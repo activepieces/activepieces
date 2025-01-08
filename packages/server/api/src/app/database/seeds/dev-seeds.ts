@@ -1,15 +1,16 @@
-import { logger, SharedSystemProp, system } from '@activepieces/server-shared'
-import { ApEnvironment } from '@activepieces/shared'
-import { authenticationService } from '../../authentication/authentication-service'
-import { Provider } from '../../authentication/authentication-service/hooks/authentication-service-hooks'
+import { ApEnvironment, UserIdentityProvider } from '@activepieces/shared'
+import { authenticationService } from '../../authentication/authentication.service'
 import { FlagEntity } from '../../flags/flag.entity'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { databaseConnection } from '../database-connection'
 import { DataSeed } from './data-seed'
 
 const DEV_DATA_SEEDED_FLAG = 'DEV_DATA_SEEDED'
+const log = system.globalLogger()
 
 const currentEnvIsNotDev = (): boolean => {
-    const env = system.get(SharedSystemProp.ENVIRONMENT)
+    const env = system.get(AppSystemProp.ENVIRONMENT)
     return env !== ApEnvironment.DEVELOPMENT
 }
 
@@ -33,28 +34,27 @@ const seedDevUser = async (): Promise<void> => {
     const DEV_PASSWORD = '12345678'
 
 
-    await authenticationService.signUp({
+    await authenticationService(log).signUp({
         email: DEV_EMAIL,
         password: DEV_PASSWORD,
         firstName: 'Dev',
         lastName: 'User',
         trackEvents: false,
-        newsLetter: false,
-        verified: true,
         platformId: null,
-        provider: Provider.EMAIL,
+        newsLetter: false,
+        provider: UserIdentityProvider.EMAIL,
     })
 
-    logger.info({ name: 'seedDevUser' }, `email=${DEV_EMAIL} pass=${DEV_PASSWORD}`)
+    log.info({ name: 'seedDevUser' }, `email=${DEV_EMAIL} pass=${DEV_PASSWORD}`)
 }
 const seedDevData = async (): Promise<void> => {
     if (currentEnvIsNotDev()) {
-        logger.info({ name: 'seedDevData' }, 'skip: not in development environment')
+        log.info({ name: 'seedDevData' }, 'skip: not in development environment')
         return
     }
 
     if (await devDataAlreadySeeded()) {
-        logger.info({ name: 'seedDevData' }, 'skip: already seeded')
+        log.info({ name: 'seedDevData' }, 'skip: already seeded')
         return
     }
 

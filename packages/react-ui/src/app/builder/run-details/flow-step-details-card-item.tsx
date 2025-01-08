@@ -17,7 +17,7 @@ import { ActionType, flowStructureUtil } from '@activepieces/shared';
 
 import { StepStatusIcon } from '../../../features/flow-runs/components/step-status-icon';
 import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
-import { flowCanvasUtils } from '../flow-canvas/flow-canvas-utils';
+import { flowCanvasUtils } from '../flow-canvas/utils/flow-canvas-utils';
 
 import { LoopIterationInput } from './loop-iteration-input';
 type FlowStepDetailsCardProps = {

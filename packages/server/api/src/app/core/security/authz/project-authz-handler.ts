@@ -8,13 +8,15 @@ export class ProjectAuthzHandler extends BaseSecurityHandler {
         '/v1/admin/pieces',
         '/v1/admin/platforms',
         '/v1/app-credentials',
-        '/v1/users/projects/:projectId/token',
+        '/v1/authentication/switch-project',
+        '/v1/authentication/switch-platform',
         '/v1/webhooks',
         '/v1/webhooks/:flowId',
         '/v1/webhooks/:flowId/test',
         '/v1/webhooks/:flowId/sync',
         // This works for both platform and project, we have to check this manually
         '/v1/user-invitations',
+        '/v1/audit-events',
     ]
 
     protected canHandle(request: FastifyRequest): Promise<boolean> {

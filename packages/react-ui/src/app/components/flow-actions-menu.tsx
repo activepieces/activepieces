@@ -73,7 +73,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   const openNewWindow = useNewWindow();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
-    platform.gitSyncEnabled,
+    platform.environmentsEnabled,
   );
   const { checkAccess } = useAuthorization();
   const userHasPermissionToUpdateFlow = checkAccess(Permission.WRITE_FLOW);
@@ -252,7 +252,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                     {isDevelopmentBranch && (
                       <div className="font-bold mt-2">
                         {t(
-                          'You are on a development branch, this will not delete the flow from the remote repository.',
+                          'You are on a development branch, this will also delete the flow from the remote repository.',
                         )}
                       </div>
                     )}

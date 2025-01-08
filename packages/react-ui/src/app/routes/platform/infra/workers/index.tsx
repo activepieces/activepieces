@@ -12,9 +12,9 @@ import { workersApi } from '@/features/platform-admin-panel/lib/workers-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn, useTimeAgo } from '@/lib/utils';
 import {
+  ApEdition,
   ApFlagId,
   WorkerMachineStatus,
-  WorkerMachineType,
   WorkerMachineWithStatus,
 } from '@activepieces/shared';
 
@@ -25,8 +25,6 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
     id: 'hbAcAzqbOEQLzvIi6PMCF',
     created: '2024-11-23T18:51:30.000Z',
     updated: dayjs().subtract(10, 'seconds').toISOString(),
-    platformId: 'demo-platform',
-    type: WorkerMachineType.DEDICATED,
     information: {
       diskInfo: {
         total: 337374281728,
@@ -50,8 +48,6 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
     id: 'kpMnBxRtYuWvZsQi9NLCJ',
     created: '2024-11-23T19:12:45.000Z',
     updated: dayjs().subtract(1, 'minute').toISOString(),
-    platformId: 'demo-platform',
-    type: WorkerMachineType.DEDICATED,
     information: {
       diskInfo: {
         total: 536870912000,
@@ -74,22 +70,21 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
 ];
 
 export default function WorkersPage() {
-  const { data: showPlatformDemo } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_PLATFORM_DEMO,
-  );
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const showDemoData = edition === ApEdition.CLOUD;
   const { data: workersData, isLoading } = useQuery<WorkerMachineWithStatus[]>({
     queryKey: ['worker-machines'],
     staleTime: 0,
     gcTime: 0,
     refetchInterval: 5000,
     queryFn: async () =>
-      showPlatformDemo ? DEMO_WORKERS_DATA : await workersApi.list(),
+      showDemoData ? DEMO_WORKERS_DATA : await workersApi.list(),
   });
 
   return (
     <div className="flex flex-col w-full">
       <TableTitle>{t('Workers')}</TableTitle>
-      {showPlatformDemo && (
+      {showDemoData && (
         <Alert variant="default" className="mt-4">
           <div className="flex items-center gap-2">
             <InfoIcon size={16} />

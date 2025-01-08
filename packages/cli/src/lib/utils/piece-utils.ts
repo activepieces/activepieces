@@ -1,7 +1,13 @@
 
 import { readdir, stat } from 'node:fs/promises'
-import { resolve, join } from 'node:path'
+import path, { resolve, join } from 'node:path'
 import { cwd } from 'node:process'
+import { readPackageJson, readProjectJson } from './files'
+import { exec } from './exec'
+import axios, { AxiosError } from 'axios'
+import chalk from 'chalk'
+import FormData from 'form-data';
+import fs from 'fs';
 
 export async function findAllPieces(path?: string): Promise<string[]> {
     const piecesPath = path ?? resolve(cwd(), 'packages', 'pieces')
@@ -14,6 +20,60 @@ export async function findPieceSourceDirectory(pieceName: string): Promise<strin
     return piecePath ?? null
 }
 
+
+export async function buildPiece(pieceFolder: string): Promise<{ outputFolder: string, outputFile: string }> {
+    const projectJson = await readProjectJson(pieceFolder);
+
+    await exec(`npx nx build ${projectJson.name} --skip-cache && cd ${path.resolve('dist/packages' + pieceFolder.split('/packages')[1])}`);
+    const compiledPath = path.resolve('dist/packages' + pieceFolder.split('/packages')[1]);
+
+    const { stdout } = await exec('cd ' + compiledPath + ' && npm pack --json');
+    const tarFileName = JSON.parse(stdout)[0].filename;
+    return {
+        outputFolder: compiledPath,
+        outputFile: join(compiledPath, tarFileName)
+    };
+}
+
+export async function publishPieceFromFolder(pieceFolder: string, apiUrl: string, apiKey: string) {
+    const projectJson = await readProjectJson(pieceFolder);
+    const packageJson = await readPackageJson(pieceFolder);
+
+    await exec(`npx nx build ${projectJson.name} --skip-cache`);
+
+    const { outputFile } = await buildPiece(pieceFolder);
+    const formData = new FormData();
+
+    console.log(chalk.blue(`Uploading ${outputFile}`));
+    formData.append('pieceArchive', fs.createReadStream(outputFile));
+    formData.append('pieceName', packageJson.name);
+    formData.append('pieceVersion', packageJson.version);
+    formData.append('packageType', 'ARCHIVE');
+    formData.append('scope', 'PLATFORM');
+
+    try {
+        await axios.post(`${apiUrl}/v1/pieces`, formData, {
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                ...formData.getHeaders()
+            }
+        });
+        console.info(chalk.green(`Piece '${packageJson.name}' published.`));
+    } catch (error) {
+        const axiosError = error as AxiosError;
+        if (axiosError.response) {
+            if (axiosError.response.status === 409) {
+                console.info(chalk.yellow(`Piece '${packageJson.name}' and '${packageJson.version}' already published.`));
+            } else if (Math.floor(axiosError.response.status / 100) !== 2) {
+                console.info(chalk.red(`Error publishing piece '${packageJson.name}', ` + JSON.stringify(axiosError.response.data)));
+            } else {
+                console.error(chalk.red(`Unexpected error: ${error.message}`));
+            }
+        } else {
+            console.error(chalk.red(`Unexpected error: ${error.message}`));
+        }
+    }
+}
 async function traverseFolder(folderPath: string): Promise<string[]> {
     const paths: string[] = []
     const directoryExists = await stat(folderPath).catch(() => null)

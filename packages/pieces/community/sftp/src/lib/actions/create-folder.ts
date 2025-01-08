@@ -1,6 +1,7 @@
-import { sftpAuth } from '../../index';
+  import { endClient, getClient, getProtocolBackwardCompatibility, sftpAuth } from '../../index';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
+import { Client as FTPClient } from 'basic-ftp';
 
 export const createFolderAction = createAction({
   auth: sftpAuth,
@@ -11,30 +12,31 @@ export const createFolderAction = createAction({
     folderPath: Property.ShortText({
       displayName: 'Folder Path',
       required: true,
-      description: 'The new folder path e.g. `./myfolder`',
+      description: 'The new folder path e.g. `./myfolder`. For FTP/FTPS, it will create nested folders if necessary.',
     }),
     recursive: Property.Checkbox({
       displayName: 'Recursive',
       defaultValue: false,
       required: false,
+      description: 'For SFTP only: Create parent directories if they do not exist',
     }),
   },
   async run(context) {
-    const { host, port, username, password } = context.auth;
+    const client = await getClient(context.auth);
     const directoryPath = context.propsValue.folderPath;
     const recursive = context.propsValue.recursive ?? false;
-    const sftp = new Client();
-
+    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol);
     try {
-      await sftp.connect({
-        host,
-        port,
-        username,
-        password,
-        readyTimeout: 15000,
-      });
-
-      await sftp.mkdir(directoryPath, recursive);
+      switch (protocolBackwardCompatibility) {
+        case 'ftps':
+        case 'ftp':
+          await (client as FTPClient).ensureDir(directoryPath);
+          break;
+        default:
+        case 'sftp':
+          await (client as Client).mkdir(directoryPath, recursive);
+          break;
+      }
 
       return {
         status: 'success',
@@ -45,7 +47,7 @@ export const createFolderAction = createAction({
         error: err,
       };
     } finally {
-      await sftp.end();
+      await endClient(client, context.auth.protocol);
     }
   },
 });

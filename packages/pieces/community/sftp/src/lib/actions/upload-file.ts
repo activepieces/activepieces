@@ -1,6 +1,24 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
-import { sftpAuth } from '../..';
+import { Client as FTPClient } from 'basic-ftp';
+import { endClient, getClient, getProtocolBackwardCompatibility, sftpAuth } from '../..';
+import { Readable } from 'stream';
+
+async function uploadFileToFTP(client: FTPClient, fileName: string, fileContent: { data: any }) {
+  const remoteDirectory = fileName.substring(0, fileName.lastIndexOf('/'));
+  await client.ensureDir(remoteDirectory);
+  await client.uploadFrom(Readable.from(fileContent.data), fileName);
+}
+
+async function uploadFileToSFTP(client: Client, fileName: string, fileContent: { data: any }) {
+  const remotePathExists = await client.exists(fileName);
+  if (!remotePathExists) {
+    const remoteDirectory = fileName.substring(0, fileName.lastIndexOf('/'));
+    await client.mkdir(remoteDirectory, true);
+  }
+  await client.put(fileContent.data, fileName);
+  await client.end();
+}
 
 export const uploadFileAction = createAction({
   auth: sftpAuth,
@@ -20,47 +38,31 @@ export const uploadFileAction = createAction({
     }),
   },
   async run(context) {
-    const host = context.auth.host;
-    const port = context.auth.port;
-    const username = context.auth.username;
-    const password = context.auth.password;
+    const client = await getClient(context.auth);
     const fileName = context.propsValue['fileName'];
     const fileContent = context.propsValue['fileContent'];
-    const sftp = new Client();
-
+    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol);
     try {
-      await sftp.connect({
-        host,
-        port,
-        username,
-        password,
-      });
-
-      const remotePathExists = await sftp.exists(fileName);
-      if (!remotePathExists) {
-        // Extract the directory path from the fileName
-        const remoteDirectory = fileName.substring(
-          0,
-          fileName.lastIndexOf('/')
-        );
-
-        // Create the directory if it doesn't exist
-        await sftp.mkdir(remoteDirectory, true); // The second argument 'true' makes the function create all intermediate directories
-
-        // You can also check if the directory was successfully created and handle any potential errors here
+      switch (protocolBackwardCompatibility) {
+        case 'ftps':
+        case 'ftp':
+          await uploadFileToFTP(client as FTPClient, fileName, fileContent);
+          break;
+        default:
+        case 'sftp':
+          await uploadFileToSFTP(client as Client, fileName, fileContent);
+          break;
       }
-
-      await sftp.put(fileContent.data, fileName);
-      await sftp.end();
-
       return {
         status: 'success',
       };
-    } catch (err) {
+    } catch (error) {
+      console.error(error);
       return {
         status: 'error',
-        error: err,
       };
+    } finally {
+      await endClient(client, context.auth.protocol);
     }
   },
 });

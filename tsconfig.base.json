@@ -66,6 +66,9 @@
       "@activepieces/piece-asana": [
         "packages/pieces/community/asana/src/index.ts"
       ],
+      "@activepieces/piece-ashby": [
+        "packages/pieces/community/ashby/src/index.ts"
+      ],
       "@activepieces/piece-assemblyai": [
         "packages/pieces/community/assemblyai/src/index.ts"
       ],
@@ -74,6 +77,9 @@
       ],
       "@activepieces/piece-azure-openai": [
         "packages/pieces/community/azure-openai/src/index.ts"
+      ],
+      "@activepieces/piece-bamboohr": [
+        "packages/pieces/community/bamboohr/src/index.ts"
       ],
       "@activepieces/piece-bannerbear": [
         "packages/pieces/community/bannerbear/src/index.ts"
@@ -290,6 +296,9 @@
       "@activepieces/piece-hackernews": [
         "packages/pieces/community/hackernews/src/index.ts"
       ],
+      "@activepieces/piece-harvest": [
+        "packages/pieces/community/harvest/src/index.ts"
+      ],
       "@activepieces/piece-heartbeat": [
         "packages/pieces/community/heartbeat/src/index.ts"
       ],
@@ -395,6 +404,9 @@
       "@activepieces/piece-microsoft-onedrive": [
         "packages/pieces/community/microsoft-onedrive/src/index.ts"
       ],
+      "@activepieces/piece-microsoft-outlook-calendar": [
+        "packages/pieces/community/microsoft-outlook-calendar/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-teams": [
         "packages/pieces/community/microsoft-teams/src/index.ts"
       ],
@@ -465,6 +477,9 @@
       "@activepieces/piece-pushover": [
         "packages/pieces/community/pushover/src/index.ts"
       ],
+      "@activepieces/piece-pylon": [
+        "packages/pieces/community/pylon/src/index.ts"
+      ],
       "@activepieces/piece-qdrant": [
         "packages/pieces/community/qdrant/src/index.ts"
       ],
@@ -510,6 +525,9 @@
       ],
       "@activepieces/piece-salesforce": [
         "packages/pieces/community/salesforce/src/index.ts"
+      ],
+      "@activepieces/piece-scenario": [
+        "packages/pieces/community/scenario/src/index.ts"
       ],
       "@activepieces/piece-schedule": [
         "packages/pieces/community/schedule/src/index.ts"
@@ -621,6 +639,9 @@
       ],
       "@activepieces/piece-twilio": [
         "packages/pieces/community/twilio/src/index.ts"
+      ],
+      "@activepieces/piece-twin-labs": [
+        "packages/pieces/community/twin-labs/src/index.ts"
       ],
       "@activepieces/piece-twitter": [
         "packages/pieces/community/twitter/src/index.ts"

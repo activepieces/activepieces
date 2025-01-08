@@ -1,6 +1,7 @@
 import {
   createAction,
   DynamicProp,
+  DynamicPropsValue,
   Property,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
@@ -42,24 +43,55 @@ export const callFlow = createAction({
       },
       refreshers: [],
     }),
+    mode: Property.StaticDropdown({
+      displayName: 'Mode',
+      required: true,
+      description: 'Choose Simple for key-value or Advanced for JSON.',
+      defaultValue: 'simple',
+      options: {
+        disabled: false,
+        options: [
+          {
+            label: 'Simple',
+            value: 'simple',
+          },
+          {
+            label: 'Advanced',
+            value: 'advanced',
+          },
+        ],
+      },
+    }),
     flowProps: Property.DynamicProperties({
       description: '',
       displayName: '',
       required: true,
-      refreshers: ['flow'],
+      refreshers: ['flow', 'mode'],
       props: async (propsValue) => {
-        const props: Record<string, DynamicProp> = {};
         const castedFlowValue = propsValue['flow'] as unknown as FlowValue;
+        const mode = propsValue['mode'] as unknown as string;
+        const fields: DynamicPropsValue = {};
+
+
         if (!isNil(castedFlowValue)) {
-          props['payload'] = Property.Json({
-            displayName: 'Payload',
-            description:
-              'Provide the data to be passed to the flow',
-            required: true,
-            defaultValue: castedFlowValue.exampleData as unknown as object,
-          });
+          if (mode === 'simple') {
+            fields['payload'] = Property.Object({
+              displayName: 'Payload',
+              required: true,
+              defaultValue: (castedFlowValue.exampleData as unknown as { sampleData: object }).sampleData,
+            });
+          }
+          else{
+            fields['payload'] = Property.Json({
+              displayName: 'Payload',
+              description:
+                'Provide the data to be passed to the flow',
+              required: true,
+              defaultValue: (castedFlowValue.exampleData as unknown as { sampleData: object }).sampleData,
+            });
+          }
         }
-        return props;
+        return fields;
       },
     }),
     waitForResponse: Property.Checkbox({
@@ -71,18 +103,32 @@ export const callFlow = createAction({
       description: '',
       displayName: '',
       required: true,
-      refreshers: ['waitForResponse'],
+      refreshers: ['waitForResponse', 'mode'],
       props: async (propsValue) => {
-        const props: Record<string, DynamicProp> = {};
+        const fields: DynamicPropsValue = {};
         if (!propsValue['waitForResponse']) {
-          return props;
+          return fields;
         }
-        props['data'] = Property.Json({
-          displayName: 'Example Response (For Testing)',
-          required: true,
-          description: 'This data will be returned when testing this step, and is necessary to proceed with building the flow'
-        })
-        return props;
+
+        const mode = propsValue['mode'] as unknown as string;
+
+        if (mode === 'simple') {
+            fields['data'] = Property.Object({
+            displayName: 'Example Response (For Testing)',
+            required: true,
+            description: 'This data will be returned when testing this step, and is necessary to proceed with building the flow',
+            defaultValue: {},
+          });
+        } else {
+          fields['data'] = Property.Json({
+            displayName: 'Example Response (For Testing)',
+            required: true,
+            description: 'This data will be returned when testing this step, and is necessary to proceed with building the flow',
+            defaultValue: {},
+          });
+        }
+
+        return fields;
       }
     })
   },

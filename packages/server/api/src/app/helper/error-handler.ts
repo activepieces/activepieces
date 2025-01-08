@@ -1,4 +1,4 @@
-import { exceptionHandler, logger } from '@activepieces/server-shared'
+import { exceptionHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -6,7 +6,7 @@ import { StatusCodes } from 'http-status-codes'
 
 export const errorHandler = async (
     error: FastifyError,
-    _request: FastifyRequest,
+    request: FastifyRequest,
     reply: FastifyReply,
 ): Promise<void> => {
     if (error instanceof ActivepiecesError) {
@@ -24,6 +24,7 @@ export const errorHandler = async (
             [ErrorCode.FLOW_IN_USE]: StatusCodes.CONFLICT,
             [ErrorCode.AUTHORIZATION]: StatusCodes.FORBIDDEN,
             [ErrorCode.SIGN_UP_DISABLED]: StatusCodes.FORBIDDEN,
+            [ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS]: StatusCodes.CONFLICT,
             [ErrorCode.INVALID_CREDENTIALS]: StatusCodes.UNAUTHORIZED,
             [ErrorCode.SESSION_EXPIRED]: StatusCodes.FORBIDDEN,
             [ErrorCode.EMAIL_IS_NOT_VERIFIED]: StatusCodes.FORBIDDEN,
@@ -48,12 +49,12 @@ export const errorHandler = async (
         })
     }
     else {
-        logger.error('[errorHandler]: ' + JSON.stringify(error))
+        request.log.error('[errorHandler]: ' + JSON.stringify(error))
         if (
             !error.statusCode ||
       error.statusCode === StatusCodes.INTERNAL_SERVER_ERROR.valueOf()
         ) {
-            exceptionHandler.handle(error)
+            exceptionHandler.handle(error, request.log)
         }
         await reply
             .status(error.statusCode ?? StatusCodes.INTERNAL_SERVER_ERROR)

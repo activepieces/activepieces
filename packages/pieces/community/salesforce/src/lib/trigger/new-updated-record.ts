@@ -35,6 +35,7 @@ export const newOrUpdatedRecord = createTrigger({
       auth: ctx.auth,
       store: ctx.store,
       propsValue: ctx.propsValue,
+      files: ctx.files,
     });
   },
   async onEnable(ctx) {
@@ -52,11 +53,7 @@ export const newOrUpdatedRecord = createTrigger({
     });
   },
   async run(ctx) {
-    return await pollingHelper.poll(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-    });
+    return await pollingHelper.poll(polling, ctx);
   },
 });
 

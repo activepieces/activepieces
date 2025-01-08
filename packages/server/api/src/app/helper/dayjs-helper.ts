@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import duration from 'dayjs/plugin/duration'
+import duration, { DurationUnitType } from 'dayjs/plugin/duration'
 import timezone from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
 
@@ -14,4 +14,11 @@ export function apDayjs(
         return dayjs()
     }
     return dayjs(time)
+}
+
+export function apDayjsDuration(
+    value: number,
+    unit: DurationUnitType,
+) {
+    return dayjs.duration(value, unit)
 }

@@ -70,9 +70,10 @@ const BuilderPublishButton = React.memo(() => {
     flow.publishedVersionId === flowVersion.id &&
     flowVersion.state === FlowVersionState.LOCKED;
   const isViewingDraft =
-    (flow.publishedVersionId === flowVersion.id &&
+    ((flow.publishedVersionId === flowVersion.id &&
       flow.version.id === flowVersion.id) ||
-    flowVersion.state === FlowVersionState.DRAFT;
+      flowVersion.state === FlowVersionState.DRAFT) &&
+    !readonly;
 
   return (
     <>

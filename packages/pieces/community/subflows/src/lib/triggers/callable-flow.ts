@@ -1,5 +1,6 @@
 import {
   createTrigger,
+  DynamicPropsValue,
   Property,
   StoreScope,
   TriggerStrategy,
@@ -11,10 +12,46 @@ export const callableFlow = createTrigger({
   displayName: 'Callable Flow',
   description: 'Waiting to be triggered from another flow',
   props: {
-    exampleData: Property.Json({
+    mode: Property.StaticDropdown({
+      displayName: 'Mode',
+      required: true,
+      description: 'Choose Simple for key-value or Advanced for JSON.',
+      defaultValue: 'simple',
+      options: {
+        disabled: false,
+        options: [
+          {
+            label: 'Simple',
+            value: 'simple',
+          },
+          {
+            label: 'Advanced',
+            value: 'advanced',
+          },
+        ],
+      },
+    }),
+    exampleData: Property.DynamicProperties({
       displayName: 'Sample Data',
       description: 'The schema to be passed to the flow',
       required: true,
+      refreshers: ['mode'],
+      props: async (propsValue) => {
+        const mode = propsValue['mode'] as unknown as string;
+        const fields: DynamicPropsValue = {};
+        if (mode === 'simple') {
+          fields['sampleData'] = Property.Object({
+            displayName: 'Sample Data',
+            required: true,
+          });
+        } else {
+          fields['sampleData'] = Property.Json({
+            displayName: 'Sample Data',
+            required: true,
+          });
+        }
+        return fields;
+      },
     }),
   },
   sampleData: null,
@@ -27,7 +64,7 @@ export const callableFlow = createTrigger({
   },
   async test(context) {
     const request: CallableFlowRequest = {
-      data: context.propsValue.exampleData,
+      data: context.propsValue.exampleData['sampleData'],
       callbackUrl: MOCK_CALLBACK_IN_TEST_FLOW_URL
     }
     return [request];

@@ -1,9 +1,11 @@
 import { readFile } from 'node:fs/promises'
-import { AppSystemProp, logger, SharedSystemProp, system } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEnvironment, ErrorCode, isNil, Platform, SMTPInformation } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import Mustache from 'mustache'
 import nodemailer, { Transporter } from 'nodemailer'
 import { defaultTheme } from '../../../../flags/theme'
+import { system } from '../../../../helper/system/system'
+import { AppSystemProp } from '../../../../helper/system/system-prop'
 import { platformService } from '../../../../platform/platform.service'
 import { EmailSender, EmailTemplateData } from './email-sender'
 
@@ -24,51 +26,53 @@ type SMTPEmailSender = EmailSender & {
     validateOrThrow: (smtp: SMTPInformation) => Promise<void>
 }
 
-export const smtpEmailSender: SMTPEmailSender = {
-    async validateOrThrow(smtp: SMTPInformation) {
-        const disableSmtpValidationInTesting = system.getOrThrow(SharedSystemProp.ENVIRONMENT) === ApEnvironment.TESTING
-        if (disableSmtpValidationInTesting) {
-            return
-        }
-        const smtpClient = initSmtpClient(smtp)
-        try {
-            await smtpClient.verify()
-        }
-        catch (e) {
-            throw new ActivepiecesError({
-                code: ErrorCode.INVALID_SMTP_CREDENTIALS,
-                params: {
-                    message: JSON.stringify(e),
-                },
+export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
+    return {
+        async validateOrThrow(smtp: SMTPInformation) {
+            const disableSmtpValidationInTesting = system.getOrThrow(AppSystemProp.ENVIRONMENT) === ApEnvironment.TESTING
+            if (disableSmtpValidationInTesting) {
+                return
+            }
+            const smtpClient = initSmtpClient(smtp)
+            try {
+                await smtpClient.verify()
+            }
+            catch (e) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.INVALID_SMTP_CREDENTIALS,
+                    params: {
+                        message: JSON.stringify(e),
+                    },
+                })
+            }
+        },
+        async send({ emails, platformId, templateData }) {
+            const platform = await getPlatform(platformId)
+            const emailSubject = getEmailSubject(templateData.name, templateData.vars)
+            const senderName = platform?.smtp?.senderName ?? system.get(AppSystemProp.SMTP_SENDER_NAME)
+            const senderEmail = platform?.smtp?.senderEmail ?? system.get(AppSystemProp.SMTP_SENDER_EMAIL)
+
+            if (!isSmtpConfigured(platform)) {
+                log.error(`SMTP isn't configured for sending the email ${emailSubject}`)
+                return
+            }
+
+            const emailBody = await renderEmailBody({
+                platform,
+                templateData,
             })
-        }
-    },
-    async send({ emails, platformId, templateData }) {
-        const platform = await getPlatform(platformId)
-        const emailSubject = getEmailSubject(templateData.name, templateData.vars)
-        const senderName = platform?.smtp?.senderName ?? system.get(AppSystemProp.SMTP_SENDER_NAME)
-        const senderEmail = platform?.smtp?.senderEmail ?? system.get(AppSystemProp.SMTP_SENDER_EMAIL)
 
-        if (!isSmtpConfigured(platform)) {
-            logger.error(`SMTP isn't configured for sending the email ${emailSubject}`)
-            return
-        }
+            const smtpClient = initSmtpClient(platform?.smtp)
 
-        const emailBody = await renderEmailBody({
-            platform,
-            templateData,
-        })
-
-        const smtpClient = initSmtpClient(platform?.smtp)
-
-        await smtpClient.sendMail({
-            from: `${senderName} <${senderEmail}>`,
-            to: emails.join(','),
-            subject: emailSubject,
-            html: emailBody,
-        })
-    },
-    isSmtpConfigured,
+            await smtpClient.sendMail({
+                from: `${senderName} <${senderEmail}>`,
+                to: emails.join(','),
+                subject: emailSubject,
+                html: emailBody,
+            })
+        },
+        isSmtpConfigured,
+    }
 }
 
 const getPlatform = async (platformId: string | undefined): Promise<Platform | null> => {

@@ -1,4 +1,3 @@
-import { logger } from '@activepieces/server-shared'
 import { apId, FlowId, ProjectId } from '@activepieces/shared'
 import { repoFactory } from '../core/db/repo-factory'
 import {
@@ -23,13 +22,6 @@ export const appEventRoutingService = {
         flowId,
         projectId,
     }: CreateParams): Promise<void> {
-        logger.info({
-            appName,
-            events,
-            identifierValue,
-            flowId,
-            projectId,
-        }, '[AppEventRoutingService#createListeners] create')
         const upsertCommands: Promise<unknown>[] = []
         events.forEach((event) => {
             const upsert = appEventRoutingRepo().upsert(

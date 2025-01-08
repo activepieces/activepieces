@@ -7,6 +7,8 @@ declare module 'fastify' {
     // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
     export interface FastifyRequest {
         principal: Principal
+        rawBody?: string | Buffer
+        isMultipart(): boolean
     }
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-definitions

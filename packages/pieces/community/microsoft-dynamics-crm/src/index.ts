@@ -28,7 +28,7 @@ export const dynamicsCRMAuth = PieceAuth.OAuth2({
     proxyUrl: Property.ShortText({
       displayName: 'Proxy URL with Port',
       description:
-        'Only to use for establishing connections (only needed when proxying requests). For example **https://proxy.com:8080**.',
+        'Keep empty if not needed. Optional proxy URL used for establishing connections when proxying requests is needed. For example: **https://proxy.com:8080**.',
       required: false,
     }),
   },
@@ -39,7 +39,7 @@ export const dynamicsCRMAuth = PieceAuth.OAuth2({
 });
 
 export function getBaseUrl(host: string, proxyUrl?: string): string {
-  if (proxyUrl) {
+  if (proxyUrl && proxyUrl !== '') {
     return proxyUrl;
   }
   return host;

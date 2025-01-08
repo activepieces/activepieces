@@ -1,15 +1,17 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-case-declarations */
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class SwitchToRouter1731019013340 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         const flowVersionIds = await queryRunner.query(
             'SELECT id FROM flow_version WHERE "schemaVersion" IS NULL',
         )
-        logger.info(
+        log.info(
             'SwitchToRouter1731019013340: found ' +
             flowVersionIds.length +
             ' versions',
@@ -44,7 +46,7 @@ export class SwitchToRouter1731019013340 implements MigrationInterface {
             }
         }
 
-        logger.info({
+        log.info({
             name: 'SwitchToRouter1731019013340: up',
             updatedFlows,
         })

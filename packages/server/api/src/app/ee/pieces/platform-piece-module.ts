@@ -1,7 +1,6 @@
 import {
     ActivepiecesError,
     AddPieceRequestBody,
-    DefaultProjectRole,
     EndpointScope,
     ErrorCode,
     PieceScope,
@@ -14,10 +13,8 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { flagService } from '../../flags/flag.service'
 import { pieceService } from '../../pieces/piece-service'
 import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
-import { projectMemberService } from '../project-members/project-member.service'
 
 export const platformPieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(platformPieceController, { prefix: '/v1/pieces' })
@@ -31,28 +28,11 @@ const platformPieceController: FastifyPluginCallbackTypebox = (
 
     app.post('/', installPieceParams, async (req, reply) => {
         const platformId = req.principal.platform.id
-        if (flagService.isCloudPlatform(platformId)) {
-            assertOneOfTheseScope(req.body.scope, [PieceScope.PROJECT])
-            const platformRole = await projectMemberService.getRole({
-                projectId: req.principal.projectId,
-                userId: req.principal.id,
-            })
-            if (platformRole?.name !== DefaultProjectRole.ADMIN) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.AUTHORIZATION,
-                    params: {
-                        message: 'Only admin role is allowed for cloud platform',
-                    },
-                })
-            }
-        }
-        else {
-            assertOneOfTheseScope(req.body.scope, [PieceScope.PLATFORM])
-            await platformMustBeOwnedByCurrentUser.call(app, req, reply)
-        }
-        await pieceService.installPiece(
+        assertOneOfTheseScope(req.body.scope, [PieceScope.PLATFORM])
+        await platformMustBeOwnedByCurrentUser.call(app, req, reply)
+        await pieceService(req.log).installPiece(
             platformId,
-            req.principal.projectId,
+            undefined,
             req.body,
         )
         await reply.status(StatusCodes.CREATED).send({})

@@ -1,4 +1,3 @@
-import { system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -11,7 +10,8 @@ import {
     PrincipalType,
     ProjectRole,
 } from '@activepieces/shared'
-import { FastifyRequest } from 'fastify'
+import { FastifyBaseLogger, FastifyRequest } from 'fastify'
+import { system } from '../../../helper/system/system'
 import { projectMemberService } from '../../project-members/project-member.service'
 import { projectRoleService } from '../../project-role/project-role.service'
 
@@ -21,12 +21,13 @@ export const rbacMiddleware = async (req: FastifyRequest): Promise<void> => {
     if (ignoreRequest(req)) {
         return
     }
-    await assertRoleHasPermission(req.principal, req.routeConfig.permission)
+    await assertRoleHasPermission(req.principal, req.routeConfig.permission, req.log)
 }
 
 export async function assertUserHasPermissionToFlow(
     principal: Principal,
     operationType: FlowOperationType,
+    log: FastifyBaseLogger,
 ): Promise<void> {
     const edition = system.getEdition()
     if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
@@ -36,7 +37,7 @@ export async function assertUserHasPermissionToFlow(
     switch (operationType) {
         case FlowOperationType.LOCK_AND_PUBLISH:
         case FlowOperationType.CHANGE_STATUS: {
-            await assertRoleHasPermission(principal, Permission.UPDATE_FLOW_STATUS)
+            await assertRoleHasPermission(principal, Permission.UPDATE_FLOW_STATUS, log)
             break
         }
         case FlowOperationType.ADD_ACTION:
@@ -53,17 +54,21 @@ export async function assertUserHasPermissionToFlow(
         case FlowOperationType.ADD_BRANCH:
         case FlowOperationType.DELETE_BRANCH:
         case FlowOperationType.DUPLICATE_BRANCH: {
-            await assertRoleHasPermission(principal, Permission.WRITE_FLOW)
+            await assertRoleHasPermission(principal, Permission.WRITE_FLOW, log)
+            break
+        }
+        case FlowOperationType.SET_SKIP_ACTION: {
+            await assertRoleHasPermission(principal, Permission.WRITE_FLOW, log)
             break
         }
     }
 }
 
-export const assertRoleHasPermission = async (principal: Principal, permission: Permission | undefined): Promise<void> => {
+export const assertRoleHasPermission = async (principal: Principal, permission: Permission | undefined, log: FastifyBaseLogger): Promise<void> => {
     if (principal.type === PrincipalType.SERVICE) { 
         return
     }
-    const principalRole = await getPrincipalRoleOrThrow(principal)
+    const principalRole = await getPrincipalRoleOrThrow(principal, log)
     const access = await grantAccess({
         principalRoleId: principalRole.id,
         routePermission: permission,
@@ -91,10 +96,10 @@ const ignoreRequest = (req: FastifyRequest): boolean => {
     return req.routeConfig.permission === undefined
 }
 
-export const getPrincipalRoleOrThrow = async (principal: Principal): Promise<ProjectRole> => {
+export const getPrincipalRoleOrThrow = async (principal: Principal, log: FastifyBaseLogger): Promise<ProjectRole> => {
     const { id: userId, projectId } = principal
 
-    const projectRole = await projectMemberService.getRole({
+    const projectRole = await projectMemberService(log).getRole({
         projectId,
         userId,
     })

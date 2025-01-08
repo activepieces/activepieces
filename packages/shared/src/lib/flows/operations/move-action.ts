@@ -18,7 +18,7 @@ export function _moveAction(flowVersion: FlowVersion, request: MoveActionRequest
         {
             type: FlowOperationType.DELETE_ACTION,
             request: {
-                name: request.name,
+                names: [request.name],
             },
         },
     ]

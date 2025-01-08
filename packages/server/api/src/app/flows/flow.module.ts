@@ -18,7 +18,7 @@ export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
     websocketService.addListener(WebsocketServerEvent.TEST_FLOW_RUN, (socket) => {
         return async (data: TestFlowRunRequestBody) => {
             const principal = await accessTokenManager.verifyPrincipal(socket.handshake.auth.token)
-            const flowRun = await flowRunService.test({
+            const flowRun = await flowRunService(app.log).test({
                 projectId: principal.projectId,
                 flowVersionId: data.flowVersionId,
             })

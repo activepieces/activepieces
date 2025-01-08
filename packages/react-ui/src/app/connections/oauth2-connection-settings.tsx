@@ -168,7 +168,11 @@ const OAuth2ConnectionSettings = ({
     const propsValues = form.getValues('request.value.props') ?? {};
     const arePropsValid = authProperty.props
       ? Object.keys(authProperty.props).reduce((acc, key) => {
-          return acc && !isNil(propsValues[key]) && propsValues[key] !== '';
+          return (
+            acc &&
+            ((!isNil(propsValues[key]) && propsValues[key] !== '') ||
+              !authProperty.props?.[key]?.required)
+          );
         }, true)
       : true;
 

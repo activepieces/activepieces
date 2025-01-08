@@ -9,6 +9,7 @@ import {
   FlowVersion,
   Folder,
   Project,
+  ProjectRelease,
   ProjectRole,
   User,
 } from '@activepieces/shared';
@@ -17,8 +18,10 @@ export const ListAuditEventsRequest = Type.Object({
   limit: Type.Optional(Type.Number()),
   cursor: Type.Optional(Type.String()),
   action: Type.Optional(Type.String()),
-  projectId: Type.Optional(Type.String()),
+  projectId: Type.Optional(Type.Array(Type.String())),
   userId: Type.Optional(Type.String()),
+  createdBefore: Type.Optional(Type.String()),
+  createdAfter: Type.Optional(Type.String()),
 });
 
 export type ListAuditEventsRequest = Static<typeof ListAuditEventsRequest>;
@@ -44,6 +47,7 @@ export enum ApplicationEventName {
   PROJECT_ROLE_CREATED = 'project.role.created',
   PROJECT_ROLE_DELETED = 'project.role.deleted',
   PROJECT_ROLE_UPDATED = 'project.role.updated',
+  PROJECT_RELEASE_CREATED = 'project.release.created',
 }
 
 const BaseAuditEventProps = {
@@ -227,6 +231,16 @@ export const ProjectRoleEvent = Type.Object({
 
 export type ProjectRoleEvent = Static<typeof ProjectRoleEvent>;
 
+export const ProjectReleaseEvent = Type.Object({
+  ...BaseAuditEventProps,
+  action: Type.Literal(ApplicationEventName.PROJECT_RELEASE_CREATED),
+  data: Type.Object({
+    release: Type.Pick(ProjectRelease, ['name', 'description', 'type', 'projectId', 'importedByUser']),
+  }),
+});
+
+export type ProjectReleaseEvent = Static<typeof ProjectReleaseEvent>;
+
 export const ApplicationEvent = Type.Union([
   ConnectionEvent,
   FlowCreatedEvent,
@@ -238,6 +252,7 @@ export const ApplicationEvent = Type.Union([
   SignUpEvent,
   SigningKeyEvent,
   ProjectRoleEvent,
+  ProjectReleaseEvent,
 ]);
 
 export type ApplicationEvent = Static<typeof ApplicationEvent>;
@@ -273,7 +288,7 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
     case ApplicationEventName.USER_EMAIL_VERIFIED:
       return `User ${event.userEmail} verified email`;
     case ApplicationEventName.USER_SIGNED_UP:
-      return `User ${event.data.user?.email} signed up using email from ${event.data.source}`;
+      return `User ${event.userEmail} signed up using email from ${event.data.source}`;
     case ApplicationEventName.SIGNING_KEY_CREATED:
       return `${event.data.signingKey.displayName} is created`;
     case ApplicationEventName.PROJECT_ROLE_CREATED:
@@ -282,6 +297,8 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
       return `${event.data.projectRole.name} is updated`;
     case ApplicationEventName.PROJECT_ROLE_DELETED:
       return `${event.data.projectRole.name} is deleted`;
+    case ApplicationEventName.PROJECT_RELEASE_CREATED:
+      return `${event.data.release.name} is created`;
   }
 }
 
@@ -292,7 +309,11 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
     case FlowOperationType.UPDATE_ACTION:
       return `Updated action "${event.data.request.request.displayName}" in "${event.data.flowVersion.displayName}" Flow.`;
     case FlowOperationType.DELETE_ACTION:
-      return `Deleted action "${event.data.request.request.name}" from "${event.data.flowVersion.displayName}" Flow.`;
+      {
+        const request = event.data.request.request
+        const names = request.names
+        return `Deleted actions "${names.join(', ')}" from "${event.data.flowVersion.displayName}" Flow.`;
+      }
     case FlowOperationType.CHANGE_NAME:
       return `Renamed flow "${event.data.flowVersion.displayName}" to "${event.data.request.request.displayName}".`;
     case FlowOperationType.LOCK_AND_PUBLISH:
@@ -333,5 +354,12 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
       } in flow "${event.data.flowVersion.displayName}" for the step "${
         event.data.request.request.stepName
       }".`;
+    case FlowOperationType.SET_SKIP_ACTION:
+      {
+        const request = event.data.request.request
+        const names = request.names
+        return `Updated actions "${names.join(', ')}" in "${event.data.flowVersion.displayName}" Flow to skip.`;
+
+      }
   }
 }

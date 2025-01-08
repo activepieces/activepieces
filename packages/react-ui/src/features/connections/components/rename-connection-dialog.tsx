@@ -3,7 +3,7 @@ import { DialogTrigger } from '@radix-ui/react-dialog';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import React, { useState } from 'react';
+import React, { useState, forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,10 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 
 import { appConnectionsApi } from '../lib/app-connections-api';
+import {
+  ConnectionNameAlreadyExists,
+  isConnectionNameUnique,
+} from '../lib/utils';
 
 const RenameConnectionSchema = Type.Object({
   displayName: Type.String(),
@@ -34,12 +38,10 @@ type RenameConnectionDialogProps = {
   onRename: () => void;
 };
 
-const RenameConnectionDialog: React.FC<RenameConnectionDialogProps> = ({
-  children,
-  connectionId,
-  currentName,
-  onRename,
-}) => {
+const RenameConnectionDialog = forwardRef<
+  HTMLDivElement,
+  RenameConnectionDialogProps
+>(({ children, connectionId, currentName, onRename }, _) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const renameConnectionForm = useForm<RenameConnectionSchema>({
     resolver: typeboxResolver(RenameConnectionSchema),
@@ -56,7 +58,14 @@ const RenameConnectionDialog: React.FC<RenameConnectionDialogProps> = ({
       displayName: string;
     }
   >({
-    mutationFn: ({ connectionId, displayName }) => {
+    mutationFn: async ({ connectionId, displayName }) => {
+      const existingConnection = await isConnectionNameUnique(
+        false,
+        displayName,
+      );
+      if (!existingConnection && displayName !== currentName) {
+        throw new ConnectionNameAlreadyExists();
+      }
       return appConnectionsApi.update(connectionId, { displayName });
     },
     onSuccess: () => {
@@ -68,7 +77,15 @@ const RenameConnectionDialog: React.FC<RenameConnectionDialogProps> = ({
         duration: 3000,
       });
     },
-    onError: () => toast(INTERNAL_ERROR_TOAST),
+    onError: (error) => {
+      if (error instanceof ConnectionNameAlreadyExists) {
+        renameConnectionForm.setError('displayName', {
+          message: error.message,
+        });
+      } else {
+        toast(INTERNAL_ERROR_TOAST);
+      }
+    },
   });
 
   return (
@@ -118,6 +135,8 @@ const RenameConnectionDialog: React.FC<RenameConnectionDialogProps> = ({
       </DialogContent>
     </Dialog>
   );
-};
+});
+
+RenameConnectionDialog.displayName = 'RenameConnectionDialog';
 
 export { RenameConnectionDialog };

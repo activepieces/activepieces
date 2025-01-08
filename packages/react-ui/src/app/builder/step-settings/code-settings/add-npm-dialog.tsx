@@ -37,7 +37,13 @@ const formSchema = Type.Object({
 
 type AddNpmDialogProps = {
   children: React.ReactNode;
-  onAdd: (packageName: string, packageVersion: string) => void;
+  onAdd: ({
+    packageName,
+    packageVersion,
+  }: {
+    packageName: string;
+    packageVersion: string;
+  }) => void;
 };
 const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
   const [open, setOpen] = useState(false);
@@ -54,11 +60,11 @@ const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
       );
       return {
         packageName,
-        version: response['dist-tags'].latest,
+        packageVersion: response['dist-tags'].latest,
       };
     },
-    onSuccess: ({ packageName, version }) => {
-      onAdd(packageName, version);
+    onSuccess: (response) => {
+      onAdd(response);
       setOpen(false);
       toast({
         title: t('Success'),
@@ -85,7 +91,7 @@ const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
         </DialogHeader>
         <Form {...form}>
           <form
-            onSubmit={(e) => e.preventDefault()}
+            onSubmit={(e) => form.handleSubmit(() => mutate())(e)}
             className="flex flex-col gap-4"
           >
             <FormField

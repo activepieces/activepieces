@@ -1,6 +1,5 @@
 
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import { logger, system } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     AppConnectionType,
@@ -8,81 +7,79 @@ import {
     ErrorCode,
 } from '@activepieces/shared'
 import axios from 'axios'
+import { FastifyBaseLogger } from 'fastify'
+import { system } from '../../../../helper/system/system'
 import {
     ClaimOAuth2Request,
     OAuth2Service,
     RefreshOAuth2Request,
 } from '../oauth2-service'
 
-export const cloudOAuth2Service: OAuth2Service<CloudOAuth2ConnectionValue> = {
-    refresh,
-    claim,
-}
-
-async function refresh({
-    pieceName,
-    connectionValue,
-}: RefreshOAuth2Request<CloudOAuth2ConnectionValue>): Promise<CloudOAuth2ConnectionValue> {
-    const requestBody = {
-        refreshToken: connectionValue.refresh_token,
+export const cloudOAuth2Service = (log: FastifyBaseLogger): OAuth2Service<CloudOAuth2ConnectionValue> => ({
+    refresh: async ({
         pieceName,
-        clientId: connectionValue.client_id,
-        edition: system.getEdition(),
-        authorizationMethod: connectionValue.authorization_method,
-        tokenUrl: connectionValue.token_url,
-    }
-    const response = (
-        await axios.post('https://secrets.activepieces.com/refresh', requestBody, {
-            timeout: 10000,
-        })
-    ).data
-    return {
-        ...connectionValue,
-        ...response,
-        props: connectionValue.props,
-        type: AppConnectionType.CLOUD_OAUTH2,
-    }
-}
-
-async function claim({
-    request,
-    pieceName,
-}: ClaimOAuth2Request): Promise<CloudOAuth2ConnectionValue> {
-    try {
-        const cloudRequest: ClaimWithCloudRequest = {
-            code: request.code,
-            codeVerifier: request.codeVerifier,
-            authorizationMethod: request.authorizationMethod,
-            clientId: request.clientId,
-            tokenUrl: request.tokenUrl,
+        connectionValue,
+    }: RefreshOAuth2Request<CloudOAuth2ConnectionValue>): Promise<CloudOAuth2ConnectionValue> => {
+        const requestBody = {
+            refreshToken: connectionValue.refresh_token,
             pieceName,
+            clientId: connectionValue.client_id,
             edition: system.getEdition(),
+            authorizationMethod: connectionValue.authorization_method,
+            tokenUrl: connectionValue.token_url,
         }
-        const value = (
-            await axios.post<CloudOAuth2ConnectionValue>(
-                'https://secrets.activepieces.com/claim',
-                cloudRequest,
-                {
-                    timeout: 10000,
-                },
-            )
+        const response = (
+            await axios.post('https://secrets.activepieces.com/refresh', requestBody, {
+                timeout: 10000,
+            })
         ).data
         return {
-            ...value,
-            token_url: request.tokenUrl,
-            props: request.props,
+            ...connectionValue,
+            ...response,
+            props: connectionValue.props,
+            type: AppConnectionType.CLOUD_OAUTH2,
         }
-    }
-    catch (e: unknown) {
-        logger.error(e)
-        throw new ActivepiecesError({
-            code: ErrorCode.INVALID_CLOUD_CLAIM,
-            params: {
+    },
+    claim: async ({
+        request,
+        pieceName,
+    }: ClaimOAuth2Request): Promise<CloudOAuth2ConnectionValue> => {
+        try {
+            const cloudRequest: ClaimWithCloudRequest = {
+                code: request.code,
+                codeVerifier: request.codeVerifier,
+                authorizationMethod: request.authorizationMethod,
+                clientId: request.clientId,
+                tokenUrl: request.tokenUrl,
                 pieceName,
-            },
-        })
-    }
-}
+                edition: system.getEdition(),
+            }
+            const value = (
+                await axios.post<CloudOAuth2ConnectionValue>(
+                    'https://secrets.activepieces.com/claim',
+                    cloudRequest,
+                    {
+                        timeout: 10000,
+                    },
+                )
+            ).data
+            return {
+                ...value,
+                token_url: request.tokenUrl,
+                props: request.props,
+            }
+        }
+        catch (e: unknown) {
+            log.error(e)
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_CLOUD_CLAIM,
+                params: {
+                    pieceName,
+                },
+            })
+        }
+    },
+})
 
 type ClaimWithCloudRequest = {
     pieceName: string

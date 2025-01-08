@@ -1,9 +1,11 @@
 import fs, { rmdir } from 'node:fs/promises'
 import path from 'node:path'
-import { fileExists, logger, memoryLock, PackageInfo, packageManager, threadSafeMkdir } from '@activepieces/server-shared'
-import { FlowVersionState } from '@activepieces/shared'
+import { fileExists, memoryLock, PackageInfo, packageManager, threadSafeMkdir } from '@activepieces/server-shared'
+import { ExecutionMode, FlowVersionState } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../engine/engine-runner'
 import { cacheHandler } from '../utils/cache-handler'
+import { workerMachine } from './machine'
 
 const TS_CONFIG_CONTENT = `
 
@@ -35,12 +37,13 @@ const INVALID_ARTIFACT_TEMPLATE = `
 
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '${ERROR_MESSAGE}'
 
+
 enum CacheState {
     READY = 'READY',
     PENDING = 'PENDING',
 }
 
-export const codeBuilder = {
+export const codeBuilder = (log: FastifyBaseLogger) => ({
     getCodesFolder({ codesFolderPath, flowVersionId }: { codesFolderPath: string, flowVersionId: string }): string {
         return path.join(codesFolderPath, flowVersionId)
     },
@@ -49,9 +52,9 @@ export const codeBuilder = {
         codesFolderPath,
     }: ProcessCodeStepParams): Promise<void> {
         const { sourceCode, flowVersionId, name } = artifact
-        const flowVersionPath = codeBuilder.getCodesFolder({ codesFolderPath, flowVersionId })
+        const flowVersionPath = this.getCodesFolder({ codesFolderPath, flowVersionId })
         const codePath = path.join(flowVersionPath, name)
-        logger.debug({
+        log.debug({
             message: 'CodeBuilder#processCodeStep',
             sourceCode,
             name,
@@ -77,20 +80,24 @@ export const codeBuilder = {
 
             await cache.setCache(codePath, CacheState.PENDING)
 
+            const isPackagesAllowed = workerMachine.getSettings().EXECUTION_MODE !== ExecutionMode.SANDBOX_CODE_ONLY
+
             await installDependencies({
                 path: codePath,
-                packageJson,
+                packageJson: isPackagesAllowed ? packageJson : '{"dependencies":{}}',
+                log,
             })
 
             await compileCode({
                 path: codePath,
                 code,
+                log,
             })
 
             await cache.setCache(codePath, CacheState.READY)
         }
         catch (error: unknown) {
-            logger.error({ name: 'CodeBuilder#processCodeStep', codePath, error })
+            log.error({ name: 'CodeBuilder#processCodeStep', codePath, error })
 
             await handleCompilationError({
                 codePath,
@@ -101,11 +108,12 @@ export const codeBuilder = {
             await lock.release()
         }
     },
-}
+})
 
 const installDependencies = async ({
     path,
     packageJson,
+    log,
 }: InstallDependenciesParams): Promise<void> => {
     await fs.writeFile(`${path}/package.json`, packageJson, 'utf8')
 
@@ -124,7 +132,7 @@ const installDependencies = async ({
         },
     ]
 
-    await packageManager.add({
+    await packageManager(log).add({
         path,
         dependencies,
     })
@@ -133,11 +141,12 @@ const installDependencies = async ({
 const compileCode = async ({
     path,
     code,
+    log,
 }: CompileCodeParams): Promise<void> => {
     await fs.writeFile(`${path}/tsconfig.json`, TS_CONFIG_CONTENT, { encoding: 'utf8', flag: 'w' })
     await fs.writeFile(`${path}/index.ts`, code, { encoding: 'utf8', flag: 'w' })
 
-    await packageManager.exec({
+    await packageManager(log).exec({
         path,
         command: 'tsc',
     })
@@ -161,16 +170,19 @@ const handleCompilationError = async ({
 type ProcessCodeStepParams = {
     artifact: CodeArtifact
     codesFolderPath: string
+    log: FastifyBaseLogger
 }
 
 type InstallDependenciesParams = {
     path: string
     packageJson: string
+    log: FastifyBaseLogger
 }
 
 type CompileCodeParams = {
     path: string
     code: string
+    log: FastifyBaseLogger
 }
 
 type HandleCompilationErrorParams = {

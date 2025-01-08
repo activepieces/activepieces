@@ -1,5 +1,7 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class AddLogsFileIdIndex1725699690971 implements MigrationInterface {
     name = 'AddLogsFileIdIndex1725699690971'
@@ -10,20 +12,20 @@ export class AddLogsFileIdIndex1725699690971 implements MigrationInterface {
         await queryRunner.query(`
             CREATE INDEX CONCURRENTLY "idx_file_project_id" ON "file" ("projectId")
         `)
-        logger.info({
+        log.info({
             name: this.name,
         }, 'idx_file_project_id is up')
         await queryRunner.query(`
             CREATE INDEX CONCURRENTLY "idx_file_type_created_desc" ON "file" ("type", "created")
         `)
-        logger.info({
+        log.info({
             name: this.name,
         }, 'idx_file_type_created_desc is up')
 
         await queryRunner.query(`
             CREATE INDEX CONCURRENTLY "idx_run_logs_file_id" ON "flow_run" ("logsFileId")
         `)
-        logger.info({
+        log.info({
             name: this.name,
         }, 'idx_run_logs_file_id is up')
     }
@@ -38,7 +40,7 @@ export class AddLogsFileIdIndex1725699690971 implements MigrationInterface {
         await queryRunner.query(`
             DROP INDEX CONCURRENTLY ""idx_file_project_id"
         `)
-        logger.info({
+        log.info({
             name: this.name,
         }, 'is down')
     }

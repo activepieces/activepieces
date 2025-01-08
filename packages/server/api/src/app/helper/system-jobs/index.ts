@@ -1,4 +1,6 @@
-import { AppSystemProp, QueueMode, system } from '@activepieces/server-shared'
+import { FastifyBaseLogger } from 'fastify'
+import { QueueMode, system } from '../system/system'
+import { AppSystemProp } from '../system/system-prop'
 import { SystemJobSchedule } from './common'
 import { memorySystemJobSchedulerService } from './memory-system-jobs'
 import { redisSystemJobSchedulerService } from './redis-system-job'
@@ -6,13 +8,13 @@ import { redisSystemJobSchedulerService } from './redis-system-job'
 
 const queueMode = system.get<QueueMode>(AppSystemProp.QUEUE_MODE)
 
-export const systemJobsSchedule: SystemJobSchedule = (() => {
+export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule => {
     switch (queueMode) {
         case QueueMode.REDIS:
-            return redisSystemJobSchedulerService
+            return redisSystemJobSchedulerService(log)
         case QueueMode.MEMORY:
-            return memorySystemJobSchedulerService
+            return memorySystemJobSchedulerService(log)
         default:
             throw new Error(`Invalid queue mode: ${queueMode}`)
     }
-})()
+}

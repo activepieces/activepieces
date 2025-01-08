@@ -28,7 +28,10 @@ const EditableText = ({
   const [value, setValue] = useState(initialValue);
   const isEditingPreviousRef = useRef(isEditing);
   const valueOnEditingStartedRef = useRef(initialValue);
-
+  //detect change coming from outside
+  if (value !== initialValue) {
+    setValue(initialValue);
+  }
   const editableTextRef = useRef<HTMLDivElement>(null);
 
   const emitChangedValue = useCallback(() => {

@@ -12,7 +12,7 @@ export const newConversationFromUser = createTrigger({
   description:
     'Triggers when a conversation is created by a user or lead (not an admin)',
   props: {},
-  sampleData: {},
+  sampleData: undefined,
   auth: intercomAuth,
   type: TriggerStrategy.APP_WEBHOOK,
   async onEnable(context) {

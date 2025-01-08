@@ -12,7 +12,7 @@ export const conversationAssigned = createTrigger({
   description:
     'Triggers when a conversation is assigned to an admin',
   props: {},
-  sampleData: {},
+  sampleData: undefined,
   auth: intercomAuth,
   type: TriggerStrategy.APP_WEBHOOK,
   async onEnable(context) {

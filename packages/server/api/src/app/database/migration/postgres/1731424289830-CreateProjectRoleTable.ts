@@ -1,6 +1,6 @@
-import { logger } from '@activepieces/server-shared'
 import { RoleType } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 enum ProjectMemberRole {
     ADMIN = 'ADMIN',
@@ -91,11 +91,13 @@ const rolePermissions: Record<ProjectMemberRole, Permission[]> = {
 }
 
 
+const log = system.globalLogger()
+
 export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
     name = 'CreateProjectRoleTable1731424289830'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info({
+        log.info({
             name: this.name,
         }, 'Creating project role table')
         await queryRunner.query(`
@@ -205,7 +207,7 @@ export class CreateProjectRoleTable1731424289830 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        logger.info({
+        log.info({
             name: this.name,
         }, 'down')
         // Re-add the "projectRole" column to "user_invitation"

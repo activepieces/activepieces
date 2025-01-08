@@ -16,7 +16,7 @@ import AnalyticsPage from '@/app/routes/platform/analytics';
 import { ApiKeysPage } from '@/app/routes/platform/security/api-keys';
 import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
 import { SSOPage } from '@/app/routes/platform/security/sso';
-import AIProvidersPage from '@/app/routes/platform/setup/ai-providers';
+import AIProvidersPage from '@/app/routes/platform/setup/ai';
 import { BrandingPage } from '@/app/routes/platform/setup/branding';
 import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
 import { RedirectPage } from '@/app/routes/redirect';
@@ -46,6 +46,7 @@ import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
 import IssuesPage from '../routes/issues';
 import PlansPage from '../routes/plans';
+import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
 import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
@@ -56,11 +57,13 @@ import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
 import { LicenseKeyPage } from '../routes/platform/setup/license-key';
 import TemplatesPage from '../routes/platform/setup/templates';
 import UsersPage from '../routes/platform/users';
+import { ProjectReleasesPage } from '../routes/project-release';
+import ViewRelease from '../routes/project-release/view-release';
 import { FlowRunPage } from '../routes/runs/id';
 import AlertsPage from '../routes/settings/alerts';
 import AppearancePage from '../routes/settings/appearance';
+import { EnvironmentPage } from '../routes/settings/environment';
 import GeneralPage from '../routes/settings/general';
-import { GitSyncPage } from '../routes/settings/git-sync';
 import TeamPage from '../routes/settings/team';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
@@ -71,7 +74,6 @@ import { DefaultRoute } from './default-route';
 import { FlagRouteGuard } from './flag-route-guard';
 import { RoutePermissionGuard } from './permission-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
-
 const SettingsRerouter = () => {
   const { hash } = useLocation();
   const fragmentWithoutHash = hash.slice(1).toLowerCase();
@@ -166,6 +168,16 @@ const routes = [
     ),
   },
   ...ProjectRouterWrapper({
+    path: '/releases/:releaseId',
+    element: (
+      <DashboardContainer>
+        <PageTitle title="Releases">
+          <ViewRelease />
+        </PageTitle>
+      </DashboardContainer>
+    ),
+  }),
+  ...ProjectRouterWrapper({
     path: '/runs',
     element: (
       <DashboardContainer>
@@ -198,6 +210,16 @@ const routes = [
             <AppConnectionsPage />
           </PageTitle>
         </RoutePermissionGuard>
+      </DashboardContainer>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/releases',
+    element: (
+      <DashboardContainer>
+        <PageTitle title="Releases">
+          <ProjectReleasesPage />
+        </PageTitle>
       </DashboardContainer>
     ),
   }),
@@ -331,13 +353,13 @@ const routes = [
   },
 
   ...ProjectRouterWrapper({
-    path: '/settings/git-sync',
+    path: '/settings/environments',
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_GIT_REPO}>
           <ProjectSettingsLayout>
-            <PageTitle title="Git Sync">
-              <GitSyncPage />
+            <PageTitle title="Environments">
+              <EnvironmentPage />
             </PageTitle>
           </ProjectSettingsLayout>
         </RoutePermissionGuard>
@@ -458,7 +480,7 @@ const routes = [
     element: (
       <PlatformAdminContainer>
         <PlatformSecondSidebarLayout type="setup">
-          <PageTitle title="Universal AI">
+          <PageTitle title="AI">
             <AIProvidersPage />
           </PageTitle>
         </PlatformSecondSidebarLayout>
@@ -510,6 +532,18 @@ const routes = [
             <SettingsHealthPage />
           </PageTitle>
         </PlatformSecondSidebarLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/setup/billing',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Billing">
+          <PlatformSecondSidebarLayout type="setup">
+            <SettingsBilling />
+          </PlatformSecondSidebarLayout>
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },

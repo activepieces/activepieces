@@ -12,7 +12,7 @@ export const conversationRated = createTrigger({
   description:
     'Triggers when a conversation is rated',
   props: {},
-  sampleData: {},
+  sampleData: undefined,
   auth: intercomAuth,
   type: TriggerStrategy.APP_WEBHOOK,
   async onEnable(context) {

@@ -1,7 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
+import { CheckIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ApplyTags } from '@/app/routes/platform/setup/pieces/apply-tags';
@@ -12,22 +13,37 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { oauth2AppsHooks } from '@/features/connections/lib/oauth2-apps-hooks';
 import { InstallPieceDialog } from '@/features/pieces/components/install-piece-dialog';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { piecesApi } from '@/features/pieces/lib/pieces-api';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
   PieceMetadataModelSummary,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import { PieceScope } from '@activepieces/shared';
+import { ApEdition, ApFlagId, PieceScope } from '@activepieces/shared';
 
 import { TableTitle } from '../../../../../components/ui/table-title';
 
 const PlatformPiecesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.managePiecesEnabled;
-
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('name') ?? '';
+  const {
+    pieces,
+    refetch: refetchPieces,
+    isLoading,
+  } = piecesHooks.usePieces({
+    searchQuery,
+    includeTags: true,
+    includeHidden: true,
+  });
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { refetch: refetchPiecesClientIdsMap } =
+    oauth2AppsHooks.usePieceToClientIdMap(platform.cloudAuthEnabled, edition!);
   const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] =
     useMemo(
       () => [
@@ -124,7 +140,13 @@ const PlatformPiecesPage = () => {
               <div className="flex justify-end">
                 {row.original.auth &&
                   row.original.auth.type === PropertyType.OAUTH2 && (
-                    <ConfigurePieceOAuth2Dialog pieceName={row.original.name} />
+                    <ConfigurePieceOAuth2Dialog
+                      pieceName={row.original.name}
+                      onConfigurationDone={() => {
+                        refetchPieces();
+                        refetchPiecesClientIdsMap();
+                      }}
+                    />
                   )}
                 <PieceActions pieceName={row.original.name} />
               </div>
@@ -134,21 +156,6 @@ const PlatformPiecesPage = () => {
       ],
       [],
     );
-
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['pieces'],
-    queryFn: async () => {
-      const pieces = await piecesApi.list({
-        includeHidden: true,
-        includeTags: true,
-      });
-      return {
-        data: pieces,
-        next: null,
-        previous: null,
-      };
-    },
-  });
 
   const [selectedPieces, setSelectedPieces] = useState<
     PieceMetadataModelSummary[]
@@ -173,12 +180,12 @@ const PlatformPiecesPage = () => {
                 <ApplyTags
                   selectedPieces={selectedPieces}
                   onApplyTags={() => {
-                    refetch();
+                    refetchPieces();
                   }}
                 ></ApplyTags>
                 <SyncPiecesButton />
                 <InstallPieceDialog
-                  onInstallPiece={() => refetch()}
+                  onInstallPiece={() => refetchPieces()}
                   scope={PieceScope.PLATFORM}
                 />
               </div>
@@ -186,7 +193,20 @@ const PlatformPiecesPage = () => {
           </div>
           <DataTable
             columns={columns}
-            page={data}
+            filters={[
+              {
+                type: 'input',
+                title: t('Piece Name'),
+                accessorKey: 'name',
+                options: [],
+                icon: CheckIcon,
+              } as const,
+            ]}
+            page={{
+              data: pieces ?? [],
+              next: null,
+              previous: null,
+            }}
             isLoading={isLoading}
             onSelectedRowsChange={setSelectedPieces}
           />

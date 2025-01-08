@@ -1,13 +1,14 @@
 import * as Sentry from '@sentry/node'
-import { logger } from './logger'
-import { system } from './system/system'
-import { SharedSystemProp } from './system/system-prop'
+import { FastifyBaseLogger } from 'fastify'
 
-const sentryDsn = system.get(SharedSystemProp.SENTRY_DSN)
+let sentryInitialized = false
 
-export const initializeSentry = () => {
-    if (sentryDsn) {
-        logger.info('Initializing Sentry')
+export const exceptionHandler = {
+    initializeSentry: (sentryDsn: string | undefined) => {
+        if (!sentryDsn) {
+            return
+        }
+        sentryInitialized = true
         Sentry.init({
             dsn: sentryDsn,
             beforeSend: (event) => {
@@ -21,13 +22,10 @@ export const initializeSentry = () => {
                 return event
             },
         })
-    }
-}
-
-export const exceptionHandler = {
-    handle: (e: unknown): void => {
-        logger.error(e)
-        if (sentryDsn) {
+    },
+    handle: (e: unknown, log: FastifyBaseLogger): void => {
+        log.error(e)
+        if (sentryInitialized) {
             Sentry.captureException(e)
         }
     },
@@ -35,18 +33,12 @@ export const exceptionHandler = {
 
 
 
-const ENRICH_ERROR_CONTEXT =
-    system.getBoolean(SharedSystemProp.ENRICH_ERROR_CONTEXT) ?? false
-
-
 export const enrichErrorContext = ({
     error,
     key,
     value,
 }: EnrichErrorContextParams): unknown => {
-    if (!ENRICH_ERROR_CONTEXT) {
-        return error
-    }
+
 
     if (error instanceof Error) {
         if ('context' in error && error.context instanceof Object) {

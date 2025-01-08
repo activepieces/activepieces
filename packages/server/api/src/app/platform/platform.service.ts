@@ -8,12 +8,14 @@ import {
     LocalesEnum,
     Platform,
     PlatformId,
+    PlatformWithoutSensitiveData,
     spreadIfDefined,
     UpdatePlatformRequestBody,
     UserId } from '@activepieces/shared'
+import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { defaultTheme } from '../flags/theme'
-import { userService } from '../user/user-service'
+import { userRepo, userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
 
 const repo = repoFactory<Platform>(PlatformEntity)
@@ -22,6 +24,17 @@ export const platformService = {
     async hasAnyPlatforms(): Promise<boolean> {
         const count = await repo().count()
         return count > 0
+    },
+    async listPlatformsForIdentity(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
+        const users = await userRepo().findBy({
+            identityId: params.identityId,
+        })
+        const platformIds = users.map((user) => user.platformId).filter((platformId) => platformId !== null)
+        return repo().find({
+            where: {
+                id: In(platformIds),
+            },
+        })
     },
     async create(params: AddParams): Promise<Platform> {
         const {
@@ -57,7 +70,7 @@ export const platformService = {
             federatedAuthProviders: {},
             cloudAuthEnabled: true,
             flowIssuesEnabled: false,
-            gitSyncEnabled: false,
+            environmentsEnabled: false,
             managePiecesEnabled: false,
             manageTemplatesEnabled: false,
             manageProjectsEnabled: false,
@@ -111,7 +124,7 @@ export const platformService = {
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
             ...spreadIfDefined('defaultLocale', params.defaultLocale),
             ...spreadIfDefined('showPoweredBy', params.showPoweredBy),
-            ...spreadIfDefined('gitSyncEnabled', params.gitSyncEnabled),
+            ...spreadIfDefined('environmentsEnabled', params.environmentsEnabled),
             ...spreadIfDefined('embeddingEnabled', params.embeddingEnabled),
             ...spreadIfDefined('globalConnectionsEnabled', params.globalConnectionsEnabled),
             ...spreadIfDefined('customRolesEnabled', params.customRolesEnabled),
@@ -133,6 +146,7 @@ export const platformService = {
             ...spreadIfDefined('alertsEnabled', params.alertsEnabled),
             ...spreadIfDefined('licenseKey', params.licenseKey),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
+            ...spreadIfDefined('copilotSettings', params.copilotSettings),
         }
 
         return repo().save(updatedPlatform)
@@ -154,9 +168,7 @@ export const platformService = {
             })
         }
         
-        return {
-            ...platform,
-        }
+        return platform
     },
 
     async getOne(id: PlatformId): Promise<Platform | null> {
@@ -182,7 +194,7 @@ type UpdateParams = UpdatePlatformRequestBody & {
     auditLogEnabled?: boolean
     showPoweredBy?: boolean
     ssoEnabled?: boolean
-    gitSyncEnabled?: boolean
+    environmentsEnabled?: boolean
     embeddingEnabled?: boolean
     globalConnectionsEnabled?: boolean
     customRolesEnabled?: boolean
@@ -197,4 +209,9 @@ type UpdateParams = UpdatePlatformRequestBody & {
     alertsEnabled?: boolean 
     analyticsEnabled?: boolean 
     licenseKey?: string
+}
+
+
+type ListPlatformsForIdentityParams = {
+    identityId: string
 }

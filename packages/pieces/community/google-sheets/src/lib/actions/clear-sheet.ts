@@ -26,11 +26,13 @@ export const clearSheetAction = createAction({
     );
 
     const rowsToDelete: number[] = [];
-    const values = await googleSheetsCommon.getValues(
-      propsValue.spreadsheet_id,
-      auth['access_token'],
-      propsValue.sheet_id
-    );
+    const values = await googleSheetsCommon.getGoogleSheetRows({
+      spreadsheetId: propsValue.spreadsheet_id,
+      accessToken: auth['access_token'],
+      sheetId: propsValue.sheet_id,
+      rowIndex_s: 1,
+      rowIndex_e: undefined,
+    });
     for (const key in values) {
       if (key === '0' && propsValue.is_first_row_headers) {
         continue;

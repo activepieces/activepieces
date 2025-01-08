@@ -5,7 +5,7 @@ import { issuesService } from './issues-service'
 
 export const issuesController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListIssuesRequest, async (req) => {
-        return issuesService.list({
+        return issuesService(app.log).list({
             projectId: req.query.projectId,
             cursor: req.query.cursor,
             limit: req.query.limit ?? 10,
@@ -13,13 +13,13 @@ export const issuesController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/count', CountIssuesRequest, async (req) => {
-        return issuesService.count({
+        return issuesService(app.log).count({
             projectId: req.principal.projectId,
         })
     })
 
     app.post('/:id', UpdateIssueRequest, async (req) => {
-        return issuesService.updateById({
+        return issuesService(app.log).updateById({
             id: req.params.id,
             status: req.body.status,
             projectId: req.principal.projectId,

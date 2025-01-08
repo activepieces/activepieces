@@ -71,6 +71,10 @@ export type PieceSelectorOperation =
       stepName: string;
     };
 
+export type AskAiButtonOperations = Exclude<
+  PieceSelectorOperation,
+  { type: FlowOperationType.UPDATE_TRIGGER }
+>;
 export type PieceSelectorItem =
   | ActionBase
   | TriggerBase

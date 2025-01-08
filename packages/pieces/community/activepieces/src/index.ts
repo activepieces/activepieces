@@ -4,11 +4,8 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { createProject } from './lib/actions/create-project';
-import { createProjectMember } from './lib/actions/create-project-member';
 import { listProject } from './lib/actions/list-project';
 import { updateProject } from './lib/actions/update-project';
-import { listProjectMember } from './lib/actions/list-project-member';
-import { deleteProjectMember } from './lib/actions/delete-project-member';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const markdown = `
@@ -46,9 +43,6 @@ export const activepieces = createPiece({
     createProject,
     updateProject,
     listProject,
-    createProjectMember,
-    listProjectMember,
-    deleteProjectMember,
     createCustomApiCallAction({
       baseUrl: (auth) => {
         return `${(auth as { baseApiUrl: string }).baseApiUrl}`;

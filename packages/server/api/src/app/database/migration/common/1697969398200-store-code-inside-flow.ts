@@ -1,7 +1,9 @@
-import { logger } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import decompress from 'decompress'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 type FunctionTransformer = (
     s: CodeStep,
@@ -15,14 +17,14 @@ export class StoreCodeInsideFlow1697969398200 implements MigrationInterface {
         await this.processFlowVersions(queryRunner, flattenCodeStep)
         await this.processFlowTemplates(queryRunner, flattenCodeStep)
 
-        logger.info('StoreCodeInsideFlow1697969398200: up finished')
+        log.info('StoreCodeInsideFlow1697969398200: up finished')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await this.processFlowVersions(queryRunner, removeNewCodeField)
         await this.processFlowTemplates(queryRunner, removeNewCodeField)
 
-        logger.info('StoreCodeInsideFlow1697969398200: down finished')
+        log.info('StoreCodeInsideFlow1697969398200: down finished')
     }
 
     private async processFlowVersions(
@@ -64,7 +66,7 @@ export class StoreCodeInsideFlow1697969398200 implements MigrationInterface {
         const doesTableExist = await queryRunner.hasTable('flow_template')
 
         if (doesTableExist) {
-            logger.info(
+            log.info(
                 'StoreCodeInsideFlow1697969398200: flow template table exists',
             )
 
@@ -185,7 +187,7 @@ const flattenCodeStep = async (
             sourceCodeId,
         ])
         if (isNil(file)) {
-            logger.warn(
+            log.warn(
                 `StoreCodeInsideFlow1697969398100: file not found for file id ${sourceCodeId} in flow ${flowId} of flow version ${flowVersionId}`,
             )
             return
@@ -199,7 +201,7 @@ const flattenCodeStep = async (
             f.path.includes('package.json'),
         )
         if (isNil(code) || isNil(packageJson)) {
-            logger.warn(
+            log.warn(
                 `StoreCodeInsideFlow1697969398100: code or package.json not found for file ${file.id} in flow ${flowId} of flow version ${flowVersionId}`,
             )
             return

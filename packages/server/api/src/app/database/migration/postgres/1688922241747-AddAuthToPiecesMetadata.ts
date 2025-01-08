@@ -1,14 +1,16 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class AddAuthToPiecesMetadata1688922241747
 implements MigrationInterface {
     name = 'AddAuthToPiecesMetadata1688922241747'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('AddAuthToPiecesMetadata1688922241747 is Running')
+        log.info('AddAuthToPiecesMetadata1688922241747 is Running')
         await queryRunner.query('ALTER TABLE "piece_metadata" ADD "auth" jsonb')
-        logger.info('AddAuthToPiecesMetadata1688922241747 is Finished')
+        log.info('AddAuthToPiecesMetadata1688922241747 is Finished')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

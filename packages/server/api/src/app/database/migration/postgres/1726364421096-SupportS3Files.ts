@@ -1,5 +1,7 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class SupportS3Files1726364421096 implements MigrationInterface {
     name = 'SupportS3Files1726364421096'
@@ -37,7 +39,7 @@ export class SupportS3Files1726364421096 implements MigrationInterface {
             ALTER TABLE "file"
             ALTER COLUMN "data" DROP NOT NULL
         `)
-        logger.info({
+        log.info({
             name: this.name,
         }, 'is up')
     }
@@ -67,7 +69,7 @@ export class SupportS3Files1726364421096 implements MigrationInterface {
         await queryRunner.query(`
             ALTER TABLE "file" DROP COLUMN "location"
         `)
-        logger.info({
+        log.info({
             name: this.name,
         }, 'is down')
     }

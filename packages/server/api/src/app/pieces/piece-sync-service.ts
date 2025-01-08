@@ -1,11 +1,13 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { AppSystemProp, logger, system } from '@activepieces/server-shared'
 import { ListVersionsResponse, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { repoFactory } from '../core/db/repo-factory'
 import { flagService } from '../flags/flag.service'
 import { parseAndVerify } from '../helper/json-validator'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-prop'
 import { systemJobsSchedule } from '../helper/system-jobs'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
@@ -15,17 +17,18 @@ import { pieceMetadataService } from './piece-metadata-service'
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const piecesRepo = repoFactory(PieceMetadataEntity)
 const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
-export const pieceSyncService = {
+
+export const pieceSyncService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
         if (syncMode !== PieceSyncMode.OFFICIAL_AUTO) {
-            logger.info('Piece sync service is disabled')
+            log.info('Piece sync service is disabled')
             return
         }
         systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
-            await pieceSyncService.sync()
+            await pieceSyncService(log).sync()
         })
-        await pieceSyncService.sync()
-        await systemJobsSchedule.upsertJob({
+        await pieceSyncService(log).sync()
+        await systemJobsSchedule(log).upsertJob({
             job: {
                 name: SystemJobName.PIECES_SYNC,
                 data: {},
@@ -38,37 +41,37 @@ export const pieceSyncService = {
     },
     async sync(): Promise<void> {
         if (syncMode !== PieceSyncMode.OFFICIAL_AUTO) {
-            logger.info('Piece sync service is disabled')
+            log.info('Piece sync service is disabled')
             return
         }
         try {
-            logger.info({ time: dayjs().toISOString() }, 'Syncing pieces')
+            log.info({ time: dayjs().toISOString() }, 'Syncing pieces')
             const pieces = await listPieces()
             const promises: Promise<void>[] = []
 
             for (const summary of pieces) {
                 const lastVersionSynced = await existsInDatabase({ name: summary.name, version: summary.version })
                 if (!lastVersionSynced) {
-                    promises.push(syncPiece(summary.name))
+                    promises.push(syncPiece(summary.name, log))
                 }
             }
             await Promise.all(promises)
         }
         catch (error) {
-            logger.error({ error }, 'Error syncing pieces')
+            log.error({ error }, 'Error syncing pieces')
         }
     },
-}
+})
 
-async function syncPiece(name: string): Promise<void> {
+async function syncPiece(name: string, log: FastifyBaseLogger): Promise<void> {
     try {
-        logger.info({ name }, 'Syncing piece metadata into database')
+        log.info({ name }, 'Syncing piece metadata into database')
         const versions = await getVersions({ name })
         for (const version of Object.keys(versions)) {
             const currentVersionSynced = await existsInDatabase({ name, version })
             if (!currentVersionSynced) {
                 const piece = await getOrThrow({ name, version })
-                await pieceMetadataService.create({
+                await pieceMetadataService(log).create({
                     pieceMetadata: piece,
                     packageType: piece.packageType,
                     pieceType: piece.pieceType,
@@ -77,7 +80,7 @@ async function syncPiece(name: string): Promise<void> {
         }
     }
     catch (error) {
-        logger.error({ error }, 'Error syncing piece, please upgrade the activepieces to latest version')
+        log.error({ error }, 'Error syncing piece, please upgrade the activepieces to latest version')
     }
 
 }
@@ -114,7 +117,6 @@ async function listPieces(): Promise<PieceMetadataModelSummary[]> {
     const url = `${CLOUD_API_URL}?${queryParams.toString()}`
     const response = await fetch(url)
     if (response.status === StatusCodes.GONE.valueOf()) {
-        logger.error({ name }, 'Piece list not found')
         return []
     }
     if (response.status !== StatusCodes.OK.valueOf()) {

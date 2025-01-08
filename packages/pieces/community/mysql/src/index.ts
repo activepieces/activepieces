@@ -31,8 +31,8 @@ export const mysqlAuth = PieceAuth.CustomAuth({
     }),
     database: Property.ShortText({
       displayName: 'Database',
-      description: 'The name of the database to use',
-      required: true,
+      description: 'The name of the database to use. Required if you are not using the "Execute Query" Action',
+      required: false,
     }),
   },
   required: true,

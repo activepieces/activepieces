@@ -90,17 +90,24 @@ export const addOrUpdateContact = createAction({
                     throw new Error('Failed to load contact properties');
                 }
             }
+        }),
+        instant: Property.Checkbox({
+            displayName: 'Instant',
+            description: 'Process contact immediately instead of queuing. Only enable this when you need to add an event for this contact in the next step. Not recommended for high-volume operations.',
+            required: false,
+            defaultValue: false
         })
     },
 
     async run(context) {
         const contact = context.propsValue.contact;
+        const instant = context.propsValue.instant;
         const auth = context.auth as InstasentAuthType;
         const baseUrl = getBaseUrl({ projectId: auth.projectId, datasourceId: auth.datasourceId });
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
-            url: `${baseUrl}/stream/contacts`,
+            url: `${baseUrl}/stream/contacts${instant ? '?_sync' : ''}`,
             headers: {
                 'Authorization': `Bearer ${auth.apiKey}`,
                 'Content-Type': 'application/json'

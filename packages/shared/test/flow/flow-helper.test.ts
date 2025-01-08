@@ -171,7 +171,7 @@ describe('Flow Helper', () => {
         const operation: FlowOperationRequest = {
             type: FlowOperationType.DELETE_ACTION,
             request: {
-                name: flowVersionWithBranching.trigger.nextAction.name,
+                names: [flowVersionWithBranching.trigger.nextAction.name],
             },
         }
         const result = flowOperations.apply(flowVersionWithBranching, operation)

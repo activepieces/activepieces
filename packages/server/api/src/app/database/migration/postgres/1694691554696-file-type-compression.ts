@@ -1,5 +1,7 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class FileTypeCompression1694691554696 implements MigrationInterface {
     name = 'FileTypeCompression1694691554696'
@@ -12,13 +14,13 @@ export class FileTypeCompression1694691554696 implements MigrationInterface {
             'ALTER TABLE "file" ADD "compression" character varying NOT NULL DEFAULT \'NONE\'',
         )
 
-        logger.info('[FileTypeCompression1694691554696] up')
+        log.info('[FileTypeCompression1694691554696] up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query('ALTER TABLE "file" DROP COLUMN "compression"')
         await queryRunner.query('ALTER TABLE "file" DROP COLUMN "type"')
 
-        logger.info('[FileTypeCompression1694691554696] down')
+        log.info('[FileTypeCompression1694691554696] down')
     }
 }

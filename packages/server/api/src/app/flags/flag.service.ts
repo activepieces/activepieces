@@ -1,9 +1,10 @@
-import { AppSystemProp, flowTimeoutSandbox, SharedSystemProp, system, webhookSecretsUtils } from '@activepieces/server-shared'
-import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
+import { networkUtls, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
+import { ApEdition, ApEnvironment, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import axios from 'axios'
-import { webhookUtils } from 'server-worker'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-prop'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
 
@@ -26,12 +27,9 @@ export const flagService = {
             id: In([
                 ApFlagId.SHOW_POWERED_BY_IN_FORM,
                 ApFlagId.CLOUD_AUTH_ENABLED,
-                ApFlagId.CODE_COPILOT_ENABLED,
-                ApFlagId.HTTP_REQUEST_COPILOT_ENABLED,
                 ApFlagId.PROJECT_LIMITS_ENABLED,
                 ApFlagId.CURRENT_VERSION,
                 ApFlagId.EDITION,
-                ApFlagId.IS_CLOUD_PLATFORM,
                 ApFlagId.EMAIL_AUTH_ENABLED,
                 ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 ApFlagId.ENVIRONMENT,
@@ -42,15 +40,8 @@ export const flagService = {
                 ApFlagId.PIECES_SYNC_MODE,
                 ApFlagId.PRIVATE_PIECES_ENABLED,
                 ApFlagId.FLOW_RUN_TIME_SECONDS,
-                ApFlagId.SHOW_BILLING,
-                ApFlagId.INSTALL_PROJECT_PIECES_ENABLED,
-                ApFlagId.MANAGE_PROJECT_PIECES_ENABLED,
                 ApFlagId.SHOW_COMMUNITY,
-                ApFlagId.SHOW_COPILOTS,
                 ApFlagId.SHOW_DOCS,
-                ApFlagId.SHOW_PLATFORM_DEMO,
-                ApFlagId.SHOW_SIGN_UP_LINK,
-                ApFlagId.SHOW_REWARDS,
                 ApFlagId.SUPPORTED_APP_WEBHOOKS,
                 ApFlagId.TELEMETRY_ENABLED,
                 ApFlagId.TEMPLATES_PROJECT_ID,
@@ -72,19 +63,13 @@ export const flagService = {
         flags.push(
             {
                 id: ApFlagId.ENVIRONMENT,
-                value: system.get(SharedSystemProp.ENVIRONMENT),
+                value: system.get(AppSystemProp.ENVIRONMENT),
                 created,
                 updated,
             },
             {
                 id: ApFlagId.SHOW_POWERED_BY_IN_FORM,
                 value: true,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.IS_CLOUD_PLATFORM,
-                value: false,
                 created,
                 updated,
             },
@@ -101,19 +86,7 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.SHOW_PLATFORM_DEMO,
-                value: [ApEdition.CLOUD].includes(system.getEdition()),
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.OWN_AUTH2_ENABLED,
-                value: true,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.SHOW_REWARDS,
                 value: true,
                 created,
                 updated,
@@ -127,42 +100,6 @@ export const flagService = {
             {
                 id: ApFlagId.PROJECT_LIMITS_ENABLED,
                 value: false,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.CODE_COPILOT_ENABLED,
-                value: !isNil(system.get(AppSystemProp.OPENAI_API_KEY)),
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.HTTP_REQUEST_COPILOT_ENABLED,
-                value: !isNil(system.get(AppSystemProp.OPENAI_API_KEY)) && !isNil(system.get(AppSystemProp.RAPID_API_KEY)),
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.SHOW_COPILOTS,
-                value: true,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.INSTALL_PROJECT_PIECES_ENABLED,
-                value: true,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.MANAGE_PROJECT_PIECES_ENABLED,
-                value: false,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.SHOW_SIGN_UP_LINK,
-                value: true,
                 created,
                 updated,
             },
@@ -186,9 +123,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-                value: [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
-                    ? this.getThirdPartyRedirectUrl(undefined, undefined)
-                    : `${system.get(SharedSystemProp.FRONTEND_URL)}/redirect`,
+                value: this.getThirdPartyRedirectUrl(undefined, undefined),
                 created,
                 updated,
             },
@@ -241,26 +176,20 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.WEBHOOK_URL_PREFIX,
-                value: await webhookUtils.getWebhookPrefix(),
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.FRONTEND_URL,
-                value: system.get(SharedSystemProp.FRONTEND_URL),
+                value: system.get(WorkerSystemProp.FRONTEND_URL),
                 created,
                 updated,
             },
             {
                 id: ApFlagId.FLOW_RUN_TIME_SECONDS,
-                value: flowTimeoutSandbox,
+                value: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
                 created,
                 updated,
             },
             {
                 id: ApFlagId.PAUSED_FLOW_TIMEOUT_DAYS,
-                value: system.getNumber(SharedSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
+                value: system.getNumber(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
                 created,
                 updated,
             },
@@ -283,36 +212,39 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.SUPPORTED_APP_WEBHOOKS,
-                value: webhookSecretsUtils.getSupportedAppWebhooks(),
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP,
-                value: system.get(SharedSystemProp.EXECUTION_MODE) !== ExecutionMode.SANDBOX_CODE_ONLY,
+                value: system.get(AppSystemProp.EXECUTION_MODE) !== ExecutionMode.SANDBOX_CODE_ONLY,
                 created,
                 updated,
             },
-
         )
 
+        if (system.isApp()) {
+            flags.push(
+                {
+                    id: ApFlagId.WEBHOOK_URL_PREFIX,
+                    value: await getWebhookPrefix(),
+                    created,
+                    updated,
+                },
+                {
+                    id: ApFlagId.SUPPORTED_APP_WEBHOOKS,
+                    value: getSupportedAppWebhooks(),
+                    created,
+                    updated,
+                },
+            )
+        }
         return flags
     },
     getThirdPartyRedirectUrl(
-        platformId: string | undefined,
         hostUrl: string | undefined,
+        platformId: string | undefined,
     ): string {
-        const isCustomerPlatform =
-            platformId && !flagService.isCloudPlatform(platformId)
-        if (isCustomerPlatform && system.getEdition() === ApEdition.CLOUD) {
-            return `https://${hostUrl}/redirect`
+        if (isNil(hostUrl) || isNil(platformId)) {
+            return `${system.getOrThrow(WorkerSystemProp.FRONTEND_URL)}/redirect`
         }
-        const frontendUrl = system.get(SharedSystemProp.FRONTEND_URL)
-        const trimmedFrontendUrl = frontendUrl?.endsWith('/')
-            ? frontendUrl.slice(0, -1)
-            : frontendUrl
-        return `${trimmedFrontendUrl}/redirect`
+        return `https://${hostUrl}/redirect`
     },
     async getCurrentRelease(): Promise<string> {
         const packageJson = await import('package.json')
@@ -344,6 +276,22 @@ export const flagService = {
         return platformId === cloudPlatformId
     },
 }
+
+
+async function getWebhookPrefix(): Promise<string> {
+    return `${await networkUtls.getPublicUrl(system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT), system.getOrThrow(WorkerSystemProp.FRONTEND_URL))}v1/webhooks`
+}
+
+function getSupportedAppWebhooks(): string[] {
+    const webhookSecrets = system.get(AppSystemProp.APP_WEBHOOK_SECRETS)
+    if (isNil(webhookSecrets)) {
+        return []
+    }
+    const parsed = webhookSecretsUtils.parseWebhookSecrets(webhookSecrets)
+    return Object.keys(parsed)
+}
+
+
 
 export type FlagType =
     | BaseFlagStructure<ApFlagId.FRONTEND_URL, string>

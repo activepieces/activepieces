@@ -1,5 +1,7 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class FixPieceMetadataOrderBug1694367186954
 implements MigrationInterface {
@@ -16,7 +18,7 @@ implements MigrationInterface {
             'ALTER TABLE "piece_metadata" ALTER COLUMN "triggers" TYPE json',
         )
 
-        logger.info('[FixPieceMetadataOrderBug1694367186954] up')
+        log.info('[FixPieceMetadataOrderBug1694367186954] up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -30,6 +32,6 @@ implements MigrationInterface {
             'ALTER TABLE "piece_metadata" ALTER COLUMN "triggers" SET DATA TYPE jsonb USING my_json::jsonb',
         )
 
-        logger.info('[FixPieceMetadataOrderBug1694367186954] down')
+        log.info('[FixPieceMetadataOrderBug1694367186954] down')
     }
 }

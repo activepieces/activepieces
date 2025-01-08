@@ -1,7 +1,8 @@
 import { AlertChannel, OtpType } from '@activepieces/ee-shared'
-import { logger, system } from '@activepieces/server-shared'
-import { ApEdition, assertNotNullOrUndefined, InvitationType, User, UserInvitation } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, InvitationType, UserIdentity, UserInvitation } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
+import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { alertsService } from '../../alerts/alerts-service'
@@ -17,9 +18,9 @@ const EDITION_IS_NOT_CLOUD = EDITION !== ApEdition.CLOUD
 
 const MAX_ISSUES_EMAIL_LIMT = 50
 
-export const emailService = {
+export const emailService = (log: FastifyBaseLogger) => ({
     async sendInvitation({ userInvitation, invitationLink }: SendInvitationArgs): Promise<void> {
-        logger.info({
+        log.info({
             message: '[emailService#sendInvitation] sending invitation email',
             email: userInvitation.email,
             platformId: userInvitation.platformId,
@@ -30,7 +31,7 @@ export const emailService = {
         })
         const { email, platformId } = userInvitation
         const { name: projectOrPlatformName, role } = await getEntityNameForInvitation(userInvitation)
-        await emailSender.send({
+        await emailSender(log).send({
             emails: [email],
             platformId,
             templateData: {
@@ -56,7 +57,7 @@ export const emailService = {
             return
         }
 
-        logger.info({
+        log.info({
             name: '[emailService#sendIssueCreatedNotification]',
             projectId,
             flowName,
@@ -64,10 +65,10 @@ export const emailService = {
         })
 
         // TODO remove the hardcoded limit
-        const alerts = await alertsService.list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
+        const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
         
-        await emailSender.send({
+        await emailSender(log).send({
             emails,
             platformId,
             templateData: {
@@ -95,10 +96,10 @@ export const emailService = {
         }
 
         // TODO remove the hardcoded limit
-        const alerts = await alertsService.list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
+        const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
 
-        await emailSender.send({
+        await emailSender(log).send({
             emails,
             platformId: project.platformId,
             templateData: {
@@ -110,19 +111,19 @@ export const emailService = {
         })
     },
 
-    async sendOtp({ platformId, user, otp, type }: SendOtpArgs): Promise<void> {
+    async sendOtp({ platformId, userIdentity, otp, type }: SendOtpArgs): Promise<void> {
         if (EDITION_IS_NOT_PAID) {
             return
         }
 
-        if (user.verified && type === OtpType.EMAIL_VERIFICATION) {
+        if (userIdentity.verified && type === OtpType.EMAIL_VERIFICATION) {
             return
         }
 
-        logger.info('Sending OTP email', {
-            email: user.email,
+        log.info('Sending OTP email', {
+            email: userIdentity.email,
             otp,
-            userId: user.id,
+            identityId: userIdentity.id,
             type,
         })
 
@@ -133,7 +134,7 @@ export const emailService = {
 
         const setupLink = await platformDomainHelper.constructUrlFrom({
             platformId,
-            path: frontendPath[type] + `?otpcode=${otp}&userId=${user.id}`,
+            path: frontendPath[type] + `?otpcode=${otp}&identityId=${userIdentity.id}`,
         })
 
         const otpToTemplate: Record<string, EmailTemplateData> = {
@@ -151,8 +152,8 @@ export const emailService = {
             },
         }
 
-        await emailSender.send({
-            emails: [user.email],
+        await emailSender(log).send({
+            emails: [userIdentity.email],
             platformId: platformId ?? undefined,
             templateData: otpToTemplate[type],
         })
@@ -163,12 +164,12 @@ export const emailService = {
         platformId: string
         projectName: string
     }): Promise<void> {
-        const issues = await issuesService.list({ projectId: job.projectId, cursor: undefined, limit: 50 })
+        const issues = await issuesService(log).list({ projectId: job.projectId, cursor: undefined, limit: 50 })
         if (issues.data.length === 0) {
             return
         }
 
-        const alerts = await alertsService.list({ projectId: job.projectId, cursor: undefined, limit: 50 })
+        const alerts = await alertsService(log).list({ projectId: job.projectId, cursor: undefined, limit: 50 })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
         
         const issuesUrl = await platformDomainHelper.constructUrlFrom({
@@ -182,7 +183,7 @@ export const emailService = {
             lastOccurrence: dayjs(issue.lastOccurrence).format('MMM D, h:mm a'), 
         }))
 
-        await emailSender.send({
+        await emailSender(log).send({
             emails,
             platformId: job.platformId,
             templateData: {
@@ -198,11 +199,11 @@ export const emailService = {
     },
 
     async sendExceedFailureThresholdAlert(projectId: string, flowName: string): Promise<void> {
-        const alerts = await alertsService.list({ projectId, cursor: undefined, limit: 50 })
+        const alerts = await alertsService(log) .list({ projectId, cursor: undefined, limit: 50 })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
         const project = await projectService.getOneOrThrow(projectId)
         
-        await emailSender.send({
+        await emailSender(log).send({
             emails,
             platformId: project.platformId,
             templateData: {
@@ -215,7 +216,7 @@ export const emailService = {
         })
     },
 
-}
+})
 
 async function getEntityNameForInvitation(userInvitation: UserInvitation): Promise<{ name: string, role: string }> {
     switch (userInvitation.type) {
@@ -261,7 +262,7 @@ type SendOtpArgs = {
     type: OtpType
     platformId: string | null
     otp: string
-    user: User
+    userIdentity: UserIdentity
 }
 
 type IssueCreatedArgs = {

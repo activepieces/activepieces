@@ -24,6 +24,8 @@ const commonActionProps = {
     name: Type.String({}),
     valid: Type.Boolean({}),
     displayName: Type.String({}),
+    skip: Type.Optional(Type.Boolean({})),
+    customLogoUrl: Type.Optional(Type.String({})),
 }
 
 export const ActionErrorHandlingOptions = Type.Optional(

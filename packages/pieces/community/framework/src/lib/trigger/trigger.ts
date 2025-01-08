@@ -3,7 +3,7 @@ import { OnStartContext, ActionContext, TestOrRunHookContext, TriggerHookContext
 import { TriggerBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { PieceAuthProperty } from '../property/authentication';
-import { TriggerTestStrategy } from '@activepieces/shared';
+import { isNil, TriggerTestStrategy } from '@activepieces/shared';
 
 export const DEDUPE_KEY_PROPERTY = '_dedupe_key'
 
@@ -187,7 +187,7 @@ export const createTrigger = <
         params.run,
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
-        TriggerTestStrategy.TEST_FUNCTION,
+        (isNil(params.sampleData) && isNil(params.test)) ? TriggerTestStrategy.SIMULATION : TriggerTestStrategy.TEST_FUNCTION,
       )
   }
 }

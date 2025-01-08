@@ -2,6 +2,7 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, EXACT_VERSION_REGEX, isNil, ListVersionsResponse, PieceType } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
 import { IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -17,10 +18,13 @@ import { toPieceMetadataModelSummary } from '.'
 
 const repo = repoFactory(PieceMetadataEntity)
 
-export const FastDbPieceMetadataService = (): PieceMetadataService => {
+export const FastDbPieceMetadataService = (log: FastifyBaseLogger): PieceMetadataService => {
     return {
         async list(params): Promise<PieceMetadataModelSummary[]> {
-            const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc(params)
+            const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({
+                ...params,
+                log,
+            })
             const uniquePieces = new Set<string>(originalPieces.map((piece) => piece.name))
             const latestVersionOfEachPiece = Array.from(uniquePieces).map((name) => {
                 const result = originalPieces.find((piece) => piece.name === name)
@@ -43,7 +47,12 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
         },
         async get({ projectId, platformId, version, name }): Promise<PieceMetadataModel | undefined> {
             const versionToSearch = findNextExcludedVersion(version)
-            const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({ projectId, platformId, release: undefined })
+            const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({
+                projectId,
+                platformId,
+                release: undefined,
+                log,
+            })
             const piece = originalPieces.find((piece) => {
                 const strictlyLessThan = (isNil(versionToSearch) || (
                     semVer.compare(piece.version, versionToSearch.nextExcludedVersion) < 0
@@ -66,7 +75,12 @@ export const FastDbPieceMetadataService = (): PieceMetadataService => {
             return piece
         },
         async getVersions({ name, projectId, release, platformId }): Promise<ListVersionsResponse> {
-            const pieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({ projectId, platformId, release })
+            const pieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({
+                projectId,
+                platformId,
+                release,
+                log,
+            })
             return pieces.filter(p => p.name === name).reverse()
                 .reduce((record, pieceMetadata) => {
                     record[pieceMetadata.version] = {}
@@ -234,8 +248,8 @@ const increaseMajorVersion = (version: string): string => {
     return incrementedVersion
 }
 
-async function findAllPiecesVersionsSortedByNameAscVersionDesc({ projectId, platformId, release }: { projectId?: string, platformId?: string, release: string | undefined }): Promise<PieceMetadataSchema[]> {
-    const piece = (await localPieceCache.getSortedbyNameAscThenVersionDesc()).filter((piece) => {
+async function findAllPiecesVersionsSortedByNameAscVersionDesc({ projectId, platformId, release, log }: { projectId?: string, platformId?: string, release: string | undefined, log: FastifyBaseLogger }): Promise<PieceMetadataSchema[]> {
+    const piece = (await localPieceCache(log).getSortedbyNameAscThenVersionDesc()).filter((piece) => {
         return isOfficialPiece(piece) || isProjectPiece(projectId, piece) || isPlatformPiece(platformId, piece)
     }).filter((piece) => isSupportedRelease(release, piece))
     return piece

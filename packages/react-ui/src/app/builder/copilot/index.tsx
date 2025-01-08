@@ -2,55 +2,65 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ArrowUp, LoaderCircle } from 'lucide-react';
 import { nanoid } from 'nanoid';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Socket } from 'socket.io-client';
 
 import { useSocket } from '@/components/socket-provider';
 import { CardList } from '@/components/ui/card-list';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { toast, UNSAVED_CHANGES_TOAST } from '@/components/ui/use-toast';
 import {
-  Action,
+  INTERNAL_ERROR_TOAST,
+  toast,
+  UNSAVED_CHANGES_TOAST,
+} from '@/components/ui/use-toast';
+import {
   ActionType,
-  deepMergeAndCast,
+  CodeAction,
   FlowOperationType,
   flowStructureUtil,
-  GenerateCodeRequest,
-  GenerateCodeResponse,
+  AskCopilotCodeResponse,
+  AskCopilotRequest,
   WebsocketClientEvent,
   WebsocketServerEvent,
+  AskCopilotTool,
 } from '@activepieces/shared';
 
+import { Textarea } from '../../../components/ui/textarea';
+import { CORE_STEP_METADATA } from '../../../features/pieces/lib/pieces-api';
+import { getCoreActions } from '../../../features/pieces/lib/pieces-hook';
 import { LeftSideBarType, useBuilderStateContext } from '../builder-hooks';
+import { pieceSelectorUtils } from '../pieces-selector/piece-selector-utils';
 import { SidebarHeader } from '../sidebar-header';
 
 import { ChatMessage, CopilotMessage } from './chat-message';
+import { LoadingMessage } from './loading-message';
 
 interface DefaultEventsMap {
   [event: string]: (...args: any[]) => void;
 }
 
-const initialMessages: CopilotMessage[] = [
+const COPILOT_WELCOME_MESSAGES: CopilotMessage[] = [
   {
     messageType: 'text',
-    content: t("Hi! Give me an idea and I'll write the code for it."),
+    content: 'welcome',
     userType: 'bot',
   },
 ];
 
 async function getCodeResponse(
   socket: Socket<DefaultEventsMap, DefaultEventsMap>,
-  request: GenerateCodeRequest,
-): Promise<GenerateCodeResponse> {
+  request: AskCopilotRequest,
+): Promise<AskCopilotCodeResponse> {
   const id = nanoid();
-  socket.emit(WebsocketServerEvent.GENERATE_CODE, {
+
+  socket.emit(WebsocketServerEvent.ASK_COPILOT, {
     ...request,
     id,
   });
-  return new Promise<GenerateCodeResponse>((resolve, reject) => {
+  return new Promise<AskCopilotCodeResponse>((resolve, reject) => {
     socket.on(
-      WebsocketClientEvent.GENERATE_CODE_FINISHED,
-      (response: GenerateCodeResponse) => {
+      WebsocketClientEvent.ASK_COPILOT_FINISHED,
+      (response: AskCopilotCodeResponse) => {
         resolve(response);
       },
     );
@@ -61,20 +71,28 @@ async function getCodeResponse(
 }
 
 export const CopilotSidebar = () => {
-  const [messages, setMessages] = useState<CopilotMessage[]>(initialMessages);
+  const [messages, setMessages] = useState<CopilotMessage[]>(
+    COPILOT_WELCOME_MESSAGES,
+  );
   const [inputMessage, setInputMessage] = useState('');
   const [
-    selectedStep,
     flowVersion,
     refreshSettings,
     applyOperation,
     setLeftSidebar,
+    askAiButtonProps,
+    selectStepByName,
+    setAskAiButtonProps,
+    selectedStep,
   ] = useBuilderStateContext((state) => [
-    state.selectedStep,
     state.flowVersion,
     state.refreshSettings,
     state.applyOperation,
     state.setLeftSidebar,
+    state.askAiButtonProps,
+    state.selectStepByName,
+    state.setAskAiButtonProps,
+    state.selectedStep,
   ]);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const socket = useSocket();
@@ -86,9 +104,10 @@ export const CopilotSidebar = () => {
     }, 1);
   };
   const { isPending, mutate } = useMutation({
-    mutationFn: (request: GenerateCodeRequest) =>
+    mutationFn: (request: AskCopilotRequest) =>
       getCodeResponse(socket, request),
-    onSuccess: (response: GenerateCodeResponse) => {
+    onSuccess: (response: AskCopilotCodeResponse) => {
+      console.log(response);
       setMessages((prevMessages) => [
         ...prevMessages,
         {
@@ -96,6 +115,8 @@ export const CopilotSidebar = () => {
             code: response.code,
             packages: response.packageJson,
             inputs: response.inputs,
+            icon: response.icon ?? '',
+            title: response.title,
           },
           messageType: 'code',
           userType: 'bot',
@@ -117,14 +138,17 @@ export const CopilotSidebar = () => {
       return;
     }
     mutate({
-      prompt: `${inputMessage}. ${t(
-        'Please return the code formatted and use inputs parameter for the inputs. All TypeScript code, should use import for dependencies.',
-      )}`,
-      previousContext: messages.map((message) => ({
+      prompt: inputMessage,
+      context: messages.map((message) => ({
         role: message.userType === 'user' ? 'user' : 'assistant',
         content: JSON.stringify(message.content),
       })),
+      tools: [AskCopilotTool.GENERATE_CODE],
+      flowId: flowVersion.flowId,
+      flowVersionId: flowVersion.id,
+      selectedStepName: selectedStep ?? undefined,
     });
+
     setMessages([
       ...messages,
       { content: inputMessage, userType: 'user', messageType: 'text' },
@@ -132,83 +156,98 @@ export const CopilotSidebar = () => {
     setInputMessage('');
     scrollToLastMessage();
   };
-
-  const updateAction = (newAction: Action): void => {
-    setMessages([
-      ...messages,
-      {
-        content: t('I have updated the code piece for you.'),
-        userType: 'bot',
-        messageType: 'text',
-      },
-    ]);
-    applyOperation(
-      {
-        type: FlowOperationType.UPDATE_ACTION,
-        request: newAction,
-      },
-      () => toast(UNSAVED_CHANGES_TOAST),
-    );
-  };
-
-  const mergeInputs = (
-    inputsOne: Record<string, string>,
-    inputsTwo: Record<string, string> | undefined,
-  ) => {
-    if (!inputsOne) {
-      return {};
-    }
-    return Object.keys(inputsOne).reduce(
-      (acc: Record<string, string>, input) => {
-        acc[input] = inputsOne[input];
-        if (inputsTwo && inputsTwo[input] !== undefined) {
-          acc[input] = inputsTwo[input];
-        }
-        return acc;
-      },
-      {},
-    );
-  };
-
+  const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
   const applyCodeToCurrentStep = (message: CopilotMessage) => {
-    if (!selectedStep) {
+    if (!askAiButtonProps) {
+      console.log('no ask ai button props');
+      toast(INTERNAL_ERROR_TOAST);
       return;
     }
-    const step = flowStructureUtil.getStepOrThrow(
-      selectedStep,
-      flowVersion.trigger,
-    );
-    const isCodeType = message.messageType !== 'code';
-    if (isCodeType) {
+    if (message.messageType !== 'code') {
       return;
     }
-    const mergedInputs = mergeInputs(
-      message.content.inputs,
-      step.settings.input,
-    );
-    if (step.type === ActionType.CODE) {
-      const newStep = deepMergeAndCast(step, {
-        settings: {
-          input: mergedInputs,
-          sourceCode: {
-            code: message.content.code,
-            packageJson: JSON.stringify(message.content.packages, null, 2),
-          },
+    if (askAiButtonProps) {
+      const stepName =
+        askAiButtonProps.type === FlowOperationType.UPDATE_ACTION
+          ? askAiButtonProps.stepName
+          : flowStructureUtil.findUnusedName(flowVersion.trigger);
+      const codeAction = pieceSelectorUtils.getDefaultStep({
+        stepName,
+        stepMetadata: CORE_STEP_METADATA[ActionType.CODE],
+        actionOrTrigger: getCoreActions(ActionType.CODE)[0],
+      }) as CodeAction;
+      codeAction.settings = {
+        input: message.content.inputs,
+        sourceCode: {
+          code: message.content.code,
+          packageJson: JSON.stringify(message.content.packages, null, 2),
         },
-      });
-      updateAction(newStep);
-      refreshSettings();
+      };
+      codeAction.displayName = message.content.title;
+      codeAction.customLogoUrl = message.content.icon;
+      if (askAiButtonProps.type === FlowOperationType.ADD_ACTION) {
+        applyOperation(
+          {
+            type: FlowOperationType.ADD_ACTION,
+            request: {
+              action: codeAction,
+              ...askAiButtonProps.actionLocation,
+            },
+          },
+          () => toast(UNSAVED_CHANGES_TOAST),
+        );
+        selectStepByName(stepName);
+        setAskAiButtonProps({
+          type: FlowOperationType.UPDATE_ACTION,
+          stepName: codeAction.name,
+        });
+      } else {
+        const step = flowStructureUtil.getStep(
+          askAiButtonProps.stepName,
+          flowVersion.trigger,
+        );
+        if (step) {
+          applyOperation(
+            {
+              type: FlowOperationType.UPDATE_ACTION,
+              request: {
+                displayName: message.content.title,
+                name: step.name,
+                customLogoUrl: message.content.icon,
+                settings: {
+                  ...codeAction.settings,
+                  input: message.content.inputs,
+                  errorHandlingOptions:
+                    step.type === ActionType.CODE ||
+                    step.type === ActionType.PIECE
+                      ? step.settings.errorHandlingOptions
+                      : codeAction.settings.errorHandlingOptions,
+                },
+                type: ActionType.CODE,
+                valid: true,
+              },
+            },
+            () => toast(UNSAVED_CHANGES_TOAST),
+          );
+        }
+      }
     }
+    refreshSettings();
   };
+  useEffect(() => {
+    if (textAreaRef.current) {
+      textAreaRef.current.focus();
+    }
+  }, []);
 
   return (
     <div className="flex flex-col h-full">
       <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>
         {t('AI Copilot')}
       </SidebarHeader>
-      <div className="flex flex-col flex-grow overflow-hidden">
+      <div className="flex flex-col flex-grow overflow-hidden ">
         <ScrollArea className="flex-grow overflow-auto">
-          <CardList>
+          <CardList className="pb-3">
             {messages.map((message, index) => (
               <ChatMessage
                 key={index}
@@ -217,24 +256,30 @@ export const CopilotSidebar = () => {
                 onApplyCode={(message) => applyCodeToCurrentStep(message)}
               />
             ))}
+            {isPending && <LoadingMessage></LoadingMessage>}
             <ScrollBar />
           </CardList>
         </ScrollArea>
-        <div className="relative p-4 bg-white dark:bg-gray-900 border-t dark:border-gray-700">
-          <input
+        <div className="flex items-center py-4 px-3 gap-2 bg-white dark:bg-gray-900 border-t dark:border-gray-700">
+          <Textarea
+            ref={textAreaRef}
             value={inputMessage}
-            type="text"
-            className="w-full focus:outline-none p-2 border rounded-xl bg-gray-100 dark:bg-gray-700 dark:text-gray-100 pr-12"
+            className="w-full focus:outline-none p-2 border rounded-xl bg-gray-100 dark:bg-gray-700 dark:text-gray-100 pr-12 resize-none"
+            minRows={1}
+            autoFocus={true}
+            maxRows={4}
+            placeholder={t('i.e Calculate the sum of a list...')}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === 'Enter' && !e.shiftKey && !isPending) {
                 handleSendMessage();
+                e.preventDefault();
               }
             }}
           />
           <button
             onClick={handleSendMessage}
-            className="absolute right-5 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-md hover:bg-gray-100 dark:hover:bg-gray-600"
+            className="transform  w-8 h-8 rounded-full flex items-center justify-center border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-md hover:bg-gray-100 dark:hover:bg-gray-600"
             aria-label={t('Send')}
             disabled={isPending}
           >

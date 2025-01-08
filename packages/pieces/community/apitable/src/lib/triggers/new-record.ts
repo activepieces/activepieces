@@ -63,6 +63,7 @@ export const newRecordTrigger = createTrigger({
       store: context.store,
       auth: context.auth,
       propsValue: { datasheet_id: context.propsValue.datasheet_id },
+      files: context.files,
     });
   },
   async onEnable(context) {
@@ -84,6 +85,7 @@ export const newRecordTrigger = createTrigger({
       store: context.store,
       auth: context.auth,
       propsValue: { datasheet_id: context.propsValue.datasheet_id },
+      files: context.files,
     });
   },
 });

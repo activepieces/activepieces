@@ -33,7 +33,7 @@ ENV LC_ALL en_US.UTF-8
 COPY default.cf /usr/local/etc/isolate
 
 RUN npm i -g npm@9.9.3
-RUN npm i -g pnpm@9.12.1
+RUN npm i -g pnpm@9.15.0
 RUN npm i -g cross-env@7.0.3
 
 RUN pnpm config set store-dir /root/.local/share/pnpm/store

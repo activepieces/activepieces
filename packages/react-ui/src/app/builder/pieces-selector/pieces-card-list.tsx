@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { SearchX } from 'lucide-react';
+import { SearchX, WandSparkles } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -19,10 +19,17 @@ import {
   StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId, TriggerType, supportUrl } from '@activepieces/shared';
+import { platformHooks } from '@/hooks/platform-hooks';
+import {
+  ApFlagId,
+  FlowOperationType,
+  TriggerType,
+  supportUrl,
+} from '@activepieces/shared';
 
 import { cn } from '../../../lib/utils';
 
+import { AskAiButton } from './ask-ai';
 import { PieceSearchSuggestions } from './piece-search-suggestions';
 import { PieceTagEnum } from './piece-tag-group';
 
@@ -42,6 +49,7 @@ type PiecesCardListProps = {
   isLoadingPieces: boolean;
   piecesIsLoaded: boolean;
   noResultsFound: boolean;
+  closePieceSelector: () => void;
 };
 
 export const PiecesCardList: React.FC<PiecesCardListProps> = ({
@@ -53,15 +61,21 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
   isLoadingPieces,
   piecesIsLoaded,
   noResultsFound,
+  operation,
+  closePieceSelector,
 }) => {
   const { data: showRequestPieceButton } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
 
   const selectedItemRef = useRef<HTMLDivElement | null>(null);
-
+  const isCopilotEnabled = platformHooks.isCopilotEnabled();
   useEffect(() => {
-    if (piecesIsLoaded && selectedItemRef.current) {
+    if (
+      piecesIsLoaded &&
+      selectedItemRef.current &&
+      debouncedQuery.length === 0
+    ) {
       selectedItemRef.current?.scrollIntoView({
         behavior: 'auto',
         block: 'nearest',
@@ -115,22 +129,54 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
           </React.Fragment>
         ))}
 
-      {noResultsFound && (
-        <div className="flex flex-col gap-2 items-center justify-center h-full ">
-          <SearchX className="w-10 h-10" />
-          <div className="text-sm ">{t('No pieces found')}</div>
-          <div className="text-sm ">{t('Try adjusting your search')}</div>
-          {showRequestPieceButton && (
-            <Link
-              to={`${supportUrl}/c/feature-requests/9`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button className="h-8 px-2 ">Request Piece</Button>
-            </Link>
-          )}
-        </div>
-      )}
+      {noResultsFound &&
+        isCopilotEnabled &&
+        operation.type !== FlowOperationType.UPDATE_TRIGGER && (
+          <div className="flex flex-col gap-2 items-center justify-center h-full ">
+            <WandSparkles className="w-14 h-14" />
+            <div className="text-sm mb-3">
+              {t('Let our AI assistant help you out')}
+            </div>
+            <AskAiButton
+              varitant={'default'}
+              operation={operation}
+              onClick={closePieceSelector}
+            ></AskAiButton>
+            {showRequestPieceButton && (
+              <>
+                {t('Or')}
+                <Link
+                  to={`${supportUrl}/c/feature-requests/9`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button variant="ghost" size="sm">
+                    Request Piece
+                  </Button>
+                </Link>
+              </>
+            )}
+          </div>
+        )}
+
+      {noResultsFound &&
+        (!isCopilotEnabled ||
+          operation.type === FlowOperationType.UPDATE_TRIGGER) && (
+          <div className="flex flex-col gap-2 items-center justify-center h-full ">
+            <SearchX className="w-14 h-14" />
+            <div className="text-sm ">{t('No pieces found')}</div>
+            <div className="text-sm ">{t('Try adjusting your search')}</div>
+            {showRequestPieceButton && (
+              <Link
+                to={`${supportUrl}/c/feature-requests/9`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button className="h-8 px-2 ">Request Piece</Button>
+              </Link>
+            )}
+          </div>
+        )}
     </CardList>
   );
 };
@@ -174,7 +220,7 @@ const PieceCardListItem = React.forwardRef<
         clearTimeout(timeoutRef.current);
       }
     };
-
+    const isMobile = pieceSelectorUtils.useIsMobile();
     return (
       <div onMouseLeave={handleMouseLeave} ref={ref}>
         <CardListItem
@@ -199,8 +245,7 @@ const PieceCardListItem = React.forwardRef<
           </div>
         </CardListItem>
 
-        {(debouncedQuery.length > 0 ||
-          (window.innerWidth || document.documentElement.clientWidth) < 768) &&
+        {(debouncedQuery.length > 0 || isMobile) &&
           pieceMetadata.type !== TriggerType.EMPTY && (
             <div onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}>
               <PieceSearchSuggestions

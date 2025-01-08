@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
+import { Shortcut } from './shortcut';
 import { LoadingSpinner } from './spinner';
 
 const buttonVariants = cva(
@@ -115,11 +116,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             {keyboardShortcut && (
               <div className="flex justify-center items-center gap-2">
                 {children}
-                <span className="flex-grow text-xs tracking-widest text-muted-foreground">
-                  {!isEscape && (isMac ? '⌘' : 'Ctrl')}
-                  {!isEscape && ' + '}
-                  {keyboardShortcut.toString().toLocaleUpperCase()}
-                </span>
+                <Shortcut shortcutKey={keyboardShortcut} withCtrl={true} />
               </div>
             )}
             {!keyboardShortcut && children}

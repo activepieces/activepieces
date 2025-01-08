@@ -9,6 +9,8 @@ import {
   username,
   blocks,
 } from '../common/props';
+import { Block,KnownBlock } from '@slack/web-api';
+
 
 export const slackSendDirectMessageAction = createAction({
   auth: slackAuth,
@@ -30,13 +32,16 @@ export const slackSendDirectMessageAction = createAction({
     assertNotNullOrUndefined(text, 'text');
     assertNotNullOrUndefined(userId, 'userId');
 
+    const blockList = blocks ?[{ type: 'section', text: { type: 'mrkdwn', text } }, ...(blocks as unknown as (KnownBlock | Block)[])] :undefined
+
+
     return slackSendMessage({
       token,
       text,
       username: context.propsValue.username,
       profilePicture: context.propsValue.profilePicture,
       conversationId: userId,
-      blocks,
+      blocks:blockList,
     });
   },
 });

@@ -1,5 +1,7 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class SetFlowVersionUpdatedByToNullIfUserIsDeletedPostgres1709641016072 implements MigrationInterface {
     name = 'SetFlowVersionUpdatedByToNullIfUserIsDeletedPostgres1709641016072'
@@ -14,7 +16,7 @@ export class SetFlowVersionUpdatedByToNullIfUserIsDeletedPostgres1709641016072 i
             ON DELETE SET NULL ON UPDATE NO ACTION
         `)
 
-        logger.info({ name: this.name }, 'up')
+        log.info({ name: this.name }, 'up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -27,7 +29,7 @@ export class SetFlowVersionUpdatedByToNullIfUserIsDeletedPostgres1709641016072 i
             ON DELETE CASCADE ON UPDATE NO ACTION
         `)
 
-        logger.info({ name: this.name }, 'down')
+        log.info({ name: this.name }, 'down')
     }
 
 }

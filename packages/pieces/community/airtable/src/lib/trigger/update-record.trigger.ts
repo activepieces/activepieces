@@ -109,8 +109,7 @@ export const airtableUpdatedRecordTrigger = createTrigger({
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async test(context) {
-    const { store, auth, propsValue } = context;
-    return await pollingHelper.test(polling, { store, auth, propsValue });
+    return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
     const { store, auth, propsValue } = context;
@@ -123,7 +122,6 @@ export const airtableUpdatedRecordTrigger = createTrigger({
   },
 
   async run(context) {
-    const { store, auth, propsValue } = context;
-    return await pollingHelper.poll(polling, { store, auth, propsValue });
+    return await pollingHelper.poll(polling, context);
   },
 });

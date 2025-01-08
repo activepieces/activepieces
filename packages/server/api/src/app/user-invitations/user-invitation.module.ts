@@ -23,7 +23,6 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
 import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
-import { projectMembersLimit } from '../ee/project-plan/members-limit'
 import { projectRoleService } from '../ee/project-role/project-role.service'
 import { projectService } from '../project/project-service'
 import { userInvitationsService } from './user-invitation.service'
@@ -47,7 +46,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
         const status = request.principal.type === PrincipalType.SERVICE ? InvitationStatus.ACCEPTED : InvitationStatus.PENDING
         const projectRole = await getProjectRoleAndAssertIfFound(request.principal.platform.id, request.body)
         const platformId = request.principal.platform.id
-        const invitation = await userInvitationsService.create({
+        const invitation = await userInvitationsService(request.log).create({
             email,
             type,
             platformId,
@@ -62,7 +61,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/', ListUserInvitationsRequestParams, async (request, reply) => {
         const projectId = await getProjectIdAndAssertPermission(app, request, reply, request.query)
-        const invitations = await userInvitationsService.list({
+        const invitations = await userInvitationsService(request.log).list({
             platformId: request.principal.platform.id,
             projectId: request.query.type === InvitationType.PROJECT ? projectId : null,
             type: request.query.type,
@@ -74,8 +73,8 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/accept', AcceptUserInvitationRequestParams, async (request, reply) => {
-        const invitation = await userInvitationsService.getOneByInvitationTokenOrThrow(request.body.invitationToken)
-        await userInvitationsService.accept({
+        const invitation = await userInvitationsService(request.log).getOneByInvitationTokenOrThrow(request.body.invitationToken)
+        await userInvitationsService(request.log).accept({
             invitationId: invitation.id,
             platformId: invitation.platformId,
         })
@@ -83,7 +82,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.delete('/:id', DeleteInvitationRequestParams, async (request, reply) => {
-        const invitation = await userInvitationsService.getOneOrThrow({
+        const invitation = await userInvitationsService(request.log).getOneOrThrow({
             id: request.params.id,
             platformId: request.principal.platform.id,
         })
@@ -97,7 +96,7 @@ const invitationController: FastifyPluginAsyncTypebox = async (app) => {
                 await platformMustBeOwnedByCurrentUser.call(app, request, reply)
                 break
         }
-        await userInvitationsService.delete({
+        await userInvitationsService(request.log).delete({
             id: request.params.id,
             platformId: request.principal.platform.id,
         })
@@ -112,12 +111,6 @@ const getProjectRoleAndAssertIfFound = async (platformId: string, request: SendU
         return null
     }
     const projectRoleName = request.projectRole
-    
-    await projectMembersLimit.limit({
-        projectId: request.projectId,
-        platformId,
-        projectRoleName,
-    })
 
     const projectRole = await projectRoleService.getOneOrThrow({
         name: projectRoleName,
@@ -149,7 +142,7 @@ async function assertPrincipalHasPermissionToProject(fastify: FastifyInstance, r
         })
     }
     await platformMustHaveFeatureEnabled((platform) => platform.projectRolesEnabled).call(fastify, request, reply)
-    await assertRoleHasPermission(request.principal, permission)
+    await assertRoleHasPermission(request.principal, permission, request.log)
 }
 
 
@@ -163,7 +156,7 @@ const ListUserInvitationsRequestParams = {
         tags: ['user-invitations'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListUserInvitationsRequest,
-        responnse: {
+        response: {
             [StatusCodes.OK]: SeekPage(UserInvitation),
         },
     },

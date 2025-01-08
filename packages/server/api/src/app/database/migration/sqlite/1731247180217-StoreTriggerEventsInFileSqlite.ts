@@ -1,12 +1,12 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 export class StoreTriggerEventsInFileSqlite1731247180217 implements MigrationInterface {
     name = 'StoreTriggerEventsInFileSqlite1731247180217'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-
-        logger.info({
+        const log = system.globalLogger()
+        log.info({
             name: this.name,
         }, 'up')
         await queryRunner.query(`
@@ -39,7 +39,8 @@ export class StoreTriggerEventsInFileSqlite1731247180217 implements MigrationInt
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        logger.info({
+        const log = system.globalLogger()
+        log.info({
             name: this.name,
         }, 'down')
         await queryRunner.query(`

@@ -165,11 +165,13 @@ const ProjectRolePage = () => {
                         onSave={() => refetch()}
                         disabled={row.type === RoleType.DEFAULT}
                       >
-                        {row.type === RoleType.DEFAULT ? (
-                          <Eye className="size-4" />
-                        ) : (
-                          <Pencil className="size-4" />
-                        )}
+                        <Button variant="ghost">
+                          {row.type === RoleType.DEFAULT ? (
+                            <Eye className="size-4" />
+                          ) : (
+                            <Pencil className="size-4" />
+                          )}
+                        </Button>
                       </ProjectRoleDialog>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">

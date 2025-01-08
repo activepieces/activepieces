@@ -8,12 +8,13 @@ import {
     ScheduleOptions,
     ScheduleType,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { EntityManager } from 'typeorm'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { triggerHooks } from '../trigger'
 
-export const flowSideEffects = {
+export const flowSideEffects = (log: FastifyBaseLogger) => ({
     async preUpdateStatus({
         flowToUpdate,
         newStatus,
@@ -24,7 +25,7 @@ export const flowSideEffects = {
             'publishedVersionId',
         )
 
-        const publishedFlowVersion = await flowVersionService.getFlowVersionOrThrow(
+        const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow(
             {
                 flowId: flowToUpdate.id,
                 versionId: flowToUpdate.publishedVersionId,
@@ -40,7 +41,7 @@ export const flowSideEffects = {
                     flowVersion: publishedFlowVersion,
                     projectId: flowToUpdate.projectId,
                     simulate: false,
-                })
+                }, log)
                 scheduleOptions = response?.result.scheduleOptions
                 break
             }
@@ -49,7 +50,7 @@ export const flowSideEffects = {
                     flowVersion: publishedFlowVersion,
                     projectId: flowToUpdate.projectId,
                     simulate: false,
-                })
+                }, log)
                 break
             }
         }
@@ -78,19 +79,19 @@ export const flowSideEffects = {
       flowToUpdate.publishedVersionId
         ) {
             await triggerHooks.disable({
-                flowVersion: await flowVersionService.getOneOrThrow(
+                flowVersion: await flowVersionService(log).getOneOrThrow(
                     flowToUpdate.publishedVersionId,
                 ),
                 projectId: flowToUpdate.projectId,
                 simulate: false,
-            })
+            }, log)
         }
 
         const enableResult = await triggerHooks.enable({
             flowVersion: flowVersionToPublish,
             projectId: flowToUpdate.projectId,
             simulate: false,
-        })
+        }, log)
 
         const scheduleOptions = enableResult?.result.scheduleOptions
 
@@ -117,7 +118,7 @@ export const flowSideEffects = {
             return
         }
 
-        const publishedFlowVersion = await flowVersionService.getFlowVersionOrThrow(
+        const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow(
             {
                 flowId: flowToDelete.id,
                 versionId: flowToDelete.publishedVersionId,
@@ -128,14 +129,14 @@ export const flowSideEffects = {
             flowVersion: publishedFlowVersion,
             projectId: flowToDelete.projectId,
             simulate: false,
-        })
+        }, log)
 
-        await sampleDataService.deleteForFlow({
+        await sampleDataService(log).deleteForFlow({
             projectId: flowToDelete.projectId,
             flowId: flowToDelete.id,
         })
     },
-}
+})
 
 type PreUpdateParams = {
     flowToUpdate: Flow

@@ -10,7 +10,7 @@ export const smtpCommon = {
         user: auth.email,
         pass: auth.password,
       },
-      connectionTimeout: 10000,
+      connectionTimeout: 60000,
       secure: auth.port === 465,
     };
   },

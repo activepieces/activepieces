@@ -1,9 +1,9 @@
 import {
     ApplicationEventName,
 } from '@activepieces/ee-shared'
+import { networkUtls } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
-    assertNotNullOrUndefined,
     ClaimTokenRequest,
     ThirdPartyAuthnProviderEnum,
 } from '@activepieces/shared'
@@ -12,7 +12,9 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { eventsHooks } from '../../../helper/application-events'
-import { resolvePlatformIdForRequest } from '../../../platform/platform-utils'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-prop'
+import { platformUtils } from '../../../platform/platform.utils'
 import { federatedAuthnService } from './federated-authn-service'
 
 export const federatedAuthModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -23,25 +25,26 @@ export const federatedAuthModule: FastifyPluginAsyncTypebox = async (app) => {
 
 const federatedAuthnController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/login', LoginRequestSchema, async (req) => {
-        const platformId = await resolvePlatformIdForRequest(req)
-        assertNotNullOrUndefined(platformId, 'Platform id is not defined')
-        return federatedAuthnService.login({
-            providerName: req.query.providerName,
-            platformId,
+        const platformId = await platformUtils.getPlatformIdForRequest(req)
+        return federatedAuthnService(req.log).login({
+            platformId: platformId ?? undefined,
             hostname: req.hostname,
         })
     })
 
     app.post('/claim', ClaimTokenRequestSchema, async (req) => {
-        const platformId = await resolvePlatformIdForRequest(req)
-        assertNotNullOrUndefined(platformId, 'Platform id is not defined')
-        const response = await federatedAuthnService.claim({
-            platformId,
+        const platformId = await platformUtils.getPlatformIdForRequest(req)
+        const response = await federatedAuthnService(req.log).claim({
+            platformId: platformId ?? undefined,
             hostname: req.hostname,
-            providerName: req.body.providerName,
             code: req.body.code,
         })
-        eventsHooks.get().sendUserEventFromRequest(req, {
+        eventsHooks.get(req.log).sendUserEvent({
+            platformId: response.platformId!,
+            userId: response.id,
+            projectId: response.projectId,
+            ip: networkUtls.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+        }, {
             action: ApplicationEventName.USER_SIGNED_UP,
             data: {
                 source: 'sso',

@@ -28,6 +28,7 @@ export const ProjectUsage = Type.Object({
     tasks: Type.Number(),
     teamMembers: Type.Number(),
     aiTokens: Type.Number(),
+    nextLimitResetDate: Type.String(),
 })
 
 export const SwitchProjectResponse = Type.Object({
@@ -55,7 +56,6 @@ export const ProjectPlan = Type.Object({
 
 export type ProjectPlan = Static<typeof ProjectPlan>
 
-
 export const Project = Type.Object({
     ...BaseModelSchema,
     deleted: Nullable(Type.String()),
@@ -64,6 +64,7 @@ export const Project = Type.Object({
     notifyStatus: Type.Enum(NotificationStatus),
     platformId: ApId,
     externalId: Type.Optional(Type.String()),
+    releasesEnabled: Type.Boolean(),
 })
 
 const projectAnalytics = Type.Object(

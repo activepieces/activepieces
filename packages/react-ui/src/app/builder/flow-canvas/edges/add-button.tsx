@@ -11,15 +11,19 @@ import {
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
-import { flowUtilConsts } from '../consts';
-import { ApButtonData } from '../types';
+import { flowUtilConsts } from '../utils/consts';
+import { ApButtonData } from '../utils/types';
+
+import { AskAiIndicator, shouldShowAskAiIndicator } from './ask-ai-indicator';
 
 const ApAddButton = React.memo((props: ApButtonData) => {
   const [isStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
-  const [activeDraggingStep, readonly] = useBuilderStateContext((state) => [
-    state.activeDraggingStep,
-    state.readonly,
-  ]);
+  const [activeDraggingStep, readonly, showAskAiIndicator] =
+    useBuilderStateContext((state) => [
+      state.activeDraggingStep,
+      state.readonly,
+      shouldShowAskAiIndicator(state, props),
+    ]);
 
   const { setNodeRef } = useDroppable({
     id: props.edgeId,
@@ -91,28 +95,52 @@ const ApAddButton = React.memo((props: ApButtonData) => {
           }
           open={actionMenuOpen}
           onOpenChange={setActionMenuOpen}
+          asChild={true}
         >
           <div
-            className={cn('rounded-xss cursor-pointer transition-all', {
-              'shadow-add-button': actionMenuOpen,
-            })}
+            style={{
+              width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
+              height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
+            }}
           >
-            <div
-              style={{
-                width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
-                height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
-              }}
-              className={cn(
-                'bg-light-blue  overflow-visible rounded-xss cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
-                {
-                  'bg-primary ': actionMenuOpen,
-                },
-              )}
-            >
-              {!actionMenuOpen && (
-                <Plus className="w-3 h-3 stroke-[3px] text-white" />
-              )}
-            </div>
+            {showAskAiIndicator && (
+              <AskAiIndicator
+                height={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height}
+                width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width}
+              ></AskAiIndicator>
+            )}
+            {!showAskAiIndicator && (
+              <div
+                style={{
+                  width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
+                  height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
+                }}
+                className={cn(
+                  'rounded-xss cursor-pointer transition-all z-50',
+                  {
+                    'shadow-add-button': actionMenuOpen,
+                  },
+                )}
+              >
+                <div
+                  style={{
+                    width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
+                    height:
+                      flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
+                  }}
+                  className={cn(
+                    'bg-light-blue  relative group overflow-visible rounded-xss cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
+                    {
+                      'bg-primary ': actionMenuOpen,
+                    },
+                  )}
+                >
+                  {!actionMenuOpen && (
+                    <Plus className="w-3 h-3 stroke-[3px] text-white" />
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </PieceSelector>
       )}

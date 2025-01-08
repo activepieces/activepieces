@@ -2,8 +2,8 @@ import { BaseEdge, EdgeProps } from '@xyflow/react';
 
 import { StepLocationRelativeToParent } from '@activepieces/shared';
 
-import { flowUtilConsts } from '../consts';
-import { ApRouterStartEdge } from '../types';
+import { flowUtilConsts } from '../utils/consts';
+import { ApRouterStartEdge } from '../utils/types';
 
 import { ApAddButton } from './add-button';
 import { BranchLabel } from './branch-label';
@@ -77,7 +77,7 @@ export const ApRouterStartCanvasEdge = ({
 
   const path = generatePath();
 
-  const brancLabelProps =
+  const branchLabelProps =
     data.stepLocationRelativeToParent ===
     StepLocationRelativeToParent.INSIDE_BRANCH
       ? {
@@ -146,7 +146,7 @@ export const ApRouterStartCanvasEdge = ({
         className="flex items-center "
       >
         <BranchLabel
-          key={brancLabelProps.label + brancLabelProps.targetNodeName}
+          key={branchLabelProps.label + branchLabelProps.targetNodeName}
           sourceNodeName={source}
           targetNodeName={target}
           stepLocationRelativeToParent={data.stepLocationRelativeToParent}

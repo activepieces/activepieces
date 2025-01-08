@@ -1,5 +1,6 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+const log = system.globalLogger()
 
 export class AddArchiveIdToPieceMetadata1696956123632
 implements MigrationInterface {
@@ -156,7 +157,9 @@ implements MigrationInterface {
             CREATE UNIQUE INDEX "idx_piece_metadata_name_project_id_version" ON "piece_metadata" ("name", "version", "projectId")
         `)
 
-        logger.info('AddArchiveIdToPieceMetadata1696956123632: up')
+        log.info({
+            name: this.name,
+        }, 'up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -307,6 +310,8 @@ implements MigrationInterface {
             CREATE UNIQUE INDEX "idx_piece_metadata_name_project_id_version" ON "piece_metadata" ("name", "version", "projectId")
         `)
 
-        logger.info('AddArchiveIdToPieceMetadata1696956123632: down')
+        log.info({
+            name: this.name,
+        }, 'down')
     }
 }

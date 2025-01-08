@@ -3,11 +3,11 @@ import {
     CustomDomainStatus,
     ListCustomDomainsRequest,
 } from '@activepieces/ee-shared'
-import { system } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, apId, ErrorCode, isNil, SeekPage } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { system } from '../../helper/system/system'
 import { CustomDomainEntity } from './custom-domain.entity'
 
 const customDomainRepo = repoFactory<CustomDomain>(CustomDomainEntity)
@@ -73,6 +73,18 @@ export const customDomainService = {
             status: isCloudEdition ? CustomDomainStatus.PENDING : CustomDomainStatus.ACTIVE,
         })
 
+    },
+    async getPlatformUrlFromEmail(userEmail: string): Promise<string | null> {
+        const rootDomain = userEmail.split('@')[1]
+        const allDomains: CustomDomain[] = await customDomainRepo().find({
+            where: {
+                status: CustomDomainStatus.ACTIVE,
+            },
+        })
+        return allDomains.find(cd => {
+            const domainOrSubdomain = cd.domain
+            return domainOrSubdomain.endsWith(`.${rootDomain}`)
+        })?.domain ?? null
     },
     async list({
         request,

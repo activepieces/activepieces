@@ -1,11 +1,13 @@
-import { logger } from '@activepieces/server-shared'
+
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 export class AddPieceTypeAndPackageTypeToPieceMetadata1696016228398
 implements MigrationInterface {
     name = 'AddPieceTypeAndPackageTypeToPieceMetadata1696016228398'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        const log = system.globalLogger()
         await queryRunner.query(
             'CREATE TABLE "temporary_piece_metadata" ("id" varchar(21) PRIMARY KEY NOT NULL, "created" datetime NOT NULL DEFAULT (datetime(\'now\')), "updated" datetime NOT NULL DEFAULT (datetime(\'now\')), "name" varchar NOT NULL, "displayName" varchar NOT NULL, "logoUrl" varchar NOT NULL, "description" varchar, "projectId" varchar, "version" varchar NOT NULL, "minimumSupportedRelease" varchar NOT NULL, "maximumSupportedRelease" varchar NOT NULL, "auth" text, "actions" text NOT NULL, "triggers" text NOT NULL, "pieceType" varchar, "packageType" varchar, CONSTRAINT "fk_piece_metadata_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)',
         )
@@ -44,10 +46,13 @@ implements MigrationInterface {
             'CREATE UNIQUE INDEX "idx_piece_metadata_name_project_id_version" ON "piece_metadata" ("name", "version", "projectId") ',
         )
 
-        logger.info('AddPieceTypeAndPackageTypeToPieceMetadata1696016228398: up')
+        log.info({
+            name: this.name,
+        }, 'up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        const log = system.globalLogger()   
         await queryRunner.query(
             'DROP INDEX "idx_piece_metadata_name_project_id_version"',
         )
@@ -65,6 +70,8 @@ implements MigrationInterface {
             'CREATE UNIQUE INDEX "idx_piece_metadata_name_project_id_version" ON "piece_metadata" ("name", "version", "projectId") ',
         )
 
-        logger.info('AddPieceTypeAndPackageTypeToPieceMetadata1696016228398: down')
+        log.info({
+            name: this.name,
+        }, 'down')
     }
 }

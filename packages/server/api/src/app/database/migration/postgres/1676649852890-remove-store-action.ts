@@ -1,9 +1,11 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class removeStoreAction1676649852890 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('Running migration removeStoreAction1676649852890')
+        log.info('Running migration removeStoreAction1676649852890')
         const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
         let count = 0
         for (let i = 0; i < flowVersions.length; ++i) {
@@ -40,7 +42,7 @@ export class removeStoreAction1676649852890 implements MigrationInterface {
             }
         }
 
-        logger.info(
+        log.info(
             'Finished running migration removeStoreAction1676649852890, changed ' +
         count +
         ' actions',

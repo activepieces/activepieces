@@ -110,7 +110,7 @@ export const BranchListItem = ({
   return (
     <div
       className={
-        'flex items-center gap-2 transition-all   has-[div.button-group:hover]:bg-background  text-sm hover:bg-gray-100 px-2 cursor-pointer'
+        'flex items-center gap-2 transition-all   has-[div.button-group:hover]:bg-background  text-sm hover:bg-gray-100 dark:hover:bg-accent px-2 cursor-pointer'
       }
       onClick={() => {
         onClick();

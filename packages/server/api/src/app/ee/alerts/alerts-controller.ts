@@ -5,7 +5,7 @@ import { alertsService } from './alerts-service'
 
 export const alertsController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListAlertsRequest, async (req) => {
-        return alertsService.list({
+        return alertsService(req.log).list({
             projectId: req.query.projectId,
             cursor: req.query.cursor,
             limit: req.query.limit ?? 10,
@@ -13,7 +13,7 @@ export const alertsController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/', CreateAlertRequest, async (req) => {
-        return alertsService.add({
+        return alertsService(req.log).add({
             projectId: req.body.projectId,
             channel: req.body.channel,
             receiver: req.body.receiver,
@@ -21,7 +21,7 @@ export const alertsController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.delete('/:id', DeleteAlertRequest, async (req) => {
-        return alertsService.delete({
+        return alertsService(req.log).delete({
             alertId: req.params.id,
         })
     })

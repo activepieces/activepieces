@@ -1,15 +1,14 @@
-import { DeleteWebhookSimulationRequest, JobData, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendWebhookUpdateRequest, SubmitPayloadsRequest, WebhookJobData } from '@activepieces/server-shared'
+import { JobData, OneTimeJobData, PollJobRequest, QueueName, rejectedPromiseHandler, ResumeRunRequest, SavePayloadRequest, ScheduledJobData, SendEngineUpdateRequest, SubmitPayloadsRequest, UserInteractionJobData, UserInteractionJobType, WebhookJobData } from '@activepieces/server-shared'
 import { apId, ExecutionType, PrincipalType, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
-import { flowService } from '../flows/flow/flow.service'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { dedupeService } from '../flows/trigger/dedupe'
 import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
 import { projectService } from '../project/project-service'
 import { webhookSimulationService } from '../webhooks/webhook-simulation/webhook-simulation-service'
 import { flowConsumer } from './consumer'
-import { webhookResponseWatcher } from './helper/webhook-response-watcher'
+import { engineResponseWatcher } from './engine-response-watcher'
 
 export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -25,7 +24,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         
         const token = apId()
         const { queueName } = request.query
-        const job = await flowConsumer.poll(queueName, {
+        const job = await flowConsumer(request.log).poll(queueName, {
             token,
         })
         if (!job) {
@@ -34,28 +33,17 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         return enrichEngineToken(token, queueName, job)
     })
 
-    app.post('/delete-webhook-simulation', {
-        config: {
-            allowedPrincipals: [PrincipalType.WORKER],
-        },
-        schema: {
-            body: DeleteWebhookSimulationRequest,
-        },
-    }, async (request) => {
-        const { flowId, projectId } = request.body
-        await webhookSimulationService.delete({ flowId, projectId })
-    })
 
-    app.post('/send-webhook-update', {
+    app.post('/send-engine-update', {
         config: {
             allowedPrincipals: [PrincipalType.WORKER],
         },
         schema: {
-            body: SendWebhookUpdateRequest,
+            body: SendEngineUpdateRequest,
         },
     }, async (request) => {
         const { workerServerId, requestId, response } = request.body
-        await webhookResponseWatcher.publish(requestId, workerServerId, response)
+        await engineResponseWatcher(request.log).publish(requestId, workerServerId, response)
         return {}
     })
 
@@ -70,14 +58,14 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
     }, async (request) => {
         const { flowId, projectId, payloads } = request.body
         const savePayloads = payloads.map((payload) =>
-            rejectedPromiseHandler(triggerEventService.saveEvent({
+            rejectedPromiseHandler(triggerEventService(request.log).saveEvent({
                 flowId,
                 payload,
                 projectId,
-            })),
+            }), request.log),
         )
-        rejectedPromiseHandler(Promise.all(savePayloads))
-        await webhookSimulationService.delete({ flowId, projectId })
+        rejectedPromiseHandler(Promise.all(savePayloads), request.log)
+        await webhookSimulationService(request.log).delete({ flowId, projectId })
         return {}
     })
 
@@ -96,7 +84,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
             payloads,
         )
         const createFlowRuns = filterPayloads.map((payload) =>
-            flowRunService.start({
+            flowRunService(request.log).start({
                 environment,
                 flowVersionId,
                 payload,
@@ -119,7 +107,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
         },
     }, async (request) => {
         const data = request.body
-        await flowRunService.start({
+        await flowRunService(request.log).start({
             payload: null,
             flowRunId: data.runId,
             synchronousHandlerId: data.synchronousHandlerId ?? undefined,
@@ -134,9 +122,9 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
 
 }
 
+
 async function enrichEngineToken(token: string, queueName: QueueName, job: { id: string, data: JobData }) {
-    const projectId = await getProjectId(queueName, job.data)   
-    const platformId = await projectService.getPlatformId(projectId)
+    const { projectId, platformId } = await getProjectIdAndPlatformId(queueName, job.data)
     const engineToken = await accessTokenManager.generateEngineToken({
         jobId: job.id,
         queueToken: token,
@@ -150,17 +138,35 @@ async function enrichEngineToken(token: string, queueName: QueueName, job: { id:
     }
 }
 
-async function getProjectId(queueName: QueueName, job: JobData) {
+async function getProjectIdAndPlatformId(queueName: QueueName, job: JobData): Promise<{
+    projectId: string
+    platformId: string
+}> {
     switch (queueName) {
         case QueueName.ONE_TIME:
-            return (job as OneTimeJobData).projectId
-        case QueueName.WEBHOOK: {
-            // TODO add project it to the webhook data
-            const webhookData = (job as WebhookJobData)
-            const flow = await flowService.getOneById(webhookData.flowId)
-            return flow?.projectId ?? apId()
+        case QueueName.WEBHOOK: 
+        case QueueName.SCHEDULED:{ 
+            const castedJob = job as OneTimeJobData | WebhookJobData | ScheduledJobData
+            return {
+                projectId: castedJob.projectId,
+                platformId: await projectService.getPlatformId(castedJob.projectId),
+            }
         }
-        case QueueName.SCHEDULED:
-            return (job as ScheduledJobData).projectId
+        case QueueName.USERS_INTERACTION:{
+            const userInteractionJob = job as UserInteractionJobData
+            switch (userInteractionJob.jobType) {
+                case UserInteractionJobType.EXECUTE_VALIDATION:
+                case UserInteractionJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
+                    return {
+                        projectId: userInteractionJob.projectId!,
+                        platformId: userInteractionJob.platformId,
+                    }
+                default:
+                    return {
+                        projectId: userInteractionJob.projectId,
+                        platformId: await projectService.getPlatformId(userInteractionJob.projectId),
+                    }
+            }
+        }
     }
 }

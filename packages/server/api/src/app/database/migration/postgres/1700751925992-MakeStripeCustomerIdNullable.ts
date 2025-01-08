@@ -1,7 +1,9 @@
-import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 import { isNotOneOfTheseEditions } from '../../database-common'
+
+const log = system.globalLogger()
 
 export class MakeStripeCustomerIdNullable1700751925992
 implements MigrationInterface {
@@ -11,7 +13,7 @@ implements MigrationInterface {
         if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
             return
         }
-        logger.info('MakeStripeCustomerIdNullable1700751925992 is up')
+        log.info('MakeStripeCustomerIdNullable1700751925992 is up')
         await queryRunner.query(`
             ALTER TABLE "project_plan"
             ALTER COLUMN "stripeCustomerId" DROP NOT NULL
@@ -19,14 +21,14 @@ implements MigrationInterface {
         await queryRunner.query(`
         DROP INDEX "idx_plan_stripe_customer_id"
     `)
-        logger.info('MakeStripeCustomerIdNullable1700751925992 finished')
+        log.info('MakeStripeCustomerIdNullable1700751925992 finished')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
             return
         }
-        logger.info('MakeStripeCustomerIdNullable1700751925992 is down')
+        log.info('MakeStripeCustomerIdNullable1700751925992 is down')
         await queryRunner.query(`
             ALTER TABLE "project_plan"
             ALTER COLUMN "stripeCustomerId"

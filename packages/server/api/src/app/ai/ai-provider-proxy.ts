@@ -1,43 +1,36 @@
 import { exceptionHandler, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { PrincipalType, TelemetryEventName } from '@activepieces/shared'
+import { EnginePrincipal, PrincipalType, TelemetryEventName } from '@activepieces/shared'
 import {
-    FastifyPluginCallbackTypebox,
+    FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { aiTokenLimit } from '../ee/project-plan/ai-token-limit'
+import { BillingUsageType, usageService } from '../ee/platform-billing/usage/usage-service'
 import { telemetry } from '../helper/telemetry.utils'
 import { projectService } from '../project/project-service'
-import { projectUsageService } from '../project/usage/project-usage-service'
 import { aiProviderService } from './ai-provider.service'
 
-export const proxyController: FastifyPluginCallbackTypebox = (
+export const proxyController: FastifyPluginAsyncTypebox = async (
     fastify,
     _opts,
-    done,
 ) => {
     fastify.all('/:provider/*', ProxyRequest, async (request, reply) => {
         const { provider } = request.params
-        const { projectId } = request.principal
+        const { projectId } = request.principal as EnginePrincipal
+
 
         const platformId = await projectService.getPlatformId(projectId)
         const aiProvider = await aiProviderService.getOrThrow({
             platformId,
             provider,
         })
-        const limitResponse = await aiTokenLimit.exceededLimit({
-            projectId,
-            tokensToConsume: 0,
-        })
-        if (limitResponse.exceeded) {
+        const exceededLimit = await usageService(request.log).aiTokensExceededLimit(projectId, 0)
+        if (exceededLimit) {
             return reply.code(StatusCodes.PAYMENT_REQUIRED).send(
                 makeOpenAiResponse(
                     'You have exceeded your AI tokens limit for this project.',
                     'ai_tokens_limit_exceeded',
-                    {
-                        usage: limitResponse.usage,
-                        limit: limitResponse.limit,
-                    },
+                    {},
                 ),
             )
         }
@@ -58,16 +51,16 @@ export const proxyController: FastifyPluginCallbackTypebox = (
 
             const data = await parseResponseData(response, responseContentType)
 
-            await projectUsageService.increaseUsage(projectId, 1, 'aiTokens')
+            await usageService(request.log).increaseProjectAndPlatformUsage({ projectId, incrementBy: 1, usageType: BillingUsageType.AI_TOKENS })
 
-            rejectedPromiseHandler(telemetry.trackProject(projectId, {
+            rejectedPromiseHandler(telemetry(request.log).trackProject(projectId, {
                 name: TelemetryEventName.AI_PROVIDER_USED,
                 payload: {
                     projectId,
                     platformId,
                     provider,
                 },
-            }))
+            }), request.log)
             await reply.code(response.status).type(responseContentType ?? 'text/plain').send(data)
         }
         catch (error) {
@@ -76,14 +69,13 @@ export const proxyController: FastifyPluginCallbackTypebox = (
                 await reply.code(error.status).send(errorData)
             }
             else {
-                exceptionHandler.handle(error)
+                exceptionHandler.handle(error, request.log)
                 await reply
                     .code(500)
                     .send({ message: 'An unexpected error occurred in the proxy' })
             }
         }
     })
-    done()
 }
 
 async function parseResponseData(response: Response, responseContentType: string | null) {

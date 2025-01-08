@@ -1,7 +1,9 @@
-import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 import { isNotOneOfTheseEditions } from '../../database-common'
+
+const log = system.globalLogger()
 
 export class AddSigningKey1698602417745 implements MigrationInterface {
     name = 'AddSigningKey1698602417745'
@@ -31,7 +33,7 @@ export class AddSigningKey1698602417745 implements MigrationInterface {
             ADD CONSTRAINT "fk_signing_key_generated_by" FOREIGN KEY ("generatedBy") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE RESTRICT
         `)
 
-        logger.info('AddSigningKey1698602417745 up')
+        log.info('AddSigningKey1698602417745 up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -48,6 +50,6 @@ export class AddSigningKey1698602417745 implements MigrationInterface {
             DROP TABLE "signing_key"
         `)
 
-        logger.info('AddSigningKey1698602417745 down')
+        log.info('AddSigningKey1698602417745 down')
     }
 }

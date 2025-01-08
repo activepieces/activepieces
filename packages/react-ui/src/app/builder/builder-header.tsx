@@ -1,6 +1,6 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { ChevronDown, History, Home, Logs } from 'lucide-react';
+import { ChevronDown, History, Logs } from 'lucide-react';
 import { useMemo } from 'react';
 import {
   createSearchParams,
@@ -25,6 +25,7 @@ import { UserAvatar } from '@/components/ui/user-avatar';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import {
   ApFlagId,
   FlowVersionState,
@@ -33,6 +34,7 @@ import {
 } from '@activepieces/shared';
 
 import FlowActionMenu from '../components/flow-actions-menu';
+import { determineDefaultRoute } from '../router/default-route';
 
 import { BuilderPublishButton } from './builder-publish-button';
 
@@ -45,7 +47,7 @@ export const BuilderHeader = () => {
   );
   const branding = flagsHooks.useWebsiteBranding();
   const isInRunsPage = useMemo(
-    () => location.pathname.startsWith('/runs'),
+    () => location.pathname.includes('/runs'),
     [location.pathname],
   );
   const hasPermissionToReadRuns = useAuthorization().checkAccess(
@@ -72,25 +74,32 @@ export const BuilderHeader = () => {
   const isLatestVersion =
     flowVersion.state === FlowVersionState.DRAFT ||
     flowVersion.id === flow.publishedVersionId;
-
   const folderName = folderData?.displayName ?? t('Uncategorized');
+  const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
 
   return (
-    <div className="bg-background ">
-      <div className="relative items-left flex h-[70px] w-full p-4 bg-muted/50 border-b">
-        <div className="flex h-full items-center justify-center gap-2">
-          {!embedState.disableNavigationInBuilder && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link to="/flows">
-                  <Button variant="ghost" size={'icon'}>
-                    <Home className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">{t('Home')}</TooltipContent>
-            </Tooltip>
-          )}
+    <div className="bg-background select-none">
+      <div className="relative items-center flex h-[55px] w-full p-4 bg-muted/30">
+        <div className="flex items-center gap-2">
+          {!embedState.hideLogoInBuilder &&
+            !embedState.disableNavigationInBuilder && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link to={defaultRoute}>
+                    <Button variant="ghost" size={'icon'}>
+                      <img
+                        className="h-5 w-5 object-contain"
+                        src={branding.logos.logoIconUrl}
+                        alt={branding.websiteName}
+                      />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {t('Go to Dashboard')}
+                </TooltipContent>
+              </Tooltip>
+            )}
           <span>
             {!embedState.hideFolders && (
               <>
@@ -99,7 +108,10 @@ export const BuilderHeader = () => {
                     <TooltipTrigger
                       onClick={() =>
                         navigate({
-                          pathname: '/flows',
+                          pathname:
+                            authenticationSession.appendProjectRoutePrefix(
+                              '/flows',
+                            ),
                           search: createSearchParams({
                             folderId: folderData?.id ?? 'NULL',
                           }).toString(),
@@ -137,17 +149,8 @@ export const BuilderHeader = () => {
             <ChevronDown className="h-8 w-8" />
           </FlowActionMenu>
         </div>
-        {!embedState.hideLogoInBuilder && (
-          <div className="absolute absolute w-full h-full left-0 top-0 flex items-center justify-center p-4 pointer-events-none">
-            <img
-              className="h-8 object-contain"
-              src={branding.logos.fullLogoUrl}
-              alt={branding.websiteName}
-            ></img>
-          </div>
-        )}
 
-        <div className="grow "></div>
+        <div className="grow"></div>
         <div className="flex items-center justify-center gap-4">
           {showSupport && (
             <Tooltip>

@@ -1,5 +1,7 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class AddPlatformToProject1698065083750 implements MigrationInterface {
     name = 'AddPlatformToProject1698065083750'
@@ -14,7 +16,7 @@ export class AddPlatformToProject1698065083750 implements MigrationInterface {
             ADD "platformId" character varying(21)
         `)
 
-        logger.info('AddPlatformToProject1698065083750 up')
+        log.info('AddPlatformToProject1698065083750 up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -25,6 +27,6 @@ export class AddPlatformToProject1698065083750 implements MigrationInterface {
             ALTER TABLE "project" DROP COLUMN "type"
         `)
 
-        logger.info('AddPlatformToProject1698065083750 down')
+        log.info('AddPlatformToProject1698065083750 down')
     }
 }

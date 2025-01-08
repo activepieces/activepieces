@@ -59,9 +59,6 @@ Setting up HTTPS is highly recommended because many services require webhook URL
 
 To set up SSL, you can use any reverse proxy. For a step-by-step guide, check out our example using [Nginx](./setup-ssl).
 </Accordion>
-<Accordion title="Enable Code AI Copilot (Optional)" icon="robot">
-If you are looking to enable the "ASK AI" feature in the code piece, you need to set the `AP_OPENAI_API_KEY` environment variable to your OpenAI API key.
-</Accordion>
 <Accordion title="Configure S3 (Optional)" icon="cloud">
 Run logs and files are stored in the database by default, but you can switch to S3 later without any migration; for most cases, the database is enough.
 
@@ -78,7 +75,7 @@ Configure the following environment variables:
 - `AP_FILE_STORAGE_LOCATION` (set to `S3`)
 - `AP_S3_USE_SIGNED_URLS`
 <Tip>
-**Friendly Tip #1**: If the S3 bucket is public, you can set `AP_S3_USE_SIGNED_URLS` to `true` to route traffic to S3 directly and avoid heavy traffic on your API server.
+**Friendly Tip #1**: If the S3 bucket supports signed URLs but needs to be accessible over a public network, you can set `AP_S3_USE_SIGNED_URLS` to `true` to route traffic directly to S3 and reduce heavy traffic on your API server.
 </Tip>
 
 </Accordion>

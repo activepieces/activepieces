@@ -16,13 +16,15 @@ export const auditEventModule: FastifyPluginAsyncTypebox = async (app) => {
 const auditEventController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/', ListAuditEventsRequestEndpoint, async (request) => {
-        return auditLogService.list({
+        return auditLogService(request.log).list({
             platformId: request.principal.platform.id,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? 20,
             action: request.query.action ?? undefined,
             projectId: request.query.projectId ?? undefined,
             userId: request.query.userId ?? undefined,
+            createdBefore: request.query.createdBefore ?? undefined,
+            createdAfter: request.query.createdAfter ?? undefined,
         })
     })
 }

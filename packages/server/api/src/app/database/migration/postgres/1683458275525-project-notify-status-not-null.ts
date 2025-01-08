@@ -1,5 +1,7 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class ProjectNotifyStatusNotNull1683458275525
 implements MigrationInterface {
@@ -13,7 +15,7 @@ implements MigrationInterface {
             'ALTER TABLE "project" ALTER COLUMN "notifyStatus" SET NOT NULL',
         )
 
-        logger.info('[ProjectNotifyStatusNotNull1683458275525] up')
+        log.info('[ProjectNotifyStatusNotNull1683458275525] up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -24,6 +26,6 @@ implements MigrationInterface {
             'UPDATE "project" SET "notifyStatus" = NULL WHERE "notifyStatus" = \'ALWAYS\'',
         )
 
-        logger.info('[ProjectNotifyStatusNotNull1683458275525] down')
+        log.info('[ProjectNotifyStatusNotNull1683458275525] down')
     }
 }

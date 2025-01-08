@@ -6,7 +6,6 @@ import { Piece } from '@activepieces/pieces-framework'
 import {
     JobType,
     LATEST_JOB_DATA_SCHEMA_VERSION,
-    logger,
     rejectedPromiseHandler,
 } from '@activepieces/server-shared'
 import {
@@ -21,7 +20,8 @@ import {
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { flowQueue } from '../workers/queue'
+import { webhookSimulationService } from '../webhooks/webhook-simulation/webhook-simulation-service'
+import { jobQueue } from '../workers/queue'
 import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
 import { appEventRoutingService } from './app-event-routing.service'
 
@@ -87,7 +87,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                 payload,
             })
             if (!isNil(reply)) {
-                logger.info(
+                request.log.info(
                     {
                         reply,
                         piece: pieceUrl,
@@ -99,7 +99,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                     .headers(reply?.headers ?? {})
                     .send(reply?.body ?? {})
             }
-            logger.info(
+            request.log.info(
                 {
                     event,
                     identifierValue,
@@ -116,7 +116,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
             })
             const eventsQueue = listeners.map(async (listener) => {
                 const requestId = apId()
-                return flowQueue.add({
+                return jobQueue(request.log).add({
                     id: requestId,
                     type: JobType.WEBHOOK,
                     data: {
@@ -126,13 +126,13 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                         synchronousHandlerId: null,
                         payload,
                         flowId: listener.flowId,
-                        saveSampleData: false,
+                        saveSampleData: await webhookSimulationService(request.log).exists(listener.flowId),
                         flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
                     },
                     priority: DEFAULT_PRIORITY,
                 })
             })
-            rejectedPromiseHandler(Promise.all(eventsQueue))
+            rejectedPromiseHandler(Promise.all(eventsQueue), request.log)
             return requestReply.status(StatusCodes.OK).send({})
         },
     )

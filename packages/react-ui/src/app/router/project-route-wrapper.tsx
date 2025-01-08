@@ -17,9 +17,12 @@ const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
   const { projectId } = useParams<{ projectId: string }>();
   const currentProjectId = authenticationSession.getProjectId();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-
   const { toast } = useToast();
-  const { data: isProjectValid, isError } = useSuspenseQuery<boolean, Error>({
+  const {
+    data: isProjectValid,
+    isError,
+    error,
+  } = useSuspenseQuery<boolean, Error>({
     queryKey: ['switch-to-project', projectId],
     queryFn: async () => {
       if (edition === ApEdition.COMMUNITY) {
@@ -54,11 +57,12 @@ const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
   }
 
   if (!isProjectValid && !isNil(projectId) && projectId !== currentProjectId) {
-    return <Navigate to="/flows" replace />;
+    return <Navigate to={`/projects/${currentProjectId}/flows`} replace />;
   }
 
   if (isError || !isProjectValid) {
-    return <Navigate to="/404" replace />;
+    console.log({ isError, isProjectValid, error });
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

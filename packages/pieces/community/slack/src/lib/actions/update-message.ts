@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../..';
 import { blocks, singleSelectChannelInfo, slackChannel } from '../common/props';
 import { processMessageTimestamp } from '../common/utils';
-import { Block, WebClient } from '@slack/web-api';
+import { Block,KnownBlock, WebClient } from '@slack/web-api';
 
 export const updateMessage = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -32,11 +32,15 @@ export const updateMessage = createAction({
       throw new Error('Invalid Timestamp Value.');
     }
     const client = new WebClient(auth.access_token);
+
+
+    const blockList = propsValue.blocks ?[{ type: 'section', text: { type: 'mrkdwn', text:propsValue.text } }, ...(propsValue.blocks as unknown as (KnownBlock | Block)[])] :undefined
+
     return await client.chat.update({
       channel: propsValue.channel,
       ts: messageTimestamp,
       text: propsValue.text,
-      blocks: propsValue.blocks as unknown as Block[],
+      blocks: blockList,
     });
   },
 });

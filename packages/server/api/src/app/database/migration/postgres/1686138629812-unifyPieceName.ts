@@ -1,5 +1,5 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 const FLOW_VERSION_TABLE = 'flow_version'
 const APP_CONNECTION_TABLE = 'app_connection'
@@ -20,11 +20,13 @@ type Step = {
     nextAction?: Step
 }
 
+const log = system.globalLogger()
+
 export class UnifyPieceName1686138629812 implements MigrationInterface {
     name = 'UnifyPieceName1686138629812'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('UnifyPieceName1686138629812, started')
+        log.info('UnifyPieceName1686138629812, started')
 
         const count = await updateFlowVersions(queryRunner, false)
         const connectionCount = await updateAppConnections(queryRunner, false)
@@ -32,7 +34,7 @@ export class UnifyPieceName1686138629812 implements MigrationInterface {
         const pieceMetadataCount = await updatePieceMetadata(queryRunner, false)
         const triggerEventCount = await updateTriggerEvent(queryRunner, false)
 
-        logger.info(
+        log.info(
             'UnifyPieceName1686138629812, finished renaming ' +
         count +
         ' flows and connections count ' +
@@ -47,7 +49,7 @@ export class UnifyPieceName1686138629812 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        logger.info('UnifyPieceName1686138629812, reverting')
+        log.info('UnifyPieceName1686138629812, reverting')
 
         const count = await updateFlowVersions(queryRunner, true)
         const connectionCount = await updateAppConnections(queryRunner, true)
@@ -55,7 +57,7 @@ export class UnifyPieceName1686138629812 implements MigrationInterface {
         const pieceMetadataCount = await updatePieceMetadata(queryRunner, true)
         const triggerEventCount = await updateTriggerEvent(queryRunner, true)
 
-        logger.info(
+        log.info(
             'UnifyPieceName1686138629812, finished reverting renaming ' +
         count +
         ' flows and connections count ' +

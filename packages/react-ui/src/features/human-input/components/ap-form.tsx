@@ -32,6 +32,7 @@ import {
   FormResponse,
   HumanInputFormResultTypes,
   HumanInputFormResult,
+  createKeyForFormInput,
 } from '@activepieces/shared';
 
 import { Checkbox } from '../../../components/ui/checkbox';
@@ -44,23 +45,6 @@ type ApFormProps = {
 type FormInputWithName = FormInput & {
   name: string;
 };
-/**We do this because react form inputs must not contain quotes */
-export const removeQuotations = (key: string): string => {
-  return key.replaceAll(/[\\"'’\n\r\t]/g, '');
-};
-
-const createKeyForFormInput = (displayName: string, keepQuotes = false) => {
-  const inputKey = displayName
-    .replace(/\s(.)/g, function ($1) {
-      return $1.toUpperCase();
-    })
-    .replace(/\s/g, '')
-    .replace(/^(.)/, function ($1) {
-      return $1.toLowerCase();
-    });
-
-  return keepQuotes ? inputKey : removeQuotations(inputKey);
-};
 
 /**We do this because it was the behaviour in previous versions of Activepieces.*/
 const putBackQuotesForInputNames = (
@@ -68,8 +52,8 @@ const putBackQuotesForInputNames = (
   inputs: FormInputWithName[],
 ) => {
   return inputs.reduce((acc, input) => {
-    acc[createKeyForFormInput(input.displayName, true)] =
-      value[createKeyForFormInput(input.displayName, false)];
+    const key = createKeyForFormInput(input.displayName);
+    acc[key] = value[key];
     return acc;
   }, {} as Record<string, unknown>);
 };
@@ -81,9 +65,15 @@ const requiredPropertySettings = {
 
 const createPropertySchema = (input: FormInputWithName) => {
   const schemaSettings = input.required ? requiredPropertySettings : {};
-  return input.type === FormInputType.TOGGLE
-    ? Type.Boolean(schemaSettings)
-    : Type.String(schemaSettings);
+  switch (input.type) {
+    case FormInputType.TOGGLE:
+      return Type.Boolean(schemaSettings);
+    case FormInputType.TEXT:
+    case FormInputType.TEXT_AREA:
+      return Type.String(schemaSettings);
+    case FormInputType.FILE:
+      return Type.Unknown(schemaSettings);
+  }
 };
 
 function buildSchema(inputs: FormInputWithName[]) {
@@ -116,17 +106,6 @@ const handleDownloadFile = (fileBase: FileResponseInterface) => {
   link.rel = 'noreferrer noopener';
 
   link.click();
-};
-
-const fileToBase64 = (
-  file: File,
-  callback: (result: string | ArrayBuffer | null) => void,
-) => {
-  const reader = new FileReader();
-  reader.readAsDataURL(file);
-  reader.onloadend = () => {
-    callback(reader.result);
-  };
 };
 
 const ApForm = ({ form, useDraft }: ApFormProps) => {
@@ -301,9 +280,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                                         onChange={(e) => {
                                           const file = e.target.files?.[0];
                                           if (file) {
-                                            fileToBase64(file, (result) => {
-                                              field.onChange(result);
-                                            });
+                                            field.onChange(file);
                                           }
                                         }}
                                         placeholder={input.displayName}

@@ -1,14 +1,11 @@
 import dns from 'node:dns/promises'
-import { ApEnvironment } from '@activepieces/shared'
+import os from 'os'
+import { ApEnvironment, isNil } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
-import { system } from './system/system'
-import { AppSystemProp, SharedSystemProp } from './system/system-prop'
 
 const GOOGLE_DNS = '216.239.32.10'
 const PUBLIC_IP_ADDRESS_QUERY = 'o-o.myaddr.l.google.com'
-const CLIENT_REAL_IP_HEADER = system.getOrThrow(
-    AppSystemProp.CLIENT_REAL_IP_HEADER,
-)
+
 
 type IpMetadata = {
     ip: string
@@ -16,52 +13,79 @@ type IpMetadata = {
 
 let ipMetadata: IpMetadata | undefined
 
+const getLocalIp = (): string | null => {
+    const networkInterfaces = os.networkInterfaces()
+    for (const interfaceName of Object.keys(networkInterfaces)) {
+        const networkInterface = networkInterfaces[interfaceName]
+        if (networkInterface) {
+            for (const iface of networkInterface) {
+                if (iface.family === 'IPv4' && !iface.internal) {
+                    return iface.address
+                }
+            }
+        }
+    }
+    return null
+}
+
 const getPublicIp = async (): Promise<IpMetadata> => {
     if (ipMetadata !== undefined) {
         return ipMetadata
     }
 
-    dns.setServers([GOOGLE_DNS])
+    try {
+        dns.setServers([GOOGLE_DNS])
 
-    const ipList = await dns.resolve(PUBLIC_IP_ADDRESS_QUERY, 'TXT')
+        const ipList = await dns.resolve(PUBLIC_IP_ADDRESS_QUERY, 'TXT')
 
-    ipMetadata = {
-        ip: ipList[0][0],
+        ipMetadata = {
+            ip: ipList[0][0],
+        }
+
+        return ipMetadata
+    }
+    catch (error) {
+        const localIp = getLocalIp()
+        if (localIp) {
+            ipMetadata = {
+                ip: localIp,
+            }
+            return ipMetadata
+        }
+        throw error
+    }
+}
+
+const getPublicUrl = async (environment: ApEnvironment, frontendUrl: string): Promise<string> => {
+    let url = frontendUrl
+
+    if (extractHostname(url) === 'localhost' && environment === ApEnvironment.PRODUCTION) {
+        url = `http://${(await networkUtls.getPublicIp()).ip}`
     }
 
-    return ipMetadata
+    return appendSlashAndApi(url)
 }
 
 
-const extractClientRealIp = (request: FastifyRequest): string => {
-    return request.headers[CLIENT_REAL_IP_HEADER] as string
+const extractClientRealIp = (request: FastifyRequest, clientIpHeader: string | undefined): string => {
+    if (isNil(clientIpHeader)) {
+        return request.ip
+    }
+    return request.headers[clientIpHeader] as string
+}
+
+
+
+export const networkUtls = {
+    extractClientRealIp,
+    getPublicIp,
+    getPublicUrl,
 }
 
 const appendSlashAndApi = (url: string): string => {
     const slash = url.endsWith('/') ? '' : '/'
     return `${url}${slash}api/`
 }
-
-const getInternalApiUrl = (): string => {
-    if (system.isApp()) {
-        return 'http://127.0.0.1:3000/'
-    }
-    const url = system.getOrThrow(SharedSystemProp.FRONTEND_URL)
-    return appendSlashAndApi(url)
-}
-
-const getPublicUrl = async (): Promise<string> => {
-    const environment = system.getOrThrow<ApEnvironment>(SharedSystemProp.ENVIRONMENT)
-    let url = system.getOrThrow(SharedSystemProp.FRONTEND_URL)
-    
-    if (extractHostname(url) === 'localhost' && environment === ApEnvironment.PRODUCTION) {
-        url = `http://${(await getPublicIp()).ip}`
-    }
-
-    return appendSlashAndApi(url)
-}
-
-
 
 function extractHostname(url: string): string | null {
     try {
@@ -71,11 +95,4 @@ function extractHostname(url: string): string | null {
     catch (e) {
         return null
     }
-}
-
-export const networkUtls = {
-    getPublicUrl,
-    extractClientRealIp,
-    getInternalApiUrl,
-    getPublicIp,
 }

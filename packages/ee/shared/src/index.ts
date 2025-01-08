@@ -6,7 +6,6 @@ export * from './lib/api-key';
 export * from './lib/billing';
 export * from './lib/project/project-requests';
 export * from './lib/custom-domains';
-export * from './lib/referral/referral';
 export * from './lib/project-members/project-member-request';
 export * from './lib/project-members/project-member';
 export * from './lib/flow-templates';
@@ -19,3 +18,4 @@ export * from './lib/otp'
 export * from './lib/authn'
 export * from './lib/issues'
 export * from './lib/alerts'
+export * from './lib/platform-billing'

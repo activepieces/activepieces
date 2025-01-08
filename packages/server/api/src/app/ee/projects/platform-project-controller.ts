@@ -41,20 +41,21 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
         })
         await projectLimitsService.upsert(DEFAULT_PLATFORM_LIMIT, project.id)
         const projectWithUsage =
-            await platformProjectService.getWithPlanAndUsageOrThrow(project.id)
+            await platformProjectService(request.log).getWithPlanAndUsageOrThrow(project.id)
         await reply.status(StatusCodes.CREATED).send(projectWithUsage)
     })
 
     app.get('/', ListProjectRequestForApiKey, async (request) => {
         const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
-        return platformProjectService.getAll({
-            externalId: request.query.externalId,
-            principalType: request.principal.type,
-            principalId: request.principal.id,
+        
+        const userId = await getUserId(request.principal)
+        return platformProjectService(request.log).getAllForPlatform({
             platformId: request.principal.platform.id,
+            externalId: request.query.externalId,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_LIMIT_SIZE,
+            userId,
         })
     })
 
@@ -68,10 +69,13 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
                 params: {},
             })
         }
-        return platformProjectService.update({
+        return platformProjectService(request.log).update({
             platformId: request.principal.platform.id,
             projectId: request.params.id,
-            request: request.body,
+            request: {
+                ...request.body,
+                externalId: ownThePlatform ? request.body.externalId : undefined,
+            },
         })
     })
 
@@ -79,13 +83,24 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
         await platformMustBeOwnedByCurrentUser.call(app, req, res)
         assertProjectToDeleteIsNotPrincipalProject(req.principal, req.params.id)
 
-        await platformProjectService.softDelete({
+        await platformProjectService(req.log).softDelete({
             id: req.params.id,
             platformId: req.principal.platform.id,
         })
 
         return res.status(StatusCodes.NO_CONTENT).send()
     })
+}
+
+async function getUserId(principal: Principal): Promise<string> {
+    if (principal.type === PrincipalType.SERVICE) {
+        const platform = await platformService.getOneOrThrow(principal.platform.id)
+        const user = await userService.getOneOrFail({
+            id: platform.ownerId,
+        })
+        return user.id
+    }
+    return principal.id
 }
 
 async function isPlatformAdmin(principal: Principal, platformId: string): Promise<boolean> {
@@ -95,10 +110,9 @@ async function isPlatformAdmin(principal: Principal, platformId: string): Promis
     if (principal.type === PrincipalType.SERVICE) {
         return true
     }
-    const user = await userService.getMetaInfo({
+    const user = await userService.getOneOrFail({
         id: principal.id,
     })
-    assertNotNullOrUndefined(user, 'user can not be null')
     return user.platformRole === PlatformRole.ADMIN
 }
 

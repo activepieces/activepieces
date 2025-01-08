@@ -1,7 +1,9 @@
-import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 import { isNotOneOfTheseEditions } from '../../database-common'
+
+const log = system.globalLogger()
 
 export class AddSlugToGitRepo1709151540095 implements MigrationInterface {
     name = 'AddSlugToGitRepo1709151540095'
@@ -25,7 +27,7 @@ export class AddSlugToGitRepo1709151540095 implements MigrationInterface {
             ALTER COLUMN "slug" SET NOT NULL
         `)
 
-        logger.info({ name: this.name }, 'up')
+        log.info({ name: this.name }, 'up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -36,7 +38,7 @@ export class AddSlugToGitRepo1709151540095 implements MigrationInterface {
             ALTER TABLE "git_repo" DROP COLUMN "slug"
         `)
 
-        logger.info({ name: this.name }, 'down')
+        log.info({ name: this.name }, 'down')
     }
 
 }

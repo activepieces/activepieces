@@ -1,13 +1,15 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class AddScheduleOptions1687384796637 implements MigrationInterface {
     name = 'AddScheduleOptions1687384796637'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('Running AddScheduleOptions1687384796637 migration up')
+        log.info('Running AddScheduleOptions1687384796637 migration up')
         await queryRunner.query('ALTER TABLE "flow_instance" ADD "schedule" jsonb')
-        logger.info('Running AddScheduleOptions1687384796637 migration done')
+        log.info('Running AddScheduleOptions1687384796637 migration done')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

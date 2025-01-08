@@ -1,12 +1,14 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class AddProjectIdToPieceMetadata1686090319016
 implements MigrationInterface {
     name = 'AddProjectIdToPieceMetadata1686090319016'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('[AddProjectIdToPieceMetadata1686090319016] up')
+        log.info('[AddProjectIdToPieceMetadata1686090319016] up')
         await queryRunner.query(
             'DROP INDEX "idx_piece_metadata_name_version"',
         )
@@ -19,7 +21,7 @@ implements MigrationInterface {
         await queryRunner.query(
             'ALTER TABLE "piece_metadata" ADD CONSTRAINT "fk_piece_metadata_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION',
         )
-        logger.info('[AddProjectIdToPieceMetadata1686090319016] finished')
+        log.info('[AddProjectIdToPieceMetadata1686090319016] finished')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

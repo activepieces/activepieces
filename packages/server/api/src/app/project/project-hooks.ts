@@ -1,22 +1,12 @@
 import { Project } from '@activepieces/shared'
+import { hooksFactory } from '../helper/hooks-factory'
 
 export type ProjectHooks = {
     postCreate(project: Project): Promise<void>
 }
 
-const emptyHooks: ProjectHooks = {
-    async postCreate() {
-        // DO NOTHING
+export const projectHooks = hooksFactory.create<ProjectHooks>(_log => ({
+    postCreate: async (_project: Project) => {
+        return
     },
-}
-
-let hooks = emptyHooks
-
-export const projectHooks = {
-    setHooks(newHooks: ProjectHooks) {
-        hooks = newHooks
-    },
-    getHooks() {
-        return hooks
-    },
-}
+}))

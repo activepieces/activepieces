@@ -29,6 +29,7 @@ export const FormResponse = Type.Object({
     title: Type.String(),
     props: FormProps,
     projectId: Type.String(),
+    version: Type.String(),
 })
 
 export type FormResponse = Static<typeof FormResponse>

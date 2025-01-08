@@ -12,7 +12,10 @@ import {
     PieceType,
     ProjectId,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import {
     PieceMetadataSchema,
 } from '../piece-metadata-entity'
@@ -21,12 +24,13 @@ import { PieceMetadataService } from './piece-metadata-service'
 import { toPieceMetadataModelSummary } from '.'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
-    const pieces = await filePiecesUtils.findAllPieces()
+    const packages = system.getOrThrow(AppSystemProp.DEV_PIECES)?.split(',')
+    const pieces = await filePiecesUtils(packages, system.globalLogger()).findAllPieces()
     return pieces.sort((a, b) =>
         a.displayName.toUpperCase().localeCompare(b.displayName.toUpperCase()),
     )
 }
-export const FilePieceMetadataService = (): PieceMetadataService => {
+export const FilePieceMetadataService = (_log: FastifyBaseLogger): PieceMetadataService => {
     return {
         async list(params): Promise<PieceMetadataModelSummary[]> {
             const { projectId } = params

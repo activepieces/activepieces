@@ -12,7 +12,7 @@ export const replyFromUser = createTrigger({
   description:
     'Triggers when a reply is received from a user or lead (not an admin)',
   props: {},
-  sampleData: {},
+  sampleData: undefined,
   auth: intercomAuth,
   type: TriggerStrategy.APP_WEBHOOK,
   async onEnable(context) {

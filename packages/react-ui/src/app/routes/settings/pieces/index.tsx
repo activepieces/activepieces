@@ -1,19 +1,19 @@
-import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Trash } from 'lucide-react';
-import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
+import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { InstallPieceDialog } from '@/features/pieces/components/install-piece-dialog';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
-import { flagsHooks } from '@/hooks/flags-hooks';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { ApFlagId, isNil, PieceScope, PieceType } from '@activepieces/shared';
+import { isNil, PieceType } from '@activepieces/shared';
 
 import { TableTitle } from '../../../../components/ui/table-title';
 
@@ -101,71 +101,55 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
 ];
 
 const ProjectPiecesPage = () => {
-  const { data: installPiecesEnabled } = flagsHooks.useFlag<boolean>(
-    ApFlagId.INSTALL_PROJECT_PIECES_ENABLED,
-  );
-
-  const { data: managedPiecesEnabled } = flagsHooks.useFlag<boolean>(
-    ApFlagId.MANAGE_PROJECT_PIECES_ENABLED,
-  );
-
-  const [searchQuery, setSearchQuery] = useState('');
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['pieces', searchQuery],
-    gcTime: 0,
-    staleTime: 0,
-    queryFn: async () => {
-      const pieces = await piecesApi.list({
-        includeHidden: false,
-        searchQuery: searchQuery,
-      });
-      return {
-        data: pieces,
-        next: null,
-        previous: null,
-      };
-    },
+  const { platform } = platformHooks.useCurrentPlatform();
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('name') ?? '';
+  const { pieces, isLoading, refetch } = piecesHooks.usePieces({
+    searchQuery,
   });
 
   return (
-    <div className="flex w-full flex-col items-center justify-center gap-4">
-      <div className="mx-auto w-full flex-col">
-        <div className="mb-4 flex">
-          <TableTitle>{t('Pieces')}</TableTitle>
-          <div className="ml-auto">
-            {installPiecesEnabled && (
-              <InstallPieceDialog
-                onInstallPiece={() => refetch()}
-                scope={PieceScope.PROJECT}
-              />
+    <LockedFeatureGuard
+      featureKey="PIECES"
+      locked={!platform.managePiecesEnabled}
+      lockTitle={t('Control Pieces')}
+      lockDescription={t(
+        "Show the pieces that matter most to your users and hide the ones that you don't like",
+      )}
+      lockVideoUrl="https://cdn.activepieces.com/videos/showcase/pieces.mp4"
+    >
+      <div className="flex w-full flex-col items-center justify-center gap-4">
+        <div className="mx-auto w-full flex-col">
+          <div className="mb-4 flex">
+            <TableTitle>{t('Pieces')}</TableTitle>
+          </div>
+          <div className="flex justify-end">
+            {platform.managePiecesEnabled && (
+              <ManagePiecesDialog onSuccess={() => refetch()} />
             )}
           </div>
+          <DataTable
+            columns={columns}
+            filters={[
+              {
+                type: 'input',
+                title: t('Piece Name'),
+                accessorKey: 'name',
+                options: [],
+                icon: CheckIcon,
+              } as const,
+            ]}
+            page={{
+              data: pieces ?? [],
+              next: null,
+              previous: null,
+            }}
+            isLoading={isLoading}
+            hidePagination={true}
+          />
         </div>
-        <div className="flex justify-end">
-          {managedPiecesEnabled && (
-            <ManagePiecesDialog onSuccess={() => refetch()} />
-          )}
-        </div>
-        <DataTable
-          columns={columns}
-          filters={[
-            {
-              type: 'input',
-              title: t('Piece Name'),
-              accessorKey: 'name',
-              options: [],
-              icon: CheckIcon,
-              handleFilterChange: (filterValue: string) => {
-                setSearchQuery(filterValue);
-              },
-            } as const,
-          ]}
-          page={data}
-          isLoading={isLoading}
-          hidePagination={true}
-        />
       </div>
-    </div>
+    </LockedFeatureGuard>
   );
 };
 

@@ -1,7 +1,9 @@
-import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 import { isNotOneOfTheseEditions } from '../../database-common'
+
+const log = system.globalLogger()
 
 export class MigrateWebhookTemplate1709581196564 implements MigrationInterface {
     name = 'MigrateWebhookTemplate1709581196564'
@@ -10,7 +12,7 @@ export class MigrateWebhookTemplate1709581196564 implements MigrationInterface {
         if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
             return
         }
-        logger.info('MigrateWebhookTemplate1709581196564, started')
+        log.info('MigrateWebhookTemplate1709581196564, started')
 
         let count = 0
         const flowVersionsIds = await queryRunner.query('SELECT id FROM flow_template')
@@ -40,14 +42,14 @@ export class MigrateWebhookTemplate1709581196564 implements MigrationInterface {
                 )
             }
         }
-        logger.info('MigrateWebhookTemplate1709581196564, finished flows ' + count)
+        log.info('MigrateWebhookTemplate1709581196564, finished flows ' + count)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
             return
         }
-        logger.info('rolling back MigrateWebhookTemplate1709581196564, started')
+        log.info('rolling back MigrateWebhookTemplate1709581196564, started')
 
         let count = 0
         const flowVersionsIds = await queryRunner.query('SELECT id FROM flow_template')
@@ -74,7 +76,7 @@ export class MigrateWebhookTemplate1709581196564 implements MigrationInterface {
                 }
             }
         }
-        logger.info(
+        log.info(
             'rolling back  MigrateWebhookTemplate1709581196564, finished flows ' + count,
         )
     }

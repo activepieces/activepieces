@@ -364,4 +364,20 @@ describe('flow with branching different  branches', () => {
         })
     })
 
+    it('should skip router', async () => {
+        const result = await flowExecutor.execute({
+            action: buildRouterWithOneCondition({ children: [
+                buildCodeAction({ name: 'echo_step', input: {}, skip: true }),
+            ], conditions: [
+                {
+                    operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                    firstValue: 'test',
+                    secondValue: 'test',
+                    caseSensitive: false,
+                },
+            ], executionType: RouterExecutionType.EXECUTE_FIRST_MATCH, skip: true }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+        })
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
+        expect(result.steps.router).toBeUndefined()
+    })
 })

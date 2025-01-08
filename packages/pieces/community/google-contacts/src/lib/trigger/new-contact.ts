@@ -166,6 +166,7 @@ export const googleContactNewOrUpdatedContact = createTrigger({
       store: ctx.store,
       auth: ctx.auth,
       propsValue: {},
+      files: ctx.files,
     });
   },
   test: async (ctx) => {
@@ -173,6 +174,7 @@ export const googleContactNewOrUpdatedContact = createTrigger({
       store: ctx.store,
       auth: ctx.auth,
       propsValue: {},
+      files: ctx.files,
     });
   },
 });

@@ -2,6 +2,7 @@ import {
   PieceAuth,
   Property,
   createPiece,
+  OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createNewObject } from './lib/action/create-new-object';
@@ -11,6 +12,8 @@ import { upsertByExternalId } from './lib/action/upsert-by-external-id';
 import { upsertByExternalIdBulk } from './lib/action/upsert-by-external-id-bulk';
 import { newRecord } from './lib/trigger/new-record';
 import { newOrUpdatedRecord } from './lib/trigger/new-updated-record';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { ntfyAuth } from '@activepieces/piece-ntfy';
 
 export const salesforceAuth = PieceAuth.OAuth2({
   props: {
@@ -47,7 +50,14 @@ export const salesforce = createPiece({
 
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/salesforce.png',
-  authors: ["HKudria","tanoggy","landonmoir","kishanprmr","khaledmashaly","abuaboud"],
+  authors: [
+    'HKudria',
+    'tanoggy',
+    'landonmoir',
+    'kishanprmr',
+    'khaledmashaly',
+    'abuaboud',
+  ],
   categories: [PieceCategory.SALES_AND_CRM],
   auth: salesforceAuth,
   actions: [
@@ -56,6 +66,13 @@ export const salesforce = createPiece({
     UpdateObjectById,
     upsertByExternalId,
     upsertByExternalIdBulk,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as OAuth2PropertyValue).data['instance_url'],
+      auth: salesforceAuth,
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+      }),
+    }),
   ],
   triggers: [newRecord, newOrUpdatedRecord],
 });

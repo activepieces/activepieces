@@ -1,11 +1,12 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 
 export class MigrateConnectionNamesSqlite1731443310900 implements MigrationInterface {
     name = 'MigrateConnectionNamesSqlite1731443310900'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info({
+        const log = system.globalLogger()
+        log.info({
             name: this.name,
         }, 'up')
         await queryRunner.query(`
@@ -85,7 +86,8 @@ export class MigrateConnectionNamesSqlite1731443310900 implements MigrationInter
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        logger.info({
+        const log = system.globalLogger()
+        log.info({
             name: this.name,
         }, 'down')
         await queryRunner.query(`

@@ -17,7 +17,7 @@ export const pipedriveAuth = PieceAuth.OAuth2({
   authUrl: 'https://oauth.pipedrive.com/oauth/authorize',
   tokenUrl: 'https://oauth.pipedrive.com/oauth/token',
   required: true,
-  scope: ['admin', 'contacts:full', 'users:read'],
+  scope: ['admin', 'contacts:full', 'users:read','deals:full','activities:full'],
 });
 
 export const pipedrive = createPiece({

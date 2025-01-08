@@ -1,7 +1,9 @@
-import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 import { isNotOneOfTheseEditions } from '../../database-common'
+
+const log = system.globalLogger()
 
 export class CascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669 implements MigrationInterface {
     name = 'CascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669'
@@ -30,7 +32,7 @@ export class CascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669 imp
         `)
 
 
-        logger.info({ name: this.name }, 'up')
+        log.info({ name: this.name }, 'up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -51,6 +53,6 @@ export class CascadeProjectDeleteAppCredentialsAndConnectionKey1710720610669 imp
             ALTER TABLE "connection_key" DROP CONSTRAINT "FK_03177dc6779e6e147866d43c050"
         `)
 
-        logger.info({ name: this.name }, 'down')
+        log.info({ name: this.name }, 'down')
     }
 }

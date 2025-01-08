@@ -1,11 +1,13 @@
-import { logger } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const log = system.globalLogger()
 
 export class initializeSchema1676238396411 implements MigrationInterface {
     name = 'initializeSchema1676238396411'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        logger.info('initializeSchema1676238396411: started')
+        log.info('initializeSchema1676238396411: started')
 
         const userTableExistsQueryResponse: { exists: boolean }[] =
       await queryRunner.query(
@@ -22,7 +24,7 @@ export class initializeSchema1676238396411 implements MigrationInterface {
       userTableExistsQueryResponse[0].exists
 
         if (userTableExists) {
-            logger.info('initializeSchema1676238396411: skipped')
+            log.info('initializeSchema1676238396411: skipped')
             return
         }
 
@@ -135,7 +137,7 @@ export class initializeSchema1676238396411 implements MigrationInterface {
             'ALTER TABLE "app_connection" ADD CONSTRAINT "fk_app_connection_app_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION',
         )
 
-        logger.info('initializeSchema1676238396411: completed')
+        log.info('initializeSchema1676238396411: completed')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

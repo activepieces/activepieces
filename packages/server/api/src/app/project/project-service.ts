@@ -1,5 +1,6 @@
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, apId,
+import {
+    ActivepiecesError,
+    apId,
     ApId,
     assertNotNullOrUndefined,
     ErrorCode,
@@ -9,14 +10,15 @@ import { ActivepiecesError, apId,
     Project,
     ProjectId,
     spreadIfDefined,
-    User,
     UserId,
 } from '@activepieces/shared'
-import { IsNull } from 'typeorm'
+import { FindOptionsWhere, In, IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { projectMemberService } from '../ee/project-members/project-member.service'
+import { system } from '../helper/system/system'
+import { userService } from '../user/user-service'
 import { ProjectEntity } from './project-entity'
 import { projectHooks } from './project-hooks'
-
 export const projectRepo = repoFactory(ProjectEntity)
 
 export const projectService = {
@@ -25,10 +27,18 @@ export const projectService = {
             id: apId(),
             ...params,
             notifyStatus: NotificationStatus.ALWAYS,
+            releasesEnabled: false,
         }
         const savedProject = await projectRepo().save(newProject)
-        rejectedPromiseHandler(projectHooks.getHooks().postCreate(savedProject))
+        await projectHooks.get(system.globalLogger()).postCreate(savedProject)
         return savedProject
+    },
+    async getOneByOwnerAndPlatform(params: GetOneByOwnerAndPlatformParams): Promise<Project | null> {
+        return projectRepo().findOneBy({
+            ownerId: params.ownerId,
+            platformId: params.platformId,
+            deleted: IsNull(),
+        })
     },
 
     async getOne(projectId: ProjectId | undefined): Promise<Project | null> {
@@ -43,25 +53,31 @@ export const projectService = {
     },
 
     async update(projectId: ProjectId, request: UpdateParams): Promise<Project> {
+        await assertExternalIdIsUnique(request.externalId, projectId)
+
         await projectRepo().update(
             {
                 id: projectId,
                 deleted: IsNull(),
             },
             {
+                ...spreadIfDefined('externalId', request.externalId),
                 ...spreadIfDefined('displayName', request.displayName),
                 ...spreadIfDefined('notifyStatus', request.notifyStatus),
+                ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
             },
         )
         return this.getOneOrThrow(projectId)
     },
 
     async getPlatformId(projectId: ProjectId): Promise<string> {
-        const result =  await projectRepo().createQueryBuilder('project').select('"platformId"').where({
+        const result = await projectRepo().createQueryBuilder('project').select('"platformId"').where({
             id: projectId,
         }).getRawOne()
         const platformId = result?.platformId
-        assertNotNullOrUndefined(platformId, 'platformId for project is undefined in webhook')
+        if (isNil(platformId)) {
+            throw new Error(`Platform ID for project ${projectId} is undefined in webhook.`)
+        }
         return platformId
     },
     async getOneOrThrow(projectId: ProjectId): Promise<Project> {
@@ -79,45 +95,56 @@ export const projectService = {
 
         return project
     },
-
-    async getOneForUser(user: User): Promise<Project | null> {
-        assertNotNullOrUndefined(user.platformId, 'user.platformId')
-        switch (user.platformRole) {
-            case PlatformRole.ADMIN: {
-                return projectRepo().findOneBy({
-                    platformId: user.platformId,
-                    deleted: IsNull(),
-                })
-            }
-            case PlatformRole.MEMBER: {
-                return projectRepo().findOneBy({
-                    ownerId: user.id,
-                    platformId: user.platformId,
-                    deleted: IsNull(),
-                })
-            }
-        }
-    },
-
-    async getUserProjectOrThrow(ownerId: UserId): Promise<Project> {
-        const project = await projectRepo().findOneBy({
-            ownerId,
-            deleted: IsNull(),
+    async getUserProjectOrThrow(userId: UserId): Promise<Project> {
+        const user = await userService.getOneOrFail({ id: userId })
+        assertNotNullOrUndefined(user.platformId, 'platformId is undefined')
+        const projects = await this.getAllForUser({
+            platformId: user.platformId,
+            userId,
         })
-
-        if (isNil(project)) {
+        if (isNil(projects) || projects.length === 0) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
+                    entityId: userId,
                     entityType: 'project',
-                    message: `userId=${ownerId}`,
                 },
             })
         }
-
-        return project
+        return projects[0]
     },
 
+    async getAllForUser(params: GetAllForUserParams): Promise<Project[]> {
+        assertNotNullOrUndefined(params.platformId, 'platformId is undefined')
+        const filters: FindOptionsWhere<Project>[] = []
+        const projectIds = await projectMemberService(system.globalLogger()).getIdsOfProjects({
+            platformId: params.platformId,
+            userId: params.userId,
+        })
+        const user = await userService.getOneOrFail({ id: params.userId })
+        switch (user.platformRole) {
+            case PlatformRole.ADMIN:
+                filters.push({
+                    platformId: params.platformId,
+                    deleted: IsNull(),
+                })
+                break
+            case PlatformRole.MEMBER:
+                filters.push({
+                    ownerId: params.userId,
+                    platformId: params.platformId,
+                    deleted: IsNull(),
+                })
+                break
+        }
+        if (!isNil(projectIds)) {
+            filters.push({
+                id: In(projectIds),
+                deleted: IsNull(),
+            })
+        }
+        return projectRepo().findBy(filters)
+    },
     async addProjectToPlatform({ projectId, platformId }: AddProjectToPlatformParams): Promise<void> {
         const query = {
             id: projectId,
@@ -143,9 +170,42 @@ export const projectService = {
     },
 }
 
+
+async function assertExternalIdIsUnique(externalId: string | undefined, projectId: ProjectId): Promise<void> {
+    if (!isNil(externalId)) {
+        const externalIdAlreadyExists = await projectRepo().existsBy({
+            id: Not(projectId),
+            externalId,
+            deleted: IsNull(),
+        })
+
+        if (externalIdAlreadyExists) {
+            throw new ActivepiecesError({
+                code: ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS,
+                params: {
+                    externalId,
+                },
+            })
+        }
+    }
+}
+
+type GetAllForUserParams = {
+    platformId: string
+    userId: string
+}
+
+type GetOneByOwnerAndPlatformParams = {
+    ownerId: UserId
+    platformId: string
+}
+
+
 type UpdateParams = {
     displayName?: string
+    externalId?: string
     notifyStatus?: NotificationStatus
+    releasesEnabled?: boolean
 }
 
 type CreateParams = {

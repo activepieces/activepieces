@@ -1,4 +1,3 @@
-import { logger } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -22,7 +21,7 @@ export function extractResourceName(url: string): string | undefined {
 export const entitiesMustBeOwnedByCurrentProject: preSerializationHookHandler<
 Payload | null
 > = (request, _response, payload, done) => {
-    logger.trace(
+    request.log.trace(
         { payload, principal: request.principal, route: request.routeConfig },
         'entitiesMustBeOwnedByCurrentProject',
     )

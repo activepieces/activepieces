@@ -4,6 +4,18 @@ import { flowStructureUtil, FlowVersion } from '@activepieces/shared';
 
 import { sampleDataApi } from './sample-data-api';
 
+const getSampleData = async (flowVersion: FlowVersion, stepName: string) => {
+  try {
+    return await sampleDataApi.get({
+      flowId: flowVersion!.flowId,
+      flowVersionId: flowVersion!.id,
+      stepName: stepName,
+    });
+  } catch (error) {
+    console.error(error);
+    return undefined;
+  }
+};
 export const sampleDataHooks = {
   useSampleDataForFlow: (flowVersion: FlowVersion | undefined) => {
     return useQuery({
@@ -17,11 +29,7 @@ export const sampleDataHooks = {
         const singleStepSampleData = await Promise.all(
           steps.map(async (step) => {
             return {
-              [step.name]: await sampleDataApi.get({
-                flowId: flowVersion!.flowId,
-                flowVersionId: flowVersion!.id,
-                stepName: step.name,
-              }),
+              [step.name]: await getSampleData(flowVersion!, step.name),
             };
           }),
         );

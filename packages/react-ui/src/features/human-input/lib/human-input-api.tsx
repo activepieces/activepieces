@@ -1,3 +1,5 @@
+import semVer from 'semver';
+
 import { api } from '@/lib/api';
 import {
   ChatUIResponse,
@@ -17,11 +19,26 @@ export const humanInputApi = {
       [USE_DRAFT_QUERY_PARAM_NAME]: useDraft ?? false,
     });
   },
-  submitForm: (formResult: FormResponse, useDraft: boolean, data: unknown) => {
+  submitForm: async (
+    formResult: FormResponse,
+    useDraft: boolean,
+    data: unknown,
+  ) => {
+    const processedData = await processData(
+      data as Record<string, unknown>,
+      formResult,
+    );
     const suffix = getSuffix(useDraft, formResult.props.waitForResponse);
     return api.post<HumanInputFormResult | null>(
       `/v1/webhooks/${formResult.id}${suffix}`,
-      data,
+      processedData,
+      undefined,
+      {
+        'Content-Type':
+          processedData instanceof FormData
+            ? 'multipart/form-data'
+            : 'application/json',
+      },
     );
   },
   sendMessage: async ({
@@ -48,6 +65,42 @@ export const humanInputApi = {
     );
   },
 };
+
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onloadend = () => {
+      if (reader.result) {
+        resolve(reader.result as string);
+      } else {
+        reject(new Error('Failed to read file'));
+      }
+    };
+    reader.onerror = () => {
+      reject(reader.error);
+    };
+  });
+};
+
+async function processData(
+  data: Record<string, unknown>,
+  formResult: FormResponse,
+) {
+  const useFormData = semVer.gte(formResult.version, '0.4.1');
+  const formData = new FormData();
+  const processedData: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(data)) {
+    if (useFormData) {
+      formData.append(key, value instanceof File ? value : String(value));
+    } else {
+      processedData[key] =
+        value instanceof File ? await fileToBase64(value) : value;
+    }
+  }
+  return useFormData ? formData : processedData;
+}
 
 function getSuffix(useDraft: boolean, waitForResponse: boolean): string {
   if (useDraft) {

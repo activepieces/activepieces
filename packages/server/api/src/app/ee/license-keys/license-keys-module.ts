@@ -9,8 +9,29 @@ import { licenseKeysController } from './license-keys-controller'
 import { licenseKeysService } from './license-keys-service'
 
 export const licenseKeysModule: FastifyPluginAsyncTypebox = async (app) => {
-    systemJobHandlers.registerJobHandler(SystemJobName.TRIAL_TRACKER, licenseKeyJobHandler)
-    await systemJobsSchedule.upsertJob({
+    systemJobHandlers.registerJobHandler(SystemJobName.TRIAL_TRACKER, async () => {
+        const platforms = await platformService.getAll()
+        for (const platform of platforms) {
+            if (isNil(platform.licenseKey) || isEmpty(platform.licenseKey)) {
+                continue
+            }
+            try {
+                const key = await licenseKeysService(app.log).verifyKeyOrReturnNull({
+                    platformId: platform.id,
+                    license: platform.licenseKey,
+                })
+                if (isNil(key)) {
+                    await licenseKeysService(app.log).downgradeToFreePlan(platform.id)
+                    continue
+                }
+                await licenseKeysService(app.log).applyLimits(platform.id, key)
+            }
+            catch (e) {
+                exceptionHandler.handle(e, app.log)
+            }
+        }
+    })
+    await systemJobsSchedule(app.log).upsertJob({
         job: {
             name: SystemJobName.TRIAL_TRACKER,
             data: {},
@@ -21,27 +42,4 @@ export const licenseKeysModule: FastifyPluginAsyncTypebox = async (app) => {
         },
     })
     await app.register(licenseKeysController, { prefix: '/v1/license-keys' })
-}
-
-async function licenseKeyJobHandler(): Promise<void> {
-    const platforms = await platformService.getAll()
-    for (const platform of platforms) {
-        if (isNil(platform.licenseKey) || isEmpty(platform.licenseKey)) {
-            continue
-        }
-        try {
-            const key = await licenseKeysService.verifyKeyOrReturnNull({
-                platformId: platform.id,
-                license: platform.licenseKey,
-            })
-            if (isNil(key)) {
-                await licenseKeysService.downgradeToFreePlan(platform.id)
-                continue
-            }
-            await licenseKeysService.applyLimits(platform.id, key)
-        }
-        catch (e) {
-            exceptionHandler.handle(e)
-        }
-    }
 }

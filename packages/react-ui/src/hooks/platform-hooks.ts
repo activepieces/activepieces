@@ -11,6 +11,10 @@ export const platformHooks = {
       staleTime: Infinity,
     });
   },
+  isCopilotEnabled: () => {
+    const { platform } = platformHooks.useCurrentPlatform();
+    return Object.keys(platform?.copilotSettings?.providers ?? {}).length > 0;
+  },
   useCurrentPlatform: () => {
     const query = useSuspenseQuery({
       queryKey: ['platform'],

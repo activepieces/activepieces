@@ -1,12 +1,16 @@
-import { exceptionHandler, JobType, logger, QueueName } from '@activepieces/server-shared'
+import { exceptionHandler, JobType, QueueName } from '@activepieces/server-shared'
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
 import { DefaultJobOptions, Queue } from 'bullmq'
+import { FastifyBaseLogger } from 'fastify'
 import { createRedisClient } from '../../database/redis-connection'
+import { apDayjsDuration } from '../../helper/dayjs-helper'
 import { AddParams, JOB_PRIORITY, QueueManager } from '../queue/queue-manager'
 import { redisMigrations } from './redis-migration'
 import { redisRateLimiter } from './redis-rate-limiter'
 
-const EIGHT_MINUTES_IN_MILLISECONDS = 8 * 60 * 1000
+const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
+const ONE_MONTH = apDayjsDuration(1, 'month').asMilliseconds()
+
 const defaultJobOptions: DefaultJobOptions = {
     attempts: 5,
     backoff: {
@@ -14,6 +18,9 @@ const defaultJobOptions: DefaultJobOptions = {
         delay: EIGHT_MINUTES_IN_MILLISECONDS,
     },
     removeOnComplete: true,
+    removeOnFail: {
+        age: ONE_MONTH,
+    },
 }
 const repeatingJobKey = (id: ApId): string => `activepieces:repeatJobKey:${id}`
 
@@ -24,22 +31,33 @@ const jobTypeToQueueName: Record<JobType, QueueName> = {
     [JobType.ONE_TIME]: QueueName.ONE_TIME,
     [JobType.REPEATING]: QueueName.SCHEDULED,
     [JobType.WEBHOOK]: QueueName.WEBHOOK,
+    [JobType.USERS_INTERACTION]: QueueName.USERS_INTERACTION,
 }
 
-export const redisQueue: QueueManager = {
+const jobTypeToDefaultJobOptions: Record<QueueName, DefaultJobOptions> = {
+    [QueueName.SCHEDULED]: defaultJobOptions,
+    [QueueName.ONE_TIME]: defaultJobOptions,
+    [QueueName.USERS_INTERACTION]: {
+        ...defaultJobOptions,
+        attempts: 1,
+    },
+    [QueueName.WEBHOOK]: defaultJobOptions,
+}
+
+export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
     async init(): Promise<void> {
-        await redisRateLimiter.init()
+        await redisRateLimiter(log).init()
         const queues = Object.values(QueueName).map((queueName) => ensureQueueExists(queueName))
         await Promise.all(queues)
-        await redisMigrations.run()
-        logger.info('[redisQueueManager#init] Redis queues initialized')
+        await redisMigrations(log).run()
+        log.info('[redisQueueManager#init] Redis queues initialized')
     },
-    async add(params): Promise<void> {
+    async add(params: AddParams<JobType>): Promise<void> {
         const { type, data } = params
-        const { shouldRateLimit } = await redisRateLimiter.shouldBeLimited(jobTypeToQueueName[type], data.projectId, params.id)
+        const { shouldRateLimit } = await redisRateLimiter(log).shouldBeLimited(jobTypeToQueueName[type], data.projectId, params.id)
 
         if (shouldRateLimit) {
-            await redisRateLimiter.rateLimitJob(params)
+            await redisRateLimiter(log).rateLimitJob(params)
             return
         }
 
@@ -57,6 +75,11 @@ export const redisQueue: QueueManager = {
                 await addJobWithPriority(queue, params)
                 break
             }
+            case JobType.USERS_INTERACTION: {
+                const queue = await ensureQueueExists(QueueName.USERS_INTERACTION)
+                await addUserInteractionJob(queue, params)
+                break
+            }
             case JobType.WEBHOOK: {
                 const queue = await ensureQueueExists(QueueName.WEBHOOK)
                 await addJobWithPriority(queue, params)
@@ -64,15 +87,15 @@ export const redisQueue: QueueManager = {
             }
         }
     },
-    async removeRepeatingJob({ flowVersionId }): Promise<void> {
+    async removeRepeatingJob({ flowVersionId }: { flowVersionId: ApId }): Promise<void> {
         const queue = await ensureQueueExists(QueueName.SCHEDULED)
         const client = await queue.client
-        const repeatJob = await findRepeatableJobKey(flowVersionId)
+        const repeatJob = await findRepeatableJobKey(flowVersionId, log)
         if (isNil(repeatJob)) {
-            exceptionHandler.handle(new Error(`Couldn't find job key for flow version id "${flowVersionId}"`))
+            exceptionHandler.handle(new Error(`Couldn't find job key for flow version id "${flowVersionId}"`), log)
             return
         }
-        logger.info({
+        log.info({
             flowVersionId,
         }, '[redisQueue#removeRepeatingJob] removing the jobs')
         const result = await queue.removeRepeatableByKey(repeatJob)
@@ -86,9 +109,9 @@ export const redisQueue: QueueManager = {
         }
         await client.del(repeatingJobKey(flowVersionId))
     },
-}
+})
 
-async function findRepeatableJobKey(flowVersionId: ApId): Promise<string | undefined> {
+async function findRepeatableJobKey(flowVersionId: ApId, log: FastifyBaseLogger): Promise<string | undefined> {
     const queue = await ensureQueueExists(QueueName.SCHEDULED)
     const client = await queue.client
     const jobKey = await client.get(repeatingJobKey(flowVersionId))
@@ -96,7 +119,7 @@ async function findRepeatableJobKey(flowVersionId: ApId): Promise<string | undef
     if (isNil(jobKey)) {
         const jobs = await queue.getJobs()
         const jobKeyInRedis = jobs.filter(f => !isNil(f) && !isNil(f.data)).find((f) => f.data.flowVersionId === flowVersionId)
-        logger.warn({ flowVersionId, repeatJobKey: jobKeyInRedis?.repeatJobKey }, 'Job key not found in redis, trying to find it in the queue')
+        log.warn({ flowVersionId, repeatJobKey: jobKeyInRedis?.repeatJobKey }, 'Job key not found in redis, trying to find it in the queue')
         return jobKeyInRedis?.repeatJobKey
     }
     return jobKey
@@ -110,7 +133,7 @@ async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
         queueName,
         {
             connection: createRedisClient(),
-            defaultJobOptions,
+            defaultJobOptions: jobTypeToDefaultJobOptions[queueName],
         },
     )
     await bullMqGroups[queueName].waitUntilReady()
@@ -132,6 +155,11 @@ async function addDelayedJob(params: AddParams<JobType.DELAYED>): Promise<void> 
         jobId: id,
         delay,
     })
+}
+
+async function addUserInteractionJob(queue: Queue, params: AddParams<JobType.USERS_INTERACTION>): Promise<void> {
+    const { id, data } = params
+    await queue.add(id, data)
 }
 
 async function addRepeatingJob(params: AddParams<JobType.REPEATING>): Promise<void> {

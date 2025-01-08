@@ -15,7 +15,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { platformApi } from '@/lib/platforms-api';
 import { isNil } from '@activepieces/shared';
 
-import GithubIcon from '../../../../../assets/img/custom/auth/github.svg';
 import GoogleIcon from '../../../../../assets/img/custom/auth/google-icon.svg';
 
 type ProviderCardProps = {
@@ -69,7 +68,6 @@ const SSOPage = () => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
 
   const googleConnected = !isNil(platform.federatedAuthProviders?.google);
-  const githubConnected = !isNil(platform.federatedAuthProviders?.github);
   const samlConnected = !isNil(platform.federatedAuthProviders?.saml);
   const emailAuthEnabled = platform.emailAuthEnabled;
 
@@ -138,21 +136,6 @@ const SSOPage = () => {
                 platform={platform}
                 refetch={refetch}
                 connected={googleConnected}
-              />
-            }
-          />
-          <ProviderCard
-            providerName="Github"
-            providerIcon={
-              <img src={GithubIcon} alt="icon" width={32} height={32} />
-            }
-            button={
-              <NewOAuth2Dialog
-                providerDisplayName="Github"
-                providerName="github"
-                platform={platform}
-                refetch={refetch}
-                connected={githubConnected}
               />
             }
           />

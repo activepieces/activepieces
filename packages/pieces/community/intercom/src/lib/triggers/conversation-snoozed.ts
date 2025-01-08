@@ -12,7 +12,7 @@ export const conversationSnoozed = createTrigger({
   description:
     'Triggers when a conversation is snoozed',
   props: {},
-  sampleData: {},
+  sampleData: undefined,
   auth: intercomAuth,
   type: TriggerStrategy.APP_WEBHOOK,
   async onEnable(context) {

@@ -5,9 +5,9 @@ import {
     FlowId,
     FlowVersionId,
     isNil,
-    PopulatedFlow,
     ProjectId,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../flows/flow/flow.service'
 import { triggerHooks } from '../../flows/trigger'
 
@@ -17,26 +17,13 @@ type BaseParams = {
     flowVersionId?: FlowVersionId
 }
 
-type GetFlowParams = BaseParams
 type PreCreateParams = BaseParams
 type PreDeleteParams = BaseParams
 
-const getFlowOrThrow = async ({
-    projectId,
-    flowId,
-    flowVersionId,
-}: GetFlowParams): Promise<PopulatedFlow> => {
-    return flowService.getOnePopulatedOrThrow({
-        id: flowId,
-        projectId,
-        versionId: flowVersionId,
-    })
-}
-
-export const webhookSideEffects = {
+export const webhookSideEffects = (log: FastifyBaseLogger) => ({
     async preCreate({ projectId, flowId }: PreCreateParams): Promise<void> {
-        const { version: flowVersion } = await getFlowOrThrow({
-            flowId,
+        const { version: flowVersion } = await flowService(log).getOnePopulatedOrThrow({
+            id: flowId,
             projectId,
         })
 
@@ -44,7 +31,7 @@ export const webhookSideEffects = {
             projectId,
             flowVersion,
             simulate: true,
-        })
+        }, log)
 
         if (isNil(response) || response.status !== EngineResponseStatus.OK) {
             throw new ActivepiecesError({
@@ -61,16 +48,19 @@ export const webhookSideEffects = {
         flowId,
         flowVersionId,
     }: PreDeleteParams): Promise<void> {
-        const { version: flowVersion } = await getFlowOrThrow({
-            flowId,
+        const { version: flowVersion } = await flowService(log).getOnePopulatedOrThrow({
+            id: flowId,
             projectId,
-            flowVersionId,
+            versionId: flowVersionId,
         })
 
-        await triggerHooks.disable({
-            projectId,
-            flowVersion,
-            simulate: true,
-        })
+        await triggerHooks.disable(
+            {
+                projectId,
+                flowVersion,
+                simulate: true,
+            },
+            log,
+        )
     },
-}
+})

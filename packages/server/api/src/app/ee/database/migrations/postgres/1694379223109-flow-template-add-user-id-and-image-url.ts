@@ -1,7 +1,7 @@
-import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { isNotOneOfTheseEditions } from '../../../../database/database-common'
+import { system } from '../../../../helper/system/system'
 
 export class FlowTemplateAddUserIdAndImageUrl1694379223109
 implements MigrationInterface {
@@ -11,6 +11,7 @@ implements MigrationInterface {
         if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
             return
         }
+        const logger = system.globalLogger()
         await queryRunner.query(
             'ALTER TABLE "flow_template" DROP COLUMN "pinnedOrder"',
         )
@@ -40,6 +41,8 @@ implements MigrationInterface {
         if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
             return
         }
+        const logger = system.globalLogger()
+
         await queryRunner.query(
             'ALTER TABLE "flow_template" DROP CONSTRAINT "fk_flow_template_user_id"',
         )

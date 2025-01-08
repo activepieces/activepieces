@@ -50,17 +50,9 @@ export const newContact = createTrigger({
     });
   },
   run: async (context) => {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    return await pollingHelper.poll(polling, context);
   },
   test: async (context) => {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    return await pollingHelper.test(polling, context);
   },
 });

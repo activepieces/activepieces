@@ -1,4 +1,4 @@
-import { AppSystemProp, logger, rejectedPromiseHandler, system } from '@activepieces/server-shared'
+import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -21,12 +21,15 @@ import {
     ProjectId,
     SeekPage, TelemetryEventName, UserId,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
 import { emailService } from '../../ee/helper/email/email-service'
 import { distributedLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
 import { telemetry } from '../../helper/telemetry.utils'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
@@ -38,10 +41,10 @@ import { flowRepo } from './flow.repo'
 const TRIGGER_FAILURES_THRESHOLD = system.getNumberOrThrow(AppSystemProp.TRIGGER_FAILURES_THRESHOLD)
 
 
-export const flowService = {
-    async create({ projectId, request }: CreateParams): Promise<PopulatedFlow> {
+export const flowService = (log: FastifyBaseLogger) => ({
+    async create({ projectId, request, externalId }: CreateParams): Promise<PopulatedFlow> {
 
-        const folderId = isNil(request.folderName) ? null : (await flowFolderService.upsert({
+        const folderId = isNil(request.folderName) ? null : (await flowFolderService(log).upsert({
             projectId,
             request: {
                 projectId,
@@ -55,26 +58,26 @@ export const flowService = {
             status: FlowStatus.DISABLED,
             publishedVersionId: null,
             schedule: null,
+            externalId,
         }
 
         const savedFlow = await flowRepo().save(newFlow)
 
-        const savedFlowVersion = await flowVersionService.createEmptyVersion(
+        const savedFlowVersion = await flowVersionService(log).createEmptyVersion(
             savedFlow.id,
             {
                 displayName: request.displayName,
             },
         )
 
-        telemetry
-            .trackProject(savedFlow.projectId, {
-                name: TelemetryEventName.CREATED_FLOW,
-                payload: {
-                    flowId: savedFlow.id,
-                },
-            })
+        telemetry(log).trackProject(savedFlow.projectId, {
+            name: TelemetryEventName.CREATED_FLOW,
+            payload: {
+                flowId: savedFlow.id,
+            },
+        })
             .catch((e) =>
-                logger.error(e, '[FlowService#create] telemetry.trackProject'),
+                log.error(e, '[FlowService#create] telemetry.trackProject'),
             )
 
         return {
@@ -117,7 +120,7 @@ export const flowService = {
         )
 
         const populatedFlowPromises = paginationResult.data.map(async (flow) => {
-            const version = await flowVersionService.getFlowVersionOrThrow({
+            const version = await flowVersionService(log).getFlowVersionOrThrow({
                 flowId: flow.id,
                 versionId: undefined,
             })
@@ -168,7 +171,7 @@ export const flowService = {
             return null
         }
 
-        const flowVersion = await flowVersionService.getFlowVersionOrThrow({
+        const flowVersion = await flowVersionService(log).getFlowVersionOrThrow({
             flowId: id,
             versionId,
             removeConnectionsName,
@@ -214,6 +217,7 @@ export const flowService = {
             ? await distributedLock.acquireLock({
                 key: id,
                 timeout: 30000,
+                log,
             })
             : null
 
@@ -239,24 +243,24 @@ export const flowService = {
                 })
             }
             else {
-                let lastVersion = await flowVersionService.getFlowVersionOrThrow({
+                let lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
                     flowId: id,
                     versionId: undefined,
                 })
 
                 if (lastVersion.state === FlowVersionState.LOCKED) {
                     const lastVersionWithArtifacts =
-                        await flowVersionService.getFlowVersionOrThrow({
+                        await flowVersionService(log).getFlowVersionOrThrow({
                             flowId: id,
                             versionId: undefined,
                         })
 
-                    lastVersion = await flowVersionService.createEmptyVersion(id, {
+                    lastVersion = await flowVersionService(log).createEmptyVersion(id, {
                         displayName: lastVersionWithArtifacts.displayName,
                     })
 
                     // Duplicate the artifacts from the previous version, otherwise they will be deleted during update operation
-                    lastVersion = await flowVersionService.applyOperation({
+                    lastVersion = await flowVersionService(log).applyOperation({
                         userId,
                         projectId,
                         platformId,
@@ -268,7 +272,7 @@ export const flowService = {
                     })
                 }
 
-                await flowVersionService.applyOperation({
+                await flowVersionService(log).applyOperation({
                     userId,
                     projectId,
                     platformId,
@@ -300,7 +304,7 @@ export const flowService = {
         })
 
         if (flowToUpdate.status !== newStatus) {
-            const { scheduleOptions } = await flowSideEffects.preUpdateStatus({
+            const { scheduleOptions } = await flowSideEffects(log).preUpdateStatus({
                 flowToUpdate,
                 newStatus,
                 entityManager,
@@ -324,7 +328,7 @@ export const flowService = {
         projectId,
         success,
     }: UpdateFailureCountParams): Promise<void> {
-        const flow = await flowService.getOnePopulatedOrThrow({
+        const flow = await this.getOnePopulatedOrThrow({
             id: flowId,
             projectId,
         })
@@ -344,8 +348,8 @@ export const flowService = {
                 newStatus: FlowStatus.DISABLED,
             })
 
-            await emailService.sendExceedFailureThresholdAlert(projectId, flow.version.displayName)
-            rejectedPromiseHandler(telemetry.trackProject(projectId, {
+            await emailService(log).sendExceedFailureThresholdAlert(projectId, flow.version.displayName)
+            rejectedPromiseHandler(telemetry(log).trackProject(projectId, {
                 name: TelemetryEventName.TRIGGER_FAILURES_EXCEEDED,
                 payload: {
                     projectId,
@@ -353,9 +357,7 @@ export const flowService = {
                     pieceName: flow.version.trigger.settings.pieceName,
                     pieceVersion: flow.version.trigger.settings.pieceVersion,
                 },
-            },
-            ),
-            )
+            }), log)
         }
 
         await flowRepo().update(flowId, {
@@ -375,14 +377,14 @@ export const flowService = {
     }: UpdatePublishedVersionIdParams): Promise<PopulatedFlow> {
         const flowToUpdate = await this.getOneOrThrow({ id, projectId })
 
-        const flowVersionToPublish = await flowVersionService.getFlowVersionOrThrow(
+        const flowVersionToPublish = await flowVersionService(log).getFlowVersionOrThrow(
             {
                 flowId: id,
                 versionId: undefined,
             },
         )
 
-        const { scheduleOptions } = await flowSideEffects.preUpdatePublishedVersionId({
+        const { scheduleOptions } = await flowSideEffects(log).preUpdatePublishedVersionId({
             flowToUpdate,
             flowVersionToPublish,
         })
@@ -394,6 +396,7 @@ export const flowService = {
                 projectId,
                 platformId,
                 entityManager,
+                log,
             })
 
             flowToUpdate.publishedVersionId = lockedFlowVersion.id
@@ -413,6 +416,7 @@ export const flowService = {
         const lock = await distributedLock.acquireLock({
             key: id,
             timeout: 10000,
+            log,
         })
 
         try {
@@ -421,9 +425,9 @@ export const flowService = {
                 projectId,
             })
 
-            rejectedPromiseHandler(flowSideEffects.preDelete({
+            rejectedPromiseHandler(flowSideEffects(log).preDelete({
                 flowToDelete,
-            }))
+            }), log)
 
             await flowRepo().delete({ id })
         }
@@ -483,7 +487,7 @@ export const flowService = {
             status,
         })
     },
-}
+})
 
 const lockFlowVersionIfNotLocked = async ({
     flowVersion,
@@ -491,12 +495,13 @@ const lockFlowVersionIfNotLocked = async ({
     projectId,
     platformId,
     entityManager,
+    log,
 }: LockFlowVersionIfNotLockedParams): Promise<FlowVersion> => {
     if (flowVersion.state === FlowVersionState.LOCKED) {
         return flowVersion
     }
 
-    return flowVersionService.applyOperation({
+    return flowVersionService(log).applyOperation({
         userId,
         projectId,
         platformId,
@@ -525,6 +530,7 @@ const assertFlowIsNotNull: <T extends Flow>(
 type CreateParams = {
     projectId: ProjectId
     request: CreateFlowRequest
+    externalId?: string
 }
 
 type ListParams = {
@@ -602,6 +608,7 @@ type LockFlowVersionIfNotLockedParams = {
     projectId: ProjectId
     platformId: PlatformId
     entityManager: EntityManager
+    log: FastifyBaseLogger
 }
 
 type ExistsByProjectAndStatusParams = {

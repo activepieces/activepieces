@@ -1,7 +1,9 @@
-import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 import { isNotOneOfTheseEditions } from '../../database-common'
+
+const log = system.globalLogger()
 
 export class AddStateToOtp1701084418793 implements MigrationInterface {
     name = 'AddStateToOtp1701084418793'
@@ -15,7 +17,7 @@ export class AddStateToOtp1701084418793 implements MigrationInterface {
             ADD "state" character varying NOT NULL
         `)
 
-        logger.info('AddStateToOtp1701084418793 up')
+        log.info('AddStateToOtp1701084418793 up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -26,6 +28,6 @@ export class AddStateToOtp1701084418793 implements MigrationInterface {
             ALTER TABLE "otp" DROP COLUMN "state"
         `)
 
-        logger.info('AddStateToOtp1701084418793 down')
+        log.info('AddStateToOtp1701084418793 down')
     }
 }

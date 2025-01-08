@@ -7,6 +7,7 @@ export type AcceptInvitationRequest = Static<typeof AcceptInvitationRequest>;
 
 export const ListProjectMembersRequestQuery = Type.Object({
     projectId: Type.String(),
+    projectRoleId: Type.Optional(Type.String()),
     cursor: Type.Optional(Type.String()),
     limit: Type.Optional(Type.Number()),
 });

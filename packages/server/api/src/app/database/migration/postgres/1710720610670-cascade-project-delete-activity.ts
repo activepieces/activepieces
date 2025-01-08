@@ -1,7 +1,9 @@
-import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 import { isNotOneOfTheseEditions } from '../../database-common'
+
+const log = system.globalLogger()
 
 export class CascadeProjectDeleteToActivity1710720610670 implements MigrationInterface {
     name = 'CascadeProjectDeleteToActivity1710720610670'
@@ -19,7 +21,7 @@ export class CascadeProjectDeleteToActivity1710720610670 implements MigrationInt
                 ON DELETE CASCADE ON UPDATE RESTRICT
         `)
 
-        logger.info({ name: this.name }, 'up')
+        log.info({ name: this.name }, 'up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -34,6 +36,6 @@ export class CascadeProjectDeleteToActivity1710720610670 implements MigrationInt
             ADD CONSTRAINT "fk_activity_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id")
                 ON DELETE RESTRICT ON UPDATE RESTRICT
         `)
-        logger.info({ name: this.name }, 'down')
+        log.info({ name: this.name }, 'down')
     }
 }

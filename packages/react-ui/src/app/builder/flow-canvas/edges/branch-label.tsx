@@ -2,6 +2,7 @@ import { DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import { CopyPlus, EllipsisVertical, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 import {
   ActionType,
@@ -16,11 +17,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
 } from '../../../../components/ui/dropdown-menu';
 import { cn } from '../../../../lib/utils';
 import { useBuilderStateContext } from '../../builder-hooks';
-import { flowUtilConsts } from '../consts';
-import { flowCanvasUtils } from '../flow-canvas-utils';
+import { flowUtilConsts } from '../utils/consts';
+import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 
 type BaseBranchLabel = {
   label: string;
@@ -65,13 +67,21 @@ const BranchLabel = (props: BaseBranchLabel) => {
       StepLocationRelativeToParent.INSIDE_BRANCH &&
     props.branchIndex === selectedBranchIndex;
   const { fitView } = useReactFlow();
+  const [isDropdownMenuOpen, setIsDropdownMenuOpen] = useState(false);
 
   if (isNil(step) || step.type !== ActionType.ROUTER) {
     return <></>;
   }
 
   return (
-    <div className="h-full flex items-center justify-center ">
+    <div
+      className="h-full flex items-center justify-center "
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDropdownMenuOpen(true);
+      }}
+    >
       <div
         className="bg-background"
         style={{
@@ -81,10 +91,10 @@ const BranchLabel = (props: BaseBranchLabel) => {
       >
         <div
           className={cn(
-            'flex items-center justify-center gap-0.5 select-none  items-center transition-all rounded-full  text-sm border  border-solid bg-primary-100/30  border-primary/50   px-2 text-primary/80 hover:text-primary hover:border-primary',
+            'flex items-center justify-center gap-0.5 select-none  items-center transition-all rounded-full  text-sm border  border-solid bg-primary-100/30 dark:bg-primary-100/15  border-primary/50   px-2 text-primary/80 dark:text-primary/90   hover:text-primary hover:border-primary',
             {
               'border-primary text-primary': isBranchSelected,
-              'bg-accent text-foreground/70  border-accent hover:text-foreground/70 hover:bg-accent hover:border-accent cursor-default':
+              'bg-accent dark:bg-accent text-foreground/70 dark:text-foreground/70  border-accent hover:text-foreground/70 hover:bg-accent hover:border-accent cursor-default':
                 isBranchNonInteractive,
             },
           )}
@@ -113,7 +123,11 @@ const BranchLabel = (props: BaseBranchLabel) => {
           {!isBranchNonInteractive &&
             !readonly &&
             step.type === ActionType.ROUTER && (
-              <DropdownMenu modal={true}>
+              <DropdownMenu
+                modal={true}
+                open={isDropdownMenuOpen}
+                onOpenChange={setIsDropdownMenuOpen}
+              >
                 <DropdownMenuTrigger asChild>
                   <div
                     className="h-5 shrink-0 border border-transparent hover:border-solid hover:border-primary-300/50 transition-all rounded-full w-5 flex items-center justify-center"
@@ -128,6 +142,29 @@ const BranchLabel = (props: BaseBranchLabel) => {
                     e.stopPropagation();
                   }}
                 >
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      applyOperation(
+                        {
+                          type: FlowOperationType.DUPLICATE_BRANCH,
+                          request: {
+                            stepName: props.sourceNodeName,
+                            branchIndex: props.branchIndex,
+                          },
+                        },
+                        () => {},
+                      );
+                      setSelectedBranchIndex(props.branchIndex + 1);
+                    }}
+                  >
+                    <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                      <CopyPlus className="h-4 w-4" />
+                      <span>{t('Duplicate Branch')}</span>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     disabled={step.settings.branches.length <= 2}
                     onSelect={(e) => {
@@ -152,29 +189,6 @@ const BranchLabel = (props: BaseBranchLabel) => {
                       <span className="text-destructive">
                         {t('Delete Branch')}
                       </span>
-                    </div>
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      applyOperation(
-                        {
-                          type: FlowOperationType.DUPLICATE_BRANCH,
-                          request: {
-                            stepName: props.sourceNodeName,
-                            branchIndex: props.branchIndex,
-                          },
-                        },
-                        () => {},
-                      );
-                      setSelectedBranchIndex(props.branchIndex + 1);
-                    }}
-                  >
-                    <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                      <CopyPlus className="h-4 w-4" />
-                      <span>{t('Duplicate Branch')}</span>
                     </div>
                   </DropdownMenuItem>
                 </DropdownMenuContent>

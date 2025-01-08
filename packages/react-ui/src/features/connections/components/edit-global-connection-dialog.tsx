@@ -6,11 +6,11 @@ import { t } from 'i18next';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -18,10 +18,15 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { projectHooks } from '@/hooks/project-hooks';
-import { AppConnectionWithoutSensitiveData, isNil } from '@activepieces/shared';
+import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 
+import { AssignConnectionToProjectsControl } from '../../../components/ui/assign-global-connection-to-projects';
 import { globalConnectionsApi } from '../lib/global-connections-api';
+import {
+  ConnectionNameAlreadyExists,
+  isConnectionNameUnique,
+  NoProjectSelected,
+} from '../lib/utils';
 
 const EditGlobalConnectionSchema = Type.Object({
   displayName: Type.String(),
@@ -45,9 +50,7 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
   projectIds,
   onEdit,
 }) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const { data: projects } = projectHooks.useProjects();
+  const [isOpen, setIsOpen] = useState(false);
 
   const editConnectionForm = useForm<EditGlobalConnectionSchema>({
     resolver: typeboxResolver(EditGlobalConnectionSchema),
@@ -66,7 +69,16 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
       projectIds: string[];
     }
   >({
-    mutationFn: ({ connectionId, displayName, projectIds }) => {
+    mutationFn: async ({ connectionId, displayName, projectIds }) => {
+      if (
+        !(await isConnectionNameUnique(true, displayName)) &&
+        displayName !== currentName
+      ) {
+        throw new ConnectionNameAlreadyExists();
+      }
+      if (projectIds.length === 0) {
+        throw new NoProjectSelected();
+      }
       return globalConnectionsApi.update(connectionId, {
         displayName,
         projectIds,
@@ -79,13 +91,25 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
         description: t('Connection has been updated.'),
         duration: 3000,
       });
-      setIsDialogOpen(false);
+      setIsOpen(false);
     },
-    onError: () => toast(INTERNAL_ERROR_TOAST),
+    onError: (error) => {
+      if (error instanceof ConnectionNameAlreadyExists) {
+        editConnectionForm.setError('displayName', {
+          message: error.message,
+        });
+      } else if (error instanceof NoProjectSelected) {
+        editConnectionForm.setError('projectIds', {
+          message: error.message,
+        });
+      } else {
+        toast(INTERNAL_ERROR_TOAST);
+      }
+    },
   });
 
   return (
-    <Dialog open={isDialogOpen} onOpenChange={(open) => setIsDialogOpen(open)}>
+    <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent onInteractOutside={(event) => event.preventDefault()}>
         <DialogHeader>
@@ -118,30 +142,9 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
                   </FormItem>
                 )}
               />
-              <FormField
+              <AssignConnectionToProjectsControl
                 control={editConnectionForm.control}
                 name="projectIds"
-                render={({ field }) => (
-                  <FormItem className="grid space-y-2">
-                    <Label>{t('Assign to Projects')}</Label>
-                    <MultiSelectPieceProperty
-                      placeholder={t('Select projects')}
-                      options={
-                        projects?.map((project) => ({
-                          value: project.id,
-                          label: project.displayName,
-                        })) ?? []
-                      }
-                      loading={!projects}
-                      onChange={(value) => {
-                        field.onChange(isNil(value) ? [] : value);
-                      }}
-                      initialValues={field.value}
-                      showDeselect={field.value.length > 0}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
               />
               {editConnectionForm?.formState?.errors?.root?.serverError && (
                 <FormMessage>
@@ -149,9 +152,21 @@ const EditGlobalConnectionDialog: React.FC<EditGlobalConnectionDialogProps> = ({
                 </FormMessage>
               )}
             </div>
-            <div className="mt-8">
-              <Button loading={isPending}>{t('Save Changes')}</Button>
-            </div>
+            <DialogFooter className="mt-8">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isPending}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setIsOpen(false);
+                }}
+              >
+                {t('Cancel')}
+              </Button>
+              <Button loading={isPending}>{t('Save')}</Button>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>

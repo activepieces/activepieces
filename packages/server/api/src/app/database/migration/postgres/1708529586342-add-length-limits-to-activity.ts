@@ -1,7 +1,9 @@
-import { logger } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
 import { isNotOneOfTheseEditions } from '../../database-common'
+
+const log = system.globalLogger()
 
 export class AddLengthLimitsToActivity1708529586342 implements MigrationInterface {
     name = 'AddLengthLimitsToActivity1708529586342'
@@ -17,7 +19,7 @@ export class AddLengthLimitsToActivity1708529586342 implements MigrationInterfac
                 ALTER COLUMN "status" TYPE character varying(100) USING "status"::character varying(100)
         `)
 
-        logger.info({ name: this.name }, 'up')
+        log.info({ name: this.name }, 'up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -31,6 +33,6 @@ export class AddLengthLimitsToActivity1708529586342 implements MigrationInterfac
                 ALTER COLUMN "status" TYPE character varying USING "status"::character varying
         `)
 
-        logger.info({ name: this.name }, 'down')
+        log.info({ name: this.name }, 'down')
     }
 }

@@ -1,4 +1,3 @@
-import { logger } from '@activepieces/server-shared'
 import {
     ActionType,
     ActivepiecesError,
@@ -23,19 +22,21 @@ import {
     UserId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { EntityManager } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
+import { userService } from '../../user/user-service'
 import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
 import { flowVersionValidationUtil } from './flow-version-validator-util'
 
 const flowVersionRepo = repoFactory(FlowVersionEntity)
 
-export const flowVersionService = {
+export const flowVersionService = (log: FastifyBaseLogger) => ({
     async lockPieceVersions({
         projectId,
         flowVersion,
@@ -53,7 +54,7 @@ export const flowVersionService = {
                 step.type,
             )
             if (stepTypeIsPiece) {
-                const pieceMetadata = await pieceMetadataService.getOrThrow({
+                const pieceMetadata = await pieceMetadataService(log).getOrThrow({
                     projectId,
                     platformId,
                     name: step.settings.pieceName,
@@ -85,7 +86,7 @@ export const flowVersionService = {
 
         switch (userOperation.type) {
             case FlowOperationType.USE_AS_DRAFT: {
-                const previousVersion = await flowVersionService.getFlowVersionOrThrow({
+                const previousVersion = await flowVersionService(log).getFlowVersionOrThrow({
                     flowId: flowVersion.flowId,
                     versionId: userOperation.request.versionId,
                     removeConnectionsName: false,
@@ -121,6 +122,7 @@ export const flowVersionService = {
                 mutatedFlowVersion,
                 operation,
                 platformId,
+                log,
             )
         }
 
@@ -154,7 +156,7 @@ export const flowVersionService = {
         })
     },
     async getOneOrThrow(id: FlowVersionId): Promise<FlowVersion> {
-        const flowVersion = await flowVersionService.getOne(id)
+        const flowVersion = await flowVersionService(log).getOne(id)
 
         if (isNil(flowVersion)) {
             throw new ActivepiecesError({
@@ -184,20 +186,21 @@ export const flowVersionService = {
             },
         })
         const paginationResult = await paginator.paginate(
-            flowVersionRepo()
-                .createQueryBuilder('flow_version')
-                .leftJoinAndMapOne(
-                    'flow_version.updatedByUser',
-                    'user',
-                    'user',
-                    'flow_version."updatedBy" = "user"."id"',
-                )
+            flowVersionRepo().createQueryBuilder('flow_version')
                 .where({
                     flowId,
                 }),
         )
+        const promises = paginationResult.data.map(async (flowVersion) => {
+            return {
+                ...flowVersion,
+                updatedByUser: isNil(flowVersion.updatedBy) ? null : await userService.getMetaInformation({
+                    id: flowVersion.updatedBy,
+                }),
+            }
+        })
         return paginationHelper.createPage<FlowVersion>(
-            paginationResult.data,
+            await Promise.all(promises),
             paginationResult.cursor,
         )
     },
@@ -261,21 +264,21 @@ export const flowVersionService = {
         }
         return flowVersionRepo().save(flowVersion)
     },
-}
+})
 
 async function applySingleOperation(
     projectId: ProjectId,
     flowVersion: FlowVersion,
     operation: FlowOperationRequest,
     platformId: PlatformId,
+    log: FastifyBaseLogger,
 ): Promise<FlowVersion> {
-    logger.info(`applying ${operation.type} to ${flowVersion.displayName}`)
-    await flowVersionSideEffects.preApplyOperation({
+    await flowVersionSideEffects(log).preApplyOperation({
         projectId,
         flowVersion,
         operation,
     })
-    operation = await flowVersionValidationUtil.prepareRequest(projectId, platformId, operation)
+    operation = await flowVersionValidationUtil(log).prepareRequest(projectId, platformId, operation)
     return flowOperations.apply(flowVersion, operation)
 }
 

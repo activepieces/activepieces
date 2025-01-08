@@ -12,7 +12,7 @@ describe('Logging Utils', () => {
                 type: ActionType.CODE,
                 status: StepOutputStatus.SUCCEEDED,
                 input: {
-                    a: 'a'.repeat(1024 * 1024 * 4),
+                    a: 'a'.repeat(1024 * 1024 * 12),
                 },
             }),
         }
@@ -21,6 +21,6 @@ describe('Logging Utils', () => {
         const result = await loggingUtils.trimExecution(steps)
 
         // assert
-        expect(result.mockStep.input).toHaveProperty<string>('a', '(truncated)')
+        expect((result.mockStep.input as Record<string, string>).a.length).toBeLessThan(1024 * 1024 * 12)
     })
 })

@@ -1,6 +1,18 @@
-import { sftpAuth } from '../../index';
+import { endClient, sftpAuth } from '../../index';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
+import { Client as FTPClient } from 'basic-ftp';
+import { getClient, getProtocolBackwardCompatibility } from '../..';
+import { MarkdownVariant } from '@activepieces/shared';
+
+async function renameFTP(client: FTPClient, oldPath: string, newPath: string) {
+  await client.rename(oldPath, newPath);
+}
+
+async function renameSFTP(client: Client, oldPath: string, newPath: string) {
+  await client.rename(oldPath, newPath);
+  await client.end();
+}
 
 export const renameFileOrFolderAction = createAction({
   auth: sftpAuth,
@@ -8,6 +20,10 @@ export const renameFileOrFolderAction = createAction({
   displayName: 'Rename File or Folder',
   description: 'Renames a file or folder at given path.',
   props: {
+    information: Property.MarkDown({
+      value: 'Depending on the server you can also use this to move a file to another directory, as long as the directory exists.',
+      variant: MarkdownVariant.INFO,
+    }),
     oldPath: Property.ShortText({
       displayName: 'Old Path',
       required: true,
@@ -22,21 +38,21 @@ export const renameFileOrFolderAction = createAction({
     }),
   },
   async run(context) {
-    const { host, port, username, password } = context.auth;
+    const client = await getClient(context.auth);
     const oldPath = context.propsValue.oldPath;
     const newPath = context.propsValue.newPath;
-    const sftp = new Client();
-
+    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol);
     try {
-      await sftp.connect({
-        host,
-        port,
-        username,
-        password,
-        readyTimeout: 15000,
-      });
-
-      await sftp.rename(oldPath, newPath);
+      switch (protocolBackwardCompatibility) {
+        case 'ftps':
+        case 'ftp':
+          await renameFTP(client as FTPClient, oldPath, newPath);
+          break;
+        default:
+        case 'sftp':
+          await renameSFTP(client as Client, oldPath, newPath);
+          break;
+      }
 
       return {
         status: 'success',
@@ -47,7 +63,7 @@ export const renameFileOrFolderAction = createAction({
         error: err,
       };
     } finally {
-      await sftp.end();
-    }
+      await endClient(client, context.auth.protocol);
+    } 
   },
 });

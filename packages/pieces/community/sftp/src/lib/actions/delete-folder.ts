@@ -1,6 +1,19 @@
-import { sftpAuth } from '../../index';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
+import { Client as FTPClient } from 'basic-ftp';
+import { endClient, getClient, getProtocolBackwardCompatibility, sftpAuth } from '../..';
+
+async function deleteFolderFTP(client: FTPClient, directoryPath: string, recursive: boolean) {
+  if (recursive) {
+    await client.removeDir(directoryPath);
+  } else {
+    await client.removeEmptyDir(directoryPath);
+  }
+}
+
+async function deleteFolderSFTP(client: Client, directoryPath: string, recursive: boolean) {
+  await client.rmdir(directoryPath, recursive);
+}
 
 export const deleteFolderAction = createAction({
   auth: sftpAuth,
@@ -22,32 +35,33 @@ export const deleteFolderAction = createAction({
     }),
   },
   async run(context) {
-    const { host, port, username, password } = context.auth;
+    const client = await getClient(context.auth);
     const directoryPath = context.propsValue.folderPath;
     const recursive = context.propsValue.recursive ?? false;
-    const sftp = new Client();
-
+    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol);
     try {
-      await sftp.connect({
-        host,
-        port,
-        username,
-        password,
-        readyTimeout: 15000,
-      });
-
-      await sftp.rmdir(directoryPath, recursive);
+      switch (protocolBackwardCompatibility) {
+        case 'ftps':
+        case 'ftp':
+          await deleteFolderFTP(client as FTPClient, directoryPath, recursive);
+          break;
+        default:
+        case 'sftp':
+          await deleteFolderSFTP(client as Client, directoryPath, recursive);
+          break;
+      }
 
       return {
         status: 'success',
       };
     } catch (err) {
+      console.error(err);
       return {
         status: 'error',
         error: err,
       };
     } finally {
-      await sftp.end();
+      await endClient(client, context.auth.protocol);
     }
   },
 });

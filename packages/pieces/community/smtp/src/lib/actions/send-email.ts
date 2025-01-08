@@ -98,7 +98,7 @@ export const sendEmail = createAction({
       };
     });
 
-    const info = await transporter.sendMail({
+    const mailOptions = {
       from: getFrom(propsValue.senderName, propsValue.from),
       to: propsValue.to.join(','),
       cc: propsValue.cc?.join(','),
@@ -109,11 +109,30 @@ export const sendEmail = createAction({
       html: propsValue.body_type === 'html' ? propsValue.body : undefined,
       attachments: attachment_data ? attachment_data : undefined,
       headers: propsValue.customHeaders as Headers,
-    });
+    };
 
-    return info;
+    return await sendWithRetry(transporter, mailOptions);
   },
 });
+
+async function sendWithRetry(transporter: any, mailOptions: any) {
+  const maxRetries = 3;
+  let retryCount = 0;
+  
+  while (retryCount < maxRetries) {
+    try {
+      const info = await transporter.sendMail(mailOptions);
+      return info;
+    } catch (error: any) {
+      if ('code' in error && error.code === 'ECONNRESET' && retryCount < maxRetries - 1) {
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        continue;
+      }
+      throw error;
+    }
+  }
+}
 
 function getFrom(senderName: string|undefined, from: string) {
   if (senderName) {
