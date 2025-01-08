@@ -43,7 +43,7 @@ export const temporaryMigration = {
 
             for (const flow of repoState.flows) {
                 const flowResults = await Promise.all(flows.map(async (f) => {
-                    const latestVersion = await flowVersionService(logger).getOne(f.id);
+                    const latestVersion = await flowVersionService(logger).getOneByFlowId(f.id);
                     if (isNil(latestVersion)) {
                         return null;
                     }
@@ -57,7 +57,7 @@ export const temporaryMigration = {
 
                 if (matchingFlows.length === 0) {
                     const matchingFlowsByDisplayName = await Promise.all(matchingFlows.map(async (f) => {
-                        const latestVersion = await flowVersionService(logger).getOne(f.id);
+                        const latestVersion = await flowVersionService(logger).getOneByFlowId(f.id);
                         if (isNil(latestVersion)) {
                             return null;
                         }

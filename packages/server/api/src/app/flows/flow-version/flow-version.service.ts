@@ -143,6 +143,12 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         })
     },
 
+    async getOneByFlowId(flowId: FlowId): Promise<FlowVersion | null> {
+        return flowVersionRepo().findOneBy({
+            flowId,
+        })
+    },
+
     async getLatestLockedVersionOrThrow(flowId: FlowId): Promise<FlowVersion> {
         return flowVersionRepo().findOneOrFail({
             where: {
