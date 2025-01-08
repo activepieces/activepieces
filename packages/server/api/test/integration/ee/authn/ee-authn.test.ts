@@ -8,8 +8,7 @@ import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 import { setupServer } from '../../../../src/app/server'
 import {
     createMockCustomDomain,
-    createMockPlatform,
-    createMockUser,
+    mockAndSaveBasicSetup,
 } from '../../../../test/helpers/mocks'
 import { createMockSignUpRequest } from '../../../helpers/mocks/authn'
 
@@ -72,17 +71,14 @@ describe('Authentication API', () => {
 
     it('fails to sign up invited user platform if no project exist', async () => {
     // arrange
-        const mockPlatformId = faker.string.nanoid(21)
 
-        const mockPlatformOwner = createMockUser({ platformId: mockPlatformId })
-        await databaseConnection().getRepository('user').save([mockPlatformOwner])
-
-        const mockPlatform = createMockPlatform({
-            id: mockPlatformId,
-            ownerId: mockPlatformOwner.id,
+        const { mockPlatform } = await mockAndSaveBasicSetup({
+            platform: {
+                emailAuthEnabled: true,
+                ssoEnabled: false,
+                enforceAllowedAuthDomains: false,
+            },
         })
-        await databaseConnection().getRepository('platform').save(mockPlatform)
-
         const mockCustomDomain = createMockCustomDomain({
             platformId: mockPlatform.id,
         })

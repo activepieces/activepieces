@@ -4,15 +4,17 @@ import {
 import { cryptoUtils } from '@activepieces/server-shared'
 import {
     AuthenticationResponse,
+    isNil,
     PiecesFilterType,
     PlatformRole,
     PrincipalType,
     Project,
     User,
+    UserIdentityProvider,
 } from '@activepieces/shared'
-import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
+import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { pieceTagService } from '../../tags/pieces/piece-tag.service'
@@ -28,7 +30,6 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
         const externalPrincipal = await externalTokenExtractor(log).extract(
             externalAccessToken,
         )
-        const user = await getOrCreateUser(externalPrincipal)
 
         const project = await getOrCreateProject({
             platformId: externalPrincipal.platformId,
@@ -37,10 +38,16 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
 
         await updateProjectLimits(project.platformId, project.id, externalPrincipal.pieces.tags, externalPrincipal.pieces.filterType, externalPrincipal.tasks, externalPrincipal.aiTokens)
 
+        const user = await getOrCreateUser(externalPrincipal, log)
+
         await projectMemberService(log).upsert({
             projectId: project.id,
             userId: user.id,
             projectRoleName: externalPrincipal.projectRole,
+        })
+
+        const identity = await userIdentityService(log).getOneOrFail({
+            id: user.identityId,
         })
 
         const token = await accessTokenManager.generateToken({
@@ -50,10 +57,20 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             platform: {
                 id: externalPrincipal.platformId,
             },
-            tokenVersion: user.tokenVersion,
-        }, dayjs.duration(7, 'day').asSeconds())
+            tokenVersion: identity.tokenVersion,
+        }, 7 * 24 * 60 * 60 * 1000)
         return {
-            ...user,
+            id: user.id,
+            platformRole: user.platformRole,
+            status: user.status,
+            externalId: user.externalId,
+            platformId: user.platformId,
+            firstName: identity.firstName,
+            lastName: identity.lastName,
+            email: identity.email,
+            trackEvents: identity.trackEvents,
+            newsLetter: identity.newsLetter,
+            verified: identity.verified,
             token,
             projectId: project.id,
         }
@@ -89,36 +106,34 @@ const updateProjectLimits = async (
 
 const getOrCreateUser = async (
     params: GetOrCreateUserParams,
-): Promise<GetOrCreateUserReturn> => {
-    const {
-        platformId,
-        externalUserId,
-        externalFirstName,
-        externalLastName,
-    } = params
+    log: FastifyBaseLogger,
+): Promise<User> => {
     const existingUser = await userService.getByPlatformAndExternalId({
-        platformId,
-        externalId: externalUserId,
+        platformId: params.platformId,
+        externalId: params.externalUserId,
     })
 
-    if (existingUser) {
-        const { password: _, ...user } = existingUser
-        return user
+    if (!isNil(existingUser)) {
+        return existingUser
     }
 
-    const { password: _, ...newUser } = await userService.create({
-        email: `managed_${platformId}_${externalUserId}`,
+    const identity = await userIdentityService(log).create({
+        email: `managed_${params.platformId}_${params.externalUserId}`,
         password: await cryptoUtils.generateRandomPassword(),
-        firstName: externalFirstName,
-        lastName: externalLastName,
+        firstName: params.externalFirstName,
+        lastName: params.externalLastName,
         trackEvents: true,
         newsLetter: false,
-        platformRole: PlatformRole.MEMBER,
-        verified: true,
-        externalId: externalUserId,
-        platformId,
+        provider: UserIdentityProvider.JWT,
     })
-    return newUser
+    await userIdentityService(log).verify(identity.id)
+    const user = await userService.create({
+        externalId: params.externalUserId,
+        platformId: params.platformId,
+        identityId: identity.id,
+        platformRole: PlatformRole.MEMBER,
+    })
+    return user
 }
 
 const getOrCreateProject = async ({
@@ -175,8 +190,6 @@ type GetOrCreateUserParams = {
     externalFirstName: string
     externalLastName: string
 }
-
-type GetOrCreateUserReturn = Omit<User, 'password'>
 
 type GetOrCreateProjectParams = {
     platformId: string

@@ -1,13 +1,13 @@
 import { OtpModel, OtpState, OtpType } from '@activepieces/ee-shared'
-import { User } from '@activepieces/shared'
+import { UserIdentity } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
-} from '../../database/database-common'
+} from '../../../database/database-common'
 
 export type OtpSchema = OtpModel & {
-    user: User
+    userIdentity: UserIdentity
 }
 
 export const OtpEntity = new EntitySchema<OtpSchema>({
@@ -19,7 +19,7 @@ export const OtpEntity = new EntitySchema<OtpSchema>({
             enum: OtpType,
             nullable: false,
         },
-        userId: {
+        identityId: {
             ...ApIdSchema,
             nullable: false,
         },
@@ -35,20 +35,20 @@ export const OtpEntity = new EntitySchema<OtpSchema>({
     },
     indices: [
         {
-            name: 'idx_otp_user_id_type',
-            columns: ['userId', 'type'],
+            name: 'idx_otp_identity_id_type',
+            columns: ['identityId', 'type'],
             unique: true,
         },
     ],
     relations: {
-        user: {
+        userIdentity: {
             type: 'many-to-one',
-            target: 'user',
+            target: 'user_identity',
             cascade: true,
             onDelete: 'CASCADE',
             joinColumn: {
-                name: 'userId',
-                foreignKeyConstraintName: 'fk_otp_user_id',
+                name: 'identityId',
+                foreignKeyConstraintName: 'fk_otp_identity_id',
             },
         },
     },

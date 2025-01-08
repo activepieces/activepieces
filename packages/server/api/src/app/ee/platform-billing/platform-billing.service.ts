@@ -3,8 +3,8 @@ import { ActivepiecesError, apId, ErrorCode, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { repoFactory } from '../../core/db/repo-factory'
-import { isEnterpriseCustomerOnCloud } from '../../platform/platform-utils'
 import { platformService } from '../../platform/platform.service'
+import { platformUtils } from '../../platform/platform.utils'
 import { userService } from '../../user/user-service'
 import { PlatformBillingEntity } from './platform-billing.entity'
 import { stripeHelper } from './stripe-helper'
@@ -56,13 +56,13 @@ export const platformBillingService = (log: FastifyBaseLogger) => ({
 
 async function createInitialBilling(platformId: string, log: FastifyBaseLogger): Promise<PlatformBilling> {
     const platform = await platformService.getOneOrThrow(platformId)
-    const user = await userService.getOneOrFail({ id: platform.ownerId })
+    const user = await userService.getMetaInformation({ id: platform.ownerId })
     const stripeCustomerId = await stripeHelper(log).createCustomer(
         user,
         platformId,
     )
     // TODO(@amrabuaza) remove this once we have migrated all platform on the cloud
-    const isEnterpriseCustomer = isEnterpriseCustomerOnCloud(platform)
+    const isEnterpriseCustomer = platformUtils.isEnterpriseCustomerOnCloud(platform)
     if (isEnterpriseCustomer) {
         return platformBillingRepo().save({
             id: apId(),

@@ -1,5 +1,5 @@
 import { getTasksPriceId } from '@activepieces/ee-shared'
-import { ApEdition, assertNotNullOrUndefined, User } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
@@ -25,7 +25,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             apiVersion: '2023-10-16',
         })
     },
-    async createCustomer(user: User, platformId: string) {
+    async createCustomer(user: UserWithMetaInformation, platformId: string) {
         const stripe = this.getStripe()
         if (!stripe) {
             throw new Error('Stripe is not enabled')

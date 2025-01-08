@@ -3,12 +3,12 @@ import {
     OtpState,
     OtpType,
 } from '@activepieces/ee-shared'
-import { apId, PlatformId, User, UserId } from '@activepieces/shared'
+import { apId, PlatformId } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { repoFactory } from '../../core/db/repo-factory'
-import { userService } from '../../user/user-service'
-import { emailService } from '../helper/email/email-service'
+import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
+import { repoFactory } from '../../../core/db/repo-factory'
+import { emailService } from '../../helper/email/email-service'
 import { otpGenerator } from './lib/otp-generator'
 import { OtpEntity } from './otp-entity'
 
@@ -22,15 +22,12 @@ export const otpService = (log: FastifyBaseLogger) => ({
         email,
         type,
     }: CreateParams): Promise<void> {
-        const user = await getUser({
-            platformId,
-            email,
-        })
-        if (!user) {
+        const userIdentity = await userIdentityService(log).getIdentityByEmail(email)
+        if (!userIdentity) {
             return
         }
         const existingOtp = await repo().findOneBy({
-            userId: user.id,
+            identityId: userIdentity.id,
             type,
         })
         const otpIsNotExpired = existingOtp && dayjs().diff(existingOtp.updated, 'milliseconds') < TEN_MINUTES
@@ -41,22 +38,22 @@ export const otpService = (log: FastifyBaseLogger) => ({
             id: apId(),
             updated: dayjs().toISOString(),
             type,
-            userId: user.id,
+            identityId: userIdentity.id,
             value: otpGenerator.generate(),
             state: OtpState.PENDING,
         }
-        await repo().upsert(newOtp, ['userId', 'type'])
+        await repo().upsert(newOtp, ['identityId', 'type'])
         await emailService(log).sendOtp({
             platformId,
-            user,
+            userIdentity,
             otp: newOtp.value,
             type: newOtp.type,
         })
     },
 
-    async confirm({ userId, type, value }: ConfirmParams): Promise<boolean> {
+    async confirm({ identityId, type, value }: ConfirmParams): Promise<boolean> {
         const otp = await repo().findOneByOrFail({
-            userId,
+            identityId,
             type,
         })
         const otpIsPending = otp.state === OtpState.PENDING
@@ -73,31 +70,14 @@ export const otpService = (log: FastifyBaseLogger) => ({
     },
 })
 
-const getUser = async ({
-    platformId,
-    email,
-}: GetUserOrThrowParams): Promise<User | null> => {
-    const user = await userService.getByPlatformAndEmail({
-        platformId,
-        email,
-    })
-
-    return user
-}
-
 type CreateParams = {
-    platformId: PlatformId
+    platformId: PlatformId | null
     email: string
     type: OtpType
 }
 
 type ConfirmParams = {
-    userId: UserId
+    identityId: string
     type: OtpType
     value: string
-}
-
-type GetUserOrThrowParams = {
-    platformId: PlatformId | null
-    email: string
 }

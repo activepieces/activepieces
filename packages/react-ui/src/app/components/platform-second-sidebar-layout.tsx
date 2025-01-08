@@ -128,13 +128,11 @@ export default function PlatformSecondSidebarLayout({
     },
   };
 
-  if (!showPlatformDemo) {
-    sidebarNavItems['setup'].items.push({
-      title: 'License Key',
-      href: '/platform/setup/license-key',
-      icon: <CreditCard size={iconSize} />,
-    });
-  }
+  sidebarNavItems['setup'].items.push({
+    title: 'License Key',
+    href: '/platform/setup/license-key',
+    icon: <CreditCard size={iconSize} />,
+  });
 
   return (
     <SidebarLayout

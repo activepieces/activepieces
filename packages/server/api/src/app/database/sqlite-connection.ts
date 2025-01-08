@@ -79,6 +79,7 @@ import { AddProjectRelationInUserInvitationSqlite1732791068873 } from './migrati
 import { RemoveWorkerTypeSqlite1734439194575 } from './migration/sqlite/1734439194575-RemoveWorkerTypeSqlite'
 import { AddCopilotSettingsSqlite1734479435668 } from './migration/sqlite/1734479435668-AddCopilotSettingsSqlite'
 import { AddExternalIdForFlowSqlite1735262810939 } from './migration/sqlite/1735262810939-AddExternalIdForFlowSqlite'
+import { AddUserIdentitySqlite1735602676499 } from './migration/sqlite/1735602676499-AddUserIdentitySqlite'
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
     mkdirSync(apConfigDirectoryPath, { recursive: true })
@@ -174,6 +175,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveWorkerTypeSqlite1734439194575,
         AddCopilotSettingsSqlite1734479435668,
         AddExternalIdForFlowSqlite1735262810939,
+        AddUserIdentitySqlite1735602676499,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

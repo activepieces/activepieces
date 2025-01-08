@@ -540,7 +540,9 @@ const routes = [
     element: (
       <PlatformAdminContainer>
         <PageTitle title="Billing">
-          <SettingsBilling />
+          <PlatformSecondSidebarLayout type="setup">
+            <SettingsBilling />
+          </PlatformSecondSidebarLayout>
         </PageTitle>
       </PlatformAdminContainer>
     ),

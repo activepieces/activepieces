@@ -6,11 +6,12 @@ import {
     apId,
     assertNotNullOrUndefined,
     ProjectId,
-    UserMeta,
+    User,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
+import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-prop'
 import { usageService } from '../../platform-billing/usage/usage-service'
@@ -45,7 +46,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
     },
 
     getOrCreateCustomer: async (
-        user: UserMeta,
+        user: User,
         projectId: ProjectId,
     ): Promise<string | undefined> => {
         const edition = system.getEdition()
@@ -57,11 +58,13 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         if (environment === ApEnvironment.TESTING) {
             return apId()
         }
+        const identity = await userIdentityService(log).getBasicInformation(user.identityId)
+
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
         try {
             // Retrieve the customer by their email
             const existingCustomers = await stripe.customers.list({
-                email: user.email,
+                email: identity.email,
                 limit: 1,
             })
 
@@ -73,8 +76,8 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
 
             // If no customer with the email exists, create a new customer
             const newCustomer = await stripe.customers.create({
-                email: user.email,
-                name: user.firstName + ' ' + user.lastName,
+                email: identity.email,
+                name: identity.firstName + ' ' + identity.lastName,
                 description: 'User Id: ' + user.id + ' Project Id: ' + projectId,
             })
             return newCustomer.id

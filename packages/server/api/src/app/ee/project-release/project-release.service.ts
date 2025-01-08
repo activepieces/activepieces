@@ -71,7 +71,7 @@ export const projectReleaseService = {
     async enrich(projectRelease: ProjectRelease): Promise<ProjectRelease> {
         return {
             ...projectRelease,
-            importedByUser: isNil(projectRelease.importedBy) ? undefined : await userService.getMetaInfo({
+            importedByUser: isNil(projectRelease.importedBy) ? undefined : await userService.getMetaInformation({
                 id: projectRelease.importedBy,
             }) ?? undefined,
         }

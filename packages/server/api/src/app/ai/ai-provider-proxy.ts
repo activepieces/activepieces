@@ -1,7 +1,7 @@
 import { exceptionHandler, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { PrincipalType, TelemetryEventName } from '@activepieces/shared'
 import {
-    FastifyPluginCallbackTypebox,
+    FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -10,10 +10,9 @@ import { telemetry } from '../helper/telemetry.utils'
 import { projectService } from '../project/project-service'
 import { aiProviderService } from './ai-provider.service'
 
-export const proxyController: FastifyPluginCallbackTypebox = (
+export const proxyController: FastifyPluginAsyncTypebox = async (
     fastify,
     _opts,
-    done,
 ) => {
     fastify.all('/:provider/*', ProxyRequest, async (request, reply) => {
         const { provider } = request.params
@@ -76,7 +75,6 @@ export const proxyController: FastifyPluginCallbackTypebox = (
             }
         }
     })
-    done()
 }
 
 async function parseResponseData(response: Response, responseContentType: string | null) {

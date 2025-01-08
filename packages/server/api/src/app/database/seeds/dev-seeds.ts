@@ -1,6 +1,5 @@
-import { ApEnvironment } from '@activepieces/shared'
-import { authenticationService } from '../../authentication/authentication-service'
-import { Provider } from '../../authentication/authentication-service/hooks/authentication-service-hooks'
+import { ApEnvironment, UserIdentityProvider } from '@activepieces/shared'
+import { authenticationService } from '../../authentication/authentication.service'
 import { FlagEntity } from '../../flags/flag.entity'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-prop'
@@ -41,10 +40,9 @@ const seedDevUser = async (): Promise<void> => {
         firstName: 'Dev',
         lastName: 'User',
         trackEvents: false,
-        newsLetter: false,
-        verified: true,
         platformId: null,
-        provider: Provider.EMAIL,
+        newsLetter: false,
+        provider: UserIdentityProvider.EMAIL,
     })
 
     log.info({ name: 'seedDevUser' }, `email=${DEV_EMAIL} pass=${DEV_PASSWORD}`)

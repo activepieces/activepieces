@@ -4,6 +4,7 @@ import { ConfigureRepoRequest, GitRepo } from '@activepieces/ee-shared'
 import { ActivepiecesError, ApEnvironment, ErrorCode } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import simpleGit, { SimpleGit } from 'simple-git'
+import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-prop'
 import { userService } from '../../../user/user-service'
@@ -55,9 +56,11 @@ async function createGitRepoAndReturnPaths(
     const git = await initGitRepo(keyPath, gitRepo.remoteUrl, tmpFolder, gitRepo.branch)
     await git.pull('origin', gitRepo.branch)
 
-    const { email, firstName, lastName } = await userService.getOneOrFail({
+    const user = await userService.getOneOrFail({
         id: userId,
     })
+    const identity = await userIdentityService(system.globalLogger()).getBasicInformation(user.identityId)
+    const { email, firstName, lastName } = identity
     await git.addConfig('user.email', email)
     await git.addConfig('user.name', `${firstName} ${lastName}`)
     return {
