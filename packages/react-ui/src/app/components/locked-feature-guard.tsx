@@ -1,5 +1,8 @@
 import React from 'react';
 
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { ApFlagId } from '@activepieces/shared';
+
 import { FeatureKey, RequestTrial } from './request-trial';
 
 type LockedFeatureGuardProps = {
@@ -9,6 +12,7 @@ type LockedFeatureGuardProps = {
   lockDescription: string;
   lockVideoUrl?: string;
   featureKey: FeatureKey;
+  cloudOnlyFeature?: boolean;
 };
 
 export const LockedFeatureGuard = ({
@@ -18,8 +22,13 @@ export const LockedFeatureGuard = ({
   lockDescription,
   lockVideoUrl,
   featureKey,
+  cloudOnlyFeature = false,
 }: LockedFeatureGuardProps) => {
-  if (!locked) {
+  const { data: showPlatformDemo } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_PLATFORM_DEMO,
+  );
+
+  if (!locked && (!showPlatformDemo || cloudOnlyFeature)) {
     return children;
   }
 

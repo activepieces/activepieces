@@ -1,10 +1,12 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import React, { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 import { ProgressCircularComponent } from '@/components/custom/circular-progress';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress-circle';
+import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
   TooltipContent,
@@ -12,7 +14,9 @@ import {
 } from '@/components/ui/tooltip';
 import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
+import { ApFlagId, isNil } from '@activepieces/shared';
+
+import { FlagGuard } from './flag-guard';
 
 const getTimeUntilNextReset = (nextResetDate: string) => {
   const now = dayjs();
@@ -87,6 +91,21 @@ const UsageLimitsButton = React.memo(() => {
             {getTimeUntilNextReset(project.usage.nextLimitResetDate)}{' '}
           </div>
         )}
+
+        <FlagGuard flag={ApFlagId.SHOW_BILLING}>
+          <Separator className="my-4" />
+          <div className="flex justify-end ">
+            <Link to={'/plans'}>
+              <Button
+                variant={'outline'}
+                size="sm"
+                className="w-full text-primary hover:!text-primary/80 h-8"
+              >
+                {t('Your Plan')}
+              </Button>
+            </Link>
+          </div>
+        </FlagGuard>
       </TooltipContent>
     </Tooltip>
   );

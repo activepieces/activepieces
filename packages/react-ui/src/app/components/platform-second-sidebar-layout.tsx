@@ -36,6 +36,10 @@ export default function PlatformSecondSidebarLayout({
   children,
   type,
 }: SecondSidebarProps) {
+  const { data: showPlatformDemo } = flagsHooks.useFlag(
+    ApFlagId.SHOW_PLATFORM_DEMO,
+  );
+
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const sidebarNavItems: Record<string, SidebarSection> = {
     setup: {

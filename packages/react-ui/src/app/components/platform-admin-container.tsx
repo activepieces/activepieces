@@ -10,7 +10,9 @@ import {
 import { Navigate } from 'react-router-dom';
 
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { ApFlagId } from '@activepieces/shared';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { Sidebar, SidebarLink } from './sidebar';
@@ -24,8 +26,12 @@ export function PlatformAdminContainer({
 }: PlatformAdminContainerProps) {
   const { platform } = platformHooks.useCurrentPlatform();
 
+  const { data: showPlatformDemo } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_PLATFORM_DEMO,
+  );
+
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
-  const isLocked = (locked: boolean) => locked;
+  const isLocked = (locked: boolean) => locked || (showPlatformDemo ?? false);
   const links: SidebarLink[] = [
     {
       to: '/platform/analytics',

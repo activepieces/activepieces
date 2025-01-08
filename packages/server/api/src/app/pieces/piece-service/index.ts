@@ -48,7 +48,7 @@ export const pieceService = (log: FastifyBaseLogger) => ({
                     name: pieceInformation.name,
                     version: pieceInformation.version,
                 },
-                // TODO urgent move all pieces scope to platform
+                // TODO (@abuaboud) delete after migrating everyone to their own platform
                 projectId: undefined,
                 packageType: params.packageType,
                 platformId,

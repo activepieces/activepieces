@@ -9,6 +9,7 @@ export default function IssuesPage() {
   return (
     <LockedFeatureGuard
       featureKey="ISSUES"
+      cloudOnlyFeature={true}
       locked={!platform.flowIssuesEnabled}
       lockTitle={t('Unlock Flow Issues')}
       lockDescription={t('Track an aggregated issues across your flows')}
