@@ -8,11 +8,11 @@ import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
+import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { platformBillingController } from './platform-billing.controller'
 import { platformBillingService } from './platform-billing.service'
 import { stripeHelper, TASKS_PAYG_PRICE_ID } from './stripe-helper'
 import { BillingEntityType, usageService } from './usage/usage-service'
-import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 
 const EVERY_4_HOURS = '59 */4 * * *'
 

@@ -42,7 +42,7 @@ export const aiProviderService = {
         await repo().delete(params)
     },
     async list(platformId: PlatformId): Promise<SeekPage<AiProviderWithoutSensitiveData>> {
-        let providers = await repo().findBy({ platformId })
+        const providers = await repo().findBy({ platformId })
         if (providers.length === 0) {
             const cloudProviders = await fallbackToCloudPlatformList(platformId)
             if (!isNil(cloudProviders)) {

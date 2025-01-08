@@ -30,6 +30,7 @@ import { otpModule } from './ee/authentication/otp/otp-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { appSumoModule } from './ee/billing/appsumo/appsumo.module'
+import { projectBillingModule } from './ee/billing/project-billing/project-billing.module'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { customDomainModule } from './ee/custom-domains/custom-domain.module'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
@@ -91,7 +92,6 @@ import { websocketService } from './websockets/websockets.service'
 import { flowConsumer } from './workers/consumer'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { workerModule } from './workers/worker-module'
-import { projectBillingModule } from './ee/billing/project-billing/project-billing.module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
@@ -214,7 +214,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(appEventRoutingModule)
     await app.register(authenticationModule)
     await app.register(copilotModule),
-        await app.register(platformModule)
+    await app.register(platformModule)
     await app.register(humanInputModule)
     await app.register(tagsModule)
     await pieceSyncService(app.log).setup()
