@@ -1,4 +1,5 @@
 import {
+    apId,
     isNil,
     Platform,
     PlatformRole,
@@ -18,6 +19,7 @@ import { FileEntity } from '../../file/file.entity'
 import { UserInvitationEntity } from '../../user-invitations/user-invitation.entity'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { PieceMetadataEntity } from '../../pieces/piece-metadata-entity'
+import { UserIdentityEntity } from '../../authentication/user-identity/user-identity-entity'
 
 export const appConnectionRepo = repoFactory(AppConnectionEntity)
 export const flowTemplateRepo = repoFactory(FlowTemplateEntity)
@@ -25,6 +27,7 @@ export const fileRepo = repoFactory(FileEntity)
 export const userInvitationRepo = repoFactory(UserInvitationEntity)
 export const projectMemberRepo = repoFactory(ProjectMemberEntity)
 export const pieceMetadataRepo = repoFactory(PieceMetadataEntity)
+export const userIdentityRepo = repoFactory(UserIdentityEntity)
 
 export const adminPlatformService = (log: FastifyBaseLogger) => ({
     async add(userId: UserId): Promise<Platform> {
@@ -122,6 +125,15 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
             projectId: project.id,
         }, {
             platformId: platform.id,
+        })
+
+        const user = await userRepo().findOneByOrFail({
+            id: userId,
+        })
+        await userIdentityRepo().update({
+            id: user.identityId,
+        }, {
+            tokenVersion: apId()
         })
 
         // Check if all updates were successful
