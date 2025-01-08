@@ -9,6 +9,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { GetField } from './types';
 
+
 export async function fetchPersonsOptions(
 	auth: PiecePropValueSchema<typeof pipedriveAuth>,
 ): Promise<DropdownOption<number>[]> {
@@ -57,7 +58,7 @@ export async function fetchOwnersOptions(
 	return options;
 }
 
-export async function fetchOrganizationOptions(
+export async function fetchOrganizationsOptions(
 	auth: PiecePropValueSchema<typeof pipedriveAuth>,
 ): Promise<DropdownOption<number>[]> {
 	const organizations = await pipedrivePaginatedApiCall<{ id: number; name: string }>({

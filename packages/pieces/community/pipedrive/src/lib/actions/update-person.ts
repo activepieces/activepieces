@@ -6,7 +6,7 @@ import {
 	Property,
 } from '@activepieces/pieces-framework';
 import {
-	fetchOrganizationOptions,
+	fetchOrganizationsOptions,
 	fetchOwnersOptions,
 	fetchPersonsOptions,
 	retriveObjectCustomProperties,
@@ -84,7 +84,7 @@ export const updatePersonAction = createAction({
 					};
 				}
 				const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-				const options = await fetchOrganizationOptions(authValue);
+				const options = await fetchOrganizationsOptions(authValue);
 
 				return {
 					disabled: false,

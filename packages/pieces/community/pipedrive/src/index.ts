@@ -13,6 +13,8 @@ import { updatedOrganizationTrigger } from './lib/trigger/updated-organization';
 import { updatedDealStageTrigger } from './lib/trigger/updated-deal-stage';
 import { createPersonAction } from './lib/actions/create-person';
 import { updatePersonAction } from './lib/actions/update-person';
+import { createOrganizationAction } from './lib/actions/create-organization';
+import { updateOrganizationAction } from './lib/actions/update-organization';
 
 export const pipedriveAuth = PieceAuth.OAuth2({
 	description: '',
@@ -32,6 +34,8 @@ export const pipedrive = createPiece({
 	auth: pipedriveAuth,
 	actions: [
 		addPerson,
+		createOrganizationAction,
+		updateOrganizationAction,
 		createPersonAction,
 		updatePersonAction,
 		createCustomApiCallAction({
