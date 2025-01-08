@@ -14,6 +14,8 @@ import {
 
 export const useAuthorization = () => {
   const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
+
+  const platformId = authenticationSession.getPlatformId();
   const { data: projectRole, isLoading } = useQuery({
     queryKey: ['project-role', authenticationSession.getProjectId()],
     queryFn: async () => {
@@ -25,7 +27,8 @@ export const useAuthorization = () => {
       return null;
     },
     retry: false,
-    enabled: !isNil(edition) && edition !== ApEdition.COMMUNITY,
+    enabled:
+      !isNil(edition) && edition !== ApEdition.COMMUNITY && !isNil(platformId),
   });
 
   const checkAccess = (permission: Permission) => {
