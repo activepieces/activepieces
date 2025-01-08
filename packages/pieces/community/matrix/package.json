@@ -1,7 +1,5 @@
 {
   "name": "@activepieces/piece-matrix",
   "version": "0.3.4",
-  "dependencies": {
-    "marked": "^15.0.6"
-  }
+  "dependencies": {}
 }
