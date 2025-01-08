@@ -1,5 +1,6 @@
 import {
     apId,
+    assertNotNullOrUndefined,
     isNil,
     Platform,
     PlatformRole,
@@ -7,7 +8,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { platformService } from '../../platform/platform.service'
-import { projectRepo } from '../../project/project-service'
+import { projectRepo, projectService } from '../../project/project-service'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-prop'
 import { userRepo, userService } from '../../user/user-service'
@@ -20,6 +21,15 @@ import { UserInvitationEntity } from '../../user-invitations/user-invitation.ent
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { PieceMetadataEntity } from '../../pieces/piece-metadata-entity'
 import { UserIdentityEntity } from '../../authentication/user-identity/user-identity-entity'
+import { ProjectBillingEntity } from '../billing/project-billing/project-billing.entity'
+import { ProjectPlanEntity } from '../project-plan/project-plan.entity'
+import { platformProjectService } from '../projects/platform-project-service'
+import { projectBillingService } from '../billing/project-billing/project-billing.service'
+import { platformBillingService } from '../platform-billing/platform-billing.service'
+import { PlatformBillingEntity } from '../platform-billing/platform-billing.entity'
+import { ApSubscriptionStatus, DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
+import { stripeHelper, TASKS_PAYG_PRICE_ID } from '../platform-billing/stripe-helper'
+import { apDayjs } from '../../helper/dayjs-helper'
 
 export const appConnectionRepo = repoFactory(AppConnectionEntity)
 export const flowTemplateRepo = repoFactory(FlowTemplateEntity)
@@ -28,6 +38,9 @@ export const userInvitationRepo = repoFactory(UserInvitationEntity)
 export const projectMemberRepo = repoFactory(ProjectMemberEntity)
 export const pieceMetadataRepo = repoFactory(PieceMetadataEntity)
 export const userIdentityRepo = repoFactory(UserIdentityEntity)
+export const projectBillingRepo = repoFactory(ProjectBillingEntity)
+export const projectPlanRepo = repoFactory(ProjectPlanEntity)
+export const platformBillingRepo = repoFactory(PlatformBillingEntity)
 
 export const adminPlatformService = (log: FastifyBaseLogger) => ({
     async add(userId: UserId): Promise<Platform> {
@@ -136,6 +149,40 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
             tokenVersion: apId()
         })
 
+        const projectBilling = await projectBillingService(system.globalLogger()).getOrCreateForProject(project.id)
+        const projectPlan = await platformProjectService(system.globalLogger()).getWithPlanAndUsageOrThrow(project.id)
+
+        const platformPlan = await platformBillingService(system.globalLogger()).getOrCreateForPlatform(platform.id)
+
+        await platformBillingRepo().update(platformPlan.id, {
+            tasksLimit: projectPlan.plan.tasks,
+            aiCreditsLimit: projectPlan.plan.aiTokens,
+            includedAiCredits: DEFAULT_FREE_PLAN_LIMIT.aiTokens,
+            includedTasks: projectBilling.includedTasks,
+        })
+
+        const stripeSubscriptionId = projectBilling.stripeSubscriptionId
+        if(!isNil(stripeSubscriptionId) && projectBilling.subscriptionStatus === ApSubscriptionStatus.ACTIVE && !isNil(projectBilling.stripeCustomerId)) {
+            const stripe = stripeHelper(system.globalLogger()).getStripe()
+            assertNotNullOrUndefined(stripe, 'stripe')
+
+            await stripe.subscriptions.cancel(stripeSubscriptionId);
+
+            const newSubscription = await stripe?.subscriptions.create({
+                items: [{
+                    price: TASKS_PAYG_PRICE_ID,
+                    quantity: 1,
+                }],
+                billing_cycle_anchor: apDayjs().startOf('month').add(1, 'month').unix(),
+                customer: projectBilling.stripeCustomerId,
+            });
+
+            await platformBillingRepo().update(platformPlan.id, {
+                stripeSubscriptionId: newSubscription.id,
+                stripeSubscriptionStatus: ApSubscriptionStatus.ACTIVE,
+                stripeCustomerId: projectBilling.stripeCustomerId,
+            })
+        }   
         // Check if all updates were successful
         const updatedUser = await userRepo().findOneByOrFail({ id: userId })
         if (updatedUser.platformId !== platform.id || updatedUser.platformRole !== PlatformRole.ADMIN) {

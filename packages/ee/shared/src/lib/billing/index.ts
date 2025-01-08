@@ -41,6 +41,7 @@ export function getTasksPriceId(stripeKey: string | undefined) {
   const testMode = stripeKey?.startsWith('sk_test');
   return testMode
     ? 'price_1OnWqKKZ0dZRqLEKkcYBso8K'
-    : 'price_1OngsdKZ0dZRqLEKPpvm67Sk';
+    : 'price_1Qf7RiKZ0dZRqLEKAgP38l7w';
 }
+
 export const PRICE_PER_1000_TASKS = 1;
