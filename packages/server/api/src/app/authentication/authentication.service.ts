@@ -219,12 +219,12 @@ async function getPersonalPlatformIdForFederatedAuthn(email: string, log: Fastif
 async function getPersonalPlatforIdForSignWithPassword(identityId: string): Promise<string | null> {
     const edition = system.getEdition()
     if (edition === ApEdition.CLOUD) {
-        const platform = getPersonalPlatformIdForIdentity(identityId)
+        const platformId = await getPersonalPlatformIdForIdentity(identityId)
         // TODO (@abuaboud) clean up this once everyone is moved to their own platform
-        if (isNil(platform)) {
+        if (isNil(platformId)) {
             return system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
         }
-        return platform
+        return platformId
     }
     return null
 }
