@@ -72,7 +72,9 @@ const createGraphKey = (flowVersion: FlowVersion) => {
     .getAllSteps(flowVersion.trigger)
     .reduce((acc, step) => {
       const barnchesNames =
-        step.type === ActionType.ROUTER ? step.settings.branches.map(branch => branch.branchName).join('-') : '0';
+        step.type === ActionType.ROUTER
+          ? step.settings.branches.map((branch) => branch.branchName).join('-')
+          : '0';
       const childrenKey = getChildrenKey(step);
       return `${acc}-${step.displayName}-${step.type}-${
         step.nextAction ? step.nextAction.name : ''
