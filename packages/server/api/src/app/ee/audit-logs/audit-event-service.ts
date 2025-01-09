@@ -12,6 +12,7 @@ import {
 import { Value } from '@sinclair/typebox/value'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { In } from 'typeorm'
+import { authenticationUtils } from '../../authentication/authentication-utils'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { AuditEventParam } from '../../helper/application-events'
@@ -34,12 +35,15 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
         if ([PrincipalType.UNKNOWN, PrincipalType.WORKER].includes(request.principal.type)) {
             return
         }
-        rejectedPromiseHandler(saveEvent({
-            platformId: request.principal.platform.id,
-            projectId: request.principal.projectId,
-            userId: request.principal.id,
-            ip: networkUtls.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-        }, params, log), log)
+        rejectedPromiseHandler((async () => {
+            const userId = await authenticationUtils.extractUserIdFromPrincipal(request.principal)
+            await saveEvent({
+                platformId: request.principal.platform.id,
+                projectId: request.principal.projectId,
+                userId,
+                ip: networkUtls.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+            }, params, log)
+        })(), log)
     },
     sendWorkerEvent(projectId: string, params: AuditEventParam): void {
         rejectedPromiseHandler(projectService.getOneOrThrow(projectId).then((project) => {

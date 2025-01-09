@@ -1,7 +1,8 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage } from '@activepieces/shared'
+import { ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { authenticationUtils } from '../../authentication/authentication-utils'
 import { eventsHooks } from '../../helper/application-events'
 import { platformService } from '../../platform/platform.service'
 import { projectReleaseService } from './project-release.service'
@@ -24,9 +25,8 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
     })
 
     app.post('/', CreateProjectReleaseRequest, async (req) => {
-        const platform = await platformService.getOneOrThrow(req.principal.platform.id)
-        const ownerId = platform.ownerId
-        const release = await projectReleaseService.create(req.principal.projectId, ownerId, req.principal.id, req.body, req.log)
+        const userId = await authenticationUtils.extractUserIdFromPrincipal(req.principal)
+        const release = await projectReleaseService.create(req.body.projectId, userId, req.body, req.log)
 
         eventsHooks.get(req.log).sendUserEventFromRequest(req, {
             action: ApplicationEventName.PROJECT_RELEASE_CREATED,
@@ -78,11 +78,12 @@ const DiffProjectReleaseRequest = {
 
 const CreateProjectReleaseRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
     },
     schema: {
         tags: ['project-releases'],
         body: CreateProjectReleaseRequestBody,
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {
             [StatusCodes.CREATED]: ProjectRelease,
         },
