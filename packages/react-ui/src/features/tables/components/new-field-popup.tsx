@@ -18,6 +18,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { fieldsApi } from '@/features/tables/lib/fields-api';
+import { useSequentialMutationsStore } from '@/features/tables/lib/tables-mutations-hooks';
 import { getColumnIcon } from '@/features/tables/lib/utils';
 import { cn } from '@/lib/utils';
 import { Field, FieldType } from '@activepieces/shared';
@@ -37,6 +38,7 @@ type NewFieldDialogProps = {
 export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { enqueueMutation } = useSequentialMutationsStore();
 
   const form = useForm<NewFieldSchema>({
     resolver: typeboxResolver(NewFieldSchema),
@@ -105,9 +107,9 @@ export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
         <div className="text-lg font-semibold mb-4">{t('New Field')}</div>
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit((data) =>
-              createFieldMutation.mutate(data),
-            )}
+            onSubmit={form.handleSubmit(async (data) => {
+              await enqueueMutation(createFieldMutation, data);
+            })}
             className="space-y-4"
           >
             <FormField

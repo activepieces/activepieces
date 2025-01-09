@@ -1,5 +1,4 @@
 import {
-  useIsMutating,
   useMutation,
   useQuery,
   useQueryClient,
@@ -40,6 +39,7 @@ import { SelectColumn } from '@/features/tables/components/select-column';
 import { fieldsApi } from '@/features/tables/lib/fields-api';
 import { recordsApi } from '@/features/tables/lib/records-api';
 import { tablesApi } from '@/features/tables/lib/tables-api';
+import { useSequentialMutationsStore } from '@/features/tables/lib/tables-mutations-hooks';
 import { Row } from '@/features/tables/lib/types';
 import { cn } from '@/lib/utils';
 import {
@@ -71,6 +71,7 @@ function TablePage() {
   const { tableId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { saving, enqueueMutation } = useSequentialMutationsStore();
   const [selectedRows, setSelectedRows] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
@@ -96,7 +97,7 @@ function TablePage() {
       recordsApi.list({
         tableId: tableId!,
         cursor: pageParam as string | undefined,
-        limit: 1,
+        limit: 200,
       }),
     getNextPageParam: (lastPage) => lastPage.next,
     initialPageParam: undefined as string | undefined,
@@ -388,7 +389,7 @@ function TablePage() {
             {
               type: ColumnActionType.DELETE,
               onClick: async () => {
-                await deleteFieldMutation.mutateAsync(field.id);
+                await enqueueMutation(deleteFieldMutation, field.id);
               },
             },
           ]}
@@ -408,24 +409,9 @@ function TablePage() {
           onRowChange={(newRow, commitChanges) => {
             if (commitChanges) {
               if (row.id.startsWith('temp-')) {
-                createRecordMutation.mutate({
-                  field,
-                  value: String(newRow[field.name]),
-                  tempId: row.id,
-                });
+                handleCellEdit(row, field, String(newRow[field.name]), row.id);
               } else {
-                updateRecordMutation.mutate({
-                  recordId: row.id,
-                  request: {
-                    tableId: tableId!,
-                    cells: [
-                      {
-                        key: field.name,
-                        value: String(newRow[field.name]),
-                      },
-                    ],
-                  },
-                });
+                handleCellEdit(row, field, String(newRow[field.name]));
               }
             }
           }}
@@ -491,14 +477,33 @@ function TablePage() {
 
   const isLoading = isFieldsLoading || isRecordsLoading || isTableLoading;
 
-  const isMutating = useIsMutating({
-    predicate: (mutation) =>
-      mutation.options.mutationKey?.[0] === 'updateRecord' ||
-      mutation.options.mutationKey?.[0] === 'createRecord' ||
-      mutation.options.mutationKey?.[0] === 'deleteRecords' ||
-      mutation.options.mutationKey?.[0] === 'deleteField' ||
-      mutation.options.mutationKey?.[0] === 'createField',
-  });
+  const handleCellEdit = async (
+    row: Row,
+    field: Field,
+    newValue: string,
+    tempId?: string,
+  ) => {
+    if (tempId) {
+      await enqueueMutation(createRecordMutation, {
+        field,
+        value: newValue,
+        tempId,
+      });
+    } else {
+      await enqueueMutation(updateRecordMutation, {
+        recordId: row.id,
+        request: {
+          tableId: tableId!,
+          cells: [
+            {
+              key: field.name,
+              value: newValue,
+            },
+          ],
+        },
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -537,7 +542,7 @@ function TablePage() {
           </Button>
           <span className="text-xl">{tableData?.name}</span>
 
-          {isMutating > 0 && (
+          {saving && (
             <div className="flex items-center gap-2 text-muted-foreground animate-fade-in">
               <RefreshCw className="h-4 w-4 animate-spin" />
               <span className="text-sm">{t('Saving...')}</span>
@@ -643,14 +648,11 @@ function TablePage() {
                     selectedRows.size === 1 ? t('record') : t('records')
                   }
                   mutationFn={async () => {
-                    try {
-                      await deleteRecordsMutation.mutateAsync(
-                        Array.from(selectedRows),
-                      );
-                      setSelectedRows(new Set());
-                    } catch (error) {
-                      console.error('Error deleting records:', error);
-                    }
+                    await enqueueMutation(
+                      deleteRecordsMutation,
+                      Array.from(selectedRows),
+                    );
+                    setSelectedRows(new Set());
                   }}
                 >
                   <Button
