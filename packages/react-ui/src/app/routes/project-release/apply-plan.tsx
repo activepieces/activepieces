@@ -44,12 +44,6 @@ export const ApplyButton = ({
     },
     onSuccess: (plan) => {
       if (!plan.operations || plan.operations.length === 0) {
-        toast({
-          title: t('No Changes Found'),
-          description: t('There are no differences to apply'),
-          variant: 'default',
-        });
-        setDialogOpen(false);
         setLoadingRequestId(null);
         return;
       }

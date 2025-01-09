@@ -1,5 +1,4 @@
-import { UpdateIcon } from '@radix-ui/react-icons';
-import { Minus, Plus } from 'lucide-react';
+import { Minus, PencilIcon, Plus } from 'lucide-react';
 import React from 'react';
 
 import { Checkbox } from '@/components/ui/checkbox';
@@ -26,7 +25,7 @@ type OperationChangeProps = {
 export const OperationChange = React.memo(
   ({ change, selected, onSelect }: OperationChangeProps) => {
     return (
-      <div>
+      <>
         {change.type === ProjectOperationType.CREATE_FLOW && (
           <div className="flex gap-2 text-success items-center">
             <Checkbox checked={selected} onCheckedChange={onSelect} />
@@ -41,7 +40,7 @@ export const OperationChange = React.memo(
             <Checkbox checked={selected} onCheckedChange={onSelect} />
             {renderDiffInfo(
               change.targetFlow.displayName,
-              <UpdateIcon className="w-4 h-4 shrink-0" />,
+              <PencilIcon className="w-4 h-4 shrink-0" />,
             )}
           </div>
         )}
@@ -54,7 +53,7 @@ export const OperationChange = React.memo(
             )}
           </div>
         )}
-      </div>
+      </>
     );
   },
 );

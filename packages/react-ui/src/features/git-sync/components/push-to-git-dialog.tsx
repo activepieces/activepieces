@@ -86,11 +86,6 @@ const PushToGitDialog = ({ children, flowIds }: PushToGitDialogProps) => {
           <form onSubmit={form.handleSubmit((data) => mutate(data))}>
             <DialogHeader>
               <DialogTitle>{t('Push to Git')}</DialogTitle>
-              <DialogDescription>
-                {t(
-                  'Enter a commit message to describe the changes you want to push.',
-                )}
-              </DialogDescription>
             </DialogHeader>
             <FormField
               control={form.control}
@@ -104,7 +99,22 @@ const PushToGitDialog = ({ children, flowIds }: PushToGitDialogProps) => {
                 </FormItem>
               )}
             />
+            <div className="text-sm text-gray-500 mt-2">
+                {t(
+                  'Enter a commit message to describe the changes you want to push.',
+                )}
+              </div>
             <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setOpen(false);
+                  form.reset();
+                }}
+              >
+                {t('Cancel')}
+              </Button>
               <Button
                 type="submit"
                 loading={isPending}
