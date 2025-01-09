@@ -202,4 +202,5 @@ export enum EngineResponseStatus {
     OK = 'OK',
     ERROR = 'ERROR',
     TIMEOUT = 'TIMEOUT',
+    MEMORY_ISSUE = 'MEMORY_ISSUE',
 }
