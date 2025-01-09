@@ -27,7 +27,7 @@ import {
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
 import { projectHooks } from '@/hooks/project-hooks';
-import { DiffReleaseRequest, ProjectReleaseType } from '@activepieces/shared';
+import { DiffReleaseRequest, isNil, ProjectReleaseType } from '@activepieces/shared';
 
 import { CreateReleaseDialog } from '../create-release-dialog';
 
@@ -104,6 +104,7 @@ export function ProjectSelectionDialog({
     });
   };
 
+
   return (
     <>
       <Dialog
@@ -138,17 +139,19 @@ export function ProjectSelectionDialog({
                         <SelectValue placeholder={t('Project')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>{t('Project')}</SelectLabel>
-                          {projects?.map(
-                            (project) =>
-                              project.id !== projectId && (
-                                <SelectItem key={project.id} value={project.id}>
-                                  {project.displayName}
-                                </SelectItem>
-                              ),
-                          )}
-                        </SelectGroup>
+                        {projects && projects.length > 1 ? (
+                          projects
+                            .filter((project) => project.id !== projectId)
+                            .map((project) => (
+                              <SelectItem key={project.id} value={project.id}>
+                                {project.displayName}
+                              </SelectItem>
+                            ))
+                        ) : (
+                          <SelectItem disabled value="1">
+                            {t('No projects available')}
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />

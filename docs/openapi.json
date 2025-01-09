@@ -14103,76 +14103,12 @@
                   {
                     "type": "object",
                     "properties": {
-                      "name": {
-                        "type": "string"
-                      },
-                      "description": {
-                        "type": "string",
-                        "nullable": true
-                      },
-                      "selectedFlowsIds": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        },
-                        "nullable": true
-                      },
-                      "projectId": {
-                        "type": "string"
-                      },
-                      "type": {
-                        "type": "string",
-                        "enum": [
-                          "GIT"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "name",
-                      "projectId",
-                      "type"
-                    ]
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "name": {
-                        "type": "string"
-                      },
-                      "description": {
-                        "type": "string",
-                        "nullable": true
-                      },
-                      "selectedFlowsIds": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        },
-                        "nullable": true
-                      },
-                      "projectId": {
-                        "type": "string"
-                      },
                       "type": {
                         "type": "string",
                         "enum": [
                           "ROLLBACK"
                         ]
                       },
-                      "projectReleaseId": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "name",
-                      "projectId",
-                      "type",
-                      "projectReleaseId"
-                    ]
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
                       "name": {
                         "type": "string"
                       },
@@ -14190,24 +14126,89 @@
                       "projectId": {
                         "type": "string"
                       },
+                      "projectReleaseId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "name",
+                      "projectId",
+                      "projectReleaseId"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
                       "type": {
                         "type": "string",
                         "enum": [
                           "PROJECT"
                         ]
                       },
+                      "name": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "selectedFlowsIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "nullable": true
+                      },
+                      "projectId": {
+                        "type": "string"
+                      },
                       "targetProjectId": {
                         "type": "string"
                       }
                     },
                     "required": [
+                      "type",
                       "name",
                       "projectId",
-                      "type",
                       "targetProjectId"
                     ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "GIT"
+                        ]
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "selectedFlowsIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "nullable": true
+                      },
+                      "projectId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "name",
+                      "projectId"
+                    ]
                   }
-                ]
+                ],
+                "discriminator": "type"
               }
             }
           }

@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { Nullable } from '../common'
+import { DiscriminatedUnion, Nullable } from '../common'
 
 export enum ProjectReleaseType {
     GIT = 'GIT',
@@ -7,40 +7,35 @@ export enum ProjectReleaseType {
     ROLLBACK = 'ROLLBACK',
 }
 
-const BaseProjectReleaseRequestBody = Type.Object({
+const BaseProjectReleaseRequestBody = {
     name: Type.String(),
     description: Nullable(Type.String()),
     selectedFlowsIds: Nullable(Type.Array(Type.String())),
     projectId: Type.String(),
+}
+
+export const CreateProjectReleaseFromGitRequestBody = Type.Object({
+    type: Type.Literal(ProjectReleaseType.GIT),
+    ...BaseProjectReleaseRequestBody,
 })
 
-export const CreateProjectReleaseFromGitRequestBody = Type.Composite([
-    BaseProjectReleaseRequestBody,
-    Type.Object({
-        type: Type.Literal(ProjectReleaseType.GIT),
-    }),
-])
 
-export const CreateProjectReleaseFromRollbackRequestBody = Type.Composite([
-    BaseProjectReleaseRequestBody,
-    Type.Object({
-        type: Type.Literal(ProjectReleaseType.ROLLBACK),
-        projectReleaseId: Type.String(),
-    }),
-])
+export const CreateProjectReleaseFromRollbackRequestBody = Type.Object({
+    type: Type.Literal(ProjectReleaseType.ROLLBACK),
+    ...BaseProjectReleaseRequestBody,
+    projectReleaseId: Type.String(),
+})
 
-export const CreateProjectReleaseFromProjectRequestBody = Type.Composite([
-    BaseProjectReleaseRequestBody,
-    Type.Object({
-        type: Type.Literal(ProjectReleaseType.PROJECT),
-        targetProjectId: Type.String(),
-    }),
-])
+export const CreateProjectReleaseFromProjectRequestBody = Type.Object({
+    type: Type.Literal(ProjectReleaseType.PROJECT),
+    ...BaseProjectReleaseRequestBody,
+    targetProjectId: Type.String(),
+})
 
-export const CreateProjectReleaseRequestBody = Type.Union([
-    CreateProjectReleaseFromGitRequestBody,
+export const CreateProjectReleaseRequestBody = DiscriminatedUnion('type', [
     CreateProjectReleaseFromRollbackRequestBody,
     CreateProjectReleaseFromProjectRequestBody,
+    CreateProjectReleaseFromGitRequestBody,
 ])
 
 export type CreateProjectReleaseRequestBody = Static<typeof CreateProjectReleaseRequestBody>
