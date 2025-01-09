@@ -152,9 +152,10 @@ export const createChatCompletionAction = createAction({
     if (response.status === 200) {
       const content = response.body.choices[0].message.content;
       const citations:string[] = response.body.citations && Array.isArray(response.body.citations) ? response.body.citations : [];
-      const citationsNumbered = citations.map((citation, index) => `[${index + 1}](${citation})`);
-      const citationsString = citationsNumbered.length > 0 ? `\n\n${citationsNumbered.join('\n')}` : '';
-      return `${content}${citationsString}`
+      return {
+        content,
+        citations
+      }
     }
 
     return response.body;
