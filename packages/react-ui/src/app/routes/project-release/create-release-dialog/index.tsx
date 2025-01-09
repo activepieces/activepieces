@@ -76,7 +76,6 @@ const CreateReleaseDialog = ({
             name: form.getValues('name'),
             description: form.getValues('description'),
             selectedFlowsIds: Array.from(selectedChanges),
-            repoId: gitSync.id,
             type: diffRequest.type,
             projectId: authenticationSession.getProjectId()!,
             importedBy: authenticationSession.getCurrentUser()!.id,

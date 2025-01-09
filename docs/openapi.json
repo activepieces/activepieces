@@ -14075,15 +14075,13 @@
                         "type": "array",
                         "items": {
                           "type": "string"
-                        }
+                        },
+                        "nullable": true
                       },
                       "projectId": {
                         "type": "string"
                       },
                       "importedBy": {
-                        "type": "string"
-                      },
-                      "repoId": {
                         "type": "string"
                       },
                       "type": {
@@ -14095,10 +14093,8 @@
                     },
                     "required": [
                       "name",
-                      "selectedFlowsIds",
                       "projectId",
                       "importedBy",
-                      "repoId",
                       "type"
                     ]
                   },
@@ -14116,7 +14112,8 @@
                         "type": "array",
                         "items": {
                           "type": "string"
-                        }
+                        },
+                        "nullable": true
                       },
                       "projectId": {
                         "type": "string"
@@ -14136,7 +14133,6 @@
                     },
                     "required": [
                       "name",
-                      "selectedFlowsIds",
                       "projectId",
                       "importedBy",
                       "type",
@@ -14157,7 +14153,8 @@
                         "type": "array",
                         "items": {
                           "type": "string"
-                        }
+                        },
+                        "nullable": true
                       },
                       "projectId": {
                         "type": "string"
@@ -14177,7 +14174,6 @@
                     },
                     "required": [
                       "name",
-                      "selectedFlowsIds",
                       "projectId",
                       "importedBy",
                       "type",

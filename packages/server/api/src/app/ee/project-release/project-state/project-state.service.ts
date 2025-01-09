@@ -1,5 +1,5 @@
 import { ProjectOperationType, ProjectSyncError } from '@activepieces/ee-shared'
-import { FileCompression, FileId, FileType, FlowStatus, ProjectId, ProjectState } from '@activepieces/shared'
+import { FileCompression, FileId, FileType, FlowStatus, isNil, ProjectId, ProjectState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { fileService } from '../../../file/file.service'
 import { flowRepo } from '../../../flows/flow/flow.repo'
@@ -13,7 +13,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         for (const operation of operations) {
             switch (operation.type) {
                 case ProjectOperationType.UPDATE_FLOW: {
-                    if (selectedFlowsIds.length > 0 && !selectedFlowsIds.includes(operation.newFlowState.id)) {
+                    if (!isNil(selectedFlowsIds) && !selectedFlowsIds.includes(operation.newFlowState.id)) {
                         continue
                     }
                     const flowUpdated = await projectStateHelper(log).updateFlowInProject(operation.flowState, operation.newFlowState, projectId)
@@ -23,14 +23,14 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                     break
                 }
                 case ProjectOperationType.CREATE_FLOW: {
-                    if (selectedFlowsIds.length > 0 && !selectedFlowsIds.includes(operation.flowState.id)) {
+                    if (!isNil(selectedFlowsIds) && !selectedFlowsIds.includes(operation.flowState.id)) {
                         continue
                     }
                     await projectStateHelper(log).createFlowInProject(operation.flowState, projectId)
                     break
                 }
                 case ProjectOperationType.DELETE_FLOW: {
-                    if (selectedFlowsIds.length > 0 && !selectedFlowsIds.includes(operation.flowState.id)) {
+                    if (!isNil(selectedFlowsIds) && !selectedFlowsIds.includes(operation.flowState.id)) {
                         continue
                     }
                     await projectStateHelper(log).deleteFlowFromProject(operation.flowState.id, projectId)
@@ -91,6 +91,6 @@ type ApplyProjectStateResponse = {
 type ApplyProjectStateRequest = {
     projectId: string
     operations: ProjectOperation[]
-    selectedFlowsIds: string[]
+    selectedFlowsIds: string[] | null
     log: FastifyBaseLogger
 }

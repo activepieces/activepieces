@@ -10,7 +10,7 @@ export enum ProjectReleaseType {
 const BaseProjectReleaseRequestBody = Type.Object({
     name: Type.String(),
     description: Nullable(Type.String()),
-    selectedFlowsIds: Type.Array(Type.String()),
+    selectedFlowsIds: Nullable(Type.Array(Type.String())),
     projectId: Type.String(),
     importedBy: Type.String(),
 })
@@ -18,7 +18,6 @@ const BaseProjectReleaseRequestBody = Type.Object({
 export const CreateProjectReleaseFromGitRequestBody = Type.Composite([
     BaseProjectReleaseRequestBody,
     Type.Object({
-        repoId: Type.String(),
         type: Type.Literal(ProjectReleaseType.GIT),
     }),
 ])

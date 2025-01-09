@@ -31,7 +31,7 @@ export const projectReleaseService = {
             await projectStateService(log).apply({
                 projectId,
                 operations: diffs,
-                selectedFlowsIds: params.selectedFlowsIds,
+                selectedFlowsIds: params.selectedFlowsIds ?? null,
                 log,
             })
             const fileId = await projectStateService(log).save(projectId, params.name, log)

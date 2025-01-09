@@ -566,7 +566,6 @@ describe('Project API', () => {
                 projectId: faker.string.uuid(),
                 importedBy: platformOwnerUser.id,
                 type: ProjectReleaseType.GIT,
-                repoId: faker.string.uuid(),
             }
 
             const response = await app?.inject({
@@ -595,7 +594,6 @@ describe('Project API', () => {
                 projectId: mockProject.id,
                 importedBy: faker.string.uuid(),
                 type: ProjectReleaseType.GIT,
-                repoId: faker.string.uuid(),
             }
 
             const response = await app?.inject({
