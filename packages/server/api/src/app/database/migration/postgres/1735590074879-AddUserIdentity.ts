@@ -79,7 +79,7 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
             // Prepare the values for all users in the batch
             const values = batchOfUsers.map((user: Record<string, unknown>) => [
                 apId(), user.email, user.password, user.trackEvents, user.newsLetter,
-                user.verified, user.firstName, user.lastName, user.tokenVersion, 'EMAIL', user.created
+                user.verified, user.firstName, user.lastName, user.tokenVersion, 'EMAIL', user.created,
             ])
         
             // Create the insert query for the whole batch

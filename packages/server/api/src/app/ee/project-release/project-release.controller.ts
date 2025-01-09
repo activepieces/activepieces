@@ -1,5 +1,5 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, ErrorCode, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { eventsHooks } from '../../helper/application-events'
@@ -24,9 +24,17 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
     })
 
     app.post('/', CreateProjectReleaseRequest, async (req) => {
+        if (req.principal.projectId !== req.body.projectId) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'You are not authorized to create a project release for this project',
+                },
+            })
+        }
         const platform = await platformService.getOneOrThrow(req.principal.platform.id)
         const ownerId = platform.ownerId
-        const release = await projectReleaseService.create(req.principal.projectId, ownerId, req.principal.id, req.body, req.log)
+        const release = await projectReleaseService.create(req.body.projectId, ownerId, req.body.importedBy, req.body, req.log)
 
         eventsHooks.get(req.log).sendUserEventFromRequest(req, {
             action: ApplicationEventName.PROJECT_RELEASE_CREATED,
@@ -78,11 +86,12 @@ const DiffProjectReleaseRequest = {
 
 const CreateProjectReleaseRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
     },
     schema: {
         tags: ['project-releases'],
         body: CreateProjectReleaseRequestBody,
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {
             [StatusCodes.CREATED]: ProjectRelease,
         },

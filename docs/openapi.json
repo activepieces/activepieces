@@ -1271,24 +1271,12 @@
               "user": {
                 "type": "object",
                 "properties": {
-                  "email": {
-                    "type": "string"
-                  },
                   "id": {
-                    "type": "string"
-                  },
-                  "firstName": {
-                    "type": "string"
-                  },
-                  "lastName": {
                     "type": "string"
                   }
                 },
                 "required": [
-                  "email",
-                  "id",
-                  "firstName",
-                  "lastName"
+                  "id"
                 ]
               }
             },
@@ -1364,24 +1352,12 @@
               "user": {
                 "type": "object",
                 "properties": {
-                  "email": {
-                    "type": "string"
-                  },
                   "id": {
-                    "type": "string"
-                  },
-                  "firstName": {
-                    "type": "string"
-                  },
-                  "lastName": {
                     "type": "string"
                   }
                 },
                 "required": [
-                  "email",
-                  "id",
-                  "firstName",
-                  "lastName"
+                  "id"
                 ]
               }
             }
@@ -1454,24 +1430,12 @@
               "user": {
                 "type": "object",
                 "properties": {
-                  "email": {
-                    "type": "string"
-                  },
                   "id": {
-                    "type": "string"
-                  },
-                  "firstName": {
-                    "type": "string"
-                  },
-                  "lastName": {
                     "type": "string"
                   }
                 },
                 "required": [
-                  "email",
-                  "id",
-                  "firstName",
-                  "lastName"
+                  "id"
                 ]
               }
             }
@@ -1544,24 +1508,12 @@
               "user": {
                 "type": "object",
                 "properties": {
-                  "email": {
-                    "type": "string"
-                  },
                   "id": {
-                    "type": "string"
-                  },
-                  "firstName": {
-                    "type": "string"
-                  },
-                  "lastName": {
                     "type": "string"
                   }
                 },
                 "required": [
-                  "email",
-                  "id",
-                  "firstName",
-                  "lastName"
+                  "id"
                 ]
               }
             }
@@ -1842,6 +1794,26 @@
                       "firstName": {
                         "type": "string"
                       },
+                      "status": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "ACTIVE"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "INACTIVE"
+                            ]
+                          }
+                        ]
+                      },
+                      "externalId": {
+                        "type": "string",
+                        "nullable": true
+                      },
                       "platformId": {
                         "type": "string",
                         "nullable": true
@@ -1864,14 +1836,23 @@
                       },
                       "lastName": {
                         "type": "string"
+                      },
+                      "created": {
+                        "type": "string"
+                      },
+                      "updated": {
+                        "type": "string"
                       }
                     },
                     "required": [
                       "id",
                       "email",
                       "firstName",
+                      "status",
                       "platformRole",
-                      "lastName"
+                      "lastName",
+                      "created",
+                      "updated"
                     ]
                   }
                 },
@@ -2920,6 +2901,26 @@
               "firstName": {
                 "type": "string"
               },
+              "status": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "ACTIVE"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "INACTIVE"
+                    ]
+                  }
+                ]
+              },
+              "externalId": {
+                "type": "string",
+                "nullable": true
+              },
               "platformId": {
                 "type": "string",
                 "nullable": true
@@ -2942,14 +2943,23 @@
               },
               "lastName": {
                 "type": "string"
+              },
+              "created": {
+                "type": "string"
+              },
+              "updated": {
+                "type": "string"
               }
             },
             "required": [
               "id",
               "email",
               "firstName",
+              "status",
               "platformRole",
-              "lastName"
+              "lastName",
+              "created",
+              "updated"
             ],
             "nullable": true
           }
@@ -6449,6 +6459,26 @@
               "firstName": {
                 "type": "string"
               },
+              "status": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "ACTIVE"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "INACTIVE"
+                    ]
+                  }
+                ]
+              },
+              "externalId": {
+                "type": "string",
+                "nullable": true
+              },
               "platformId": {
                 "type": "string",
                 "nullable": true
@@ -6471,14 +6501,23 @@
               },
               "lastName": {
                 "type": "string"
+              },
+              "created": {
+                "type": "string"
+              },
+              "updated": {
+                "type": "string"
               }
             },
             "required": [
               "id",
               "email",
               "firstName",
+              "status",
               "platformRole",
-              "lastName"
+              "lastName",
+              "created",
+              "updated"
             ]
           }
         },
@@ -11471,6 +11510,26 @@
                               "firstName": {
                                 "type": "string"
                               },
+                              "status": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ACTIVE"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "INACTIVE"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "externalId": {
+                                "type": "string",
+                                "nullable": true
+                              },
                               "platformId": {
                                 "type": "string",
                                 "nullable": true
@@ -11493,14 +11552,23 @@
                               },
                               "lastName": {
                                 "type": "string"
+                              },
+                              "created": {
+                                "type": "string"
+                              },
+                              "updated": {
+                                "type": "string"
                               }
                             },
                             "required": [
                               "id",
                               "email",
                               "firstName",
+                              "status",
                               "platformRole",
-                              "lastName"
+                              "lastName",
+                              "created",
+                              "updated"
                             ],
                             "nullable": true
                           }
@@ -13239,6 +13307,26 @@
                               "firstName": {
                                 "type": "string"
                               },
+                              "status": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ACTIVE"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "INACTIVE"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "externalId": {
+                                "type": "string",
+                                "nullable": true
+                              },
                               "platformId": {
                                 "type": "string",
                                 "nullable": true
@@ -13261,14 +13349,23 @@
                               },
                               "lastName": {
                                 "type": "string"
+                              },
+                              "created": {
+                                "type": "string"
+                              },
+                              "updated": {
+                                "type": "string"
                               }
                             },
                             "required": [
                               "id",
                               "email",
                               "firstName",
+                              "status",
                               "platformRole",
-                              "lastName"
+                              "lastName",
+                              "created",
+                              "updated"
                             ]
                           },
                           "projectRole": {
@@ -13406,19 +13503,9 @@
                         ]
                       },
                       "scope": {
-                        "anyOf": [
-                          {
-                            "type": "string",
-                            "enum": [
-                              "PROJECT"
-                            ]
-                          },
-                          {
-                            "type": "string",
-                            "enum": [
-                              "PLATFORM"
-                            ]
-                          }
+                        "type": "string",
+                        "enum": [
+                          "PLATFORM"
                         ]
                       },
                       "pieceName": {
@@ -13469,19 +13556,9 @@
                         ]
                       },
                       "scope": {
-                        "anyOf": [
-                          {
-                            "type": "string",
-                            "enum": [
-                              "PROJECT"
-                            ]
-                          },
-                          {
-                            "type": "string",
-                            "enum": [
-                              "PLATFORM"
-                            ]
-                          }
+                        "type": "string",
+                        "enum": [
+                          "PLATFORM"
                         ]
                       },
                       "pieceName": {
@@ -14000,6 +14077,12 @@
                           "type": "string"
                         }
                       },
+                      "projectId": {
+                        "type": "string"
+                      },
+                      "importedBy": {
+                        "type": "string"
+                      },
                       "repoId": {
                         "type": "string"
                       },
@@ -14013,6 +14096,8 @@
                     "required": [
                       "name",
                       "selectedFlowsIds",
+                      "projectId",
+                      "importedBy",
                       "repoId",
                       "type"
                     ]
@@ -14033,6 +14118,12 @@
                           "type": "string"
                         }
                       },
+                      "projectId": {
+                        "type": "string"
+                      },
+                      "importedBy": {
+                        "type": "string"
+                      },
                       "type": {
                         "type": "string",
                         "enum": [
@@ -14046,6 +14137,8 @@
                     "required": [
                       "name",
                       "selectedFlowsIds",
+                      "projectId",
+                      "importedBy",
                       "type",
                       "projectReleaseId"
                     ]
@@ -14066,6 +14159,12 @@
                           "type": "string"
                         }
                       },
+                      "projectId": {
+                        "type": "string"
+                      },
+                      "importedBy": {
+                        "type": "string"
+                      },
                       "type": {
                         "type": "string",
                         "enum": [
@@ -14079,6 +14178,8 @@
                     "required": [
                       "name",
                       "selectedFlowsIds",
+                      "projectId",
+                      "importedBy",
                       "type",
                       "targetProjectId"
                     ]
@@ -14088,6 +14189,11 @@
             }
           }
         },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
         "responses": {
           "201": {
             "description": "Default Response",
@@ -14156,6 +14262,26 @@
                         "firstName": {
                           "type": "string"
                         },
+                        "status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "ACTIVE"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "INACTIVE"
+                              ]
+                            }
+                          ]
+                        },
+                        "externalId": {
+                          "type": "string",
+                          "nullable": true
+                        },
                         "platformId": {
                           "type": "string",
                           "nullable": true
@@ -14178,14 +14304,23 @@
                         },
                         "lastName": {
                           "type": "string"
+                        },
+                        "created": {
+                          "type": "string"
+                        },
+                        "updated": {
+                          "type": "string"
                         }
                       },
                       "required": [
                         "id",
                         "email",
                         "firstName",
+                        "status",
                         "platformRole",
-                        "lastName"
+                        "lastName",
+                        "created",
+                        "updated"
                       ]
                     }
                   },

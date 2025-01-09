@@ -78,6 +78,8 @@ const CreateReleaseDialog = ({
             selectedFlowsIds: Array.from(selectedChanges),
             repoId: gitSync.id,
             type: diffRequest.type,
+            projectId: authenticationSession.getProjectId()!,
+            importedBy: authenticationSession.getCurrentUser()!.id,
           });
           break;
         case ProjectReleaseType.PROJECT:
@@ -90,6 +92,8 @@ const CreateReleaseDialog = ({
             selectedFlowsIds: Array.from(selectedChanges),
             targetProjectId: diffRequest.targetProjectId,
             type: diffRequest.type,
+            projectId: authenticationSession.getProjectId()!,
+            importedBy: authenticationSession.getCurrentUser()!.id,
           });
           break;
         case ProjectReleaseType.ROLLBACK:
@@ -99,6 +103,8 @@ const CreateReleaseDialog = ({
             selectedFlowsIds: Array.from(selectedChanges),
             projectReleaseId: diffRequest.projectReleaseId,
             type: diffRequest.type,
+            projectId: authenticationSession.getProjectId()!,
+            importedBy: authenticationSession.getCurrentUser()!.id,
           });
           break;
       }
