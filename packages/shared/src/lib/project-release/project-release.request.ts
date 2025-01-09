@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { Nullable } from '../common'
+import { DiscriminatedUnion, Nullable } from '../common'
 
 export enum ProjectReleaseType {
     GIT = 'GIT',
@@ -32,10 +32,10 @@ export const CreateProjectReleaseFromProjectRequestBody = Type.Object({
     targetProjectId: Type.String(),
 })
 
-export const CreateProjectReleaseRequestBody = Type.Union([
-    CreateProjectReleaseFromGitRequestBody,
+export const CreateProjectReleaseRequestBody = DiscriminatedUnion('type', [
     CreateProjectReleaseFromRollbackRequestBody,
     CreateProjectReleaseFromProjectRequestBody,
+    CreateProjectReleaseFromGitRequestBody,
 ])
 
 export type CreateProjectReleaseRequestBody = Static<typeof CreateProjectReleaseRequestBody>
