@@ -141,8 +141,8 @@ const systemPropValidators: {
     [AppSystemProp.PERPLEXITY_BASE_URL]: urlValidator,
 
     // AppSystemProp
-    [AppSystemProp.FLOW_WORKER_CONCURRENCY]: numberValidator,
-    [AppSystemProp.SCHEDULED_WORKER_CONCURRENCY]: numberValidator,
+    [WorkerSystemProp.FLOW_WORKER_CONCURRENCY]: numberValidator,
+    [WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY]: numberValidator,
 
     // Cloud
     [AppSystemProp.GOOGLE_CLIENT_ID]: stringValidator,

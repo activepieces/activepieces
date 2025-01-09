@@ -2,8 +2,8 @@ import { exec } from 'child_process'
 import fs from 'fs'
 import os from 'os'
 import { promisify } from 'util'
-import { exceptionHandler, fileExists, networkUtls, webhookSecretsUtils } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, MachineInformation, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { environmentVariables, exceptionHandler, fileExists, networkUtls, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 
 const execAsync = promisify(exec)
 
@@ -14,7 +14,11 @@ let settings: WorkerMachineHealthcheckResponse | undefined
 export const workerMachine = {
     getSystemInfo,
     init: async (_settings: WorkerMachineHealthcheckResponse) => {
-        settings = _settings
+        settings = {
+            ..._settings,
+            ...spreadIfDefined('FLOW_WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.FLOW_WORKER_CONCURRENCY)),
+            ...spreadIfDefined('SCHEDULED_WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY)),
+        }
 
         await webhookSecretsUtils.init(settings.APP_WEBHOOK_SECRETS)
         exceptionHandler.initializeSentry(settings.SENTRY_DSN)

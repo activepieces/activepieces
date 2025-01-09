@@ -71,14 +71,16 @@ const createGraphKey = (flowVersion: FlowVersion) => {
   return flowStructureUtil
     .getAllSteps(flowVersion.trigger)
     .reduce((acc, step) => {
-      const branchesLength =
-        step.type === ActionType.ROUTER ? step.settings.branches.length : 0;
+      const branchesNames =
+        step.type === ActionType.ROUTER
+          ? step.settings.branches.map((branch) => branch.branchName).join('-')
+          : '0';
       const childrenKey = getChildrenKey(step);
       return `${acc}-${step.displayName}-${step.type}-${
         step.nextAction ? step.nextAction.name : ''
       }-${
         step.type === ActionType.PIECE ? step.settings.pieceName : ''
-      }-${branchesLength}-${childrenKey}`;
+      }-${branchesNames}-${childrenKey}`;
     }, '');
 };
 

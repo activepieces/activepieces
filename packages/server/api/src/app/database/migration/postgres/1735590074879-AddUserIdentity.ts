@@ -58,9 +58,9 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
         // Migrate user data to user_identity
         // Get all users, ensuring only one row per email
         const users = await queryRunner.query(`
-            SELECT DISTINCT ON ("email") "id", "email", "password", "trackEvents", "newsLetter", "verified", "firstName", "lastName", "tokenVersion", "created"
+            SELECT DISTINCT ON (LOWER(TRIM("email"))) "id", "email", "password", "trackEvents", "newsLetter", "verified", "firstName", "lastName", "tokenVersion", "created"
             FROM "user"
-            ORDER BY "email", "id"
+            ORDER BY LOWER(TRIM("email")), "id"
         `)
         const batchSize = 1000
         const userBatches = []
@@ -78,7 +78,7 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
         
             // Prepare the values for all users in the batch
             const values = batchOfUsers.map((user: Record<string, unknown>) => [
-                apId(), user.email, user.password, user.trackEvents, user.newsLetter,
+                apId(), (user.email as string).trim().toLowerCase(), user.password, user.trackEvents, user.newsLetter,
                 user.verified, user.firstName, user.lastName, user.tokenVersion, 'EMAIL', user.created,
             ])
         
@@ -115,7 +115,7 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
             UPDATE "user" AS u
             SET "identityId" = ui.id
             FROM "user_identity" AS ui
-            WHERE u.email = ui.email
+            WHERE LOWER(TRIM(u.email)) = LOWER(TRIM(ui.email))
         `)
 
         // Make identityId not null after linking
