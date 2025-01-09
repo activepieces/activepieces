@@ -91,6 +91,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
       const createdFlow = await flowsApi.create({
         displayName: flowVersion.displayName,
         projectId: authenticationSession.getProjectId()!,
+        folderId: flow.folderId ?? undefined,
       });
       const updatedFlow = await flowsApi.update(createdFlow.id, {
         type: FlowOperationType.IMPORT_FLOW,
