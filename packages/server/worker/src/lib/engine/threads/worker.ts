@@ -1,4 +1,4 @@
-import { ChildProcess, fork } from 'child_process'
+import { Worker, WorkerOptions } from 'worker_threads'
 import { ApSemaphore, getEngineTimeout } from '@activepieces/server-shared'
 import { ApEnvironment, assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -10,38 +10,25 @@ export type WorkerResult = {
     stdError: string
 }
 
+
 export class EngineWorker {
-    workers: ChildProcess[]
+    workers: Worker[]
     availableWorkerIndexes: number[]
     lock: ApSemaphore
     enginePath: string
+    engineOptions: WorkerOptions | undefined
     log: FastifyBaseLogger
-    options: {
-        env: Record<string, string | undefined>
-        resourceLimits: {
-            maxOldGenerationSizeMb: number
-            maxYoungGenerationSizeMb: number
-            stackSizeMb: number
-        }
-    }
-    constructor(log: FastifyBaseLogger, maxWorkers: number, enginePath: string, options: { env: Record<string, string | undefined>, resourceLimits: { maxOldGenerationSizeMb: number, maxYoungGenerationSizeMb: number, stackSizeMb: number } }) {
+    constructor(log: FastifyBaseLogger, maxWorkers: number, enginePath: string, engineOptions?: WorkerOptions) {
         this.log = log
         this.enginePath = enginePath
-        this.options = options
+        this.engineOptions = engineOptions
         this.workers = []
         this.availableWorkerIndexes = []
         this.lock = new ApSemaphore(maxWorkers)
 
         // Create the initial workers
         for (let i = 0; i < maxWorkers; i++) {
-            this.workers.push(fork(enginePath, [], {
-                env: options.env,
-                execArgv: [
-                    `--max-old-space-size=${options.resourceLimits.maxOldGenerationSizeMb}`,
-                    `--max-semi-space-size=${options.resourceLimits.maxYoungGenerationSizeMb}`,
-                    `--stack-size=${options.resourceLimits.stackSizeMb * 1024}`, // stack size is in KB
-                ],
-            }))
+            this.workers.push(new Worker(enginePath, engineOptions))
             this.availableWorkerIndexes.push(i)
         }
     }
@@ -67,7 +54,7 @@ export class EngineWorker {
                 let stdOut = ''
 
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
-                const timeoutWorker = setTimeout(() => {
+                const timeoutWorker = setTimeout(async () => {
                     resolve({
                         engine: {
                             status: EngineResponseStatus.TIMEOUT,
@@ -76,69 +63,43 @@ export class EngineWorker {
                         stdError: '',
                         stdOut: '',
                     })
-                    worker.kill()
+                    await worker.terminate()
                 }, timeout * 1000)
 
+
                 worker.on('message', (m: { type: string, message: unknown }) => {
-                    switch (m.type) {
-                        case 'result':
-                            cleanUp(worker, timeoutWorker)
-                            resolve({
-                                engine: m.message as EngineResponse<unknown>,
-                                stdOut,
-                                stdError,
-                            })
-                            break
-                        case 'stdout':
-                            stdOut += m.message as string
-                            break
-                        case 'stderr':
-                            stdError += m.message as string
-                            break
-                        case 'error':
-                            cleanUp(worker, timeoutWorker)
-                            this.workers[workerIndex] = fork(this.enginePath, [], this.options)
-                            reject({ status: EngineResponseStatus.ERROR, response: m.message })
-                            break
+                    if (m.type === 'result') {
+                        cleanUp(worker, timeoutWorker)
+                        resolve({
+                            engine: m.message as EngineResponse<unknown>,
+                            stdOut,
+                            stdError,
+                        })
+                    }
+                    else if (m.type === 'stdout') {
+                        stdOut += m.message
+                    }
+                    else if (m.type === 'stderr') {
+                        stdError += m.message
                     }
                 })
 
-                worker.on('error', (error) => {
+                worker.on('error', () => {
                     cleanUp(worker, timeoutWorker)
-                    this.workers[workerIndex] = fork(this.enginePath, [], this.options)
-                    this.log.info({
-                        error,
-                    }, 'Worker returned something in stderr')
-                    reject({ status: EngineResponseStatus.ERROR, response: error })
+                    this.workers[workerIndex] = new Worker(this.enginePath, this.engineOptions)
+                    reject({ status: EngineResponseStatus.ERROR, response: {} })
                 })
 
-                worker.on('exit', (code, signal) => {
-                    const isRamIssue = stdError.includes('JavaScript heap out of memory') || stdError.includes('Allocation failed - JavaScript heap out of memory') || (code === 134 || signal === 'SIGABRT' || signal === 'SIGKILL')
-
+                worker.on('exit', () => {
                     this.log.error({
                         stdError,
                         stdOut,
                         workerIndex,
-                        code,
-                        isRamIssue,
-                        signal,
                     }, 'Worker exited')
-
                     cleanUp(worker, timeoutWorker)
-                    this.workers[workerIndex] = fork(this.enginePath, [], this.options)
-
-                    if (isRamIssue) {
-                        resolve({
-                            engine: {
-                                status: EngineResponseStatus.MEMORY_ISSUE,
-                                response: {},
-                            },
-                            stdError,
-                            stdOut,
-                        })
-                    }
+                    this.workers[workerIndex] = new Worker(this.enginePath, this.engineOptions)
                 })
-                worker.send({ operation, operationType })
+                worker.postMessage({ operation, operationType })
             })
             return result
         }
@@ -148,14 +109,14 @@ export class EngineWorker {
                     this.log.trace({
                         workerIndex,
                     }, 'Removing worker in development mode to avoid caching issues')
-                    worker.kill()
+                    await worker.terminate()
                 }
                 catch (e) {
                     this.log.error({
                         error: e,
                     }, 'Error terminating worker')
                 }
-                this.workers[workerIndex] = fork(this.enginePath, [], this.options)
+                this.workers[workerIndex] = new Worker(this.enginePath, this.engineOptions)
             }
             this.log.debug({
                 workerIndex,
@@ -166,7 +127,7 @@ export class EngineWorker {
     }
 }
 
-function cleanUp(worker: ChildProcess, timeout: NodeJS.Timeout): void {
+function cleanUp(worker: Worker, timeout: NodeJS.Timeout): void {
     worker.removeAllListeners('exit')
     worker.removeAllListeners('error')
     worker.removeAllListeners('message')
