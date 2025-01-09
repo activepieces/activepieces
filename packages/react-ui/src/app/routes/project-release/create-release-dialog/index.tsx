@@ -78,7 +78,6 @@ const CreateReleaseDialog = ({
             selectedFlowsIds: Array.from(selectedChanges),
             type: diffRequest.type,
             projectId: authenticationSession.getProjectId()!,
-            importedBy: authenticationSession.getCurrentUser()!.id,
           });
           break;
         case ProjectReleaseType.PROJECT:
@@ -92,7 +91,6 @@ const CreateReleaseDialog = ({
             targetProjectId: diffRequest.targetProjectId,
             type: diffRequest.type,
             projectId: authenticationSession.getProjectId()!,
-            importedBy: authenticationSession.getCurrentUser()!.id,
           });
           break;
         case ProjectReleaseType.ROLLBACK:
@@ -103,7 +101,6 @@ const CreateReleaseDialog = ({
             projectReleaseId: diffRequest.projectReleaseId,
             type: diffRequest.type,
             projectId: authenticationSession.getProjectId()!,
-            importedBy: authenticationSession.getCurrentUser()!.id,
           });
           break;
       }

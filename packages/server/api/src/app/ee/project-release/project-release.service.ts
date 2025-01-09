@@ -14,16 +14,6 @@ const projectReleaseRepo = repoFactory(ProjectReleaseEntity)
 
 export const projectReleaseService = {
     async create(projectId: ProjectId, ownerId: ApId, importedBy: ApId, params: CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectRelease> {
-        const user = await userService.get({ id: importedBy })
-        if (isNil(user)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityId: importedBy,
-                    message: 'User not found',
-                },
-            })
-        }
         const lockKey = `project-release:${projectId}`
         const lock = await memoryLock.acquire(lockKey)
         try {
@@ -109,7 +99,6 @@ async function findDiffOperations(projectId: ProjectId, ownerId: ApId, params: D
         newState,
         currentState,
     })
-
     return diffs
 }
 

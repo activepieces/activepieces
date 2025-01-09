@@ -553,7 +553,7 @@ describe('Project API', () => {
 
     describe('Create Project Release', () => {
         it('Fails if projectId does not match', async () => {
-            const { mockOwner: platformOwnerUser, mockPlatform } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup()
             const apiKey = createMockApiKey({
                 platformId: mockPlatform.id,
             })
@@ -564,7 +564,6 @@ describe('Project API', () => {
                 description: faker.lorem.sentence(),
                 selectedFlowsIds: [],
                 projectId: faker.string.uuid(),
-                importedBy: platformOwnerUser.id,
                 type: ProjectReleaseType.GIT,
             }
 
@@ -592,7 +591,6 @@ describe('Project API', () => {
                 description: faker.lorem.sentence(),
                 selectedFlowsIds: [],
                 projectId: mockProject.id,
-                importedBy: faker.string.uuid(),
                 type: ProjectReleaseType.GIT,
             }
 
