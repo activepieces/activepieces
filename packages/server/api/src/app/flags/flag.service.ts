@@ -233,6 +233,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.FLOW_RUN_MEMORY_LIMIT_KB,
+                value: system.getNumber(AppSystemProp.SANDBOX_MEMORY_LIMIT),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.PAUSED_FLOW_TIMEOUT_DAYS,
                 value: system.getNumber(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
                 created,

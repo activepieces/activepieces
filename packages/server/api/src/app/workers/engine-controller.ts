@@ -224,6 +224,7 @@ async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePr
         case FlowRunStatus.TIMEOUT:
         case FlowRunStatus.PAUSED:
         case FlowRunStatus.QUOTA_EXCEEDED:
+        case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
         case FlowRunStatus.STOPPED:
         case FlowRunStatus.SUCCEEDED:
             await flowConsumer(log).update({ jobId, queueName: QueueName.ONE_TIME, status: JobStatus.COMPLETED, token: enginePrincipal.queueToken!, message: 'Flow succeeded' })
@@ -320,6 +321,7 @@ async function getFlowResponse(
                 headers: {},
             }
         case FlowRunStatus.FAILED:
+        case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
             return {
                 status: StatusCodes.INTERNAL_SERVER_ERROR,
                 body: {

@@ -106,6 +106,12 @@ export const engineRunnerUtils = (log: FastifyBaseLogger) => ({
                 params: {},
             })
         }
+        if (sandboxResponse.verdict === EngineResponseStatus.MEMORY_ISSUE) {
+            throw new ActivepiecesError({
+                code: ErrorCode.MEMORY_ISSUE,
+                params: {},
+            })
+        }
 
         const result = tryParseJson(sandboxResponse.output) as EngineHelperFlowResult
 
