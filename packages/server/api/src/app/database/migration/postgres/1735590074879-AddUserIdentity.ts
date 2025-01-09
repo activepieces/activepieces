@@ -81,13 +81,13 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
         for (let batchIndex = 0; batchIndex < userBatches.length; batchIndex++) {
             const batchOfUsers = userBatches[batchIndex]
 
-        
+
             // Prepare the values for all users in the batch
             const values = batchOfUsers.map((user: Record<string, unknown>) => [
                 apId(), (user.email as string).trim().toLowerCase(), user.password, user.trackEvents, user.newsLetter,
                 user.verified, user.firstName, user.lastName, user.tokenVersion, 'EMAIL', user.created,
             ])
-        
+
             // Create the insert query for the whole batch
             const insertQuery = `
                 INSERT INTO "user_identity" (
@@ -96,13 +96,13 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
                 ) VALUES 
                 ${values.map((_: Record<string, unknown>, index: number) => `($${index * 11 + 1}, $${index * 11 + 2}, $${index * 11 + 3}, $${index * 11 + 4}, $${index * 11 + 5}, $${index * 11 + 6}, $${index * 11 + 7}, $${index * 11 + 8}, $${index * 11 + 9}, $${index * 11 + 10}, $${index * 11 + 11})`).join(', ')}
             `
-        
+
             // Flatten the values array for binding
             const flattenedValues = values.flat()
-        
+
             // Execute the batch insert
             await queryRunner.query(insertQuery, flattenedValues)
-        
+
             total += batchOfUsers.length
             log.info({
                 name: this.name,
@@ -269,5 +269,9 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
                 ADD CONSTRAINT "fk_otp_user_id" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION
             `)
         }
+
+        await queryRunner.query(`
+            CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("email", "platformId")
+        `)
     }
 }
