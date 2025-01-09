@@ -20,10 +20,20 @@ export const CopilotSidebar = () => {
     state.addMessage
   ]);
 
-  // Get the last flow plan from messages
+  // Get the last accepted flow plan from messages
   const getCurrentWorkflow = () => {
-    const lastFlowPlan = [...messages].reverse().find(m => m.type === 'flow_plan');
-    return lastFlowPlan?.type === 'flow_plan' ? lastFlowPlan.content.plan : undefined;
+    // Find the last flow plan that has been accepted (has operation property)
+    const lastAcceptedPlan = [...messages]
+      .reverse()
+      .find(m => m.type === 'flow_plan' && m.content.operation);
+    
+    if (lastAcceptedPlan?.type === 'flow_plan') {
+      return {
+        ...lastAcceptedPlan.content.plan,
+        operation: lastAcceptedPlan.content.operation
+      };
+    }
+    return undefined;
   };
 
   const mutation = useMutation({
@@ -74,10 +84,11 @@ export const CopilotSidebar = () => {
       content: trimmedContent
     });
 
-    // Then send to API with reversed message history
-    const messageHistory = [...messages].reverse().map(message => 
-      message.type === 'flow_plan' ? JSON.stringify(message.content) : message.content
-    );
+    // Then send to API with reversed message history (excluding flow_plan messages)
+    const messageHistory = [...messages]
+      .reverse()
+      .filter(message => message.type !== 'flow_plan')
+      .map(message => message.content);
     
     mutation.mutate([trimmedContent, ...messageHistory]);
   };

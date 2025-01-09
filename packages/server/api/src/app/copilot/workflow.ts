@@ -7,8 +7,6 @@ import { operationBuilder } from './agents/diff-analyzer/operation-builder';
 export const workflow = {
     handleRequest: async (id: string, prompts: string[], currentWorkflow?: CopilotFlowOutline): Promise<AskCopilotResponse> => {
         const { intent } = await taskManager.determineIntent(prompts);
-        console.log('intent', prompts)
-        console.log('currentWorkflow', currentWorkflow)
         if (intent === 'MODIFY_WORKFLOW') {
             if (!currentWorkflow) {
                 return {
@@ -19,7 +17,7 @@ export const workflow = {
             }
 
             // For modifications, only use the last prompt and pass the current workflow
-            const lastPrompt = prompts[0]; // prompts are already in reverse order
+            const lastPrompt = prompts[0]; 
             const newWorkflowResponse = await plannerAgent.run(id, [lastPrompt], currentWorkflow);
             if (newWorkflowResponse.type === 'error') {
                 return newWorkflowResponse;
