@@ -255,6 +255,9 @@ function AppConnectionsPage() {
       id: 'actions',
       cell: ({ row }) => {
         const isPlatformConnection = row.original.scope === 'PLATFORM';
+        const userHasPermissionToRename = isPlatformConnection
+          ? userPlatformRole === PlatformRole.ADMIN
+          : userHasPermissionToWriteAppConnection;
         return (
           <div className="flex items-center gap-2 justify-end">
             <RenameConnectionDialog
@@ -263,18 +266,10 @@ function AppConnectionsPage() {
               onRename={() => {
                 refetch();
               }}
-              isPlatformConnection={isPlatformConnection}
-              userPlatformRole={userPlatformRole}
-              userHasPermissionToWriteAppConnection={
-                userHasPermissionToWriteAppConnection
-              }
+              userHasPermissionToRename={userHasPermissionToRename}
             />
             <ReconnectButtonDialog
-              hasPermission={
-                !isPlatformConnection
-                  ? userHasPermissionToWriteAppConnection
-                  : userPlatformRole === PlatformRole.ADMIN
-              }
+              hasPermission={userHasPermissionToRename}
               connection={row.original}
               onConnectionCreated={() => {
                 refetch();

@@ -1,16 +1,17 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { DialogTrigger } from '@radix-ui/react-dialog';
+import { DialogClose, DialogTrigger } from '@radix-ui/react-dialog';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Pencil } from 'lucide-react';
-import React, { useState, forwardRef } from 'react';
+import { useState, forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -25,7 +26,6 @@ import {
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import {
   AppConnectionWithoutSensitiveData,
-  PlatformRole,
 } from '@activepieces/shared';
 
 import { appConnectionsApi } from '../lib/app-connections-api';
@@ -43,9 +43,7 @@ type RenameConnectionSchema = Static<typeof RenameConnectionSchema>;
 type RenameConnectionDialogProps = {
   connectionId: string;
   currentName: string;
-  isPlatformConnection: boolean;
-  userPlatformRole: PlatformRole | null;
-  userHasPermissionToWriteAppConnection: boolean;
+  userHasPermissionToRename: boolean;
   onRename: () => void;
 };
 
@@ -57,9 +55,7 @@ const RenameConnectionDialog = forwardRef<
     {
       connectionId,
       currentName,
-      isPlatformConnection,
-      userPlatformRole,
-      userHasPermissionToWriteAppConnection,
+      userHasPermissionToRename,
       onRename,
     },
     _,
@@ -111,21 +107,20 @@ const RenameConnectionDialog = forwardRef<
     });
 
     return (
+      <Tooltip>
+
       <Dialog
         open={isRenameDialogOpen}
         onOpenChange={(open) => setIsRenameDialogOpen(open)}
       >
+
         <DialogTrigger asChild>
-          <Tooltip>
+          <>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
-                disabled={
-                  isPlatformConnection
-                    ? userPlatformRole !== PlatformRole.ADMIN
-                    : !userHasPermissionToWriteAppConnection
-                }
+                disabled={!userHasPermissionToRename}
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
@@ -136,12 +131,11 @@ const RenameConnectionDialog = forwardRef<
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              {userPlatformRole !== PlatformRole.ADMIN &&
-              !userHasPermissionToWriteAppConnection
+              {!userHasPermissionToRename
                 ? t('Permission needed')
                 : t('Rename')}
             </TooltipContent>
-          </Tooltip>
+            </>
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
@@ -181,11 +175,20 @@ const RenameConnectionDialog = forwardRef<
                   }
                 </FormMessage>
               )}
-              <Button loading={isPending}>{t('Confirm')}</Button>
+                <DialogFooter className="justify-end">
+          <DialogClose asChild>
+            <Button variant={'outline'}>{t('Cancel')}</Button>
+          </DialogClose>
+         
+          <Button loading={isPending}>{t('Confirm')}</Button>
+        </DialogFooter>
+
             </form>
           </Form>
         </DialogContent>
       </Dialog>
+      </Tooltip>
+
     );
   },
 );

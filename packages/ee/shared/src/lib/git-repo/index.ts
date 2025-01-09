@@ -1,5 +1,5 @@
 import { Static, Type } from "@sinclair/typebox";
-import { BaseModelSchema, ConnectionState } from "@activepieces/shared";
+import { BaseModelSchema } from "@activepieces/shared";
 
 export enum GitBranchType {
     PRODUCTION = 'PRODUCTION',

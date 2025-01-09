@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -105,18 +106,15 @@ const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
       <DialogContent className="sm:max-w-[500px]">
         <Form {...form}>
           <form
-            className="grid space-y-4"
+            className="flex flex-col"
             onSubmit={form.handleSubmit((data) => mutate(data))}
           >
             <DialogHeader>
               <DialogTitle>{t('Connect Git')}</DialogTitle>
-              <DialogDescription>
-                {t(
-                  'Start by connecting an empty git repository to your project.',
-                )}
-              </DialogDescription>
+           
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            
+            <div className="grid gap-4">
               <FormField
                 control={form.control}
                 name="remoteUrl"
@@ -187,6 +185,15 @@ const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
             </div>
 
             <DialogFooter>
+              <DialogClose>
+                <Button
+                  type="button"
+                  variant={'outline'}
+                  loading={isPending}
+                >
+                  {t('Cancel')}
+                </Button>
+              </DialogClose>
               <Button
                 type="submit"
                 onClick={form.handleSubmit((data) => mutate(data))}
