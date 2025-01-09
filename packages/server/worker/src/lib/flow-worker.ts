@@ -25,13 +25,19 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
         heartbeatInterval = setInterval(() => {
             rejectedPromiseHandler(workerApiService(workerToken).heartbeat(), log)
         }, 15000)
-    },
-    async start(): Promise<void> {
-        const FLOW_WORKER_CONCURRENCY = workerMachine.getSettings().FLOW_WORKER_CONCURRENCY
-        const SCHEDULED_WORKER_CONCURRENCY = workerMachine.getSettings().SCHEDULED_WORKER_CONCURRENCY
 
+        const FLOW_WORKER_CONCURRENCY = heartbeatResponse.FLOW_WORKER_CONCURRENCY
+        const SCHEDULED_WORKER_CONCURRENCY = heartbeatResponse.SCHEDULED_WORKER_CONCURRENCY
+        log.info({
+            FLOW_WORKER_CONCURRENCY,
+            SCHEDULED_WORKER_CONCURRENCY,
+        }, 'Starting worker')
         for (const queueName of Object.values(QueueName)) {
             const times = queueName === QueueName.SCHEDULED ? SCHEDULED_WORKER_CONCURRENCY : FLOW_WORKER_CONCURRENCY
+            log.info({
+                queueName,
+                times,
+            }, 'Starting polling queue with concurrency')
             for (let i = 0; i < times; i++) {
                 rejectedPromiseHandler(run(queueName, log), log)
             }
