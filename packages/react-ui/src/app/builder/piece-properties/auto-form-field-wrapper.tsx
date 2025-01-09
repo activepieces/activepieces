@@ -12,8 +12,9 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
-import { Action, Trigger } from '@activepieces/shared';
+import { Action, isNil, Trigger } from '@activepieces/shared';
 
+import { ArrayPiecePropertyInListMapperMode } from './array-property-in-list-mapper-mode';
 import { TextInputWithMentions } from './text-input-with-mentions';
 
 type inputNameLiteral = `settings.input.${string}`;
@@ -23,6 +24,7 @@ const isInputNameLiteral = (
 ): inputName is inputNameLiteral => {
   return inputName.match(/settings\.input\./) !== null;
 };
+
 type AutoFormFieldWrapperProps = {
   children: React.ReactNode;
   allowDynamicValues: boolean;
@@ -47,13 +49,14 @@ const AutoFormFieldWrapper = ({
   field,
 }: AutoFormFieldWrapperProps) => {
   const form = useFormContext<Action | Trigger>();
-  const toggled =
-    form.getValues().settings?.inputUiInfo?.customizedInputs?.[propertyName];
+  const dynamicInputModeToggled =
+    form.getValues().settings?.inputUiInfo?.customizedInputs?.[propertyName] ===
+    true;
 
-  function handleChange(pressed: boolean) {
+  function handleChange(mode: boolean) {
     const newCustomizedInputs = {
       ...form.getValues().settings?.inputUiInfo?.customizedInputs,
-      [propertyName]: pressed,
+      [propertyName]: mode,
     };
     form.setValue(
       `settings.inputUiInfo.customizedInputs`,
@@ -72,11 +75,12 @@ const AutoFormFieldWrapper = ({
       );
     }
   }
+  const isArrayProperty = property.type === PropertyType.ARRAY;
 
   return (
     <FormItem className="flex flex-col gap-1">
       <FormLabel className="flex items-center gap-1 ">
-        {placeBeforeLabelText && !toggled && children}
+        {placeBeforeLabelText && !dynamicInputModeToggled && children}
         {(property.type === PropertyType.FILE ||
           property.type === PropertyType.DATE_TIME) && (
           <Tooltip>
@@ -104,36 +108,62 @@ const AutoFormFieldWrapper = ({
 
         <span className="grow"></span>
         {allowDynamicValues && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Toggle
-                pressed={toggled}
-                onPressedChange={(e) => handleChange(e)}
-                disabled={disabled}
-              >
-                <SquareFunction
-                  className={cn('size-5', {
-                    'text-foreground': toggled,
-                    'text-muted-foreground': !toggled,
-                  })}
-                />
-              </Toggle>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="bg-background">
-              {t('Dynamic value')}
-            </TooltipContent>
-          </Tooltip>
+          <div className="flex gap-2 items-center">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Toggle
+                  pressed={dynamicInputModeToggled}
+                  onPressedChange={(e) => handleChange(e)}
+                  disabled={disabled}
+                >
+                  <SquareFunction
+                    className={cn('size-5', {
+                      'text-foreground': dynamicInputModeToggled,
+                      'text-muted-foreground': !dynamicInputModeToggled,
+                    })}
+                  />
+                </Toggle>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="bg-background">
+                {t('Dynamic value')}
+              </TooltipContent>
+            </Tooltip>
+          </div>
         )}
       </FormLabel>
 
-      {toggled && (
+      {dynamicInputModeToggled && !isArrayProperty && (
         <TextInputWithMentions
           disabled={disabled}
           onChange={field.onChange}
           initialValue={field.value ?? property.defaultValue ?? null}
-        ></TextInputWithMentions>
+        />
       )}
-      {!placeBeforeLabelText && !toggled && <div>{children}</div>}
+
+      {isArrayProperty &&
+        isNil(property.properties) &&
+        dynamicInputModeToggled && (
+          <ArrayPiecePropertyInListMapperMode
+            disabled={disabled}
+            arrayProperties={property.properties}
+            inputName={inputName}
+            onChange={field.onChange}
+            value={field.value ?? property.defaultValue ?? null}
+          />
+        )}
+      {isArrayProperty &&
+        !isNil(property.properties) &&
+        dynamicInputModeToggled && (
+          <ArrayPiecePropertyInListMapperMode
+            disabled={disabled}
+            arrayProperties={property.properties}
+            inputName={inputName}
+          />
+        )}
+
+      {!placeBeforeLabelText && !dynamicInputModeToggled && (
+        <div>{children}</div>
+      )}
       {property.description && !hideDescription && (
         <ReadMoreDescription text={t(property.description)} />
       )}

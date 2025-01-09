@@ -23,9 +23,13 @@ export type EngineHelperTriggerResult<
     T extends TriggerHookType = TriggerHookType,
 > = ExecuteTriggerResponse<T>
 
-export type EngineHelperPropResult =
-    | DropdownState<unknown>
-    | Record<string, DynamicPropsValue>
+export type EngineHelperPropResult = {
+    type: 'dropdown'
+    options: DropdownState<unknown>
+} | {
+    type: 'dynamicproperties'
+    options: Record<string, DynamicPropsValue>
+}
 
 export type EngineHelperActionResult = ExecuteActionResponse
 

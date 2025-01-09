@@ -1,17 +1,18 @@
 import { InputProperty } from './input';
 import { PieceAuthProperty } from './authentication';
 import { Type } from '@sinclair/typebox';
+import { PropertyType } from './input/property-type';
+import { DropdownState } from './input/dropdown/common';
 
 // EXPORTED
 export { ApFile } from './input/file-property';
 export { DropdownProperty, MultiSelectDropdownProperty } from './input/dropdown/dropdown-prop';
-export { DropdownState } from './input/dropdown/common';
 export { DynamicProperties, DynamicProp } from './input/dynamic-prop';
 export { PropertyType } from './input/property-type';
 export { Property } from './input';
 export { PieceAuth } from './authentication';
 export { DynamicPropsValue } from './input/dynamic-prop';
-export { DropdownOption } from './input/dropdown/common';
+export { DropdownOption,DropdownState } from './input/dropdown/common';
 export { OAuth2PropertyValue } from './authentication/oauth2-prop';
 export { PieceAuthProperty } from './authentication';
 export { ShortTextProperty } from './input/text-property';
@@ -58,3 +59,9 @@ export type StaticPropsValue<T extends PiecePropertyMap> = {
   [P in keyof T]: PiecePropValueSchema<T[P]>;
 };
 
+
+  
+export type ExecutePropsResult<T extends PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC> = {
+  type: T
+  options: T extends PropertyType.DROPDOWN ? DropdownState<unknown> : T extends PropertyType.MULTI_SELECT_DROPDOWN ? DropdownState<unknown> : InputPropertyMap
+}

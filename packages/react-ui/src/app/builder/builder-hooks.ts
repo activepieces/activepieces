@@ -1,5 +1,11 @@
 import { useMutation } from '@tanstack/react-query';
-import { createContext, useContext, useCallback, useState } from 'react';
+import {
+  createContext,
+  useContext,
+  useCallback,
+  useState,
+  useEffect,
+} from 'react';
 import { create, useStore } from 'zustand';
 
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -37,6 +43,7 @@ import {
   CanvasShortcutsProps,
 } from './flow-canvas/context-menu/canvas-context-menu';
 import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
+import { textMentionUtils } from './piece-properties/text-input-with-mentions/text-input-utils';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -131,6 +138,10 @@ export type BuilderState = {
   setPanningMode: (mode: 'grab' | 'pan') => void;
   pieceSelectorStep: string | null;
   setPieceSelectorStep: (step: string | null) => void;
+  isFocusInsideListMapperModeInput: boolean;
+  setIsFocusInsideListMapperModeInput: (
+    isFocusInsideListMapperModeInput: boolean,
+  ) => void;
 };
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
@@ -479,6 +490,14 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           };
         });
       },
+      isFocusInsideListMapperModeInput: false,
+      setIsFocusInsideListMapperModeInput: (
+        isFocusInsideListMapperModeInput: boolean,
+      ) => {
+        return set(() => ({
+          isFocusInsideListMapperModeInput,
+        }));
+      },
     };
   });
 
@@ -657,4 +676,37 @@ export const usePasteActionsInClipboard = () => {
     }
   };
   return { actionsToPaste, fetchClipboardOperations };
+};
+
+export const useIsFocusInsideListMapperModeInput = ({
+  containerRef,
+  setIsFocusInsideListMapperModeInput,
+  isFocusInsideListMapperModeInput,
+}: {
+  containerRef: React.RefObject<HTMLDivElement>;
+  setIsFocusInsideListMapperModeInput: (
+    isFocusInsideListMapperModeInput: boolean,
+  ) => void;
+  isFocusInsideListMapperModeInput: boolean;
+}) => {
+  useEffect(() => {
+    const focusInListener = () => {
+      const focusedElement = document.activeElement;
+      const isFocusedInside = !!containerRef.current?.contains(focusedElement);
+      const isFocusedInsideDataSelector =
+        !isNil(document.activeElement) &&
+        document.activeElement instanceof HTMLElement &&
+        textMentionUtils.isDataSelectorOrChildOfDataSelector(
+          document.activeElement,
+        );
+      setIsFocusInsideListMapperModeInput(
+        isFocusedInside ||
+          (isFocusedInsideDataSelector && isFocusInsideListMapperModeInput),
+      );
+    };
+    document.addEventListener('focusin', focusInListener);
+    return () => {
+      document.removeEventListener('focusin', focusInListener);
+    };
+  }, [setIsFocusInsideListMapperModeInput, isFocusInsideListMapperModeInput]);
 };
