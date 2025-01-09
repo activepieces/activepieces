@@ -1,3 +1,4 @@
+import { WorkerSystemProp } from '@activepieces/server-shared'
 import { PrincipalType, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse, WorkerPrincipal } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { platformMustBeOwnedByCurrentUser } from '../../ee/authentication/ee-authorization'
@@ -31,8 +32,8 @@ export const workerMachineController: FastifyPluginAsyncTypebox = async (app) =>
             PAUSED_FLOW_TIMEOUT_DAYS: system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
             EXECUTION_MODE: system.getOrThrow(AppSystemProp.EXECUTION_MODE),
             FLOW_TIMEOUT_SECONDS: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
-            FLOW_WORKER_CONCURRENCY: system.getNumberOrThrow(AppSystemProp.FLOW_WORKER_CONCURRENCY),
-            SCHEDULED_WORKER_CONCURRENCY: system.getNumberOrThrow(AppSystemProp.SCHEDULED_WORKER_CONCURRENCY),
+            FLOW_WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.FLOW_WORKER_CONCURRENCY),
+            SCHEDULED_WORKER_CONCURRENCY: system.getNumberOrThrow(WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY),
             LOG_LEVEL: system.getOrThrow(AppSystemProp.LOG_LEVEL),
             LOG_PRETTY: system.getOrThrow(AppSystemProp.LOG_PRETTY),
             ENVIRONMENT: system.getOrThrow(AppSystemProp.ENVIRONMENT),
