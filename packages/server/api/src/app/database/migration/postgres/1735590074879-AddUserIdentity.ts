@@ -11,24 +11,30 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
             message: 'Starting migration',
         })
 
+        // Check if otp table exists
+        const otpTableExists = await queryRunner.hasTable('otp')
+        if (otpTableExists) {
+            // Drop existing constraints and indexes
+            await queryRunner.query(`
+                ALTER TABLE "otp" DROP CONSTRAINT "fk_otp_user_id"
+            `)
+            await queryRunner.query(`
+                DROP INDEX "idx_otp_user_id_type"
+            `)
+
+            // Clean and modify OTP table
+            await queryRunner.query(`
+                DELETE FROM "otp"
+            `)
+            await queryRunner.query(`
+                ALTER TABLE "otp"
+                    RENAME COLUMN "userId" TO "identityId"
+            `)
+        }
+
         // Drop existing constraints and indexes
         await queryRunner.query(`
-            ALTER TABLE "otp" DROP CONSTRAINT "fk_otp_user_id"
-        `)
-        await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
-        `)
-        await queryRunner.query(`
-            DROP INDEX "idx_otp_user_id_type"
-        `)
-
-        // Clean and modify OTP table
-        await queryRunner.query(`
-            DELETE FROM "otp"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "otp"
-                RENAME COLUMN "userId" TO "identityId"
         `)
 
         // Create user_identity table
@@ -155,21 +161,23 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "identityId")
         `)
-        await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_otp_identity_id_type" ON "otp" ("identityId", "type")
-        `)
+        if (otpTableExists) {
+            await queryRunner.query(`
+                CREATE UNIQUE INDEX "idx_otp_identity_id_type" ON "otp" ("identityId", "type")
+            `)
+        }
 
         // Add foreign key constraints
         await queryRunner.query(`
             ALTER TABLE "user"
             ADD CONSTRAINT "FK_dea97e26c765a4cdb575957a146" FOREIGN KEY ("identityId") REFERENCES "user_identity"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         `)
-        await queryRunner.query(`
-            ALTER TABLE "otp"
-            ADD CONSTRAINT "fk_otp_identity_id" FOREIGN KEY ("identityId") REFERENCES "user_identity"("id") ON DELETE CASCADE ON UPDATE NO ACTION
-        `)
-
-
+        if (otpTableExists) {
+            await queryRunner.query(`
+                ALTER TABLE "otp"
+                ADD CONSTRAINT "fk_otp_identity_id" FOREIGN KEY ("identityId") REFERENCES "user_identity"("id") ON DELETE CASCADE ON UPDATE NO ACTION
+            `)
+        }
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -177,18 +185,25 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
             name: this.name,
             message: 'Starting down migration',
         })
-        // Drop foreign key constraints
-        await queryRunner.query(`
-            ALTER TABLE "otp" DROP CONSTRAINT "fk_otp_identity_id"
-        `)
+
+        // Check if otp table exists
+        const otpTableExists = await queryRunner.hasTable('otp')
+        if (otpTableExists) {
+            // Drop foreign key constraints
+            await queryRunner.query(`
+                ALTER TABLE "otp" DROP CONSTRAINT "fk_otp_identity_id"
+            `)
+        }
         await queryRunner.query(`
             ALTER TABLE "user" DROP CONSTRAINT "FK_dea97e26c765a4cdb575957a146"
         `)
 
         // Drop indexes
-        await queryRunner.query(`
-            DROP INDEX "idx_otp_identity_id_type"
-        `)
+        if (otpTableExists) {
+            await queryRunner.query(`
+                DROP INDEX "idx_otp_identity_id_type"
+            `)
+        }
         await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
         `)
@@ -241,23 +256,18 @@ export class AddUserIdentity1735590074879 implements MigrationInterface {
         `)
 
         // Restore OTP table
-        await queryRunner.query(`
-            ALTER TABLE "otp"
-                RENAME COLUMN "identityId" TO "userId"
-        `)
-        await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_otp_user_id_type" ON "otp" ("type", "userId")
-        `)
-        await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("email", "platformId")
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "otp"
-            ADD CONSTRAINT "fk_otp_user_id" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION
-        `)
-
-
-
+        if (otpTableExists) {
+            await queryRunner.query(`
+                ALTER TABLE "otp"
+                    RENAME COLUMN "identityId" TO "userId"
+            `)
+            await queryRunner.query(`
+                CREATE UNIQUE INDEX "idx_otp_user_id_type" ON "otp" ("type", "userId")
+            `)
+            await queryRunner.query(`
+                ALTER TABLE "otp"
+                ADD CONSTRAINT "fk_otp_user_id" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION
+            `)
+        }
     }
-
 }
