@@ -89,7 +89,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   const { mutate: duplicateFlow, isPending: isDuplicatePending } = useMutation({
     mutationFn: async () => {
       const createdFlow = await flowsApi.create({
-        displayName: flowVersion.displayName,
+        displayName: `${flowVersion.displayName} - Copy`,
         projectId: authenticationSession.getProjectId()!,
         folderId: flow.folderId ?? undefined,
       });
