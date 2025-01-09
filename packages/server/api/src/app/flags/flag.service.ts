@@ -30,7 +30,6 @@ export const flagService = {
                 ApFlagId.PROJECT_LIMITS_ENABLED,
                 ApFlagId.CURRENT_VERSION,
                 ApFlagId.EDITION,
-                ApFlagId.IS_CLOUD_PLATFORM,
                 ApFlagId.EMAIL_AUTH_ENABLED,
                 ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 ApFlagId.ENVIRONMENT,
@@ -41,14 +40,8 @@ export const flagService = {
                 ApFlagId.PIECES_SYNC_MODE,
                 ApFlagId.PRIVATE_PIECES_ENABLED,
                 ApFlagId.FLOW_RUN_TIME_SECONDS,
-                ApFlagId.SHOW_BILLING,
-                ApFlagId.INSTALL_PROJECT_PIECES_ENABLED,
-                ApFlagId.MANAGE_PROJECT_PIECES_ENABLED,
                 ApFlagId.SHOW_COMMUNITY,
                 ApFlagId.SHOW_DOCS,
-                ApFlagId.SHOW_PLATFORM_DEMO,
-                ApFlagId.SHOW_SIGN_UP_LINK,
-                ApFlagId.SHOW_REWARDS,
                 ApFlagId.SUPPORTED_APP_WEBHOOKS,
                 ApFlagId.TELEMETRY_ENABLED,
                 ApFlagId.TEMPLATES_PROJECT_ID,
@@ -81,12 +74,6 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.IS_CLOUD_PLATFORM,
-                value: false,
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.PIECES_SYNC_MODE,
                 value: system.get(AppSystemProp.PIECES_SYNC_MODE),
                 created,
@@ -99,19 +86,7 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.SHOW_PLATFORM_DEMO,
-                value: [ApEdition.CLOUD].includes(system.getEdition()),
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.OWN_AUTH2_ENABLED,
-                value: true,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.SHOW_REWARDS,
                 value: true,
                 created,
                 updated,
@@ -125,24 +100,6 @@ export const flagService = {
             {
                 id: ApFlagId.PROJECT_LIMITS_ENABLED,
                 value: false,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.INSTALL_PROJECT_PIECES_ENABLED,
-                value: true,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.MANAGE_PROJECT_PIECES_ENABLED,
-                value: false,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.SHOW_SIGN_UP_LINK,
-                value: true,
                 created,
                 updated,
             },
@@ -166,9 +123,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-                value: [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
-                    ? this.getThirdPartyRedirectUrl(undefined, undefined)
-                    : `${system.get(WorkerSystemProp.FRONTEND_URL)}/redirect`,
+                value: this.getThirdPartyRedirectUrl(undefined, undefined),
                 created,
                 updated,
             },
@@ -283,19 +238,13 @@ export const flagService = {
         return flags
     },
     getThirdPartyRedirectUrl(
-        platformId: string | undefined,
         hostUrl: string | undefined,
+        platformId: string | undefined,
     ): string {
-        const isCustomerPlatform =
-            platformId && !flagService.isCloudPlatform(platformId)
-        if (isCustomerPlatform && system.getEdition() === ApEdition.CLOUD) {
-            return `https://${hostUrl}/redirect`
+        if (isNil(hostUrl) || isNil(platformId)) {
+            return `${system.getOrThrow(WorkerSystemProp.FRONTEND_URL)}/redirect`
         }
-        const frontendUrl = system.get(WorkerSystemProp.FRONTEND_URL)
-        const trimmedFrontendUrl = frontendUrl?.endsWith('/')
-            ? frontendUrl.slice(0, -1)
-            : frontendUrl
-        return `${trimmedFrontendUrl}/redirect`
+        return `https://${hostUrl}/redirect`
     },
     async getCurrentRelease(): Promise<string> {
         const packageJson = await import('package.json')

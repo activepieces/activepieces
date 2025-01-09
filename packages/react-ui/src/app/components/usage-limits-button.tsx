@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 import { ProgressCircularComponent } from '@/components/custom/circular-progress';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+import { Progress } from '@/components/ui/progress-circle';
 import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,

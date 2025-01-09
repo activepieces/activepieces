@@ -122,6 +122,10 @@ const SignUpForm = ({
           return;
         }
         switch (errorCode) {
+          case ErrorCode.EMAIL_IS_NOT_VERIFIED: {
+            setShowCheckYourEmailNote(true);
+            break;
+          }
           case ErrorCode.INVITATION_ONLY_SIGN_UP: {
             form.setError('root.serverError', {
               message: t(

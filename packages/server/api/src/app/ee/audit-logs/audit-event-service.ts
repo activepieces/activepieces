@@ -12,6 +12,7 @@ import {
 import { Value } from '@sinclair/typebox/value'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { In } from 'typeorm'
+import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { AuditEventParam } from '../../helper/application-events'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -102,13 +103,16 @@ async function saveEvent(info: MetaInformation, rawEvent: AuditEventParam, log: 
     const user = info.userId ? await userService.getOneOrFail({
         id: info.userId,
     }) : undefined
+    const identity = !isNil(user?.identityId) ? await userIdentityService(log).getOneOrFail({
+        id: user.identityId,
+    }) : undefined
     const project = info.projectId ? await projectService.getOne(info.projectId) : undefined
     const eventToSave: unknown = {
         id: apId(),
         created: new Date().toISOString(),
         updated: new Date().toISOString(),
         userId: info.userId,
-        userEmail: user?.email,
+        userEmail: identity?.email,
         projectId: info.projectId,
         projectDisplayName: project?.displayName,
         platformId: info.platformId,

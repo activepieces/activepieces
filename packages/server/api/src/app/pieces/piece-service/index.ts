@@ -48,7 +48,8 @@ export const pieceService = (log: FastifyBaseLogger) => ({
                     name: pieceInformation.name,
                     version: pieceInformation.version,
                 },
-                projectId: params.scope === PieceScope.PROJECT ? projectId : undefined,
+                // TODO (@abuaboud) delete after migrating everyone to their own platform
+                projectId: undefined,
                 packageType: params.packageType,
                 platformId,
                 pieceType: PieceType.CUSTOM,
@@ -96,7 +97,7 @@ async function savePiecePackage(platformId: string | undefined, projectId: strin
     switch (params.packageType) {
         case PackageType.ARCHIVE: {
             const archiveId = await saveArchive({
-                projectId: params.scope === PieceScope.PROJECT ? projectId : undefined,
+                projectId: undefined,
                 platformId,
                 archive: params.pieceArchive.data as Buffer,
             }, log)

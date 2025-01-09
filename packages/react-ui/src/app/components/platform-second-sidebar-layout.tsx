@@ -13,11 +13,12 @@ import {
   Puzzle,
   ScanFace,
   HeartPulse,
+  Receipt,
 } from 'lucide-react';
 
 import SidebarLayout, { SidebarItem } from '@/app/components/sidebar-layout';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 const iconSize = 20;
 
@@ -39,6 +40,7 @@ export default function PlatformSecondSidebarLayout({
     ApFlagId.SHOW_PLATFORM_DEMO,
   );
 
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const sidebarNavItems: Record<string, SidebarSection> = {
     setup: {
       title: t('Setup'),
@@ -68,6 +70,15 @@ export default function PlatformSecondSidebarLayout({
           href: '/platform/setup/templates',
           icon: <Workflow size={iconSize} />,
         },
+        ...(edition === ApEdition.CLOUD && !showPlatformDemo
+          ? [
+              {
+                title: t('Billing'),
+                href: '/platform/setup/billing',
+                icon: <Receipt size={iconSize} />,
+              },
+            ]
+          : []),
       ],
     },
     security: {
@@ -117,13 +128,11 @@ export default function PlatformSecondSidebarLayout({
     },
   };
 
-  if (!showPlatformDemo) {
-    sidebarNavItems['setup'].items.push({
-      title: 'License Key',
-      href: '/platform/setup/license-key',
-      icon: <CreditCard size={iconSize} />,
-    });
-  }
+  sidebarNavItems['setup'].items.push({
+    title: 'License Key',
+    href: '/platform/setup/license-key',
+    icon: <CreditCard size={iconSize} />,
+  });
 
   return (
     <SidebarLayout

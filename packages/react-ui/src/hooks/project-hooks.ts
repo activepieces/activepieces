@@ -5,7 +5,6 @@ import {
   useSuspenseQuery,
 } from '@tanstack/react-query';
 
-import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 import { ProjectWithLimits } from '@activepieces/shared';
@@ -18,14 +17,6 @@ export const projectHooks = {
     usePrefetchQuery<ProjectWithLimits, Error>({
       queryKey: ['current-project'],
       queryFn: projectApi.current,
-      staleTime: Infinity,
-    });
-  },
-  prefetchProjectRole: () => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    usePrefetchQuery({
-      queryKey: ['project-role', authenticationSession.getProjectId()],
-      queryFn: async () => authenticationApi.me(),
       staleTime: Infinity,
     });
   },
