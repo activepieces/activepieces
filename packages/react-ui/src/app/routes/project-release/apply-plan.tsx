@@ -1,5 +1,4 @@
 import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
 import { useState, ReactNode } from 'react';
 
 import { Button, ButtonProps } from '@/components/ui/button';

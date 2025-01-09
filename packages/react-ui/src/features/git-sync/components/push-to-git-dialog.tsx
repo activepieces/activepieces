@@ -12,7 +12,6 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -100,10 +99,10 @@ const PushToGitDialog = ({ children, flowIds }: PushToGitDialogProps) => {
               )}
             />
             <div className="text-sm text-gray-500 mt-2">
-                {t(
-                  'Enter a commit message to describe the changes you want to push.',
-                )}
-              </div>
+              {t(
+                'Enter a commit message to describe the changes you want to push.',
+              )}
+            </div>
             <DialogFooter>
               <Button
                 type="button"

@@ -24,9 +24,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import {
-  AppConnectionWithoutSensitiveData,
-} from '@activepieces/shared';
+import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 
 import { appConnectionsApi } from '../lib/app-connections-api';
 import {
@@ -50,70 +48,59 @@ type RenameConnectionDialogProps = {
 const RenameConnectionDialog = forwardRef<
   HTMLDivElement,
   RenameConnectionDialogProps
->(
-  (
-    {
-      connectionId,
-      currentName,
-      userHasPermissionToRename,
-      onRename,
+>(({ connectionId, currentName, userHasPermissionToRename, onRename }, _) => {
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
+  const renameConnectionForm = useForm<RenameConnectionSchema>({
+    resolver: typeboxResolver(RenameConnectionSchema),
+    defaultValues: {
+      displayName: currentName,
     },
-    _,
-  ) => {
-    const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
-    const renameConnectionForm = useForm<RenameConnectionSchema>({
-      resolver: typeboxResolver(RenameConnectionSchema),
-      defaultValues: {
-        displayName: currentName,
-      },
-    });
+  });
 
-    const { mutate, isPending } = useMutation<
-      AppConnectionWithoutSensitiveData,
-      Error,
-      {
-        connectionId: string;
-        displayName: string;
+  const { mutate, isPending } = useMutation<
+    AppConnectionWithoutSensitiveData,
+    Error,
+    {
+      connectionId: string;
+      displayName: string;
+    }
+  >({
+    mutationFn: async ({ connectionId, displayName }) => {
+      const existingConnection = await isConnectionNameUnique(
+        false,
+        displayName,
+      );
+      if (!existingConnection && displayName !== currentName) {
+        throw new ConnectionNameAlreadyExists();
       }
-    >({
-      mutationFn: async ({ connectionId, displayName }) => {
-        const existingConnection = await isConnectionNameUnique(
-          false,
-          displayName,
-        );
-        if (!existingConnection && displayName !== currentName) {
-          throw new ConnectionNameAlreadyExists();
-        }
-        return appConnectionsApi.update(connectionId, { displayName });
-      },
-      onSuccess: () => {
-        onRename();
-        toast({
-          title: t('Success'),
-          description: t('Connection has been renamed.'),
-          duration: 3000,
+      return appConnectionsApi.update(connectionId, { displayName });
+    },
+    onSuccess: () => {
+      onRename();
+      toast({
+        title: t('Success'),
+        description: t('Connection has been renamed.'),
+        duration: 3000,
+      });
+      setIsRenameDialogOpen(false);
+    },
+    onError: (error) => {
+      if (error instanceof ConnectionNameAlreadyExists) {
+        renameConnectionForm.setError('displayName', {
+          message: error.message,
         });
-        setIsRenameDialogOpen(false);
-      },
-      onError: (error) => {
-        if (error instanceof ConnectionNameAlreadyExists) {
-          renameConnectionForm.setError('displayName', {
-            message: error.message,
-          });
-        } else {
-          toast(INTERNAL_ERROR_TOAST);
-        }
-      },
-    });
+      } else {
+        toast(INTERNAL_ERROR_TOAST);
+      }
+    },
+  });
 
-    return (
-      <Tooltip>
-
+  return (
+    <Tooltip>
       <Dialog
         open={isRenameDialogOpen}
         onOpenChange={(open) => setIsRenameDialogOpen(open)}
       >
-
         <DialogTrigger asChild>
           <>
             <TooltipTrigger asChild>
@@ -135,7 +122,7 @@ const RenameConnectionDialog = forwardRef<
                 ? t('Permission needed')
                 : t('Rename')}
             </TooltipContent>
-            </>
+          </>
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
@@ -175,23 +162,20 @@ const RenameConnectionDialog = forwardRef<
                   }
                 </FormMessage>
               )}
-                <DialogFooter className="justify-end">
-          <DialogClose asChild>
-            <Button variant={'outline'}>{t('Cancel')}</Button>
-          </DialogClose>
-         
-          <Button loading={isPending}>{t('Confirm')}</Button>
-        </DialogFooter>
+              <DialogFooter className="justify-end">
+                <DialogClose asChild>
+                  <Button variant={'outline'}>{t('Cancel')}</Button>
+                </DialogClose>
 
+                <Button loading={isPending}>{t('Confirm')}</Button>
+              </DialogFooter>
             </form>
           </Form>
         </DialogContent>
       </Dialog>
-      </Tooltip>
-
-    );
-  },
-);
+    </Tooltip>
+  );
+});
 
 RenameConnectionDialog.displayName = 'RenameConnectionDialog';
 

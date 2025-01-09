@@ -8,7 +8,6 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -111,9 +110,8 @@ const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
           >
             <DialogHeader>
               <DialogTitle>{t('Connect Git')}</DialogTitle>
-           
             </DialogHeader>
-            
+
             <div className="grid gap-4">
               <FormField
                 control={form.control}
@@ -186,11 +184,7 @@ const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
 
             <DialogFooter>
               <DialogClose>
-                <Button
-                  type="button"
-                  variant={'outline'}
-                  loading={isPending}
-                >
+                <Button type="button" variant={'outline'} loading={isPending}>
                   {t('Cancel')}
                 </Button>
               </DialogClose>

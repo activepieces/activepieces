@@ -1,8 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { AlertTriangle, ArrowRight, PencilIcon, Plus } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { PencilIcon, Plus } from 'lucide-react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -133,13 +134,9 @@ const CreateReleaseDialog = ({
     );
   };
 
-  useEffect(() => {
-    if (!loading && plan) {
-      setSelectedChanges(
-        new Set(plan.operations.map((op) => op.flow.id) || []),
-      );
-    }
-  }, [loading, plan]);
+  if (!loading && plan && selectedChanges.size === 0) {
+    setSelectedChanges(new Set(plan.operations.map((op) => op.flow.id)));
+  }
 
   return (
     <Dialog
@@ -155,14 +152,14 @@ const CreateReleaseDialog = ({
         setOpen(newOpenState);
       }}
     >
-      <DialogContent className="min-h-[300px] max-h-[720px] flex flex-col">
-        <DialogHeader className='flex-shrink-0'>
+      <DialogContent className="min-h-[100px] max-h-[720px] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>
             {diffRequest.type === ProjectReleaseType.GIT
               ? t('Create Git Release')
               : diffRequest.type === ProjectReleaseType.PROJECT
               ? t('Create Project Release')
-              : t('Create Rollback to')} {form.getValues('name')}
+              : `${t('Create Rollback to')} ${form.getValues('name')}`}
           </DialogTitle>
         </DialogHeader>
 
@@ -223,7 +220,7 @@ const CreateReleaseDialog = ({
                   </Label>
                 </div>
               </div>
-              <div className='max-h-[15vh] overflow-y-auto'>
+              <ScrollArea viewPortClassName="max-h-[15vh]">
                 {plan?.operations.map((operation) => (
                   <OperationChange
                     key={operation.flow.id}
@@ -239,26 +236,31 @@ const CreateReleaseDialog = ({
                       setErrorMessage('');
                       setSelectedChanges(newSelectedChanges);
                     }}
-                />
-              ))}
-              </div>
+                  />
+                ))}
+              </ScrollArea>
             </div>
             {plan?.connections && plan?.connections.length > 0 && (
               <div className="space-y-2">
                 <div className="flex flex-col gap-2">
                   <div className="flex flex-col justify -center gap-1 py-2 border-b">
                     <Label className="text-sm font-medium">
-                      {t('Connections Changes')} ({plan?.connections?.length || 0})
+                      {t('Connections Changes')} (
+                      {plan?.connections?.length || 0})
                     </Label>
                     <div className="flex items-center text-sm text-muted-foreground">
-                    <span>{t('New connections are placeholders and need to be reconnected again')}</span>
+                      <span className="flex items-center gap-2">
+                        {t(
+                          'New connections are placeholders and need to be reconnected again',
+                        )}
+                      </span>
+                    </div>
                   </div>
-                  </div>
-                  <div className="space-y-1.5 max-h-[16vh] overflow-y-auto ">
+                  <ScrollArea viewPortClassName="max-h-[16vh]">
                     {plan?.connections.map((connection, index) => (
                       <div
                         key={connection.connectionState.externalId}
-                        className="flex items-center gap-2 text-sm"
+                        className="flex items-center gap-2 text-sm py-1"
                       >
                         {connection.type ===
                           ConnectionOperationType.UPDATE_CONNECTION && (
@@ -268,12 +270,8 @@ const CreateReleaseDialog = ({
                               <span>
                                 {connection.connectionState.displayName}
                               </span>
+                              <span> {t('renamed to')} </span>
                               <span>
-                                {' '}
-                                {t('renamed to')}
-                                {' '}
-                              </span>
-                              <span >
                                 {connection.newConnectionState.displayName}
                               </span>
                             </div>
@@ -281,16 +279,16 @@ const CreateReleaseDialog = ({
                         )}
                         {connection.type ===
                           ConnectionOperationType.CREATE_CONNECTION && (
-                          <>
+                          <div className="flex items-center gap-2">
                             <Plus className="w-4 h-4 shrink-0 text-success" />
                             <span className="text-success">
                               {connection.connectionState.displayName}
                             </span>
-                          </>
+                          </div>
                         )}
                       </div>
                     ))}
-                  </div>
+                  </ScrollArea>
                 </div>
               </div>
             )}
@@ -300,11 +298,10 @@ const CreateReleaseDialog = ({
           </div>
         )}
 
-        {loading || (!loading && !isThereAnyChanges) && (
-          <div className="text-sm py-2">
-            {t('No changes to apply')}
-          </div>
-        )}
+        {loading ||
+          (!loading && !isThereAnyChanges && (
+            <div className="text-sm py-2">{t('No changes to apply')}</div>
+          ))}
 
         {!loading && isThereAnyChanges && (
           <DialogFooter className=" items-end gap-1 ">
@@ -333,7 +330,7 @@ const CreateReleaseDialog = ({
                 applyChanges();
               }}
             >
-            {t('Apply Changes')}
+              {t('Apply Changes')}
             </Button>
           </DialogFooter>
         )}
