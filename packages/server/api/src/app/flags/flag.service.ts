@@ -247,6 +247,10 @@ export const flagService = {
         hostUrl: string | undefined,
         platformId: string | undefined,
     ): string {
+        const edition = system.getEdition()
+        if (edition !== ApEdition.CLOUD) {
+            return `${system.getOrThrow(WorkerSystemProp.FRONTEND_URL)}/redirect`
+        }
         if (isNil(hostUrl) || isNil(platformId)) {
             return `${system.getOrThrow(WorkerSystemProp.FRONTEND_URL)}/redirect`
         }
