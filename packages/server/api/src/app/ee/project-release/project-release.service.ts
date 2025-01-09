@@ -13,7 +13,7 @@ import { projectStateService } from './project-state/project-state.service'
 const projectReleaseRepo = repoFactory(ProjectReleaseEntity)
 
 export const projectReleaseService = {
-    async create(projectId: ProjectId, ownerId: ApId, importedBy: ApId, params: CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectRelease> {
+    async create(projectId: ProjectId, ownerId: ApId, params: CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectRelease> {
         const lockKey = `project-release:${projectId}`
         const lock = await memoryLock.acquire(lockKey)
         try {
@@ -30,7 +30,7 @@ export const projectReleaseService = {
                 created: new Date().toISOString(),
                 updated: new Date().toISOString(),
                 projectId,
-                importedBy,
+                importedBy: ownerId,
                 fileId,
                 name: params.name,
                 description: params.description,

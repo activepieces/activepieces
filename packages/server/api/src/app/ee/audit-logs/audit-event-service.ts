@@ -23,6 +23,7 @@ import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { AuditEventEntity } from './audit-event-entity'
+import { authenticationUtils } from '../../authentication/authentication-utils'
 
 export const auditLogRepo = repoFactory(AuditEventEntity)
 
@@ -34,12 +35,15 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
         if ([PrincipalType.UNKNOWN, PrincipalType.WORKER].includes(request.principal.type)) {
             return
         }
-        rejectedPromiseHandler(saveEvent({
-            platformId: request.principal.platform.id,
-            projectId: request.principal.projectId,
-            userId: request.principal.id,
-            ip: networkUtls.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-        }, params, log), log)
+        rejectedPromiseHandler((async () => {
+            const userId = await authenticationUtils.extractUserIdFromPrincipal(request.principal)
+            await saveEvent({
+                platformId: request.principal.platform.id,
+                projectId: request.principal.projectId,
+                userId: userId,
+                ip: networkUtls.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+            }, params, log)
+        })(), log)
     },
     sendWorkerEvent(projectId: string, params: AuditEventParam): void {
         rejectedPromiseHandler(projectService.getOneOrThrow(projectId).then((project) => {

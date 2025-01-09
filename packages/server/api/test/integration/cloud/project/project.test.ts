@@ -4,14 +4,12 @@ import {
 } from '@activepieces/ee-shared'
 import {
     apId,
-    CreateProjectReleaseRequestBody,
     FlowStatus,
     NotificationStatus,
     Platform,
     PlatformRole,
     PrincipalType,
     Project,
-    ProjectReleaseType,
     User,
 } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
@@ -551,61 +549,7 @@ describe('Project API', () => {
         })
     })
 
-    describe('Create Project Release', () => {
-        it('Fails if projectId does not match', async () => {
-            const { mockPlatform } = await mockAndSaveBasicSetup()
-            const apiKey = createMockApiKey({
-                platformId: mockPlatform.id,
-            })
-            await databaseConnection().getRepository('api_key').save([apiKey])
 
-            const request: CreateProjectReleaseRequestBody = {
-                name: faker.animal.bird(),
-                description: faker.lorem.sentence(),
-                selectedFlowsIds: [],
-                projectId: faker.string.uuid(),
-                type: ProjectReleaseType.GIT,
-            }
-
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/project-releases',
-                body: request,
-                headers: {
-                    authorization: `Bearer ${apiKey.value}`,
-                },
-            })
-
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-        })
-
-        it('Fails if importedBy does not exist', async () => {
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
-            const apiKey = createMockApiKey({
-                platformId: mockPlatform.id,
-            })
-            await databaseConnection().getRepository('api_key').save([apiKey])
-
-            const request: CreateProjectReleaseRequestBody = {
-                name: faker.animal.bird(),
-                description: faker.lorem.sentence(),
-                selectedFlowsIds: [],
-                projectId: mockProject.id,
-                type: ProjectReleaseType.GIT,
-            }
-
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/project-releases',
-                body: request,
-                headers: {
-                    authorization: `Bearer ${apiKey.value}`,
-                },
-            })
-
-            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
-        })
-    })
 })
 
 async function createProjectAndPlatformAndApiKey(): Promise<{

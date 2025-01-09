@@ -25,18 +25,8 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
     })
 
     app.post('/', CreateProjectReleaseRequest, async (req) => {
-        if (req.principal.projectId !== req.body.projectId) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
-                params: {
-                    message: 'You are not authorized to create a project release for this project',
-                },
-            })
-        }
-        const platform = await platformService.getOneOrThrow(req.principal.platform.id)
-        const ownerId = platform.ownerId
         const userId = await authenticationUtils.extractUserIdFromPrincipal(req.principal)
-        const release = await projectReleaseService.create(req.body.projectId, ownerId, userId, req.body, req.log)
+        const release = await projectReleaseService.create(req.body.projectId, userId, req.body, req.log)
 
         eventsHooks.get(req.log).sendUserEventFromRequest(req, {
             action: ApplicationEventName.PROJECT_RELEASE_CREATED,

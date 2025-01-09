@@ -987,6 +987,12 @@
                       {
                         "type": "string",
                         "enum": [
+                          "MEMORY_LIMIT_EXCEEDED"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
                           "TIMEOUT"
                         ]
                       }
@@ -1160,6 +1166,12 @@
                         "type": "string",
                         "enum": [
                           "SUCCEEDED"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "MEMORY_LIMIT_EXCEEDED"
                         ]
                       },
                       {
@@ -2634,6 +2646,12 @@
                 "type": "string",
                 "enum": [
                   "SUCCEEDED"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "MEMORY_LIMIT_EXCEEDED"
                 ]
               },
               {
@@ -6729,6 +6747,9 @@
                   "displayName": {
                     "type": "string"
                   },
+                  "folderId": {
+                    "type": "string"
+                  },
                   "folderName": {
                     "type": "string"
                   },
@@ -10424,6 +10445,12 @@
                   {
                     "type": "string",
                     "enum": [
+                      "MEMORY_LIMIT_EXCEEDED"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
                       "TIMEOUT"
                     ]
                   }
@@ -10570,6 +10597,12 @@
                                 "type": "string",
                                 "enum": [
                                   "SUCCEEDED"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "MEMORY_LIMIT_EXCEEDED"
                                 ]
                               },
                               {
@@ -10747,6 +10780,12 @@
                           "type": "string",
                           "enum": [
                             "SUCCEEDED"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "MEMORY_LIMIT_EXCEEDED"
                           ]
                         },
                         {
@@ -14081,9 +14120,6 @@
                       "projectId": {
                         "type": "string"
                       },
-                      "importedBy": {
-                        "type": "string"
-                      },
                       "type": {
                         "type": "string",
                         "enum": [
@@ -14094,7 +14130,6 @@
                     "required": [
                       "name",
                       "projectId",
-                      "importedBy",
                       "type"
                     ]
                   },
@@ -14118,9 +14153,6 @@
                       "projectId": {
                         "type": "string"
                       },
-                      "importedBy": {
-                        "type": "string"
-                      },
                       "type": {
                         "type": "string",
                         "enum": [
@@ -14134,7 +14166,6 @@
                     "required": [
                       "name",
                       "projectId",
-                      "importedBy",
                       "type",
                       "projectReleaseId"
                     ]
@@ -14159,9 +14190,6 @@
                       "projectId": {
                         "type": "string"
                       },
-                      "importedBy": {
-                        "type": "string"
-                      },
                       "type": {
                         "type": "string",
                         "enum": [
@@ -14175,7 +14203,6 @@
                     "required": [
                       "name",
                       "projectId",
-                      "importedBy",
                       "type",
                       "targetProjectId"
                     ]
