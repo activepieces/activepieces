@@ -16,6 +16,7 @@ import { updatePersonAction } from './lib/actions/update-person';
 import { createOrganizationAction } from './lib/actions/create-organization';
 import { updateOrganizationAction } from './lib/actions/update-organization';
 import { createLeadAction } from './lib/actions/create-lead';
+import { updateLeadAction } from './lib/actions/update-lead';
 
 export const pipedriveAuth = PieceAuth.OAuth2({
 	description: '',
@@ -36,6 +37,7 @@ export const pipedrive = createPiece({
 	actions: [
 		addPerson,
 		createLeadAction,
+		updateLeadAction,
 		createOrganizationAction,
 		updateOrganizationAction,
 		createPersonAction,

@@ -6,6 +6,7 @@ import {
 	Property,
 } from '@activepieces/pieces-framework';
 import {
+	fetchLeadsOptions,
 	fetchOrganizationsOptions,
 	fetchOwnersOptions,
 	fetchPersonsOptions,
@@ -19,15 +20,36 @@ import {
 import { GetField, OrganizationCreateResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-export const createLeadAction = createAction({
+export const updateLeadAction = createAction({
 	auth: pipedriveAuth,
-	name: 'create-lead',
-	displayName: 'Create Lead',
-	description: 'Creates a new lead.',
+	name: 'update-lead',
+	displayName: 'Update Lead',
+	description: 'Updates an existing lead.',
 	props: {
+		leadId: Property.Dropdown({
+			displayName: 'Lead',
+			refreshers: [],
+			required: true,
+			options: async ({ auth }) => {
+				if (!auth) {
+					return {
+						disabled: true,
+						options: [],
+						placeholder: 'Please connect your account.',
+					};
+				}
+				const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
+				const options = await fetchLeadsOptions(authValue);
+
+				return {
+					disabled: false,
+					options,
+				};
+			},
+		}),
 		title: Property.ShortText({
 			displayName: 'Title',
-			required: true,
+			required: false,
 		}),
 		ownerId: Property.Dropdown({
 			displayName: 'Owner',
@@ -212,6 +234,7 @@ export const createLeadAction = createAction({
 		const {
 			title,
 			ownerId,
+			leadId,
 			channel,
 			organizationId,
 			personId,
@@ -220,12 +243,6 @@ export const createLeadAction = createAction({
 			leadValue,
 			leadValueCurrency,
 		} = context.propsValue;
-
-		if (!personId && !organizationId) {
-			throw new Error(
-				'Neither an Organization nor a Person were provided. One of them must be provided in order to create a lead.',
-			);
-		}
 
 		const labelIds = (context.propsValue.labelIds as string[]) ?? [];
 		const customFields = context.propsValue.customfields ?? {};
@@ -258,14 +275,14 @@ export const createLeadAction = createAction({
 
 		Object.entries(customFields).forEach(([key, value]) => {
 			// Format values if they are arrays
-			leadCustomFields[key] = Array.isArray(value) ? value.join(',') : value;
+			leadCustomFields[key] = Array.isArray(value) && value.length > 0 ? value.join(',') : value;
 		});
 
-		const createdLeadResponse = await pipedriveApiCall<OrganizationCreateResponse>({
+		const updatedLeadResponse = await pipedriveApiCall<OrganizationCreateResponse>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
-			method: HttpMethod.POST,
-			resourceUri: '/leads',
+			method: HttpMethod.PATCH,
+			resourceUri: `/leads/${leadId}`,
 			body: {
 				...leadDefaultFields,
 				...leadCustomFields,
@@ -281,11 +298,11 @@ export const createLeadAction = createAction({
 
 		const updatedLeadProperties = pipedriveTransformCustomFields(
 			customFieldsResponse,
-			createdLeadResponse.data,
+			updatedLeadResponse.data,
 		);
 
 		return {
-			...createdLeadResponse,
+			...updatedLeadResponse,
 			data: updatedLeadProperties,
 		};
 	},
