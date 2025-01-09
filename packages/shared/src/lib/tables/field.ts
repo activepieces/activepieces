@@ -2,10 +2,9 @@ import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema } from '../common'
 
 export enum FieldType {
-    NUMBER = 'NUMBER',
     TEXT = 'TEXT',
+    NUMBER = 'NUMBER',
     DATE = 'DATE',
-    JSON = 'JSON',
 }
 
 export const Field = Type.Object({

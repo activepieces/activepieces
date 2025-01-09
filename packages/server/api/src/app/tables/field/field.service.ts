@@ -17,6 +17,9 @@ export const fieldService = {
     async getAll({ projectId, tableId }: { projectId: string, tableId: string }): Promise<Field[]> {
         return fieldRepo().find({
             where: { projectId, tableId },
+            order: {
+                created: 'ASC',
+            },
         })
     },
 

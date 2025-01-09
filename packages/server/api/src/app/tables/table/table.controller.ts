@@ -1,4 +1,4 @@
-import { CreateTableRequest, PrincipalType, Table } from '@activepieces/shared'
+import { CreateTableRequest, ExportTableResponse, PrincipalType, Table } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { tableService } from './table.service'
@@ -38,6 +38,13 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
         })
     },
     )
+
+    fastify.get('/:id/export', ExportTableRequest, async (request) => {
+        return tableService.exportTable({
+            projectId: request.principal.projectId,
+            id: request.params.id,
+        })
+    })
 }
 
 const CreateRequest =  {
@@ -79,6 +86,20 @@ const GetTableByIdRequest = {
         }),
         response: {
             [StatusCodes.OK]: Table,
+        },
+    },
+}
+
+const ExportTableRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+    },
+    schema: {
+        params: Type.Object({
+            id: Type.String(),
+        }),
+        response: {
+            [StatusCodes.OK]: ExportTableResponse,
         },
     },
 }

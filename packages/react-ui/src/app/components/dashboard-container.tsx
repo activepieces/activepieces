@@ -1,5 +1,12 @@
 import { t } from 'i18next';
-import { AlertCircle, Link2, Logs, Workflow, Wrench } from 'lucide-react';
+import {
+  AlertCircle,
+  Database,
+  Link2,
+  Logs,
+  Workflow,
+  Wrench,
+} from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
@@ -15,9 +22,13 @@ import { Sidebar, SidebarLink } from './sidebar';
 
 type DashboardContainerProps = {
   children: React.ReactNode;
+  hideHeader?: boolean;
 };
 
-export function DashboardContainer({ children }: DashboardContainerProps) {
+export function DashboardContainer({
+  children,
+  hideHeader,
+}: DashboardContainerProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification(
     platform.flowIssuesEnabled,
@@ -41,6 +52,13 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
       icon: Workflow,
       showInEmbed: true,
       hasPermission: checkAccess(Permission.READ_FLOW),
+    },
+    {
+      to: '/tables',
+      label: t('Tables'),
+      icon: Database,
+      showInEmbed: true,
+      hasPermission: checkAccess(Permission.READ_TABLE),
     },
     {
       to: '/runs',
@@ -84,6 +102,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
         isHomeDashboard={true}
         links={links}
         hideSideNav={embedState.hideSideNav}
+        hideHeader={hideHeader}
       >
         {children}
       </Sidebar>

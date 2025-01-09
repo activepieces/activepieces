@@ -20,6 +20,7 @@ export enum Permission {
     READ_ALERT = 'READ_ALERT',
     WRITE_PROJECT = 'WRITE_PROJECT',
     READ_PROJECT = 'READ_PROJECT',
+    READ_TABLE = 'READ_TABLE',
 }
 
 export enum RoleType {
