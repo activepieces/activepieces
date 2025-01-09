@@ -57,8 +57,16 @@ const EnvironmentPage = () => {
           <h1 className="text-2xl font-bold flex-grow">{t('Environments')}</h1>
           <span className="text-muted-foreground text-md">
             {t(
-              'Connect to Git to enable version control, backup your flows, and manage multiple environments',
+              'Connect to Git to enable version control, backup your flows, and manage multiple environments. ',
             )}
+                        <a 
+              href="https://www.activepieces.com/docs/operations/git-sync"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              {t('Environments & Releases')}
+            </a>
           </span>
         </div>
         <Card className="w-full p-4">

@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { AlertTriangle, ArrowRight, PencilIcon, Plus } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
@@ -16,14 +17,19 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { ProjectSyncPlan } from '@activepieces/ee-shared';
-import { DiffReleaseRequest, ProjectReleaseType } from '@activepieces/shared';
+import {
+  ConnectionOperationType,
+  DiffReleaseRequest,
+  ProjectReleaseType,
+  ProjectSyncPlan,
+} from '@activepieces/shared';
 
 import { OperationChange } from './operation-change';
 
@@ -32,13 +38,14 @@ type CreateReleaseDialogProps = {
   setOpen: (open: boolean) => void;
   refetch: () => void;
   diffRequest: DiffReleaseRequest;
-  plan: ProjectSyncPlan | undefined;
+  plan: ProjectSyncPlan;
   defaultName?: string;
+  loading: boolean;
 };
 
 const formSchema = z.object({
   name: z.string().min(1, t('Name is required')),
-  description: z.string(),
+  description: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -48,6 +55,7 @@ const CreateReleaseDialog = ({
   setOpen,
   refetch,
   plan,
+  loading,
   defaultName = '',
   diffRequest,
 }: CreateReleaseDialogProps) => {
@@ -112,10 +120,11 @@ const CreateReleaseDialog = ({
       toast(INTERNAL_ERROR_TOAST);
     },
   });
-
+  const isThereAnyChanges = plan?.operations && plan?.operations.length > 0;
   const [selectedChanges, setSelectedChanges] = useState<Set<string>>(
     new Set(plan?.operations.map((op) => op.flow.id) || []),
   );
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleSelectAll = (checked: boolean) => {
     if (!plan) return;
@@ -123,6 +132,14 @@ const CreateReleaseDialog = ({
       new Set(checked ? plan.operations.map((op) => op.flow.id) : []),
     );
   };
+
+  useEffect(() => {
+    if (!loading && plan) {
+      setSelectedChanges(
+        new Set(plan.operations.map((op) => op.flow.id) || []),
+      );
+    }
+  }, [loading, plan]);
 
   return (
     <Dialog
@@ -138,107 +155,188 @@ const CreateReleaseDialog = ({
         setOpen(newOpenState);
       }}
     >
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="min-h-[300px] max-h-[720px] flex flex-col">
+        <DialogHeader className='flex-shrink-0'>
           <DialogTitle>
             {diffRequest.type === ProjectReleaseType.GIT
               ? t('Create Git Release')
               : diffRequest.type === ProjectReleaseType.PROJECT
               ? t('Create Project Release')
-              : t('Rollback Release')}
+              : t('Create Rollback to')} {form.getValues('name')}
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <div className="flex flex-col gap-2">
-            <Label className="text-sm" htmlFor="name">
-              {t('Name')}
-            </Label>
-            <Input
-              id="name"
-              {...form.register('name')}
-              placeholder={t('Meeting Summary Flow')}
-            />
-            {form.formState.errors.name && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.name.message}
-              </p>
-            )}
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label className="text-sm" htmlFor="description">
-              {t('Description')}
-            </Label>
-            <Textarea
-              id="description"
-              {...form.register('description')}
-              placeholder={t('Added new features and fixed bugs')}
-            />
-            {form.formState.errors.description && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.description.message}
-              </p>
-            )}
-          </div>
 
-          <div className="max-h-[50vh] overflow-y-auto space-y-2">
+        {loading && (
+          <div className="flex items-center justify-center h-24">
+            <LoadingSpinner />
+          </div>
+        )}
+
+        {!loading && isThereAnyChanges && (
+          <div className="space-y-4">
             <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2 py-2 border-b">
-                <Checkbox
-                  checked={selectedChanges.size === plan?.operations.length}
-                  onCheckedChange={handleSelectAll}
+              <Label className="text-sm" htmlFor="name">
+                {t('Name')}
+              </Label>
+              <Input
+                id="name"
+                {...form.register('name')}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setErrorMessage('');
+                  }
+                }}
+                placeholder={t('Meeting Summary Flow')}
+              />
+              {form.formState.errors.name && (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.name.message}
+                </p>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label className="text-sm" htmlFor="description">
+                {t('Description')}
+              </Label>
+              <Textarea
+                id="description"
+                {...form.register('description')}
+                placeholder={t('Added new features and fixed bugs')}
+              />
+              {form.formState.errors.description && (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.description.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2 ">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 py-2 border-b">
+                  <Checkbox
+                    checked={selectedChanges.size === plan?.operations.length}
+                    onCheckedChange={handleSelectAll}
+                  />
+                  <Label className="text-sm font-medium">
+                    {t('Flows Changes')} ({selectedChanges.size}/
+                    {plan?.operations.length || 0})
+                  </Label>
+                </div>
+              </div>
+              <div className='max-h-[15vh] overflow-y-auto'>
+                {plan?.operations.map((operation) => (
+                  <OperationChange
+                    key={operation.flow.id}
+                    change={operation}
+                    selected={selectedChanges.has(operation.flow.id)}
+                    onSelect={(checked) => {
+                      const newSelectedChanges = new Set(selectedChanges);
+                      if (checked) {
+                        newSelectedChanges.add(operation.flow.id);
+                      } else {
+                        newSelectedChanges.delete(operation.flow.id);
+                      }
+                      setErrorMessage('');
+                      setSelectedChanges(newSelectedChanges);
+                    }}
                 />
-                <Label className="text-sm font-medium">
-                  {t('Changes')} ({selectedChanges.size}/
-                  {plan?.operations.length || 0})
-                </Label>
+              ))}
               </div>
             </div>
-            {plan?.operations.length ? (
-              plan.operations.map((operation) => (
-                <OperationChange
-                  key={operation.flow.id}
-                  change={operation}
-                  selected={selectedChanges.has(operation.flow.id)}
-                  onSelect={(checked) => {
-                    setSelectedChanges(
-                      new Set(
-                        checked
-                          ? [...selectedChanges, operation.flow.id]
-                          : [...selectedChanges].filter(
-                              (id) => id !== operation.flow.id,
-                            ),
-                      ),
-                    );
-                  }}
-                />
-              ))
-            ) : (
-              <div className="text-sm text-muted-foreground py-2">
-                {t('No changes to apply')}
+            {plan?.connections && plan?.connections.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-col justify -center gap-1 py-2 border-b">
+                    <Label className="text-sm font-medium">
+                      {t('Connections Changes')} ({plan?.connections?.length || 0})
+                    </Label>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                    <span>{t('New connections are placeholders and need to be reconnected again')}</span>
+                  </div>
+                  </div>
+                  <div className="space-y-1.5 max-h-[16vh] overflow-y-auto ">
+                    {plan?.connections.map((connection, index) => (
+                      <div
+                        key={connection.connectionState.externalId}
+                        className="flex items-center gap-2 text-sm"
+                      >
+                        {connection.type ===
+                          ConnectionOperationType.UPDATE_CONNECTION && (
+                          <div className="flex items-center gap-2">
+                            <PencilIcon className="w-4 h-4 shrink-0" />
+                            <div className="flex items-center gap-1">
+                              <span>
+                                {connection.connectionState.displayName}
+                              </span>
+                              <span>
+                                {' '}
+                                {t('renamed to')}
+                                {' '}
+                              </span>
+                              <span >
+                                {connection.newConnectionState.displayName}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                        {connection.type ===
+                          ConnectionOperationType.CREATE_CONNECTION && (
+                          <>
+                            <Plus className="w-4 h-4 shrink-0 text-success" />
+                            <span className="text-success">
+                              {connection.connectionState.displayName}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
+            {errorMessage && (
+              <p className="text-sm text-destructive">{errorMessage}</p>
+            )}
           </div>
-        </div>
+        )}
 
-        <DialogFooter className="flex justify-end gap-1">
-          <Button
-            size={'sm'}
-            variant={'outline'}
-            onClick={() => setOpen(false)}
-          >
-            {t('Cancel')}
-          </Button>
-          <Button
-            size={'sm'}
-            loading={isPending}
-            disabled={!form.formState.isValid || selectedChanges.size === 0}
-            onClick={() => {
-              applyChanges();
-            }}
-          >
+        {loading || (!loading && !isThereAnyChanges) && (
+          <div className="text-sm py-2">
+            {t('No changes to apply')}
+          </div>
+        )}
+
+        {!loading && isThereAnyChanges && (
+          <DialogFooter className=" items-end gap-1 ">
+            <Button
+              size={'sm'}
+              variant={'outline'}
+              onClick={() => setOpen(false)}
+            >
+              {t('Cancel')}
+            </Button>
+            <Button
+              size={'sm'}
+              loading={isPending}
+              disabled={isPending}
+              onClick={() => {
+                if (form.getValues('name').trim() === '') {
+                  setErrorMessage('Release name is required');
+                  return;
+                }
+                if (selectedChanges.size === 0) {
+                  setErrorMessage(
+                    'Please select at least one change to include in the release',
+                  );
+                  return;
+                }
+                applyChanges();
+              }}
+            >
             {t('Apply Changes')}
-          </Button>
-        </DialogFooter>
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

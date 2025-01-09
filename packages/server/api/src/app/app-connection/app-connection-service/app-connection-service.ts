@@ -10,6 +10,7 @@ import {
     AppConnectionType,
     AppConnectionValue,
     AppConnectionWithoutSensitiveData,
+    ConnectionState,
     Cursor,
     EngineResponseStatus,
     ErrorCode,
@@ -120,6 +121,33 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         return this.removeSensitiveData(updatedConnection)
     },
 
+    async upsertPlaceholder(params: UpsertPlaceholderParams): Promise<void> {
+        const { projectId, platformId, externalId, pieceName, displayName } = params
+
+        const existingConnection = await repo().findOne({
+            where: {
+                ...(params.projectId ? { projectIds: APArrayContains('projectIds', [params.projectId]) } : {}),
+                externalId,
+                platformId,
+            },
+        })
+
+        const connection = {
+            displayName,
+            status: AppConnectionStatus.ERROR,
+            externalId,
+            pieceName,
+            value: encryptUtils.encryptObject({}),
+            type: AppConnectionType.CUSTOM_AUTH,
+            id: existingConnection?.id ?? apId(),
+            scope: AppConnectionScope.PROJECT,
+            projectIds: [projectId],
+            platformId,
+        }
+
+        await repo().upsert(connection, ['id'])
+    },
+
     async getOne({
         projectId,
         platformId,
@@ -167,6 +195,19 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             })
         }
         return this.removeSensitiveData(connectionById)
+    },
+
+    async getManyConnectionStates(params: GetManyParams): Promise<ConnectionState[]> {
+        const connections = await repo().find({
+            where: {
+                ...(params.projectId ? { projectIds: APArrayContains('projectIds', [params.projectId]) } : {}),
+            },
+        })
+        return connections.map((connection) => ({
+            externalId: connection.externalId,
+            pieceName: connection.pieceName,
+            displayName: connection.displayName,
+        }))
     },
 
     async delete(params: DeleteParams): Promise<void> {
@@ -562,6 +603,14 @@ type UpsertParams = {
     pieceName: string
 }
 
+type UpsertPlaceholderParams = {
+    projectId: ProjectId
+    platformId: string
+    externalId: string
+    pieceName: string
+    displayName: string
+}
+
 type GetOneByName = {
     projectId: ProjectId
     platformId: string
@@ -572,6 +621,10 @@ type GetOneParams = {
     projectId: ProjectId | null
     platformId: string
     id: string
+}
+
+type GetManyParams = {
+    projectId: ProjectId
 }
 
 type DeleteParams = {

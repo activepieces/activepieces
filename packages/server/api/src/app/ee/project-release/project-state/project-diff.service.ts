@@ -1,13 +1,16 @@
-import { ProjectOperationType } from '@activepieces/ee-shared'
-import { ActionType, assertNotNullOrUndefined, DEFAULT_SAMPLE_DATA_SETTINGS, flowPieceUtil, FlowState, flowStructureUtil, FlowVersion, isNil, PopulatedFlow, ProjectState, Step, TriggerType } from '@activepieces/shared'
-import { Static, Type } from '@sinclair/typebox'
+import { ActionType, assertNotNullOrUndefined, ConnectionOperation, ConnectionOperationType, ConnectionState, DEFAULT_SAMPLE_DATA_SETTINGS, DiffState, flowPieceUtil, flowStructureUtil, FlowVersion, isNil, PopulatedFlow, ProjectOperation, ProjectOperationType, ProjectState, Step, TriggerType } from '@activepieces/shared'
 
 export const projectDiffService = {
-    diff({ newState, currentState }: DiffParams): ProjectOperation[] {
+    diff({ newState, currentState }: DiffParams): DiffState {
         const createFlowOperation = findFlowsToCreate({ newState, currentState })
         const deleteFlowOperation = findFlowsToDelete({ newState, currentState })
         const updateFlowOperations = findFlowsToUpdate({ newState, currentState })
-        return [...deleteFlowOperation, ...createFlowOperation, ...updateFlowOperations]
+        const operations = [...deleteFlowOperation, ...createFlowOperation, ...updateFlowOperations]
+        const connections = getFlowConnections(currentState, newState)
+        return {
+            operations,
+            connections,
+        }
     },
 }
 
@@ -29,7 +32,6 @@ function findFlowsToDelete({ newState, currentState }: DiffParams): ProjectOpera
         flowState,
     }))
 }
-
 function findFlowsToUpdate({ newState, currentState }: DiffParams): ProjectOperation[] {
     const newStateFiles = newState.flows.filter((state) => {
         const flow = searchInFlowForFlowByIdOrExternalId(currentState.flows, state.id)
@@ -47,6 +49,38 @@ function findFlowsToUpdate({ newState, currentState }: DiffParams): ProjectOpera
         }
         return null
     }).filter((op): op is ProjectOperation => op !== null)
+}
+
+function isConnectionChanged(stateOne: ConnectionState, stateTwo: ConnectionState): boolean {
+    return stateOne.displayName !== stateTwo.displayName || stateOne.pieceName !== stateTwo.pieceName
+}
+
+function getFlowConnections(currentState: ProjectState, newState: ProjectState): ConnectionOperation[] {
+
+    const connectionOperations: ConnectionOperation[] = []
+
+    currentState.connections.forEach(connection => {
+        const connectionState = newState.connections.find((c) => c.externalId === connection.externalId)
+        if (!isNil(connectionState) && isConnectionChanged(connectionState, connection)) {
+            connectionOperations.push({
+                type: ConnectionOperationType.UPDATE_CONNECTION,
+                connectionState: connection,
+                newConnectionState: connectionState,
+            })
+        }
+    })
+
+    newState.connections.forEach(connection => {
+        const isExistingConnection = currentState.connections.find((c) => c.externalId === connection.externalId)
+        if (isNil(isExistingConnection)) {
+            connectionOperations.push({
+                type: ConnectionOperationType.CREATE_CONNECTION,
+                connectionState: connection,
+            })
+        }
+    })
+
+    return connectionOperations
 }
 
 function searchInFlowForFlowByIdOrExternalId(flows: PopulatedFlow[], id: string): PopulatedFlow | undefined {
@@ -79,26 +113,8 @@ function normalize(flowVersion: FlowVersion): FlowVersion {
 type DiffParams = {
     currentState: {
         flows: PopulatedFlow[]
+        connections: ConnectionState[]
     }
-    newState: Pick<ProjectState, 'flows'>
+    newState: ProjectState
 }
 
-
-
-export const ProjectOperation = Type.Union([
-    Type.Object({
-        type: Type.Literal(ProjectOperationType.UPDATE_FLOW),
-        newFlowState: FlowState,
-        flowState: FlowState,
-    }),
-    Type.Object({
-        type: Type.Literal(ProjectOperationType.CREATE_FLOW),
-        flowState: FlowState,
-    }),
-    Type.Object({
-        type: Type.Literal(ProjectOperationType.DELETE_FLOW),
-        flowState: FlowState,
-    }),
-])
-
-export type ProjectOperation = Static<typeof ProjectOperation>

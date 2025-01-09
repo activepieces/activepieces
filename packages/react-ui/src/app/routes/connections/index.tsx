@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Trash, Pencil, Globe } from 'lucide-react';
+import { CheckIcon, Trash, Globe } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -255,6 +255,9 @@ function AppConnectionsPage() {
       id: 'actions',
       cell: ({ row }) => {
         const isPlatformConnection = row.original.scope === 'PLATFORM';
+        const userHasPermissionToRename = isPlatformConnection
+          ? userPlatformRole === PlatformRole.ADMIN
+          : userHasPermissionToWriteAppConnection;
         return (
           <div className="flex items-center gap-2 justify-end">
             <RenameConnectionDialog
@@ -263,36 +266,10 @@ function AppConnectionsPage() {
               onRename={() => {
                 refetch();
               }}
-            >
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={
-                      isPlatformConnection
-                        ? userPlatformRole !== PlatformRole.ADMIN
-                        : !userHasPermissionToWriteAppConnection
-                    }
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {userPlatformRole !== PlatformRole.ADMIN &&
-                  !userHasPermissionToWriteAppConnection
-                    ? t('Permission needed')
-                    : t('Rename')}
-                </TooltipContent>
-              </Tooltip>
-            </RenameConnectionDialog>
-
+              userHasPermissionToRename={userHasPermissionToRename}
+            />
             <ReconnectButtonDialog
-              hasPermission={
-                !isPlatformConnection
-                  ? userHasPermissionToWriteAppConnection
-                  : userPlatformRole === PlatformRole.ADMIN
-              }
+              hasPermission={userHasPermissionToRename}
               connection={row.original}
               onConnectionCreated={() => {
                 refetch();
