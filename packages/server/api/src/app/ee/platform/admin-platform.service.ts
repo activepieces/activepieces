@@ -172,7 +172,6 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
             const newSubscription = await stripe?.subscriptions.create({
                 items: [{
                     price: TASKS_PAYG_PRICE_ID,
-                    quantity: 1,
                 }],
                 billing_cycle_anchor: apDayjs().startOf('month').add(1, 'month').unix(),
                 customer: projectBilling.stripeCustomerId,
