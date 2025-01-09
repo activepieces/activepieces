@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common';
 import { supadataAuth } from '../..';
 import { supadataConfig } from '../config';
 
@@ -28,17 +28,22 @@ export const getTranscriptAction = createAction({
   },
   async run(context) {
     const { url, text, lang } = context.propsValue;
+    const qs:QueryParams = {
+      url,
+      text: text ? 'true' : 'false',
+    }
+
+    if (lang) {
+      qs['lang'] = lang;
+    }
+
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${supadataConfig.baseUrl}/youtube/transcript`,
       headers: {
         [supadataConfig.accessTokenHeaderKey]: context.auth,
       },
-      queryParams: {
-        url,
-        text: text ? 'true' : 'false',
-        lang,
-      },
+      queryParams: qs,
     });
 
     return response.body;

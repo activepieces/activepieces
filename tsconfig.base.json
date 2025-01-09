@@ -601,6 +601,9 @@
       "@activepieces/piece-supabase": [
         "packages/pieces/community/supabase/src/index.ts"
       ],
+      "@activepieces/piece-supadata": [
+        "packages/pieces/community/supadata/src/index.ts"
+      ],
       "@activepieces/piece-surveymonkey": [
         "packages/pieces/community/surveymonkey/src/index.ts"
       ],
