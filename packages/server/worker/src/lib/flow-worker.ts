@@ -46,6 +46,7 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
 })
 
 async function initializeWorker(log: FastifyBaseLogger): Promise<void> {
+    // eslint-disable-next-line no-constant-condition
     while (true) {
         try {
             const heartbeatResponse = await workerApiService(workerToken).heartbeat()
@@ -54,7 +55,8 @@ async function initializeWorker(log: FastifyBaseLogger): Promise<void> {
             }
             await workerMachine.init(heartbeatResponse)
             break
-        } catch (error) {
+        }
+        catch (error) {
             log.error({
                 error,
             }, 'The worker is unable to reach the server')

@@ -1,4 +1,4 @@
-import { fork, ChildProcess } from 'child_process'
+import { ChildProcess, fork } from 'child_process'
 import { ApSemaphore, getEngineTimeout } from '@activepieces/server-shared'
 import { ApEnvironment, assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -39,8 +39,8 @@ export class EngineWorker {
                 execArgv: [
                     `--max-old-space-size=${options.resourceLimits.maxOldGenerationSizeMb}`,
                     `--max-semi-space-size=${options.resourceLimits.maxYoungGenerationSizeMb}`,
-                    `--stack-size=${options.resourceLimits.stackSizeMb * 1024}` // stack size is in KB
-                ]
+                    `--stack-size=${options.resourceLimits.stackSizeMb * 1024}`, // stack size is in KB
+                ],
             }))
             this.availableWorkerIndexes.push(i)
         }
@@ -113,7 +113,7 @@ export class EngineWorker {
                 })
 
                 worker.on('exit', (code, signal) => {
-                    const isRamIssue = stdError.includes('JavaScript heap out of memory') || stdError.includes('Allocation failed - JavaScript heap out of memory') || (code === 134 || signal === 'SIGABRT' || signal === 'SIGKILL');
+                    const isRamIssue = stdError.includes('JavaScript heap out of memory') || stdError.includes('Allocation failed - JavaScript heap out of memory') || (code === 134 || signal === 'SIGABRT' || signal === 'SIGKILL')
 
                     this.log.error({
                         stdError,
