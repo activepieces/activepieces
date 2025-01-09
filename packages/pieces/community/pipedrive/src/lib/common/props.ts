@@ -9,6 +9,30 @@ import {
 } from '@activepieces/pieces-framework';
 import { GetField } from './types';
 
+export async function fetchDealsOptions(
+	auth: PiecePropValueSchema<typeof pipedriveAuth>,
+): Promise<DropdownOption<number>[]> {
+	const deals = await pipedrivePaginatedApiCall<{ id: number; title: string }>({
+		accessToken: auth.access_token,
+		apiDomain: auth.data['api_domain'],
+		method: HttpMethod.GET,
+		resourceUri: '/deals',
+		query: {
+			sort: 'update_time DESC',
+		},
+	});
+
+	const options: DropdownOption<number>[] = [];
+	for (const deal of deals) {
+		options.push({
+			label: deal.title,
+			value: deal.id,
+		});
+	}
+
+	return options;
+}
+
 export async function fetchLeadsOptions(
 	auth: PiecePropValueSchema<typeof pipedriveAuth>,
 ): Promise<DropdownOption<number>[]> {
@@ -32,6 +56,28 @@ export async function fetchLeadsOptions(
 
 	return options;
 }
+
+export async function fetchPipelinesOptions(
+	auth: PiecePropValueSchema<typeof pipedriveAuth>,
+): Promise<DropdownOption<number>[]> {
+	const pipelines = await pipedriveApiCall<{ data: Array<{ id: number; name: string }> }>({
+		accessToken: auth.access_token,
+		apiDomain: auth.data['api_domain'],
+		method: HttpMethod.GET,
+		resourceUri: '/pipelines:(id,name)'
+	});
+
+	const options: DropdownOption<number>[] = [];
+	for (const pipeline of pipelines.data) {
+		options.push({
+			label: pipeline.name,
+			value: pipeline.id,
+		});
+	}
+
+	return options;
+}
+
 
 export async function fetchPersonsOptions(
 	auth: PiecePropValueSchema<typeof pipedriveAuth>,

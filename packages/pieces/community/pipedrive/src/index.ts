@@ -1,7 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { addPerson } from './lib/actions/add-person.action';
 import { newActivity } from './lib/trigger/new-activity';
 import { newDeal } from './lib/trigger/new-deal';
 import { newPerson } from './lib/trigger/new-person';
@@ -17,6 +16,8 @@ import { createOrganizationAction } from './lib/actions/create-organization';
 import { updateOrganizationAction } from './lib/actions/update-organization';
 import { createLeadAction } from './lib/actions/create-lead';
 import { updateLeadAction } from './lib/actions/update-lead';
+import { createDealAction } from './lib/actions/create-deal';
+import { updateDealAction } from './lib/actions/update-deal';
 
 export const pipedriveAuth = PieceAuth.OAuth2({
 	description: '',
@@ -35,7 +36,8 @@ export const pipedrive = createPiece({
 	categories: [PieceCategory.SALES_AND_CRM],
 	auth: pipedriveAuth,
 	actions: [
-		addPerson,
+		createDealAction,
+		updateDealAction,
 		createLeadAction,
 		updateLeadAction,
 		createOrganizationAction,
