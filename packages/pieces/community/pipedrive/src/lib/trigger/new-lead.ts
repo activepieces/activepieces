@@ -17,7 +17,7 @@ import dayjs from 'dayjs';
 const polling: Polling<PiecePropValueSchema<typeof pipedriveAuth>, Record<string, unknown>> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, lastFetchEpochMS }) {
-		let leads = [];
+		const leads = [];
 
 		if (lastFetchEpochMS === 0) {
 			const response = await pipedriveApiCall<LeadListResponse>({
