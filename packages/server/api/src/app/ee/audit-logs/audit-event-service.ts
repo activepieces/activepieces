@@ -12,6 +12,7 @@ import {
 import { Value } from '@sinclair/typebox/value'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { In } from 'typeorm'
+import { authenticationUtils } from '../../authentication/authentication-utils'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { AuditEventParam } from '../../helper/application-events'
@@ -23,7 +24,6 @@ import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { AuditEventEntity } from './audit-event-entity'
-import { authenticationUtils } from '../../authentication/authentication-utils'
 
 export const auditLogRepo = repoFactory(AuditEventEntity)
 
@@ -40,7 +40,7 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
             await saveEvent({
                 platformId: request.principal.platform.id,
                 projectId: request.principal.projectId,
-                userId: userId,
+                userId,
                 ip: networkUtls.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
             }, params, log)
         })(), log)
