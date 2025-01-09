@@ -3,6 +3,7 @@ import {
   AskCopilotResponse,
   WebsocketClientEvent,
   WebsocketServerEvent,
+  CopilotFlowOutline,
 } from '@activepieces/shared';
 import { nanoid } from 'nanoid';
 
@@ -10,12 +11,14 @@ export const copilotApi = {
   planFlow: async (
     socket: Socket,
     prompts: string[],
+    currentWorkflow?: CopilotFlowOutline,
   ): Promise<AskCopilotResponse> => {
     const id = nanoid();
 
     socket.emit(WebsocketServerEvent.ASK_COPILOT, {
       prompts,
       id,
+      currentWorkflow,
     });
 
     return new Promise<AskCopilotResponse>((resolve, reject) => {

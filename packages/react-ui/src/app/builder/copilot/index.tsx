@@ -20,20 +20,48 @@ export const CopilotSidebar = () => {
     state.addMessage
   ]);
 
+  // Get the last accepted flow plan from messages
+  const getCurrentWorkflow = () => {
+    // Find the last flow plan that has been accepted (has operation property)
+    const lastAcceptedPlan = [...messages]
+      .reverse()
+      .find(m => m.type === 'flow_plan' && m.content.operation);
+    
+    if (lastAcceptedPlan?.type === 'flow_plan') {
+      return {
+        ...lastAcceptedPlan.content.plan,
+        operation: lastAcceptedPlan.content.operation
+      };
+    }
+    return undefined;
+  };
+
   const mutation = useMutation({
-    mutationFn: (prompts: string[]) => copilotApi.planFlow(socket, prompts),
+    mutationFn: (prompts: string[]) => copilotApi.planFlow(socket, prompts, getCurrentWorkflow()),
     onSuccess: (response) => {
       switch (response.type) {
         case 'flow':
           addMessage({
             type: 'flow_plan',
-            content: response 
+            content: {
+              plan: response.plan,
+              operation: response.operation
+            }
           });
           break;
         case 'error':
           addMessage({
             type: 'assistant_message',
             content: response.errorMessage ?? 'I don\'t know how to do that.'
+          });
+          break;
+        case 'modifications':
+          addMessage({
+            type: 'flow_plan',
+            content: {
+              plan: response.plan,
+              operations: response.operations
+            }
           });
           break;
       }
@@ -50,16 +78,19 @@ export const CopilotSidebar = () => {
     const trimmedContent = content.trim();
     if (!trimmedContent) return;
 
-    const userMessages = messages
-      .filter(message => message.type === 'user_message')
-      .map(message => message.content);
-
-    mutation.mutate([trimmedContent, ...userMessages]);
-
+    // Add user message first
     addMessage({
       type: 'user_message',
       content: trimmedContent
     });
+
+    // Then send to API with reversed message history (excluding flow_plan messages)
+    const messageHistory = [...messages]
+      .reverse()
+      .filter(message => message.type !== 'flow_plan')
+      .map(message => message.content);
+    
+    mutation.mutate([trimmedContent, ...messageHistory]);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -74,7 +105,10 @@ export const CopilotSidebar = () => {
     if (message.type === 'flow_plan') {
       return <PreviewPlanMessage key={index} message={message} />;
     }
-    return <TextMessage key={index} content={message} />;
+    if (message.type === 'assistant_message' || message.type === 'user_message') {
+      return <TextMessage key={index} content={message} />;
+    }
+    return null;
   };
 
   return (

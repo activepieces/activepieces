@@ -10,19 +10,34 @@ import { FlowOperationRequest, FlowOperationType } from '../../../../../../share
 type PreviewPlanMessageProps = {
     message: FlowPlanMessageContnt;
 }
+
 export const PreviewPlanMessage: React.FC<PreviewPlanMessageProps> = ({
     message
 }) => {
     const [applyOperation] = useBuilderStateContext((state) => [
         state.applyOperation,
-      ]);
-    const { plan, operation } = message.content;
+    ]);
+    const { plan, operation, operations } = message.content;
 
     const handleAccept = () => {
-        applyOperation({
-            type: FlowOperationType.IMPORT_FLOW,
-            request: operation 
-        }, () => {})
+        if (operations) {
+            console.log(operations)
+            // Handle modification operations
+            operations.forEach((op: FlowOperationRequest, index: number) => {
+                applyOperation(op, () => {
+                    // Optional: Add callback for last operation
+                    if (index === operations.length - 1) {
+                        console.log('All modifications applied');
+                    }
+                });
+            });
+        } else if (operation) {
+            // Handle new flow import
+            applyOperation({
+                type: FlowOperationType.IMPORT_FLOW,
+                request: operation 
+            }, () => {});
+        }
     };
 
     const renderStep = (step: { title: string; description: string; type: string; branches?: any[] }, index: string) => {
@@ -80,11 +95,10 @@ export const PreviewPlanMessage: React.FC<PreviewPlanMessageProps> = ({
                             className="text-success-300 hover:text-success flex items-center gap-2"
                         >
                             <CheckIcon className="h-4 w-4" />
-                            Accept
+                            {operations ? 'Apply Changes' : 'Accept'}
                         </Button>
                     </div>
             </ChatBubbleMessage>
         </ChatBubble>
-
     );
 };
