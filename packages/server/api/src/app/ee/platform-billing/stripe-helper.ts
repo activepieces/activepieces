@@ -4,7 +4,7 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { platformBillingService } from './platform-billing.service'
 import { usageService } from './usage/usage-service'
 

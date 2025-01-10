@@ -6,7 +6,7 @@ import {
     WhereExpressionBuilder,
 } from 'typeorm'
 import { DatabaseType, system } from '../system/system'
-import { AppSystemProp } from '../system/system-prop'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { atob, btoa, decodeByType, encodeByType } from './pagination-utils'
 
 export enum Order {

@@ -15,7 +15,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
     PieceMetadataSchema,
 } from '../piece-metadata-entity'

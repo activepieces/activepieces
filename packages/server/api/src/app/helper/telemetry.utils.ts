@@ -5,7 +5,7 @@ import { flagService } from '../flags/flag.service'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { system } from './system/system'
-import { AppSystemProp } from './system/system-prop'
+import { AppSystemProp } from '@activepieces/server-shared'
 
 const telemetryEnabled = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)
 

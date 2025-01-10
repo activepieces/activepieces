@@ -31,7 +31,7 @@ import { distributedLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
     getPiecePackageWithoutArchive,
     pieceMetadataService,

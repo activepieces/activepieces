@@ -4,7 +4,7 @@ import { Redis } from 'ioredis'
 import RedLock from 'redlock'
 import { createRedisClient } from '../database/redis-connection'
 import { QueueMode, system } from './system/system'
-import { AppSystemProp } from './system/system-prop'
+import { AppSystemProp } from '@activepieces/server-shared'
 
 let redLock: RedLock
 let redisConnection: Redis

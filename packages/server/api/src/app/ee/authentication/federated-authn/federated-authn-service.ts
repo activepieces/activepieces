@@ -6,7 +6,7 @@ import { assertNotNullOrUndefined, AuthenticationResponse,
 import { FastifyBaseLogger } from 'fastify'
 import { authenticationService } from '../../../authentication/authentication.service'
 import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-prop'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { platformService } from '../../../platform/platform.service'
 import { googleAuthnProvider } from './google-authn-provider'
 import { domainHelper } from '../../custom-domains/domain-helper'
@@ -51,7 +51,7 @@ export const federatedAuthnService = (log: FastifyBaseLogger) => ({
     async getThirdPartyRedirectUrl(
         platformId: string | undefined,
     ): Promise<string> {
-        return domainHelper.getPublicUrl({
+        return domainHelper.getInternalUrl({
             path: '/redirect',
             platformId,
         })

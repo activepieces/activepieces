@@ -1,6 +1,6 @@
 import { FastifyBaseLogger } from 'fastify'
 import { QueueMode, system } from '../system/system'
-import { AppSystemProp } from '../system/system-prop'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { SystemJobSchedule } from './common'
 import { memorySystemJobSchedulerService } from './memory-system-jobs'
 import { redisSystemJobSchedulerService } from './redis-system-job'

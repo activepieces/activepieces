@@ -11,7 +11,7 @@ import { setupApp } from './app'
 import { healthModule } from './health/health.module'
 import { errorHandler } from './helper/error-handler'
 import { system } from './helper/system/system'
-import { AppSystemProp } from './helper/system/system-prop'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { setupWorker } from './worker'
 
 

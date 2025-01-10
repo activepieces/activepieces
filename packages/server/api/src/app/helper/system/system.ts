@@ -1,6 +1,6 @@
 import os from 'os'
 import path from 'path'
-import { ContainerType, PiecesSource, pinoLogging, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, ContainerType, environmentVariables, PiecesSource, pinoLogging, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -12,7 +12,6 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Level } from 'pino'
-import { AppSystemProp, SystemProp } from './system-prop'
 
 
 export enum CopilotInstanceTypes {
@@ -94,7 +93,7 @@ export const system = {
         return globalLogger
     },
     get<T extends string>(prop: SystemProp): T | undefined {
-        return getEnvVar(prop) as T | undefined
+        return getEnvVarOrReturnDefaultValue(prop) as T | undefined
     },
 
     getNumberOrThrow(prop: SystemProp): number {
@@ -115,7 +114,7 @@ export const system = {
 
     },
     getNumber(prop: SystemProp): number | null {
-        const stringNumber = getEnvVar(prop)
+        const stringNumber = getEnvVarOrReturnDefaultValue(prop)
 
         if (!stringNumber) {
             return null
@@ -131,7 +130,7 @@ export const system = {
     },
 
     getBoolean(prop: SystemProp): boolean | undefined {
-        const value = getEnvVar(prop)
+        const value = getEnvVarOrReturnDefaultValue(prop)
 
         if (isNil(value)) {
             return undefined
@@ -140,7 +139,7 @@ export const system = {
     },
 
     getList(prop: SystemProp): string[] {
-        const values = getEnvVar(prop)
+        const values = getEnvVarOrReturnDefaultValue(prop)
 
         if (isNil(values)) {
             return []
@@ -149,7 +148,7 @@ export const system = {
     },
 
     getOrThrow<T extends string>(prop: SystemProp): T {
-        const value = getEnvVar(prop) as T | undefined
+        const value = getEnvVarOrReturnDefaultValue(prop) as T | undefined
 
         if (value === undefined) {
             throw new ActivepiecesError(
@@ -180,6 +179,6 @@ export const system = {
     },
 }
 
-const getEnvVar = (prop: SystemProp): string | undefined => {
-    return process.env[`AP_${prop}`] ?? systemPropDefaultValues[prop]
+const getEnvVarOrReturnDefaultValue = (prop: SystemProp): string | undefined => {
+    return environmentVariables.getEnvironment(prop) ?? systemPropDefaultValues[prop]
 }

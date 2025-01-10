@@ -3,7 +3,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
 import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { platformService } from '../../platform/platform.service'
 import { licenseKeysService } from './license-keys-service'
 

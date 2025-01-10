@@ -1,4 +1,10 @@
-import { WorkerSystemProp } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+
+export const systemConstants = {
+    PACKAGE_ARCHIVE_PATH: 'cache/archives',
+    POLLING_POOL_SIZE: 5,
+    ENGINE_EXECUTABLE_PATH: 'dist/packages/engine/main.js',
+}
 
 export type SystemProp = AppSystemProp | WorkerSystemProp
 
@@ -16,29 +22,12 @@ export enum AppSystemProp {
     EXECUTION_DATA_RETENTION_DAYS = 'EXECUTION_DATA_RETENTION_DAYS',
     JWT_SECRET = 'JWT_SECRET',
 
-    PUBLIC_URL = 'PUBLIC_URL',
-
     
     /**
      * @deprecated this now can be done from the platform admin page.
      */
     LICENSE_KEY = 'LICENSE_KEY',
     MAX_CONCURRENT_JOBS_PER_PROJECT = 'MAX_CONCURRENT_JOBS_PER_PROJECT',
-    /**
-     * @deprecated this now can be done from the platform admin page.
-     */
-    OPENAI_API_BASE_URL = 'OPENAI_API_BASE_URL',
-    /**
-     * @deprecated this now can be done from the platform admin page.
-     */
-    OPENAI_API_KEY = 'OPENAI_API_KEY',
-    /**
-     * @deprecated this now can be done from the platform admin page.
-     */
-    PERPLEXITY_API_KEY = 'PERPLEXITY_API_KEY',
-    /**
-     * @deprecated this now can be done from the platform admin page.
-     */
     PERPLEXITY_BASE_URL = 'PERPLEXITY_BASE_URL',
     PIECES_SYNC_MODE = 'PIECES_SYNC_MODE',
     POSTGRES_DATABASE = 'POSTGRES_DATABASE',
@@ -83,7 +72,7 @@ export enum AppSystemProp {
     TRIGGER_DEFAULT_POLL_INTERVAL = 'TRIGGER_DEFAULT_POLL_INTERVAL',
     TRIGGER_FAILURES_THRESHOLD = 'TRIGGER_FAILURES_THRESHOLD',
     WEBHOOK_TIMEOUT_SECONDS = 'WEBHOOK_TIMEOUT_SECONDS',
-
+    INTERNAL_URL = 'INTERNAL_URL',
 
     // ENTERPRISE ONLY
     APPSUMO_TOKEN = 'APPSUMO_TOKEN',
@@ -95,9 +84,6 @@ export enum AppSystemProp {
 
     // CLOUD_ONLY
     CLOUD_PLATFORM_ID = 'CLOUD_PLATFORM_ID',
-    CLOUDFLARE_AUTH_EMAIL = 'CLOUDFLARE_AUTH_EMAIL',
-    CLOUDFLARE_ZONE_ID = 'CLOUDFLARE_ZONE_ID',
-    CLOUDFLARE_API_KEY = 'CLOUDFLARE_API_KEY',
     GOOGLE_CLIENT_ID = 'GOOGLE_CLIENT_ID',
     GOOGLE_CLIENT_SECRET = 'GOOGLE_CLIENT_SECRET',
     EDITION = 'EDITION',
@@ -123,6 +109,47 @@ export enum AppSystemProp {
     LOKI_URL = 'LOKI_URL',
     LOKI_USERNAME = 'LOKI_USERNAME',
 }
+export enum PiecesSource {
+    /**
+   * @deprecated Use `DB`, as `CLOUD_AND_DB` is no longer supported.
+   */
+    CLOUD_AND_DB = 'CLOUD_AND_DB',
+    DB = 'DB',
+    FILE = 'FILE',
+}
+
+export enum ContainerType {
+    WORKER = 'WORKER',
+    APP = 'APP',
+    WORKER_AND_APP = 'WORKER_AND_APP',
+}
+
+export enum WorkerSystemProp {
+    WORKER_TOKEN = 'WORKER_TOKEN',
+    CONTAINER_TYPE = 'CONTAINER_TYPE',
+    FRONTEND_URL = 'FRONTEND_URL',
+
+    // Optional
+    FLOW_WORKER_CONCURRENCY = 'FLOW_WORKER_CONCURRENCY',
+    SCHEDULED_WORKER_CONCURRENCY = 'SCHEDULED_WORKER_CONCURRENCY',
+}
 
 
-
+export const environmentVariables = {
+    hasAppModules(): boolean {
+        const environment = this.getEnvironment(WorkerSystemProp.CONTAINER_TYPE) ?? ContainerType.WORKER_AND_APP
+        return [ContainerType.APP, ContainerType.WORKER_AND_APP].includes(environment as ContainerType)
+    },
+    getNumberEnvironment: (prop: WorkerSystemProp): number | undefined => {
+        const value = environmentVariables.getEnvironment(prop)
+        return value ? parseInt(value) : undefined
+    },
+    getEnvironment: (prop: WorkerSystemProp | AppSystemProp): string | undefined => {
+        return process.env[`AP_${prop}`]
+    },
+    getEnvironmentOrThrow: (prop: WorkerSystemProp): string => {
+        const value = environmentVariables.getEnvironment(prop)
+        assertNotNullOrUndefined(value, `Environment variable ${prop} is not set`)
+        return value
+    },
+}

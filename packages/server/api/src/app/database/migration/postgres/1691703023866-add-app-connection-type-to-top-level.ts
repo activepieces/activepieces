@@ -1,7 +1,7 @@
 import * as crypto from 'crypto'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-prop'
+import { AppSystemProp } from '@activepieces/server-shared'
 
 const log = system.globalLogger()
 type AppConnectionValue = {

@@ -43,7 +43,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             path: '',
             platformId,
         })
-        modifiedFlags[ApFlagId.SAML_AUTH_ACS_URL] = await domainHelper.getPublicApiUrl({
+        modifiedFlags[ApFlagId.SAML_AUTH_ACS_URL] = await domainHelper.getInternalApiUrl({
             path: '/v1/authn/saml/acs',
             platformId,
         })

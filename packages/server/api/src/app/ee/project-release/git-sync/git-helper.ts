@@ -6,7 +6,7 @@ import { nanoid } from 'nanoid'
 import simpleGit, { SimpleGit } from 'simple-git'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-prop'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { userService } from '../../../user/user-service'
 
 
