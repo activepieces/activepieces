@@ -188,6 +188,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.FLOW_RUN_MEMORY_LIMIT_KB,
+                value: system.getNumber(AppSystemProp.SANDBOX_MEMORY_LIMIT),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.PAUSED_FLOW_TIMEOUT_DAYS,
                 value: system.getNumber(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS),
                 created,
@@ -241,6 +247,10 @@ export const flagService = {
         hostUrl: string | undefined,
         platformId: string | undefined,
     ): string {
+        const edition = system.getEdition()
+        if (edition !== ApEdition.CLOUD) {
+            return `${system.getOrThrow(WorkerSystemProp.FRONTEND_URL)}/redirect`
+        }
         if (isNil(hostUrl) || isNil(platformId)) {
             return `${system.getOrThrow(WorkerSystemProp.FRONTEND_URL)}/redirect`
         }

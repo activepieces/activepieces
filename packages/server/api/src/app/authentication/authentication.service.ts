@@ -109,7 +109,18 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 password: await cryptoUtils.generateRandomPassword(),
             })
         }
-        assertNotNullOrUndefined(userIdentity, 'User identity not found')
+        if (isNil(userIdentity)) {
+            return authenticationService(log).signUp({
+                email: params.email,
+                firstName: params.firstName,
+                lastName: params.lastName,
+                newsLetter: params.newsLetter,
+                trackEvents: params.trackEvents,
+                provider: params.provider,
+                platformId,
+                password: await cryptoUtils.generateRandomPassword(),
+            })
+        }
         const user = await userService.getOneByIdentityAndPlatform({
             identityId: userIdentity.id,
             platformId,

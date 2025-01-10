@@ -17,17 +17,13 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
     async init(generatedToken: string): Promise<void> {
         closed = false
         workerToken = generatedToken
-        const heartbeatResponse = await workerApiService(workerToken).heartbeat()
-        if (isNil(heartbeatResponse)) {
-            throw new Error('The worker is enable to reach the server')
-        }
-        await workerMachine.init(heartbeatResponse)
+        await initializeWorker(log)
         heartbeatInterval = setInterval(() => {
             rejectedPromiseHandler(workerApiService(workerToken).heartbeat(), log)
         }, 15000)
 
-        const FLOW_WORKER_CONCURRENCY = heartbeatResponse.FLOW_WORKER_CONCURRENCY
-        const SCHEDULED_WORKER_CONCURRENCY = heartbeatResponse.SCHEDULED_WORKER_CONCURRENCY
+        const FLOW_WORKER_CONCURRENCY = workerMachine.getSettings().FLOW_WORKER_CONCURRENCY
+        const SCHEDULED_WORKER_CONCURRENCY = workerMachine.getSettings().SCHEDULED_WORKER_CONCURRENCY
         log.info({
             FLOW_WORKER_CONCURRENCY,
             SCHEDULED_WORKER_CONCURRENCY,
@@ -48,6 +44,26 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
         clearTimeout(heartbeatInterval)
     },
 })
+
+async function initializeWorker(log: FastifyBaseLogger): Promise<void> {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+        try {
+            const heartbeatResponse = await workerApiService(workerToken).heartbeat()
+            if (isNil(heartbeatResponse)) {
+                throw new Error('The worker is unable to reach the server')
+            }
+            await workerMachine.init(heartbeatResponse)
+            break
+        }
+        catch (error) {
+            log.error({
+                error,
+            }, 'The worker is unable to reach the server')
+            await new Promise(resolve => setTimeout(resolve, 5000))
+        }
+    }
+}
 
 async function run<T extends QueueName>(queueName: T, log: FastifyBaseLogger): Promise<void> {
     while (!closed) {

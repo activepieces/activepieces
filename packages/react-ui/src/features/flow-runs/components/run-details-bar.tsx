@@ -22,7 +22,11 @@ type RunDetailsBarProps = {
   isLoading: boolean;
 };
 
-function getStatusText(status: FlowRunStatus, timeout: number) {
+function getStatusText(
+  status: FlowRunStatus,
+  timeout: number,
+  memoryLimit: number,
+) {
   switch (status) {
     case FlowRunStatus.STOPPED:
     case FlowRunStatus.SUCCEEDED:
@@ -33,6 +37,13 @@ function getStatusText(status: FlowRunStatus, timeout: number) {
       return t('Flow Run is paused');
     case FlowRunStatus.QUOTA_EXCEEDED:
       return t('Run Failed due to quota exceeded');
+    case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
+      return t(
+        'Run failed due to exceeding the memory limit of {memoryLimit} MB',
+        {
+          memoryLimit: Math.floor(memoryLimit / 1024),
+        },
+      );
     case FlowRunStatus.RUNNING:
       return t('Running');
     case FlowRunStatus.TIMEOUT:
@@ -52,6 +63,9 @@ const RunDetailsBar = React.memo(
 
     const { data: timeoutSeconds } = flagsHooks.useFlag<number>(
       ApFlagId.FLOW_RUN_TIME_SECONDS,
+    );
+    const { data: memoryLimit } = flagsHooks.useFlag<number>(
+      ApFlagId.FLOW_RUN_MEMORY_LIMIT_KB,
     );
     const { checkAccess } = useAuthorization();
     const userHasPermissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
@@ -74,7 +88,7 @@ const RunDetailsBar = React.memo(
         />
         <div className="flex-col flex flex-grow text-foreground gap-0">
           <div className="text-sm">
-            {getStatusText(run.status, timeoutSeconds ?? -1)}
+            {getStatusText(run.status, timeoutSeconds ?? -1, memoryLimit ?? -1)}
           </div>
           <div className="text-xs text-muted-foreground">
             {run?.id ?? t('Unknown')}

@@ -25,12 +25,19 @@ export enum WorkerSystemProp {
     FRONTEND_URL = 'FRONTEND_URL',
     WORKER_TOKEN = 'WORKER_TOKEN',
     CONTAINER_TYPE = 'CONTAINER_TYPE',
+    // Optional
+    FLOW_WORKER_CONCURRENCY = 'FLOW_WORKER_CONCURRENCY',
+    SCHEDULED_WORKER_CONCURRENCY = 'SCHEDULED_WORKER_CONCURRENCY',
 }
 
 export const environmentVariables = {
     hasAppModules(): boolean {
         const environment = this.getEnvironment(WorkerSystemProp.CONTAINER_TYPE) ?? ContainerType.WORKER_AND_APP
         return [ContainerType.APP, ContainerType.WORKER_AND_APP].includes(environment as ContainerType)
+    },
+    getNumberEnvironment: (prop: WorkerSystemProp) => {
+        const value = environmentVariables.getEnvironment(prop)
+        return value ? parseInt(value) : undefined
     },
     getEnvironment: (prop: WorkerSystemProp) => {
         return process.env[`AP_${prop}`]

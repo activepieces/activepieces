@@ -43,6 +43,23 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, e
     }
 }
 
+async function handleMemoryIssueError(jobData: OneTimeJobData, engineToken: string, log: FastifyBaseLogger): Promise<void> {
+    await engineApiService(engineToken, log).updateRunStatus({
+        runDetails: {
+            duration: 0,
+            status: FlowRunStatus.MEMORY_LIMIT_EXCEEDED,
+            tasks: 0,
+            tags: [],
+        },
+        executionStateContentLength: null,
+        httpRequestId: jobData.httpRequestId,
+        progressUpdateType: jobData.progressUpdateType,
+        workerHandlerId: jobData.synchronousHandlerId,
+        runId: jobData.runId,
+    })
+}
+
+
 async function handleQuotaExceededError(jobData: OneTimeJobData, engineToken: string, log: FastifyBaseLogger): Promise<void> {
     await engineApiService(engineToken, log).updateRunStatus({
         runDetails: {
@@ -129,11 +146,15 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
         catch (e) {
             const isQuotaExceededError = e instanceof ActivepiecesError && e.error.code === ErrorCode.QUOTA_EXCEEDED
             const isTimeoutError = e instanceof ActivepiecesError && e.error.code === ErrorCode.EXECUTION_TIMEOUT
+            const isMemoryIssueError = e instanceof ActivepiecesError && e.error.code === ErrorCode.MEMORY_ISSUE
             if (isQuotaExceededError) {
                 await handleQuotaExceededError(jobData, engineToken, log)
             }
             else if (isTimeoutError) {
                 await handleTimeoutError(jobData, engineToken, log)
+            }
+            else if (isMemoryIssueError) {
+                await handleMemoryIssueError(jobData, engineToken, log)
             }
             else {
                 await handleInternalError(jobData, engineToken, e as Error, log)
