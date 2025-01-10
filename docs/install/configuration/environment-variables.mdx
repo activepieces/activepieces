@@ -22,6 +22,7 @@ it will produce these values. </Tip>
 | `AP_ENCRYPTION_KEY`                | ❗️ Encryption key used for connections is a 16-character hexadecimal key. You can generate one using the following command: `openssl rand -hex 16`.                                                                                                                                                                              | `None`                                                                         |
 | `AP_EXECUTION_DATA_RETENTION_DAYS` | The number of days to retain execution data, logs and events.                                                                                                                                                        | `30`                                                                         |                                                                        |
 | `AP_FRONTEND_URL`                  | ❗️ Url that will be used to specify redirect url and webhook url.                                                                                                                                                   | `None`                                                                         | [https://demo.activepieces.com/api](https://demo.activepieces.com/api) |
+| `AP_PUBLIC_URL`                    | Required only if Activepieces is hosted on an internal network. For more details, refer to the [Configuring Public URL (Advanced)](#configuring-public-url-advanced) section.                                                                                                                                                  | `None`                                                                         | [https://demo.activepieces.com/api](https://demo.activepieces.com/api) |
 | `AP_JWT_SECRET`                    | ❗️ Encryption key used for generating JWT tokens is a 32-character hexadecimal key. You can generate one using the following command: `openssl rand -hex 32`.                                                                                                                                                                     | `None`                                                                         | [https://demo.activepieces.com](https://demo.activepieces.com)         |
 | `AP_QUEUE_MODE`                    | The queue mode to use. (MEMORY / REDIS)                                                                                                                                                                              | `MEMORY`                                                                       |                                                                        |
 | `AP_QUEUE_UI_ENABLED`              | Enable the queue UI (only works with redis)                                                                                                                                                                          | `true`                                                                         |                                                                        |
@@ -117,3 +118,10 @@ If you don't have the Redis URL, you can use the following command to get it. Yo
   - `AP_REDIS_USE_SSL`: Connect to Redis with SSL.
   - `AP_REDIS_SSL_CA_FILE`: The path to the CA file for the Redis server.
 </Info>
+
+### Configuring Public URL (Advanced)
+
+For internal network hosting of Activepieces, you can set the `AP_PUBLIC_URL` environment variable to override the default public URL. This URL will be utilized for app triggers and webhooks.
+
+- api/v1/webhook/*
+- api/v1/app-events/*

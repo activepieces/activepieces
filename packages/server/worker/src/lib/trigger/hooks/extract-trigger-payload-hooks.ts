@@ -12,6 +12,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../../api/server-api.service'
 import { engineRunner } from '../../engine'
 import { webhookUtils } from '../../utils/webhook-utils'
+import { workerMachine } from '../../utils/machine'
 
 export async function extractPayloads(
     engineToken: string,
@@ -28,6 +29,7 @@ export async function extractPayloads(
             webhookUrl: await webhookUtils(log).getWebhookUrl({
                 flowId: flowVersion.flowId,
                 simulate,
+                publicApiUrl: workerMachine.getPublicApiUrl(),
             }),
             projectId,
             test: simulate,

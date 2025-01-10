@@ -1,6 +1,6 @@
 import dns from 'node:dns/promises'
 import os from 'os'
-import { ApEnvironment, isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 
 const GOOGLE_DNS = '216.239.32.10'
@@ -56,17 +56,6 @@ const getPublicIp = async (): Promise<IpMetadata> => {
     }
 }
 
-const getPublicUrl = async (environment: ApEnvironment, frontendUrl: string): Promise<string> => {
-    let url = frontendUrl
-
-    if (extractHostname(url) === 'localhost' && environment === ApEnvironment.PRODUCTION) {
-        url = `http://${(await networkUtls.getPublicIp()).ip}`
-    }
-
-    return appendSlashAndApi(url)
-}
-
-
 const extractClientRealIp = (request: FastifyRequest, clientIpHeader: string | undefined): string => {
     if (isNil(clientIpHeader)) {
         return request.ip
@@ -75,24 +64,22 @@ const extractClientRealIp = (request: FastifyRequest, clientIpHeader: string | u
 }
 
 
-
-export const networkUtls = {
+export const networkUtils = {
     extractClientRealIp,
     getPublicIp,
-    getPublicUrl,
+    combineUrl(url: string, path: string) {
+        const cleanedUrl = cleanTrailingSlash(url)
+        const cleanedPath = cleanLeadingSlash(path)
+        return `${cleanedUrl}/${cleanedPath}`
+    },
 }
 
-const appendSlashAndApi = (url: string): string => {
-    const slash = url.endsWith('/') ? '' : '/'
-    return `${url}${slash}api/`
+function cleanLeadingSlash(url: string): string {
+    return url.startsWith('/') ? url.slice(1) : url
 }
 
-function extractHostname(url: string): string | null {
-    try {
-        const hostname = new URL(url).hostname
-        return hostname
-    }
-    catch (e) {
-        return null
-    }
+function cleanTrailingSlash(url: string): string {
+    return url.endsWith('/') ? url.slice(0, -1) : url
 }
+
+

@@ -7,7 +7,7 @@ import { SystemJobName } from '../../helper/system-jobs/common'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { emailService } from '../helper/email/email-service'
-import { platformDomainHelper } from '../helper/platform-domain-helper'
+import { domainHelper } from '../custom-domains/domain-helper'
 
 const HOUR_IN_SECONDS = 3600
 const DAY_IN_SECONDS = 86400
@@ -64,7 +64,7 @@ async function sendAlertOnNewIssue(params: IssueParams, log: FastifyBaseLogger):
         return
     }
 
-    const issueUrl = await platformDomainHelper.constructUrlFrom({
+    const issueUrl = await domainHelper.getPublicUrl({
         platformId,
         path: 'runs?limit=10#Issues',
     })
@@ -91,7 +91,7 @@ async function sendAlertOnFlowRun(params: IssueParams, log: FastifyBaseLogger): 
         return
     }
 
-    const flowRunsUrl = await platformDomainHelper.constructUrlFrom({
+    const flowRunsUrl = await domainHelper.getPublicUrl({
         platformId,
         path: `runs/${flowRunId}`,
     })

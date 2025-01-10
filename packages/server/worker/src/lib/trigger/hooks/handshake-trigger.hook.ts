@@ -14,6 +14,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { engineApiService } from '../../api/server-api.service'
 import { engineRunner } from '../../engine'
 import { webhookUtils } from '../../utils/webhook-utils'
+import { workerMachine } from '../../utils/machine'
 
 export async function tryHandshake(
     engineToken: string,
@@ -98,6 +99,7 @@ async function executeHandshake(
         webhookUrl: await webhookUtils(log).getWebhookUrl({
             flowId: flowVersion.flowId,
             simulate: false,
+            publicApiUrl: workerMachine.getPublicApiUrl(),
         }),
         test: false,
         projectId,

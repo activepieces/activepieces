@@ -18,16 +18,14 @@ import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
 import { projectHooks } from '@/hooks/project-hooks';
-import { DiffReleaseRequest, isNil, ProjectReleaseType } from '@activepieces/shared';
+import { DiffReleaseRequest } from '@activepieces/shared';
 
 import { CreateReleaseDialog } from '../create-release-dialog';
 
@@ -103,7 +101,6 @@ export function ProjectSelectionDialog({
       targetProjectId: data.selectedProject,
     });
   };
-
 
   return (
     <>

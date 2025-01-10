@@ -38,7 +38,6 @@ import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
 import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
 import { emailService } from './ee/helper/email/email-service'
-import { platformDomainHelper } from './ee/helper/platform-domain-helper'
 import { issuesModule } from './ee/issues/issues-module'
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
@@ -67,7 +66,6 @@ import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { eventsHooks } from './helper/application-events'
-import { domainHelper } from './helper/domain-helper'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { QueueMode, system } from './helper/system/system'
 import { AppSystemProp } from './helper/system/system-prop'
@@ -92,6 +90,7 @@ import { websocketService } from './websockets/websockets.service'
 import { flowConsumer } from './workers/consumer'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { workerModule } from './workers/worker-module'
+import { domainHelper } from './ee/custom-domains/domain-helper'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
@@ -291,7 +290,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             flowRunHooks.set(platformRunHooks)
             flagHooks.set(enterpriseFlagsHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
-            domainHelper.set(platformDomainHelper)
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             break
@@ -323,7 +321,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             flowRunHooks.set(platformRunHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
-            domainHelper.set(platformDomainHelper)
             break
         case ApEdition.COMMUNITY:
             await app.register(projectModule)
@@ -369,7 +366,7 @@ export async function appPostBoot(app: FastifyInstance): Promise<void> {
  / ____ \\  | |____     | |     _| |_     \\  /    | |____  | |       _| |_  | |____  | |____  | |____   ____) |
 /_/    \\_\\  \\_____|    |_|    |_____|     \\/     |______| |_|      |_____| |______|  \\_____| |______| |_____/
 
-The application started on ${system.get(WorkerSystemProp.FRONTEND_URL)}, as specified by the AP_FRONTEND_URL variables.`)
+The application started on ${domainHelper.getPublicApiUrl({ path: '' })}, as specified by the AP_FRONTEND_URL variables.`)
 
     const environment = system.get(AppSystemProp.ENVIRONMENT)
     const piecesSource = system.getOrThrow(AppSystemProp.PIECES_SOURCE)

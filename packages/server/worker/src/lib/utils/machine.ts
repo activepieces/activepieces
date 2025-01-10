@@ -2,8 +2,8 @@ import { exec } from 'child_process'
 import fs from 'fs'
 import os from 'os'
 import { promisify } from 'util'
-import { environmentVariables, exceptionHandler, fileExists, networkUtls, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { environmentVariables, exceptionHandler, fileExists, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined, isNil, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 
 const execAsync = promisify(exec)
 
@@ -27,8 +27,39 @@ export const workerMachine = {
         assertNotNullOrUndefined(settings, 'Settings are not set')
         return settings
     },
+    getInternalApiUrl: (): string => {
+        if (environmentVariables.hasAppModules()) {
+            return 'http://127.0.0.1:3000/'
+        }
+        return getInternalUrl()
+    },
+    getPublicApiUrl: (): string => {
+        return networkUtils.combineUrl(workerMachine.getPublicUrl(), 'api')
+    },
+    getPublicUrl: () => {
+        if (isNil(settings)) {
+            return getInternalUrl()
+        }
+        return cleanTrailingSlash(settings.PUBLIC_URL)
+    },
 }
 
+const appendSlashAndApi = (url: string): string => {
+    const slash = url.endsWith('/') ? '' : '/'
+    return `${url}${slash}api/`
+}
+
+
+function getInternalUrl(): string {
+    const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.FRONTEND_URL)
+    return appendSlashAndApi(url)
+}
+function cleanTrailingSlash(url: string) {
+    if (url.endsWith('/')) {
+        return url.slice(0, -1)
+    }
+    return url
+}
 
 async function getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
     const { totalRamInBytes, ramUsage } = await getContainerMemoryUsage()
@@ -40,7 +71,7 @@ async function getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
         return acc + (1 - idle / total)
     }, 0) / cpus.length * 100
 
-    const ip = (await networkUtls.getPublicIp()).ip
+    const ip = (await networkUtils.getPublicIp()).ip
     const diskInfo = await getDiskInfo()
 
     return {
