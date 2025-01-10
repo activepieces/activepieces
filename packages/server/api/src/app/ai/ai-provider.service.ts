@@ -2,7 +2,7 @@ import { ActivepiecesError, AiProviderConfig, AiProviderWithoutSensitiveData, Ap
 import { repoFactory } from '../core/db/repo-factory'
 import { encryptUtils } from '../helper/encryption'
 import { system } from '../helper/system/system'
-import { AppSystemProp } from '../helper/system/system-prop'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { platformService } from '../platform/platform.service'
 import { platformUtils } from '../platform/platform.utils'
 import { AiProviderEntity, AiProviderSchema } from './ai-provider-entity'

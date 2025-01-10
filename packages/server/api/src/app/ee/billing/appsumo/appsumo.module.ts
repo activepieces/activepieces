@@ -4,7 +4,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-prop'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { appsumoService } from './appsumo.service'
 
 export const appSumoModule: FastifyPluginAsyncTypebox = async (app) => {

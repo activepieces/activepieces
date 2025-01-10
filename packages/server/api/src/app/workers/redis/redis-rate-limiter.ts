@@ -7,7 +7,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { Redis } from 'ioredis'
 import { createRedisClient, getRedisConnection } from '../../database/redis-connection'
 import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { AddParams } from '../queue/queue-manager'
 import { redisQueue } from './redis-queue'
 

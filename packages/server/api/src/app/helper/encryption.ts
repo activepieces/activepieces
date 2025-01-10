@@ -9,7 +9,7 @@ import {
 import { Static, Type } from '@sinclair/typebox'
 import { localFileStore } from './local-store'
 import { QueueMode, system } from './system/system'
-import { AppSystemProp } from './system/system-prop'
+import { AppSystemProp } from '@activepieces/server-shared'
 
 let secret: string | null
 const algorithm = 'aes-256-cbc'

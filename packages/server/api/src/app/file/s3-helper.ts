@@ -6,7 +6,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../helper/system/system'
-import { AppSystemProp } from '../helper/system/system-prop'
+import { AppSystemProp } from '@activepieces/server-shared'
 
 export const s3Helper = (log: FastifyBaseLogger) => ({
     constructS3Key(platformId: string | undefined, projectId: ProjectId | undefined, type: FileType, fileId: string): string {

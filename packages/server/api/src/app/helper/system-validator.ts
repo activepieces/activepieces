@@ -5,7 +5,7 @@ import { s3Helper } from '../file/s3-helper'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
 import { DatabaseType, QueueMode, RedisType, system } from './system/system'
-import { AppSystemProp, SystemProp } from './system/system-prop'
+import { AppSystemProp, SystemProp } from '@activepieces/server-shared'
 
 
 function enumValidator<T extends string>(enumValues: T[]) {
@@ -53,7 +53,7 @@ const systemPropValidators: {
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: numberValidator,
     [AppSystemProp.APP_WEBHOOK_SECRETS]: stringValidator,
     [AppSystemProp.MAX_FILE_SIZE_MB]: numberValidator,
-    [WorkerSystemProp.FRONTEND_URL]: urlValidator,
+    [AppSystemProp.FRONTEND_URL]: urlValidator,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: numberValidator,
     [AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
     [AppSystemProp.PIECES_SOURCE]: enumValidator(Object.values(PiecesSource)),
@@ -61,9 +61,9 @@ const systemPropValidators: {
     [AppSystemProp.LOKI_PASSWORD]: stringValidator,
     [AppSystemProp.LOKI_URL]: urlValidator,
     [AppSystemProp.LOKI_USERNAME]: stringValidator,
+    [WorkerSystemProp.APP_URL]: urlValidator,
     [WorkerSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
     [WorkerSystemProp.WORKER_TOKEN]: stringValidator,
-    [AppSystemProp.PUBLIC_URL]: stringValidator,
     // AppSystemProp
     [AppSystemProp.API_KEY]: stringValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: booleanValidator,
@@ -79,8 +79,6 @@ const systemPropValidators: {
     [AppSystemProp.JWT_SECRET]: stringValidator,
     [AppSystemProp.LICENSE_KEY]: stringValidator,
     [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: numberValidator,
-    [AppSystemProp.OPENAI_API_BASE_URL]: urlValidator,
-    [AppSystemProp.OPENAI_API_KEY]: stringValidator,
     [AppSystemProp.PIECES_SYNC_MODE]: enumValidator(Object.values(PieceSyncMode)),
     [AppSystemProp.POSTGRES_DATABASE]: stringValidator,
     [AppSystemProp.POSTGRES_HOST]: stringValidator,
@@ -131,13 +129,9 @@ const systemPropValidators: {
     [AppSystemProp.STRIPE_SECRET_KEY]: stringValidator,
     [AppSystemProp.STRIPE_WEBHOOK_SECRET]: stringValidator,
     [AppSystemProp.CLOUD_PLATFORM_ID]: stringValidator,
-    [AppSystemProp.CLOUDFLARE_AUTH_EMAIL]: (value: string) => value.includes('@') ? true : 'Value must be a valid email address',
-    [AppSystemProp.CLOUDFLARE_ZONE_ID]: stringValidator,
-    [AppSystemProp.CLOUDFLARE_API_KEY]: stringValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
 
     // Copilot
-    [AppSystemProp.PERPLEXITY_API_KEY]: stringValidator,
     [AppSystemProp.PERPLEXITY_BASE_URL]: urlValidator,
 
     // AppSystemProp

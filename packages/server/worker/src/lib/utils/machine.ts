@@ -51,9 +51,10 @@ const appendSlashAndApi = (url: string): string => {
 
 
 function getInternalUrl(): string {
-    const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.FRONTEND_URL)
+    const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.APP_URL)
     return appendSlashAndApi(url)
 }
+
 function cleanTrailingSlash(url: string) {
     if (url.endsWith('/')) {
         return url.slice(0, -1)

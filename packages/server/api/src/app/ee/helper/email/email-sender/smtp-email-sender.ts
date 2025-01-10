@@ -5,7 +5,7 @@ import Mustache from 'mustache'
 import nodemailer, { Transporter } from 'nodemailer'
 import { defaultTheme } from '../../../../flags/theme'
 import { system } from '../../../../helper/system/system'
-import { AppSystemProp } from '../../../../helper/system/system-prop'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { platformService } from '../../../../platform/platform.service'
 import { EmailSender, EmailTemplateData } from './email-sender'
 

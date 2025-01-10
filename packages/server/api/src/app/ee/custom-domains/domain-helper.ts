@@ -1,8 +1,7 @@
-import { networkUtils, WorkerSystemProp } from '@activepieces/server-shared'
+import { networkUtils, AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, isNil } from '@activepieces/shared'
 import { system } from '../../helper/system/system'
 import { customDomainService } from './custom-domain.service'
-import { AppSystemProp } from '../../helper/system/system-prop'
 
 export const domainHelper = {
     async getPublicUrl({ path, platformId }: PublicUrlParams): Promise<string> {
@@ -15,21 +14,11 @@ export const domainHelper = {
                 return networkUtils.combineUrl(customDomain.domain, path ?? '')
             }
         }
-        const publicUrl = system.get(AppSystemProp.PUBLIC_URL)
-        if (!isNil(publicUrl)) {
-            return networkUtils.combineUrl(publicUrl, path ?? '')
-        }
-        return domainHelper.getInternalUrl({ path: path ?? '' })
+        return networkUtils.combineUrl(system.getOrThrow(AppSystemProp.FRONTEND_URL), path ?? '')
     },
     async getPublicApiUrl({ path, platformId }: PublicUrlParams): Promise<string> {
         return domainHelper.getPublicUrl({ path: `/api/${path}`, platformId })
-    },
-    async getInternalUrl({ path }: InternalUrlParams): Promise<string> {
-        return networkUtils.combineUrl(system.getOrThrow(WorkerSystemProp.FRONTEND_URL), path)
-    },
-    async getInternalApiUrl({ path }: InternalUrlParams): Promise<string> {
-        return domainHelper.getInternalUrl({ path: `/api/${path}` })
-    },
+    }
 }
 
 

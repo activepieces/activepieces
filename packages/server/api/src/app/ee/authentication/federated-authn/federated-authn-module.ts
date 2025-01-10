@@ -1,7 +1,7 @@
 import {
     ApplicationEventName,
 } from '@activepieces/ee-shared'
-import { networkUtils } from '@activepieces/server-shared'
+import { AppSystemProp, networkUtils } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     ClaimTokenRequest,
@@ -13,7 +13,6 @@ import {
 } from '@fastify/type-provider-typebox'
 import { eventsHooks } from '../../../helper/application-events'
 import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-prop'
 import { platformUtils } from '../../../platform/platform.utils'
 import { federatedAuthnService } from './federated-authn-service'
 
