@@ -7,12 +7,12 @@ import {
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { domainHelper } from '../../helper/domain-helper'
 import { jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-prop'
 import { fileService } from '../file.service'
 import { s3Helper } from '../s3-helper'
-import { domainHelper } from '../../ee/custom-domains/domain-helper'
 
 const executionRetentionInDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 
@@ -32,7 +32,7 @@ export const stepFileService = (log: FastifyBaseLogger) => ({
         })
         return {
             uploadUrl: await constructUploadUrl(log, file.s3Key, params.data, params.contentLength),
-            url: await constructDownloadUrl(params.platformId, file),
+            url: await constructDownloadUrl(params.hostname, file),
         }
     },
 })
@@ -46,7 +46,7 @@ async function constructUploadUrl(log: FastifyBaseLogger, s3Key: string | undefi
     return s3Helper(log).putS3SignedUrl(s3Key, contentLength)
 }
 
-async function constructDownloadUrl(platformId: string, file: File): Promise<string> {
+async function constructDownloadUrl(hostname: string, file: File): Promise<string> {
     const accessToken = await jwtUtils.sign({
         payload: {
             fileId: file.id,
@@ -54,12 +54,11 @@ async function constructDownloadUrl(platformId: string, file: File): Promise<str
         expiresInSeconds: dayjs.duration(executionRetentionInDays, 'days').asSeconds(),
         key: await jwtUtils.getJwtSecret(),
     })
-    return domainHelper.getPublicApiUrl({
+    return domainHelper.get().constructApiUrlFromRequest({
+        domain: hostname,
         path: `v1/step-files/signed?token=${accessToken}`,
-        platformId,
     })
 }
-
 
 type SaveParams = {
     fileName: string
@@ -67,6 +66,6 @@ type SaveParams = {
     stepName: string
     data: Buffer | undefined
     contentLength: number
+    hostname: string
     projectId: string
-    platformId: string
 }

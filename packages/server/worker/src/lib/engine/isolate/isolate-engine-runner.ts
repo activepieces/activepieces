@@ -2,20 +2,20 @@ import fs from 'node:fs/promises'
 import { webhookSecretsUtils } from '@activepieces/server-shared'
 import { Action, ActionType, apId, EngineOperation, EngineOperationType, ExecuteExtractPieceMetadata, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, FlowVersionState, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { appNetworkUtils } from '../../utils/app-network-utils'
 import { webhookUtils } from '../../utils/webhook-utils'
 import { EngineHelperExtractPieceInformation, EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
 import { pieceEngineUtil } from '../flow-engine-util'
 import { IsolateSandbox } from './sandbox/isolate-sandbox'
 import { sandboxProvisioner } from './sandbox/provisioner/sandbox-provisioner'
-import { workerMachine } from '../../utils/machine'
 
 export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
     async executeFlow(engineToken, operation) {
         const input: ExecuteFlowOperation = {
             ...operation,
             engineToken,
-            publicUrl: workerMachine.getPublicUrl(),
-            internalApiUrl: workerMachine.getInternalApiUrl(),
+            publicUrl: await appNetworkUtils.getPublicUrl(),
+            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
         }
         const sandbox = await prepareFlowSandbox(log, engineToken, operation.runEnvironment, operation.flowVersion, operation.projectId)
         return execute(EngineOperationType.EXECUTE_FLOW, sandbox, input, log)
@@ -63,10 +63,9 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             flowVersion: lockedVersion,
             appWebhookUrl: await webhookUtils(log).getAppWebhookUrl({
                 appName: triggerPiece.pieceName,
-                publicApiUrl: workerMachine.getPublicApiUrl(),
             }),
-            publicUrl: workerMachine.getPublicUrl(),
-            internalApiUrl: workerMachine.getInternalApiUrl(),
+            publicUrl: await appNetworkUtils.getPublicUrl(),
+            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
             webhookSecret: await webhookSecretsUtils.getWebhookSecret(lockedVersion),
             engineToken,
         }
@@ -82,8 +81,8 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
 
         const input: ExecutePropsOptions = {
             ...operation,
-            publicUrl: workerMachine.getPublicUrl(),
-            internalApiUrl: workerMachine.getInternalApiUrl(),
+            publicUrl: await appNetworkUtils.getPublicUrl(),
+            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
             engineToken,
         }
 
@@ -98,8 +97,8 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         })
         const input: ExecuteValidateAuthOperation = {
             ...operation,
-            publicUrl: workerMachine.getPublicUrl(),
-            internalApiUrl: workerMachine.getInternalApiUrl(),
+            publicUrl: await appNetworkUtils.getPublicUrl(),
+            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
             engineToken,
         }
         return execute(EngineOperationType.EXECUTE_VALIDATE_AUTH, sandbox, input, log)
@@ -124,8 +123,8 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             stepName: operation.stepName,
             projectId: operation.projectId,
             sampleData: operation.sampleData,
-            publicUrl: workerMachine.getPublicUrl(),
-            internalApiUrl: workerMachine.getInternalApiUrl(),
+            publicUrl: await appNetworkUtils.getPublicUrl(),
+            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
             engineToken,
         }
 

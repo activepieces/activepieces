@@ -4,7 +4,6 @@ import { FastifyBaseLogger } from 'fastify'
 import { workerApiService } from '../api/server-api.service'
 import { engineRunner } from '../engine'
 import { webhookUtils } from '../utils/webhook-utils'
-import { workerMachine } from '../utils/machine'
 
 export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
     async execute(jobData: UserInteractionJobData, engineToken: string, workerToken: string): Promise<void> {
@@ -27,7 +26,6 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                     webhookUrl: await webhookUtils(log).getWebhookUrl({
                         flowId: jobData.flowVersion.flowId,
                         simulate: jobData.test,
-                        publicApiUrl: workerMachine.getPublicApiUrl(),
                     }),
                     test: jobData.test,
                     projectId: jobData.projectId,

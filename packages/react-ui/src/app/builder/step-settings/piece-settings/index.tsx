@@ -60,7 +60,9 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
     ApFlagId.WEBHOOK_TIMEOUT_SECONDS,
   );
 
-  const { data: frontendUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
+  const { data: frontendUrl } = flagsHooks.useFlag<string>(
+    ApFlagId.FRONTEND_URL,
+  );
   const markdownVariables = {
     webhookUrl: `${webhookPrefixUrl}/${props.flowId}`,
     formUrl: `${frontendUrl}/forms/${props.flowId}`,

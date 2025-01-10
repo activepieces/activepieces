@@ -18,7 +18,7 @@ import { AppSystemProp } from '../../helper/system/system-prop'
 import { fileService } from '../file.service'
 import { s3Helper } from '../s3-helper'
 import { stepFileService } from './step-file.service'
-import { projectService } from '../../project/project-service'
+
 
 const useS3SignedUrls = system.getBoolean(AppSystemProp.S3_USE_SIGNED_URLS)
 
@@ -48,13 +48,12 @@ export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/', UpsertStepFileRequest, async (request) => {
-        const platformId = await projectService.getPlatformId(request.principal.projectId)
         return stepFileService(request.log).saveAndEnrich({
             fileName: request.body.fileName,
             flowId: request.body.flowId,
             stepName: request.body.stepName,
             data: request.body.file?.data as Buffer | undefined,
-            platformId,
+            hostname: request.hostname,
             projectId: request.principal.projectId,
             contentLength: request.body.contentLength,
         })

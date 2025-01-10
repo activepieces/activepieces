@@ -1,5 +1,5 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { networkUtils } from '@activepieces/server-shared'
+import { networkUtls } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     assertNotNullOrUndefined,
@@ -34,7 +34,7 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
             platformId: signUpResponse.platformId!,
             userId: signUpResponse.id,
             projectId: signUpResponse.projectId,
-            ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+            ip: networkUtls.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
         }, {
             action: ApplicationEventName.USER_SIGNED_UP,
             data: {
@@ -60,7 +60,7 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
             platformId: responsePlatformId,
             userId: response.id,
             projectId: response.projectId,
-            ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+            ip: networkUtls.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
         }, {
             action: ApplicationEventName.USER_SIGNED_IN,
             data: {},

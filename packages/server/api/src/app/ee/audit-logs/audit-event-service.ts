@@ -1,7 +1,7 @@
 import {
     ApplicationEvent,
 } from '@activepieces/ee-shared'
-import { networkUtils, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { networkUtls, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     apId,
     Cursor,
@@ -41,7 +41,7 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
                 platformId: request.principal.platform.id,
                 projectId: request.principal.projectId,
                 userId,
-                ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+                ip: networkUtls.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
             }, params, log)
         })(), log)
     },

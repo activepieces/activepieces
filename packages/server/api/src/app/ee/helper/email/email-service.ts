@@ -8,8 +8,8 @@ import { projectService } from '../../../project/project-service'
 import { alertsService } from '../../alerts/alerts-service'
 import { issuesService } from '../../issues/issues-service'
 import { projectRoleService } from '../../project-role/project-role.service'
+import { platformDomainHelper } from '../platform-domain-helper'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
-import { domainHelper } from '../../custom-domains/domain-helper'
 
 const EDITION = system.getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
@@ -132,7 +132,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
             [OtpType.PASSWORD_RESET]: 'reset-password',
         }
 
-        const setupLink = await domainHelper.getPublicUrl({
+        const setupLink = await platformDomainHelper.constructUrlFrom({
             platformId,
             path: frontendPath[type] + `?otpcode=${otp}&identityId=${userIdentity.id}`,
         })
@@ -172,7 +172,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
         const alerts = await alertsService(log).list({ projectId: job.projectId, cursor: undefined, limit: 50 })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
         
-        const issuesUrl = await domainHelper.getPublicUrl({
+        const issuesUrl = await platformDomainHelper.constructUrlFrom({
             platformId: job.platformId,
             path: 'runs?limit=10#Issues',
         })

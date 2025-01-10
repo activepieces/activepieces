@@ -9,14 +9,15 @@ import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-prop'
 import { platformService } from '../../../platform/platform.service'
 import { googleAuthnProvider } from './google-authn-provider'
-import { domainHelper } from '../../custom-domains/domain-helper'
 
 export const federatedAuthnService = (log: FastifyBaseLogger) => ({
     async login({
         platformId,
+        hostname,
     }: LoginParams): Promise<FederatedAuthnLoginResponse> {
         const { clientId } = await getClientIdAndSecret(platformId)
-        const loginUrl = await googleAuthnProvider(log).getLoginUrl({
+        const loginUrl = await googleAuthnProvider.getLoginUrl({
+            hostname,
             clientId,
             platformId,
         })
@@ -27,11 +28,13 @@ export const federatedAuthnService = (log: FastifyBaseLogger) => ({
     },
 
     async claim({
+        hostname,
         platformId,
         code,
     }: ClaimParams): Promise<AuthenticationResponse> {
         const { clientId, clientSecret } = await getClientIdAndSecret(platformId)
-        const idToken = await googleAuthnProvider(log).authenticate({
+        const idToken = await googleAuthnProvider.authenticate({
+            hostname,
             clientId,
             clientSecret,
             authorizationCode: code,
@@ -46,14 +49,6 @@ export const federatedAuthnService = (log: FastifyBaseLogger) => ({
             newsLetter: true,
             provider: UserIdentityProvider.GOOGLE,
             predefinedPlatformId: platformId ?? null,
-        })
-    },
-    async getThirdPartyRedirectUrl(
-        platformId: string | undefined,
-    ): Promise<string> {
-        return domainHelper.getPublicUrl({
-            path: '/redirect',
-            platformId,
         })
     },
 })
@@ -76,9 +71,11 @@ async function getClientIdAndSecret(platformId: string | undefined) {
 
 type LoginParams = {
     platformId: string | undefined
+    hostname: string
 }
 
 type ClaimParams = {
     platformId: string | undefined
+    hostname: string
     code: string
 }

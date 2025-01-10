@@ -1,4 +1,4 @@
-import { networkUtils } from '@activepieces/server-shared'
+import { networkUtls } from '@activepieces/server-shared'
 import RateLimitPlugin from '@fastify/rate-limit'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import FastifyPlugin from 'fastify-plugin'
@@ -16,7 +16,7 @@ export const rateLimitModule: FastifyPluginAsyncTypebox = FastifyPlugin(
         if (API_RATE_LIMIT_AUTHN_ENABLED) {
             await app.register(RateLimitPlugin, {
                 global: false,
-                keyGenerator: (req) => networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+                keyGenerator: (req) => networkUtls.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
                 redis: getRedisClient(),
             })
         }

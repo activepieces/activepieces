@@ -3,6 +3,7 @@ import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, Q
 import { ActivepiecesError, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { appNetworkUtils } from '../utils/app-network-utils'
 import { workerMachine } from '../utils/machine'
 import { ApAxiosClient } from './ap-axios'
 
@@ -10,8 +11,10 @@ const removeTrailingSlash = (url: string): string => {
     return url.endsWith('/') ? url.slice(0, -1) : url
 }
 
+
+
 export const workerApiService = (workerToken: string) => {
-    const apiUrl = removeTrailingSlash(workerMachine.getInternalApiUrl())
+    const apiUrl = removeTrailingSlash(appNetworkUtils.getInternalApiUrl())
 
     const client = new ApAxiosClient(apiUrl, workerToken)
 
@@ -60,7 +63,7 @@ export const workerApiService = (workerToken: string) => {
 }
 
 export const engineApiService = (engineToken: string, log: FastifyBaseLogger) => {
-    const apiUrl = removeTrailingSlash(workerMachine.getInternalApiUrl())
+    const apiUrl = removeTrailingSlash(appNetworkUtils.getInternalApiUrl())
     const client = new ApAxiosClient(apiUrl, engineToken)
 
     return {

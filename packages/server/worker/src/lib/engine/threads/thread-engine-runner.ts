@@ -2,6 +2,7 @@ import path from 'path'
 import { webhookSecretsUtils } from '@activepieces/server-shared'
 import { ActionType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, isNil, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { appNetworkUtils } from '../../utils/app-network-utils'
 import { workerMachine } from '../../utils/machine'
 import { webhookUtils } from '../../utils/webhook-utils'
 import { EngineHelperResponse, EngineHelperResult, EngineRunner, engineRunnerUtils } from '../engine-runner'
@@ -25,8 +26,8 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         const input: ExecuteFlowOperation = {
             ...operation,
             engineToken,
-            publicUrl: workerMachine.getPublicUrl(),
-            internalApiUrl: workerMachine.getInternalApiUrl(),
+            publicUrl: await appNetworkUtils.getPublicUrl(),
+            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
         }
 
         return execute(log, input, EngineOperationType.EXECUTE_FLOW)
@@ -52,10 +53,9 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             flowVersion: lockedVersion,
             appWebhookUrl: await webhookUtils(log).getAppWebhookUrl({
                 appName: triggerPiece.pieceName,
-                publicApiUrl: workerMachine.getPublicApiUrl(),
             }),
-            publicUrl: workerMachine.getPublicUrl(),
-            internalApiUrl: workerMachine.getInternalApiUrl(),
+            publicUrl: await appNetworkUtils.getPublicUrl(),
+            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
             webhookSecret: await webhookSecretsUtils.getWebhookSecret(lockedVersion),
             engineToken,
         }
@@ -95,8 +95,8 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         })
         const input: ExecuteValidateAuthOperation = {
             ...operation,
-            publicUrl: workerMachine.getPublicUrl(),
-            internalApiUrl: workerMachine.getInternalApiUrl(),
+            publicUrl: await appNetworkUtils.getPublicUrl(),
+            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
             engineToken,
         }
         return execute(log, input, EngineOperationType.EXECUTE_VALIDATE_AUTH)
@@ -147,8 +147,8 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             stepName: operation.stepName,
             projectId: operation.projectId,
             sampleData: operation.sampleData,
-            publicUrl: workerMachine.getPublicUrl(),
-            internalApiUrl: workerMachine.getInternalApiUrl(),
+            publicUrl: await appNetworkUtils.getPublicUrl(),
+            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
             engineToken,
         }
 
@@ -174,8 +174,8 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
 
         const input: ExecutePropsOptions = {
             ...operation,
-            publicUrl: workerMachine.getPublicUrl(),
-            internalApiUrl: workerMachine.getInternalApiUrl(),
+            publicUrl: await appNetworkUtils.getPublicUrl(),
+            internalApiUrl: appNetworkUtils.getInternalApiUrl(),
             engineToken,
         }
         return execute(log, input, EngineOperationType.EXECUTE_PROPERTY)
