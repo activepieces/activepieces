@@ -63,7 +63,7 @@ const systemPropValidators: {
     [AppSystemProp.LOKI_USERNAME]: stringValidator,
     [WorkerSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
     [WorkerSystemProp.WORKER_TOKEN]: stringValidator,
-
+    [AppSystemProp.PUBLIC_URL]: stringValidator,
     // AppSystemProp
     [AppSystemProp.API_KEY]: stringValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: booleanValidator,
