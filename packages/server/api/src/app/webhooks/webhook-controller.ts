@@ -29,6 +29,8 @@ import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue } from '../workers/queue'
 import { getJobPriority } from '../workers/queue/queue-manager'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
+import { platformService } from '../platform/platform.service'
+import { projectService } from '../project/project-service'
 
 const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 
@@ -228,6 +230,8 @@ const convertBody = async (
             request.body as Record<string, unknown>,
         )
 
+        const platformId = await projectService.getPlatformId(projectId)
+
         for (const [key, value] of requestBodyEntries) {
             if (isMultipartFile(value)) {
                 const file = await stepFileService(request.log).saveAndEnrich({
@@ -236,7 +240,7 @@ const convertBody = async (
                     stepName: 'trigger',
                     flowId,
                     contentLength: value.data.length,
-                    hostname: request.hostname,
+                    platformId,
                     projectId,
                 })
                 jsonResult[key] = file.url

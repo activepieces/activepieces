@@ -1,5 +1,6 @@
 import { WebhookResponse } from '@activepieces/pieces-framework'
 import {
+    networkUtils,
     rejectedPromiseHandler,
 } from '@activepieces/server-shared'
 import {
@@ -12,27 +13,24 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { workerApiService } from '../api/server-api.service'
 import { triggerConsumer } from '../trigger/hooks/trigger-consumer'
-import { appNetworkUtils } from './app-network-utils'
-
 export const webhookUtils = (log: FastifyBaseLogger) => ({
-    async getWebhookPrefix(): Promise<string> {
-        return `${await appNetworkUtils.getPublicUrl()}v1/webhooks`
-    },
+
     async getAppWebhookUrl({
         appName,
+        publicApiUrl,
     }: {
         appName: string
+        publicApiUrl: string
     }): Promise<string | undefined> {
-        const frontendUrl = await appNetworkUtils.getPublicUrl()
-        return `${frontendUrl}v1/app-events/${appName}`
+        return networkUtils.combineUrl(publicApiUrl, `v1/app-events/${appName}`)
     },
     async getWebhookUrl({
         flowId,
         simulate,
+        publicApiUrl,
     }: GetWebhookUrlParams): Promise<string> {
         const suffix: WebhookUrlSuffix = simulate ? '/test' : ''
-        const webhookPrefix = await this.getWebhookPrefix()
-        return `${webhookPrefix}/${flowId}${suffix}`
+        return networkUtils.combineUrl(publicApiUrl, `v1/webhooks/${flowId}${suffix}`)
     },
     async extractPayload({
         flowVersion,
@@ -99,6 +97,7 @@ export const webhookUtils = (log: FastifyBaseLogger) => ({
     },
 })
 
+
 type HandshakeParams = {
     populatedFlow: PopulatedFlow
     payload: EventPayload
@@ -110,6 +109,7 @@ type WebhookUrlSuffix = '' | '/test'
 type GetWebhookUrlParams = {
     flowId: FlowId
     simulate?: boolean
+    publicApiUrl: string
 }
 
 type ExtractPayloadParams = {

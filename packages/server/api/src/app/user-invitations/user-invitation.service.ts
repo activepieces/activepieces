@@ -5,7 +5,6 @@ import { userIdentityService } from '../authentication/user-identity/user-identi
 import { repoFactory } from '../core/db/repo-factory'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../ee/helper/email/email-service'
-import { platformDomainHelper } from '../ee/helper/platform-domain-helper'
 import { projectMemberService } from '../ee/project-members/project-member.service'
 import { projectRoleService } from '../ee/project-role/project-role.service'
 import { jwtUtils } from '../helper/jwt-utils'
@@ -14,6 +13,7 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { platformService } from '../platform/platform.service'
 import { userService } from '../user/user-service'
 import { UserInvitationEntity } from './user-invitation.entity'
+import { domainHelper } from '../ee/custom-domains/domain-helper'
 
 const repo = repoFactory(UserInvitationEntity)
 
@@ -248,7 +248,7 @@ async function generateInvitationLink(userInvitation: UserInvitation, expireyInS
         key: await jwtUtils.getJwtSecret(),
     })
 
-    return platformDomainHelper.constructUrlFrom({
+    return domainHelper.getPublicUrl({
         platformId: userInvitation.platformId,
         path: `invitation?token=${token}&email=${encodeURIComponent(userInvitation.email)}`,
     })

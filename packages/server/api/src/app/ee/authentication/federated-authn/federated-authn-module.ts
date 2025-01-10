@@ -1,7 +1,7 @@
 import {
     ApplicationEventName,
 } from '@activepieces/ee-shared'
-import { networkUtls } from '@activepieces/server-shared'
+import { networkUtils } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     ClaimTokenRequest,
@@ -28,7 +28,6 @@ const federatedAuthnController: FastifyPluginAsyncTypebox = async (app) => {
         const platformId = await platformUtils.getPlatformIdForRequest(req)
         return federatedAuthnService(req.log).login({
             platformId: platformId ?? undefined,
-            hostname: req.hostname,
         })
     })
 
@@ -36,14 +35,13 @@ const federatedAuthnController: FastifyPluginAsyncTypebox = async (app) => {
         const platformId = await platformUtils.getPlatformIdForRequest(req)
         const response = await federatedAuthnService(req.log).claim({
             platformId: platformId ?? undefined,
-            hostname: req.hostname,
             code: req.body.code,
         })
         eventsHooks.get(req.log).sendUserEvent({
             platformId: response.platformId!,
             userId: response.id,
             projectId: response.projectId,
-            ip: networkUtls.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+            ip: networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
         }, {
             action: ApplicationEventName.USER_SIGNED_UP,
             data: {
