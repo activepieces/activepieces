@@ -72,7 +72,7 @@ export enum AppSystemProp {
     TRIGGER_DEFAULT_POLL_INTERVAL = 'TRIGGER_DEFAULT_POLL_INTERVAL',
     TRIGGER_FAILURES_THRESHOLD = 'TRIGGER_FAILURES_THRESHOLD',
     WEBHOOK_TIMEOUT_SECONDS = 'WEBHOOK_TIMEOUT_SECONDS',
-    FRONTEND_URL = 'FRONTEND_URL',
+    INTERNAL_URL = 'INTERNAL_URL',
 
     // ENTERPRISE ONLY
     APPSUMO_TOKEN = 'APPSUMO_TOKEN',
@@ -125,19 +125,14 @@ export enum ContainerType {
 }
 
 export enum WorkerSystemProp {
-    APP_URL = 'APP_URL',
     WORKER_TOKEN = 'WORKER_TOKEN',
     CONTAINER_TYPE = 'CONTAINER_TYPE',
+    FRONTEND_URL = 'FRONTEND_URL',
 
     // Optional
     FLOW_WORKER_CONCURRENCY = 'FLOW_WORKER_CONCURRENCY',
     SCHEDULED_WORKER_CONCURRENCY = 'SCHEDULED_WORKER_CONCURRENCY',
 }
-
-const renamedSystemProps: Partial<Record<WorkerSystemProp | AppSystemProp | string, string | AppSystemProp>> = {
-    [WorkerSystemProp.APP_URL]: 'FRONTEND_URL',
-}
-
 
 
 export const environmentVariables = {
@@ -149,13 +144,8 @@ export const environmentVariables = {
         const value = environmentVariables.getEnvironment(prop)
         return value ? parseInt(value) : undefined
     },
-    getEnvironment: (prop: WorkerSystemProp | string | AppSystemProp): string | undefined => {
-        const value = process.env[`AP_${prop}`]
-        if(!isNil(value)) {
-            return value;
-        }
-        const renamedProp: string | undefined = renamedSystemProps[prop];
-        return isNil(renamedProp) ? undefined : environmentVariables.getEnvironment(renamedProp);
+    getEnvironment: (prop: WorkerSystemProp | AppSystemProp): string | undefined => {
+        return process.env[`AP_${prop}`]
     },
     getEnvironmentOrThrow: (prop: WorkerSystemProp): string => {
         const value = environmentVariables.getEnvironment(prop)

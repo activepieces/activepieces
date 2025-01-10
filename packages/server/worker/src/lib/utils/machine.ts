@@ -51,7 +51,7 @@ const appendSlashAndApi = (url: string): string => {
 
 
 function getInternalUrl(): string {
-    const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.APP_URL)
+    const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.FRONTEND_URL)
     return appendSlashAndApi(url)
 }
 

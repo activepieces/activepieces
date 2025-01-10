@@ -53,7 +53,7 @@ const systemPropValidators: {
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: numberValidator,
     [AppSystemProp.APP_WEBHOOK_SECRETS]: stringValidator,
     [AppSystemProp.MAX_FILE_SIZE_MB]: numberValidator,
-    [AppSystemProp.FRONTEND_URL]: urlValidator,
+    [AppSystemProp.INTERNAL_URL]: urlValidator,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: numberValidator,
     [AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
     [AppSystemProp.PIECES_SOURCE]: enumValidator(Object.values(PiecesSource)),
@@ -61,7 +61,7 @@ const systemPropValidators: {
     [AppSystemProp.LOKI_PASSWORD]: stringValidator,
     [AppSystemProp.LOKI_URL]: urlValidator,
     [AppSystemProp.LOKI_USERNAME]: stringValidator,
-    [WorkerSystemProp.APP_URL]: urlValidator,
+    [WorkerSystemProp.FRONTEND_URL]: urlValidator,
     [WorkerSystemProp.CONTAINER_TYPE]: enumValidator(Object.values(ContainerType)),
     [WorkerSystemProp.WORKER_TOKEN]: stringValidator,
     // AppSystemProp
