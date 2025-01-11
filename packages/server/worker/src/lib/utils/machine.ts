@@ -7,9 +7,7 @@ import { assertNotNullOrUndefined, isNil, MachineInformation, spreadIfDefined, W
 
 const execAsync = promisify(exec)
 
-
 let settings: WorkerMachineHealthcheckResponse | undefined
-
 
 export const workerMachine = {
     getSystemInfo,
@@ -35,7 +33,7 @@ export const workerMachine = {
         return appendSlashAndApi(replaceLocalhost(url))
     },
     getPublicApiUrl: (): string => {
-        return appendSlashAndApi((replaceLocalhost(getPublicUrl()))
+        return appendSlashAndApi(replaceLocalhost(getPublicUrl()))
     },
 }
 
@@ -60,7 +58,6 @@ function appendSlashAndApi(url: string): string {
     return `${url}${slash}api/`
 }
 
-
 async function getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
     const { totalRamInBytes, ramUsage } = await getContainerMemoryUsage()
 
@@ -83,13 +80,13 @@ async function getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
         workerProps: {},
     }
 }
+
 async function getContainerMemoryUsage() {
     const memLimitPath = '/sys/fs/cgroup/memory/memory.limit_in_bytes'
     const memUsagePath = '/sys/fs/cgroup/memory/memory.usage_in_bytes'
 
     const memLimitExists = await fileExists(memLimitPath)
     const memUsageExists = await fileExists(memUsagePath)
-
 
     const totalRamInBytes = memLimitExists ? parseInt(await fs.promises.readFile(memLimitPath, 'utf8')) : os.totalmem()
     const usedRamInBytes = memUsageExists ? parseInt(await fs.promises.readFile(memUsagePath, 'utf8')) : os.totalmem() - os.freemem()

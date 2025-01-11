@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { assertNotNullOrUndefined } from '@activepieces/shared'
 
 export const systemConstants = {
     PACKAGE_ARCHIVE_PATH: 'cache/archives',

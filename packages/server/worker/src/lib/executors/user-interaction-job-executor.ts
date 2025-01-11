@@ -3,8 +3,8 @@ import { AppConnectionValue } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { workerApiService } from '../api/server-api.service'
 import { engineRunner } from '../engine'
-import { webhookUtils } from '../utils/webhook-utils'
 import { workerMachine } from '../utils/machine'
+import { webhookUtils } from '../utils/webhook-utils'
 
 export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
     async execute(jobData: UserInteractionJobData, engineToken: string, workerToken: string): Promise<void> {
