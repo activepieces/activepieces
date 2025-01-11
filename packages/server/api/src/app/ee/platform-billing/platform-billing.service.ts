@@ -5,7 +5,9 @@ import Stripe from 'stripe'
 import { repoFactory } from '../../core/db/repo-factory'
 import { platformService } from '../../platform/platform.service'
 import { platformUtils } from '../../platform/platform.utils'
+import { projectRepo } from '../../project/project-service'
 import { userService } from '../../user/user-service'
+import { projectLimitsService } from '../project-plan/project-plan.service'
 import { PlatformBillingEntity } from './platform-billing.entity'
 import { stripeHelper } from './stripe-helper'
 
@@ -15,7 +17,9 @@ export const platformBillingService = (log: FastifyBaseLogger) => ({
     async getOrCreateForPlatform(platformId: string): Promise<PlatformBilling> {
         const platformBilling = await platformBillingRepo().findOneBy({ platformId })
         if (isNil(platformBilling)) {
-            return createInitialBilling(platformId, log)
+            const newPlatformBilling = await createInitialBilling(platformId, log)
+            await updateAllProjectsLimits(platformId, newPlatformBilling.tasksLimit, newPlatformBilling.aiCreditsLimit)
+            return newPlatformBilling
         }
         return platformBilling
     },
@@ -32,9 +36,10 @@ export const platformBillingService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        platformBilling.tasksLimit = tasksLimit
-        platformBilling.aiCreditsLimit = aiCreditsLimit
-        return platformBillingRepo().save(platformBilling)
+        return platformBillingRepo().save({
+            tasksLimit,
+            aiCreditsLimit,
+        })
     },
 
     async updateSubscriptionIdByCustomerId(subscription: Stripe.Subscription): Promise<PlatformBilling> {
@@ -83,4 +88,22 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
         includedAiCredits: DEFAULT_FREE_PLAN_LIMIT.aiTokens,
         stripeCustomerId,
     })
+}
+
+async function updateAllProjectsLimits(platformId: string, tasksLimit: number | undefined, aiCreditsLimit: number | undefined) {
+    const platform = await platformService.getOneOrThrow(platformId)
+    if (!platform.manageProjectsEnabled) {
+        return
+    }
+    const projects = await projectRepo().find({
+        where: {
+            platformId,
+        },
+    })
+    for (const project of projects) {
+        await projectLimitsService.upsert({
+            tasks: tasksLimit,
+            aiTokens: aiCreditsLimit,
+        }, project.id)
+    }
 }

@@ -61,16 +61,17 @@ export const usageService = (log: FastifyBaseLogger) => ({
             const platformId = await projectService.getPlatformId(projectId)
             const { consumedProjectUsage, consumedPlatformUsage } = await increaseProjectAndPlatformUsage({ projectId, incrementBy: 0, usageType: BillingUsageType.TASKS })
             // TODO (@abuaboud) clean once project billing is deprecated
+            const shouldLimitFromProjectPlan = !isNil(projectPlan.tasks) && consumedProjectUsage >= projectPlan.tasks
             if (flagService.isCloudPlatform(platformId)) {
-                return consumedProjectUsage >= projectPlan.tasks
+                return shouldLimitFromProjectPlan
             }
             const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
-
+            const shouldLimitFromPlatformBilling = !isNil(platformBilling.tasksLimit) && consumedPlatformUsage >= platformBilling.tasksLimit
             const platform = await platformService.getOneOrThrow(platformId)
             if (!platform.manageProjectsEnabled) {
-                return !isNil(platformBilling.tasksLimit) && consumedPlatformUsage >= platformBilling.tasksLimit
+                return shouldLimitFromPlatformBilling
             }
-            return consumedProjectUsage >= projectPlan.tasks || (!isNil(platformBilling.tasksLimit) && consumedPlatformUsage >= platformBilling.tasksLimit)
+            return shouldLimitFromProjectPlan || shouldLimitFromPlatformBilling
         }
         catch (e) {
             exceptionHandler.handle(e, log)
@@ -91,16 +92,17 @@ export const usageService = (log: FastifyBaseLogger) => ({
             const platformId = await projectService.getPlatformId(projectId)
             const { consumedProjectUsage, consumedPlatformUsage } = await increaseProjectAndPlatformUsage({ projectId, incrementBy: tokensToConsume, usageType: BillingUsageType.AI_TOKENS })
             // TODO (@abuaboud) clean once project billing is deprecated
+            const shouldLimitFromProjectPlan = !isNil(projectPlan.aiTokens) && consumedProjectUsage >= projectPlan.aiTokens
             if (flagService.isCloudPlatform(platformId)) {
-                return consumedProjectUsage >= projectPlan.aiTokens
+                return shouldLimitFromProjectPlan
             }
             const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
-
+            const shouldLimitFromPlatformBilling = !isNil(platformBilling.aiCreditsLimit) && consumedPlatformUsage >= platformBilling.aiCreditsLimit
             const platform = await platformService.getOneOrThrow(platformId)
             if (!platform.manageProjectsEnabled) {
-                return !isNil(platformBilling.aiCreditsLimit) && consumedPlatformUsage >= platformBilling.aiCreditsLimit
+                return shouldLimitFromPlatformBilling
             }
-            return consumedProjectUsage >= projectPlan.aiTokens || (!isNil(platformBilling.aiCreditsLimit) && consumedPlatformUsage >= platformBilling.aiCreditsLimit)
+            return shouldLimitFromProjectPlan || shouldLimitFromPlatformBilling
         }
         catch (e) {
             exceptionHandler.handle(e, log)

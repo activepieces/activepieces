@@ -4,23 +4,16 @@ import React from 'react';
 import { formatUtils } from '@/lib/utils';
 
 type PlanDataProps = {
-  minimumPollingInterval: number;
   includedUsers: number;
   includedTasks: number;
 };
 
 const PlanData: React.FC<PlanDataProps> = ({
-  minimumPollingInterval,
   includedUsers,
   includedTasks,
 }) => {
-  const addPostfixToMinute = minimumPollingInterval > 1 ? 's' : '';
 
   const dataArray = [
-    {
-      title: t('Sync Time'),
-      data: `${minimumPollingInterval} ${t('minute')}${addPostfixToMinute}`,
-    },
     {
       title: t('Included Team Members'),
       data: includedUsers === -1 ? t('Unlimited') : includedUsers,

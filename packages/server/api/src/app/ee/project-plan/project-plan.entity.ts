@@ -19,12 +19,6 @@ export const ProjectPlanEntity = new EntitySchema<ProjectPlanSchema>({
         name: {
             type: String,
         },
-        minimumPollingInterval: {
-            type: Number,
-        },
-        connections: {
-            type: Number,
-        },
         pieces: {
             type: ARRAY_COLUMN_TYPE,
             array: isPostgres(),
@@ -33,14 +27,13 @@ export const ProjectPlanEntity = new EntitySchema<ProjectPlanSchema>({
         piecesFilterType: {
             type: String,
         },
-        teamMembers: {
-            type: Number,
-        },
         tasks: {
             type: Number,
+            nullable: true,
         },
         aiTokens: {
             type: Number,
+            nullable: true,
         },
     },
     indices: [
