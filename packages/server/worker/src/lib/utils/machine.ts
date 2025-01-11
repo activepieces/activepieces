@@ -34,11 +34,11 @@ export const workerMachine = {
         return appendSlashAndApi(getInternalUrl())
     },
     getPublicApiUrl: (): string => {
-        const url = new URL(addTrailingSlash(networkUtils.combineUrl(getPublicUrl(), 'api')))
+        const url = new URL(networkUtils.combineUrl(getPublicUrl(), 'api'))
         if (url.hostname === 'localhost') {
             url.hostname = '127.0.0.1'
         }
-        return url.toString()
+        return addTrailingSlash(url.toString())
     },
 }
 
