@@ -6,10 +6,10 @@ import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { alertsService } from '../../alerts/alerts-service'
+import { domainHelper } from '../../custom-domains/domain-helper'
 import { issuesService } from '../../issues/issues-service'
 import { projectRoleService } from '../../project-role/project-role.service'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
-import { domainHelper } from '../../custom-domains/domain-helper'
 
 const EDITION = system.getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)

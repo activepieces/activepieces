@@ -1,4 +1,5 @@
 import { TlsOptions } from 'node:tls'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
@@ -21,7 +22,6 @@ import { AddDatasourcesLimit1695916063833 } from '../ee/database/migrations/post
 import { AddPlatform1697717995884 } from '../ee/database/migrations/postgres/1697717995884-add-platform'
 import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
 import { system } from '../helper/system/system'
-import { AppSystemProp } from '@activepieces/server-shared'
 import { commonProperties } from './database-connection'
 import { AddPlatformBilling1734971881345 } from './migration/1734971881345-AddPlatformBilling'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'

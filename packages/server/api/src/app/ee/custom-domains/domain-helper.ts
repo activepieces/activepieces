@@ -28,7 +28,7 @@ export const domainHelper = {
     },
     async getInternalApiUrl({ path, platformId }: InternalUrlParams): Promise<string> {
         return this.getInternalUrl({ path: `/api/${path}`, platformId })
-    }
+    },
 }
 
 

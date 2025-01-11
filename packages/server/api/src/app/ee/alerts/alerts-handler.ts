@@ -6,8 +6,8 @@ import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
-import { emailService } from '../helper/email/email-service'
 import { domainHelper } from '../custom-domains/domain-helper'
+import { emailService } from '../helper/email/email-service'
 
 const HOUR_IN_SECONDS = 3600
 const DAY_IN_SECONDS = 86400

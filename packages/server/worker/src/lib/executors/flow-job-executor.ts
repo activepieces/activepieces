@@ -5,7 +5,7 @@ import { engineApiService } from '../api/server-api.service'
 import { engineRunner } from '../engine'
 import { workerMachine } from '../utils/machine'
 
-type EngineConstants = 'internalApiUrl' | 'publicUrl' | 'engineToken'
+type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
 
 
 async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, engineToken: string, log: FastifyBaseLogger): Promise<Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>> {

@@ -31,19 +31,30 @@ export const workerMachine = {
         if (environmentVariables.hasAppModules()) {
             return 'http://127.0.0.1:3000/'
         }
-        return getInternalUrl()
+        return appendSlashAndApi(getInternalUrl())
     },
     getPublicApiUrl: (): string => {
-        return networkUtils.combineUrl(workerMachine.getPublicUrl(), 'api')
-    },
-    getPublicUrl: () => {
-        if (isNil(settings)) {
-            return getInternalUrl()
+        const url = new URL(addTrailingSlash(networkUtils.combineUrl(getPublicUrl(), 'api')))
+        if (url.hostname === 'localhost') {
+            url.hostname = '127.0.0.1'
         }
-        return cleanTrailingSlash(settings.PUBLIC_URL)
+        return url.toString()
     },
 }
 
+function getPublicUrl(): string {
+    if (isNil(settings)) {
+        return getInternalUrl()
+    }
+    return addTrailingSlash(settings.PUBLIC_URL)
+}
+
+function addTrailingSlash(url: string) {
+    if (!url.endsWith('/')) {
+        return `${url}/`
+    }
+    return url
+}
 const appendSlashAndApi = (url: string): string => {
     const slash = url.endsWith('/') ? '' : '/'
     return `${url}${slash}api/`
@@ -55,12 +66,6 @@ function getInternalUrl(): string {
     return appendSlashAndApi(url)
 }
 
-function cleanTrailingSlash(url: string) {
-    if (url.endsWith('/')) {
-        return url.slice(0, -1)
-    }
-    return url
-}
 
 async function getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
     const { totalRamInBytes, ramUsage } = await getContainerMemoryUsage()

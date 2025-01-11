@@ -1,11 +1,10 @@
-import { WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import { PrincipalType, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse, WorkerPrincipal } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { platformMustBeOwnedByCurrentUser } from '../../ee/authentication/ee-authorization'
-import { system } from '../../helper/system/system'
-import { AppSystemProp } from '@activepieces/server-shared'
-import { machineService } from './machine-service'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
+import { system } from '../../helper/system/system'
+import { machineService } from './machine-service'
 
 export const workerMachineController: FastifyPluginAsyncTypebox = async (app) => {
 

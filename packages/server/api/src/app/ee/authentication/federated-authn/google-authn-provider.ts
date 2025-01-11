@@ -1,11 +1,10 @@
 import {
     assertNotEqual,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import jwksClient from 'jwks-rsa'
-import { flagService } from '../../../flags/flag.service'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
 import { federatedAuthnService } from './federated-authn-service'
-import { FastifyBaseLogger } from 'fastify'
 
 const JWKS_URI = 'https://www.googleapis.com/oauth2/v3/certs'
 
