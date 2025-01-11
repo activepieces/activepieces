@@ -3,6 +3,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
+import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../ee/helper/email/email-service'
 import { projectMemberService } from '../ee/project-members/project-member.service'
@@ -13,7 +14,6 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { platformService } from '../platform/platform.service'
 import { userService } from '../user/user-service'
 import { UserInvitationEntity } from './user-invitation.entity'
-import { domainHelper } from '../ee/custom-domains/domain-helper'
 
 const repo = repoFactory(UserInvitationEntity)
 

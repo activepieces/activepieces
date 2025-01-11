@@ -1,3 +1,4 @@
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -7,7 +8,6 @@ import {
 } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '@activepieces/server-shared'
 import { BaseSecurityHandler } from '../security-handler'
 
 export class GlobalApiKeyAuthnHandler extends BaseSecurityHandler {

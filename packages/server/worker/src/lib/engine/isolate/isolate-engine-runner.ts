@@ -14,7 +14,7 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         const input: ExecuteFlowOperation = {
             ...operation,
             engineToken,
-            publicUrl: workerMachine.getPublicUrl(),
+            publicApiUrl: workerMachine.getPublicApiUrl(),
             internalApiUrl: workerMachine.getInternalApiUrl(),
         }
         const sandbox = await prepareFlowSandbox(log, engineToken, operation.runEnvironment, operation.flowVersion, operation.projectId)
@@ -65,7 +65,7 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
                 appName: triggerPiece.pieceName,
                 publicApiUrl: workerMachine.getPublicApiUrl(),
             }),
-            publicUrl: workerMachine.getPublicUrl(),
+            publicApiUrl: workerMachine.getPublicApiUrl(),
             internalApiUrl: workerMachine.getInternalApiUrl(),
             webhookSecret: await webhookSecretsUtils.getWebhookSecret(lockedVersion),
             engineToken,
@@ -82,7 +82,7 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
 
         const input: ExecutePropsOptions = {
             ...operation,
-            publicUrl: workerMachine.getPublicUrl(),
+            publicApiUrl: workerMachine.getPublicApiUrl(),
             internalApiUrl: workerMachine.getInternalApiUrl(),
             engineToken,
         }
@@ -98,7 +98,7 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         })
         const input: ExecuteValidateAuthOperation = {
             ...operation,
-            publicUrl: workerMachine.getPublicUrl(),
+            publicApiUrl: workerMachine.getPublicApiUrl(),
             internalApiUrl: workerMachine.getInternalApiUrl(),
             engineToken,
         }
@@ -124,7 +124,7 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
             stepName: operation.stepName,
             projectId: operation.projectId,
             sampleData: operation.sampleData,
-            publicUrl: workerMachine.getPublicUrl(),
+            publicApiUrl: workerMachine.getPublicApiUrl(),
             internalApiUrl: workerMachine.getInternalApiUrl(),
             engineToken,
         }
