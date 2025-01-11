@@ -31,39 +31,33 @@ export const workerMachine = {
         if (environmentVariables.hasAppModules()) {
             return 'http://127.0.0.1:3000/'
         }
-        return appendSlashAndApi(getInternalUrl())
+        const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.FRONTEND_URL)
+        return appendSlashAndApi(replaceLocalhost(url))
     },
     getPublicApiUrl: (): string => {
-        const url = new URL(networkUtils.combineUrl(getPublicUrl(), 'api'))
-        if (url.hostname === 'localhost') {
-            url.hostname = '127.0.0.1'
-        }
-        return addTrailingSlash(url.toString())
+        return appendSlashAndApi((replaceLocalhost(getPublicUrl()))
     },
 }
 
 function getPublicUrl(): string {
     if (isNil(settings)) {
-        return getInternalUrl()
+        const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.FRONTEND_URL)
+        return url
     }
-    return addTrailingSlash(settings.PUBLIC_URL)
+    return settings.PUBLIC_URL
 }
 
-function addTrailingSlash(url: string) {
-    if (!url.endsWith('/')) {
-        return `${url}/`
+function replaceLocalhost(urlString: string): string {
+    const url = new URL(urlString)
+    if (url.hostname === 'localhost') {
+        url.hostname = '127.0.0.1'
     }
-    return url
+    return url.toString()
 }
-const appendSlashAndApi = (url: string): string => {
+
+function appendSlashAndApi(url: string): string {
     const slash = url.endsWith('/') ? '' : '/'
     return `${url}${slash}api/`
-}
-
-
-function getInternalUrl(): string {
-    const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.FRONTEND_URL)
-    return appendSlashAndApi(url)
 }
 
 
