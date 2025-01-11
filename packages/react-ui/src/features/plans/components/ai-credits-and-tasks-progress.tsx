@@ -3,15 +3,16 @@ import React from 'react';
 
 import { ProgressCircularComponent } from '@/components/custom/circular-progress';
 import { formatUtils } from '@/lib/utils';
+import { isNil } from '@activepieces/shared';
 
 type AiCreditsAndTasksProgressProps = {
   tasks: {
     usage: number;
-    plan: number;
+    plan: number | undefined | null;
   };
   aiTokens: {
     usage: number;
-    plan: number;
+    plan: number | undefined | null;
   };
   nextBillingDate: string;
 };
@@ -24,9 +25,11 @@ const AiCreditsAndTasksProgress: React.FC<AiCreditsAndTasksProgressProps> = ({
   return (
     <div className="flex flex-col justify-center  gap-4">
       <div className="flex flex-row gap-3 items-center ">
-        <ProgressCircularComponent
-          data={{ plan: tasks.plan, usage: tasks.usage }}
-        />
+        {!isNil(tasks.plan) && (
+          <ProgressCircularComponent
+            data={{ plan: tasks.plan, usage: tasks.usage }}
+          />
+        )}
         <div className="flex flex-col gap-2">
           <span className="text-md">
             {t('{usage} of {plan} Tasks', {
@@ -37,9 +40,11 @@ const AiCreditsAndTasksProgress: React.FC<AiCreditsAndTasksProgressProps> = ({
         </div>
       </div>
       <div className="flex  flex-row gap-3 items-center ">
-        <ProgressCircularComponent
-          data={{ plan: aiTokens.plan, usage: aiTokens.usage }}
-        />
+        {!isNil(aiTokens.plan) && (
+          <ProgressCircularComponent
+            data={{ plan: aiTokens.plan, usage: aiTokens.usage }}
+          />
+        )}
         <div className="flex flex-col gap-2">
           <span className="text-md">
             {t('{usage} of {plan}', {

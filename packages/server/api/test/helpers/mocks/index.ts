@@ -138,11 +138,8 @@ export const createMockPlan = (plan?: Partial<ProjectPlan>): ProjectPlan => {
         projectId: plan?.projectId ?? apId(),
         name: plan?.name ?? faker.lorem.word(),
         aiTokens: plan?.aiTokens ?? 0,
-        minimumPollingInterval: plan?.minimumPollingInterval ?? 0,
-        connections: plan?.connections ?? 0,
         pieces: plan?.pieces ?? [],
         piecesFilterType: plan?.piecesFilterType ?? PiecesFilterType.NONE,
-        teamMembers: plan?.teamMembers ?? 0,
         tasks: plan?.tasks ?? 0,
     }
 }
