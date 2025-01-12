@@ -1,5 +1,14 @@
 import { useMutation } from '@tanstack/react-query';
-import { createContext, useContext, useCallback, useState, useEffect, useRef } from 'react';
+import { useReactFlow } from '@xyflow/react';
+import {
+  createContext,
+  useContext,
+  useCallback,
+  useState,
+  useEffect,
+  useRef,
+} from 'react';
+import { usePrevious } from 'react-use';
 import { create, useStore } from 'zustand';
 
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -38,8 +47,6 @@ import {
   CanvasShortcutsProps,
 } from './flow-canvas/context-menu/canvas-context-menu';
 import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
-import { usePrevious } from 'react-use';
-import { useReactFlow } from '@xyflow/react';
 import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
 
 const flowUpdatesQueue = new PromiseQueue();
@@ -672,11 +679,15 @@ export const useFocusedFailedStep = () => {
   const currentRun = useBuilderStateContext((state) => state.run);
   const previousRun = usePrevious(currentRun);
   const { fitView } = useReactFlow();
-  if ((currentRun && previousRun?.id !== currentRun.id && isFlowStateTerminal(currentRun.status)) ||
+  if (
+    (currentRun &&
+      previousRun?.id !== currentRun.id &&
+      isFlowStateTerminal(currentRun.status)) ||
     (currentRun &&
       previousRun &&
       !isFlowStateTerminal(previousRun.status) &&
-      isFlowStateTerminal(currentRun.status))) {
+      isFlowStateTerminal(currentRun.status))
+  ) {
     const failedStep = currentRun.steps
       ? flowRunUtils.findFailedStepInOutput(currentRun.steps)
       : null;
@@ -686,9 +697,12 @@ export const useFocusedFailedStep = () => {
       });
     }
   }
-}
+};
 
-export const useResizeCanvas = (containerRef: React.RefObject<HTMLDivElement>,setHasCanvasBeenInitialised: (hasCanvasBeenInitialised: boolean) => void) => {
+export const useResizeCanvas = (
+  containerRef: React.RefObject<HTMLDivElement>,
+  setHasCanvasBeenInitialised: (hasCanvasBeenInitialised: boolean) => void,
+) => {
   const containerSizeRef = useRef({
     width: 0,
     height: 0,
@@ -717,4 +731,4 @@ export const useResizeCanvas = (containerRef: React.RefObject<HTMLDivElement>,se
       resizeObserver.disconnect();
     };
   }, [setViewport, getViewport]);
-}
+};

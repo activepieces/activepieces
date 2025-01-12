@@ -8,12 +8,7 @@ import {
   useKeyPress,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import React, {
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import {
   ActionType,
@@ -38,11 +33,14 @@ import {
   ContextMenuType,
 } from './context-menu/canvas-context-menu';
 import { FlowDragLayer } from './flow-drag-layer';
-import { flowUtilConsts, SELECTION_RECT_CHEVRON_ATTRIBUTE, STEP_CONTEXT_MENU_ATTRIBUTE } from './utils/consts';
+import {
+  flowUtilConsts,
+  SELECTION_RECT_CHEVRON_ATTRIBUTE,
+  STEP_CONTEXT_MENU_ATTRIBUTE,
+} from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { AboveFlowWidgets } from './widgets';
-import {  useShowChevronNextToSelection } from './widgets/selection-chevron-button';
-
+import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
 
 const getChildrenKey = (step: Step) => {
   switch (step.type) {
@@ -120,11 +118,11 @@ export const FlowCanvas = React.memo(
     });
     const containerRef = useRef<HTMLDivElement>(null);
     const { actionsToPaste, fetchClipboardOperations } =
-     usePasteActionsInClipboard();
-     useShowChevronNextToSelection();
-     useFocusedFailedStep();
-     useHandleKeyPressOnCanvas();
-     useResizeCanvas(containerRef,setHasCanvasBeenInitialised);
+      usePasteActionsInClipboard();
+    useShowChevronNextToSelection();
+    useFocusedFailedStep();
+    useHandleKeyPressOnCanvas();
+    useResizeCanvas(containerRef, setHasCanvasBeenInitialised);
     const storeApi = useStoreApi();
     const isShiftKeyPressed = useKeyPress('Shift');
     const inGrabPanningMode = !isShiftKeyPressed && panningMode === 'grab';
@@ -163,8 +161,12 @@ export const FlowCanvas = React.memo(
             selectStepByName(stepName);
             storeApi.getState().addSelectedNodes([stepName]);
           }
-          const targetIsSelectionChevron = ev.target.closest(`[data-${SELECTION_RECT_CHEVRON_ATTRIBUTE}]`);
-          const targetIsSelectionRect = ev.target.classList.contains(NODE_SELECTION_RECT_CLASS_NAME)
+          const targetIsSelectionChevron = ev.target.closest(
+            `[data-${SELECTION_RECT_CHEVRON_ATTRIBUTE}]`,
+          );
+          const targetIsSelectionRect = ev.target.classList.contains(
+            NODE_SELECTION_RECT_CLASS_NAME,
+          );
           if (
             stepElement ||
             targetIsSelectionRect ||
@@ -280,4 +282,3 @@ export const FlowCanvas = React.memo(
 );
 
 FlowCanvas.displayName = 'FlowCanvas';
-
