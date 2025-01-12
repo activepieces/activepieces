@@ -12,7 +12,6 @@ const PlanData: React.FC<PlanDataProps> = ({
   includedUsers,
   includedTasks,
 }) => {
-
   const dataArray = [
     {
       title: t('Included Team Members'),

@@ -124,7 +124,8 @@ const UsageProgress = ({ value, max }: UsageProgressProps) => {
           {t('Used')}: {formatUtils.formatNumber(value)}{' '}
         </span>
         <span>
-          {t('Limit')}: {!isNil(max) ? formatUtils.formatNumber(max) : t('Unlimited')}{' '}
+          {t('Limit')}:{' '}
+          {!isNil(max) ? formatUtils.formatNumber(max) : t('Unlimited')}{' '}
         </span>
       </div>
       {!isNil(max) && (
