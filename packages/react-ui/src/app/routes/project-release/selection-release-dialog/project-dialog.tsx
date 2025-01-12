@@ -18,9 +18,7 @@ import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -138,17 +136,19 @@ export function ProjectSelectionDialog({
                         <SelectValue placeholder={t('Project')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>{t('Project')}</SelectLabel>
-                          {projects?.map(
-                            (project) =>
-                              project.id !== projectId && (
-                                <SelectItem key={project.id} value={project.id}>
-                                  {project.displayName}
-                                </SelectItem>
-                              ),
-                          )}
-                        </SelectGroup>
+                        {projects && projects.length > 1 ? (
+                          projects
+                            .filter((project) => project.id !== projectId)
+                            .map((project) => (
+                              <SelectItem key={project.id} value={project.id}>
+                                {project.displayName}
+                              </SelectItem>
+                            ))
+                        ) : (
+                          <SelectItem disabled value="1">
+                            {t('No projects available')}
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />

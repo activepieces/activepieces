@@ -257,14 +257,14 @@ function AppConnectionsPage() {
         const isPlatformConnection = row.original.scope === 'PLATFORM';
         return (
           <div className="flex items-center gap-2 justify-end">
-            <RenameConnectionDialog
-              connectionId={row.original.id}
-              currentName={row.original.displayName}
-              onRename={() => {
-                refetch();
-              }}
-            >
-              <Tooltip>
+            <Tooltip>
+              <RenameConnectionDialog
+                connectionId={row.original.id}
+                currentName={row.original.displayName}
+                onRename={() => {
+                  refetch();
+                }}
+              >
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
@@ -278,14 +278,14 @@ function AppConnectionsPage() {
                     <Pencil className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>
-                  {userPlatformRole !== PlatformRole.ADMIN &&
-                  !userHasPermissionToWriteAppConnection
-                    ? t('Permission needed')
-                    : t('Rename')}
-                </TooltipContent>
-              </Tooltip>
-            </RenameConnectionDialog>
+              </RenameConnectionDialog>
+              <TooltipContent>
+                {userPlatformRole !== PlatformRole.ADMIN &&
+                !userHasPermissionToWriteAppConnection
+                  ? t('Permission needed')
+                  : t('Rename')}
+              </TooltipContent>
+            </Tooltip>
 
             <ReconnectButtonDialog
               hasPermission={

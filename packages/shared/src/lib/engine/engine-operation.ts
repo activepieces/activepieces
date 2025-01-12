@@ -37,7 +37,7 @@ export type BaseEngineOperation = {
     projectId: ProjectId
     engineToken: string
     internalApiUrl: string
-    publicUrl: string
+    publicApiUrl: string
 }
 
 export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'> & {
@@ -202,4 +202,5 @@ export enum EngineResponseStatus {
     OK = 'OK',
     ERROR = 'ERROR',
     TIMEOUT = 'TIMEOUT',
+    MEMORY_ISSUE = 'MEMORY_ISSUE',
 }

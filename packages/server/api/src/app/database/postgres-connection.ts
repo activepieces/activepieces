@@ -1,4 +1,5 @@
 import { TlsOptions } from 'node:tls'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
@@ -21,7 +22,6 @@ import { AddDatasourcesLimit1695916063833 } from '../ee/database/migrations/post
 import { AddPlatform1697717995884 } from '../ee/database/migrations/postgres/1697717995884-add-platform'
 import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
 import { system } from '../helper/system/system'
-import { AppSystemProp } from '../helper/system/system-prop'
 import { commonProperties } from './database-connection'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
@@ -169,8 +169,11 @@ import { AddProjectRelationInUserInvitation1732790412900 } from './migration/pos
 import { CreateProjectReleaseTable1734418823028 } from './migration/postgres/1734418823028-CreateProjectReleaseTable'
 import { RemoveWorkerType1734439097357 } from './migration/postgres/1734439097357-RemoveWorkerType'
 import { AddCopilotSettings1734479886363 } from './migration/postgres/1734479886363-AddCopilotSettings'
+import { AddPlatformBilling1734971881345 } from './migration/postgres/1734971881345-AddPlatformBilling'
 import { AddExternalIdForFlow1735262417593 } from './migration/postgres/1735262417593-AddExternalIdForFlow'
 import { AddEnvironmentsEnabled1735267452262 } from './migration/postgres/1735267452262-AddEnvironmentsEnabled'
+import { AddUserIdentity1735590074879 } from './migration/postgres/1735590074879-AddUserIdentity'
+import { RemoveUnusedProjectBillingFields1736607721367 } from './migration/postgres/1736607721367-RemoveUnusedProjectBillingFields'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -286,6 +289,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddCopilotSettings1734479886363,
         AddExternalIdForFlow1735262417593,
         AddEnvironmentsEnabled1735267452262,
+        AddUserIdentity1735590074879,
     ]
 
     const edition = system.getEdition()
@@ -361,8 +365,9 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 MigrateAuditEventSchema1723489038729,
                 AddAiTokensForProjectPlan1726446092010,
                 AddAuditLogIndicies1731711188507,
+                AddPlatformBilling1734971881345,
                 CreateProjectReleaseTable1734418823028,
-
+                RemoveUnusedProjectBillingFields1736607721367,
             )
             break
         case ApEdition.COMMUNITY:

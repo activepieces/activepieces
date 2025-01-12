@@ -49,7 +49,7 @@ export const platformMustBeOwnedByCurrentUser: onRequestAsyncHookHandler =
             return
         }
 
-        const user = await userService.getMetaInfo({
+        const user = await userService.getOneOrFail({
             id: request.principal.id,
         })
 

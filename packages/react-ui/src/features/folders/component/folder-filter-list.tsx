@@ -311,6 +311,12 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                       </FormMessage>
                     )}
                     <DialogFooter>
+                      <Button
+                        variant={'outline'}
+                        onClick={() => setIsDialogOpen(false)}
+                      >
+                        {t('Cancel')}
+                      </Button>
                       <Button type="submit" loading={isPending}>
                         {t('Confirm')}
                       </Button>

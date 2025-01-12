@@ -52,7 +52,7 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
       return (
         <div className="text-left">
           {formatUtils.formatNumber(row.original.usage.tasks)} /{' '}
-          {formatUtils.formatNumber(row.original.plan.tasks)}
+          {row.original.plan.tasks ? formatUtils.formatNumber(row.original.plan.tasks) : t('Unlimited')}
         </div>
       );
     },

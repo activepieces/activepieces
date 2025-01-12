@@ -503,9 +503,13 @@ const shortcutHandler = (
       !!shortcut.withShift === event.shiftKey,
   );
   if (shortcutActivated) {
-    event.preventDefault();
+    if (
+      isNil(shortcutActivated[1].shouldNotPreventDefault) ||
+      !shortcutActivated[1].shouldNotPreventDefault
+    ) {
+      event.preventDefault();
+    }
     event.stopPropagation();
-
     handlers[shortcutActivated[0] as keyof CanvasShortcutsProps]();
   }
 };
@@ -545,7 +549,10 @@ export const useHandleKeyPressOnCanvas = () => {
         );
         shortcutHandler(e, {
           Copy: () => {
-            if (selectedNodesWithoutTrigger.length > 0) {
+            if (
+              selectedNodesWithoutTrigger.length > 0 &&
+              document.getSelection()?.toString() === ''
+            ) {
               copySelectedNodes({
                 selectedNodes: selectedNodesWithoutTrigger,
                 flowVersion,
