@@ -27,7 +27,8 @@ export const askOpenAI = createAction({
         'The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.',
       refreshers: [],
       defaultValue: 'gpt-3.5-turbo',
-      options: async ({ auth }) => {
+      options: async (values) => {
+        const auth = values.auth as {apiKey:string , baseURL:string};
         if (!auth) {
           return {
             disabled: true,
@@ -37,7 +38,8 @@ export const askOpenAI = createAction({
         }
         try {
           const openai = new OpenAI({
-            apiKey: auth as string,
+            apiKey: auth.apiKey,
+            baseURL: auth.baseURL
           });
           const response = await openai.models.list();
           // We need to get only LLM models
@@ -122,7 +124,8 @@ export const askOpenAI = createAction({
       memoryKey: z.string().max(128).optional(),
     });
     const openai = new OpenAI({
-      apiKey: auth,
+      apiKey: auth.apiKey,
+      baseURL: auth.baseURL
     });
     const {
       model,
