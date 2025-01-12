@@ -23,41 +23,53 @@ const removeNonFormProps = (obj: object): any => {
     return objectCopy as CodePropertyMap;
   };
   
-  const extractPropsFromCode = (codeString: string) => {
 
-     // Find the start and end of props object
-     const startIndex = codeString.indexOf('props:');
-     if (startIndex === -1) {return null;}
- 
+  const extractPropsStringFromCode = (codeString: string) => {
+    const codeConstStringMatch = codeString.match(/\bconst\s+code\s*=\s*\{/g);
+    if (isNil(codeConstStringMatch)) {return null;}
+    const position = codeString.indexOf(codeConstStringMatch[0]);
+    const codeStringAfterCodeConst = codeString.slice(position + codeConstStringMatch[0].length-1);
+    const propsStringStartIndex = codeStringAfterCodeConst.indexOf('props:');
+    if (propsStringStartIndex === -1) {return null;}
+    return codeStringAfterCodeConst.slice(propsStringStartIndex + 'props:'.length);
+  }
+  const ensureStringIsJsJson = (propsString: string) => {
      let braceCount = 0;
      let foundStart = false;
-     let propsString = '';
-     
-     // Iterate through the string character by character
-     for (let i = startIndex + 5; i < codeString.length; i++) {
-         const char = codeString[i];
-         
-         if (char === '{' && !foundStart) {
-             foundStart = true;
-         }
-         
-         if (foundStart) {
-             propsString += char;
-             if (char === '{') {braceCount++;}
-             if (char === '}') {braceCount--;}
-             
-             // When we've found the matching closing brace, we're done
-             if (braceCount === 0) break;
-         }
+     let foundEnd = false;
+     const jsJsonString = propsString.split('').reduce((result,char)=>{
+      if (char === '{' && !foundStart) {
+          foundStart = true;
+      }
+      if (foundStart && !foundEnd) {
+          result += char;
+          if (char === '{') {braceCount++;}
+          if (char === '}') {braceCount--;}
+          foundEnd = braceCount === 0;
+      }
+      return result;
+     },'');
+     if(!foundEnd)
+     {
+      return null;
      }
+     return jsJsonString;
+  }
+  const extractPropsFromCode = (codeString: string) => {
+
+    const codePropsString = extractPropsStringFromCode(codeString);
+    if (isNil(codePropsString)) {return null;}
+    const propsValueString = ensureStringIsJsJson(codePropsString);
+    if (isNil(propsValueString)) {return null;}
      try {
+      
          // Use Function constructor instead of eval for better scoping
-         const rawProps = (new Function('return ' + propsString))();
+         const rawProps = (new Function('return ' + propsValueString))();
          if (typeof rawProps !== 'object' || isEmpty(rawProps)) return null;
          const props = removeNonFormProps(rawProps);
          return props as CodePropertyMap;
      } catch (error) {
-         console.error('Failed to parse props:', error);
+         console.error(`Failed to parse ${codePropsString}`, error);
          return null;
      }
 
