@@ -1,7 +1,7 @@
 import {
     ApplicationEvent,
 } from '@activepieces/ee-shared'
-import { networkUtls, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { AppSystemProp, networkUtils, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     apId,
     Cursor,
@@ -19,7 +19,6 @@ import { AuditEventParam } from '../../helper/application-events'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -41,7 +40,7 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
                 platformId: request.principal.platform.id,
                 projectId: request.principal.projectId,
                 userId,
-                ip: networkUtls.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+                ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
             }, params, log)
         })(), log)
     },

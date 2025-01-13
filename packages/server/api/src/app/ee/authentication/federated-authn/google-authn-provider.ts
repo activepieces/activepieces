@@ -1,9 +1,10 @@
 import {
     assertNotEqual,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import jwksClient from 'jwks-rsa'
-import { flagService } from '../../../flags/flag.service'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
+import { federatedAuthnService } from './federated-authn-service'
 
 const JWKS_URI = 'https://www.googleapis.com/oauth2/v3/certs'
 
@@ -13,14 +14,14 @@ const keyLoader = jwksClient({
     jwksUri: JWKS_URI,
 })
 
-export const googleAuthnProvider = {
+export const googleAuthnProvider = (log: FastifyBaseLogger) => ({
     async getLoginUrl(params: GetLoginUrlParams): Promise<string> {
-        const { clientId, hostname, platformId } = params
+        const { clientId, platformId } = params
         const loginUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
         loginUrl.searchParams.set('client_id', clientId)
         loginUrl.searchParams.set(
             'redirect_uri',
-            flagService.getThirdPartyRedirectUrl(hostname, platformId),
+            await federatedAuthnService(log).getThirdPartyRedirectUrl(platformId),
         )
         loginUrl.searchParams.set('scope', 'email profile')
         loginUrl.searchParams.set('response_type', 'code')
@@ -31,9 +32,9 @@ export const googleAuthnProvider = {
     async authenticate(
         params: AuthenticateParams,
     ): Promise<FebderatedAuthnIdToken> {
-        const { clientId, clientSecret, authorizationCode, hostname, platformId } = params
+        const { clientId, clientSecret, authorizationCode, platformId } = params
         const idToken = await exchangeCodeForIdToken(
-            hostname,
+            log,
             platformId,
             clientId,
             clientSecret,
@@ -41,10 +42,10 @@ export const googleAuthnProvider = {
         )
         return verifyIdToken(clientId, idToken)
     },
-}
+})
 
 const exchangeCodeForIdToken = async (
-    hostName: string,
+    log: FastifyBaseLogger,
     platformId: string | undefined,
     clientId: string,
     clientSecret: string,
@@ -59,7 +60,7 @@ const exchangeCodeForIdToken = async (
             code,
             client_id: clientId,
             client_secret: clientSecret,
-            redirect_uri: flagService.getThirdPartyRedirectUrl(hostName, platformId),
+            redirect_uri: await federatedAuthnService(log).getThirdPartyRedirectUrl(platformId),
             grant_type: 'authorization_code',
         }),
     })
@@ -103,13 +104,11 @@ type IdTokenPayloadRaw = {
 }
 
 type GetLoginUrlParams = {
-    hostname: string
     clientId: string
     platformId: string | undefined
 }
 
 type AuthenticateParams = {
-    hostname: string
     platformId: string | undefined
     clientId: string
     clientSecret: string

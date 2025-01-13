@@ -110,7 +110,13 @@ const UsageLimitsButton = React.memo(() => {
     </Tooltip>
   );
 });
-const UsageProgress = ({ value, max }: { value: number; max: number }) => {
+
+type UsageProgressProps = {
+  value: number;
+  max: number | undefined | null;
+};
+
+const UsageProgress = ({ value, max }: UsageProgressProps) => {
   return (
     <div className="flex justify-center flex-col gap-0.5  w-full">
       <div className="text-sm text-muted-foreground flex justify-between">
@@ -118,10 +124,13 @@ const UsageProgress = ({ value, max }: { value: number; max: number }) => {
           {t('Used')}: {formatUtils.formatNumber(value)}{' '}
         </span>
         <span>
-          {t('Limit')}: {formatUtils.formatNumber(max)}{' '}
+          {t('Limit')}:{' '}
+          {!isNil(max) ? formatUtils.formatNumber(max) : t('Unlimited')}{' '}
         </span>
       </div>
-      <Progress value={(value / max) * 100} className="h-[5px]" />
+      {!isNil(max) && (
+        <Progress value={(value / max) * 100} className="h-[5px]" />
+      )}
     </div>
   );
 };

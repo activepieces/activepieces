@@ -1,11 +1,12 @@
-import { exceptionHandler } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, isNil, ProjectUsage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { getRedisConnection } from '../../../database/redis-connection'
 import { projectLimitsService } from '../../../ee/project-plan/project-plan.service'
+import { flagService } from '../../../flags/flag.service'
 import { apDayjs } from '../../../helper/dayjs-helper'
 import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-prop'
+import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { userInvitationsService } from '../../../user-invitations/user-invitation.service'
 import { projectMemberService } from '../../project-members/project-member.service'
@@ -46,24 +47,6 @@ export const usageService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async aiTokensExceededLimit(projectId: string, tokensToConsume: number): Promise<boolean> {
-        if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
-            return false
-        }
-
-        try {
-            const projectPlan = await projectLimitsService.getPlanByProjectId(projectId)
-            if (!projectPlan) {
-                return false
-            }
-            const platformId = await projectService.getPlatformId(projectId)
-            return await checkProjectTokensExceeded(projectId, tokensToConsume, projectPlan.aiTokens) || await checkPlatformTokensExceeded(log, platformId, projectId, tokensToConsume)
-        }
-        catch (e) {
-            exceptionHandler.handle(e, log)
-            throw e
-        }
-    },
 
     async tasksExceededLimit(projectId: string): Promise<boolean> {
         if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
@@ -75,9 +58,51 @@ export const usageService = (log: FastifyBaseLogger) => ({
             if (!projectPlan) {
                 return false
             }
-
             const platformId = await projectService.getPlatformId(projectId)
-            return await checkProjectTasksExceeded(projectId, projectPlan.tasks) || await checkPlatformTasksExceeded(log, platformId, projectId)
+            const { consumedProjectUsage, consumedPlatformUsage } = await increaseProjectAndPlatformUsage({ projectId, incrementBy: 0, usageType: BillingUsageType.TASKS })
+            // TODO (@abuaboud) clean once project billing is deprecated
+            const shouldLimitFromProjectPlan = !isNil(projectPlan.tasks) && consumedProjectUsage >= projectPlan.tasks
+            if (flagService.isCloudPlatform(platformId)) {
+                return shouldLimitFromProjectPlan
+            }
+            const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
+            const shouldLimitFromPlatformBilling = !isNil(platformBilling.tasksLimit) && consumedPlatformUsage >= platformBilling.tasksLimit
+            const platform = await platformService.getOneOrThrow(platformId)
+            if (!platform.manageProjectsEnabled) {
+                return shouldLimitFromPlatformBilling
+            }
+            return shouldLimitFromProjectPlan || shouldLimitFromPlatformBilling
+        }
+        catch (e) {
+            exceptionHandler.handle(e, log)
+            return false
+        }
+    },
+
+    async aiTokensExceededLimit(projectId: string, tokensToConsume: number): Promise<boolean> {
+        if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
+            return false
+        }
+
+        try {
+            const projectPlan = await projectLimitsService.getPlanByProjectId(projectId)
+            if (!projectPlan) {
+                return false
+            }
+            const platformId = await projectService.getPlatformId(projectId)
+            const { consumedProjectUsage, consumedPlatformUsage } = await increaseProjectAndPlatformUsage({ projectId, incrementBy: tokensToConsume, usageType: BillingUsageType.AI_TOKENS })
+            // TODO (@abuaboud) clean once project billing is deprecated
+            const shouldLimitFromProjectPlan = !isNil(projectPlan.aiTokens) && consumedProjectUsage >= projectPlan.aiTokens
+            if (flagService.isCloudPlatform(platformId)) {
+                return shouldLimitFromProjectPlan
+            }
+            const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
+            const shouldLimitFromPlatformBilling = !isNil(platformBilling.aiCreditsLimit) && consumedPlatformUsage >= platformBilling.aiCreditsLimit
+            const platform = await platformService.getOneOrThrow(platformId)
+            if (!platform.manageProjectsEnabled) {
+                return shouldLimitFromPlatformBilling
+            }
+            return shouldLimitFromProjectPlan || shouldLimitFromPlatformBilling
         }
         catch (e) {
             exceptionHandler.handle(e, log)
@@ -90,39 +115,6 @@ export const usageService = (log: FastifyBaseLogger) => ({
     getUsage,
 })
 
-async function checkProjectTokensExceeded(projectId: string, tokensToConsume: number, tokenLimit: number): Promise<boolean> {
-    const { consumedProjectUsage: consumedProjectTokens } = await increaseProjectAndPlatformUsage({ projectId, incrementBy: tokensToConsume, usageType: BillingUsageType.AI_TOKENS })
-    return consumedProjectTokens >= tokenLimit
-}
-
-async function checkPlatformTokensExceeded(log: FastifyBaseLogger, platformId: string, projectId: string, tokensToConsume: number): Promise<boolean> {
-    if (edition !== ApEdition.CLOUD) {
-        return false
-    }
-    const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
-    const { consumedPlatformUsage: consumedPlatformTokens } = await increaseProjectAndPlatformUsage({ projectId, incrementBy: tokensToConsume, usageType: BillingUsageType.AI_TOKENS })
-    if (isNil(platformBilling.aiCreditsLimit)) {
-        return false
-    }
-    return consumedPlatformTokens >= platformBilling.aiCreditsLimit
-}
-
-async function checkProjectTasksExceeded(projectId: string, taskLimit: number): Promise<boolean> {
-    const { consumedProjectUsage: consumedProjectTasks } = await increaseProjectAndPlatformUsage({ projectId, incrementBy: 0, usageType: BillingUsageType.TASKS })
-    return consumedProjectTasks >= taskLimit
-}
-
-async function checkPlatformTasksExceeded(log: FastifyBaseLogger, platformId: string, projectId: string): Promise<boolean> {
-    if (edition !== ApEdition.CLOUD) {
-        return false
-    }
-    const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
-    const { consumedPlatformUsage: consumedPlatformTasks } = await increaseProjectAndPlatformUsage({ projectId, incrementBy: 0, usageType: BillingUsageType.TASKS })
-    if (isNil(platformBilling.tasksLimit)) {
-        return false
-    }
-    return consumedPlatformTasks >= platformBilling.tasksLimit
-}
 
 async function increaseProjectAndPlatformUsage({ projectId, incrementBy, usageType }: { projectId: string, incrementBy: number, usageType: BillingUsageType }): Promise<{ consumedProjectUsage: number, consumedPlatformUsage: number }> {
     const edition = system.getEdition()
@@ -154,6 +146,7 @@ async function getUsage(entityId: string, entityType: BillingEntityType, startBi
     const value = await redisConnection.get(redisKey)
     return Number(value) || 0
 }
+
 
 function getCurrentBillingPeriodStart(): string {
     return apDayjs().startOf('month').toISOString()

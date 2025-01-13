@@ -1,3 +1,4 @@
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -14,11 +15,10 @@ import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
+import { projectService } from '../../project/project-service'
 import { fileService } from '../file.service'
 import { s3Helper } from '../s3-helper'
 import { stepFileService } from './step-file.service'
-
 
 const useS3SignedUrls = system.getBoolean(AppSystemProp.S3_USE_SIGNED_URLS)
 
@@ -48,12 +48,13 @@ export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/', UpsertStepFileRequest, async (request) => {
+        const platformId = await projectService.getPlatformId(request.principal.projectId)
         return stepFileService(request.log).saveAndEnrich({
             fileName: request.body.fileName,
             flowId: request.body.flowId,
             stepName: request.body.stepName,
             data: request.body.file?.data as Buffer | undefined,
-            hostname: request.hostname,
+            platformId,
             projectId: request.principal.projectId,
             contentLength: request.body.contentLength,
         })

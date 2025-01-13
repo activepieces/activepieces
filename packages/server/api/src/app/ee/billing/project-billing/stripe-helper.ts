@@ -1,5 +1,5 @@
 import { getTasksPriceId } from '@activepieces/ee-shared'
-import { exceptionHandler } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
 import {
     ApEdition,
     ApEnvironment,
@@ -13,7 +13,6 @@ import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-prop'
 import { usageService } from '../../platform-billing/usage/usage-service'
 import { projectBillingService } from './project-billing.service'
 export const stripeWebhookSecret = system.get(

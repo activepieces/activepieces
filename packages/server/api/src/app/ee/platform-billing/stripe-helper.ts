@@ -1,10 +1,10 @@
 import { getTasksPriceId } from '@activepieces/ee-shared'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, assertNotNullOrUndefined, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
 import { platformBillingService } from './platform-billing.service'
 import { usageService } from './usage/usage-service'
 

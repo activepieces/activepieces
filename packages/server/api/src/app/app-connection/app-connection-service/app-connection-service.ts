@@ -1,4 +1,4 @@
-import { exceptionHandler, UserInteractionJobType } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, UserInteractionJobType } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEnvironment,
@@ -31,7 +31,6 @@ import { distributedLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
 import {
     getPiecePackageWithoutArchive,
     pieceMetadataService,

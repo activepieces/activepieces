@@ -1,16 +1,15 @@
-import { WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApFlagId, isNil, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
-import { flagService } from '../../flags/flag.service'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { system } from '../../helper/system/system'
 import { platformService } from '../../platform/platform.service'
 import { platformUtils } from '../../platform/platform.utils'
+import { federatedAuthnService } from '../authentication/federated-authn/federated-authn-service'
+import { domainHelper } from '../custom-domains/domain-helper'
 import { appearanceHelper } from '../helper/appearance-helper'
 
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {
-        const modifiedFlags = { ...flags }
-        const hostUrl = resolveHostUrl(request.hostname)
+        const modifiedFlags: Record<string, string | boolean | number | Record<string, unknown>> = { ...flags }
         const platformId = await platformUtils.getPlatformIdForRequest(request)
         if (isNil(platformId)) {
             const edition = system.getEdition()
@@ -40,26 +39,24 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
         modifiedFlags[ApFlagId.SHOW_BILLING] = false
         modifiedFlags[ApFlagId.PROJECT_LIMITS_ENABLED] = true
         modifiedFlags[ApFlagId.CLOUD_AUTH_ENABLED] = platform.cloudAuthEnabled
-        modifiedFlags[ApFlagId.FRONTEND_URL] = `${hostUrl}`
-        modifiedFlags[ApFlagId.SAML_AUTH_ACS_URL] = `${hostUrl}/api/v1/authn/saml/acs`
+        modifiedFlags[ApFlagId.PUBLIC_URL] = await domainHelper.getPublicUrl({
+            path: '',
+            platformId,
+        })
+        modifiedFlags[ApFlagId.SAML_AUTH_ACS_URL] = await domainHelper.getInternalApiUrl({
+            path: '/v1/authn/saml/acs',
+            platformId,
+        })
         modifiedFlags[
             ApFlagId.WEBHOOK_URL_PREFIX
-        ] = `${hostUrl}/api/v1/webhooks`
-        modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] =
-            flagService.getThirdPartyRedirectUrl(request.hostname, platformId)
+        ] = await domainHelper.getPublicApiUrl({
+            path: '/v1/webhooks',
+            platformId,
+        })
+        modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] = await federatedAuthnService(request.log).getThirdPartyRedirectUrl(platformId)
         modifiedFlags[ApFlagId.OWN_AUTH2_ENABLED] = false
         return modifiedFlags
     },
 }
-function resolveHostUrl(hostname: string): string {
-    const edition = system.getEdition()
-    if (edition === ApEdition.CLOUD) {
-        return `https://${hostname}`
-    }
-    const frontendUrl = system.getOrThrow(WorkerSystemProp.FRONTEND_URL)
-    return removeTrailingSlash(frontendUrl)
-}
 
-function removeTrailingSlash(url: string): string {
-    return url.endsWith('/') ? url.slice(0, -1) : url
-}
+

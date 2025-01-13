@@ -64,7 +64,7 @@ async function createInitialBilling(user: User, projectId: string, log: FastifyB
         id: apId(),
         projectId,
         includedTasks: DEFAULT_FREE_PLAN_LIMIT.tasks,
-        includedUsers: DEFAULT_FREE_PLAN_LIMIT.teamMembers,
+        includedUsers: 10000000,
         stripeCustomerId,
     })
     return projectBillingRepo().save(billing)

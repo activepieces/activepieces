@@ -7,7 +7,7 @@ import { ActivepiecesError, BeginExecuteFlowOperation, EngineResponseStatus, Err
 import chalk from 'chalk'
 import { FastifyBaseLogger } from 'fastify'
 
-type EngineConstants = 'publicUrl' | 'internalApiUrl' | 'engineToken'
+type EngineConstants = 'publicApiUrl' | 'internalApiUrl' | 'engineToken'
 
 export type CodeArtifact = {
     name: string

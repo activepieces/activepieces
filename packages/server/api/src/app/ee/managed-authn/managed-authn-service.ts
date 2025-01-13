@@ -94,9 +94,6 @@ const updateProjectLimits = async (
     const projectPlan = await projectLimitsService.getPlanByProjectId(projectId)
     await projectLimitsService.upsert({
         nickname: projectPlan?.name ?? DEFAULT_PLATFORM_LIMIT.nickname,
-        teamMembers: projectPlan?.teamMembers ?? DEFAULT_PLATFORM_LIMIT.teamMembers,
-        connections: projectPlan?.connections ?? DEFAULT_PLATFORM_LIMIT.connections,
-        minimumPollingInterval: projectPlan?.minimumPollingInterval ?? DEFAULT_PLATFORM_LIMIT.minimumPollingInterval,
         tasks: tasks ?? projectPlan?.tasks ?? DEFAULT_PLATFORM_LIMIT.tasks,
         aiTokens: aiTokens ?? projectPlan?.aiTokens ?? DEFAULT_PLATFORM_LIMIT.aiTokens,
         pieces,
