@@ -1,4 +1,5 @@
 import { t } from 'i18next';
+
 import { Button } from '@/components/ui/button';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -28,9 +29,7 @@ type RequestTrialProps = {
   customButton?: React.ReactNode;
 };
 
-export const RequestTrial = ({
-  featureKey,
-}: RequestTrialProps) => {
+export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
   const currentUser = authenticationSession.getCurrentUser();
   const { data: flags } = flagsHooks.useFlags();
 
@@ -40,9 +39,9 @@ export const RequestTrial = ({
       lastName: currentUser?.lastName || '',
       email: currentUser?.email || '',
       featureKey,
-      flags: btoa(JSON.stringify(flags))
+      flags: btoa(JSON.stringify(flags)),
     };
-    
+
     return Object.entries(params)
       .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
       .join('&');
@@ -53,13 +52,9 @@ export const RequestTrial = ({
       // `https://www.activepieces.com/sales?${createQueryParams()}`,
       'http://localhost:3001/sales?' + createQueryParams(),
       '_blank',
-      'noopener noreferrer'
+      'noopener noreferrer',
     );
   };
 
-  return (
-    <Button onClick={handleClick}>
-      {t('Contact Sales')}
-    </Button>
-  );
+  return <Button onClick={handleClick}>{t('Contact Sales')}</Button>;
 };
