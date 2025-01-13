@@ -131,7 +131,6 @@ export const createProductAction = createAction({
 			unit,
 			tax,
 			active_flag: isActive,
-			owner_id: ownerId,
 			prices: [
 				{
 					price: price ?? 0,
@@ -142,6 +141,11 @@ export const createProductAction = createAction({
 			],
 			visible_to: visibleTo,
 		};
+
+		if(ownerId)
+		{
+			productDefaultFields.owner_id = ownerId;
+		}
 
 		const productCustomFields: Record<string, any> = {};
 
