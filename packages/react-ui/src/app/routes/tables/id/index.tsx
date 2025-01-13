@@ -14,7 +14,7 @@ import {
   RefreshCw,
   Trash2,
 } from 'lucide-react';
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import DataGrid, {
   Column,
   RenderCellProps,
@@ -439,22 +439,19 @@ function TablePage() {
     setSelectedRows(newSelectedRows);
   }
 
-  const handleScroll = useCallback(
-    ({ currentTarget }: React.UIEvent<HTMLDivElement>) => {
-      const target = currentTarget;
-      const scrollPosition = target.scrollTop + target.clientHeight;
-      const scrollThreshold = target.scrollHeight - 500; // Load more when 500px from bottom
+  const handleScroll = ({ currentTarget }: React.UIEvent<HTMLDivElement>) => {
+    const target = currentTarget;
+    const scrollPosition = target.scrollTop + target.clientHeight;
+    const scrollThreshold = target.scrollHeight - 500; // Load more when 500px from bottom
 
-      if (
-        scrollPosition > scrollThreshold &&
-        hasNextPage &&
-        !isFetchingNextPage
-      ) {
-        fetchNextPage();
-      }
-    },
-    [fetchNextPage, hasNextPage, isFetchingNextPage],
-  );
+    if (
+      scrollPosition > scrollThreshold &&
+      hasNextPage &&
+      !isFetchingNextPage
+    ) {
+      fetchNextPage();
+    }
+  };
 
   function mapRecordsToRows(
     pages: typeof recordsPages,
