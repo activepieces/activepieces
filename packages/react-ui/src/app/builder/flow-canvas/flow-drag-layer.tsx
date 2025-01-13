@@ -1,8 +1,6 @@
 import {
-  CollisionDetection,
   DndContext,
   DragEndEvent,
-  DragMoveEvent,
   DragOverlay,
   DragStartEvent,
   PointerSensor,
@@ -11,7 +9,9 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
+import { useViewport } from '@xyflow/react';
 import { t } from 'i18next';
+import { useCallback, useState } from 'react';
 
 import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
 import {
@@ -24,10 +24,6 @@ import { useBuilderStateContext } from '../builder-hooks';
 
 import StepDragOverlay from './step-drag-overlay';
 import { ApButtonData } from './utils/types';
-import { useViewport } from '@xyflow/react';
-import { useCallback, useState } from 'react';
-
-
 
 const FlowDragLayer = ({
   children,
@@ -36,7 +32,7 @@ const FlowDragLayer = ({
 }: {
   children: React.ReactNode;
   lefSideBarContainerWidth: number;
-  cursorPosition: {x:number,y:number};
+  cursorPosition: { x: number; y: number };
 }) => {
   const { toast } = useToast();
   const viewport = useViewport();
@@ -46,41 +42,42 @@ const FlowDragLayer = ({
     applyOperation,
     flowVersion,
     activeDraggingStep,
-    setAllowCanvasPanning,
   ] = useBuilderStateContext((state) => [
     state.setActiveDraggingStep,
     state.applyOperation,
     state.flowVersion,
     state.activeDraggingStep,
-    state.setAllowCanvasPanning,
   ]);
 
-const fixCursorSnapOffset = useCallback((args:Parameters<typeof rectIntersection>[0]) => {
-// Bail out if keyboard activated
-if (!args.pointerCoordinates) {
-  return rectIntersection(args);
-} 
-const { x, y } = args.pointerCoordinates;
-const { width, height } = args.collisionRect;
-const deltaViewport = {
-  x: previousViewPort.x - viewport.x,
-  y: previousViewPort.y - viewport.y,
-}
-const updated = {
-  ...args,
-  // The collision rectangle is broken when using snapCenterToCursor. Reset
-  // the collision rectangle based on pointer location and overlay size.
-  collisionRect: {
-    width,
-    height,
-    bottom: y + height / 2 + deltaViewport.y,
-    left: x - width / 2 + deltaViewport.x,
-    right: x + width / 2 + deltaViewport.x,
-    top: y - height / 2 + deltaViewport.y,
-  },
-};
-return rectIntersection(updated);
-}, [viewport.x, viewport.y,previousViewPort.x,previousViewPort.y])
+  const fixCursorSnapOffset = useCallback(
+    (args: Parameters<typeof rectIntersection>[0]) => {
+      // Bail out if keyboard activated
+      if (!args.pointerCoordinates) {
+        return rectIntersection(args);
+      }
+      const { x, y } = args.pointerCoordinates;
+      const { width, height } = args.collisionRect;
+      const deltaViewport = {
+        x: previousViewPort.x - viewport.x,
+        y: previousViewPort.y - viewport.y,
+      };
+      const updated = {
+        ...args,
+        // The collision rectangle is broken when using snapCenterToCursor. Reset
+        // the collision rectangle based on pointer location and overlay size.
+        collisionRect: {
+          width,
+          height,
+          bottom: y + height / 2 + deltaViewport.y,
+          left: x - width / 2 + deltaViewport.x,
+          right: x + width / 2 + deltaViewport.x,
+          top: y - height / 2 + deltaViewport.y,
+        },
+      };
+      return rectIntersection(updated);
+    },
+    [viewport.x, viewport.y, previousViewPort.x, previousViewPort.y],
+  );
   const draggedStep = activeDraggingStep
     ? flowStructureUtil.getStep(activeDraggingStep, flowVersion.trigger)
     : undefined;
@@ -96,7 +93,6 @@ return rectIntersection(updated);
 
   const handleDragEnd = (e: DragEndEvent) => {
     setActiveDraggingStep(null);
-    setAllowCanvasPanning(true);
     if (
       e.over &&
       e.over.data.current &&
@@ -163,7 +159,7 @@ return rectIntersection(updated);
         collisionDetection={fixCursorSnapOffset}
       >
         {children}
-        <DragOverlay  dropAnimation={{ duration: 0 }}></DragOverlay>
+        <DragOverlay dropAnimation={{ duration: 0 }}></DragOverlay>
       </DndContext>
 
       {draggedStep && (

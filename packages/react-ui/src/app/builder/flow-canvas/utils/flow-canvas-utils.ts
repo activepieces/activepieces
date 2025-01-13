@@ -80,7 +80,7 @@ const createStepGraph: (
       step,
     },
     selectable: step.name !== 'trigger',
-    draggable:true,
+    draggable: true,
     style: {
       pointerEvents: 'all',
     },
