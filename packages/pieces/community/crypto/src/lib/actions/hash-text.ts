@@ -15,6 +15,7 @@ export const hashText = createAction({
           { label: 'MD5', value: 'md5' },
           { label: 'SHA256', value: 'sha256' },
           { label: 'SHA512', value: 'sha512' },
+          { label: 'SHA3-512', value: 'sha3-512' },
         ],
       },
     }),
