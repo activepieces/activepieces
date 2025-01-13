@@ -19,6 +19,7 @@ import { updateLeadAction } from './lib/actions/update-lead';
 import { createDealAction } from './lib/actions/create-deal';
 import { updateDealAction } from './lib/actions/update-deal';
 import { createProductAction } from './lib/actions/create-product';
+import { addProdictToDealAction } from './lib/actions/add-product-to-deal';
 
 export const pipedriveAuth = PieceAuth.OAuth2({
 	description: '',
@@ -37,6 +38,7 @@ export const pipedrive = createPiece({
 	categories: [PieceCategory.SALES_AND_CRM],
 	auth: pipedriveAuth,
 	actions: [
+		addProdictToDealAction,
 		createDealAction,
 		updateDealAction,
 		createLeadAction,

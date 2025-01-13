@@ -9,6 +9,31 @@ import {
 } from '@activepieces/pieces-framework';
 import { GetField } from './types';
 
+export async function fetchProductsOptions(
+	auth: PiecePropValueSchema<typeof pipedriveAuth>,
+): Promise<DropdownOption<number>[]> {
+	const products = await pipedrivePaginatedApiCall<{ id: number; name: string }>({
+		accessToken: auth.access_token,
+		apiDomain: auth.data['api_domain'],
+		method: HttpMethod.GET,
+		resourceUri: '/products',
+		query: {
+			sort: 'update_time DESC',
+		},
+	});
+
+	const options: DropdownOption<number>[] = [];
+	for (const product of products) {
+		options.push({
+			label: product.name,
+			value: product.id,
+		});
+	}
+
+	return options;
+}
+
+
 export async function fetchDealsOptions(
 	auth: PiecePropValueSchema<typeof pipedriveAuth>,
 ): Promise<DropdownOption<number>[]> {
