@@ -82,7 +82,7 @@ export const common = {
     search?: {
       parent?: string;
       createdTime?: string | number | Date;
-      createdTimeOp?: string;
+      createdTimeOperator?: string;
       includeTeamDrive?: boolean;
     },
     order?: string
@@ -96,7 +96,7 @@ export const common = {
     if (search?.parent) q.push(`'${search.parent}' in parents`);
     if (search?.createdTime)
       q.push(
-        `createdTime ${search.createdTimeOp ?? '>'} '${dayjs(
+        `createdTime ${search.createdTimeOperator ?? '>'} '${dayjs(
           search.createdTime
         ).format()}'`
       );
@@ -117,7 +117,7 @@ export const common = {
     search?: {
       parent?: string;
       createdTime?: string | number | Date;
-      createdTimeOp?: string;
+      createdTimeOperator?: string;
     },
     order?: string
   ) {
@@ -125,7 +125,7 @@ export const common = {
     if (search?.parent) q.push(`'${search.parent}' in parents`);
     if (search?.createdTime)
       q.push(
-        `createdTime ${search.createdTimeOp ?? '>'} '${dayjs(
+        `createdTime ${search.createdTimeOperator ?? '>'} '${dayjs(
           search.createdTime
         ).format()}'`
       );

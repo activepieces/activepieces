@@ -49,7 +49,7 @@ export const oneDriveCommon = {
     search?: {
       parentFolder?: string;
       createdTime?: string | number | Date;
-      createdTimeOp?: string;
+      createdTimeOperator?: string;
     }
   ) {
     let url = `${this.baseUrl}/items/root/children?$filter=folder eq null`;
@@ -79,7 +79,7 @@ export const oneDriveCommon = {
       return files.filter((file) => {
         const fileDate = dayjs(file.createdDateTime);
         const comparison =
-          search.createdTimeOp === '<'
+          search.createdTimeOperator === '<'
             ? fileDate.isBefore(compareDate)
             : fileDate.isAfter(compareDate);
         return comparison;

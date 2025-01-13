@@ -15,7 +15,10 @@ import { googleDriveAuth } from '../..';
 import { common } from '../common';
 import { downloadFileFromDrive } from '../common/get-file-content';
 
-const polling: Polling<
+
+// I didn't enforce the orderBy to always be createdTime desc because it probably will break the polling previously working
+const getPolling = (isTesting: boolean) => {
+  const polling: Polling<
   PiecePropValueSchema<typeof googleDriveAuth>,
   { parentFolder?: any; include_team_drives?: boolean }
 > = {
@@ -26,7 +29,7 @@ const polling: Polling<
         parent: propsValue.parentFolder,
         createdTime: lastFetchEpochMS,
         includeTeamDrive: propsValue.include_team_drives,
-      })) ?? [];
+      },isTesting ? 'createdTime desc': undefined)) ?? [];
     const items = currentValues.map((item: any) => ({
       epochMilliSeconds: dayjs(item.createdTime).valueOf(),
       data: item,
@@ -34,6 +37,9 @@ const polling: Polling<
     return items;
   },
 };
+return polling;
+}
+
 
 export const newFile = createTrigger({
   auth: googleDriveAuth,
@@ -52,21 +58,21 @@ export const newFile = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
-    await pollingHelper.onEnable(polling, {
+    await pollingHelper.onEnable(getPolling(false), {
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
     });
   },
   onDisable: async (context) => {
-    await pollingHelper.onDisable(polling, {
+    await pollingHelper.onDisable(getPolling(false), {
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
     });
   },
   run: async (context) => {
-    const newFiles = await pollingHelper.poll(polling, {
+    const newFiles = await pollingHelper.poll(getPolling(false), {
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
@@ -76,7 +82,7 @@ export const newFile = createTrigger({
     return await handleFileContent(newFiles, context)
   },
   test: async (context) => {
-    const newFiles = await pollingHelper.test(polling, {
+    const newFiles = await pollingHelper.test(getPolling(true), {
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
