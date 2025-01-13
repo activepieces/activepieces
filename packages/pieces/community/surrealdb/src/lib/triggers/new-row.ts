@@ -9,55 +9,49 @@ import {
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import crypto from 'crypto';
-import { postgresAuth } from '../..';
-import { pgClient } from '../common';
-import format from 'pg-format';
 import dayjs from 'dayjs';
+import { surrealdbAuth } from '../..';
+import client from '../common';
+import crypto from 'crypto';
 
-type OrderDirection = 'ASC' | 'DESC';
+// replace auth with piece auth variable
 const polling: Polling<
-  PiecePropValueSchema<typeof postgresAuth>,
+  PiecePropValueSchema<typeof surrealdbAuth>,
   {
-    table: {
-      table_schema: string;
-      table_name: string;
-    };
+    table: string;
     order_by: string;
-    order_direction: OrderDirection | undefined;
+    order_direction: 'ASC' | 'DESC' | undefined;
   }
 > = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue, lastItemId }) => {
-    const client = await pgClient(auth);
-    try {
-      const lastItem = lastItemId as string;
-      const query = constructQuery({
-        table: propsValue.table,
-        order_by: propsValue.order_by,
-        lastItem: lastItem,
-        order_direction: propsValue.order_direction,
-      });
-      const result = await client.query(query);
-      const items = result.rows.map(function (row) {
-        const rowHash = crypto
-          .createHash('md5')
-          .update(JSON.stringify(row))
-          .digest('hex');
-        const isTimestamp = dayjs(row[propsValue.order_by]).isValid();
-        const orderValue = isTimestamp
-          ? dayjs(row[propsValue.order_by]).toISOString()
-          : row[propsValue.order_by];
-        return {
-          id: orderValue + '|' + rowHash,
-          data: row,
-        };
-      });
+    const lastItem = lastItemId as string;
+    const query = constructQuery({
+      table: propsValue.table,
+      order_by: propsValue.order_by,
+      lastItem: lastItem,
+      order_direction: propsValue.order_direction,
+    });
+    const authProps = auth as PiecePropValueSchema<typeof surrealdbAuth>;
+    const result = await client.query(authProps, query, {
+      table: propsValue.table,
+    });
+    const items = result.body[0].result.map(function (row) {
+      const rowHash = crypto
+        .createHash('md5')
+        .update(JSON.stringify(row))
+        .digest('hex');
+      const isTimestamp = dayjs(row[propsValue.order_by]).isValid();
+      const orderValue = isTimestamp
+        ? dayjs(row[propsValue.order_by]).toISOString()
+        : row[propsValue.order_by];
+      return {
+        id: orderValue + '|' + rowHash,
+        data: row,
+      };
+    });
 
-      return items;
-    } finally {
-      await client.end();
-    }
+    return items;
   },
 };
 
@@ -67,28 +61,18 @@ function constructQuery({
   lastItem,
   order_direction,
 }: {
-  table: { table_name: string; table_schema: string };
+  table: string;
   order_by: string;
-  order_direction: OrderDirection | undefined;
+  order_direction: 'ASC' | 'DESC' | undefined;
   lastItem: string;
 }): string {
   const lastOrderKey = lastItem ? lastItem.split('|')[0] : null;
   if (lastOrderKey === null) {
     switch (order_direction) {
       case 'ASC':
-        return format(
-          `SELECT * FROM %I.%I ORDER BY %I ASC LIMIT 5`,
-          table.table_schema,
-          table.table_name,
-          order_by
-        );
+        return `SELECT * FROM type::table($table) ORDER BY ${order_by} ASC LIMIT 5`;
       case 'DESC':
-        return format(
-          `SELECT * FROM %I.%I ORDER BY %I DESC LIMIT 5`,
-          table.table_schema,
-          table.table_name,
-          order_by
-        );
+        return `SELECT * FROM type::table($table) ORDER BY ${order_by} DESC LIMIT 5`;
       default:
         throw new Error(
           JSON.stringify({
@@ -100,23 +84,9 @@ function constructQuery({
   } else {
     switch (order_direction) {
       case 'ASC':
-        return format(
-          `SELECT * FROM %I.%I WHERE %I <= %L ORDER BY %I ASC`,
-          table.table_schema,
-          table.table_name,
-          order_by,
-          lastOrderKey,
-          order_by
-        );
+        return `SELECT * FROM $table WHERE ${order_by} <= ${lastOrderKey} ORDER BY ${order_by} ASC`;
       case 'DESC':
-        return format(
-          `SELECT * FROM %I.%I WHERE %I >= %L ORDER BY %I DESC`,
-          table.table_schema,
-          table.table_name,
-          order_by,
-          lastOrderKey,
-          order_by
-        );
+        return `SELECT * FROM $table WHERE ${order_by} >= ${lastOrderKey} ORDER BY ${order_by} DESC`;
       default:
         throw new Error(
           JSON.stringify({
@@ -130,9 +100,8 @@ function constructQuery({
 
 export const newRow = createTrigger({
   name: 'new-row',
-  auth: postgresAuth,
   displayName: 'New Row',
-  description: 'triggered when a new row is added',
+  description: 'Executes when a new row is added to the defined table.',
   props: {
     description: Property.MarkDown({
       value: `**NOTE:** The trigger fetches the latest rows using the provided order by column (newest first), and then will keep polling until the previous last row is reached.`,
@@ -150,25 +119,26 @@ export const newRow = createTrigger({
             placeholder: 'Please authenticate first',
           };
         }
-        const authProps = auth as PiecePropValueSchema<typeof postgresAuth>;
-        const client = await pgClient(authProps);
+        const authProps = auth as PiecePropValueSchema<typeof surrealdbAuth>;
         try {
-          const result = await client.query(
-            `SELECT table_schema, table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE'`
+          const result = await client.query(authProps, 'INFO FOR DB');
+          console.log(result.body[0].result.tables);
+          const options = Object.keys(result.body[0].result.tables).map(
+            (row) => ({
+              label: row,
+              value: row,
+            })
           );
-          const options = result.rows.map((row) => ({
-            label: `${row.table_schema}.${row.table_name}`,
-            value: {
-              table_schema: row.table_schema,
-              table_name: row.table_name,
-            },
-          }));
           return {
             disabled: false,
             options,
           };
-        } finally {
-          await client.end();
+        } catch (e) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: JSON.stringify(e),
+          };
         }
       },
     }),
@@ -194,38 +164,37 @@ export const newRow = createTrigger({
             placeholder: 'Please select a table',
           };
         }
-        const authProps = auth as PiecePropValueSchema<typeof postgresAuth>;
-        const client = await pgClient(authProps);
+        const authProps = auth as PiecePropValueSchema<typeof surrealdbAuth>;
         try {
-          const { table_name, table_schema } = table as {
-            table_schema: string;
-            table_name: string;
+          const args = {
+            table: table as string,
           };
-          const query = `
-                    SELECT column_name
-                    FROM information_schema.columns
-                    WHERE table_schema = $1
-                    AND table_name = $2
-                `;
-          const params = [table_schema, table_name];
-          const result = await client.query(query, params);
+          const query = `SELECT * FROM type::table($table) LIMIT 1`;
+          const result = await client.query(authProps, query, args);
 
-          const options = result.rows.map((f) => {
+          const options = Object.keys(result.body[0].result[0]).map((c) => {
             return {
-              label: f.column_name,
-              value: f.column_name,
+              label: c,
+              value: c,
             };
           });
           return {
             disabled: false,
             options,
           };
-        } finally {
-          await client.end();
+        } catch (e) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: JSON.stringify(e),
+          };
         }
       },
     }),
-    order_direction: Property.StaticDropdown<OrderDirection>({
+    markdown_order_by: Property.MarkDown({
+      value: `**NOTE:** You will need at least one record in the table`,
+    }),
+    order_direction: Property.StaticDropdown({
       displayName: 'Order Direction',
       description:
         'The direction to sort by such that the newest rows are fetched first.',
@@ -247,6 +216,7 @@ export const newRow = createTrigger({
   },
   sampleData: {},
   type: TriggerStrategy.POLLING,
+  auth: surrealdbAuth,
   async test(context) {
     return await pollingHelper.test(polling, context);
   },
