@@ -18,13 +18,14 @@ import { createLeadAction } from './lib/actions/create-lead';
 import { updateLeadAction } from './lib/actions/update-lead';
 import { createDealAction } from './lib/actions/create-deal';
 import { updateDealAction } from './lib/actions/update-deal';
+import { createProductAction } from './lib/actions/create-product';
 
 export const pipedriveAuth = PieceAuth.OAuth2({
 	description: '',
 	authUrl: 'https://oauth.pipedrive.com/oauth/authorize',
 	tokenUrl: 'https://oauth.pipedrive.com/oauth/token',
 	required: true,
-	scope: ['admin', 'contacts:full', 'users:read', 'deals:full', 'activities:full', 'leads:full'],
+	scope: ['admin', 'contacts:full', 'users:read', 'deals:full', 'activities:full', 'leads:full','products:full'],
 });
 
 export const pipedrive = createPiece({
@@ -44,6 +45,7 @@ export const pipedrive = createPiece({
 		updateOrganizationAction,
 		createPersonAction,
 		updatePersonAction,
+		createProductAction,
 		createCustomApiCallAction({
 			baseUrl: () => 'https://api.pipedrive.com/v1',
 			auth: pipedriveAuth,  
