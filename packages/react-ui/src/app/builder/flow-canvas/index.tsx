@@ -221,12 +221,13 @@ export const FlowCanvas = React.memo(
         .getState()
         .addSelectedNodes(selectedSteps.map((step) => step.name));
     }, [selectedNodes, storeApi, selectedStep]);
+    const [cursorPosition,setCursorPosition] = useState({x:0,y:0});
     return (
       <div
         ref={containerRef}
         className="size-full relative overflow-hidden z-50"
       >
-        <FlowDragLayer lefSideBarContainerWidth={lefSideBarContainerWidth}>
+        <FlowDragLayer cursorPosition={cursorPosition} lefSideBarContainerWidth={lefSideBarContainerWidth}>
           <CanvasContextMenu
             selectedNodes={selectedNodes}
             applyOperation={applyOperation}
@@ -253,7 +254,7 @@ export const FlowCanvas = React.memo(
               maxZoom={1.5}
               minZoom={0.5}
               panOnDrag={
-                allowCanvasPanning ? (inGrabPanningMode ? [0, 1] : [1]) : false
+                (inGrabPanningMode ? [0, 1] : [1])
               }
               zoomOnDoubleClick={false}
               panOnScroll={true}
@@ -263,6 +264,9 @@ export const FlowCanvas = React.memo(
               elementsSelectable={true}
               nodesDraggable={false}
               nodesFocusable={false}
+              onNodeDrag={(event)=>{
+                setCursorPosition({x:event.clientX,y:event.clientY});
+              }}
               selectionKeyCode={inGrabPanningMode ? 'Shift' : null}
               multiSelectionKeyCode={inGrabPanningMode ? 'Shift' : null}
               selectionOnDrag={inGrabPanningMode ? false : true}
