@@ -49,8 +49,7 @@ export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
 
   const handleClick = () => {
     window.open(
-      // `https://www.activepieces.com/sales?${createQueryParams()}`,
-      'http://localhost:3001/sales?' + createQueryParams(),
+      `https://www.activepieces.com/sales?${createQueryParams()}`,
       '_blank',
       'noopener noreferrer',
     );
