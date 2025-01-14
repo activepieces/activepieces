@@ -65,6 +65,5 @@ export const surrealdb = createPiece({
   authors: ['maarteNNNN'],
   auth: surrealdbAuth,
   actions: [runQuery],
-  // triggers: [newRow],
-  triggers: [],
+  triggers: [newRow],
 });

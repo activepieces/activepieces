@@ -27,16 +27,19 @@ const polling: Polling<
   items: async ({ auth, propsValue, lastItemId }) => {
     const lastItem = lastItemId as string;
     const query = constructQuery({
-      table: propsValue.table,
       order_by: propsValue.order_by,
       lastItem: lastItem,
       order_direction: propsValue.order_direction,
     });
+
     const authProps = auth as PiecePropValueSchema<typeof surrealdbAuth>;
     const result = await client.query(authProps, query, {
       table: propsValue.table,
     });
-    const items = result.body[0].result.map(function (row) {
+
+    const items = result.body[0].result.map(function (
+      row: Record<string, any>
+    ) {
       const rowHash = crypto
         .createHash('md5')
         .update(JSON.stringify(row))
@@ -56,12 +59,10 @@ const polling: Polling<
 };
 
 function constructQuery({
-  table,
   order_by,
   lastItem,
   order_direction,
 }: {
-  table: string;
   order_by: string;
   order_direction: 'ASC' | 'DESC' | undefined;
   lastItem: string;
@@ -84,9 +85,9 @@ function constructQuery({
   } else {
     switch (order_direction) {
       case 'ASC':
-        return `SELECT * FROM $table WHERE ${order_by} <= ${lastOrderKey} ORDER BY ${order_by} ASC`;
+        return `SELECT * FROM type::table($table) WHERE ${order_by} <= '${lastOrderKey}' ORDER BY ${order_by} ASC`;
       case 'DESC':
-        return `SELECT * FROM $table WHERE ${order_by} >= ${lastOrderKey} ORDER BY ${order_by} DESC`;
+        return `SELECT * FROM type::table($table) WHERE ${order_by} >= '${lastOrderKey}' ORDER BY ${order_by} DESC`;
       default:
         throw new Error(
           JSON.stringify({
@@ -104,7 +105,7 @@ export const newRow = createTrigger({
   description: 'Executes when a new row is added to the defined table.',
   props: {
     description: Property.MarkDown({
-      value: `**NOTE:** The trigger fetches the latest rows using the provided order by column (newest first), and then will keep polling until the previous last row is reached.`,
+      value: `**NOTE:** The trigger fetches the latest rows using the provided order by column (newest first), and then will keep polling until the previous last row is reached. It's suggested to add a created_at timestamp. \`DEFINE FIELD OVERWRITE createdAt ON schedule VALUE time::now() READONLY;\``,
     }),
     table: Property.Dropdown({
       displayName: 'Table name',
@@ -122,7 +123,6 @@ export const newRow = createTrigger({
         const authProps = auth as PiecePropValueSchema<typeof surrealdbAuth>;
         try {
           const result = await client.query(authProps, 'INFO FOR DB');
-          console.log(result.body[0].result.tables);
           const options = Object.keys(result.body[0].result.tables).map(
             (row) => ({
               label: row,
@@ -142,59 +142,16 @@ export const newRow = createTrigger({
         }
       },
     }),
-    order_by: Property.Dropdown({
+    order_by: Property.ShortText({
       displayName: 'Column to order by',
-      description:
-        'Use something like a created timestamp or an auto-incrementing ID.',
+      description: 'Use something like a created timestamp.',
       required: true,
-      refreshers: ['table'],
-      refreshOnSearch: false,
-      options: async ({ auth, table }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Please authenticate first',
-          };
-        }
-        if (!table) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Please select a table',
-          };
-        }
-        const authProps = auth as PiecePropValueSchema<typeof surrealdbAuth>;
-        try {
-          const args = {
-            table: table as string,
-          };
-          const query = `SELECT * FROM type::table($table) LIMIT 1`;
-          const result = await client.query(authProps, query, args);
-
-          const options = Object.keys(result.body[0].result[0]).map((c) => {
-            return {
-              label: c,
-              value: c,
-            };
-          });
-          return {
-            disabled: false,
-            options,
-          };
-        } catch (e) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: JSON.stringify(e),
-          };
-        }
-      },
+      defaultValue: 'created_at',
     }),
     markdown_order_by: Property.MarkDown({
-      value: `**NOTE:** You will need at least one record in the table`,
+      value: `**NOTE:** You will need at least one record in the table. Might not have a key if SCHEMALESS.`,
     }),
-    order_direction: Property.StaticDropdown({
+    order_direction: Property.StaticDropdown<'ASC' | 'DESC'>({
       displayName: 'Order Direction',
       description:
         'The direction to sort by such that the newest rows are fetched first.',
