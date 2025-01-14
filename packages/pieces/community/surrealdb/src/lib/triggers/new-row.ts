@@ -148,9 +148,6 @@ export const newRow = createTrigger({
       required: true,
       defaultValue: 'created_at',
     }),
-    markdown_order_by: Property.MarkDown({
-      value: `**NOTE:** You will need at least one record in the table. Might not have a key if SCHEMALESS.`,
-    }),
     order_direction: Property.StaticDropdown<'ASC' | 'DESC'>({
       displayName: 'Order Direction',
       description:
