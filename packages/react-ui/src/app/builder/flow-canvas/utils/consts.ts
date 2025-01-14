@@ -102,4 +102,5 @@ export const flowUtilConsts = {
 };
 
 export const STEP_CONTEXT_MENU_ATTRIBUTE = 'step-context-menu';
+export const SELECTION_RECT_CHEVRON_ATTRIBUTE = 'selection-rect-chevron';
 export const EMPTY_STEP_PARENT_NAME = 'empty-step-parent';
