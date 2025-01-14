@@ -53,10 +53,10 @@ export class EngineConstants {
         public readonly resumePayload?: ResumePayload,
     ) {
         if (!publicApiUrl.endsWith('/api/')) {
-            throw new Error('Public URL must end with a slash')
+            throw new Error('Public URL must end with a slash, got: ' + publicApiUrl)
         }
         if (!internalApiUrl.endsWith('/')) {
-            throw new Error('Internal API URL must end with a slash')
+            throw new Error('Internal API URL must end with a slash, got: ' + internalApiUrl)
         }
     }
 
