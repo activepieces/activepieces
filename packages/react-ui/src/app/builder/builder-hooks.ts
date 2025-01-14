@@ -88,7 +88,6 @@ export type BuilderState = {
   selectedStep: string | null;
   canExitRun: boolean;
   activeDraggingStep: string | null;
-  allowCanvasPanning: boolean;
   saving: boolean;
   /** change this value to trigger the step form to set its values from the step */
   refreshStepFormSettingsToggle: boolean;
@@ -109,7 +108,6 @@ export type BuilderState = {
   removeStepSelection: () => void;
   selectStepByName: (stepName: string) => void;
   startSaving: () => void;
-  setAllowCanvasPanning: (allowCanvasPanning: boolean) => void;
   setActiveDraggingStep: (stepName: string | null) => void;
   setFlow: (flow: PopulatedFlow) => void;
   setSampleData: (stepName: string, payload: unknown) => void;
@@ -198,7 +196,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       selectedStep: initiallySelectedStep,
       canExitRun: initialState.canExitRun,
       activeDraggingStep: null,
-      allowCanvasPanning: true,
       rightSidebar:
         initiallySelectedStep &&
         (initiallySelectedStep !== 'trigger' ||
@@ -213,10 +210,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           rightSidebar: RightSideBarType.NONE,
           selectedBranchIndex: null,
         }),
-      setAllowCanvasPanning: (allowCanvasPanning: boolean) =>
-        set({
-          allowCanvasPanning,
-        }),
+    
       setActiveDraggingStep: (stepName: string | null) =>
         set({
           activeDraggingStep: stepName,
