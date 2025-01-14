@@ -291,7 +291,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddExternalIdForFlow1735262417593,
         AddEnvironmentsEnabled1735267452262,
         AddUserIdentity1735590074879,
-        RenameGitRepoPermission1736813103505
+        RenameGitRepoPermission1736813103505,
     ]
 
     const edition = system.getEdition()
