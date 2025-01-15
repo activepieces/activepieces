@@ -210,7 +210,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           rightSidebar: RightSideBarType.NONE,
           selectedBranchIndex: null,
         }),
-    
+
       setActiveDraggingStep: (stepName: string | null) =>
         set({
           activeDraggingStep: stepName,

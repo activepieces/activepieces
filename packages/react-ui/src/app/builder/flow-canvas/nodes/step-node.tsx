@@ -178,7 +178,6 @@ const ApStepCanvasNode = React.memo(
           },
         )}
         onClick={(e) => handleStepClick(e)}
-    
         key={step.name}
         ref={openPieceSelector ? null : setNodeRef}
         {...(!openPieceSelector ? attributes : {})}
