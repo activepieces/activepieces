@@ -1,5 +1,14 @@
 import { useMutation } from '@tanstack/react-query';
-import { createContext, useContext, useCallback, useState } from 'react';
+import { useReactFlow } from '@xyflow/react';
+import {
+  createContext,
+  useContext,
+  useCallback,
+  useState,
+  useEffect,
+  useRef,
+} from 'react';
+import { usePrevious } from 'react-use';
 import { create, useStore } from 'zustand';
 
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -19,6 +28,7 @@ import {
   isNil,
   StepLocationRelativeToParent,
   Action,
+  isFlowStateTerminal,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
@@ -37,6 +47,7 @@ import {
   CanvasShortcutsProps,
 } from './flow-canvas/context-menu/canvas-context-menu';
 import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
+import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -77,7 +88,6 @@ export type BuilderState = {
   selectedStep: string | null;
   canExitRun: boolean;
   activeDraggingStep: string | null;
-  allowCanvasPanning: boolean;
   saving: boolean;
   /** change this value to trigger the step form to set its values from the step */
   refreshStepFormSettingsToggle: boolean;
@@ -98,7 +108,6 @@ export type BuilderState = {
   removeStepSelection: () => void;
   selectStepByName: (stepName: string) => void;
   startSaving: () => void;
-  setAllowCanvasPanning: (allowCanvasPanning: boolean) => void;
   setActiveDraggingStep: (stepName: string | null) => void;
   setFlow: (flow: PopulatedFlow) => void;
   setSampleData: (stepName: string, payload: unknown) => void;
@@ -187,7 +196,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       selectedStep: initiallySelectedStep,
       canExitRun: initialState.canExitRun,
       activeDraggingStep: null,
-      allowCanvasPanning: true,
       rightSidebar:
         initiallySelectedStep &&
         (initiallySelectedStep !== 'trigger' ||
@@ -202,10 +210,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           rightSidebar: RightSideBarType.NONE,
           selectedBranchIndex: null,
         }),
-      setAllowCanvasPanning: (allowCanvasPanning: boolean) =>
-        set({
-          allowCanvasPanning,
-        }),
+
       setActiveDraggingStep: (stepName: string | null) =>
         set({
           activeDraggingStep: stepName,
@@ -535,7 +540,7 @@ export const useHandleKeyPressOnCanvas = () => {
     state.readonly,
   ]);
 
-  return useCallback(
+  const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (
         e.target instanceof HTMLElement &&
@@ -614,6 +619,11 @@ export const useHandleKeyPressOnCanvas = () => {
       readonly,
     ]
   );
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 };
 
 export const useSwitchToDraft = () => {
@@ -657,4 +667,62 @@ export const usePasteActionsInClipboard = () => {
     }
   };
   return { actionsToPaste, fetchClipboardOperations };
+};
+
+export const useFocusedFailedStep = () => {
+  const currentRun = useBuilderStateContext((state) => state.run);
+  const previousRun = usePrevious(currentRun);
+  const { fitView } = useReactFlow();
+  if (
+    (currentRun &&
+      previousRun?.id !== currentRun.id &&
+      isFlowStateTerminal(currentRun.status)) ||
+    (currentRun &&
+      previousRun &&
+      !isFlowStateTerminal(previousRun.status) &&
+      isFlowStateTerminal(currentRun.status))
+  ) {
+    const failedStep = currentRun.steps
+      ? flowRunUtils.findFailedStepInOutput(currentRun.steps)
+      : null;
+    if (failedStep) {
+      setTimeout(() => {
+        fitView(flowCanvasUtils.createFocusStepInGraphParams(failedStep));
+      });
+    }
+  }
+};
+
+export const useResizeCanvas = (
+  containerRef: React.RefObject<HTMLDivElement>,
+  setHasCanvasBeenInitialised: (hasCanvasBeenInitialised: boolean) => void,
+) => {
+  const containerSizeRef = useRef({
+    width: 0,
+    height: 0,
+  });
+  const { getViewport, setViewport } = useReactFlow();
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const resizeObserver = new ResizeObserver((entries) => {
+      const { width, height } = entries[0].contentRect;
+      setHasCanvasBeenInitialised(true);
+      const { x, y, zoom } = getViewport();
+      if (containerRef.current && width !== containerSizeRef.current.width) {
+        const newX = x + (width - containerSizeRef.current.width) / 2;
+        // Update the viewport to keep content centered without affecting zoom
+        setViewport({ x: newX, y, zoom });
+      }
+      // Adjust x/y values based on the new size and keep the same zoom level
+      containerSizeRef.current = {
+        width,
+        height,
+      };
+    });
+    resizeObserver.observe(containerRef.current);
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [setViewport, getViewport]);
 };
