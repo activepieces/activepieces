@@ -1,6 +1,7 @@
 import {
 	AuthenticationType,
 	httpClient,
+	HttpError,
 	HttpMessageBody,
 	HttpMethod,
 	HttpRequest,
@@ -87,8 +88,24 @@ export async function pipedriveApiCall<T extends HttpMessageBody>({
 		body,
 	};
 
-	const response = await httpClient.sendRequest<T>(request);
-	return response.body;
+	try
+	{
+
+		const response = await httpClient.sendRequest<T>(request);
+		return response.body;
+	}
+	catch(error)
+	{
+		if(error instanceof HttpError)
+		{
+			if(error.response.status === 403)
+			{
+				throw new Error("Please reconnect your Pipedrive account.");
+			}
+		}
+		throw error;
+	}
+
 }
 
 export async function pipedrivePaginatedApiCall<T extends HttpMessageBody>({
