@@ -133,14 +133,14 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
 
         const connection = {
             displayName,
-            status: AppConnectionStatus.ERROR,
+            status: existingConnection?.status ?? AppConnectionStatus.ERROR,
             externalId,
             pieceName,
             value: encryptUtils.encryptObject({}),
-            type: AppConnectionType.CUSTOM_AUTH,
+            type: existingConnection?.type ?? AppConnectionType.CUSTOM_AUTH,
             id: existingConnection?.id ?? apId(),
-            scope: AppConnectionScope.PROJECT,
-            projectIds: [projectId],
+            scope: existingConnection?.scope ?? AppConnectionScope.PROJECT,
+            projectIds: existingConnection?.projectIds ?? [projectId],
             platformId,
         }
 
