@@ -14,7 +14,8 @@ export const extractStructuredDataAction = createAction({
 			required: true,
 			refreshers: [],
 			defaultValue: 'gpt-3.5-turbo',
-			options: async ({ auth }) => {
+			options: async (values) => {
+				const auth = values.auth as {apiKey:string , baseURL:string};
 				if (!auth) {
 					return {
 						disabled: true,
@@ -24,7 +25,8 @@ export const extractStructuredDataAction = createAction({
 				}
 				try {
 					const openai = new OpenAI({
-						apiKey: auth as string,
+						apiKey: auth.apiKey,
+						baseURL: auth.baseURL,
 					});
 					const response = await openai.models.list();
 					// We need to get only LLM models
@@ -105,7 +107,8 @@ export const extractStructuredDataAction = createAction({
 		}
 		const prompt = 'Extract the following data from the provided text'
 		const openai = new OpenAI({
-			apiKey: context.auth,
+			apiKey: context.auth.apiKey,
+			baseURL: context.auth.baseURL,
 		});
 
 		const response = await openai.chat.completions.create({

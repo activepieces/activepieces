@@ -99,7 +99,8 @@ export const visionPrompt = createAction({
     });
 
     const openai = new OpenAI({
-      apiKey: auth,
+      apiKey: auth.apiKey,
+      baseURL: auth.baseURL
     });
     const { temperature, maxTokens, topP, frequencyPenalty, presencePenalty } =
       propsValue;
