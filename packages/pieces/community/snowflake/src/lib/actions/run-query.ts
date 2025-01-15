@@ -1,19 +1,22 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import snowflake from 'snowflake-sdk';
+import snowflake, { Statement, SnowflakeError } from 'snowflake-sdk';
 import { snowflakeAuth } from '../../index';
+
+type QueryResult = unknown[] | undefined;
 
 const DEFAULT_APPLICATION_NAME = 'ActivePieces';
 const DEFAULT_QUERY_TIMEOUT = 30000;
 
-export const runQuery = createAction({
-  name: 'runQuery',
-  displayName: 'Run Query',
-  description: 'Run Query',
+export const runQueries = createAction({
+  name: 'runQueries',
+  displayName: 'Run Queries',
+  description: 'Run Queries',
   auth: snowflakeAuth,
   props: {
-    sqlText: Property.ShortText({
-      displayName: 'SQL query',
-      description: 'Use :1, :2… or ? placeholders to use binding parameters.',
+    sqlTexts: Property.Array({
+      displayName: 'SQL queries',
+      description:
+        'Array of SQL queries to execute in order, in the same transaction. Use :1, :2… or ? placeholders to use binding parameters.',
       required: true,
     }),
     binds: Property.Array({
@@ -52,29 +55,82 @@ export const runQuery = createAction({
       account,
     });
 
-    return new Promise((resolve, reject) => {
-      connection.connect(function (err, conn) {
+    return new Promise<QueryResult>((resolve, reject) => {
+      connection.connect(function (err: SnowflakeError | undefined) {
         if (err) {
           reject(err);
+          return;
         }
-      });
 
-      const { sqlText, binds } = context.propsValue;
-
-      connection.execute({
-        sqlText,
-        binds: binds as snowflake.Binds,
-        complete: (err, stmt, rows) => {
-          if (err) {
-            reject(err);
-          }
-          connection.destroy((err, conn) => {
+        connection.execute({
+          sqlText: 'BEGIN',
+          complete: (err: SnowflakeError | undefined) => {
             if (err) {
               reject(err);
+              return;
             }
+            executeQueriesSequentially();
+          },
+        });
+
+        const { sqlTexts, binds } = context.propsValue;
+        let lastQueryResult: QueryResult = [];
+
+        function handleError(err: SnowflakeError) {
+          connection.execute({
+            sqlText: 'ROLLBACK',
+            complete: () => {
+              connection.destroy(() => {
+                reject(err);
+              });
+            },
           });
-          resolve(rows);
-        },
+        }
+
+        async function executeQueriesSequentially() {
+          try {
+            for (const sqlText of sqlTexts) {
+              lastQueryResult = await new Promise<QueryResult>(
+                (resolveQuery, rejectQuery) => {
+                  connection.execute({
+                    sqlText: sqlText as string,
+                    binds: binds as snowflake.Binds,
+                    complete: (
+                      err: SnowflakeError | undefined,
+                      stmt: Statement,
+                      rows: QueryResult
+                    ) => {
+                      if (err) {
+                        rejectQuery(err);
+                        return;
+                      }
+                      resolveQuery(rows);
+                    },
+                  });
+                }
+              );
+            }
+
+            connection.execute({
+              sqlText: 'COMMIT',
+              complete: (err: SnowflakeError | undefined) => {
+                if (err) {
+                  handleError(err);
+                  return;
+                }
+                connection.destroy((err: SnowflakeError | undefined) => {
+                  if (err) {
+                    reject(err);
+                    return;
+                  }
+                  resolve(lastQueryResult);
+                });
+              },
+            });
+          } catch (err) {
+            handleError(err as SnowflakeError); // Reject with the original error!
+          }
+        }
       });
     });
   },
