@@ -8,6 +8,7 @@ export const updateRecordAction = createAction({
 	displayName: 'Update a Record',
 	description: 'Updates an existing record with the given Record ID.',
 	props: {
+		version: nocodbCommon.version,
 		workspaceId: nocodbCommon.workspaceId,
 		baseId: nocodbCommon.baseId,
 		tableId: nocodbCommon.tableId,
@@ -18,7 +19,7 @@ export const updateRecordAction = createAction({
 		tableColumns: nocodbCommon.tableColumns,
 	},
 	async run(context) {
-		const { tableId, recordId, tableColumns } = context.propsValue;
+		const { tableId, recordId, tableColumns, version } = context.propsValue;
 		const recordInput: DynamicPropsValue = {
 			Id: recordId,
 		};
@@ -32,6 +33,6 @@ export const updateRecordAction = createAction({
 		});
 
 		const client = makeClient(context.auth);
-		return await client.updateRecord(tableId, recordInput);
+		return await client.updateRecord(tableId, recordInput, Number(version));
 	},
 });

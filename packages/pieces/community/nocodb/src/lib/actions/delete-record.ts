@@ -8,6 +8,7 @@ export const deleteRecordAction = createAction({
 	displayName: 'Delete a Record',
 	description: 'Deletes a record with the given Record ID.',
 	props: {
+		version: nocodbCommon.version,
 		workspaceId: nocodbCommon.workspaceId,
 		baseId: nocodbCommon.baseId,
 		tableId: nocodbCommon.tableId,
@@ -17,9 +18,9 @@ export const deleteRecordAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { tableId, recordId } = context.propsValue;
+		const { tableId, recordId, version } = context.propsValue;
 
 		const client = makeClient(context.auth);
-		return await client.deleteRecord(tableId, recordId);
+		return await client.deleteRecord(tableId, recordId, Number(version));
 	},
 });
