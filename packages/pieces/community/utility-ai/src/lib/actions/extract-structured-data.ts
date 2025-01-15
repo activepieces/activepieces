@@ -11,7 +11,7 @@ import Ajv from 'ajv';
 export const extractStructuredData = createAction({
   name: 'extractStructuredData',
   displayName: 'Extract Structured Data',
-  description: 'Extract structured data from provided text or image.',
+  description: 'Extract structured data from provided text,image or PDF.',
   props: {
     provider: aiProps('function').provider,
     model: aiProps('function').model,
@@ -21,8 +21,8 @@ export const extractStructuredData = createAction({
       required: false,
     }),
     image: Property.File({
-      displayName: 'Image',
-      description: 'Image to extract structured data from.',
+      displayName: 'Image/PDF',
+      description: 'Image or PDF to extract structured data from.',
       required: false,
     }),
     prompt: Property.LongText({
@@ -131,7 +131,7 @@ export const extractStructuredData = createAction({
     const schema = context.propsValue.schama;
 
     if (!text && !image) {
-      throw new Error('Please provide text or image to extract data from.');
+      throw new Error('Please provide text or image/PDF to extract data from.');
     }
 
     const ai = AI({ provider, server: context.server });
@@ -165,7 +165,7 @@ export const extractStructuredData = createAction({
 
     const functionCalling = ai?.function?.call;
     if (!functionCalling) {
-      throw new Error(`Model ${model} does not support image generation.`);
+      throw new Error(`Model ${model} does not support iextract structured data.`);
     }
 
     const messages = [{
