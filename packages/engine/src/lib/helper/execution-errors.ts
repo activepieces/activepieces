@@ -44,20 +44,20 @@ export class StorageLimitError extends ExecutionError {
     public maxStorageSizeInBytes: number
 
     constructor(key: string, maxStorageSizeInBytes: number, cause?: unknown) {
-        super('StorageLimitError', formatMessage(`Failed to read/write key "${key}", the value you are trying to read/write is larger than ${Math.floor(maxStorageSizeInBytes)} MB`), ExecutionErrorType.USER, cause)
+        super('StorageLimitError', formatMessage(`Failed to read/write key "${key}" from/to storage, the value you are trying to read/write is larger than ${Math.floor(maxStorageSizeInBytes)} MB`), ExecutionErrorType.USER, cause)
         this.maxStorageSizeInBytes = maxStorageSizeInBytes
     }
 }
 
 export class StorageInvalidKeyError extends ExecutionError {
     constructor(key: string, cause?: unknown) {
-        super('StorageInvalidKeyError', formatMessage(`Failed to read/write key "${key}", the key is empty or longer than ${STORE_KEY_MAX_LENGTH} characters`), ExecutionErrorType.USER, cause)
+        super('StorageInvalidKeyError', formatMessage(`Failed to read/write key "${key}" from/to storage, the key is empty or longer than ${STORE_KEY_MAX_LENGTH} characters`), ExecutionErrorType.USER, cause)
     }
 }
 
 export class StorageError extends ExecutionError {
     constructor(key: string, cause?: unknown) {
-        super('StorageError', formatMessage(`Failed to read/write key "${key}" due to ${JSON.stringify(cause)}`), ExecutionErrorType.ENGINE, cause)
+        super('StorageError', formatMessage(`Failed to read/write key "${key}" from/to storage due to ${JSON.stringify(cause)}`), ExecutionErrorType.ENGINE, cause)
     }
 }
 
