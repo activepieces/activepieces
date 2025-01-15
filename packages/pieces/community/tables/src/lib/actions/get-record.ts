@@ -2,20 +2,24 @@ import { createAction, PieceAuth, Property } from '@activepieces/pieces-framewor
 import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 
-export const deleteRecord = createAction({
-  name: 'tables-delete-record',
-  displayName: 'Delete Record',
-  description: 'Delete a record in a table',
+export const getRecord = createAction({
+  name: 'tables-get-record',
+  displayName: 'Get Record',
+  description: 'Get single record by its id.',
   auth: PieceAuth.None(),
   props: {
     table_name: tablesCommon.table_name,
-    record_id: tablesCommon.record_id,
+    record_id: Property.ShortText({
+      displayName: 'Record ID',
+      description: 'The ID of the record to get.',
+      required: true,
+    }),
   },
   async run(context) {
     const { record_id } = context.propsValue;
 
-    await httpClient.sendRequest({
-      method: HttpMethod.DELETE,
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
       url: `${context.server.apiUrl}v1/records/${record_id}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
@@ -23,8 +27,6 @@ export const deleteRecord = createAction({
       },
     });
 
-    return {
-      success: true
-    };
+    return response.body;
   },
 });

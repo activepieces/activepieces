@@ -10,11 +10,7 @@ export const updateRecord = createAction({
   auth: PieceAuth.None(),
   props: {
     table_name: tablesCommon.table_name,
-    record_id: Property.ShortText({
-      displayName: 'Record ID',
-      description: 'The ID of the record to update.',
-      required: true,
-    }),
+    record_id: tablesCommon.record_id,
     values: Property.DynamicProperties({
       displayName: 'Values',
       description: 'The values to update. Leave empty to keep current value.',

@@ -3,16 +3,16 @@ import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@ac
 import { CreateRecordsRequest } from '@activepieces/shared';
 import { tablesCommon } from '../common';
 
-export const insertRecords = createAction({
-  name: 'tables-insert-records',
-  displayName: 'Insert Records',
-  description: 'Add one or more new records to a table.',
+export const createRecords = createAction({
+  name: 'tables-create-records',
+  displayName: 'Create Record(s)',
+  description: 'Insert one or more new records to a table.',
   auth: PieceAuth.None(),
   props: {
     table_name: tablesCommon.table_name,
     values: Property.DynamicProperties({
-      displayName: 'Values',
-      description: 'The values to insert.',
+      displayName: 'Records',
+      description: 'The records to create.',
       required: true,
       refreshers: ['table_name'],
       props: async ({ table_name }, context) => {

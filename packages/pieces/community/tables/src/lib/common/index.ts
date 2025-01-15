@@ -44,6 +44,12 @@ export const tablesCommon = {
     },
   }),
 
+  record_id: Property.ShortText({
+    displayName: 'Record ID',
+    description: 'The ID of the record to do the action on.',
+    required: true,
+  }),
+
   async getTableFields({ tableId, context }: { tableId: string, context: { server: { apiUrl: string, token: string } } }) {
     const fieldsResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,

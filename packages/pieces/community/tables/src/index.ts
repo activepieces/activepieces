@@ -1,8 +1,9 @@
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
-import { insertRecords } from "./lib/actions/insert-records";
+import { createRecords } from "./lib/actions/create-records";
 import { PieceCategory } from "@activepieces/shared";
 import { deleteRecord } from "./lib/actions/delete-record";
 import { updateRecord } from "./lib/actions/update-record";
+import { getRecord } from "./lib/actions/get-record";
 
 export const tables = createPiece({
   displayName: 'Tables',
@@ -11,6 +12,6 @@ export const tables = createPiece({
   minimumSupportedRelease: '0.36.1',
   authors: ['amrdb'],
   auth: PieceAuth.None(),
-  actions: [insertRecords, deleteRecord, updateRecord],
+  actions: [createRecords, deleteRecord, updateRecord, getRecord],
   triggers: [],
 });
