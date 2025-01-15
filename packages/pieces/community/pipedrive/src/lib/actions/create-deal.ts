@@ -67,7 +67,7 @@ export const createDealAction = createAction({
 			options: async ({ auth }) => {
 				if (!auth) {
 					return {
-						placeholder: 'please connect your account.',
+						placeholder: 'Please connect your account.',
 						disabled: true,
 						options: [],
 					};
