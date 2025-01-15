@@ -356,7 +356,7 @@ const routes = [
     path: '/settings/environments',
     element: (
       <DashboardContainer>
-        <RoutePermissionGuard permission={Permission.READ_GIT_REPO}>
+        <RoutePermissionGuard permission={Permission.READ_PROJECT_RELEASE}>
           <ProjectSettingsLayout>
             <PageTitle title="Environments">
               <EnvironmentPage />
