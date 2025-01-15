@@ -47,7 +47,7 @@ function hasSkippedParent(stepName: string, trigger: Trigger): boolean {
       (p) =>
         (p.type === ActionType.LOOP_ON_ITEMS || p.type === ActionType.ROUTER) &&
         flowStructureUtil.isChildOf(p, stepName) &&
-        p.skip
+        p.skip,
     );
   return skippedParents.length > 0;
 }
@@ -56,7 +56,7 @@ function getStepStatus(
   stepName: string | undefined,
   run: FlowRun | null,
   loopIndexes: Record<string, number>,
-  flowVersion: FlowVersion
+  flowVersion: FlowVersion,
 ) {
   if (!run || !stepName || !run.steps) {
     return undefined;
@@ -65,7 +65,7 @@ function getStepStatus(
     stepName,
     loopIndexes,
     run.steps,
-    flowVersion.trigger
+    flowVersion.trigger,
   );
   return stepOutput?.status;
 }
@@ -75,7 +75,7 @@ const StepActionWrapper = React.memo(
     return (
       <div className="flex items-center gap-2 cursor-pointer">{children}</div>
     );
-  }
+  },
 );
 
 StepActionWrapper.displayName = 'StepActionWrapper';
@@ -150,7 +150,7 @@ const ApStepCanvasNode = React.memo(
       !isSkipped;
 
     const handleStepClick = (
-      e: React.MouseEvent<HTMLDivElement, MouseEvent>
+      e: React.MouseEvent<HTMLDivElement, MouseEvent>,
     ) => {
       const { name } = data.step!;
       selectStepByName(name);
@@ -175,7 +175,7 @@ const ApStepCanvasNode = React.memo(
             'border-none': isDragging,
             'shadow-none': isDragging,
             'bg-accent/90': isSkipped,
-          }
+          },
         )}
         onClick={(e) => handleStepClick(e)}
         key={step.name}
@@ -197,7 +197,7 @@ const ApStepCanvasNode = React.memo(
             {
               'border-t-[3px] border-primary border-solid':
                 isSelected && !isDragging,
-            }
+            },
           )}
         ></div>
         <div className="px-3 h-full w-full  overflow-hidden">
@@ -270,7 +270,7 @@ const ApStepCanvasNode = React.memo(
                                   button: 2,
                                   clientX: e.clientX,
                                   clientY: e.clientY,
-                                }
+                                },
                               );
                               e.target.dispatchEvent(rightClickEvent);
                             }
@@ -342,7 +342,7 @@ const ApStepCanvasNode = React.memo(
         </div>
       </div>
     );
-  }
+  },
 );
 
 ApStepCanvasNode.displayName = 'ApStepCanvasNode';
