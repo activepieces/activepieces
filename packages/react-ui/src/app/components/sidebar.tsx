@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/tooltip';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
 import { ApFlagId, supportUrl } from '@activepieces/shared';
 
 import { ShowPoweredBy } from '../../components/show-powered-by';
@@ -106,7 +105,6 @@ export function Sidebar({
     ApFlagId.SHOW_COMMUNITY,
   );
   const { platform } = platformHooks.useCurrentPlatform();
-  const projectId = authenticationSession.getProjectId();
   const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
   return (
     <div>
@@ -116,11 +114,7 @@ export function Sidebar({
             <ScrollArea>
               <nav className="flex flex-col items-center h-screen  sm:py-5  gap-5 p-2 ">
                 <Link
-                  to={
-                    isHomeDashboard
-                      ? `/projects/${projectId}${defaultRoute}`
-                      : '/platform'
-                  }
+                  to={isHomeDashboard ? defaultRoute : '/platform'}
                   className="h-[48px] items-center justify-center "
                 >
                   <Tooltip>

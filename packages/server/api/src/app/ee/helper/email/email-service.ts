@@ -1,14 +1,14 @@
 import { AlertChannel, OtpType } from '@activepieces/ee-shared'
-import { ApEdition, assertNotNullOrUndefined, InvitationType, User, UserInvitation } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, InvitationType, UserIdentity, UserInvitation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { alertsService } from '../../alerts/alerts-service'
+import { domainHelper } from '../../custom-domains/domain-helper'
 import { issuesService } from '../../issues/issues-service'
 import { projectRoleService } from '../../project-role/project-role.service'
-import { platformDomainHelper } from '../platform-domain-helper'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 
 const EDITION = system.getEdition()
@@ -111,19 +111,19 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async sendOtp({ platformId, user, otp, type }: SendOtpArgs): Promise<void> {
+    async sendOtp({ platformId, userIdentity, otp, type }: SendOtpArgs): Promise<void> {
         if (EDITION_IS_NOT_PAID) {
             return
         }
 
-        if (user.verified && type === OtpType.EMAIL_VERIFICATION) {
+        if (userIdentity.verified && type === OtpType.EMAIL_VERIFICATION) {
             return
         }
 
         log.info('Sending OTP email', {
-            email: user.email,
+            email: userIdentity.email,
             otp,
-            userId: user.id,
+            identityId: userIdentity.id,
             type,
         })
 
@@ -132,9 +132,9 @@ export const emailService = (log: FastifyBaseLogger) => ({
             [OtpType.PASSWORD_RESET]: 'reset-password',
         }
 
-        const setupLink = await platformDomainHelper.constructUrlFrom({
+        const setupLink = await domainHelper.getPublicUrl({
             platformId,
-            path: frontendPath[type] + `?otpcode=${otp}&userId=${user.id}`,
+            path: frontendPath[type] + `?otpcode=${otp}&identityId=${userIdentity.id}`,
         })
 
         const otpToTemplate: Record<string, EmailTemplateData> = {
@@ -153,7 +153,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
         }
 
         await emailSender(log).send({
-            emails: [user.email],
+            emails: [userIdentity.email],
             platformId: platformId ?? undefined,
             templateData: otpToTemplate[type],
         })
@@ -172,7 +172,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
         const alerts = await alertsService(log).list({ projectId: job.projectId, cursor: undefined, limit: 50 })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
         
-        const issuesUrl = await platformDomainHelper.constructUrlFrom({
+        const issuesUrl = await domainHelper.getPublicUrl({
             platformId: job.platformId,
             path: 'runs?limit=10#Issues',
         })
@@ -262,7 +262,7 @@ type SendOtpArgs = {
     type: OtpType
     platformId: string | null
     otp: string
-    user: User
+    userIdentity: UserIdentity
 }
 
 type IssueCreatedArgs = {

@@ -41,6 +41,7 @@ import {
 
 import { useNewWindow } from '../../../components/embed-provider';
 import { TableTitle } from '../../../components/ui/table-title';
+import TaskLimitAlert from '../flows/task-limit-alert';
 
 type SelectedRow = {
   id: string;
@@ -99,8 +100,6 @@ const FlowRunsPage = () => {
           onCheckedChange={(value) => {
             const isChecked = !!value;
             table.toggleAllPageRowsSelected(isChecked);
-            console.log('isChecked', isChecked);
-
             if (isChecked) {
               const allRows = table.getRowModel().rows.map((row) => ({
                 id: row.original.id,
@@ -378,25 +377,32 @@ const FlowRunsPage = () => {
   const handleRowClick = useCallback(
     (row: FlowRun, newWindow: boolean) => {
       if (newWindow) {
-        openNewWindow(`/runs/${row.id}`);
+        openNewWindow(
+          authenticationSession.appendProjectRoutePrefix(`/runs/${row.id}`),
+        );
       } else {
-        navigate(`/runs/${row.id}`);
+        navigate(
+          authenticationSession.appendProjectRoutePrefix(`/runs/${row.id}`),
+        );
       }
     },
     [navigate, openNewWindow],
   );
 
   return (
-    <div className="flex-col w-full">
-      <TableTitle>{t('Flow Runs')}</TableTitle>
-      <DataTable
-        columns={columns}
-        page={data}
-        isLoading={isLoading || isFetchingFlows}
-        filters={filters}
-        bulkActions={bulkActions}
-        onRowClick={(row, newWindow) => handleRowClick(row, newWindow)}
-      />
+    <div className="flex flex-col gap-4 grow">
+      <TaskLimitAlert />
+      <div className="flex-col w-full">
+        <TableTitle>{t('Flow Runs')}</TableTitle>
+        <DataTable
+          columns={columns}
+          page={data}
+          isLoading={isLoading || isFetchingFlows}
+          filters={filters}
+          bulkActions={bulkActions}
+          onRowClick={(row, newWindow) => handleRowClick(row, newWindow)}
+        />
+      </div>
     </div>
   );
 };

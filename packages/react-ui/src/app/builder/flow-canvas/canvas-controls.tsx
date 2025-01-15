@@ -216,7 +216,7 @@ const CanvasControls = ({
               <MousePointer className="w-5 h-5"></MousePointer>
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="top">{t('Select Mode')}</TooltipContent>
+          <TooltipContent side="right">{t('Select Mode')}</TooltipContent>
         </Tooltip>
 
         <Tooltip>
@@ -236,7 +236,7 @@ const CanvasControls = ({
               <Hand className="w-5 h-5"></Hand>
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="top">{t('Move Mode')}</TooltipContent>
+          <TooltipContent side="right">{t('Move Mode')}</TooltipContent>
         </Tooltip>
       </div>
       <div className="bg-secondary absolute left-[10px] bottom-[10px] z-50 flex flex-row shadow-md">

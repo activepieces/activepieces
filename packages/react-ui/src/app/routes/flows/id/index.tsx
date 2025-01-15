@@ -28,7 +28,8 @@ const FlowBuilderPage = () => {
     sampleDataHooks.useSampleDataForFlow(flow?.version);
 
   if (isError) {
-    return <Navigate to="/404" />;
+    console.error('Error fetching flow', flowId);
+    return <Navigate to="/" />;
   }
 
   if (isLoading || isSampleDataLoading) {

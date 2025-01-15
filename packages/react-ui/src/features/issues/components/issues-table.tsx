@@ -149,7 +149,7 @@ export default function IssuesTable() {
     ],
     [userHasPermissionToMarkAsResolved, handleMarkAsResolved, t],
   );
-  const userHasPermisionToSeeRuns = checkAccess(Permission.READ_RUN);
+  const userHasPermissionToSeeRuns = checkAccess(Permission.READ_RUN);
   const handleRowClick = ({
     newWindow,
     flowId,
@@ -168,11 +168,12 @@ export default function IssuesTable() {
         FlowRunStatus.TIMEOUT,
       ],
     }).toString();
+    const pathname = authenticationSession.appendProjectRoutePrefix('/runs');
     if (newWindow) {
-      openNewWindow('/runs', searchParams);
+      openNewWindow(pathname, searchParams);
     } else {
       navigate({
-        pathname: '/runs',
+        pathname,
         search: searchParams,
       });
     }
@@ -226,7 +227,7 @@ export default function IssuesTable() {
           },
         ]}
         onRowClick={
-          userHasPermisionToSeeRuns
+          userHasPermissionToSeeRuns
             ? (row, newWindow) =>
                 handleRowClick({
                   newWindow,

@@ -276,6 +276,8 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                 <Button
                   variant="ghost"
                   disabled={!userHasPermissionToUpdateFolders}
+                  size="icon"
+                  className="mr-1"
                 >
                   <PlusIcon size={18} />
                 </Button>
@@ -309,6 +311,12 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                       </FormMessage>
                     )}
                     <DialogFooter>
+                      <Button
+                        variant={'outline'}
+                        onClick={() => setIsDialogOpen(false)}
+                      >
+                        {t('Cancel')}
+                      </Button>
                       <Button type="submit" loading={isPending}>
                         {t('Confirm')}
                       </Button>

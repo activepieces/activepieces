@@ -26,7 +26,7 @@ export const LicenseKeyEntity = Type.Object({
     isTrial: Type.Boolean(),
     key: Type.String(),
     ssoEnabled: Type.Boolean(),
-    gitSyncEnabled: Type.Boolean(),
+    environmentsEnabled: Type.Boolean(),
     showPoweredBy: Type.Boolean(),
     embeddingEnabled: Type.Boolean(),
     auditLogEnabled: Type.Boolean(),

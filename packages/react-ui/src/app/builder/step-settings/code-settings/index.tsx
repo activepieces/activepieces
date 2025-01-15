@@ -9,14 +9,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { platformHooks } from '@/hooks/platform-hooks';
 import {
-  ApFlagId,
   CodeAction,
   FlowOperationType,
   MarkdownVariant,
 } from '@activepieces/shared';
 
-import { flagsHooks } from '../../../../hooks/flags-hooks';
 import { useBuilderStateContext } from '../../builder-hooks';
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
 import { AskAiButton } from '../../pieces-selector/ask-ai';
@@ -42,9 +41,7 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
   const [selectedStep, refreshStepFormSettingsToggle] = useBuilderStateContext(
     (state) => [state.selectedStep || '', state.refreshStepFormSettingsToggle],
   );
-  const { data: isCopilotEnabled } = flagsHooks.useFlag<boolean>(
-    ApFlagId.CODE_COPILOT_ENABLED,
-  );
+  const isCopilotEnabled = platformHooks.isCopilotEnabled();
   return (
     <div className="flex flex-col gap-4">
       <FormField

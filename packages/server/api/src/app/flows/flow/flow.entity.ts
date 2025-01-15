@@ -45,6 +45,10 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             type: JSONB_COLUMN_TYPE,
             nullable: true,
         },
+        externalId: {
+            type: String,
+            nullable: true,
+        },
         publishedVersionId: {
             ...ApIdSchema,
             nullable: true,

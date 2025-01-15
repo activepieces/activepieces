@@ -1,9 +1,8 @@
 import { exceptionHandler } from '@activepieces/server-shared'
-import { createOpenAI } from '@ai-sdk/openai'
-import { generateObject } from 'ai'
+import { generateObject, LanguageModel } from 'ai'
 import { z } from 'zod'
 import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-prop'
+import { Message } from './types'
 
 const iconSelectionSchema = z.object({
     icon: z.string(),
@@ -11,38 +10,12 @@ const iconSelectionSchema = z.object({
     isNewRequest: z.boolean().default(true),
 })
 
-type Message = {
-    role: 'user' | 'assistant'
-    content: string
-}
-
-function getModel() {
-    try {
-        const apiKey = system.get(AppSystemProp.OPENAI_API_KEY)
-        if (!apiKey) {
-            throw new Error('OpenAI API key not configured')
-        }
-
-        const openai = createOpenAI({
-            apiKey,
-        })
-        return openai.chat('gpt-4o-mini')
-    }
-    catch (error) {
-        throw new Error('Failed to initialize OpenAI model')
-    }
-}
-
-export async function selectIcon(requirement: string, conversationHistory: Message[] = []): Promise<string | null> {
+export async function selectIcon(model: LanguageModel, requirement: string, conversationHistory: Message[] = []): Promise<string | null> {
     try {
         // Check if there's a previous icon in the conversation history
         const lastAssistantMessage = [...conversationHistory].reverse().find(msg => msg.role === 'assistant')
         const previousIcon = lastAssistantMessage?.content.match(/"icon":\s*"([^"]+)"/)?.[1]
 
-        const model = getModel()
-        if (!model) {
-            return null
-        }
 
         const systemPrompt = `
         You are an expert at selecting the most appropriate icon for automation flows.

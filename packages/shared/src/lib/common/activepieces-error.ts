@@ -69,11 +69,18 @@ export type ApErrorParams =
     | NoChatResponseParams
     | InvalidSmtpCredentialsErrorParams
     | InvalidGitCredentialsParams
+    | InvalidReleaseTypeParams
+    | CopilotFailedErrorParams
     | ProjectExternalIdAlreadyExistsParams
+    | MemoryIssueParams
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
 }
+
+export type MemoryIssueParams = BaseErrorParams<ErrorCode.MEMORY_ISSUE, {
+    message?: string
+}>
 
 export type InvitationOnlySignUpParams = BaseErrorParams<
 ErrorCode.INVITATION_ONLY_SIGN_UP,
@@ -403,6 +410,14 @@ export type InvalidGitCredentialsParams = BaseErrorParams<ErrorCode.INVALID_GIT_
     message: string
 }>
 
+export type InvalidReleaseTypeParams = BaseErrorParams<ErrorCode.INVALID_RELEASE_TYPE, {
+    message: string
+}>
+
+export type CopilotFailedErrorParams = BaseErrorParams<ErrorCode.COPILOT_FAILED, {
+    message: string
+}>
+
 export type ProjectExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS, {
     externalId: string
 }>
@@ -418,6 +433,7 @@ export enum ErrorCode {
     ENGINE_OPERATION_FAILURE = 'ENGINE_OPERATION_FAILURE',
     ENTITY_NOT_FOUND = 'ENTITY_NOT_FOUND',
     EXECUTION_TIMEOUT = 'EXECUTION_TIMEOUT',
+    MEMORY_ISSUE = 'MEMORY_ISSUE',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
     EXISTING_USER = 'EXISTING_USER',
     EXISTING_ALERT_CHANNEL = 'EXISTING_ALERT_CHANNEL',
@@ -463,4 +479,6 @@ export enum ErrorCode {
     EMAIL_ALREADY_HAS_ACTIVATION_KEY = 'EMAIL_ALREADY_HAS_ACTIVATION_KEY',
     INVALID_SMTP_CREDENTIALS = 'INVALID_SMTP_CREDENTIALS',
     INVALID_GIT_CREDENTIALS = 'INVALID_GIT_CREDENTIALS',
+    INVALID_RELEASE_TYPE = 'INVALID_RELEASE_TYPE',
+    COPILOT_FAILED = 'COPILOT_FAILED',
 }

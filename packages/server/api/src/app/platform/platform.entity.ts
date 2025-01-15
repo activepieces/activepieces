@@ -104,7 +104,7 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             enum: FilteredPieceBehavior,
             nullable: false,
         },
-        gitSyncEnabled: {
+        environmentsEnabled: {
             type: Boolean,
             nullable: false,
         },
@@ -155,6 +155,10 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: ARRAY_COLUMN_TYPE,
             array: isPostgres(),
             nullable: false,
+        },
+        copilotSettings: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: true,
         },
     },
     indices: [],

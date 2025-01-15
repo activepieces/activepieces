@@ -12,8 +12,7 @@ import { FlowRunEntity } from '../../../flows/flow-run/flow-run-entity'
 import { systemJobsSchedule } from '../../../helper/system-jobs'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
-import { projectService } from '../../../project/project-service'
-import { projectUsageService } from '../../../project/usage/project-usage-service'
+import { BillingEntityType, usageService } from '../../platform-billing/usage/usage-service'
 import { projectLimitsService } from '../../project-plan/project-plan.service'
 import { projectBillingService } from './project-billing.service'
 import { stripeHelper, stripeWebhookSecret, TASKS_PAYG_PRICE_ID } from './stripe-helper'
@@ -49,9 +48,7 @@ export const projectBillingModule: FastifyPluginAsyncTypebox = async (app) => {
             const subscription: Stripe.Subscription = await stripe.subscriptions.retrieve(projectBilling.stripeSubscriptionId)
             const item = subscription.items.data.find((item) => item.price.id === TASKS_PAYG_PRICE_ID)
             assertNotNullOrUndefined(item, 'No item found for tasks')
-            const project = await projectService.getOneOrThrow(projectId)
-            const billingPeriod = projectUsageService(log).getCurrentingStartPeriod(project.created)
-            const usage = await projectUsageService(log).getUsageForBillingPeriod(projectId, billingPeriod)
+            const usage = await usageService(log).getUsageForBillingPeriod(projectId, BillingEntityType.PROJECT)
             log.info({ projectId, tasks: usage.tasks, includedTasks: projectBilling.includedTasks }, 'Sending usage record to stripe')
             await stripe.subscriptionItems.createUsageRecord(item.id, {
                 quantity: Math.max(usage.tasks - projectBilling.includedTasks, 0),
@@ -76,16 +73,14 @@ export const projectBillingModule: FastifyPluginAsyncTypebox = async (app) => {
 
 const projectBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
 
-
     fastify.get('/', {
         config: {
             allowedPrincipals: [PrincipalType.USER],
         },
     }, async (request) => {
-        const project = await projectService.getOneOrThrow(request.principal.projectId)
         return {
             subscription: await projectBillingService(request.log).getOrCreateForProject(request.principal.projectId),
-            nextBillingDate: projectUsageService(request.log).getCurrentingEndPeriod(project.created),
+            nextBillingDate: usageService(request.log).getCurrentBillingPeriodEnd(),
         }
     })
 
@@ -113,7 +108,7 @@ const projectBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
                 return
             }
             return {
-                paymentLink: await stripeHelper(request.log).createCheckoutUrl(request.principal.projectId, projectBilling.stripeCustomerId),
+                paymentLink: await stripeHelper(request.log).createCheckoutUrl(projectBilling.stripeCustomerId),
             }
         },
     )

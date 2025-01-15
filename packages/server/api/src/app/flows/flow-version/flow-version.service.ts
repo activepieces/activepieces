@@ -29,6 +29,7 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { projectService } from '../../project/project-service'
+import { userService } from '../../user/user-service'
 import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
 import { flowVersionValidationUtil } from './flow-version-validator-util'
@@ -185,20 +186,21 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             },
         })
         const paginationResult = await paginator.paginate(
-            flowVersionRepo()
-                .createQueryBuilder('flow_version')
-                .leftJoinAndMapOne(
-                    'flow_version.updatedByUser',
-                    'user',
-                    'user',
-                    'flow_version."updatedBy" = "user"."id"',
-                )
+            flowVersionRepo().createQueryBuilder('flow_version')
                 .where({
                     flowId,
                 }),
         )
+        const promises = paginationResult.data.map(async (flowVersion) => {
+            return {
+                ...flowVersion,
+                updatedByUser: isNil(flowVersion.updatedBy) ? null : await userService.getMetaInformation({
+                    id: flowVersion.updatedBy,
+                }),
+            }
+        })
         return paginationHelper.createPage<FlowVersion>(
-            paginationResult.data,
+            await Promise.all(promises),
             paginationResult.cursor,
         )
     },

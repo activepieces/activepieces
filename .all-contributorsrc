@@ -890,7 +890,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/65794951?v=4",
       "profile": "http://johnmark.dev",
       "contributions": [
-        "code"
+        "code",
+        "plugin"
       ]
     },
     {
@@ -1403,6 +1404,42 @@
       "name": "D-Rowe-FS",
       "avatar_url": "https://avatars.githubusercontent.com/u/142934784?v=4",
       "profile": "https://github.com/D-Rowe-FS",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "ChineseHamberger",
+      "name": "张晟杰",
+      "avatar_url": "https://avatars.githubusercontent.com/u/101547635?v=4",
+      "profile": "https://github.com/ChineseHamberger",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "AshotZaqoyan",
+      "name": "Ashot",
+      "avatar_url": "https://avatars.githubusercontent.com/u/72438085?v=4",
+      "profile": "https://codesign.rf.gd",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "amrabuaza",
+      "name": "Amr Abu Aza",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30035105?v=4",
+      "profile": "https://github.com/amrabuaza",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "jerboa88",
+      "name": "John Goodliff",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9030780?v=4",
+      "profile": "http://johng.io",
       "contributions": [
         "plugin"
       ]

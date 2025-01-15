@@ -28,6 +28,7 @@ export const ProjectUsage = Type.Object({
     tasks: Type.Number(),
     teamMembers: Type.Number(),
     aiTokens: Type.Number(),
+    nextLimitResetDate: Type.String(),
 })
 
 export const SwitchProjectResponse = Type.Object({
@@ -44,17 +45,13 @@ export const ProjectPlan = Type.Object({
     ...BaseModelSchema,
     projectId: Type.String(),
     name: Type.String(),
-    minimumPollingInterval: Type.Number(),
     piecesFilterType: Type.Enum(PiecesFilterType),
     pieces: Type.Array(Type.String()),
-    connections: Type.Number(),
-    teamMembers: Type.Number(),
-    tasks: Type.Number(),
-    aiTokens: Type.Number(),
+    tasks: Nullable(Type.Number()),
+    aiTokens: Nullable(Type.Number()),
 })
 
 export type ProjectPlan = Static<typeof ProjectPlan>
-
 
 export const Project = Type.Object({
     ...BaseModelSchema,
@@ -64,6 +61,7 @@ export const Project = Type.Object({
     notifyStatus: Type.Enum(NotificationStatus),
     platformId: ApId,
     externalId: Type.Optional(Type.String()),
+    releasesEnabled: Type.Boolean(),
 })
 
 const projectAnalytics = Type.Object(

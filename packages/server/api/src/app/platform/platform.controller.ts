@@ -14,7 +14,9 @@ import {
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
+import { userService } from '../user/user-service'
 import { platformService } from './platform.service'
+import { platformUtils } from './platform.utils'
 
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', UpdatePlatformRequest, async (req, res) => {
@@ -31,6 +33,12 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
+    app.get('/', ListPlatformsForIdentityRequest, async (req) => {
+        const userId = await userService.getOneOrFail({ id: req.principal.id })
+        const platforms = await platformService.listPlatformsForIdentity({ identityId: userId.identityId })
+        return platforms.filter((platform) => !platformUtils.isEnterpriseCustomerOnCloud(platform))
+    })
+
     app.get('/:id', GetPlatformRequest, async (req) => {
         assertEqual(
             req.principal.platform.id,
@@ -42,7 +50,6 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
         return platform
     })
 }
-
 
 const UpdatePlatformRequest = {
     schema: {
@@ -56,6 +63,18 @@ const UpdatePlatformRequest = {
     },
 }
 
+const ListPlatformsForIdentityRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+        scope: EndpointScope.PLATFORM,
+    },
+    schema: {
+        params: Type.Object({}),
+        response: {
+            [StatusCodes.OK]: Type.Array(PlatformWithoutSensitiveData),
+        },
+    },
+}
 const GetPlatformRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],

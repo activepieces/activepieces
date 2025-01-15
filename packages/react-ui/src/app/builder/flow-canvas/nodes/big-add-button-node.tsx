@@ -17,7 +17,6 @@ import {
   AskAiIndicator,
   shouldShowAskAiIndicator,
 } from '../edges/ask-ai-indicator';
-import { PasteButton } from '../edges/paste-button';
 import { flowUtilConsts } from '../utils/consts';
 import { ApBigAddButtonNode } from '../utils/types';
 
@@ -109,7 +108,7 @@ const ApBigAddButtonCanvasNode = React.memo(
                       open={pieceSelectorOpen}
                       onOpenChange={setPieceSelectorOpen}
                     >
-                      <span className="relative group">
+                      <span>
                         {showAiIndicator && (
                           <AskAiIndicator
                             height={
@@ -133,9 +132,6 @@ const ApBigAddButtonCanvasNode = React.memo(
                             />
                           </Button>
                         )}
-                        <div className="absolute top-[15px] left-[55px]  group-hover:opacity-100 hover:opacity-100 opacity-0 transition-all duration-300 ease-in-out">
-                          <PasteButton addButtonData={data} />
-                        </div>
                       </span>
                     </PieceSelector>
                   )}

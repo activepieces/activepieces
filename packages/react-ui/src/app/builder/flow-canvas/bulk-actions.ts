@@ -62,11 +62,11 @@ export async function getActionsInClipboard(): Promise<Action[]> {
   try {
     const clipboardText = await navigator.clipboard.readText();
     const request: CopyActionsRequest = JSON.parse(clipboardText);
-
     if (request && request.type === 'COPY_ACTIONS') {
       return request.actions;
     }
   } catch (error) {
+    console.error('Error getting actions in clipboard', error);
     return [];
   }
 
@@ -94,10 +94,11 @@ export function pasteNodes(
 export function getLastLocationAsPasteLocation(
   flowVersion: FlowVersion,
 ): PasteLocation {
-  const nextActions = flowStructureUtil.getAllNextActionsWithoutChildren(
+  const firstLevelParents = [
     flowVersion.trigger,
-  );
-  const lastAction = nextActions[nextActions.length - 1];
+    ...flowStructureUtil.getAllNextActionsWithoutChildren(flowVersion.trigger),
+  ];
+  const lastAction = firstLevelParents[firstLevelParents.length - 1];
   return {
     parentStepName: lastAction.name,
     stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
