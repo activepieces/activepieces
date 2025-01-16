@@ -48,7 +48,7 @@ export const findUserAction = createAction({
 		);
 
 		return {
-            success: response.data.length === 0? false: true,
+            found: response.data.length === 0? false: true,
             data: response.data
         };
 	},
