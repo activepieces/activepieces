@@ -111,7 +111,13 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                     const connections = await appConnectionService(log).getManyConnectionStates({
                         projectId: gitRepo.projectId,
                     })
-                    await gitSyncHelper(log).upsertFlowToGit(flowName, flow, flowFolderPath, connections, connectionsFolderPath)
+                    await gitSyncHelper(log).upsertFlowToGit({
+                        fileName: flowName,
+                        flow,
+                        flowFolderPath,
+                        connections,
+                        connectionsFolderPath,
+                    })
                 }
                 await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: updated flows ${request.flowIds.join(', ')}`)
                 break
@@ -125,7 +131,10 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                 if (isNil(externalId)) {
                     break
                 }
-                const deleted = await gitSyncHelper(log).deleteFlowFromGit(externalId, flowFolderPath)
+                const deleted = await gitSyncHelper(log).deleteFlowFromGit({
+                    flowId: externalId,
+                    flowFolderPath,
+                })
                 if (deleted) {
                     await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: deleted flow ${request.flowIds[0]} from user interface`)
                 }
@@ -135,7 +144,10 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
     },
     async getState({ gitRepo, userId, log }: PullGitRepoRequest): Promise<ProjectState> {
         const { flowFolderPath, connectionsFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
-        return gitSyncHelper(log).getStateFromGit(flowFolderPath, connectionsFolderPath)
+        return gitSyncHelper(log).getStateFromGit({
+            flowPath: flowFolderPath,
+            connectionsFolderPath,
+        })
     },
     async delete({ id, projectId }: DeleteParams): Promise<void> {
         const gitRepo = await repo().findOneBy({ id, projectId })
