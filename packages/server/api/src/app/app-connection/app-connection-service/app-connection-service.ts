@@ -120,7 +120,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         return this.removeSensitiveData(updatedConnection)
     },
 
-    async upsertPlaceholder(params: UpsertPlaceholderParams): Promise<void> {
+    async upsertMissingConnection(params: UpsertPlaceholderParams): Promise<void> {
         const { projectId, platformId, externalId, pieceName, displayName } = params
 
         const existingConnection = await repo().findOne({

@@ -42,7 +42,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         for (const state of connections) {
             switch (state.type) {
                 case ConnectionOperationType.CREATE_CONNECTION: {
-                    await appConnectionService(log).upsertPlaceholder({
+                    await appConnectionService(log).upsertMissingConnection({
                         projectId,
                         platformId,
                         externalId: state.connectionState.externalId,
@@ -52,7 +52,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                     break
                 }
                 case ConnectionOperationType.UPDATE_CONNECTION: {
-                    await appConnectionService(log).upsertPlaceholder({
+                    await appConnectionService(log).upsertMissingConnection({
                         projectId,
                         platformId,
                         externalId: state.newConnectionState.externalId,
