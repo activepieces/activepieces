@@ -7,7 +7,7 @@ import { flowService } from '../../../flows/flow/flow.service'
 import { projectStateHelper } from './project-state-helper'
 
 export const projectStateService = (log: FastifyBaseLogger) => ({
-    async apply({ projectId, diffs, selectedFlowsIds, platformId }: ApplyProjectStateRequest): Promise<ApplyProjectStateResponse> {
+    async apply({ projectId, diffs, selectedFlowsIds, platformId }: ApplyProjectStateRequest): Promise<void> {
         const { operations, connections } = diffs
         const publishJobs: Promise<ProjectSyncError | null>[] = []
         for (const operation of operations) {
@@ -64,9 +64,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
             }
         }
     
-        return {
-            errors: [],
-        }
+  
     },
     async save(projectId: ProjectId, name: string, log: FastifyBaseLogger): Promise<FileId> {
         const fileToSave: ProjectState = await this.getCurrentState(projectId, log)
@@ -113,9 +111,6 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
     },
 })
 
-type ApplyProjectStateResponse = {
-    errors: ProjectSyncError[]
-}
 
 type ApplyProjectStateRequest = {
     projectId: string
