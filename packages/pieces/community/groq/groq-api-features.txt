@@ -1,0 +1,618 @@
+Quickstart
+Get up and running with the Groq API in a few minutes.
+
+Create an API Key
+Please visit here to create an API Key.
+
+Set up your API Key (recommended)
+Configure your API key as an environment variable. This approach streamlines your API usage by eliminating the need to include your API key in each request. Moreover, it enhances security by minimizing the risk of inadvertently including your API key in your codebase.
+
+In your terminal of choice:
+
+export GROQ_API_KEY=<your-api-key-here>
+Requesting your first chat completion
+curl
+JavaScript
+Python
+JSON
+Install the Groq JavaScript library:
+
+npm install --save groq-sdk
+Performing a Chat Completion:
+
+import Groq from "groq-sdk";
+
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+export async function main() {
+  const chatCompletion = await getGroqChatCompletion();
+  // Print the completion returned by the LLM.
+  console.log(chatCompletion.choices[0]?.message?.content || "");
+}
+
+export async function getGroqChatCompletion() {
+  return groq.chat.completions.create({
+    messages: [
+      {
+        role: "user",
+        content: "Explain the importance of fast language models",
+      },
+    ],
+    model: "llama-3.3-70b-versatile",
+  });
+}
+Now that you have successfully received a chat completion, you can try out the other endpoints in the API.
+
+OpenAI Compatibility
+
+We designed Groq API to be mostly compatible with OpenAI's client libraries, making it easy to configure your existing applications to run on Groq and try our inference speed.
+
+We also have our own Groq Python and Groq TypeScript libraries that we encourage you to use.
+
+Configuring OpenAI to Use Groq API
+To start using Groq with OpenAI's client libraries, pass your Groq API key to the api_key parameter and change the base_url to https://api.groq.com/openai/v1:
+
+Python
+JavaScript
+
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: "https://api.groq.com/openai/v1"
+});
+You can find your API key here.
+
+Currently Unsupported OpenAI Features
+Note that although Groq API is mostly OpenAI compatible, there are a few features we don't support just yet:
+
+Text Completions
+The following fields are currently not supported and will result in a 400 error (yikes) if they are supplied:
+
+logprobs
+
+logit_bias
+
+top_logprobs
+
+messages[].name
+
+If N is supplied, it must be equal to 1.
+
+Temperature
+If you set a temperature value of 0, it will be converted to 1e-8. If you run into any issues, please try setting the value to a float32 > 0 and <= 2.
+
+Audio Transcription and Translation
+The following values are not supported:
+
+response_format
+vtt
+srt
+timestamp_granularities[]
+Feedback
+If you'd like to see support for such features as the above on Groq API, please reach out to us and let us know by submitting a "Feature Request" via "Chat with us" located on the left. We really value your feedback and would love to hear from you! 🤩
+
+Chat Completion Models
+The Groq Chat Completions API processes a series of messages and generates output responses. These models can perform multi-turn discussions or tasks that require only one interaction.
+
+
+For details about the parameters, visit the reference page.
+
+JSON mode (beta)
+JSON mode is a beta feature that guarantees all chat completions are valid JSON.
+
+Usage:
+
+Set "response_format": {"type": "json_object"} in your chat completion request
+Add a description of the desired JSON structure within the system prompt (see below for example system prompts)
+Recommendations for best beta results:
+
+Mixtral performs best at generating JSON, followed by Gemma, then Llama
+Use pretty-printed JSON instead of compact JSON
+Keep prompts concise
+Beta Limitations:
+
+Does not support streaming
+Does not support stop sequences
+Error Code:
+
+Groq will return a 400 error with an error code of json_validate_failed if JSON generation fails.
+Example system prompts:
+
+
+
+You are a legal advisor who summarizes documents in JSON
+
+
+You are a data analyst API capable of sentiment analysis that responds in JSON.  The JSON schema should include
+{
+  "sentiment_analysis": {
+    "sentiment": "string (positive, negative, neutral)",
+    "confidence_score": "number (0-1)"
+    # Include additional fields as required
+  }
+}
+Generating Chat Completions with groq SDK
+Code Overview
+Python
+JavaScript
+
+npm install --save groq-sdk
+
+Performing a basic Chat Completion
+
+import Groq from "groq-sdk";
+
+const groq = new Groq();
+
+export async function main() {
+  const chatCompletion = await getGroqChatCompletion();
+  // Print the completion returned by the LLM.
+  console.log(chatCompletion.choices[0]?.message?.content || "");
+}
+
+export const getGroqChatCompletion = async () => {
+  return groq.chat.completions.create({
+    //
+    // Required parameters
+    //
+    messages: [
+      // Set an optional system message. This sets the behavior of the
+      // assistant and can be used to provide specific instructions for
+      // how it should behave throughout the conversation.
+      {
+        role: "system",
+        content: "you are a helpful assistant.",
+      },
+      // Set a user message for the assistant to respond to.
+      {
+        role: "user",
+        content: "Explain the importance of fast language models",
+      },
+    ],
+
+    // The language model which will generate the completion.
+    model: "llama-3.3-70b-versatile",
+
+    //
+    // Optional parameters
+    //
+
+    // Controls randomness: lowering results in less random completions.
+    // As the temperature approaches zero, the model will become deterministic
+    // and repetitive.
+    temperature: 0.5,
+
+    // The maximum number of tokens to generate. Requests can use up to
+    // 2048 tokens shared between prompt and completion.
+    max_tokens: 1024,
+
+    // Controls diversity via nucleus sampling: 0.5 means half of all
+    // likelihood-weighted options are considered.
+    top_p: 1,
+
+    // A stop sequence is a predefined or user-specified text string that
+    // signals an AI to stop generating content, ensuring its responses
+    // remain focused and concise. Examples include punctuation marks and
+    // markers like "[end]".
+    stop: null,
+
+    // If set, partial message deltas will be sent.
+    stream: false,
+  });
+};
+
+Streaming a Chat Completion
+To stream a completion, simply set the parameter stream=True. Then the completion function will return an iterator of completion deltas rather than a single, full completion.
+
+
+
+import Groq from "groq-sdk";
+
+const groq = new Groq();
+
+export async function main() {
+  const stream = await getGroqChatStream();
+  for await (const chunk of stream) {
+    // Print the completion returned by the LLM.
+    console.log(chunk.choices[0]?.delta?.content || "");
+  }
+}
+
+export async function getGroqChatStream() {
+  return groq.chat.completions.create({
+    //
+    // Required parameters
+    //
+    messages: [
+      // Set an optional system message. This sets the behavior of the
+      // assistant and can be used to provide specific instructions for
+      // how it should behave throughout the conversation.
+      {
+        role: "system",
+        content: "you are a helpful assistant.",
+      },
+      // Set a user message for the assistant to respond to.
+      {
+        role: "user",
+        content: "Explain the importance of fast language models",
+      },
+    ],
+
+    // The language model which will generate the completion.
+    model: "llama-3.3-70b-versatile",
+
+    //
+    // Optional parameters
+    //
+
+    // Controls randomness: lowering results in less random completions.
+    // As the temperature approaches zero, the model will become deterministic
+    // and repetitive.
+    temperature: 0.5,
+
+    // The maximum number of tokens to generate. Requests can use up to
+    // 2048 tokens shared between prompt and completion.
+    max_tokens: 1024,
+
+    // Controls diversity via nucleus sampling: 0.5 means half of all
+    // likelihood-weighted options are considered.
+    top_p: 1,
+
+    // A stop sequence is a predefined or user-specified text string that
+    // signals an AI to stop generating content, ensuring its responses
+    // remain focused and concise. Examples include punctuation marks and
+    // markers like "[end]".
+    stop: null,
+
+    // If set, partial message deltas will be sent.
+    stream: true,
+  });
+}
+Streaming a chat completion with a stop sequence
+
+import Groq from "groq-sdk";
+
+const groq = new Groq();
+
+export async function main() {
+  const stream = await getGroqChatStream();
+  for await (const chunk of stream) {
+    // Print the completion returned by the LLM.
+    console.log(chunk.choices[0]?.delta?.content || "");
+  }
+}
+
+export async function getGroqChatStream() {
+  return groq.chat.completions.create({
+    //
+    // Required parameters
+    //
+    messages: [
+      // Set an optional system message. This sets the behavior of the
+      // assistant and can be used to provide specific instructions for
+      // how it should behave throughout the conversation.
+      {
+        role: "system",
+        content: "you are a helpful assistant.",
+      },
+      // Set a user message for the assistant to respond to.
+      {
+        role: "user",
+        content:
+          "Start at 1 and count to 10.  Separate each number with a comma and a space",
+      },
+    ],
+
+    // The language model which will generate the completion.
+    model: "llama-3.3-70b-versatile",
+
+    //
+    // Optional parameters
+    //
+
+    // Controls randomness: lowering results in less random completions.
+    // As the temperature approaches zero, the model will become deterministic
+    // and repetitive.
+    temperature: 0.5,
+
+    // The maximum number of tokens to generate. Requests can use up to
+    // 2048 tokens shared between prompt and completion.
+    max_tokens: 1024,
+
+    // Controls diversity via nucleus sampling: 0.5 means half of all
+    // likelihood-weighted options are considered.
+    top_p: 1,
+
+    // A stop sequence is a predefined or user-specified text string that
+    // signals an AI to stop generating content, ensuring its responses
+    // remain focused and concise. Examples include punctuation marks and
+    // markers like "[end]".
+    //
+    // For this example, we will use ", 6" so that the llm stops counting at 5.
+    // If multiple stop values are needed, an array of string may be passed,
+    // stop: [", 6", ", six", ", Six"]
+    stop: ", 6",
+
+    // If set, partial message deltas will be sent.
+    stream: true,
+  });
+}
+JSON Mode
+
+import Groq from "groq-sdk";
+
+const groq = new Groq();
+
+const schema = {
+  $defs: {
+    Ingredient: {
+      properties: {
+        name: { title: "Name", type: "string" },
+        quantity: { title: "Quantity", type: "string" },
+        quantity_unit: {
+          anyOf: [{ type: "string" }, { type: "null" }],
+          title: "Quantity Unit",
+        },
+      },
+      required: ["name", "quantity", "quantity_unit"],
+      title: "Ingredient",
+      type: "object",
+    },
+  },
+  properties: {
+    recipe_name: { title: "Recipe Name", type: "string" },
+    ingredients: {
+      items: { $ref: "#/$defs/Ingredient" },
+      title: "Ingredients",
+      type: "array",
+    },
+    directions: {
+      items: { type: "string" },
+      title: "Directions",
+      type: "array",
+    },
+  },
+  required: ["recipe_name", "ingredients", "directions"],
+  title: "Recipe",
+  type: "object",
+};
+
+class Ingredient {
+  constructor(name, quantity, quantity_unit) {
+    this.name = name;
+    this.quantity = quantity;
+    this.quantity_unit = quantity_unit || null;
+  }
+}
+
+class Recipe {
+  constructor(recipe_name, ingredients, directions) {
+    this.recipe_name = recipe_name;
+    this.ingredients = ingredients;
+    this.directions = directions;
+  }
+}
+
+export async function getRecipe(recipe_name) {
+  // Pretty printing improves completion results.
+  const jsonSchema = JSON.stringify(schema, null, 4);
+  const chat_completion = await groq.chat.completions.create({
+    messages: [
+      {
+        role: "system",
+        content: `You are a recipe database that outputs recipes in JSON.\n'The JSON object must use the schema: ${jsonSchema}`,
+      },
+      {
+        role: "user",
+        content: `Fetch a recipe for ${recipe_name}`,
+      },
+    ],
+    model: "llama-3.3-70b-versatile",
+    temperature: 0,
+    stream: false,
+    response_format: { type: "json_object" },
+  });
+  return Object.assign(
+    new Recipe(),
+    JSON.parse(chat_completion.choices[0].message.content),
+  );
+}
+
+function printRecipe(recipe) {
+  console.log("Recipe:", recipe.recipe_name);
+  console.log();
+
+  console.log("Ingredients:");
+  recipe.ingredients.forEach((ingredient) => {
+    console.log(
+      `- ${ingredient.name}: ${ingredient.quantity} ${
+        ingredient.quantity_unit || ""
+      }`,
+    );
+  });
+  console.log();
+
+  console.log("Directions:");
+  recipe.directions.forEach((direction, step) => {
+    console.log(`${step + 1}. ${direction}`);
+  });
+}
+
+export async function main() {
+  const recipe = await getRecipe("apple pie");
+  printRecipe(recipe);
+}
+
+Speech
+Groq API is the fastest speech-to-text solution available, offering OpenAI-compatible endpoints that enable real-time transcriptions and translations. With Groq API, you can integrate high-quality audio processing into your applications at speeds that rival human interaction.
+
+API Endpoints
+We support two endpoints:
+
+Endpoint	Usage	API Endpoint
+Transcriptions	Convert audio to text	https://api.groq.com/openai/v1/audio/transcriptions
+Translations	Translate audio to English text	https://api.groq.com/openai/v1/audio/translations
+Supported Models
+Model ID	Model	Supported Language(s)	Description
+whisper-large-v3-turbo	Whisper Large V3 Turbo	Multilingual	A fine-tuned version of a pruned Whisper Large V3 designed for fast, multilingual transcription tasks.
+distil-whisper-large-v3-en	Distil-Whisper English	English-only	A distilled, or compressed, version of OpenAI's Whisper model, designed to provide faster, lower cost English speech recognition while maintaining comparable accuracy.
+whisper-large-v3	Whisper large-v3	Multilingual	Provides state-of-the-art performance with high accuracy for multilingual transcription and translation tasks.
+Which Whisper Model Should You Use?
+Having more choices is great, but let's try to avoid decision paralysis by breaking down the tradeoffs between models to find the one most suitable for your applications:
+
+If your application is error-sensitive and requires multilingual support, use whisper-large-v3.
+If your application is less sensitive to errors and requires English only, use distil-whisper-large-v3-en.
+If your application requires multilingual support and you need the best price for performance, use whisper-large-v3-turbo.
+The following table breaks down the metrics for each model.
+
+Model	Cost Per Hour	Language Support	Transcription Support	Translation Support	Real-time Speed Factor	Word Error Rate
+whisper-large-v3	$0.111	Multilingual	Yes	Yes	189	10.3%
+whisper-large-v3-turbo	$0.04	Multilingual	Yes	No	216	12%
+distil-whisper-large-v3-en	$0.02	English only	Yes	No	250	13%
+Working with Audio Files
+Audio File Limitations
+Max File Size
+25 MB
+Minimum File Length
+0.01 seconds
+Minimum Billed Length
+10 seconds. If you submit a request less than this, you will still be billed for 10 seconds.
+Supported File Types
+`flac`, `mp3`, `mp4`, `mpeg`, `mpga`, `m4a`, `ogg`, `wav`, `webm`
+Single Audio Track
+Only the first track will be transcribed for files with multiple audio tracks. (e.g. dubbed video)
+Supported Response Formats
+`json`, `verbose_json`, `text`
+Audio Preprocessing
+Our speech-to-text models will downsample audio to 16KHz mono before transcribing, which is optimal for speech recognition. This preprocessing can be performed client-side if your original file is extremely large and you want to make it smaller without a loss in quality (without chunking, Groq API speech endpoints accept up to 25MB). We recommend FLAC for lossless compression.
+
+The following ffmpeg command can be used to reduce file size:
+
+
+ffmpeg \
+  -i <your file> \
+  -ar 16000 \
+  -ac 1 \
+  -map 0:a \
+  -c:a flac \
+  <output file name>.flac
+Working with Larger Audio Files
+For audio files that exceed our size limits or require more precise control over transcription, we recommend implementing audio chunking. This process involves:
+
+Breaking the audio into smaller, overlapping segments
+Processing each segment independently
+Combining the results while handling overlapping
+To learn more about this process and get code for your own implementation, see the complete audio chunking tutorial in our Groq API Cookbook. 
+
+Using the API
+The following are optional request parameters you can use in your transcription and translation requests:
+
+Parameter	Type	Default	Description
+prompt	string	None	Provide context or specify how to spell unfamiliar words (limited to 224 tokens).
+response_format	string	json	Define the output response format.
+Set to verbose_json to receive timestamps for audio segments.
+Set to text to return a text response.
+temperature	float	None	Specify a value between 0 and 1 to control the translation output.
+language	string	None	whisper-large-v3-turbo and whisper-large-v3 only!
+Specify the language for transcription. Use ISO 639-1 language codes (e.g. "en" for English, "fr" for French, etc.). We highly recommend setting the language if you know it as specifying a language may improve transcription accuracy and speed.
+Example Usage of Transcription Endpoint
+The transcription endpoint allows you to transcribe spoken words in audio or video files.
+
+Python
+JavaScript
+curl
+The Groq SDK package can be installed using the following command:
+
+
+npm install --save groq-sdk
+The following code snippet demonstrates how to use Groq API to transcribe an audio file in JavaScript:
+
+
+import fs from "fs";
+import Groq from "groq-sdk";
+
+// Initialize the Groq client
+const groq = new Groq();
+
+async function main() {
+  // Create a transcription job
+  const transcription = await groq.audio.transcriptions.create({
+    file: fs.createReadStream("sample_audio.m4a"), // Required path to audio file - replace with your audio file!
+    model: "whisper-large-v3-turbo", // Required model to use for transcription
+    prompt: "Specify context or spelling", // Optional
+    response_format: "json", // Optional
+    language: "en", // Optional
+    temperature: 0.0, // Optional
+  });
+  // Log the transcribed text
+  console.log(transcription.text);
+}
+main();
+Example Usage of Translation Endpoint
+The translation endpoint allows you to translate spoken words in audio or video files to English.
+
+Python
+JavaScript
+curl
+The Groq SDK package can be installed using the following command:
+
+
+npm install --save groq-sdk
+The following code snippet demonstrates how to use Groq API to translate an audio file in JavaScript:
+
+
+import fs from "fs";
+import Groq from "groq-sdk";
+
+// Initialize the Groq client
+const groq = new Groq();
+async function main() {
+  // Create a translation job
+  const translation = await groq.audio.translations.create({
+    file: fs.createReadStream("sample_audio.m4a"), // Required path to audio file - replace with your audio file!
+    model: "whisper-large-v3", // Required model to use for translation
+    prompt: "Specify context or spelling", // Optional
+    response_format: "json", // Optional
+    temperature: 0.0, // Optional
+  });
+  // Log the transcribed text
+  console.log(translation.text);
+}
+main();
+Understanding Metadata Fields
+When working with Groq API, setting response_format to verbose_json outputs each segment of transcribed text with valuable metadata that helps us understand the quality and characteristics of our transcription, including avg_logprob, compression_ratio, and no_speech_prob.
+
+This information can help us with debugging any transcription issues. Let's examine what this metadata tells us using a real example:
+
+
+{
+  "id": 8,
+  "seek": 3000,
+  "start": 43.92,
+  "end": 50.16,
+  "text": " document that the functional specification that you started to read through that isn't just the",
+  "tokens": [51061, 4166, 300, 264, 11745, 31256],
+  "temperature": 0,
+  "avg_logprob": -0.097569615,
+  "compression_ratio": 1.6637554,
+  "no_speech_prob": 0.012814695
+}
+As shown in the above example, we receive timing information as well as quality indicators. Let's gain a better understanding of what each field means:
+
+id:8: The 9th segment in the transcription (counting begins at 0)
+seek: Indicates where in the audio file this segment begins (3000 in this case)
+start and end timestamps: Tell us exactly when this segment occurs in the audio (43.92 to 50.16 seconds in our example)
+avg_logprob (Average Log Probability): -0.097569615 in our example indicates very high confidence. Values closer to 0 suggest better confidence, while more negative values (like -0.5 or lower) might indicate transcription issues.
+no_speech_prob (No Speech Probability): 0.0.012814695 is very low, suggesting this is definitely speech. Higher values (closer to 1) would indicate potential silence or non-speech audio.
+compression_ratio: 1.6637554 is a healthy value, indicating normal speech patterns. Unusual values (very high or low) might suggest issues with speech clarity or word boundaries.
+Using Metadata for Debugging
+When troubleshooting transcription issues, look for these patterns:
+
+Low Confidence Sections: If avg_logprob drops significantly (becomes more negative), check for background noise, multiple speakers talking simultaneously, unclear pronunciation, and strong accents. Consider cleaning up the audio in these sections or adjusting chunk sizes around problematic chunk boundaries.
+Non-Speech Detection: High no_speech_prob values might indicate silence periods that could be trimmed, background music or noise, or non-verbal sounds being misinterpreted as speech. Consider noise reduction when preprocessing.
+Unusual Speech Patterns: Unexpected compression_ratio values can reveal stuttering or word repetition, speaker talking unusually fast or slow, or audio quality issues affecting word separation.
+Quality Thresholds and Regular Monitoring
+We recommend setting acceptable ranges for each metadata value we reviewed above and flagging segments that fall outside these ranges to be able to identify and adjust preprocessing or chunking strategies for flagged sections.
+
+By understanding and monitoring these metadata values, you can significantly improve your transcription quality and quickly identify potential issues in your audio processing pipeline.
