@@ -23,6 +23,7 @@ import { addProductToDealAction } from './lib/actions/add-product-to-deal';
 import { addLabelToPersonAction } from './lib/actions/add-label-to-person';
 import { createActivityAction } from './lib/actions/create-activity';
 import { updateActivityAction } from './lib/actions/update-activity';
+import { attachFileAction } from './lib/actions/attach-file';
 
 export const pipedriveAuth = PieceAuth.OAuth2({
 	description: '',
@@ -43,6 +44,7 @@ export const pipedrive = createPiece({
 	actions: [
     addLabelToPersonAction,
 		addProductToDealAction,
+		attachFileAction,
 		createActivityAction,
 		updateActivityAction,
 		createDealAction,
