@@ -62,7 +62,7 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
 const DeleteRepoRequestSchema = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
-        permission: Permission.WRITE_GIT_REPO,
+        permission: Permission.WRITE_PROJECT_RELEASE,
     },
     schema: {
         description: 'Delete a git repository information for a project.',
@@ -79,7 +79,7 @@ const DeleteRepoRequestSchema = {
 const PushRepoRequestSchema = {
     config: {
         allowedPrincipals: [PrincipalType.USER],
-        permission: Permission.WRITE_GIT_REPO,
+        permission: Permission.WRITE_PROJECT_RELEASE,
     },
     schema: {
         description:
@@ -97,7 +97,7 @@ const PushRepoRequestSchema = {
 const ConfigureRepoRequestSchema = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.WRITE_GIT_REPO,
+        permission: Permission.WRITE_PROJECT_RELEASE,
     },
     schema: {
         tags: ['git-repos'],
@@ -112,7 +112,7 @@ const ConfigureRepoRequestSchema = {
 const ListRepoRequestSchema = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.READ_GIT_REPO,
+        permission: Permission.READ_PROJECT_RELEASE,
     },
     schema: {
         querystring: Type.Object({
