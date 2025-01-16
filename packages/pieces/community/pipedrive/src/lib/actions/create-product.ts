@@ -1,6 +1,6 @@
 import { pipedriveAuth } from '../../index';
-import { createAction, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
-import { fetchOwnersOptions, retriveObjectCustomProperties } from '../common/props';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { customFieldsProp, ownerIdProp, visibleToProp } from '../common/props';
 import {
 	pipedriveApiCall,
 	pipedrivePaginatedApiCall,
@@ -39,27 +39,7 @@ export const createProductAction = createAction({
 			displayName: 'Is Active ?',
 			required: false,
 		}),
-		ownerId: Property.Dropdown({
-			displayName: 'Owner',
-			refreshers: [],
-			required: false,
-			options: async ({ auth }) => {
-				if (!auth) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account.',
-					};
-				}
-				const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-				const options = await fetchOwnersOptions(authValue);
-
-				return {
-					disabled: false,
-					options,
-				};
-			},
-		}),
+		ownerId: ownerIdProp(false),
 		currency: Property.ShortText({
 			displayName: 'Currency',
 			required: false,
@@ -77,34 +57,8 @@ export const createProductAction = createAction({
 			displayName: 'Overhead Cost',
 			required: false,
 		}),
-		visibleTo: Property.StaticDropdown({
-			displayName: 'Visible To',
-			required: false,
-			options: {
-				disabled: false,
-				options: [
-					{
-						label: 'Item Owner',
-						value: 1,
-					},
-					{
-						label: 'All Users',
-						value: 3,
-					},
-				],
-			},
-		}),
-		customfields: Property.DynamicProperties({
-			displayName: 'Custom Fields',
-			refreshers: [],
-			required: false,
-			props: async ({ auth }) => {
-				if (!auth) return {};
-
-				const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-				return await retriveObjectCustomProperties(authValue, 'product');
-			},
-		}),
+		visibleTo: visibleToProp,
+		customfields: customFieldsProp('product'),
 	},
 	async run(context) {
 		const {
@@ -134,7 +88,7 @@ export const createProductAction = createAction({
 			prices: [
 				{
 					price: price ?? 0,
-					currency: currency??'USD',
+					currency: currency ?? 'USD',
 					cost: cost ?? 0,
 					overhead_cost: overheadCost ?? 0,
 				},
@@ -142,8 +96,7 @@ export const createProductAction = createAction({
 			visible_to: visibleTo,
 		};
 
-		if(ownerId)
-		{
+		if (ownerId) {
 			productDefaultFields.owner_id = ownerId;
 		}
 

@@ -1,6 +1,6 @@
 import { pipedriveAuth } from "../../index";
 import { createAction, PiecePropValueSchema, Property } from "@activepieces/pieces-framework";
-import { fetchDealsOptions, fetchProductsOptions } from "../common/props";
+import { dealIdProp, fetchDealsOptions, fetchProductsOptions, productIdProp } from "../common/props";
 import { pipedriveApiCall } from "../common";
 import { HttpMethod } from "@activepieces/pieces-common";
 
@@ -10,48 +10,8 @@ export const addProdictToDealAction = createAction({
     displayName: 'Add Product to Deal',
     description: 'Adds a product to a deal.',   
     props: {
-         dealId: Property.Dropdown({
-                displayName: 'Deal',
-                refreshers: [],
-                required: true,
-                options: async ({ auth }) => {
-                    if (!auth) {
-                        return {
-                            disabled: true,
-                            options: [],
-                            placeholder: 'Please connect your account.',
-                        };
-                    }
-                    const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-                    const options = await fetchDealsOptions(authValue);
-     
-                    return {
-                        disabled: false,
-                        options,
-                    };
-                },
-            }),
-            productId: Property.Dropdown({
-                displayName: 'Product',
-                refreshers: [],
-                required: true,
-                options: async ({ auth }) => {
-                    if (!auth) {
-                        return {
-                            disabled: true,
-                            options: [],
-                            placeholder: 'Please connect your account.',
-                        };
-                    }
-                    const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-                    const options = await fetchProductsOptions(authValue);
-     
-                    return {
-                        disabled: false,
-                        options,
-                    };
-                },
-            }),
+         dealId: dealIdProp(true),
+            productId: productIdProp(true),
             price:Property.Number({ 
                 displayName: 'Price',
                 required: true,

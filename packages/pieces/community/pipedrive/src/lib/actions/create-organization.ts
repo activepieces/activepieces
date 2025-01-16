@@ -1,11 +1,6 @@
 import { pipedriveAuth } from '../../index';
-import {
-	createAction,
-	DropdownOption,
-	PiecePropValueSchema,
-	Property,
-} from '@activepieces/pieces-framework';
-import { fetchOwnersOptions, retriveObjectCustomProperties } from '../common/props';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { organizationCommonProps } from '../common/props';
 import {
 	pipedriveApiCall,
 	pipedrivePaginatedApiCall,
@@ -24,99 +19,10 @@ export const createOrganizationAction = createAction({
 			displayName: 'Name',
 			required: true,
 		}),
-		ownerId: Property.Dropdown({
-			displayName: 'Owner',
-			refreshers: [],
-			required: false,
-			options: async ({ auth }) => {
-				if (!auth) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account.',
-					};
-				}
-				const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-				const options = await fetchOwnersOptions(authValue);
-
-				return {
-					disabled: false,
-					options,
-				};
-			},
-		}),
-		visibleTo: Property.StaticDropdown({
-			displayName: 'Visible To',
-			required: false,
-			options: {
-				disabled: false,
-				options: [
-					{
-						label: 'Item Owner',
-						value: 1,
-					},
-					{
-						label: 'All Users',
-						value: 3,
-					},
-				],
-			},
-		}),
-		labelIds: Property.MultiSelectDropdown({
-			displayName: 'Label',
-			required: false,
-			refreshers: [],
-			options: async ({ auth }) => {
-				if (!auth) {
-					return {
-						disabled: true,
-						options: [],
-						placeholder: 'Please connect your account.',
-					};
-				}
-				const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-				const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
-					accessToken: authValue.access_token,
-					apiDomain: authValue.data['api_domain'],
-					method: HttpMethod.GET,
-					resourceUri: '/organizationFields:(key,name,options)',
-				});
-
-				const labelField = customFieldsResponse.find((field) => field.key === 'label_ids');
-				const options: DropdownOption<number>[] = [];
-				if (labelField) {
-					for (const option of labelField.options ?? []) {
-						options.push({
-							label: option.label,
-							value: option.id,
-						});
-					}
-				}
-
-				return {
-					disabled: false,
-					options,
-				};
-			},
-		}),
-		address:Property.LongText({
-			displayName:'Address',
-			required:false
-		}),
-		customfields: Property.DynamicProperties({
-			displayName: 'Custom Fields',
-			refreshers: [],
-			required: false,
-			props: async ({ auth }) => {
-				if (!auth) return {};
-
-				const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-				return await retriveObjectCustomProperties(authValue, 'organization');
-			},
-		}),
+		...organizationCommonProps,
 	},
 	async run(context) {
-		const { name, ownerId,address, visibleTo } = context.propsValue;
+		const { name, ownerId, address, visibleTo } = context.propsValue;
 
 		const labelIds = (context.propsValue.labelIds as number[]) ?? [];
 		const customFields = context.propsValue.customfields ?? {};
@@ -125,7 +31,7 @@ export const createOrganizationAction = createAction({
 			name: name,
 			owner_id: ownerId,
 			visible_to: visibleTo,
-			address:address
+			address: address,
 		};
 
 		if (labelIds.length > 0) {
