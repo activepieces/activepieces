@@ -12,8 +12,9 @@ import { projectStateService } from './project-state/project-state.service'
 const projectReleaseRepo = repoFactory(ProjectReleaseEntity)
 
 export const projectReleaseService = {
-    async create(projectId: ProjectId, ownerId: ApId, params: CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectRelease> {
-        const lockKey = `project-release:${projectId}`
+    async create(request: CreateProjectReleaseParams): Promise<ProjectRelease> {
+        const { platformId, projectId, ownerId, params, log } = request
+        const lockKey = `project-release:${params.projectId}`
         const lock = await memoryLock.acquire(lockKey)
         try {
             const diffs = await findDiffStates(projectId, ownerId, params, log)
@@ -163,6 +164,14 @@ async function getStateFromCreateRequest(projectId: string, ownerId: ApId, reque
             return projectStateService(log).getStateFromRelease(projectId, projectRelease.fileId, log)
         }
     }
+}
+
+type CreateProjectReleaseParams = {
+    platformId: PlatformId
+    projectId: ProjectId
+    ownerId: ApId
+    params: CreateProjectReleaseRequestBody
+    log: FastifyBaseLogger
 }
 
 type toResponseParams = {

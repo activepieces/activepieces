@@ -112,7 +112,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
 type ApplyProjectStateRequest = {
     projectId: string
     diffs: DiffState
-    selectedFlowsIds: string[]
+    selectedFlowsIds: string[] | null
     log: FastifyBaseLogger
     platformId: string
 }

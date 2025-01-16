@@ -11,28 +11,29 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
             const flows: FlowState[] = []
             for (const file of flowFiles) {
                 const flow: PopulatedFlow = JSON.parse(
-                await fs.readFile(path.join(flowPath, file), 'utf-8'),
-            )
-            const migratedFlowVersion = flowMigrations.apply(flow.version)
-            flows.push({
-                ...flow,
-                version: migratedFlowVersion,
-            })
-        }
+                    await fs.readFile(path.join(flowPath, file), 'utf-8'),
+                )
+                const migratedFlowVersion = flowMigrations.apply(flow.version)
+                flows.push({
+                    ...flow,
+                    version: migratedFlowVersion,
+                })
+            }
 
-        const connections = await fs.readdir(connectionsFolderPath)
-        const connectionStates: ConnectionState[] = []
-        for (const connection of connections) {
-            const connectionState = JSON.parse(
-                await fs.readFile(path.join(connectionsFolderPath, connection), 'utf-8'),
-            )
+            const connections = await fs.readdir(connectionsFolderPath)
+            const connectionStates: ConnectionState[] = []
+            for (const connection of connections) {
+                const connectionState = JSON.parse(
+                    await fs.readFile(path.join(connectionsFolderPath, connection), 'utf-8'),
+                )
                 connectionStates.push(connectionState)
             }
             return {
                 flows,
                 connections: connectionStates,
             }
-        } catch (error) {
+        }
+        catch (error) {
             _log.error(`Failed to read flow files: ${error}`)
             throw error
         }

@@ -2,7 +2,6 @@ import { ApplicationEventName } from '@activepieces/ee-shared'
 import { ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { authenticationUtils } from '../../authentication/authentication-utils'
 import { eventsHooks } from '../../helper/application-events'
 import { platformService } from '../../platform/platform.service'
 import { projectReleaseService } from './project-release.service'
@@ -27,7 +26,13 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
     app.post('/', CreateProjectReleaseRequest, async (req) => {
         const platform = await platformService.getOneOrThrow(req.principal.platform.id)
         const ownerId = platform.ownerId
-        const release = await projectReleaseService.create(req.principal.platform.id, req.principal.projectId, ownerId, req.body, req.log)
+        const release = await projectReleaseService.create({
+            platformId: req.principal.platform.id,
+            projectId: req.principal.projectId,
+            ownerId,
+            params: req.body,
+            log: req.log,
+        })
 
         eventsHooks.get(req.log).sendUserEventFromRequest(req, {
             action: ApplicationEventName.PROJECT_RELEASE_CREATED,
