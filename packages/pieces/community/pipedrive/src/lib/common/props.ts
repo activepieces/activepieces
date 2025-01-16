@@ -81,6 +81,27 @@ export async function fetchLeadsOptions(
 	return options;
 }
 
+export async function fetchActivityTypesOptions(
+	auth: PiecePropValueSchema<typeof pipedriveAuth>,
+): Promise<DropdownOption<string>[]> {
+	const activityTypes = await pipedriveApiCall<{ data: Array<{ key_string: string; name: string }> }>({
+		accessToken: auth.access_token,
+		apiDomain: auth.data['api_domain'],
+		method: HttpMethod.GET,
+		resourceUri: '/activityTypes:(key_string,name)',
+	});
+
+	const options: DropdownOption<string>[] = [];
+	for (const type of activityTypes.data) {
+		options.push({
+			label: type.name,
+			value: type.key_string,
+		});
+	}
+
+	return options;
+}
+
 export async function fetchPipelinesOptions(
 	auth: PiecePropValueSchema<typeof pipedriveAuth>,
 ): Promise<DropdownOption<number>[]> {
@@ -615,6 +636,28 @@ export const leadIdProp = (required = false) =>Property.Dropdown({
 	},
 })
 
+export const activityTypeIdProp = (required = false) =>Property.Dropdown({
+	displayName: 'Activity Type',
+	refreshers: [],
+	required,
+	options: async ({ auth }) => {
+		if (!auth) {
+			return {
+				disabled: true,
+				options: [],
+				placeholder: 'Please connect your account.',
+			};
+		}
+		const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
+		const options = await fetchActivityTypesOptions(authValue);
+
+		return {
+			disabled: false,
+			options,
+		};
+	},
+})
+
 export const dealCommonProps = {
 	creationTime: Property.DateTime({
 		displayName: 'Creation Time',
@@ -794,4 +837,58 @@ export const personCommonProps = {
 		}),
 		customfields: customFieldsProp('person')
 
+}
+
+export const activityCommonProps ={
+	organizationId:organizationIdProp(false),
+	personId:personIdProp(false),
+	dealId:dealIdProp(false),
+	leadId:leadIdProp(false),
+	assignTo:ownerIdProp(false),
+	type:activityTypeIdProp(false),
+	dueDate:Property.ShortText({
+		displayName:'Due Date',
+		required:false,
+		description:'Please enter date in YYYY-MM-DD format.'
+	}),
+	dueTime:Property.ShortText({
+		displayName:'Due Time',
+		required:false,
+		description:'Please enter time in HH:MM format.'
+	}),
+	duration:Property.ShortText({
+		displayName:'Duration',
+		required:false,
+		description:'Please enter time in HH:MM format.'
+	}),
+	idDone:Property.Checkbox({
+		displayName:'Mark as Done?',
+		required:false,
+		defaultValue:false
+	}),
+	isBusy:Property.StaticDropdown({
+		displayName:'Free or Busy',
+		required:false,
+	  options:{
+		disabled:false,
+		options:[
+			{
+				label:'Free',
+				value:'free'
+			},
+			{
+				label:'Busy',
+				value:'busy'
+			}
+		]
+	  }
+	}),
+	note:Property.LongText({
+		displayName:'Note',
+		required:false
+	}),
+	publicDescription:Property.LongText({
+		displayName:'Public Description',
+		required:false
+	}),
 }
