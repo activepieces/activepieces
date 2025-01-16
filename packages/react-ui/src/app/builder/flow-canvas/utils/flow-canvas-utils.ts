@@ -18,7 +18,9 @@ import {
   ApEdgeType,
   ApGraph,
   ApGraphEndNode,
+  ApGroupNode,
   ApLoopReturnNode,
+  ApNode,
   ApNodeType,
   ApStepNode,
   ApStraightLineEdge,
@@ -414,9 +416,71 @@ const offsetRouterChildSteps = (childGraphs: ApGraph[]) => {
   });
 };
 
+const buildGroupNode = (group: { id: string; nodes: string[]; status: string }, nodes: ApNode[]): ApGroupNode => {
+  let maxX = 0;
+  let maxY = 0;
+  let minX = Infinity;
+  let minY = Infinity;
+  nodes.forEach((node) => {
+    if (group.nodes.includes(node.id)) {
+      maxX = Math.max(maxX, node.position.x);
+      maxY = Math.max(maxY, node.position.y);
+      minX = Math.min(minX, node.position.x);
+      minY = Math.min(minY, node.position.y);
+    }
+  });
+  const width = maxX - minX;
+  const height = maxY - minY;
+  const position = {
+    x: minX - flowUtilConsts.AP_NODE_SIZE.STEP.width / 4,
+    y: minY - flowUtilConsts.AP_NODE_SIZE.STEP.height / 4,
+  };
+  const style = {
+    width: width + 1.5 * flowUtilConsts.AP_NODE_SIZE.STEP.width,
+    height: height + 1.5 * flowUtilConsts.AP_NODE_SIZE.STEP.height,
+  };
+  const graphNode: ApGroupNode = {
+    id: group.id,
+    type: ApNodeType.GROUP,
+    position,
+    style,
+    data: { label: group.id },
+    className: group.status === 'ADDED' ? '!bg-green-500/20 !border-1 !border-green-500/60' : '!bg-red-500/20 !border-1 !border-red-500/60',
+  };
+  return graphNode;
+};
+
 export const flowCanvasUtils = {
   convertFlowVersionToGraph(version: FlowVersion): ApGraph {
-    const graph = buildGraph(version.trigger);
+    const buldGraphNodes = buildGraph(version.trigger);
+    
+    const groups = [{
+      id: 'group_1',
+      status: 'ADDED',
+      nodes: ['step_1', 'step_2']
+    }, {
+      id: 'group_2',
+      nodes: ['step_4', 'step_5'],
+      status: 'DELETED',
+    }]
+    const groupNodes = groups.map((group) => buildGroupNode(group, buldGraphNodes.nodes as ApNode[]));
+    const graph: ApGraph = {
+      edges: buldGraphNodes.edges as ApEdge[] ,
+      nodes: [...groupNodes, ...buldGraphNodes.nodes.map(node => {
+        const group = groups.find((group) => group.nodes.includes(node.id));
+        if (group) {
+          return {
+            ...node,
+            parentId: group.id,
+            position: {
+              x: node.position.x - (groupNodes.find(groupNode => groupNode.id === group.id)?.position.x || 0),
+              y: node.position.y - (groupNodes.find(groupNode => groupNode.id === group.id)?.position.y || 0),
+            },
+          };
+        }
+        return node;
+      })] as ApNode[],
+    };
     const graphEndWidget = graph.nodes.findLast(
       (node) => node.type === ApNodeType.GRAPH_END_WIDGET,
     ) as ApGraphEndNode;

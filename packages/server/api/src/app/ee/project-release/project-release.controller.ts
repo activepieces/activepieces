@@ -42,6 +42,12 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
         const ownerId = platform.ownerId
         return projectReleaseService.releasePlan(req.principal.projectId, ownerId, req.body, req.log)
     })
+
+    app.post('/compare', CompareProjectReleaseRequest, async (req) => {
+        const platform = await platformService.getOneOrThrow(req.principal.platform.id)
+        const ownerId = platform.ownerId
+        return projectReleaseService.compare(req.principal.projectId, ownerId, req.body, req.log)
+    })
 }
 
 const GetProjectReleaseRequest = {
@@ -87,5 +93,14 @@ const CreateProjectReleaseRequest = {
         response: {
             [StatusCodes.CREATED]: ProjectRelease,
         },
+    },
+}
+
+const CompareProjectReleaseRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
+    schema: {
+        body: DiffReleaseRequest,
     },
 }

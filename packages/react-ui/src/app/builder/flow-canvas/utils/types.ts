@@ -12,6 +12,7 @@ export enum ApNodeType {
   BIG_ADD_BUTTON = 'BIG_ADD_BUTTON',
   GRAPH_END_WIDGET = 'GRAPH_END_WIDGET',
   GRAPH_START_WIDGET = 'GRAPH_START_WIDGET',
+  GROUP = 'GROUP',
   /**Used for calculating the loop graph width */
   LOOP_RETURN_NODE = 'LOOP_RETURN_NODE',
 }
@@ -88,11 +89,29 @@ export type ApGraphEndNode = {
   selectable?: boolean;
 };
 
+export type ApGroupNode = {
+  id: string;
+  type: ApNodeType.GROUP;
+  position: {
+    x: number;
+    y: number;
+  };
+  style: {
+    width: number;
+    height: number;
+  };
+  data: {
+    label: string;
+  };
+  className: string;
+};
+
 export type ApNode =
   | ApStepNode
   | ApGraphEndNode
   | ApBigAddButtonNode
-  | ApLoopReturnNode;
+  | ApLoopReturnNode
+  | ApGroupNode;
 
 export enum ApEdgeType {
   STRAIGHT_LINE = 'ApStraightLineEdge',

@@ -1,5 +1,5 @@
 import { ProjectOperationType } from '@activepieces/ee-shared'
-import { ActionType, assertNotNullOrUndefined, DEFAULT_SAMPLE_DATA_SETTINGS, flowPieceUtil, FlowState, flowStructureUtil, FlowVersion, isNil, PopulatedFlow, ProjectState, Step, TriggerType } from '@activepieces/shared'
+import { ActionType, assertNotNullOrUndefined, DEFAULT_SAMPLE_DATA_SETTINGS, flowPieceUtil, FlowState, flowStructureUtil, FlowVersion, GroupState, isNil, PopulatedFlow, ProjectState, Step, TriggerType } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
 export const projectDiffService = {
@@ -8,6 +8,9 @@ export const projectDiffService = {
         const deleteFlowOperation = findFlowsToDelete({ newState, currentState })
         const updateFlowOperations = findFlowsToUpdate({ newState, currentState })
         return [...deleteFlowOperation, ...createFlowOperation, ...updateFlowOperations]
+    },
+    findGroups({ newState, currentState }: DiffParams): GroupState[] {
+        return []
     },
 }
 
@@ -82,8 +85,6 @@ type DiffParams = {
     }
     newState: Pick<ProjectState, 'flows'>
 }
-
-
 
 export const ProjectOperation = Type.Union([
     Type.Object({

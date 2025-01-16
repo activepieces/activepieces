@@ -1,6 +1,6 @@
 import { ProjectOperationType, ProjectSyncError, ProjectSyncPlan, ProjectSyncPlanOperation } from '@activepieces/ee-shared'
 import { memoryLock } from '@activepieces/server-shared'
-import { ActivepiecesError, ApId, apId, CreateProjectReleaseRequestBody, DiffReleaseRequest, ErrorCode, isNil, ListProjectReleasesRequest, ProjectId, ProjectRelease, ProjectReleaseType, ProjectState, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, ApId, apId, CreateProjectReleaseRequestBody, DiffReleaseRequest, ErrorCode, GroupState, isNil, ListProjectReleasesRequest, ProjectId, ProjectRelease, ProjectReleaseType, ProjectState, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -45,6 +45,9 @@ export const projectReleaseService = {
     async releasePlan(projectId: ProjectId, userId: ApId, params: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectSyncPlan> {
         const diffs = await findDiffOperations(projectId, userId, params, log)
         return toResponse(diffs)
+    },
+    async compare(projectId: ProjectId, userId: ApId, params: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<GroupState[]> {
+        return await findDiffGroups(projectId, userId, params, log)
     },
     async list({ projectId, request }: ListParams): Promise<SeekPage<ProjectRelease>> {
         const decodedCursor = paginationHelper.decodeCursor(request.cursor ?? null)
@@ -100,6 +103,16 @@ async function findDiffOperations(projectId: ProjectId, ownerId: ApId, params: D
         currentState,
     })
     return diffs
+}
+
+async function findDiffGroups(projectId: ProjectId, ownerId: ApId, params: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<GroupState[]> {
+    const newState = await getStateFromCreateRequest(projectId, ownerId, params, log) as ProjectState
+    const currentState = await projectStateService(log).getCurrentState(projectId, log) as ProjectState
+    const groups = projectDiffService.findGroups({
+        newState,
+        currentState,
+    })
+    return groups
 }
 
 function toResponse(operations: ProjectOperation[], errors: ProjectSyncError[] = []): ProjectSyncPlan {
