@@ -9,6 +9,7 @@ import updatePlaylist from './update-playlist';
 import addPlaylistItems from './add-playlist-items';
 import removePlaylistItems from './remove-playlist-items';
 import getPlaylistItems from './get-playlist-items';
+import getSavedTracks from './get-saved-tracks';
 import reorderPlaylist from './reorder-playlist';
 import getPlaylists from './get-playlists';
 
@@ -21,6 +22,7 @@ export default [
   getPlaylists,
   getPlaylistInfo,
   getPlaylistItems,
+  getSavedTracks,
   createPlaylist,
   updatePlaylist,
   addPlaylistItems,

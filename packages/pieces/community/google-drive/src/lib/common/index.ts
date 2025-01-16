@@ -104,7 +104,7 @@ export const common = {
     const response = await drive.files.list({
       q: q.concat("mimeType!='application/vnd.google-apps.folder'").join(' and '),
       fields: 'files(id, name, mimeType, webViewLink, kind)',
-      orderBy: order ?? 'createdTime asc',
+      orderBy: order ?? 'createdTime desc',
       supportsAllDrives: true,
       includeItemsFromAllDrives: search?.includeTeamDrive,
     });    
@@ -137,7 +137,7 @@ export const common = {
       url: `https://www.googleapis.com/drive/v3/files`,
       queryParams: {
         q: q.join(' and '),
-        orderBy: order ?? 'createdTime asc',
+        orderBy: order ?? 'createdTime desc',
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,

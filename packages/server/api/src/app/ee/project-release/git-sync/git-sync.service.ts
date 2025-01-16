@@ -47,7 +47,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
         return repo().findOneByOrFail({ id })
     },
     async getOneByProjectOrThrow({ projectId }: { projectId: string }): Promise<GitRepo> {
-        const gitRepo = await repo().findOneByOrFail({ projectId })
+        const gitRepo = await repo().findOneBy({ projectId })
         if (isNil(gitRepo)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,

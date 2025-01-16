@@ -167,7 +167,6 @@ const Plans: React.FC = () => {
             </div>
             <div className="flex justify-center">
               <PlanData
-                minimumPollingInterval={project.plan.minimumPollingInterval}
                 includedUsers={subscriptionData.subscription.includedUsers}
                 includedTasks={subscriptionData.subscription.includedTasks}
               />

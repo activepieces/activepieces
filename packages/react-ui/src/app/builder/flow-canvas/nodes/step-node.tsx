@@ -83,7 +83,6 @@ const ApStepCanvasNode = React.memo(
   ({ data }: NodeProps & Omit<ApStepNode, 'position'>) => {
     const [
       selectStepByName,
-      setAllowCanvasPanning,
       isSelected,
       isDragging,
       selectedStep,
@@ -97,7 +96,6 @@ const ApStepCanvasNode = React.memo(
       pieceSelectorStep,
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
-      state.setAllowCanvasPanning,
       !isNil(state.selectedStep) && state.selectedStep === data.step?.name,
       state.activeDraggingStep === data.step?.name,
       state.selectedStep,
@@ -180,12 +178,6 @@ const ApStepCanvasNode = React.memo(
           },
         )}
         onClick={(e) => handleStepClick(e)}
-        onMouseEnter={() => {
-          setAllowCanvasPanning(false);
-        }}
-        onMouseLeave={() => {
-          setAllowCanvasPanning(true);
-        }}
         key={step.name}
         ref={openPieceSelector ? null : setNodeRef}
         {...(!openPieceSelector ? attributes : {})}

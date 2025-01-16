@@ -1,4 +1,4 @@
-import { exceptionHandler, UserInteractionJobType } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, UserInteractionJobType } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEnvironment,
@@ -32,12 +32,12 @@ import { distributedLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
 import {
     getPiecePackageWithoutArchive,
     pieceMetadataService,
 } from '../../pieces/piece-metadata-service'
 import { projectRepo } from '../../project/project-service'
+import { userService } from '../../user/user-service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import {
     AppConnectionEntity,
@@ -158,14 +158,24 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
                 externalId,
                 platformId,
             },
-            relations: ['owner'],
         })
 
         if (isNil(encryptedAppConnection)) {
-            return encryptedAppConnection
+            return null
+        }
+        const connection = await this.decryptAndRefreshConnection(encryptedAppConnection, projectId, log)
+
+        if (isNil(connection)) {
+            return null
         }
 
-        return this.decryptAndRefreshConnection(encryptedAppConnection, projectId, log)
+        const owner = isNil(connection.ownerId) ? null : await userService.getMetaInformation({
+            id: connection.ownerId,
+        })
+        return {
+            ...connection,
+            owner,
+        }
     },
 
     async getOneOrThrowWithoutValue(params: GetOneParams): Promise<AppConnectionWithoutSensitiveData> {
@@ -247,25 +257,20 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         const queryBuilder = repo()
             .createQueryBuilder('app_connection')
             .where(querySelector)
-            .leftJoinAndMapOne(
-                'app_connection.owner',
-                'user',
-                'user',
-                'app_connection."ownerId" = "user"."id"',
-            )
         const { data, cursor } = await paginator.paginate(queryBuilder)
-        const promises: Promise<AppConnection>[] = []
 
-        data.forEach((encryptedConnection) => {
-            const apConnection: AppConnection =
-                decryptConnection(encryptedConnection)
-            promises.push(
-                new Promise((resolve) => {
-                    return resolve(apConnection)
-                }),
-            )
+
+
+        const promises = data.map(async (encryptedConnection) => {
+            const apConnection: AppConnection = decryptConnection(encryptedConnection)
+            const owner = isNil(apConnection.ownerId) ? null : await userService.getMetaInformation({
+                id: apConnection.ownerId,
+            })
+            return {
+                ...apConnection,
+                owner,
+            }
         })
-
         const refreshConnections = await Promise.all(promises)
 
         return paginationHelper.createPage<AppConnection>(

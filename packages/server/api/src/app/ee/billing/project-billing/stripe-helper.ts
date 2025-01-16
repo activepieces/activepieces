@@ -1,22 +1,20 @@
 import { getTasksPriceId } from '@activepieces/ee-shared'
-import { exceptionHandler } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
 import {
     ApEdition,
     ApEnvironment,
     apId,
     assertNotNullOrUndefined,
     ProjectId,
-    UserMeta,
+    User,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
+import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-prop'
-import { projectService } from '../../../project/project-service'
-import { projectUsageService } from '../../../project/usage/project-usage-service'
+import { usageService } from '../../platform-billing/usage/usage-service'
 import { projectBillingService } from './project-billing.service'
-
 export const stripeWebhookSecret = system.get(
     AppSystemProp.STRIPE_WEBHOOK_SECRET,
 )!
@@ -47,7 +45,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
     },
 
     getOrCreateCustomer: async (
-        user: UserMeta,
+        user: User,
         projectId: ProjectId,
     ): Promise<string | undefined> => {
         const edition = system.getEdition()
@@ -59,11 +57,13 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         if (environment === ApEnvironment.TESTING) {
             return apId()
         }
+        const identity = await userIdentityService(log).getBasicInformation(user.identityId)
+
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
         try {
             // Retrieve the customer by their email
             const existingCustomers = await stripe.customers.list({
-                email: user.email,
+                email: identity.email,
                 limit: 1,
             })
 
@@ -75,8 +75,8 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
 
             // If no customer with the email exists, create a new customer
             const newCustomer = await stripe.customers.create({
-                email: user.email,
-                name: user.firstName + ' ' + user.lastName,
+                email: identity.email,
+                name: identity.firstName + ' ' + identity.lastName,
                 description: 'User Id: ' + user.id + ' Project Id: ' + projectId,
             })
             return newCustomer.id
@@ -88,13 +88,11 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
     },
 
     createCheckoutUrl: async (
-        projectId: string,
         customerId: string,
     ): Promise<string> => {
         const stripe = stripeHelper(log).getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
-        const project = await projectService.getOneOrThrow(projectId)
-        const startBillingPeriod = projectUsageService(log).getCurrentingStartPeriod(project.created)
+        const startBillingPeriod = usageService(log).getCurrentBillingPeriodStart()
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [

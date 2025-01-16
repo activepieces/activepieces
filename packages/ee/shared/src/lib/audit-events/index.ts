@@ -288,7 +288,7 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
     case ApplicationEventName.USER_EMAIL_VERIFIED:
       return `User ${event.userEmail} verified email`;
     case ApplicationEventName.USER_SIGNED_UP:
-      return `User ${event.data.user?.email} signed up using email from ${event.data.source}`;
+      return `User ${event.userEmail} signed up using email from ${event.data.source}`;
     case ApplicationEventName.SIGNING_KEY_CREATED:
       return `${event.data.signingKey.displayName} is created`;
     case ApplicationEventName.PROJECT_ROLE_CREATED:

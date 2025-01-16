@@ -12,7 +12,7 @@ import { projectStateService } from './project-state/project-state.service'
 const projectReleaseRepo = repoFactory(ProjectReleaseEntity)
 
 export const projectReleaseService = {
-    async create(platformId: PlatformId, projectId: ProjectId, ownerId: ApId, importedBy: ApId, params: CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectRelease> {
+    async create(projectId: ProjectId, ownerId: ApId, params: CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<ProjectRelease> {
         const lockKey = `project-release:${projectId}`
         const lock = await memoryLock.acquire(lockKey)
         try {
@@ -20,7 +20,7 @@ export const projectReleaseService = {
             await projectStateService(log).apply({
                 projectId,
                 diffs,
-                selectedFlowsIds: params.selectedFlowsIds,
+                selectedFlowsIds: params.selectedFlowsIds ?? null,
                 log,
                 platformId,
             })
@@ -30,7 +30,7 @@ export const projectReleaseService = {
                 created: new Date().toISOString(),
                 updated: new Date().toISOString(),
                 projectId,
-                importedBy,
+                importedBy: ownerId,
                 fileId,
                 name: params.name,
                 description: params.description,
@@ -74,7 +74,7 @@ export const projectReleaseService = {
     async enrich(projectRelease: ProjectRelease): Promise<ProjectRelease> {
         return {
             ...projectRelease,
-            importedByUser: isNil(projectRelease.importedBy) ? undefined : await userService.getMetaInfo({
+            importedByUser: isNil(projectRelease.importedBy) ? undefined : await userService.getMetaInformation({
                 id: projectRelease.importedBy,
             }) ?? undefined,
         }
@@ -102,7 +102,6 @@ async function findDiffStates(projectId: ProjectId, ownerId: ApId, params: DiffR
         newState,
         currentState,
     })
-
     return diffs
 }
 

@@ -12,10 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
-import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared';
-import { ApFlagId, DefaultProjectRole } from '@activepieces/shared';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { DefaultProjectRole } from '@activepieces/shared';
 
 type ProjectRoleSelectProps = {
   form: UseFormReturn<any>;
@@ -29,20 +27,14 @@ const RolesDisplayNames: { [k: string]: string } = {
 };
 
 const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {
-  const { project } = projectHooks.useCurrentProject();
-
-  const { data: isCloudPlatform } = flagsHooks.useFlag<boolean>(
-    ApFlagId.IS_CLOUD_PLATFORM,
-  );
+  const { platform } = platformHooks.useCurrentPlatform();
 
   const invitationRoles = Object.values(DefaultProjectRole)
     .filter((f) => {
       if (f === DefaultProjectRole.ADMIN) {
         return true;
       }
-      const showNonAdmin =
-        !isCloudPlatform ||
-        project?.plan.teamMembers !== DEFAULT_FREE_PLAN_LIMIT.teamMembers;
+      const showNonAdmin = platform.projectRolesEnabled;
       return showNonAdmin;
     })
     .map((role) => {
