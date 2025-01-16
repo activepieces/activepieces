@@ -272,7 +272,7 @@ function createPropertyDefinition(property: GetField) {
 	}
 }
 
-export async function retriveObjectCustomProperties(
+export async function retrieveObjectCustomProperties(
 	auth: PiecePropValueSchema<typeof pipedriveAuth>,
 	objectType: string,
 ) {
@@ -324,7 +324,7 @@ export const customFieldsProp = (objectType: string) =>
 			if (!auth) return {};
 
 			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-			return await retriveObjectCustomProperties(authValue, objectType);
+			return await retrieveObjectCustomProperties(authValue, objectType);
 		},
 	});
 
@@ -512,7 +512,7 @@ export const labelIdsProp = (objectType: string, labelFieldName: string, require
 		},
 	});
 
-export const leadLableIdsProp = (required = false) =>
+export const leadlabeIdsProp = (required = false) =>
 	Property.MultiSelectDropdown({
 		displayName: 'Label',
 		required,
@@ -720,7 +720,7 @@ export const leadCommonProps = {
 	ownerId: ownerIdProp('Owner',false),
 	organizationId: organizationIdProp(false),
 	personId: personIdProp(false),
-	labelIds: leadLableIdsProp(false),
+	labelIds: leadlabeIdsProp(false),
 	expectedCloseDate: Property.ShortText({
 		displayName: 'Expected Close Date',
 		required: false,
