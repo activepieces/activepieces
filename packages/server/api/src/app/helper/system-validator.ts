@@ -110,6 +110,7 @@ const systemPropValidators: {
     [AppSystemProp.S3_REGION]: stringValidator,
     [AppSystemProp.S3_SECRET_ACCESS_KEY]: stringValidator,
     [AppSystemProp.S3_USE_SIGNED_URLS]: booleanValidator,
+    [AppSystemProp.S3_USE_IRSA]: booleanValidator,
     [AppSystemProp.SMTP_HOST]: stringValidator,
     [AppSystemProp.SMTP_PASSWORD]: stringValidator,
     [AppSystemProp.SMTP_PORT]: numberValidator,
