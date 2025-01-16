@@ -2,22 +2,19 @@ import {
     ActivepiecesError,
     apId,
     ErrorCode,
-    isNil,
     PlatformId,
     PlatformRole,
     SeekPage,
-    SignUpRequest,
     spreadIfDefined,
     User,
     UserId,
-    UserMeta,
     UserStatus,
+    UserWithMetaInformation,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { nanoid } from 'nanoid'
-import { IsNull } from 'typeorm'
-import { passwordHasher } from '../authentication/lib/password-hasher'
+import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
+import { system } from '../helper/system/system'
 import { UserEntity } from './user-entity'
 
 
@@ -25,21 +22,17 @@ export const userRepo = repoFactory(UserEntity)
 
 export const userService = {
     async create(params: CreateParams): Promise<User> {
-        const hashedPassword = await passwordHasher.hash(params.password)
-
         const user: NewUser = {
             id: apId(),
-            ...params,
-            email: params.email.toLowerCase().trim(),
+            identityId: params.identityId,
             platformRole: params.platformRole,
             status: UserStatus.ACTIVE,
-            password: hashedPassword,
-            tokenVersion: nanoid(),
+            externalId: params.externalId,
+            platformId: params.platformId,
         }
-
         return userRepo().save(user)
     },
-    async update({ id, status, platformId, platformRole, externalId }: UpdateParams): Promise<User> {
+    async update({ id, status, platformId, platformRole, externalId }: UpdateParams): Promise<UserWithMetaInformation> {
 
         const updateResult = await userRepo().update({
             id,
@@ -59,89 +52,36 @@ export const userService = {
                 },
             })
         }
-        return userRepo().findOneByOrFail({
-            id,
-            platformId,
-        })
+        return this.getMetaInformation({ id })
     },
-    async list({ platformId }: ListParams): Promise<SeekPage<User>> {
+    async list({ platformId }: ListParams): Promise<SeekPage<UserWithMetaInformation>> {
         const users = await userRepo().findBy({
             platformId,
         })
 
         return {
-            data: users,
+            data: await Promise.all(users.map(this.getMetaInformation)),
             next: null,
             previous: null,
         }
     },
-
-    async verify({ id }: IdParams): Promise<User> {
-        const user = await userRepo().findOneByOrFail({ id })
-        if (user.verified) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
-                params: {
-                    message: 'User is already verified',
-                },
-            })
-        }
-        return userRepo().save({
-            ...user,
-            verified: true,
-        })
+    async getOneByIdentityIdOnly({ identityId }: GetOneByIdentityIdOnlyParams): Promise<User | null> {
+        return userRepo().findOneBy({ identityId })
     },
-
+    async getOneByIdentityAndPlatform({ identityId, platformId }: GetOneByIdentityIdParams): Promise<User | null> {
+        return userRepo().findOneBy({ identityId, platformId })
+    },
     async get({ id }: IdParams): Promise<User | null> {
         return userRepo().findOneBy({ id })
     },
     async getOneOrFail({ id }: IdParams): Promise<User> {
         return userRepo().findOneByOrFail({ id })
     },
-
-    async getMetaInfo({ id }: IdParams): Promise<UserMeta | null> {
-        const user = await this.get({ id })
-
-        if (isNil(user)) {
-            return null
-        }
-
-        return {
-            id: user.id,
-            email: user.email,
-            platformId: user.platformId,
-            firstName: user.firstName,
-            platformRole: user.platformRole,
-            lastName: user.lastName,
-        }
-    },
-
     async delete({ id, platformId }: DeleteParams): Promise<void> {
         await userRepo().delete({
             id,
             platformId,
         })
-    },
-
-    async getUsersByEmail({ email }: { email: string }): Promise<User[]> {
-        return userRepo()
-            .createQueryBuilder()
-            .andWhere('LOWER(email) = LOWER(:email)', { email })
-            .getMany()
-    },
-    async getByPlatformAndEmail({
-        platformId,
-        email,
-    }: GetByPlatformAndEmailParams): Promise<User | null> {
-        const platformWhereQuery = platformId
-            ? { platformId }
-            : { platformId: IsNull() }
-
-        return userRepo()
-            .createQueryBuilder()
-            .where(platformWhereQuery)
-            .andWhere('LOWER(email) = LOWER(:email)', { email })
-            .getOne()
     },
 
     async getByPlatformAndExternalId({
@@ -153,18 +93,21 @@ export const userService = {
             externalId,
         })
     },
-
-    async updatePassword({
-        id,
-        newPassword,
-    }: UpdatePasswordParams): Promise<void> {
-        const hashedPassword = await passwordHasher.hash(newPassword)
-
-        await userRepo().update(id, {
-            updated: dayjs().toISOString(),
-            password: hashedPassword,
-            tokenVersion: nanoid(),
-        })
+    async getMetaInformation({ id }: IdParams): Promise<UserWithMetaInformation> {
+        const user = await userRepo().findOneByOrFail({ id })
+        const identity = await userIdentityService(system.globalLogger()).getBasicInformation(user.identityId)
+        return {
+            id: user.id,
+            email: identity.email,
+            firstName: identity.firstName,
+            lastName: identity.lastName,
+            platformId: user.platformId,
+            platformRole: user.platformRole,
+            status: user.status,
+            externalId: user.externalId,
+            created: user.created,
+            updated: user.updated,
+        }
     },
 
     async addOwnerToPlatform({
@@ -189,6 +132,14 @@ type ListParams = {
     platformId: PlatformId
 }
 
+type GetOneByIdentityIdOnlyParams = {
+    identityId: string
+}
+
+type GetOneByIdentityIdParams = {
+    identityId: string
+    platformId: PlatformId
+}
 
 type UpdateParams = {
     id: UserId
@@ -198,19 +149,14 @@ type UpdateParams = {
     externalId?: string
 }
 
-type CreateParams = SignUpRequest & {
-    verified: boolean
+type CreateParams = {
+    identityId: string
     platformId: string | null
     externalId?: string
     platformRole: PlatformRole
 }
 
 type NewUser = Omit<User, 'created' | 'updated'>
-
-type GetByPlatformAndEmailParams = {
-    platformId: string | null
-    email: string
-}
 
 type GetByPlatformAndExternalIdParams = {
     platformId: string
@@ -219,11 +165,6 @@ type GetByPlatformAndExternalIdParams = {
 
 type IdParams = {
     id: UserId
-}
-
-type UpdatePasswordParams = {
-    id: UserId
-    newPassword: string
 }
 
 type UpdatePlatformIdParams = {

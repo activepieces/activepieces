@@ -150,7 +150,11 @@ export const createChatCompletionAction = createAction({
     });
 
     if (response.status === 200) {
-      return response.body.choices[0].message.content;
+     
+      return {
+        result:response.body.choices[0].message.content,
+        citations:response.body.citations
+      }
     }
 
     return response.body;

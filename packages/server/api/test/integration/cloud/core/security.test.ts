@@ -16,9 +16,8 @@ import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockFlow,
-    createMockPlatformWithOwner,
-    createMockProject,
-    setupMockApiKeyServiceAccount,
+    mockAndSaveBasicSetup,
+    mockAndSaveBasicSetupWithApiKey,
 } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
@@ -126,12 +125,8 @@ describe('API Security', () => {
     describe('Platform API Key Authentication', () => {
         it('Authenticates service principals', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockApiKey } =
-                setupMockApiKeyServiceAccount()
-
-            await databaseConnection().getRepository('user').save([mockOwner])
-            await databaseConnection().getRepository('platform').save([mockPlatform])
-            await databaseConnection().getRepository('api_key').save([mockApiKey])
+            const { mockPlatform, mockApiKey } =
+                await mockAndSaveBasicSetupWithApiKey()
 
             const mockRequest = {
                 method: 'GET',
@@ -165,17 +160,8 @@ describe('API Security', () => {
 
         it('Gets projectId from body if endpoint scope is PROJECT', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockApiKey } =
-                setupMockApiKeyServiceAccount()
-            const mockProject = createMockProject({
-                ownerId: mockOwner.id,
-                platformId: mockPlatform.id,
-            })
-
-            await databaseConnection().getRepository('user').save([mockOwner])
-            await databaseConnection().getRepository('platform').save([mockPlatform])
-            await databaseConnection().getRepository('api_key').save([mockApiKey])
-            await databaseConnection().getRepository('project').save([mockProject])
+            const { mockPlatform, mockProject, mockApiKey } =
+                await mockAndSaveBasicSetupWithApiKey()
 
             const mockRequest = {
                 method: 'GET',
@@ -212,17 +198,8 @@ describe('API Security', () => {
 
         it('Gets projectId from query if endpoint scope is PROJECT', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockApiKey } =
-                setupMockApiKeyServiceAccount()
-            const mockProject = createMockProject({
-                ownerId: mockOwner.id,
-                platformId: mockPlatform.id,
-            })
-
-            await databaseConnection().getRepository('user').save([mockOwner])
-            await databaseConnection().getRepository('platform').save([mockPlatform])
-            await databaseConnection().getRepository('api_key').save([mockApiKey])
-            await databaseConnection().getRepository('project').save([mockProject])
+            const { mockPlatform, mockProject, mockApiKey } =
+                await mockAndSaveBasicSetupWithApiKey()
 
             const mockRequest = {
                 method: 'GET',
@@ -259,18 +236,10 @@ describe('API Security', () => {
 
         it('extracts projectId from resource if endpoint scope is PROJECT', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockApiKey } =
-                setupMockApiKeyServiceAccount()
-            const mockProject = createMockProject({
-                ownerId: mockOwner.id,
-                platformId: mockPlatform.id,
-            })
+            const { mockPlatform, mockProject, mockApiKey } =
+                await mockAndSaveBasicSetupWithApiKey()
             const mockFlow = createMockFlow({ projectId: mockProject.id })
 
-            await databaseConnection().getRepository('user').save([mockOwner])
-            await databaseConnection().getRepository('platform').save([mockPlatform])
-            await databaseConnection().getRepository('api_key').save([mockApiKey])
-            await databaseConnection().getRepository('project').save([mockProject])
             await databaseConnection().getRepository('flow').save([mockFlow])
 
             const mockRequest = {
@@ -308,25 +277,8 @@ describe('API Security', () => {
 
         it('Fails if API key and project don\'t belong to same platform if endpoint scope is PROJECT', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockApiKey } =
-                setupMockApiKeyServiceAccount()
-            const { mockOwner: mockOtherOwner, mockPlatform: mockOtherPlatform } =
-                createMockPlatformWithOwner()
-            const mockOtherProject = createMockProject({
-                ownerId: mockOtherOwner.id,
-                platformId: mockOtherPlatform.id,
-            })
-
-            await databaseConnection()
-                .getRepository('user')
-                .save([mockOwner, mockOtherOwner])
-            await databaseConnection()
-                .getRepository('platform')
-                .save([mockPlatform, mockOtherPlatform])
-            await databaseConnection().getRepository('api_key').save([mockApiKey])
-            await databaseConnection()
-                .getRepository('project')
-                .save([mockOtherProject])
+            const { mockApiKey } = await mockAndSaveBasicSetupWithApiKey()
+            const { mockProject: mockOtherProject } = await mockAndSaveBasicSetup()
 
             const mockRequest = {
                 method: 'GET',
@@ -359,12 +311,7 @@ describe('API Security', () => {
 
         it('Fails if no projectId is extracted from request or resource and endpoint scope is PROJECT', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockApiKey } =
-                setupMockApiKeyServiceAccount()
-
-            await databaseConnection().getRepository('user').save([mockOwner])
-            await databaseConnection().getRepository('platform').save([mockPlatform])
-            await databaseConnection().getRepository('api_key').save([mockApiKey])
+            const { mockApiKey } = await mockAndSaveBasicSetupWithApiKey()
 
             const mockRequest = {
                 method: 'GET',
@@ -395,12 +342,7 @@ describe('API Security', () => {
         it('Fails if project with extracted id doesn\'t exist and endpoint scope is PROJECT', async () => {
             // arrange
             const mockNonExistentProjectId = apId()
-            const { mockOwner, mockPlatform, mockApiKey } =
-                setupMockApiKeyServiceAccount()
-
-            await databaseConnection().getRepository('user').save([mockOwner])
-            await databaseConnection().getRepository('platform').save([mockPlatform])
-            await databaseConnection().getRepository('api_key').save([mockApiKey])
+            const { mockApiKey } = await mockAndSaveBasicSetupWithApiKey()
 
             const mockRequest = {
                 method: 'GET',
@@ -463,12 +405,7 @@ describe('API Security', () => {
 
         it('Fails if route doesn\'t allow SERVICE principals', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockApiKey } =
-                setupMockApiKeyServiceAccount()
-
-            await databaseConnection().getRepository('user').save([mockOwner])
-            await databaseConnection().getRepository('platform').save([mockPlatform])
-            await databaseConnection().getRepository('api_key').save([mockApiKey])
+            const { mockApiKey } = await mockAndSaveBasicSetupWithApiKey()
 
             const mockRequest = {
                 method: 'POST',
@@ -501,15 +438,10 @@ describe('API Security', () => {
 
         it('Session expirey for Users', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockProject } = setupMockApiKeyServiceAccount()
+            const { mockOwner, mockPlatform, mockProject, mockUserIdentity } = await mockAndSaveBasicSetupWithApiKey()
 
-            await databaseConnection().getRepository('user').save([mockOwner])
-            await databaseConnection().getRepository('platform').save([mockPlatform])
-            await databaseConnection().getRepository('project').save([mockProject])
-
-            const sessionId = nanoid()
-            await databaseConnection().getRepository('user').update(mockOwner.id, {
-                tokenVersion: sessionId,
+            await databaseConnection().getRepository('user_identity').update(mockUserIdentity.id, {
+                tokenVersion: nanoid(),
             })
             const mockPrincipal: Principal = {
                 id: mockOwner.id,
@@ -547,12 +479,7 @@ describe('API Security', () => {
 
         it('Authenticates users', async () => {
             // arrange
-
-            const { mockOwner, mockPlatform, mockProject } = setupMockApiKeyServiceAccount()
-
-            await databaseConnection().getRepository('user').save([mockOwner])
-            await databaseConnection().getRepository('platform').save([mockPlatform])
-            await databaseConnection().getRepository('project').save([mockProject])
+            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetupWithApiKey()
 
             const mockPrincipal: Principal = {
                 id: mockOwner.id,
@@ -561,7 +488,6 @@ describe('API Security', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-
             }
 
             const mockAccessToken = await generateMockToken(mockPrincipal)
@@ -594,13 +520,7 @@ describe('API Security', () => {
         })
 
         it('Fails if route disallows USER principal type', async () => {
-
-            const { mockOwner, mockPlatform, mockProject } = setupMockApiKeyServiceAccount()
-
-            await databaseConnection().getRepository('user').save([mockOwner])
-            await databaseConnection().getRepository('platform').save([mockPlatform])
-            await databaseConnection().getRepository('project').save([mockProject])
-
+            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetupWithApiKey()
 
             // arrange
             const mockPrincipal: Principal = {
@@ -610,7 +530,6 @@ describe('API Security', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-
             }
             const mockAccessToken = await generateMockToken(mockPrincipal)
 
@@ -640,14 +559,7 @@ describe('API Security', () => {
         })
 
         it('Fails if projectId in query doesn\'t match principal projectId', async () => {
-
-
-            const { mockOwner, mockPlatform, mockProject } = setupMockApiKeyServiceAccount()
-
-            await databaseConnection().getRepository('user').save([mockOwner])
-            await databaseConnection().getRepository('platform').save([mockPlatform])
-            await databaseConnection().getRepository('project').save([mockProject])
-
+            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetupWithApiKey()
 
             const mockPrincipal: Principal = {
                 id: mockOwner.id,
@@ -656,7 +568,6 @@ describe('API Security', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-
             }
 
             // arrange
@@ -690,13 +601,7 @@ describe('API Security', () => {
         })
 
         it('Fails if projectId in body doesn\'t match principal projectId', async () => {
-            
-            const { mockOwner, mockPlatform, mockProject } = setupMockApiKeyServiceAccount()
-
-            await databaseConnection().getRepository('user').save([mockOwner])
-            await databaseConnection().getRepository('platform').save([mockPlatform])
-            await databaseConnection().getRepository('project').save([mockProject])
-
+            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetupWithApiKey()
 
             const mockPrincipal: Principal = {
                 id: mockOwner.id,
@@ -705,7 +610,6 @@ describe('API Security', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-
             }
 
             // arrange

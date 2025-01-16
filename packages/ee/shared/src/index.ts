@@ -1,5 +1,5 @@
 export * from './lib/billing';
-export * from './lib/billing/project-stripe';
+export * from './lib/billing/project-billing';
 export * from './lib/audit-events';
 export * from './lib/git-repo';
 export * from './lib/api-key';
@@ -18,3 +18,4 @@ export * from './lib/otp'
 export * from './lib/authn'
 export * from './lib/issues'
 export * from './lib/alerts'
+export * from './lib/platform-billing'

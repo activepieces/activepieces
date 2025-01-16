@@ -96,7 +96,7 @@ const PushRepoRequestSchema = {
 
 const ConfigureRepoRequestSchema = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         permission: Permission.WRITE_GIT_REPO,
     },
     schema: {

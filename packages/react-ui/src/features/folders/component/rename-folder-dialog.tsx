@@ -17,6 +17,7 @@ import {
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { validationUtils } from '@/lib/utils';
 import { Folder } from '@activepieces/shared';
 
 import { foldersApi } from '../lib/folders-api';
@@ -57,7 +58,15 @@ const RenameFolderDialog = ({
         title: t('Renamed flow successfully'),
       });
     },
-    onError: () => toast(INTERNAL_ERROR_TOAST),
+    onError: (err) => {
+      if (validationUtils.isValidationError(err)) {
+        form.setError('displayName', {
+          message: t('Folder name already used'),
+        });
+      } else {
+        toast(INTERNAL_ERROR_TOAST);
+      }
+    },
   });
 
   return (
@@ -94,6 +103,16 @@ const RenameFolderDialog = ({
               </FormMessage>
             )}
             <DialogFooter>
+              <Button
+                variant={'outline'}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setIsOpen(false);
+                }}
+              >
+                {t('Cancel')}
+              </Button>
               <Button type="submit" loading={isPending}>
                 {t('Confirm')}
               </Button>

@@ -1,6 +1,6 @@
 
 import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { filePiecesUtils } from '@activepieces/server-shared'
+import { AppSystemProp, filePiecesUtils } from '@activepieces/server-shared'
 
 import {
     ActivepiecesError,
@@ -15,7 +15,6 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
 import {
     PieceMetadataSchema,
 } from '../piece-metadata-entity'

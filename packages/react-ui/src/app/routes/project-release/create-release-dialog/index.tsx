@@ -86,8 +86,8 @@ const CreateReleaseDialogContent = ({
             name: form.getValues('name'),
             description: form.getValues('description'),
             selectedFlowsIds: Array.from(selectedChanges),
-            repoId: gitSync.id,
             type: diffRequest.type,
+            projectId: authenticationSession.getProjectId()!,
           });
           break;
         case ProjectReleaseType.PROJECT:
@@ -100,6 +100,7 @@ const CreateReleaseDialogContent = ({
             selectedFlowsIds: Array.from(selectedChanges),
             targetProjectId: diffRequest.targetProjectId,
             type: diffRequest.type,
+            projectId: authenticationSession.getProjectId()!,
           });
           break;
         case ProjectReleaseType.ROLLBACK:
@@ -109,6 +110,7 @@ const CreateReleaseDialogContent = ({
             selectedFlowsIds: Array.from(selectedChanges),
             projectReleaseId: diffRequest.projectReleaseId,
             type: diffRequest.type,
+            projectId: authenticationSession.getProjectId()!,
           });
           break;
       }
