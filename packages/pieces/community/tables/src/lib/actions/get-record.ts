@@ -9,11 +9,7 @@ export const getRecord = createAction({
   auth: PieceAuth.None(),
   props: {
     table_name: tablesCommon.table_name,
-    record_id: Property.ShortText({
-      displayName: 'Record ID',
-      description: 'The ID of the record to get.',
-      required: true,
-    }),
+    record_id: tablesCommon.record_id,
   },
   async run(context) {
     const { record_id } = context.propsValue;
