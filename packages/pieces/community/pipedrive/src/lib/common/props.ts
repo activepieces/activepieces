@@ -328,9 +328,9 @@ export const customFieldsProp = (objectType: string) =>
 		},
 	});
 
-export const ownerIdProp = (required = false) =>
+export const ownerIdProp = (displayName:string,required = false) =>
 	Property.Dropdown({
-		displayName: 'Owner',
+		displayName,
 		refreshers: [],
 		required,
 		options: async ({ auth }) => {
@@ -690,7 +690,7 @@ export const dealCommonProps = {
 	}),
 	stageId: dealStageIdProp(false),
 	pipelineId: dealPipelineIdProp(false),
-	ownerId: ownerIdProp(false),
+	ownerId: ownerIdProp('Owner',false),
 	organizationId: organizationIdProp(false),
 	personId: personIdProp(false),
 	labelIds: labelIdsProp('deal', 'label', false),
@@ -717,7 +717,7 @@ export const dealCommonProps = {
 };
 
 export const leadCommonProps = {
-	ownerId: ownerIdProp(false),
+	ownerId: ownerIdProp('Owner',false),
 	organizationId: organizationIdProp(false),
 	personId: personIdProp(false),
 	labelIds: leadLableIdsProp(false),
@@ -777,7 +777,7 @@ export const leadCommonProps = {
 };
 
 export const organizationCommonProps = {
-	ownerId: ownerIdProp(false),
+	ownerId: ownerIdProp('Owner',false),
 	visibleTo: visibleToProp,
 	labelIds: labelIdsProp('organization', 'label_ids', false),
 	address: Property.LongText({
@@ -789,7 +789,7 @@ export const organizationCommonProps = {
 
 
 export const personCommonProps = {
-	ownerId:ownerIdProp(false),
+	ownerId:ownerIdProp('Owner',false),
 		organizationId: organizationIdProp(false),
 		email: Property.Array({
 			displayName: 'Email',
@@ -844,7 +844,7 @@ export const activityCommonProps ={
 	personId:personIdProp(false),
 	dealId:dealIdProp(false),
 	leadId:leadIdProp(false),
-	assignTo:ownerIdProp(false),
+	assignTo:ownerIdProp('Assign To',false),
 	type:activityTypeIdProp(false),
 	dueDate:Property.ShortText({
 		displayName:'Due Date',

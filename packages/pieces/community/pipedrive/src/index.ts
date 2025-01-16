@@ -24,25 +24,35 @@ import { addLabelToPersonAction } from './lib/actions/add-label-to-person';
 import { createActivityAction } from './lib/actions/create-activity';
 import { updateActivityAction } from './lib/actions/update-activity';
 import { attachFileAction } from './lib/actions/attach-file';
+import { addFollowerAction } from './lib/actions/add-follower';
 
 export const pipedriveAuth = PieceAuth.OAuth2({
 	description: '',
 	authUrl: 'https://oauth.pipedrive.com/oauth/authorize',
 	tokenUrl: 'https://oauth.pipedrive.com/oauth/token',
 	required: true,
-	scope: ['admin', 'contacts:full', 'users:read', 'deals:full', 'activities:full', 'leads:full','products:full'],
+	scope: [
+		'admin',
+		'contacts:full',
+		'users:read',
+		'deals:full',
+		'activities:full',
+		'leads:full',
+		'products:full',
+	],
 });
 
 export const pipedrive = createPiece({
 	displayName: 'Pipedrive',
-	description: 'Sales CRM and pipeline management software',  
+	description: 'Sales CRM and pipeline management software',
 
 	minimumSupportedRelease: '0.30.0',
 	logoUrl: 'https://cdn.activepieces.com/pieces/pipedrive.png',
 	categories: [PieceCategory.SALES_AND_CRM],
 	auth: pipedriveAuth,
 	actions: [
-    addLabelToPersonAction,
+		addFollowerAction,
+		addLabelToPersonAction,
 		addProductToDealAction,
 		attachFileAction,
 		createActivityAction,
@@ -58,7 +68,7 @@ export const pipedrive = createPiece({
 		createProductAction,
 		createCustomApiCallAction({
 			baseUrl: () => 'https://api.pipedrive.com/v1',
-			auth: pipedriveAuth,  
+			auth: pipedriveAuth,
 			authMapping: async (auth) => ({
 				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
 			}),
