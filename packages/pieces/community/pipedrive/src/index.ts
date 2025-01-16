@@ -25,6 +25,8 @@ import { createActivityAction } from './lib/actions/create-activity';
 import { updateActivityAction } from './lib/actions/update-activity';
 import { attachFileAction } from './lib/actions/attach-file';
 import { addFollowerAction } from './lib/actions/add-follower';
+import { createNoteAction } from './lib/actions/create-note';
+import { getNoteAction } from './lib/actions/get-note';
 
 export const pipedriveAuth = PieceAuth.OAuth2({
 	description: '',
@@ -52,6 +54,8 @@ export const pipedrive = createPiece({
 	auth: pipedriveAuth,
 	actions: [
 		addFollowerAction,
+		getNoteAction,
+		createNoteAction,
 		addLabelToPersonAction,
 		addProductToDealAction,
 		attachFileAction,
