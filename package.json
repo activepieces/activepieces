@@ -4,6 +4,7 @@
   "rcVersion": "0.39.0-rc.0",
   "scripts": {
     "prepare": "husky install",
+    "publish-piece": "npx ts-node tools/scripts/pieces/publish-piece.ts",
     "serve:frontend": "nx serve react-ui",
     "serve:backend": "nx serve server-api",
     "serve:engine": "nx serve engine",
