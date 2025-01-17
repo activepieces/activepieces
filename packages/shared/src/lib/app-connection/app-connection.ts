@@ -9,6 +9,7 @@ export type AppConnectionId = string
 
 export enum AppConnectionStatus {
     ACTIVE = 'ACTIVE',
+    MISSING = 'MISSING',
     ERROR = 'ERROR',
 }
 
