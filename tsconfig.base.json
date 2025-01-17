@@ -550,6 +550,9 @@
       "@activepieces/piece-sessions-us": [
         "packages/pieces/community/sessions-us/src/index.ts"
       ],
+      "@activepieces/piece-seven": [
+        "packages/pieces/community/seven/src/index.ts"
+      ],
       "@activepieces/piece-sftp": [
         "packages/pieces/community/sftp/src/index.ts"
       ],
