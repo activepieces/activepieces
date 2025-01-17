@@ -175,6 +175,7 @@ export function ProjectSelectionDialog({
 
       {dialogOpen && (
         <CreateReleaseDialog
+          loading={loading}
           open={dialogOpen}
           setOpen={setDialogOpen}
           refetch={onSuccess}
