@@ -42,7 +42,23 @@ export const triggers = [
             name: 'John Smith',
             contactNumber: '+9779834509123',
         },
-    }
+    },
+    {
+        name: 'newCallLog',
+        displayName: 'New Call Log',
+        description: 'Trigger when a new call log is recorded.',
+        action: 'new_call_log',
+        sampleData: {
+        id: '101',
+        callFrom: "+11234567890",
+        callTo: "+11234567891",
+        direction: "Outgoing",
+        duration : "0hr 01min 30sec",
+        outcome:"Completed",
+        callRecording: "http://example.com/recording.mp3",
+        
+        },
+    },
 ].map(trigger => {
     return createTrigger({
         name: trigger.name,
