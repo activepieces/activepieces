@@ -29,6 +29,11 @@ import { createNoteAction } from './lib/actions/create-note';
 import { getNoteAction } from './lib/actions/get-note';
 import { findUserAction } from './lib/actions/find-user';
 import { findProductAction } from './lib/actions/find-product';
+import { organizationMatchingFilterTrigger } from './lib/trigger/organization-matching-filter';
+import { personMatchingFilterTrigger } from './lib/trigger/person-matching-filter';
+import { activityMatchingFilterTrigger } from './lib/trigger/activity-matching-filter';
+import { dealMatchingFilterTrigger } from './lib/trigger/deal-matching-filter';
+import { newNoteTrigger } from './lib/trigger/new-note';
 
 export const pipedriveAuth = PieceAuth.OAuth2({
 	description: '',
@@ -87,11 +92,16 @@ export const pipedrive = createPiece({
 		newPerson,
 		newDeal,
 		newActivity,
+		newNoteTrigger,
 		updatedPerson,
 		updatedDeal,
 		updatedDealStageTrigger,
 		newLeadTrigger,
 		newOrganizationTrigger,
 		updatedOrganizationTrigger,
+		activityMatchingFilterTrigger,
+		dealMatchingFilterTrigger,
+		personMatchingFilterTrigger,
+		organizationMatchingFilterTrigger
 	],
 });

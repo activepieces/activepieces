@@ -9,6 +9,29 @@ import {
 } from '@activepieces/pieces-framework';
 import { GetField, StageWithPipelineInfo } from './types';
 
+export async function fetchFiltersOptions(auth: PiecePropValueSchema<typeof pipedriveAuth>,type:string): Promise<DropdownOption<number>[]> {
+
+	const filters = await pipedriveApiCall<{ data: Array<{ id: number; name: string }> }>({
+		accessToken: auth.access_token,
+		apiDomain: auth.data['api_domain'],
+		method: HttpMethod.GET,
+		resourceUri: '/filters',
+		query:{
+			type:type
+		}
+	});
+
+	const options: DropdownOption<number>[] = [];
+	for (const filter of filters.data) {
+		options.push({
+			label: filter.name,
+			value: filter.id,
+		});
+	}
+
+	return options;
+}
+
 export async function fetchProductsOptions(
 	auth: PiecePropValueSchema<typeof pipedriveAuth>,
 ): Promise<DropdownOption<number>[]> {
@@ -343,6 +366,29 @@ export const ownerIdProp = (displayName:string,required = false) =>
 			}
 			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
 			const options = await fetchOwnersOptions(authValue);
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	});
+
+export const filterIdProp = (type:string,required = false) =>
+	Property.Dropdown({
+		displayName: 'Filter',
+		refreshers: [],
+		required,
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please connect your account.',
+				};
+			}
+			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
+			const options = await fetchFiltersOptions(authValue,type);
 
 			return {
 				disabled: false,
