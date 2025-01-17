@@ -11,7 +11,7 @@ export const domainHelper = {
                 platformId,
             })
             if (!isNil(customDomain)) {
-                return networkUtils.combineUrl(customDomain.domain, path ?? '')
+                return networkUtils.combineUrl(`https://${customDomain.domain}`, path ?? '')
             }
         }
         return networkUtils.combineUrl(system.getOrThrow(WorkerSystemProp.FRONTEND_URL), path ?? '')
@@ -20,10 +20,6 @@ export const domainHelper = {
         return domainHelper.getPublicUrl({ path: `/api/${path}`, platformId })
     },
     async getInternalUrl({ path, platformId }: InternalUrlParams): Promise<string> {
-        const internalUrl = system.get(AppSystemProp.INTERNAL_URL)
-        if (!isNil(internalUrl)) {
-            return networkUtils.combineUrl(internalUrl, path ?? '')
-        }
         return this.getPublicUrl({ path, platformId })
     },
     async getInternalApiUrl({ path, platformId }: InternalUrlParams): Promise<string> {
