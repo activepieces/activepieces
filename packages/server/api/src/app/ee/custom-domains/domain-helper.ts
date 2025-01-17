@@ -17,17 +17,20 @@ export const domainHelper = {
         return networkUtils.combineUrl(system.getOrThrow(WorkerSystemProp.FRONTEND_URL), path ?? '')
     },
     async getPublicApiUrl({ path, platformId }: PublicUrlParams): Promise<string> {
-        return domainHelper.getPublicUrl({ path: `/api/${path}`, platformId })
+        return domainHelper.getPublicUrl({ path: `/api/${cleanLeadingSlash(path)}`, platformId })
     },
     async getInternalUrl({ path, platformId }: InternalUrlParams): Promise<string> {
         return this.getPublicUrl({ path, platformId })
     },
     async getInternalApiUrl({ path, platformId }: InternalUrlParams): Promise<string> {
-        return this.getInternalUrl({ path: `/api/${path}`, platformId })
+        return this.getInternalUrl({ path: `/api/${cleanLeadingSlash(path)}`, platformId })
     },
 }
 
 
+function cleanLeadingSlash(path: string) {
+    return path.startsWith('/') ? path.slice(1) : path
+}
 
 type PublicUrlParams = {
     path?: string
