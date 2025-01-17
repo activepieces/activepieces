@@ -21,6 +21,12 @@ export const RecordEntity = new EntitySchema<RecordSchema>({
             nullable: false,
         },
     },
+    indices: [
+        {
+            name: 'idx_record_project_id_table_id',
+            columns: ['projectId', 'tableId'],
+        },
+    ],
     relations: {
         table: {
             type: 'many-to-one',
