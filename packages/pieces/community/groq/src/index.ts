@@ -1,5 +1,4 @@
 import {
-  AI_PROVIDERS_MAKRDOWN,
   AuthenticationType,
   HttpMethod,
   createCustomApiCallAction,
@@ -43,9 +42,9 @@ export const groqAuth = PieceAuth.SecretText({
 
 export const groq = createPiece({
   displayName: 'Groq',
-  description: 'Use Groq\'s fast language models and audio processing capabilities',
+  description: 'Use Groq\'s fast language models and audio processing capabilities.',
   minimumSupportedRelease: '0.9.0',
-  logoUrl: 'assets/groq.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/groq.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   auth: groqAuth,
   actions: [
