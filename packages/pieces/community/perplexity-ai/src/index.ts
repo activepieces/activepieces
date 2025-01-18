@@ -17,7 +17,7 @@ export const perplexityAi = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/perplexity-ai.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   description: 'AI powered search engine',
-  authors: ['kishanprmr'],
+  authors: ['kishanprmr','AbdulTheActivePiecer'],
   actions: [createChatCompletionAction],
   triggers: [],
 });

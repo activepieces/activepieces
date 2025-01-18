@@ -1,11 +1,10 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { networkUtls } from '@activepieces/server-shared'
+import { AppSystemProp, networkUtils } from '@activepieces/server-shared'
 import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { eventsHooks } from '../../../helper/application-events'
 import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-prop'
 import { platformService } from '../../../platform/platform.service'
 import { platformUtils } from '../../../platform/platform.utils'
 import { authnSsoSamlService } from './authn-sso-saml-service'
@@ -29,7 +28,7 @@ export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => 
             platformId,
             userId: response.id,
             projectId: response.projectId,
-            ip: networkUtls.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+            ip: networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
         }, {
             action: ApplicationEventName.USER_SIGNED_UP,
             data: {

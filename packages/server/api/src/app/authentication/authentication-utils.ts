@@ -1,7 +1,7 @@
-import { ActivepiecesError, ApEdition, ApEnvironment, AuthenticationResponse, ErrorCode, isNil, PrincipalType, Project, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { AppSystemProp } from '@activepieces/server-shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, AuthenticationResponse, ErrorCode, isNil, Principal, PrincipalType, Project, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../helper/system/system'
-import { AppSystemProp } from '../helper/system/system-prop'
 import { telemetry } from '../helper/telemetry.utils'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
@@ -183,6 +183,16 @@ export const authenticationUtils = {
         catch (error) {
             log.warn(error)
         }
+    },
+    async extractUserIdFromPrincipal(
+        principal: Principal,
+    ): Promise<string> {
+        if (principal.type === PrincipalType.USER) {
+            return principal.id
+        }
+        // TODO currently it's same as api service, but it's better to get it from api key service, in case we introduced more admin users
+        const project = await projectService.getOneOrThrow(principal.projectId)
+        return project.ownerId
     },
 }
 

@@ -548,6 +548,8 @@ describe('Project API', () => {
             expect(responseBody?.params?.entityType).toBe('project')
         })
     })
+
+
 })
 
 async function createProjectAndPlatformAndApiKey(): Promise<{

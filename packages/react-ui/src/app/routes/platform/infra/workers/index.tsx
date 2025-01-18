@@ -83,7 +83,7 @@ export default function WorkersPage() {
 
   return (
     <div className="flex flex-col w-full">
-      <TableTitle>{t('Workers')}</TableTitle>
+      <TableTitle>{t('Workers Machine')}</TableTitle>
       {showDemoData && (
         <Alert variant="default" className="mt-4">
           <div className="flex items-center gap-2">

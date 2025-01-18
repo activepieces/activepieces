@@ -87,7 +87,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
       hasPermission: project.releasesEnabled,
     },
     {
-      to: authenticationSession.appendProjectRoutePrefix('/settings/general'),
+      to: authenticationSession.appendProjectRoutePrefix('/settings'),
       label: t('Settings'),
       icon: Wrench,
     },

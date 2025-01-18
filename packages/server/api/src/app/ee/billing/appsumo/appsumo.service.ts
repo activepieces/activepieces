@@ -109,7 +109,6 @@ export const appsumoService = (log: FastifyBaseLogger) => ({
                     await projectLimitsService.upsert(DEFAULT_FREE_PLAN_LIMIT, project.id)
                     await projectBillingService(log).updateByProjectId(project.id, {
                         includedTasks: DEFAULT_FREE_PLAN_LIMIT.tasks,
-                        includedUsers: DEFAULT_FREE_PLAN_LIMIT.teamMembers,
                     })
                 }
                 else {

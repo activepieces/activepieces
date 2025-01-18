@@ -6,6 +6,7 @@ import {
 import { askClaude } from './lib/actions/send-prompt';
 import { baseUrl } from './lib/common/common';
 import { PieceCategory } from '@activepieces/shared';
+import { extractStructuredDataAction } from './lib/actions/extract-structured-data';
 
 export const claudeAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -19,9 +20,10 @@ export const claude = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/claude.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ['dennisrongo'],
+  authors: ['dennisrongo','kishanprmr'],
   actions: [
     askClaude,
+    extractStructuredDataAction,
     createCustomApiCallAction({
       auth: claudeAuth,
       baseUrl: () => baseUrl,

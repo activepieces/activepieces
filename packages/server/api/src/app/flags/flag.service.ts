@@ -1,10 +1,11 @@
-import { networkUtls, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
+import { AppSystemProp, webhookSecretsUtils } from '@activepieces/server-shared'
+import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import axios from 'axios'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
+import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { system } from '../helper/system/system'
-import { AppSystemProp } from '../helper/system/system-prop'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
 
@@ -33,7 +34,7 @@ export const flagService = {
                 ApFlagId.EMAIL_AUTH_ENABLED,
                 ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 ApFlagId.ENVIRONMENT,
-                ApFlagId.FRONTEND_URL,
+                ApFlagId.PUBLIC_URL,
                 ApFlagId.LATEST_VERSION,
                 ApFlagId.OWN_AUTH2_ENABLED,
                 ApFlagId.PRIVACY_POLICY_URL,
@@ -123,7 +124,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-                value: this.getThirdPartyRedirectUrl(undefined, undefined),
+                value: await federatedAuthnService(system.globalLogger()).getThirdPartyRedirectUrl(undefined),
                 created,
                 updated,
             },
@@ -176,14 +177,22 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.FRONTEND_URL,
-                value: system.get(WorkerSystemProp.FRONTEND_URL),
+                id: ApFlagId.PUBLIC_URL,
+                value: await domainHelper.getPublicUrl({
+                    path: '',
+                }),
                 created,
                 updated,
             },
             {
                 id: ApFlagId.FLOW_RUN_TIME_SECONDS,
                 value: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.FLOW_RUN_MEMORY_LIMIT_KB,
+                value: system.getNumber(AppSystemProp.SANDBOX_MEMORY_LIMIT),
                 created,
                 updated,
             },
@@ -223,7 +232,9 @@ export const flagService = {
             flags.push(
                 {
                     id: ApFlagId.WEBHOOK_URL_PREFIX,
-                    value: await getWebhookPrefix(),
+                    value: await domainHelper.getPublicApiUrl({
+                        path: 'v1/webhooks',
+                    }),
                     created,
                     updated,
                 },
@@ -236,15 +247,6 @@ export const flagService = {
             )
         }
         return flags
-    },
-    getThirdPartyRedirectUrl(
-        hostUrl: string | undefined,
-        platformId: string | undefined,
-    ): string {
-        if (isNil(hostUrl) || isNil(platformId)) {
-            return `${system.getOrThrow(WorkerSystemProp.FRONTEND_URL)}/redirect`
-        }
-        return `https://${hostUrl}/redirect`
     },
     async getCurrentRelease(): Promise<string> {
         const packageJson = await import('package.json')
@@ -278,9 +280,6 @@ export const flagService = {
 }
 
 
-async function getWebhookPrefix(): Promise<string> {
-    return `${await networkUtls.getPublicUrl(system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT), system.getOrThrow(WorkerSystemProp.FRONTEND_URL))}v1/webhooks`
-}
 
 function getSupportedAppWebhooks(): string[] {
     const webhookSecrets = system.get(AppSystemProp.APP_WEBHOOK_SECRETS)
@@ -294,7 +293,7 @@ function getSupportedAppWebhooks(): string[] {
 
 
 export type FlagType =
-    | BaseFlagStructure<ApFlagId.FRONTEND_URL, string>
+    | BaseFlagStructure<ApFlagId.PUBLIC_URL, string>
     | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
     | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>

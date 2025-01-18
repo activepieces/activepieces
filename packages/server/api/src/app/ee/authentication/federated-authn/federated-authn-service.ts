@@ -1,3 +1,4 @@
+import { AppSystemProp } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, AuthenticationResponse,
     FederatedAuthnLoginResponse,
     isNil,
@@ -6,18 +7,16 @@ import { assertNotNullOrUndefined, AuthenticationResponse,
 import { FastifyBaseLogger } from 'fastify'
 import { authenticationService } from '../../../authentication/authentication.service'
 import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-prop'
 import { platformService } from '../../../platform/platform.service'
+import { domainHelper } from '../../custom-domains/domain-helper'
 import { googleAuthnProvider } from './google-authn-provider'
 
 export const federatedAuthnService = (log: FastifyBaseLogger) => ({
     async login({
         platformId,
-        hostname,
     }: LoginParams): Promise<FederatedAuthnLoginResponse> {
         const { clientId } = await getClientIdAndSecret(platformId)
-        const loginUrl = await googleAuthnProvider.getLoginUrl({
-            hostname,
+        const loginUrl = await googleAuthnProvider(log).getLoginUrl({
             clientId,
             platformId,
         })
@@ -28,13 +27,11 @@ export const federatedAuthnService = (log: FastifyBaseLogger) => ({
     },
 
     async claim({
-        hostname,
         platformId,
         code,
     }: ClaimParams): Promise<AuthenticationResponse> {
         const { clientId, clientSecret } = await getClientIdAndSecret(platformId)
-        const idToken = await googleAuthnProvider.authenticate({
-            hostname,
+        const idToken = await googleAuthnProvider(log).authenticate({
             clientId,
             clientSecret,
             authorizationCode: code,
@@ -49,6 +46,14 @@ export const federatedAuthnService = (log: FastifyBaseLogger) => ({
             newsLetter: true,
             provider: UserIdentityProvider.GOOGLE,
             predefinedPlatformId: platformId ?? null,
+        })
+    },
+    async getThirdPartyRedirectUrl(
+        platformId: string | undefined,
+    ): Promise<string> {
+        return domainHelper.getInternalUrl({
+            path: '/redirect',
+            platformId,
         })
     },
 })
@@ -71,11 +76,9 @@ async function getClientIdAndSecret(platformId: string | undefined) {
 
 type LoginParams = {
     platformId: string | undefined
-    hostname: string
 }
 
 type ClaimParams = {
     platformId: string | undefined
-    hostname: string
     code: string
 }

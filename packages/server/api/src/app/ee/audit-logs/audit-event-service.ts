@@ -1,7 +1,7 @@
 import {
     ApplicationEvent,
 } from '@activepieces/ee-shared'
-import { networkUtls, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { AppSystemProp, networkUtils, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     apId,
     Cursor,
@@ -12,13 +12,13 @@ import {
 import { Value } from '@sinclair/typebox/value'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { In } from 'typeorm'
+import { authenticationUtils } from '../../authentication/authentication-utils'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { AuditEventParam } from '../../helper/application-events'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -34,12 +34,15 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
         if ([PrincipalType.UNKNOWN, PrincipalType.WORKER].includes(request.principal.type)) {
             return
         }
-        rejectedPromiseHandler(saveEvent({
-            platformId: request.principal.platform.id,
-            projectId: request.principal.projectId,
-            userId: request.principal.id,
-            ip: networkUtls.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-        }, params, log), log)
+        rejectedPromiseHandler((async () => {
+            const userId = await authenticationUtils.extractUserIdFromPrincipal(request.principal)
+            await saveEvent({
+                platformId: request.principal.platform.id,
+                projectId: request.principal.projectId,
+                userId,
+                ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+            }, params, log)
+        })(), log)
     },
     sendWorkerEvent(projectId: string, params: AuditEventParam): void {
         rejectedPromiseHandler(projectService.getOneOrThrow(projectId).then((project) => {

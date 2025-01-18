@@ -2,19 +2,21 @@ import { exec } from 'child_process'
 import fs from 'fs'
 import os from 'os'
 import { promisify } from 'util'
-import { exceptionHandler, fileExists, networkUtls, webhookSecretsUtils } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, MachineInformation, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { environmentVariables, exceptionHandler, fileExists, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined, isNil, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 
 const execAsync = promisify(exec)
 
-
 let settings: WorkerMachineHealthcheckResponse | undefined
-
 
 export const workerMachine = {
     getSystemInfo,
     init: async (_settings: WorkerMachineHealthcheckResponse) => {
-        settings = _settings
+        settings = {
+            ..._settings,
+            ...spreadIfDefined('FLOW_WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.FLOW_WORKER_CONCURRENCY)),
+            ...spreadIfDefined('SCHEDULED_WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY)),
+        }
 
         await webhookSecretsUtils.init(settings.APP_WEBHOOK_SECRETS)
         exceptionHandler.initializeSentry(settings.SENTRY_DSN)
@@ -23,8 +25,38 @@ export const workerMachine = {
         assertNotNullOrUndefined(settings, 'Settings are not set')
         return settings
     },
+    getInternalApiUrl: (): string => {
+        if (environmentVariables.hasAppModules()) {
+            return 'http://127.0.0.1:3000/'
+        }
+        const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.FRONTEND_URL)
+        return appendSlashAndApi(replaceLocalhost(url))
+    },
+    getPublicApiUrl: (): string => {
+        return appendSlashAndApi(replaceLocalhost(getPublicUrl()))
+    },
 }
 
+function getPublicUrl(): string {
+    if (isNil(settings)) {
+        const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.FRONTEND_URL)
+        return url
+    }
+    return settings.PUBLIC_URL
+}
+
+function replaceLocalhost(urlString: string): string {
+    const url = new URL(urlString)
+    if (url.hostname === 'localhost') {
+        url.hostname = '127.0.0.1'
+    }
+    return url.toString()
+}
+
+function appendSlashAndApi(url: string): string {
+    const slash = url.endsWith('/') ? '' : '/'
+    return `${url}${slash}api/`
+}
 
 async function getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
     const { totalRamInBytes, ramUsage } = await getContainerMemoryUsage()
@@ -36,7 +68,7 @@ async function getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
         return acc + (1 - idle / total)
     }, 0) / cpus.length * 100
 
-    const ip = (await networkUtls.getPublicIp()).ip
+    const ip = (await networkUtils.getPublicIp()).ip
     const diskInfo = await getDiskInfo()
 
     return {
@@ -48,13 +80,13 @@ async function getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
         workerProps: {},
     }
 }
+
 async function getContainerMemoryUsage() {
     const memLimitPath = '/sys/fs/cgroup/memory/memory.limit_in_bytes'
     const memUsagePath = '/sys/fs/cgroup/memory/memory.usage_in_bytes'
 
     const memLimitExists = await fileExists(memLimitPath)
     const memUsageExists = await fileExists(memUsagePath)
-
 
     const totalRamInBytes = memLimitExists ? parseInt(await fs.promises.readFile(memLimitPath, 'utf8')) : os.totalmem()
     const usedRamInBytes = memUsageExists ? parseInt(await fs.promises.readFile(memUsagePath, 'utf8')) : os.totalmem() - os.freemem()

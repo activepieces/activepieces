@@ -77,7 +77,9 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   );
   const { checkAccess } = useAuthorization();
   const userHasPermissionToUpdateFlow = checkAccess(Permission.WRITE_FLOW);
-  const userHasPermissionToPushToGit = checkAccess(Permission.WRITE_GIT_REPO);
+  const userHasPermissionToPushToGit = checkAccess(
+    Permission.WRITE_PROJECT_RELEASE,
+  );
   const importFlowProps: ImportFlowDialogProps = {
     insideBuilder: true,
     flowId: flow.id,
@@ -89,8 +91,9 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   const { mutate: duplicateFlow, isPending: isDuplicatePending } = useMutation({
     mutationFn: async () => {
       const createdFlow = await flowsApi.create({
-        displayName: flowVersion.displayName,
+        displayName: `${flowVersion.displayName} - Copy`,
         projectId: authenticationSession.getProjectId()!,
+        folderId: flow.folderId ?? undefined,
       });
       const updatedFlow = await flowsApi.update(createdFlow.id, {
         type: FlowOperationType.IMPORT_FLOW,
