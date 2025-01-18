@@ -8,9 +8,8 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { platformService } from '../../platform/platform.service'
-import { projectRepo, projectService } from '../../project/project-service'
+import { projectRepo } from '../../project/project-service'
 import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
 import { userRepo, userService } from '../../user/user-service'
 import { AppConnectionEntity } from '../../app-connection/app-connection.entity'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -30,6 +29,7 @@ import { PlatformBillingEntity } from '../platform-billing/platform-billing.enti
 import { ApSubscriptionStatus, DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
 import { stripeHelper, TASKS_PAYG_PRICE_ID } from '../platform-billing/stripe-helper'
 import { apDayjs } from '../../helper/dayjs-helper'
+import { AppSystemProp } from '@activepieces/server-shared'
 
 export const appConnectionRepo = repoFactory(AppConnectionEntity)
 export const flowTemplateRepo = repoFactory(FlowTemplateEntity)
@@ -156,8 +156,8 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
         const platformPlan = await platformBillingService(system.globalLogger()).getOrCreateForPlatform(platform.id)
 
         await platformBillingRepo().update(platformPlan.id, {
-            tasksLimit: projectPlan.plan.tasks,
-            aiCreditsLimit: projectPlan.plan.aiTokens,
+            tasksLimit: projectPlan.plan.tasks ?? undefined,
+            aiCreditsLimit: projectPlan.plan.aiTokens ?? undefined,
             includedAiCredits: DEFAULT_FREE_PLAN_LIMIT.aiTokens,
             includedTasks: projectBilling.includedTasks,
         })
