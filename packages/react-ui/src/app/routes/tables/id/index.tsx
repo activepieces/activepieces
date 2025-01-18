@@ -21,7 +21,12 @@ import DataGrid, {
   DataGridHandle,
 } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
-import { useNavigate, useParams } from 'react-router-dom';
+import {
+  useNavigate,
+  useParams,
+  useSearchParams,
+  useLocation,
+} from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useTheme } from '@/components/theme-provider';
@@ -34,6 +39,7 @@ import {
   ColumnActionType,
 } from '@/features/tables/components/column-header';
 import { EditableCell } from '@/features/tables/components/editable-cell';
+import { FiltersPopup } from '@/features/tables/components/filters-popup';
 import { NewFieldPopup } from '@/features/tables/components/new-field-popup';
 import { SelectColumn } from '@/features/tables/components/select-column';
 import { fieldsApi } from '@/features/tables/lib/fields-api';
@@ -47,6 +53,7 @@ import {
   PopulatedRecord,
   UpdateRecordRequest,
   SeekPage,
+  FilterOperator,
 } from '@activepieces/shared';
 import './react-data-grid.css';
 
@@ -70,6 +77,8 @@ const getRowHeight = (type: RowHeight = RowHeight.DEFAULT): number => {
 function TablePage() {
   const { tableId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams(location.search);
   const queryClient = useQueryClient();
   const { saving, enqueueMutation } = useSequentialMutationsStore();
   const [selectedRows, setSelectedRows] = useState<ReadonlySet<string>>(
@@ -92,13 +101,24 @@ function TablePage() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery<SeekPage<PopulatedRecord>>({
-    queryKey: ['records', tableId],
-    queryFn: async ({ pageParam }) =>
-      recordsApi.list({
+    queryKey: ['records', tableId, location.search],
+    queryFn: async ({ pageParam }) => {
+      const filters = searchParams.getAll('filter').map((f) => {
+        const [fieldId, operator, value] = f.split(':');
+        return {
+          fieldId,
+          operator: operator as FilterOperator,
+          value: decodeURIComponent(value),
+        };
+      });
+
+      return recordsApi.list({
         tableId: tableId!,
         cursor: pageParam as string | undefined,
         limit: 200,
-      }),
+        filters: filters.length > 0 ? filters : undefined,
+      });
+    },
     getNextPageParam: (lastPage) => lastPage.next,
     initialPageParam: undefined as string | undefined,
   });
@@ -554,6 +574,7 @@ function TablePage() {
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
+            {fieldsData && <FiltersPopup fields={fieldsData} />}
             <span className="text-sm text-muted-foreground ml-2">
               {t('Row Height')}
             </span>

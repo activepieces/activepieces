@@ -45,12 +45,13 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
     },
     )
 
-    fastify.get('/', ListRequest, async (request) => {
+    fastify.post('/list', ListRequest, async (request) => {
         return recordService.list({
-            tableId: request.query.tableId,
+            tableId: request.body.tableId,
             projectId: request.principal.projectId,
-            cursorRequest: request.query.cursor ?? null,
-            limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
+            cursorRequest: request.body.cursor ?? null,
+            limit: request.body.limit ?? DEFAULT_PAGE_SIZE,
+            filters: request.body.filters ?? null,
         })
     },
     )
@@ -114,7 +115,7 @@ const ListRequest = {
         allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
     },
     schema: {
-        querystring: ListRecordsRequest,
+        body: ListRecordsRequest,
         response: {
             [StatusCodes.OK]: SeekPage(PopulatedRecord),
         },

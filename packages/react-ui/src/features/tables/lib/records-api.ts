@@ -9,7 +9,7 @@ import {
 
 export const recordsApi = {
   list(request: ListRecordsRequest): Promise<SeekPage<PopulatedRecord>> {
-    return api.get<SeekPage<PopulatedRecord>>('/v1/records', request);
+    return api.post<SeekPage<PopulatedRecord>>('/v1/records/list', request);
   },
 
   create(request: CreateRecordsRequest): Promise<PopulatedRecord[]> {

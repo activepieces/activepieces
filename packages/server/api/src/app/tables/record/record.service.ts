@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, CreateRecordsRequest, Cursor, ErrorCode, isNil, PopulatedRecord, SeekPage, UpdateRecordRequest } from '@activepieces/shared'
+import { ActivepiecesError, apId, CreateRecordsRequest, Cursor, ErrorCode, Filter, FilterOperator, isNil, PopulatedRecord, SeekPage, UpdateRecordRequest } from '@activepieces/shared'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -68,26 +68,72 @@ export const recordService = {
         })
     },
 
-    async list({ tableId, projectId, cursorRequest, limit }: ListParams): Promise<SeekPage<PopulatedRecord>> {
+    async list({ tableId, projectId, cursorRequest, limit, filters }: ListParams): Promise<SeekPage<PopulatedRecord>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
 
         const paginator = buildPaginator({
             entity: RecordEntity,
             query: {
                 limit,
-                order: 'DESC',
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
 
-        const paginationResult = await paginator.paginate(
-            recordRepo()
-                .createQueryBuilder('record')
-                .where({ tableId, projectId })
-                .leftJoinAndSelect('record.cells', 'cell'),
-        )
+        const queryBuilder = recordRepo()
+            .createQueryBuilder('record')
+            .leftJoinAndSelect('record.cells', 'cell')
+            .leftJoinAndSelect('cell.field', 'field')
+            .where('record.tableId = :tableId', { tableId })
+            .andWhere('record.projectId = :projectId', { projectId })
 
+        if (filters?.length) {
+            filters.forEach((filter, _index) => {
+                const operator = filter.operator || FilterOperator.EQ
+                let condition: string
+
+                switch (operator) {
+                    case FilterOperator.EQ:
+                        condition = '='
+                        break
+                    case FilterOperator.NEQ:
+                        condition = '!='
+                        break
+                    case FilterOperator.GT:
+                        condition = '>'
+                        break
+                    case FilterOperator.GTE:
+                        condition = '>='
+                        break
+                    case FilterOperator.LT:
+                        condition = '<'
+                        break
+                    case FilterOperator.LTE:
+                        condition = '<='
+                        break
+                }
+
+                // Create a subquery for each filter condition using field ID directly
+                const subQuery = recordRepo()
+                    .createQueryBuilder('r')
+                    .select('1')
+                    .innerJoin('r.cells', 'c')
+                    .where('c.projectId = :projectId') // To use the index
+                    .andWhere('c.fieldId = :fieldId')
+                    .andWhere('r.id = record.id')
+                    .andWhere(`c.value ${condition} :fieldValue`)
+                    .setParameters({
+                        projectId,
+                        fieldId: filter.fieldId,
+                        fieldValue: filter.value,
+                    })
+
+                queryBuilder.andWhere(`EXISTS (${subQuery.getQuery()})`)
+                queryBuilder.setParameters(subQuery.getParameters())
+            })
+        }
+
+        const paginationResult = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage(paginationResult.data, paginationResult.cursor)
     },
 
@@ -191,4 +237,5 @@ type ListParams = {
     projectId: string
     cursorRequest: Cursor | null
     limit: number
+    filters: Filter[] | null
 }
