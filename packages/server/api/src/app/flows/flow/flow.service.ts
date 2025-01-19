@@ -39,26 +39,26 @@ import { flowRepo } from './flow.repo'
 
 const TRIGGER_FAILURES_THRESHOLD = system.getNumberOrThrow(AppSystemProp.TRIGGER_FAILURES_THRESHOLD)
 
-const getFolderIdFromRequest = async ({projectId, folderId, folderName, log}: {projectId: string, folderId: string | undefined, folderName: string | undefined,log: FastifyBaseLogger}) => {
-            if (folderId) {
-                return folderId
-            }
-            if(folderName){
-            return (await flowFolderService(log).upsert({
+const getFolderIdFromRequest = async ({ projectId, folderId, folderName, log }: { projectId: string, folderId: string | undefined, folderName: string | undefined, log: FastifyBaseLogger }) => {
+    if (folderId) {
+        return folderId
+    }
+    if (folderName) {
+        return (await flowFolderService(log).upsert({
+            projectId,
+            request: {
                 projectId,
-                request: {
-                    projectId,
-                    displayName: folderName,
-                },
-            })).id
-        }
-        return null
+                displayName: folderName,
+            },
+        })).id
+    }
+    return null
 }
 
 export const flowService = (log: FastifyBaseLogger) => ({
     async create({ projectId, request, externalId }: CreateParams): Promise<PopulatedFlow> {
      
-        const folderId = await getFolderIdFromRequest({projectId, folderId: request.folderId, folderName: request.folderName, log})
+        const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId, folderName: request.folderName, log })
         const newFlow: NewFlow = {
             id: apId(),
             projectId,
@@ -66,7 +66,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             status: FlowStatus.DISABLED,
             publishedVersionId: null,
             schedule: null,
-            externalId
+            externalId,
         }
         const savedFlow = await flowRepo().save(newFlow)
 
@@ -283,7 +283,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
                             },
                         })
                     }
-                    console.log('flow serviceapply operation:'+JSON.stringify(operation))
                     await flowVersionService(log).applyOperation({
                         userId,
                         projectId,
