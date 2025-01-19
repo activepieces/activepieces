@@ -16,9 +16,9 @@ import { ApFlagId, supportUrl } from '@activepieces/shared';
 
 import { ShowPoweredBy } from '../../components/show-powered-by';
 import { platformHooks } from '../../hooks/platform-hooks';
-import { determineDefaultRoute } from '../router/default-route';
 
 import { Header } from './header';
+import { determineDefaultRoute } from '@/lib/utils';
 
 type Link = {
   icon: React.ReactNode;

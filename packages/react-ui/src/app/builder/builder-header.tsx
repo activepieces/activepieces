@@ -34,9 +34,9 @@ import {
 } from '@activepieces/shared';
 
 import FlowActionMenu from '../components/flow-actions-menu';
-import { determineDefaultRoute } from '../router/default-route';
 
 import { BuilderPublishButton } from './builder-publish-button';
+import { determineDefaultRoute } from '@/lib/utils';
 
 export const BuilderHeader = () => {
   const navigate = useNavigate();

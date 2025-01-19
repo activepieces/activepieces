@@ -10,6 +10,12 @@ import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 import { ProjectWithLimits } from '@activepieces/shared';
 
 import { projectApi } from '../lib/project-api';
+import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useAuthorization } from './authorization-hooks';
+import { determineDefaultRoute } from '@/lib/utils';
+import { toast } from '@/components/ui/use-toast';
+import { t } from 'i18next';
 
 export const projectHooks = {
   prefetchProject: () => {
@@ -21,8 +27,9 @@ export const projectHooks = {
     });
   },
   useCurrentProject: () => {
+    const currentProjectId = authenticationSession.getProjectId();
     const query = useSuspenseQuery<ProjectWithLimits, Error>({
-      queryKey: ['current-project'],
+      queryKey: ['current-project', currentProjectId],
       queryFn: projectApi.current,
       staleTime: Infinity,
     });
@@ -72,3 +79,27 @@ const setCurrentProject = async (
     window.location.href = pathNameWithNewProjectId;
   }
 };
+
+
+export const useRedirectToHomeIfProjectIdChanged = (projectId: string) =>{
+  const navigate = useNavigate();
+  const {checkAccess} = useAuthorization();
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+       const currentProjectId = authenticationSession.getProjectId();
+        if(currentProjectId !== projectId && document.visibilityState === "visible"){
+          toast({
+            title: t('Project changed'),
+            description: t('You have been redirected to the home page'),
+            
+          })
+          navigate(determineDefaultRoute(checkAccess));
+        }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [projectId]);
+  
+}

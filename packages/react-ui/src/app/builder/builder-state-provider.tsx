@@ -8,6 +8,7 @@ import {
 } from '@/app/builder/builder-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Permission } from '@activepieces/shared';
+import { useRedirectToHomeIfProjectIdChanged } from '@/hooks/project-hooks';
 
 type BuilderStateProviderProps = React.PropsWithChildren<BuilderInitialState>;
 
@@ -27,6 +28,7 @@ export function BuilderStateProvider({
       sampleData,
     });
   }
+  useRedirectToHomeIfProjectIdChanged(props.flow.projectId);
   return (
     <BuilderStateContext.Provider value={storeRef.current}>
       {children}

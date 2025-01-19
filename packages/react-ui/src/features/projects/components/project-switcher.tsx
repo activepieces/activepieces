@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
+import { t } from 'i18next';
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { projectHooks } from '../../../hooks/project-hooks';
 
@@ -73,7 +74,7 @@ function ProjectSwitcher() {
         <Command filter={filterProjects}>
           <CommandList>
             <CommandInput placeholder="Search project..." />
-            <CommandEmpty>No projects found.</CommandEmpty>
+            <CommandEmpty>{t('No projects found')}</CommandEmpty>
             <CommandGroup key="projects" heading="Projects">
               <ScrollArea viewPortClassName="max-h-[200px]">
                 {sortedProjects &&

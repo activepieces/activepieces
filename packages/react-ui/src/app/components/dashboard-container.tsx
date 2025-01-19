@@ -14,7 +14,7 @@ import { useEmbedding } from '@/components/embed-provider';
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectHooks, useRedirectToHomeIfProjectIdChanged } from '@/hooks/project-hooks';
 import { isNil, Permission } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
@@ -94,6 +94,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
   ]
     .filter(embedFilter)
     .filter(permissionFilter);
+  useRedirectToHomeIfProjectIdChanged(currentProjectId);
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
       <CloseTaskLimitAlertContext.Provider
