@@ -287,6 +287,9 @@
       "@activepieces/piece-gotify": [
         "packages/pieces/community/gotify/src/index.ts"
       ],
+      "@activepieces/piece-graphql": [
+        "packages/pieces/community/graphql/src/index.ts"
+      ],
       "@activepieces/piece-gravityforms": [
         "packages/pieces/community/gravityforms/src/index.ts"
       ],
