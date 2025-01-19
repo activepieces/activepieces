@@ -13,7 +13,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
-import { UNSAVED_CHANGES_TOAST, toast } from '@/components/ui/use-toast';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import {
   StepMetadata,
@@ -202,27 +201,21 @@ const PieceSelector = ({
     switch (operation.type) {
       case FlowOperationType.UPDATE_TRIGGER: {
         setSampleData(stepData.name, undefined);
-        applyOperation(
-          {
-            type: FlowOperationType.UPDATE_TRIGGER,
-            request: stepData as Trigger,
-          },
-          () => toast(UNSAVED_CHANGES_TOAST),
-        );
+        applyOperation({
+          type: FlowOperationType.UPDATE_TRIGGER,
+          request: stepData as Trigger,
+        });
         selectStepByName('trigger');
         break;
       }
       case FlowOperationType.ADD_ACTION: {
-        applyOperation(
-          {
-            type: FlowOperationType.ADD_ACTION,
-            request: {
-              ...operation.actionLocation,
-              action: stepData as Action,
-            },
+        applyOperation({
+          type: FlowOperationType.ADD_ACTION,
+          request: {
+            ...operation.actionLocation,
+            action: stepData as Action,
           },
-          () => toast(UNSAVED_CHANGES_TOAST),
-        );
+        });
         selectStepByName(stepData.name);
         break;
       }
@@ -257,22 +250,19 @@ const PieceSelector = ({
           return;
         }
 
-        applyOperation(
-          {
-            type: FlowOperationType.UPDATE_ACTION,
-            request: {
-              type: (stepData as Action).type,
-              displayName: stepData.displayName,
-              name: operation.stepName,
-              skip: (stepData as Action).skip,
-              settings: {
-                ...stepData.settings,
-              },
-              valid: stepData.valid,
+        applyOperation({
+          type: FlowOperationType.UPDATE_ACTION,
+          request: {
+            type: (stepData as Action).type,
+            displayName: stepData.displayName,
+            name: operation.stepName,
+            skip: (stepData as Action).skip,
+            settings: {
+              ...stepData.settings,
             },
+            valid: stepData.valid,
           },
-          () => toast(UNSAVED_CHANGES_TOAST),
-        );
+        });
       }
     }
     setAskAiButtonProps(null);

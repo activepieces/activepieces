@@ -36,7 +36,7 @@ import {
 import FlowActionMenu from '../components/flow-actions-menu';
 import { determineDefaultRoute } from '../router/default-route';
 
-import { BuilderPublishButton } from './builder-publish-button';
+import { BuilderFlowStatusSection } from './builder-flow-status-section';
 
 export const BuilderHeader = () => {
   const navigate = useNavigate();
@@ -201,7 +201,7 @@ export const BuilderHeader = () => {
             </Tooltip>
           )}
 
-          <BuilderPublishButton></BuilderPublishButton>
+          <BuilderFlowStatusSection></BuilderFlowStatusSection>
           <UserAvatar></UserAvatar>
         </div>
       </div>
