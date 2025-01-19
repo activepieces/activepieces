@@ -624,12 +624,14 @@ export const useHandleKeyPressOnCanvas = () => {
 };
 
 export const useSwitchToDraft = () => {
-  const [flowVersion, setVersion, exitRun,setFlow] = useBuilderStateContext((state) => [
-    state.flowVersion,
-    state.setVersion,
-    state.exitRun,
-    state.setFlow
-  ]);
+  const [flowVersion, setVersion, exitRun, setFlow] = useBuilderStateContext(
+    (state) => [
+      state.flowVersion,
+      state.setVersion,
+      state.exitRun,
+      state.setFlow,
+    ],
+  );
   const { checkAccess } = useAuthorization();
   const userHasPermissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
   const { mutate: switchToDraft, isPending: isSwitchingToDraftPending } =
