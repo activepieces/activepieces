@@ -63,7 +63,7 @@ export const FilterRow = ({
   };
 
   return (
-    <div className="flex items-center justify-between gap-2">
+    <div className="flex items-center justify-between gap-2 p-2">
       <div className="flex-auto w-44">
         <Select value={selectedField} onValueChange={handleFieldChange}>
           <SelectTrigger>

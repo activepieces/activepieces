@@ -150,12 +150,18 @@ function TablePage() {
       return recordsApi.update(recordId, request);
     },
     onMutate: async ({ recordId, request }) => {
-      await queryClient.cancelQueries({ queryKey: ['records', tableId] });
-      const previousRecords = queryClient.getQueryData(['records', tableId]);
+      await queryClient.cancelQueries({
+        queryKey: ['records', tableId, location.search],
+      });
+      const previousRecords = queryClient.getQueryData([
+        'records',
+        tableId,
+        location.search,
+      ]);
 
       // Update the cache optimistically
       queryClient.setQueryData(
-        ['records', tableId],
+        ['records', tableId, location.search],
         (old: { pages: { data: PopulatedRecord[] }[] }) => ({
           ...old,
           pages: old.pages.map((page) => ({
@@ -188,7 +194,10 @@ function TablePage() {
     },
     onError: (error, variables, context) => {
       if (context?.previousRecords) {
-        queryClient.setQueryData(['records', tableId], context.previousRecords);
+        queryClient.setQueryData(
+          ['records', tableId, location.search],
+          context.previousRecords,
+        );
       }
       toast({
         title: t('Error'),
@@ -199,7 +208,7 @@ function TablePage() {
     onSuccess: (data, { recordId }) => {
       // Update the cache with the server response
       queryClient.setQueryData(
-        ['records', tableId],
+        ['records', tableId, location.search],
         (old: { pages: { data: PopulatedRecord[] }[] }) => ({
           ...old,
           pages: old.pages.map((page) => ({
@@ -248,12 +257,18 @@ function TablePage() {
       await Promise.all(recordIds.map((id) => recordsApi.delete(id)));
     },
     onMutate: async (recordIds) => {
-      await queryClient.cancelQueries({ queryKey: ['records', tableId] });
-      const previousRecords = queryClient.getQueryData(['records', tableId]);
+      await queryClient.cancelQueries({
+        queryKey: ['records', tableId, location.search],
+      });
+      const previousRecords = queryClient.getQueryData([
+        'records',
+        tableId,
+        location.search,
+      ]);
 
       // Update the cache optimistically
       queryClient.setQueryData(
-        ['records', tableId],
+        ['records', tableId, location.search],
         (old: { pages: { data: PopulatedRecord[] }[] }) => ({
           ...old,
           pages: old.pages.map((page) => ({
@@ -267,7 +282,10 @@ function TablePage() {
     },
     onError: (error, variables, context) => {
       if (context?.previousRecords) {
-        queryClient.setQueryData(['records', tableId], context.previousRecords);
+        queryClient.setQueryData(
+          ['records', tableId, location.search],
+          context.previousRecords,
+        );
       }
       toast({
         title: t('Error'),
@@ -304,8 +322,14 @@ function TablePage() {
       });
     },
     onMutate: async ({ field, value, tempId }) => {
-      await queryClient.cancelQueries({ queryKey: ['records', tableId] });
-      const previousRecords = queryClient.getQueryData(['records', tableId]);
+      await queryClient.cancelQueries({
+        queryKey: ['records', tableId, location.search],
+      });
+      const previousRecords = queryClient.getQueryData([
+        'records',
+        tableId,
+        location.search,
+      ]);
 
       return { previousRecords, tempId };
     },
@@ -313,7 +337,7 @@ function TablePage() {
       if (context?.previousRecords) {
         // Restore the previous records and remove the temporary record
         queryClient.setQueryData(
-          ['records', tableId],
+          ['records', tableId, location.search],
           (old: { pages: { data: PopulatedRecord[] }[] }) => ({
             ...old,
             pages: old.pages.map((page) => ({
@@ -332,7 +356,7 @@ function TablePage() {
     onSuccess: (data, { tempId }) => {
       // Replace the temporary record with the real one
       queryClient.setQueryData(
-        ['records', tableId],
+        ['records', tableId, location.search],
         (old: { pages: { data: PopulatedRecord[] }[] }) => ({
           ...old,
           pages: old.pages.map((page) => ({
@@ -364,8 +388,13 @@ function TablePage() {
             };
 
             queryClient.setQueryData(
-              ['records', tableId],
+              ['records', tableId, location.search],
               (old: { pages: { data: PopulatedRecord[] }[] }) => {
+                console.log('old', old);
+                if (!old) {
+                  return { pages: [{ data: [emptyRecord] }] };
+                }
+
                 const updatedData = {
                   ...old,
                   pages: old.pages.map((page, index) =>
