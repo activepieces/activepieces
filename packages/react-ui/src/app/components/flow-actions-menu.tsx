@@ -98,7 +98,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
       const updatedFlow = await flowsApi.update(createdFlow.id, {
         type: FlowOperationType.IMPORT_FLOW,
         request: {
-          displayName: flowVersion.displayName,
+          displayName: `${flowVersion.displayName} - Copy`,
           trigger: flowVersion.trigger,
           schemaVersion: flowVersion.schemaVersion,
         },
