@@ -98,9 +98,10 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
       hasPermission: project.releasesEnabled,
     },
     {
-      to: authenticationSession.appendProjectRoutePrefix('/settings'),
+      to: authenticationSession.appendProjectRoutePrefix('/settings/general'),
       label: t('Settings'),
       icon: Wrench,
+      isActive: (pathname: string) => pathname.includes('/settings'),
     },
   ]
     .filter(embedFilter)
