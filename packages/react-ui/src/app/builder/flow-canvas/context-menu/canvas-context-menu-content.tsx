@@ -18,7 +18,6 @@ import {
   ContextMenuSubTrigger,
 } from '@/components/ui/context-menu';
 import { Shortcut, ShortcutProps } from '@/components/ui/shortcut';
-import { toast, UNSAVED_CHANGES_TOAST } from '@/components/ui/use-toast';
 import {
   Action,
   ActionType,
@@ -119,15 +118,12 @@ export const CanvasContextMenuContent = ({
     !isTriggerTheOnlySelectedNode;
 
   const duplicateStep = () => {
-    applyOperation(
-      {
-        type: FlowOperationType.DUPLICATE_ACTION,
-        request: {
-          stepName: selectedNodes[0],
-        },
+    applyOperation({
+      type: FlowOperationType.DUPLICATE_ACTION,
+      request: {
+        stepName: selectedNodes[0],
       },
-      () => toast(UNSAVED_CHANGES_TOAST),
-    );
+    });
   };
   return (
     <>
@@ -290,18 +286,15 @@ export const CanvasContextMenuContent = ({
                 )}
               <ContextMenuItem
                 onClick={() => {
-                  applyOperation(
-                    {
-                      type: FlowOperationType.ADD_BRANCH,
-                      request: {
-                        stepName: firstSelectedStep.name,
-                        branchIndex:
-                          firstSelectedStep.settings.branches.length - 1,
-                        branchName: `Branch ${firstSelectedStep.settings.branches.length}`,
-                      },
+                  applyOperation({
+                    type: FlowOperationType.ADD_BRANCH,
+                    request: {
+                      stepName: firstSelectedStep.name,
+                      branchIndex:
+                        firstSelectedStep.settings.branches.length - 1,
+                      branchName: `Branch ${firstSelectedStep.settings.branches.length}`,
                     },
-                    () => {},
-                  );
+                  });
                   pasteNodes(
                     actionsToPaste,
                     flowVersion,
