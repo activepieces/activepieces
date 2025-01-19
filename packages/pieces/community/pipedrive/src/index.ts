@@ -34,6 +34,14 @@ import { personMatchingFilterTrigger } from './lib/trigger/person-matching-filte
 import { activityMatchingFilterTrigger } from './lib/trigger/activity-matching-filter';
 import { dealMatchingFilterTrigger } from './lib/trigger/deal-matching-filter';
 import { newNoteTrigger } from './lib/trigger/new-note';
+import { findDealsAssociatedWithPersonAction } from './lib/actions/find-deals-associated-with-person';
+import { findProductsAction } from './lib/actions/find-products';
+import { getProductAction } from './lib/actions/get-product';
+import { findNotesAction } from './lib/actions/find-notes';
+import { findOrganizationAction } from './lib/actions/find-organization';
+import { findPersonAction } from './lib/actions/find-person';
+import { findDealAction } from './lib/actions/find-deal';
+import { findActivityAction } from './lib/actions/find-activity';
 
 export const pipedriveAuth = PieceAuth.OAuth2({
 	description: '',
@@ -79,6 +87,14 @@ export const pipedrive = createPiece({
 		createPersonAction,
 		updatePersonAction,
 		createProductAction,
+		findDealsAssociatedWithPersonAction,
+		findProductsAction,
+		findNotesAction,
+		getProductAction,
+		findOrganizationAction,
+		findPersonAction,
+		findDealAction,
+		findActivityAction,
 		createCustomApiCallAction({
 			baseUrl: () => 'https://api.pipedrive.com/v1',
 			auth: pipedriveAuth,
@@ -102,6 +118,6 @@ export const pipedrive = createPiece({
 		activityMatchingFilterTrigger,
 		dealMatchingFilterTrigger,
 		personMatchingFilterTrigger,
-		organizationMatchingFilterTrigger
+		organizationMatchingFilterTrigger,
 	],
 });
