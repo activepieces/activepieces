@@ -16,7 +16,7 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
   projectHooks,
-  useRedirectToHomeIfProjectIdChanged,
+  useReloadPageIfProjectIdChanged,
 } from '@/hooks/project-hooks';
 import { isNil, Permission } from '@activepieces/shared';
 
@@ -36,7 +36,7 @@ const ProjectChangedRedirector = ({
   currentProjectId: string;
   children: React.ReactNode;
 }) => {
-  useRedirectToHomeIfProjectIdChanged(currentProjectId);
+  useReloadPageIfProjectIdChanged(currentProjectId);
   return children;
 };
 export const CloseTaskLimitAlertContext = createContext({
