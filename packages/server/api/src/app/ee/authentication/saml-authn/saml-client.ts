@@ -1,5 +1,5 @@
 
-import { ActivepiecesError, ErrorCode, isNil, SAMLAuthnProviderConfig } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import * as validator from '@authenio/samlify-node-xmllint'
 import { Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
@@ -76,7 +76,7 @@ const createIdp = (metadata: string): saml.IdentityProviderInstance => {
 }
 
 const createSp = async (platformId: string, privateKey: string): Promise<saml.ServiceProviderInstance> => {
-    const acsUrl = await domainHelper.getPublicUrl({ path: `/api/v1/authn/saml/acs`, platformId })
+    const acsUrl = await domainHelper.getPublicUrl({ path: '/api/v1/authn/saml/acs', platformId })
     return saml.ServiceProvider({
         entityID: 'Activepieces',
         authnRequestsSigned: false,
