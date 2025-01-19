@@ -2,6 +2,7 @@
 
 import { CaretSortIcon, CheckIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
 import * as React from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -22,7 +23,6 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
-import { t } from 'i18next';
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { projectHooks } from '../../../hooks/project-hooks';
 

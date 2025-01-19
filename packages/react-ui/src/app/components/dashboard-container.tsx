@@ -7,14 +7,17 @@ import {
   Workflow,
   Wrench,
 } from 'lucide-react';
-import { createContext, useState } from 'react';
+import { Children, createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectHooks, useRedirectToHomeIfProjectIdChanged } from '@/hooks/project-hooks';
+import {
+  projectHooks,
+  useRedirectToHomeIfProjectIdChanged,
+} from '@/hooks/project-hooks';
 import { isNil, Permission } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
@@ -26,6 +29,16 @@ type DashboardContainerProps = {
   children: React.ReactNode;
 };
 
+const ProjectChangedRedirector = ({
+  currentProjectId,
+  children,
+}: {
+  currentProjectId: string;
+  children: React.ReactNode;
+}) => {
+  useRedirectToHomeIfProjectIdChanged(currentProjectId);
+  return children;
+};
 export const CloseTaskLimitAlertContext = createContext({
   isAlertClosed: false,
   setIsAlertClosed: (isAlertClosed: boolean) => {},
@@ -37,12 +50,10 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     platform.flowIssuesEnabled,
   );
   const { project } = projectHooks.useCurrentProject();
-
   const { embedState } = useEmbedding();
   const currentProjectId = authenticationSession.getProjectId();
   const { checkAccess } = useAuthorization();
   const [isAlertClosed, setIsAlertClosed] = useState(false);
-
   if (isNil(currentProjectId) || currentProjectId === '') {
     return <Navigate to="/sign-in" replace />;
   }
@@ -94,23 +105,24 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
   ]
     .filter(embedFilter)
     .filter(permissionFilter);
-  useRedirectToHomeIfProjectIdChanged(currentProjectId);
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
-      <CloseTaskLimitAlertContext.Provider
-        value={{
-          isAlertClosed,
-          setIsAlertClosed,
-        }}
-      >
-        <Sidebar
-          isHomeDashboard={true}
-          links={links}
-          hideSideNav={embedState.hideSideNav}
+      <ProjectChangedRedirector currentProjectId={currentProjectId}>
+        <CloseTaskLimitAlertContext.Provider
+          value={{
+            isAlertClosed,
+            setIsAlertClosed,
+          }}
         >
-          {children}
-        </Sidebar>
-      </CloseTaskLimitAlertContext.Provider>
+          <Sidebar
+            isHomeDashboard={true}
+            links={links}
+            hideSideNav={embedState.hideSideNav}
+          >
+            {children}
+          </Sidebar>
+        </CloseTaskLimitAlertContext.Provider>
+      </ProjectChangedRedirector>
     </AllowOnlyLoggedInUserOnlyGuard>
   );
 }

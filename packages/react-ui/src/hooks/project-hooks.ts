@@ -4,18 +4,19 @@ import {
   usePrefetchQuery,
   useSuspenseQuery,
 } from '@tanstack/react-query';
+import { t } from 'i18next';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
+import { toast } from '@/components/ui/use-toast';
 import { authenticationSession } from '@/lib/authentication-session';
+import { determineDefaultRoute } from '@/lib/utils';
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 import { ProjectWithLimits } from '@activepieces/shared';
 
 import { projectApi } from '../lib/project-api';
-import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+
 import { useAuthorization } from './authorization-hooks';
-import { determineDefaultRoute } from '@/lib/utils';
-import { toast } from '@/components/ui/use-toast';
-import { t } from 'i18next';
 
 export const projectHooks = {
   prefetchProject: () => {
@@ -80,26 +81,26 @@ const setCurrentProject = async (
   }
 };
 
-
-export const useRedirectToHomeIfProjectIdChanged = (projectId: string) =>{
+export const useRedirectToHomeIfProjectIdChanged = (projectId: string) => {
   const navigate = useNavigate();
-  const {checkAccess} = useAuthorization();
+  const { checkAccess } = useAuthorization();
   useEffect(() => {
     const handleVisibilityChange = () => {
-       const currentProjectId = authenticationSession.getProjectId();
-        if(currentProjectId !== projectId && document.visibilityState === "visible"){
-          toast({
-            title: t('Project changed'),
-            description: t('You have been redirected to the home page'),
-            
-          })
-          navigate(determineDefaultRoute(checkAccess));
-        }
+      const currentProjectId = authenticationSession.getProjectId();
+      if (
+        currentProjectId !== projectId &&
+        document.visibilityState === 'visible'
+      ) {
+        toast({
+          title: t('Project changed'),
+          description: t('You have been redirected to the home page'),
+        });
+        navigate(determineDefaultRoute(checkAccess));
+      }
     };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [projectId]);
-  
-}
+};

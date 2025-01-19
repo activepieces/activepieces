@@ -7,8 +7,8 @@ import {
   createBuilderStore,
 } from '@/app/builder/builder-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { Permission } from '@activepieces/shared';
 import { useRedirectToHomeIfProjectIdChanged } from '@/hooks/project-hooks';
+import { Permission } from '@activepieces/shared';
 
 type BuilderStateProviderProps = React.PropsWithChildren<BuilderInitialState>;
 
@@ -20,7 +20,7 @@ export function BuilderStateProvider({
   const storeRef = useRef<BuilderStore>();
   const { checkAccess } = useAuthorization();
   const readonly = !checkAccess(Permission.WRITE_FLOW) || props.readonly;
-
+  useRedirectToHomeIfProjectIdChanged(props.flow.projectId);
   if (!storeRef.current) {
     storeRef.current = createBuilderStore({
       ...props,
@@ -28,7 +28,6 @@ export function BuilderStateProvider({
       sampleData,
     });
   }
-  useRedirectToHomeIfProjectIdChanged(props.flow.projectId);
   return (
     <BuilderStateContext.Provider value={storeRef.current}>
       {children}

@@ -26,6 +26,7 @@ import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { determineDefaultRoute } from '@/lib/utils';
 import {
   ApFlagId,
   FlowVersionState,
@@ -36,7 +37,6 @@ import {
 import FlowActionMenu from '../components/flow-actions-menu';
 
 import { BuilderPublishButton } from './builder-publish-button';
-import { determineDefaultRoute } from '@/lib/utils';
 
 export const BuilderHeader = () => {
   const navigate = useNavigate();
