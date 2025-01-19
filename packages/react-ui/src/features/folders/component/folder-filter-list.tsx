@@ -97,7 +97,7 @@ const FolderItem = ({
     <div key={folder.id} className="group py-1">
       <Button
         variant="ghost"
-        className={cn('w-full  items-center justify-start gap-2', {
+        className={cn('w-full  items-center justify-start gap-2 px-4 ', {
           'bg-muted': selectedFolderId === folder.id,
         })}
         onClick={() => updateSearchParams(folder.id)}
@@ -118,27 +118,26 @@ const FolderItem = ({
             </div>
           }
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="flex flex-row -space-x-4 min-w-5"
-          >
+          <div onClick={(e) => e.stopPropagation()} className="flex flex-row ">
+            <span
+              className={cn(
+                'text-muted-foreground self-end group-hover:hidden',
+                { invisible: isActionMenuOpen },
+              )}
+            >
+              {folder.numberOfFlows}
+            </span>
             <DropdownMenu onOpenChange={setIsActionMenuOpen} modal={true}>
-              <DropdownMenuTrigger
-                asChild
-                className={cn('invisible group-hover:visible', {
-                  visible: isActionMenuOpen,
-                })}
-              >
-                <EllipsisVertical className="h-5 w-5" />
+              <DropdownMenuTrigger asChild>
+                <div
+                  className={cn('w-0 group-hover:w-3 overflow-hidden', {
+                    '!w-3': isActionMenuOpen,
+                  })}
+                >
+                  <EllipsisVertical className="h-5 w-5" />
+                </div>
               </DropdownMenuTrigger>
-              <span
-                className={cn(
-                  'text-muted-foreground self-end group-hover:invisible',
-                  { invisible: isActionMenuOpen },
-                )}
-              >
-                {folder.numberOfFlows}
-              </span>
+
               <DropdownMenuContent>
                 <PermissionNeededTooltip
                   hasPermission={userHasPermissionToUpdateFolders}
