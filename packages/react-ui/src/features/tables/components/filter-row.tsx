@@ -1,9 +1,16 @@
+import { format } from 'date-fns';
 import { t } from 'i18next';
-import { Trash } from 'lucide-react';
+import { Trash, Calendar as CalendarIcon } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -114,11 +121,40 @@ export const FilterRow = ({
         </div>
 
         <div className="flex-auto w-44">
-          <Input
-            placeholder={t('Value')}
-            value={value}
-            onChange={(e) => handleValueChange(e.target.value)}
-          />
+          {selectedFieldType === FieldType.DATE ? (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {value ? (
+                    format(new Date(value), 'PPP')
+                  ) : (
+                    <span>{t('Pick a date')}</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={new Date(value)}
+                  onSelect={(date) =>
+                    handleValueChange(date ? date.toISOString() : '')
+                  }
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          ) : (
+            <Input
+              placeholder={t('Value')}
+              value={value}
+              type={selectedFieldType === FieldType.NUMBER ? 'number' : 'text'}
+              onChange={(e) => handleValueChange(e.target.value)}
+            />
+          )}
         </div>
       </div>
 
