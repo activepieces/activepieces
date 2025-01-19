@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, RefObject } from 'react';
 import { twMerge } from 'tailwind-merge';
 
 import { LocalesEnum, Permission } from '@activepieces/shared';
+
 import { authenticationSession } from './authentication-session';
 
 export function cn(...inputs: ClassValue[]) {

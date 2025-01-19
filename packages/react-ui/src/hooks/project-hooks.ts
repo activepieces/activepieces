@@ -91,6 +91,7 @@ export const useRedirectToHomeIfProjectIdChanged = (projectId: string) => {
         currentProjectId !== projectId &&
         document.visibilityState === 'visible'
       ) {
+        console.log('Project changed', currentProjectId, projectId);
         toast({
           title: t('Project changed'),
           description: t('You have been redirected to the home page'),

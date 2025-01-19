@@ -12,13 +12,13 @@ import {
 } from '@/components/ui/tooltip';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { determineDefaultRoute } from '@/lib/utils';
 import { ApFlagId, supportUrl } from '@activepieces/shared';
 
 import { ShowPoweredBy } from '../../components/show-powered-by';
 import { platformHooks } from '../../hooks/platform-hooks';
 
 import { Header } from './header';
-import { determineDefaultRoute } from '@/lib/utils';
 
 type Link = {
   icon: React.ReactNode;

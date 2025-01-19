@@ -86,9 +86,9 @@ export const BuilderHeader = () => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link to={defaultRoute}>
-                    <Button variant="ghost" size={'icon'}>
+                    <Button variant="ghost" size={'icon'} className="size-10">
                       <img
-                        className="h-5 w-5 object-contain"
+                        className="h-7 w-7 object-contain"
                         src={branding.logos.logoIconUrl}
                         alt={branding.websiteName}
                       />

@@ -7,7 +7,7 @@ import {
   Workflow,
   Wrench,
 } from 'lucide-react';
-import { Children, createContext, useState } from 'react';
+import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
