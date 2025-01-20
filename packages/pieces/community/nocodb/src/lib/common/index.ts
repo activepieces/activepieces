@@ -46,19 +46,19 @@ export const nocodbCommon = {
 					options: [],
 				};
 			}
-				const client = makeClient(auth as PiecePropValueSchema<typeof nocodbAuth>);
-				const response = await client.listBases(workspaceId as string);
 
-				return {
-					disabled: false,
-					options: response.list.map((base) => {
-						return {
-							label: base.title,
-							value: base.id,
-						};
-					}),
-				};
-			
+			const client = makeClient(auth as PiecePropValueSchema<typeof nocodbAuth>);
+			const response = await client.listBases(workspaceId as string);
+
+			return {
+				disabled: false,
+				options: response.list.map((base) => {
+					return {
+						label: base.title,
+						value: base.id,
+					};
+				}),
+			};
 		},
 	}),
 	tableId: Property.Dropdown({
@@ -121,7 +121,7 @@ export const nocodbCommon = {
 		displayName: 'Table Columns',
 		refreshers: ['tableId'],
 		required: true,
-		props: async ({ auth, tableId}) => {
+		props: async ({ auth, tableId }) => {
 			if (!auth) return {};
 			if (!tableId) return {};
 
