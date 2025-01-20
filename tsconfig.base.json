@@ -293,6 +293,9 @@
       "@activepieces/piece-grist": [
         "packages/pieces/community/grist/src/index.ts"
       ],
+      "@activepieces/piece-groq": [
+        "packages/pieces/community/groq/src/index.ts"
+      ],
       "@activepieces/piece-hackernews": [
         "packages/pieces/community/hackernews/src/index.ts"
       ],
@@ -550,6 +553,9 @@
       "@activepieces/piece-sessions-us": [
         "packages/pieces/community/sessions-us/src/index.ts"
       ],
+      "@activepieces/piece-seven": [
+        "packages/pieces/community/seven/src/index.ts"
+      ],
       "@activepieces/piece-sftp": [
         "packages/pieces/community/sftp/src/index.ts"
       ],
@@ -618,6 +624,9 @@
       ],
       "@activepieces/piece-taskade": [
         "packages/pieces/community/taskade/src/index.ts"
+      ],
+      "@activepieces/piece-tavily": [
+        "packages/pieces/community/tavily/src/index.ts"
       ],
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/community/telegram-bot/src/index.ts"
