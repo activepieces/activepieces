@@ -359,6 +359,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="http://johng.io"><img src="https://avatars.githubusercontent.com/u/9030780?v=4?s=100" width="100px;" alt="John Goodliff"/><br /><sub><b>John Goodliff</b></sub></a><br /><a href="#plugin-jerboa88" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/DiwashDev"><img src="https://avatars.githubusercontent.com/u/182864159?v=4?s=100" width="100px;" alt="Diwash Dev"/><br /><sub><b>Diwash Dev</b></sub></a><br /><a href="#plugin-DiwashDev" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://www.seven.io"><img src="https://avatars.githubusercontent.com/u/12965261?v=4?s=100" width="100px;" alt="André"/><br /><sub><b>André</b></sub></a><br /><a href="#plugin-matthiez" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/loudotdigital"><img src="https://avatars.githubusercontent.com/u/7611772?v=4?s=100" width="100px;" alt="Lou &#124; Digital Marketing"/><br /><sub><b>Lou &#124; Digital Marketing</b></sub></a><br /><a href="#plugin-loudotdigital" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
