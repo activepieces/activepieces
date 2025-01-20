@@ -6,8 +6,8 @@ import { callSevenApi } from '../common';
 export const lookup = createAction({
   auth: sevenAuth,
   name: 'lookup',
+  displayName: 'Lookup Phone Numbers',
   description: 'Get information about CNAM, HLR, MNP, RCS capabilities and Number formats.',
-  displayName: 'Lookup',
   props: {
     type: Property.StaticDropdown<string, true>({
       options: {
@@ -23,7 +23,7 @@ export const lookup = createAction({
       required: true
     }),
     numbers: Property.Array({
-      description: 'The phone numbers for looking up',
+      description: 'The phone numbers to look up.',
       displayName: 'Numbers',
       required: true
     }),
@@ -31,12 +31,14 @@ export const lookup = createAction({
   async run(context) {
     const { numbers, type } = context.propsValue;
 
-    return await callSevenApi({
+    const response= await callSevenApi({
       queryParams: {
         number: numbers.join(','),
       },
       method: HttpMethod.GET
     }, `lookup/${type}`, context.auth as string);
+
+    return response.body;
 
   }
 });

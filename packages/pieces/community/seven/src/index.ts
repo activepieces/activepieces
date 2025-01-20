@@ -1,20 +1,25 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { smsSend } from './action/sms-send';
-import { ttsCall } from './action/tts-call';
+import { sendSmsAction } from './action/sms-send';
+import { sendVoiceCallAction } from './action/send-voice-call';
 import { lookup } from './action/lookup';
 import { smsInbound } from './trigger/sms-inbound';
+import { PieceCategory } from '@activepieces/shared';
 
 export const sevenAuth = PieceAuth.SecretText({
-  description: 'The authentication to use to connect to seven',
+  description:
+    'You can find your API key in [Developer Menu](https://app.seven.io/developer).',
   displayName: 'API key',
-  required: true
+  required: true,
 });
 
 export const seven = createPiece({
-  actions: [smsSend, ttsCall, lookup],
-  auth: sevenAuth,
-  authors: ['seven-io'],
   displayName: 'seven',
-  logoUrl: 'https://www.seven.io/wp-content/uploads/icon-green-bold.png',
-  triggers: [smsInbound]
+  description: 'Business Messaging Gateway',
+  auth: sevenAuth,
+  minimumSupportedRelease: '0.30.0',
+  logoUrl: 'https://cdn.activepieces.com/pieces/seven.jpg',
+  categories: [PieceCategory.MARKETING],
+  authors: ['seven-io'],
+  actions: [sendSmsAction, sendVoiceCallAction, lookup],
+  triggers: [smsInbound],
 });

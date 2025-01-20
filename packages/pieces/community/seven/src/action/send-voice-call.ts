@@ -3,31 +3,32 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { sevenAuth } from '../index';
 import { callSevenApi } from '../common';
 
-export const ttsCall = createAction({
+export const sendVoiceCallAction = createAction({
   auth: sevenAuth,
-  name: 'tts_call',
-  description: 'Convert text to speech, call number and read text out loud',
-  displayName: 'Text-To-Speech Call',
+  name: 'send-voice-call',
+  displayName: 'Send Voice Call',
+  description: 'Creates a new Text-To-Speech call to a number.',
   props: {
+    to: Property.ShortText({
+      description: 'Recipient number(s) of the voice calls.',
+      displayName: 'To',
+      required: true
+    }),
     from: Property.ShortText({
       displayName: 'From',
       required: false
     }),
     text: Property.LongText({
-      description: 'The message to convert to speech',
       displayName: 'Message Body',
+      description: 'Text message to be read out.',
       required: true
     }),
-    to: Property.ShortText({
-      description: 'The phone number for calling',
-      displayName: 'To',
-      required: true
-    })
+
   },
   async run(context) {
     const { from, text, to } = context.propsValue;
 
-    return await callSevenApi({
+    const response= await callSevenApi({
       body: {
         from,
         text,
@@ -35,6 +36,8 @@ export const ttsCall = createAction({
       },
       method: HttpMethod.POST
     }, 'voice', context.auth as string);
+
+    return response.body;
 
   }
 });

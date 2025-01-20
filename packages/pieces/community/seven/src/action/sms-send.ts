@@ -3,18 +3,23 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { sevenAuth } from '../index';
 import { callSevenApi } from '../common';
 
-export const smsSend = createAction({
+export const sendSmsAction = createAction({
   auth: sevenAuth,
-  name: 'send_sms',
-  description: 'Send a new SMS message',
+  name: 'send-sms',
   displayName: 'Send SMS',
+  description: 'Sends an SMS to one or more recipients.',
   props: {
+    to: Property.Array({
+      displayName: 'To',
+      description: 'Recipient numbers of the SMS.',
+      required: true
+    }),
     delay: Property.DateTime({
       displayName: 'Delay',
       required: false
     }),
     flash: Property.Checkbox({
-      displayName: 'Flash SMS',
+      displayName: 'Flash SMS ?',
       required: false
     }),
     from: Property.ShortText({
@@ -22,20 +27,16 @@ export const smsSend = createAction({
       required: false
     }),
     text: Property.LongText({
-      description: 'The body of the message to send',
       displayName: 'Message Body',
+      description: 'The body of the message to send.',
       required: true
     }),
-    to: Property.Array({
-      description: 'The phone numbers to send the message to',
-      displayName: 'To',
-      required: true
-    })
+ 
   },
   async run(context) {
     const { delay, flash, from, text, to } = context.propsValue;
 
-    return await callSevenApi({
+    const response =  await callSevenApi({
       body: {
         delay: delay ? new Date(delay).toISOString().replace('T', ' ').substring(0, 19) : undefined,
         flash,
@@ -45,6 +46,8 @@ export const smsSend = createAction({
       },
       method: HttpMethod.POST
     }, 'sms', context.auth as string);
+
+    return response.body;
 
   }
 });
