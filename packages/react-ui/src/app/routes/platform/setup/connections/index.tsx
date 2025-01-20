@@ -220,23 +220,23 @@ const GlobalConnectionsTable = () => {
       cell: ({ row }) => {
         return (
           <div className="flex items-center gap-2 justify-end">
-            <EditGlobalConnectionDialog
-              connectionId={row.original.id}
-              currentName={row.original.displayName}
-              projectIds={row.original.projectIds}
-              onEdit={() => {
-                refetch();
-              }}
-            >
-              <Tooltip>
+            <Tooltip>
+              <EditGlobalConnectionDialog
+                connectionId={row.original.id}
+                currentName={row.original.displayName}
+                projectIds={row.original.projectIds}
+                onEdit={() => {
+                  refetch();
+                }}
+              >
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="sm">
                     <Pencil className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>{t('Edit')}</TooltipContent>
-              </Tooltip>
-            </EditGlobalConnectionDialog>
+              </EditGlobalConnectionDialog>
+              <TooltipContent>{t('Edit')}</TooltipContent>
+            </Tooltip>
 
             <ReconnectButtonDialog
               connection={row.original}

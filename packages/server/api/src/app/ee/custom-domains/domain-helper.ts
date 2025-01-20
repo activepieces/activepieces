@@ -1,4 +1,4 @@
-import { AppSystemProp, networkUtils, WorkerSystemProp } from '@activepieces/server-shared'
+import { networkUtils, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, isNil } from '@activepieces/shared'
 import { system } from '../../helper/system/system'
 import { customDomainService } from './custom-domain.service'
@@ -11,27 +11,26 @@ export const domainHelper = {
                 platformId,
             })
             if (!isNil(customDomain)) {
-                return networkUtils.combineUrl(customDomain.domain, path ?? '')
+                return networkUtils.combineUrl(`https://${customDomain.domain}`, path ?? '')
             }
         }
         return networkUtils.combineUrl(system.getOrThrow(WorkerSystemProp.FRONTEND_URL), path ?? '')
     },
     async getPublicApiUrl({ path, platformId }: PublicUrlParams): Promise<string> {
-        return domainHelper.getPublicUrl({ path: `/api/${path}`, platformId })
+        return domainHelper.getPublicUrl({ path: `/api/${cleanLeadingSlash(path ?? '')}`, platformId })
     },
     async getInternalUrl({ path, platformId }: InternalUrlParams): Promise<string> {
-        const internalUrl = system.get(AppSystemProp.INTERNAL_URL)
-        if (!isNil(internalUrl)) {
-            return networkUtils.combineUrl(internalUrl, path ?? '')
-        }
         return this.getPublicUrl({ path, platformId })
     },
     async getInternalApiUrl({ path, platformId }: InternalUrlParams): Promise<string> {
-        return this.getInternalUrl({ path: `/api/${path}`, platformId })
+        return this.getInternalUrl({ path: `/api/${cleanLeadingSlash(path ?? '')}`, platformId })
     },
 }
 
 
+function cleanLeadingSlash(path: string) {
+    return path.startsWith('/') ? path.slice(1) : path
+}
 
 type PublicUrlParams = {
     path?: string

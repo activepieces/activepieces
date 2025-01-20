@@ -1,5 +1,4 @@
-import { ProjectSyncError } from '@activepieces/ee-shared'
-import { FlowOperationType, FlowState, flowStructureUtil, PopulatedFlow } from '@activepieces/shared'
+import { FlowOperationType, FlowState, flowStructureUtil, PopulatedFlow, ProjectSyncError } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRepo } from '../../../flows/flow/flow.repo'
 import { flowService } from '../../../flows/flow/flow.service'

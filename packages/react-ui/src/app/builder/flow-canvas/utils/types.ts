@@ -35,6 +35,7 @@ export type ApStepNode = {
   };
   selectable?: boolean;
   style?: React.CSSProperties;
+  draggable?: boolean;
 };
 
 export type ApLoopReturnNode = {
