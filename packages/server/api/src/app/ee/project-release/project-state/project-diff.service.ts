@@ -63,8 +63,8 @@ function getFlowConnections(currentState: ProjectState, newState: ProjectState):
 
     const connectionOperations: ConnectionOperation[] = []
 
-    currentState.connections.forEach(connection => {
-        const connectionState = newState.connections.find((c) => c.externalId === connection.externalId)
+    currentState.connections?.forEach(connection => {
+        const connectionState = newState.connections?.find((c) => c.externalId === connection.externalId)
         if (!isNil(connectionState) && isConnectionChanged(connectionState, connection)) {
             connectionOperations.push({
                 type: ConnectionOperationType.UPDATE_CONNECTION,
@@ -74,8 +74,8 @@ function getFlowConnections(currentState: ProjectState, newState: ProjectState):
         }
     })
 
-    newState.connections.forEach(connection => {
-        const isExistingConnection = currentState.connections.find((c) => c.externalId === connection.externalId)
+    newState.connections?.forEach(connection => {
+        const isExistingConnection = currentState.connections?.find((c) => c.externalId === connection.externalId)
         if (isNil(isExistingConnection)) {
             connectionOperations.push({
                 type: ConnectionOperationType.CREATE_CONNECTION,
@@ -117,7 +117,7 @@ function normalize(flowVersion: FlowVersion): FlowVersion {
 type DiffParams = {
     currentState: {
         flows: PopulatedFlow[]
-        connections: ConnectionState[]
+        connections?: ConnectionState[]
     }
     newState: ProjectState
 }

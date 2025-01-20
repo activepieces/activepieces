@@ -29,7 +29,8 @@ export type ConnectionState = Static<typeof ConnectionState>
 
 export const ProjectState = Type.Object({
     flows: Type.Array(PopulatedFlow),
-    connections: Type.Array(ConnectionState),
+    // NOTE: This is optional because in old releases, the connections state is not present
+    connections: Type.Optional(Type.Array(ConnectionState)),
 })
 export type ProjectState = Static<typeof ProjectState>
 
