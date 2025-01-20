@@ -1452,6 +1452,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "matthiez",
+      "name": "André",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12965261?v=4",
+      "profile": "https://www.seven.io",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
