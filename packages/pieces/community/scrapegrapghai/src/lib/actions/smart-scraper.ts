@@ -5,22 +5,22 @@ import { scrapegraphaiAuth } from '../../index';
 export const smartScraper = createAction({
   name: 'smart_scraper',
   displayName: 'Smart Scraper',
-  description: 'Extract content from a webpage using AI by providing a natural language prompt',
+  description: 'Extract content from a webpage using AI by providing a natural language prompt.',
   auth: scrapegraphaiAuth,
   props: {
     website_url: Property.ShortText({
       displayName: 'Website URL',
-      description: 'The webpage URL to scrape',
+      description: 'The webpage URL to scrape.',
       required: true,
     }),
     user_prompt: Property.LongText({
       displayName: 'Extraction Prompt',
-      description: 'Describe what information you want to extract in natural language',
+      description: 'Describe what information you want to extract in natural language.',
       required: true,
     }),
     output_schema: Property.Json({
       displayName: 'Output Schema',
-      description: 'Optional schema to structure the output data',
+      description: 'Optional schema to structure the output data.',
       required: false,
     }),
   },

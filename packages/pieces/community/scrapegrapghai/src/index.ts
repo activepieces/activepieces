@@ -6,11 +6,11 @@ import { localScraper } from './lib/actions/local-scraper';
 import { markdownify } from './lib/actions/markdownify';
 
 const markdownDescription = `
-Follow these instructions to get your ScrapeGraphAI API Key:
+Follow these steps to obtain your ScrapeGraphAI API Key:
 
-1. Visit https://scrapegraphai.com and sign up for an account
-2. Navigate to your dashboard
-3. Copy your API key
+1. Visit [ScrapeGraphAI](https://scrapegraphai.com) and create an account.
+2. Log in and navigate to your dashboard.
+3. Locate and copy your API key from the dashboard.
 `;
 
 export const scrapegraphaiAuth = PieceAuth.SecretText({
@@ -45,9 +45,9 @@ export const scrapegraphaiAuth = PieceAuth.SecretText({
 
 export const scrapegraphai = createPiece({
   displayName: 'ScrapeGraphAI',
-  description: 'AI-powered web scraping and content extraction',
+  description: 'AI-powered web scraping and content extraction.',
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/scrapegraphai.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/scrapegraphai.jpg',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["OsamaHaikal"],
   auth: scrapegraphaiAuth,

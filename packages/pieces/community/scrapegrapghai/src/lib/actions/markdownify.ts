@@ -5,7 +5,7 @@ import { scrapegraphaiAuth } from '../../index';
 export const markdownify = createAction({
   name: 'markdownify',
   displayName: 'Convert to Markdown',
-  description: 'Convert any webpage into clean, readable Markdown format',
+  description: 'Convert any webpage into clean, readable Markdown format.',
   auth: scrapegraphaiAuth,
   props: {
     website_url: Property.ShortText({
