@@ -13,7 +13,7 @@ import { useViewport } from '@xyflow/react';
 import { t } from 'i18next';
 import { useCallback, useState } from 'react';
 
-import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import {
   FlowOperationType,
   StepLocationRelativeToParent,
@@ -34,7 +34,6 @@ const FlowDragLayer = ({
   lefSideBarContainerWidth: number;
   cursorPosition: { x: number; y: number };
 }) => {
-  const { toast } = useToast();
   const viewport = useViewport();
   const [previousViewPort, setPreviousViewPort] = useState(viewport);
   const [
@@ -120,23 +119,20 @@ const FlowDragLayer = ({
           });
           return;
         }
-        applyOperation(
-          {
-            type: FlowOperationType.MOVE_ACTION,
-            request: {
-              name: draggedStep.name,
-              newParentStep: droppedAtNodeData.parentStepName,
-              stepLocationRelativeToNewParent:
-                droppedAtNodeData.stepLocationRelativeToParent,
-              branchIndex:
-                droppedAtNodeData.stepLocationRelativeToParent ===
-                StepLocationRelativeToParent.INSIDE_BRANCH
-                  ? droppedAtNodeData.branchIndex
-                  : undefined,
-            },
+        applyOperation({
+          type: FlowOperationType.MOVE_ACTION,
+          request: {
+            name: draggedStep.name,
+            newParentStep: droppedAtNodeData.parentStepName,
+            stepLocationRelativeToNewParent:
+              droppedAtNodeData.stepLocationRelativeToParent,
+            branchIndex:
+              droppedAtNodeData.stepLocationRelativeToParent ===
+              StepLocationRelativeToParent.INSIDE_BRANCH
+                ? droppedAtNodeData.branchIndex
+                : undefined,
           },
-          () => toast(UNSAVED_CHANGES_TOAST),
-        );
+        });
       }
     }
   };

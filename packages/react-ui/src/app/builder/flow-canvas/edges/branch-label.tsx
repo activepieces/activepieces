@@ -146,16 +146,13 @@ const BranchLabel = (props: BaseBranchLabel) => {
                     onSelect={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      applyOperation(
-                        {
-                          type: FlowOperationType.DUPLICATE_BRANCH,
-                          request: {
-                            stepName: props.sourceNodeName,
-                            branchIndex: props.branchIndex,
-                          },
+                      applyOperation({
+                        type: FlowOperationType.DUPLICATE_BRANCH,
+                        request: {
+                          stepName: props.sourceNodeName,
+                          branchIndex: props.branchIndex,
                         },
-                        () => {},
-                      );
+                      });
                       setSelectedBranchIndex(props.branchIndex + 1);
                     }}
                   >
@@ -171,16 +168,13 @@ const BranchLabel = (props: BaseBranchLabel) => {
                       e.preventDefault();
                       e.stopPropagation();
                       setSelectedBranchIndex(null);
-                      applyOperation(
-                        {
-                          type: FlowOperationType.DELETE_BRANCH,
-                          request: {
-                            stepName: props.sourceNodeName,
-                            branchIndex: props.branchIndex,
-                          },
+                      applyOperation({
+                        type: FlowOperationType.DELETE_BRANCH,
+                        request: {
+                          stepName: props.sourceNodeName,
+                          branchIndex: props.branchIndex,
                         },
-                        () => {},
-                      );
+                      });
                       selectStepByName(props.sourceNodeName);
                     }}
                   >
