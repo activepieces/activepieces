@@ -2,20 +2,20 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { tavilyAuth } from '../../index';
 
-export const extract = createAction({
+export const extractAction = createAction({
   name: 'extract',
   displayName: 'Extract Content',
-  description: 'Retrieve raw web content from specified URLs',
+  description: 'Retrieve raw web content from specified URLs.',
   auth: tavilyAuth,
   props: {
     urls: Property.Array({
       displayName: 'URLs',
-      description: 'The URLs you want to extract with Tavily',
+      description: 'The URLs you want to extract with Tavily.',
       required: true,
     }),
     include_images: Property.Checkbox({
       displayName: 'Include Images',
-      description: 'Include a list of images extracted from the URLs in the response',
+      description: 'Include a list of images extracted from the URLs in the response.',
       required: false,
       defaultValue: false,
     }),
