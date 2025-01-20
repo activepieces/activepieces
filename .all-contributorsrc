@@ -1443,6 +1443,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "DiwashDev",
+      "name": "Diwash Dev",
+      "avatar_url": "https://avatars.githubusercontent.com/u/182864159?v=4",
+      "profile": "https://github.com/DiwashDev",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
