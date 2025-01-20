@@ -358,6 +358,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/amrabuaza"><img src="https://avatars.githubusercontent.com/u/30035105?v=4?s=100" width="100px;" alt="Amr Abu Aza"/><br /><sub><b>Amr Abu Aza</b></sub></a><br /><a href="#plugin-amrabuaza" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://johng.io"><img src="https://avatars.githubusercontent.com/u/9030780?v=4?s=100" width="100px;" alt="John Goodliff"/><br /><sub><b>John Goodliff</b></sub></a><br /><a href="#plugin-jerboa88" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/DiwashDev"><img src="https://avatars.githubusercontent.com/u/182864159?v=4?s=100" width="100px;" alt="Diwash Dev"/><br /><sub><b>Diwash Dev</b></sub></a><br /><a href="#plugin-DiwashDev" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.seven.io"><img src="https://avatars.githubusercontent.com/u/12965261?v=4?s=100" width="100px;" alt="André"/><br /><sub><b>André</b></sub></a><br /><a href="#plugin-matthiez" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
