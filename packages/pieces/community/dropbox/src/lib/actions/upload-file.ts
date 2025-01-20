@@ -48,21 +48,22 @@ export const dropboxUploadFile = createAction({
 
     const params = {
       autorename: context.propsValue.autorename,
-      // For information about Dropbox JSON encoding, see https://www.dropbox.com/developers/reference/json-encoding
-      path: context.propsValue.path.replace(/[\u007f-\uffff]/g, (c) => '\\u'+('000'+c.charCodeAt(0).toString(16)).slice(-4)),
+      path: context.propsValue.path,
       mode: 'add',
       mute: context.propsValue.mute,
       strict_conflict: context.propsValue.strict_conflict,
     };
 
     const fileBuffer = Buffer.from(fileData.base64, 'base64');
+    // For information about Dropbox JSON encoding, see https://www.dropbox.com/developers/reference/json-encoding
+    const dropboxApiArg = JSON.stringify(params).replace(/[\u007f-\uffff]/g, (c) => '\\u'+('000'+c.charCodeAt(0).toString(16)).slice(-4));
 
     const result = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `https://content.dropboxapi.com/2/files/upload`,
       body: fileBuffer,
       headers: {
-        'Dropbox-API-Arg': JSON.stringify(params),
+        'Dropbox-API-Arg': dropboxApiArg,
         'Content-Type': 'application/octet-stream',
       },
       authentication: {
