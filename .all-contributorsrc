@@ -1461,6 +1461,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "loudotdigital",
+      "name": "Lou | Digital Marketing",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7611772?v=4",
+      "profile": "https://github.com/loudotdigital",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
