@@ -23,7 +23,8 @@ const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
     isError,
     error,
   } = useSuspenseQuery<boolean, Error>({
-    queryKey: ['switch-to-project', projectId],
+    //added currentProjectId in case user switches project and goes back to the same project
+    queryKey: ['switch-to-project', projectId, currentProjectId],
     queryFn: async () => {
       if (edition === ApEdition.COMMUNITY) {
         return true;

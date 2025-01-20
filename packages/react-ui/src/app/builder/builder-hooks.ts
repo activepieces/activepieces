@@ -101,10 +101,7 @@ export type BuilderState = {
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
   setLeftSidebar: (leftSidebar: LeftSideBarType) => void;
   setRightSidebar: (rightSidebar: RightSideBarType) => void;
-  applyOperation: (
-    operation: FlowOperationRequest,
-    onError: () => void,
-  ) => void;
+  applyOperation: (operation: FlowOperationRequest) => void;
   removeStepSelection: () => void;
   selectStepByName: (stepName: string) => void;
   startSaving: () => void;
@@ -340,7 +337,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           };
         });
       },
-      applyOperation: (operation: FlowOperationRequest, onError: () => void) =>
+      applyOperation: (operation: FlowOperationRequest) =>
         set((state) => {
           if (state.readonly) {
             console.warn('Cannot apply operation while readonly');
@@ -361,6 +358,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               const updatedFlowVersion = await flowsApi.update(
                 state.flow.id,
                 operation,
+                true,
               );
               set((state) => {
                 return {
@@ -375,7 +373,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             } catch (error) {
               console.error(error);
               flowUpdatesQueue.halt();
-              onError();
             }
           };
           flowUpdatesQueue.add(updateRequest);
@@ -627,11 +624,14 @@ export const useHandleKeyPressOnCanvas = () => {
 };
 
 export const useSwitchToDraft = () => {
-  const [flowVersion, setVersion, exitRun] = useBuilderStateContext((state) => [
-    state.flowVersion,
-    state.setVersion,
-    state.exitRun,
-  ]);
+  const [flowVersion, setVersion, exitRun, setFlow] = useBuilderStateContext(
+    (state) => [
+      state.flowVersion,
+      state.setVersion,
+      state.exitRun,
+      state.setFlow,
+    ],
+  );
   const { checkAccess } = useAuthorization();
   const userHasPermissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
   const { mutate: switchToDraft, isPending: isSwitchingToDraftPending } =
@@ -641,6 +641,7 @@ export const useSwitchToDraft = () => {
         return flow;
       },
       onSuccess: (flow) => {
+        setFlow(flow);
         setVersion(flow.version);
         exitRun(userHasPermissionToEditFlow);
       },
