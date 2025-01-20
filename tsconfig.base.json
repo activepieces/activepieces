@@ -293,6 +293,9 @@
       "@activepieces/piece-grist": [
         "packages/pieces/community/grist/src/index.ts"
       ],
+      "@activepieces/piece-groq": [
+        "packages/pieces/community/groq/src/index.ts"
+      ],
       "@activepieces/piece-hackernews": [
         "packages/pieces/community/hackernews/src/index.ts"
       ],
