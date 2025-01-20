@@ -70,8 +70,6 @@ export const pipedrive = createPiece({
 	actions: [
 		addFollowerAction,
 		getNoteAction,
-		findProductAction,
-		findUserAction,
 		createNoteAction,
 		addLabelToPersonAction,
 		addProductToDealAction,
@@ -88,6 +86,7 @@ export const pipedrive = createPiece({
 		updatePersonAction,
 		createProductAction,
 		findDealsAssociatedWithPersonAction,
+		findProductAction,
 		findProductsAction,
 		findNotesAction,
 		getProductAction,
@@ -95,6 +94,7 @@ export const pipedrive = createPiece({
 		findPersonAction,
 		findDealAction,
 		findActivityAction,
+		findUserAction,
 		createCustomApiCallAction({
 			baseUrl: () => 'https://api.pipedrive.com/v1',
 			auth: pipedriveAuth,

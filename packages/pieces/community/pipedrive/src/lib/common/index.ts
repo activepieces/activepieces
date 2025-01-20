@@ -8,7 +8,7 @@ import {
 	QueryParams,
 } from '@activepieces/pieces-common';
 import { GetField, PaginatedResponse, RequestParams } from './types';
-import { isNil } from '@activepieces/shared';
+import { isNil, pickBy } from '@activepieces/shared';
 
 export const pipedriveCommon = {
 	subscribeWebhook: async (
@@ -70,6 +70,7 @@ export async function pipedriveApiCall<T extends HttpMessageBody>({
 }: PipedriveApiCallParams): Promise<T> {
 	const baseUrl = `${apiDomain}/api/v1`;
 	const qs: QueryParams = {};
+	let data: any;
 
 	if (query) {
 		for (const [key, value] of Object.entries(query)) {
@@ -77,6 +78,14 @@ export async function pipedriveApiCall<T extends HttpMessageBody>({
 				qs[key] = String(value);
 			}
 		}
+	}
+	if (body) {
+		data = Object.entries(body).reduce((acc, [key, value]) => {
+			if (!isNil(value)) {
+				acc[key] = value;
+			}
+			return acc;
+		}, {} as Record<string, any>);
 	}
 	const request: HttpRequest = {
 		method,
@@ -86,27 +95,20 @@ export async function pipedriveApiCall<T extends HttpMessageBody>({
 			token: accessToken,
 		},
 		queryParams: qs,
-		body,
+		body: data,
 	};
 
-	try
-	{
-
+	try {
 		const response = await httpClient.sendRequest<T>(request);
 		return response.body;
-	}
-	catch(error)
-	{
-		if(error instanceof HttpError)
-		{
-			if(error.response.status === 403)
-			{
-				throw new Error("Please reconnect your Pipedrive account.");
+	} catch (error) {
+		if (error instanceof HttpError) {
+			if (error.response.status === 403) {
+				throw new Error('Please reconnect your Pipedrive account.');
 			}
 		}
 		throw error;
 	}
-
 }
 
 export async function pipedrivePaginatedApiCall<T extends HttpMessageBody>({

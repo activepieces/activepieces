@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { activityCommonProps } from '../common/props';
 import { pipedriveApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import dayjs from 'dayjs';
 
 export const updateActivityAction = createAction({
 	auth: pipedriveAuth,
@@ -49,7 +50,6 @@ export const updateActivityAction = createAction({
 			public_description: publicDescription,
 			type,
 			user_id: assignTo,
-			due_date: dueDate,
 			due_time: dueTime,
 			duration,
 			done: idDone ? 1 : 0,
@@ -57,6 +57,10 @@ export const updateActivityAction = createAction({
 
 		if (isBusy) {
 			activityDefaultFields.busy_flag = isBusy === 'busy' ? true : false;
+		}
+
+		if (dueDate) {
+			activityDefaultFields.due_date = dayjs(dueDate).format('YYYY-MM-DD');
 		}
 
 		const response = await pipedriveApiCall({

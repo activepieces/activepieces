@@ -876,7 +876,7 @@ export const dealCommonProps = {
 		displayName: 'Probability',
 		required: false,
 	}),
-	expectedCloseDate: Property.ShortText({
+	expectedCloseDate: Property.DateTime({
 		displayName: 'Expected Close Date',
 		required: false,
 		description: 'Please enter date in YYYY-MM-DD format.',
@@ -899,7 +899,7 @@ export const leadCommonProps = {
 	organizationId: organizationIdProp(false),
 	personId: personIdProp(false),
 	labelIds: leadlabeIdsProp(false),
-	expectedCloseDate: Property.ShortText({
+	expectedCloseDate: Property.DateTime({
 		displayName: 'Expected Close Date',
 		required: false,
 		description: 'Please enter date in YYYY-MM-DD format.',
@@ -1022,7 +1022,7 @@ export const activityCommonProps = {
 	leadId: leadIdProp(false),
 	assignTo: ownerIdProp('Assign To', false),
 	type: activityTypeIdProp(false),
-	dueDate: Property.ShortText({
+	dueDate: Property.DateTime({
 		displayName: 'Due Date',
 		required: false,
 		description: 'Please enter date in YYYY-MM-DD format.',
