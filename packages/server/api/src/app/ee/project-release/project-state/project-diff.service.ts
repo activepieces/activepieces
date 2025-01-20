@@ -113,7 +113,7 @@ function normalize(flowVersion: FlowVersion): FlowVersion {
 type DiffParams = {
     currentState: {
         flows: PopulatedFlow[]
-        connections: ConnectionState[]
+        connections?: ConnectionState[]
     }
     newState: ProjectState
 }
