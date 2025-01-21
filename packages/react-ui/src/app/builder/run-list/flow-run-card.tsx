@@ -28,7 +28,9 @@ import { cn, formatUtils } from '@/lib/utils';
 import {
   FlowRetryStrategy,
   FlowRun,
+  FlowRunStatus,
   isFailedState,
+  isFlowStateTerminal,
   isNil,
   Permission,
   PopulatedFlow,
@@ -147,10 +149,16 @@ const FlowRunCard = React.memo(
             {formatUtils.formatDate(new Date(run.startTime))}{' '}
             {run.id === viewedRunId && <Eye className="w-3.5 h-3.5"></Eye>}
           </div>
-          {run.finishTime && (
+          {isFlowStateTerminal(run.status) && (
             <p className="flex gap-1 text-xs text-muted-foreground">
               <StopwatchIcon className="h-3.5 w-3.5" />
               {t('Took')} {formatUtils.formatDuration(run.duration, false)}
+            </p>
+          )}
+           {run.status === FlowRunStatus.PAUSED && (
+            <p className="flex gap-1 text-xs text-muted-foreground">
+              <StopwatchIcon className="h-3.5 w-3.5" />
+              {t('Still running...')}
             </p>
           )}
           {isNil(run.finishTime) ||
@@ -167,13 +175,13 @@ const FlowRunCard = React.memo(
             </Button>
           )}
 
-          {!isFetchingRun && !isRetryingRun && !isFailedState(run.status) && (
+          {!isFetchingRun && !isRetryingRun && !isFlowStateTerminal(run.status) && (
             <Button variant="ghost">
               <ChevronRight className="w-4 h-4"></ChevronRight>
             </Button>
           )}
 
-          {!isFetchingRun && !isRetryingRun && isFailedState(run.status) && (
+          {!isFetchingRun && !isRetryingRun && isFlowStateTerminal(run.status) && (
             <PermissionNeededTooltip
               hasPermission={userHasPermissionToRetryRun}
             >
@@ -187,7 +195,6 @@ const FlowRunCard = React.memo(
                         e.stopPropagation();
                       }}
                     >
-                      {isFailedState(run.status) && (
                         <RefreshCcw
                           className="w-4 h-4"
                           onMouseEnter={() => {
@@ -197,7 +204,6 @@ const FlowRunCard = React.memo(
                             setHoveringRetryButton(false);
                           }}
                         ></RefreshCcw>
-                      )}
                     </Button>
                   </>
                 </DropdownMenuTrigger>
@@ -220,24 +226,26 @@ const FlowRunCard = React.memo(
                     </div>
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      if (!isRetryingRun) {
-                        retryRun({
-                          run,
-                          retryStrategy: FlowRetryStrategy.FROM_FAILED_STEP,
-                        });
-                      }
-                    }}
-                    className="cursor-pointer"
-                  >
-                    <div className="flex flex-row gap-2 items-center">
-                      <Redo className="h-4 w-4" />
-                      <span>{t('from failed step')}</span>
-                    </div>
-                  </DropdownMenuItem>
+                  {
+                    isFailedState(run.status) && (<DropdownMenuItem
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (!isRetryingRun) {
+                          retryRun({
+                            run,
+                            retryStrategy: FlowRetryStrategy.FROM_FAILED_STEP,
+                          });
+                        }
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <div className="flex flex-row gap-2 items-center">
+                        <Redo className="h-4 w-4" />
+                        <span>{t('from failed step')}</span>
+                      </div>
+                    </DropdownMenuItem>)
+                  }
                 </DropdownMenuContent>
               </DropdownMenu>
             </PermissionNeededTooltip>
