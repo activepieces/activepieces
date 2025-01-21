@@ -199,7 +199,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     async getManyConnectionStates(params: GetManyParams): Promise<ConnectionState[]> {
         const connections = await repo().find({
             where: {
-                ...(params.projectId ? { projectIds: APArrayContains('projectIds', [params.projectId]) } : {}),
+                projectIds: APArrayContains('projectIds', [params.projectId]),
             },
         })
         return connections.map((connection) => ({
