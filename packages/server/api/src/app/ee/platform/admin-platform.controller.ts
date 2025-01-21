@@ -21,7 +21,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
         const { flowIds } = req.body
         flowIds.forEach(async (flowId) => {
             const currentFlow = await flowService(req.log).getOneById(flowId)
-            if (currentFlow) {
+            if (currentFlow && currentFlow.status !== FlowStatus.ENABLED) {
                 await flowService(req.log).updateStatus({
                     id: flowId,
                     projectId: currentFlow.projectId,
