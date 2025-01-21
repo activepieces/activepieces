@@ -77,12 +77,18 @@ export const textToSpeech = createAction({
         ],
       }),
     }),
+    fileName: Property.ShortText({
+      displayName: 'File Name',
+      description: 'The name of the output audio file (without extension)',
+      required: false,
+      defaultValue: 'test',
+    }),
   },
   async run({ auth, propsValue, files }) {
     const openai = new OpenAI({
       apiKey: auth,
     });
-    const { voice, format, model, text, speed } = propsValue;
+    const { voice, format, model, text, speed, fileName } = propsValue;
 
     const audio = await openai.audio.speech.create({
       model: model,
@@ -94,7 +100,7 @@ export const textToSpeech = createAction({
     const result = await streamToBuffer(audio.body);
 
     return files.write({
-      fileName: 'test',
+      fileName: fileName || 'test',
       data: result as Buffer,
     });
   },
