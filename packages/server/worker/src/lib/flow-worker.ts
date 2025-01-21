@@ -14,12 +14,12 @@ let workerToken: string
 let heartbeatInterval: NodeJS.Timeout
 
 export const flowWorker = (log: FastifyBaseLogger) => ({
-    async init(generatedToken: string): Promise<void> {
+    async init({ workerToken: token, version }: { workerToken: string, version: string }): Promise<void> {
         closed = false
-        workerToken = generatedToken
-        await initializeWorker(log)
+        workerToken = token
+        await initializeWorker(log, version)
         heartbeatInterval = setInterval(() => {
-            rejectedPromiseHandler(workerApiService(workerToken).heartbeat(), log)
+            rejectedPromiseHandler(workerApiService(workerToken).heartbeat(version), log)
         }, 15000)
 
         const FLOW_WORKER_CONCURRENCY = workerMachine.getSettings().FLOW_WORKER_CONCURRENCY
@@ -45,11 +45,11 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function initializeWorker(log: FastifyBaseLogger): Promise<void> {
+async function initializeWorker(log: FastifyBaseLogger, serverVersion: string): Promise<void> {
     // eslint-disable-next-line no-constant-condition
     while (true) {
         try {
-            const heartbeatResponse = await workerApiService(workerToken).heartbeat()
+            const heartbeatResponse = await workerApiService(workerToken).heartbeat(serverVersion)
             if (isNil(heartbeatResponse)) {
                 throw new Error('The worker is unable to reach the server')
             }
