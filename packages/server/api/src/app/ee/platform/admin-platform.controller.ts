@@ -17,7 +17,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
         return res.status(StatusCodes.CREATED).send(newPlatform)
     })
 
-    app.post('/enable-flows', TurnOnFlowsRunsRequest, async (req, res) => {
+    app.post('/enable-flows', TurnOnFlowsRequest, async (req, res) => {
         const { flowIds } = req.body
         flowIds.forEach(async (flowId) => {
             const currentFlow = await flowService(req.log).getOneById(flowId)
@@ -42,7 +42,7 @@ const AdminAddPlatformRequest = {
     },
 }
 
-const TurnOnFlowsRunsRequest = {
+const TurnOnFlowsRequest = {
     schema: {
         body: Type.Object({
             flowIds: Type.Array(Type.String()),
