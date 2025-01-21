@@ -17,7 +17,7 @@ const handleUnexpectedSecretsManagerError = (log: FastifyBaseLogger, message: st
 }
 
 export const licenseKeysService = (log: FastifyBaseLogger) => ({
-    async requestTrial(request: CreateTrialLicenseKeyRequestBody): Promise<void> {
+    async requestTrial(request: CreateTrialLicenseKeyRequestBody): Promise<string> {
         const response = await fetch(secretManagerLicenseKeysRoute, {
             method: 'POST',
             headers: {
@@ -35,6 +35,8 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
             const errorMessage = JSON.stringify(await response.json())
             handleUnexpectedSecretsManagerError(log, errorMessage)
         }
+        const responseBody = await response.json()
+        return responseBody.key
     },
     async markAsActiviated(request: { key: string, platformId: string }): Promise<void> {
         try {
@@ -89,6 +91,29 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         const key = await this.getKey(license)
         const isExpired = isNil(key) || dayjs(key.expiresAt).isBefore(dayjs())
         return isExpired ? null : key
+    },
+    async extendTrial({ email, days }: { email: string, days: number }): Promise<void> {
+        const response = await fetch(`${secretManagerLicenseKeysRoute}/extend-trial`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, days }),
+        })
+
+        if (response.status === StatusCodes.NOT_FOUND) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    message: 'License key not found',
+                },
+            })
+        }
+
+        if (!response.ok) {
+            const errorMessage = JSON.stringify(await response.json())
+            handleUnexpectedSecretsManagerError(log, errorMessage)
+        }
     },
     async downgradeToFreePlan(platformId: string): Promise<void> {
         await platformService.update({
