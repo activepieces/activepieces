@@ -76,47 +76,4 @@ export const platformBillingController: FastifyPluginAsyncTypebox = async (fasti
             return platformBillingService(request.log).update(platformId, request.body.tasksLimit, request.body.aiCreditsLimit)
         },
     )
-
-    fastify.post(
-        '/stripe/webhook',
-        {
-            config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
-                rawBody: true,
-            },
-        },
-        async (request: FastifyRequest, reply) => {
-            try {
-                const payload = request.rawBody as string
-                const signature = request.headers['stripe-signature'] as string
-                const stripe = stripeHelper(request.log).getStripe()
-                assertNotNullOrUndefined(stripe, 'Stripe is not configured')
-                const webhook = stripe.webhooks.constructEvent(
-                    payload,
-                    signature,
-                    stripeWebhookSecret,
-                )
-                const subscription = webhook.data.object as Stripe.Subscription
-                if (!stripeHelper(request.log).isPriceForTasks(subscription)) {
-                    return {
-                        message: 'Subscription does not have a price for tasks',
-                    }
-                }
-                const platformBilling = await platformBillingService(request.log).updateSubscriptionIdByCustomerId(subscription)
-                if (subscription.status === ApSubscriptionStatus.CANCELED) {
-                    request.log.info(`Subscription canceled for project ${platformBilling.platformId}, downgrading to free plan`)
-                    await platformBillingService(request.log).update(platformBilling.platformId, 0, 0)
-                }
-                return await reply.status(StatusCodes.OK).send()
-            }
-            catch (err) {
-                request.log.error(err)
-                request.log.warn('⚠️  Webhook signature verification failed.')
-                exceptionHandler.handle(err, request.log)
-                return reply
-                    .status(StatusCodes.BAD_REQUEST)
-                    .send('Invalid webhook signature')
-            }
-        },
-    )
 }
