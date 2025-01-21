@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { ListFilter, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -39,7 +39,10 @@ export function FiltersPopup({ fields }: FiltersPopupProps) {
       : [{ fieldId: '', operator: FilterOperator.EQ, value: '' }];
   });
 
-  const initializedFilters = filters.filter((f) => f.fieldId && f.value);
+  const location = useLocation();
+  const [appliedFiltersCount, setAppliedFiltersCount] = useState(
+    useSearchParams(location.search)[0].getAll('filter').length,
+  );
 
   const handleAddFilter = () => {
     setFilters([
@@ -52,6 +55,19 @@ export function FiltersPopup({ fields }: FiltersPopupProps) {
     const newFilters = [...filters];
     newFilters.splice(index, 1);
     setFilters(newFilters);
+
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.delete('filter');
+    newFilters.forEach((f) => {
+      if (f.fieldId && f.value) {
+        newSearchParams.append(
+          'filter',
+          `${f.fieldId}:${f.operator}:${encodeURIComponent(f.value)}`,
+        );
+      }
+    });
+    setSearchParams(newSearchParams);
+    setAppliedFiltersCount(newSearchParams.getAll('filter').length);
   };
 
   const handleFilterChange = (
@@ -63,6 +79,15 @@ export function FiltersPopup({ fields }: FiltersPopupProps) {
     const newFilters = [...filters];
     newFilters[index] = { fieldId, operator, value };
     setFilters(newFilters);
+  };
+
+  const handleClearFilters = () => {
+    setFilters([{ fieldId: '', operator: FilterOperator.EQ, value: '' }]);
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.delete('filter');
+    setSearchParams(newSearchParams);
+    setAppliedFiltersCount(0);
+    setOpen(false);
   };
 
   const handleApplyFilters = () => {
@@ -78,6 +103,7 @@ export function FiltersPopup({ fields }: FiltersPopupProps) {
       );
     });
     setSearchParams(newSearchParams);
+    setAppliedFiltersCount(validFilters.length);
 
     setOpen(false);
   };
@@ -88,14 +114,14 @@ export function FiltersPopup({ fields }: FiltersPopupProps) {
         <Button variant="outline" size="sm" className="h-8 border-dashed">
           <ListFilter className="mr-2 h-4 w-4" />
           {t('Filters')}
-          {initializedFilters.length > 0 && (
+          {appliedFiltersCount > 0 && (
             <>
               <Separator orientation="vertical" className="mx-2 h-4" />
               <Badge
                 variant="secondary"
                 className="rounded-sm px-1 font-normal"
               >
-                {initializedFilters.length}
+                {appliedFiltersCount}
               </Badge>
             </>
           )}
@@ -128,18 +154,7 @@ export function FiltersPopup({ fields }: FiltersPopupProps) {
             {t('Add Filter')}
           </Button>
           <div className="flex gap-2 justify-end">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setFilters([
-                  { fieldId: '', operator: FilterOperator.EQ, value: '' },
-                ]);
-                const newSearchParams = new URLSearchParams(searchParams);
-                newSearchParams.delete('filter');
-                setSearchParams(newSearchParams);
-                setOpen(false);
-              }}
-            >
+            <Button variant="outline" onClick={handleClearFilters}>
               {t('Clear')}
             </Button>
             <Button onClick={handleApplyFilters}>
