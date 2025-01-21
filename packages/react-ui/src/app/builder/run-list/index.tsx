@@ -70,8 +70,7 @@ const RunsList = React.memo(({ recentRuns = 20 }: FlowRunsListProps) => {
         )}
 
         <ScrollArea className="w-full h-full">
-          {
-            flowPage &&
+          {flowPage &&
             flowPage.data.map((flowRun: FlowRun) => (
               <FlowRunCard
                 refetchRuns={() => {

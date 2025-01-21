@@ -155,7 +155,7 @@ const FlowRunCard = React.memo(
               {t('Took')} {formatUtils.formatDuration(run.duration, false)}
             </p>
           )}
-           {run.status === FlowRunStatus.PAUSED && (
+          {run.status === FlowRunStatus.PAUSED && (
             <p className="flex gap-1 text-xs text-muted-foreground">
               <StopwatchIcon className="h-3.5 w-3.5" />
               {t('Still running...')}
@@ -175,26 +175,30 @@ const FlowRunCard = React.memo(
             </Button>
           )}
 
-          {!isFetchingRun && !isRetryingRun && !isFlowStateTerminal(run.status) && (
-            <Button variant="ghost">
-              <ChevronRight className="w-4 h-4"></ChevronRight>
-            </Button>
-          )}
+          {!isFetchingRun &&
+            !isRetryingRun &&
+            !isFlowStateTerminal(run.status) && (
+              <Button variant="ghost">
+                <ChevronRight className="w-4 h-4"></ChevronRight>
+              </Button>
+            )}
 
-          {!isFetchingRun && !isRetryingRun && isFlowStateTerminal(run.status) && (
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToRetryRun}
-            >
-              <DropdownMenu modal={false}>
-                <DropdownMenuTrigger>
-                  <>
-                    <Button
-                      variant="ghost"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                    >
+          {!isFetchingRun &&
+            !isRetryingRun &&
+            isFlowStateTerminal(run.status) && (
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToRetryRun}
+              >
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger>
+                    <>
+                      <Button
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                      >
                         <RefreshCcw
                           className="w-4 h-4"
                           onMouseEnter={() => {
@@ -204,52 +208,52 @@ const FlowRunCard = React.memo(
                             setHoveringRetryButton(false);
                           }}
                         ></RefreshCcw>
-                    </Button>
-                  </>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem
-                    disabled={!userHasPermissionToRetryRun}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      retryRun({
-                        run,
-                        retryStrategy: FlowRetryStrategy.ON_LATEST_VERSION,
-                      });
-                    }}
-                    className="cursor-pointer"
-                  >
-                    <div className="flex flex-row gap-2 items-center">
-                      <RotateCw className="h-4 w-4" />
-                      <span>{t('on latest version')}</span>
-                    </div>
-                  </DropdownMenuItem>
-
-                  {
-                    isFailedState(run.status) && (<DropdownMenuItem
+                      </Button>
+                    </>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem
+                      disabled={!userHasPermissionToRetryRun}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        if (!isRetryingRun) {
-                          retryRun({
-                            run,
-                            retryStrategy: FlowRetryStrategy.FROM_FAILED_STEP,
-                          });
-                        }
+                        retryRun({
+                          run,
+                          retryStrategy: FlowRetryStrategy.ON_LATEST_VERSION,
+                        });
                       }}
                       className="cursor-pointer"
                     >
                       <div className="flex flex-row gap-2 items-center">
-                        <Redo className="h-4 w-4" />
-                        <span>{t('from failed step')}</span>
+                        <RotateCw className="h-4 w-4" />
+                        <span>{t('on latest version')}</span>
                       </div>
-                    </DropdownMenuItem>)
-                  }
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </PermissionNeededTooltip>
-          )}
+                    </DropdownMenuItem>
+
+                    {isFailedState(run.status) && (
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (!isRetryingRun) {
+                            retryRun({
+                              run,
+                              retryStrategy: FlowRetryStrategy.FROM_FAILED_STEP,
+                            });
+                          }
+                        }}
+                        className="cursor-pointer"
+                      >
+                        <div className="flex flex-row gap-2 items-center">
+                          <Redo className="h-4 w-4" />
+                          <span>{t('from failed step')}</span>
+                        </div>
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </PermissionNeededTooltip>
+            )}
         </div>
       </CardListItem>
     );
