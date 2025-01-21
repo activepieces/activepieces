@@ -30,7 +30,7 @@ export const platformBillingController: FastifyPluginAsyncTypebox = async (fasti
 
     fastify.post('/portal', {}, async (request) => {
         return {
-            portalLink: await stripeHelper(request.log).createPortalSessionUrl(request.principal.projectId),
+            portalLink: await stripeHelper(request.log).createPortalSessionUrl({ platformId: request.principal.platform.id }),
         }
     })
 
@@ -51,6 +51,7 @@ export const platformBillingController: FastifyPluginAsyncTypebox = async (fasti
                 })
                 return
             }
+            
             await platformBillingService(request.log).update(request.principal.platform.id, undefined, undefined)
             return {
                 paymentLink: await stripeHelper(request.log).createCheckoutUrl(projectBilling.stripeCustomerId),
