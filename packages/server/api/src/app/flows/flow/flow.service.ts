@@ -212,6 +212,25 @@ export const flowService = (log: FastifyBaseLogger) => ({
         return flow
     },
 
+    async getOnePopulatedByExternalIdOrThrow(externalId: string): Promise<PopulatedFlow> {
+        const flow = await flowRepo().findOneBy({
+            externalId,
+        })
+        if (isNil(flow)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FLOW_NOT_FOUND,
+                params: {
+                    id: externalId,
+                },
+            })
+        }
+        const version = await flowVersionService(log).getFlowVersionOrThrow({
+            flowId: flow.id,
+            versionId: undefined,
+        })
+        return { ...flow, version }
+    },
+
     async update({
         id,
         userId,

@@ -57,6 +57,25 @@ export const DiffReleaseRequest = Type.Union([
 
 export type DiffReleaseRequest = Static<typeof DiffReleaseRequest>
 
+export const FlowDiffRequest = Type.Union([
+    Type.Object({
+        type: Type.Literal(ProjectReleaseType.PROJECT),
+        targetProjectId: Type.String(),
+        flowId: Type.String(),
+    }),
+    Type.Object({
+        type: Type.Literal(ProjectReleaseType.ROLLBACK),
+        projectReleaseId: Type.String(),
+        flowId: Type.String(),
+    }),
+    Type.Object({
+        type: Type.Literal(ProjectReleaseType.GIT),
+        flowId: Type.String(),
+    }),
+])
+
+export type FlowDiffRequest = Static<typeof FlowDiffRequest>
+
 export const ListProjectReleasesRequest = Type.Object({
     cursor: Nullable(Type.String()),
     limit: Type.Optional(Type.Number({ default: 10 })),

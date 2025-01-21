@@ -1,4 +1,4 @@
-import { Minus, PencilIcon, Plus } from 'lucide-react';
+import { GitCompareArrows, Minus, PencilIcon, Plus } from 'lucide-react';
 import React from 'react';
 
 import { Checkbox } from '@/components/ui/checkbox';
@@ -6,6 +6,7 @@ import {
   ProjectOperationType,
   ProjectSyncPlanOperation,
 } from '@activepieces/shared';
+import { Button } from '@/components/ui/button';
 
 const renderDiffInfo = (flowName: string, icon: React.ReactNode) => (
   <div className="flex items-center justify-between text-sm hover:bg-accent/20 rounded-md py-1">
@@ -20,10 +21,11 @@ type OperationChangeProps = {
   change: ProjectSyncPlanOperation;
   selected: boolean;
   onSelect: (selected: boolean) => void;
+  compare: (flowId: string) => void;
 };
 
 export const OperationChange = React.memo(
-  ({ change, selected, onSelect }: OperationChangeProps) => {
+  ({ change, selected, onSelect, compare }: OperationChangeProps) => {
     return (
       <>
         {change.type === ProjectOperationType.CREATE_FLOW && (
@@ -42,6 +44,11 @@ export const OperationChange = React.memo(
               change.targetFlow.displayName,
               <PencilIcon className="w-4 h-4 shrink-0" />,
             )}
+            <Button variant="outline" size="icon" onClick={() => {
+              compare(change.targetFlow.id);
+            }}>
+              <GitCompareArrows className="w-4 h-4 shrink-0" />
+            </Button>
           </div>
         )}
         {change.type === ProjectOperationType.DELETE_FLOW && (

@@ -124,6 +124,35 @@ const CreateReleaseDialogContent = ({
       toast(INTERNAL_ERROR_TOAST);
     },
   });
+
+  const { mutate: compare, isPending: comparePending } = useMutation({
+    mutationFn: async (flowId: string) => {
+      let response;
+      switch (diffRequest.type) {
+        case ProjectReleaseType.GIT:
+          response = await projectReleaseApi.compare({
+            type: diffRequest.type,
+            flowId,
+          });
+          break;
+        case ProjectReleaseType.PROJECT:
+          response = await projectReleaseApi.compare({
+            type: diffRequest.type,
+            targetProjectId: diffRequest.targetProjectId,
+            flowId,
+          });
+          break;
+        case ProjectReleaseType.ROLLBACK:
+          response = await projectReleaseApi.compare({
+            type: diffRequest.type,
+            projectReleaseId: diffRequest.projectReleaseId,
+            flowId,
+          });
+          break;
+      }
+      console.log('response', response);
+    },
+  });
   const [selectedChanges, setSelectedChanges] = useState<Set<string>>(
     new Set(plan?.operations.map((op) => op.flow.id) || []),
   );
@@ -211,6 +240,7 @@ const CreateReleaseDialogContent = ({
                     setErrorMessage('');
                     setSelectedChanges(newSelectedChanges);
                   }}
+                  compare={() => compare(operation.flow.id)}
                 />
               ))}
             </ScrollArea>

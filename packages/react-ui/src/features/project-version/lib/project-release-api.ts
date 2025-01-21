@@ -1,5 +1,5 @@
 import { api } from '@/lib/api';
-import { ProjectSyncPlan } from '@activepieces/ee-shared';
+import { FlowDiffRequest, FlowDiffState, ProjectSyncPlan } from '@activepieces/shared';
 import {
   SeekPage,
   CreateProjectReleaseRequestBody,
@@ -23,6 +23,12 @@ export const projectReleaseApi = {
   async diff(request: DiffReleaseRequest) {
     return await api.post<ProjectSyncPlan>(
       `/v1/project-releases/diff`,
+      request,
+    );
+  },
+  async compare(request: FlowDiffRequest) {
+    return await api.post<FlowDiffState>(
+      `/v1/project-releases/compare`,
       request,
     );
   },

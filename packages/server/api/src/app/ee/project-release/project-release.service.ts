@@ -1,5 +1,5 @@
 import { memoryLock } from '@activepieces/server-shared'
-import { ActivepiecesError, ApId, apId, CreateProjectReleaseRequestBody, DiffReleaseRequest, DiffState, ErrorCode, isNil, ListProjectReleasesRequest, PlatformId, ProjectId, ProjectOperationType, ProjectRelease, ProjectReleaseType, ProjectState, ProjectSyncError, ProjectSyncPlan, ProjectSyncPlanOperation, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, ApId, apId, CreateProjectReleaseRequestBody, DiffReleaseRequest, DiffState, ErrorCode, FlowDiffRequest, FlowDiffState, FlowState, GroupState, isNil, ListProjectReleasesRequest, PlatformId, PopulatedFlow, ProjectId, ProjectOperationType, ProjectRelease, ProjectReleaseType, ProjectState, ProjectSyncError, ProjectSyncPlan, ProjectSyncPlanOperation, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -9,6 +9,7 @@ import { gitRepoService } from './git-sync/git-sync.service'
 import { ProjectReleaseEntity } from './project-release.entity'
 import { projectDiffService } from './project-state/project-diff.service'
 import { projectStateService } from './project-state/project-state.service'
+import { flowService } from '../../flows/flow/flow.service'
 const projectReleaseRepo = repoFactory(ProjectReleaseEntity)
 
 export const projectReleaseService = {
@@ -50,9 +51,9 @@ export const projectReleaseService = {
             errors: [],
         })
     },
-    // async compare(projectId: ProjectId, userId: ApId, params: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<GroupState[]> {
-    //     return await findDiffGroups(projectId, userId, params, log)
-    // },
+    async compare(projectId: ProjectId, userId: ApId, params: FlowDiffRequest, log: FastifyBaseLogger): Promise<FlowDiffState> {
+        return await findDiffGroups(projectId, userId, params, log)
+    },
     async list({ projectId, request }: ListParams): Promise<SeekPage<ProjectRelease>> {
         const decodedCursor = paginationHelper.decodeCursor(request.cursor ?? null)
         const paginator = buildPaginator({
@@ -99,6 +100,7 @@ export const projectReleaseService = {
         return projectRelease
     },
 }
+
 async function findDiffStates(projectId: ProjectId, ownerId: ApId, params: DiffReleaseRequest | CreateProjectReleaseRequestBody, log: FastifyBaseLogger): Promise<DiffState> {
     const newState = await getStateFromCreateRequest(projectId, ownerId, params, log) as ProjectState
     const currentState = await projectStateService(log).getCurrentState(projectId, log) as ProjectState
@@ -109,7 +111,14 @@ async function findDiffStates(projectId: ProjectId, ownerId: ApId, params: DiffR
     return diffs
 }
 
-
+async function findDiffGroups(projectId: ProjectId, ownerId: ApId, params: FlowDiffRequest, log: FastifyBaseLogger): Promise<FlowDiffState> {
+    const oldFlow = await getFlowFromFlowDiffRequest(projectId, ownerId, params, log)
+    const newFlow = await flowService(log).getOnePopulatedByExternalIdOrThrow(oldFlow.id)
+    return projectDiffService.findGroups({
+        newFlow,
+        currentFlow: oldFlow,
+    })
+}
 
 async function toResponse(params: toResponseParams): Promise<ProjectSyncPlan> {
     const { diffs, errors } = params
@@ -167,6 +176,27 @@ async function getStateFromCreateRequest(projectId: string, ownerId: ApId, reque
                 projectId,
             })
             return projectStateService(log).getStateFromRelease(projectId, projectRelease.fileId, log)
+        }
+    }
+}
+
+async function getFlowFromFlowDiffRequest(projectId: string, ownerId: ApId, request: FlowDiffRequest, log: FastifyBaseLogger): Promise<PopulatedFlow> {
+    switch (request.type) {
+        case ProjectReleaseType.GIT: {
+            const gitRepo = await gitRepoService(log).getOneByProjectOrThrow({ projectId })
+            return gitRepoService(log).getFlowFromState({ flowId: request.flowId, gitRepo, userId: ownerId, log })
+        }
+        case ProjectReleaseType.PROJECT: {
+            const projectState = await projectStateService(log).getCurrentState(request.targetProjectId, log)
+            return projectState.flows.find((flow) => flow.id === request.flowId) as FlowState
+        }
+        case ProjectReleaseType.ROLLBACK: {
+            const projectRelease = await projectReleaseService.getOneOrThrow({
+                id: request.projectReleaseId,
+                projectId,
+            })
+            const state = await projectStateService(log).getStateFromRelease(projectId, projectRelease.fileId, log)
+            return state.flows.find((flow) => flow.id === request.flowId) as FlowState
         }
     }
 }

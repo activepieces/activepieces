@@ -5,19 +5,29 @@ import { ConnectionState, Flow, flowMigrations, FlowState, PopulatedFlow, Projec
 import { FastifyBaseLogger } from 'fastify'
     
 export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
+    async getFlowFromGit({ flowId, flowPath }: GetFlowFromGitParams): Promise<FlowState> {
+        try {
+            const flow: PopulatedFlow = JSON.parse(
+                await fs.readFile(path.join(flowPath, `${flowId}${flowId.endsWith('.json') ? '' : '.json'}`), 'utf-8'),
+            )
+            const migratedFlowVersion = flowMigrations.apply(flow.version)
+            return {
+                ...flow,
+                version: migratedFlowVersion,
+            }
+        }
+        catch (error) {
+            _log.error(`Failed to read flow file ${flowId}: ${error}`)
+            throw error
+        }
+    },
+    
     async getStateFromGit({ flowPath, connectionsFolderPath }: GetStateFromGitParams): Promise<ProjectState> {
         try {
             const flowFiles = await fs.readdir(flowPath)
             const flows: FlowState[] = []
             for (const file of flowFiles) {
-                const flow: PopulatedFlow = JSON.parse(
-                    await fs.readFile(path.join(flowPath, file), 'utf-8'),
-                )
-                const migratedFlowVersion = flowMigrations.apply(flow.version)
-                flows.push({
-                    ...flow,
-                    version: migratedFlowVersion,
-                })
+                flows.push(await this.getFlowFromGit({ flowId: file, flowPath }))
             }
 
             const connections = await fs.readdir(connectionsFolderPath)
@@ -70,6 +80,11 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
 type GetStateFromGitParams = {
     flowPath: string
     connectionsFolderPath: string
+}
+
+type GetFlowFromGitParams = {
+    flowId: string
+    flowPath: string
 }
 
 type UpsertFlowIntoProjectParams = {

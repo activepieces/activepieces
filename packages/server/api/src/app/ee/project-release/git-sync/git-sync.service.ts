@@ -10,6 +10,7 @@ import {
     ApEdition,
     apId,
     ErrorCode,
+    FlowState,
     isNil,
     ProjectState,
     SeekPage,
@@ -149,6 +150,13 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
             connectionsFolderPath,
         })
     },
+    async getFlowFromState({ flowId, gitRepo, userId, log }: GetFlowFromStateParams): Promise<FlowState> {
+        const { flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
+        return gitSyncHelper(log).getFlowFromGit({
+            flowId,
+            flowPath: flowFolderPath,
+        })
+    },
     async delete({ id, projectId }: DeleteParams): Promise<void> {
         const gitRepo = await repo().findOneBy({ id, projectId })
         if (isNil(gitRepo)) {
@@ -178,4 +186,7 @@ type PullGitRepoRequest = {
     gitRepo: GitRepo
     userId: string
     log: FastifyBaseLogger
+}
+type GetFlowFromStateParams = PullGitRepoRequest & {
+    flowId: string
 }

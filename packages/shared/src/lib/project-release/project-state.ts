@@ -5,6 +5,7 @@ export enum GroupStatus {
     ADDED = 'ADDED',
     DELETED = 'DELETED',
     UPDATED = 'UPDATED',
+    NO_CHANGE = 'NO_CHANGE',
 }
 
 export enum ProjectOperationType {
@@ -37,7 +38,7 @@ export type ProjectState = Static<typeof ProjectState>
 export const GroupState = Type.Object({
     id: Type.String(),
     nodes: Type.Array(Type.String()),
-    status: Type.Union([Type.Literal(GroupStatus.ADDED), Type.Literal(GroupStatus.DELETED), Type.Literal(GroupStatus.UPDATED)]),
+    status: Type.Union([Type.Literal(GroupStatus.ADDED), Type.Literal(GroupStatus.DELETED), Type.Literal(GroupStatus.UPDATED), Type.Literal(GroupStatus.NO_CHANGE)]),
 })
 
 export type GroupState = Static<typeof GroupState>
@@ -57,6 +58,13 @@ export const ProjectOperation = Type.Union([
     }),
 ])
 export type ProjectOperation = Static<typeof ProjectOperation>
+
+export const FlowDiffState = Type.Object({
+    groups: Type.Array(GroupState),
+    flow: FlowState,
+})
+export type FlowDiffState = Static<typeof FlowDiffState>
+
 
 export const ConnectionOperation = Type.Union([
     Type.Object({

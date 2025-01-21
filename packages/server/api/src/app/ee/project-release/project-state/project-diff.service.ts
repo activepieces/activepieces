@@ -1,5 +1,4 @@
-import { ActionType, assertNotNullOrUndefined, ConnectionOperation, ConnectionOperationType, ConnectionState, DEFAULT_SAMPLE_DATA_SETTINGS, DiffState, flowPieceUtil, FlowState, flowStructureUtil, FlowVersion, GroupState, isNil, PopulatedFlow, ProjectOperation, ProjectOperationType, ProjectState, Step, TriggerType } from '@activepieces/shared'
-import { Static, Type } from '@sinclair/typebox'
+import { Action, ActionType, apId, assertNotNullOrUndefined, ConnectionOperation, ConnectionOperationType, ConnectionState, DEFAULT_SAMPLE_DATA_SETTINGS, DiffState, FlowDiffState, flowPieceUtil, FlowState, flowStructureUtil, FlowVersion, GroupState, GroupStatus, isNil, LoopOnItemsAction, PopulatedFlow, ProjectOperation, ProjectOperationType, ProjectState, Step, Trigger, TriggerType } from '@activepieces/shared'
 
 export const projectDiffService = {
     diff({ newState, currentState }: DiffParams): DiffState {
@@ -13,9 +12,173 @@ export const projectDiffService = {
             connections,
         }
     },
-    findGroups({ newState, currentState }: DiffParams): GroupState[] {
-        return []
+    findGroups({ newFlow, currentFlow }: FlowDiffParams): FlowDiffState {
+        const steps = new Map<string, Action | Trigger>()
+        const newFlowNodes = getFlowNodes(newFlow.version.trigger, steps)
+        const currentFlowNodes = getFlowNodes(currentFlow.version.trigger, steps)
+        const nodeMap = new Map<string, GroupStatus>()
+
+        for (const nodeIdentity of newFlowNodes) {
+            const existingNode = currentFlowNodes.find((n) => n.name === nodeIdentity.name && n.pieceName === nodeIdentity.pieceName)
+            if (!isNil(existingNode)) {
+                if (steps.get(getFlowDiffPattern(nodeIdentity.name, nodeIdentity.pieceName)) !== steps.get(getFlowDiffPattern(existingNode.name, existingNode.pieceName))) {
+                    nodeMap.set(getFlowDiffPattern(nodeIdentity.name, nodeIdentity.pieceName), GroupStatus.UPDATED)
+                } else {
+                    nodeMap.set(getFlowDiffPattern(nodeIdentity.name, nodeIdentity.pieceName), GroupStatus.NO_CHANGE)
+                }
+            } else {
+                nodeMap.set(getFlowDiffPattern(nodeIdentity.name, nodeIdentity.pieceName), GroupStatus.ADDED)
+            }
+        }
+
+        for (const nodeIdentity of currentFlowNodes) {
+            const isExistingNode = newFlowNodes.find((n) => n.name === nodeIdentity.name && n.pieceName === nodeIdentity.pieceName)
+            if (!isExistingNode) {
+                nodeMap.set(getFlowDiffPattern(nodeIdentity.name, nodeIdentity.pieceName), GroupStatus.DELETED)
+            }
+        }
+
+        return groupingNodes({ nodeMap, currentFlow: currentFlow, newFlow: newFlow })
     },
+}
+
+function getFlowNodes(action: Action | Trigger | undefined, steps: Map<string, Action | Trigger>): StepIdentity[] {
+    if (isNil(action)) {
+        return []
+    }
+    const stepsIdentity: StepIdentity[] = []
+    stepsIdentity.push({ name: action.name, pieceName: action.settings.pieceName })
+    steps.set(getFlowDiffPattern(action.name, action.settings.pieceName), action)
+    switch (action.type) {
+        case ActionType.LOOP_ON_ITEMS:
+            stepsIdentity.push(...getFlowNodes(action.firstLoopAction, steps))
+            break
+        case ActionType.ROUTER:
+            action.children.forEach((child) => {
+                if (!isNil(child)) {
+                    stepsIdentity.push(...getFlowNodes(child, steps))
+                }
+            })
+            break
+    }
+    stepsIdentity.push(...getFlowNodes(action.nextAction, steps))
+    return stepsIdentity
+}
+
+function isLinear(action: Action | Trigger): boolean {
+    return action.type !== ActionType.LOOP_ON_ITEMS && action.type !== ActionType.ROUTER
+}
+
+function getContigousAction(params: GetGroupParams): Action | Trigger | undefined {
+    if (isNil(params.flowPointer) || getFlowDiffPattern(params.flowPointer.name, params.flowPointer.settings.pieceName) !== params.status) {
+        return undefined
+    }
+    switch (params.flowPointer.type) {
+        case ActionType.LOOP_ON_ITEMS:
+            const loopAction = getContigousAction({
+                flowPointer: params.flowPointer.firstLoopAction,
+                nodeMap: params.nodeMap,
+                status: params.status,
+            })
+            if (params.flowPointer.type === ActionType.LOOP_ON_ITEMS) {
+                params.flowPointer.firstLoopAction = isNil(loopAction) ? undefined : loopAction as Action
+            }
+            break
+        case ActionType.ROUTER:
+            const routerActions = params.flowPointer.children.map((child) => {
+                return getContigousAction({
+                    flowPointer: child,
+                    nodeMap: params.nodeMap,
+                    status: params.status,
+                })
+            })
+            if (params.flowPointer.type === ActionType.ROUTER) {
+                params.flowPointer.children = routerActions.map((action) => action as Action ?? null)
+            }
+            break
+    }
+    params.flowPointer.nextAction = getContigousAction({
+        flowPointer: params.flowPointer.nextAction,
+        nodeMap: params.nodeMap,
+        status: params.status,
+    })
+    return params.flowPointer 
+}
+
+function getContigousGroup(params: GetGroupParams): GroupState[] {
+    if (isNil(params.flowPointer)) {
+        return []
+    }
+
+    let status = params.status
+
+    // GOING LINEAR AS MUCH AS POSSIBLE
+    const group: GroupState = {
+        status: status,
+        id: apId(),
+        nodes: []
+    }
+    while (!isNil(params.flowPointer) && isLinear(params.flowPointer) 
+        && params.nodeMap.get(getFlowDiffPattern(params.flowPointer.name, params.flowPointer.settings.pieceName)) === status) {
+        group.nodes.push(params.flowPointer.name)
+        params.flowPointer = params.flowPointer.nextAction
+    }
+
+    // GET SPLITTED BRANCHES AS LOOP OR ROUTER
+    if (!isNil(params.flowPointer)) {
+        status = params.nodeMap.get(getFlowDiffPattern(params.flowPointer.name, params.flowPointer.settings.pieceName)) ?? GroupStatus.NO_CHANGE
+    }
+    const groups: GroupState[] = [group]
+    while (params.flowPointer && !isLinear(params.flowPointer)) {
+        const branchedGroups = getBranchedGroup({ flowPointer: params.flowPointer, nodeMap: params.nodeMap, status })
+        groups.push(...branchedGroups)
+        params.flowPointer = params.flowPointer.nextAction
+    }
+
+    // IF THERE IS STILL AFTER THEM RUN THE SAME LOGIC AGAIN
+    if (!isNil(params.flowPointer)) {
+        status = params.nodeMap.get(getFlowDiffPattern(params.flowPointer.name, params.flowPointer.settings.pieceName)) ?? GroupStatus.NO_CHANGE
+        const remainingGroup = getContigousGroup({ flowPointer: params.flowPointer, nodeMap: params.nodeMap, status })
+        groups.push(...remainingGroup)
+    }
+
+    return groups
+}
+
+function getBranchedGroup(params: GetGroupParams): GroupState[] {
+    if (isNil(params.flowPointer)) {
+        return []
+    }
+    const groups: GroupState[] = [{
+        status: params.status,
+        id: apId(),
+        nodes: [params.flowPointer.name]
+    }]
+    switch (params.flowPointer.type) {
+        case ActionType.LOOP_ON_ITEMS:
+            groups.push(...getContigousGroup({ flowPointer: params.flowPointer.firstLoopAction, nodeMap: params.nodeMap, status: params.status }))
+            break
+        case ActionType.ROUTER:
+            params.flowPointer.children.forEach((child) => groups.push(...getContigousGroup({ flowPointer: child, nodeMap: params.nodeMap, status: params.status })))
+            break
+    }
+    return groups
+}
+
+function getFlowDiffPattern(name: string, pieceName: string): string {
+    return `${name}.${pieceName}`;
+}
+
+function groupingNodes({ nodeMap, currentFlow, newFlow }: GroupingNodeParams): FlowDiffState {
+    let currentFlowPointer: Action | Trigger | undefined = currentFlow.version.trigger
+    let newFlowPointer: Action | Trigger | undefined = newFlow.version.trigger
+    const status = nodeMap.get(getFlowDiffPattern(newFlowPointer.name, newFlowPointer.settings.pieceName)) ?? GroupStatus.NO_CHANGE
+    const groups: GroupState[] = getContigousGroup({ flowPointer: newFlowPointer, nodeMap, status })
+    return {
+        groups,
+        // TODO WE NEED TO RETURN FLOW THAT MERGED WITH NEW FLOW
+        flow: currentFlow,
+    }
 }
 
 function findFlowsToCreate({ newState, currentState }: DiffParams): ProjectOperation[] {
@@ -120,4 +283,26 @@ type DiffParams = {
         connections?: ConnectionState[]
     }
     newState: ProjectState
+}
+
+type FlowDiffParams = {
+    newFlow: PopulatedFlow
+    currentFlow: PopulatedFlow
+}
+
+type StepIdentity = {
+    name: string
+    pieceName: string
+}
+
+type GroupingNodeParams = {
+    nodeMap: Map<string, GroupStatus>
+    currentFlow: PopulatedFlow
+    newFlow: PopulatedFlow
+}
+
+type GetGroupParams = {
+    nodeMap: Map<string, GroupStatus>
+    flowPointer: Action | Trigger | undefined | null
+    status: GroupStatus
 }

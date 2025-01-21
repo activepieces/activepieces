@@ -1,5 +1,5 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, FlowDiffRequest, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { eventsHooks } from '../../helper/application-events'
@@ -107,6 +107,6 @@ const CompareProjectReleaseRequest = {
         allowedPrincipals: [PrincipalType.USER],
     },
     schema: {
-        body: DiffReleaseRequest,
+        body: FlowDiffRequest,
     },
 }
