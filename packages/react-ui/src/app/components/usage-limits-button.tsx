@@ -13,6 +13,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { projectHooks } from '@/hooks/project-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { ApFlagId, isNil } from '@activepieces/shared';
 
@@ -38,6 +39,8 @@ const getTimeUntilNextReset = (nextResetDate: string) => {
 };
 
 const UsageLimitsButton = React.memo(() => {
+  const cloudPlatformId = 'NgixMLyPUxy1ZgCcxw5cM';
+  const platformId = authenticationSession.getPlatformId();
   const { project, refetch } = projectHooks.useCurrentProject();
   useEffect(() => {
     return () => {
@@ -95,7 +98,13 @@ const UsageLimitsButton = React.memo(() => {
         <FlagGuard flag={ApFlagId.SHOW_BILLING}>
           <Separator className="my-4" />
           <div className="flex justify-end ">
-            <Link to={'/plans'}>
+            <Link
+              to={
+                cloudPlatformId === platformId
+                  ? '/plans'
+                  : '/platform/setup/billing'
+              }
+            >
               <Button
                 variant={'outline'}
                 size="sm"
