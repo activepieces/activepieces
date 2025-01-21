@@ -19,7 +19,8 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
 
     app.post('/enable-flows', TurnOnFlowsRequest, async (req, res) => {
         const { flowIds } = req.body
-        flowIds.forEach(async (flowId) => {
+        let count = 0;
+        for (const flowId of flowIds) {
             const currentFlow = await flowService(req.log).getOneById(flowId)
             if (currentFlow && currentFlow.status !== FlowStatus.ENABLED) {
                 await flowService(req.log).updateStatus({
@@ -27,9 +28,10 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
                     projectId: currentFlow.projectId,
                     newStatus: FlowStatus.ENABLED,
                 })
+                count++;
             }
-        })
-        return res.status(StatusCodes.OK)
+        }
+        return res.status(StatusCodes.OK).send({ message: `Flows enabled: ${count}` })
     })
 }
 
