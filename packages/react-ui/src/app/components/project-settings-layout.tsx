@@ -67,7 +67,7 @@ export default function ProjectSettingsLayout({
         '/settings/environments',
       ),
       icon: <GitBranch size={iconSize} />,
-      hasPermission: checkAccess(Permission.READ_GIT_REPO),
+      hasPermission: checkAccess(Permission.READ_PROJECT_RELEASE),
     },
   ];
 

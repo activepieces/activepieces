@@ -24,6 +24,12 @@ module.exports = {
       },
     },
     extend: {
+      width: {
+        '4.5': '1.125rem'
+      },
+      height: {
+        '4.5': '1.125rem',
+      },
       transitionDuration: {
         1500: '1500ms',
       },

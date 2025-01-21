@@ -61,16 +61,13 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
   });
 
   const deleteBranch = (index: number) => {
-    applyOperation(
-      {
-        type: FlowOperationType.DELETE_BRANCH,
-        request: {
-          stepName: step.name,
-          branchIndex: index,
-        },
+    applyOperation({
+      type: FlowOperationType.DELETE_BRANCH,
+      request: {
+        stepName: step.name,
+        branchIndex: index,
       },
-      () => {},
-    );
+    });
 
     setSelectedBranchIndex(null);
     fitView(flowCanvasUtils.createFocusStepInGraphParams(step.name));
@@ -178,16 +175,13 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
             }}
             deleteBranch={deleteBranch}
             duplicateBranch={(index) => {
-              applyOperation(
-                {
-                  type: FlowOperationType.DUPLICATE_BRANCH,
-                  request: {
-                    stepName: step.name,
-                    branchIndex: index,
-                  },
+              applyOperation({
+                type: FlowOperationType.DUPLICATE_BRANCH,
+                request: {
+                  stepName: step.name,
+                  branchIndex: index,
                 },
-                () => {},
-              );
+              });
               setSelectedBranchIndex(index + 1);
             }}
             setSelectedBranchIndex={(index) => {
@@ -211,17 +205,14 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
             <div className="mt-2">
               <BranchesToolbar
                 addButtonClicked={() => {
-                  applyOperation(
-                    {
-                      type: FlowOperationType.ADD_BRANCH,
-                      request: {
-                        stepName: step.name,
-                        branchIndex: step.settings.branches.length - 1,
-                        branchName: `Branch ${step.settings.branches.length}`,
-                      },
+                  applyOperation({
+                    type: FlowOperationType.ADD_BRANCH,
+                    request: {
+                      stepName: step.name,
+                      branchIndex: step.settings.branches.length - 1,
+                      branchName: `Branch ${step.settings.branches.length}`,
                     },
-                    () => {},
-                  );
+                  });
 
                   setSelectedBranchIndex(step.settings.branches.length - 1);
                 }}

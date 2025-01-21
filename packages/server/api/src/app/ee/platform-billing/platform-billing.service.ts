@@ -39,6 +39,7 @@ export const platformBillingService = (log: FastifyBaseLogger) => ({
         return platformBillingRepo().save({
             tasksLimit,
             aiCreditsLimit,
+            id: platformBilling.id,
         })
     },
 
