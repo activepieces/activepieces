@@ -82,6 +82,7 @@ import { platformService } from './platform/platform.service'
 import { projectHooks } from './project/project-hooks'
 import { projectModule } from './project/project-module'
 import { storeEntryModule } from './store-entry/store-entry.module'
+import { stripeBillingModule } from './stripe-billing/stripe-billing.module'
 import { tagsModule } from './tags/tags-module'
 import { platformUserModule } from './user/platform/platform-user-module'
 import { invitationModule } from './user-invitations/user-invitation.module'
@@ -260,6 +261,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(connectionKeyModule)
             await app.register(platformProjectModule)
             await app.register(platformBillingModule)
+            await app.register(stripeBillingModule)
             await app.register(projectMemberModule)
             await app.register(appSumoModule)
             await app.register(adminPieceModule)
