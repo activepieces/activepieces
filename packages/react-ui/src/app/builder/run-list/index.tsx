@@ -46,7 +46,7 @@ const RunsList = React.memo(({ recentRuns = 20 }: FlowRunsListProps) => {
         limit: recentRuns,
         cursor: undefined,
       }),
-    staleTime: 15 * 1000,
+    refetchInterval: 15 * 1000,
   });
 
   //so the user doesn't have to refresh the browser each time they want to refetch, they just have to close the left side bar and reopen
@@ -70,8 +70,7 @@ const RunsList = React.memo(({ recentRuns = 20 }: FlowRunsListProps) => {
         )}
 
         <ScrollArea className="w-full h-full">
-          {!isRefetching &&
-            !isLoading &&
+          {
             flowPage &&
             flowPage.data.map((flowRun: FlowRun) => (
               <FlowRunCard
