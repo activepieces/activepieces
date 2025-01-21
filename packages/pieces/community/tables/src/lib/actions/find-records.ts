@@ -27,7 +27,7 @@ export const findRecords = createAction({
       description: 'Filter conditions to apply',
       required: false,
       refreshers: ['table_name'],
-      props: async (propsValue: Record<string, DynamicPropsValue>, context: PropertyContext) => {
+      props: async (propsValue, context) => {
         const table_name = propsValue['table_name'];
         if (!table_name || typeof table_name !== 'string') {
           return {
