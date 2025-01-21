@@ -1,3 +1,4 @@
+import { createHash } from 'crypto'
 import {
     DEFAULT_PLATFORM_LIMIT,
 } from '@activepieces/ee-shared'
@@ -128,7 +129,7 @@ const getOrCreateUserIdentity = async (
     params: GetOrCreateUserParams,
     log: FastifyBaseLogger,
 ): Promise<UserIdentity> => {
-    const cleanedEmail = `managed_${params.platformId}_${params.externalUserId}`
+    const cleanedEmail = generateEmailHash(params)
     const existingIdentity = await userIdentityService(log).getIdentityByEmail(cleanedEmail)
     if (!isNil(existingIdentity)) {
         return existingIdentity
@@ -186,6 +187,15 @@ const getPiecesList = async ({
             return []
         }
     }
+}
+
+function generateEmailHash(params: { platformId: string, externalUserId: string }): string {
+    const inputString = `managed_${params.platformId}_${params.externalUserId}`
+    return cleanEmailOtherwiseCompareFails(createHash('sha256').update(inputString).digest('hex'))
+}
+
+function cleanEmailOtherwiseCompareFails(email: string): string {
+    return email.trim().toLowerCase()
 }
 
 type AuthenticateParams = {
