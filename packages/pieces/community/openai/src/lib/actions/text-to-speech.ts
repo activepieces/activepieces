@@ -5,6 +5,8 @@ import { streamToBuffer } from '../common/common';
 
 type Voice = OpenAI.Audio.Speech.SpeechCreateParams['voice'];
 type ResponseFormat = OpenAI.Audio.Speech.SpeechCreateParams['response_format'];
+type Model = OpenAI.Audio.Speech.SpeechCreateParams['model'];
+type Speed = OpenAI.Audio.Speech.SpeechCreateParams['speed'];
 
 export const textToSpeech = createAction({
   auth: openaiAuth,
@@ -17,7 +19,7 @@ export const textToSpeech = createAction({
       description: 'The text you want to hear.',
       required: true,
     }),
-    model: Property.Dropdown({
+    model: Property.Dropdown<Model>({
       displayName: 'Model',
       required: true,
       description: 'The model which will generate the audio.',
@@ -91,11 +93,11 @@ export const textToSpeech = createAction({
     const { voice, format, model, text, speed, fileName } = propsValue;
 
     const audio = await openai.audio.speech.create({
-      model: model,
+      model: model as Model,
       input: text,
       response_format: format as ResponseFormat,
       voice: voice as Voice,
-      speed: speed,
+      speed: speed as Speed,
     });
     const result = await streamToBuffer(audio.body);
 
