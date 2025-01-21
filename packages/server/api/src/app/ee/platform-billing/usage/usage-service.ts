@@ -61,12 +61,12 @@ export const usageService = (log: FastifyBaseLogger) => ({
             const platformId = await projectService.getPlatformId(projectId)
             const { consumedProjectUsage, consumedPlatformUsage } = await increaseProjectAndPlatformUsage({ projectId, incrementBy: 0, usageType: BillingUsageType.TASKS })
             // TODO (@abuaboud) clean once project billing is deprecated
-            const shouldLimitFromProjectPlan = !isNil(projectPlan.tasks) && consumedProjectUsage >= projectPlan.tasks
+            const shouldLimitFromProjectPlan = !isNil(projectPlan.tasks) && consumedProjectUsage < projectPlan.tasks
             if (flagService.isCloudPlatform(platformId)) {
                 return shouldLimitFromProjectPlan
             }
             const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
-            const shouldLimitFromPlatformBilling = !isNil(platformBilling.tasksLimit) && consumedPlatformUsage >= platformBilling.tasksLimit
+            const shouldLimitFromPlatformBilling = !isNil(platformBilling.tasksLimit) && consumedPlatformUsage < platformBilling.tasksLimit
             const platform = await platformService.getOneOrThrow(platformId)
             if (!platform.manageProjectsEnabled) {
                 return shouldLimitFromPlatformBilling
