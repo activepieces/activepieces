@@ -3,6 +3,9 @@ import OpenAI from 'openai';
 import { openaiAuth } from '../..';
 import { streamToBuffer } from '../common/common';
 
+type Voice = OpenAI.Audio.Speech.SpeechCreateParams['voice'];
+type ResponseFormat = OpenAI.Audio.Speech.SpeechCreateParams['response_format'];
+
 export const textToSpeech = createAction({
   auth: openaiAuth,
   name: 'text_to_speech',
@@ -42,71 +45,37 @@ export const textToSpeech = createAction({
       defaultValue: 1.0,
       required: false,
     }),
-    voice: Property.Dropdown({
+    voice: Property.Dropdown<Voice>({
       displayName: 'Voice',
       description: 'The voice to generate the audio in.',
-      required: false,
+      required: true,
       refreshers: [],
       defaultValue: 'alloy',
-      options: async () => {
-        return {
-          options: [
-            {
-              label: 'alloy',
-              value: 'alloy',
-            },
-            {
-              label: 'echo',
-              value: 'echo',
-            },
-            {
-              label: 'fable',
-              value: 'fable',
-            },
-            {
-              label: 'onyx',
-              value: 'onyx',
-            },
-            {
-              label: 'nova',
-              value: 'nova',
-            },
-            {
-              label: 'shimmer',
-              value: 'shimmer',
-            },
-          ],
-        };
-      },
+      options: async () => ({
+        options: [
+          { label: 'alloy', value: 'alloy' },
+          { label: 'echo', value: 'echo' },
+          { label: 'fable', value: 'fable' },
+          { label: 'onyx', value: 'onyx' },
+          { label: 'nova', value: 'nova' },
+          { label: 'shimmer', value: 'shimmer' },
+        ],
+      }),
     }),
-    format: Property.Dropdown({
+    format: Property.Dropdown<ResponseFormat>({
       displayName: 'Output Format',
-      required: false,
+      required: true,
       description: 'The format you want the audio file in.',
       defaultValue: 'mp3',
       refreshers: [],
-      options: async () => {
-        return {
-          options: [
-            {
-              label: 'mp3',
-              value: 'mp3',
-            },
-            {
-              label: 'opus',
-              value: 'opus',
-            },
-            {
-              label: 'aac',
-              value: 'aac',
-            },
-            {
-              label: 'flac',
-              value: 'flac',
-            },
-          ],
-        };
-      },
+      options: async () => ({
+        options: [
+          { label: 'mp3', value: 'mp3' },
+          { label: 'opus', value: 'opus' },
+          { label: 'aac', value: 'aac' },
+          { label: 'flac', value: 'flac' },
+        ],
+      }),
     }),
   },
   async run({ auth, propsValue, files }) {
@@ -118,11 +87,11 @@ export const textToSpeech = createAction({
     const audio = await openai.audio.speech.create({
       model: model,
       input: text,
-      response_format: format as any,
-      voice: voice as any,
+      response_format: format as ResponseFormat,
+      voice: voice as Voice,
       speed: speed,
     });
-    const result = await streamToBuffer((audio as any).body);
+    const result = await streamToBuffer(audio.body);
 
     return files.write({
       fileName: 'test',
