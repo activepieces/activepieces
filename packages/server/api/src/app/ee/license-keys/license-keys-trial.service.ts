@@ -58,13 +58,13 @@ async function fetchPlatform(email: string): Promise<Platform> {
 }
 
 async function generateSelfHostingTrialLicense(email: string, companyName: string, disabledFeatures: string[], log: FastifyBaseLogger): Promise<{ trialLicenseKey: string }> {
-    const trialLicenseKey = await generateLicenseKey(email, companyName, log, 'production', disabledFeatures)
+    const trialLicenseKey = await generateLicenseKey(email, companyName, disabledFeatures, 'production', log)
     return { trialLicenseKey }
 }
 
 async function generateCloudTrialLicense(workEmail: string, platformId: string, companyName: string, disabledFeatures: string[], log: FastifyBaseLogger): Promise<{ trialLicenseKey1: string, trialLicenseKey2: string, subdomain: string }> {
-    const trialLicenseKey1 = await generateLicenseKey(workEmail, companyName, log, 'development', disabledFeatures, platformId)
-    const trialLicenseKey2 = await generateLicenseKey(workEmail, companyName, log, 'production', disabledFeatures, platformId)
+    const trialLicenseKey1 = await generateLicenseKey(workEmail, companyName, disabledFeatures, 'development', log, platformId)
+    const trialLicenseKey2 = await generateLicenseKey(workEmail, companyName, disabledFeatures, 'production', log, platformId)
     const subdomain = workEmail.split('@')[1].split('.')[0]
     const domain = 'activepieces.com'
     const target = 'cloud.activepieces.com'
@@ -80,7 +80,7 @@ async function generateCloudTrialLicense(workEmail: string, platformId: string, 
     }
 }
 
-async function generateLicenseKey(workEmail: string, companyName: string, log: FastifyBaseLogger, keyType: 'development' | 'production', disabledFeatures: string[], platformId?: string): Promise<string> {
+async function generateLicenseKey(workEmail: string, companyName: string, disabledFeatures: string[], keyType: 'development' | 'production', log: FastifyBaseLogger, platformId?: string): Promise<string> {
     const trialLicenseKey = await licenseKeysService(log).requestTrial({
         email: workEmail,
         companyName,
