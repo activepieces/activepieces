@@ -29,6 +29,7 @@ import {
   StepLocationRelativeToParent,
   Action,
   isFlowStateTerminal,
+  GroupState,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
@@ -80,6 +81,7 @@ export type BuilderState = {
   flow: PopulatedFlow;
   flowVersion: FlowVersion;
   readonly: boolean;
+  flowDiffGroups: GroupState[] | null;
   sampleData: Record<string, unknown>;
   loopsIndexes: Record<string, number>;
   run: FlowRun | null;
@@ -187,6 +189,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       leftSidebar: initialState.run
         ? LeftSideBarType.RUN_DETAILS
         : LeftSideBarType.NONE,
+      flowDiffGroups: null,
       readonly: initialState.readonly,
       run: initialState.run,
       saving: false,

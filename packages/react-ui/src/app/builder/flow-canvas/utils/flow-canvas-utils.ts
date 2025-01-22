@@ -4,6 +4,7 @@ import {
   Action,
   ActionType,
   FlowVersion,
+  GroupState,
   isNil,
   LoopOnItemsAction,
   RouterAction,
@@ -453,17 +454,20 @@ const buildGroupNode = (group: { id: string; nodes: string[]; status: string }, 
 
 export const flowCanvasUtils = {
   convertFlowVersionToGraph(version: FlowVersion): ApGraph {
+    const graph = buildGraph(version.trigger);
+    const graphEndWidget = graph.nodes.findLast(
+      (node) => node.type === ApNodeType.GRAPH_END_WIDGET,
+    ) as ApGraphEndNode;
+    if (graphEndWidget) {
+      graphEndWidget.data.showWidget = true;
+    } else {
+      console.warn('Flow end widget not found');
+    }
+    return graph;
+  },
+  convertFlowVersionToFlowDiffGraph(version: FlowVersion, groups: GroupState[]): ApGraph {
     const buldGraphNodes = buildGraph(version.trigger);
-    
-    const groups = [{
-      id: 'group_1',
-      status: 'ADDED',
-      nodes: ['step_1', 'step_2']
-    }, {
-      id: 'group_2',
-      nodes: ['step_4', 'step_5'],
-      status: 'DELETED',
-    }]
+
     const groupNodes = groups.map((group) => buildGroupNode(group, buldGraphNodes.nodes as ApNode[]));
     const graph: ApGraph = {
       edges: buldGraphNodes.edges as ApEdge[] ,

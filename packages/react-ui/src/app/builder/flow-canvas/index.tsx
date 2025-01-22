@@ -100,6 +100,7 @@ export const FlowCanvas = React.memo(
       panningMode,
       setPieceSelectorStep,
       selectStepByName,
+      flowDiffGroups,
     ] = useBuilderStateContext((state) => {
       return [
         state.flowVersion,
@@ -112,11 +113,12 @@ export const FlowCanvas = React.memo(
         state.panningMode,
         state.setPieceSelectorStep,
         state.selectStepByName,
+        state.flowDiffGroups,
       ];
     });
     const containerRef = useRef<HTMLDivElement>(null);
     const { actionsToPaste, fetchClipboardOperations } =
-      usePasteActionsInClipboard();
+    usePasteActionsInClipboard();
     useShowChevronNextToSelection();
     useFocusedFailedStep();
     useHandleKeyPressOnCanvas();
@@ -136,7 +138,7 @@ export const FlowCanvas = React.memo(
     );
     const graphKey = createGraphKey(flowVersion);
     const graph = useMemo(() => {
-      return flowCanvasUtils.convertFlowVersionToGraph(flowVersion);
+      return !isNil(flowDiffGroups) ? flowCanvasUtils.convertFlowVersionToFlowDiffGraph(flowVersion, flowDiffGroups) : flowCanvasUtils.convertFlowVersionToGraph(flowVersion);
     }, [graphKey]);
     const [contextMenuType, setContextMenuType] = useState<ContextMenuType>(
       ContextMenuType.CANVAS,
