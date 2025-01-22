@@ -108,23 +108,27 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
             const userMember = await userRepo().findOneByOrFail({
                 id: userId,
             })
-            if (userMember.platformId !== platform.id) {
+            const project = await projectRepo().findOneByOrFail({
+                id: projectMember.projectId,
+            })
+            if (userMember.platformId !== project.platformId) {
 
+                const projectPlatformId = project.platformId
                 const existingUser = await userRepo().findOneBy({
                     identityId: userMember.identityId,
-                    platformId: platform.id,
+                    platformId: projectPlatformId,
                 })
                 if (!isNil(existingUser)) {
                     await projectMemberRepo().update({
                         id: projectMember.id,
                     }, {
-                        platformId: platform.id,
+                        platformId: projectPlatformId,
                         userId: existingUser.id,
                     })
                 } else {
                     const newUser = await userService.create({
                         identityId: userMember.identityId,
-                        platformId: platform.id,
+                        platformId: projectPlatformId,
                         platformRole: PlatformRole.MEMBER,
                     })
                     usersCreated++
@@ -132,7 +136,7 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
                         id: projectMember.id,
                     }, {
                         userId: newUser.id,
-                        platformId: platform.id,
+                        platformId: projectPlatformId,
                     })
                 }
             }
