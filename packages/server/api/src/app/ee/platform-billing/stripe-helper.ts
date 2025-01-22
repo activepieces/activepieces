@@ -25,7 +25,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             apiVersion: '2023-10-16',
         })
     },
-    async createCustomer(user: UserWithMetaInformation, platformId: string) {
+    async createCustomer(user: Pick<UserWithMetaInformation, 'email' | 'firstName' | 'lastName' | 'id'>, platformId: string) {
         const stripe = this.getStripe()
         if (!stripe) {
             throw new Error('Stripe is not enabled')
