@@ -97,9 +97,10 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
         })
 
         const projectMembers = await projectMemberRepo().find({
-            where: {
-                userId: userId,
-            },
+            where: [
+                { userId: userId },
+                { projectId: project.id },
+            ],
         })
         for (const projectMember of projectMembers) {
             const userId = projectMember.userId
@@ -163,7 +164,7 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
         })
 
         const stripeSubscriptionId = projectBilling.stripeSubscriptionId
-        if(!isNil(stripeSubscriptionId) && projectBilling.subscriptionStatus === ApSubscriptionStatus.ACTIVE && !isNil(projectBilling.stripeCustomerId)) {
+        if (!isNil(stripeSubscriptionId) && projectBilling.subscriptionStatus === ApSubscriptionStatus.ACTIVE && !isNil(projectBilling.stripeCustomerId)) {
             const stripe = stripeHelper(system.globalLogger()).getStripe()
             assertNotNullOrUndefined(stripe, 'stripe')
 
@@ -182,7 +183,7 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
                 stripeSubscriptionStatus: ApSubscriptionStatus.ACTIVE,
                 stripeCustomerId: projectBilling.stripeCustomerId,
             })
-        }   
+        }
         // Check if all updates were successful
         const updatedUser = await userRepo().findOneByOrFail({ id: userId })
         if (updatedUser.platformId !== platform.id || updatedUser.platformRole !== PlatformRole.ADMIN) {
