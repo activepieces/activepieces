@@ -5,12 +5,14 @@ import { Type } from '@sinclair/typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../platform/platform.service'
+import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { platformBillingService } from './platform-billing.service'
- 
 import { stripeHelper } from './stripe-helper'
 import { BillingEntityType, usageService } from './usage/usage-service'
 
 export const platformBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
+    fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
+    
     fastify.get('/info', {
         config: {
             allowedPrincipals: [PrincipalType.USER],
