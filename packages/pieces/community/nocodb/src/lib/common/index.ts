@@ -7,24 +7,10 @@ export function makeClient(auth: PiecePropValueSchema<typeof nocodbAuth>) {
 }
 
 export const nocodbCommon = {
-	version: Property.StaticDropdown({
-		displayName: 'API Version',
-		description: 'Version of NocoDB API to use',
-		required: true,
-		defaultValue: 3,
-		options: {
-			options: [
-				{ label: 'Before v0.90.0', value: 1 },
-				{ label: 'v0.90.0 to v0.199.0', value: 2 },
-				{ label: 'v0.200.0 Onwards', value: 3 }
-			]
-		}
-	}),
 	workspaceId: Property.Dropdown({
 		displayName: 'Workspace ID',
 		refreshers: [],
-		required: false,
-		description: 'Only required for cloud instances. Leave empty for self-hosted instances.',
+		required: true,
 		options: async ({ auth }) => {
 			if (!auth) {
 				return {
@@ -50,46 +36,37 @@ export const nocodbCommon = {
 	}),
 	baseId: Property.Dropdown({
 		displayName: 'Base ID',
-		refreshers: ['workspaceId', 'version'],
+		refreshers: ['workspaceId'],
 		required: true,
-		options: async ({ auth, workspaceId, version }) => {
-			if (!auth) {
+		options: async ({ auth, workspaceId }) => {
+			if (!auth || !workspaceId) {
 				return {
 					disabled: true,
-					placeholder: 'Please connect your account first.',
+					placeholder: 'Please connect your account first and select workspace.',
 					options: [],
 				};
 			}
 
-			try {
-				const client = makeClient(auth as PiecePropValueSchema<typeof nocodbAuth>);
-				const response = await client.listBases(workspaceId as string || undefined, Number(version));
+			const client = makeClient(auth as PiecePropValueSchema<typeof nocodbAuth>);
+			const response = await client.listBases(workspaceId as string);
 
-				return {
-					disabled: false,
-					options: response.list.map((base) => {
-						return {
-							label: base.title,
-							value: base.id,
-						};
-					}),
-				};
-			} catch (error) {
-				console.error('Error fetching bases:', error);
-				return {
-					disabled: true,
-					placeholder: 'Error fetching bases. Please check your connection and version.',
-					options: [],
-				};
-			}
+			return {
+				disabled: false,
+				options: response.list.map((base) => {
+					return {
+						label: base.title,
+						value: base.id,
+					};
+				}),
+			};
 		},
 	}),
 	tableId: Property.Dropdown({
 		displayName: 'Table ID',
 		refreshers: ['workspaceId', 'baseId'],
 		required: true,
-		options: async ({ auth, baseId, version }) => {
-			if (!auth || !baseId) {
+		options: async ({ auth, workspaceId, baseId }) => {
+			if (!auth || !workspaceId || !baseId) {
 				return {
 					disabled: true,
 					placeholder: 'Please connect your account first and select base.',
@@ -98,7 +75,7 @@ export const nocodbCommon = {
 			}
 
 			const client = makeClient(auth as PiecePropValueSchema<typeof nocodbAuth>);
-			const response = await client.listTables(baseId as string, Number(version));
+			const response = await client.listTables(baseId as string);
 
 			return {
 				disabled: false,
@@ -117,8 +94,8 @@ export const nocodbCommon = {
 			'Allows you to specify the fields that you wish to include in your API response. By default, all the fields are included in the response.',
 		refreshers: ['workspaceId', 'baseId', 'tableId'],
 		required: false,
-		options: async ({ auth, baseId, tableId, version }) => {
-			if (!auth || !baseId || !tableId) {
+		options: async ({ auth, workspaceId, baseId, tableId }) => {
+			if (!auth || !workspaceId || !baseId || !tableId) {
 				return {
 					disabled: true,
 					placeholder: 'Please connect your account first and select base.',
@@ -127,7 +104,7 @@ export const nocodbCommon = {
 			}
 
 			const client = makeClient(auth as PiecePropValueSchema<typeof nocodbAuth>);
-			const response = await client.getTable(tableId as unknown as string, Number(version));
+			const response = await client.getTable(tableId as unknown as string);
 
 			return {
 				disabled: false,
@@ -144,14 +121,14 @@ export const nocodbCommon = {
 		displayName: 'Table Columns',
 		refreshers: ['tableId'],
 		required: true,
-		props: async ({ auth, tableId, version }) => {
+		props: async ({ auth, tableId }) => {
 			if (!auth) return {};
 			if (!tableId) return {};
 
 			const fields: DynamicPropsValue = {};
 
 			const client = makeClient(auth as PiecePropValueSchema<typeof nocodbAuth>);
-			const response = await client.getTable(tableId as unknown as string, Number(version));
+			const response = await client.getTable(tableId as unknown as string);
 
 			for (const column of response.columns) {
 				switch (column.uidt) {

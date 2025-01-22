@@ -138,7 +138,17 @@ const ProjectReleasesPage = () => {
         <div className="flex flex-col gap-2">
           <TableTitle>{t('Project Releases')}</TableTitle>
           <div className="text-sm text-muted-foreground">
-            {t('Track and manage your project version history and deployments')}
+            {t(
+              'Track and manage your project version history and deployments. ',
+            )}
+            <a
+              href="https://www.activepieces.com/docs/operations/git-sync"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              {t('Environments & Releases')}
+            </a>
           </div>
         </div>
         <div className="flex items-center gap-2">

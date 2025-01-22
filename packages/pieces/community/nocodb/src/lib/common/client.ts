@@ -52,100 +52,59 @@ export class NocoDBClient {
 		);
 	}
 
-	async listBases(workspaceId?: string, version: number = 3): Promise<ListAPIResponse<BaseResponse>> {
-		try {
-			if (workspaceId && workspaceId !== 'none') {
-				// Cloud version
-				const endpoint = `/v1/workspaces/${workspaceId}/bases/`;
-				return await this.makeRequest<ListAPIResponse<BaseResponse>>(
-					HttpMethod.GET,
-					endpoint,
-				);
-			} else {
-				// Self-hosted version
-				const endpoint = version === 3 ? '/v2/meta/bases/' : '/v1/db/meta/projects/';
-				return await this.makeRequest<ListAPIResponse<BaseResponse>>(
-					HttpMethod.GET,
-					endpoint,
-				);
-			}
-		} catch (error) {
-			throw error;
-		}
+	async listBases(workspaceId: string): Promise<ListAPIResponse<BaseResponse>> {
+		return await this.makeRequest<ListAPIResponse<BaseResponse>>(
+			HttpMethod.GET,
+			`/v1/workspaces/${workspaceId}/bases/`,
+		);
 	}
 
-	async listTables(baseId: string, version: number = 3): Promise<ListAPIResponse<TableResponse>> {
-		const endpoint = version === 3
-			? `/v2/meta/bases/${baseId}/tables`
-			: `/v1/db/meta/projects/${baseId}/tables`;
+	async listTables(baseId: string): Promise<ListAPIResponse<TableResponse>> {
 		return await this.makeRequest<ListAPIResponse<TableResponse>>(
 			HttpMethod.GET,
-			endpoint,
+			`/v2/meta/bases/${baseId}/tables/`,
 		);
 	}
 
-	async getTable(tableId: string, version: number = 3): Promise<GetTableResponse> {
-		const endpoint = version === 3
-			? `/v2/meta/tables/${tableId}/`
-			: `/v1/db/meta/tables/${tableId}/`;
-		return await this.makeRequest<GetTableResponse>(HttpMethod.GET, endpoint);
+	async getTable(tableId: string): Promise<GetTableResponse> {
+		return await this.makeRequest<GetTableResponse>(HttpMethod.GET, `/v2/meta/tables/${tableId}/`);
 	}
 
-	async createRecord(tableId: string, recordInput: Record<string, any>, version: number = 3) {
-		const endpoint = version === 3
-			? `/v2/tables/${tableId}/records`
-			: `/v1/db/data/noco/${tableId}`;
+	async createRecord(tableId: string, recordInput: Record<string, any>) {
 		return await this.makeRequest(
 			HttpMethod.POST,
-			endpoint,
-			undefined,
-			recordInput
-		);
-	}
-
-	async getRecord(tableId: string, recordId: number, version: number = 3) {
-		const endpoint = version === 3
-			? `/v2/tables/${tableId}/records/${recordId}`
-			: `/v1/db/data/noco/${tableId}/${recordId}`;
-		return await this.makeRequest(HttpMethod.GET, endpoint);
-	}
-
-	async updateRecord(tableId: string, recordInput: Record<string, any>, version: number = 3) {
-		const endpoint = version === 3
-			? `/v2/tables/${tableId}/records/`
-			: `/v1/db/data/noco/${tableId}`;
-		return await this.makeRequest(
-			HttpMethod.PATCH,
-			endpoint,
+			`/v2/tables/${tableId}/records/`,
 			undefined,
 			recordInput,
 		);
 	}
 
-	async deleteRecord(tableId: string, recordId: number, version: number = 3) {
-		const endpoint = version === 3
-			? `/v2/tables/${tableId}/records/`
-			: `/v1/db/data/noco/${tableId}/${recordId}`;
-		const body = version === 3 ? { Id: recordId } : undefined;
+	async getRecord(tableId: string, recordId: number) {
+		return await this.makeRequest(HttpMethod.GET, `/v2/tables/${tableId}/records/${recordId}`);
+	}
+
+	async updateRecord(tableId: string, recordInput: Record<string, any>) {
 		return await this.makeRequest(
-			HttpMethod.DELETE,
-			endpoint,
+			HttpMethod.PATCH,
+			`/v2/tables/${tableId}/records/`,
 			undefined,
-			body
+			recordInput,
 		);
+	}
+
+	async deleteRecord(tableId: string, recordId: number) {
+		return await this.makeRequest(HttpMethod.DELETE, `/v2/tables/${tableId}/records/`, undefined, {
+			Id: recordId,
+		});
 	}
 
 	async listRecords(
 		tableId: string,
 		params: ListRecordsParams,
-		version: number = 3
 	): Promise<ListAPIResponse<Record<string, any>>> {
-		const endpoint = version === 3
-			? `/v2/tables/${tableId}/records/`
-			: `/v1/db/data/noco/${tableId}`;
 		return await this.makeRequest<ListAPIResponse<Record<string, any>>>(
 			HttpMethod.GET,
-			endpoint,
+			`/v2/tables/${tableId}/records/`,
 			params,
 		);
 	}
