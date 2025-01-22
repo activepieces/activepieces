@@ -11,9 +11,10 @@ export const publishPiece = async (name: string): Promise<void> => {
 
   const distPaths = await findAllPiecesDirectoryInSource()
   const directory = distPaths.find(path => {
-    const normalizedPath = path.replace(/\\/g, '/')
-    const parts = normalizedPath.split('/')
-    return parts[parts.length - 1] === name
+    if (path.endsWith(`/${name}`)) {
+      return true;
+    }
+    return false
   })
   if (isNil(directory)) {
     console.error(chalk.red(`[publishPiece] can't find the directory with name ${name}`))
