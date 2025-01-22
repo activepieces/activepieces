@@ -64,7 +64,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         })
         return session.url!
     },
-    createPortalSessionUrl: async (platformId: string): Promise<string> => {
+    createPortalSessionUrl: async ({ platformId }: { platformId: string }): Promise<string> => {
         const stripe = stripeHelper(log).getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
         const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
