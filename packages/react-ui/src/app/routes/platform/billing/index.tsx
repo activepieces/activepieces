@@ -34,8 +34,8 @@ const fetchSubscriptionInfo = async () => {
 export default function Billing() {
   const [isTasksLimitDialogOpen, setIsTasksLimitDialogOpen] = useState(false);
   const [isAIDialogOpen, setIsAIDialogOpen] = useState(false);
-  const [tasksLimit, setTasksLimit] = useState(200);
-  const [aiLimit, setAiLimit] = useState(200);
+  const [tasksLimit, setTasksLimit] = useState<number | undefined>(undefined);
+  const [aiLimit, setAiLimit] = useState<number | undefined>(undefined);
   const { platform } = platformHooks.useCurrentPlatform();
   const queryClient = useQueryClient();
 
@@ -136,12 +136,15 @@ export default function Billing() {
   const calculateTaskCost = useMemo(() => {
     return calculateTaskCostHelper(
       platformSubscription?.flowRunCount || 0,
-      tasksLimit,
+      tasksLimit ?? 0,
     );
   }, [platformSubscription?.flowRunCount, tasksLimit]);
 
   const calculateAICost = useMemo(() => {
-    return calculateAICostHelper(platformSubscription?.aiCredits || 0, aiLimit);
+    return calculateAICostHelper(
+      platformSubscription?.aiCredits || 0,
+      aiLimit ?? 0,
+    );
   }, [platformSubscription?.aiCredits, aiLimit]);
 
   const calculateTotalCost = useMemo(() => {
@@ -201,22 +204,27 @@ export default function Billing() {
                       </TooltipProvider>
                     </div>
                     <div className="text-sm font-sm text-gray-500">
-                      {t('First 1000 tasks free')}
+                      {t(
+                        `First ${
+                          platformSubscription?.subscription?.includedTasks ||
+                          1000
+                        } tasks free`,
+                      )}
                     </div>
                   </div>
                   <div className="basis-2/3">
                     <Progress
                       value={platformSubscription?.flowRunCount || 0}
-                      limit={tasksLimit}
+                      limit={tasksLimit ?? 0}
                       label={t('Billing Limit')}
                     />
                   </div>
                 </div>
                 {isSubscriptionActive ? (
                   <div className="text-sm mt-5 flex items-center gap-1">
-                    {platformSubscription?.flowRunCount || 0 > 0 ? (
+                    {(tasksLimit || 0) > 0 ? (
                       <div className="flex items-center gap-1">
-                        {t(`You added a limit of ${tasksLimit} tasks.`)}
+                        {t(`You added a limit of ${tasksLimit ?? 0} tasks.`)}
                         <span
                           className="ml-2 text-primary cursor-pointer"
                           onClick={() => setIsTasksLimitDialogOpen(true)}
@@ -260,13 +268,18 @@ export default function Billing() {
                       {t('Current Credit Usage')}
                     </div>
                     <div className="text-sm font-sm text-gray-500">
-                      {t('First 200 credits free')}
+                      {t(
+                        `First ${
+                          platformSubscription?.subscription
+                            ?.includedAiCredits || 200
+                        } credits free`,
+                      )}
                     </div>
                   </div>
                   <div className="basis-2/3">
                     <Progress
                       value={platformSubscription?.aiCredits || 0}
-                      limit={aiLimit}
+                      limit={aiLimit ?? 0}
                       label={t('Billing Limit')}
                     />
                   </div>
@@ -274,7 +287,7 @@ export default function Billing() {
 
                 {isSubscriptionActive ? (
                   <div className="text-sm mt-5 flex items-center gap-1">
-                    {platformSubscription?.aiCredits || 0 > 0 ? (
+                    {(aiLimit || 0) > 0 ? (
                       <div className="flex items-center gap-1">
                         {t(`You added a limit of ${aiLimit} credits.`)}
                         <span
