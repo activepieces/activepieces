@@ -58,6 +58,19 @@ export const triggers = [
             callRecording: "http://example.com/recording.mp3",
         },
     },
+    {
+        name: 'OutboundSMS/MMS',
+        displayName: 'Outbound MMS/SMS',
+        description: 'Trigger when a new MMS/SMS is sent.',
+        action: 'outbound_sms_or_mms',
+        sampleData: {
+            "id": "YiW2nyxqtJPYqkRKbrcJQ7",
+            "from_number": "+16466813538",
+            "to_number": "+12517327005",
+            "content": "Last testing",
+            "media_link": "https://api.twilio.com/2010-04-01/Accounts/LINK/Media/SOMETHING"
+        },
+    },
 ].map(trigger => {
     return createTrigger({
         name: trigger.name,
