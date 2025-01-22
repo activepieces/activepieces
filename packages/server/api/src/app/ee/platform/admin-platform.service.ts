@@ -43,7 +43,7 @@ export const projectPlanRepo = repoFactory(ProjectPlanEntity)
 export const platformBillingRepo = repoFactory(PlatformBillingEntity)
 
 export const adminPlatformService = (log: FastifyBaseLogger) => ({
-    async add(userId: UserId): Promise<Platform> {
+    async add(userId: UserId) {
         const cloudPlatformId = system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
         const userMeta = await userService.getMetaInformation({ id: userId })
 
@@ -102,6 +102,7 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
                 { projectId: project.id },
             ],
         })
+        let usersCreated = 0
         for (const projectMember of projectMembers) {
             const userId = projectMember.userId
             const userMember = await userRepo().findOneByOrFail({
@@ -126,6 +127,7 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
                         platformId: platform.id,
                         platformRole: PlatformRole.MEMBER,
                     })
+                    usersCreated++
                     await projectMemberRepo().update({
                         id: projectMember.id,
                     }, {
@@ -134,6 +136,12 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
                     })
                 }
             }
+        }
+        if (projectMembers.length > 0) {
+            await platformService.update({
+                id: platform.id,
+                projectRolesEnabled: true,
+            })
         }
 
         await pieceMetadataRepo().update({
@@ -230,6 +238,10 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
             throw new Error("Failed to update piece metadata platform information")
         }
 
-        return platform
+        return {
+            platform,
+            projectMembers: projectMembers.length,
+            usersCreated,
+        }
     },
 })
