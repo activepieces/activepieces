@@ -2,6 +2,7 @@
 
 import { CaretSortIcon, CheckIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
 import * as React from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -73,7 +74,7 @@ function ProjectSwitcher() {
         <Command filter={filterProjects}>
           <CommandList>
             <CommandInput placeholder="Search project..." />
-            <CommandEmpty>No projects found.</CommandEmpty>
+            <CommandEmpty>{t('No projects found')}</CommandEmpty>
             <CommandGroup key="projects" heading="Projects">
               <ScrollArea viewPortClassName="max-h-[200px]">
                 {sortedProjects &&

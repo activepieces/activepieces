@@ -1,15 +1,13 @@
 import { ApSubscriptionStatus } from '@activepieces/ee-shared'
-import { exceptionHandler } from '@activepieces/server-shared'
-import { ALL_PRINCIPAL_TYPES, assertNotNullOrUndefined, PrincipalType } from '@activepieces/shared'
+import { assertNotNullOrUndefined, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import Stripe from 'stripe'
 import { platformService } from '../../platform/platform.service'
 import { platformBillingService } from './platform-billing.service'
  
-import { stripeHelper, stripeWebhookSecret } from './stripe-helper'
+import { stripeHelper } from './stripe-helper'
 import { BillingEntityType, usageService } from './usage/usage-service'
 
 export const platformBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
@@ -30,7 +28,7 @@ export const platformBillingController: FastifyPluginAsyncTypebox = async (fasti
 
     fastify.post('/portal', {}, async (request) => {
         return {
-            portalLink: await stripeHelper(request.log).createPortalSessionUrl(request.principal.projectId),
+            portalLink: await stripeHelper(request.log).createPortalSessionUrl({ platformId: request.principal.platform.id }),
         }
     })
 
@@ -51,6 +49,7 @@ export const platformBillingController: FastifyPluginAsyncTypebox = async (fasti
                 })
                 return
             }
+            
             await platformBillingService(request.log).update(request.principal.platform.id, undefined, undefined)
             return {
                 paymentLink: await stripeHelper(request.log).createCheckoutUrl(projectBilling.stripeCustomerId),
@@ -74,49 +73,6 @@ export const platformBillingController: FastifyPluginAsyncTypebox = async (fasti
         async (request) => {
             const platformId = request.principal.platform.id
             return platformBillingService(request.log).update(platformId, request.body.tasksLimit, request.body.aiCreditsLimit)
-        },
-    )
-
-    fastify.post(
-        '/stripe/webhook',
-        {
-            config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
-                rawBody: true,
-            },
-        },
-        async (request: FastifyRequest, reply) => {
-            try {
-                const payload = request.rawBody as string
-                const signature = request.headers['stripe-signature'] as string
-                const stripe = stripeHelper(request.log).getStripe()
-                assertNotNullOrUndefined(stripe, 'Stripe is not configured')
-                const webhook = stripe.webhooks.constructEvent(
-                    payload,
-                    signature,
-                    stripeWebhookSecret,
-                )
-                const subscription = webhook.data.object as Stripe.Subscription
-                if (!stripeHelper(request.log).isPriceForTasks(subscription)) {
-                    return {
-                        message: 'Subscription does not have a price for tasks',
-                    }
-                }
-                const platformBilling = await platformBillingService(request.log).updateSubscriptionIdByCustomerId(subscription)
-                if (subscription.status === ApSubscriptionStatus.CANCELED) {
-                    request.log.info(`Subscription canceled for project ${platformBilling.platformId}, downgrading to free plan`)
-                    await platformBillingService(request.log).update(platformBilling.platformId, 0, 0)
-                }
-                return await reply.status(StatusCodes.OK).send()
-            }
-            catch (err) {
-                request.log.error(err)
-                request.log.warn('⚠️  Webhook signature verification failed.')
-                exceptionHandler.handle(err, request.log)
-                return reply
-                    .status(StatusCodes.BAD_REQUEST)
-                    .send('Invalid webhook signature')
-            }
         },
     )
 }
