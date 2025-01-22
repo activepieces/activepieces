@@ -117,8 +117,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
                 },
             })
         }
-        const projectId = request.principal.projectId
-        await disableFlowIfQuotaExceeded(projectId, runWithoutSteps.flowId, runDetails.status, request.log)
         await markJobAsCompleted(runWithoutSteps.status, runWithoutSteps.id, request.principal as unknown as EnginePrincipal, runDetails.error, request.log)
         const response: UpdateRunProgressResponse = {
             uploadUrl,
@@ -190,20 +188,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
 
 
-}
-
-async function disableFlowIfQuotaExceeded(projectId: ProjectId, flowId: FlowId, status: FlowRunStatus, log: FastifyBaseLogger): Promise<void> {
-    if (status === FlowRunStatus.QUOTA_EXCEEDED) {
-        log.info({
-            projectId,
-            flowId,
-        }, 'Disabling flow due to quota exceeded')
-        await flowService(log).updateStatus({
-            id: flowId,
-            projectId,
-            newStatus: FlowStatus.DISABLED,
-        })
-    }
 }
 
 async function handleWebhookResponse(runDetails: FlowRunResponse, progressUpdateType: ProgressUpdateType, workerHandlerId: string | null | undefined, httpRequestId: string | null | undefined, log: FastifyBaseLogger): Promise<void> {
