@@ -55,7 +55,6 @@ import { projectRoleModule } from './ee/project-role/project-role.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
-import { stripeBillingModule } from './ee/stripe-billing/stripe-billing.module'
 import { usageTrackerModule } from './ee/usage-tracker/usage-tracker-module'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
@@ -261,7 +260,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(connectionKeyModule)
             await app.register(platformProjectModule)
             await app.register(platformBillingModule)
-            await app.register(stripeBillingModule)
             await app.register(projectMemberModule)
             await app.register(appSumoModule)
             await app.register(adminPieceModule)

@@ -42,7 +42,7 @@ const Progress = React.forwardRef<
           >
             {label}
             <br />
-            {limit.toLocaleString()}
+            {limit && limit.toLocaleString()}
           </div>
 
           <div
