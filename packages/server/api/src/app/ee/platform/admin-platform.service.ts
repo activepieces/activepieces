@@ -98,7 +98,7 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
 
         const projectMembers = await projectMemberRepo().find({
             where: {
-                projectId: project.id,
+                userId: userId,
             },
         })
         for (const projectMember of projectMembers) {
