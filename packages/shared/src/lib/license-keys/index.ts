@@ -5,6 +5,7 @@ export const CreateTrialLicenseKeyRequestBody = Type.Object({
     companyName: Type.String(),
     goal: Type.String(),
     keyType: Type.Optional(Type.String()),
+    disabledFeatures: Type.Optional(Type.Array(Type.String())),
 })
 
 export type CreateTrialLicenseKeyRequestBody = Static<typeof CreateTrialLicenseKeyRequestBody>

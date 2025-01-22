@@ -13,22 +13,23 @@ export const licenseKeysTrialService = (log: FastifyBaseLogger): {
 } => ({
     async requestTrial({
         email,
+        companyName,
         selfHosting,
         ultimatePlan,
     }: RequestTrialParams): Promise<{ message: string }> {
-        const platform = await fetchPlatform(email)
+        const disabledFeatures = getDisabledFeatures(ultimatePlan)
         const activationMessage = 'Activation Path: Platform Admin -> Setup -> License Keys\n\n'
         let message = ''
         
         if (selfHosting) {
-            const { trialLicenseKey } = await generateSelfHostingTrialLicense(email, platform, log)
+            const { trialLicenseKey } = await generateSelfHostingTrialLicense(email, companyName, disabledFeatures, log)
             message = `Your license key is: ${trialLicenseKey}. \n\n ${activationMessage}`
         }
         else {
-            const { trialLicenseKey1, trialLicenseKey2, subdomain } = await generateCloudTrialLicense(email, platform, log)
+            const platform = await fetchPlatform(email)
+            const { trialLicenseKey1, trialLicenseKey2, subdomain } = await generateCloudTrialLicense(email, platform.id, companyName, disabledFeatures, log)
             message = `Your development key is: ${trialLicenseKey1}. Your production key is: ${trialLicenseKey2}. and your domain is: ${subdomain}. \n\n ${activationMessage}`
         }
-        await updatePlatformFeaturesBasedOnPlan(platform, ultimatePlan)
         return { message }
     },
 
@@ -56,21 +57,21 @@ async function fetchPlatform(email: string): Promise<Platform> {
     return platformService.getOneOrThrow(user.platformId)
 }
 
-async function generateSelfHostingTrialLicense(email: string, platform: Platform, log: FastifyBaseLogger): Promise<{ trialLicenseKey: string }> {
-    const trialLicenseKey = await generateLicenseKey(email, platform, log, 'production')
+async function generateSelfHostingTrialLicense(email: string, companyName: string, disabledFeatures: string[], log: FastifyBaseLogger): Promise<{ trialLicenseKey: string }> {
+    const trialLicenseKey = await generateLicenseKey(email, companyName, log, 'production', disabledFeatures)
     return { trialLicenseKey }
 }
 
-async function generateCloudTrialLicense(workEmail: string, platform: Platform, log: FastifyBaseLogger): Promise<{ trialLicenseKey1: string, trialLicenseKey2: string, subdomain: string }> {
-    const trialLicenseKey1 = await generateLicenseKey(workEmail, platform, log, 'development')
-    const trialLicenseKey2 = await generateLicenseKey(workEmail, platform, log, 'production')
+async function generateCloudTrialLicense(workEmail: string, platformId: string, companyName: string, disabledFeatures: string[], log: FastifyBaseLogger): Promise<{ trialLicenseKey1: string, trialLicenseKey2: string, subdomain: string }> {
+    const trialLicenseKey1 = await generateLicenseKey(workEmail, companyName, log, 'development', disabledFeatures, platformId)
+    const trialLicenseKey2 = await generateLicenseKey(workEmail, companyName, log, 'production', disabledFeatures, platformId)
     const subdomain = workEmail.split('@')[1].split('.')[0]
     const domain = 'activepieces.com'
     const target = 'cloud.activepieces.com'
     await addCNAMERecord(domain, subdomain, target, log)
     await customDomainService.create({
         domain: subdomain,
-        platformId: platform.id,
+        platformId,
     })
     return {
         trialLicenseKey1,
@@ -79,17 +80,18 @@ async function generateCloudTrialLicense(workEmail: string, platform: Platform, 
     }
 }
 
-async function generateLicenseKey(workEmail: string, platform: Platform, log: FastifyBaseLogger, keyType: 'development' | 'production'): Promise<string> {
+async function generateLicenseKey(workEmail: string, companyName: string, log: FastifyBaseLogger, keyType: 'development' | 'production', disabledFeatures: string[], platformId?: string): Promise<string> {
     const trialLicenseKey = await licenseKeysService(log).requestTrial({
         email: workEmail,
-        companyName: platform.name,
+        companyName,
         goal: 'Manual Trial',
         keyType,
+        disabledFeatures,
     })
 
     await licenseKeysService(log).markAsActiviated({
         key: trialLicenseKey,
-        platformId: platform.id,
+        platformId,
     })
 
     return trialLicenseKey
@@ -153,47 +155,25 @@ async function addCNAMERecord(
     }
 }
 
-async function updatePlatformFeaturesBasedOnPlan(platform: Platform, ultimatePlan: boolean): Promise<void> {
+function getDisabledFeatures(ultimatePlan: boolean): string[] {
     if (ultimatePlan) {
-        await platformService.update({
-            id: platform.id,
-            customAppearanceEnabled: true,
-            manageProjectsEnabled: true,
-            managePiecesEnabled: true,
-            manageTemplatesEnabled: true,
-            apiKeysEnabled: true,
-            customDomainsEnabled: true,
-            flowIssuesEnabled: true,
-            alertsEnabled: true,
-            embeddingEnabled: true,
-            analyticsEnabled: true,
-        })
+        return ['embeddingEnabled']
     }
     else {
-        await platformService.update({
-            id: platform.id,
-            ssoEnabled: true,
-            showPoweredBy: true,
-            embeddingEnabled: false,
-            auditLogEnabled: true,
-            customAppearanceEnabled: true,
-            manageProjectsEnabled: true,
-            managePiecesEnabled: true,
-            manageTemplatesEnabled: true,
-            apiKeysEnabled: true,
-            customDomainsEnabled: true,
-            flowIssuesEnabled: true,
-            alertsEnabled: true,
-            analyticsEnabled: true,
-            globalConnectionsEnabled: true,
-            customRolesEnabled: true,
-            environmentsEnabled: false,
-        })
+        return [
+            'ssoEnabled',
+            'showPoweredBy',
+            'auditLogEnabled',
+            'globalConnectionsEnabled', 
+            'customRolesEnabled',
+            'environmentsEnabled',
+        ]
     }
 }
 
 type RequestTrialParams = {
     email: string
+    companyName: string
     selfHosting: boolean
     ultimatePlan: boolean
 }

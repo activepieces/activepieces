@@ -9,7 +9,8 @@ import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 
-const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
+// const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
+const secretManagerLicenseKeysRoute = 'http://localhost:4000/license-keys'
 
 const handleUnexpectedSecretsManagerError = (log: FastifyBaseLogger, message: string) => {
     log.error(`[ERROR]: Unexpected error from secret manager: ${message}`)
@@ -38,7 +39,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         const responseBody = await response.json()
         return responseBody.key
     },
-    async markAsActiviated(request: { key: string, platformId: string }): Promise<void> {
+    async markAsActiviated(request: { key: string, platformId?: string }): Promise<void> {
         try {
             const response = await fetch(`${secretManagerLicenseKeysRoute}/activate`, {
                 method: 'POST',
@@ -57,13 +58,15 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 const errorMessage = JSON.stringify(await response.json())
                 handleUnexpectedSecretsManagerError(log, errorMessage)
             }
-            rejectedPromiseHandler(telemetry(log).trackPlatform(request.platformId, {
-                name: TelemetryEventName.KEY_ACTIVIATED,
-                payload: {
-                    date: dayjs().toISOString(),
-                    key: request.key,
-                },
-            }), log)
+            if (request.platformId) {
+                rejectedPromiseHandler(telemetry(log).trackPlatform(request.platformId, {
+                    name: TelemetryEventName.KEY_ACTIVIATED,
+                    payload: {
+                        date: dayjs().toISOString(),
+                        key: request.key,
+                    },
+                }), log)
+            }
         }
         catch (e) {
             // ignore
