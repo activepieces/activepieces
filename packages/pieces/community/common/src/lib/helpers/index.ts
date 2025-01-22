@@ -83,7 +83,8 @@ export function createCustomApiCallAction({
           return {
             url: Property.ShortText({
               displayName: 'URL',
-              description: 'The full URL to use, including the base URL',
+              description: `You can either use the full URL or the relative path to the base URL 
+              i.e https://api.example.com/api/v1/users or /api/v1/users`,
               required: true,
               defaultValue: baseUrl(auth),
               ...(props?.url ?? {}),
