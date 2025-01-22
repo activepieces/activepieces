@@ -16,6 +16,7 @@
     "create-action": "npx ts-node packages/cli/src/index.ts actions create",
     "create-trigger": "npx ts-node packages/cli/src/index.ts triggers create",
     "sync-pieces": "npx ts-node packages/cli/src/index.ts pieces sync",
+    "publish-piece": "npx ts-node tools/scripts/pieces/publish-piece.ts",
     "pieces": "npx ts-node packages/cli/src/index.ts pieces",
     "workers": "npx ts-node packages/cli/src/index.ts workers",
     "pull-i18n": "crowdin pull --config crowdin.yml",
