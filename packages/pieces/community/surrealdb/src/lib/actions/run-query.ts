@@ -10,7 +10,7 @@ export const runQuery = createAction({
   props: {
     markdown: Property.MarkDown({
       value: `
-        **NOTE:** Prevent SQL injection by using parameterized queries
+        **NOTE:** Prevent SQL injection by using parameterized queries.
       `,
     }),
     query: Property.ShortText({

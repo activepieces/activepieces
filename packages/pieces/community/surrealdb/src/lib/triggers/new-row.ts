@@ -102,7 +102,7 @@ function constructQuery({
 export const newRow = createTrigger({
   name: 'new-row',
   displayName: 'New Row',
-  description: 'Executes when a new row is added to the defined table.',
+  description: 'Triggers when a new row is added to the defined table.',
   props: {
     description: Property.MarkDown({
       value: `**NOTE:** The trigger fetches the latest rows using the provided order by column (newest first), and then will keep polling until the previous last row is reached. It's suggested to add a created_at timestamp. \`DEFINE FIELD OVERWRITE createdAt ON schedule VALUE time::now() READONLY;\``,

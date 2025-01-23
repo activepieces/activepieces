@@ -13,7 +13,7 @@ export const surrealdbAuth = PieceAuth.CustomAuth({
     url: Property.ShortText({
       displayName: 'Connection URL',
       required: true,
-      description: 'Connection string, e.g. http://1.2.3.5:8000',
+      description: 'Connection string, e.g. http://1.2.3.5:8000.',
     }),
     database: Property.ShortText({
       displayName: 'Database',
@@ -58,10 +58,10 @@ export const surrealdbAuth = PieceAuth.CustomAuth({
 
 export const surrealdb = createPiece({
   displayName: 'Surreal DB',
-  description: "The world's most advanced open-source relational database",
+  description: "Multi Model Database",
   minimumSupportedRelease: '0.30.0',
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  logoUrl: 'https://avatars.githubusercontent.com/u/10982346?s=48&v=4',
+  logoUrl: 'https://cdn.activepieces.com/pieces/surrealdb.jpg',
   authors: ['maarteNNNN'],
   auth: surrealdbAuth,
   actions: [runQuery],
