@@ -80,7 +80,7 @@ export const TasksLimitDialog = ({
                         field.onChange(value);
                       }}
                     />
-                    {form.watch('tasks') !== undefined && form.watch('tasks') !== '' && (
+                    {field.value !== undefined && field.value !== '' && (
                       <Button
                         type="button"
                         variant="transparent"
