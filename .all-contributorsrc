@@ -1488,6 +1488,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Blightwidow",
+      "name": "Theo Dammaretz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/14098167?v=4",
+      "profile": "https://dammaretz.com",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
