@@ -3,7 +3,6 @@ import { ApEdition, ApEnvironment, isNil, ProjectUsage } from '@activepieces/sha
 import { FastifyBaseLogger } from 'fastify'
 import { getRedisConnection } from '../../../database/redis-connection'
 import { projectLimitsService } from '../../../ee/project-plan/project-plan.service'
-import { flagService } from '../../../flags/flag.service'
 import { apDayjs } from '../../../helper/dayjs-helper'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'

@@ -70,7 +70,6 @@ import { ShareTemplatePage } from '../routes/templates/share-template';
 
 import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 import { DefaultRoute } from './default-route';
-import { FlagRouteGuard } from './flag-route-guard';
 import { RoutePermissionGuard } from './permission-guard';
 import { ProjectRouterWrapper } from './project-route-wrapper';
 const SettingsRerouter = () => {

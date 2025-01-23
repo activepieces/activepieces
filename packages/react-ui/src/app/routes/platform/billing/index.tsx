@@ -1,11 +1,14 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { ClipboardCheck, CircleHelp, Sparkles } from 'lucide-react';
 import { useState } from 'react';
+
 import { useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progres-bar';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { TableTitle } from '@/components/ui/table-title';
 import {
   Tooltip,
@@ -16,6 +19,7 @@ import {
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
+import { isNil } from '@activepieces/shared';
 
 import { platformBillingApi } from './api/billing-api';
 import { TasksLimitDialog } from './dialogs/tasks';
@@ -23,26 +27,27 @@ import {
   calculateTaskCostHelper,
   calculateTotalCostHelper,
 } from './helpers/platform-billing-helper';
-import dayjs from 'dayjs';
-import { isNil } from '../../../../../../shared/src';
-import { LoadingSpinner } from '@/components/ui/spinner';
 
 export default function Billing() {
   const [isTasksLimitDialogOpen, setIsTasksLimitDialogOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
 
-  const { data: platformSubscription, refetch, isLoading, isError } = useQuery({
+  const {
+    data: platformSubscription,
+    refetch,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['platform-billing-subscription', platform.id],
     queryFn: platformBillingApi.getSubscription,
     enabled: !!platform,
   });
 
-
   const updateLimitsMutation = useMutation({
     mutationFn: (data: { tasksLimit?: number | null | undefined }) =>
       platformBillingApi.update(data.tasksLimit),
     onSuccess: () => {
-      refetch()
+      refetch();
       toast({
         title: t('Success'),
         description: t('Limits updated successfully'),
@@ -75,12 +80,12 @@ export default function Billing() {
       const { paymentLink } = await platformBillingApi.upgrade();
       openNewWindow(paymentLink);
     },
-    onSuccess: () => { },
+    onSuccess: () => {},
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
-  const tasksLimit = platformSubscription?.subscription.tasksLimit ?? 0
-  const aiLimit = platformSubscription?.subscription.aiCreditsLimit ?? 0
+  const tasksLimit = platformSubscription?.subscription.tasksLimit ?? 0;
+  const aiLimit = platformSubscription?.subscription.aiCreditsLimit ?? 0;
 
   const calculateTaskCost = calculateTaskCostHelper(
     platformSubscription?.flowRunCount || 0,
@@ -122,8 +127,8 @@ export default function Billing() {
           <div className="text-sm text-gray-500">
             {platformSubscription
               ? `Next Billing: ${formatUtils.formatDate(
-                new Date(platformSubscription?.nextBillingDate || ''),
-              )} (${daysRemaining} days remaining)`
+                  new Date(platformSubscription?.nextBillingDate || ''),
+                )} (${daysRemaining} days remaining)`
               : ''}
           </div>
         </div>
@@ -162,8 +167,9 @@ export default function Billing() {
                     </div>
                     <div className="text-sm font-sm text-gray-500">
                       {t(
-                        `First ${platformSubscription?.subscription?.includedTasks ||
-                        1000
+                        `First ${
+                          platformSubscription?.subscription?.includedTasks ||
+                          1000
                         } tasks free`,
                       )}
                     </div>
@@ -183,7 +189,11 @@ export default function Billing() {
                     </div>
                   ) : null}
                   {isSubscriptionActive ? (
-                    <Button variant="link" onClick={() => setIsTasksLimitDialogOpen(true)} size="sm">
+                    <Button
+                      variant="link"
+                      onClick={() => setIsTasksLimitDialogOpen(true)}
+                      size="sm"
+                    >
                       {tasksLimit ? t('Edit') : t('Add Limit')}
                     </Button>
                   ) : null}
@@ -208,8 +218,9 @@ export default function Billing() {
                     </div>
                     <div className="text-sm font-sm text-gray-500">
                       {t(
-                        `First ${platformSubscription?.subscription
-                          ?.includedAiCredits || 200
+                        `First ${
+                          platformSubscription?.subscription
+                            ?.includedAiCredits || 200
                         } credits free`,
                       )}
                     </div>
@@ -239,6 +250,7 @@ export default function Billing() {
         open={isTasksLimitDialogOpen}
         onOpenChange={setIsTasksLimitDialogOpen}
         onSubmit={(newLimit) => {
+          console.log('newLimit', newLimit);
           updateLimitsMutation.mutateAsync({
             tasksLimit: isNil(newLimit) ? null : newLimit,
           });
