@@ -4,6 +4,7 @@ import {
   usePrefetchQuery,
   useSuspenseQuery,
 } from '@tanstack/react-query';
+import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
@@ -22,7 +23,6 @@ import {
 import { projectApi } from '../lib/project-api';
 
 import { flagsHooks } from './flags-hooks';
-import { HttpStatusCode } from 'axios';
 
 export const projectHooks = {
   prefetchProject: () => {
@@ -102,7 +102,11 @@ export const projectHooks = {
           await authenticationSession.switchToSession(projectIdFromParams);
           return true;
         } catch (error) {
-          if (api.isError(error) && (error.response?.status === HttpStatusCode.BadRequest || error.response?.status === HttpStatusCode.Forbidden)) {
+          if (
+            api.isError(error) &&
+            (error.response?.status === HttpStatusCode.BadRequest ||
+              error.response?.status === HttpStatusCode.Forbidden)
+          ) {
             toast({
               duration: 10000,
               title: t('Invalid Access'),
