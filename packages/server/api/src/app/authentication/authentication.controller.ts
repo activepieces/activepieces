@@ -77,9 +77,9 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
     })
 
     app.post('/switch-project', SwitchProjectRequestOptions, async (request) => {
+        const user = await userService.getOneOrFail({ id: request.principal.id })
         return authenticationService(request.log).switchProject({
-            userId: request.principal.id,
-            platformId: request.principal.platform.id,
+            identityId: user.identityId,
             projectId: request.body.projectId,
         })
     })
