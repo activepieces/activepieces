@@ -143,7 +143,6 @@ const getOrCreateUserIdentity = async (
         newsLetter: false,
         provider: UserIdentityProvider.JWT,
     })
-    await userIdentityService(log).verify(identity.id)
     return identity
 }
 const getOrCreateProject = async ({

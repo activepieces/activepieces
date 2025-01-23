@@ -81,6 +81,7 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
         return authenticationService(request.log).switchProject({
             identityId: user.identityId,
             projectId: request.body.projectId,
+            currentPlatformId: request.principal.platform.id,
         })
     })
 }
