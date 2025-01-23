@@ -57,7 +57,7 @@ export const surrealdbAuth = PieceAuth.CustomAuth({
 });
 
 export const surrealdb = createPiece({
-  displayName: 'Surreal DB',
+  displayName: 'SurrealDB',
   description: "Multi Model Database",
   minimumSupportedRelease: '0.30.0',
   categories: [PieceCategory.DEVELOPER_TOOLS],
