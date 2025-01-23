@@ -17,72 +17,29 @@ import axios from 'axios';
 
 export const query = createAction({
   name: 'send_request',
-  displayName: 'Query Request',
-  description: 'Query Request',
+  displayName: 'Send Request',
+  description: 'Makes a GraphQL request.',
   props: {
     method: httpMethodDropdown,
     url: Property.ShortText({
       displayName: 'URL',
       required: true,
     }),
-    headers: Property.Object({
-      displayName: 'Headers',
-      required: true,
-    }),
     queryParams: Property.Object({
       displayName: 'Query params',
       required: true,
     }),
-    body_type: Property.StaticDropdown({
-      displayName: 'Body Type',
-      required: false,
-      defaultValue: 'json',
-      options: {
-        disabled: false,
-        options: [
-          {
-            label: 'JSON',
-            value: 'json',
-          },
-          {
-            label: 'Raw',
-            value: 'raw',
-          }
-        ],
-      },
+    headers: Property.Object({
+      displayName: 'Headers',
+      required: true,
     }),
-    body: Property.DynamicProperties({
-      displayName: 'Body',
-      refreshers: ['body_type'],
+    query: Property.LongText({
+      displayName: 'Query',
+      required: true,
+    }),
+    variables: Property.Json({
+      displayName: 'Variables',
       required: false,
-      props: async ({ body_type }) => {
-        if (!body_type) return {};
-
-        const bodyTypeInput = body_type as unknown as string;
-
-        const fields: DynamicPropsValue = {};
-
-        switch (bodyTypeInput) {
-          case 'json':
-            fields['query'] = Property.Json({
-              displayName: 'Query Body',
-              required: true,
-            });
-            fields['variable'] = Property.Json({
-              displayName: 'Variables Body',
-              defaultValue: {},
-              required: false,
-            });
-            break;
-            case 'raw':
-              fields['query'] = Property.LongText({
-                displayName: 'Query Body',
-                required: true,
-              });
-              break;
-        }
-        return fields;
-      },
     }),
     use_proxy: Property.Checkbox({
       displayName: 'Use Proxy',
@@ -141,8 +98,8 @@ export const query = createAction({
       url,
       headers,
       queryParams,
-      body,
-      body_type,
+      query,
+      variables,
       timeout,
       failsafe,
       use_proxy,
@@ -154,25 +111,11 @@ export const query = createAction({
     const request: HttpRequest = {
       method,
       url,
-      headers: headers as HttpHeaders,
       queryParams: queryParams as QueryParams,
+      headers: headers as HttpHeaders,
       timeout: timeout ? timeout * 1000 : 0,
+      body: JSON.stringify({ query, variables }),
     };
-    if (body) {
-      const query = body['query'];
-
-      if (body_type === 'json') {
-        const variable = body['variable'];
-        request.body = {
-          query,
-          variable,
-        };
-      }
-      if (body_type === 'raw') {
-        request.body = query;
-      }
-      
-    }
 
     try {
       if (use_proxy) {

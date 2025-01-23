@@ -10,4 +10,5 @@ export const httpMethodDropdown = Property.StaticDropdown<HttpMethod>({
   displayName: 'Method',
   required: true,
   options: { options: httpMethodDropdownOptions },
+  defaultValue: HttpMethod.POST,
 });
