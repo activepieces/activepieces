@@ -1,6 +1,6 @@
 import { OtpType } from '@activepieces/ee-shared'
-import { AppSystemProp, cryptoUtils } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, Platform, PlatformRole, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { cryptoUtils } from '@activepieces/server-shared'
+import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformRole, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { otpService } from '../ee/authentication/otp/otp-service'
 import { flagService } from '../flags/flag.service'
@@ -128,7 +128,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
     async switchPlatform(params: SwitchPlatformParams): Promise<AuthenticationResponse> {
         const platforms = await platformService.listPlatformsForIdentity({ identityId: params.identityId })
         const platform = platforms.find((platform) => platform.id === params.platformId)
-        assertUserCanSwitchToPlatform(null, platform)
+        await assertUserCanSwitchToPlatform(null, platform)
         
         assertNotNullOrUndefined(platform, 'Platform not found')
         const user = await getUserForPlatform(params.identityId, platform)
@@ -141,7 +141,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
     async switchProject(params: SwitchProjectParams): Promise<AuthenticationResponse> {
         const project = await projectService.getOneOrThrow(params.projectId)
         const projectPlatform = await platformService.getOneOrThrow(project.platformId)
-        assertUserCanSwitchToPlatform(params.currentPlatformId, projectPlatform)
+        await assertUserCanSwitchToPlatform(params.currentPlatformId, projectPlatform)
         const user = await getUserForPlatform(params.identityId, projectPlatform)
         return authenticationUtils.getProjectAndToken({
             userId: user.id,
