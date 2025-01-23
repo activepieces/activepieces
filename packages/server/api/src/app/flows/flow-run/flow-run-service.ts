@@ -237,7 +237,23 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
 
         flowRun.status = FlowRunStatus.RUNNING
 
-        const savedFlowRun = await flowRunRepo().save(flowRun)
+        assertNotNullOrUndefined(flowRun.id, 'flowRun.id')
+        const payloadFile = await fileService(log).save({
+            projectId,
+            type: FileType.FLOW_RUN_PAYLOAD,
+            data: Buffer.from(JSON.stringify(payload)),
+            size: Buffer.from(JSON.stringify(payload)).length,
+            compression : FileCompression.NONE,
+            metadata: {
+                flowRunId: flowRun.id,
+                projectId,
+            },
+        })
+        const savedFlowRun = await flowRunRepo().save({
+            ...flowRun,
+            triggerPayloadFileId: payloadFile.id,
+        })
+
         const priority = await getJobPriority(synchronousHandlerId)
         await flowRunSideEffects(log).start({
             flowRun: savedFlowRun,

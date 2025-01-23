@@ -12,6 +12,7 @@ export enum FileType {
     SAMPLE_DATA = 'SAMPLE_DATA',
     TRIGGER_EVENT_FILE = 'TRIGGER_EVENT_FILE',
     PROJECT_RELEASE = 'PROJECT_RELEASE',
+    FLOW_RUN_PAYLOAD = 'FLOW_RUN_PAYLOAD',
 }
 export enum FileCompression {
     NONE = 'NONE',

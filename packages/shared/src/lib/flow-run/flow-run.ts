@@ -30,6 +30,7 @@ export const FlowRun = Type.Object({
     // TODO remove this, and create migration to remove it
     terminationReason: Type.Optional(Type.String()),
     logsFileId: Nullable(Type.String()),
+    triggerPayloadFileId: Nullable(Type.String()),
     tasks: Type.Optional(Type.Number()),
     status: Type.Enum(FlowRunStatus),
     duration: Type.Optional(Type.Number()),

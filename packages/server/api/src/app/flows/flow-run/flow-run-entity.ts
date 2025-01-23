@@ -38,6 +38,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             ...ApIdSchema, 
             nullable: true,
         },
+        triggerPayloadFileId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
         status: {
             type: String,
         },
