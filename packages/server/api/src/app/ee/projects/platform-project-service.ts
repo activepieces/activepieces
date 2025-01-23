@@ -4,9 +4,11 @@ import {
     MAXIMUM_ALLOWED_TASKS,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
+    ApEnvironment,
     assertNotNullOrUndefined,
     Cursor,
     ErrorCode,
@@ -177,6 +179,10 @@ function getTasksLimit(isCustomerPlatform: boolean, limit: number | undefined) {
 async function isSubscribedInStripe(projectId: ProjectId, log: FastifyBaseLogger): Promise<boolean> {
     const isCloud = system.getEdition() === ApEdition.CLOUD
     if (!isCloud) {
+        return false
+    }
+    const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
+    if (environment === ApEnvironment.TESTING) {
         return false
     }
     const project = await projectService.getOneOrThrow(projectId)

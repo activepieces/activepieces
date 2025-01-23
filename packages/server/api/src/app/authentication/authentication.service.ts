@@ -126,7 +126,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         })
     },
     async switchPlatform(params: SwitchPlatformParams): Promise<AuthenticationResponse> {
-        const platforms = await platformService.listPlatformsForIdentity({ identityId: params.identityId })
+        const platforms = await platformService.listPlatformsForIdentityWithAtleastProject({ identityId: params.identityId })
         const platform = platforms.find((platform) => platform.id === params.platformId)
         await assertUserCanSwitchToPlatform(null, platform)
         
@@ -262,7 +262,7 @@ async function getPersonalPlatforIdForSignWithPassword(identityId: string): Prom
 async function getPersonalPlatformIdForIdentity(identityId: string): Promise<string | null> {
     const edition = system.getEdition()
     if (edition === ApEdition.CLOUD) {
-        const platforms = await platformService.listPlatformsForIdentity({ identityId })
+        const platforms = await platformService.listPlatformsForIdentityWithAtleastProject({ identityId })
         const platform = platforms.find((platform) => !platformUtils.isEnterpriseCustomerOnCloud(platform))
         return platform?.id ?? null
     }
