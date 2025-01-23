@@ -73,7 +73,10 @@ import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 import { DefaultRoute } from './default-route';
 import { FlagRouteGuard } from './flag-route-guard';
 import { RoutePermissionGuard } from './permission-guard';
-import { ProjectRouterWrapper } from './project-route-wrapper';
+import {
+  ProjectRouterWrapper,
+  TokenCheckerWrapper,
+} from './project-route-wrapper';
 const SettingsRerouter = () => {
   const { hash } = useLocation();
   const fragmentWithoutHash = hash.slice(1).toLowerCase();
@@ -628,6 +631,14 @@ const routes = [
   {
     path: '/redirect',
     element: <RedirectPage></RedirectPage>,
+  },
+  {
+    path: '/projects/:projectId',
+    element: (
+      <TokenCheckerWrapper>
+        <DefaultRoute></DefaultRoute>
+      </TokenCheckerWrapper>
+    ),
   },
   {
     path: '/*',

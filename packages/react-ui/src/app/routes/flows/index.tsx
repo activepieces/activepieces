@@ -137,7 +137,7 @@ const FlowsPage = () => {
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ['flow-table', searchParams.toString()],
     staleTime: 0,
     queryFn: () => {
@@ -607,7 +607,7 @@ const FlowsPage = () => {
                   !embedState.hideFolders || column.accessorKey !== 'folderId',
               )}
               page={data}
-              isLoading={isLoading}
+              isLoading={isLoading || isRefetching}
               filters={filters}
               bulkActions={bulkActions}
               onRowClick={(row, newWindow) => {
