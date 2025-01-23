@@ -1,5 +1,8 @@
 import { api } from '@/lib/api';
-import { PlatformBilling, PlatformBillingResponse } from '@activepieces/ee-shared';
+import {
+  PlatformBilling,
+  PlatformBillingResponse,
+} from '@activepieces/ee-shared';
 
 export const platformBillingApi = {
   getSubscription() {
