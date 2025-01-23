@@ -44,12 +44,18 @@ export const planNameFormatter = (planName: string | undefined) => {
 
 export const calculateTaskCostHelper = (
   flowRunCount: number,
-  tasksLimit: number,
-) => {
-  const unitCost = 1 / 1000;
+  includedTasks: number
+): string => {
+  const unitCost = 1 / 1000; 
   const totalTasks = flowRunCount || 0;
-  const paidTasks = Math.max(0, totalTasks - tasksLimit);
-  return Number((paidTasks * unitCost).toFixed(2));
+  const excessTasks = totalTasks - includedTasks;
+
+  if (excessTasks <= 0) {
+    return Number(0).toFixed(2);
+  }
+
+  const cost = excessTasks * unitCost;
+  return Number(cost).toFixed(2);
 };
 
 export const calculateTaskCostTextHelper = (
