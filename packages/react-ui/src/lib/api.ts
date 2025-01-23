@@ -38,8 +38,12 @@ function globalErrorHandler(error: AxiosError) {
     const errorCode: ErrorCode | undefined = (
       error.response?.data as { code: ErrorCode }
     )?.code;
-    if (errorCode === ErrorCode.SESSION_EXPIRED) {
+    if (
+      errorCode === ErrorCode.SESSION_EXPIRED ||
+      errorCode === ErrorCode.INVALID_BEARER_TOKEN
+    ) {
       authenticationSession.logOut();
+      console.log(errorCode);
       window.location.href = '/sign-in';
     }
   }

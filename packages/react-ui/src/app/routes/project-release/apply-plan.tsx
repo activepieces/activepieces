@@ -1,5 +1,4 @@
 import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
 import { useState, ReactNode } from 'react';
 
 import { Button, ButtonProps } from '@/components/ui/button';
@@ -38,20 +37,16 @@ export const ApplyButton = ({
   const [loadingRequestId, setLoadingRequestId] = useState<string | null>(null);
 
   const { mutate: loadSyncPlan } = useMutation({
-    mutationFn: (request: DiffReleaseRequest) =>
-      projectReleaseApi.diff(request),
+    mutationFn: (request: DiffReleaseRequest) => {
+      setDialogOpen(true);
+      return projectReleaseApi.diff(request);
+    },
     onSuccess: (plan) => {
       if (!plan.operations || plan.operations.length === 0) {
-        toast({
-          title: t('No Changes Found'),
-          description: t('There are no differences to apply'),
-          variant: 'default',
-        });
         setLoadingRequestId(null);
         return;
       }
       setSyncPlan(plan);
-      setDialogOpen(true);
       setLoadingRequestId(null);
     },
     onError: () => {
@@ -70,7 +65,6 @@ export const ApplyButton = ({
     <>
       <Button
         {...props}
-        loading={isLoading}
         onClick={(e) => {
           e.stopPropagation();
           e.preventDefault();
@@ -95,6 +89,7 @@ export const ApplyButton = ({
         dialogOpen && (
           <CreateReleaseDialog
             open={dialogOpen}
+            loading={isLoading}
             setOpen={setDialogOpen}
             refetch={onSuccess}
             plan={syncPlan}
