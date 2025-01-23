@@ -1,8 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ClipboardCheck, CircleHelp, Sparkles } from 'lucide-react';
-import { useState, useEffect, useMemo } from 'react';
-
+import { useState } from 'react';
 import { useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -24,48 +23,26 @@ import {
   calculateTaskCostHelper,
   calculateTotalCostHelper,
 } from './helpers/platform-billing-helper';
-
-const fetchSubscriptionInfo = async () => {
-  return await platformBillingApi.getSubscription();
-};
+import dayjs from 'dayjs';
+import { isNil } from '../../../../../../shared/src';
+import { LoadingSpinner } from '@/components/ui/spinner';
 
 export default function Billing() {
   const [isTasksLimitDialogOpen, setIsTasksLimitDialogOpen] = useState(false);
-  const [tasksLimit, setTasksLimit] = useState<number | undefined>(undefined);
-  const [aiLimit, setAiLimit] = useState<number | undefined>(undefined);
   const { platform } = platformHooks.useCurrentPlatform();
-  const queryClient = useQueryClient();
 
-  const { data: platformSubscription, error: subscriptionError } = useQuery({
+  const { data: platformSubscription, refetch, isLoading, isError } = useQuery({
     queryKey: ['platform-billing-subscription', platform.id],
-    queryFn: fetchSubscriptionInfo,
+    queryFn: platformBillingApi.getSubscription,
     enabled: !!platform,
   });
 
-  useEffect(() => {
-    if (subscriptionError) {
-      toast({
-        title: t('Error fetching subscription'),
-        description: t('Failed to load subscription details'),
-        variant: 'destructive',
-      });
-    }
-  }, [subscriptionError]);
-
-  useEffect(() => {
-    if (platformSubscription?.subscription) {
-      setTasksLimit(platformSubscription.subscription.tasksLimit ?? 0);
-      setAiLimit(platformSubscription.subscription.aiCreditsLimit ?? 0);
-    }
-  }, [platformSubscription]);
 
   const updateLimitsMutation = useMutation({
     mutationFn: (data: { tasksLimit?: number | null | undefined }) =>
       platformBillingApi.update(data.tasksLimit),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['platform-billing-subscription', platform.id],
-      });
+      refetch()
       toast({
         title: t('Success'),
         description: t('Limits updated successfully'),
@@ -80,29 +57,12 @@ export default function Billing() {
     },
   });
 
-  async function handleTasksLimitSubmit(
-    limit: number | undefined,
-  ): Promise<void> {
-    setTasksLimit(limit);
-    try {
-      await updateLimitsMutation.mutateAsync({
-        tasksLimit: limit === undefined ? null : limit,
-      });
-    } catch (error) {
-      console.error('Failed to update tasks limit:', error);
-    }
-  }
-
-  const daysRemaining = useMemo(() => {
-    if (!platformSubscription?.nextBillingDate) return 0;
-    return Math.ceil(
-      (new Date(platformSubscription.nextBillingDate).getTime() -
-        new Date().getTime()) /
-        (1000 * 60 * 60 * 24),
-    );
-  }, [platformSubscription?.nextBillingDate]);
+  const daysRemaining = platformSubscription?.nextBillingDate
+    ? dayjs(platformSubscription.nextBillingDate).diff(dayjs(), 'day')
+    : 0;
 
   const openNewWindow = useNewWindow();
+
   const { mutate: manageBilling, isPending: isBillingPending } = useMutation({
     mutationFn: async () => {
       if (
@@ -115,24 +75,42 @@ export default function Billing() {
       const { paymentLink } = await platformBillingApi.upgrade();
       openNewWindow(paymentLink);
     },
-    onSuccess: () => {},
+    onSuccess: () => { },
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
-  const calculateTaskCost = useMemo(() => {
-    return calculateTaskCostHelper(
-      platformSubscription?.flowRunCount || 0,
-      tasksLimit ?? 0,
-    );
-  }, [platformSubscription?.flowRunCount, tasksLimit]);
+  const tasksLimit = platformSubscription?.subscription.tasksLimit ?? 0
+  const aiLimit = platformSubscription?.subscription.aiCreditsLimit ?? 0
 
-  const calculateTotalCost = useMemo(() => {
-    return calculateTotalCostHelper(calculateTaskCost);
-  }, [calculateTaskCost]);
+  const calculateTaskCost = calculateTaskCostHelper(
+    platformSubscription?.flowRunCount || 0,
+    tasksLimit,
+  );
+
+  const calculateTotalCost = calculateTotalCostHelper(calculateTaskCost)
 
   const isSubscriptionActive =
     platformSubscription?.subscription.stripeSubscriptionStatus === 'active';
 
+  if (isLoading) {
+    return (
+      <article className="flex flex-col w-full p-6 gap-8">
+        <TableTitle>Platform Billing</TableTitle>
+        <LoadingSpinner />
+      </article>
+    );
+  }
+
+  if (isError) {
+    return (
+      <article className="flex flex-col w-full p-6 gap-8">
+        <TableTitle>Platform Billing</TableTitle>
+        <div className="flex items-center justify-center h-[400px] text-destructive">
+          {t('Failed to load billing information')}
+        </div>
+      </article>
+    );
+  }
   return (
     <article className="flex flex-col w-full p-6 gap-8">
       <TableTitle>Platform Billing</TableTitle>
@@ -144,8 +122,8 @@ export default function Billing() {
           <div className="text-sm text-gray-500">
             {platformSubscription
               ? `Next Billing: ${formatUtils.formatDate(
-                  new Date(platformSubscription?.nextBillingDate || ''),
-                )} (${daysRemaining} days remaining)`
+                new Date(platformSubscription?.nextBillingDate || ''),
+              )} (${daysRemaining} days remaining)`
               : ''}
           </div>
         </div>
@@ -184,9 +162,8 @@ export default function Billing() {
                     </div>
                     <div className="text-sm font-sm text-gray-500">
                       {t(
-                        `First ${
-                          platformSubscription?.subscription?.includedTasks ||
-                          1000
+                        `First ${platformSubscription?.subscription?.includedTasks ||
+                        1000
                         } tasks free`,
                       )}
                     </div>
@@ -203,53 +180,13 @@ export default function Billing() {
                   {(tasksLimit || 0) > 0 ? (
                     <div className="flex items-center gap-1">
                       {t(`Your tasks limit is set to ${tasksLimit}`)}
-                      {!isSubscriptionActive && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="link"
-                                className="pl-2"
-                                disabled={!isSubscriptionActive}
-                                onClick={() => setIsTasksLimitDialogOpen(true)}
-                              >
-                                {t('Edit')}
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom">
-                              {t(
-                                'To set usage limits, please add your payment details.',
-                              )}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-1">
-                      {!isSubscriptionActive && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="link"
-                                disabled={!isSubscriptionActive}
-                                className="pl-2"
-                                onClick={() => setIsTasksLimitDialogOpen(true)}
-                              >
-                                {t('Add Limit')}
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom">
-                              {t(
-                                'To set usage limits, please add your payment details.',
-                              )}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                    </div>
-                  )}
+                  ) : null}
+                  {isSubscriptionActive ? (
+                    <Button variant="link" onClick={() => setIsTasksLimitDialogOpen(true)} size="sm">
+                      {tasksLimit ? t('Edit') : t('Add Limit')}
+                    </Button>
+                  ) : null}
                 </div>
               </CardContent>
             </Card>
@@ -271,9 +208,8 @@ export default function Billing() {
                     </div>
                     <div className="text-sm font-sm text-gray-500">
                       {t(
-                        `First ${
-                          platformSubscription?.subscription
-                            ?.includedAiCredits || 200
+                        `First ${platformSubscription?.subscription
+                          ?.includedAiCredits || 200
                         } credits free`,
                       )}
                     </div>
@@ -302,7 +238,12 @@ export default function Billing() {
       <TasksLimitDialog
         open={isTasksLimitDialogOpen}
         onOpenChange={setIsTasksLimitDialogOpen}
-        onSubmit={handleTasksLimitSubmit}
+        onSubmit={(newLimit) => {
+          console.log('newLimit', newLimit)
+          updateLimitsMutation.mutateAsync({
+            tasksLimit: isNil(newLimit) ? null : newLimit,
+          });
+        }}
         initialLimit={tasksLimit}
       />
     </article>
