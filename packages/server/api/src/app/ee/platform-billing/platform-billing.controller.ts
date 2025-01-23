@@ -1,4 +1,4 @@
-import { ApSubscriptionStatus } from '@activepieces/ee-shared'
+import { ApSubscriptionStatus, DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
 import { assertNotNullOrUndefined, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
@@ -52,7 +52,7 @@ export const platformBillingController: FastifyPluginAsyncTypebox = async (fasti
                 return
             }
             
-            await platformBillingService(request.log).update({ platformId: request.principal.platform.id, tasksLimit: undefined })
+            await platformBillingService(request.log).update({ platformId: request.principal.platform.id, tasksLimit: DEFAULT_FREE_PLAN_LIMIT.tasks })
             return {
                 paymentLink: await stripeHelper(request.log).createCheckoutUrl(projectBilling.stripeCustomerId),
             }
