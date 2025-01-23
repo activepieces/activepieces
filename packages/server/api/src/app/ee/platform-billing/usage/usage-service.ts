@@ -48,30 +48,8 @@ export const usageService = (log: FastifyBaseLogger) => ({
 
 
     async tasksExceededLimit(projectId: string): Promise<boolean> {
-        if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
-            return false
-        }
+        return false
 
-        try {
-            const projectPlan = await projectLimitsService.getPlanByProjectId(projectId)
-            if (!projectPlan) {
-                return false
-            }
-            const platformId = await projectService.getPlatformId(projectId)
-            const { consumedProjectUsage, consumedPlatformUsage } = await increaseProjectAndPlatformUsage({ projectId, incrementBy: 0, usageType: BillingUsageType.TASKS })
-            const shouldLimitFromProjectPlan = !isNil(projectPlan.tasks) && consumedProjectUsage >= projectPlan.tasks
-            const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
-            const shouldLimitFromPlatformBilling = !isNil(platformBilling.tasksLimit) && consumedPlatformUsage >= platformBilling.tasksLimit
-            const platform = await platformService.getOneOrThrow(platformId)
-            if (!platform.manageProjectsEnabled) {
-                return shouldLimitFromPlatformBilling
-            }
-            return shouldLimitFromProjectPlan || shouldLimitFromPlatformBilling
-        }
-        catch (e) {
-            exceptionHandler.handle(e, log)
-            return false
-        }
     },
 
     async aiTokensExceededLimit(projectId: string, tokensToConsume: number): Promise<boolean> {
