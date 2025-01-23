@@ -363,6 +363,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/maarteNNNN"><img src="https://avatars.githubusercontent.com/u/14275291?v=4?s=100" width="100px;" alt="Maarten Coppens"/><br /><sub><b>Maarten Coppens</b></sub></a><br /><a href="#plugin-maarteNNNN" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/mahmuthamet"><img src="https://avatars.githubusercontent.com/u/90776946?v=4?s=100" width="100px;" alt="Mahmoud Hamed"/><br /><sub><b>Mahmoud Hamed</b></sub></a><br /><a href="#plugin-mahmuthamet" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
