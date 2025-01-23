@@ -24,7 +24,11 @@ type TasksLimitDialogProps = {
 };
 
 const TasksSchema = Type.Object({
-  tasks: Type.Union([Type.Optional(Type.Number()), Type.Undefined(), Type.String()]),
+  tasks: Type.Union([
+    Type.Optional(Type.Number()),
+    Type.Undefined(),
+    Type.String(),
+  ]),
 });
 
 type TasksSchema = Static<typeof TasksSchema>;

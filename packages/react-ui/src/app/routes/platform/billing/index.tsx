@@ -92,7 +92,9 @@ export default function Billing() {
     platformSubscription?.subscription.includedTasks || 0,
   );
 
-  const calculateTotalCost = calculateTotalCostHelper(Number(calculateTaskCost))
+  const calculateTotalCost = calculateTotalCostHelper(
+    Number(calculateTaskCost),
+  );
 
   const isSubscriptionActive =
     platformSubscription?.subscription.stripeSubscriptionStatus === 'active';
