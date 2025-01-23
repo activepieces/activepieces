@@ -52,13 +52,6 @@ export const calculateTaskCostHelper = (
   return Number((paidTasks * unitCost).toFixed(2));
 };
 
-export const calculateAICostHelper = (aiCredits: number, aiLimit: number) => {
-  const unitCost = 1 / 1000;
-  const totalAiCredits = aiCredits || 0;
-  const paidAiCredits = Math.max(0, totalAiCredits - aiLimit);
-  return Number((paidAiCredits * unitCost).toFixed(2));
-};
-
 export const calculateTaskCostTextHelper = (
   flowRunCount: number,
   calculateTaskCost: number,
@@ -66,9 +59,6 @@ export const calculateTaskCostTextHelper = (
   return `${flowRunCount} Tasks ($${calculateTaskCost.toFixed(2)})`;
 };
 
-export const calculateTotalCostHelper = (
-  calculateTaskCost: number,
-  calculateAICost: number,
-) => {
-  return `$${(calculateTaskCost + calculateAICost).toFixed(2)}`;
+export const calculateTotalCostHelper = (calculateTaskCost: number) => {
+  return `$${calculateTaskCost.toFixed(2)}`;
 };
