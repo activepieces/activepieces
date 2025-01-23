@@ -19,10 +19,8 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
 
 import { platformBillingApi } from './api/billing-api';
-import { AiLimitDialog } from './dialogs/ai';
 import { TasksLimitDialog } from './dialogs/tasks';
 import {
-  calculateAICostHelper,
   calculateTaskCostHelper,
   calculateTotalCostHelper,
 } from './helpers/platform-billing-helper';
@@ -33,7 +31,6 @@ const fetchSubscriptionInfo = async () => {
 
 export default function Billing() {
   const [isTasksLimitDialogOpen, setIsTasksLimitDialogOpen] = useState(false);
-  const [isAIDialogOpen, setIsAIDialogOpen] = useState(false);
   const [tasksLimit, setTasksLimit] = useState<number | undefined>(undefined);
   const [aiLimit, setAiLimit] = useState<number | undefined>(undefined);
   const { platform } = platformHooks.useCurrentPlatform();
@@ -63,8 +60,8 @@ export default function Billing() {
   }, [platformSubscription]);
 
   const updateLimitsMutation = useMutation({
-    mutationFn: (data: { tasksLimit?: number; aiCreditsLimit?: number }) =>
-      platformBillingApi.update(data.tasksLimit, data.aiCreditsLimit),
+    mutationFn: (data: { tasksLimit?: number | null | undefined }) =>
+      platformBillingApi.update(data.tasksLimit),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['platform-billing-subscription', platform.id],
@@ -83,27 +80,16 @@ export default function Billing() {
     },
   });
 
-  async function handleTasksLimitSubmit(limit: number): Promise<void> {
+  async function handleTasksLimitSubmit(
+    limit: number | undefined,
+  ): Promise<void> {
     setTasksLimit(limit);
     try {
       await updateLimitsMutation.mutateAsync({
-        tasksLimit: limit,
-        aiCreditsLimit: aiLimit,
+        tasksLimit: limit === undefined ? null : limit,
       });
     } catch (error) {
       console.error('Failed to update tasks limit:', error);
-    }
-  }
-
-  async function handleAILimitSubmit(limit: number): Promise<void> {
-    setAiLimit(limit);
-    try {
-      await updateLimitsMutation.mutateAsync({
-        tasksLimit: tasksLimit,
-        aiCreditsLimit: limit,
-      });
-    } catch (error) {
-      console.error('Failed to update AI credits limit:', error);
     }
   }
 
@@ -140,16 +126,9 @@ export default function Billing() {
     );
   }, [platformSubscription?.flowRunCount, tasksLimit]);
 
-  const calculateAICost = useMemo(() => {
-    return calculateAICostHelper(
-      platformSubscription?.aiCredits || 0,
-      aiLimit ?? 0,
-    );
-  }, [platformSubscription?.aiCredits, aiLimit]);
-
   const calculateTotalCost = useMemo(() => {
-    return calculateTotalCostHelper(calculateTaskCost, calculateAICost);
-  }, [calculateTaskCost, calculateAICost]);
+    return calculateTotalCostHelper(calculateTaskCost);
+  }, [calculateTaskCost]);
 
   const isSubscriptionActive =
     platformSubscription?.subscription.stripeSubscriptionStatus === 'active';
@@ -220,35 +199,51 @@ export default function Billing() {
                     />
                   </div>
                 </div>
-                {isSubscriptionActive ? (
-                  <div className="text-sm mt-5 flex items-center gap-1">
-                    {(tasksLimit || 0) > 0 ? (
-                      <div className="flex items-center gap-1">
-                        {t(`You added a limit of ${tasksLimit ?? 0} tasks.`)}
-                        <span
-                          className="ml-2 text-primary cursor-pointer"
-                          onClick={() => setIsTasksLimitDialogOpen(true)}
-                        >
-                          {t('Edit')}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1">
-                        {t('You have no configured usage limit for credits.')}
-                        <span
-                          className="ml-2 text-primary cursor-pointer"
-                          onClick={() => setIsTasksLimitDialogOpen(true)}
-                        >
-                          {t('Add Limit')}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-sm mt-5 flex items-center gap-1">
-                    {t('You have no configured usage limit for credits.')}
-                  </div>
-                )}
+                <div className="text-sm mt-5 flex items-center gap-1">
+                  {(tasksLimit || 0) > 0 ? (
+                    <div className="flex items-center gap-1">
+                      {t(
+                        `You have a maximum of ${tasksLimit} tasks available.`,
+                      )}
+                      <span
+                        className="ml-2 text-primary cursor-pointer"
+                        onClick={() => setIsTasksLimitDialogOpen(true)}
+                      >
+                        {t('Edit')}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <span
+                        className={`${
+                          isSubscriptionActive
+                            ? 'text-primary cursor-pointer ml-2 '
+                            : 'text-gray-400 cursor-not-allowed'
+                        }`}
+                        onClick={() =>
+                          isSubscriptionActive &&
+                          setIsTasksLimitDialogOpen(true)
+                        }
+                      >
+                        {t('Add Limit')}
+                      </span>
+                      {!isSubscriptionActive && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <CircleHelp className="w-4 h-4" />
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom">
+                              {t(
+                                'To set usage limits, please add your payment details.',
+                              )}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -284,48 +279,13 @@ export default function Billing() {
                     />
                   </div>
                 </div>
-
-                {isSubscriptionActive ? (
-                  <div className="text-sm mt-5 flex items-center gap-1">
-                    {(aiLimit || 0) > 0 ? (
-                      <div className="flex items-center gap-1">
-                        {t(`You added a limit of ${aiLimit} credits.`)}
-                        <span
-                          className="ml-2 text-primary cursor-pointer"
-                          onClick={() => setIsAIDialogOpen(true)}
-                        >
-                          {t('Edit')}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1">
-                        {t('You have no configured usage limit for credits.')}
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <CircleHelp className="w-4 h-4" />
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom">
-                              {t(
-                                'You have no configured usage limit for credits.',
-                              )}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <span
-                          className="ml-2 text-primary cursor-pointer"
-                          onClick={() => setIsAIDialogOpen(true)}
-                        >
-                          {t('Add Limit')}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-sm mt-5 flex items-center gap-1">
-                    {t('You have no configured usage limit for credits.')}
-                  </div>
-                )}
+                <div className="text-sm mt-5 flex items-center gap-1">
+                  {(aiLimit || 0) > 0 ? (
+                    <div className="flex items-center gap-1">
+                      {t(`You have a maximum of ${aiLimit} credits available.`)}
+                    </div>
+                  ) : null}
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -337,12 +297,6 @@ export default function Billing() {
         onOpenChange={setIsTasksLimitDialogOpen}
         onSubmit={handleTasksLimitSubmit}
         initialLimit={tasksLimit}
-      />
-      <AiLimitDialog
-        open={isAIDialogOpen}
-        onOpenChange={setIsAIDialogOpen}
-        onSubmit={handleAILimitSubmit}
-        initialLimit={aiLimit}
       />
     </article>
   );
