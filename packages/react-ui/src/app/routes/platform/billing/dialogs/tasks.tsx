@@ -24,7 +24,7 @@ type TasksLimitDialogProps = {
 };
 
 const TasksSchema = Type.Object({
-  tasks: Type.Union([Type.Optional(Type.Number()), Type.Undefined()]),
+  tasks: Type.Union([Type.Optional(Type.Number()), Type.Undefined(), Type.String()]),
 });
 
 type TasksSchema = Static<typeof TasksSchema>;
@@ -33,19 +33,20 @@ export const TasksLimitDialog = ({
   open,
   onOpenChange,
   onSubmit,
-  initialLimit = 0,
+  initialLimit,
 }: TasksLimitDialogProps) => {
   const form = useForm<TasksSchema>({
     resolver: typeboxResolver(TasksSchema),
     defaultValues: {
-      tasks: initialLimit,
+      tasks: initialLimit ?? undefined,
     },
   });
 
   const updateLimits: SubmitHandler<{
-    tasks: number | undefined;
+    tasks: number | undefined | string;
   }> = (data) => {
-    onSubmit(data.tasks);
+    const value = data.tasks === '' ? undefined : Number(data.tasks);
+    onSubmit(value);
     onOpenChange(false);
   };
 
@@ -79,13 +80,13 @@ export const TasksLimitDialog = ({
                         field.onChange(value);
                       }}
                     />
-                    {form.watch('tasks') !== undefined && (
+                    {form.watch('tasks') !== undefined && form.watch('tasks') !== '' && (
                       <Button
                         type="button"
                         variant="transparent"
                         className="absolute right-1 top-1/2 -translate-y-1/2 text-xs"
                         onClick={() => {
-                          field.onChange(undefined);
+                          field.onChange('');
                         }}
                       >
                         Remove

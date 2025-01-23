@@ -84,10 +84,10 @@ export default function Billing() {
 
   const calculateTaskCost = calculateTaskCostHelper(
     platformSubscription?.flowRunCount || 0,
-    tasksLimit,
+    platformSubscription?.subscription.includedTasks || 0,
   );
 
-  const calculateTotalCost = calculateTotalCostHelper(calculateTaskCost)
+  const calculateTotalCost = calculateTotalCostHelper(Number(calculateTaskCost))
 
   const isSubscriptionActive =
     platformSubscription?.subscription.stripeSubscriptionStatus === 'active';
@@ -239,7 +239,6 @@ export default function Billing() {
         open={isTasksLimitDialogOpen}
         onOpenChange={setIsTasksLimitDialogOpen}
         onSubmit={(newLimit) => {
-          console.log('newLimit', newLimit)
           updateLimitsMutation.mutateAsync({
             tasksLimit: isNil(newLimit) ? null : newLimit,
           });
