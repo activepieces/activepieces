@@ -613,6 +613,9 @@
       "@activepieces/piece-supadata": [
         "packages/pieces/community/supadata/src/index.ts"
       ],
+      "@activepieces/piece-surrealdb": [
+        "packages/pieces/community/surrealdb/src/index.ts"
+      ],
       "@activepieces/piece-surveymonkey": [
         "packages/pieces/community/surveymonkey/src/index.ts"
       ],
