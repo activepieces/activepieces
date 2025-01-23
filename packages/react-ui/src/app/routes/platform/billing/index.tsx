@@ -60,8 +60,8 @@ export default function Billing() {
   }, [platformSubscription]);
 
   const updateLimitsMutation = useMutation({
-    mutationFn: (data: { tasksLimit?: number; aiCreditsLimit?: number }) =>
-      platformBillingApi.update(data.tasksLimit, data.aiCreditsLimit),
+    mutationFn: (data: { tasksLimit?: number | null | undefined }) =>
+      platformBillingApi.update(data.tasksLimit),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['platform-billing-subscription', platform.id],
@@ -80,11 +80,13 @@ export default function Billing() {
     },
   });
 
-  async function handleTasksLimitSubmit(limit: number): Promise<void> {
+  async function handleTasksLimitSubmit(
+    limit: number | undefined,
+  ): Promise<void> {
     setTasksLimit(limit);
     try {
       await updateLimitsMutation.mutateAsync({
-        tasksLimit: limit,
+        tasksLimit: limit === undefined ? null : limit,
       });
     } catch (error) {
       console.error('Failed to update tasks limit:', error);

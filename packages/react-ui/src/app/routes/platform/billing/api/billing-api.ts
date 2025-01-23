@@ -11,10 +11,9 @@ export const platformBillingApi = {
   upgrade() {
     return api.post<{ paymentLink: string }>('/v1/platform-billing/upgrade');
   },
-  update(tasksLimit: number | undefined, aiCreditsLimit: number | undefined) {
+  update(tasksLimit: number | null | undefined) {
     return api.patch<{ paymentLink: string }>('/v1/platform-billing', {
       tasksLimit,
-      aiCreditsLimit,
     });
   },
 };

@@ -52,7 +52,7 @@ export const platformBillingController: FastifyPluginAsyncTypebox = async (fasti
                 return
             }
             
-            await platformBillingService(request.log).update(request.principal.platform.id, undefined)
+            await platformBillingService(request.log).update({ platformId: request.principal.platform.id, tasksLimit: undefined })
             return {
                 paymentLink: await stripeHelper(request.log).createCheckoutUrl(projectBilling.stripeCustomerId),
             }
@@ -73,7 +73,7 @@ export const platformBillingController: FastifyPluginAsyncTypebox = async (fasti
         },
         async (request) => {
             const platformId = request.principal.platform.id
-            return platformBillingService(request.log).update(platformId, request.body.tasksLimit)
+            return platformBillingService(request.log).update({ platformId, tasksLimit: request.body.tasksLimit })
         },
     )
 }

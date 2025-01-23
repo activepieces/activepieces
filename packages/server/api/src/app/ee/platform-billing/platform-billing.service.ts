@@ -24,8 +24,10 @@ export const platformBillingService = (log: FastifyBaseLogger) => ({
         return platformBilling
     },
 
-    async update(platformId: string, tasksLimit: number | undefined): Promise<PlatformBilling> {
-        const platformBilling = await platformBillingRepo().findOneBy({ platformId })
+    async update(
+        { platformId, tasksLimit }: { platformId: string; tasksLimit: number | undefined }
+    ): Promise<PlatformBilling> {
+        const platformBilling = await platformBillingRepo().findOneBy({ platformId });
         if (isNil(platformBilling)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -34,12 +36,12 @@ export const platformBillingService = (log: FastifyBaseLogger) => ({
                     entityType: 'PlatformBilling',
                     message: 'Platform billing not found by platform id',
                 },
-            })
+            });
         }
         return platformBillingRepo().save({
             tasksLimit,
             id: platformBilling.id,
-        })
+        });
     },
 
     async updateSubscriptionIdByCustomerId(subscription: Stripe.Subscription): Promise<PlatformBilling> {
