@@ -48,7 +48,7 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
         const cloudPlatformId = system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
         const userMeta = await userService.getMetaInformation({ id: userId })
         const userIdentity = await userIdentityRepo().findOneByOrFail({ email: userMeta.email })
-        const allUsers = await userRepo().find({ where: { identityId: userIdentity.id, platformId: Not(cloudPlatformId) } })
+        const allUsers = await userRepo().find({ where: { identityId: userIdentity.id, platformId: Not(cloudPlatformId), platformRole: PlatformRole.ADMIN } })
         if (allUsers.length > 0) {
             throw new Error("User is already migrated")
         }
