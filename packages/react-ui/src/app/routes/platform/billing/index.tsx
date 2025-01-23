@@ -129,7 +129,7 @@ export default function Billing() {
   const calculateTotalCost = useMemo(() => {
     return calculateTotalCostHelper(calculateTaskCost);
   }, [calculateTaskCost]);
-  
+
   const isSubscriptionActive =
     platformSubscription?.subscription.stripeSubscriptionStatus === 'active';
 
@@ -202,36 +202,43 @@ export default function Billing() {
                 <div className="text-sm mt-5 flex items-center gap-1">
                   {(tasksLimit || 0) > 0 ? (
                     <div className="flex items-center gap-1">
-                      {t(
-                        `Your tasks limit is set to ${tasksLimit}`
-                      )}
-                      <span
-                        className={`ml-2 ${isSubscriptionActive ? 'text-primary cursor-pointer' : 'text-gray-400 cursor-not-allowed'}`}
-                        onClick={() => isSubscriptionActive && setIsTasksLimitDialogOpen(true)}
-                      >
-                        {t('Edit')}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1">
-                      <span
-                        className={`${
-                          isSubscriptionActive
-                            ? 'text-primary cursor-pointer ml-2 '
-                            : 'text-gray-400 cursor-not-allowed'
-                        }`}
-                        onClick={() =>
-                          isSubscriptionActive &&
-                          setIsTasksLimitDialogOpen(true)
-                        }
-                      >
-                        {t('Add Limit')}
-                      </span>
+                      {t(`Your tasks limit is set to ${tasksLimit}`)}
                       {!isSubscriptionActive && (
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <CircleHelp className="w-4 h-4" />
+                              <Button
+                                variant="link"
+                                className="pl-2"
+                                disabled={!isSubscriptionActive}
+                                onClick={() => setIsTasksLimitDialogOpen(true)}
+                              >
+                                {t('Edit')}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom">
+                              {t(
+                                'To set usage limits, please add your payment details.',
+                              )}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      {!isSubscriptionActive && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="link"
+                                disabled={!isSubscriptionActive}
+                                className="pl-2"
+                                onClick={() => setIsTasksLimitDialogOpen(true)}
+                              >
+                                {t('Add Limit')}
+                              </Button>
                             </TooltipTrigger>
                             <TooltipContent side="bottom">
                               {t(
