@@ -129,7 +129,7 @@ export default function Billing() {
   const calculateTotalCost = useMemo(() => {
     return calculateTotalCostHelper(calculateTaskCost);
   }, [calculateTaskCost]);
-
+  
   const isSubscriptionActive =
     platformSubscription?.subscription.stripeSubscriptionStatus === 'active';
 
@@ -203,11 +203,11 @@ export default function Billing() {
                   {(tasksLimit || 0) > 0 ? (
                     <div className="flex items-center gap-1">
                       {t(
-                        `You have a maximum of ${tasksLimit} tasks available.`,
+                        `Your tasks limit is set to ${tasksLimit}`
                       )}
                       <span
-                        className="ml-2 text-primary cursor-pointer"
-                        onClick={() => setIsTasksLimitDialogOpen(true)}
+                        className={`ml-2 ${isSubscriptionActive ? 'text-primary cursor-pointer' : 'text-gray-400 cursor-not-allowed'}`}
+                        onClick={() => isSubscriptionActive && setIsTasksLimitDialogOpen(true)}
                       >
                         {t('Edit')}
                       </span>
@@ -282,7 +282,7 @@ export default function Billing() {
                 <div className="text-sm mt-5 flex items-center gap-1">
                   {(aiLimit || 0) > 0 ? (
                     <div className="flex items-center gap-1">
-                      {t(`You have a maximum of ${aiLimit} credits available.`)}
+                      {t(`Your AI credits limit is set to ${aiLimit}`)}
                     </div>
                   ) : null}
                 </div>
