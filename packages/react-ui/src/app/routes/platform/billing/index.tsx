@@ -3,15 +3,6 @@ import { t } from 'i18next';
 import { ClipboardCheck, CircleHelp, Sparkles } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 
-import { platformBillingApi } from './api/billing-api';
-import { AiLimitDialog } from './dialogs/ai';
-import { TasksLimitDialog } from './dialogs/tasks';
-import {
-  calculateAICostHelper,
-  calculateTaskCostHelper,
-  calculateTotalCostHelper,
-} from './helpers/platform-billing-helper';
-
 import { useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -26,6 +17,13 @@ import {
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
+
+import { platformBillingApi } from './api/billing-api';
+import { TasksLimitDialog } from './dialogs/tasks';
+import {
+  calculateTaskCostHelper,
+  calculateTotalCostHelper,
+} from './helpers/platform-billing-helper';
 
 const fetchSubscriptionInfo = async () => {
   return await platformBillingApi.getSubscription();
