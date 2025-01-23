@@ -24,7 +24,7 @@ export const platformBillingService = (log: FastifyBaseLogger) => ({
         return platformBilling
     },
 
-    async update(platformId: string, tasksLimit: number | undefined, aiCreditsLimit: number | undefined): Promise<PlatformBilling> {
+    async update(platformId: string, tasksLimit: number | undefined): Promise<PlatformBilling> {
         const platformBilling = await platformBillingRepo().findOneBy({ platformId })
         if (isNil(platformBilling)) {
             throw new ActivepiecesError({
@@ -38,7 +38,6 @@ export const platformBillingService = (log: FastifyBaseLogger) => ({
         }
         return platformBillingRepo().save({
             tasksLimit,
-            aiCreditsLimit,
             id: platformBilling.id,
         })
     },

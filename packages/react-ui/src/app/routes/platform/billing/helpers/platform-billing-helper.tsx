@@ -66,9 +66,6 @@ export const calculateTaskCostTextHelper = (
   return `${flowRunCount} Tasks ($${calculateTaskCost.toFixed(2)})`;
 };
 
-export const calculateTotalCostHelper = (
-  calculateTaskCost: number,
-  calculateAICost: number,
-) => {
-  return `$${(calculateTaskCost + calculateAICost).toFixed(2)}`;
+export const calculateTotalCostHelper = (calculateTaskCost: number) => {
+  return `$${calculateTaskCost.toFixed(2)}`;
 };

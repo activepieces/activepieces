@@ -41,7 +41,7 @@ export const TasksLimitDialog = ({
   });
   useEffect(() => {
     form.reset({ tasks: initialLimit });
-  }, [initialLimit]);
+  }, [form, initialLimit]);
 
   const updateLimits: SubmitHandler<{
     tasks: number;
@@ -90,7 +90,13 @@ export const TasksLimitDialog = ({
                         type="button"
                         variant="transparent"
                         className="absolute right-1 top-1/2 -translate-y-1/2 text-xs"
-                        onClick={() => field.onChange('')}
+                        onClick={() => {
+                          field.onChange('');
+                          form.setError('tasks', {
+                            type: 'manual',
+                            message: t('Expected number'),
+                          });
+                        }}
                       >
                         Remove
                       </Button>
