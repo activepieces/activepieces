@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { LogOut, SunMoon } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -6,8 +5,6 @@ import { Link } from 'react-router-dom';
 import { useEmbedding } from '@/components/embed-provider';
 import { useTelemetry } from '@/components/telemetry-provider';
 import { authenticationSession } from '@/lib/authentication-session';
-import { platformApi } from '@/lib/platforms-api';
-import { isNil } from '@activepieces/shared';
 
 import { Avatar, AvatarFallback } from './avatar';
 import { AvatarLetter } from './avatar-letter';
@@ -24,12 +21,6 @@ export function UserAvatar() {
   const { reset } = useTelemetry();
   const { embedState } = useEmbedding();
   const user = authenticationSession.getCurrentUser();
-
-  const { data: platforms } = useQuery({
-    queryKey: ['platforms', user?.id],
-    queryFn: () => platformApi.listPlatforms(),
-    enabled: !isNil(user),
-  });
 
   if (!user || embedState.isEmbedded) {
     return null;
