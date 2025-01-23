@@ -1470,6 +1470,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "maarteNNNN",
+      "name": "Maarten Coppens",
+      "avatar_url": "https://avatars.githubusercontent.com/u/14275291?v=4",
+      "profile": "https://github.com/maarteNNNN",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
