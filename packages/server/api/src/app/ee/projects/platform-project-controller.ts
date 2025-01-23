@@ -37,7 +37,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
             ownerId: platform.ownerId,
             displayName: request.body.displayName,
             platformId,
-            externalId: request.body.externalId,
+            externalId: request.body.externalId ?? undefined,
         })
         await projectLimitsService.upsert(DEFAULT_PLATFORM_LIMIT, project.id)
         const projectWithUsage =

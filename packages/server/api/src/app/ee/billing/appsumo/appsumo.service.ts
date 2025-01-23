@@ -107,11 +107,17 @@ export const appsumoService = (log: FastifyBaseLogger) => ({
 
                 if (action === 'refund') {
                     await projectLimitsService.upsert(DEFAULT_FREE_PLAN_LIMIT, project.id)
-                    await platformBillingService(log).update(project.platformId, DEFAULT_FREE_PLAN_LIMIT.tasks, undefined)
+                    await platformBillingService(log).update({
+                        platformId: project.platformId,
+                        tasksLimit: DEFAULT_FREE_PLAN_LIMIT.tasks,
+                    })
                 }
                 else {
                     await projectLimitsService.upsert(appSumoPlan, project.id)
-                    await platformBillingService(log).update(project.platformId, appSumoPlan.tasks, undefined)
+                    await platformBillingService(log).update({
+                        platformId: project.platformId,
+                        tasksLimit: appSumoPlan.tasks,
+                    })
 
                 }
             }
