@@ -1,6 +1,5 @@
 import { PiecesFilterType } from '@activepieces/shared';
 
-export * from './project-billing';
 
 export type FlowPlanLimits = {
   nickname: string;
@@ -36,3 +35,12 @@ export function getTasksPriceId(stripeKey: string | undefined) {
 }
 
 export const PRICE_PER_1000_TASKS = 1;
+
+export enum ApSubscriptionStatus {
+  ACTIVE = 'active',
+  INCOMPLETE = 'incomplete',
+  INCOMPLETE_EXPIRED = 'incomplete_expired',
+  PAST_DUE = 'past_due',
+  CANCELED = 'canceled',
+  UNAPID = 'unpaid',
+}

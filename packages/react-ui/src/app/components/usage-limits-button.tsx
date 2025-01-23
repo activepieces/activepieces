@@ -99,11 +99,7 @@ const UsageLimitsButton = React.memo(() => {
           <Separator className="my-4" />
           <div className="flex justify-end ">
             <Link
-              to={
-                cloudPlatformId === platformId
-                  ? '/plans'
-                  : '/platform/setup/billing'
-              }
+              to={'/platform/setup/billing'}
             >
               <Button
                 variant={'outline'}
