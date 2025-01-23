@@ -30,6 +30,7 @@ import { ApSubscriptionStatus, DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-
 import { stripeHelper, TASKS_PAYG_PRICE_ID } from '../platform-billing/stripe-helper'
 import { apDayjs } from '../../helper/dayjs-helper'
 import { AppSystemProp } from '@activepieces/server-shared'
+import { Not } from 'typeorm'
 
 export const appConnectionRepo = repoFactory(AppConnectionEntity)
 export const flowTemplateRepo = repoFactory(FlowTemplateEntity)
@@ -46,10 +47,12 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
     async add(userId: UserId) {
         const cloudPlatformId = system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
         const userMeta = await userService.getMetaInformation({ id: userId })
-
-        if (userMeta.platformId !== cloudPlatformId) {
+        const userIdentity = await userIdentityRepo().findOneByOrFail({ email: userMeta.email })
+        const allUsers = await userRepo().find({ where: { identityId: userIdentity.id, platformId: Not(cloudPlatformId) } })
+        if (allUsers.length > 0) {
             throw new Error("User is already migrated")
         }
+
         const project = await projectRepo().findOneByOrFail({
             ownerId: userId,
             platformId: cloudPlatformId,
@@ -195,6 +198,17 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
                 stripeSubscriptionStatus: ApSubscriptionStatus.ACTIVE,
                 stripeCustomerId: projectBilling.stripeCustomerId,
             })
+        }
+
+        const migratedProjectMembers = await projectMemberRepo().find({
+            where: { projectId: project.id }
+        });
+
+        for (const member of migratedProjectMembers) {
+            const memberUser = await userRepo().findOneByOrFail({ id: member.userId });
+            if (memberUser.platformId !== platform.id) {
+                throw new Error(`User with ID ${member.userId} is not in the same platform`);
+            }
         }
         // Check if all updates were successful
         const updatedUser = await userRepo().findOneByOrFail({ id: userId })
