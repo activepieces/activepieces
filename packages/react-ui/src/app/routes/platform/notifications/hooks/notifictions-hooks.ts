@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useEffect, useMemo, useState } from 'react';
 import semver from 'semver';
 
@@ -36,11 +37,13 @@ export const notificationHooks = {
         setMessages((prevMessages) => [
           ...prevMessages,
           {
-            title: 'Websocket Connection Error',
-            description: `We encountered an error trying to connect to the websocket: ${
-              err.message || 'Unknown error'
-            }. Please check your network or server.`,
-            actionText: 'Retry Connection',
+            title: t('Websocket Connection Error'),
+            description: t(
+              `We encountered an error trying to connect to the websocket: ${
+                err.message || 'Unknown error'
+              }. Please check your network or server.`,
+            ),
+            actionText: t('Retry Connection'),
             actionLink: '/platform/infrastructure/health',
             type: 'destructive',
           },
@@ -59,19 +62,20 @@ export const notificationHooks = {
 
       if (!isVersionUpToDate) {
         allMessages.push({
-          title: 'Update Available',
+          title: t('Update Available'),
           description: `Version ${latestVersion} is now available. Update to get the latest features and security improvements.`,
-          actionText: 'Update Now',
+          actionText: t('Update Now'),
           actionLink: '/platform/infrastructure/health',
         });
       }
 
       if (!(providers && providers.data.length > 0) && !isLoading) {
         allMessages.push({
-          title: 'Your Universal AI needs a quick setup',
-          description:
-            "I noticed you haven't set up any AI providers yet. To unlock Universal AI pieces for your team, you'll need to configure some provider credentials first.",
-          actionText: 'Configure',
+          title: t('Your Universal AI needs a quick setup'),
+          description: t(
+            "We noticed you haven't set up any AI providers yet. To unlock Universal AI pieces for your team, you'll need to configure some provider credentials first.",
+          ),
+          actionText: t('Configure'),
           actionLink: '/platform/setup/ai',
         });
       }

@@ -12,7 +12,6 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -46,14 +45,13 @@ const PushToGitDialog = ({ children, flowIds }: PushToGitDialogProps) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
-    platform.gitSyncEnabled,
+    platform.environmentsEnabled,
   );
-
   const form = useForm<PushGitRepoRequest>({
     defaultValues: {
       type: GitPushOperationType.PUSH_FLOW,
       commitMessage: '',
-      flowId: '',
+      flowIds: [],
     },
     resolver: typeboxResolver(PushGitRepoRequest),
   });
@@ -61,11 +59,7 @@ const PushToGitDialog = ({ children, flowIds }: PushToGitDialogProps) => {
   const { mutate, isPending } = useMutation({
     mutationFn: async (request: PushGitRepoRequest) => {
       assertNotNullOrUndefined(gitSync, 'gitSync');
-      await Promise.all(
-        flowIds.map((flowId) =>
-          gitSyncApi.push(gitSync.id, { ...request, flowId }),
-        ),
-      );
+      await gitSyncApi.push(gitSync.id, { ...request, flowIds });
     },
     onSuccess: () => {
       toast({
@@ -91,11 +85,6 @@ const PushToGitDialog = ({ children, flowIds }: PushToGitDialogProps) => {
           <form onSubmit={form.handleSubmit((data) => mutate(data))}>
             <DialogHeader>
               <DialogTitle>{t('Push to Git')}</DialogTitle>
-              <DialogDescription>
-                {t(
-                  'Enter a commit message to describe the changes you want to push.',
-                )}
-              </DialogDescription>
             </DialogHeader>
             <FormField
               control={form.control}
@@ -109,7 +98,22 @@ const PushToGitDialog = ({ children, flowIds }: PushToGitDialogProps) => {
                 </FormItem>
               )}
             />
+            <div className="text-sm text-gray-500 mt-2">
+              {t(
+                'Enter a commit message to describe the changes you want to push.',
+              )}
+            </div>
             <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setOpen(false);
+                  form.reset();
+                }}
+              >
+                {t('Cancel')}
+              </Button>
               <Button
                 type="submit"
                 loading={isPending}

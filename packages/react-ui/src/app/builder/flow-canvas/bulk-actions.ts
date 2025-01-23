@@ -1,9 +1,4 @@
 import {
-  toast,
-  INTERNAL_ERROR_TOAST,
-  UNSAVED_CHANGES_TOAST,
-} from '@/components/ui/use-toast';
-import {
   Action,
   flowOperations,
   FlowOperationType,
@@ -44,15 +39,12 @@ export function deleteSelectedNodes({
   BuilderState,
   'selectedNodes' | 'applyOperation' | 'selectedStep' | 'exitStepSettings'
 >) {
-  applyOperation(
-    {
-      type: FlowOperationType.DELETE_ACTION,
-      request: {
-        names: selectedNodes,
-      },
+  applyOperation({
+    type: FlowOperationType.DELETE_ACTION,
+    request: {
+      names: selectedNodes,
     },
-    () => toast(INTERNAL_ERROR_TOAST),
-  );
+  });
   if (selectedStep && selectedNodes.includes(selectedStep)) {
     exitStepSettings();
   }
@@ -85,19 +77,18 @@ export function pasteNodes(
     pastingDetails,
   );
   addOperations.forEach((request) => {
-    applyOperation(request, () => {
-      toast(UNSAVED_CHANGES_TOAST);
-    });
+    applyOperation(request);
   });
 }
 
 export function getLastLocationAsPasteLocation(
   flowVersion: FlowVersion,
 ): PasteLocation {
-  const nextActions = flowStructureUtil.getAllNextActionsWithoutChildren(
+  const firstLevelParents = [
     flowVersion.trigger,
-  );
-  const lastAction = nextActions[nextActions.length - 1];
+    ...flowStructureUtil.getAllNextActionsWithoutChildren(flowVersion.trigger),
+  ];
+  const lastAction = firstLevelParents[firstLevelParents.length - 1];
   return {
     parentStepName: lastAction.name,
     stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
@@ -113,14 +104,11 @@ export function toggleSkipSelectedNodes({
     flowStructureUtil.getStepOrThrow(node, flowVersion.trigger),
   ) as Action[];
   const areAllStepsSkipped = steps.every((step) => !!step.skip);
-  applyOperation(
-    {
-      type: FlowOperationType.SET_SKIP_ACTION,
-      request: {
-        names: steps.map((step) => step.name),
-        skip: !areAllStepsSkipped,
-      },
+  applyOperation({
+    type: FlowOperationType.SET_SKIP_ACTION,
+    request: {
+      names: steps.map((step) => step.name),
+      skip: !areAllStepsSkipped,
     },
-    () => toast(UNSAVED_CHANGES_TOAST),
-  );
+  });
 }

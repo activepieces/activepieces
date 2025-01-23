@@ -1,6 +1,6 @@
-import { 
-    PiecePropertyMap, 
-    PropertyType, 
+import {
+    PiecePropertyMap,
+    PropertyType,
 } from '@activepieces/pieces-framework'
 import {
     ActionType,
@@ -17,7 +17,6 @@ import {
 } from '@activepieces/shared'
 import { TSchema, Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
-import { Value } from '@sinclair/typebox/value'
 import { FastifyBaseLogger } from 'fastify'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 
@@ -36,7 +35,7 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
         request: FlowOperationRequest,
     ): Promise<FlowOperationRequest> {
         const clonedRequest: FlowOperationRequest = JSON.parse(JSON.stringify(request))
-        
+
         switch (clonedRequest.type) {
             case FlowOperationType.ADD_ACTION:
                 switch (clonedRequest.request.action.type) {
@@ -53,7 +52,7 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                             log,
                         )
                         clonedRequest.request.action.valid = result.valid
-                        if (result.valid && result.cleanInput) {
+                        if (!isNil(result.cleanInput)) {
                             clonedRequest.request.action.settings.input = result.cleanInput
                         }
                         break
@@ -83,7 +82,7 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                             log,
                         )
                         clonedRequest.request.valid = result.valid
-                        if (result.valid && result.cleanInput) {
+                        if (!isNil(result.cleanInput)) {
                             clonedRequest.request.settings.input = result.cleanInput
                         }
                         break
@@ -157,7 +156,7 @@ async function validateAction(
     }
 
     const props = action.props
-    if (!isNil(piece.auth) && action.requireAuth) {
+    if (!isNil(piece.auth) && action.requireAuth !== false) {
         props.auth = piece.auth
     }
     return validateProps(props, settings.input)
@@ -192,7 +191,7 @@ async function validateTrigger(
         return { valid: false }
     }
     const props = trigger.props
-    if (!isNil(piece.auth) && trigger.requireAuth) {
+    if (!isNil(piece.auth) && trigger.requireAuth !== false) {
         props.auth = piece.auth
     }
     return validateProps(props, settings.input)
@@ -205,9 +204,13 @@ function validateProps(
     const propsSchema = buildSchema(props)
     const propsValidator = TypeCompiler.Compile(propsSchema)
     const valid = propsValidator.Check(input)
+    const cleanInput = !isNil(input) ? Object.fromEntries(
+        Object.keys(props).map(key => [key, input?.[key]]),
+    ) : undefined
+
     return {
         valid,
-        cleanInput: valid ? (Value.Clean(propsSchema, input) as Record<string, unknown>) : undefined,
+        cleanInput,
     }
 }
 
@@ -247,10 +250,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
             case PropertyType.CUSTOM_AUTH:
             case PropertyType.SECRET_TEXT:
             case PropertyType.OAUTH2:
-                propsSchema[name] = Type.Union([
-                    Type.RegExp(RegExp('{{1}{connections.(.*?)}{1}}')),
-                    Type.String(),
-                ])
+                propsSchema[name] = Type.String()
                 break
             case PropertyType.ARRAY:
                 propsSchema[name] = Type.Union([Type.Array(Type.Unknown({})), Type.String()])

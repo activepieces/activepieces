@@ -64,10 +64,10 @@ const initialPermissions = [
     write: [Permission.READ_INVITATION, Permission.WRITE_INVITATION],
   },
   {
-    name: 'Git Repos',
-    description: 'Read and write git repos',
-    read: [Permission.READ_GIT_REPO],
-    write: [Permission.READ_GIT_REPO, Permission.WRITE_GIT_REPO],
+    name: 'Project Releases',
+    description: 'Read and write project releases',
+    read: [Permission.READ_PROJECT_RELEASE],
+    write: [Permission.READ_PROJECT_RELEASE, Permission.WRITE_PROJECT_RELEASE],
   },
 ];
 interface ProjectRoleDialogProps {
@@ -247,7 +247,7 @@ export const ProjectRoleDialog = ({
                           }
                           disabled={disabled}
                         >
-                          None
+                          {t('None')}
                         </Button>
                       )}
                       <Button
@@ -258,7 +258,7 @@ export const ProjectRoleDialog = ({
                         }
                         disabled={disabled}
                       >
-                        Read
+                        {t('Read')}
                       </Button>
                       <Button
                         className="h-9 px-4"
@@ -268,7 +268,7 @@ export const ProjectRoleDialog = ({
                         }
                         disabled={disabled}
                       >
-                        Write
+                        {t('Write')}
                       </Button>
                     </div>
                   </div>

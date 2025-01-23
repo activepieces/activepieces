@@ -12,12 +12,11 @@ import {
 } from '@/components/ui/tooltip';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
+import { determineDefaultRoute } from '@/lib/utils';
 import { ApFlagId, supportUrl } from '@activepieces/shared';
 
 import { ShowPoweredBy } from '../../components/show-powered-by';
 import { platformHooks } from '../../hooks/platform-hooks';
-import { determineDefaultRoute } from '../router/default-route';
 
 import { Header } from './header';
 
@@ -36,6 +35,7 @@ type CustomTooltipLinkProps = {
   notification?: boolean;
   locked?: boolean;
   newWindow?: boolean;
+  isActive?: (pathname: string) => boolean;
 };
 const CustomTooltipLink = ({
   to,
@@ -45,10 +45,12 @@ const CustomTooltipLink = ({
   notification,
   locked,
   newWindow,
+  isActive,
 }: CustomTooltipLinkProps) => {
   const location = useLocation();
 
-  const isActive = location.pathname.startsWith(to);
+  const isLinkActive =
+    location.pathname.startsWith(to) || isActive?.(location.pathname);
 
   return (
     <Link
@@ -67,7 +69,7 @@ const CustomTooltipLink = ({
         )}
         <Icon
           className={`size-10 p-2.5 hover:text-primary rounded-lg transition-colors ${
-            isActive ? 'bg-accent text-primary' : ''
+            isLinkActive ? 'bg-accent text-primary' : ''
           } ${extraClasses || ''}`}
         />
         <span className="text-[10px]">{label}</span>
@@ -87,6 +89,7 @@ export type SidebarLink = {
   locked?: boolean;
   hasPermission?: boolean;
   showInEmbed?: boolean;
+  isActive?: (pathname: string) => boolean;
 };
 
 type SidebarProps = {
@@ -106,7 +109,6 @@ export function Sidebar({
     ApFlagId.SHOW_COMMUNITY,
   );
   const { platform } = platformHooks.useCurrentPlatform();
-  const projectId = authenticationSession.getProjectId();
   const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
   return (
     <div>
@@ -116,11 +118,7 @@ export function Sidebar({
             <ScrollArea>
               <nav className="flex flex-col items-center h-screen  sm:py-5  gap-5 p-2 ">
                 <Link
-                  to={
-                    isHomeDashboard
-                      ? `/projects/${projectId}${defaultRoute}`
-                      : '/platform'
-                  }
+                  to={isHomeDashboard ? defaultRoute : '/platform'}
                   className="h-[48px] items-center justify-center "
                 >
                   <Tooltip>
@@ -144,6 +142,7 @@ export function Sidebar({
                     key={index}
                     notification={link.notification}
                     locked={link.locked}
+                    isActive={link.isActive}
                   />
                 ))}
 

@@ -1,14 +1,12 @@
-import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
 import {
     TriggerStrategy,
     WebhookRenewStrategy,
 } from '@activepieces/pieces-framework'
 import {
-    JobType, LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType,
-    UserInteractionJobType,
-} from '@activepieces/server-shared'
+    AppSystemProp, JobType, LATEST_JOB_DATA_SCHEMA_VERSION,
+    RepeatableJobType,
+    UserInteractionJobType } from '@activepieces/server-shared'
 import {
-    ApEdition,
     EngineResponseStatus,
     FlowVersion,
     isNil,
@@ -24,28 +22,14 @@ import {
     EngineHelperTriggerResult,
 } from 'server-worker'
 import { appEventRoutingService } from '../../../app-event-routing/app-event-routing.service'
-import { projectLimitsService } from '../../../ee/project-plan/project-plan.service'
 import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-prop'
 import { jobQueue } from '../../../workers/queue'
 import { userInteractionWatcher } from '../../../workers/user-interaction-watcher'
 import { triggerUtils } from './trigger-utils'
 
-const POLLING_FREQUENCY_CRON_EXPRESSON = constructEveryXMinuteCron(
-    system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5,
-)
 
-function constructEveryXMinuteCron(minute: number): string {
-    const edition = system.getEdition()
-    switch (edition) {
-        case ApEdition.CLOUD:
-            return `*/${minute} * * * *`
-        case ApEdition.COMMUNITY:
-        case ApEdition.ENTERPRISE:
-            return `*/${system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5
-            } * * * *`
-    }
-}
+const POLLING_FREQUENCY_CRON_EXPRESSON = `*/${system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5} * * * *`
+
 
 export const enablePieceTrigger = async (
     params: EnableParams,
@@ -123,13 +107,6 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
                     timezone: 'UTC',
                     failureCount: 0,
                 }
-                // BEGIN EE
-                const edition = system.getEdition()
-                if (edition === ApEdition.CLOUD) {
-                    const plan = await projectLimitsService.getOrCreateDefaultPlan(projectId, DEFAULT_FREE_PLAN_LIMIT)
-                    engineHelperResponse.result.scheduleOptions.cronExpression = constructEveryXMinuteCron(plan.minimumPollingInterval)
-                }
-                // END EE
             }
             await jobQueue(log).add({
                 id: flowVersion.id,

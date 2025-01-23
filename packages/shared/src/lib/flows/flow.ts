@@ -26,6 +26,7 @@ export type FlowScheduleOptions = Static<typeof FlowScheduleOptions>
 export const Flow = Type.Object({
     ...BaseModelSchema,
     projectId: Type.String(),
+    externalId: Nullable(Type.String()),
     folderId: Nullable(Type.String()),
     status: Type.Enum(FlowStatus),
     schedule: Nullable(FlowScheduleOptions),

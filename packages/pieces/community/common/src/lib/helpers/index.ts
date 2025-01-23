@@ -28,7 +28,12 @@ export const getAccessTokenOrThrow = (
 
   return accessToken;
 };
-
+const joinBaseUrlWithRelativePath = ({ baseUrl, relativePath }: { baseUrl: string, relativePath: string }) => {
+  const baseUrlWithSlash = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
+  const relativePathWithoutSlash = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath
+  return `${baseUrlWithSlash}${relativePathWithoutSlash}`
+ }
+ 
 export function createCustomApiCallAction({
   auth,
   baseUrl,
@@ -60,6 +65,7 @@ export function createCustomApiCallAction({
   };
   extraProps?: InputPropertyMap;
 }) {
+ 
   return createAction({
     name: name ? name : 'custom_api_call',
     displayName: displayName ? displayName : 'Custom API Call',
@@ -77,7 +83,8 @@ export function createCustomApiCallAction({
           return {
             url: Property.ShortText({
               displayName: 'URL',
-              description: 'The full URL to use, including the base URL',
+              description: `You can either use the full URL or the relative path to the base URL 
+              i.e https://api.example.com/api/v1/users or /api/v1/users`,
               required: true,
               defaultValue: baseUrl(auth),
               ...(props?.url ?? {}),
@@ -145,10 +152,12 @@ export function createCustomApiCallAction({
           };
         }
       }
-
+      const urlValue = url['url'] as string;
+      const fullUrl = urlValue.startsWith('http://') || urlValue.startsWith('https://') ? urlValue :
+                     joinBaseUrlWithRelativePath({ baseUrl: baseUrl(context.auth), relativePath: urlValue})
       const request: HttpRequest<Record<string, unknown>> = {
         method,
-        url: url['url'],
+        url: fullUrl,
         headers: headersValue,
         queryParams: queryParams as QueryParams,
         timeout: timeout ? timeout * 1000 : 0,
@@ -169,3 +178,4 @@ export function createCustomApiCallAction({
     },
   });
 }
+

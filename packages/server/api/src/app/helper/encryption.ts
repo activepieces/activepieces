@@ -2,6 +2,7 @@ import * as crypto from 'crypto'
 import { randomBytes } from 'node:crypto'
 import { promisify } from 'util'
 
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
     isNil,
@@ -9,7 +10,6 @@ import {
 import { Static, Type } from '@sinclair/typebox'
 import { localFileStore } from './local-store'
 import { QueueMode, system } from './system/system'
-import { AppSystemProp } from './system/system-prop'
 
 let secret: string | null
 const algorithm = 'aes-256-cbc'

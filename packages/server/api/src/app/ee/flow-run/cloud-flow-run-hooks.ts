@@ -3,10 +3,10 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { FlowRunHooks } from '../../flows/flow-run/flow-run-hooks'
 import { system } from '../../helper/system/system'
-import { projectUsageService } from '../../project/usage/project-usage-service'
 import { alertsService } from '../alerts/alerts-service'
 import { emailService } from '../helper/email/email-service'
 import { issuesService } from '../issues/issues-service'
+import { BillingUsageType, usageService } from '../platform-billing/usage/usage-service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 
 export const platformRunHooks = (log: FastifyBaseLogger): FlowRunHooks => ({
@@ -29,18 +29,18 @@ export const platformRunHooks = (log: FastifyBaseLogger): FlowRunHooks => ({
         if (isNil(flowRun.tasks)) {
             return
         }
-        const consumedTasks = await projectUsageService(log).increaseUsage(flowRun.projectId, flowRun.tasks, 'tasks')
+        const { consumedProjectUsage } = await usageService(log).increaseProjectAndPlatformUsage({ projectId: flowRun.projectId, incrementBy: flowRun.tasks, usageType: BillingUsageType.TASKS })
         await sendQuotaAlertIfNeeded({
             projectId: flowRun.projectId,
-            consumedTasks,
+            consumedTasks: consumedProjectUsage,
             createdAt: dayjs().toISOString(),
-            previousConsumedTasks: consumedTasks - flowRun.tasks,
+            previousConsumedTasks: consumedProjectUsage - flowRun.tasks,
             log,
         })
     },
 })
 
-async function sendQuotaAlertIfNeeded({ projectId, createdAt, consumedTasks, previousConsumedTasks, log }: SendQuotaAlertIfNeededParams): Promise<void> {
+async function sendQuotaAlertIfNeeded({ projectId, consumedTasks, previousConsumedTasks, log }: SendQuotaAlertIfNeededParams): Promise<void> {
     const quotaAlerts: { limit: number, templateName: 'quota-50' | 'quota-90' | 'quota-100' }[] = [
         { limit: 1.0, templateName: 'quota-100' },
         { limit: 0.9, templateName: 'quota-90' },
@@ -51,7 +51,7 @@ async function sendQuotaAlertIfNeeded({ projectId, createdAt, consumedTasks, pre
     if (!tasksPerMonth) {
         return
     }
-    const resetDate = projectUsageService(log).getCurrentingEndPeriod(createdAt).replace(' UTC', '')
+    const resetDate = usageService(log).getCurrentBillingPeriodEnd().replace(' UTC', '')
     const currentUsagePercentage = (consumedTasks / tasksPerMonth) * 100
     const previousUsagePercentage = (previousConsumedTasks / tasksPerMonth) * 100
 

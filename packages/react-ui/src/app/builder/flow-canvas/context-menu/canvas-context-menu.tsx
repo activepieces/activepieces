@@ -29,6 +29,7 @@ export const CanvasShortcuts: CanvasShortcutsProps = {
     withCtrl: true,
     withShift: false,
     shortcutKey: 'c',
+    shouldNotPreventDefault: true,
   },
   Skip: {
     withCtrl: true,
@@ -36,7 +37,10 @@ export const CanvasShortcuts: CanvasShortcutsProps = {
     shortcutKey: 'e',
   },
 };
-
+export enum ContextMenuType {
+  CANVAS = 'CANVAS',
+  STEP = 'STEP',
+}
 export type CanvasContextMenuProps = Pick<
   BuilderState,
   | 'applyOperation'
@@ -49,6 +53,7 @@ export type CanvasContextMenuProps = Pick<
 > & {
   children?: React.ReactNode;
   actionsToPaste: Action[];
+  contextMenuType: ContextMenuType;
 };
 export const CanvasContextMenu = ({
   selectedNodes,
@@ -60,30 +65,24 @@ export const CanvasContextMenu = ({
   readonly,
   setPieceSelectorStep,
   actionsToPaste,
+  contextMenuType,
 }: CanvasContextMenuProps) => {
-  const doesNotContainTrigger = !selectedNodes.some(
-    (node) => node === flowVersion.trigger.name,
-  );
-
   return (
     <ContextMenu modal={false}>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-      {!doesNotContainTrigger && readonly ? (
-        <></>
-      ) : (
-        <ContextMenuContent>
-          <CanvasContextMenuContent
-            selectedNodes={selectedNodes}
-            applyOperation={applyOperation}
-            selectedStep={selectedStep}
-            flowVersion={flowVersion}
-            exitStepSettings={exitStepSettings}
-            readonly={readonly}
-            actionsToPaste={actionsToPaste}
-            setPieceSelectorStep={setPieceSelectorStep}
-          ></CanvasContextMenuContent>
-        </ContextMenuContent>
-      )}
+      <ContextMenuContent>
+        <CanvasContextMenuContent
+          selectedNodes={selectedNodes}
+          applyOperation={applyOperation}
+          selectedStep={selectedStep}
+          flowVersion={flowVersion}
+          exitStepSettings={exitStepSettings}
+          readonly={readonly}
+          actionsToPaste={actionsToPaste}
+          setPieceSelectorStep={setPieceSelectorStep}
+          contextMenuType={contextMenuType}
+        ></CanvasContextMenuContent>
+      </ContextMenuContent>
     </ContextMenu>
   );
 };

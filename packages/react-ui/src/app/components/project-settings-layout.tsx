@@ -34,36 +34,40 @@ export default function ProjectSettingsLayout({
   const sidebarNavItems: SidebarItem[] = [
     {
       title: t('General'),
-      href: '/settings/general',
+      href: authenticationSession.appendProjectRoutePrefix('/settings/general'),
       icon: <Settings size={iconSize} />,
     },
     {
       title: t('Appearance'),
-      href: '/settings/appearance',
+      href: authenticationSession.appendProjectRoutePrefix(
+        '/settings/appearance',
+      ),
       icon: <SunMoon size={iconSize} />,
     },
     {
       title: t('Team'),
-      href: '/settings/team',
+      href: authenticationSession.appendProjectRoutePrefix('/settings/team'),
       icon: <Users size={iconSize} />,
       hasPermission: checkAccess(Permission.READ_PROJECT_MEMBER),
     },
     {
       title: t('Pieces'),
-      href: '/settings/pieces',
+      href: authenticationSession.appendProjectRoutePrefix('/settings/pieces'),
       icon: <Puzzle size={iconSize} />,
     },
     {
       title: t('Alerts'),
-      href: '/settings/alerts',
+      href: authenticationSession.appendProjectRoutePrefix('/settings/alerts'),
       icon: <Bell size={iconSize} />,
       hasPermission: checkAccess(Permission.READ_ALERT),
     },
     {
-      title: t('Git Sync'),
-      href: '/settings/git-sync',
+      title: t('Environments'),
+      href: authenticationSession.appendProjectRoutePrefix(
+        '/settings/environments',
+      ),
       icon: <GitBranch size={iconSize} />,
-      hasPermission: checkAccess(Permission.READ_GIT_REPO),
+      hasPermission: checkAccess(Permission.READ_PROJECT_RELEASE),
     },
   ];
 
@@ -71,15 +75,10 @@ export default function ProjectSettingsLayout({
     platform.alertsEnabled || item.title !== t('Alerts');
   const filterOnPermission = (item: SidebarItem) =>
     isNil(item.hasPermission) || item.hasPermission;
-  const addProjectIdToHref = (item: SidebarItem) => ({
-    ...item,
-    href: `/projects/${currentProjectId}${item.href}`,
-  });
 
   const filteredNavItems = sidebarNavItems
     .filter(filterAlerts)
-    .filter(filterOnPermission)
-    .map(addProjectIdToHref);
+    .filter(filterOnPermission);
 
   return (
     <SidebarLayout title={t('Settings')} items={filteredNavItems}>

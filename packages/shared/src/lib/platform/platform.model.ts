@@ -59,6 +59,13 @@ export const CopilotSettingsWithoutSensitiveData = Type.Object({
 })
 export type CopilotSettingsWithoutSensitiveData = Static<typeof CopilotSettingsWithoutSensitiveData>
 
+export const PlatformUsage = Type.Object({
+    tasks: Type.Number(),
+    aiCredits: Type.Number(),
+})
+
+export type PlatformUsage = Static<typeof PlatformUsage>
+
 export const Platform = Type.Object({
     ...BaseModelSchema,
     ownerId: ApId,
@@ -77,7 +84,7 @@ export const Platform = Type.Object({
     filteredPieceBehavior: Type.Enum(FilteredPieceBehavior),
     smtp: Type.Optional(SMTPInformation),
     cloudAuthEnabled: Type.Boolean(),
-    gitSyncEnabled: Type.Boolean(),
+    environmentsEnabled: Type.Boolean(),
     analyticsEnabled: Type.Boolean(),
     showPoweredBy: Type.Boolean(),
     auditLogEnabled: Type.Boolean(),
@@ -128,6 +135,7 @@ export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     'gitSyncEnabled',
     'analyticsEnabled',
     'showPoweredBy',
+    'environmentsEnabled',
     'auditLogEnabled',
     'embeddingEnabled',
     'managePiecesEnabled',

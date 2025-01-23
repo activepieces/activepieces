@@ -73,11 +73,13 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   const openNewWindow = useNewWindow();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
-    platform.gitSyncEnabled,
+    platform.environmentsEnabled,
   );
   const { checkAccess } = useAuthorization();
   const userHasPermissionToUpdateFlow = checkAccess(Permission.WRITE_FLOW);
-  const userHasPermissionToPushToGit = checkAccess(Permission.WRITE_GIT_REPO);
+  const userHasPermissionToPushToGit = checkAccess(
+    Permission.WRITE_PROJECT_RELEASE,
+  );
   const importFlowProps: ImportFlowDialogProps = {
     insideBuilder: true,
     flowId: flow.id,
@@ -88,16 +90,21 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
 
   const { mutate: duplicateFlow, isPending: isDuplicatePending } = useMutation({
     mutationFn: async () => {
+      const modifiedFlowVersion = {
+        ...flowVersion,
+        displayName: `${flowVersion.displayName} - Copy`,
+      };
       const createdFlow = await flowsApi.create({
-        displayName: flowVersion.displayName,
+        displayName: modifiedFlowVersion.displayName,
         projectId: authenticationSession.getProjectId()!,
+        folderId: flow.folderId ?? undefined,
       });
       const updatedFlow = await flowsApi.update(createdFlow.id, {
         type: FlowOperationType.IMPORT_FLOW,
         request: {
-          displayName: flowVersion.displayName,
-          trigger: flowVersion.trigger,
-          schemaVersion: flowVersion.schemaVersion,
+          displayName: modifiedFlowVersion.displayName,
+          trigger: modifiedFlowVersion.trigger,
+          schemaVersion: modifiedFlowVersion.schemaVersion,
         },
       });
       return updatedFlow;
@@ -252,7 +259,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                     {isDevelopmentBranch && (
                       <div className="font-bold mt-2">
                         {t(
-                          'You are on a development branch, this will not delete the flow from the remote repository.',
+                          'You are on a development branch, this will also delete the flow from the remote repository.',
                         )}
                       </div>
                     )}

@@ -184,11 +184,9 @@ const ImportFlowDialog = (
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    console.log('handleFileChange');
     const files = event.target.files;
     if (!files?.[0]) return;
 
-    console.log('handleFileChange 2');
     setTemplates([]);
     setFailedFiles([]);
     setErrorMessage('');

@@ -8,11 +8,7 @@ import { Socket } from 'socket.io-client';
 import { useSocket } from '@/components/socket-provider';
 import { CardList } from '@/components/ui/card-list';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import {
-  INTERNAL_ERROR_TOAST,
-  toast,
-  UNSAVED_CHANGES_TOAST,
-} from '@/components/ui/use-toast';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import {
   ActionType,
   CodeAction,
@@ -186,16 +182,13 @@ export const CopilotSidebar = () => {
       codeAction.displayName = message.content.title;
       codeAction.customLogoUrl = message.content.icon;
       if (askAiButtonProps.type === FlowOperationType.ADD_ACTION) {
-        applyOperation(
-          {
-            type: FlowOperationType.ADD_ACTION,
-            request: {
-              action: codeAction,
-              ...askAiButtonProps.actionLocation,
-            },
+        applyOperation({
+          type: FlowOperationType.ADD_ACTION,
+          request: {
+            action: codeAction,
+            ...askAiButtonProps.actionLocation,
           },
-          () => toast(UNSAVED_CHANGES_TOAST),
-        );
+        });
         selectStepByName(stepName);
         setAskAiButtonProps({
           type: FlowOperationType.UPDATE_ACTION,
@@ -207,28 +200,25 @@ export const CopilotSidebar = () => {
           flowVersion.trigger,
         );
         if (step) {
-          applyOperation(
-            {
-              type: FlowOperationType.UPDATE_ACTION,
-              request: {
-                displayName: message.content.title,
-                name: step.name,
-                customLogoUrl: message.content.icon,
-                settings: {
-                  ...codeAction.settings,
-                  input: message.content.inputs,
-                  errorHandlingOptions:
-                    step.type === ActionType.CODE ||
-                    step.type === ActionType.PIECE
-                      ? step.settings.errorHandlingOptions
-                      : codeAction.settings.errorHandlingOptions,
-                },
-                type: ActionType.CODE,
-                valid: true,
+          applyOperation({
+            type: FlowOperationType.UPDATE_ACTION,
+            request: {
+              displayName: message.content.title,
+              name: step.name,
+              customLogoUrl: message.content.icon,
+              settings: {
+                ...codeAction.settings,
+                input: message.content.inputs,
+                errorHandlingOptions:
+                  step.type === ActionType.CODE ||
+                  step.type === ActionType.PIECE
+                    ? step.settings.errorHandlingOptions
+                    : codeAction.settings.errorHandlingOptions,
               },
+              type: ActionType.CODE,
+              valid: true,
             },
-            () => toast(UNSAVED_CHANGES_TOAST),
-          );
+          });
         }
       }
     }
