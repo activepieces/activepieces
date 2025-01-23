@@ -17,20 +17,26 @@ export const licenseKeysTrialService = (log: FastifyBaseLogger): {
         selfHosting,
         ultimatePlan,
     }: RequestTrialParams): Promise<{ message: string }> {
-        const disabledFeatures = getDisabledFeatures(ultimatePlan)
-        const activationMessage = 'Activation Path: Platform Admin -> Setup -> License Keys\n\n'
-        let message = ''
-        
-        if (selfHosting) {
-            const { trialLicenseKey } = await generateSelfHostingTrialLicense(email, companyName, disabledFeatures, log)
-            message = `Your license key is: ${trialLicenseKey}. \n\n ${activationMessage}`
+        try {
+            const disabledFeatures = getDisabledFeatures(ultimatePlan)
+            const activationMessage = 'Activation Path: Platform Admin -> Setup -> License Keys'
+            let message = ''
+            
+            if (selfHosting) {
+                const { trialLicenseKey } = await generateSelfHostingTrialLicense(email, companyName, disabledFeatures, log)
+                message = `Your license key is: ${trialLicenseKey}. <br><br> ${activationMessage}`
+            }
+            else {
+                const platform = await fetchPlatform(email)
+                const { trialLicenseKey1, trialLicenseKey2, subdomain } = await generateCloudTrialLicense(email, platform.id, companyName, disabledFeatures, log)
+                message = `Your development license key is: ${trialLicenseKey1}. <br><br> Your production license key is: ${trialLicenseKey2}. <br><br> Your domain is: ${subdomain}. <br><br> ${activationMessage}`
+            }
+            return { message }
         }
-        else {
-            const platform = await fetchPlatform(email)
-            const { trialLicenseKey1, trialLicenseKey2, subdomain } = await generateCloudTrialLicense(email, platform.id, companyName, disabledFeatures, log)
-            message = `Your development key is: ${trialLicenseKey1}. Your production key is: ${trialLicenseKey2}. and your domain is: ${subdomain}. \n\n ${activationMessage}`
+        catch (e) {
+            log.error(e, '[LicenseKeysTrialService#requestTrial] Failed to request trial')
+            return { message: 'Failed to request trial. Please try again later or contact support.' }
         }
-        return { message }
     },
 
     async extendTrial({

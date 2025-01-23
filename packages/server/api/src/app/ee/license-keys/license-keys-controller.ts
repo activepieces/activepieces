@@ -12,7 +12,7 @@ const key = system.get<string>(AppSystemProp.LICENSE_KEY)
 
 export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
 
-    app.post('/generate-trial-key', GenerateTrialRequest, async (req, res) => {
+    app.post('/', GenerateTrialRequest, async (req, res) => {
         const { email, companyName, selfHosting, ultimatePlan } = req.body as { email: string, companyName: string, selfHosting: boolean, ultimatePlan: boolean }
         const { message } = await licenseKeysTrialService(req.log).requestTrial({ email, companyName, selfHosting, ultimatePlan })
         return res.status(StatusCodes.OK).send({ message })
@@ -71,15 +71,15 @@ const GenerateTrialRequest = {
             type: 'object',
             properties: {
                 email: { type: 'string' },
+                companyName: { type: 'string' },
                 selfHosting: { type: 'boolean' },
-                plan: { type: 'string' },
+                ultimatePlan: { type: 'boolean' },
             },
-            required: ['email', 'selfHosting', 'plan'],
+            required: ['email', 'companyName', 'selfHosting', 'ultimatePlan'],
         },
     },
     config: {
-        // allowedPrincipals: [PrincipalType.SUPER_USER],
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.SUPER_USER],
     },
 }
 
@@ -94,9 +94,7 @@ const ExtendTrialRequest = {
         },
     },
     config: {
-        // allowedPrincipals: [PrincipalType.SUPER_USER],
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        // scope: EndpointScope.PLATFORM,
+        allowedPrincipals: [PrincipalType.SUPER_USER],
     },
 }
 
