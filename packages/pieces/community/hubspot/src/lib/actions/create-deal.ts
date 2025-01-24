@@ -1,288 +1,89 @@
-import {
-  AuthenticationType,
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
-
 import { hubspotAuth } from '../../';
 
-import {
-  DynamicPropsValue,
-  PiecePropValueSchema,
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework';
 
+import { MarkdownVariant } from '@activepieces/shared';
+import { OBJECT_TYPE } from '../common/constants';
 import {
-  ListDealPipelinesResponse,
-  ListOwnersResponse,
-  ListPipelineStagesResponse,
-  ListPropertiesResponse,
-  PropertyResponse,
-} from '../common/models';
+	getDefaultPropertiesForObject,
+	pipelineDropdown,
+	pipelineStageDropdown,
+	standardObjectDynamicProperties,
+	standardObjectPropertiesDropdown,
+} from '../common/props';
+
+import { Client } from '@hubspot/api-client';
 
 export const createDealAction = createAction({
-  auth: hubspotAuth,
-  name: 'create_deal',
-  displayName: 'Create Deal',
-  description: 'Creates a new deal in hubspot.',
-  props: {
-    dealname: Property.ShortText({
-      displayName: 'Deal Name',
-      required: true,
-    }),
-    amount: Property.Number({
-      displayName: 'Deal Amount',
-      required: false,
-    }),
-    pipelineId: Property.Dropdown({
-      displayName: 'Deal Pipeline',
-      refreshers: [],
-      required: true,
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please connect your account first.',
-            options: [],
-          };
-        }
-        const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-        const request: HttpRequest = {
-          method: HttpMethod.GET,
-          url: 'https://api.hubapi.com/crm/v3/pipelines/deals',
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: authValue.access_token,
-          },
-        };
-        const response =
-          await httpClient.sendRequest<ListDealPipelinesResponse>(request);
-        return {
-          disabled: false,
-          options: response.body.results.map((pipeline) => {
-            return {
-              label: pipeline.label,
-              value: pipeline.id,
-            };
-          }),
-        };
-      },
-    }),
-    dealstageId: Property.Dropdown({
-      displayName: 'Deal Stage',
-      refreshers: ['pipelineId'],
-      required: true,
-      options: async ({ auth, pipelineId }) => {
-        if (!auth || !pipelineId) {
-          return {
-            disabled: true,
-            placeholder:
-              'Please connect your account first and select pipeline.',
-            options: [],
-          };
-        }
-        const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-        const request: HttpRequest = {
-          method: HttpMethod.GET,
-          url: `https://api.hubapi.com/crm/v3/pipelines/deals/${pipelineId}/stages`,
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: authValue.access_token,
-          },
-        };
-        const response =
-          await httpClient.sendRequest<ListPipelineStagesResponse>(request);
-        return {
-          disabled: false,
-          options: response.body.results.map((stage) => {
-            return {
-              label: stage.label,
-              value: stage.id,
-            };
-          }),
-        };
-      },
-    }),
-    hubspot_owner_id: Property.Dropdown({
-      displayName: 'Deal Owner',
-      refreshers: [],
-      required: false,
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please connect your account first.',
-            options: [],
-          };
-        }
-        const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-        const request: HttpRequest = {
-          method: HttpMethod.GET,
-          url: 'https://api.hubapi.com/crm/v3/owners',
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: authValue.access_token,
-          },
-        };
-        const response = await httpClient.sendRequest<ListOwnersResponse>(
-          request
-        );
-        return {
-          disabled: false,
-          options: response.body.results.map((owner) => {
-            return {
-              label: owner.email,
-              value: owner.id,
-            };
-          }),
-        };
-      },
-    }),
-    additionalFields: Property.DynamicProperties({
-      displayName: 'Additional Fields',
-      refreshers: [],
-      required: true,
-      props: async ({ auth }) => {
-        if (!auth) return {};
+	auth: hubspotAuth,
+	name: 'create-deal',
+	displayName: 'Create Deal',
+	description: 'Creates a new deal in Hubspot.',
+	props: {
+		dealname: Property.ShortText({
+			displayName: 'Deal Name',
+			required: true,
+		}),
+		pipelineId: pipelineDropdown({
+			objectType: OBJECT_TYPE.DEAL,
+			displayName: 'Deal Pipeline',
+			required: true,
+		}),
+		pipelineStageId: pipelineStageDropdown({
+			objectType: OBJECT_TYPE.DEAL,
+			displayName: 'Deal Stage',
+			required: true,
+		}),
+		objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.DEAL, [
+			'dealname',
+			'pipeline',
+			'dealstage',
+		]),
+		markdown: Property.MarkDown({
+			variant: MarkdownVariant.INFO,
+			value: `### Properties to retrieve:
+                                        
+              dealtype, dealname, amount, description, closedate, createdate, num_associated_contacts, hs_forecast_amount, hs_forecast_probability, hs_manual_forecast_category, hs_next_step, hs_object_id, hs_lastmodifieddate, hubspot_owner_id, hubspot_team_id
+                                                
+              **Specify here a list of additional properties to retrieve**`,
+		}),
+		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
+			objectType: OBJECT_TYPE.DEAL,
+			displayName: 'Additional properties to retrieve',
+			required: false,
+		}),
+	},
+	async run(context) {
+		const { dealname, pipelineId, pipelineStageId } = context.propsValue;
+		const objectProperites = context.propsValue.objectProperties ?? {};
+		const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve ?? [];
 
-        const fields: DynamicPropsValue = {};
-        const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
+		const dealProperties: Record<string, string> = {
+			dealname,
+			pipeline: pipelineId!,
+			dealstage: pipelineStageId!,
+		};
 
-        const request: HttpRequest = {
-          method: HttpMethod.GET,
-          url: 'https://api.hubapi.com/crm/v3/properties/deals',
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: authValue.access_token,
-          },
-        };
+		// Add additional properties to the dealProperties object
+		Object.entries(objectProperites).forEach(([key, value]) => {
+			// Format values if they are arrays
+			dealProperties[key] = Array.isArray(value) ? value.join(';') : value;
+		});
 
-        const response = await httpClient.sendRequest<ListPropertiesResponse>(
-          request
-        );
+		const client = new Client({ accessToken: context.auth.access_token });
 
-        for (const property of response.body.results) {
-          if (isRelevantProperty(property)) {
-            switch (property.fieldType) {
-              case 'booleancheckbox':
-              case 'radio':
-              case 'select':
-                fields[property.name] = Property.StaticDropdown({
-                  displayName: property.label,
-                  description: property.description ?? '',
-                  required: false,
-                  options: {
-                    disabled: false,
-                    options: property.options.map((option) => {
-                      return {
-                        label: option.label,
-                        value: option.value,
-                      };
-                    }),
-                  },
-                });
-                break;
-              case 'checkbox':
-                fields[property.name] = Property.StaticMultiSelectDropdown({
-                  displayName: property.label,
-                  description: property.description ?? '',
-                  required: false,
-                  options: {
-                    disabled: false,
-                    options: property.options.map((option) => {
-                      return {
-                        label: option.label,
-                        value: option.value,
-                      };
-                    }),
-                  },
-                });
-                break;
-              case 'date':
-                fields[property.name] = Property.DateTime({
-                  displayName: property.label,
-                  description: property.description ?? '',
-                  required: false,
-                });
-                break;
-              case 'file':
-                fields[property.name] = Property.File({
-                  displayName: property.label,
-                  description: property.description ?? '',
-                  required: false,
-                });
-                break;
-              case 'text':
-              case 'phonenumber':
-              case 'html':
-                fields[property.name] = Property.ShortText({
-                  displayName: property.label,
-                  description: property.description ?? '',
-                  required: false,
-                });
-                break;
-              case 'textarea':
-                fields[property.name] = Property.LongText({
-                  displayName: property.label,
-                  description: property.description ?? '',
-                  required: false,
-                });
-                break;
-              default:
-                break;
-            }
-          }
-        }
-        return fields;
-      },
-    }),
-  },
-  async run(context) {
-    const additionalFields = context.propsValue.additionalFields;
-    const properties: DynamicPropsValue = {};
-    Object.entries(additionalFields).forEach(([key, value]) => {
-      if (Array.isArray(value)) {
-        properties[key] = value.join(';');
-      } else {
-        properties[key] = value;
-      }
-    });
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: 'https://api.hubapi.com/crm/v3/objects/deals',
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.access_token,
-      },
-      body: {
-        properties: {
-          dealname: context.propsValue.dealname,
-          amount: context.propsValue.amount,
-          pipeline: context.propsValue.pipelineId,
-          dealstage: context.propsValue.dealstageId,
-          hubspot_owner_id: context.propsValue.hubspot_owner_id,
-          ...properties,
-        },
-      },
-    };
-    const response = await httpClient.sendRequest(request);
-    return response.body;
-  },
+		const createdDeal = await client.crm.deals.basicApi.create({
+			properties: dealProperties,
+		});
+		// Retrieve default properties for the deal and merge with additional properties to retrieve
+		const defaultDealProperties = getDefaultPropertiesForObject(OBJECT_TYPE.DEAL);
+
+		const dealDetails = await client.crm.deals.basicApi.getById(createdDeal.id, [
+			...defaultDealProperties,
+			...additionalPropertiesToRetrieve,
+		]);
+
+		return dealDetails;
+	},
 });
 
-function isRelevantProperty(property: PropertyResponse) {
-  return (
-    !property.modificationMetadata.readOnlyValue &&
-    !property.hidden &&
-    !property.externalOptions &&
-    ![
-      'dealname',
-      'pipeline',
-      'dealstage',
-      'hubspot_owner_id',
-      'amount',
-    ].includes(property.name)
-  );
-}

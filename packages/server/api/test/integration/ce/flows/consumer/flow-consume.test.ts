@@ -21,9 +21,7 @@ import {
     createMockFlow,
     createMockFlowRun,
     createMockFlowVersion,
-    createMockPlatform,
-    createMockProject,
-    createMockUser,
+    mockAndSaveBasicSetup,
 } from '../../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
@@ -48,14 +46,7 @@ afterAll(async () => {
 
 describe('flow execution', () => {
     it('should execute simple flow with code and data mapper', async () => {
-        const mockUser = createMockUser()
-        await databaseConnection().getRepository('user').save([mockUser])
-
-        const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
-        await databaseConnection().getRepository('platform').save([mockPlatform])
-
-        const mockProject = createMockProject({ ownerId: mockUser.id, platformId: mockPlatform.id })
-        await databaseConnection().getRepository('project').save([mockProject])
+        const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup()
 
         const mockFlow = createMockFlow({
             projectId: mockProject.id,
@@ -65,7 +56,7 @@ describe('flow execution', () => {
 
         const mockFlowVersion = createMockFlowVersion({
             flowId: mockFlow.id,
-            updatedBy: mockUser.id,
+            updatedBy: mockOwner.id,
             state: FlowVersionState.LOCKED,
             trigger: {
                 type: TriggerType.PIECE,

@@ -4,17 +4,17 @@ import {
     MAXIMUM_ALLOWED_TASKS,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
+    ApEnvironment,
     assertNotNullOrUndefined,
     Cursor,
     ErrorCode,
     FlowStatus,
     isNil,
     PlatformId,
-    PlatformRole,
-    PrincipalType,
     Project,
     ProjectId,
     ProjectWithLimits,
@@ -23,7 +23,7 @@ import {
     UserStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, Equal, ILike, In, IsNull } from 'typeorm'
+import { EntityManager, Equal, In, IsNull } from 'typeorm'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -34,48 +34,30 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
 import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
-import { projectUsageService } from '../../project/usage/project-usage-service'
-import {  userService } from '../../user/user-service'
-import { projectBillingService } from '../billing/project-billing/project-billing.service'
+import { userService } from '../../user/user-service'
+import { platformBillingService } from '../platform-billing/platform-billing.service'
+import { BillingEntityType, usageService } from '../platform-billing/usage/usage-service'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 import { platformProjectSideEffects } from './platform-project-side-effects'
-
 const projectRepo = repoFactory(ProjectEntity)
 const projectMemberRepo = repoFactory(ProjectMemberEntity)
+
 export const platformProjectService = (log: FastifyBaseLogger) => ({
-    async getAll(params: GetAllParams): Promise<SeekPage<ProjectWithLimits>> {
-        const { cursorRequest, limit } = params
-        const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
-        const paginator = buildPaginator({
-            entity: ProjectEntity,
-            query: {
-                limit,
-                order: 'ASC',
-                afterCursor: decodedCursor.nextCursor,
-                beforeCursor: decodedCursor.previousCursor,
-            },
+    async getAllForPlatform(params: GetAllForParamsAndUser): Promise<SeekPage<ProjectWithLimits>> {
+        const user = await userService.getOneOrFail({
+            id: params.userId,
         })
-        const filters = await createFilters(params)
-        const queryBuilder = projectRepo()
-            .createQueryBuilder('project')
-            .leftJoinAndMapOne(
-                'project.plan',
-                'project_plan',
-                'project_plan',
-                'project.id = "project_plan"."projectId"',
-            )
-            .where(filters)
-            .groupBy('project.id') 
-            .addGroupBy('"project_plan"."id"') 
-
-        const { data, cursor } = await paginator.paginate(queryBuilder)
-        const projects: ProjectWithLimits[] = await Promise.all(
-            data.map((project) => enrichProject(project, log)),
-        )
-        return paginationHelper.createPage<ProjectWithLimits>(projects, cursor)
+        assertNotNullOrUndefined(user.platformId, 'platformId is undefined')
+        const projects = await projectService.getAllForUser({
+            platformId: user.platformId,
+            userId: params.userId,
+        })
+        return getProjects({
+            ...params,
+            projectIds: projects.map((project) => project.id),
+        }, log)
     },
-
     async update({
         projectId,
         request,
@@ -139,12 +121,53 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     },
 })
 
+async function getProjects(params: GetAllParams & { projectIds?: string[] }, log: FastifyBaseLogger): Promise<SeekPage<ProjectWithLimits>> {
+    const { cursorRequest, limit, platformId, displayName, externalId, projectIds } = params
+    const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
+    const paginator = buildPaginator({
+        entity: ProjectEntity,
+        query: {
+            limit,
+            order: 'ASC',
+            afterCursor: decodedCursor.nextCursor,
+            beforeCursor: decodedCursor.previousCursor,
+        },
+    })
+    const filters = {
+        platformId: Equal(platformId),
+        deleted: IsNull(),
+        ...spreadIfDefined('externalId', externalId),
+        ...spreadIfDefined('displayName', displayName),
+        ...(projectIds ? { id: In(projectIds) } : {}),
+    }
+
+    const queryBuilder = projectRepo()
+        .createQueryBuilder('project')
+        .leftJoinAndMapOne(
+            'project.plan',
+            'project_plan',
+            'project_plan',
+            'project.id = "project_plan"."projectId"',
+        )
+        .where(filters)
+        .groupBy('project.id')
+        .addGroupBy('"project_plan"."id"')
+
+    const { data, cursor } = await paginator.paginate(queryBuilder)
+    const projects: ProjectWithLimits[] = await Promise.all(
+        data.map((project) => enrichProject(project, log)),
+    )
+    return paginationHelper.createPage<ProjectWithLimits>(projects, cursor)
+}
+
+type GetAllForParamsAndUser = {
+    userId: string
+} & GetAllParams
+
 type GetAllParams = {
-    principalType: PrincipalType
-    principalId: string
     platformId: string
-    externalId?: string
     displayName?: string
+    externalId?: string
     cursorRequest: Cursor | null
     limit: number
 }
@@ -158,69 +181,19 @@ async function isSubscribedInStripe(projectId: ProjectId, log: FastifyBaseLogger
     if (!isCloud) {
         return false
     }
-    const status = await projectBillingService(log).getOrCreateForProject(projectId)
-    return status.subscriptionStatus === ApSubscriptionStatus.ACTIVE
+    const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
+    if (environment === ApEnvironment.TESTING) {
+        return false
+    }
+    const project = await projectService.getOneOrThrow(projectId)
+    const status = await platformBillingService(log).getOrCreateForPlatform(project.platformId)
+    return status.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE
 }
 function isCustomerPlatform(platformId: string | undefined): boolean {
     if (isNil(platformId)) {
         return true
     }
     return !flagService.isCloudPlatform(platformId)
-}
-async function createFilters({ platformId, principalType, principalId, externalId, displayName }: GetAllParams) {
-    const displayNameFilter = displayName ? {
-        displayName: ILike(`%${displayName}%`),
-    } : {}
-    const commonFilter = {
-        deleted: IsNull(),
-        ...spreadIfDefined('platformId', platformId),
-        ...spreadIfDefined('externalId', externalId),
-        ...displayNameFilter,
-    }
-    switch (principalType) {
-        case PrincipalType.SERVICE: {
-            return commonFilter
-        }
-        case PrincipalType.USER: {
-            const user = await userService.getMetaInfo({ id: principalId })
-            assertNotNullOrUndefined(user, 'User not found')
-            if (user.platformRole === PlatformRole.ADMIN) {
-                return commonFilter
-            }
-            else {
-                const ids = await getIdsOfProjects({
-                    platformId,
-                    userId: user.id,
-                })
-                return [
-                    {
-                        ...commonFilter,
-                        id: In(ids),
-                    },
-                    {
-                        ...commonFilter,
-                        ownerId: Equal(user.id),
-                    },
-                ]
-            }
-        }
-        default: {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'INVALID_PRINCIPAL_TYPE',
-                },
-            })
-        }
-    }
-}
-
-async function getIdsOfProjects({ platformId, userId }: { platformId: string, userId: string }): Promise<string[]> {
-    const members = await projectMemberRepo().findBy({
-        userId,
-        platformId: Equal(platformId),
-    })
-    return members.map((member) => member.projectId)
 }
 
 async function enrichProject(
@@ -236,7 +209,7 @@ async function enrichProject(
         .groupBy('user.id')
         .where(`user.status = '${UserStatus.ACTIVE}' and project_member."projectId" = '${project.id}'`)
         .getCount()
-  
+
     const totalFlows = await flowService(log).count({
         projectId: project.id,
     })
@@ -246,18 +219,18 @@ async function enrichProject(
         status: FlowStatus.ENABLED,
     })
 
-  
+
     return {
         ...project,
         plan: await projectLimitsService.getOrCreateDefaultPlan(
             project.id,
             DEFAULT_FREE_PLAN_LIMIT,
         ),
-        usage: await projectUsageService(log).getUsageForBillingPeriod(
+        usage: await usageService(log).getUsageForBillingPeriod(
             project.id,
-            projectUsageService(log).getCurrentingStartPeriod(project.created),
+            BillingEntityType.PROJECT,
         ),
-        analytics: { 
+        analytics: {
             activeFlows,
             totalFlows,
             totalUsers,

@@ -11,6 +11,8 @@ import {
   ProjectRole,
   SignInRequest,
   SignUpRequest,
+  SwitchPlatformRequest,
+  SwitchProjectRequest,
   ThirdPartyAuthnProviderEnum,
 } from '@activepieces/shared';
 
@@ -49,5 +51,17 @@ export const authenticationApi = {
   },
   verifyEmail(request: VerifyEmailRequestBody) {
     return api.post<void>('/v1/authn/local/verify-email', request);
+  },
+  switchProject(request: SwitchProjectRequest) {
+    return api.post<AuthenticationResponse>(
+      `/v1/authentication/switch-project`,
+      request,
+    );
+  },
+  switchPlatform(request: SwitchPlatformRequest) {
+    return api.post<AuthenticationResponse>(
+      `/v1/authentication/switch-platform`,
+      request,
+    );
   },
 };

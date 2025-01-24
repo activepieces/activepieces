@@ -1,11 +1,12 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { ConfigureRepoRequest, GitRepo } from '@activepieces/ee-shared'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEnvironment, ErrorCode } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import simpleGit, { SimpleGit } from 'simple-git'
+import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-prop'
 import { userService } from '../../../user/user-service'
 
 
@@ -28,7 +29,7 @@ async function commitAndPush(
 async function createGitRepoAndReturnPaths(
     gitRepo: GitRepo,
     userId: string,
-): Promise<{ flowFolderPath: string, git: SimpleGit, stateFolderPath: string }> {
+): Promise<{ flowFolderPath: string, git: SimpleGit, stateFolderPath: string, connectionsFolderPath: string }> {
     const tmpFolder = path.join('/', 'tmp', 'repo', gitRepo.projectId)
     try {
         await fs.rmdir(tmpFolder, { recursive: true })
@@ -42,7 +43,14 @@ async function createGitRepoAndReturnPaths(
         gitRepo.slug,
         'flows',
     )
+    const connectionsFolderPath = path.join(
+        tmpFolder,
+        'projects',
+        gitRepo.slug,
+        'connections',
+    )
     await fs.mkdir(flowFolderPath, { recursive: true })
+    await fs.mkdir(connectionsFolderPath, { recursive: true })
     const stateFolderPath = path.join(
         tmpFolder,
         'projects',
@@ -55,15 +63,18 @@ async function createGitRepoAndReturnPaths(
     const git = await initGitRepo(keyPath, gitRepo.remoteUrl, tmpFolder, gitRepo.branch)
     await git.pull('origin', gitRepo.branch)
 
-    const { email, firstName, lastName } = await userService.getOneOrFail({
+    const user = await userService.getOneOrFail({
         id: userId,
     })
+    const identity = await userIdentityService(system.globalLogger()).getBasicInformation(user.identityId)
+    const { email, firstName, lastName } = identity
     await git.addConfig('user.email', email)
     await git.addConfig('user.name', `${firstName} ${lastName}`)
     return {
         git,
         flowFolderPath,
         stateFolderPath,
+        connectionsFolderPath,
     }
 }
 

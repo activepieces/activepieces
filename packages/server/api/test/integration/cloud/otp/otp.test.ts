@@ -5,7 +5,7 @@ import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import * as emailServiceFile from '../../../../src/app/ee/helper/email/email-service'
 import { setupServer } from '../../../../src/app/server'
-import { CLOUD_PLATFORM_ID, createMockPlatform, createMockUser } from '../../../helpers/mocks'
+import { mockAndSaveBasicSetup } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
 let sendOtpSpy: jest.Mock
@@ -36,15 +36,10 @@ afterAll(async () => {
 describe('OTP API', () => {
     describe('Create and Send Endpoint', () => {
         it('Generates new OTP', async () => {
-            const mockUser = createMockUser()
-            await databaseConnection().getRepository('user').save(mockUser)
-
-            const mockPlatform = createMockPlatform({ id: CLOUD_PLATFORM_ID, ownerId: mockUser.id })
-            await databaseConnection().getRepository('platform').save(mockPlatform)
-            await databaseConnection().getRepository('user').update(mockUser.id, { platformId: mockPlatform.id })
+            const { mockUserIdentity } = await mockAndSaveBasicSetup()
 
             const mockCreateOtpRequest = {
-                email: mockUser.email,
+                email: mockUserIdentity.email,
                 type: OtpType.EMAIL_VERIFICATION,
             }
 
@@ -60,15 +55,14 @@ describe('OTP API', () => {
         })
 
         it('Sends OTP to user', async () => {
-            const mockUser = createMockUser()
-            await databaseConnection().getRepository('user').save(mockUser)
+            const { mockUserIdentity } = await mockAndSaveBasicSetup()
 
-            const mockPlatform = createMockPlatform({ id: CLOUD_PLATFORM_ID, ownerId: mockUser.id })
-            await databaseConnection().getRepository('platform').save(mockPlatform)
-            await databaseConnection().getRepository('user').update(mockUser.id, { platformId: mockPlatform.id })
-            
+            await databaseConnection().getRepository('user_identity').update(mockUserIdentity.id, {
+                verified: false,
+            })
+
             const mockCreateOtpRequest = {
-                email: mockUser.email,
+                email: mockUserIdentity.email,
                 type: OtpType.EMAIL_VERIFICATION,
             }
 
@@ -84,24 +78,19 @@ describe('OTP API', () => {
             expect(sendOtpSpy).toHaveBeenCalledTimes(1)
             expect(sendOtpSpy).toHaveBeenCalledWith({
                 otp: expect.stringMatching(/^([0-9A-F]|-){36}$/i),
-                platformId: CLOUD_PLATFORM_ID,
+                platformId: null,
                 type: OtpType.EMAIL_VERIFICATION,
-                user: expect.objectContaining({
-                    email: mockUser.email,
+                userIdentity: expect.objectContaining({
+                    email: mockUserIdentity.email,
                 }),
             })
         })
 
         it('OTP is unique per user per OTP type', async () => {
-            const mockUser = createMockUser()
-            await databaseConnection().getRepository('user').save(mockUser)
-
-            const mockPlatform = createMockPlatform({ id: CLOUD_PLATFORM_ID, ownerId: mockUser.id })
-            await databaseConnection().getRepository('platform').save(mockPlatform)
-            await databaseConnection().getRepository('user').update(mockUser.id, { platformId: mockPlatform.id })
+            const { mockUserIdentity } = await mockAndSaveBasicSetup()
 
             const mockCreateOtpRequest = {
-                email: mockUser.email,
+                email: mockUserIdentity.email,
                 type: OtpType.EMAIL_VERIFICATION,
             }
 
@@ -123,7 +112,7 @@ describe('OTP API', () => {
             expect(response2?.statusCode).toBe(StatusCodes.NO_CONTENT)
 
             const otpCount = await databaseConnection().getRepository('otp').countBy({
-                userId: mockUser.id,
+                identityId: mockUserIdentity.id,
                 type: mockCreateOtpRequest.type,
             })
 

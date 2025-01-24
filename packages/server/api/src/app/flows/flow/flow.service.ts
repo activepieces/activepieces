@@ -1,4 +1,4 @@
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -29,7 +29,6 @@ import { distributedLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
 import { telemetry } from '../../helper/telemetry.utils'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
@@ -40,17 +39,26 @@ import { flowRepo } from './flow.repo'
 
 const TRIGGER_FAILURES_THRESHOLD = system.getNumberOrThrow(AppSystemProp.TRIGGER_FAILURES_THRESHOLD)
 
-
-export const flowService = (log: FastifyBaseLogger) => ({
-    async create({ projectId, request, externalId }: CreateParams): Promise<PopulatedFlow> {
-
-        const folderId = isNil(request.folderName) ? null : (await flowFolderService(log).upsert({
+const getFolderIdFromRequest = async ({ projectId, folderId, folderName, log }: { projectId: string, folderId: string | undefined, folderName: string | undefined, log: FastifyBaseLogger }) => {
+    if (folderId) {
+        return folderId
+    }
+    if (folderName) {
+        return (await flowFolderService(log).upsert({
             projectId,
             request: {
                 projectId,
-                displayName: request.folderName,
+                displayName: folderName,
             },
         })).id
+    }
+    return null
+}
+
+export const flowService = (log: FastifyBaseLogger) => ({
+    async create({ projectId, request, externalId }: CreateParams): Promise<PopulatedFlow> {
+     
+        const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId, folderName: request.folderName, log })
         const newFlow: NewFlow = {
             id: apId(),
             projectId,
@@ -60,7 +68,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
             schedule: null,
             externalId,
         }
-
         const savedFlow = await flowRepo().save(newFlow)
 
         const savedFlowVersion = await flowVersionService(log).createEmptyVersion(
@@ -222,63 +229,68 @@ export const flowService = (log: FastifyBaseLogger) => ({
             : null
 
         try {
-            if (operation.type === FlowOperationType.LOCK_AND_PUBLISH) {
-                await this.updatedPublishedVersionId({
+            switch (operation.type) {
+                case FlowOperationType.LOCK_AND_PUBLISH:
+                {  await this.updatedPublishedVersionId({
                     id,
                     userId,
                     projectId,
                     platformId,
                 })
-            }
-            else if (operation.type === FlowOperationType.CHANGE_STATUS) {
-                await this.updateStatus({
+                break
+                }
+
+                case FlowOperationType.CHANGE_STATUS:
+                { await this.updateStatus({
                     id,
                     projectId,
                     newStatus: operation.request.status,
                 })
-            }
-            else if (operation.type === FlowOperationType.CHANGE_FOLDER) {
-                await flowRepo().update(id, {
+                break }
+
+                case FlowOperationType.CHANGE_FOLDER:
+                { await flowRepo().update(id, {
                     folderId: operation.request.folderId,
                 })
-            }
-            else {
-                let lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
-                    flowId: id,
-                    versionId: undefined,
-                })
+                break }
 
-                if (lastVersion.state === FlowVersionState.LOCKED) {
-                    const lastVersionWithArtifacts =
-                        await flowVersionService(log).getFlowVersionOrThrow({
-                            flowId: id,
-                            versionId: undefined,
-                        })
-
-                    lastVersion = await flowVersionService(log).createEmptyVersion(id, {
-                        displayName: lastVersionWithArtifacts.displayName,
+                default: {
+                    let lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
+                        flowId: id,
+                        versionId: undefined,
                     })
 
-                    // Duplicate the artifacts from the previous version, otherwise they will be deleted during update operation
-                    lastVersion = await flowVersionService(log).applyOperation({
+                    if (lastVersion.state === FlowVersionState.LOCKED) {
+                        const lastVersionWithArtifacts =
+                            await flowVersionService(log).getFlowVersionOrThrow({
+                                flowId: id,
+                                versionId: undefined,
+                            })
+
+                        lastVersion = await flowVersionService(log).createEmptyVersion(id, {
+                            displayName: lastVersionWithArtifacts.displayName,
+                        })
+
+                        // Duplicate the artifacts from the previous version, otherwise they will be deleted during update operation
+                        lastVersion = await flowVersionService(log).applyOperation({
+                            userId,
+                            projectId,
+                            platformId,
+                            flowVersion: lastVersion,
+                            userOperation: {
+                                type: FlowOperationType.IMPORT_FLOW,
+                                request: lastVersionWithArtifacts,
+                            },
+                        })
+                    }
+                    await flowVersionService(log).applyOperation({
                         userId,
                         projectId,
                         platformId,
                         flowVersion: lastVersion,
-                        userOperation: {
-                            type: FlowOperationType.IMPORT_FLOW,
-                            request: lastVersionWithArtifacts,
-                        },
+                        userOperation: operation,
                     })
                 }
-
-                await flowVersionService(log).applyOperation({
-                    userId,
-                    projectId,
-                    platformId,
-                    flowVersion: lastVersion,
-                    userOperation: operation,
-                })
             }
         }
         finally {

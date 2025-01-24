@@ -70,7 +70,7 @@ export const TaskLimitAlert = () => {
               {showBilling ? (
                 <div>
                   <span>{t('Please visit') + ' '}</span>
-                  <Link to="/plans" className="underline">
+                  <Link to="/platform/setup/billing" className="underline">
                     {t('Your Plan')}
                   </Link>{' '}
                   <span>

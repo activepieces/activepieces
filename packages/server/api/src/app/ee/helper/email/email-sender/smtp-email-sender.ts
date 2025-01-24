@@ -1,11 +1,11 @@
 import { readFile } from 'node:fs/promises'
-import { ActivepiecesError, ApEnvironment, ErrorCode, isNil, Platform, SMTPInformation } from '@activepieces/shared'
+import { AppSystemProp } from '@activepieces/server-shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, ErrorCode, isNil, Platform, SMTPInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Mustache from 'mustache'
 import nodemailer, { Transporter } from 'nodemailer'
 import { defaultTheme } from '../../../../flags/theme'
 import { system } from '../../../../helper/system/system'
-import { AppSystemProp } from '../../../../helper/system/system-prop'
 import { platformService } from '../../../../platform/platform.service'
 import { EmailSender, EmailTemplateData } from './email-sender'
 
@@ -81,8 +81,10 @@ const getPlatform = async (platformId: string | undefined): Promise<Platform | n
 
 const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs): Promise<string> => {
     const templatePath = `packages/server/api/src/assets/emails/${templateData.name}.html`
+    const footerPath = 'packages/server/api/src/assets/emails/footer.html'
     const template = await readFile(templatePath, 'utf-8')
-
+    const footer = await readFile(footerPath, 'utf-8')
+    const edition = system.getEdition()
     const primaryColor = platform?.primaryColor ?? defaultTheme.colors.primary.default
     const fullLogoUrl = platform?.fullLogoUrl ?? defaultTheme.logos.fullLogoUrl
     const platformName = platform?.name ?? defaultTheme.websiteName
@@ -100,7 +102,15 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
                 return JSON.parse(templateData.vars.issues)
             }
         },
-    })
+        footerContent() {
+            return edition === ApEdition.CLOUD ? `   Activepieces, Inc. 398 11th Street,
+                    2nd floor, San Francisco, CA 94103` : `${platform?.name} Team.`
+        },
+    },
+    {
+        footer,
+    },
+    )
 }
 
 const initSmtpClient = (smtp: SMTPInformation | undefined): Transporter => {

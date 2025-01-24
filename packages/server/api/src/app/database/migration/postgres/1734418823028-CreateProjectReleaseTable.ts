@@ -48,7 +48,7 @@ export class CreateProjectReleaseTable1734418823028 implements MigrationInterfac
             ALTER TABLE "project_release" DROP CONSTRAINT "fk_project_release_project_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_project_release_project_id"
+            DROP INDEX "idx_project_release_project_id"
         `)
         await queryRunner.query(`
             DROP TABLE "project_release"
