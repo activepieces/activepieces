@@ -44,19 +44,18 @@ export const planNameFormatter = (planName: string | undefined) => {
 
 export const calculateTaskCostHelper = (
   flowRunCount: number,
-  tasksLimit: number,
-) => {
+  includedTasks: number,
+): string => {
   const unitCost = 1 / 1000;
   const totalTasks = flowRunCount || 0;
-  const paidTasks = Math.max(0, totalTasks - tasksLimit);
-  return Number((paidTasks * unitCost).toFixed(2));
-};
+  const excessTasks = totalTasks - includedTasks;
 
-export const calculateAICostHelper = (aiCredits: number, aiLimit: number) => {
-  const unitCost = 1 / 1000;
-  const totalAiCredits = aiCredits || 0;
-  const paidAiCredits = Math.max(0, totalAiCredits - aiLimit);
-  return Number((paidAiCredits * unitCost).toFixed(2));
+  if (excessTasks <= 0) {
+    return Number(0).toFixed(2);
+  }
+
+  const cost = excessTasks * unitCost;
+  return Number(cost).toFixed(2);
 };
 
 export const calculateTaskCostTextHelper = (
@@ -66,9 +65,6 @@ export const calculateTaskCostTextHelper = (
   return `${flowRunCount} Tasks ($${calculateTaskCost.toFixed(2)})`;
 };
 
-export const calculateTotalCostHelper = (
-  calculateTaskCost: number,
-  calculateAICost: number,
-) => {
-  return `$${(calculateTaskCost + calculateAICost).toFixed(2)}`;
+export const calculateTotalCostHelper = (calculateTaskCost: number) => {
+  return `$${calculateTaskCost.toFixed(2)}`;
 };

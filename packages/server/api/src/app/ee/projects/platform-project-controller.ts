@@ -21,7 +21,7 @@ import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
-import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
+import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 import { platformProjectService } from './platform-project-service'
 
@@ -29,6 +29,7 @@ const DEFAULT_LIMIT_SIZE = 50
 
 export const platformProjectController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', CreateProjectRequest, async (request, reply) => {
+        await platformMustHaveFeatureEnabled(platform => platform.manageProjectsEnabled).call(app, request, reply)
         const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
         const platform = await platformService.getOneOrThrow(platformId)
@@ -37,7 +38,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
             ownerId: platform.ownerId,
             displayName: request.body.displayName,
             platformId,
-            externalId: request.body.externalId,
+            externalId: request.body.externalId ?? undefined,
         })
         await projectLimitsService.upsert(DEFAULT_PLATFORM_LIMIT, project.id)
         const projectWithUsage =
@@ -48,7 +49,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
     app.get('/', ListProjectRequestForApiKey, async (request) => {
         const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
-        
+
         const userId = await getUserId(request.principal)
         return platformProjectService(request.log).getAllForPlatform({
             platformId: request.principal.platform.id,

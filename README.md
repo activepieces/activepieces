@@ -361,6 +361,11 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://www.seven.io"><img src="https://avatars.githubusercontent.com/u/12965261?v=4?s=100" width="100px;" alt="André"/><br /><sub><b>André</b></sub></a><br /><a href="#plugin-matthiez" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/loudotdigital"><img src="https://avatars.githubusercontent.com/u/7611772?v=4?s=100" width="100px;" alt="Lou &#124; Digital Marketing"/><br /><sub><b>Lou &#124; Digital Marketing</b></sub></a><br /><a href="#plugin-loudotdigital" title="Plugin/utility libraries">🔌</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/maarteNNNN"><img src="https://avatars.githubusercontent.com/u/14275291?v=4?s=100" width="100px;" alt="Maarten Coppens"/><br /><sub><b>Maarten Coppens</b></sub></a><br /><a href="#plugin-maarteNNNN" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/mahmuthamet"><img src="https://avatars.githubusercontent.com/u/90776946?v=4?s=100" width="100px;" alt="Mahmoud Hamed"/><br /><sub><b>Mahmoud Hamed</b></sub></a><br /><a href="#plugin-mahmuthamet" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://dammaretz.fr"><img src="https://avatars.githubusercontent.com/u/14098167?v=4?s=100" width="100px;" alt="Theo Dammaretz"/><br /><sub><b>Theo Dammaretz</b></sub></a><br /><a href="#plugin-Blightwidow" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
   </tbody>
 </table>
 
