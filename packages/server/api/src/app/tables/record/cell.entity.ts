@@ -30,8 +30,8 @@ export const CellEntity = new EntitySchema<CellSchema>({
     },
     indices: [
         {
-            name: 'idx_cell_project_id_field_id_record_id_value_unique',
-            columns: ['projectId', 'fieldId', 'recordId', 'value'],
+            name: 'idx_cell_project_id_field_id_record_id_unique',
+            columns: ['projectId', 'fieldId', 'recordId'],
             unique: true,
         },
     ],

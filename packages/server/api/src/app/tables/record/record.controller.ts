@@ -1,5 +1,16 @@
-import { CreateRecordsRequest, ListRecordsRequest, PopulatedRecord, PrincipalType, SeekPage, UpdateRecordRequest } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import {
+    CreateRecordsRequest,
+    ListRecordsRequest,
+    PopulatedRecord,
+    PrincipalType,
+    SeekPage,
+    TableWebhookEventType,
+    UpdateRecordRequest,
+} from '@activepieces/shared'
+import {
+    FastifyPluginAsyncTypebox,
+    Type,
+} from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { recordService } from './record.service'
@@ -10,40 +21,64 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
     fastify.post('/', CreateRequest, async (request, reply) => {
-        const response = await recordService.create({
+        const records = await recordService.create({
             request: request.body,
             projectId: request.principal.projectId,
         })
-        await reply.status(StatusCodes.CREATED).send(response)
-    },
-    )
+        await reply.status(StatusCodes.CREATED).send(records)
+        if (records.length > 0) {
+            await recordService.triggerWebhooks({
+                projectId: request.principal.projectId,
+                tableId: request.body.tableId,
+                eventType: TableWebhookEventType.RECORD_CREATED,
+                data: { records },
+                authorization: request.headers.authorization as string,
+            })
+        }
+    })
 
     fastify.get('/:id', GetRecordByIdRequest, async (request) => {
         return recordService.getById({
             id: request.params.id,
             projectId: request.principal.projectId,
         })
-    },
-    )
+    })
 
-    fastify.post('/:id', UpdateRequest, async (request) => {
-        return recordService.update({
+    fastify.post('/:id', UpdateRequest, async (request, reply) => {
+        const record = await recordService.update({
             id: request.params.id,
             request: request.body,
             projectId: request.principal.projectId,
         })
-    },
-    )
+        await reply.status(StatusCodes.OK).send(record)
+        await recordService.triggerWebhooks({
+            projectId: request.principal.projectId,
+            tableId: request.body.tableId,
+            eventType: TableWebhookEventType.RECORD_UPDATED,
+            data: { record },
+            authorization: request.headers.authorization as string,
+        })
+    })
 
     fastify.delete('/:id', DeleteRecordRequest, async (request, reply) => {
-        await recordService.delete({
+        const deletedRecord = await recordService.delete({
             id: request.params.id,
             projectId: request.principal.projectId,
         })
 
+        if (!deletedRecord) {
+            return reply.status(StatusCodes.NOT_FOUND).send()
+        }
+
         await reply.status(StatusCodes.NO_CONTENT).send()
-    },
-    )
+        await recordService.triggerWebhooks({
+            projectId: request.principal.projectId,
+            tableId: deletedRecord.tableId,
+            eventType: TableWebhookEventType.RECORD_DELETED,
+            data: { record: deletedRecord },
+            authorization: request.headers.authorization as string,
+        })
+    })
 
     fastify.post('/list', ListRequest, async (request) => {
         return recordService.list({
@@ -53,8 +88,7 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
             limit: request.body.limit ?? DEFAULT_PAGE_SIZE,
             filters: request.body.filters ?? null,
         })
-    },
-    )
+    })
 }
 
 const CreateRequest = {

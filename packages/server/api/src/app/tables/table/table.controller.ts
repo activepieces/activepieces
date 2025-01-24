@@ -1,4 +1,4 @@
-import { CreateTableRequest, ExportTableResponse, PrincipalType, Table } from '@activepieces/shared'
+import { CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, PrincipalType, Table } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { tableService } from './table.service'
@@ -43,6 +43,22 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
         return tableService.exportTable({
             projectId: request.principal.projectId,
             id: request.params.id,
+        })
+    })
+
+    fastify.post('/:id/webhooks', CreateTableWebhook, async (request) => {
+        return tableService.createWebhook({
+            projectId: request.principal.projectId,
+            id: request.params.id,
+            request: request.body,
+        })
+    })
+
+    fastify.delete('/:id/webhooks/:webhookId', DeleteTableWebhook, async (request) => {
+        return tableService.deleteWebhook({
+            projectId: request.principal.projectId,
+            id: request.params.id,
+            webhookId: request.params.webhookId,
         })
     })
 }
@@ -101,5 +117,29 @@ const ExportTableRequest = {
         response: {
             [StatusCodes.OK]: ExportTableResponse,
         },
+    },
+}
+
+const CreateTableWebhook = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+    },
+    schema: {
+        params: Type.Object({
+            id: Type.String(),
+        }),
+        body: CreateTableWebhookRequest,
+    },
+}
+
+const DeleteTableWebhook = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+    },
+    schema: {
+        params: Type.Object({
+            id: Type.String(),
+            webhookId: Type.String(),
+        }),
     },
 }

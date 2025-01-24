@@ -80,6 +80,7 @@ import { TablesProductSqlite1734354249984 } from './migration/sqlite/17343542499
 import { RemoveWorkerTypeSqlite1734439194575 } from './migration/sqlite/1734439194575-RemoveWorkerTypeSqlite'
 import { FieldAndRecordAndCellProjectId1734967659746 } from './migration/sqlite/1734967659746-FieldAndRecordAndCell_ProjectIdSqlite'
 import { AddCellUniqueIndex1735057433052 } from './migration/sqlite/1735057433052-AddCellUniqueIndexSqlite'
+import { TableWebhooksSqlite1737550783153 } from './migration/sqlite/1737550783153-TableWebhooksSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -177,6 +178,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveWorkerTypeSqlite1734439194575,
         FieldAndRecordAndCellProjectId1734967659746,
         AddCellUniqueIndex1735057433052,
+        TableWebhooksSqlite1737550783153,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

@@ -1,4 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
+import { TableWebhookEventType } from '../table-webhook'
 
 export const CreateTableRequest = Type.Object({
     name: Type.String(),
@@ -12,3 +13,11 @@ export const ExportTableResponse = Type.Object({
 })
 
 export type ExportTableResponse = Static<typeof ExportTableResponse>
+
+export const CreateTableWebhookRequest = Type.Object({
+    eventType: Type.Enum(TableWebhookEventType),
+    webhookUrl: Type.String(),
+    flowId: Type.String(),
+})
+
+export type CreateTableWebhookRequest = Static<typeof CreateTableWebhookRequest>

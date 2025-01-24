@@ -8,6 +8,7 @@ import {
     Project,
     Record,
     Table,
+    TableWebhook,
     TriggerEvent,
     User,
 } from '@activepieces/shared'
@@ -16,16 +17,17 @@ import { ApIdSchema, BaseColumnSchemaPart, TIMESTAMP_COLUMN_TYPE } from '../data
 
 type ProjectSchema = Project & {
     owner: User
-    tables: Table[]
-    fields: Field[]
-    records: Record[]
-    cells: Cell[]
     flows: Flow[]
     files: File[]
     folders: Folder[]
     events: TriggerEvent[]
     appConnections: AppConnection[]
     platform: Platform
+    tables: Table[]
+    fields: Field[]
+    records: Record[]
+    cells: Cell[]
+    tableWebhooks: TableWebhook[]
 }
 
 export const ProjectEntity = new EntitySchema<ProjectSchema>({
@@ -128,6 +130,11 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         cells: {
             type: 'one-to-many',
             target: 'cell',
+            inverseSide: 'project',
+        },
+        tableWebhooks: {
+            type: 'one-to-many',
+            target: 'table_webhook',
             inverseSide: 'project',
         },
     },

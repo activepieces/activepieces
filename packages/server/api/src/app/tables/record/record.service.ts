@@ -1,4 +1,18 @@
-import { ActivepiecesError, apId, CreateRecordsRequest, Cursor, ErrorCode, Filter, FilterOperator, isNil, PopulatedRecord, SeekPage, UpdateRecordRequest } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    ApEnvironment,
+    apId,
+    CreateRecordsRequest,
+    Cursor,
+    ErrorCode,
+    Filter,
+    FilterOperator,
+    isNil,
+    PopulatedRecord,
+    SeekPage,
+    TableWebhookEventType,
+    UpdateRecordRequest,
+} from '@activepieces/shared'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -7,25 +21,38 @@ import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { FieldEntity } from '../field/field.entity'
 import { CellEntity } from './cell.entity'
 import { RecordEntity } from './record.entity'
+import { networkUtls, WorkerSystemProp } from '@activepieces/server-shared'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-prop'
+import { tableService } from '../table/table.service'
+import axios from 'axios'
+import { FastifyRequest } from 'fastify'
 
 const recordRepo = repoFactory(RecordEntity)
 
 export const recordService = {
-    async create({ request, projectId }: { request: CreateRecordsRequest, projectId: string }): Promise<PopulatedRecord[]> {
+    async create({
+        request,
+        projectId,
+    }: {
+        request: CreateRecordsRequest
+        projectId: string
+    }): Promise<PopulatedRecord[]> {
         return transaction(async (entityManager: EntityManager) => {
             // Find existing fields for the table
-            const existingFields = await entityManager.getRepository(FieldEntity).find({
-                where: { tableId: request.tableId, projectId },
-            })
+            const existingFields = await entityManager
+                .getRepository(FieldEntity)
+                .find({
+                    where: { tableId: request.tableId, projectId },
+                })
 
             // Filter out cells with non-existing fields during record creation
-            const validRecords = request.records.map(recordData =>
-                recordData.filter(cellData =>
-                    existingFields.some(field => field.name === cellData.key),
+            const validRecords = request.records.map((recordData) =>
+                recordData.filter((cellData) =>
+                    existingFields.some((field) => field.name === cellData.key),
                 ),
             )
 
-            // Prepare record insertions
             const recordInsertions = validRecords.map(() => ({
                 tableId: request.tableId,
                 projectId,
@@ -36,8 +63,8 @@ export const recordService = {
 
             // Prepare cells for insertion
             const cellInsertions = validRecords.flatMap((recordData, index) =>
-                recordData.map(cellData => {
-                    const field = existingFields.find(f => f.name === cellData.key)
+                recordData.map((cellData) => {
+                    const field = existingFields.find((f) => f.name === cellData.key)
                     return {
                         recordId: recordInsertions[index].id,
                         fieldId: field?.id,
@@ -51,24 +78,32 @@ export const recordService = {
             await entityManager.getRepository(CellEntity).insert(cellInsertions)
 
             // Fetch and return fully populated records
-            const insertedRecordIds = recordInsertions.map(r => r.id)
-            const fullyPopulatedRecords = await entityManager.getRepository(RecordEntity).find({
-                where: {
-                    id: In(insertedRecordIds),
-                    tableId: request.tableId,
-                    projectId,
-                },
-                relations: ['cells'],
-                order: {
-                    created: 'ASC',
-                },
-            })
+            const insertedRecordIds = recordInsertions.map((r) => r.id)
+            const fullyPopulatedRecords = await entityManager
+                .getRepository(RecordEntity)
+                .find({
+                    where: {
+                        id: In(insertedRecordIds),
+                        tableId: request.tableId,
+                        projectId,
+                    },
+                    relations: ['cells'],
+                    order: {
+                        created: 'ASC',
+                    },
+                })
 
             return fullyPopulatedRecords
         })
     },
 
-    async list({ tableId, projectId, cursorRequest, limit, filters }: ListParams): Promise<SeekPage<PopulatedRecord>> {
+    async list({
+        tableId,
+        projectId,
+        cursorRequest,
+        limit,
+        filters,
+    }: ListParams): Promise<SeekPage<PopulatedRecord>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
 
         const paginator = buildPaginator({
@@ -134,10 +169,19 @@ export const recordService = {
         }
 
         const paginationResult = await paginator.paginate(queryBuilder)
-        return paginationHelper.createPage(paginationResult.data, paginationResult.cursor)
+        return paginationHelper.createPage(
+            paginationResult.data,
+            paginationResult.cursor,
+        )
     },
 
-    async getById({ id, projectId }: { id: string, projectId: string }): Promise<PopulatedRecord> {
+    async getById({
+        id,
+        projectId,
+    }: {
+        id: string
+        projectId: string
+    }): Promise<PopulatedRecord> {
         const record = await recordRepo().findOne({
             where: { id, projectId },
             relations: ['cells'],
@@ -156,7 +200,15 @@ export const recordService = {
         return record
     },
 
-    async update({ id, projectId, request }: { id: string, projectId: string, request: UpdateRecordRequest }): Promise<PopulatedRecord> {
+    async update({
+        id,
+        projectId,
+        request,
+    }: {
+        id: string
+        projectId: string
+        request: UpdateRecordRequest
+    }): Promise<PopulatedRecord> {
         const { tableId } = request
         return transaction(async (entityManager: EntityManager) => {
             const record = await entityManager.getRepository(RecordEntity).findOne({
@@ -174,18 +226,20 @@ export const recordService = {
             }
 
             if (request.cells && request.cells.length > 0) {
-                const existingFields = await entityManager.getRepository(FieldEntity).find({
-                    where: { projectId, tableId },
-                })
+                const existingFields = await entityManager
+                    .getRepository(FieldEntity)
+                    .find({
+                        where: { projectId, tableId },
+                    })
 
                 // Filter out cells with non-existing fields
-                const validCells = request.cells.filter(cellData =>
-                    existingFields.some(field => field.name === cellData.key),
+                const validCells = request.cells.filter((cellData) =>
+                    existingFields.some((field) => field.name === cellData.key),
                 )
 
                 // Prepare cells for upsert
-                const cellsToUpsert = validCells.map(cellData => {
-                    const field = existingFields.find(f => f.name === cellData.key)
+                const cellsToUpsert = validCells.map((cellData) => {
+                    const field = existingFields.find((f) => f.name === cellData.key)
                     return {
                         recordId: id,
                         fieldId: field?.id,
@@ -197,18 +251,19 @@ export const recordService = {
 
                 // Perform bulk upsert only for valid cells
                 if (cellsToUpsert.length > 0) {
-                    await entityManager.getRepository(CellEntity).upsert(
-                        cellsToUpsert,
-                        ['projectId', 'fieldId', 'recordId'], // Unique constraint for upsert
-                    )
+                    await entityManager
+                        .getRepository(CellEntity)
+                        .upsert(cellsToUpsert, ['projectId', 'fieldId', 'recordId'])
                 }
             }
 
             // Fetch and return the updated record with full details
-            const updatedRecord = await entityManager.getRepository(RecordEntity).findOne({
-                where: { id, projectId, tableId },
-                relations: ['cells'],
-            })
+            const updatedRecord = await entityManager
+                .getRepository(RecordEntity)
+                .findOne({
+                    where: { id, projectId, tableId },
+                    relations: ['cells'],
+                })
 
             if (isNil(updatedRecord)) {
                 throw new ActivepiecesError({
@@ -224,11 +279,76 @@ export const recordService = {
         })
     },
 
-    async delete({ id, projectId }: { id: string, projectId: string }): Promise<void> {
-        await recordRepo().delete({
-            id,
-            projectId,
+    async delete({
+        id,
+        projectId,
+    }: {
+        id: string
+        projectId: string
+    }): Promise<PopulatedRecord | undefined> {
+        const record = await recordRepo().findOne({
+            where: { id, projectId },
+            relations: ['cells'],
         })
+
+        if (!isNil(record)) {
+            await recordRepo().delete({
+                id,
+                projectId,
+            })
+            return record
+        }
+        return
+    },
+
+    async triggerWebhooks({
+        projectId,
+        tableId,
+        eventType,
+        data,
+        authorization,
+    }: {
+        projectId: string
+        tableId: string
+        eventType: TableWebhookEventType
+        data: Record<string, unknown>
+        authorization: string
+    }): Promise<void> {
+        const webhooks = await tableService.getWebhooks({
+            projectId,
+            id: tableId,
+            eventType,
+        })
+
+        if (webhooks.length > 0) {
+            const webhookRequests: {
+                flowId: string
+                request: Pick<FastifyRequest, 'body'>
+            }[] = webhooks.map((webhook) => ({
+                flowId: webhook.flowId,
+                request: {
+                    body: data,
+                },
+            }))
+
+            const publicUrl = await networkUtls.getPublicUrl(
+                system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT),
+                system.getOrThrow(WorkerSystemProp.FRONTEND_URL),
+            )
+
+            const promises = webhookRequests.map((webhookRequest) => {
+                return axios.post(
+                    `${publicUrl}v1/webhooks/${webhookRequest.flowId}`,
+                    webhookRequest.request,
+                    {
+                        headers: {
+                            authorization,
+                        },
+                    },
+                )
+            })
+            await Promise.all(promises)
+        }
     },
 }
 

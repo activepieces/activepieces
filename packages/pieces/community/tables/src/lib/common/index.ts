@@ -1,10 +1,10 @@
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { DynamicPropsValue, Property } from "@activepieces/pieces-framework";
-import { Field, FieldType, MarkdownVariant, Table } from "@activepieces/shared";
+import { DynamicPropsValue, Property, TriggerHookContext } from "@activepieces/pieces-framework";
+import { Field, FieldType, MarkdownVariant, Table, TableWebhookEventType } from "@activepieces/shared";
 import { z } from 'zod';
 
 export const tablesCommon = {
-  table_name: Property.Dropdown({
+  table_name: Property.Dropdown({ // TODO: change to table_id
     displayName: 'Table Name',
     description: 'The name of the table to insert records into.',
     required: true,
@@ -142,5 +142,56 @@ export const tablesCommon = {
 
       return fields;
     }
+  },
+
+  async createWebhook({
+    tableId,
+    eventType,
+    webhookUrl,
+    flowId,
+    server,
+  }: {
+    tableId: string;
+    eventType: TableWebhookEventType;
+    webhookUrl: string;
+    flowId: string;
+    server: { apiUrl: string, token: string };
+  }) {
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: `${server.apiUrl}v1/tables/${tableId}/webhooks`,
+      body: {
+        eventType,
+        webhookUrl,
+        flowId,
+      },
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: server.token,
+      },
+    });
+
+    return response.body;
+  },
+
+  async deleteWebhook({
+    tableId,
+    webhookId,
+    server,
+  }: {
+    tableId: string;
+    webhookId: string;
+    server: { apiUrl: string, token: string };
+  }) {
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.DELETE,
+      url: `${server.apiUrl}v1/tables/${tableId}/webhooks/${webhookId}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: server.token,
+      },
+    });
+
+    return response.body;
   }
 }

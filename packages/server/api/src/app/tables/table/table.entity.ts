@@ -1,4 +1,4 @@
-import { Field, Project, Record, Table } from '@activepieces/shared'
+import { Field, Project, Record, Table, TableWebhook } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
@@ -6,6 +6,7 @@ type TableSchema = Table & {
     project: Project
     fields: Field[]
     records: Record[]
+    tableWebhooks: TableWebhook[]
 }
 
 export const TableEntity = new EntitySchema<TableSchema>({
@@ -46,6 +47,11 @@ export const TableEntity = new EntitySchema<TableSchema>({
         records: {
             type: 'one-to-many',
             target: 'record',
+            inverseSide: 'table',
+        },
+        tableWebhooks: {
+            type: 'one-to-many',
+            target: 'table_webhook',
             inverseSide: 'table',
         },
     },
