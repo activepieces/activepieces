@@ -5,6 +5,7 @@ import { flowService } from '../../flows/flow/flow.service'
 import { FlowVersionEntity } from '../../flows/flow-version/flow-version-entity'
 import { repoFactory } from '../../core/db/repo-factory'
 import { fileRepo } from '../../file/file.service'
+import { flowRepo } from '../../flows/flow/flow.repo'
 
 export const adminPlatformPieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(adminPlatformController, { prefix: '/v1/admin/platforms' })
@@ -20,9 +21,14 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
         let cleanedSteps = 0;
         let cleanedFlows = 0;
         for (const flowId of flowIds) {
+            const flowById = await flowRepo().findOneOrFail({
+                where: {
+                    id: flowId,
+                }
+            })
             const flow = await flowService(req.log).getOnePopulatedOrThrow({
                 id: flowId,
-                projectId: req.principal.projectId,
+                projectId: flowById.projectId,
             })
             const flowVersion = await flowVersionRepo().findOneOrFail({
                 where: {
