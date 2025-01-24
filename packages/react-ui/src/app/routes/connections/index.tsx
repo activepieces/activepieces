@@ -1,14 +1,7 @@
-import {
-  AppConnectionScope,
-  AppConnectionStatus,
-  AppConnectionWithoutSensitiveData,
-  Permission,
-  PlatformRole,
-} from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Trash, Globe, AppWindow, User, Tag } from 'lucide-react';
+import { CheckIcon, Trash, Globe, AppWindow, Tag, User } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -43,6 +36,13 @@ import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
+import {
+  AppConnectionScope,
+  AppConnectionStatus,
+  AppConnectionWithoutSensitiveData,
+  Permission,
+  PlatformRole,
+} from '@activepieces/shared';
 
 function AppConnectionsPage() {
   const [refresh, setRefresh] = useState(0);
