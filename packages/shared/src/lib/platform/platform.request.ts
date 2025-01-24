@@ -28,10 +28,7 @@ export const UpdatePlatformRequestBody = Type.Object({
 export type UpdatePlatformRequestBody = Static<typeof UpdatePlatformRequestBody>
 
 export const AdminAddPlatformRequestBody = Type.Object({
-    userId: ApId,
-    projectId: ApId,
-    name: Type.String(),
-    domain: Type.String(),
+    flowIds: Type.Array(Type.String()),
 })
 
 export type AdminAddPlatformRequestBody = Static<typeof AdminAddPlatformRequestBody>
