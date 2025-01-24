@@ -91,11 +91,11 @@ function AppConnectionsPage() {
     if (ownerEmails.length === 0) return data;
 
     return {
-      data: data.data.filter(conn =>
-        conn.owner && ownerEmails.includes(conn.owner.email)
+      data: data.data.filter(
+        (conn) => conn.owner && ownerEmails.includes(conn.owner.email),
       ),
       next: data.next,
-      previous: data.previous
+      previous: data.previous,
     };
   }, [data, location.search]);
 
@@ -120,10 +120,10 @@ function AppConnectionsPage() {
 
   const uniquePieceNames = useMemo(() => {
     if (!data?.data) return [];
-    const names = new Set(data.data.map(conn => conn.pieceName));
-    return Array.from(names).map(name => ({
+    const names = new Set(data.data.map((conn) => conn.pieceName));
+    return Array.from(names).map((name) => ({
       label: name.replace('@activepieces/piece-', ''),
-      value: name
+      value: name,
     }));
   }, [data?.data]);
 
@@ -131,57 +131,60 @@ function AppConnectionsPage() {
     if (!data?.data) return [];
     const owners = new Map();
     data.data
-      .filter(conn => conn.owner)
-      .forEach(conn => {
+      .filter((conn) => conn.owner)
+      .forEach((conn) => {
         const owner = conn.owner!;
         owners.set(owner.email, {
           firstName: owner.firstName,
           lastName: owner.lastName,
-          email: owner.email
+          email: owner.email,
         });
       });
 
-    return Array.from(owners.values()).map(owner => ({
+    return Array.from(owners.values()).map((owner) => ({
       label: `${owner.firstName} ${owner.lastName} (${owner.email})`,
-      value: owner.email
+      value: owner.email,
     }));
   }, [data?.data]);
 
-  const filters = useMemo(() => [
-    {
-      type: 'select',
-      title: t('Status'),
-      accessorKey: 'status',
-      options: Object.values(AppConnectionStatus).map((status) => {
-        return {
-          label: formatUtils.convertEnumToHumanReadable(status),
-          value: status,
-        };
-      }),
-      icon: CheckIcon,
-    } as const,
-    {
-      type: 'select',
-      title: t('App'),
-      accessorKey: 'pieceName',
-      icon: AppWindow,
-      options: uniquePieceNames,
-    } as const,
-    {
-      type: 'input',
-      title: t('Connection Name'),
-      accessorKey: 'displayName',
-      icon: Tag,
-      options: [],
-    } as const,
-    {
-      type: 'select',
-      title: t('Owner'),
-      accessorKey: 'owner',
-      icon: User,
-      options: uniqueOwners,
-    } as const,
-  ], [uniquePieceNames, uniqueOwners]);
+  const filters = useMemo(
+    () => [
+      {
+        type: 'select',
+        title: t('Status'),
+        accessorKey: 'status',
+        options: Object.values(AppConnectionStatus).map((status) => {
+          return {
+            label: formatUtils.convertEnumToHumanReadable(status),
+            value: status,
+          };
+        }),
+        icon: CheckIcon,
+      } as const,
+      {
+        type: 'select',
+        title: t('App'),
+        accessorKey: 'pieceName',
+        icon: AppWindow,
+        options: uniquePieceNames,
+      } as const,
+      {
+        type: 'input',
+        title: t('Display Name'),
+        accessorKey: 'displayName',
+        icon: Tag,
+        options: [],
+      } as const,
+      {
+        type: 'select',
+        title: t('Owner'),
+        accessorKey: 'owner',
+        icon: User,
+        options: uniqueOwners,
+      } as const,
+    ],
+    [uniquePieceNames, uniqueOwners],
+  );
 
   const columns: ColumnDef<
     RowDataWithActions<AppConnectionWithoutSensitiveData>,
