@@ -37,16 +37,19 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
             })
             const stepsToClean = (await Promise.all(flowStructureUtil.getAllSteps(flowVersion.trigger).map(async (step) => {
                 const sampleFileId = step.settings.inputUiInfo.sampleDataFileId
-                const file = await fileRepo().existsBy({
+                if(isNil(sampleFileId)) {
+                    return null;
+                }
+                const fileExists = await fileRepo().existsBy({
                     id: sampleFileId,
                     projectId: flow.projectId,
                 })
-                return isNil(file) ? step : null
+                return !fileExists ? step : null
             }))).filter((step) => step !== null)
 
             const trigger = flowStructureUtil.transferStep(flowVersion.trigger, (step) => {
                 const cleanTheStep = stepsToClean.find((stepToClean) => stepToClean.name === step.name)
-                if (cleanTheStep) {
+                if (!isNil(cleanTheStep)) {
                     cleanedSteps++;
                     return {
                         ...step,
