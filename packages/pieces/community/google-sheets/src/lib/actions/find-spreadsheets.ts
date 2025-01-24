@@ -6,13 +6,13 @@ import { googleSheetsAuth } from '../..';
 export const findSpreadsheets = createAction({
   name: 'find_spreadsheets',
   displayName: 'Find Spreadsheet(s)',
-  description: 'Find Google Spreadsheet(s) by name',
+  description: 'Find spreadsheet(s) by name.',
   auth: googleSheetsAuth,
   props: {
     include_team_drives: googleSheetsCommon.include_team_drives,
     spreadsheet_name: Property.ShortText({
       displayName: 'Spreadsheet Name',
-      description: 'The name of the spreadsheet(s) to find',
+      description: 'The name of the spreadsheet(s) to find.',
       required: true,
     }),
     exact_match: Property.Checkbox({
@@ -35,7 +35,7 @@ export const findSpreadsheets = createAction({
       queries.push(`name contains '${searchValue}'`);
     }
 
-    const response = await httpClient.sendRequest({
+    const response = await httpClient.sendRequest<{files: any[]}>({
       method: HttpMethod.GET,
       url: 'https://www.googleapis.com/drive/v3/files',
       queryParams: {
@@ -51,7 +51,7 @@ export const findSpreadsheets = createAction({
     });
 
     return {
-      success: true,
+      found: response.body.files.length > 0,
       spreadsheets: response.body.files,
     };
   },
