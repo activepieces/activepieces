@@ -11,9 +11,11 @@ import { ChatInput } from '@/components/ui/chat/chat-input';
 import MessageLoading from '@/components/ui/chat/message-loading';
 import { PreviewPlanMessage } from './messages/preview-plan-message';
 import { TextMessage } from './messages/text-message';
-import { AskCopilotRequest, CopilotSkill, flowStructureUtil, isNil } from '@activepieces/shared';
+import { AskCopilotRequest, CopilotSkill, flowStructureUtil, isNil, WebsocketClientEvent } from '@activepieces/shared';
 import { Workflow } from 'lucide-react';
 import { PreviewCodeMessage } from './messages/preview-code-message';
+import { nanoid } from 'nanoid';
+import { useEffect } from 'react';
 
 export const CopilotSidebar = () => {
   const socket = useSocket();
@@ -25,37 +27,52 @@ export const CopilotSidebar = () => {
     state.flow.id
   ]);
 
-  const mutation = useMutation({
-    mutationFn: (request: Omit<AskCopilotRequest, 'id'>) => copilotApi.ask(socket, request),
-    onSuccess: (response) => {
-      console.log(response);
+  useEffect(() => {
+
+    socket.on(WebsocketClientEvent.ASK_COPILOT_RESPONSE, (response) => {
       switch (response.type) {
         case 'flow':
           addMessage({
+            id: response.id,
             type: 'flow_plan',
             content: response
           });
           break;
         case 'action':
           addMessage({
+            id: response.id,
             type: 'code_block',
             content: {
               code: response.code,
-              inputs: response.inputs,
+              inputs: {},
               operation: response.operation
             }
           });
           break;
         case 'error':
           addMessage({
+            id: response.id,
             type: 'assistant_message',
             content: response.errorMessage ?? 'I don\'t know how to do that.'
           });
           break;
       }
-    },
+    });
+
+    socket.on('error', (error) => {
+    });
+
+    return () => {
+      socket.off(WebsocketClientEvent.ASK_COPILOT_RESPONSE);
+      socket.off('error');
+    };
+  }, [messages, socket]);
+
+  const mutation = useMutation({
+    mutationFn: (request: AskCopilotRequest) => copilotApi.ask(socket, request),
     onError: () => {
       addMessage({
+        id: nanoid(),
         type: 'assistant_message',
         content: 'Sorry, there was an error generating the workflow.'
       });
@@ -70,22 +87,16 @@ export const CopilotSidebar = () => {
       .filter(message => message.type === 'user_message')
       .map(message => message.content);
 
-    if (selectedStep) {
-      mutation.mutate({
-        flowId,
-        skill: CopilotSkill.ACTION,
-        prompts: [trimmedContent, ...userMessages],
-        selectedStep: selectedStep.name,
-      });
-    } else {
-      mutation.mutate({
-        flowId,
-        skill: CopilotSkill.PLANNER,
-        prompts: [trimmedContent, ...userMessages],
-      });
-    }
+    mutation.mutate({
+      id: nanoid(),
+      flowId,
+      skill: CopilotSkill.ACTION,
+      prompts: [trimmedContent, ...userMessages],
+      selectedStep: selectedStep?.name,
+    });
 
     addMessage({
+      id: nanoid(),
       type: 'user_message',
       content: trimmedContent
     });

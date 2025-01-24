@@ -22,7 +22,7 @@ export const PreviewPlanMessage: React.FC<PreviewPlanMessageProps> = ({
         applyOperation({
             type: FlowOperationType.IMPORT_FLOW,
             request: operation 
-        }, () => {})
+        })
     };
 
     const renderStep = (step: { title: string; description: string; type: string; branches?: any[] }, index: string) => {

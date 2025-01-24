@@ -76,5 +76,4 @@ export type AskCopilotResponse =
   type: 'action',
   operation: UpdateActionRequest,
   code: string,
-  inputs: Record<string, string>,
 }

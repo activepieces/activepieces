@@ -11,14 +11,15 @@ export const copilotModule: FastifyPluginAsyncTypebox = async (app) => {
             const principal = await accessTokenManager.verifyPrincipal(socket.handshake.auth.token)
 
             switch (request.skill) {
-                case CopilotSkill.PLANNER:{
+                case CopilotSkill.PLANNER: {
                     const response: AskCopilotResponse | null = await plannerAgent.run(request.id, request.prompts)
                     socket.emit(WebsocketClientEvent.ASK_COPILOT_RESPONSE, response)
                     break
                 }
                 case CopilotSkill.ACTION: {
-                    const response: AskCopilotResponse | null = await actionAgent(app.log).run(request, principal.projectId)
-                    socket.emit(WebsocketClientEvent.ASK_COPILOT_RESPONSE, response)
+                    await actionAgent(app.log).run(request, principal.projectId, (response) => {
+                        socket.emit(WebsocketClientEvent.ASK_COPILOT_RESPONSE, response)
+                    })
                     break
                 }
             }

@@ -47,6 +47,7 @@ import {
 } from './flow-canvas/context-menu/canvas-context-menu';
 import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
 import { INITIAL_COPILOT_MESSAGE, MessageContent } from './copilot/types';
+import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -191,7 +192,15 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       activeDraggingStep: null,
       allowCanvasPanning: true,
       messages: [INITIAL_COPILOT_MESSAGE],
-      addMessage: (message: MessageContent) => set((state) => ({ messages: [...state.messages, message] })),
+      addMessage: (message: MessageContent) => set((state) => {
+        const existingMessageIndex = state.messages.findIndex(m => m.id === message.id);
+        if (existingMessageIndex >= 0) {
+          const newMessages = [...state.messages];
+          newMessages[existingMessageIndex] = message;
+          return { messages: newMessages };
+        }
+        return { messages: [...state.messages, message] };
+      }),
       rightSidebar:
         initiallySelectedStep &&
           (initiallySelectedStep !== 'trigger' ||

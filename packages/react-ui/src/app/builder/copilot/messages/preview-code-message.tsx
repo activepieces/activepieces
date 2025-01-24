@@ -25,7 +25,7 @@ export const PreviewCodeMessage: React.FC<PreviewCodeMessageProps> = ({
         applyOperation({
             type: FlowOperationType.UPDATE_ACTION,
             request: operation 
-        }, () => {})
+        })
         selectStepByName(operation.name)
     };
 
