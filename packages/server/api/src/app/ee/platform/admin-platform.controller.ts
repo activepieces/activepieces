@@ -26,6 +26,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
                     id: flowId,
                 }
             })
+            let localSteps = 0;
             const flow = await flowService(req.log).getOnePopulatedOrThrow({
                 id: flowId,
                 projectId: flowById.projectId,
@@ -51,6 +52,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
                 const cleanTheStep = stepsToClean.find((stepToClean) => stepToClean.name === step.name)
                 if (!isNil(cleanTheStep)) {
                     cleanedSteps++;
+                    localSteps++;
                     return {
                         ...step,
                         settings: {
@@ -65,7 +67,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
                 }
                 return step
             })
-            if(cleanedSteps > 0) {
+            if(localSteps > 0) {
                 cleanedFlows++;
                 await flowVersionRepo().update({
                     id: flowVersion.id,
