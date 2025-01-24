@@ -35,7 +35,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/', ListPlatformsForIdentityRequest, async (req) => {
         const userId = await userService.getOneOrFail({ id: req.principal.id })
-        const platforms = await platformService.listPlatformsForIdentity({ identityId: userId.identityId })
+        const platforms = await platformService.listPlatformsForIdentityWithAtleastProject({ identityId: userId.identityId })
         return platforms.filter((platform) => !platformUtils.isEnterpriseCustomerOnCloud(platform))
     })
 
