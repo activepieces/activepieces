@@ -46,59 +46,22 @@ export const usageService = (log: FastifyBaseLogger) => ({
         }
     },
 
-
     async tasksExceededLimit(projectId: string): Promise<boolean> {
-        if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
-            return false
-        }
-
-        try {
-            const projectPlan = await projectLimitsService.getPlanByProjectId(projectId)
-            if (!projectPlan) {
-                return false
-            }
-            const platformId = await projectService.getPlatformId(projectId)
-            const { consumedProjectUsage, consumedPlatformUsage } = await increaseProjectAndPlatformUsage({ projectId, incrementBy: 0, usageType: BillingUsageType.TASKS })
-            const shouldLimitFromProjectPlan = !isNil(projectPlan.tasks) && consumedProjectUsage >= projectPlan.tasks
-            const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
-            const shouldLimitFromPlatformBilling = !isNil(platformBilling.tasksLimit) && consumedPlatformUsage >= platformBilling.tasksLimit
-            const platform = await platformService.getOneOrThrow(platformId)
-            if (!platform.manageProjectsEnabled) {
-                return shouldLimitFromPlatformBilling
-            }
-            return shouldLimitFromProjectPlan || shouldLimitFromPlatformBilling
-        }
-        catch (e) {
-            exceptionHandler.handle(e, log)
-            return false
-        }
+        return checkUsageLimit({
+            projectId,
+            incrementBy: 0,
+            usageType: BillingUsageType.TASKS,
+            log,
+        })
     },
 
     async aiTokensExceededLimit(projectId: string, tokensToConsume: number): Promise<boolean> {
-        if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
-            return false
-        }
-
-        try {
-            const projectPlan = await projectLimitsService.getPlanByProjectId(projectId)
-            if (!projectPlan) {
-                return false
-            }
-            const platformId = await projectService.getPlatformId(projectId)
-            const { consumedProjectUsage, consumedPlatformUsage } = await increaseProjectAndPlatformUsage({ projectId, incrementBy: tokensToConsume, usageType: BillingUsageType.AI_TOKENS })
-            const shouldLimitFromProjectPlan = !isNil(projectPlan.aiTokens) && consumedProjectUsage >= projectPlan.aiTokens
-            const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
-            const shouldLimitFromPlatformBilling = !isNil(platformBilling.aiCreditsLimit) && consumedPlatformUsage >= platformBilling.aiCreditsLimit
-            const platform = await platformService.getOneOrThrow(platformId)
-            if (!platform.manageProjectsEnabled) {
-                return shouldLimitFromPlatformBilling
-            }
-            return shouldLimitFromProjectPlan || shouldLimitFromPlatformBilling
-        }
-        catch (e) {
-            exceptionHandler.handle(e, log)
-            return false
-        }
+        return checkUsageLimit({
+            projectId,
+            incrementBy: tokensToConsume,
+            usageType: BillingUsageType.AI_TOKENS,
+            log,
+        })
     },
     increaseProjectAndPlatformUsage,
     getCurrentBillingPeriodStart,
@@ -106,6 +69,36 @@ export const usageService = (log: FastifyBaseLogger) => ({
     getUsage,
 })
 
+async function checkUsageLimit({ projectId, incrementBy, usageType, log }: { projectId: string, incrementBy: number, usageType: BillingUsageType, log: FastifyBaseLogger }): Promise<boolean> {
+    if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
+        return false
+    }
+    try {
+        const projectPlan = await projectLimitsService.getPlanByProjectId(projectId)
+        if (!projectPlan) {
+            return false
+        }
+        const platformId = await projectService.getPlatformId(projectId)
+        const { consumedProjectUsage, consumedPlatformUsage } = await increaseProjectAndPlatformUsage({ projectId, incrementBy, usageType })
+        const planLimit = usageType === BillingUsageType.TASKS ? projectPlan.tasks : projectPlan.aiTokens
+        const shouldLimitFromProjectPlan = !isNil(planLimit) && consumedProjectUsage >= planLimit
+        if (edition === ApEdition.ENTERPRISE) {
+            return shouldLimitFromProjectPlan
+        }
+        const platform = await platformService.getOneOrThrow(platformId)
+        const platformBilling = await platformBillingService(log).getOrCreateForPlatform(platformId)
+        const platformLimit = usageType === BillingUsageType.TASKS ? platformBilling.tasksLimit : platformBilling.aiCreditsLimit
+        const shouldLimitFromPlatformBilling = !isNil(platformLimit) && consumedPlatformUsage >= platformLimit
+        if (!platform.manageProjectsEnabled) {
+            return shouldLimitFromPlatformBilling
+        }
+        return shouldLimitFromProjectPlan || shouldLimitFromPlatformBilling
+    }
+    catch (e) {
+        exceptionHandler.handle(e, log)
+        return false
+    }
+}
 
 async function increaseProjectAndPlatformUsage({ projectId, incrementBy, usageType }: { projectId: string, incrementBy: number, usageType: BillingUsageType }): Promise<{ consumedProjectUsage: number, consumedPlatformUsage: number }> {
     const edition = system.getEdition()
