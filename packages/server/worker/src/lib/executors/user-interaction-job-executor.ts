@@ -3,6 +3,7 @@ import { AppConnectionValue } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { workerApiService } from '../api/server-api.service'
 import { engineRunner } from '../engine'
+import { workerMachine } from '../utils/machine'
 import { webhookUtils } from '../utils/webhook-utils'
 
 export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
@@ -26,6 +27,7 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                     webhookUrl: await webhookUtils(log).getWebhookUrl({
                         flowId: jobData.flowVersion.flowId,
                         simulate: jobData.test,
+                        publicApiUrl: workerMachine.getPublicApiUrl(),
                     }),
                     test: jobData.test,
                     projectId: jobData.projectId,

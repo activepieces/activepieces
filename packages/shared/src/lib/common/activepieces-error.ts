@@ -72,10 +72,15 @@ export type ApErrorParams =
     | InvalidReleaseTypeParams
     | CopilotFailedErrorParams
     | ProjectExternalIdAlreadyExistsParams
+    | MemoryIssueParams
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
 }
+
+export type MemoryIssueParams = BaseErrorParams<ErrorCode.MEMORY_ISSUE, {
+    message?: string
+}>
 
 export type InvitationOnlySignUpParams = BaseErrorParams<
 ErrorCode.INVITATION_ONLY_SIGN_UP,
@@ -428,6 +433,7 @@ export enum ErrorCode {
     ENGINE_OPERATION_FAILURE = 'ENGINE_OPERATION_FAILURE',
     ENTITY_NOT_FOUND = 'ENTITY_NOT_FOUND',
     EXECUTION_TIMEOUT = 'EXECUTION_TIMEOUT',
+    MEMORY_ISSUE = 'MEMORY_ISSUE',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
     EXISTING_USER = 'EXISTING_USER',
     EXISTING_ALERT_CHANNEL = 'EXISTING_ALERT_CHANNEL',

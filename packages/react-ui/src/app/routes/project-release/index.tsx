@@ -2,13 +2,13 @@ import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
-  Plus,
   ChevronDown,
   Undo2,
   GitBranch,
   RotateCcw,
   FolderOpenDot,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
@@ -30,10 +30,10 @@ import { formatUtils } from '@/lib/utils';
 import { ProjectRelease, ProjectReleaseType } from '@activepieces/shared';
 
 import { ApplyButton } from './apply-plan';
-import { DownloadButton } from './download-button';
 import { SelectionButton } from './selection-dialog';
 
 const ProjectReleasesPage = () => {
+  const navigate = useNavigate();
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['project-releases'],
     queryFn: () => projectReleaseApi.list(),
@@ -97,6 +97,39 @@ const ProjectReleasesPage = () => {
         <div className="text-left">{row.original.importedByUser?.email}</div>
       ),
     },
+    {
+      accessorKey: 'actions',
+      id: 'select',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="" />
+      ),
+      cell: ({ row }) => {
+        return (
+          <div
+            className="flex items-center justify-center z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <ApplyButton
+                  onSuccess={refetch}
+                  variant="ghost"
+                  className="size-8 p-0"
+                  request={{
+                    type: ProjectReleaseType.ROLLBACK,
+                    projectReleaseId: row.original.id,
+                  }}
+                  defaultName={row.original.name}
+                >
+                  <Undo2 className="size-4" />
+                </ApplyButton>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{t('Rollback')}</TooltipContent>
+            </Tooltip>
+          </div>
+        );
+      },
+    },
   ];
 
   return (
@@ -105,7 +138,17 @@ const ProjectReleasesPage = () => {
         <div className="flex flex-col gap-2">
           <TableTitle>{t('Project Releases')}</TableTitle>
           <div className="text-sm text-muted-foreground">
-            {t('Track and manage your project version history and deployments')}
+            {t(
+              'Track and manage your project version history and deployments. ',
+            )}
+            <a
+              href="https://www.activepieces.com/docs/operations/git-sync"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              {t('Environments & Releases')}
+            </a>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -125,7 +168,7 @@ const ProjectReleasesPage = () => {
                   request={{ type: ProjectReleaseType.GIT }}
                 >
                   <div className="flex flex-row gap-2 items-center">
-                    <Plus className="h-4 w-4" />
+                    <GitBranch className="size-4" />
                     <span>{t('From Git')}</span>
                   </div>
                 </ApplyButton>
@@ -138,7 +181,7 @@ const ProjectReleasesPage = () => {
                   ReleaseType={ProjectReleaseType.PROJECT}
                 >
                   <div className="flex flex-row gap-2 items-center">
-                    <Plus className="h-4 w-4" />
+                    <FolderOpenDot className="size-4" />
                     <span>{t('From Project')}</span>
                   </div>
                 </SelectionButton>
@@ -151,32 +194,9 @@ const ProjectReleasesPage = () => {
         columns={columns}
         page={data}
         isLoading={isLoading}
-        actions={[
-          (row) => <DownloadButton release={row} />,
-          (row) => {
-            return (
-              <div className="flex items-center justify-center">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <ApplyButton
-                      onSuccess={refetch}
-                      variant="ghost"
-                      className="size-8 p-0"
-                      request={{
-                        type: ProjectReleaseType.ROLLBACK,
-                        projectReleaseId: row.id,
-                      }}
-                      defaultName={row.name}
-                    >
-                      <Undo2 className="size-4" />
-                    </ApplyButton>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">{t('Rollback')}</TooltipContent>
-                </Tooltip>
-              </div>
-            );
-          },
-        ]}
+        onRowClick={(row) => {
+          navigate(`/releases/${row.id}`);
+        }}
       />
     </div>
   );

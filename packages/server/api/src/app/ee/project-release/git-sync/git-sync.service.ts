@@ -15,6 +15,7 @@ import {
     SeekPage,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { flowService } from '../../../flows/flow/flow.service'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
@@ -46,7 +47,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
         return repo().findOneByOrFail({ id })
     },
     async getOneByProjectOrThrow({ projectId }: { projectId: string }): Promise<GitRepo> {
-        const gitRepo = await repo().findOneByOrFail({ projectId })
+        const gitRepo = await repo().findOneBy({ projectId })
         if (isNil(gitRepo)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -89,47 +90,64 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
             request: {
                 type: GitPushOperationType.DELETE_FLOW,
                 commitMessage: `chore: deleted flow ${flowId}`,
-                flowId,
+                flowIds: [flowId],
             },
             log,
         })
     },
     async push({ id, userId, request, log }: PushParams): Promise<void> {
         const gitRepo = await gitRepoService(log).getOrThrow({ id })
-        const { git, flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
+        const { git, flowFolderPath, connectionsFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
         switch (request.type) {
             case GitPushOperationType.PUSH_FLOW: {
-                const flow = await flowService(log).getOnePopulatedOrThrow({
-                    id: request.flowId,
-                    projectId: gitRepo.projectId,
-                    removeConnectionsName: false,
-                    removeSampleData: true,
-                })
-                const flowName = request.flowId
-                await gitSyncHelper(log).upsertFlowToGit(flowName, flow, flowFolderPath)
-                await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: updated flow ${flow.id}`)
+                for (const flowId of request.flowIds) {
+                    const flow = await flowService(log).getOnePopulatedOrThrow({
+                        id: flowId,
+                        projectId: gitRepo.projectId,
+                        removeConnectionsName: false,
+                        removeSampleData: true,
+                    })
+                    const flowName = flow.externalId || flowId
+                    const connections = await appConnectionService(log).getManyConnectionStates({
+                        projectId: gitRepo.projectId,
+                    })
+                    await gitSyncHelper(log).upsertFlowToGit({
+                        fileName: flowName,
+                        flow,
+                        flowFolderPath,
+                        connections,
+                        connectionsFolderPath,
+                    })
+                }
+                await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: updated flows ${request.flowIds.join(', ')}`)
                 break
             }
             case GitPushOperationType.DELETE_FLOW: {
                 const flow = await flowService(log).getOnePopulatedOrThrow({
-                    id: request.flowId,
+                    id: request.flowIds[0],
                     projectId: gitRepo.projectId,
                 })
                 const externalId = flow.externalId
                 if (isNil(externalId)) {
                     break
                 }
-                const deleted = await gitSyncHelper(log).deleteFlowFromGit(externalId, flowFolderPath)
+                const deleted = await gitSyncHelper(log).deleteFlowFromGit({
+                    flowId: externalId,
+                    flowFolderPath,
+                })
                 if (deleted) {
-                    await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: deleted flow ${request.flowId} from user interface`)
+                    await gitHelper.commitAndPush(git, gitRepo, request.commitMessage ?? `chore: deleted flow ${request.flowIds[0]} from user interface`)
                 }
                 break
             }
         }
     },
     async getState({ gitRepo, userId, log }: PullGitRepoRequest): Promise<ProjectState> {
-        const { flowFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
-        return gitSyncHelper(log).getStateFromGit(flowFolderPath)
+        const { flowFolderPath, connectionsFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
+        return gitSyncHelper(log).getStateFromGit({
+            flowPath: flowFolderPath,
+            connectionsFolderPath,
+        })
     },
     async delete({ id, projectId }: DeleteParams): Promise<void> {
         const gitRepo = await repo().findOneBy({ id, projectId })

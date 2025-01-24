@@ -31,8 +31,10 @@ const EnvironmentPage = () => {
     onSuccess: () => {
       refetch();
       toast({
-        title: t('Git Sync Disconnected'),
-        description: t('You have successfully disconnected your Git Sync'),
+        title: t('Git Connection Removed'),
+        description: t(
+          'Your Git repository has been successfully disconnected',
+        ),
         duration: 3000,
       });
     },
@@ -45,18 +47,26 @@ const EnvironmentPage = () => {
     <LockedFeatureGuard
       featureKey="ENVIRONMENT"
       locked={!platform.environmentsEnabled}
-      lockTitle={t('Unlock Environment')}
+      lockTitle={t('Enable Environments')}
       lockDescription={t(
-        "Streamline your team's workflow for a seamless experience to build and deploy flows across your environments",
+        'Deploy flows across development, staging and production environments with version control and team collaboration',
       )}
     >
       <div className="flex w-full flex-col items-start justify-center gap-4">
         <div className="flex flex-col justify-start items-start w-full">
-          <h1 className="text-2xl font-bold flex-grow">{t('Environment')}</h1>
+          <h1 className="text-2xl font-bold flex-grow">{t('Environments')}</h1>
           <span className="text-muted-foreground text-md">
             {t(
-              'This feature allows for the creation of an external backup, environments, and maintaining a version history',
+              'Connect to Git to enable version control, backup your flows, and manage multiple environments. ',
             )}
+            <a
+              href="https://www.activepieces.com/docs/operations/git-sync"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              {t('Environments & Releases')}
+            </a>
           </span>
         </div>
         <Card className="w-full p-4">
@@ -65,14 +75,14 @@ const EnvironmentPage = () => {
               <>
                 <div className="flex flex-grow flex-col gap-2">
                   <p>
-                    {t('Remote URL')}:{' '}
-                    {gitSync?.remoteUrl ?? t('Not Connected')}
+                    {t('Repository URL')}:{' '}
+                    {gitSync?.remoteUrl ?? t('Not connected')}
                   </p>
                   <p>
-                    {t('Branch')}: {gitSync?.branch ?? t('Not Connected')}
+                    {t('Branch')}: {gitSync?.branch ?? t('Not connected')}
                   </p>
                   <p>
-                    {t('Folder')}: {gitSync?.slug ?? t('Not Connected')}
+                    {t('Project Folder')}: {gitSync?.slug ?? t('Not connected')}
                   </p>
                 </div>
                 <div className="flex flex-col justify-center items-center gap-2">

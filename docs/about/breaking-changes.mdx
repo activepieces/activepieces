@@ -4,6 +4,17 @@ description: "This list shows all versions that include breaking changes and how
 icon: "hammer"
 ---
 
+## 0.38.6
+
+### What has changed?
+
+- Workers no longer rely on the `AP_FLOW_WORKER_CONCURRENCY` and `AP_SCHEDULED_WORKER_CONCURRENCY` environment variables. These values are now retrieved from the app server.
+
+### When is action necessary?
+
+- If `AP_SCHEDULED_WORKER_CONCURRENCY` and `AP_FLOW_WORKER_CONCURRENCY` are set to zero on the app server, workers will stop processing the queues. To resolve this, refer to the [Separate Worker from App](https://www.activepieces.com/docs/install/configuration/seperate-workers) documentation and use `AP_CONTAINER_TYPE`.
+
+
 ## 0.35.1
 
 ### What has changed?

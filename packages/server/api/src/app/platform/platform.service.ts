@@ -8,12 +8,14 @@ import {
     LocalesEnum,
     Platform,
     PlatformId,
+    PlatformWithoutSensitiveData,
     spreadIfDefined,
     UpdatePlatformRequestBody,
     UserId } from '@activepieces/shared'
+import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { defaultTheme } from '../flags/theme'
-import { userService } from '../user/user-service'
+import { userRepo, userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
 
 const repo = repoFactory<Platform>(PlatformEntity)
@@ -22,6 +24,17 @@ export const platformService = {
     async hasAnyPlatforms(): Promise<boolean> {
         const count = await repo().count()
         return count > 0
+    },
+    async listPlatformsForIdentity(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
+        const users = await userRepo().findBy({
+            identityId: params.identityId,
+        })
+        const platformIds = users.map((user) => user.platformId).filter((platformId) => platformId !== null)
+        return repo().find({
+            where: {
+                id: In(platformIds),
+            },
+        })
     },
     async create(params: AddParams): Promise<Platform> {
         const {
@@ -56,7 +69,7 @@ export const platformService = {
             ssoEnabled: false,
             federatedAuthProviders: {},
             cloudAuthEnabled: true,
-            flowIssuesEnabled: false,
+            flowIssuesEnabled: true,
             environmentsEnabled: false,
             managePiecesEnabled: false,
             manageTemplatesEnabled: false,
@@ -196,4 +209,9 @@ type UpdateParams = UpdatePlatformRequestBody & {
     alertsEnabled?: boolean 
     analyticsEnabled?: boolean 
     licenseKey?: string
+}
+
+
+type ListPlatformsForIdentityParams = {
+    identityId: string
 }

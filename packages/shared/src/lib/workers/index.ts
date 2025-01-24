@@ -40,6 +40,7 @@ export const WorkerMachineHealthcheckRequest = MachineInformation
 
 export type WorkerMachineHealthcheckRequest = Static<typeof WorkerMachineHealthcheckRequest>
 export const WorkerMachineHealthcheckResponse = Type.Object({
+    PUBLIC_URL: Type.String(),
     TRIGGER_TIMEOUT_SECONDS: Type.Number(),
     PAUSED_FLOW_TIMEOUT_DAYS: Type.Number(),
     EXECUTION_MODE: Type.String(),

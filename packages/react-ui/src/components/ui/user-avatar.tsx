@@ -21,9 +21,11 @@ export function UserAvatar() {
   const { reset } = useTelemetry();
   const { embedState } = useEmbedding();
   const user = authenticationSession.getCurrentUser();
+
   if (!user || embedState.isEmbedded) {
     return null;
   }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

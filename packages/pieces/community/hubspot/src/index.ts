@@ -2,17 +2,70 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { hubSpotListsAddContactAction } from './lib/actions/add-contact-to-list-action';
-import { createHubspotContact } from './lib/actions/create-contact.action';
-import { hubSpotContactsCreateOrUpdateAction } from './lib/actions/create-or-update-contact-action';
-import { hubSpotGetOwnerByEmailAction } from './lib/actions/search-owner-by-email';
-import { newCompanyAdded } from './lib/triggers/new-company-added';
-import { newContactAdded } from './lib/triggers/new-contact-added';
-import { newDealAdded } from './lib/triggers/new-deal-added';
-import { newTaskAdded } from './lib/triggers/new-task-added';
-import { newTicketAdded } from './lib/triggers/new-ticket-added';
+import { newCompanyTrigger } from './lib/triggers/new-company';
+import { newContactTrigger } from './lib/triggers/new-contact';
+import { newDealTrigger } from './lib/triggers/new-deal';
+import { newTaskTrigger } from './lib/triggers/new-task';
+import { newTicketTrigger } from './lib/triggers/new-ticket';
 import { createDealAction } from './lib/actions/create-deal';
 import { updateDealAction } from './lib/actions/update-deal';
 import { dealStageUpdatedTrigger } from './lib/triggers/deal-stage-updated';
+import { getContactAction } from './lib/actions/get-contact';
+import { getDealAction } from './lib/actions/get-deal';
+import { getTicketAction } from './lib/actions/get-ticket';
+import { getCompanyAction } from './lib/actions/get-company';
+import { getPipelineStageDeatilsAction } from './lib/actions/get-pipeline-stage-details';
+import { getProductAction } from './lib/actions/get-product';
+import { addContactToWorkflowAction } from './lib/actions/add-contact-to-workflow';
+import { createTicketAction } from './lib/actions/create-ticket';
+import { updateTicketAction } from './lib/actions/update-ticket';
+import { findTicketAction } from './lib/actions/find-ticket';
+import { createContactAction } from './lib/actions/create-contact';
+import { updateContactAction } from './lib/actions/update-contact';
+import { findContactAction } from './lib/actions/find-contact';
+import { createOrUpdateContactAction } from './lib/actions/create-or-update-contact';
+import { createProductAction } from './lib/actions/create-product';
+import { updateProductAction } from './lib/actions/update-product';
+import { findProductAction } from './lib/actions/find-product';
+import { createCompanyAction } from './lib/actions/create-company';
+import { findCompanyAction } from './lib/actions/find-company';
+import { updateCompanyAction } from './lib/actions/update-company';
+import { createCustomObjectAction } from './lib/actions/create-custom-object';
+import { updateCustomObjectAction } from './lib/actions/update-custom-object';
+import { getCustomObjectAction } from './lib/actions/get-custom-object';
+import { findCustomObjectAction } from './lib/actions/find-custom-object';
+import { getOwnerByEmailAction } from './lib/actions/get-owner-by-email';
+import { getOwnerByIdAction } from './lib/actions/get-owner-by-id';
+import { findDealAction } from './lib/actions/find-deal';
+import { createLineItemAction } from './lib/actions/create-line-item';
+import { getLineItemAction } from './lib/actions/get-line-item';
+import { updateLineItemAction } from './lib/actions/update-line-item';
+import { findLineItemAction } from './lib/actions/find-line-item';
+import { removeContactFromListAction } from './lib/actions/remove-contact-from-list';
+import { uploadFileAction } from './lib/actions/upload-file';
+import { removeEmailSubscriptionAction } from './lib/actions/remove-email-subscription';
+import { createAssociationsAction } from './lib/actions/create-associations';
+import { removeAssociationsAction } from './lib/actions/remove-associations';
+import { findAssociationsAction } from './lib/actions/find-associations';
+import { newOrUpdatedCompanyTrigger } from './lib/triggers/new-or-updated-company';
+import { newOrUpdatedContactTrigger } from './lib/triggers/new-or-updated-contact';
+import { newOrUpdatedProductTrigger } from './lib/triggers/new-or-updated-product';
+import { newOrUpdatedLineItemTrigger } from './lib/triggers/new-or-updated-line-item';
+import { newContactPropertyChangeTrigger } from './lib/triggers/new-contact-property-change';
+import { newTicketPropertyChangeTrigger } from './lib/triggers/new-ticket-property-change';
+import { newCompanyPropertyChangeTrigger } from './lib/triggers/new-company-propety-change';
+import { newDealPropertyChangeTrigger } from './lib/triggers/new-deal-property-change';
+import { newCustomObjectPropertyChangeTrigger } from './lib/triggers/new-custom-object-property-change';
+import { newLineItemTrigger } from './lib/triggers/new-line-item';
+import { newProductTrigger } from './lib/triggers/new-product';
+import { newCustomObjectTrigger } from './lib/triggers/new-custom-object';
+import { newFormSubmissionTrigger } from './lib/triggers/new-form-submission';
+import { newEmailEventTrigger } from './lib/triggers/new-email-event';
+import { newBlogArticleTrigger } from './lib/triggers/new-blog-article';
+import { newContactInListTrigger } from './lib/triggers/new-contact-in-list';
+import { newEngagementTrigger } from './lib/triggers/new-engagement';
+import { newEmailSubscriptionsTimelineTrigger } from './lib/triggers/email-subscriptions-timeline';
+import { createBlogPostAction } from './lib/actions/create-blog-post';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -21,19 +74,31 @@ export const hubspotAuth = PieceAuth.OAuth2({
 	scope: [
 		'crm.lists.read',
 		'crm.lists.write',
-		'crm.objects.contacts.read',
-		'crm.objects.contacts.write',
-		'crm.objects.owners.read',
 		'crm.objects.companies.read',
 		'crm.objects.companies.write',
+		'crm.objects.contacts.read',
+		'crm.objects.contacts.write',
+		'crm.objects.custom.read',
+		'crm.objects.custom.write',
 		'crm.objects.deals.read',
 		'crm.objects.deals.write',
 		'crm.objects.line_items.read',
-		'crm.schemas.line_items.read',
+		'crm.objects.owners.read',
 		'crm.schemas.companies.read',
 		'crm.schemas.contacts.read',
+		'crm.schemas.custom.read',
 		'crm.schemas.deals.read',
+		'crm.schemas.line_items.read',
+		'automation',
+		'e-commerce',
 		'tickets',
+		'content',
+		'settings.currencies.read',
+		'settings.users.read',
+		'settings.users.teams.read',
+		'files',
+		'forms'
+		// 'business_units_view.read'
 	],
 });
 
@@ -46,12 +111,47 @@ export const hubspot = createPiece({
 	categories: [PieceCategory.SALES_AND_CRM],
 	auth: hubspotAuth,
 	actions: [
-		createHubspotContact,
-		hubSpotContactsCreateOrUpdateAction,
 		hubSpotListsAddContactAction,
-		hubSpotGetOwnerByEmailAction,
+		addContactToWorkflowAction,
+		createAssociationsAction,
+		createCompanyAction,
+		createContactAction,
+		createBlogPostAction,
+		createCustomObjectAction,
 		createDealAction,
+		createLineItemAction,
+		createOrUpdateContactAction,
+		createProductAction,
+		createTicketAction,
+		getCompanyAction,
+		getContactAction,
+		getCustomObjectAction,
+		getDealAction,
+		getLineItemAction,
+		getProductAction,
+		getTicketAction,
+		removeAssociationsAction,
+		removeContactFromListAction,
+		removeEmailSubscriptionAction,
+		updateCompanyAction,
+		updateContactAction,
+		updateCustomObjectAction,
 		updateDealAction,
+		updateLineItemAction,
+		updateProductAction,
+		updateTicketAction,
+		uploadFileAction,
+		findAssociationsAction,
+		findCompanyAction,
+		findContactAction,
+		findCustomObjectAction,
+		findDealAction,
+		findLineItemAction,
+		findProductAction,
+		findTicketAction,
+		getOwnerByEmailAction,
+		getOwnerByIdAction,
+		getPipelineStageDeatilsAction,
 		createCustomApiCallAction({
 			baseUrl: () => 'https://api.hubapi.com',
 			auth: hubspotAuth,
@@ -61,11 +161,29 @@ export const hubspot = createPiece({
 		}),
 	],
 	triggers: [
-		newTaskAdded,
-		newCompanyAdded,
-		newContactAdded,
-		newDealAdded,
-		newTicketAdded,
+		newOrUpdatedCompanyTrigger,
+		newOrUpdatedContactTrigger,
+		newDealPropertyChangeTrigger,
+		newEmailSubscriptionsTimelineTrigger,
+		newOrUpdatedLineItemTrigger,
+		newCompanyTrigger,
+		newCompanyPropertyChangeTrigger,
+		newContactTrigger,
+		newContactInListTrigger,
+		newContactPropertyChangeTrigger,
+		newBlogArticleTrigger,
+		newCustomObjectTrigger,
+		newCustomObjectPropertyChangeTrigger,
+		newDealTrigger,
+		newEmailEventTrigger,
+		newEngagementTrigger,
+		newFormSubmissionTrigger,
+		newLineItemTrigger,
+		newProductTrigger,
+		newTicketTrigger,
+		newTicketPropertyChangeTrigger,
+		newOrUpdatedProductTrigger,
+		newTaskTrigger,
 		dealStageUpdatedTrigger,
 	],
 });

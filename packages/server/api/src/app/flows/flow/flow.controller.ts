@@ -14,7 +14,6 @@ import {
     ListFlowsRequest,
     Permission,
     PopulatedFlow,
-    Principal,
     PrincipalType,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
@@ -25,11 +24,11 @@ import {
 } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
 import { StatusCodes } from 'http-status-codes'
+import { authenticationUtils } from '../../authentication/authentication-utils'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
 import { gitRepoService } from '../../ee/project-release/git-sync/git-sync.service'
 import { eventsHooks } from '../../helper/application-events'
-import { projectService } from '../../project/project-service'
 import { flowService } from './flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
@@ -54,7 +53,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/:id', UpdateFlowRequestOptions, async (request) => {
-        const userId = await extractUserIdFromPrincipal(request.principal)
+        const userId = await authenticationUtils.extractUserIdFromPrincipal(request.principal)
         await assertUserHasPermissionToFlow(request.principal, request.body.type, request.log)
 
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
@@ -158,17 +157,6 @@ async function assertThatFlowIsNotBeingUsed(
             },
         })
     }
-}
-
-async function extractUserIdFromPrincipal(
-    principal: Principal,
-): Promise<string> {
-    if (principal.type === PrincipalType.USER) {
-        return principal.id
-    }
-    // TODO currently it's same as api service, but it's better to get it from api key service, in case we introduced more admin users
-    const project = await projectService.getOneOrThrow(principal.projectId)
-    return project.ownerId
 }
 
 const CreateFlowRequestOptions = {

@@ -4,8 +4,8 @@ import {
   usePrefetchQuery,
   useSuspenseQuery,
 } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
-import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 import { ProjectWithLimits } from '@activepieces/shared';
@@ -21,17 +21,10 @@ export const projectHooks = {
       staleTime: Infinity,
     });
   },
-  prefetchProjectRole: () => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    usePrefetchQuery({
-      queryKey: ['project-role', authenticationSession.getProjectId()],
-      queryFn: async () => authenticationApi.me(),
-      staleTime: Infinity,
-    });
-  },
   useCurrentProject: () => {
+    const currentProjectId = authenticationSession.getProjectId();
     const query = useSuspenseQuery<ProjectWithLimits, Error>({
-      queryKey: ['current-project'],
+      queryKey: ['current-project', currentProjectId],
       queryFn: projectApi.current,
       staleTime: Infinity,
     });
@@ -80,4 +73,23 @@ const setCurrentProject = async (
     );
     window.location.href = pathNameWithNewProjectId;
   }
+};
+
+export const useReloadPageIfProjectIdChanged = (projectId: string) => {
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const currentProjectId = authenticationSession.getProjectId();
+      if (
+        currentProjectId !== projectId &&
+        document.visibilityState === 'visible'
+      ) {
+        console.log('Project changed', currentProjectId, projectId);
+        window.location.reload();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [projectId]);
 };

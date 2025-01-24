@@ -66,7 +66,6 @@ export const CopilotSidebar = () => {
           },
         },
       },
-      () => { },
     );
 
     await new Promise(resolve => setTimeout(resolve, 2600));
@@ -97,7 +96,6 @@ export const CopilotSidebar = () => {
           },
         },
       },
-      () => { },
     );
 
     await new Promise(resolve => setTimeout(resolve, 3000));
@@ -128,7 +126,6 @@ export const CopilotSidebar = () => {
           },
         },
       },
-      () => { },
     );
     setMessages([...messages, { type: 'feedback', message: 'I added three actions in sequence - Gmail, Slack and Discord. What do you think?' }]);
   }

@@ -6,8 +6,8 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -94,29 +94,25 @@ const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
   });
 
   return (
-    <Form {...form}>
-      <form
-        className="grid space-y-4"
-        onSubmit={form.handleSubmit((data) => mutate(data))}
-      >
-        <Dialog open={open} onOpenChange={setOpen}>
-          {showButton && (
-            <DialogTrigger asChild>
-              <Button size={'sm'} className="w-32">
-                {t('Connect Git')}
-              </Button>
-            </DialogTrigger>
-          )}
-          <DialogContent className="sm:max-w-[500px]">
+    <Dialog open={open} onOpenChange={setOpen} modal={true}>
+      {showButton && (
+        <DialogTrigger asChild>
+          <Button size={'sm'} className="w-32">
+            {t('Connect Git')}
+          </Button>
+        </DialogTrigger>
+      )}
+      <DialogContent className="sm:max-w-[500px]">
+        <Form {...form}>
+          <form
+            className="flex flex-col"
+            onSubmit={form.handleSubmit((data) => mutate(data))}
+          >
             <DialogHeader>
               <DialogTitle>{t('Connect Git')}</DialogTitle>
-              <DialogDescription>
-                {t(
-                  'Start by connecting an empty git repository to your project.',
-                )}
-              </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+
+            <div className="grid gap-4">
               <FormField
                 control={form.control}
                 name="remoteUrl"
@@ -187,6 +183,11 @@ const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
             </div>
 
             <DialogFooter>
+              <DialogClose>
+                <Button type="button" variant={'outline'} loading={isPending}>
+                  {t('Cancel')}
+                </Button>
+              </DialogClose>
               <Button
                 type="submit"
                 onClick={form.handleSubmit((data) => mutate(data))}
@@ -195,10 +196,10 @@ const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
                 {t('Connect')}
               </Button>
             </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </form>
-    </Form>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 };
 

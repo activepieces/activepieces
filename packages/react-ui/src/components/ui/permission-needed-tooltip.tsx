@@ -17,7 +17,7 @@ export const PermissionNeededTooltip = React.forwardRef<
         <div>{children}</div>
       </TooltipTrigger>
       {!hasPermission && (
-        <TooltipContent side="bottom">{t('Permission needed')}</TooltipContent>
+        <TooltipContent side="top">{t('Permission needed')}</TooltipContent>
       )}
     </Tooltip>
   );

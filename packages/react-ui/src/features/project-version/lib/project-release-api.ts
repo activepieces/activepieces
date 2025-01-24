@@ -1,6 +1,6 @@
 import { api } from '@/lib/api';
-import { ProjectSyncPlan } from '@activepieces/ee-shared';
 import {
+  ProjectSyncPlan,
   SeekPage,
   CreateProjectReleaseRequestBody,
   ProjectRelease,
@@ -8,6 +8,9 @@ import {
 } from '@activepieces/shared';
 
 export const projectReleaseApi = {
+  async get(releaseId: string) {
+    return await api.get<ProjectRelease>(`/v1/project-releases/${releaseId}`);
+  },
   async list() {
     return await api.get<SeekPage<ProjectRelease>>(`/v1/project-releases`);
   },
@@ -16,9 +19,6 @@ export const projectReleaseApi = {
   },
   async delete(id: string) {
     return await api.delete<void>(`/v1/project-releases/${id}`);
-  },
-  async export(releaseId: string) {
-    return await api.post<unknown>(`/v1/project-releases/${releaseId}/export`);
   },
   async diff(request: DiffReleaseRequest) {
     return await api.post<ProjectSyncPlan>(

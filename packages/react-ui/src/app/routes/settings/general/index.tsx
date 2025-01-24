@@ -45,8 +45,8 @@ export default function GeneralPage() {
       displayName: project?.displayName,
       externalId: project?.externalId,
       plan: {
-        tasks: project?.plan?.tasks,
-        aiTokens: project?.plan?.aiTokens,
+        tasks: project?.plan?.tasks ?? undefined,
+        aiTokens: project?.plan?.aiTokens ?? undefined,
       },
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
@@ -59,7 +59,7 @@ export default function GeneralPage() {
     {
       displayName: string;
       externalId?: string;
-      plan: { tasks: number; aiTokens?: number };
+      plan: { tasks: number | undefined; aiTokens?: number | undefined };
     }
   >({
     mutationFn: (request) => {
