@@ -243,7 +243,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             type: FileType.FLOW_RUN_PAYLOAD,
             data: Buffer.from(JSON.stringify(payload)),
             size: Buffer.from(JSON.stringify(payload)).length,
-            compression : FileCompression.NONE,
+            compression: FileCompression.NONE,
             metadata: {
                 flowRunId: flowRun.id,
                 projectId,

@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddTriggerPayloadFlowRunSQLITE1737844653684 implements MigrationInterface {
     name = 'AddTriggerPayloadFlowRunSQLITE1737844653684'
@@ -6,22 +6,22 @@ export class AddTriggerPayloadFlowRunSQLITE1737844653684 implements MigrationInt
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_run_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_logs_file_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_environment_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_environment_status_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_flow_id_environment_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_flow_id_environment_status_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_flow_run" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -47,7 +47,7 @@ export class AddTriggerPayloadFlowRunSQLITE1737844653684 implements MigrationInt
                     CONSTRAINT "fk_flow_run_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                     CONSTRAINT "fk_flow_run_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_flow_run"(
                     "id",
@@ -86,29 +86,29 @@ export class AddTriggerPayloadFlowRunSQLITE1737844653684 implements MigrationInt
                 "terminationReason",
                 "duration"
             FROM "flow_run"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "flow_run"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_flow_run"
                 RENAME TO "flow_run"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_flow_id" ON "flow_run" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_logs_file_id" ON "flow_run" ("logsFileId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_environment_created_desc" ON "flow_run" ("projectId", "environment", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_environment_status_created_desc" ON "flow_run" ("projectId", "environment", "status", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_flow_id_environment_created_desc" ON "flow_run" ("projectId", "flowId", "environment", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_flow_id_environment_status_created_desc" ON "flow_run" (
                 "projectId",
@@ -117,32 +117,32 @@ export class AddTriggerPayloadFlowRunSQLITE1737844653684 implements MigrationInt
                 "status",
                 "created"
             )
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_flow_id_environment_status_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_flow_id_environment_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_environment_status_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_project_id_environment_created_desc"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_logs_file_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_run_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "flow_run"
                 RENAME TO "temporary_flow_run"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "flow_run" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -167,7 +167,7 @@ export class AddTriggerPayloadFlowRunSQLITE1737844653684 implements MigrationInt
                     CONSTRAINT "fk_flow_run_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                     CONSTRAINT "fk_flow_run_flow_id" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "flow_run"(
                     "id",
@@ -206,10 +206,10 @@ export class AddTriggerPayloadFlowRunSQLITE1737844653684 implements MigrationInt
                 "terminationReason",
                 "duration"
             FROM "temporary_flow_run"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_flow_run"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_flow_id_environment_status_created_desc" ON "flow_run" (
                 "projectId",
@@ -218,22 +218,22 @@ export class AddTriggerPayloadFlowRunSQLITE1737844653684 implements MigrationInt
                 "status",
                 "created"
             )
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_flow_id_environment_created_desc" ON "flow_run" ("projectId", "flowId", "environment", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_environment_status_created_desc" ON "flow_run" ("projectId", "environment", "status", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_environment_created_desc" ON "flow_run" ("projectId", "environment", "created")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_logs_file_id" ON "flow_run" ("logsFileId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_run_flow_id" ON "flow_run" ("flowId")
-        `);
+        `)
     }
 
 }
