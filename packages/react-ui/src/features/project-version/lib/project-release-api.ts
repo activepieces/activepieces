@@ -1,5 +1,5 @@
 import { api } from '@/lib/api';
-import { ProjectSyncPlan } from '@activepieces/ee-shared';
+import { ProjectSyncPlan } from '@activepieces/shared';
 import {
   SeekPage,
   CreateProjectReleaseRequestBody,
