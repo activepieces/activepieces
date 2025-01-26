@@ -1,12 +1,14 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { ClipboardCheck, CircleHelp, Sparkles } from 'lucide-react';
-import { useState, useEffect, useMemo } from 'react';
+import { useState } from 'react';
 
 import { useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progres-bar';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { TableTitle } from '@/components/ui/table-title';
 import {
   Tooltip,
@@ -17,58 +19,35 @@ import {
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
+import { isNil } from '@activepieces/shared';
 
 import { platformBillingApi } from './api/billing-api';
-import { AiLimitDialog } from './dialogs/ai';
 import { TasksLimitDialog } from './dialogs/tasks';
 import {
-  calculateAICostHelper,
   calculateTaskCostHelper,
   calculateTotalCostHelper,
 } from './helpers/platform-billing-helper';
 
-const fetchSubscriptionInfo = async () => {
-  return await platformBillingApi.getSubscription();
-};
-
 export default function Billing() {
   const [isTasksLimitDialogOpen, setIsTasksLimitDialogOpen] = useState(false);
-  const [isAIDialogOpen, setIsAIDialogOpen] = useState(false);
-  const [tasksLimit, setTasksLimit] = useState<number | undefined>(undefined);
-  const [aiLimit, setAiLimit] = useState<number | undefined>(undefined);
   const { platform } = platformHooks.useCurrentPlatform();
-  const queryClient = useQueryClient();
 
-  const { data: platformSubscription, error: subscriptionError } = useQuery({
+  const {
+    data: platformSubscription,
+    refetch,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['platform-billing-subscription', platform.id],
-    queryFn: fetchSubscriptionInfo,
+    queryFn: platformBillingApi.getSubscription,
     enabled: !!platform,
   });
 
-  useEffect(() => {
-    if (subscriptionError) {
-      toast({
-        title: t('Error fetching subscription'),
-        description: t('Failed to load subscription details'),
-        variant: 'destructive',
-      });
-    }
-  }, [subscriptionError]);
-
-  useEffect(() => {
-    if (platformSubscription?.subscription) {
-      setTasksLimit(platformSubscription.subscription.tasksLimit ?? 0);
-      setAiLimit(platformSubscription.subscription.aiCreditsLimit ?? 0);
-    }
-  }, [platformSubscription]);
-
   const updateLimitsMutation = useMutation({
-    mutationFn: (data: { tasksLimit?: number; aiCreditsLimit?: number }) =>
-      platformBillingApi.update(data.tasksLimit, data.aiCreditsLimit),
+    mutationFn: (data: { tasksLimit?: number | null | undefined }) =>
+      platformBillingApi.update(data.tasksLimit),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['platform-billing-subscription', platform.id],
-      });
+      refetch();
       toast({
         title: t('Success'),
         description: t('Limits updated successfully'),
@@ -83,40 +62,12 @@ export default function Billing() {
     },
   });
 
-  async function handleTasksLimitSubmit(limit: number): Promise<void> {
-    setTasksLimit(limit);
-    try {
-      await updateLimitsMutation.mutateAsync({
-        tasksLimit: limit,
-        aiCreditsLimit: aiLimit,
-      });
-    } catch (error) {
-      console.error('Failed to update tasks limit:', error);
-    }
-  }
-
-  async function handleAILimitSubmit(limit: number): Promise<void> {
-    setAiLimit(limit);
-    try {
-      await updateLimitsMutation.mutateAsync({
-        tasksLimit: tasksLimit,
-        aiCreditsLimit: limit,
-      });
-    } catch (error) {
-      console.error('Failed to update AI credits limit:', error);
-    }
-  }
-
-  const daysRemaining = useMemo(() => {
-    if (!platformSubscription?.nextBillingDate) return 0;
-    return Math.ceil(
-      (new Date(platformSubscription.nextBillingDate).getTime() -
-        new Date().getTime()) /
-        (1000 * 60 * 60 * 24),
-    );
-  }, [platformSubscription?.nextBillingDate]);
+  const daysRemaining = platformSubscription?.nextBillingDate
+    ? dayjs(platformSubscription.nextBillingDate).diff(dayjs(), 'day')
+    : 0;
 
   const openNewWindow = useNewWindow();
+
   const { mutate: manageBilling, isPending: isBillingPending } = useMutation({
     mutationFn: async () => {
       if (
@@ -133,27 +84,40 @@ export default function Billing() {
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
-  const calculateTaskCost = useMemo(() => {
-    return calculateTaskCostHelper(
-      platformSubscription?.flowRunCount || 0,
-      tasksLimit ?? 0,
-    );
-  }, [platformSubscription?.flowRunCount, tasksLimit]);
+  const tasksLimit = platformSubscription?.subscription.tasksLimit ?? 0;
+  const aiLimit = platformSubscription?.subscription.aiCreditsLimit ?? 0;
 
-  const calculateAICost = useMemo(() => {
-    return calculateAICostHelper(
-      platformSubscription?.aiCredits || 0,
-      aiLimit ?? 0,
-    );
-  }, [platformSubscription?.aiCredits, aiLimit]);
+  const calculateTaskCost = calculateTaskCostHelper(
+    platformSubscription?.flowRunCount || 0,
+    platformSubscription?.subscription.includedTasks || 0,
+  );
 
-  const calculateTotalCost = useMemo(() => {
-    return calculateTotalCostHelper(calculateTaskCost, calculateAICost);
-  }, [calculateTaskCost, calculateAICost]);
+  const calculateTotalCost = calculateTotalCostHelper(
+    Number(calculateTaskCost),
+  );
 
   const isSubscriptionActive =
     platformSubscription?.subscription.stripeSubscriptionStatus === 'active';
 
+  if (isLoading) {
+    return (
+      <article className="flex flex-col w-full p-6 gap-8">
+        <TableTitle>Platform Billing</TableTitle>
+        <LoadingSpinner />
+      </article>
+    );
+  }
+
+  if (isError) {
+    return (
+      <article className="flex flex-col w-full p-6 gap-8">
+        <TableTitle>Platform Billing</TableTitle>
+        <div className="flex items-center justify-center h-[400px] text-destructive">
+          {t('Failed to load billing information')}
+        </div>
+      </article>
+    );
+  }
   return (
     <article className="flex flex-col w-full p-6 gap-8">
       <TableTitle>Platform Billing</TableTitle>
@@ -220,35 +184,22 @@ export default function Billing() {
                     />
                   </div>
                 </div>
-                {isSubscriptionActive ? (
-                  <div className="text-sm mt-5 flex items-center gap-1">
-                    {(tasksLimit || 0) > 0 ? (
-                      <div className="flex items-center gap-1">
-                        {t(`You added a limit of ${tasksLimit ?? 0} tasks.`)}
-                        <span
-                          className="ml-2 text-primary cursor-pointer"
-                          onClick={() => setIsTasksLimitDialogOpen(true)}
-                        >
-                          {t('Edit')}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1">
-                        {t('You have no configured usage limit for credits.')}
-                        <span
-                          className="ml-2 text-primary cursor-pointer"
-                          onClick={() => setIsTasksLimitDialogOpen(true)}
-                        >
-                          {t('Add Limit')}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-sm mt-5 flex items-center gap-1">
-                    {t('You have no configured usage limit for credits.')}
-                  </div>
-                )}
+                <div className="text-sm mt-5 flex items-center gap-1">
+                  {(tasksLimit || 0) > 0 ? (
+                    <div className="flex items-center gap-1">
+                      {t(`Your tasks limit is set to ${tasksLimit}`)}
+                    </div>
+                  ) : null}
+                  {isSubscriptionActive ? (
+                    <Button
+                      variant="link"
+                      onClick={() => setIsTasksLimitDialogOpen(true)}
+                      size="sm"
+                    >
+                      {tasksLimit ? t('Edit') : t('Add Limit')}
+                    </Button>
+                  ) : null}
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -284,48 +235,13 @@ export default function Billing() {
                     />
                   </div>
                 </div>
-
-                {isSubscriptionActive ? (
-                  <div className="text-sm mt-5 flex items-center gap-1">
-                    {(aiLimit || 0) > 0 ? (
-                      <div className="flex items-center gap-1">
-                        {t(`You added a limit of ${aiLimit} credits.`)}
-                        <span
-                          className="ml-2 text-primary cursor-pointer"
-                          onClick={() => setIsAIDialogOpen(true)}
-                        >
-                          {t('Edit')}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1">
-                        {t('You have no configured usage limit for credits.')}
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <CircleHelp className="w-4 h-4" />
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom">
-                              {t(
-                                'You have no configured usage limit for credits.',
-                              )}
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <span
-                          className="ml-2 text-primary cursor-pointer"
-                          onClick={() => setIsAIDialogOpen(true)}
-                        >
-                          {t('Add Limit')}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-sm mt-5 flex items-center gap-1">
-                    {t('You have no configured usage limit for credits.')}
-                  </div>
-                )}
+                <div className="text-sm mt-5 flex items-center gap-1">
+                  {(aiLimit || 0) > 0 ? (
+                    <div className="flex items-center gap-1">
+                      {t(`Your AI credits limit is set to ${aiLimit}`)}
+                    </div>
+                  ) : null}
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -335,14 +251,13 @@ export default function Billing() {
       <TasksLimitDialog
         open={isTasksLimitDialogOpen}
         onOpenChange={setIsTasksLimitDialogOpen}
-        onSubmit={handleTasksLimitSubmit}
+        onSubmit={(newLimit) => {
+          console.log('newLimit', newLimit);
+          updateLimitsMutation.mutateAsync({
+            tasksLimit: isNil(newLimit) ? null : newLimit,
+          });
+        }}
         initialLimit={tasksLimit}
-      />
-      <AiLimitDialog
-        open={isAIDialogOpen}
-        onOpenChange={setIsAIDialogOpen}
-        onSubmit={handleAILimitSubmit}
-        initialLimit={aiLimit}
       />
     </article>
   );

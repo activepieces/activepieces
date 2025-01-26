@@ -4,9 +4,11 @@ import {
     MAXIMUM_ALLOWED_TASKS,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
+    ApEnvironment,
     assertNotNullOrUndefined,
     Cursor,
     ErrorCode,
@@ -33,7 +35,7 @@ import { system } from '../../helper/system/system'
 import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
-import { projectBillingService } from '../billing/project-billing/project-billing.service'
+import { platformBillingService } from '../platform-billing/platform-billing.service'
 import { BillingEntityType, usageService } from '../platform-billing/usage/usage-service'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { projectLimitsService } from '../project-plan/project-plan.service'
@@ -138,7 +140,7 @@ async function getProjects(params: GetAllParams & { projectIds?: string[] }, log
         ...spreadIfDefined('displayName', displayName),
         ...(projectIds ? { id: In(projectIds) } : {}),
     }
-   
+
     const queryBuilder = projectRepo()
         .createQueryBuilder('project')
         .leftJoinAndMapOne(
@@ -148,8 +150,8 @@ async function getProjects(params: GetAllParams & { projectIds?: string[] }, log
             'project.id = "project_plan"."projectId"',
         )
         .where(filters)
-        .groupBy('project.id') 
-        .addGroupBy('"project_plan"."id"') 
+        .groupBy('project.id')
+        .addGroupBy('"project_plan"."id"')
 
     const { data, cursor } = await paginator.paginate(queryBuilder)
     const projects: ProjectWithLimits[] = await Promise.all(
@@ -179,8 +181,13 @@ async function isSubscribedInStripe(projectId: ProjectId, log: FastifyBaseLogger
     if (!isCloud) {
         return false
     }
-    const status = await projectBillingService(log).getOrCreateForProject(projectId)
-    return status.subscriptionStatus === ApSubscriptionStatus.ACTIVE
+    const environment = system.getOrThrow(AppSystemProp.ENVIRONMENT)
+    if (environment === ApEnvironment.TESTING) {
+        return false
+    }
+    const project = await projectService.getOneOrThrow(projectId)
+    const status = await platformBillingService(log).getOrCreateForPlatform(project.platformId)
+    return status.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE
 }
 function isCustomerPlatform(platformId: string | undefined): boolean {
     if (isNil(platformId)) {
@@ -202,7 +209,7 @@ async function enrichProject(
         .groupBy('user.id')
         .where(`user.status = '${UserStatus.ACTIVE}' and project_member."projectId" = '${project.id}'`)
         .getCount()
-  
+
     const totalFlows = await flowService(log).count({
         projectId: project.id,
     })
@@ -212,7 +219,7 @@ async function enrichProject(
         status: FlowStatus.ENABLED,
     })
 
-  
+
     return {
         ...project,
         plan: await projectLimitsService.getOrCreateDefaultPlan(
@@ -223,7 +230,7 @@ async function enrichProject(
             project.id,
             BillingEntityType.PROJECT,
         ),
-        analytics: { 
+        analytics: {
             activeFlows,
             totalFlows,
             totalUsers,

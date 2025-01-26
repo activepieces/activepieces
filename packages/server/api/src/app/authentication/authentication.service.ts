@@ -1,6 +1,6 @@
 import { OtpType } from '@activepieces/ee-shared'
-import { AppSystemProp, cryptoUtils } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformRole, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { cryptoUtils } from '@activepieces/server-shared'
+import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformRole, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { otpService } from '../ee/authentication/otp/otp-service'
 import { flagService } from '../flags/flag.service'
@@ -12,8 +12,6 @@ import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
 import { authenticationUtils } from './authentication-utils'
 import { userIdentityService } from './user-identity/user-identity-service'
-
-const edition = system.getEdition()
 
 export const authenticationService = (log: FastifyBaseLogger) => ({
     async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
@@ -55,7 +53,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
     },
     async signInWithPassword(params: SignInWithPasswordParams): Promise<AuthenticationResponse> {
         const identity = await userIdentityService(log).verifyIdenityPassword(params)
-        const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatforIdForSignWithPassword(identity.id) : params.predefinedPlatformId
+        const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatformIdForIdentity(identity.id) : params.predefinedPlatformId
         if (isNil(platformId)) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHENTICATION,
@@ -89,10 +87,6 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
 
         if (isNil(platformId)) {
             if (!isNil(userIdentity)) {
-                const cloudProjectAndToken = await getCloudProjectAndToken(userIdentity)
-                if (cloudProjectAndToken) {
-                    return cloudProjectAndToken
-                }
                 // User already exists, create a new personal platform and return token
                 return createUserAndPlatform(userIdentity, log)
             }
@@ -132,23 +126,12 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         })
     },
     async switchPlatform(params: SwitchPlatformParams): Promise<AuthenticationResponse> {
-        const platforms = await platformService.listPlatformsForIdentity({ identityId: params.identityId })
+        const platforms = await platformService.listPlatformsForIdentityWithAtleastProject({ identityId: params.identityId })
         const platform = platforms.find((platform) => platform.id === params.platformId)
-        const allowToSwitch = !isNil(platform) && !platformUtils.isEnterpriseCustomerOnCloud(platform)
-        if (!allowToSwitch) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHENTICATION,
-                params: {
-                    message: 'Platform not found',
-                },
-            })
-        }
+        await assertUserCanSwitchToPlatform(null, platform)
+        
         assertNotNullOrUndefined(platform, 'Platform not found')
-        const user = await userService.getOneByIdentityAndPlatform({
-            identityId: params.identityId,
-            platformId: platform.id,
-        })
-        assertNotNullOrUndefined(user, 'User not found')
+        const user = await getUserForPlatform(params.identityId, platform)
         return authenticationUtils.getProjectAndToken({
             userId: user.id,
             platformId: platform.id,
@@ -156,13 +139,54 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         })
     },
     async switchProject(params: SwitchProjectParams): Promise<AuthenticationResponse> {
+        const project = await projectService.getOneOrThrow(params.projectId)
+        const projectPlatform = await platformService.getOneOrThrow(project.platformId)
+        await assertUserCanSwitchToPlatform(params.currentPlatformId, projectPlatform)
+        const user = await getUserForPlatform(params.identityId, projectPlatform)
         return authenticationUtils.getProjectAndToken({
-            userId: params.userId,
-            platformId: params.platformId,
+            userId: user.id,
+            platformId: project.platformId,
             projectId: params.projectId,
         })
     },
 })
+
+async function assertUserCanSwitchToPlatform(currentPlatformId: string | null, platform: PlatformWithoutSensitiveData | undefined): Promise<void> {
+    if (isNil(platform)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'The user is not a member of the platform',
+            },
+        })
+    }
+    const samePlatform = currentPlatformId === platform.id
+    const allowToSwitch = !platformUtils.isEnterpriseCustomerOnCloud(platform) || samePlatform
+    if (!allowToSwitch) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHENTICATION,
+            params: {
+                message: 'The user is not a member of the platform',
+            },
+        })
+    }
+}
+
+async function getUserForPlatform(identityId: string, platform: PlatformWithoutSensitiveData): Promise<User> {
+    const user = await userService.getOneByIdentityAndPlatform({
+        identityId,
+        platformId: platform.id,
+    })
+    if (isNil(user)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'User is not member of the platform',
+            },
+        })
+    }
+    return user
+}
 
 async function createUserAndPlatform(userIdentity: UserIdentity, log: FastifyBaseLogger): Promise<AuthenticationResponse> {
     const user = await userService.create({
@@ -226,53 +250,17 @@ async function getPersonalPlatformIdForFederatedAuthn(email: string, log: Fastif
     return getPersonalPlatformIdForIdentity(identity.id)
 }
 
-async function getPersonalPlatforIdForSignWithPassword(identityId: string): Promise<string | null> {
-    const edition = system.getEdition()
-    if (edition === ApEdition.CLOUD) {
-        const platformId = await getPersonalPlatformIdForIdentity(identityId)
-        // TODO (@abuaboud) clean up this once everyone is moved to their own platform
-        if (isNil(platformId)) {
-            return system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
-        }
-        return platformId
-    }
-    return null
-}
-
 async function getPersonalPlatformIdForIdentity(identityId: string): Promise<string | null> {
     const edition = system.getEdition()
     if (edition === ApEdition.CLOUD) {
-        const platforms = await platformService.listPlatformsForIdentity({ identityId })
+        const platforms = await platformService.listPlatformsForIdentityWithAtleastProject({ identityId })
         const platform = platforms.find((platform) => !platformUtils.isEnterpriseCustomerOnCloud(platform))
         return platform?.id ?? null
     }
     return null
 }
 
-// TODO (@abuaboud) clean up this once everyone is moved to their own platform
-async function getCloudProjectAndToken(userIdentity: UserIdentity): Promise<AuthenticationResponse | null> {
-    if (edition === ApEdition.CLOUD) {
-        const cloudPlatformId = system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
-        const cloudPlatformUser = await userService.getOneByIdentityAndPlatform({
-            identityId: userIdentity.id,
-            platformId: cloudPlatformId,
-        })
-        if (!isNil(cloudPlatformUser)) {
-            const cloudProject = await projectService.getOneByOwnerAndPlatform({
-                ownerId: cloudPlatformUser.id,
-                platformId: cloudPlatformId,
-            })
-            if (!isNil(cloudProject)) {
-                return authenticationUtils.getProjectAndToken({
-                    userId: cloudPlatformUser.id,
-                    platformId: cloudPlatformId,
-                    projectId: cloudProject.id,
-                })
-            }
-        }
-    }
-    return null
-}
+
 
 type FederatedAuthnParams = {
     email: string
@@ -307,7 +295,7 @@ type SwitchPlatformParams = {
 }
 
 type SwitchProjectParams = {
-    userId: string
-    platformId: string
+    identityId: string
+    currentPlatformId: string
     projectId: string
 }

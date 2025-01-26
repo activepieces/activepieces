@@ -48,9 +48,13 @@ export const runQuery = createAction({
   async run(context) {
     const client = await pgClient(context.auth, context.propsValue.query_timeout, context.propsValue.application_name, context.propsValue.connection_timeout_ms);
     const { query } = context.propsValue;
+    const queryWithMetadata = `
+    /* Source : /projects/${context.project.id}/flows/${context.flows.current.id}/runs/${context.run.id} */
+    ${query}
+    `
     const args = context.propsValue.args || [];
     return new Promise((resolve, reject) => {
-      client.query(query, args, function (error: any, results: { rows: unknown }) {
+      client.query(queryWithMetadata, args, function (error: any, results: { rows: unknown }) {
         if (error) {
           client.end();
           return reject(error);

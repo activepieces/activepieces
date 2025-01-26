@@ -1479,6 +1479,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "mahmuthamet",
+      "name": "Mahmoud Hamed",
+      "avatar_url": "https://avatars.githubusercontent.com/u/90776946?v=4",
+      "profile": "https://github.com/mahmuthamet",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Blightwidow",
+      "name": "Theo Dammaretz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/14098167?v=4",
+      "profile": "https://dammaretz.com",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

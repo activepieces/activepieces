@@ -287,6 +287,9 @@
       "@activepieces/piece-gotify": [
         "packages/pieces/community/gotify/src/index.ts"
       ],
+      "@activepieces/piece-graphql": [
+        "packages/pieces/community/graphql/src/index.ts"
+      ],
       "@activepieces/piece-gravityforms": [
         "packages/pieces/community/gravityforms/src/index.ts"
       ],
@@ -612,6 +615,9 @@
       ],
       "@activepieces/piece-supadata": [
         "packages/pieces/community/supadata/src/index.ts"
+      ],
+      "@activepieces/piece-surrealdb": [
+        "packages/pieces/community/surrealdb/src/index.ts"
       ],
       "@activepieces/piece-surveymonkey": [
         "packages/pieces/community/surveymonkey/src/index.ts"
