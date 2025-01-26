@@ -1,9 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
-import {
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { CardList, CardListItemSkeleton } from '@/components/ui/card-list';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { flowsApi } from '@/features/flows/lib/flows-api';
@@ -12,9 +10,10 @@ import { FlowVersionMetadata, SeekPage } from '@activepieces/shared';
 import { FlowVersionDetailsCard } from './flow-versions-card';
 
 const FlowVersionsList = () => {
-  const [flow, selectedFlowVersion] = useBuilderStateContext(
-    (state) => [state.flow, state.flowVersion],
-  );
+  const [flow, selectedFlowVersion] = useBuilderStateContext((state) => [
+    state.flow,
+    state.flowVersion,
+  ]);
 
   const {
     data: flowVersionPage,
@@ -31,25 +30,23 @@ const FlowVersionsList = () => {
   });
 
   return (
-    <>
-      <CardList>
-        {isLoading && <CardListItemSkeleton numberOfCards={10} />}
-        {isError && <div>{t('Error, please try again.')}</div>}
-        {flowVersionPage && flowVersionPage.data && (
-          <ScrollArea className="w-full h-full">
-            {flowVersionPage.data.map((flowVersion, index) => (
-              <FlowVersionDetailsCard
-                selected={flowVersion.id === selectedFlowVersion?.id}
-                published={flow.publishedVersionId === flowVersion.id}
-                flowVersion={flowVersion}
-                flowVersionNumber={flowVersionPage.data.length - index}
-                key={flowVersion.id}
-              />
-            ))}
-          </ScrollArea>
-        )}
-      </CardList>
-    </>
+    <CardList>
+      {isLoading && <CardListItemSkeleton numberOfCards={10} />}
+      {isError && <div>{t('Error, please try again.')}</div>}
+      {flowVersionPage && flowVersionPage.data && (
+        <ScrollArea className="w-full h-full">
+          {flowVersionPage.data.map((flowVersion, index) => (
+            <FlowVersionDetailsCard
+              selected={flowVersion.id === selectedFlowVersion?.id}
+              published={flow.publishedVersionId === flowVersion.id}
+              flowVersion={flowVersion}
+              flowVersionNumber={flowVersionPage.data.length - index}
+              key={flowVersion.id}
+            />
+          ))}
+        </ScrollArea>
+      )}
+    </CardList>
   );
 };
 

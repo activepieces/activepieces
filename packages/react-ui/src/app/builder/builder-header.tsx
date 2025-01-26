@@ -1,6 +1,6 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { Bot, ChevronDown, History, Logs, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { ChevronDown, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { useMemo } from 'react';
 import {
   createSearchParams,
@@ -15,6 +15,7 @@ import {
 } from '@/app/builder/builder-hooks';
 import { useEmbedding, useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
+import { Toggle } from '@/components/ui/toggle';
 import {
   Tooltip,
   TooltipContent,
@@ -27,17 +28,11 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { determineDefaultRoute } from '@/lib/utils';
-import {
-  ApFlagId,
-  FlowVersionState,
-  Permission,
-  supportUrl,
-} from '@activepieces/shared';
+import { ApFlagId, FlowVersionState, supportUrl } from '@activepieces/shared';
 
 import FlowActionMenu from '../components/flow-actions-menu';
 
 import { BuilderFlowStatusSection } from './builder-flow-status-section';
-import { Toggle } from '@/components/ui/toggle';
 
 export const BuilderHeader = () => {
   const navigate = useNavigate();
@@ -105,7 +100,13 @@ export const BuilderHeader = () => {
                     <TooltipTrigger asChild>
                       <Toggle
                         pressed={leftSidebar !== LeftSideBarType.NONE}
-                        onPressedChange={(pressed) => setLeftSidebar(pressed ? LeftSideBarType.AI_COPILOT : LeftSideBarType.NONE)}
+                        onPressedChange={(pressed) =>
+                          setLeftSidebar(
+                            pressed
+                              ? LeftSideBarType.AI_COPILOT
+                              : LeftSideBarType.NONE,
+                          )
+                        }
                       >
                         {leftSidebar === LeftSideBarType.NONE ? (
                           <PanelRightClose className="h-5 w-5" />

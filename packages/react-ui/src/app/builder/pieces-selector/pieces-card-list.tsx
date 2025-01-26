@@ -19,12 +19,7 @@ import {
   StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import {
-  ApFlagId,
-  FlowOperationType,
-  TriggerType,
-  supportUrl,
-} from '@activepieces/shared';
+import { ApFlagId, TriggerType, supportUrl } from '@activepieces/shared';
 
 import { cn } from '../../../lib/utils';
 

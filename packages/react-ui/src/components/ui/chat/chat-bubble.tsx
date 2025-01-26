@@ -167,13 +167,6 @@ const ChatBubbleAction: React.FC<ChatBubbleActionProps> = ({
   </Button>
 );
 
-interface ChatBubbleActionWrapperProps
-  extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'sent' | 'received';
-  className?: string;
-}
-
-
 export {
   ChatBubble,
   ChatBubbleAvatar,

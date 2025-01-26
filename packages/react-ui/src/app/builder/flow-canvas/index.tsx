@@ -100,6 +100,7 @@ export const FlowCanvas = React.memo(
       panningMode,
       setPieceSelectorStep,
       selectStepByName,
+      isApplyingCopilotPlan,
     ] = useBuilderStateContext((state) => {
       return [
         state.flowVersion,
@@ -112,6 +113,7 @@ export const FlowCanvas = React.memo(
         state.panningMode,
         state.setPieceSelectorStep,
         state.selectStepByName,
+        state.isApplyingCopilotPlan,
       ];
     });
     const containerRef = useRef<HTMLDivElement>(null);
@@ -235,7 +237,7 @@ export const FlowCanvas = React.memo(
             selectedStep={selectedStep}
             exitStepSettings={exitStepSettings}
             flowVersion={flowVersion}
-            readonly={readonly}
+            readonly={readonly || isApplyingCopilotPlan}
             setPieceSelectorStep={setPieceSelectorStep}
             actionsToPaste={actionsToPaste}
             contextMenuType={contextMenuType}

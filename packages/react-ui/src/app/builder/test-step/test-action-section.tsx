@@ -137,7 +137,7 @@ const TestActionSection = React.memo(
                 onClick={() => mutate()}
                 keyboardShortcut="G"
                 onKeyboardShortcut={mutate}
-                loading={isTesting}
+                loading={isTesting || isSaving}
                 disabled={!isValid}
               >
                 <Dot animation={true} variant={'primary'}></Dot>
