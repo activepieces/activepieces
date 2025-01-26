@@ -95,7 +95,7 @@ function getFlowExecutionState(input: ExecuteFlowOperation): FlowExecutorContext
                     type: input.flowVersion.trigger.type,
                     status: StepOutputStatus.SUCCEEDED,
                     input: {},
-                }).setOutput(input.triggerPayload)
+                }).setOutput(input.triggerPayload),
             })
         case ExecutionType.RESUME: {
             let flowContext = FlowExecutorContext.empty().increaseTask(input.tasks)
