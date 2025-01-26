@@ -51,6 +51,8 @@ const sendUpdateRunRequest = async (params: UpdateStepProgressParams): Promise<v
             executionState: {
                 steps: runDetails.steps as Record<string, StepOutput>,
             },
+            triggerPayload: runDetails.triggerPayload ? JSON.parse(runDetails.triggerPayload) : undefined,
+            resumePayload: runDetails.resumePayload ? JSON.parse(runDetails.resumePayload) : undefined,
         })
         const request = {
             runId: engineConstants.flowRunId,

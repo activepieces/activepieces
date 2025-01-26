@@ -156,7 +156,6 @@ function isExecutionDataFileThatExpires(type: FileType) {
             return true
         case FileType.SAMPLE_DATA:
         case FileType.PACKAGE_ARCHIVE:
-        case FileType.FLOW_RUN_PAYLOAD:
         case FileType.PROJECT_RELEASE:
             return false
         default:

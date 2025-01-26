@@ -28,8 +28,9 @@ export class FlowExecutorContext {
     verdict: ExecutionVerdict
     verdictResponse: VerdictResponse | undefined
     currentPath: StepExecutionPath
+    triggerPayload?: string
+    resumePayload?: string
     error?: FlowError
-
     /**
      * Execution time in milliseconds
      */
@@ -45,6 +46,8 @@ export class FlowExecutorContext {
         this.verdictResponse = copyFrom?.verdictResponse ?? undefined
         this.error = copyFrom?.error ?? undefined
         this.currentPath = copyFrom?.currentPath ?? StepExecutionPath.empty()
+        this.triggerPayload = copyFrom?.triggerPayload ?? JSON.stringify({})
+        this.resumePayload = copyFrom?.resumePayload ?? JSON.stringify({})
     }
 
     static empty(): FlowExecutorContext {
@@ -111,7 +114,7 @@ export class FlowExecutorContext {
         })
     }
 
-    public upsertStep(stepName: string, stepOutput: StepOutput): FlowExecutorContext {
+    public upsertStep({ stepName, triggerPayload, resumePayload, stepOutput }: UpsertStepParams): FlowExecutorContext {
         const steps = {
             ...this.steps,
         }
@@ -126,6 +129,8 @@ export class FlowExecutorContext {
         return new FlowExecutorContext({
             ...this,
             tasks: this.tasks,
+            ...spreadIfDefined('triggerPayload', triggerPayload),
+            ...spreadIfDefined('resumePayload', resumePayload),
             ...spreadIfDefined('error', error),
             steps,
         })
@@ -189,6 +194,8 @@ export class FlowExecutorContext {
             tasks: this.tasks,
             tags: [...this.tags],
             steps: await loggingUtils.trimExecution(this.steps),
+            triggerPayload: this.triggerPayload,
+            resumePayload: this.resumePayload,
         }
         switch (this.verdict) {
             case ExecutionVerdict.FAILED: {
@@ -281,4 +288,11 @@ function getStateAtPath({ currentPath, steps }: { currentPath: StepExecutionPath
 type SetStepDurationParams = {
     stepName: string
     duration: number
+}
+
+type UpsertStepParams = {
+    stepName: string
+    triggerPayload?: string
+    resumePayload?: string
+    stepOutput: StepOutput
 }

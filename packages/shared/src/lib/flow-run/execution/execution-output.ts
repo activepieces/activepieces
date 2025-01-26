@@ -17,6 +17,8 @@ export const ExecutionState = Type.Object({
 
 export type ExecutioOutputFile = {
     executionState: ExecutionState
+    triggerPayload?: TriggerPayload
+    resumePayload?: ResumePayload
 }
 
 export type ResumePayload = TriggerPayload

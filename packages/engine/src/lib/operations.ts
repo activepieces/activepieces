@@ -88,16 +88,24 @@ function cleanSampleData(stepOutput: StepOutput) {
 function getFlowExecutionState(input: ExecuteFlowOperation): FlowExecutorContext {
     switch (input.executionType) {
         case ExecutionType.BEGIN:
-            return FlowExecutorContext.empty().upsertStep(input.flowVersion.trigger.name, GenericStepOutput.create({
-                type: input.flowVersion.trigger.type,
-                status: StepOutputStatus.SUCCEEDED,
-                input: {},
-            }).setOutput(input.triggerPayload))
+            return FlowExecutorContext.empty().upsertStep({
+                stepName: input.flowVersion.trigger.name,
+                triggerPayload: JSON.stringify(input.triggerPayload),
+                stepOutput: GenericStepOutput.create({
+                    type: input.flowVersion.trigger.type,
+                    status: StepOutputStatus.SUCCEEDED,
+                    input: {},
+                }).setOutput(input.triggerPayload)
+            })
         case ExecutionType.RESUME: {
             let flowContext = FlowExecutorContext.empty().increaseTask(input.tasks)
             for (const [step, output] of Object.entries(input.steps)) {
                 if ([StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(output.status)) {
-                    flowContext = flowContext.upsertStep(step, output)
+                    flowContext = flowContext.upsertStep({
+                        stepName: step,
+                        resumePayload: output.status === StepOutputStatus.PAUSED ? JSON.stringify(input.resumePayload) : undefined,
+                        stepOutput: output,
+                    })
                 }
             }
             return flowContext

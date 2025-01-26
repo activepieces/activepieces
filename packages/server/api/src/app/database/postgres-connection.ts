@@ -175,7 +175,6 @@ import { AddEnvironmentsEnabled1735267452262 } from './migration/postgres/173526
 import { AddUserIdentity1735590074879 } from './migration/postgres/1735590074879-AddUserIdentity'
 import { RemoveUnusedProjectBillingFields1736607721367 } from './migration/postgres/1736607721367-RemoveUnusedProjectBillingFields'
 import { RenameGitRepoPermission1736813103505 } from './migration/postgres/1736813103505-RenameGitRepoPermission'
-import { AddTriggerPayloadFlowRun1737844551720 } from './migration/postgres/1737844551720-AddTriggerPayloadFlowRun'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -293,7 +292,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddEnvironmentsEnabled1735267452262,
         AddUserIdentity1735590074879,
         RenameGitRepoPermission1736813103505,
-        AddTriggerPayloadFlowRun1737844551720,
     ]
 
     const edition = system.getEdition()
