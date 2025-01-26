@@ -16,7 +16,6 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PromiseQueue } from '@/lib/promise-queue';
 import {
   FlowOperationRequest,
-  FlowOperationType,
   FlowRun,
   FlowVersion,
   FlowVersionState,
@@ -34,6 +33,7 @@ import {
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
 import { useAuthorization } from '../../hooks/authorization-hooks';
 
+import { INITIAL_COPILOT_MESSAGES, MessageContent } from './copilot/types';
 import {
   copySelectedNodes,
   deleteSelectedNodes,
@@ -46,7 +46,6 @@ import {
   CanvasShortcutsProps,
 } from './flow-canvas/context-menu/canvas-context-menu';
 import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
-import { INITIAL_COPILOT_MESSAGES, MessageContent } from './copilot/types';
 import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
 
 const flowUpdatesQueue = new PromiseQueue();
@@ -136,6 +135,10 @@ export type BuilderState = {
   setPieceSelectorStep: (step: string | null) => void;
   messages: MessageContent[];
   addMessage: (message: MessageContent) => void;
+  rightSidebarSize: number;
+  setRightSidebarSize: (size: number) => void;
+  setIsApplyingCopilotPlan: (isApplyingCopilotPlan: boolean) => void;
+  isApplyingCopilotPlan: boolean;
 };
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
@@ -173,14 +176,17 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
 
     return {
       refreshPieceSettingsCounter: 0,
-      refreshPieceSettings: () => set((state) => ({ refreshPieceSettingsCounter: state.refreshPieceSettingsCounter + 1 })),
+      refreshPieceSettings: () =>
+        set((state) => ({
+          refreshPieceSettingsCounter: state.refreshPieceSettingsCounter + 1,
+        })),
       loopsIndexes:
         initialState.run && initialState.run.steps
           ? flowRunUtils.findLoopsState(
-            initialState.flowVersion,
-            initialState.run,
-            {},
-          )
+              initialState.flowVersion,
+              initialState.run,
+              {},
+            )
           : {},
       sampleData: initialState.sampleData,
       flow: initialState.flow,
@@ -196,19 +202,22 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       activeDraggingStep: null,
       allowCanvasPanning: true,
       messages: INITIAL_COPILOT_MESSAGES,
-      addMessage: (message: MessageContent) => set((state) => {
-        const existingMessageIndex = state.messages.findIndex(m => m.id === message.id);
-        if (existingMessageIndex >= 0) {
-          const newMessages = [...state.messages];
-          newMessages[existingMessageIndex] = message;
-          return { messages: newMessages };
-        }
-        return { messages: [...state.messages, message] };
-      }),
+      addMessage: (message: MessageContent) =>
+        set((state) => {
+          const existingMessageIndex = state.messages.findIndex(
+            (m) => m.id === message.id,
+          );
+          if (existingMessageIndex >= 0) {
+            const newMessages = [...state.messages];
+            newMessages[existingMessageIndex] = message;
+            return { messages: newMessages };
+          }
+          return { messages: [...state.messages, message] };
+        }),
       rightSidebar:
         initiallySelectedStep &&
-          (initiallySelectedStep !== 'trigger' ||
-            initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
+        (initiallySelectedStep !== 'trigger' ||
+          initialState.flowVersion.trigger.type !== TriggerType.EMPTY)
           ? RightSideBarType.PIECE_SETTINGS
           : RightSideBarType.NONE,
 
@@ -217,6 +226,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           selectedStep: null,
           rightSidebar: RightSideBarType.NONE,
           selectedBranchIndex: null,
+          rightSidebarSize: 0,
         }),
 
       setActiveDraggingStep: (stepName: string | null) =>
@@ -250,7 +260,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
 
           const rightSidebar =
             selectedStep === 'trigger' &&
-              state.flowVersion.trigger.type === TriggerType.EMPTY
+            state.flowVersion.trigger.type === TriggerType.EMPTY
               ? RightSideBarType.NONE
               : RightSideBarType.PIECE_SETTINGS;
 
@@ -311,8 +321,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         }),
       setRightSidebar: (rightSidebar: RightSideBarType) =>
         set({ rightSidebar }),
-      setLeftSidebar: (leftSidebar: LeftSideBarType) =>
-        set({ leftSidebar }),
+      setLeftSidebar: (leftSidebar: LeftSideBarType) => set({ leftSidebar }),
       setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
         set((state) => {
           return {
@@ -327,8 +336,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             rightSidebar: RightSideBarType.PIECE_SETTINGS,
             selectedStep: run.steps
               ? flowRunUtils.findFailedStepInOutput(run.steps) ??
-              state.selectedStep ??
-              'trigger'
+                state.selectedStep ??
+                'trigger'
               : 'trigger',
             readonly: true,
           };
@@ -446,12 +455,20 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             selectedStep: step ? step : state.selectedStep,
             rightSidebar:
               (step && step !== 'trigger') ||
-                state.flowVersion.trigger.type !== TriggerType.EMPTY
+              state.flowVersion.trigger.type !== TriggerType.EMPTY
                 ? RightSideBarType.PIECE_SETTINGS
                 : state.rightSidebar,
           };
         });
       },
+      rightSidebarSize: 0,
+      setRightSidebarSize: (size: number) => {
+        set({ rightSidebarSize: size });
+      },
+      setIsApplyingCopilotPlan: (isApplyingCopilotPlan: boolean) => {
+        set({ isApplyingCopilotPlan });
+      },
+      isApplyingCopilotPlan: false,
     };
   });
 

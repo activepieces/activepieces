@@ -2,10 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React, { useEffect } from 'react';
 
-import {
-  LeftSideBarType,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import {
   CardList,
   CardListEmpty,
@@ -16,8 +13,6 @@ import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { FlowRun, SeekPage } from '@activepieces/shared';
 
-import { SidebarHeader } from '../sidebar-header';
-
 import { FlowRunCard } from './flow-run-card';
 
 type FlowRunsListProps = {
@@ -25,9 +20,8 @@ type FlowRunsListProps = {
 };
 
 const RunsList = React.memo(({ recentRuns = 20 }: FlowRunsListProps) => {
-  const [flow, setLeftSidebar, run] = useBuilderStateContext((state) => [
+  const [flow, run] = useBuilderStateContext((state) => [
     state.flow,
-    state.setLeftSidebar,
     state.run,
   ]);
 
@@ -57,33 +51,31 @@ const RunsList = React.memo(({ recentRuns = 20 }: FlowRunsListProps) => {
   }, []);
 
   return (
-    <>
-      <CardList>
-        {isLoading ||
-          (isRefetching && <CardListItemSkeleton numberOfCards={10} />)}
-        {isError && <div>{t('Error, please try again.')}</div>}
-        {flowPage && flowPage.data.length === 0 && (
-          <CardListEmpty message={t('No runs found')} />
-        )}
+    <CardList>
+      {isLoading ||
+        (isRefetching && <CardListItemSkeleton numberOfCards={10} />)}
+      {isError && <div>{t('Error, please try again.')}</div>}
+      {flowPage && flowPage.data.length === 0 && (
+        <CardListEmpty message={t('No runs found')} />
+      )}
 
-        <ScrollArea className="w-full h-full">
-          {!isRefetching &&
-            !isLoading &&
-            flowPage &&
-            flowPage.data.map((flowRun: FlowRun) => (
-              <FlowRunCard
-                refetchRuns={() => {
-                  refetch();
-                }}
-                run={flowRun}
-                key={flowRun.id + flowRun.status}
-                viewedRunId={run?.id}
-              ></FlowRunCard>
-            ))}
-          <ScrollBar />
-        </ScrollArea>
-      </CardList>
-    </>
+      <ScrollArea className="w-full h-full">
+        {!isRefetching &&
+          !isLoading &&
+          flowPage &&
+          flowPage.data.map((flowRun: FlowRun) => (
+            <FlowRunCard
+              refetchRuns={() => {
+                refetch();
+              }}
+              run={flowRun}
+              key={flowRun.id + flowRun.status}
+              viewedRunId={run?.id}
+            ></FlowRunCard>
+          ))}
+        <ScrollBar />
+      </ScrollArea>
+    </CardList>
   );
 });
 

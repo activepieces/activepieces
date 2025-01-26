@@ -21,6 +21,7 @@ import {
   StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { cn } from '@/lib/utils';
 import {
   Action,
   ActionType,
@@ -75,11 +76,13 @@ const PieceSelector = ({
     selectStepByName,
     flowVersion,
     setSampleData,
+    isApplyingCopilotPlan,
   ] = useBuilderStateContext((state) => [
     state.applyOperation,
     state.selectStepByName,
     state.flowVersion,
     state.setSampleData,
+    state.isApplyingCopilotPlan,
   ]);
 
   const isTrigger = operation.type === FlowOperationType.UPDATE_TRIGGER;
@@ -266,7 +269,7 @@ const PieceSelector = ({
   const isMobile = pieceSelectorUtils.useIsMobile();
   return (
     <Popover
-      open={open}
+      open={isApplyingCopilotPlan ? false : open}
       modal={true}
       onOpenChange={(open) => {
         if (!open) {
@@ -277,7 +280,13 @@ const PieceSelector = ({
       }}
     >
       <PopoverTrigger ref={popoverTriggerRef} asChild={asChild}>
-        {children}
+        <span
+          className={cn({
+            'cursor-default pointer-events-none ': isApplyingCopilotPlan,
+          })}
+        >
+          {children}
+        </span>
       </PopoverTrigger>
       <PopoverContent
         onContextMenu={(e) => {

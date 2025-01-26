@@ -9,15 +9,12 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import {
-  CodeAction,
-  MarkdownVariant,
-} from '@activepieces/shared';
+import { CodeAction, MarkdownVariant } from '@activepieces/shared';
 
+import { useBuilderStateContext } from '../../builder-hooks';
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
 
 import { CodeEditor } from './code-editor';
-import { useBuilderStateContext } from '../../builder-hooks';
 
 const markdown = `
 To use data from previous steps in your code, include them as pairs of keys and values below. 

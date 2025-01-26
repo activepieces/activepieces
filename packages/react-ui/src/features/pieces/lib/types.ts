@@ -71,7 +71,6 @@ export type PieceSelectorOperation =
       stepName: string;
     };
 
-
 export type PieceSelectorItem =
   | ActionBase
   | TriggerBase

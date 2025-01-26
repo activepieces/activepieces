@@ -70,15 +70,6 @@ function getStepStatus(
   return stepOutput?.status;
 }
 
-const StepActionWrapper = React.memo(
-  ({ children }: { children: React.ReactNode }) => {
-    return (
-      <div className="flex items-center gap-2 cursor-pointer">{children}</div>
-    );
-  },
-);
-
-StepActionWrapper.displayName = 'StepActionWrapper';
 const ApStepCanvasNode = React.memo(
   ({ data }: NodeProps & Omit<ApStepNode, 'position'>) => {
     const [
@@ -94,6 +85,7 @@ const ApStepCanvasNode = React.memo(
       setSelectedBranchIndex,
       setPieceSelectorStep,
       pieceSelectorStep,
+      isApplyingCopilotPlan,
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
       !isNil(state.selectedStep) && state.selectedStep === data.step?.name,
@@ -107,6 +99,7 @@ const ApStepCanvasNode = React.memo(
       state.setSelectedBranchIndex,
       state.setPieceSelectorStep,
       state.pieceSelectorStep,
+      state.isApplyingCopilotPlan,
     ]);
     const openPieceSelector = pieceSelectorStep === data.step!.name;
     const step =
@@ -130,10 +123,10 @@ const ApStepCanvasNode = React.memo(
     const isEmptyTriggerSelected =
       selectedStep === 'trigger' && step.type === TriggerType.EMPTY;
     const isSkipped = (step as Action).skip;
-
+    const isDraggingDisabled = isTrigger || readonly || isApplyingCopilotPlan;
     const { attributes, listeners, setNodeRef } = useDraggable({
       id: step.name,
-      disabled: isTrigger || readonly,
+      disabled: isDraggingDisabled,
       data: {
         type: flowUtilConsts.DRAGGED_STEP_TAG,
       },
@@ -152,9 +145,11 @@ const ApStepCanvasNode = React.memo(
     const handleStepClick = (
       e: React.MouseEvent<HTMLDivElement, MouseEvent>,
     ) => {
-      const { name } = data.step!;
-      selectStepByName(name);
-      setSelectedBranchIndex(null);
+      if (!isApplyingCopilotPlan) {
+        const { name } = data.step!;
+        selectStepByName(name);
+        setSelectedBranchIndex(null);
+      }
       e.preventDefault();
       e.stopPropagation();
     };
@@ -167,7 +162,7 @@ const ApStepCanvasNode = React.memo(
           maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
         }}
         className={cn(
-          'transition-all border-box rounded-sm border border-solid border-border relative hover:border-primary group',
+          'transition-all border-box rounded-sm border border-solid border-border relative  group',
           {
             'shadow-step-container': !isDragging,
             'border-primary': isSelected,
@@ -175,6 +170,8 @@ const ApStepCanvasNode = React.memo(
             'border-none': isDragging,
             'shadow-none': isDragging,
             'bg-accent/90': isSkipped,
+            'hover:border-primary': !isApplyingCopilotPlan,
+            'cursor-default': isApplyingCopilotPlan,
           },
         )}
         onClick={(e) => handleStepClick(e)}

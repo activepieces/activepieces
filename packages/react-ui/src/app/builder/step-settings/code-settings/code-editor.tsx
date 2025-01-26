@@ -38,7 +38,7 @@ const CodeEditor = ({
   applyCodeToCurrentStep,
   minHeight,
   refreshCounter,
-  hidePackageJson
+  hidePackageJson,
 }: CodeEditorProps) => {
   const { code, packageJson } = sourceCode;
   const [activeTab, setActiveTab] = useState<keyof SourceCode>('code');
@@ -142,13 +142,14 @@ const CodeEditor = ({
             {t('Use code')}
           </Button>
         ) : (
-          !hidePackageJson && allowNpmPackagesInCodeStep && (
+          !hidePackageJson &&
+          allowNpmPackagesInCodeStep && (
             <AddNpmDialog onAdd={handleAddPackages}>
               <Button
                 variant="outline"
                 className="flex gap-2"
                 size={'sm'}
-                onClick={() => { }}
+                onClick={() => {}}
               >
                 <Package className="w-4 h-4" />
                 {t('Add package')}

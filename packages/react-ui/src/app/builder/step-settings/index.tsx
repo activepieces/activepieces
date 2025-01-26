@@ -48,6 +48,7 @@ const StepSettingsContainer = () => {
     selectedBranchIndex,
     refreshPieceSettingsCounter,
     setSelectedBranchIndex,
+    isApplyingCopilotPlan,
   ] = useBuilderStateContext((state) => [
     state.readonly,
     state.exitStepSettings,
@@ -57,6 +58,7 @@ const StepSettingsContainer = () => {
     state.selectedBranchIndex,
     state.refreshPieceSettingsCounter,
     state.setSelectedBranchIndex,
+    state.isApplyingCopilotPlan,
   ]);
 
   const defaultValues = useMemo(() => {
@@ -90,19 +92,17 @@ const StepSettingsContainer = () => {
       });
     }, 200);
   }, [applyOperation]);
-
+  const isFormDisabled = readonly || isApplyingCopilotPlan;
   const form = useForm<Action | Trigger>({
     mode: 'onChange',
-    disabled: readonly,
+    disabled: isFormDisabled,
     reValidateMode: 'onChange',
     defaultValues,
     resolver: typeboxResolver(formSchema),
   });
-
   useDeepCompareEffect(() => {
     form.trigger();
   }, [formSchema, defaultValues]);
-
 
   const actionOrTriggerDisplayName = selectedStep.settings.actionName
     ? pieceModel?.actions[selectedStep.settings.actionName]?.displayName
@@ -253,26 +253,26 @@ const StepSettingsContainer = () => {
                   ></PieceCardInfo>
                 )}
                 {modifiedStep.type === ActionType.LOOP_ON_ITEMS && (
-                  <LoopsSettings readonly={readonly}></LoopsSettings>
+                  <LoopsSettings readonly={isFormDisabled}></LoopsSettings>
                 )}
                 {modifiedStep.type === ActionType.CODE && (
-                  <CodeSettings readonly={readonly}></CodeSettings>
+                  <CodeSettings readonly={isFormDisabled}></CodeSettings>
                 )}
                 {modifiedStep.type === ActionType.PIECE && modifiedStep && (
                   <PieceSettings
                     step={modifiedStep}
                     flowId={flowVersion.flowId}
-                    readonly={readonly}
+                    readonly={isFormDisabled}
                   ></PieceSettings>
                 )}
                 {modifiedStep.type === ActionType.ROUTER && modifiedStep && (
-                  <RouterSettings readonly={readonly}></RouterSettings>
+                  <RouterSettings readonly={isFormDisabled}></RouterSettings>
                 )}
                 {modifiedStep.type === TriggerType.PIECE && modifiedStep && (
                   <PieceSettings
                     step={modifiedStep}
                     flowId={flowVersion.flowId}
-                    readonly={readonly}
+                    readonly={isFormDisabled}
                   ></PieceSettings>
                 )}
                 {[ActionType.CODE, ActionType.PIECE].includes(
@@ -283,7 +283,7 @@ const StepSettingsContainer = () => {
                       modifiedStep.settings.errorHandlingOptions
                         ?.continueOnFailure?.hide
                     }
-                    disabled={readonly}
+                    disabled={isFormDisabled}
                     hideRetryOnFailure={
                       modifiedStep.settings.errorHandlingOptions?.retryOnFailure
                         ?.hide

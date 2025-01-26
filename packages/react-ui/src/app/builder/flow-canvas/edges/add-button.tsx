@@ -16,11 +16,10 @@ import { ApButtonData } from '../utils/types';
 
 const ApAddButton = React.memo((props: ApButtonData) => {
   const [isStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
-  const [activeDraggingStep, readonly] =
-    useBuilderStateContext((state) => [
-      state.activeDraggingStep,
-      state.readonly,
-    ]);
+  const [activeDraggingStep, readonly] = useBuilderStateContext((state) => [
+    state.activeDraggingStep,
+    state.readonly,
+  ]);
 
   const { setNodeRef } = useDroppable({
     id: props.edgeId,
@@ -105,18 +104,14 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                 width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
                 height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
               }}
-              className={cn(
-                'rounded-xss cursor-pointer transition-all z-50',
-                {
-                  'shadow-add-button': actionMenuOpen,
-                },
-              )}
+              className={cn('rounded-xss cursor-pointer transition-all z-50', {
+                'shadow-add-button': actionMenuOpen,
+              })}
             >
               <div
                 style={{
                   width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
-                  height:
-                    flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
+                  height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
                 }}
                 className={cn(
                   'bg-light-blue  relative group overflow-visible rounded-xss cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',

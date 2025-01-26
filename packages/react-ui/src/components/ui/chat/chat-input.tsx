@@ -1,8 +1,10 @@
 import * as React from 'react';
+
 import { cn } from '@/lib/utils';
 
-interface ChatInputProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-    onSendMessage: (message: string) => void;
+interface ChatInputProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  onSendMessage: (message: string) => void;
 }
 
 const TEXTAREA_MIN_HEIGHT = '61px';
@@ -19,7 +21,7 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
             ref={ref}
             className={cn(
               'w-full pl-4 pt-4 pr-16 focus:outline-none resize-none text-sm text-gray-900 placeholder-gray-500 bg-transparent',
-              className
+              className,
             )}
             onKeyDown={(event) => {
               if (event.key === 'Enter') {
@@ -28,7 +30,6 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
                 onSendMessage(event.currentTarget.value);
                 event.currentTarget.value = '';
                 setInput('');
-
               }
             }}
             value={input}
@@ -45,7 +46,7 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
         </div>
       </div>
     );
-  }
+  },
 );
 
 ChatInput.displayName = 'ChatInput';

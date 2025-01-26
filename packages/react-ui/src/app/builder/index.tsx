@@ -18,6 +18,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
@@ -34,13 +35,12 @@ import {
 import { cn, useElementSize } from '../../lib/utils';
 
 import { BuilderHeader } from './builder-header';
+import { CopilotSidebar } from './copilot';
 import { FlowCanvas } from './flow-canvas';
 import { FlowVersionsList } from './flow-versions';
 import { FlowRunDetails } from './run-details';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
-import { CopilotSidebar } from './copilot';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const minWidthOfLeftSidebar = 'min-w-[max(30vw,50px)]';
@@ -94,13 +94,14 @@ const BuilderPage = () => {
     state.setLeftSidebar,
   ]);
 
-  const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
-    (state) => {
+  const { memorizedSelectedStep, containerKey, rightSidebarSize } =
+    useBuilderStateContext((state) => {
       const flowVersion = state.flowVersion;
       if (isNil(state.selectedStep) || isNil(flowVersion)) {
         return {
           memorizedSelectedStep: undefined,
           containerKey: undefined,
+          rightSidebarSize: state.rightSidebarSize,
         };
       }
       const step = flowStructureUtil.getStep(
@@ -118,9 +119,10 @@ const BuilderPage = () => {
           state.selectedStep,
           triggerOrActionName,
         ),
+        rightSidebarSize: state.rightSidebarSize,
       };
-    },
-  );
+    });
+
   const middlePanelRef = useRef<HTMLDivElement>(null);
   const middlePanelSize = useElementSize(middlePanelRef);
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
@@ -128,7 +130,11 @@ const BuilderPage = () => {
   const leftHandleRef = useAnimateSidebar(leftSidebar);
   const leftSidePanelRef = useRef<HTMLDivElement>(null);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
-
+  useEffect(() => {
+    if (rightSidebarSize !== 0) {
+      rightHandleRef.current?.resize(rightSidebarSize);
+    }
+  }, [rightSidebarSize]);
   const { versions, refetch: refetchPiece } =
     piecesHooks.useMostRecentAndExactPieceVersion({
       name: memorizedSelectedStep?.settings.pieceName,
@@ -204,17 +210,38 @@ const BuilderPage = () => {
             ) : (
               <Tabs value={leftSidebar} className="w-full h-full flex flex-col">
                 <TabsList className="grid grid-cols-3 my-4 mx-4">
-                  <TabsTrigger value={LeftSideBarType.AI_COPILOT} onClick={() => setLeftSidebar(LeftSideBarType.AI_COPILOT)}>APY</TabsTrigger>
-                  <TabsTrigger value={LeftSideBarType.RUNS} onClick={() => setLeftSidebar(LeftSideBarType.RUNS)}>Runs</TabsTrigger>
-                  <TabsTrigger value={LeftSideBarType.VERSIONS} onClick={() => setLeftSidebar(LeftSideBarType.VERSIONS)}>Versions</TabsTrigger>
+                  <TabsTrigger
+                    value={LeftSideBarType.AI_COPILOT}
+                    onClick={() => setLeftSidebar(LeftSideBarType.AI_COPILOT)}
+                  >
+                    APY
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value={LeftSideBarType.RUNS}
+                    onClick={() => setLeftSidebar(LeftSideBarType.RUNS)}
+                  >
+                    Runs
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value={LeftSideBarType.VERSIONS}
+                    onClick={() => setLeftSidebar(LeftSideBarType.VERSIONS)}
+                  >
+                    Versions
+                  </TabsTrigger>
                 </TabsList>
-                <TabsContent value={LeftSideBarType.RUNS} className='flex-1'>
+                <TabsContent value={LeftSideBarType.RUNS} className="flex-1">
                   <RunsList />
                 </TabsContent>
-                <TabsContent value={LeftSideBarType.VERSIONS} className='flex-1'>
+                <TabsContent
+                  value={LeftSideBarType.VERSIONS}
+                  className="flex-1"
+                >
                   <FlowVersionsList />
                 </TabsContent>
-                <TabsContent value={LeftSideBarType.AI_COPILOT} className='flex-1'>
+                <TabsContent
+                  value={LeftSideBarType.AI_COPILOT}
+                  className="flex-1"
+                >
                   <CopilotSidebar />
                 </TabsContent>
               </Tabs>
@@ -266,7 +293,9 @@ const BuilderPage = () => {
           <ResizablePanel
             ref={rightHandleRef}
             id="right-sidebar"
-            defaultSize={0}
+            defaultSize={
+              memorizedSelectedStep?.type === ActionType.CODE ? 60 : 0
+            }
             minSize={0}
             maxSize={60}
             order={3}

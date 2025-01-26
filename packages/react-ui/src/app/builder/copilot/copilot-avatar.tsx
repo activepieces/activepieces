@@ -1,4 +1,4 @@
-import { ChatBubbleAvatar } from "@/components/ui/chat/chat-bubble";
+import { ChatBubbleAvatar } from '@/components/ui/chat/chat-bubble';
 
 export const CopilotAvatar = () => (
   <ChatBubbleAvatar
