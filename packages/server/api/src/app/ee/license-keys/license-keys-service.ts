@@ -1,4 +1,4 @@
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PackageType, PlatformRole, TelemetryEventName, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -8,6 +8,7 @@ import { telemetry } from '../../helper/telemetry.utils'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
+import { system } from '../../helper/system/system'
 
 const secretManagerLicenseKeysRoute = 'https://secrets.activepieces.com/license-keys'
 
@@ -95,10 +96,12 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         return isExpired ? null : key
     },
     async extendTrial({ email, days }: { email: string, days: number }): Promise<void> {
+        const SECRET_MANAGER_API_KEY = system.getOrThrow(AppSystemProp.SECRET_MANAGER_API_KEY)
         const response = await fetch(`${secretManagerLicenseKeysRoute}/extend-trial`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'api-key': SECRET_MANAGER_API_KEY,
             },
             body: JSON.stringify({ email, days }),
         })
