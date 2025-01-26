@@ -39,11 +39,11 @@ export const updateOrganizationAction = createAction({
 			organizationDefaultFields.label_ids = labelIds;
 		}
 
-		const organizationCustomFiels: Record<string, string> = {};
+		const organizationCustomFields: Record<string, string> = {};
 
 		Object.entries(customFields).forEach(([key, value]) => {
 			// Format values if they are arrays
-			organizationCustomFiels[key] =
+			organizationCustomFields[key] =
 				Array.isArray(value) && value.length > 0 ? value.join(',') : value;
 		});
 
@@ -54,7 +54,7 @@ export const updateOrganizationAction = createAction({
 			resourceUri: `/organizations/${organizationId}`,
 			body: {
 				...organizationDefaultFields,
-				...organizationCustomFiels,
+				...organizationCustomFields,
 			},
 		});
 

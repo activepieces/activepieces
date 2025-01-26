@@ -17,7 +17,7 @@ import {
 	ListDealsResponse,
 	RequestParams,
 	StageWithPipelineInfo,
-	WebhookCreateResonse,
+	WebhookCreateResponse,
 } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
@@ -66,7 +66,7 @@ export const updatedDealStageTrigger = createTrigger({
 		}),
 	},
 	async onEnable(context) {
-		const response = await pipedriveApiCall<WebhookCreateResonse>({
+		const response = await pipedriveApiCall<WebhookCreateResponse>({
 			accessToken: context.auth.access_token,
 			apiDomain: context.auth.data['api_domain'],
 			method: HttpMethod.POST,
@@ -83,7 +83,7 @@ export const updatedDealStageTrigger = createTrigger({
 	async onDisable(context) {
 		const webhook = await context.store.get<number>('updated-deal-stage-trigger');
 		if (webhook) {
-			await pipedriveApiCall<WebhookCreateResonse>({
+			await pipedriveApiCall<WebhookCreateResponse>({
 				accessToken: context.auth.access_token,
 				apiDomain: context.auth.data['api_domain'],
 				method: HttpMethod.DELETE,
