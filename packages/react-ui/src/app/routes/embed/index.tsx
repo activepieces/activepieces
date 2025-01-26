@@ -8,6 +8,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { managedAuthApi } from '@/lib/managed-auth-api';
 import {
   _AP_JWT_TOKEN_QUERY_PARAM_NAME,
+  ActivepiecesClientAuthenticationSuccess,
   ActivepiecesClientEventName,
   ActivepiecesClientInit,
   ActivepiecesClientShowConnectionIframe,
@@ -65,6 +66,13 @@ const EmbedPage = React.memo(() => {
                 document.body.style.background = 'transparent';
               }
               navigate(initialRoute);
+
+              const authenticationSuccessEvent: ActivepiecesClientAuthenticationSuccess =
+                {
+                  type: ActivepiecesClientEventName.CLIENT_AUTHENTICATION_SUCCESS,
+                  data: {},
+                };
+              window.parent.postMessage(authenticationSuccessEvent, '*');
             },
           },
         );

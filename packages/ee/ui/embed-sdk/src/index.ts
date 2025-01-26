@@ -4,10 +4,15 @@ export enum ActivepiecesClientEventName {
   CLIENT_NEW_CONNECTION_DIALOG_CLOSED = 'CLIENT_NEW_CONNECTION_DIALOG_CLOSED',
   CLIENT_SHOW_CONNECTION_IFRAME = 'CLIENT_SHOW_CONNECTION_IFRAME',
   CLIENT_CONNECTION_NAME_IS_INVALID = 'CLIENT_CONNECTION_NAME_IS_INVALID',
+  CLIENT_AUTHENTICATION_SUCCESS = 'CLIENT_AUTHENTICATION_SUCCESS',
 }
 export const connectionNameRegex = '[A-Za-z0-9_\\-@\\+\\.]*'
 export interface ActivepiecesClientInit {
   type: ActivepiecesClientEventName.CLIENT_INIT;
+  data: Record<string, never>;
+}
+export interface ActivepiecesClientAuthenticationSuccess {
+  type: ActivepiecesClientEventName.CLIENT_AUTHENTICATION_SUCCESS;
   data: Record<string, never>;
 }
 export interface ActivepiecesClientShowConnectionIframe {
@@ -75,7 +80,7 @@ export const _AP_JWT_TOKEN_QUERY_PARAM_NAME = "jwtToken"
 
 export const _AP_MANAGED_TOKEN_LOCAL_STORAGE_KEY = "ap_managed_token"
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.3.0";
+  readonly _sdkVersion = "0.3.3";
   _prefix = '';
   _instanceUrl = '';
   _hideSidebar = false;
@@ -206,9 +211,7 @@ class ActivepiecesEmbedded {
               },
             };
             iframeWindow.postMessage(apEvent, '*');
-            if (callbackAfterAuthentication) {
-              callbackAfterAuthentication();
-            }
+            this._createAuthenticationSuccessListener(callbackAfterAuthentication);
             window.removeEventListener('message', initialMessageHandler);
             break;
           }
@@ -219,6 +222,18 @@ class ActivepiecesEmbedded {
     return iframe;
   }
 
+  private _createAuthenticationSuccessListener = (authenticationSuccessCallback?: () => void) => {
+    const authenticationSuccessHandler = (event: MessageEvent<ActivepiecesClientAuthenticationSuccess>) => {
+      if (event.data.type === ActivepiecesClientEventName.CLIENT_AUTHENTICATION_SUCCESS) {
+        console.log('Authentication success')
+        if (authenticationSuccessCallback) {
+          authenticationSuccessCallback();
+        }
+        window.removeEventListener('message', authenticationSuccessHandler);
+      }
+    }
+    window.addEventListener('message', authenticationSuccessHandler);
+  }
   private _createIframe({ src }: { src: string }) {
     const iframe = document.createElement('iframe');
     iframe.src = src;
