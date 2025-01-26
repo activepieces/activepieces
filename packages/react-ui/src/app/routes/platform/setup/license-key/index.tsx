@@ -231,16 +231,15 @@ const LicenseKeyPage = () => {
           <div className="rounded-lg p-4">
             <h2 className="text-lg font-semibold mb-5">{t('Features')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
-              {Object.entries(LICENSE_PROPS_MAP).map(([key, label]) => (
-                <div className="flex items-center p-2 rounded-md" key={key}>
-                  {platform?.[key as keyof typeof platform] && (
-                    <>
+              {Object.entries(LICENSE_PROPS_MAP).map(
+                ([key, label]) =>
+                  platform?.[key as keyof typeof platform] && (
+                    <div className="flex items-center p-2 rounded-md" key={key}>
                       <CircleCheckBig className="w-4 h-4 text-green-500 mr-2" />
                       <span className={`text-sm`}>{t(label)}</span>
-                    </>
-                  )}
-                </div>
-              ))}
+                    </div>
+                  ),
+              )}
             </div>
           </div>
         </>

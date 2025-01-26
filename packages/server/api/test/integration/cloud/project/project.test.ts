@@ -13,10 +13,11 @@ import {
     User,
 } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
-import { FastifyInstance } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
+import { stripeHelper } from '../../../../src/app/ee/platform-billing/stripe-helper'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
@@ -28,10 +29,17 @@ import {
 } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
+let mockLog: FastifyBaseLogger
+
 
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
+    mockLog = app!.log!
+
+    stripeHelper(mockLog).createCustomer = jest
+        .fn()
+        .mockResolvedValue(faker.string.uuid())
 })
 
 afterAll(async () => {
@@ -62,8 +70,9 @@ describe('Project API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
             expect(responseBody.displayName).toBe(displayName)
             expect(responseBody.ownerId).toBe(mockOwner.id)
             expect(responseBody.platformId).toBe(mockPlatform.id)
@@ -194,8 +203,9 @@ describe('Project API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
 
             expect(responseBody.id).toBe(mockProject.id)
             expect(responseBody.displayName).toBe(request.displayName)

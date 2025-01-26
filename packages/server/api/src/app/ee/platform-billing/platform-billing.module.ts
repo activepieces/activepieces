@@ -8,17 +8,15 @@ import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
-import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { platformBillingController } from './platform-billing.controller'
 import { platformBillingService } from './platform-billing.service'
+import { stripeBillingController } from './stripe-billing.controller'
 import { stripeHelper, TASKS_PAYG_PRICE_ID } from './stripe-helper'
 import { BillingEntityType, usageService } from './usage/usage-service'
 
 const EVERY_4_HOURS = '59 */4 * * *'
 
 export const platformBillingModule: FastifyPluginAsyncTypebox = async (app) => {
-    app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
-
     systemJobHandlers.registerJobHandler(SystemJobName.PLATFORM_USAGE_REPORT, async () => {
         const log = app.log
         log.info('Running platform-daily-report')
@@ -76,4 +74,5 @@ export const platformBillingModule: FastifyPluginAsyncTypebox = async (app) => {
         },
     })
     await app.register(platformBillingController, { prefix: '/v1/platform-billing' })
+    await app.register(stripeBillingController, { prefix: '/v1/stripe-billing' })
 }
