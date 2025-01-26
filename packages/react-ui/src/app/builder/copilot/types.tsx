@@ -1,4 +1,3 @@
-import { CopilotFlowOutline, ImportFlowRequest, UpdateActionRequest } from "@activepieces/shared";
 import { nanoid } from "nanoid";
 
 export type AiMessageContent = {
@@ -13,29 +12,31 @@ export type UserMessageContent = {
     content: string;
 }
 
-export type FlowPlanMessageContnt = {
+export enum CopilotStepStatus {
+    PENDING = 'pending',
+    SUCCESS = 'success',
+    ERROR = 'error'
+}
+
+
+export type FlowPlanMessageContent = {
     id: string;
-    type: 'flow_plan';
+    type: 'plan';
     content: {
-        plan: CopilotFlowOutline;
-        operation: ImportFlowRequest;
+        steps: {
+            title: string;
+            description: string;
+            status: CopilotStepStatus;
+        }[]
     };
 }
 
-export type CodeBlockMessageContent = {
-    id: string;
-    type: 'code_block';
-    content: {
-        code: string;
-        operation: UpdateActionRequest;
-        inputs: Record<string,string>
-    };
-}
+export type MessageContent = AiMessageContent | UserMessageContent | FlowPlanMessageContent;
 
-export type MessageContent = AiMessageContent | UserMessageContent | FlowPlanMessageContnt | CodeBlockMessageContent;
-
-export const INITIAL_COPILOT_MESSAGE: MessageContent = {
-    id: nanoid(),
-    type: 'assistant_message',
-    content: 'Hi I am Flow Ninja, I can help you build your flow. What would you like to automate?',
-  }
+export const INITIAL_COPILOT_MESSAGES: MessageContent[] = [
+    {
+        id: nanoid(),
+        type: 'assistant_message',
+        content: 'Hey! I\'m APY, How can I help you today?',
+    }
+]

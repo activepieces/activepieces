@@ -58,9 +58,6 @@ const RunsList = React.memo(({ recentRuns = 20 }: FlowRunsListProps) => {
 
   return (
     <>
-      <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>
-        {t('Recent Runs')}
-      </SidebarHeader>
       <CardList>
         {isLoading ||
           (isRefetching && <CardListItemSkeleton numberOfCards={10} />)}

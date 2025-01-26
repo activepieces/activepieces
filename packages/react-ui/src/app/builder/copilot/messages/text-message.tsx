@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { AiMessageContent, UserMessageContent } from '../types';
 import { ChatBubble, ChatBubbleMessage } from '@/components/ui/chat/chat-bubble';
-import { cn } from '@/lib/utils';
 import { CopilotAvatar } from '../copilot-avatar';
 
 

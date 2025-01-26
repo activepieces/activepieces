@@ -1,22 +1,53 @@
 import * as React from 'react';
-
-import { ResizableTextareaProps, Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
-const ChatInput = React.forwardRef<HTMLTextAreaElement, ResizableTextareaProps>(
-  ({ className, ...props }, ref) => (
-    <Textarea
-      autoComplete="off"
-      ref={ref}
-      name="message"
-      className={cn(
-        'px-4 py-3 bg-muted text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 w-full rounded-md flex items-center resize-none border-0 p-3 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:ring-offset-background',
-        className,
-      )}
-      {...props}
-    />
-  ),
+interface ChatInputProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+    onSendMessage: (message: string) => void;
+}
+
+const TEXTAREA_MIN_HEIGHT = '61px';
+const TEXTAREA_MAX_HEIGHT = '200px';
+
+const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
+  ({ className, onSendMessage, ...props }, ref) => {
+    const [input, setInput] = React.useState('');
+
+    return (
+      <div className={cn('relative w-full mx-auto z-10')}>
+        <div className="shadow-sm rounded-sm overflow-hidden backdrop-blur-sm bg-gray-100">
+          <textarea
+            ref={ref}
+            className={cn(
+              'w-full pl-4 pt-4 pr-16 focus:outline-none resize-none text-sm text-gray-900 placeholder-gray-500 bg-transparent',
+              className
+            )}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                if (event.shiftKey) return;
+                event.preventDefault();
+                onSendMessage(event.currentTarget.value);
+                event.currentTarget.value = '';
+                setInput('');
+
+              }
+            }}
+            value={input}
+            onChange={(event) => {
+              setInput(event.target.value);
+            }}
+            style={{
+              minHeight: TEXTAREA_MIN_HEIGHT,
+              maxHeight: TEXTAREA_MAX_HEIGHT,
+            }}
+            translate="no"
+            {...props}
+          />
+        </div>
+      </div>
+    );
+  }
 );
+
 ChatInput.displayName = 'ChatInput';
 
 export { ChatInput };

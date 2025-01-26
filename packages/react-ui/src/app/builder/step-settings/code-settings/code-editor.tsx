@@ -28,6 +28,7 @@ type CodeEditorProps = {
   hidePackageJson?: boolean;
   applyCodeToCurrentStep?: () => void;
   minHeight?: string;
+  refreshCounter: number;
 };
 
 const CodeEditor = ({
@@ -36,6 +37,7 @@ const CodeEditor = ({
   onChange,
   applyCodeToCurrentStep,
   minHeight,
+  refreshCounter,
   hidePackageJson
 }: CodeEditorProps) => {
   const { code, packageJson } = sourceCode;
@@ -50,6 +52,19 @@ const CodeEditor = ({
   const { data: allowNpmPackagesInCodeStep } = flagsHooks.useFlag<boolean>(
     ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP,
   );
+
+  const isFirstRenderRef = useRef(true);
+  useEffect(() => {
+    if (!isFirstRenderRef.current) {
+      if (containerRef.current) {
+        containerRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        });
+      }
+    }
+    isFirstRenderRef.current = false;
+  }, [refreshCounter]);
 
   const extensions = [
     styleTheme,
@@ -133,7 +148,7 @@ const CodeEditor = ({
                 variant="outline"
                 className="flex gap-2"
                 size={'sm'}
-                onClick={() => {}}
+                onClick={() => { }}
               >
                 <Package className="w-4 h-4" />
                 {t('Add package')}

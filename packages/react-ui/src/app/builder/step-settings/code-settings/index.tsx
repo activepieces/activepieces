@@ -17,6 +17,7 @@ import {
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
 
 import { CodeEditor } from './code-editor';
+import { useBuilderStateContext } from '../../builder-hooks';
 
 const markdown = `
 To use data from previous steps in your code, include them as pairs of keys and values below. 
@@ -34,6 +35,10 @@ type CodeSettingsProps = {
 
 const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
   const form = useFormContext<CodeAction>();
+
+  const [refreshPieceSettingsCounter] = useBuilderStateContext((state) => [
+    state.refreshPieceSettingsCounter,
+  ]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -72,6 +77,7 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
         render={({ field }) => (
           <FormItem>
             <CodeEditor
+              refreshCounter={refreshPieceSettingsCounter}
               sourceCode={field.value}
               onChange={field.onChange}
               readonly={readonly}

@@ -40,6 +40,7 @@ import { FlowRunDetails } from './run-details';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
 import { CopilotSidebar } from './copilot';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const minWidthOfLeftSidebar = 'min-w-[max(30vw,50px)]';
@@ -81,6 +82,7 @@ const BuilderPage = () => {
     run,
     canExitRun,
     selectedStep,
+    setLeftSidebar,
   ] = useBuilderStateContext((state) => [
     state.setRun,
     state.flowVersion,
@@ -89,6 +91,7 @@ const BuilderPage = () => {
     state.run,
     state.canExitRun,
     state.selectedStep,
+    state.setLeftSidebar,
   ]);
 
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
@@ -196,10 +199,26 @@ const BuilderPage = () => {
           })}
         >
           <div ref={leftSidePanelRef} className="w-full h-full">
-            {leftSidebar === LeftSideBarType.RUNS && <RunsList />}
-            {leftSidebar === LeftSideBarType.RUN_DETAILS && <FlowRunDetails />}
-            {leftSidebar === LeftSideBarType.VERSIONS && <FlowVersionsList />}
-            {leftSidebar === LeftSideBarType.AI_COPILOT && <CopilotSidebar />}
+            {leftSidebar === LeftSideBarType.RUN_DETAILS ? (
+              <FlowRunDetails />
+            ) : (
+              <Tabs value={leftSidebar} className="w-full h-full flex flex-col">
+                <TabsList className="grid grid-cols-3 my-4 mx-4">
+                  <TabsTrigger value={LeftSideBarType.AI_COPILOT} onClick={() => setLeftSidebar(LeftSideBarType.AI_COPILOT)}>APY</TabsTrigger>
+                  <TabsTrigger value={LeftSideBarType.RUNS} onClick={() => setLeftSidebar(LeftSideBarType.RUNS)}>Runs</TabsTrigger>
+                  <TabsTrigger value={LeftSideBarType.VERSIONS} onClick={() => setLeftSidebar(LeftSideBarType.VERSIONS)}>Versions</TabsTrigger>
+                </TabsList>
+                <TabsContent value={LeftSideBarType.RUNS} className='flex-1'>
+                  <RunsList />
+                </TabsContent>
+                <TabsContent value={LeftSideBarType.VERSIONS} className='flex-1'>
+                  <FlowVersionsList />
+                </TabsContent>
+                <TabsContent value={LeftSideBarType.AI_COPILOT} className='flex-1'>
+                  <CopilotSidebar />
+                </TabsContent>
+              </Tabs>
+            )}
           </div>
         </ResizablePanel>
         <ResizableHandle

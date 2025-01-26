@@ -46,7 +46,7 @@ import {
   CanvasShortcutsProps,
 } from './flow-canvas/context-menu/canvas-context-menu';
 import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
-import { INITIAL_COPILOT_MESSAGE, MessageContent } from './copilot/types';
+import { INITIAL_COPILOT_MESSAGES, MessageContent } from './copilot/types';
 import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
 
 const flowUpdatesQueue = new PromiseQueue();
@@ -81,6 +81,8 @@ export type BuilderState = {
   flowVersion: FlowVersion;
   readonly: boolean;
   sampleData: Record<string, unknown>;
+  refreshPieceSettings: () => void;
+  refreshPieceSettingsCounter: number;
   loopsIndexes: Record<string, number>;
   run: FlowRun | null;
   leftSidebar: LeftSideBarType;
@@ -170,6 +172,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     );
 
     return {
+      refreshPieceSettingsCounter: 0,
+      refreshPieceSettings: () => set((state) => ({ refreshPieceSettingsCounter: state.refreshPieceSettingsCounter + 1 })),
       loopsIndexes:
         initialState.run && initialState.run.steps
           ? flowRunUtils.findLoopsState(
@@ -191,7 +195,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       canExitRun: initialState.canExitRun,
       activeDraggingStep: null,
       allowCanvasPanning: true,
-      messages: [INITIAL_COPILOT_MESSAGE],
+      messages: INITIAL_COPILOT_MESSAGES,
       addMessage: (message: MessageContent) => set((state) => {
         const existingMessageIndex = state.messages.findIndex(m => m.id === message.id);
         if (existingMessageIndex >= 0) {

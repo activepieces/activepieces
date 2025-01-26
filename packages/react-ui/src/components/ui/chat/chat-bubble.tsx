@@ -69,7 +69,7 @@ const ChatBubbleAvatar: React.FC<ChatBubbleAvatarProps> = ({
     <AvatarImage
       src={src}
       alt="Avatar"
-      className={cn('aspect-square p-2', className)}
+      className={cn('aspect-square p-0', className)}
     />
     <AvatarFallback className="bg-background border">{fallback}</AvatarFallback>
   </Avatar>
@@ -173,25 +173,6 @@ interface ChatBubbleActionWrapperProps
   className?: string;
 }
 
-const ChatBubbleActionWrapper = React.forwardRef<
-  HTMLDivElement,
-  ChatBubbleActionWrapperProps
->(({ variant, className, children, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      'absolute top-1/2 -translate-y-1/2 flex opacity-0 group-hover:opacity-100 transition-opacity duration-200',
-      variant === 'sent'
-        ? '-left-1 -translate-x-full flex-row-reverse'
-        : '-right-1 translate-x-full',
-      className,
-    )}
-    {...props}
-  >
-    {children}
-  </div>
-));
-ChatBubbleActionWrapper.displayName = 'ChatBubbleActionWrapper';
 
 export {
   ChatBubble,
@@ -201,5 +182,4 @@ export {
   chatBubbleVariant,
   chatBubbleMessageVariants,
   ChatBubbleAction,
-  ChatBubbleActionWrapper,
 };

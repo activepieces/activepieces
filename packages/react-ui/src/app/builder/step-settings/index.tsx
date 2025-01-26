@@ -46,6 +46,7 @@ const StepSettingsContainer = () => {
     saving,
     flowVersion,
     selectedBranchIndex,
+    refreshPieceSettingsCounter,
     setSelectedBranchIndex,
   ] = useBuilderStateContext((state) => [
     state.readonly,
@@ -54,6 +55,7 @@ const StepSettingsContainer = () => {
     state.saving,
     state.flowVersion,
     state.selectedBranchIndex,
+    state.refreshPieceSettingsCounter,
     state.setSelectedBranchIndex,
   ]);
 
@@ -64,6 +66,12 @@ const StepSettingsContainer = () => {
   const { stepMetadata } = piecesHooks.useStepMetadata({
     step: selectedStep,
   });
+
+  useEffect(() => {
+    form.reset(defaultValues);
+    form.trigger();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshPieceSettingsCounter]);
 
   const debouncedTrigger = useMemo(() => {
     return debounce((newTrigger: Trigger) => {

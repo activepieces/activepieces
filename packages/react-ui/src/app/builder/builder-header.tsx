@@ -1,6 +1,6 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { Bot, ChevronDown, History, Logs } from 'lucide-react';
+import { Bot, ChevronDown, History, Logs, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { useMemo } from 'react';
 import {
   createSearchParams,
@@ -37,6 +37,7 @@ import {
 import FlowActionMenu from '../components/flow-actions-menu';
 
 import { BuilderFlowStatusSection } from './builder-flow-status-section';
+import { Toggle } from '@/components/ui/toggle';
 
 export const BuilderHeader = () => {
   const navigate = useNavigate();
@@ -45,26 +46,23 @@ export const BuilderHeader = () => {
   const { data: showSupport } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
-  // TODO URGENT
-  const showCopilot = true;
   const branding = flagsHooks.useWebsiteBranding();
   const isInRunsPage = useMemo(
     () => location.pathname.includes('/runs'),
     [location.pathname],
   );
-  const hasPermissionToReadRuns = useAuthorization().checkAccess(
-    Permission.READ_FLOW,
-  );
   const [
     flow,
     flowVersion,
     setLeftSidebar,
+    leftSidebar,
     renameFlowClientSide,
     moveToFolderClientSide,
   ] = useBuilderStateContext((state) => [
     state.flow,
     state.flowVersion,
     state.setLeftSidebar,
+    state.leftSidebar,
     state.renameFlowClientSide,
     state.moveToFolderClientSide,
   ]);
@@ -85,22 +83,43 @@ export const BuilderHeader = () => {
         <div className="flex items-center gap-2">
           {!embedState.hideLogoInBuilder &&
             !embedState.disableNavigationInBuilder && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link to={defaultRoute}>
-                    <Button variant="ghost" size={'icon'} className="size-10">
-                      <img
-                        className="h-7 w-7 object-contain"
-                        src={branding.logos.logoIconUrl}
-                        alt={branding.websiteName}
-                      />
-                    </Button>
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  {t('Go to Dashboard')}
-                </TooltipContent>
-              </Tooltip>
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link to={defaultRoute}>
+                      <Button variant="ghost" size={'icon'} className="size-10">
+                        <img
+                          className="h-7 w-7 object-contain"
+                          src={branding.logos.logoIconUrl}
+                          alt={branding.websiteName}
+                        />
+                      </Button>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {t('Go to Dashboard')}
+                  </TooltipContent>
+                </Tooltip>
+                {!isInRunsPage && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Toggle
+                        pressed={leftSidebar !== LeftSideBarType.NONE}
+                        onPressedChange={(pressed) => setLeftSidebar(pressed ? LeftSideBarType.AI_COPILOT : LeftSideBarType.NONE)}
+                      >
+                        {leftSidebar === LeftSideBarType.NONE ? (
+                          <PanelRightClose className="h-5 w-5" />
+                        ) : (
+                          <PanelRightOpen className="h-5 w-5" />
+                        )}
+                      </Toggle>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      {t('Toggle AI Copilot')}
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </>
             )}
           <span>
             {!embedState.hideFolders && (
@@ -167,53 +186,6 @@ export const BuilderHeader = () => {
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">{t('Support')}</TooltipContent>
-            </Tooltip>
-          )}
-          {showCopilot && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="gap-2 px-2"
-                  onClick={() => setLeftSidebar(LeftSideBarType.AI_COPILOT)}
-                >
-                  <Bot className="w-4 h-4" />
-                  {t('Copilot')}
-                </Button>
-              </TooltipTrigger>
-            </Tooltip>
-          )}
-          {hasPermissionToReadRuns && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  onClick={() => setLeftSidebar(LeftSideBarType.RUNS)}
-                  className="gap-2 px-2"
-                >
-                  <Logs className="w-4 h-4" />
-                  {t('Runs')}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">{t('Run Logs')}</TooltipContent>
-            </Tooltip>
-          )}
-
-          {!isInRunsPage && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="gap-2 px-2"
-                  onClick={() => setLeftSidebar(LeftSideBarType.VERSIONS)}
-                >
-                  <History className="w-4 h-4" />
-                  {t('Versions')}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                {t('Versions History')}
-              </TooltipContent>
             </Tooltip>
           )}
 
