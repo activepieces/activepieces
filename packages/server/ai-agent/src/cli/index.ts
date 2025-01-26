@@ -2,8 +2,8 @@ import { createInterface } from 'readline';
 import { aiAgent, Message } from '../lib/ai-agent';
 import { config } from 'dotenv';
 import { join } from 'path';
+import { llmMessageParser } from '../lib/llm-parser';
 
-// Load environment variables from .env
 config({ path: join(__dirname, '../../.env') });
 
 const ANTHROPIC_API_KEY = process.env['ANTHROPIC_API_KEY'];
@@ -11,7 +11,6 @@ if (!ANTHROPIC_API_KEY) {
   throw new Error('ANTHROPIC_API_KEY environment variable is not set');
 }
 
-// After the check, we can safely assert the type
 const apiKey: string = ANTHROPIC_API_KEY;
 
 const readline = createInterface({
@@ -36,12 +35,9 @@ async function chat() {
     messages.push({ role: 'user', content: question });
     
     process.stdout.write('Assistant: ');
-    let response = '';
-    
-    for await (const chunk of aiAgent(messages, apiKey).textStream) {
-      process.stdout.write(chunk);
-      response += chunk;
-    }
+
+    const response = await aiAgent.run(messages, apiKey);
+    console.dir(response, { depth: null, colors: true });
     process.stdout.write('\n\n');
     
     messages.push({ role: 'assistant', content: response });

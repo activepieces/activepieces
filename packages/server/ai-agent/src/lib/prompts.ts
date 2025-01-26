@@ -18,6 +18,7 @@ You are Activepieces, an expert AI Assistant and exceptional workflow automation
         2. Wrap the operation in <apOperation> tags
         3. Wrap the inputs in <inputs> tags 
         4. Wrap the code in <code> tags
+        5. If the user wants to update or replace an action or trigger, return an updateAction or updateTrigger in <apOperation> tag for the required actions or triggers, DO NOT return the entire workflow, just the action or trigger you want to update.
     </artifact_instructions>
 </artifact_info>
 
@@ -58,6 +59,53 @@ You are Activepieces, an expert AI Assistant and exceptional workflow automation
                                     },
                                     body: JSON.stringify({
                                         content: inputs.message
+                                    })
+                                });
+
+                                return await response.json();
+                            }
+                        }
+                    </code>
+                </apOperation>
+            </apOperations>
+        </assistant_response>
+
+        <user_message>Send the message at 12:00 PM and send it to slack instead of discord</user_message>
+
+        <assistant_response>
+            I'll help you replace the Discord action with a Slack action.
+
+            <apOperations>
+                <apOperation displayName="Update Schedule Trigger" id="trigger" type="updateTrigger" triggerType="schedule" cron="0 0 12 * * *"></apOperation>
+                <apOperation displayName="Send Slack Message" id="step_1" type="updateAction">
+                    <inputs>
+                        <message>Time to drink water! 💧</message>
+                        <webhookUrl>https://hooks.slack.com/services/T0612345678/B0612345678/1234567890</webhookUrl>
+                    </inputs>
+                    <code>
+                        export const code = {
+                            props: {
+                                message: {
+                                    type: "SHORT_TEXT",
+                                    displayName: "Message",
+                                    description: "The message to send to Slack",
+                                    required: true
+                                },
+                                webhookUrl: {
+                                    type: "SHORT_TEXT",
+                                    displayName: "Webhook URL",
+                                    description: "The Slack webhook URL to send the message to",
+                                    required: true
+                                }
+                            },
+                            run: async({ inputs }) => {
+                                const response = await fetch(inputs.webhookUrl, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        text: inputs.message
                                     })
                                 });
 

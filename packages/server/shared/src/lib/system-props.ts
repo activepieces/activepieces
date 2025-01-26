@@ -9,6 +9,7 @@ export const systemConstants = {
 export type SystemProp = AppSystemProp | WorkerSystemProp
 
 export enum AppSystemProp {
+    ANTHROPIC_API_KEY = 'ANTHROPIC_API_KEY',
     API_KEY = 'API_KEY',
     API_RATE_LIMIT_AUTHN_ENABLED = 'API_RATE_LIMIT_AUTHN_ENABLED',
     API_RATE_LIMIT_AUTHN_MAX = 'API_RATE_LIMIT_AUTHN_MAX',
