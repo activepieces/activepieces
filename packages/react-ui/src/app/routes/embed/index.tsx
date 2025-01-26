@@ -8,7 +8,9 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { managedAuthApi } from '@/lib/managed-auth-api';
 import {
   _AP_JWT_TOKEN_QUERY_PARAM_NAME,
+  ActivepiecesClientAuthenticationFailed,
   ActivepiecesClientAuthenticationSuccess,
+  ActivepiecesClientConfigurationFinished,
   ActivepiecesClientEventName,
   ActivepiecesClientInit,
   ActivepiecesClientShowConnectionIframe,
@@ -16,14 +18,24 @@ import {
   ActivepiecesVendorInit,
 } from 'ee-embed-sdk';
 
+const notifyVendorPostAuthentication = () => {
+  const authenticationSuccessEvent: ActivepiecesClientAuthenticationSuccess = {
+    type: ActivepiecesClientEventName.CLIENT_AUTHENTICATION_SUCCESS,
+    data: {},
+  };
+  window.parent.postMessage(authenticationSuccessEvent, '*');
+  const configurationFinishedEvent: ActivepiecesClientConfigurationFinished = {
+    type: ActivepiecesClientEventName.CLIENT_CONFIGURATION_FINISHED,
+    data: {},
+  };
+  window.parent.postMessage(configurationFinishedEvent, '*');
+};
+
 const EmbedPage = React.memo(() => {
   const navigate = useNavigate();
   const { setEmbedState } = useEmbedding();
   const { mutateAsync } = useMutation({
     mutationFn: managedAuthApi.generateApToken,
-    onError: (error) => {
-      console.error(error);
-    },
   });
   const initState = (event: MessageEvent<ActivepiecesVendorInit>) => {
     if (
@@ -32,7 +44,6 @@ const EmbedPage = React.memo(() => {
     ) {
       const token =
         event.data.data.jwtToken || getExternalTokenFromSearchQuery();
-
       if (token) {
         mutateAsync(
           {
@@ -66,13 +77,14 @@ const EmbedPage = React.memo(() => {
                 document.body.style.background = 'transparent';
               }
               navigate(initialRoute);
-
-              const authenticationSuccessEvent: ActivepiecesClientAuthenticationSuccess =
-                {
-                  type: ActivepiecesClientEventName.CLIENT_AUTHENTICATION_SUCCESS,
-                  data: {},
-                };
-              window.parent.postMessage(authenticationSuccessEvent, '*');
+              notifyVendorPostAuthentication();
+            },
+            onError: (error) => {
+              const errorEvent: ActivepiecesClientAuthenticationFailed = {
+                type: ActivepiecesClientEventName.CLIENT_AUTHENTICATION_FAILED,
+                data: error,
+              };
+              window.parent.postMessage(errorEvent, '*');
             },
           },
         );
