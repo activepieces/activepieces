@@ -60,11 +60,11 @@ export const updatePersonAction = createAction({
 			personDefaultFields.label_ids = labelIds;
 		}
 
-		const personCustomFiels: Record<string, string> = {};
+		const personCustomFields: Record<string, string> = {};
 
 		Object.entries(customFields).forEach(([key, value]) => {
 			// Format values if they are arrays
-			personCustomFiels[key] = Array.isArray(value) && value.length > 0 ? value.join(',') : value;
+			personCustomFields[key] = Array.isArray(value) && value.length > 0 ? value.join(',') : value;
 		});
 
 		const updatedPersonResponse = await pipedriveApiCall<PersonCreateResponse>({
@@ -74,7 +74,7 @@ export const updatePersonAction = createAction({
 			resourceUri: `/persons/${personId}`,
 			body: {
 				...personDefaultFields,
-				...personCustomFiels,
+				...personCustomFields,
 			},
 		});
 

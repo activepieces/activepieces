@@ -10,12 +10,14 @@ import {
     PlatformWithoutSensitiveData,
     spreadIfDefined,
     UpdatePlatformRequestBody,
-    UserId } from '@activepieces/shared'
+    UserId,
+} from '@activepieces/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { defaultTheme } from '../flags/theme'
 import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
+import { projectService } from '../project/project-service'
 
 const repo = repoFactory<Platform>(PlatformEntity)
 
@@ -26,7 +28,20 @@ export const platformService = {
     },
     async listPlatformsForIdentity(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
         const users = await userService.getByIdentityId({ identityId: params.identityId })
-        const platformIds = users.map((user) => user.platformId).filter((platformId) => platformId !== null)
+
+        const platformsWithProjects = await Promise.all(users.map(async (user) => {
+            if (isNil(user.platformId)) {
+                return null
+            }
+            const hasProjects = await projectService.userHasProjects({
+                platformId: user.platformId,
+                userId: user.id,
+            })
+            return hasProjects ? user.platformId : null
+        }))
+
+        const platformIds = platformsWithProjects.filter((platformId) => !isNil(platformId))
+
         return repo().find({
             where: {
                 id: In(platformIds),
@@ -85,7 +100,7 @@ export const platformService = {
             id: ownerId,
             platformId: savedPlatform.id,
         })
-        
+
         return savedPlatform
     },
 
@@ -164,7 +179,7 @@ export const platformService = {
                 },
             })
         }
-        
+
         return platform
     },
     async getOne(id: PlatformId): Promise<Platform | null> {
@@ -202,8 +217,8 @@ type UpdateParams = UpdatePlatformRequestBody & {
     manageTemplatesEnabled?: boolean
     apiKeysEnabled?: boolean
     projectRolesEnabled?: boolean
-    alertsEnabled?: boolean 
-    analyticsEnabled?: boolean 
+    alertsEnabled?: boolean
+    analyticsEnabled?: boolean
     licenseKey?: string
 }
 

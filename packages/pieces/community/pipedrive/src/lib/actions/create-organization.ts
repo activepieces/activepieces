@@ -38,11 +38,11 @@ export const createOrganizationAction = createAction({
 			organizationDefaultFields.label_ids = labelIds;
 		}
 
-		const organizationCustomFiels: Record<string, string> = {};
+		const organizationCustomFields: Record<string, string> = {};
 
 		Object.entries(customFields).forEach(([key, value]) => {
 			// Format values if they are arrays
-			organizationCustomFiels[key] = Array.isArray(value) ? value.join(',') : value;
+			organizationCustomFields[key] = Array.isArray(value) ? value.join(',') : value;
 		});
 
 		const createdOrganizationResponse = await pipedriveApiCall<OrganizationCreateResponse>({
@@ -52,7 +52,7 @@ export const createOrganizationAction = createAction({
 			resourceUri: '/organizations',
 			body: {
 				...organizationDefaultFields,
-				...organizationCustomFiels,
+				...organizationCustomFields,
 			},
 		});
 

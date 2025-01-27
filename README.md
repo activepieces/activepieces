@@ -364,7 +364,9 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/maarteNNNN"><img src="https://avatars.githubusercontent.com/u/14275291?v=4?s=100" width="100px;" alt="Maarten Coppens"/><br /><sub><b>Maarten Coppens</b></sub></a><br /><a href="#plugin-maarteNNNN" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/mahmuthamet"><img src="https://avatars.githubusercontent.com/u/90776946?v=4?s=100" width="100px;" alt="Mahmoud Hamed"/><br /><sub><b>Mahmoud Hamed</b></sub></a><br /><a href="#plugin-mahmuthamet" title="Plugin/utility libraries">🔌</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://dammaretz.fr"><img src="https://avatars.githubusercontent.com/u/14098167?v=4?s=100" width="100px;" alt="Theo Dammaretz"/><br /><sub><b>Theo Dammaretz</b></sub></a><br /><a href="#plugin-Blightwidow" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://dammaretz.com"><img src="https://avatars.githubusercontent.com/u/14098167?v=4?s=100" width="100px;" alt="Theo Dammaretz"/><br /><sub><b>Theo Dammaretz</b></sub></a><br /><a href="#plugin-Blightwidow" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/s31w4n"><img src="https://avatars.githubusercontent.com/u/63353528?v=4?s=100" width="100px;" alt="s31w4n"/><br /><sub><b>s31w4n</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=s31w4n" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://kallabot.com"><img src="https://avatars.githubusercontent.com/u/94991678?v=4?s=100" width="100px;" alt="Abdul Rahman"/><br /><sub><b>Abdul Rahman</b></sub></a><br /><a href="#plugin-abdulrahmanmajid" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

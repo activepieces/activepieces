@@ -116,34 +116,12 @@ export const projectService = {
 
     async getAllForUser(params: GetAllForUserParams): Promise<Project[]> {
         assertNotNullOrUndefined(params.platformId, 'platformId is undefined')
-        const filters: FindOptionsWhere<Project>[] = []
-        const projectIds = await projectMemberService(system.globalLogger()).getIdsOfProjects({
-            platformId: params.platformId,
-            userId: params.userId,
-        })
-        const user = await userService.getOneOrFail({ id: params.userId })
-        switch (user.platformRole) {
-            case PlatformRole.ADMIN:
-                filters.push({
-                    platformId: params.platformId,
-                    deleted: IsNull(),
-                })
-                break
-            case PlatformRole.MEMBER:
-                filters.push({
-                    ownerId: params.userId,
-                    platformId: params.platformId,
-                    deleted: IsNull(),
-                })
-                break
-        }
-        if (!isNil(projectIds)) {
-            filters.push({
-                id: In(projectIds),
-                deleted: IsNull(),
-            })
-        }
+        const filters = await getUsersFilters(params)
         return projectRepo().findBy(filters)
+    },
+    async userHasProjects(params: GetAllForUserParams): Promise<boolean> {
+        const filters = await getUsersFilters(params)
+        return projectRepo().existsBy(filters)
     },
     async addProjectToPlatform({ projectId, platformId }: AddProjectToPlatformParams): Promise<void> {
         const query = {
@@ -171,6 +149,30 @@ export const projectService = {
 }
 
 
+async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptionsWhere<Project>[]> {
+    const [projectIds, user] = await Promise.all([
+        projectMemberService(system.globalLogger()).getIdsOfProjects({
+            platformId: params.platformId,
+            userId: params.userId,
+        }),
+        userService.getOneOrFail({ id: params.userId }),
+    ])
+
+    const adminFilter = user.platformRole === PlatformRole.ADMIN
+        ? [{
+            deleted: IsNull(),
+            platformId: params.platformId,
+        }]
+        : []
+
+    const memberFilter = {
+        deleted: IsNull(),
+        platformId: params.platformId,
+        id: In(projectIds),
+    }
+
+    return [...adminFilter, memberFilter]
+}
 async function assertExternalIdIsUnique(externalId: string | undefined, projectId: ProjectId): Promise<void> {
     if (!isNil(externalId)) {
         const externalIdAlreadyExists = await projectRepo().existsBy({

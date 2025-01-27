@@ -8,6 +8,32 @@ import {
 	Property,
 } from '@activepieces/pieces-framework';
 import { GetField, StageWithPipelineInfo } from './types';
+import { isNil } from '@activepieces/shared';
+
+export async function fetchFiltersOptions(
+	auth: PiecePropValueSchema<typeof pipedriveAuth>,
+	type: string,
+): Promise<DropdownOption<number>[]> {
+	const filters = await pipedriveApiCall<{ data: Array<{ id: number; name: string }> }>({
+		accessToken: auth.access_token,
+		apiDomain: auth.data['api_domain'],
+		method: HttpMethod.GET,
+		resourceUri: '/filters',
+		query: {
+			type: type,
+		},
+	});
+
+	const options: DropdownOption<number>[] = [];
+	for (const filter of filters.data) {
+		options.push({
+			label: filter.name,
+			value: filter.id,
+		});
+	}
+
+	return options;
+}
 
 export async function fetchProductsOptions(
 	auth: PiecePropValueSchema<typeof pipedriveAuth>,
@@ -75,6 +101,29 @@ export async function fetchLeadsOptions(
 		options.push({
 			label: lead.title,
 			value: lead.id,
+		});
+	}
+
+	return options;
+}
+
+export async function fetchActivityTypesOptions(
+	auth: PiecePropValueSchema<typeof pipedriveAuth>,
+): Promise<DropdownOption<string>[]> {
+	const activityTypes = await pipedriveApiCall<{
+		data: Array<{ key_string: string; name: string }>;
+	}>({
+		accessToken: auth.access_token,
+		apiDomain: auth.data['api_domain'],
+		method: HttpMethod.GET,
+		resourceUri: '/activityTypes:(key_string,name)',
+	});
+
+	const options: DropdownOption<string>[] = [];
+	for (const type of activityTypes.data) {
+		options.push({
+			label: type.name,
+			value: type.key_string,
 		});
 	}
 
@@ -174,7 +223,7 @@ export async function fetchOrganizationsOptions(
 	return options;
 }
 
-function createPropertyDefinition(property: GetField) {
+export function createPropertyDefinition(property: GetField) {
 	switch (property.field_type) {
 		case 'varchar':
 		case 'varchar_auto':
@@ -251,7 +300,7 @@ function createPropertyDefinition(property: GetField) {
 	}
 }
 
-export async function retriveObjectCustomProperties(
+export async function retrieveObjectCustomProperties(
 	auth: PiecePropValueSchema<typeof pipedriveAuth>,
 	objectType: string,
 ) {
@@ -294,6 +343,131 @@ export async function retriveObjectCustomProperties(
 	return props;
 }
 
+export const searchFieldProp = (objectType: string) =>
+	Property.Dropdown({
+		displayName: 'Field to search by',
+		required: true,
+		refreshers: [],
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please connect your account.',
+				};
+			}
+			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
+
+			let endpoint = '';
+
+			switch (objectType) {
+				case 'person':
+					endpoint = '/personFields';
+					break;
+				case 'deal':
+				case 'lead':
+					endpoint = '/dealFields';
+					break;
+				case 'organization':
+					endpoint = '/organizationFields';
+					break;
+				case 'product':
+					endpoint = '/productFields';
+					break;
+			}
+
+			const response = await pipedrivePaginatedApiCall<GetField>({
+				accessToken: authValue.access_token,
+				apiDomain: authValue.data['api_domain'],
+				method: HttpMethod.GET,
+				resourceUri: endpoint,
+			});
+
+			const options: DropdownOption<string>[] = [];
+
+			for (const field of response) {
+				if (!isNil(field.id)) {
+					options.push({
+						label: field.name,
+						value: field.id,
+					});
+				}
+			}
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	});
+
+export const searchFieldValueProp = (objectType: string) =>
+	Property.DynamicProperties({
+		displayName: 'Field Value',
+		required: true,
+		refreshers: ['searchField'],
+		props: async ({ auth, searchField }) => {
+			if (!auth || !searchField) return {};
+
+			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
+			const props: DynamicPropsValue = {};
+
+			let endpoint = '';
+
+			switch (objectType) {
+				case 'person':
+					endpoint = '/personFields';
+					break;
+				case 'deal':
+				case 'lead':
+					endpoint = '/dealFields';
+					break;
+				case 'organization':
+					endpoint = '/organizationFields';
+					break;
+				case 'product':
+					endpoint = '/productFields';
+					break;
+			}
+
+			const response = await pipedriveApiCall<{ data: GetField }>({
+				accessToken: authValue.access_token,
+				apiDomain: authValue.data['api_domain'],
+				method: HttpMethod.GET,
+				resourceUri: `${endpoint}/${searchField}`,
+			});
+
+			const propertyDefinition =
+				response.data.field_type === 'set'
+					? Property.StaticDropdown({
+							displayName: response.data.name,
+							required: false,
+							options: {
+								disabled: false,
+								options: response.data.options
+									? response.data.options.map((option) => {
+											return {
+												label: option.label,
+												value: option.id.toString(),
+											};
+									  })
+									: [],
+							},
+					  })
+					: createPropertyDefinition(response.data);
+
+			if (propertyDefinition) {
+				props['field_value'] = propertyDefinition;
+			} else {
+				props['field_value'] = Property.ShortText({
+					displayName: response.data.name,
+					required: false,
+				});
+			}
+			return props;
+		},
+	});
+
 export const customFieldsProp = (objectType: string) =>
 	Property.DynamicProperties({
 		displayName: 'Custom Fields',
@@ -303,13 +477,13 @@ export const customFieldsProp = (objectType: string) =>
 			if (!auth) return {};
 
 			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-			return await retriveObjectCustomProperties(authValue, objectType);
+			return await retrieveObjectCustomProperties(authValue, objectType);
 		},
 	});
 
-export const ownerIdProp = (required = false) =>
+export const ownerIdProp = (displayName: string, required = false) =>
 	Property.Dropdown({
-		displayName: 'Owner',
+		displayName,
 		refreshers: [],
 		required,
 		options: async ({ auth }) => {
@@ -322,6 +496,29 @@ export const ownerIdProp = (required = false) =>
 			}
 			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
 			const options = await fetchOwnersOptions(authValue);
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	});
+
+export const filterIdProp = (type: string, required = false) =>
+	Property.Dropdown({
+		displayName: 'Filter',
+		refreshers: [],
+		required,
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please connect your account.',
+				};
+			}
+			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
+			const options = await fetchFiltersOptions(authValue, type);
 
 			return {
 				disabled: false,
@@ -491,7 +688,7 @@ export const labelIdsProp = (objectType: string, labelFieldName: string, require
 		},
 	});
 
-export const leadLableIdsProp = (required = false) =>
+export const leadlabeIdsProp = (required = false) =>
 	Property.MultiSelectDropdown({
 		displayName: 'Label',
 		required,
@@ -593,27 +790,51 @@ export const visibleToProp = Property.StaticDropdown({
 	},
 });
 
-export const leadIdProp = (required = false) =>Property.Dropdown({
-	displayName: 'Lead',
-	refreshers: [],
-	required,
-	options: async ({ auth }) => {
-		if (!auth) {
-			return {
-				disabled: true,
-				options: [],
-				placeholder: 'Please connect your account.',
-			};
-		}
-		const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
-		const options = await fetchLeadsOptions(authValue);
+export const leadIdProp = (required = false) =>
+	Property.Dropdown({
+		displayName: 'Lead',
+		refreshers: [],
+		required,
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please connect your account.',
+				};
+			}
+			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
+			const options = await fetchLeadsOptions(authValue);
 
-		return {
-			disabled: false,
-			options,
-		};
-	},
-})
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	});
+
+export const activityTypeIdProp = (required = false) =>
+	Property.Dropdown({
+		displayName: 'Activity Type',
+		refreshers: [],
+		required,
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please connect your account.',
+				};
+			}
+			const authValue = auth as PiecePropValueSchema<typeof pipedriveAuth>;
+			const options = await fetchActivityTypesOptions(authValue);
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	});
 
 export const dealCommonProps = {
 	creationTime: Property.DateTime({
@@ -647,7 +868,7 @@ export const dealCommonProps = {
 	}),
 	stageId: dealStageIdProp(false),
 	pipelineId: dealPipelineIdProp(false),
-	ownerId: ownerIdProp(false),
+	ownerId: ownerIdProp('Owner', false),
 	organizationId: organizationIdProp(false),
 	personId: personIdProp(false),
 	labelIds: labelIdsProp('deal', 'label', false),
@@ -655,7 +876,7 @@ export const dealCommonProps = {
 		displayName: 'Probability',
 		required: false,
 	}),
-	expectedCloseDate: Property.ShortText({
+	expectedCloseDate: Property.DateTime({
 		displayName: 'Expected Close Date',
 		required: false,
 		description: 'Please enter date in YYYY-MM-DD format.',
@@ -674,11 +895,11 @@ export const dealCommonProps = {
 };
 
 export const leadCommonProps = {
-	ownerId: ownerIdProp(false),
+	ownerId: ownerIdProp('Owner', false),
 	organizationId: organizationIdProp(false),
 	personId: personIdProp(false),
-	labelIds: leadLableIdsProp(false),
-	expectedCloseDate: Property.ShortText({
+	labelIds: leadlabeIdsProp(false),
+	expectedCloseDate: Property.DateTime({
 		displayName: 'Expected Close Date',
 		required: false,
 		description: 'Please enter date in YYYY-MM-DD format.',
@@ -734,7 +955,7 @@ export const leadCommonProps = {
 };
 
 export const organizationCommonProps = {
-	ownerId: ownerIdProp(false),
+	ownerId: ownerIdProp('Owner', false),
 	visibleTo: visibleToProp,
 	labelIds: labelIdsProp('organization', 'label_ids', false),
 	address: Property.LongText({
@@ -744,54 +965,106 @@ export const organizationCommonProps = {
 	customfields: customFieldsProp('organization'),
 };
 
-
 export const personCommonProps = {
-	ownerId:ownerIdProp(false),
-		organizationId: organizationIdProp(false),
-		email: Property.Array({
-			displayName: 'Email',
-			required: false,
-		}),
-		phone: Property.Array({
-			displayName: 'Phone',
-			required: false,
-		}),
-		labelIds: labelIdsProp('person','label_ids',false),
-		firstName: Property.ShortText({
-			displayName: 'First Name',
-			required: false,
-		}),
-		lastName: Property.ShortText({
-			displayName: 'Last Name',
-			required: false,
-		}),
-		visibleTo:visibleToProp,
-		marketing_status: Property.StaticDropdown<string>({
-			displayName: 'Marketing Status',
-			description: 'Marketing opt-in status',
-			required: false,
-			options: {
-				disabled: false,
-				options: [
-					{
-						label: 'No Consent',
-						value: 'no_consent',
-					},
-					{
-						label: 'Unsubscribed',
-						value: 'unsubscribed',
-					},
-					{
-						label: 'Subscribed',
-						value: 'subscribed',
-					},
-					{
-						label: 'Archived',
-						value: 'archived',
-					},
-				],
-			},
-		}),
-		customfields: customFieldsProp('person')
+	ownerId: ownerIdProp('Owner', false),
+	organizationId: organizationIdProp(false),
+	email: Property.Array({
+		displayName: 'Email',
+		required: false,
+	}),
+	phone: Property.Array({
+		displayName: 'Phone',
+		required: false,
+	}),
+	labelIds: labelIdsProp('person', 'label_ids', false),
+	firstName: Property.ShortText({
+		displayName: 'First Name',
+		required: false,
+	}),
+	lastName: Property.ShortText({
+		displayName: 'Last Name',
+		required: false,
+	}),
+	visibleTo: visibleToProp,
+	marketing_status: Property.StaticDropdown<string>({
+		displayName: 'Marketing Status',
+		description: 'Marketing opt-in status',
+		required: false,
+		options: {
+			disabled: false,
+			options: [
+				{
+					label: 'No Consent',
+					value: 'no_consent',
+				},
+				{
+					label: 'Unsubscribed',
+					value: 'unsubscribed',
+				},
+				{
+					label: 'Subscribed',
+					value: 'subscribed',
+				},
+				{
+					label: 'Archived',
+					value: 'archived',
+				},
+			],
+		},
+	}),
+	customfields: customFieldsProp('person'),
+};
 
-}
+export const activityCommonProps = {
+	organizationId: organizationIdProp(false),
+	personId: personIdProp(false),
+	dealId: dealIdProp(false),
+	leadId: leadIdProp(false),
+	assignTo: ownerIdProp('Assign To', false),
+	type: activityTypeIdProp(false),
+	dueDate: Property.DateTime({
+		displayName: 'Due Date',
+		required: false,
+		description: 'Please enter date in YYYY-MM-DD format.',
+	}),
+	dueTime: Property.ShortText({
+		displayName: 'Due Time',
+		required: false,
+		description: 'Please enter time in HH:MM format.',
+	}),
+	duration: Property.ShortText({
+		displayName: 'Duration',
+		required: false,
+		description: 'Please enter time in HH:MM format.',
+	}),
+	idDone: Property.Checkbox({
+		displayName: 'Mark as Done?',
+		required: false,
+		defaultValue: false,
+	}),
+	isBusy: Property.StaticDropdown({
+		displayName: 'Free or Busy',
+		required: false,
+		options: {
+			disabled: false,
+			options: [
+				{
+					label: 'Free',
+					value: 'free',
+				},
+				{
+					label: 'Busy',
+					value: 'busy',
+				},
+			],
+		},
+	}),
+	note: Property.LongText({
+		displayName: 'Note',
+		required: false,
+	}),
+	publicDescription: Property.LongText({
+		displayName: 'Public Description',
+		required: false,
+	}),
+};

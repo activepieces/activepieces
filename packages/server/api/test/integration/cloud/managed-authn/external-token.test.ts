@@ -4,7 +4,7 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
+import { stripeHelper } from '../../../../src/app/ee/platform-billing/stripe-helper'
 import { setupServer } from '../../../../src/app/server'
 import { generateMockExternalToken } from '../../../helpers/auth'
 import {
@@ -27,7 +27,7 @@ beforeAll(async () => {
 })
 
 beforeEach(async () => {
-    stripeHelper(mockLog).getOrCreateCustomer = jest
+    stripeHelper(mockLog).createCustomer = jest
         .fn()
         .mockResolvedValue(faker.string.alphanumeric())
 })

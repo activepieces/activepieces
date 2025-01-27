@@ -53,7 +53,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
     },
     async signInWithPassword(params: SignInWithPasswordParams): Promise<AuthenticationResponse> {
         const identity = await userIdentityService(log).verifyIdenityPassword(params)
-        const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatforIdForSignWithPassword(identity.id) : params.predefinedPlatformId
+        const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatformIdForIdentity(identity.id) : params.predefinedPlatformId
         if (isNil(platformId)) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHENTICATION,
@@ -126,7 +126,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         })
     },
     async switchPlatform(params: SwitchPlatformParams): Promise<AuthenticationResponse> {
-        const platforms = await platformService.listPlatformsForIdentity({ identityId: params.identityId })
+        const platforms = await platformService.listPlatformsForIdentityWithAtleastProject({ identityId: params.identityId })
         const platform = platforms.find((platform) => platform.id === params.platformId)
         await assertUserCanSwitchToPlatform(null, platform)
         
@@ -250,19 +250,10 @@ async function getPersonalPlatformIdForFederatedAuthn(email: string, log: Fastif
     return getPersonalPlatformIdForIdentity(identity.id)
 }
 
-async function getPersonalPlatforIdForSignWithPassword(identityId: string): Promise<string | null> {
-    const edition = system.getEdition()
-    if (edition === ApEdition.CLOUD) {
-        const platformId = await getPersonalPlatformIdForIdentity(identityId)
-        return platformId
-    }
-    return null
-}
-
 async function getPersonalPlatformIdForIdentity(identityId: string): Promise<string | null> {
     const edition = system.getEdition()
     if (edition === ApEdition.CLOUD) {
-        const platforms = await platformService.listPlatformsForIdentity({ identityId })
+        const platforms = await platformService.listPlatformsForIdentityWithAtleastProject({ identityId })
         const platform = platforms.find((platform) => !platformUtils.isEnterpriseCustomerOnCloud(platform))
         return platform?.id ?? null
     }

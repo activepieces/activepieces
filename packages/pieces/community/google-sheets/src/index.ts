@@ -18,6 +18,7 @@ import { newOrUpdatedRowTrigger } from './lib/triggers/new-or-updated-row.trigge
 import { insertMultipleRowsAction } from './lib/actions/insert-multiple-rows.action';
 import { createWorksheetAction } from './lib/actions/create-worksheet';
 import { createSpreadsheetAction } from './lib/actions/create-spreadsheet';
+import { findSpreadsheets } from './lib/actions/find-spreadsheets';
 
 export const googleSheetsAuth = PieceAuth.OAuth2({
   description: '',
@@ -58,6 +59,7 @@ export const googleSheets = createPiece({
     clearSheetAction,
     findRowByNumAction,
     getRowsAction,
+    findSpreadsheets,
     createCustomApiCallAction({
       auth: googleSheetsAuth,
       baseUrl: () => {
