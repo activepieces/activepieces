@@ -2,15 +2,15 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { kallabotAuth } from '../..';
 
-export const getCallDetails = createAction({
-    name: 'get_call_details',
+export const getCallDetailsAction = createAction({
+    name: 'get-call-details',
     displayName: 'Get Call Details',
-    description: 'Retrieve details of a specific call by call SID',
+    description: 'Retrieve details of a specific call by call SID.',
     auth: kallabotAuth,
     props: {
         call_sid: Property.ShortText({
             displayName: 'Call SID',
-            description: 'The unique identifier of the call',
+            description: 'The unique identifier of the call.',
             required: true,
         })
     },

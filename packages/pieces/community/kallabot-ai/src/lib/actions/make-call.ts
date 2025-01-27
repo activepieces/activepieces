@@ -2,15 +2,15 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { kallabotAuth } from '../..';
 
-export const makeCall = createAction({
-  name: 'make_call',
+export const makeCallAction = createAction({
+  name: 'make-call',
   displayName: 'Make Call',
-  description: 'Initiate an outbound call using an AI voice agent',
+  description: 'Initiate an outbound call using an AI voice agent.',
   auth: kallabotAuth,
   props: {
     agent_id: Property.Dropdown({
       displayName: 'Agent',
-      description: 'Select the agent to make the call',
+      description: 'Select the agent to make the call.',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
@@ -53,12 +53,12 @@ export const makeCall = createAction({
     }),
     recipient_phone_number: Property.ShortText({
       displayName: 'Recipient Phone Number',
-      description: 'The phone number to call in E.164 format (e.g., +1234567890)',
+      description: 'The phone number to call in E.164 format (e.g., +1234567890).',
       required: true,
     }),
     sender_phone_number: Property.Dropdown({
       displayName: 'Sender Phone Number',
-      description: 'Select the phone number to send the call from',
+      description: 'Select the phone number to send the call from.',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
@@ -98,7 +98,7 @@ export const makeCall = createAction({
     }),
     record: Property.Checkbox({
       displayName: 'Record Call',
-      description: 'Whether to record the call for quality and training purposes',
+      description: 'Whether to record the call for quality and training purposes.',
       required: true,
       defaultValue: false,
     }),
