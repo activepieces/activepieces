@@ -29,6 +29,10 @@ It is strongly recommended that you add your credit card information to your Ope
 1. Visit the following website: https://replicate.com/account/api-tokens.
 2. Once on the website, locate and click on the option to obtain your Replicate API Key.
 `,
+  deepseek: `Follow these instructions to get your Deepseek API Key:
+  1. Visit the following website: https://platform.deepseek.com/api_keys.
+  2. Once on the website, locate and click on the option to obtain your Deepseek API Key.
+  `,
 };
 
 export const AI_PROVIDERS = [
