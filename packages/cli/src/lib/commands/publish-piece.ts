@@ -29,7 +29,7 @@ export const publishPieceCommand = new Command('publish')
             {
                 type: 'input',
                 name: 'name',
-                message: 'Enter the piece name',
+                message: 'Enter the piece folder name',
                 placeholder: 'google-drive',
             },
             {
