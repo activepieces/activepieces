@@ -8,7 +8,6 @@ export const searchRecordsAction = createAction({
 	displayName: 'Search Records',
 	description: 'Returns a list of records matching the where condition.',
 	props: {
-		version: nocodbCommon.version,
 		workspaceId: nocodbCommon.workspaceId,
 		baseId: nocodbCommon.baseId,
 		tableId: nocodbCommon.tableId,
@@ -31,7 +30,7 @@ export const searchRecordsAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { tableId, columnId, limit, whereCondition, sort, version } = context.propsValue;
+		const { tableId, columnId, limit, whereCondition, sort } = context.propsValue;
 
 		const client = makeClient(context.auth);
 		const response = await client.listRecords(tableId, {
@@ -40,7 +39,7 @@ export const searchRecordsAction = createAction({
 			sort,
 			offset: 0,
 			limit,
-		}, Number(version));
+		}, context.auth.version || 3);
 		return response.list;
 	},
 });

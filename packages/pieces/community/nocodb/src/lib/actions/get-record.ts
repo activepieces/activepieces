@@ -8,7 +8,6 @@ export const getRecordAction = createAction({
 	displayName: 'Get a Record',
 	description: 'Gets a record by the Record ID.',
 	props: {
-		version: nocodbCommon.version,
 		workspaceId: nocodbCommon.workspaceId,
 		baseId: nocodbCommon.baseId,
 		tableId: nocodbCommon.tableId,
@@ -18,9 +17,9 @@ export const getRecordAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { tableId, recordId, version } = context.propsValue;
+		const { tableId, recordId } = context.propsValue;
 
 		const client = makeClient(context.auth);
-		return await client.getRecord(tableId, recordId, Number(version));
+		return await client.getRecord(tableId, recordId, context.auth.version || 3);
 	},
 });
