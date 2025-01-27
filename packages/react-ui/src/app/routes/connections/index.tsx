@@ -33,6 +33,7 @@ import { RenameConnectionDialog } from '@/features/connections/components/rename
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { appConnectionUtils } from '@/features/connections/lib/app-connections-utils';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
@@ -43,6 +44,7 @@ import {
   Permission,
   PlatformRole,
 } from '@activepieces/shared';
+import { appConnectionsHooks } from '@/features/connections/lib/app-connections-hooks';
 
 function AppConnectionsPage() {
   const [refresh, setRefresh] = useState(0);
@@ -54,23 +56,23 @@ function AppConnectionsPage() {
   const { checkAccess } = useAuthorization();
   const userPlatformRole = authenticationSession.getUserPlatformRole();
   const location = useLocation();
-
+  const { pieces } = piecesHooks.usePieces({});
+  const pieceOptions = (pieces ?? []).map((piece) => ({
+    label: piece.displayName,
+    value: piece.name,
+  }));
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['appConnections', location.search],
-    staleTime: 0,
-    gcTime: 0,
     queryFn: () => {
       const searchParams = new URLSearchParams(location.search);
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
       const limit = searchParams.get(LIMIT_QUERY_PARAM)
         ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
         : 10;
-      const status = searchParams.get('status')
-        ? [searchParams.get('status') as AppConnectionStatus]
-        : [];
-      const pieceName = searchParams.get('pieceName') || undefined;
-      const displayName = searchParams.get('displayName') || undefined;
-
+      const status =
+        (searchParams.getAll('status') as AppConnectionStatus[]) ?? [];
+      const pieceName = searchParams.get('pieceName') ?? undefined;
+      const displayName = searchParams.get('displayName') ?? undefined;
       return appConnectionsApi.list({
         projectId: authenticationSession.getProjectId()!,
         cursor: cursor ?? undefined,
@@ -78,7 +80,6 @@ function AppConnectionsPage() {
         status,
         pieceName,
         displayName,
-        scope: undefined,
       });
     },
   });
@@ -118,73 +119,46 @@ function AppConnectionsPage() {
     },
   });
 
-  const uniquePieceNames = useMemo(() => {
-    if (!data?.data) return [];
-    const names = new Set(data.data.map((conn) => conn.pieceName));
-    return Array.from(names).map((name) => ({
-      label: name.replace('@activepieces/piece-', ''),
-      value: name,
-    }));
-  }, [data?.data]);
-
-  const uniqueOwners = useMemo(() => {
-    if (!data?.data) return [];
-    const owners = new Map();
-    data.data
-      .filter((conn) => conn.owner)
-      .forEach((conn) => {
-        const owner = conn.owner!;
-        owners.set(owner.email, {
-          firstName: owner.firstName,
-          lastName: owner.lastName,
-          email: owner.email,
-        });
-      });
-
-    return Array.from(owners.values()).map((owner) => ({
-      label: `${owner.firstName} ${owner.lastName} (${owner.email})`,
-      value: owner.email,
-    }));
-  }, [data?.data]);
-
-  const filters = useMemo(
-    () => [
-      {
-        type: 'select',
-        title: t('Status'),
-        accessorKey: 'status',
-        options: Object.values(AppConnectionStatus).map((status) => {
-          return {
-            label: formatUtils.convertEnumToHumanReadable(status),
-            value: status,
-          };
-        }),
-        icon: CheckIcon,
-      } as const,
-      {
-        type: 'select',
-        title: t('App'),
-        accessorKey: 'pieceName',
-        icon: AppWindow,
-        options: uniquePieceNames,
-      } as const,
-      {
-        type: 'input',
-        title: t('Display Name'),
-        accessorKey: 'displayName',
-        icon: Tag,
-        options: [],
-      } as const,
-      {
-        type: 'select',
-        title: t('Owner'),
-        accessorKey: 'owner',
-        icon: User,
-        options: uniqueOwners,
-      } as const,
-    ],
-    [uniquePieceNames, uniqueOwners],
-  );
+  const {data:owners} = appConnectionsHooks.useConnectionsOwners();
+  const ownersOptions = owners?.map((owner) => ({
+    label: `${owner.firstName} ${owner.lastName} (${owner.email})`,
+    value: owner.email,
+  }));
+  const filters = [
+    {
+      type: 'select',
+      title: t('Status'),
+      accessorKey: 'status',
+      options: Object.values(AppConnectionStatus).map((status) => {
+        return {
+          label: formatUtils.convertEnumToHumanReadable(status),
+          value: status,
+        };
+      }),
+      icon: CheckIcon,
+    } as const,
+    {
+      type: 'select',
+      title: t('Pieces'),
+      accessorKey: 'pieceName',
+      icon: AppWindow,
+      options: pieceOptions,
+    } as const,
+    {
+      type: 'input',
+      title: t('Display Name'),
+      accessorKey: 'displayName',
+      icon: Tag,
+      options: [],
+    } as const,
+    {
+      type: 'select',
+      title: t('Owner'),
+      accessorKey: 'owner',
+      icon: User,
+      options: ownersOptions??[],
+    } as const,
+  ];
 
   const columns: ColumnDef<
     RowDataWithActions<AppConnectionWithoutSensitiveData>,

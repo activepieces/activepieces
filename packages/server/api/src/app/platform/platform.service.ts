@@ -3,7 +3,6 @@ import {
     apId,
     ErrorCode,
     FilteredPieceBehavior,
-
     isNil,
     LocalesEnum,
     Platform,
@@ -15,7 +14,7 @@ import {
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { defaultTheme } from '../flags/theme'
-import { userRepo, userService } from '../user/user-service'
+import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
 
 const repo = repoFactory<Platform>(PlatformEntity)
@@ -26,9 +25,7 @@ export const platformService = {
         return count > 0
     },
     async listPlatformsForIdentity(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
-        const users = await userRepo().findBy({
-            identityId: params.identityId,
-        })
+        const users = await userService.getByIdentityId({ identityId: params.identityId })
         const platformIds = users.map((user) => user.platformId).filter((platformId) => platformId !== null)
         return repo().find({
             where: {
@@ -170,7 +167,6 @@ export const platformService = {
         
         return platform
     },
-
     async getOne(id: PlatformId): Promise<Platform | null> {
         return repo().findOneBy({
             id,

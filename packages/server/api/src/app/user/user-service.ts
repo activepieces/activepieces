@@ -15,7 +15,7 @@ import dayjs from 'dayjs'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { system } from '../helper/system/system'
-import { UserEntity } from './user-entity'
+import { UserEntity, UserSchema } from './user-entity'
 
 
 export const userRepo = repoFactory(UserEntity)
@@ -68,20 +68,27 @@ export const userService = {
     async getOneByIdentityIdOnly({ identityId }: GetOneByIdentityIdOnlyParams): Promise<User | null> {
         return userRepo().findOneBy({ identityId })
     },
+    async getByIdentityId({ identityId }: GetByIdentityId): Promise<UserSchema[]> {
+        return userRepo().find({ where: { identityId } })
+    },
     async getOneByIdentityAndPlatform({ identityId, platformId }: GetOneByIdentityIdParams): Promise<User | null> {
         return userRepo().findOneBy({ identityId, platformId })
     },
     async get({ id }: IdParams): Promise<User | null> {
         return userRepo().findOneBy({ id })
     },
-    async getOneOrFail({ id }: IdParams): Promise<User> {
-        return userRepo().findOneByOrFail({ id })
+    async getOneOrFail({ id }: IdParams): Promise<UserSchema> {
+        return userRepo().findOneOrFail({ where: { id }, relations: { identity: true } })
     },
     async delete({ id, platformId }: DeleteParams): Promise<void> {
         await userRepo().delete({
             id,
             platformId,
         })
+    },
+
+    async getByPlatformRole(id: PlatformId, role: PlatformRole): Promise<UserSchema[]> {
+        return userRepo().find({ where: { platformId: id, platformRole: role }, relations: { identity: true } })
     },
 
     async getByPlatformAndExternalId({
@@ -135,6 +142,11 @@ type ListParams = {
 type GetOneByIdentityIdOnlyParams = {
     identityId: string
 }
+
+type GetByIdentityId = {
+    identityId: string
+}
+
 
 type GetOneByIdentityIdParams = {
     identityId: string

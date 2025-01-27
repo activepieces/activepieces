@@ -5,6 +5,7 @@ import {
     apId,
     AppConnection,
     AppConnectionId,
+    AppConnectionOwners,
     AppConnectionScope,
     AppConnectionStatus,
     AppConnectionType,
@@ -16,6 +17,8 @@ import {
     ErrorCode,
     isNil,
     OAuth2GrantType,
+    PlatformId,
+    PlatformRole,
     ProjectId,
     SeekPage,
     spreadIfDefined,
@@ -45,6 +48,7 @@ import {
 } from '../app-connection.entity'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
+import { projectMemberService } from '../../ee/project-members/project-member.service'
 
 const repo = repoFactory(AppConnectionEntity)
 
@@ -307,6 +311,20 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             projectIds: APArrayContains('projectIds', [projectId]),
         })
     },
+    async getOwners({projectId, platformId}:{projectId:ProjectId, platformId:PlatformId}): Promise<AppConnectionOwners[]>{
+        const platformAdmins = (await userService.getByPlatformRole(platformId, PlatformRole.ADMIN)).map(user=>({
+            firstName: user.identity.firstName, 
+            lastName: user.identity.lastName,
+            email: user.identity.email,
+        }))
+        const projectMembers = await projectMemberService(log).list(projectId,null,1000,undefined);
+        const projectMembersDetails = projectMembers.data.map(pm=>({
+            firstName: pm.user.firstName,
+            lastName: pm.user.lastName,
+            email: pm.user.email,
+        }))
+        return [...platformAdmins, ...projectMembersDetails]
+    }
 })
 
 async function assertProjectIds(projectIds: ProjectId[], platformId: string): Promise<void> {
