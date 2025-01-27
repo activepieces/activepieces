@@ -80,7 +80,6 @@ import { RemoveWorkerTypeSqlite1734439194575 } from './migration/sqlite/17344391
 import { AddCopilotSettingsSqlite1734479435668 } from './migration/sqlite/1734479435668-AddCopilotSettingsSqlite'
 import { AddExternalIdForFlowSqlite1735262810939 } from './migration/sqlite/1735262810939-AddExternalIdForFlowSqlite'
 import { AddUserIdentitySqlite1735602676499 } from './migration/sqlite/1735602676499-AddUserIdentitySqlite'
-import { AddReadRunPermissionToViewerRoleSqlLite1737564201073 } from './migration/sqlite/1737564201073-AddReadRunPermissionToViewerRoleSqlLite'
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
     mkdirSync(apConfigDirectoryPath, { recursive: true })
@@ -177,7 +176,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddCopilotSettingsSqlite1734479435668,
         AddExternalIdForFlowSqlite1735262810939,
         AddUserIdentitySqlite1735602676499,
-        AddReadRunPermissionToViewerRoleSqlLite1737564201073,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
