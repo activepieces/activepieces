@@ -175,7 +175,6 @@ import { AddEnvironmentsEnabled1735267452262 } from './migration/postgres/173526
 import { AddUserIdentity1735590074879 } from './migration/postgres/1735590074879-AddUserIdentity'
 import { RemoveUnusedProjectBillingFields1736607721367 } from './migration/postgres/1736607721367-RemoveUnusedProjectBillingFields'
 import { RenameGitRepoPermission1736813103505 } from './migration/postgres/1736813103505-RenameGitRepoPermission'
-import { AddReadRunPermissionToViewerRole1737562809869 } from './migration/postgres/1737562809869-AddReadRunPermissionToViewerRole'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -293,7 +292,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddEnvironmentsEnabled1735267452262,
         AddUserIdentity1735590074879,
         RenameGitRepoPermission1736813103505,
-        AddReadRunPermissionToViewerRole1737562809869,
     ]
 
     const edition = system.getEdition()
