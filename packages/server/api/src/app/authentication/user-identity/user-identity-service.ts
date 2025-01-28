@@ -43,7 +43,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
         const identity = await userIdentityRepository().save(newUserIdentity)
         return identity
     },
-    async verifyIdenityPassword(params: VerifyIdenityPasswordParams): Promise<UserIdentity> {
+    async verifyIdentityPassword(params: VerifyIdentityPasswordParams): Promise<UserIdentity> {
         const userIdentity = await getIdentityByEmail(params.email)
         if (isNil(userIdentity)) {
             throw new ActivepiecesError({
@@ -126,7 +126,7 @@ type UpdatePasswordParams = {
     newPassword: string
 }
 
-type VerifyIdenityPasswordParams = {
+type VerifyIdentityPasswordParams = {
     email: string
     password: string
 }

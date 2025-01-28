@@ -53,7 +53,8 @@ export const projectService = {
     },
 
     async update(projectId: ProjectId, request: UpdateParams): Promise<Project> {
-        await assertExternalIdIsUnique(request.externalId, projectId)
+        const externalId = request.externalId?.trim() !== '' ? request.externalId : undefined
+        await assertExternalIdIsUnique(externalId, projectId)
 
         await projectRepo().update(
             {
@@ -61,7 +62,7 @@ export const projectService = {
                 deleted: IsNull(),
             },
             {
-                ...spreadIfDefined('externalId', request.externalId),
+                ...spreadIfDefined('externalId', externalId),
                 ...spreadIfDefined('displayName', request.displayName),
                 ...spreadIfDefined('notifyStatus', request.notifyStatus),
                 ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
@@ -174,7 +175,7 @@ async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptions
 
     return [...adminFilter, memberFilter]
 }
-async function assertExternalIdIsUnique(externalId: string | undefined, projectId: ProjectId): Promise<void> {
+async function assertExternalIdIsUnique(externalId: string | undefined | null, projectId: ProjectId): Promise<void> {
     if (!isNil(externalId)) {
         const externalIdAlreadyExists = await projectRepo().existsBy({
             id: Not(projectId),
