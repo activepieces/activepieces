@@ -169,6 +169,7 @@ async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptions
         deleted: IsNull(),
         platformId: params.platformId,
         id: In(projectIds),
+        ...spreadIfDefined('displayName', params.displayName),
     }
 
     return [...adminFilter, memberFilter]
@@ -195,6 +196,7 @@ async function assertExternalIdIsUnique(externalId: string | undefined, projectI
 type GetAllForUserParams = {
     platformId: string
     userId: string
+    displayName?: string
 }
 
 type GetOneByOwnerAndPlatformParams = {

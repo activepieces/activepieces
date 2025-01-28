@@ -52,6 +52,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         const projects = await projectService.getAllForUser({
             platformId: user.platformId,
             userId: params.userId,
+            displayName: params.displayName,
         })
         return getProjects({
             ...params,
