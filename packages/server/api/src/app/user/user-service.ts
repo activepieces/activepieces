@@ -77,8 +77,8 @@ export const userService = {
     async get({ id }: IdParams): Promise<User | null> {
         return userRepo().findOneBy({ id })
     },
-    async getOneOrFail({ id }: IdParams): Promise<UserSchema> {
-        return userRepo().findOneOrFail({ where: { id }, relations: { identity: true } })
+    async getOneOrFail({ id }: IdParams): Promise<User> {
+        return userRepo().findOneOrFail({ where: { id } })
     },
     async delete({ id, platformId }: DeleteParams): Promise<void> {
         await userRepo().delete({
