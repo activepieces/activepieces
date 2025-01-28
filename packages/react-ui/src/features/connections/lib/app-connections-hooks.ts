@@ -41,7 +41,9 @@ export const appConnectionsHooks = {
     return useQuery<AppConnectionOwners[]>({
       queryKey: ['app-connections-owners', projectId],
       queryFn: async () => {
-        const { data: owners } = await appConnectionsApi.getOwners();
+        const { data: owners } = await appConnectionsApi.getOwners({
+          projectId,
+        });
         return [...owners];
       },
     });

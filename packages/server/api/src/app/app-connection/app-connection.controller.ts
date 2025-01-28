@@ -4,6 +4,7 @@ import {
     AppConnectionOwners,
     AppConnectionScope,
     AppConnectionWithoutSensitiveData,
+    ListAppConnectionOwnersRequestQuery,
     ListAppConnectionsRequestQuery,
     Permission,
     PrincipalType,
@@ -172,6 +173,7 @@ const ListAppConnectionOwnersRequest = {
         permission: Permission.READ_APP_CONNECTION,
     },
     schema: {
+        querystring: ListAppConnectionOwnersRequestQuery,
         tags: ['app-connections'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'List app connection owners',

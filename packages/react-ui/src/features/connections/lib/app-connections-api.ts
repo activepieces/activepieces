@@ -2,6 +2,7 @@ import { api } from '@/lib/api';
 import {
   AppConnectionOwners,
   AppConnectionWithoutSensitiveData,
+  ListAppConnectionOwnersRequestQuery,
   ListAppConnectionsRequestQuery,
   SeekPage,
   UpdateConnectionValueRequestBody,
@@ -37,7 +38,12 @@ export const appConnectionsApi = {
       request,
     );
   },
-  getOwners(): Promise<SeekPage<AppConnectionOwners>> {
-    return api.get<SeekPage<AppConnectionOwners>>('/v1/app-connections/owners');
+  getOwners(
+    request: ListAppConnectionOwnersRequestQuery,
+  ): Promise<SeekPage<AppConnectionOwners>> {
+    return api.get<SeekPage<AppConnectionOwners>>(
+      '/v1/app-connections/owners',
+      request,
+    );
   },
 };
