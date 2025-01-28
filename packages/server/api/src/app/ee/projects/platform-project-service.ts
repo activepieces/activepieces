@@ -23,7 +23,7 @@ import {
     UserStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, Equal, In, IsNull } from 'typeorm'
+import { EntityManager, Equal, ILike, In, IsNull } from 'typeorm'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -138,7 +138,7 @@ async function getProjects(params: GetAllParams & { projectIds?: string[] }, log
         platformId: Equal(platformId),
         deleted: IsNull(),
         ...spreadIfDefined('externalId', externalId),
-        ...spreadIfDefined('displayName', displayName),
+        ...spreadIfDefined('displayName', ILike(`%${displayName}%`)),
         ...(projectIds ? { id: In(projectIds) } : {}),
     }
 
