@@ -96,7 +96,7 @@ export async function piecesBuilder(app: FastifyInstance, io: Server, packages: 
         })
         watcher.on('ready', debouncedHandleFileChange)
         watcher.on('all', (event, path) => {
-            if (path.endsWith('.ts')) {
+            if (path.endsWith('.ts') || path.endsWith('package.json')) {
                 debouncedHandleFileChange()
             }
         })
