@@ -12,7 +12,7 @@ import {
     spreadIfDefined,
     UserId,
 } from '@activepieces/shared'
-import { FindOptionsWhere, In, IsNull, Not } from 'typeorm'
+import { FindOptionsWhere, ILike, In, IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { projectMemberService } from '../ee/project-members/project-member.service'
 import { system } from '../helper/system/system'
@@ -164,11 +164,12 @@ async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptions
             platformId: params.platformId,
         }]
         : []
-
+    const displayNameFilter = params.displayName ? { displayName: ILike(`%${params.displayName}%`) } : {}
     const memberFilter = {
         deleted: IsNull(),
         platformId: params.platformId,
         id: In(projectIds),
+        ...displayNameFilter,
     }
 
     return [...adminFilter, memberFilter]
@@ -195,6 +196,7 @@ async function assertExternalIdIsUnique(externalId: string | undefined, projectI
 type GetAllForUserParams = {
     platformId: string
     userId: string
+    displayName?: string
 }
 
 type GetOneByOwnerAndPlatformParams = {

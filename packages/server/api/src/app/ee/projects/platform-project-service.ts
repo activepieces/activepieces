@@ -23,7 +23,7 @@ import {
     UserStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, Equal, In, IsNull } from 'typeorm'
+import { EntityManager, Equal, ILike, In, IsNull } from 'typeorm'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -52,6 +52,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         const projects = await projectService.getAllForUser({
             platformId: user.platformId,
             userId: params.userId,
+            displayName: params.displayName,
         })
         return getProjects({
             ...params,
@@ -133,11 +134,12 @@ async function getProjects(params: GetAllParams & { projectIds?: string[] }, log
             beforeCursor: decodedCursor.previousCursor,
         },
     })
+    const displayNameFilter = displayName ? ILike(`%${displayName}%`) : undefined
     const filters = {
         platformId: Equal(platformId),
         deleted: IsNull(),
         ...spreadIfDefined('externalId', externalId),
-        ...spreadIfDefined('displayName', displayName),
+        ...spreadIfDefined('displayName', displayNameFilter),
         ...(projectIds ? { id: In(projectIds) } : {}),
     }
 
