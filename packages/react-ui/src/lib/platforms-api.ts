@@ -13,9 +13,7 @@ export const platformApi = {
     if (!platformId) {
       throw Error('No platform id found');
     }
-    return api.get<PlatformWithoutSensitiveData>(
-      `/v1/platforms/${platformId}`,
-    );
+    return api.get<PlatformWithoutSensitiveData>(`/v1/platforms/${platformId}`);
   },
 
   listPlatforms() {

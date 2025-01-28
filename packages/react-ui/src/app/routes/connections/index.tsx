@@ -31,6 +31,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { UserFullName } from '@/components/ui/user-fullname';
 import { RenameConnectionDialog } from '@/features/connections/components/rename-connection-dialog';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
+import { appConnectionsHooks } from '@/features/connections/lib/app-connections-hooks';
 import { appConnectionUtils } from '@/features/connections/lib/app-connections-utils';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
@@ -44,7 +45,6 @@ import {
   Permission,
   PlatformRole,
 } from '@activepieces/shared';
-import { appConnectionsHooks } from '@/features/connections/lib/app-connections-hooks';
 
 function AppConnectionsPage() {
   const [refresh, setRefresh] = useState(0);
@@ -119,7 +119,7 @@ function AppConnectionsPage() {
     },
   });
 
-  const {data:owners} = appConnectionsHooks.useConnectionsOwners();
+  const { data: owners } = appConnectionsHooks.useConnectionsOwners();
   const ownersOptions = owners?.map((owner) => ({
     label: `${owner.firstName} ${owner.lastName} (${owner.email})`,
     value: owner.email,
@@ -156,7 +156,7 @@ function AppConnectionsPage() {
       title: t('Owner'),
       accessorKey: 'owner',
       icon: User,
-      options: ownersOptions??[],
+      options: ownersOptions ?? [],
     } as const,
   ];
 

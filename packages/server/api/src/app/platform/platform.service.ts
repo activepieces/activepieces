@@ -15,9 +15,9 @@ import {
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { defaultTheme } from '../flags/theme'
+import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
-import { projectService } from '../project/project-service'
 
 const repo = repoFactory<Platform>(PlatformEntity)
 

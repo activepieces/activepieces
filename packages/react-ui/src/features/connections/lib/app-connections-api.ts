@@ -39,5 +39,5 @@ export const appConnectionsApi = {
   },
   getOwners(): Promise<SeekPage<AppConnectionOwners>> {
     return api.get<SeekPage<AppConnectionOwners>>('/v1/app-connections/owners');
-  }
+  },
 };
