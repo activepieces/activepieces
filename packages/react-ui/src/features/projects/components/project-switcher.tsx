@@ -60,17 +60,18 @@ function ProjectSwitcher() {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
-          variant="outline"
+          variant="ghost"
           role="combobox"
+          size={'sm'}
           aria-expanded={open}
           aria-label="Select a project"
-          className="w-[200px] justify-between"
+          className="gap-2 max-w-[200px] justify-between"
         >
           <span className="truncate">{currentProject?.displayName}</span>
           <CaretSortIcon className="ml-auto size-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
+      <PopoverContent className="max-w-[200px] p-0">
         <Command filter={filterProjects}>
           <CommandList>
             <CommandInput placeholder="Search project..." />
@@ -90,12 +91,12 @@ function ProjectSwitcher() {
                         setOpen(false);
                       }}
                       value={project.id}
-                      className="text-sm"
+                      className="text-sm break-all"
                     >
                       {project.displayName}
                       <CheckIcon
                         className={cn(
-                          'ml-auto h-4 w-4',
+                          'ml-auto h-4 w-4 shrink-0',
                           currentProject?.id === project.id
                             ? 'opacity-100'
                             : 'opacity-0',

@@ -8,6 +8,7 @@ import {
 } from '../common';
 import { GetField, OrganizationCreateResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
+import dayjs from 'dayjs';
 
 export const createLeadAction = createAction({
 	auth: pipedriveAuth,
@@ -49,12 +50,17 @@ export const createLeadAction = createAction({
 			organization_id: organizationId,
 			person_id: personId,
 			channel: channel,
-			expected_close_date: expectedCloseDate,
 			visible_to: visibleTo,
 		};
 
 		if (labelIds.length > 0) {
 			leadDefaultFields.label_ids = labelIds;
+		}
+
+		if(expectedCloseDate)
+		{
+			leadDefaultFields.expected_close_date= dayjs(expectedCloseDate).format('YYYY-MM-DD')
+
 		}
 
 		if (leadValue) {

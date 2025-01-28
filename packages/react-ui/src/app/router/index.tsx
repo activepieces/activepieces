@@ -25,7 +25,7 @@ import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
-import { ApFlagId, Permission } from '@activepieces/shared';
+import { Permission } from '@activepieces/shared';
 import {
   ActivepiecesClientEventName,
   ActivepiecesVendorEventName,
@@ -45,7 +45,6 @@ import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
 import IssuesPage from '../routes/issues';
-import PlansPage from '../routes/plans';
 import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
@@ -71,7 +70,6 @@ import { ShareTemplatePage } from '../routes/templates/share-template';
 
 import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 import { DefaultRoute } from './default-route';
-import { FlagRouteGuard } from './flag-route-guard';
 import { RoutePermissionGuard } from './permission-guard';
 import {
   ProjectRouterWrapper,
@@ -224,18 +222,6 @@ const routes = [
           <ProjectReleasesPage />
         </PageTitle>
       </DashboardContainer>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: '/plans',
-    element: (
-      <FlagRouteGuard flag={ApFlagId.SHOW_BILLING}>
-        <DashboardContainer>
-          <PageTitle title="Plans">
-            <PlansPage />
-          </PageTitle>
-        </DashboardContainer>
-      </FlagRouteGuard>
     ),
   }),
   ...ProjectRouterWrapper({

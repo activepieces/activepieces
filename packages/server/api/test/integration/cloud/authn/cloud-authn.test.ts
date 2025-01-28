@@ -507,6 +507,7 @@ describe('Authentication API', () => {
                 user: {
                     status: UserStatus.ACTIVE,
                     platformId: mockPlatformId,
+                    platformRole: PlatformRole.ADMIN,
                 },
                 userIdentity: {
                     email: mockEmail,
@@ -537,9 +538,10 @@ describe('Authentication API', () => {
                 body: mockSignInRequest,
             })
 
+            const responseBody = response?.json()
+
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            const responseBody = response?.json()
             expect(responseBody?.platformId).toBe(mockPlatformId)
 
             const decodedToken = decodeToken(responseBody?.token)
@@ -650,6 +652,7 @@ describe('Authentication API', () => {
             const { mockUser, mockUserIdentity } = await mockBasicUser({
                 user: {
                     status: UserStatus.INACTIVE,
+                    platformRole: PlatformRole.ADMIN,
                 },
                 userIdentity: {
                     email: mockEmail,

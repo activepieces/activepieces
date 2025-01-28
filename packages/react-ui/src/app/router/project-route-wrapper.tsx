@@ -1,7 +1,6 @@
 import React from 'react';
 import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { useEmbedding } from '@/components/embed-provider';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { determineDefaultRoute } from '@/lib/utils';
@@ -48,16 +47,12 @@ type RedirectToCurrentProjectRouteProps = {
 };
 const RedirectToCurrentProjectRoute: React.FC<
   RedirectToCurrentProjectRouteProps
-> = ({ path, children }) => {
+> = ({ path }) => {
   const currentProjectId = authenticationSession.getProjectId();
   const params = useParams();
   const [searchParams] = useSearchParams();
-  const { embedState } = useEmbedding();
   if (isNil(currentProjectId)) {
     return <Navigate to="/sign-in" replace />;
-  }
-  if (embedState.isEmbedded) {
-    return children;
   }
 
   const pathWithParams = `${path.startsWith('/') ? path : `/${path}`}`.replace(

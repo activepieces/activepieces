@@ -1,5 +1,8 @@
 import { api } from '@/lib/api';
-import { PlatformBillingResponse } from '@activepieces/ee-shared';
+import {
+  PlatformBilling,
+  PlatformBillingResponse,
+} from '@activepieces/ee-shared';
 
 export const platformBillingApi = {
   getSubscription() {
@@ -11,10 +14,9 @@ export const platformBillingApi = {
   upgrade() {
     return api.post<{ paymentLink: string }>('/v1/platform-billing/upgrade');
   },
-  update(tasksLimit: number | undefined, aiCreditsLimit: number | undefined) {
-    return api.patch<{ paymentLink: string }>('/v1/platform-billing', {
+  update(tasksLimit: number | null | undefined) {
+    return api.patch<PlatformBilling>('/v1/platform-billing', {
       tasksLimit,
-      aiCreditsLimit,
     });
   },
 };

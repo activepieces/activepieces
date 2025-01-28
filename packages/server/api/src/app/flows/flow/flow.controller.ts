@@ -5,8 +5,11 @@ import {
     ApId,
     CountFlowsRequest,
     CreateFlowRequest,
+    deepMergeAndCast,
     ErrorCode,
     FlowOperationRequest,
+    FlowOperationType,
+    flowStructureUtil,
     FlowTemplateWithoutProjectInformation,
     GetFlowQueryParamsRequest,
     GetFlowTemplateRequestQuery,
@@ -17,6 +20,8 @@ import {
     PrincipalType,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
+    Step,
+    Trigger,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
@@ -73,7 +78,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
             platformId: request.principal.platform.id,
             projectId: request.principal.projectId,
-            operation: request.body,
+            operation: cleanOperation(request.body),
         })
         return updatedFlow
     })
@@ -136,6 +141,29 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
+}
+
+function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
+    if (operation.type === FlowOperationType.IMPORT_FLOW) {
+        const trigger = flowStructureUtil.transferStep(operation.request.trigger, (step) => {
+            return deepMergeAndCast<Step>(step, {
+                settings: {
+                    ...step.settings,
+                    inputUiInfo: {
+                        currentSelectedData: undefined,
+                        sampleDataFileId: undefined,
+                        lastTestDate: undefined,
+                    },
+                },
+            })
+        }) as Trigger
+        return deepMergeAndCast<FlowOperationRequest>(operation, {
+            request: {
+                trigger,
+            },
+        })
+    }
+    return operation
 }
 
 async function assertThatFlowIsNotBeingUsed(
