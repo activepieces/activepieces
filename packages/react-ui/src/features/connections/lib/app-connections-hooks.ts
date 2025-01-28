@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import {
+  AppConnectionOwners,
   AppConnectionWithoutSensitiveData,
   ListAppConnectionsRequestQuery,
 } from '@activepieces/shared';
@@ -28,6 +29,23 @@ export const appConnectionsHooks = {
         return [...localConnections.data];
       },
       staleTime: 0,
+    });
+  },
+  useConnectionsOwners: () => {
+    const projectId = authenticationSession.getProjectId() ?? '';
+    if (projectId === '') {
+      console.error(
+        'trying to use projectId when the authentication session is not set',
+      );
+    }
+    return useQuery<AppConnectionOwners[]>({
+      queryKey: ['app-connections-owners', projectId],
+      queryFn: async () => {
+        const { data: owners } = await appConnectionsApi.getOwners({
+          projectId,
+        });
+        return [...owners];
+      },
     });
   },
 };
