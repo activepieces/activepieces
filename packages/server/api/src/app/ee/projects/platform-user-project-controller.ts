@@ -23,6 +23,7 @@ export const usersProjectController: FastifyPluginAsyncTypebox = async (
             platformId: request.principal.platform.id,
             userId: request.principal.id,
             cursorRequest: request.query.cursor ?? null,
+            displayName: request.query.displayName,
             limit: request.query.limit ?? 10,
         })
     })
