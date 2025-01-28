@@ -1,5 +1,6 @@
 import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
 import { getPageContent } from "./lib/actions/get-page-content";
+import { newPage } from "./lib/triggers/new-page";
 import { PieceCategory } from "@activepieces/shared";
 
 export const confluenceAuth = PieceAuth.CustomAuth({
@@ -32,5 +33,5 @@ export const confluence = createPiece({
   authors: ["geekyme"],
   actions: [getPageContent],
   categories: [PieceCategory.CONTENT_AND_FILES],
-  triggers: [],
+  triggers: [newPage],
 });
