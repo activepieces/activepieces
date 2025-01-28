@@ -5,7 +5,7 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { passwordHasher } from '../lib/password-hasher'
 import { UserIdentityEntity } from './user-identity-entity'
 
-const userIdentityRepository = repoFactory(UserIdentityEntity)
+export const userIdentityRepository = repoFactory(UserIdentityEntity)
 
 export const userIdentityService = (log: FastifyBaseLogger) => ({
     async create(params: Pick<UserIdentity, 'email' | 'password' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter' | 'provider'>): Promise<UserIdentity> {
@@ -43,7 +43,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
         const identity = await userIdentityRepository().save(newUserIdentity)
         return identity
     },
-    async verifyIdenityPassword(params: VerifyIdenityPasswordParams): Promise<UserIdentity> {
+    async verifyIdentityPassword(params: VerifyIdentityPasswordParams): Promise<UserIdentity> {
         const userIdentity = await getIdentityByEmail(params.email)
         if (isNil(userIdentity)) {
             throw new ActivepiecesError({
@@ -59,6 +59,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
+
         const passwordMatches = await passwordHasher.compare(params.password, userIdentity.password)
         if (!passwordMatches) {
             throw new ActivepiecesError({
@@ -125,7 +126,7 @@ type UpdatePasswordParams = {
     newPassword: string
 }
 
-type VerifyIdenityPasswordParams = {
+type VerifyIdentityPasswordParams = {
     email: string
     password: string
 }
