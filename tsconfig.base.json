@@ -287,11 +287,17 @@
       "@activepieces/piece-gotify": [
         "packages/pieces/community/gotify/src/index.ts"
       ],
+      "@activepieces/piece-graphql": [
+        "packages/pieces/community/graphql/src/index.ts"
+      ],
       "@activepieces/piece-gravityforms": [
         "packages/pieces/community/gravityforms/src/index.ts"
       ],
       "@activepieces/piece-grist": [
         "packages/pieces/community/grist/src/index.ts"
+      ],
+      "@activepieces/piece-groq": [
+        "packages/pieces/community/groq/src/index.ts"
       ],
       "@activepieces/piece-hackernews": [
         "packages/pieces/community/hackernews/src/index.ts"
@@ -337,6 +343,9 @@
       ],
       "@activepieces/piece-json": [
         "packages/pieces/community/json/src/index.ts"
+      ],
+      "@activepieces/piece-kallabot-ai": [
+        "packages/pieces/community/kallabot-ai/src/index.ts"
       ],
       "@activepieces/piece-kimai": [
         "packages/pieces/community/kimai/src/index.ts"
@@ -532,6 +541,9 @@
       "@activepieces/piece-schedule": [
         "packages/pieces/community/schedule/src/index.ts"
       ],
+      "@activepieces/piece-scrapegrapghai": [
+        "packages/pieces/community/scrapegrapghai/src/index.ts"
+      ],
       "@activepieces/piece-segment": [
         "packages/pieces/community/segment/src/index.ts"
       ],
@@ -549,6 +561,9 @@
       ],
       "@activepieces/piece-sessions-us": [
         "packages/pieces/community/sessions-us/src/index.ts"
+      ],
+      "@activepieces/piece-seven": [
+        "packages/pieces/community/seven/src/index.ts"
       ],
       "@activepieces/piece-sftp": [
         "packages/pieces/community/sftp/src/index.ts"
@@ -604,6 +619,9 @@
       "@activepieces/piece-supadata": [
         "packages/pieces/community/supadata/src/index.ts"
       ],
+      "@activepieces/piece-surrealdb": [
+        "packages/pieces/community/surrealdb/src/index.ts"
+      ],
       "@activepieces/piece-surveymonkey": [
         "packages/pieces/community/surveymonkey/src/index.ts"
       ],
@@ -618,6 +636,9 @@
       ],
       "@activepieces/piece-taskade": [
         "packages/pieces/community/taskade/src/index.ts"
+      ],
+      "@activepieces/piece-tavily": [
+        "packages/pieces/community/tavily/src/index.ts"
       ],
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/community/telegram-bot/src/index.ts"

@@ -3,14 +3,15 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
+import { stripeHelper } from '../../../../src/app/ee/platform-billing/stripe-helper'
 import { setupServer } from '../../../../src/app/server'
 import {
     createMockCustomDomain,
     mockAndSaveBasicSetup,
 } from '../../../../test/helpers/mocks'
 import { createMockSignUpRequest } from '../../../helpers/mocks/authn'
+
 
 let app: FastifyInstance | null = null
 let mockLog: FastifyBaseLogger
@@ -23,7 +24,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
     emailService(mockLog).sendOtp = jest.fn()
-    stripeHelper(mockLog).getOrCreateCustomer = jest
+    stripeHelper(mockLog).createCustomer = jest
         .fn()
         .mockResolvedValue(faker.string.alphanumeric())
     await databaseConnection().getRepository('flag').delete({})

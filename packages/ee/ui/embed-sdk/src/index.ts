@@ -4,10 +4,26 @@ export enum ActivepiecesClientEventName {
   CLIENT_NEW_CONNECTION_DIALOG_CLOSED = 'CLIENT_NEW_CONNECTION_DIALOG_CLOSED',
   CLIENT_SHOW_CONNECTION_IFRAME = 'CLIENT_SHOW_CONNECTION_IFRAME',
   CLIENT_CONNECTION_NAME_IS_INVALID = 'CLIENT_CONNECTION_NAME_IS_INVALID',
+  CLIENT_AUTHENTICATION_SUCCESS = 'CLIENT_AUTHENTICATION_SUCCESS',
+  CLIENT_AUTHENTICATION_FAILED = 'CLIENT_AUTHENTICATION_FAILED',
+  CLIENT_CONFIGURATION_FINISHED = 'CLIENT_CONFIGURATION_FINISHED',
 }
 export const connectionNameRegex = '[A-Za-z0-9_\\-@\\+\\.]*'
 export interface ActivepiecesClientInit {
   type: ActivepiecesClientEventName.CLIENT_INIT;
+  data: Record<string, never>;
+}
+export interface ActivepiecesClientAuthenticationSuccess {
+  type: ActivepiecesClientEventName.CLIENT_AUTHENTICATION_SUCCESS;
+  data: Record<string, never>;
+}
+export interface ActivepiecesClientAuthenticationFailed {
+  type: ActivepiecesClientEventName.CLIENT_AUTHENTICATION_FAILED;
+  data: unknown;
+}
+// Added this event so in the future if we add another step between authentication and configuration finished, we can use this event to notify the parent
+export interface ActivepiecesClientConfigurationFinished {
+  type: ActivepiecesClientEventName.CLIENT_CONFIGURATION_FINISHED;
   data: Record<string, never>;
 }
 export interface ActivepiecesClientShowConnectionIframe {
@@ -75,7 +91,7 @@ export const _AP_JWT_TOKEN_QUERY_PARAM_NAME = "jwtToken"
 
 export const _AP_MANAGED_TOKEN_LOCAL_STORAGE_KEY = "ap_managed_token"
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.3.0";
+  readonly _sdkVersion = "0.3.3";
   _prefix = '';
   _instanceUrl = '';
   _hideSidebar = false;
@@ -152,7 +168,7 @@ class ActivepiecesEmbedded {
           if (iframeContainer) {
             const iframeWindow = this.connectToEmbed({
               iframeContainer,
-              callbackAfterAuthentication: () => {
+              callbackAfterConfigurationFinished: () => {
                 resolve({ status: "success" });
               },
               initialRoute: '/'
@@ -176,16 +192,16 @@ class ActivepiecesEmbedded {
 
   };
 
-  private connectToEmbed({ iframeContainer, initialRoute, callbackAfterAuthentication }: {
+  private connectToEmbed({ iframeContainer, initialRoute, callbackAfterConfigurationFinished }: {
     iframeContainer: Element,
     initialRoute: string,
-    callbackAfterAuthentication?: () => void
+    callbackAfterConfigurationFinished?: () => void
   }
   ): IframeWithWindow {
     const iframe = this._createIframe({ src: `${this._instanceUrl}/embed` });
     iframeContainer.appendChild(iframe);
     if (!this._doesFrameHaveWindow(iframe)) {
-      throw this._errorCreator('iframe window not accessible');
+       this._errorCreator('iframe window not accessible');
     }
     const iframeWindow = iframe.contentWindow;
     const initialMessageHandler = (event: MessageEvent<ActivepiecesClientEvent>) => {
@@ -206,19 +222,53 @@ class ActivepiecesEmbedded {
               },
             };
             iframeWindow.postMessage(apEvent, '*');
-            if (callbackAfterAuthentication) {
-              callbackAfterAuthentication();
-            }
+            this._createAuthenticationSuccessListener();
+            this._createAuthenticationFailedListener();
+            this._createConfigurationFinishedListener(callbackAfterConfigurationFinished);
             window.removeEventListener('message', initialMessageHandler);
             break;
           }
         }
       }
     };
+
     window.addEventListener('message', initialMessageHandler);
     return iframe;
   }
 
+  private _createConfigurationFinishedListener = (callbackAfterConfigurationFinished?: () => void) => {
+    const configurationFinishedHandler = (event: MessageEvent<ActivepiecesClientConfigurationFinished>) => {
+      if (event.data.type === ActivepiecesClientEventName.CLIENT_CONFIGURATION_FINISHED) {
+        this._logger().log('Configuration finished')
+        if (callbackAfterConfigurationFinished) {
+          callbackAfterConfigurationFinished();
+        }
+      }
+    }
+    window.addEventListener('message', configurationFinishedHandler);
+  }
+
+  private _createAuthenticationFailedListener = () => {
+    const authenticationFailedHandler = (event: MessageEvent<ActivepiecesClientAuthenticationFailed>) => {
+        if (event.data.type === ActivepiecesClientEventName.CLIENT_AUTHENTICATION_FAILED) {
+           this._errorCreator('Authentication failed',event.data.data);
+      }
+    }
+    window.addEventListener('message', authenticationFailedHandler);
+  }
+
+  private _createAuthenticationSuccessListener = (authenticationSuccessCallback?: () => void) => {
+    const authenticationSuccessHandler = (event: MessageEvent<ActivepiecesClientAuthenticationSuccess>) => {
+      if (event.data.type === ActivepiecesClientEventName.CLIENT_AUTHENTICATION_SUCCESS) {
+        this._logger().log('Authentication success')
+        if (authenticationSuccessCallback) {
+          authenticationSuccessCallback();
+        }
+        window.removeEventListener('message', authenticationSuccessHandler);
+      }
+    }
+    window.addEventListener('message', authenticationSuccessHandler);
+  }
   private _createIframe({ src }: { src: string }) {
     const iframe = document.createElement('iframe');
     iframe.src = src;
@@ -253,7 +303,7 @@ class ActivepiecesEmbedded {
 
   navigate({ route }: { route: string }) {
     if (!this._dashboardAndBuilderIframeWindow) {
-      console.error('Activepieces: dashboard iframe not found');
+      this._logger().error('dashboard iframe not found');
       return;
     }
     const event: ActivepiecesVendorRouteChanged = {
@@ -325,7 +375,7 @@ class ActivepiecesEmbedded {
               this._rejectNewConnectionDialogClosed(event.data.data);
             }
             else {
-              throw this._errorCreator(event.data.data.error);
+               this._errorCreator(event.data.data.error);
             }
             window.removeEventListener('message', connectionRelatedMessageHandler);
             break;
@@ -336,14 +386,12 @@ class ActivepiecesEmbedded {
               connectionsIframe.style.display = 'block';
             }
             else {
-              throw this._errorCreator('Connections iframe not found when trying to show it')
+               this._errorCreator('Connections iframe not found when trying to show it')
             }
             break;
           }
         }
       }
-
-
     }
     window.addEventListener(
       'message',
@@ -381,13 +429,12 @@ class ActivepiecesEmbedded {
       }
       const checker = setInterval(() => {
         if (checkCounter >= this._MAX_CONTAINER_CHECK_COUNT) {
-          console.error(`Activepieces: ${errorMessage}`);
-          reject(`Activepieces: ${errorMessage}`);
+          this._logger().error(errorMessage);
+          reject(errorMessage);
           return;
         }
         checkCounter++;
         if (condition()) {
-          console;
           clearInterval(checker);
           resolve(method());
         }
@@ -401,9 +448,9 @@ class ActivepiecesEmbedded {
       ? this._parentOrigin + this._prefix
       : `${this._parentOrigin}/${this._prefix}`);
   }
-  private _errorCreator(message: string) {
-    console.error(`Activepieces: ${message}`)
-    return new Error(`Activepieces: ${message}`);
+  private _errorCreator(message: string,...args:any[]): never {
+    this._logger().error(message,...args)
+    throw new Error(`Activepieces: ${message}`,);
   }
   private _removeIframe(selector: string) {
     const iframe = document.querySelector(selector);
@@ -411,9 +458,22 @@ class ActivepiecesEmbedded {
       iframe.remove();
     }
     else {
-      console.warn(`Activepieces: iframe not found when trying to remove it`)
+      this._logger().warn(`iframe not found when trying to remove it`)
     }
 
+  }
+  private _logger() {
+    return{
+      log: (message: string, ...args: any[]) => {
+        console.log(`Activepieces: ${message}`, ...args)
+      },
+      error: (message: string, ...args: any[]) => {
+        console.error(`Activepieces: ${message}`, ...args)
+      },
+      warn: (message: string, ...args: any[]) => {
+        console.warn(`Activepieces: ${message}`, ...args)
+      }
+    }
   }
 
 }

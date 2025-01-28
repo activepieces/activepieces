@@ -3,7 +3,6 @@ import { t } from 'i18next';
 import React from 'react';
 import { useParams, Navigate, useSearchParams } from 'react-router-dom';
 
-import { useEmbedding } from '@/components/embed-provider';
 import { useToast } from '@/components/ui/use-toast';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
@@ -23,7 +22,8 @@ const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
     isError,
     error,
   } = useSuspenseQuery<boolean, Error>({
-    queryKey: ['switch-to-project', projectId],
+    //added currentProjectId in case user switches project and goes back to the same project
+    queryKey: ['switch-to-project', projectId, currentProjectId],
     queryFn: async () => {
       if (edition === ApEdition.COMMUNITY) {
         return true;
@@ -74,16 +74,12 @@ type RedirectToCurrentProjectRouteProps = {
 };
 const RedirectToCurrentProjectRoute: React.FC<
   RedirectToCurrentProjectRouteProps
-> = ({ path, children }) => {
+> = ({ path }) => {
   const currentProjectId = authenticationSession.getProjectId();
   const params = useParams();
   const [searchParams] = useSearchParams();
-  const { embedState } = useEmbedding();
   if (isNil(currentProjectId)) {
     return <Navigate to="/sign-in" replace />;
-  }
-  if (embedState.isEmbedded) {
-    return children;
   }
 
   const pathWithParams = `${path.startsWith('/') ? path : `/${path}`}`.replace(

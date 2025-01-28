@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEnvironment, ErrorCode, isNil, Platform, SMTPInformation } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, ErrorCode, isNil, Platform, SMTPInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Mustache from 'mustache'
 import nodemailer, { Transporter } from 'nodemailer'
@@ -9,16 +9,6 @@ import { system } from '../../../../helper/system/system'
 import { platformService } from '../../../../platform/platform.service'
 import { EmailSender, EmailTemplateData } from './email-sender'
 
-const isSmtpConfigured = (platform: Platform | null): boolean => {
-    const isConfigured = (host: string | undefined, port: string | undefined, user: string | undefined, password: string | undefined): boolean => {
-        return !isNil(host) && !isNil(port) && !isNil(user) && !isNil(password)
-    }
-
-    const isPlatformSmtpConfigured = !isNil(platform) && !isNil(platform.smtp)
-    const isSmtpSystemConfigured = isConfigured(system.get(AppSystemProp.SMTP_HOST), system.get(AppSystemProp.SMTP_PORT), system.get(AppSystemProp.SMTP_USERNAME), system.get(AppSystemProp.SMTP_PASSWORD))
-
-    return isPlatformSmtpConfigured || isSmtpSystemConfigured
-}
 
 
 type SMTPEmailSender = EmailSender & {
@@ -52,7 +42,7 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
             const senderName = platform?.smtp?.senderName ?? system.get(AppSystemProp.SMTP_SENDER_NAME)
             const senderEmail = platform?.smtp?.senderEmail ?? system.get(AppSystemProp.SMTP_SENDER_EMAIL)
 
-            if (!isSmtpConfigured(platform)) {
+            if (!smtpEmailSender(log).isSmtpConfigured(platform)) {
                 log.error(`SMTP isn't configured for sending the email ${emailSubject}`)
                 return
             }
@@ -71,7 +61,16 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
                 html: emailBody,
             })
         },
-        isSmtpConfigured,
+        isSmtpConfigured(platform: Platform | null): boolean {
+            const isConfigured = (host: string | undefined, port: string | undefined, user: string | undefined, password: string | undefined): boolean => {
+                return !isNil(host) && !isNil(port) && !isNil(user) && !isNil(password)
+            }
+
+            const isPlatformSmtpConfigured = !isNil(platform) && !isNil(platform.smtp)
+            const isSmtpSystemConfigured = isConfigured(system.get(AppSystemProp.SMTP_HOST), system.get(AppSystemProp.SMTP_PORT), system.get(AppSystemProp.SMTP_USERNAME), system.get(AppSystemProp.SMTP_PASSWORD))
+
+            return isPlatformSmtpConfigured || isSmtpSystemConfigured
+        },
     }
 }
 
@@ -81,8 +80,10 @@ const getPlatform = async (platformId: string | undefined): Promise<Platform | n
 
 const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs): Promise<string> => {
     const templatePath = `packages/server/api/src/assets/emails/${templateData.name}.html`
+    const footerPath = 'packages/server/api/src/assets/emails/footer.html'
     const template = await readFile(templatePath, 'utf-8')
-
+    const footer = await readFile(footerPath, 'utf-8')
+    const edition = system.getEdition()
     const primaryColor = platform?.primaryColor ?? defaultTheme.colors.primary.default
     const fullLogoUrl = platform?.fullLogoUrl ?? defaultTheme.logos.fullLogoUrl
     const platformName = platform?.name ?? defaultTheme.websiteName
@@ -100,7 +101,15 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
                 return JSON.parse(templateData.vars.issues)
             }
         },
-    })
+        footerContent() {
+            return edition === ApEdition.CLOUD ? `   Activepieces, Inc. 398 11th Street,
+                    2nd floor, San Francisco, CA 94103` : `${platform?.name} Team.`
+        },
+    },
+    {
+        footer,
+    },
+    )
 }
 
 const initSmtpClient = (smtp: SMTPInformation | undefined): Transporter => {

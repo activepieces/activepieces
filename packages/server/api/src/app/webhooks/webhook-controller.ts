@@ -257,18 +257,6 @@ async function assertExceedsLimit(flow: Flow, log: FastifyBaseLogger): Promise<v
     if (!exceededLimit) {
         return
     }
-    if (flow.status === FlowStatus.ENABLED) {
-        log.info({
-            message: 'disable webhook out of flow quota',
-            projectId: flow.projectId,
-            flowId: flow.id,
-        })
-        await flowService(log).updateStatus({
-            id: flow.id,
-            projectId: flow.projectId,
-            newStatus: FlowStatus.DISABLED,
-        })
-    }
     throw new ActivepiecesError({
         code: ErrorCode.QUOTA_EXCEEDED,
         params: {

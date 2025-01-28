@@ -162,10 +162,10 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
     async getIdsOfProjects({
         userId,
         platformId,
-    }: GetIdsOfProjectsParams): Promise<string[] | undefined> {
+    }: GetIdsOfProjectsParams): Promise<string[]> {
         const edition = system.getEdition()
         if (edition === ApEdition.COMMUNITY) {
-            return undefined
+            return []
         }
         const members = await repo().findBy({
             userId,

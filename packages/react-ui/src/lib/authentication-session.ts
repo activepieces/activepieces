@@ -1,6 +1,6 @@
 import { jwtDecode } from 'jwt-decode';
 
-import { AuthenticationResponse, isNil } from '@activepieces/shared';
+import { AuthenticationResponse, isNil, Principal } from '@activepieces/shared';
 
 import { authenticationApi } from './authentication-api';
 
@@ -26,7 +26,7 @@ export const authenticationSession = {
     if (isNil(token)) {
       return null;
     }
-    const decodedJwt = jwtDecode<{ projectId: string }>(token);
+    const decodedJwt = getDecodedJwt(token);
     return decodedJwt.projectId;
   },
   appendProjectRoutePrefix(path: string): string {
@@ -37,7 +37,12 @@ export const authenticationSession = {
     return `/projects/${projectId}${path.startsWith('/') ? path : `/${path}`}`;
   },
   getPlatformId(): string | null {
-    return this.getCurrentUser()?.platformId ?? null;
+    const token = this.getToken();
+    if (isNil(token)) {
+      return null;
+    }
+    const decodedJwt = getDecodedJwt(token);
+    return decodedJwt.platform.id;
   },
   getUserPlatformRole() {
     return this.getCurrentUser()?.platformRole ?? null;
@@ -98,3 +103,7 @@ export const authenticationSession = {
     return null;
   },
 };
+
+function getDecodedJwt(token: string): Principal {
+  return jwtDecode<Principal>(token);
+}
