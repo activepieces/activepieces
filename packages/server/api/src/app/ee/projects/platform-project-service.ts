@@ -134,11 +134,12 @@ async function getProjects(params: GetAllParams & { projectIds?: string[] }, log
             beforeCursor: decodedCursor.previousCursor,
         },
     })
+    const displayNameFilter = displayName ? ILike(`%${displayName}%`) : undefined
     const filters = {
         platformId: Equal(platformId),
         deleted: IsNull(),
         ...spreadIfDefined('externalId', externalId),
-        ...spreadIfDefined('displayName', ILike(`%${displayName}%`)),
+        ...spreadIfDefined('displayName', displayNameFilter),
         ...(projectIds ? { id: In(projectIds) } : {}),
     }
 
