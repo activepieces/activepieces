@@ -1,7 +1,6 @@
 import {
     ApId,
     assertNotNullOrUndefined,
-    AuthenticationResponse,
     EndpointScope,
     PrincipalType,
     SeekPage,
