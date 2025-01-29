@@ -49,8 +49,25 @@ export const workerApiService = (workerToken: string) => {
         async savePayloadsAsSampleData(request: SavePayloadRequest): Promise<void> {
             await client.post('/v1/workers/save-payloads', request)
         },
+        //TODO: Ask mo about failed reuqest handling
         async startRuns(request: SubmitPayloadsRequest): Promise<FlowRun[]> {
-            return client.post<FlowRun[]>('/v1/workers/submit-payloads', request)
+            const runs: FlowRun[] = []
+            const batchSize = 5
+
+            for (let i = 0; i < request.payloads.length; i += batchSize) {
+                const batch = request.payloads.slice(i, i + batchSize)
+                const batchPromises = batch.map(payload => 
+                    client.post<FlowRun>('/v1/workers/submit-payloads', {
+                        ...request,
+                        payloads: [payload],
+                    })
+                )
+                
+                const batchResults = await Promise.all(batchPromises)
+                runs.push(...batchResults)
+            }
+            
+            return runs
 
         },
         async sendUpdate(request: SendEngineUpdateRequest): Promise<void> {
