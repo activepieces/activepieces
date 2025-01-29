@@ -14,10 +14,7 @@ import { useEmbedding } from '@/components/embed-provider';
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import {
-  projectHooks,
-  useReloadPageIfProjectIdChanged,
-} from '@/hooks/project-hooks';
+import { projectHooks } from '@/hooks/project-hooks';
 import { isNil, Permission } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
@@ -36,7 +33,7 @@ const ProjectChangedRedirector = ({
   currentProjectId: string;
   children: React.ReactNode;
 }) => {
-  useReloadPageIfProjectIdChanged(currentProjectId);
+  projectHooks.useReloadPageIfProjectIdChanged(currentProjectId);
   return children;
 };
 export const CloseTaskLimitAlertContext = createContext({
