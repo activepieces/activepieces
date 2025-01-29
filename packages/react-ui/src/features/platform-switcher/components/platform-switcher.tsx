@@ -28,9 +28,10 @@ import { cn } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
+import { platformUserHooks } from '@/hooks/platform-user-hooks';
 
 function PlatformSwitcher() {
-  const user = authenticationSession.getCurrentUser();
+  const { data: user } = platformUserHooks.useCurrentUser();
   const { data: platforms } = useQuery({
     queryKey: ['platforms', user?.id],
     queryFn: () => platformApi.listPlatforms(),

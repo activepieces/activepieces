@@ -41,7 +41,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { HttpError } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import {
   InvitationType,
@@ -52,6 +51,7 @@ import {
 } from '@activepieces/shared';
 
 import { userInvitationsHooks } from '../lib/user-invitations-hooks';
+import { platformUserHooks } from '@/hooks/platform-user-hooks';
 
 const FormSchema = Type.Object({
   email: Type.String({
@@ -81,7 +81,7 @@ export function InviteUserDialog() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { refetch } = userInvitationsHooks.useInvitations();
   const { project } = projectHooks.useCurrentProject();
-  const currentUser = authenticationSession.getCurrentUser();
+  const { data: currentUser } = platformUserHooks.useCurrentUser();
   const { checkAccess } = useAuthorization();
   const userHasPermissionToInviteUser = checkAccess(
     Permission.WRITE_INVITATION,

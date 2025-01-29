@@ -7,12 +7,10 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-api';
 import { AI_PROVIDERS } from '@activepieces/pieces-common';
 import { PlatformRole } from '@activepieces/shared';
-
-import { authenticationSession } from '../../../../../lib/authentication-session';
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
-
 import { CopilotSetup } from './copilot';
 import { AIProviderCard } from './universal-pieces/ai-provider-card';
+import { platformUserHooks } from '@/hooks/platform-user-hooks';
 
 export default function AIProvidersPage() {
   const {
@@ -23,7 +21,7 @@ export default function AIProvidersPage() {
     queryKey: ['ai-providers'],
     queryFn: () => aiProviderApi.list(),
   });
-  const currentUser = authenticationSession.getCurrentUser();
+  const { data: currentUser } = platformUserHooks.useCurrentUser();
 
   const { mutate: deleteProvider, isPending: isDeleting } = useMutation({
     mutationFn: (provider: string) => aiProviderApi.delete(provider),
