@@ -16,8 +16,9 @@ export const workerApiService = (workerToken: string) => {
     const client = new ApAxiosClient(apiUrl, workerToken)
 
     return {
-        async heartbeat(): Promise<WorkerMachineHealthcheckResponse | null> {
+        async heartbeat(version: string): Promise<WorkerMachineHealthcheckResponse | null> {
             const request: WorkerMachineHealthcheckRequest = await workerMachine.getSystemInfo()
+            request.workerProps['version'] = version
             try {
                 return await client.post<WorkerMachineHealthcheckResponse>('/v1/worker-machines/heartbeat', request)
             }

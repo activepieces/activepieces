@@ -214,6 +214,19 @@ export default function WorkersPage() {
               return <div className="text-start">{timeAgo}</div>;
             },
           },
+          {
+            accessorKey: 'version',
+            header: ({ column }) => (
+              <DataTableColumnHeader column={column} title={t('Version')} />
+            ),
+            cell: ({ row }) => {
+              return (
+                <div className="text-start">
+                  {row.original.information.workerProps.version ?? ' <= 0.39.4'}
+                </div>
+              );
+            },
+          },
         ]}
         actions={[
           (row) => (
