@@ -56,15 +56,11 @@ export const workerApiService = (workerToken: string) => {
 
             for (let i = 0; i < request.payloads.length; i += batchSize) {
                 const batch = request.payloads.slice(i, i + batchSize)
-                const batchPromises = batch.map(payload => 
-                    client.post<FlowRun>('/v1/workers/submit-payloads', {
-                        ...request,
-                        payloads: [payload],
-                    })
-                )
-                
-                const batchResults = await Promise.all(batchPromises)
-                runs.push(...batchResults)
+                const res = await client.post<FlowRun>('/v1/workers/submit-payloads', {
+                    ...request,
+                    payloads: batch,
+                })
+                runs.push(res)
             }
             
             return runs
