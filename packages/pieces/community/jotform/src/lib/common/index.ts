@@ -10,6 +10,9 @@ export const jotformCommon = {
     if (region === 'eu') {
       return 'https://eu-api.jotform.com';
     }
+    if (region === 'hipaa') {
+      return 'https://hipaa-api.jotform.com';
+    }
     return 'https://api.jotform.com';
   },
   form: Property.Dropdown({

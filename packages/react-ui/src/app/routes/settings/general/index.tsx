@@ -76,6 +76,9 @@ export default function GeneralPage() {
         description: t('Your changes have been saved.'),
         duration: 3000,
       });
+      queryClient.invalidateQueries({
+        queryKey: ['current-project'],
+      });
     },
     onError: (error) => {
       if (api.isError(error)) {

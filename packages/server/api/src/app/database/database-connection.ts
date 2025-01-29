@@ -17,7 +17,6 @@ import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entit
 import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
 import { OtpEntity } from '../ee/authentication/otp/otp-entity'
 import { AppSumoEntity } from '../ee/billing/appsumo/appsumo.entity'
-import { ProjectBillingEntity } from '../ee/billing/project-billing/project-billing.entity'
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
@@ -103,7 +102,6 @@ function getEntities(): EntitySchema<unknown>[] {
                 AppSumoEntity,
                 ConnectionKeyEntity,
                 AppCredentialEntity,
-                ProjectBillingEntity,
                 PlatformBillingEntity,
             )
             break

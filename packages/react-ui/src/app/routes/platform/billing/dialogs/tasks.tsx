@@ -1,7 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { t } from 'i18next';
-import { useEffect } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -20,12 +19,16 @@ import { Input } from '@/components/ui/input';
 type TasksLimitDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (limit: number) => void;
+  onSubmit: (limit: number | undefined) => void;
   initialLimit?: number;
 };
 
 const TasksSchema = Type.Object({
-  tasks: Type.Number(),
+  tasks: Type.Union([
+    Type.Optional(Type.Number()),
+    Type.Undefined(),
+    Type.String(),
+  ]),
 });
 
 type TasksSchema = Static<typeof TasksSchema>;
@@ -34,22 +37,20 @@ export const TasksLimitDialog = ({
   open,
   onOpenChange,
   onSubmit,
-  initialLimit = 0,
+  initialLimit,
 }: TasksLimitDialogProps) => {
   const form = useForm<TasksSchema>({
     resolver: typeboxResolver(TasksSchema),
+    defaultValues: {
+      tasks: initialLimit ?? undefined,
+    },
   });
-  useEffect(() => {
-    form.reset({ tasks: initialLimit });
-  }, [initialLimit]);
 
   const updateLimits: SubmitHandler<{
-    tasks: number;
+    tasks: number | undefined | string;
   }> = (data) => {
-    form.setError('root.serverError', {
-      message: undefined,
-    });
-    onSubmit(data.tasks);
+    const value = data.tasks === '' ? undefined : Number(data.tasks);
+    onSubmit(value);
     onOpenChange(false);
   };
 
@@ -74,23 +75,23 @@ export const TasksLimitDialog = ({
                   <div className="relative">
                     <Input
                       {...field}
-                      required
-                      id="credits"
+                      id="tasks"
                       type="number"
                       placeholder={t('Number of monthly tasks')}
                       className="rounded-sm w-full pr-8"
-                      min={0}
-                      onChange={(e) => field.onChange(+e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        field.onChange(value);
+                      }}
                     />
-                    {!(
-                      form.watch('tasks').toString() === '' ||
-                      form.watch('tasks') <= 0
-                    ) && (
+                    {field.value !== undefined && field.value !== '' && (
                       <Button
                         type="button"
                         variant="transparent"
                         className="absolute right-1 top-1/2 -translate-y-1/2 text-xs"
-                        onClick={() => field.onChange('')}
+                        onClick={() => {
+                          field.onChange('');
+                        }}
                       >
                         Remove
                       </Button>
@@ -109,11 +110,6 @@ export const TasksLimitDialog = ({
               <Button
                 className="w-24 text-[0.75rem]"
                 onClick={(e) => form.handleSubmit(updateLimits)(e)}
-                disabled={
-                  !form.formState.isDirty ||
-                  form.watch('tasks').toString() === '' ||
-                  form.watch('tasks') <= 0
-                }
               >
                 {t('Save changes')}
               </Button>

@@ -5,16 +5,20 @@ import {
     apId,
     AppConnection,
     AppConnectionId,
+    AppConnectionOwners,
     AppConnectionScope,
     AppConnectionStatus,
     AppConnectionType,
     AppConnectionValue,
     AppConnectionWithoutSensitiveData,
+    ConnectionState,
     Cursor,
     EngineResponseStatus,
     ErrorCode,
     isNil,
     OAuth2GrantType,
+    PlatformId,
+    PlatformRole,
     ProjectId,
     SeekPage,
     spreadIfDefined,
@@ -26,6 +30,7 @@ import { EngineHelperResponse, EngineHelperValidateAuthResult } from 'server-wor
 import { Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
+import { projectMemberService } from '../../ee/project-members/project-member.service'
 import { encryptUtils } from '../../helper/encryption'
 import { distributedLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -119,6 +124,33 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         return this.removeSensitiveData(updatedConnection)
     },
 
+    async upsertMissingConnection(params: UpsertPlaceholderParams): Promise<void> {
+        const { projectId, platformId, externalId, pieceName, displayName } = params
+
+        const existingConnection = await repo().findOne({
+            where: {
+                ...(params.projectId ? { projectIds: APArrayContains('projectIds', [params.projectId]) } : {}),
+                externalId,
+                platformId,
+            },
+        })
+
+        const connection = {
+            displayName,
+            status: existingConnection?.status ?? AppConnectionStatus.MISSING,
+            externalId,
+            pieceName,
+            value: encryptUtils.encryptObject({}),
+            type: existingConnection?.type ?? AppConnectionType.CUSTOM_AUTH,
+            id: existingConnection?.id ?? apId(),
+            scope: existingConnection?.scope ?? AppConnectionScope.PROJECT,
+            projectIds: existingConnection?.projectIds ?? [projectId],
+            platformId,
+        }
+
+        await repo().upsert(connection, ['id'])
+    },
+
     async getOne({
         projectId,
         platformId,
@@ -166,6 +198,19 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             })
         }
         return this.removeSensitiveData(connectionById)
+    },
+
+    async getManyConnectionStates(params: GetManyParams): Promise<ConnectionState[]> {
+        const connections = await repo().find({
+            where: {
+                projectIds: APArrayContains('projectIds', [params.projectId]),
+            },
+        })
+        return connections.map((connection) => ({
+            externalId: connection.externalId,
+            pieceName: connection.pieceName,
+            displayName: connection.displayName,
+        }))
     },
 
     async delete(params: DeleteParams): Promise<void> {
@@ -265,6 +310,20 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             scope: AppConnectionScope.PROJECT,
             projectIds: APArrayContains('projectIds', [projectId]),
         })
+    },
+    async getOwners({ projectId, platformId }: { projectId: ProjectId, platformId: PlatformId }): Promise<AppConnectionOwners[]> {
+        const platformAdmins = (await userService.getByPlatformRole(platformId, PlatformRole.ADMIN)).map(user=>({
+            firstName: user.identity.firstName, 
+            lastName: user.identity.lastName,
+            email: user.identity.email,
+        }))
+        const projectMembers = await projectMemberService(log).list(projectId, null, 1000, undefined)
+        const projectMembersDetails = projectMembers.data.map(pm=>({
+            firstName: pm.user.firstName,
+            lastName: pm.user.lastName,
+            email: pm.user.email,
+        }))
+        return [...platformAdmins, ...projectMembersDetails]
     },
 })
 
@@ -561,6 +620,14 @@ type UpsertParams = {
     pieceName: string
 }
 
+type UpsertPlaceholderParams = {
+    projectId: ProjectId
+    platformId: string
+    externalId: string
+    pieceName: string
+    displayName: string
+}
+
 type GetOneByName = {
     projectId: ProjectId
     platformId: string
@@ -571,6 +638,10 @@ type GetOneParams = {
     projectId: ProjectId | null
     platformId: string
     id: string
+}
+
+type GetManyParams = {
+    projectId: ProjectId
 }
 
 type DeleteParams = {
