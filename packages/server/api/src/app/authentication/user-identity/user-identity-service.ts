@@ -25,7 +25,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        const isVerfied = params.provider === UserIdentityProvider.GOOGLE || params.provider === UserIdentityProvider.JWT || params.provider === UserIdentityProvider.SAML
+        const verified = params.provider === UserIdentityProvider.GOOGLE || params.provider === UserIdentityProvider.JWT || params.provider === UserIdentityProvider.SAML
         const newUserIdentity: UserIdentity = {
             firstName: params.firstName,
             lastName: params.lastName,
@@ -33,7 +33,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             email: cleanedEmail,
             created: new Date().toISOString(),
             updated: new Date().toISOString(),
-            verified: isVerfied,
+            verified,
             id: apId(),
             password: hashedPassword,
             trackEvents: params.trackEvents,

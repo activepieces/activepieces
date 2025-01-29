@@ -136,9 +136,9 @@ const FlowsPage = () => {
     },
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
-
-  const { data, isLoading, isRefetching, refetch } = useQuery({
-    queryKey: ['flow-table', searchParams.toString()],
+  const projectId = authenticationSession.getProjectId()!;
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['flow-table', searchParams.toString(), projectId],
     staleTime: 0,
     queryFn: () => {
       const name = searchParams.get('name');
@@ -150,7 +150,7 @@ const FlowsPage = () => {
       const folderId = searchParams.get('folderId') ?? undefined;
 
       return flowsApi.list({
-        projectId: authenticationSession.getProjectId()!,
+        projectId,
         cursor: cursor ?? undefined,
         limit,
         name: name ?? undefined,
@@ -607,7 +607,7 @@ const FlowsPage = () => {
                   !embedState.hideFolders || column.accessorKey !== 'folderId',
               )}
               page={data}
-              isLoading={isLoading || isRefetching}
+              isLoading={isLoading}
               filters={filters}
               bulkActions={bulkActions}
               onRowClick={(row, newWindow) => {

@@ -61,8 +61,9 @@ function AppConnectionsPage() {
     label: piece.displayName,
     value: piece.name,
   }));
+  const projectId = authenticationSession.getProjectId()!;
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['appConnections', location.search],
+    queryKey: ['appConnections', location.search, projectId],
     queryFn: () => {
       const searchParams = new URLSearchParams(location.search);
       const cursor = searchParams.get(CURSOR_QUERY_PARAM);
@@ -74,7 +75,7 @@ function AppConnectionsPage() {
       const pieceName = searchParams.get('pieceName') ?? undefined;
       const displayName = searchParams.get('displayName') ?? undefined;
       return appConnectionsApi.list({
-        projectId: authenticationSession.getProjectId()!,
+        projectId,
         cursor: cursor ?? undefined,
         limit,
         status,
