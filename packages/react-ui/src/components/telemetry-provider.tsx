@@ -4,13 +4,13 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useDeepCompareEffect } from 'react-use';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import {
   ApFlagId,
   isNil,
   TelemetryEvent,
   UserWithMetaInformationAndProject,
 } from '@activepieces/shared';
-import { platformUserHooks } from '@/hooks/platform-user-hooks';
 
 interface TelemetryProviderProps {
   children: React.ReactNode;
@@ -21,7 +21,9 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   const [analytics, setAnalytics] = useState<AnalyticsBrowser | null>(null);
   const initializedUserEmail = useRef<string | null>(null);
 
-  const [user, setUser] = useState<UserWithMetaInformationAndProject | null>(currentUser ?? null);
+  const [user, setUser] = useState<UserWithMetaInformationAndProject | null>(
+    currentUser ?? null,
+  );
   const { data: telemetryEnabled } = flagsHooks.useFlag<boolean>(
     ApFlagId.TELEMETRY_ENABLED,
   );

@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { useEmbedding } from '@/components/embed-provider';
 import { useTelemetry } from '@/components/telemetry-provider';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 
 import { Avatar, AvatarFallback } from './avatar';
 import { AvatarLetter } from './avatar-letter';
@@ -16,7 +17,6 @@ import {
   DropdownMenuItem,
 } from './dropdown-menu';
 import { TextWithIcon } from './text-with-icon';
-import { authenticationSession } from '@/lib/authentication-session';
 export function UserAvatar() {
   const { reset } = useTelemetry();
   const { embedState } = useEmbedding();

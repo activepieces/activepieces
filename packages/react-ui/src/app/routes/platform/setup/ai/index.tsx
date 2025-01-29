@@ -5,12 +5,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { TableTitle } from '@/components/ui/table-title';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-api';
+import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { AI_PROVIDERS } from '@activepieces/pieces-common';
 import { PlatformRole } from '@activepieces/shared';
+
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
+
 import { CopilotSetup } from './copilot';
 import { AIProviderCard } from './universal-pieces/ai-provider-card';
-import { platformUserHooks } from '@/hooks/platform-user-hooks';
 
 export default function AIProvidersPage() {
   const {

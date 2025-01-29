@@ -22,13 +22,13 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { platformApi } from '@/lib/platforms-api';
 import { cn } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
-import { platformUserHooks } from '@/hooks/platform-user-hooks';
 
 function PlatformSwitcher() {
   const { data: user } = platformUserHooks.useCurrentUser();

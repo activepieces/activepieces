@@ -39,6 +39,7 @@ import { PlatformRoleSelect } from '@/features/team/component/platform-role-sele
 import { userInvitationApi } from '@/features/team/lib/user-invitation';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { HttpError } from '@/lib/api';
 import { formatUtils } from '@/lib/utils';
@@ -51,7 +52,6 @@ import {
 } from '@activepieces/shared';
 
 import { userInvitationsHooks } from '../lib/user-invitations-hooks';
-import { platformUserHooks } from '@/hooks/platform-user-hooks';
 
 const FormSchema = Type.Object({
   email: Type.String({
