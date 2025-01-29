@@ -48,12 +48,9 @@ export async function confluenceApiCall<T extends HttpMessageBody>({
 		body: body,
 	};
 
-	try {
-		const response = await httpClient.sendRequest<T>(request);
-		return response.body;
-	} catch (error) {
-		throw error;
-	}
+	const response = await httpClient.sendRequest<T>(request);
+	return response.body;
+	
 }
 
 export async function confluencePaginatedApiCall<T extends HttpMessageBody>({
