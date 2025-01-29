@@ -47,9 +47,9 @@ export function ProjectSelectionDialog({
 }: ProjectSelectionDialogProps) {
   const { data: projects, isLoading: loadingProjects } =
     projectHooks.useProjects();
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [isCreateReleaseDialogOpen, setIsCreateReleaseDialogOpen] =
+    useState(false);
   const [syncPlan, setSyncPlan] = useState<any>(null);
-
   const { mutate: loadSyncPlan, isPending: isDoingDiff } = useMutation({
     mutationFn: (request: DiffReleaseRequest) =>
       projectReleaseApi.diff(request),
@@ -64,7 +64,7 @@ export function ProjectSelectionDialog({
       }
       setSyncPlan(plan);
       setOpen(false);
-      setDialogOpen(true);
+      setIsCreateReleaseDialogOpen(true);
     },
     onError: () => {
       toast(INTERNAL_ERROR_TOAST);
@@ -157,11 +157,11 @@ export function ProjectSelectionDialog({
         </DialogContent>
       </Dialog>
 
-      {dialogOpen && (
+      {isCreateReleaseDialogOpen && (
         <CreateReleaseDialog
           loading={isDoingDiff}
-          open={dialogOpen}
-          setOpen={setDialogOpen}
+          open={isCreateReleaseDialogOpen}
+          setOpen={setIsCreateReleaseDialogOpen}
           refetch={onSuccess}
           diffRequest={{
             targetProjectId: form.getValues('selectedProject'),
