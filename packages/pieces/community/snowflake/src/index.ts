@@ -3,6 +3,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
+import { runMultipleQueries } from './lib/actions/run-multiple-queries';
 import { runQuery } from './lib/actions/run-query';
 import { PieceCategory } from '@activepieces/shared';
 import { insertRowAction } from './lib/actions/insert-row';
@@ -53,7 +54,7 @@ export const snowflake = createPiece({
   minimumSupportedRelease: '0.27.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/snowflake.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  authors: ['AdamSelene', 'abuaboud'],
-  actions: [runQuery, insertRowAction],
+  authors: ['AdamSelene', 'abuaboud', 'valentin-mourtialon'],
+  actions: [runQuery, runMultipleQueries, insertRowAction],
   triggers: [],
 });

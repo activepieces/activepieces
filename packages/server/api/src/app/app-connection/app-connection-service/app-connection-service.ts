@@ -5,6 +5,7 @@ import {
     apId,
     AppConnection,
     AppConnectionId,
+    AppConnectionOwners,
     AppConnectionScope,
     AppConnectionStatus,
     AppConnectionType,
@@ -16,6 +17,8 @@ import {
     ErrorCode,
     isNil,
     OAuth2GrantType,
+    PlatformId,
+    PlatformRole,
     ProjectId,
     SeekPage,
     spreadIfDefined,
@@ -27,6 +30,7 @@ import { EngineHelperResponse, EngineHelperValidateAuthResult } from 'server-wor
 import { Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
+import { projectMemberService } from '../../ee/project-members/project-member.service'
 import { encryptUtils } from '../../helper/encryption'
 import { distributedLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -306,6 +310,20 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             scope: AppConnectionScope.PROJECT,
             projectIds: APArrayContains('projectIds', [projectId]),
         })
+    },
+    async getOwners({ projectId, platformId }: { projectId: ProjectId, platformId: PlatformId }): Promise<AppConnectionOwners[]> {
+        const platformAdmins = (await userService.getByPlatformRole(platformId, PlatformRole.ADMIN)).map(user=>({
+            firstName: user.identity.firstName, 
+            lastName: user.identity.lastName,
+            email: user.identity.email,
+        }))
+        const projectMembers = await projectMemberService(log).list(projectId, null, 1000, undefined)
+        const projectMembersDetails = projectMembers.data.map(pm=>({
+            firstName: pm.user.firstName,
+            lastName: pm.user.lastName,
+            email: pm.user.email,
+        }))
+        return [...platformAdmins, ...projectMembersDetails]
     },
 })
 

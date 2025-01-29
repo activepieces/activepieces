@@ -77,8 +77,10 @@ async function resolveTemplatesPlatformId(principal: Principal, platformId: stri
         return system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
     }
     const platform = await platformService.getOneOrThrow(platformId)
+    if (!platform.manageTemplatesEnabled) {
+        return system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
+    }
     return platform.id
-
 }
 
 const GetParams = {

@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Trash, Globe } from 'lucide-react';
+import { CheckIcon, Trash, Globe, AppWindow, Tag, User } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -31,8 +31,10 @@ import { useToast } from '@/components/ui/use-toast';
 import { UserFullName } from '@/components/ui/user-fullname';
 import { RenameConnectionDialog } from '@/features/connections/components/rename-connection-dialog';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
+import { appConnectionsHooks } from '@/features/connections/lib/app-connections-hooks';
 import { appConnectionUtils } from '@/features/connections/lib/app-connections-utils';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
@@ -44,21 +46,6 @@ import {
   PlatformRole,
 } from '@activepieces/shared';
 
-const filters = [
-  {
-    type: 'select',
-    title: t('Status'),
-    accessorKey: 'status',
-    options: Object.values(AppConnectionStatus).map((status) => {
-      return {
-        label: formatUtils.convertEnumToHumanReadable(status),
-        value: status,
-      };
-    }),
-    icon: CheckIcon,
-  } as const,
-];
-
 function AppConnectionsPage() {
   const [refresh, setRefresh] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -68,6 +55,112 @@ function AppConnectionsPage() {
   const { toast } = useToast();
   const { checkAccess } = useAuthorization();
   const userPlatformRole = authenticationSession.getUserPlatformRole();
+  const location = useLocation();
+  const { pieces } = piecesHooks.usePieces({});
+  const pieceOptions = (pieces ?? []).map((piece) => ({
+    label: piece.displayName,
+    value: piece.name,
+  }));
+  const projectId = authenticationSession.getProjectId()!;
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['appConnections', location.search, projectId],
+    queryFn: () => {
+      const searchParams = new URLSearchParams(location.search);
+      const cursor = searchParams.get(CURSOR_QUERY_PARAM);
+      const limit = searchParams.get(LIMIT_QUERY_PARAM)
+        ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
+        : 10;
+      const status =
+        (searchParams.getAll('status') as AppConnectionStatus[]) ?? [];
+      const pieceName = searchParams.get('pieceName') ?? undefined;
+      const displayName = searchParams.get('displayName') ?? undefined;
+      return appConnectionsApi.list({
+        projectId,
+        cursor: cursor ?? undefined,
+        limit,
+        status,
+        pieceName,
+        displayName,
+      });
+    },
+  });
+
+  const filteredData = useMemo(() => {
+    if (!data?.data) return undefined;
+    const searchParams = new URLSearchParams(location.search);
+    const ownerEmails = searchParams.getAll('owner');
+
+    if (ownerEmails.length === 0) return data;
+
+    return {
+      data: data.data.filter(
+        (conn) => conn.owner && ownerEmails.includes(conn.owner.email),
+      ),
+      next: data.next,
+      previous: data.previous,
+    };
+  }, [data, location.search]);
+
+  const userHasPermissionToWriteAppConnection = checkAccess(
+    Permission.WRITE_APP_CONNECTION,
+  );
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map((id) => appConnectionsApi.delete(id)));
+    },
+    onSuccess: () => {
+      refetch();
+    },
+    onError: () => {
+      toast({
+        title: t('Error deleting connections'),
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const { data: owners } = appConnectionsHooks.useConnectionsOwners();
+  const ownersOptions = owners?.map((owner) => ({
+    label: `${owner.firstName} ${owner.lastName} (${owner.email})`,
+    value: owner.email,
+  }));
+  const filters = [
+    {
+      type: 'select',
+      title: t('Status'),
+      accessorKey: 'status',
+      options: Object.values(AppConnectionStatus).map((status) => {
+        return {
+          label: formatUtils.convertEnumToHumanReadable(status),
+          value: status,
+        };
+      }),
+      icon: CheckIcon,
+    } as const,
+    {
+      type: 'select',
+      title: t('Pieces'),
+      accessorKey: 'pieceName',
+      icon: AppWindow,
+      options: pieceOptions,
+    } as const,
+    {
+      type: 'input',
+      title: t('Display Name'),
+      accessorKey: 'displayName',
+      icon: Tag,
+      options: [],
+    } as const,
+    {
+      type: 'select',
+      title: t('Owner'),
+      accessorKey: 'owner',
+      icon: User,
+      options: ownersOptions ?? [],
+    } as const,
+  ];
+
   const columns: ColumnDef<
     RowDataWithActions<AppConnectionWithoutSensitiveData>,
     unknown
@@ -280,45 +373,6 @@ function AppConnectionsPage() {
       },
     },
   ];
-  const location = useLocation();
-
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['appConnections', location.search],
-    staleTime: 0,
-    gcTime: 0,
-    queryFn: () => {
-      const searchParams = new URLSearchParams(location.search);
-      const cursor = searchParams.get(CURSOR_QUERY_PARAM);
-      const limit = searchParams.get(LIMIT_QUERY_PARAM)
-        ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
-        : 10;
-      return appConnectionsApi.list({
-        projectId: authenticationSession.getProjectId()!,
-        cursor: cursor ?? undefined,
-        limit,
-        status: [],
-      });
-    },
-  });
-
-  const userHasPermissionToWriteAppConnection = checkAccess(
-    Permission.WRITE_APP_CONNECTION,
-  );
-
-  const bulkDeleteMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
-      await Promise.all(ids.map((id) => appConnectionsApi.delete(id)));
-    },
-    onSuccess: () => {
-      refetch();
-    },
-    onError: () => {
-      toast({
-        title: t('Error deleting connections'),
-        variant: 'destructive',
-      });
-    },
-  });
 
   const bulkActions: BulkAction<AppConnectionWithoutSensitiveData>[] = useMemo(
     () => [
@@ -406,7 +460,7 @@ function AppConnectionsPage() {
       </TableTitle>
       <DataTable
         columns={columns}
-        page={data}
+        page={filteredData}
         isLoading={isLoading}
         filters={filters}
         bulkActions={bulkActions}
