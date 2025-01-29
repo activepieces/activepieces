@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { platformUserApi } from '@/lib/platform-user-api';
-import { SeekPage, UserWithMetaInformation } from '@activepieces/shared';
+import { SeekPage, UserWithMetaInformation, UserWithMetaInformationAndProject } from '@activepieces/shared';
 
 export const platformUserHooks = {
   useUsers: () => {
@@ -10,6 +10,15 @@ export const platformUserHooks = {
       queryFn: async () => {
         const results = await platformUserApi.list();
         return results;
+      },
+    });
+  },
+  useCurrentUser: () => {
+    return useQuery<UserWithMetaInformationAndProject, Error>({
+      queryKey: ['currentUser'],
+      queryFn: async () => {
+        const result = await platformUserApi.getCurrentUser();
+        return result;
       },
     });
   },
