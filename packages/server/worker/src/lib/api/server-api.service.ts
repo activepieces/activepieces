@@ -5,6 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { workerMachine } from '../utils/machine'
 import { ApAxiosClient } from './ap-axios'
+import pLimit from 'p-limit';
 
 const removeTrailingSlash = (url: string): string => {
     return url.endsWith('/') ? url.slice(0, -1) : url
@@ -49,22 +50,28 @@ export const workerApiService = (workerToken: string) => {
         async savePayloadsAsSampleData(request: SavePayloadRequest): Promise<void> {
             await client.post('/v1/workers/save-payloads', request)
         },
-        //TODO: Ask mo about failed reuqest handling
         async startRuns(request: SubmitPayloadsRequest): Promise<FlowRun[]> {
-            const runs: FlowRun[] = []
-            const batchSize = 5
+            const CONCURRENT_LIMIT = 5
+            const limit = pLimit(CONCURRENT_LIMIT)
 
-            for (let i = 0; i < request.payloads.length; i += batchSize) {
-                const batch = request.payloads.slice(i, i + batchSize)
-                const res = await client.post<FlowRun>('/v1/workers/submit-payloads', {
+            const promises = request.payloads.map(payload => 
+                limit(() => client.post<FlowRun>('/v1/workers/submit-payloads', {
                     ...request,
-                    payloads: batch,
-                })
-                runs.push(res)
-            }
+                    payloads: [payload],
+                }))
+            )
             
-            return runs
+            const results = await Promise.allSettled(promises)
+            const errors = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+            
+            if (errors.length > 0) {
+                const errorMessages = errors.map(e => e.reason.message).join(', ')
+                throw new Error(`Failed to start runs: ${errorMessages}`)
+            }
 
+            return results
+                .filter((r): r is PromiseFulfilledResult<FlowRun> => r.status === 'fulfilled')
+                .map(r => r.value)
         },
         async sendUpdate(request: SendEngineUpdateRequest): Promise<void> {
             await client.post('/v1/workers/send-engine-update', request)
