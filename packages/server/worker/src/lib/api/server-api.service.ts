@@ -3,9 +3,9 @@ import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, Q
 import { ActivepiecesError, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import pLimit from 'p-limit'
 import { workerMachine } from '../utils/machine'
 import { ApAxiosClient } from './ap-axios'
-import pLimit from 'p-limit';
 
 const removeTrailingSlash = (url: string): string => {
     return url.endsWith('/') ? url.slice(0, -1) : url
@@ -58,7 +58,7 @@ export const workerApiService = (workerToken: string) => {
                 limit(() => client.post<FlowRun>('/v1/workers/submit-payloads', {
                     ...request,
                     payloads: [payload],
-                }))
+                })),
             )
             
             const results = await Promise.allSettled(promises)
