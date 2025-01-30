@@ -26,10 +26,7 @@ const initialPermissions = [
     name: 'Flows',
     description: 'Read and write flows',
     read: [Permission.READ_FLOW],
-    write: [
-      Permission.READ_FLOW,
-      Permission.WRITE_FLOW,
-    ],
+    write: [Permission.READ_FLOW, Permission.WRITE_FLOW],
     disableNone: true,
   },
   {
@@ -175,7 +172,7 @@ export const ProjectRoleDialog = ({
     const hasWritePermissions =
       writePermissions.size > 0 &&
       [...writePermissions].every((p) => currentPermissionsSet.has(p));
-      
+
     const hasReadPermissions =
       readPermissions.size > 0 &&
       [...readPermissions].every((p) => currentPermissionsSet.has(p)) &&
@@ -260,18 +257,18 @@ export const ProjectRoleDialog = ({
                       {!permission.disableRead && (
                         <Button
                           className="h-9 px-4"
-                        variant={getButtonVariant(permission.name, 'Read')}
-                        onClick={() =>
-                          handlePermissionChange(permission.name, 'Read')
-                        }
-                        disabled={disabled}
-                      >
+                          variant={getButtonVariant(permission.name, 'Read')}
+                          onClick={() =>
+                            handlePermissionChange(permission.name, 'Read')
+                          }
+                          disabled={disabled}
+                        >
                           {t('Read')}
                         </Button>
                       )}
-                        <Button
-                          className="h-9 px-4"
-                          variant={getButtonVariant(permission.name, 'Write')}
+                      <Button
+                        className="h-9 px-4"
+                        variant={getButtonVariant(permission.name, 'Write')}
                         onClick={() =>
                           handlePermissionChange(permission.name, 'Write')
                         }
