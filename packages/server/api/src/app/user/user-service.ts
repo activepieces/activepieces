@@ -120,13 +120,6 @@ export const userService = {
             platformId,
         })
     },
-    async getByEmail(email: string): Promise<User | null> {
-        const identity = await userIdentityService(system.globalLogger()).getIdentityByEmail(email)
-        if (!identity) {
-            return null
-        }
-        return userRepo().findOneBy({ identityId: identity.id })
-    },
 }
 
 type DeleteParams = {

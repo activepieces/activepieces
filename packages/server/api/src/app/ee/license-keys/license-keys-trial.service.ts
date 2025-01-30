@@ -1,6 +1,7 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, Platform } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, Platform } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { system } from '../../helper/system/system'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
@@ -21,13 +22,13 @@ export const licenseKeysTrialService = (log: FastifyBaseLogger): {
             const disabledFeatures = getDisabledFeatures(ultimatePlan)
             const activationMessage = 'Activation Path: Platform Admin -> Setup -> License Keys'
             let message = ''
-            
+
             if (selfHosting) {
                 const { trialLicenseKey } = await generateSelfHostingTrialLicense(email, companyName, disabledFeatures, log)
                 message = `Your license key is: ${trialLicenseKey}. <br><br> ${activationMessage}`
             }
             else {
-                const platform = await fetchPlatform(email)
+                const platform = await fetchPlatform(email, log)
                 const { trialLicenseKey1, trialLicenseKey2, subdomain } = await generateCloudTrialLicense(email, platform.id, companyName, disabledFeatures, log)
                 message = `Your development license key is: ${trialLicenseKey1}. <br><br> Your production license key is: ${trialLicenseKey2}. <br><br> Your domain is: ${subdomain}. <br><br> ${activationMessage}`
             }
@@ -49,18 +50,30 @@ export const licenseKeysTrialService = (log: FastifyBaseLogger): {
         })
     },
 })
+async function fetchPlatform(email: string, log: FastifyBaseLogger): Promise<Platform> {
+    const userIdentity = await userIdentityService(log).getIdentityByEmail(email)
+    const userNotFoundError = new ActivepiecesError({
+        code: ErrorCode.ENTITY_NOT_FOUND,
+        params: {
+            message: 'User identity or platform not found',
+        },
+    })
 
-async function fetchPlatform(email: string): Promise<Platform> {
-    const user = await userService.getByEmail(email)
-    if (!user?.platformId) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: {
-                message: 'User or platform not found',
-            },
-        })
+    if (isNil(userIdentity)) {
+        throw userNotFoundError
     }
-    return platformService.getOneOrThrow(user.platformId)
+
+    const user = await userService.getOneByIdentityIdOnly({
+        identityId: userIdentity.id,
+    })
+
+    const platformId = user?.platformId
+    if (!platformId) {
+        throw userNotFoundError
+    }
+
+    const platform = await platformService.getOneOrThrow(platformId)
+    return platform
 }
 
 async function generateSelfHostingTrialLicense(email: string, companyName: string, disabledFeatures: string[], log: FastifyBaseLogger): Promise<{ trialLicenseKey: string }> {
@@ -170,7 +183,7 @@ function getDisabledFeatures(ultimatePlan: boolean): string[] {
             'ssoEnabled',
             'showPoweredBy',
             'auditLogEnabled',
-            'globalConnectionsEnabled', 
+            'globalConnectionsEnabled',
             'customRolesEnabled',
             'environmentsEnabled',
         ]
