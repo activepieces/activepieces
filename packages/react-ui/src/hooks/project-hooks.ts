@@ -4,13 +4,25 @@ import {
   usePrefetchQuery,
   useSuspenseQuery,
 } from '@tanstack/react-query';
+import { HttpStatusCode } from 'axios';
+import { t } from 'i18next';
 import { useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 
+import { useToast } from '@/components/ui/use-toast';
+import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
-import { ProjectWithLimits } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  isNil,
+  ProjectWithLimits,
+} from '@activepieces/shared';
 
 import { projectApi } from '../lib/project-api';
+
+import { flagsHooks } from './flags-hooks';
 
 export const projectHooks = {
   prefetchProject: () => {
@@ -47,6 +59,75 @@ export const projectHooks = {
       },
     });
   },
+  useReloadPageIfProjectIdChanged: (projectId: string) => {
+    useEffect(() => {
+      const handleVisibilityChange = () => {
+        const currentProjectId = authenticationSession.getProjectId();
+        if (
+          currentProjectId !== projectId &&
+          document.visibilityState === 'visible'
+        ) {
+          console.log('Project changed', currentProjectId, projectId);
+          window.location.reload();
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      return () => {
+        document.removeEventListener(
+          'visibilitychange',
+          handleVisibilityChange,
+        );
+      };
+    }, [projectId]);
+  },
+  useSwitchToProjectInParams: () => {
+    const { projectId: projectIdFromParams } = useParams<{
+      projectId: string;
+    }>();
+    const projectIdFromToken = authenticationSession.getProjectId();
+    const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+    const { toast } = useToast();
+
+    const query = useSuspenseQuery<boolean, Error>({
+      //added currentProjectId in case user switches project and goes back to the same project
+      queryKey: ['switch-to-project', projectIdFromParams, projectIdFromToken],
+      queryFn: async () => {
+        if (edition === ApEdition.COMMUNITY) {
+          return true;
+        }
+        if (isNil(projectIdFromParams)) {
+          return false;
+        }
+        try {
+          await authenticationSession.switchToSession(projectIdFromParams);
+          return true;
+        } catch (error) {
+          if (
+            api.isError(error) &&
+            (error.response?.status === HttpStatusCode.BadRequest ||
+              error.response?.status === HttpStatusCode.Forbidden)
+          ) {
+            toast({
+              duration: 10000,
+              title: t('Invalid Access'),
+              description: t(
+                'Either the project does not exist or you do not have access to it.',
+              ),
+            });
+          }
+          return false;
+        }
+      },
+      retry: false,
+      staleTime: 0,
+    });
+
+    return {
+      projectIdFromParams,
+      projectIdFromToken,
+      ...query,
+    };
+  },
 };
 
 const updateProject = async (
@@ -73,23 +154,4 @@ const setCurrentProject = async (
     );
     window.location.href = pathNameWithNewProjectId;
   }
-};
-
-export const useReloadPageIfProjectIdChanged = (projectId: string) => {
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      const currentProjectId = authenticationSession.getProjectId();
-      if (
-        currentProjectId !== projectId &&
-        document.visibilityState === 'visible'
-      ) {
-        console.log('Project changed', currentProjectId, projectId);
-        window.location.reload();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [projectId]);
 };

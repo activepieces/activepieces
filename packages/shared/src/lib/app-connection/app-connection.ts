@@ -118,3 +118,11 @@ export const AppConnectionWithoutSensitiveData = Type.Object({
     description: 'App connection is a connection to an external app.',
 })
 export type AppConnectionWithoutSensitiveData = Static<typeof AppConnectionWithoutSensitiveData> & { __brand: 'AppConnectionWithoutSensitiveData' }
+
+export const AppConnectionOwners = Type.Object({
+    firstName: Type.String(),
+    lastName: Type.String(),
+    email: Type.String(),
+})
+
+export type AppConnectionOwners = Static<typeof AppConnectionOwners>

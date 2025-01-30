@@ -76,8 +76,9 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
             return principal
         }
 
+        const projectId = await this.extractProjectIdOrThrow(request)
+
         try {
-            const projectId = await this.extractProjectIdOrThrow(request)
             const project = await projectService.getOneOrThrow(projectId)
 
             this.assertApiKeyAndProjectBelongToSamePlatform(project, apiKey)
@@ -89,7 +90,7 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {
-                    message: 'invalid project id for api key',
+                    message: 'invalid api key',
                 },
             })
         }

@@ -37,7 +37,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                 const platformBilling = await platformBillingService(request.log).updateSubscriptionIdByCustomerId(subscription)
                 if (subscription.status === ApSubscriptionStatus.CANCELED) {
                     request.log.info(`Subscription canceled for project ${platformBilling.platformId}, downgrading to free plan`)
-                    await platformBillingService(request.log).update(platformBilling.platformId, 0, 0)
+                    await platformBillingService(request.log).update({ platformId: platformBilling.platformId, tasksLimit: undefined })
                 }
                 return await reply.status(StatusCodes.OK).send()
             }

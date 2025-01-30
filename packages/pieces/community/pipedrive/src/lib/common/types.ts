@@ -89,7 +89,7 @@ export type PaginatedResponse<T> =
 
 export type RequestParams = Record<string, string | number | string[] | undefined>;
 
-export type WebhookCreateResonse = {
+export type WebhookCreateResponse = {
 	status:string,
 	success:boolean,
 	data:{

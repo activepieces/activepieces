@@ -40,9 +40,9 @@ export default function IssuesTable() {
   );
 
   const [searchParams] = useSearchParams();
-
+  const projectId = authenticationSession.getProjectId()!;
   const { data, isLoading } = useQuery({
-    queryKey: ['issues', searchParams.toString()],
+    queryKey: ['issues', searchParams.toString(), projectId],
     staleTime: 0,
     gcTime: 0,
     queryFn: () => {
@@ -51,7 +51,7 @@ export default function IssuesTable() {
         ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
         : 10;
       return issuesApi.list({
-        projectId: authenticationSession.getProjectId()!,
+        projectId,
         cursor: cursor ?? undefined,
         limit,
       });

@@ -39,7 +39,7 @@ export const createProductAction = createAction({
 			displayName: 'Is Active ?',
 			required: false,
 		}),
-		ownerId: ownerIdProp(false),
+		ownerId: ownerIdProp('Owner',false),
 		currency: Property.ShortText({
 			displayName: 'Currency',
 			required: false,
