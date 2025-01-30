@@ -90,7 +90,7 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
     async removeRepeatingJob({ flowVersionId }: { flowVersionId: ApId }): Promise<void> {
         const queue = await ensureQueueExists(QueueName.SCHEDULED)
         const client = await queue.client
-        const repeatJob = await findRepeatableJobKey(flowVersionId, log)
+        const repeatJob = await findRepeatableJobKey(flowVersionId)
         if (isNil(repeatJob)) {
             exceptionHandler.handle(new Error(`Couldn't find job key for flow version id "${flowVersionId}"`), log)
             return
@@ -111,7 +111,7 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
     },
 })
 
-async function findRepeatableJobKey(flowVersionId: ApId, log: FastifyBaseLogger): Promise<string | null> {
+async function findRepeatableJobKey(flowVersionId: ApId): Promise<string | null> {
     const queue = await ensureQueueExists(QueueName.SCHEDULED)
     const client = await queue.client
     const jobKey = await client.get(repeatingJobKey(flowVersionId))
