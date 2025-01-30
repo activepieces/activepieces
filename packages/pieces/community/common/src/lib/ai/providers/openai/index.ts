@@ -2,52 +2,14 @@ import { AI, AIChatRole, AIFactory } from '../..';
 import { isNil } from '@activepieces/shared';
 import OpenAI from 'openai';
 import { imageMapper, model, ModelType } from '../utils';
-import {  Property } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework';
 import {
 	ChatCompletionMessageParam,
 	FunctionParameters,
 	ModerationMultiModalInput,
+	ChatCompletionContentPartImage,
 } from 'openai/resources';
-import { promises as fs } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import { nanoid } from 'nanoid';
 import mime from 'mime-types';
-
-const execPromise = promisify(exec);
-const pdftoppmPath = '/usr/bin/pdftoppm';
-
-async function convertPdfToImages(dataBuffer: Buffer): Promise<Buffer[]> {
-    const tempDir = tmpdir();
-    const uniqueId = nanoid();
-    const inputFilePath = join(tempDir, `input-${uniqueId}.pdf`);
-    const outputDir = join(tempDir, `output-${uniqueId}`);
-    try {
-        await fs.mkdir(outputDir);
-        await fs.writeFile(inputFilePath, dataBuffer);
-
-        const { stderr } = await execPromise(`${pdftoppmPath} -png ${inputFilePath} ${join(outputDir, 'output')}`);
-        if (stderr) {
-            throw new Error(stderr);
-        }
-
-        const files = await fs.readdir(outputDir);
-        const imageBuffers = [];
-        for (const file of files) {
-            const filePath = join(outputDir, file);
-            const imageBuffer = await fs.readFile(filePath);
-            await fs.unlink(filePath);
-            imageBuffers.push(imageBuffer);
-        }
-
-        return imageBuffers;
-    } finally {
-        await fs.unlink(inputFilePath).catch(() => void 0);
-        await fs.rm(outputDir, { recursive: true, force: true }).catch(() => void 0);
-    }
-}
 
 export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
 	const openaiApiVersion = 'v1';
@@ -60,42 +22,32 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
 		function: {
 			call: async (params) => {
 				const messages: ChatCompletionMessageParam[] = params.messages.map((message) => ({
-					role: 'user',
+					role:AIChatRole.USER,
 					content: [{ type: 'text', text: message.content }],
 				}));
 
-				if (params.image) {		
-					const mediaType = params.image.extension
-											? mime.lookup(params.image.extension)
-											: 'image/jpeg';	
-					if(mediaType === 'application/pdf') {
-						const imageBuffers = await convertPdfToImages(params.image.data);
-						messages.push({
-							role: 'user',
-							content:imageBuffers.map((imageBuffer) => {
-								return {
-									type: 'image_url',
-									image_url: {
-										url: `data:image/png;base64,${imageBuffer.toString('base64')}`,
-									},
-								};
-							}),
-						})
-					}
-					else{
-						messages.push({
-							role: 'user',
-							content: [
-								{
-									type: 'image_url',
-									image_url: {
-										url: `data:image/${params.image.extension};base64,${params.image.base64}`,
-									},
+				if (params.files.length) {
+					const contents: Array<ChatCompletionContentPartImage> = [];
+					for (const file of params.files) {
+						const fileType = file.extension ? mime.lookup(file.extension) : 'image/jpeg';
+
+						if (fileType && fileType.startsWith('image')) {
+							contents.push({
+								type: 'image_url',
+								image_url: {
+									url: `data:image/${file.extension};base64,${file.base64}`,
 								},
-							],
+							});
+						}
+					}
+					if (contents.length) {
+						messages.push({
+							role: 'user',
+							content: contents,
 						});
 					}
 				}
+
 				const completion = await sdk.chat.completions.create({
 					model: params.model,
 					messages: messages,

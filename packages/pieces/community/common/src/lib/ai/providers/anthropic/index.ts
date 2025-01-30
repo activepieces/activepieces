@@ -15,50 +15,45 @@ export const anthropic: AIFactory = ({ proxyUrl, engineToken }): AI => {
 		provider: 'ANTHROPIC' as const,
 		function: {
 			call: async (params) => {
-				type AllowedImageTypes = 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
-				const messages: Anthropic.Beta.Messages.BetaMessageParam[] = params.messages.map(
-					(message) => ({
-						role: 'user',
-						content: [{ type: 'text', text: message.content }],
-					}),
-				);
-				if (params.image) {
+				const messages: Anthropic.Messages.MessageParam[] = params.messages.map((message) => ({
+					role: AIChatRole.USER,
+					content: [{ type: 'text', text: message.content }],
+				}));
 
-					const mediaType = params.image.extension
-						? mime.lookup(params.image.extension)
-						: 'image/jpeg';
-					if (mediaType === 'application/pdf') {
-						messages.push({
-							role: 'user',
-							content: [
-								{
-									type: 'document',
-									source: {
-										type: 'base64',
-										media_type: 'application/pdf',
-										data: params.image.base64,
-									},
+				if (params.files.length) {
+					const contents: Array<Anthropic.Messages.ContentBlockParam> = [];
+					for (const file of params.files) {
+						const fileType = file.extension ? mime.lookup(file.extension) : 'image/jpeg';
+
+						if (fileType && fileType.startsWith('image')) {
+							contents.push({
+								type: 'image',
+								source: {
+									type: 'base64',
+									media_type: fileType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+									data: file.base64,
 								},
-							],
-						});
-					} else {
-						messages.push({
-							role: 'user',
-							content: [
-								{
-									type: 'image',
-									source: {
-										type: 'base64',
-										media_type:
-											((params.image.extension &&
-												mime.lookup(params.image.extension)) as AllowedImageTypes) || 'image/jpeg',
-										data: params.image.base64,
-									},
+							});
+						}
+						if (fileType === 'application/pdf') {
+							contents.push({
+								type: 'document',
+								source: {
+									type: 'base64',
+									media_type: 'application/pdf',
+									data: file.base64,
 								},
-							],
+							});
+						}
+					}
+					if (contents.length) {
+						messages.push({
+							role: AIChatRole.USER,
+							content: contents,
 						});
 					}
 				}
+				
 				const completion = await sdk.beta.messages.create({
 					model: params.model,
 					betas: ['pdfs-2024-09-25'],
