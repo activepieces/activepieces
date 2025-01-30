@@ -108,6 +108,13 @@ export enum AppSystemProp {
     LOKI_PASSWORD = 'LOKI_PASSWORD',
     LOKI_URL = 'LOKI_URL',
     LOKI_USERNAME = 'LOKI_USERNAME',
+
+    // Cloudflare
+    CLOUDFLARE_API_TOKEN = 'CLOUDFLARE_API_TOKEN',
+    CLOUDFLARE_API_BASE = 'CLOUDFLARE_API_BASE',
+
+    // Secret Manager
+    SECRET_MANAGER_API_KEY = 'SECRET_MANAGER_API_KEY',
 }
 export enum PiecesSource {
     /**

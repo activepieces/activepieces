@@ -2,10 +2,10 @@ import { Static, Type } from '@sinclair/typebox'
 
 export const CreateTrialLicenseKeyRequestBody = Type.Object({
     email: Type.String(),
-    fullName: Type.String(),
     companyName: Type.String(),
     goal: Type.String(),
-    numberOfEmployees: Type.String(),
+    keyType: Type.Optional(Type.String()),
+    disabledFeatures: Type.Optional(Type.Array(Type.String())),
 })
 
 export type CreateTrialLicenseKeyRequestBody = Static<typeof CreateTrialLicenseKeyRequestBody>
