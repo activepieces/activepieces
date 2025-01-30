@@ -11,7 +11,7 @@ export const nocodbCommon = {
 		displayName: 'Workspace ID',
 		refreshers: [],
 		required: false,
-		description: 'Leave empty for free self-hosted instances.',
+		description: 'For self-hosted instances,select "No Workspace".',
 		options: async ({ auth }) => {
 			if (!auth) {
 				return {
@@ -22,17 +22,32 @@ export const nocodbCommon = {
 			}
 
 			const client = makeClient(auth as PiecePropValueSchema<typeof nocodbAuth>);
-			const response = await client.listWorkspaces();
+			try
+			{
+				const response = await client.listWorkspaces();
+				return {
+					disabled: false,
+					options: response.list.map((workspace) => {
+						return {
+							label: workspace.title,
+							value: workspace.id,
+						};
+					}),
+				};
 
-			return {
-				disabled: false,
-				options: response.list.map((workspace) => {
-					return {
-						label: workspace.title,
-						value: workspace.id,
-					};
-				}),
-			};
+			}
+			catch(error)
+			{
+				return{
+					disabled:false,
+					options:[{
+						label:'No Workspace',
+						value:'none'
+					}]
+				}
+			}
+
+			
 		},
 	}),
 	baseId: Property.Dropdown({

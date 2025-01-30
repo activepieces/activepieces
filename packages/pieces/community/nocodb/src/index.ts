@@ -23,7 +23,7 @@ export const nocodbAuth = PieceAuth.CustomAuth({
 		}),
 		version: Property.StaticDropdown({
 			displayName: 'API Version',
-			description: 'Required only for self-hosted instances. Leave unchanged for cloud.',
+			description: 'Required only for self-hosted instances. Not needed for the cloud version.',
 			required: false,
 			defaultValue: 0,
 			options: {
