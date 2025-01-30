@@ -3,6 +3,7 @@ import { jwtDecode } from 'jwt-decode';
 import { AuthenticationResponse, isNil, Principal } from '@activepieces/shared';
 
 import { authenticationApi } from './authentication-api';
+import { useQueryClient } from '@tanstack/react-query';
 
 const tokenKey = 'token';
 const currentUserKey = 'currentUser';
@@ -28,6 +29,14 @@ export const authenticationSession = {
     }
     const decodedJwt = getDecodedJwt(token);
     return decodedJwt.projectId;
+  },
+  getCurrentUserId(): string | null {
+    const token = this.getToken();
+    if (isNil(token)) {
+      return null;
+    }
+    const decodedJwt = getDecodedJwt(token);
+    return decodedJwt.id;
   },
   appendProjectRoutePrefix(path: string): string {
     const projectId = this.getProjectId();

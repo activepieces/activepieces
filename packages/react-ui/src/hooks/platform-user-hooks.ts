@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { QueryClient, usePrefetchQuery, useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 
 import { platformUserApi } from '@/lib/platform-user-api';
 import {
@@ -6,6 +6,7 @@ import {
   UserWithMetaInformation,
   UserWithMetaInformationAndProject,
 } from '@activepieces/shared';
+import { authenticationSession } from '@/lib/authentication-session';
 
 export const platformUserHooks = {
   useUsers: () => {
@@ -18,12 +19,23 @@ export const platformUserHooks = {
     });
   },
   useCurrentUser: () => {
-    return useQuery<UserWithMetaInformationAndProject, Error>({
-      queryKey: ['currentUser'],
+    const userId = authenticationSession.getCurrentUserId();
+    if(!userId) {
+      return {
+        data: null,
+      };
+    }
+    return useSuspenseQuery<UserWithMetaInformationAndProject, Error>({
+      queryKey: ['currentUser', userId],
       queryFn: async () => {
         const result = await platformUserApi.getCurrentUser();
         return result;
       },
+      staleTime: Infinity,
     });
+  },
+  invalidateCurrentUser: (queryClient: QueryClient) => {
+    const userId = authenticationSession.getCurrentUserId();
+    queryClient.invalidateQueries({ queryKey: ['currentUser', userId] });
   },
 };

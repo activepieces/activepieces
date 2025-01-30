@@ -17,11 +17,12 @@ import {
   DropdownMenuItem,
 } from './dropdown-menu';
 import { TextWithIcon } from './text-with-icon';
+import { useQueryClient } from '@tanstack/react-query';
 export function UserAvatar() {
   const { reset } = useTelemetry();
   const { embedState } = useEmbedding();
   const { data: user } = platformUserHooks.useCurrentUser();
-
+  const queryClient = useQueryClient();
   if (!user || embedState.isEmbedded) {
     return null;
   }
@@ -57,6 +58,7 @@ export function UserAvatar() {
 
         <DropdownMenuItem
           onClick={() => {
+            platformUserHooks.invalidateCurrentUser(queryClient);
             authenticationSession.logOut();
             reset();
           }}
