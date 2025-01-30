@@ -51,9 +51,7 @@ export const workerApiService = (workerToken: string) => {
             await client.post('/v1/workers/save-payloads', request)
         },
         async startRuns(request: SubmitPayloadsRequest): Promise<FlowRun[]> {
-            const CONCURRENT_LIMIT = 5
-            const limit = pLimit(CONCURRENT_LIMIT)
-
+            const limit = pLimit(1)
             const promises = request.payloads.map(payload => 
                 limit(() => client.post<FlowRun>('/v1/workers/submit-payloads', {
                     ...request,
