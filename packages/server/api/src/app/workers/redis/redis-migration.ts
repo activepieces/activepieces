@@ -50,6 +50,7 @@ async function updateLegacyRepeatableJobKey(repeatableJobs: RepeatableJob[], log
     let count = 0
     for (const repeatableJob of repeatableJobs) {
         const nextJob = currentJobs.find(job =>
+            !isNil(job) &&
             job.repeatJobKey === repeatableJob.key &&
             !isNil(job.data),
         )
