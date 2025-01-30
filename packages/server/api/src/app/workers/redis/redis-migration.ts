@@ -54,9 +54,9 @@ async function updateLegacyRepeatableJobKey(repeatableJobs: RepeatableJob[], log
             !isNil(job.data),
         )
 
-        const newPattern = repeatableJob.pattern
+        const existingPattern = repeatableJob.pattern
         const flowVersionId = nextJob?.data?.flowVersionId
-        if (isNil(nextJob) || isNil(newPattern) || isNil(flowVersionId)) {
+        if (isNil(nextJob) || isNil(existingPattern) || isNil(flowVersionId)) {
             continue
         }
 
@@ -65,7 +65,7 @@ async function updateLegacyRepeatableJobKey(repeatableJobs: RepeatableJob[], log
         await queue.upsertJobScheduler(
             flowVersionId,
             {
-                pattern: newPattern,
+                pattern: existingPattern,
                 tz: repeatableJob.tz ?? undefined,
             },
             {
