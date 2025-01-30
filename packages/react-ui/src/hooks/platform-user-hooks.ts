@@ -1,12 +1,12 @@
-import { QueryClient, usePrefetchQuery, useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { QueryClient, useQuery, useSuspenseQuery } from '@tanstack/react-query';
 
+import { authenticationSession } from '@/lib/authentication-session';
 import { platformUserApi } from '@/lib/platform-user-api';
 import {
   SeekPage,
   UserWithMetaInformation,
   UserWithMetaInformationAndProject,
 } from '@activepieces/shared';
-import { authenticationSession } from '@/lib/authentication-session';
 
 export const platformUserHooks = {
   useUsers: () => {
@@ -20,14 +20,12 @@ export const platformUserHooks = {
   },
   useCurrentUser: () => {
     const userId = authenticationSession.getCurrentUserId();
-    if(!userId) {
-      return {
-        data: null,
-      };
-    }
-    return useSuspenseQuery<UserWithMetaInformationAndProject, Error>({
+    return useSuspenseQuery<UserWithMetaInformationAndProject | null, Error>({
       queryKey: ['currentUser', userId],
       queryFn: async () => {
+        if (!userId) {
+          return null;
+        }
         const result = await platformUserApi.getCurrentUser();
         return result;
       },

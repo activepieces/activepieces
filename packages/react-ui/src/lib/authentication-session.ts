@@ -3,7 +3,6 @@ import { jwtDecode } from 'jwt-decode';
 import { AuthenticationResponse, isNil, Principal } from '@activepieces/shared';
 
 import { authenticationApi } from './authentication-api';
-import { useQueryClient } from '@tanstack/react-query';
 
 const tokenKey = 'token';
 const currentUserKey = 'currentUser';
