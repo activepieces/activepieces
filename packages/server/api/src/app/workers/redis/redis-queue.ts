@@ -96,8 +96,6 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
 
 })
 
-
-
 async function ensureQueueExists(queueName: QueueName): Promise<Queue> {
     if (!isNil(bullMqGroups[queueName])) {
         return bullMqGroups[queueName]
