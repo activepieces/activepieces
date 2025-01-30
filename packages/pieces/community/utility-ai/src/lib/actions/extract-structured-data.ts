@@ -1,5 +1,5 @@
 import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { isNil, MarkdownVariant } from '@activepieces/shared';
 import { AI, AIChatRole, aiProps, AIFunctionArgumentDefinition } from '@activepieces/pieces-common';
 import Ajv from 'ajv';
 
@@ -14,6 +14,10 @@ export const extractStructuredData = createAction({
 			displayName: 'Text',
 			description: 'Text to extract structured data from.',
 			required: false,
+		}),
+		markdown:Property.MarkDown({
+			variant:MarkdownVariant.INFO,
+			value:`OpenAI supports only images. All other file types will be ignored. To process PDFs, use the Convert to Image action.`,
 		}),
 		files: Property.Array({
 			displayName: 'Files',

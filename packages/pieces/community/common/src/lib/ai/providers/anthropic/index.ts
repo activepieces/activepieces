@@ -22,18 +22,24 @@ export const anthropic: AIFactory = ({ proxyUrl, engineToken }): AI => {
 
 				if (params.files.length) {
 					const contents: Array<Anthropic.Messages.ContentBlockParam> = [];
-					for (const file of params.files) {
-						const fileType = file.extension ? mime.lookup(file.extension) : 'image/jpeg';
 
+					params.files.forEach((file, index) => {
+						const fileType = file.extension ? mime.lookup(file.extension) : 'image/jpeg';
 						if (fileType && fileType.startsWith('image')) {
-							contents.push({
-								type: 'image',
-								source: {
-									type: 'base64',
-									media_type: fileType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
-									data: file.base64,
+							contents.push(
+								{
+									type: 'text',
+									text: `Image ${index + 1}:`,
 								},
-							});
+								{
+									type: 'image',
+									source: {
+										type: 'base64',
+										media_type: fileType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+										data: file.base64,
+									},
+								},
+							);
 						}
 						if (fileType === 'application/pdf') {
 							contents.push({
@@ -45,18 +51,26 @@ export const anthropic: AIFactory = ({ proxyUrl, engineToken }): AI => {
 								},
 							});
 						}
-					}
+					});
+
 					if (contents.length) {
-						messages.push({
-							role: AIChatRole.USER,
-							content: contents,
-						});
+						const lastMessage = messages[messages.length - 1];
+
+						if (lastMessage && lastMessage.role === AIChatRole.USER) {
+							const exitingContent =
+								lastMessage.content as Array<Anthropic.Messages.ContentBlockParam>;
+							lastMessage.content = [...exitingContent, ...contents];
+						} else {
+							messages.push({
+								role: AIChatRole.USER,
+								content: contents,
+							});
+						}
 					}
 				}
-				
-				const completion = await sdk.beta.messages.create({
+
+				const completion = await sdk.messages.create({
 					model: params.model,
-					betas: ['pdfs-2024-09-25'],
 					messages: messages,
 					max_tokens: params.maxTokens ?? 2000,
 					tools: params.functions.map((functionDefinition) => ({

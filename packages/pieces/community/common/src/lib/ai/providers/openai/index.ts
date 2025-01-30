@@ -8,6 +8,7 @@ import {
 	FunctionParameters,
 	ModerationMultiModalInput,
 	ChatCompletionContentPartImage,
+	ChatCompletionContentPart,
 } from 'openai/resources';
 import mime from 'mime-types';
 
@@ -22,7 +23,7 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
 		function: {
 			call: async (params) => {
 				const messages: ChatCompletionMessageParam[] = params.messages.map((message) => ({
-					role:AIChatRole.USER,
+					role: AIChatRole.USER,
 					content: [{ type: 'text', text: message.content }],
 				}));
 
@@ -41,10 +42,17 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
 						}
 					}
 					if (contents.length) {
-						messages.push({
-							role: 'user',
-							content: contents,
-						});
+						const lastMessage = messages[messages.length - 1];
+
+						if (lastMessage && lastMessage.role === AIChatRole.USER) {
+							const exitingContent = lastMessage.content as Array<ChatCompletionContentPart>;
+							lastMessage.content = [...exitingContent, ...contents];
+						} else {
+							messages.push({
+								role: AIChatRole.USER,
+								content: contents,
+							});
+						}
 					}
 				}
 
