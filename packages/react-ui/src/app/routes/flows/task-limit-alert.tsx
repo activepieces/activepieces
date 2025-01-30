@@ -52,7 +52,7 @@ export const TaskLimitAlert = () => {
       <div className="flex flex-grow justify-between items-center">
         <div className="flex-grow">
           <AlertTitle className="mb-2">
-            {taskUsagePercentage === 1
+            {taskUsagePercentage >= 1
               ? t('All Flows Are Turned Off')
               : `${t('Task Usage Exceeded')} ${limitPercentage * 100}% ${t(
                   'of the Allowed Limit.',

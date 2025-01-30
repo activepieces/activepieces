@@ -5,7 +5,6 @@ import {
     ApId,
     CountFlowsRequest,
     CreateFlowRequest,
-    deepMergeAndCast,
     ErrorCode,
     FlowOperationRequest,
     FlowOperationType,
@@ -20,7 +19,6 @@ import {
     PrincipalType,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
-    Step,
     Trigger,
 } from '@activepieces/shared'
 import {
@@ -145,23 +143,39 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
 
 function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
     if (operation.type === FlowOperationType.IMPORT_FLOW) {
+        const clearInputUiInfo = {
+            currentSelectedData: undefined,
+            sampleDataFileId: undefined,
+            lastTestDate: undefined,
+        }
         const trigger = flowStructureUtil.transferStep(operation.request.trigger, (step) => {
-            return deepMergeAndCast<Step>(step, {
+            return {
+                ...step,
                 settings: {
                     ...step.settings,
                     inputUiInfo: {
-                        currentSelectedData: undefined,
-                        sampleDataFileId: undefined,
-                        lastTestDate: undefined,
+                        ...step.settings.inputUiInfo,
+                        ...clearInputUiInfo,
                     },
                 },
-            })
+            }
         }) as Trigger
-        return deepMergeAndCast<FlowOperationRequest>(operation, {
+        return {
+            ...operation,
             request: {
-                trigger,
+                ...operation.request,
+                trigger: {
+                    ...trigger,
+                    settings: {
+                        ...trigger.settings,
+                        inputUiInfo: {
+                            ...trigger.settings.inputUiInfo,
+                            ...clearInputUiInfo,
+                        },
+                    },
+                },
             },
-        })
+        }
     }
     return operation
 }

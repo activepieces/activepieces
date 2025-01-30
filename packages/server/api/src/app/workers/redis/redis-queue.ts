@@ -111,17 +111,10 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
     },
 })
 
-async function findRepeatableJobKey(flowVersionId: ApId, log: FastifyBaseLogger): Promise<string | undefined> {
+async function findRepeatableJobKey(flowVersionId: ApId, log: FastifyBaseLogger): Promise<string | null> {
     const queue = await ensureQueueExists(QueueName.SCHEDULED)
     const client = await queue.client
     const jobKey = await client.get(repeatingJobKey(flowVersionId))
-    // TODO: this temporary solution for jobs that doesn't have repeatJobKey in redis, it's also confusing because it search by flowVersionId
-    if (isNil(jobKey)) {
-        const jobs = await queue.getJobs()
-        const jobKeyInRedis = jobs.filter(f => !isNil(f) && !isNil(f.data)).find((f) => f.data.flowVersionId === flowVersionId)
-        log.warn({ flowVersionId, repeatJobKey: jobKeyInRedis?.repeatJobKey }, 'Job key not found in redis, trying to find it in the queue')
-        return jobKeyInRedis?.repeatJobKey
-    }
     return jobKey
 }
 
