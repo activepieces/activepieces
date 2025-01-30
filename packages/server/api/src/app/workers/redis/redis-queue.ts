@@ -109,6 +109,20 @@ export const redisQueue = (log: FastifyBaseLogger): QueueManager => ({
         }
         await client.del(repeatingJobKey(flowVersionId))
     },
+    async getAllRepeatableJobsWithNoRedisKey(): Promise<string[]> {
+        const queue = await ensureQueueExists(QueueName.SCHEDULED)
+        const client = await queue.client
+        const jobs = await queue.getJobs()
+        const jobsWithNoRedisKey = []
+        for (const job of jobs) {
+            const flowVersionId = job.data.flowVersionId
+            const jobKey = await client.get(repeatingJobKey(flowVersionId))
+            if (isNil(jobKey)) {
+                jobsWithNoRedisKey.push(flowVersionId)
+            }
+        }
+        return jobsWithNoRedisKey
+    },
 })
 
 async function findRepeatableJobKey(flowVersionId: ApId, log: FastifyBaseLogger): Promise<string | undefined> {

@@ -31,6 +31,7 @@ export type QueueManager = {
     init(): Promise<void>
     add<JT extends JobType>(params: AddParams<JT>): Promise<void>
     removeRepeatingJob(params: RemoveParams): Promise<void>
+    getAllRepeatableJobsWithNoRedisKey(): Promise<string[]>
 }
 
 type RemoveParams = {
