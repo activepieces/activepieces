@@ -10,6 +10,13 @@ import fs from 'fs';
 
 export const customPiecePath = () => path.join(cwd(), 'packages', 'pieces', 'custom')
 
+/**
+ * Finds and returns the paths of specific pieces or all available pieces in a given directory.
+ *
+ * @param inputPath - The root directory to search for pieces. If not provided, a default path to custom pieces is used.
+ * @param pieces - An optional array of piece names to search for. If not provided, all pieces in the directory are returned.
+ * @returns A promise resolving to an array of strings representing the paths of the found pieces.
+ */
 export async function findPieces(inputPath?: string, pieces?: string[]): Promise<string[]> {
     const piecesPath = inputPath ?? customPiecePath()
     const piecesFolders = await traverseFolder(piecesPath)
@@ -29,6 +36,13 @@ export async function findPieces(inputPath?: string, pieces?: string[]): Promise
         return piecesFolders
     }
 }
+
+/**
+ * Finds and returns the path of a single piece. Exits the process if the piece is not found.
+ *
+ * @param pieceName - The name of the piece to search for.
+ * @returns A promise resolving to a string representing the path of the found piece. If not found, the process exits.
+ */
 export async function findPiece(pieceName: string): Promise<string> {
     return (await findPieces(customPiecePath(), [pieceName]))[0] ?? process.exit(1);
 }
