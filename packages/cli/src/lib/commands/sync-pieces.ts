@@ -4,7 +4,7 @@ import chalk from "chalk";
 import { join } from "path";
 
 async function syncPieces(apiUrl: string, apiKey: string, pieces: string[] | null) {
-  const piecesDirectory = join(process.cwd(), 'packages', 'pieces', 'community')
+  const piecesDirectory = join(process.cwd(), 'packages', 'pieces', 'custom')
   const pieceFolders = await findPieces(piecesDirectory, pieces);
     for (const pieceFolder of pieceFolders) {
       await publishPieceFromFolder(pieceFolder, apiUrl, apiKey);
