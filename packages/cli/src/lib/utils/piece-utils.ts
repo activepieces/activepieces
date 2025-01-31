@@ -8,7 +8,7 @@ import chalk from 'chalk'
 import FormData from 'form-data';
 import fs from 'fs';
 
-const customPiecePath = () => path.join(cwd(), 'packages', 'pieces', 'custom')
+export const customPiecePath = () => path.join(cwd(), 'packages', 'pieces', 'custom')
 
 export async function findPieces(inputPath?: string, pieces?: string[]): Promise<string[]> {
     const piecesPath = inputPath ?? customPiecePath()
@@ -20,7 +20,7 @@ export async function findPieces(inputPath?: string, pieces?: string[]): Promise
               return normalizedPath.endsWith(path.sep + piece);
           });
           if (!folder) {
-              console.error(chalk.red(`Piece ${piece} not found`));
+              console.error(chalk.red(`🚨 Piece ${piece} not found`));
               return [];
           }
           return [folder];
@@ -29,10 +29,9 @@ export async function findPieces(inputPath?: string, pieces?: string[]): Promise
         return piecesFolders
     }
 }
-export async function findPieceSourceDirectory(pieceName: string): Promise<string | null> {
-    return (await findPieces(customPiecePath(), [pieceName]))[0] ?? null;
+export async function findPiece(pieceName: string): Promise<string> {
+    return (await findPieces(customPiecePath(), [pieceName]))[0] ?? process.exit(1);
 }
-
 
 export async function buildPiece(pieceFolder: string): Promise<{ outputFolder: string, outputFile: string }> {
     const projectJson = await readProjectJson(pieceFolder);
