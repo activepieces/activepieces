@@ -2,11 +2,7 @@ import { writeFile } from 'node:fs/promises';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import inquirer from 'inquirer';
-import {
-  displayNameToCamelCase,
-  displayNameToKebabCase,
-  findPiece
-} from '../utils/piece-utils';
+import { displayNameToCamelCase, displayNameToKebabCase, findPiece } from '../utils/piece-utils';
 import { checkIfFileExists, makeFolderRecursive } from '../utils/files';
 import { join } from 'node:path';
 

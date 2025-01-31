@@ -38,6 +38,14 @@ const validatePackageName = async (packageName: string) => {
   }
 };
 
+const checkIfPieceExists = async (pieceName: string) => {
+  const pieceFolder = await findPiece(pieceName);
+  if (pieceFolder) {
+    console.log(chalk.red(`🚨 Piece already exists at ${pieceFolder}`));
+    process.exit(1);
+  }
+};
+
 const nxGenerateNodeLibrary = async (
   pieceName: string,
   packageName: string,
@@ -165,7 +173,7 @@ export const createPiece = async (
 ) => {
   await validatePieceName(pieceName);
   await validatePackageName(packageName);
-  await findPiece(pieceName);
+  await checkIfPieceExists(pieceName);
   await nxGenerateNodeLibrary(pieceName, packageName, pieceType);
   await setupGeneratedLibrary(pieceName, pieceType);
   console.log(chalk.green('✨  Done!'));
