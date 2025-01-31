@@ -301,15 +301,15 @@ const FlowsPage = () => {
       },
     },
     {
-      accessorKey: 'created',
+      accessorKey: 'updated',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Created')} />
+        <DataTableColumnHeader column={column} title={t('Last Modified')} />
       ),
       cell: ({ row }) => {
-        const created = row.original.created;
+        const updated = row.original.version.updated;
         return (
           <div className="text-left font-medium min-w-[150px]">
-            {formatUtils.formatDate(new Date(created))}
+            {formatUtils.formatDate(new Date(updated))}
           </div>
         );
       },
