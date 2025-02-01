@@ -83,7 +83,6 @@ async function updateLegacyRepeatableJobKey(repeatableJobs: RepeatableJob[], log
                 data: nextJob.data,
             },
         )
-        await nextJob.remove()
 
         // Clean up legacy key mapping
         await client.del(`activepieces:repeatJobKey:${flowVersionId}`)
