@@ -36,7 +36,7 @@ const joinBaseUrlWithRelativePath = ({ baseUrl, relativePath }: { baseUrl: strin
  
 
 const getBaseUrlForDescription = (baseUrl: (auth?: unknown) => string,auth?: unknown) => {
-  const exampleBaseUrl = `https://api.example.com/`
+  const exampleBaseUrl = `https://api.example.com`
   try {
     const baseUrlValue = auth ? baseUrl(auth) : undefined;
     const baseUrlValueWithoutTrailingSlash = baseUrlValue?.endsWith('/') ? baseUrlValue.slice(0, -1) : baseUrlValue
