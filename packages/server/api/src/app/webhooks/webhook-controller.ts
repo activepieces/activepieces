@@ -1,8 +1,8 @@
 import {
+    AppSystemProp,
     JobType,
     LATEST_JOB_DATA_SCHEMA_VERSION,
-    pinoLogging,
-} from '@activepieces/server-shared'
+    pinoLogging } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -20,11 +20,11 @@ import {
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { tasksLimit } from '../ee/project-plan/tasks-limit'
+import { usageService } from '../ee/platform-billing/usage/usage-service'
 import { stepFileService } from '../file/step-file/step-file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { system } from '../helper/system/system'
-import { AppSystemProp } from '../helper/system/system-prop'
+import { projectService } from '../project/project-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue } from '../workers/queue'
 import { getJobPriority } from '../workers/queue/queue-manager'
@@ -228,6 +228,8 @@ const convertBody = async (
             request.body as Record<string, unknown>,
         )
 
+        const platformId = await projectService.getPlatformId(projectId)
+
         for (const [key, value] of requestBodyEntries) {
             if (isMultipartFile(value)) {
                 const file = await stepFileService(request.log).saveAndEnrich({
@@ -236,7 +238,7 @@ const convertBody = async (
                     stepName: 'trigger',
                     flowId,
                     contentLength: value.data.length,
-                    hostname: request.hostname,
+                    platformId,
                     projectId,
                 })
                 jsonResult[key] = file.url
@@ -251,23 +253,9 @@ const convertBody = async (
 }
 
 async function assertExceedsLimit(flow: Flow, log: FastifyBaseLogger): Promise<void> {
-    const exceededLimit = await tasksLimit(log).exceededLimit({
-        projectId: flow.projectId,
-    })
+    const exceededLimit = await usageService(log).tasksExceededLimit(flow.projectId)
     if (!exceededLimit) {
         return
-    }
-    if (flow.status === FlowStatus.ENABLED) {
-        log.info({
-            message: 'disable webhook out of flow quota',
-            projectId: flow.projectId,
-            flowId: flow.id,
-        })
-        await flowService(log).updateStatus({
-            id: flow.id,
-            projectId: flow.projectId,
-            newStatus: FlowStatus.DISABLED,
-        })
     }
     throw new ActivepiecesError({
         code: ErrorCode.QUOTA_EXCEEDED,

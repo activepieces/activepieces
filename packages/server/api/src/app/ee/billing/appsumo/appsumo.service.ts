@@ -1,13 +1,12 @@
 import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../../core/db/repo-factory'
-import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-prop'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
+import { platformBillingService } from '../../platform-billing/platform-billing.service'
 import { projectLimitsService } from '../../project-plan/project-plan.service'
-import { projectBillingService } from '../project-billing/project-billing.service'
 import { AppSumoEntity, AppSumoPlan } from './appsumo.entity'
 
 const appsumoRepo = repoFactory(AppSumoEntity)
@@ -79,7 +78,7 @@ export const appsumoService = (log: FastifyBaseLogger) => ({
             uuid,
         })
     },
-    async  delete({ email }: { email: string }): Promise<void> {
+    async delete({ email }: { email: string }): Promise<void> {
         await appsumoRepo().delete({
             activation_email: email,
         })
@@ -97,27 +96,30 @@ export const appsumoService = (log: FastifyBaseLogger) => ({
         const appSumoLicense = await appsumoService(log).getById(uuid)
         const activation_email = appSumoLicense?.activation_email ?? rawEmail
         const appSumoPlan = appsumoService(log).getPlanInformation(plan_id)
-        const user = await userService.getByPlatformAndEmail({
-            platformId: system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID),
-            email: activation_email,
-        })
-        if (!isNil(user)) {
-            const project = await projectService.getUserProjectOrThrow(user.id)
-            await projectBillingService(log).getOrCreateForProject(project.id)
+        const identity = await userIdentityService(log).getIdentityByEmail(activation_email)
+        if (!isNil(identity)) {
+            const user = await userService.getOneByIdentityIdOnly({
+                identityId: identity.id,
+            })
+            if (!isNil(user)) {
+                const project = await projectService.getUserProjectOrThrow(user.id)
+                await platformBillingService(log).getOrCreateForPlatform(project.platformId)
 
-            if (action === 'refund') {
-                await projectLimitsService.upsert(DEFAULT_FREE_PLAN_LIMIT, project.id)
-                await projectBillingService(log).updateByProjectId(project.id, {
-                    includedTasks: DEFAULT_FREE_PLAN_LIMIT.tasks,
-                    includedUsers: DEFAULT_FREE_PLAN_LIMIT.teamMembers,
-                })
-            }
-            else {
-                await projectLimitsService.upsert(appSumoPlan, project.id)
-                await projectBillingService(log).updateByProjectId(project.id, {
-                    includedTasks: appSumoPlan.tasks,
-                    includedUsers: appSumoPlan.teamMembers,
-                })
+                if (action === 'refund') {
+                    await projectLimitsService.upsert(DEFAULT_FREE_PLAN_LIMIT, project.id)
+                    await platformBillingService(log).update({
+                        platformId: project.platformId,
+                        tasksLimit: DEFAULT_FREE_PLAN_LIMIT.tasks,
+                    })
+                }
+                else {
+                    await projectLimitsService.upsert(appSumoPlan, project.id)
+                    await platformBillingService(log).update({
+                        platformId: project.platformId,
+                        tasksLimit: appSumoPlan.tasks,
+                    })
+
+                }
             }
         }
 

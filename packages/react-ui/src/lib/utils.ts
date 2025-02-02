@@ -4,7 +4,9 @@ import dayjs from 'dayjs';
 import { useEffect, useRef, useState, RefObject } from 'react';
 import { twMerge } from 'tailwind-merge';
 
-import { LocalesEnum } from '@activepieces/shared';
+import { LocalesEnum, Permission } from '@activepieces/shared';
+
+import { authenticationSession } from './authentication-session';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -219,4 +221,19 @@ export const useTimeAgo = (date: Date) => {
   }, [date]);
 
   return timeAgo;
+};
+
+export const determineDefaultRoute = (
+  checkAccess: (permission: Permission) => boolean,
+) => {
+  if (checkAccess(Permission.READ_FLOW)) {
+    return authenticationSession.appendProjectRoutePrefix('/flows');
+  }
+  if (checkAccess(Permission.READ_RUN)) {
+    return authenticationSession.appendProjectRoutePrefix('/runs');
+  }
+  if (checkAccess(Permission.READ_ISSUES)) {
+    return authenticationSession.appendProjectRoutePrefix('/issues');
+  }
+  return authenticationSession.appendProjectRoutePrefix('/settings');
 };

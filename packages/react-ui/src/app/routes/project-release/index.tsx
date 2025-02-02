@@ -26,6 +26,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
+import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
 import { ProjectRelease, ProjectReleaseType } from '@activepieces/shared';
 
@@ -38,7 +39,7 @@ const ProjectReleasesPage = () => {
     queryKey: ['project-releases'],
     queryFn: () => projectReleaseApi.list(),
   });
-
+  const { data: projects } = projectHooks.useProjects();
   const columns: ColumnDef<RowDataWithActions<ProjectRelease>>[] = [
     {
       accessorKey: 'name',
@@ -62,11 +63,16 @@ const ProjectReleasesPage = () => {
             {isGit ? (
               <GitBranch className="size-4" />
             ) : isProject ? (
-              <FolderOpenDot className="size-4" />
+              <div className="flex items-center gap-2">
+                <FolderOpenDot className="size-4" />
+                {projects?.find(
+                  (project) => project.id === row.original.projectId,
+                )?.displayName ?? t('Project')}
+              </div>
             ) : (
               <RotateCcw className="size-4" />
             )}
-            {isGit ? 'Git' : isProject ? 'Project' : 'Rollback'}
+            {isGit ? 'Git' : isProject ? '' : t('Rollback')}
           </div>
         );
       },
@@ -138,7 +144,17 @@ const ProjectReleasesPage = () => {
         <div className="flex flex-col gap-2">
           <TableTitle>{t('Project Releases')}</TableTitle>
           <div className="text-sm text-muted-foreground">
-            {t('Track and manage your project version history and deployments')}
+            {t(
+              'Track and manage your project version history and deployments. ',
+            )}
+            <a
+              href="https://www.activepieces.com/docs/operations/git-sync"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              {t('Environments & Releases')}
+            </a>
           </div>
         </div>
         <div className="flex items-center gap-2">

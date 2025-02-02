@@ -58,7 +58,7 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
         input,
         flowVersionId: flowVersion.id,
         flowId: flowVersion.flowId,
-      });
+      }, PropertyType.DYNAMIC);
     },
     onError: (error) => {
       console.error(error);

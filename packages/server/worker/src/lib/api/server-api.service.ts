@@ -3,7 +3,7 @@ import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, Q
 import { ActivepiecesError, ErrorCode, FlowRun, GetFlowVersionForWorkerRequest, GetPieceRequestQuery, PopulatedFlow, RemoveStableJobEngineRequest, UpdateRunProgressRequest, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { appNetworkUtils } from '../utils/app-network-utils'
+import pLimit from 'p-limit'
 import { workerMachine } from '../utils/machine'
 import { ApAxiosClient } from './ap-axios'
 
@@ -11,10 +11,8 @@ const removeTrailingSlash = (url: string): string => {
     return url.endsWith('/') ? url.slice(0, -1) : url
 }
 
-
-
 export const workerApiService = (workerToken: string) => {
-    const apiUrl = removeTrailingSlash(appNetworkUtils.getInternalApiUrl())
+    const apiUrl = removeTrailingSlash(workerMachine.getInternalApiUrl())
 
     const client = new ApAxiosClient(apiUrl, workerToken)
 
@@ -53,8 +51,25 @@ export const workerApiService = (workerToken: string) => {
             await client.post('/v1/workers/save-payloads', request)
         },
         async startRuns(request: SubmitPayloadsRequest): Promise<FlowRun[]> {
-            return client.post<FlowRun[]>('/v1/workers/submit-payloads', request)
+            const limit = pLimit(5)
+            const promises = request.payloads.map(payload => 
+                limit(() => client.post<FlowRun>('/v1/workers/submit-payloads', {
+                    ...request,
+                    payloads: [payload],
+                })),
+            )
+            
+            const results = await Promise.allSettled(promises)
+            const errors = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+            
+            if (errors.length > 0) {
+                const errorMessages = errors.map(e => e.reason.message).join(', ')
+                throw new Error(`Failed to start runs: ${errorMessages}`)
+            }
 
+            return results
+                .filter((r): r is PromiseFulfilledResult<FlowRun> => r.status === 'fulfilled')
+                .map(r => r.value)
         },
         async sendUpdate(request: SendEngineUpdateRequest): Promise<void> {
             await client.post('/v1/workers/send-engine-update', request)
@@ -63,7 +78,7 @@ export const workerApiService = (workerToken: string) => {
 }
 
 export const engineApiService = (engineToken: string, log: FastifyBaseLogger) => {
-    const apiUrl = removeTrailingSlash(appNetworkUtils.getInternalApiUrl())
+    const apiUrl = removeTrailingSlash(workerMachine.getInternalApiUrl())
     const client = new ApAxiosClient(apiUrl, engineToken)
 
     return {

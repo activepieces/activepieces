@@ -88,6 +88,11 @@ export const flowRunUtils = {
           variant: 'default',
           Icon: PauseIcon,
         };
+      case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
+        return {
+          variant: 'error',
+          Icon: X,
+        };
       case FlowRunStatus.QUOTA_EXCEEDED:
         return {
           variant: 'error',

@@ -100,7 +100,9 @@ const FlowsPage = () => {
     platform.environmentsEnabled,
   );
   const userHasPermissionToUpdateFlow = checkAccess(Permission.WRITE_FLOW);
-  const userHasPermissionToPushToGit = checkAccess(Permission.WRITE_GIT_REPO);
+  const userHasPermissionToPushToGit = checkAccess(
+    Permission.WRITE_PROJECT_RELEASE,
+  );
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
 
@@ -134,9 +136,9 @@ const FlowsPage = () => {
     },
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
-
+  const projectId = authenticationSession.getProjectId()!;
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['flow-table', searchParams.toString()],
+    queryKey: ['flow-table', searchParams.toString(), projectId],
     staleTime: 0,
     queryFn: () => {
       const name = searchParams.get('name');
@@ -148,7 +150,7 @@ const FlowsPage = () => {
       const folderId = searchParams.get('folderId') ?? undefined;
 
       return flowsApi.list({
-        projectId: authenticationSession.getProjectId()!,
+        projectId,
         cursor: cursor ?? undefined,
         limit,
         name: name ?? undefined,

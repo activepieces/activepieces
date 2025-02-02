@@ -26,6 +26,16 @@ type DashboardContainerProps = {
   children: React.ReactNode;
 };
 
+const ProjectChangedRedirector = ({
+  currentProjectId,
+  children,
+}: {
+  currentProjectId: string;
+  children: React.ReactNode;
+}) => {
+  projectHooks.useReloadPageIfProjectIdChanged(currentProjectId);
+  return children;
+};
 export const CloseTaskLimitAlertContext = createContext({
   isAlertClosed: false,
   setIsAlertClosed: (isAlertClosed: boolean) => {},
@@ -37,12 +47,10 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     platform.flowIssuesEnabled,
   );
   const { project } = projectHooks.useCurrentProject();
-
   const { embedState } = useEmbedding();
   const currentProjectId = authenticationSession.getProjectId();
   const { checkAccess } = useAuthorization();
   const [isAlertClosed, setIsAlertClosed] = useState(false);
-
   if (isNil(currentProjectId) || currentProjectId === '') {
     return <Navigate to="/sign-in" replace />;
   }
@@ -90,26 +98,29 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
       to: authenticationSession.appendProjectRoutePrefix('/settings/general'),
       label: t('Settings'),
       icon: Wrench,
+      isActive: (pathname: string) => pathname.includes('/settings'),
     },
   ]
     .filter(embedFilter)
     .filter(permissionFilter);
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
-      <CloseTaskLimitAlertContext.Provider
-        value={{
-          isAlertClosed,
-          setIsAlertClosed,
-        }}
-      >
-        <Sidebar
-          isHomeDashboard={true}
-          links={links}
-          hideSideNav={embedState.hideSideNav}
+      <ProjectChangedRedirector currentProjectId={currentProjectId}>
+        <CloseTaskLimitAlertContext.Provider
+          value={{
+            isAlertClosed,
+            setIsAlertClosed,
+          }}
         >
-          {children}
-        </Sidebar>
-      </CloseTaskLimitAlertContext.Provider>
+          <Sidebar
+            isHomeDashboard={true}
+            links={links}
+            hideSideNav={embedState.hideSideNav}
+          >
+            {children}
+          </Sidebar>
+        </CloseTaskLimitAlertContext.Provider>
+      </ProjectChangedRedirector>
     </AllowOnlyLoggedInUserOnlyGuard>
   );
 }

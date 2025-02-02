@@ -26,6 +26,7 @@ import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { determineDefaultRoute } from '@/lib/utils';
 import {
   ApFlagId,
   FlowVersionState,
@@ -34,9 +35,8 @@ import {
 } from '@activepieces/shared';
 
 import FlowActionMenu from '../components/flow-actions-menu';
-import { determineDefaultRoute } from '../router/default-route';
 
-import { BuilderPublishButton } from './builder-publish-button';
+import { BuilderFlowStatusSection } from './builder-flow-status-section';
 
 export const BuilderHeader = () => {
   const navigate = useNavigate();
@@ -86,9 +86,9 @@ export const BuilderHeader = () => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link to={defaultRoute}>
-                    <Button variant="ghost" size={'icon'}>
+                    <Button variant="ghost" size={'icon'} className="size-10">
                       <img
-                        className="h-5 w-5 object-contain"
+                        className="h-7 w-7 object-contain"
                         src={branding.logos.logoIconUrl}
                         alt={branding.websiteName}
                       />
@@ -201,7 +201,7 @@ export const BuilderHeader = () => {
             </Tooltip>
           )}
 
-          <BuilderPublishButton></BuilderPublishButton>
+          <BuilderFlowStatusSection></BuilderFlowStatusSection>
           <UserAvatar></UserAvatar>
         </div>
       </div>

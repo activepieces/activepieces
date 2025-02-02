@@ -1,11 +1,13 @@
 import { t } from 'i18next';
 
+import { toast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
   PropertyType,
   ExecutePropsResult,
+  InputPropertyMap,
 } from '@activepieces/pieces-framework';
 import {
   Action,
@@ -69,8 +71,30 @@ export const piecesApi = {
       | PropertyType.DROPDOWN
       | PropertyType.MULTI_SELECT_DROPDOWN
       | PropertyType.DYNAMIC,
-  >(request: PieceOptionRequest): Promise<ExecutePropsResult<T>> {
-    return api.post<ExecutePropsResult<T>>(`/v1/pieces/options`, request);
+  >(request: PieceOptionRequest, propertyType: T): Promise<ExecutePropsResult<T>> {
+      return api.post<ExecutePropsResult<T>>(`/v1/pieces/options`, request).catch(error=>{
+        console.error(error);
+        toast({
+          title: t('Error'),
+          description: t(
+            'An internal error occured while fetching data, please contact support',
+          ),
+          variant: 'destructive',
+        });
+        const defaultStateForDynamicProperty: ExecutePropsResult<PropertyType.DYNAMIC> = {
+         options: {} as InputPropertyMap,
+         type: PropertyType.DYNAMIC,
+        }
+        const defaultStateForDropdownProperty: ExecutePropsResult<PropertyType.DROPDOWN> = {
+          options: {
+            options: [],
+            disabled: true,
+            placeholder: t('An internal error occured, please contact support'),
+          },
+          type: PropertyType.DROPDOWN,
+        }
+        return (propertyType === PropertyType.DYNAMIC ? defaultStateForDynamicProperty : defaultStateForDropdownProperty) as ExecutePropsResult<T>;
+      });
   },
   mapToMetadata(
     type: 'action' | 'trigger',

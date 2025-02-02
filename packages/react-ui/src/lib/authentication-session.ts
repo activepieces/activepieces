@@ -1,7 +1,8 @@
 import { jwtDecode } from 'jwt-decode';
 
-import { projectApi } from '@/lib/project-api';
-import { AuthenticationResponse, isNil } from '@activepieces/shared';
+import { AuthenticationResponse, isNil, Principal } from '@activepieces/shared';
+
+import { authenticationApi } from './authentication-api';
 
 const tokenKey = 'token';
 const currentUserKey = 'currentUser';
@@ -25,7 +26,7 @@ export const authenticationSession = {
     if (isNil(token)) {
       return null;
     }
-    const decodedJwt = jwtDecode<{ projectId: string }>(token);
+    const decodedJwt = getDecodedJwt(token);
     return decodedJwt.projectId;
   },
   appendProjectRoutePrefix(path: string): string {
@@ -36,13 +37,38 @@ export const authenticationSession = {
     return `/projects/${projectId}${path.startsWith('/') ? path : `/${path}`}`;
   },
   getPlatformId(): string | null {
-    return this.getCurrentUser()?.platformId ?? null;
+    const token = this.getToken();
+    if (isNil(token)) {
+      return null;
+    }
+    const decodedJwt = getDecodedJwt(token);
+    return decodedJwt.platform.id;
   },
   getUserPlatformRole() {
     return this.getCurrentUser()?.platformRole ?? null;
   },
+  async switchToPlatform(platformId: string) {
+    if (authenticationSession.getPlatformId() === platformId) {
+      return;
+    }
+    const result = await authenticationApi.switchPlatform({
+      platformId,
+    });
+    localStorage.setItem(tokenKey, result.token);
+    localStorage.setItem(
+      currentUserKey,
+      JSON.stringify({
+        ...this.getCurrentUser(),
+        platformId,
+      }),
+    );
+    window.location.href = '/';
+  },
   async switchToSession(projectId: string) {
-    const result = await projectApi.getTokenForProject(projectId);
+    if (authenticationSession.getProjectId() === projectId) {
+      return;
+    }
+    const result = await authenticationApi.switchProject({ projectId });
     localStorage.setItem(tokenKey, result.token);
     localStorage.setItem(
       currentUserKey,
@@ -77,3 +103,7 @@ export const authenticationSession = {
     return null;
   },
 };
+
+function getDecodedJwt(token: string): Principal {
+  return jwtDecode<Principal>(token);
+}

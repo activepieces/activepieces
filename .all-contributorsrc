@@ -97,7 +97,7 @@
       "login": "OsamaHaikal",
       "name": "Osama Abdallah Essa Haikal",
       "avatar_url": "https://avatars.githubusercontent.com/u/72370395?v=4",
-      "profile": "http://osamahaikal.pythonanywhere.com/",
+      "profile": "https://osamahaikal.me/",
       "contributions": [
         "plugin"
       ]
@@ -890,7 +890,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/65794951?v=4",
       "profile": "http://johnmark.dev",
       "contributions": [
-        "code"
+        "code",
+        "plugin"
       ]
     },
     {
@@ -1439,6 +1440,78 @@
       "name": "John Goodliff",
       "avatar_url": "https://avatars.githubusercontent.com/u/9030780?v=4",
       "profile": "http://johng.io",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "DiwashDev",
+      "name": "Diwash Dev",
+      "avatar_url": "https://avatars.githubusercontent.com/u/182864159?v=4",
+      "profile": "https://github.com/DiwashDev",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "matthiez",
+      "name": "André",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12965261?v=4",
+      "profile": "https://www.seven.io",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "loudotdigital",
+      "name": "Lou | Digital Marketing",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7611772?v=4",
+      "profile": "https://github.com/loudotdigital",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "maarteNNNN",
+      "name": "Maarten Coppens",
+      "avatar_url": "https://avatars.githubusercontent.com/u/14275291?v=4",
+      "profile": "https://github.com/maarteNNNN",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "mahmuthamet",
+      "name": "Mahmoud Hamed",
+      "avatar_url": "https://avatars.githubusercontent.com/u/90776946?v=4",
+      "profile": "https://github.com/mahmuthamet",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Blightwidow",
+      "name": "Theo Dammaretz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/14098167?v=4",
+      "profile": "https://dammaretz.com",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "s31w4n",
+      "name": "s31w4n",
+      "avatar_url": "https://avatars.githubusercontent.com/u/63353528?v=4",
+      "profile": "https://github.com/s31w4n",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "abdulrahmanmajid",
+      "name": "Abdul Rahman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/94991678?v=4",
+      "profile": "https://kallabot.com",
       "contributions": [
         "plugin"
       ]

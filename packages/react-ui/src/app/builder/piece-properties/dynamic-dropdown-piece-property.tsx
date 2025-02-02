@@ -62,7 +62,7 @@ const DynamicDropdownPieceProperty = React.memo(
           input,
           flowVersionId: flowVersion.id,
           flowId: flowVersion.flowId,
-        });
+        }, PropertyType.DROPDOWN);
       },
       onError: (error) => {
         console.error(error);

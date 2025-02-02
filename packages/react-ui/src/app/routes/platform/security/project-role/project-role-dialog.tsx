@@ -26,12 +26,15 @@ const initialPermissions = [
     name: 'Flows',
     description: 'Read and write flows',
     read: [Permission.READ_FLOW],
-    write: [
-      Permission.READ_FLOW,
-      Permission.UPDATE_FLOW_STATUS,
-      Permission.WRITE_FLOW,
-    ],
+    write: [Permission.READ_FLOW, Permission.WRITE_FLOW],
     disableNone: true,
+  },
+  {
+    name: 'Flow Status',
+    description: 'Update flow status',
+    disableRead: true,
+    read: [],
+    write: [Permission.UPDATE_FLOW_STATUS],
   },
   {
     name: 'App Connections',
@@ -64,10 +67,10 @@ const initialPermissions = [
     write: [Permission.READ_INVITATION, Permission.WRITE_INVITATION],
   },
   {
-    name: 'Git Repos',
-    description: 'Read and write git repos',
-    read: [Permission.READ_GIT_REPO],
-    write: [Permission.READ_GIT_REPO, Permission.WRITE_GIT_REPO],
+    name: 'Project Releases',
+    description: 'Read and write project releases',
+    read: [Permission.READ_PROJECT_RELEASE],
+    write: [Permission.READ_PROJECT_RELEASE, Permission.WRITE_PROJECT_RELEASE],
   },
 ];
 interface ProjectRoleDialogProps {
@@ -155,7 +158,6 @@ export const ProjectRoleDialog = ({
         currentPermission?.write.forEach((p) => updatedPermissions.add(p));
       }
     }
-
     setPermissions(Array.from(updatedPermissions));
   };
 
@@ -167,10 +169,12 @@ export const ProjectRoleDialog = ({
     const readPermissions = new Set(currentPermission?.read || []);
     const currentPermissionsSet = new Set(permissions);
 
-    const hasWritePermissions = [...writePermissions].every((p) =>
-      currentPermissionsSet.has(p),
-    );
+    const hasWritePermissions =
+      writePermissions.size > 0 &&
+      [...writePermissions].every((p) => currentPermissionsSet.has(p));
+
     const hasReadPermissions =
+      readPermissions.size > 0 &&
       [...readPermissions].every((p) => currentPermissionsSet.has(p)) &&
       !hasWritePermissions;
 
@@ -250,16 +254,18 @@ export const ProjectRoleDialog = ({
                           {t('None')}
                         </Button>
                       )}
-                      <Button
-                        className="h-9 px-4"
-                        variant={getButtonVariant(permission.name, 'Read')}
-                        onClick={() =>
-                          handlePermissionChange(permission.name, 'Read')
-                        }
-                        disabled={disabled}
-                      >
-                        {t('Read')}
-                      </Button>
+                      {!permission.disableRead && (
+                        <Button
+                          className="h-9 px-4"
+                          variant={getButtonVariant(permission.name, 'Read')}
+                          onClick={() =>
+                            handlePermissionChange(permission.name, 'Read')
+                          }
+                          disabled={disabled}
+                        >
+                          {t('Read')}
+                        </Button>
+                      )}
                       <Button
                         className="h-9 px-4"
                         variant={getButtonVariant(permission.name, 'Write')}

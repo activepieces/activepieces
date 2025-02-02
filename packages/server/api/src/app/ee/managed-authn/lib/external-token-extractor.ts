@@ -36,8 +36,6 @@ export const externalTokenExtractor = (log: FastifyBaseLogger) => {
                     issuer: null,
                 })
 
-                const optionalEmail = payload.email ?? payload.externalUserId
-
                 const projectRole = await getProjectRole(payload, signingKey.platformId)
 
                 const { piecesFilterType, piecesTags } = extractPieces(payload)
@@ -45,7 +43,6 @@ export const externalTokenExtractor = (log: FastifyBaseLogger) => {
                     platformId: signingKey.platformId,
                     externalUserId: payload.externalUserId,
                     externalProjectId: payload.externalProjectId,
-                    externalEmail: optionalEmail,
                     externalFirstName: payload.firstName,
                     externalLastName: payload.lastName,
                     projectRole: projectRole.name,
@@ -126,7 +123,6 @@ function externalTokenPayload() {
     const v1 = Type.Object({
         externalUserId: Type.String(),
         externalProjectId: Type.String(),
-        email: Type.String(),
         firstName: Type.String(),
         lastName: Type.String(),
     })
@@ -158,7 +154,6 @@ export type ExternalPrincipal = {
     platformId: string
     externalUserId: string
     externalProjectId: string
-    externalEmail: string
     externalFirstName: string
     externalLastName: string
     projectRole: string

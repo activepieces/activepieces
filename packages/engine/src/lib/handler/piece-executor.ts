@@ -93,7 +93,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             server: {
                 token: constants.engineToken,
                 apiUrl: constants.internalApiUrl,
-                publicUrl: constants.publicUrl,
+                publicUrl: constants.publicApiUrl,
             },
             propsValue: processedInput,
             tags: createTagsManager(hookResponse),
@@ -103,7 +103,10 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 engineToken: constants.engineToken,
                 hookResponse,
             }),
-            serverUrl: constants.publicUrl,
+            /*
+                @deprecated Use server.publicApiUrl instead.
+            */
+            serverUrl: constants.publicApiUrl,
             run: {
                 id: constants.flowRunId,
                 stop: createStopHook(hookResponse),
@@ -114,7 +117,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 externalId: constants.externalProjectId,
             },
             generateResumeUrl: (params) => {
-                const url = new URL(`${constants.publicUrl}v1/flow-runs/${constants.flowRunId}/requests/${executionState.pauseRequestId}`)
+                const url = new URL(`${constants.publicApiUrl}v1/flow-runs/${constants.flowRunId}/requests/${executionState.pauseRequestId}`)
                 url.search = new URLSearchParams(params.queryParams).toString()
                 return url.toString()
             },

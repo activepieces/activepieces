@@ -25,7 +25,7 @@ import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
-import { ApFlagId, Permission } from '@activepieces/shared';
+import { Permission } from '@activepieces/shared';
 import {
   ActivepiecesClientEventName,
   ActivepiecesVendorEventName,
@@ -45,7 +45,7 @@ import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
 import IssuesPage from '../routes/issues';
-import PlansPage from '../routes/plans';
+import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
 import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
@@ -70,9 +70,11 @@ import { ShareTemplatePage } from '../routes/templates/share-template';
 
 import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 import { DefaultRoute } from './default-route';
-import { FlagRouteGuard } from './flag-route-guard';
 import { RoutePermissionGuard } from './permission-guard';
-import { ProjectRouterWrapper } from './project-route-wrapper';
+import {
+  ProjectRouterWrapper,
+  TokenCheckerWrapper,
+} from './project-route-wrapper';
 const SettingsRerouter = () => {
   const { hash } = useLocation();
   const fragmentWithoutHash = hash.slice(1).toLowerCase();
@@ -223,18 +225,6 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/plans',
-    element: (
-      <FlagRouteGuard flag={ApFlagId.SHOW_BILLING}>
-        <DashboardContainer>
-          <PageTitle title="Plans">
-            <PlansPage />
-          </PageTitle>
-        </DashboardContainer>
-      </FlagRouteGuard>
-    ),
-  }),
-  ...ProjectRouterWrapper({
     path: '/settings',
     element: (
       <DashboardContainer>
@@ -355,7 +345,7 @@ const routes = [
     path: '/settings/environments',
     element: (
       <DashboardContainer>
-        <RoutePermissionGuard permission={Permission.READ_GIT_REPO}>
+        <RoutePermissionGuard permission={Permission.READ_PROJECT_RELEASE}>
           <ProjectSettingsLayout>
             <PageTitle title="Environments">
               <EnvironmentPage />
@@ -535,6 +525,18 @@ const routes = [
     ),
   },
   {
+    path: '/platform/setup/billing',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Billing">
+          <PlatformSecondSidebarLayout type="setup">
+            <SettingsBilling />
+          </PlatformSecondSidebarLayout>
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
     path: '/platform/security/signing-keys',
     element: (
       <PlatformAdminContainer>
@@ -615,6 +617,14 @@ const routes = [
   {
     path: '/redirect',
     element: <RedirectPage></RedirectPage>,
+  },
+  {
+    path: '/projects/:projectId',
+    element: (
+      <TokenCheckerWrapper>
+        <DefaultRoute></DefaultRoute>
+      </TokenCheckerWrapper>
+    ),
   },
   {
     path: '/*',

@@ -1,5 +1,4 @@
 import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
 import { useState, ReactNode } from 'react';
 
 import { Button, ButtonProps } from '@/components/ui/button';
@@ -33,25 +32,22 @@ export const ApplyButton = ({
   const { toast } = useToast();
   const projectId = authenticationSession.getProjectId()!;
   const { gitSync } = gitSyncHooks.useGitSync(projectId, !isNil(projectId));
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [isCreateReleaseDialogOpen, setIsCreateReleaseDialogOpen] =
+    useState(false);
   const [syncPlan, setSyncPlan] = useState<any>(null);
   const [loadingRequestId, setLoadingRequestId] = useState<string | null>(null);
 
   const { mutate: loadSyncPlan } = useMutation({
-    mutationFn: (request: DiffReleaseRequest) =>
-      projectReleaseApi.diff(request),
+    mutationFn: (request: DiffReleaseRequest) => {
+      setIsCreateReleaseDialogOpen(true);
+      return projectReleaseApi.diff(request);
+    },
     onSuccess: (plan) => {
       if (!plan.operations || plan.operations.length === 0) {
-        toast({
-          title: t('No Changes Found'),
-          description: t('There are no differences to apply'),
-          variant: 'default',
-        });
         setLoadingRequestId(null);
         return;
       }
       setSyncPlan(plan);
-      setDialogOpen(true);
       setLoadingRequestId(null);
     },
     onError: () => {
@@ -60,7 +56,7 @@ export const ApplyButton = ({
     },
   });
 
-  const [gitDialogOpen, setGitDialogOpen] = useState(false);
+  const [isConnectGitDialogOpen, setGitDialogOpen] = useState(false);
   const showGitDialog =
     isNil(gitSync) && request.type === ProjectReleaseType.GIT;
   const requestId = JSON.stringify(request);
@@ -70,7 +66,6 @@ export const ApplyButton = ({
     <>
       <Button
         {...props}
-        loading={isLoading}
         onClick={(e) => {
           e.stopPropagation();
           e.preventDefault();
@@ -85,17 +80,18 @@ export const ApplyButton = ({
         {children}
       </Button>
 
-      {gitDialogOpen ? (
+      {isConnectGitDialogOpen ? (
         <ConnectGitDialog
-          open={gitDialogOpen}
+          open={isConnectGitDialogOpen}
           setOpen={setGitDialogOpen}
           showButton={false}
         />
       ) : (
-        dialogOpen && (
+        isCreateReleaseDialogOpen && (
           <CreateReleaseDialog
-            open={dialogOpen}
-            setOpen={setDialogOpen}
+            open={isCreateReleaseDialogOpen}
+            loading={isLoading}
+            setOpen={setIsCreateReleaseDialogOpen}
             refetch={onSuccess}
             plan={syncPlan}
             defaultName={defaultName}
