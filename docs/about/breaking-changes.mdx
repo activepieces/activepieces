@@ -12,8 +12,7 @@ icon: "hammer"
 
 ### When is action necessary?
 
-- If `AP_SCHEDULED_WORKER_CONCURRENCY` and `AP_FLOW_WORKER_CONCURRENCY` are set to zero on the app server, workers will stop processing the queues. To resolve this, refer to the [Separate Worker from App](https://www.activepieces.com/docs/install/configuration/seperate-workers) documentation and use `AP_CONTAINER_TYPE`.
-
+- If `AP_CONTAINER_TYPE` is set to `WORKER` on the worker machine, and `AP_SCHEDULED_WORKER_CONCURRENCY` or `AP_FLOW_WORKER_CONCURRENCY` are set to zero on the app server, workers will stop processing the queues. To fix this, check the [Separate Worker from App](https://www.activepieces.com/docs/install/configuration/separate-workers) documentation and set the `AP_CONTAINER_TYPE` to fetch the necessary values from the app server. If no container type is set on the worker machine, this is not a breaking change.
 
 ## 0.35.1
 
