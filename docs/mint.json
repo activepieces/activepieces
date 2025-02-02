@@ -98,10 +98,13 @@
     },
     {
       "group": "Customer Support",
-      "icon": "superpowers",
+      "icon": "hero",
       "pages": [
-        "handbook/customer-support/slack-support.mdx",
-        "handbook/customer-support/trial.mdx"
+        "handbook/customer-support/overview",
+        "handbook/customer-support/tone",
+        "handbook/customer-support/pylon",
+        "handbook/customer-support/handle-requests",
+        "handbook/customer-support/trial"
       ]
     },
     {
@@ -110,8 +113,7 @@
       "pages": [
         "handbook/engineering/how-we-work",
         "handbook/engineering/pre-releases",
-        "handbook/engineering/on-call",
-        "handbook/engineering/customer-support"
+        "handbook/engineering/on-call"
       ]
     },
     {
