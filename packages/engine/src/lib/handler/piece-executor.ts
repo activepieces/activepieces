@@ -127,21 +127,29 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 
         if (hookResponse.stopped) {
             assertNotNullOrUndefined(hookResponse.stopResponse, 'stopResponse')
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).setVerdict(ExecutionVerdict.SUCCEEDED, {
+            return newExecutionContext.upsertStep({
+                stepName: action.name,
+                stepOutput: stepOutput.setOutput(output),
+            }).setVerdict(ExecutionVerdict.SUCCEEDED, {
                 reason: FlowRunStatus.STOPPED,
                 stopResponse: hookResponse.stopResponse.response,
             }).increaseTask()
         }
         if (hookResponse.paused) {
             assertNotNullOrUndefined(hookResponse.pauseResponse, 'pauseResponse')
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED))
-                .setVerdict(ExecutionVerdict.PAUSED, {
-                    reason: FlowRunStatus.PAUSED,
-                    pauseMetadata: hookResponse.pauseResponse.pauseMetadata,
-                })
+            return newExecutionContext.upsertStep({
+                stepName: action.name,
+                stepOutput: stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED),
+            }).setVerdict(ExecutionVerdict.PAUSED, {
+                reason: FlowRunStatus.PAUSED,
+                pauseMetadata: hookResponse.pauseResponse.pauseMetadata,
+            }).increaseTask()
         }
 
-        return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
+        return newExecutionContext.upsertStep({
+            stepName: action.name,
+            stepOutput: stepOutput.setOutput(output),
+        }).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
     }
     catch (e) {
         const handledError = handleExecutionError(e)
@@ -151,7 +159,10 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             .setErrorMessage(handledError.message)
 
         return executionState
-            .upsertStep(action.name, failedStepOutput)
+            .upsertStep({
+                stepName: action.name,
+                stepOutput: failedStepOutput,
+            })
             .setVerdict(ExecutionVerdict.FAILED, handledError.verdictResponse)
             .increaseTask()
     }

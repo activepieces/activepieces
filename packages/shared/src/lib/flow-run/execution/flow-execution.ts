@@ -62,6 +62,8 @@ const BaseExecutionResponse = {
     tags: Type.Optional(Type.Array(Type.String())),
     error: Type.Optional(FlowError),
     stopResponse: Type.Optional(StopResponse),
+    triggerPayload: Type.Optional(Type.String()),
+    resumePayload: Type.Optional(Type.String()),
 }
 
 export const FlowRunResponse = Type.Union([

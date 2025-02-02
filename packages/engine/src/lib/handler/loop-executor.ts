@@ -23,7 +23,10 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
         let stepOutput = previousStepOutput ?? LoopStepOutput.init({
             input: censoredInput,
         })
-        let newExecutionContext = executionState.upsertStep(action.name, stepOutput)
+        let newExecutionContext = executionState.upsertStep({
+            stepName: action.name,
+            stepOutput,
+        })
 
         if (!Array.isArray(resolvedInput.items)) {
             const failedStepOutput = stepOutput
@@ -31,7 +34,10 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
                 .setErrorMessage(JSON.stringify({
                     message: 'The items you have selected must be a list.',
                 }))
-            return newExecutionContext.upsertStep(action.name, failedStepOutput).setVerdict(ExecutionVerdict.FAILED)
+            return newExecutionContext.upsertStep({
+                stepName: action.name,
+                stepOutput: failedStepOutput,
+            }).setVerdict(ExecutionVerdict.FAILED)
         }
 
         const firstLoopAction = action.firstLoopAction
@@ -44,7 +50,10 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
             const addEmptyIteration = !stepOutput.hasIteration(i)
             if (addEmptyIteration) {
                 stepOutput = stepOutput.addIteration()
-                newExecutionContext = newExecutionContext.upsertStep(action.name, stepOutput)
+                newExecutionContext = newExecutionContext.upsertStep({
+                    stepName: action.name,
+                    stepOutput,
+                })
             }
             newExecutionContext = newExecutionContext.setCurrentPath(newCurrentPath)
             if (!isNil(firstLoopAction) && !constants.testSingleStepMode) {
