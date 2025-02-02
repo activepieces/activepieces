@@ -32,37 +32,27 @@
     {
       "name": "GitHub",
       "url": "https://github.com/activepieces/activepieces"
-    }
-  ],
-  "anchors": [
-    {
-      "name": "Deploy",
-      "url": "install",
-      "icon": "rocket"
-    },
-    {
-      "name": "Develop Pieces",
-      "url": "developers",
-      "icon": "code"
     },
     {
       "name": "Pieces",
-      "icon": "plug",
       "url": "https://www.activepieces.com/pieces"
+    }
+  ],
+  "tabs": [
+    {
+      "name": "Develop Pieces",
+      "url": "developers"
     },
     {
-      "name": "API",
-      "url": "endpoints",
-      "icon": "link"
+      "name": "API Reference",
+      "url": "endpoints"
     },
     {
-      "name": "Discord",
-      "icon": "discord",
-      "url": "https://discord.gg/2jUXBKDdP8"
+      "name": "Deploy",
+      "url": "install"
     },
     {
       "name": "Handbook",
-      "icon": "book",
       "url": "handbook"
     }
   ],
