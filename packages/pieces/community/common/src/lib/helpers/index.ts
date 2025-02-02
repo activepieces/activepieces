@@ -155,7 +155,6 @@ i.e https://api.example.com/api/v1/users or /api/v1/users`,
       const urlValue = url['url'] as string;
       const fullUrl = urlValue.startsWith('http://') || urlValue.startsWith('https://') ? urlValue :
                      joinBaseUrlWithRelativePath({ baseUrl: baseUrl(context.auth), relativePath: urlValue})
-                     console.log('fullurl ',fullUrl)
       const request: HttpRequest<Record<string, unknown>> = {
         method,
         url: fullUrl,
