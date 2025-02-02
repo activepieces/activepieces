@@ -97,6 +97,14 @@
       ]
     },
     {
+      "group": "Customer Support",
+      "icon": "superpowers",
+      "pages": [
+        "handbook/customer-support/slack-support.mdx",
+        "handbook/customer-support/trial.mdx"
+      ]
+    },
+    {
       "group": "Engineering",
       "icon": "code",
       "pages": [
