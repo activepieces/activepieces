@@ -9,7 +9,7 @@ export const askDeepseek = createAction({
   auth: deepseekAuth,
   name: 'ask_deepseek',
   displayName: 'Ask Deepseek',
-  description: 'Ask Deepseek anything you want',
+  description: 'Ask Deepseek anything you want!',
   props: {
     model: Property.Dropdown({
       displayName: 'Model',
