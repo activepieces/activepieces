@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
 import { Action, isNil, Trigger } from '@activepieces/shared';
 
-import { ArrayPiecePropertyInListMapperMode } from './array-property-in-list-mapper-mode';
+import { ArrayPiecePropertyInInlineItemMode } from './array-property-in-inline-item-mode';
 import { TextInputWithMentions } from './text-input-with-mentions';
 
 type inputNameLiteral = `settings.input.${string}`;
@@ -143,7 +143,7 @@ const AutoFormFieldWrapper = ({
       {isArrayProperty &&
         isNil(property.properties) &&
         dynamicInputModeToggled && (
-          <ArrayPiecePropertyInListMapperMode
+          <ArrayPiecePropertyInInlineItemMode
             disabled={disabled}
             arrayProperties={property.properties}
             inputName={inputName}
@@ -154,7 +154,7 @@ const AutoFormFieldWrapper = ({
       {isArrayProperty &&
         !isNil(property.properties) &&
         dynamicInputModeToggled && (
-          <ArrayPiecePropertyInListMapperMode
+          <ArrayPiecePropertyInInlineItemMode
             disabled={disabled}
             arrayProperties={property.properties}
             inputName={inputName}

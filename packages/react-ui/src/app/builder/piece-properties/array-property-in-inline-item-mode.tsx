@@ -15,7 +15,7 @@ type BaseArrayPropertyProps = {
   disabled: boolean;
 };
 
-type ArrayPiecePropertyInListMapperModeProps = BaseArrayPropertyProps &
+type ArrayPiecePropertyInInlineItemModeProps = BaseArrayPropertyProps &
   (
     | { arrayProperties: ArraySubProps<boolean> }
     | {
@@ -25,8 +25,8 @@ type ArrayPiecePropertyInListMapperModeProps = BaseArrayPropertyProps &
       }
   );
 
-const ArrayPiecePropertyInListMapperMode = React.memo(
-  (props: ArrayPiecePropertyInListMapperModeProps) => {
+const ArrayPiecePropertyInInlineItemMode = React.memo(
+  (props: ArrayPiecePropertyInInlineItemModeProps) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [
       isFocusInsideListMapperModeInput,
@@ -66,6 +66,6 @@ const ArrayPiecePropertyInListMapperMode = React.memo(
   },
 );
 
-ArrayPiecePropertyInListMapperMode.displayName =
-  'ArrayPiecePropertyInListMapperMode';
-export { ArrayPiecePropertyInListMapperMode };
+ArrayPiecePropertyInInlineItemMode.displayName =
+  'ArrayPiecePropertyInInlineItemMode';
+export { ArrayPiecePropertyInInlineItemMode };
