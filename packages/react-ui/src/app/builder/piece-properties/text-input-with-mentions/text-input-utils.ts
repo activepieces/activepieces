@@ -52,10 +52,9 @@ const isMentionNodeText = (item: string) => {
   if (itemIsToken) {
     const content = itemIsToken[1].trim();
     const itemIsFlattenedArray = content.match(flattenNestedKeysRegex);
-    if(itemIsFlattenedArray)
-      {
-        return true;
-      }
+    if (itemIsFlattenedArray) {
+      return true;
+    }
     return /^(step_\d+|trigger)/.test(content);
   }
   return false;

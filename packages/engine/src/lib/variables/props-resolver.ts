@@ -55,25 +55,25 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl }: PropsRes
 }
 
 const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeedResolving: string[],
-     resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput'>)=>{
-    const resolvedValues: Record<string,unknown> = {};
-    let longestResultLength = 0;
-    for (const tokenPart of partsThatNeedResolving){
-       const variableName = tokenPart.substring(2, tokenPart.length - 2)
-       resolvedValues[tokenPart] = await resolveSingleToken({
-           ...resolveOptions,
-           variableName,
-       })
-       if(Array.isArray(resolvedValues[tokenPart])){
-           longestResultLength = Math.max(longestResultLength, resolvedValues[tokenPart].length)
-       }
+    resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput'>)=>{
+    const resolvedValues: Record<string, unknown> = {}
+    let longestResultLength = 0
+    for (const tokenPart of partsThatNeedResolving) {
+        const variableName = tokenPart.substring(2, tokenPart.length - 2)
+        resolvedValues[tokenPart] = await resolveSingleToken({
+            ...resolveOptions,
+            variableName,
+        })
+        if (Array.isArray(resolvedValues[tokenPart])) {
+            longestResultLength = Math.max(longestResultLength, resolvedValues[tokenPart].length)
+        }
     }
     const result = new Array(longestResultLength).fill(null).map((_, index) => {
-       return Object.entries(resolvedValues).reduce((acc, [tokenPart, value])=>{
-           const valueToUse = (Array.isArray(value) ? value[index] : value)??'';
-           acc = acc.replace(tokenPart,isString(valueToUse) ? valueToUse : JSON.stringify(valueToUse))
-           return acc
-       }, token)
+        return Object.entries(resolvedValues).reduce((acc, [tokenPart, value])=>{
+            const valueToUse = (Array.isArray(value) ? value[index] : value) ?? ''
+            acc = acc.replace(tokenPart, isString(valueToUse) ? valueToUse : JSON.stringify(valueToUse))
+            return acc
+        }, token)
     })
     return result
 }

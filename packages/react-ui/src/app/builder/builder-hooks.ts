@@ -47,8 +47,8 @@ import {
   CanvasShortcutsProps,
 } from './flow-canvas/context-menu/canvas-context-menu';
 import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
-import { textMentionUtils } from './piece-properties/text-input-with-mentions/text-input-utils';
 import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
+import { textMentionUtils } from './piece-properties/text-input-with-mentions/text-input-utils';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -714,7 +714,7 @@ export const useIsFocusInsideListMapperModeInput = ({
       document.removeEventListener('focusin', focusInListener);
     };
   }, [setIsFocusInsideListMapperModeInput, isFocusInsideListMapperModeInput]);
-}
+};
 export const useFocusedFailedStep = () => {
   const currentRun = useBuilderStateContext((state) => state.run);
   const previousRun = usePrevious(currentRun);

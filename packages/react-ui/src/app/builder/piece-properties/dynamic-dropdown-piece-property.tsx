@@ -52,17 +52,20 @@ const DynamicDropdownPieceProperty = React.memo(
         const { settings } = form.getValues();
         const actionOrTriggerName = settings.actionName ?? settings.triggerName;
         const { pieceName, pieceVersion, pieceType, packageType } = settings;
-        return piecesApi.options({
-          pieceName,
-          pieceVersion,
-          pieceType,
-          packageType,
-          propertyName: props.propertyName,
-          actionOrTriggerName: actionOrTriggerName,
-          input,
-          flowVersionId: flowVersion.id,
-          flowId: flowVersion.flowId,
-        }, PropertyType.DROPDOWN);
+        return piecesApi.options(
+          {
+            pieceName,
+            pieceVersion,
+            pieceType,
+            packageType,
+            propertyName: props.propertyName,
+            actionOrTriggerName: actionOrTriggerName,
+            input,
+            flowVersionId: flowVersion.id,
+            flowId: flowVersion.flowId,
+          },
+          PropertyType.DROPDOWN,
+        );
       },
       onError: (error) => {
         console.error(error);

@@ -48,17 +48,20 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
       const { settings } = form.getValues();
       const actionOrTriggerName = settings.actionName ?? settings.triggerName;
       const { pieceName, pieceVersion, pieceType, packageType } = settings;
-      return piecesApi.options<PropertyType.DYNAMIC>({
-        pieceName,
-        pieceVersion,
-        pieceType,
-        packageType,
-        propertyName: props.propertyName,
-        actionOrTriggerName,
-        input,
-        flowVersionId: flowVersion.id,
-        flowId: flowVersion.flowId,
-      }, PropertyType.DYNAMIC);
+      return piecesApi.options<PropertyType.DYNAMIC>(
+        {
+          pieceName,
+          pieceVersion,
+          pieceType,
+          packageType,
+          propertyName: props.propertyName,
+          actionOrTriggerName,
+          input,
+          flowVersionId: flowVersion.id,
+          flowId: flowVersion.flowId,
+        },
+        PropertyType.DYNAMIC,
+      );
     },
     onError: (error) => {
       console.error(error);

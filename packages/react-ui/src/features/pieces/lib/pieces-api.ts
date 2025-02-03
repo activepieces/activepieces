@@ -71,8 +71,13 @@ export const piecesApi = {
       | PropertyType.DROPDOWN
       | PropertyType.MULTI_SELECT_DROPDOWN
       | PropertyType.DYNAMIC,
-  >(request: PieceOptionRequest, propertyType: T): Promise<ExecutePropsResult<T>> {
-      return api.post<ExecutePropsResult<T>>(`/v1/pieces/options`, request).catch(error=>{
+  >(
+    request: PieceOptionRequest,
+    propertyType: T,
+  ): Promise<ExecutePropsResult<T>> {
+    return api
+      .post<ExecutePropsResult<T>>(`/v1/pieces/options`, request)
+      .catch((error) => {
         console.error(error);
         toast({
           title: t('Error'),
@@ -81,19 +86,27 @@ export const piecesApi = {
           ),
           variant: 'destructive',
         });
-        const defaultStateForDynamicProperty: ExecutePropsResult<PropertyType.DYNAMIC> = {
-         options: {} as InputPropertyMap,
-         type: PropertyType.DYNAMIC,
-        }
-        const defaultStateForDropdownProperty: ExecutePropsResult<PropertyType.DROPDOWN> = {
-          options: {
-            options: [],
-            disabled: true,
-            placeholder: t('An internal error occured, please contact support'),
-          },
-          type: PropertyType.DROPDOWN,
-        }
-        return (propertyType === PropertyType.DYNAMIC ? defaultStateForDynamicProperty : defaultStateForDropdownProperty) as ExecutePropsResult<T>;
+        const defaultStateForDynamicProperty: ExecutePropsResult<PropertyType.DYNAMIC> =
+          {
+            options: {} as InputPropertyMap,
+            type: PropertyType.DYNAMIC,
+          };
+        const defaultStateForDropdownProperty: ExecutePropsResult<PropertyType.DROPDOWN> =
+          {
+            options: {
+              options: [],
+              disabled: true,
+              placeholder: t(
+                'An internal error occured, please contact support',
+              ),
+            },
+            type: PropertyType.DROPDOWN,
+          };
+        return (
+          propertyType === PropertyType.DYNAMIC
+            ? defaultStateForDynamicProperty
+            : defaultStateForDropdownProperty
+        ) as ExecutePropsResult<T>;
       });
   },
   mapToMetadata(
