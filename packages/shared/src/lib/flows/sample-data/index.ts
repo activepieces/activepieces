@@ -36,8 +36,6 @@ export type StepRunResponse = Static<typeof StepRunResponse>
 
 export const StepExecutionPath = Type.Array(Type.Tuple([Type.String(), Type.Number()]))
 export type StepExecutionPath = Static<typeof StepExecutionPath>
-
-export const ListMapperModeLiteral = 'ListMapperMode'
 export const SampleDataSetting = Type.Object(
     {
         sampleDataFileId: Type.Optional(Type.String()),
