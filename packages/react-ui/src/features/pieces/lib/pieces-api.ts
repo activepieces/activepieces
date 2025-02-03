@@ -82,7 +82,7 @@ export const piecesApi = {
         toast({
           title: t('Error'),
           description: t(
-            'An internal error occured while fetching data, please contact support',
+            'An internal error occurred while fetching data, please contact support',
           ),
           variant: 'destructive',
         });
@@ -97,7 +97,7 @@ export const piecesApi = {
               options: [],
               disabled: true,
               placeholder: t(
-                'An internal error occured, please contact support',
+                'An internal error occurred, please contact support',
               ),
             },
             type: PropertyType.DROPDOWN,
