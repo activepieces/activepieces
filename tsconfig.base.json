@@ -519,6 +519,9 @@
       "@activepieces/piece-resend": [
         "packages/pieces/community/resend/src/index.ts"
       ],
+      "@activepieces/piece-respaid": [
+        "packages/pieces/community/respaid/src/index.ts"
+      ],
       "@activepieces/piece-retable": [
         "packages/pieces/community/retable/src/index.ts"
       ],
