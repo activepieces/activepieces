@@ -33,7 +33,7 @@ import {
 
 export default function GeneralPage() {
   const queryClient = useQueryClient();
-  const { project, updateProject } = projectHooks.useCurrentProject();
+  const { project, updateCurrentProject } = projectHooks.useCurrentProject();
 
   const { platform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
@@ -63,7 +63,7 @@ export default function GeneralPage() {
     }
   >({
     mutationFn: (request) => {
-      updateProject(queryClient, request);
+      updateCurrentProject(queryClient, request);
       return projectApi.update(authenticationSession.getProjectId()!, {
         ...request,
         externalId:

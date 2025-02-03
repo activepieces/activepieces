@@ -16,7 +16,6 @@ import { userService } from '../user-service'
 
 export const platformUserController: FastifyPluginAsyncTypebox = async (app) => {
 
-
     app.get('/', ListUsersRequest, async (req) => {
         const platformId = req.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')

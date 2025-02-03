@@ -1,9 +1,4 @@
-import {
-  useQuery,
-  QueryClient,
-  usePrefetchQuery,
-  useSuspenseQuery,
-} from '@tanstack/react-query';
+import { useQuery, QueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { useEffect } from 'react';
@@ -25,14 +20,6 @@ import { projectApi } from '../lib/project-api';
 import { flagsHooks } from './flags-hooks';
 
 export const projectHooks = {
-  prefetchProject: () => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    usePrefetchQuery<ProjectWithLimits, Error>({
-      queryKey: ['current-project'],
-      queryFn: projectApi.current,
-      staleTime: Infinity,
-    });
-  },
   useCurrentProject: () => {
     const currentProjectId = authenticationSession.getProjectId();
     const query = useSuspenseQuery<ProjectWithLimits, Error>({
@@ -43,7 +30,7 @@ export const projectHooks = {
     return {
       ...query,
       project: query.data,
-      updateProject,
+      updateCurrentProject,
       setCurrentProject,
     };
   },
@@ -130,12 +117,13 @@ export const projectHooks = {
   },
 };
 
-const updateProject = async (
+const updateCurrentProject = async (
   queryClient: QueryClient,
   request: UpdateProjectPlatformRequest,
 ) => {
-  queryClient.setQueryData(['current-project'], {
-    ...queryClient.getQueryData(['current-project'])!,
+  const currentProjectId = authenticationSession.getProjectId();
+  queryClient.setQueryData(['current-project', currentProjectId], {
+    ...queryClient.getQueryData(['current-project', currentProjectId])!,
     ...request,
   });
 };
