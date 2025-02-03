@@ -127,7 +127,6 @@ export const platformService = {
             ...spreadIfDefined('favIconUrl', params.favIconUrl),
             ...spreadIfDefined('filteredPieceNames', params.filteredPieceNames),
             ...spreadIfDefined('filteredPieceBehavior', params.filteredPieceBehavior),
-            ...spreadIfDefined('smtp', params.smtp),
             ...spreadIfDefined('analyticsEnabled', params.analyticsEnabled),
             ...spreadIfDefined(
                 'federatedAuthProviders',
@@ -159,6 +158,7 @@ export const platformService = {
             ...spreadIfDefined('licenseKey', params.licenseKey),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
             ...spreadIfDefined('copilotSettings', params.copilotSettings),
+            smtp: params.smtp,
         }
 
         return repo().save(updatedPlatform)

@@ -112,7 +112,7 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
     )
 }
 
-const initSmtpClient = (smtp: SMTPInformation | undefined): Transporter => {
+const initSmtpClient = (smtp: SMTPInformation | undefined | null): Transporter => {
     const smtpPort = smtp?.port ?? Number.parseInt(system.getOrThrow(AppSystemProp.SMTP_PORT))
     return nodemailer.createTransport({
         host: smtp?.host ?? system.getOrThrow(AppSystemProp.SMTP_HOST),
