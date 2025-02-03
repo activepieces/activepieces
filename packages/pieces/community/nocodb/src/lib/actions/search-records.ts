@@ -39,7 +39,7 @@ export const searchRecordsAction = createAction({
 			sort,
 			offset: 0,
 			limit,
-		});
+		}, context.auth.version || 3);
 		return response.list;
 	},
 });

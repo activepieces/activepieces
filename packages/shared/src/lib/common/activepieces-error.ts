@@ -73,6 +73,7 @@ export type ApErrorParams =
     | CopilotFailedErrorParams
     | ProjectExternalIdAlreadyExistsParams
     | MemoryIssueParams
+    | InvalidCustomDomainErrorParams
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
@@ -295,6 +296,13 @@ ErrorCode.ENTITY_NOT_FOUND,
 }
 >
 
+export type InvalidCustomDomainErrorParams = BaseErrorParams<
+ErrorCode.INVALID_CUSTOM_DOMAIN,
+{
+    message: string
+}
+>
+
 export type ExecutionTimeoutErrorParams = BaseErrorParams<
 ErrorCode.EXECUTION_TIMEOUT,
 Record<string, never>
@@ -423,6 +431,7 @@ export type ProjectExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.PRO
 }>
 
 export enum ErrorCode {
+    INVALID_CUSTOM_DOMAIN = 'INVALID_CUSTOM_DOMAIN',
     NO_CHAT_RESPONSE = 'NO_CHAT_RESPONSE',
     AUTHENTICATION = 'AUTHENTICATION',
     AUTHORIZATION = 'AUTHORIZATION',
