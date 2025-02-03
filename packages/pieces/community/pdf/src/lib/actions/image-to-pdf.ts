@@ -189,19 +189,19 @@ function getImageOrientation(file: ArrayBuffer): ImageOrientation {
 
 function getOrientationCorrection(orientation: number): { degrees: number; mirrored?: 'x' | 'y' } {
 	switch (orientation) {
-		case 2:
+		case ImageOrientation.FlipHorizontal:
 			return { degrees: 0, mirrored: 'x' };
-		case 3:
+		case ImageOrientation.Rotate180:
 			return { degrees: -180 };
-		case 4:
+		case ImageOrientation.FlipVertical:
 			return { degrees: 180, mirrored: 'x' };
-		case 5:
+		case ImageOrientation.FlipHorizontalRotate90:
 			return { degrees: 90, mirrored: 'y' };
-		case 6:
+		case ImageOrientation.Rotate90:
 			return { degrees: -90 };
-		case 7:
+		case ImageOrientation.FlipVerticalRotate90:
 			return { degrees: -90, mirrored: 'y' };
-		case 8:
+		case ImageOrientation.Rotate270:
 			return { degrees: 90 };
 		default:
 			return { degrees: 0 };
