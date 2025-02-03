@@ -13,14 +13,15 @@ const EditFlowOrViewDraftButton = () => {
   const navigate = useNavigate();
   const { checkAccess } = useAuthorization();
   const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
-  const [flowVersion, flowId, readonly] = useBuilderStateContext((state) => [
+  const [flowVersion, flowId, readonly, run] = useBuilderStateContext((state) => [
     state.flowVersion,
     state.flow.id,
     state.readonly,
+    state.run
   ]);
   const isViewingDraft = flowVersion.state === FlowVersionState.DRAFT;
   const permissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
-  if (!readonly || isViewingDraft) {
+  if (!readonly || (isViewingDraft && !run)) {
     return null;
   }
 
