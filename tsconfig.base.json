@@ -176,6 +176,9 @@
       "@activepieces/piece-deepl": [
         "packages/pieces/community/deepl/src/index.ts"
       ],
+      "@activepieces/piece-deepseek": [
+        "packages/pieces/community/deepseek/src/index.ts"
+      ],
       "@activepieces/piece-delay": [
         "packages/pieces/community/delay/src/index.ts"
       ],
