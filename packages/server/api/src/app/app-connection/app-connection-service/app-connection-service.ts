@@ -317,7 +317,13 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             lastName: user.identity.lastName,
             email: user.identity.email,
         }))
-        const projectMembers = await projectMemberService(log).list(projectId, null, 1000, undefined)
+        const projectMembers = await projectMemberService(log).list({
+            platformId: undefined,
+            projectId,
+            cursorRequest: null,
+            limit: 1000,
+            projectRoleId: undefined,
+        })
         const projectMembersDetails = projectMembers.data.map(pm=>({
             firstName: pm.user.firstName,
             lastName: pm.user.lastName,

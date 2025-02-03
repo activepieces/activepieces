@@ -6,6 +6,7 @@ import {
     ErrorCode,
     isNil,
     NotificationStatus,
+    PlatformId,
     PlatformRole,
     Project,
     ProjectId,
@@ -147,6 +148,13 @@ export const projectService = {
             deleted: IsNull(),
         })
     },
+
+    async getAllByPlatformId(platformId: PlatformId): Promise<Project[]> {
+        return projectRepo().findBy({
+            platformId,
+            deleted: IsNull(),
+        })
+    }
 }
 
 

@@ -28,12 +28,13 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
     })
 
     app.get('/', ListProjectMembersRequestQueryOptions, async (request) => {
-        return projectMemberService(request.log).list(
-            request.principal.projectId,
-            request.query.cursor ?? null,
-            request.query.limit ?? DEFAULT_LIMIT_SIZE,
-            request.query.projectRoleId ?? undefined,
-        )
+        return await projectMemberService(request.log).list({
+            platformId: request.principal.platform.id,
+            projectId: request.principal.projectId,
+            cursorRequest: request.query.cursor ?? null,
+            limit: request.query.limit ?? DEFAULT_LIMIT_SIZE,
+            projectRoleId: request.query.projectRoleId ?? undefined,
+        })
     })
 
 

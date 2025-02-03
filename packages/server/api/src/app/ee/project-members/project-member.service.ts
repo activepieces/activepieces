@@ -9,6 +9,7 @@ import {
     apId,
     Cursor,
     DefaultProjectRole,
+    isNil,
     PlatformId,
     PlatformRole,
     ProjectId,
@@ -18,7 +19,7 @@ import {
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { Equal } from 'typeorm'
+import { Equal, In } from 'typeorm'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -72,12 +73,7 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             },
         })
     },
-    async list(
-        projectId: ProjectId,
-        cursorRequest: Cursor | null,
-        limit: number,
-        projectRoleId: string | undefined,
-    ): Promise<SeekPage<ProjectMemberWithUser>> {
+    async list({ platformId, projectId, cursorRequest, limit, projectRoleId }: ListParams): Promise<SeekPage<ProjectMemberWithUser>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: ProjectMemberEntity,
@@ -88,9 +84,14 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        const queryBuilder = repo()
-            .createQueryBuilder('project_member')
-            .where({ projectId })
+        const queryBuilder = repo().createQueryBuilder('project_member')
+
+        if (!isNil(platformId)) {
+            const projects = await projectService.getAllByPlatformId(platformId)
+            queryBuilder.andWhere({ projectId: In(projects.map((project) => project.id)) })
+        } else {
+            queryBuilder.andWhere({ projectId })
+        }
 
         if (projectRoleId) {
             queryBuilder.andWhere({ projectRoleId })
@@ -183,6 +184,14 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         return repo().countBy({ projectId })
     },
 })
+
+export type ListParams = {
+    platformId: PlatformId | undefined
+    projectId: ProjectId
+    cursorRequest: Cursor | null
+    limit: number
+    projectRoleId: string | undefined
+}
 
 type GetIdsOfProjectsParams = {
     userId: UserId
