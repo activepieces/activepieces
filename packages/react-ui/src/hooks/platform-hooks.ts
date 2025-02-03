@@ -1,7 +1,19 @@
-import { usePrefetchQuery, useSuspenseQuery } from '@tanstack/react-query';
+import {
+  QueryClient,
+  usePrefetchQuery,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
+
+import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 
 import { platformApi } from '../lib/platforms-api';
 
+const setCurrentPlatform = (
+  queryClient: QueryClient,
+  platform: PlatformWithoutSensitiveData,
+) => {
+  queryClient.setQueryData(['platform'], platform);
+};
 export const platformHooks = {
   prefetchPlatform: () => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -26,6 +38,7 @@ export const platformHooks = {
       refetch: async () => {
         await query.refetch();
       },
+      setCurrentPlatform,
     };
   },
 };
