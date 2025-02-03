@@ -3,8 +3,7 @@ import { Property } from '@activepieces/pieces-framework';
 export const wedofCommon = {
    baseUrl: 'https://www.wedof.fr/api',
   host: 'https://www.wedof.fr/api',
- 
-
+  
   state: Property.StaticMultiSelectDropdown({
     displayName: 'Etat du dossier de formation',
     required: false,

@@ -10,6 +10,5 @@ export const DefaultRoute = () => {
   if (!token) {
     return <Navigate to="/sign-in" replace={true}></Navigate>;
   }
-
   return <Navigate to={determineDefaultRoute(checkAccess)} replace></Navigate>;
 };

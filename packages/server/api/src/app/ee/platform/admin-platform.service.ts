@@ -44,10 +44,8 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
 
         await licenseKeysService(log).requestTrial({
             email: `mo+trial${name}@activepieces.com`,
-            fullName: name,
             companyName: name,
             goal: 'Manual Trial',
-            numberOfEmployees: 'TBD',
         })
 
         await customDomainService.verifyDomain({

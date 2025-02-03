@@ -16,27 +16,27 @@ import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { defaultTheme } from '../flags/theme'
 import { projectService } from '../project/project-service'
-import { userRepo, userService } from '../user/user-service'
+import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
 
 const repo = repoFactory<Platform>(PlatformEntity)
 
 export const platformService = {
+    async hasAnyPlatforms(): Promise<boolean> {
+        const count = await repo().count()
+        return count > 0
+    },
     async listPlatformsForIdentityWithAtleastProject(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
-        const users = await userRepo().findBy({
-            identityId: params.identityId,
-        })
+        const users = await userService.getByIdentityId({ identityId: params.identityId })
 
         const platformsWithProjects = await Promise.all(users.map(async (user) => {
             if (isNil(user.platformId)) {
                 return null
             }
-
             const hasProjects = await projectService.userHasProjects({
                 platformId: user.platformId,
                 userId: user.id,
             })
-
             return hasProjects ? user.platformId : null
         }))
 
@@ -182,7 +182,6 @@ export const platformService = {
 
         return platform
     },
-
     async getOne(id: PlatformId): Promise<Platform | null> {
         return repo().findOneBy({
             id,
