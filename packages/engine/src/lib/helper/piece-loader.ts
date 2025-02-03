@@ -1,4 +1,4 @@
-import { Action, Piece, Trigger } from '@activepieces/pieces-framework'
+import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
 import { ActivepiecesError, ErrorCode, ExecutePropsOptions, extractPieceFromModule, getPackageAliasForPiece, isNil } from '@activepieces/shared'
 
 
@@ -88,9 +88,9 @@ const getPropOrThrow = async ({ params, piecesSource }: { params: ExecutePropsOp
 
     const piece = await loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, piecesSource })
 
-    const action = piece.getAction(actionOrTriggerName) ?? piece.getTrigger(actionOrTriggerName)
+    const actionOrTrigger = piece.getAction(actionOrTriggerName) ?? piece.getTrigger(actionOrTriggerName)
 
-    if (isNil(action)) {
+    if (isNil(actionOrTrigger)) {
         throw new ActivepiecesError({
             code: ErrorCode.STEP_NOT_FOUND,
             params: {
@@ -101,7 +101,7 @@ const getPropOrThrow = async ({ params, piecesSource }: { params: ExecutePropsOp
         })
     }
 
-    const prop = action.props[propertyName]
+    const prop = (actionOrTrigger.props  as PiecePropertyMap)[propertyName]
 
     if (isNil(prop)) {
         throw new ActivepiecesError({

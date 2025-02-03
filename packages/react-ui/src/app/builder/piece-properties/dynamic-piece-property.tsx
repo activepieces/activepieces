@@ -8,7 +8,11 @@ import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { formUtils } from '@/app/builder/piece-properties/form-utils';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
-import { PiecePropertyMap } from '@activepieces/pieces-framework';
+import {
+  PiecePropertyMap,
+  PropertyType,
+  ExecutePropsResult,
+} from '@activepieces/pieces-framework';
 import { Action, Trigger } from '@activepieces/shared';
 
 import { useStepSettingsContext } from '../step-settings/step-settings-context';
@@ -21,7 +25,10 @@ type DynamicPropertiesProps = {
   disabled: boolean;
 };
 const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
-  const [flowVersion] = useBuilderStateContext((state) => [state.flowVersion]);
+  const [flowVersion, readonly] = useBuilderStateContext((state) => [
+    state.flowVersion,
+    state.readonly,
+  ]);
   const form = useFormContext<Action | Trigger>();
   const { updateFormSchema } = useStepSettingsContext();
   const isFirstRender = useRef(true);
@@ -33,7 +40,7 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
   const newRefreshers = [...props.refreshers, 'auth'];
 
   const { mutate, isPending } = useMutation<
-    PiecePropertyMap,
+    ExecutePropsResult<PropertyType.DYNAMIC>,
     Error,
     { input: Record<string, unknown> }
   >({
@@ -41,17 +48,20 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
       const { settings } = form.getValues();
       const actionOrTriggerName = settings.actionName ?? settings.triggerName;
       const { pieceName, pieceVersion, pieceType, packageType } = settings;
-      return piecesApi.options<PiecePropertyMap>({
-        pieceName,
-        pieceVersion,
-        pieceType,
-        packageType,
-        propertyName: props.propertyName,
-        actionOrTriggerName,
-        input,
-        flowVersionId: flowVersion.id,
-        flowId: flowVersion.flowId,
-      });
+      return piecesApi.options<PropertyType.DYNAMIC>(
+        {
+          pieceName,
+          pieceVersion,
+          pieceType,
+          packageType,
+          propertyName: props.propertyName,
+          actionOrTriggerName,
+          input,
+          flowVersionId: flowVersion.id,
+          flowId: flowVersion.flowId,
+        },
+        PropertyType.DYNAMIC,
+      );
     },
     onError: (error) => {
       console.error(error);
@@ -105,11 +115,22 @@ const DynamicProperties = React.memo((props: DynamicPropertiesProps) => {
             `settings.input.${props.propertyName}`,
           );
           const defaultValue = formUtils.getDefaultValueForStep(
-            response,
+            response.options,
             currentValue ?? {},
           );
-          setPropertyMap(response);
-          updateFormSchema(`settings.input.${props.propertyName}`, response);
+          setPropertyMap(response.options);
+          updateFormSchema(
+            `settings.input.${props.propertyName}`,
+            response.options,
+          );
+          if (!readonly) {
+            const schemaInput: Record<string, unknown> =
+              form.getValues()?.settings?.inputUiInfo?.schema ?? {};
+            form.setValue(`settings.inputUiInfo.schema`, {
+              ...schemaInput,
+              [props.propertyName]: response.options,
+            } as Record<string, unknown>);
+          }
 
           form.setValue(`settings.input.${props.propertyName}`, defaultValue, {
             shouldValidate: true,
