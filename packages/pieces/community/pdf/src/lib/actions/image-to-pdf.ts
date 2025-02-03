@@ -125,23 +125,37 @@ export const imageToPdf = createAction({
 	},
 });
 
+// https://sirv.com/help/articles/rotate-photos-to-be-upright/#exif-orientation-values
+enum ImageOrientation {
+	Normal = 1, // "Image is in normal orientation, no rotation or flipping"
+    Rotate90 = 6, // "Image is rotated 90 degrees"
+    Rotate180 = 3, // "Image is rotated 180 degrees"
+    Rotate270 = 8, // "Image is rotated 270 degrees"
+    FlipHorizontal = 2, // "Image is flipped horizontally"
+    FlipVertical = 4, // "Image is flipped horizontally and rotated 180 degrees"
+    FlipHorizontalRotate90 = 5, // "Image is rotated 90 degrees and flipped horizontally"
+    FlipVerticalRotate90 = 7, // "Image is rotated 270 degrees and flipped horizontally"
+	Unknown= -1
+	
+}
+
 // https://github.com/Hopding/pdf-lib/issues/1284
 // https://stackoverflow.com/questions/7584794/accessing-jpeg-exif-rotation-data-in-javascript-on-the-client-side/32490603#32490603
-function getImageOrientation(file: ArrayBuffer): number {
+function getImageOrientation(file: ArrayBuffer): ImageOrientation {
 	const view = new DataView(file);
 
 	const length = view.byteLength;
 	let offset = 2;
 
 	while (offset < length) {
-		if (view.getUint16(offset + 2, false) <= 8) return -1;
+		if (view.getUint16(offset + 2, false) <= 8) return ImageOrientation.Unknown;
 		const marker = view.getUint16(offset, false);
 		offset += 2;
 
 		// If EXIF buffer segment exists find the orientation
 		if (marker == 0xffe1) {
 			if (view.getUint32((offset += 2), false) != 0x45786966) {
-				return -1;
+				return ImageOrientation.Unknown;
 			}
 
 			const little = view.getUint16((offset += 6), false) == 0x4949;
@@ -150,7 +164,18 @@ function getImageOrientation(file: ArrayBuffer): number {
 			offset += 2;
 			for (let i = 0; i < tags; i++) {
 				if (view.getUint16(offset + i * 12, little) == 0x0112) {
-					return view.getUint16(offset + i * 12 + 8, little);
+					const orientation = view.getUint16(offset + i * 12 + 8, little);
+					switch (orientation) {
+                        case 1: return ImageOrientation.Normal;
+                        case 3: return ImageOrientation.Rotate180;
+                        case 6: return ImageOrientation.Rotate90;
+                        case 8: return ImageOrientation.Rotate270;
+                        case 2: return ImageOrientation.FlipHorizontal;
+                        case 4: return ImageOrientation.FlipVertical;
+                        case 5: return ImageOrientation.FlipHorizontalRotate90;
+                        case 7: return ImageOrientation.FlipVerticalRotate90;
+                        default: return ImageOrientation.Unknown;
+                    }
 				}
 			}
 		} else if ((marker & 0xff00) != 0xff00) {
@@ -159,10 +184,9 @@ function getImageOrientation(file: ArrayBuffer): number {
 			offset += view.getUint16(offset, false);
 		}
 	}
-	return -1;
+	return ImageOrientation.Unknown;
 }
 
-// https://sirv.com/help/articles/rotate-photos-to-be-upright/#exif-orientation-values
 function getOrientationCorrection(orientation: number): { degrees: number; mirrored?: 'x' | 'y' } {
 	switch (orientation) {
 		case 2:
