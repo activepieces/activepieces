@@ -39,8 +39,8 @@ import { PlatformRoleSelect } from '@/features/team/component/platform-role-sele
 import { userInvitationApi } from '@/features/team/lib/user-invitation';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { HttpError } from '@/lib/api';
 import { formatUtils } from '@/lib/utils';
 import {
@@ -81,7 +81,7 @@ export function InviteUserDialog() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { refetch } = userInvitationsHooks.useInvitations();
   const { project } = projectHooks.useCurrentProject();
-  const { data: currentUser } = platformUserHooks.useCurrentUser();
+  const { data: currentUser } = userHooks.useCurrentUser();
   const { checkAccess } = useAuthorization();
   const userHasPermissionToInviteUser = checkAccess(
     Permission.WRITE_INVITATION,

@@ -2,7 +2,7 @@ import { t } from 'i18next';
 
 import { Button } from '@/components/ui/button';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformUserHooks } from '@/hooks/platform-user-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 
 export type FeatureKey =
   | 'PROJECTS'
@@ -30,7 +30,7 @@ type RequestTrialProps = {
 };
 
 export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
-  const { data: currentUser } = platformUserHooks.useCurrentUser();
+  const { data: currentUser } = userHooks.useCurrentUser();
   const { data: flags } = flagsHooks.useFlags();
 
   const createQueryParams = () => {

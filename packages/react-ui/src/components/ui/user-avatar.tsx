@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { useTelemetry } from '@/components/telemetry-provider';
-import { platformUserHooks } from '@/hooks/platform-user-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { Avatar, AvatarFallback } from './avatar';
@@ -21,7 +21,7 @@ import { TextWithIcon } from './text-with-icon';
 export function UserAvatar() {
   const { reset } = useTelemetry();
   const { embedState } = useEmbedding();
-  const { data: user } = platformUserHooks.useCurrentUser();
+  const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
   if (!user || embedState.isEmbedded) {
     return null;
@@ -58,7 +58,7 @@ export function UserAvatar() {
 
         <DropdownMenuItem
           onClick={() => {
-            platformUserHooks.invalidateCurrentUser(queryClient);
+            userHooks.invalidateCurrentUser(queryClient);
             authenticationSession.logOut();
             reset();
           }}

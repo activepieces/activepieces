@@ -4,7 +4,6 @@ import {
   UpdateUserRequestBody,
   User,
   UserWithMetaInformation,
-  UserWithMetaInformationAndProject,
 } from '@activepieces/shared';
 
 export const platformUserApi = {
@@ -16,8 +15,5 @@ export const platformUserApi = {
   },
   update(id: string, request: UpdateUserRequestBody): Promise<User> {
     return api.post<User>(`/v1/users/${id}`, request);
-  },
-  getCurrentUser() {
-    return api.get<UserWithMetaInformationAndProject>('/v1/users/me');
   },
 };

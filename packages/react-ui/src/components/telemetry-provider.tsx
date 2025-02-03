@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useDeepCompareEffect } from 'react-use';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformUserHooks } from '@/hooks/platform-user-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import {
   ApFlagId,
   isNil,
@@ -17,7 +17,7 @@ interface TelemetryProviderProps {
 }
 
 const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
-  const { data: currentUser } = platformUserHooks.useCurrentUser();
+  const { data: currentUser } = userHooks.useCurrentUser();
   const [analytics, setAnalytics] = useState<AnalyticsBrowser | null>(null);
   const initializedUserEmail = useRef<string | null>(null);
 

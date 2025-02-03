@@ -22,7 +22,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { platformUserHooks } from '@/hooks/platform-user-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { platformApi } from '@/lib/platforms-api';
 import { cn } from '@/lib/utils';
@@ -31,7 +31,7 @@ import { isNil } from '@activepieces/shared';
 import { ScrollArea } from '../../../components/ui/scroll-area';
 
 function PlatformSwitcher() {
-  const { data: user } = platformUserHooks.useCurrentUser();
+  const { data: user } = userHooks.useCurrentUser();
   const { data: platforms } = useQuery({
     queryKey: ['platforms', user?.id],
     queryFn: () => platformApi.listPlatforms(),

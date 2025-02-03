@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { TableTitle } from '@/components/ui/table-title';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-api';
-import { platformUserHooks } from '@/hooks/platform-user-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { AI_PROVIDERS } from '@activepieces/pieces-common';
 import { PlatformRole } from '@activepieces/shared';
 
@@ -23,7 +23,7 @@ export default function AIProvidersPage() {
     queryKey: ['ai-providers'],
     queryFn: () => aiProviderApi.list(),
   });
-  const { data: currentUser } = platformUserHooks.useCurrentUser();
+  const { data: currentUser } = userHooks.useCurrentUser();
 
   const { mutate: deleteProvider, isPending: isDeleting } = useMutation({
     mutationFn: (provider: string) => aiProviderApi.delete(provider),
