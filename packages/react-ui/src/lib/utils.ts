@@ -237,3 +237,5 @@ export const determineDefaultRoute = (
   }
   return authenticationSession.appendProjectRoutePrefix('/settings');
 };
+
+export const NEW_FLOW_QUERY_PARAM = 'newFlow';

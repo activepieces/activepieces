@@ -1,12 +1,13 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
 import { ChevronDown, History, Logs } from 'lucide-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   createSearchParams,
   Link,
   useLocation,
   useNavigate,
+  useSearchParams,
 } from 'react-router-dom';
 
 import {
@@ -15,6 +16,7 @@ import {
 } from '@/app/builder/builder-hooks';
 import { useEmbedding, useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
+import EditableText from '@/components/ui/editable-text';
 import {
   Tooltip,
   TooltipContent,
@@ -26,9 +28,10 @@ import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { determineDefaultRoute } from '@/lib/utils';
+import { determineDefaultRoute, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import {
   ApFlagId,
+  FlowOperationType,
   FlowVersionState,
   Permission,
   supportUrl,
@@ -39,6 +42,7 @@ import FlowActionMenu from '../components/flow-actions-menu';
 import { BuilderFlowStatusSection } from './builder-flow-status-section';
 
 export const BuilderHeader = () => {
+  const [queryParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
   const openNewWindow = useNewWindow();
@@ -57,14 +61,14 @@ export const BuilderHeader = () => {
     flow,
     flowVersion,
     setLeftSidebar,
-    renameFlowClientSide,
     moveToFolderClientSide,
+    applyOperation,
   ] = useBuilderStateContext((state) => [
     state.flow,
     state.flowVersion,
     state.setLeftSidebar,
-    state.renameFlowClientSide,
     state.moveToFolderClientSide,
+    state.applyOperation,
   ]);
 
   const { embedState } = useEmbedding();
@@ -76,7 +80,10 @@ export const BuilderHeader = () => {
     flowVersion.id === flow.publishedVersionId;
   const folderName = folderData?.displayName ?? t('Uncategorized');
   const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
-
+  const [isEditingFlowName, setIsEditingFlowName] = useState(false);
+  useEffect(() => {
+    setIsEditingFlowName(queryParams.get(NEW_FLOW_QUERY_PARAM) === 'true');
+  }, []);
   return (
     <div className="bg-background select-none">
       <div className="relative items-center flex h-[55px] w-full p-4 bg-muted/30">
@@ -100,7 +107,7 @@ export const BuilderHeader = () => {
                 </TooltipContent>
               </Tooltip>
             )}
-          <span>
+          <div className="flex gap-2 items-center">
             {!embedState.hideFolders && (
               <>
                 <TooltipProvider>
@@ -131,9 +138,23 @@ export const BuilderHeader = () => {
               </>
             )}
             {!embedState.hideFlowNameInBuilder && (
-              <strong>{flowVersion.displayName}</strong>
+              <EditableText
+                className="font-semibold"
+                value={flowVersion.displayName}
+                readonly={!isLatestVersion}
+                onValueChange={(value) =>
+                  applyOperation({
+                    type: FlowOperationType.CHANGE_NAME,
+                    request: {
+                      displayName: value,
+                    },
+                  })
+                }
+                isEditing={isEditingFlowName}
+                setIsEditing={setIsEditingFlowName}
+              />
             )}
-          </span>
+          </div>
           <FlowActionMenu
             insideBuilder={true}
             flow={flow}
@@ -142,7 +163,9 @@ export const BuilderHeader = () => {
             onDelete={() => {
               navigate('/flows');
             }}
-            onRename={(newName) => renameFlowClientSide(newName)}
+            onRename={() => {
+              setIsEditingFlowName(true);
+            }}
             onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
             onDuplicate={() => {}}
           >
