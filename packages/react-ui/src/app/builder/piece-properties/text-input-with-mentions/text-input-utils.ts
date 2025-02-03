@@ -39,7 +39,7 @@ type ApMentionNodeAttrs = {
   displayText: string;
   serverValue: string;
 };
-
+const flattenNestedKeysRegex = /^flattenNestedKeys\((\w+),\s*\[(.*?)\]\)$/;
 enum TipTapNodeTypes {
   paragraph = 'paragraph',
   text = 'text',
@@ -48,12 +48,15 @@ enum TipTapNodeTypes {
 }
 
 const isMentionNodeText = (item: string) => {
-  const match = item.match(/^\{\{(.*)\}\}$/);
-  if (match) {
-    const content = match[1].trim();
-    const { stepName } = parseStepAndNameFromMention(content);
-
-    return stepName !== null;
+  const itemIsToken = item.match(/^\{\{(.*)\}\}$/);
+  if (itemIsToken) {
+    const content = itemIsToken[1].trim();
+    const itemIsFlattenedArray = content.match(flattenNestedKeysRegex);
+    if(itemIsFlattenedArray)
+      {
+        return true;
+      }
+    return /^(step_\d+|trigger)/.test(content);
   }
   return false;
 };
@@ -109,8 +112,7 @@ function parseFlattenArrayPath(input: string): {
   stepName?: string;
   arrayPath?: string[];
 } {
-  const regex = /^flattenNestedKeys\((\w+),\s*\[(.*?)\]\)$/;
-  const match = input.match(regex);
+  const match = input.match(flattenNestedKeysRegex);
 
   if (!match) {
     return { isValid: false };
