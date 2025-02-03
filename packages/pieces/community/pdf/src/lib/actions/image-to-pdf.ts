@@ -53,10 +53,10 @@ export const imageToPdf = createAction({
 
 			let scaledImage, correctedWidth, correctedHeight;
 			switch (exifOrientation) {
-				case 5:
-				case 6:
-				case 7:
-				case 8:
+				case ImageOrientation.FlipHorizontalRotate90:
+				case ImageOrientation.Rotate90:
+				case ImageOrientation.FlipVerticalRotate90:
+				case ImageOrientation.Rotate270:
 					// The uploaded image is rotated +/- 90 degrees
 					scaledImage = result.scaleToFit(maxCardHeight, maxCardWidth);
 					correctedWidth = scaledImage.height;
@@ -71,31 +71,31 @@ export const imageToPdf = createAction({
 			let xShift, yShift;
 			const yOffset = pageHeight - yMargin;
 			switch (exifOrientation) {
-				case 2:
+				case ImageOrientation.FlipHorizontal:
 					xShift = pageWidth - xMargin - correctedWidth;
 					yShift = yOffset - correctedHeight;
 					break;
-				case 3:
+				case ImageOrientation.Rotate180:
 					xShift = xMargin + correctedWidth;
 					yShift = yOffset;
 					break;
-				case 4:
+				case ImageOrientation.FlipVertical:
 					xShift = pageWidth - xMargin;
 					yShift = yOffset;
 					break;
-				case 5:
+				case ImageOrientation.FlipHorizontalRotate90:
 					xShift = xMargin + correctedWidth;
 					yShift = pageHeight - yOffset;
 					break;
-				case 6:
+				case ImageOrientation.Rotate90:
 					xShift = xMargin;
 					yShift = yOffset;
 					break;
-				case 7:
+				case ImageOrientation.FlipVerticalRotate90:
 					xShift = xMargin;
 					yShift = pageHeight - yOffset + correctedHeight;
 					break;
-				case 8:
+				case ImageOrientation.Rotate270:
 					xShift = xMargin + correctedWidth;
 					yShift = yOffset - correctedHeight;
 					break;
