@@ -8,17 +8,13 @@ import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 
 import { platformApi } from '../lib/platforms-api';
 
-const setCurrentPlatform = (
-  queryClient: QueryClient,
-  platform: PlatformWithoutSensitiveData,
-) => {
-  queryClient.setQueryData(['platform'], platform);
-};
+const PLATFORM_KEY = ['platform'];
+
 export const platformHooks = {
   prefetchPlatform: () => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     usePrefetchQuery({
-      queryKey: ['platform'],
+      queryKey: PLATFORM_KEY,
       queryFn: platformApi.getCurrentPlatform,
       staleTime: Infinity,
     });
@@ -29,7 +25,7 @@ export const platformHooks = {
   },
   useCurrentPlatform: () => {
     const query = useSuspenseQuery({
-      queryKey: ['platform'],
+      queryKey: PLATFORM_KEY,
       queryFn: platformApi.getCurrentPlatform,
       staleTime: Infinity,
     });
@@ -38,7 +34,12 @@ export const platformHooks = {
       refetch: async () => {
         await query.refetch();
       },
-      setCurrentPlatform,
+      setCurrentPlatform: (
+        queryClient: QueryClient,
+        platform: PlatformWithoutSensitiveData,
+      ) => {
+        queryClient.setQueryData(PLATFORM_KEY, platform);
+      },
     };
   },
 };
