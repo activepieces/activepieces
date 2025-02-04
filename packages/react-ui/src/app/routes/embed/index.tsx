@@ -64,6 +64,8 @@ const EmbedPage = React.memo(() => {
                   event.data.data.disableNavigationInBuilder,
                 hideFolders: event.data.data.hideFolders || false,
                 sdkVersion: event.data.data.sdkVersion,
+                fontUrl: event.data.data.fontUrl,
+                fontFamily: event.data.data.fontFamily,
               });
 
               //previously initialRoute was optional
