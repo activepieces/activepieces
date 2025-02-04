@@ -97,6 +97,7 @@ function appendSlashAndApi(url: string): string {
     return `${url}${slash}api/`
 }
 
+
 async function getContainerMemoryUsage() {
     const memLimitPath = '/sys/fs/cgroup/memory/memory.limit_in_bytes'
     const memUsagePath = '/sys/fs/cgroup/memory/memory.usage_in_bytes'
