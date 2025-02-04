@@ -48,10 +48,9 @@ const useAnimateSidebar = (
   sidebarValue: LeftSideBarType | RightSideBarType,
 ) => {
   const handleRef = useRef<ImperativePanelHandle>(null);
-  const sidebarClosed = [
-    LeftSideBarType.NONE,
-    RightSideBarType.NONE,
-  ].includes(sidebarValue);
+  const sidebarClosed = [LeftSideBarType.NONE, RightSideBarType.NONE].includes(
+    sidebarValue,
+  );
   useEffect(() => {
     const sidebarSize = handleRef.current?.getSize() ?? 0;
     if (sidebarClosed) {
