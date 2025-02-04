@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, apVersionUtil } from '@activepieces/server-shared'
 import { Platform } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
@@ -54,7 +54,7 @@ async function sendUsageReport(job: SystemJobData<SystemJobName.USAGE_REPORT>): 
 
 async function constructUsageReport(platform: Platform, startDate: string, endDate: string): Promise<UsageReport> {
     const licenseKey = system.getOrThrow(AppSystemProp.LICENSE_KEY)
-    const version = await flagService.getCurrentRelease()
+    const version = await apVersionUtil.getCurrentRelease()
     const addedProjects = await getAddedProjects(platform.id, startDate, endDate)
     const addedUsers = await getAddedUsers(platform.id, startDate, endDate)
     const activeProjects = await projectRepo().countBy({

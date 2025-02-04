@@ -3,7 +3,6 @@ import { isNil } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { flowWorker, piecesBuilder } from 'server-worker'
 import { accessTokenManager } from './authentication/lib/access-token-manager'
-import { flagService } from './flags/flag.service'
 import { system } from './helper/system/system'
 
 export const setupWorker = async (app: FastifyInstance): Promise<void> => {
@@ -18,8 +17,7 @@ export const setupWorker = async (app: FastifyInstance): Promise<void> => {
 
 export async function workerPostBoot(app: FastifyInstance): Promise<void> {
     const workerToken = await generateWorkerToken()
-    const version = await flagService.getCurrentRelease()
-    await flowWorker(app.log).init({ workerToken, version })
+    await flowWorker(app.log).init({ workerToken })
 }
 
 

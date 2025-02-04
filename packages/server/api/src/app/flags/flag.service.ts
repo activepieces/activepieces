@@ -1,6 +1,5 @@
-import { AppSystemProp, webhookSecretsUtils } from '@activepieces/server-shared'
+import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-shared'
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
-import axios from 'axios'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
@@ -11,7 +10,6 @@ import { defaultTheme } from './theme'
 
 const flagRepo = repoFactory(FlagEntity)
 
-let cachedVersion: string | undefined
 
 export const flagService = {
     save: async (flag: FlagType): Promise<Flag> => {
@@ -59,8 +57,8 @@ export const flagService = {
         const now = new Date().toISOString()
         const created = now
         const updated = now
-        const currentVersion = await this.getCurrentRelease()
-        const latestVersion = await this.getLatestRelease()
+        const currentVersion = await apVersionUtil.getCurrentRelease()
+        const latestVersion = await apVersionUtil.getLatestRelease()
         flags.push(
             {
                 id: ApFlagId.ENVIRONMENT,
@@ -248,28 +246,7 @@ export const flagService = {
         }
         return flags
     },
-    async getCurrentRelease(): Promise<string> {
-        const packageJson = await import('package.json')
-        return packageJson.version
-    },
-    async getLatestRelease(): Promise<string> {
-        try {
-            if (cachedVersion) {
-                return cachedVersion
-            }
-            const response = await axios.get<PackageJson>(
-                'https://raw.githubusercontent.com/activepieces/activepieces/main/package.json',
-                {
-                    timeout: 5000,
-                },
-            )
-            cachedVersion = response.data.version
-            return response.data.version
-        }
-        catch (ex) {
-            return '0.0.0'
-        }
-    },
+    
     isCloudPlatform(platformId: string | null): boolean {
         const cloudPlatformId = system.get(AppSystemProp.CLOUD_PLATFORM_ID)
         if (!cloudPlatformId || !platformId) {
@@ -290,8 +267,6 @@ function getSupportedAppWebhooks(): string[] {
     return Object.keys(parsed)
 }
 
-
-
 export type FlagType =
     | BaseFlagStructure<ApFlagId.PUBLIC_URL, string>
     | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
@@ -301,8 +276,4 @@ export type FlagType =
 type BaseFlagStructure<K extends ApFlagId, V> = {
     id: K
     value: V
-}
-
-type PackageJson = {
-    version: string
 }
