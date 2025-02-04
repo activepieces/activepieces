@@ -40,8 +40,16 @@
   ],
   "tabs": [
     {
+      "name": "Features",
+      "url": "features"
+    },
+    {
       "name": "Develop Pieces",
       "url": "developers"
+    },
+    {
+      "name": "Handbook",
+      "url": "handbook"
     },
     {
       "name": "API Reference",
@@ -50,18 +58,28 @@
     {
       "name": "Deploy",
       "url": "install"
-    },
+    }
+  ],
+  "anchors": [
     {
-      "name": "Handbook",
-      "url": "handbook"
+      "name": "Changelog",
+      "url": "https://github.com/activepieces/activepieces/releases",
+      "icon": "book"
     }
   ],
   "navigation": [
     {
+      "group": "Features",
+      "pages": [
+        "features/overview"
+      ]
+    },
+    {
       "group": "Getting Started",
       "pages": [
         "getting-started/introduction",
-        "getting-started/principles"
+        "getting-started/principles",
+        "getting-started/editions"
       ]
     },
     {
@@ -77,13 +95,12 @@
       ]
     },
     {
-      "group": "Hiring",
-      "icon": "user",
+      "group": "Engineering",
+      "icon": "code",
       "pages": [
-        "handbook/hiring/hiring",
-        "handbook/hiring/levels",
-        "handbook/hiring/team",
-        "handbook/hiring/compensation"
+        "handbook/engineering/how-we-work",
+        "handbook/engineering/pre-releases",
+        "handbook/engineering/on-call"
       ]
     },
     {
@@ -98,14 +115,16 @@
       ]
     },
     {
-      "group": "Engineering",
-      "icon": "code",
+      "group": "Hiring",
+      "icon": "user",
       "pages": [
-        "handbook/engineering/how-we-work",
-        "handbook/engineering/pre-releases",
-        "handbook/engineering/on-call"
+        "handbook/hiring/hiring",
+        "handbook/hiring/levels",
+        "handbook/hiring/team",
+        "handbook/hiring/compensation"
       ]
     },
+
     {
       "group": "Endpoints",
       "pages": [
@@ -219,14 +238,23 @@
       ]
     },
     {
+      "group": "Architecture",
+      "pages": [
+        "architecture/overview",
+        "architecture/workers",
+        "architecture/engine",
+        "architecture/stack"
+      ]
+    },
+    {
       "group": "Flows",
       "pages": [
-        "flows/building-flows",
-        "flows/passing-data",
-        "flows/publishing-flows",
-        "flows/debugging-runs",
-        "flows/versioning",
-        "flows/known-limits"
+        "features/flows/building-flows",
+        "features/flows/passing-data",
+        "features/flows/publishing-flows",
+        "features/flows/debugging-runs",
+        "features/flows/versioning",
+        "features/flows/known-limits"
       ]
     },
     {
@@ -256,15 +284,6 @@
         "install/configuration/hardware",
         "install/configuration/setup-ssl",
         "install/configuration/troubleshooting"
-      ]
-    },
-    {
-      "group": "Architecture",
-      "pages": [
-        "install/architecture/overview",
-        "install/architecture/workers",
-        "install/architecture/engine",
-        "install/architecture/stack"
       ]
     },
     {
@@ -345,53 +364,53 @@
     {
       "group": "Embedding",
       "pages": [
-        "embedding/overview",
-        "embedding/provision-users",
-        "embedding/embed-builder",
-        "embedding/navigation",
-        "embedding/customize-pieces",
-        "embedding/embed-connections",
-        "embedding/sdk-changelog"
+        "features/embedding/overview",
+        "features/embedding/provision-users",
+        "features/embedding/embed-builder",
+        "features/embedding/navigation",
+        "features/embedding/customize-pieces",
+        "features/embedding/embed-connections",
+        "features/embedding/sdk-changelog"
       ]
     },
     {
       "group": "Admin Console",
       "pages": [
-        "admin-console/overview",
-        "admin-console/appearance",
-        "admin-console/manage-projects",
-        "admin-console/custom-domain",
-        "admin-console/manage-templates",
-        "admin-console/manage-pieces",
-        "admin-console/manage-oauth2",
-        "admin-console/customize-emails",
-        "admin-console/manage-ai-providers"
+        "features/admin-console/overview",
+        "features/admin-console/appearance",
+        "features/admin-console/manage-projects",
+        "features/admin-console/custom-domain",
+        "features/admin-console/manage-templates",
+        "features/admin-console/manage-pieces",
+        "features/admin-console/manage-oauth2",
+        "features/admin-console/customize-emails",
+        "features/admin-console/manage-ai-providers"
       ]
     },
     {
       "group": "Operations",
       "pages": [
-        "operations/git-sync",
+        "features/operations/git-sync",
         {
           "group": "Audit Logs",
           "icon": "book",
           "pages": [
-            "operations/audit-logs/overview",
-            "operations/audit-logs/flow-created",
-            "operations/audit-logs/flow-updated",
-            "operations/audit-logs/flow-deleted",
-            "operations/audit-logs/connection-upserted",
-            "operations/audit-logs/connection-deleted",
-            "operations/audit-logs/flow-run-started",
-            "operations/audit-logs/flow-run-finished",
-            "operations/audit-logs/folder-created",
-            "operations/audit-logs/folder-updated",
-            "operations/audit-logs/folder-deleted",
-            "operations/audit-logs/user-signed-in",
-            "operations/audit-logs/user-signed-up",
-            "operations/audit-logs/user-email-verified",
-            "operations/audit-logs/user-password-reset",
-            "operations/audit-logs/signing-key-created"
+            "features/operations/audit-logs/overview",
+            "features/operations/audit-logs/flow-created",
+            "features/operations/audit-logs/flow-updated",
+            "features/operations/audit-logs/flow-deleted",
+            "features/operations/audit-logs/connection-upserted",
+            "features/operations/audit-logs/connection-deleted",
+            "features/operations/audit-logs/flow-run-started",
+            "features/operations/audit-logs/flow-run-finished",
+            "features/operations/audit-logs/folder-created",
+            "features/operations/audit-logs/folder-updated",
+            "features/operations/audit-logs/folder-deleted",
+            "features/operations/audit-logs/user-signed-in",
+            "features/operations/audit-logs/user-signed-up",
+            "features/operations/audit-logs/user-email-verified",
+            "features/operations/audit-logs/user-password-reset",
+            "features/operations/audit-logs/signing-key-created"
           ]
         }
       ]
@@ -399,18 +418,16 @@
     {
       "group": "Security",
       "pages": [
-        "security/practices",
-        "security/permissions",
-        "security/sso"
+        "features/security/practices",
+        "features/security/permissions",
+        "features/security/sso"
       ]
     },
     {
       "group": "About",
       "pages": [
-        "about/i18n",
-        "about/editions",
         "about/breaking-changes",
-        "about/changelog",
+        "about/i18n",
         "about/telemetry",
         "about/license"
       ]
