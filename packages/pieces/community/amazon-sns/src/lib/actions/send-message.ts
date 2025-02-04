@@ -3,11 +3,11 @@ import { createSNS } from '../common';
 import { amazonSnsAuth } from '../..';
 import { ListTopicsCommand, PublishCommand } from "@aws-sdk/client-sns";
 
-export const publish = createAction({
+export const sendMessageAction = createAction({
   auth: amazonSnsAuth,
-  name: 'publish',
-  displayName: 'Publish',
-  description: 'Sends a message to an Amazon SNS topic',
+  name: 'send-message',
+  displayName: 'Send Message',
+  description: 'Sends a message to an Amazon SNS topic.',
   props: {
     topic: Property.Dropdown({
         displayName: 'Topic',
