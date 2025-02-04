@@ -1,5 +1,4 @@
 
-import { AI_PROVIDERS_MAKRDOWN } from "@activepieces/pieces-common";
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { baseUrl, unauthorizedMessage } from "./lib/common/common";
 import OpenAI from 'openai';
@@ -7,7 +6,11 @@ import { askDeepseek } from "./lib/actions/ask-deepseek";
 import { PieceCategory } from "@activepieces/shared";
 
     export const deepseekAuth = PieceAuth.SecretText({
-      description: AI_PROVIDERS_MAKRDOWN.deepseek,
+      description:`
+      Follow these instructions to get your DeepSeek API Key:
+
+1. Visit the following website: https://platform.deepseek.com/api_keys.
+2. Once on the website, locate and click on the option to obtain your DeepSeek API Key.`,
       displayName: 'API Key',
       required: true,
       validate: async (auth) => {
@@ -38,7 +41,7 @@ import { PieceCategory } from "@activepieces/shared";
     });
     
     export const deepseek = createPiece({
-      displayName: "Deepseek",
+      displayName: "DeepSeek",
       auth: deepseekAuth,
       categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
       minimumSupportedRelease: '0.36.1',
