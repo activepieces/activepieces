@@ -93,7 +93,7 @@ export const _AP_JWT_TOKEN_QUERY_PARAM_NAME = "jwtToken"
 
 export const _AP_MANAGED_TOKEN_LOCAL_STORAGE_KEY = "ap_managed_token"
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.3.3";
+  readonly _sdkVersion = "0.3.4";
   _prefix = '';
   _instanceUrl = '';
   _hideSidebar = false;
