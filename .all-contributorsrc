@@ -1470,6 +1470,69 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "maarteNNNN",
+      "name": "Maarten Coppens",
+      "avatar_url": "https://avatars.githubusercontent.com/u/14275291?v=4",
+      "profile": "https://github.com/maarteNNNN",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "mahmuthamet",
+      "name": "Mahmoud Hamed",
+      "avatar_url": "https://avatars.githubusercontent.com/u/90776946?v=4",
+      "profile": "https://github.com/mahmuthamet",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Blightwidow",
+      "name": "Theo Dammaretz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/14098167?v=4",
+      "profile": "https://dammaretz.com",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "s31w4n",
+      "name": "s31w4n",
+      "avatar_url": "https://avatars.githubusercontent.com/u/63353528?v=4",
+      "profile": "https://github.com/s31w4n",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "abdulrahmanmajid",
+      "name": "Abdul Rahman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/94991678?v=4",
+      "profile": "https://kallabot.com",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "coat",
+      "name": "Kent Smith",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1661?v=4",
+      "profile": "https://github.com/coat",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "ArvindEnvoy",
+      "name": "Arvind Ramesh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25014185?v=4",
+      "profile": "https://github.com/ArvindEnvoy",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"

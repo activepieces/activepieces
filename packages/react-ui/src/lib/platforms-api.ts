@@ -1,6 +1,5 @@
 import {
   LicenseKeyEntity,
-  Platform,
   PlatformWithoutSensitiveData,
   UpdatePlatformRequestBody,
 } from '@activepieces/shared';
@@ -14,7 +13,7 @@ export const platformApi = {
     if (!platformId) {
       throw Error('No platform id found');
     }
-    return api.get<Platform>(`/v1/platforms/${platformId}`);
+    return api.get<PlatformWithoutSensitiveData>(`/v1/platforms/${platformId}`);
   },
 
   listPlatforms() {
@@ -37,6 +36,9 @@ export const platformApi = {
   },
 
   update(req: UpdatePlatformRequestBody, platformId: string) {
-    return api.post<void>(`/v1/platforms/${platformId}`, req);
+    return api.post<PlatformWithoutSensitiveData>(
+      `/v1/platforms/${platformId}`,
+      req,
+    );
   },
 };

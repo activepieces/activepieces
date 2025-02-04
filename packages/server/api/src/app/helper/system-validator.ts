@@ -109,6 +109,7 @@ const systemPropValidators: {
     [AppSystemProp.S3_REGION]: stringValidator,
     [AppSystemProp.S3_SECRET_ACCESS_KEY]: stringValidator,
     [AppSystemProp.S3_USE_SIGNED_URLS]: booleanValidator,
+    [AppSystemProp.S3_USE_IRSA]: booleanValidator,
     [AppSystemProp.SMTP_HOST]: stringValidator,
     [AppSystemProp.SMTP_PASSWORD]: stringValidator,
     [AppSystemProp.SMTP_PORT]: numberValidator,
@@ -139,6 +140,13 @@ const systemPropValidators: {
     // Cloud
     [AppSystemProp.GOOGLE_CLIENT_ID]: stringValidator,
     [AppSystemProp.GOOGLE_CLIENT_SECRET]: stringValidator,
+
+    // Cloudflare
+    [AppSystemProp.CLOUDFLARE_API_TOKEN]: stringValidator,
+    [AppSystemProp.CLOUDFLARE_API_BASE]: stringValidator,
+
+    // Secret Manager
+    [AppSystemProp.SECRET_MANAGER_API_KEY]: stringValidator,
 }
 
 

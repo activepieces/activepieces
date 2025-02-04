@@ -80,19 +80,15 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
         return queue
     },
 
-    async shouldBeLimited(queueName: QueueName, projectId: string | undefined, jobId: string): Promise<{
+    async shouldBeLimited(projectId: string | undefined, jobId: string): Promise<{
         shouldRateLimit: boolean
     }> {
-        if (isNil(projectId)) {
+        if (isNil(projectId) || !PROJECT_RATE_LIMITER_ENABLED) {
             return {
                 shouldRateLimit: false,
             }
         }
-        if (!SUPPORTED_QUEUES.includes(queueName) || !PROJECT_RATE_LIMITER_ENABLED) {
-            return {
-                shouldRateLimit: false,
-            }
-        }
+
         const newActiveRuns = (await redis.keys(`${projectKey(projectId)}*`)).length
         if (newActiveRuns >= MAX_CONCURRENT_JOBS_PER_PROJECT) {
             return {

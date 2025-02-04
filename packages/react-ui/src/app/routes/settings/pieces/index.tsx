@@ -1,12 +1,17 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Trash } from 'lucide-react';
+import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
+import {
+  BulkAction,
+  DataTable,
+  RowDataWithActions,
+} from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
@@ -108,6 +113,17 @@ const ProjectPiecesPage = () => {
     searchQuery,
   });
 
+  const bulkActions: BulkAction<PieceMetadataModelSummary>[] = useMemo(
+    () => [
+      {
+        render: () => {
+          return <ManagePiecesDialog onSuccess={() => refetch()} />;
+        },
+      },
+    ],
+    [refetch],
+  );
+
   return (
     <LockedFeatureGuard
       featureKey="PIECES"
@@ -120,14 +136,7 @@ const ProjectPiecesPage = () => {
     >
       <div className="flex w-full flex-col items-center justify-center gap-4">
         <div className="mx-auto w-full flex-col">
-          <div className="mb-4 flex">
-            <TableTitle>{t('Pieces')}</TableTitle>
-          </div>
-          <div className="flex justify-end">
-            {platform.managePiecesEnabled && (
-              <ManagePiecesDialog onSuccess={() => refetch()} />
-            )}
-          </div>
+          <TableTitle>{t('Pieces')}</TableTitle>
           <DataTable
             columns={columns}
             filters={[
@@ -146,6 +155,7 @@ const ProjectPiecesPage = () => {
             }}
             isLoading={isLoading}
             hidePagination={true}
+            bulkActions={platform.managePiecesEnabled ? bulkActions : []}
           />
         </div>
       </div>

@@ -1,20 +1,20 @@
-import { useEmbedding } from '../../components/embed-provider';
 import { LoadingSpinner } from '../../components/ui/spinner';
 import { cn } from '../../lib/utils';
 
-export const LoadingScreen = () => {
-  const { embedState } = useEmbedding();
-  const isInEmbedding =
-    window.location.pathname.startsWith('/embed') || embedState.isEmbedded;
+export const LoadingScreen = ({
+  useDarkBackground = false,
+}: {
+  useDarkBackground?: boolean;
+}) => {
   return (
     <div
       className={cn('flex h-screen w-screen items-center justify-center ', {
-        'black/80': isInEmbedding,
+        'bg-black/80': useDarkBackground,
       })}
     >
       <LoadingSpinner
         className={cn({
-          'stroke-background': isInEmbedding,
+          'stroke-foreground': useDarkBackground,
         })}
         size={50}
       ></LoadingSpinner>

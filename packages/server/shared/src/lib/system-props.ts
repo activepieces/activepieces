@@ -64,6 +64,7 @@ export enum AppSystemProp {
     S3_REGION = 'S3_REGION',
     S3_SECRET_ACCESS_KEY = 'S3_SECRET_ACCESS_KEY',
     S3_USE_SIGNED_URLS = 'S3_USE_SIGNED_URLS',
+    S3_USE_IRSA = 'S3_USE_IRSA',
     SMTP_HOST = 'SMTP_HOST',
     SMTP_PASSWORD = 'SMTP_PASSWORD',
     SMTP_PORT = 'SMTP_PORT',
@@ -110,6 +111,13 @@ export enum AppSystemProp {
     LOKI_PASSWORD = 'LOKI_PASSWORD',
     LOKI_URL = 'LOKI_URL',
     LOKI_USERNAME = 'LOKI_USERNAME',
+
+    // Cloudflare
+    CLOUDFLARE_API_TOKEN = 'CLOUDFLARE_API_TOKEN',
+    CLOUDFLARE_API_BASE = 'CLOUDFLARE_API_BASE',
+
+    // Secret Manager
+    SECRET_MANAGER_API_KEY = 'SECRET_MANAGER_API_KEY',
 }
 export enum PiecesSource {
     /**

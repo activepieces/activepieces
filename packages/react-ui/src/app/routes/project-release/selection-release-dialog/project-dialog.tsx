@@ -5,6 +5,7 @@ import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -15,13 +16,6 @@ import {
 } from '@/components/ui/dialog';
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
 import { projectHooks } from '@/hooks/project-hooks';
@@ -51,12 +45,12 @@ export function ProjectSelectionDialog({
   setOpen,
   onSuccess,
 }: ProjectSelectionDialogProps) {
-  const { data: projects } = projectHooks.useProjects();
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const { data: projects, isLoading: loadingProjects } =
+    projectHooks.useProjects();
+  const [isCreateReleaseDialogOpen, setIsCreateReleaseDialogOpen] =
+    useState(false);
   const [syncPlan, setSyncPlan] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-
-  const { mutate: loadSyncPlan } = useMutation({
+  const { mutate: loadSyncPlan, isPending: isDoingDiff } = useMutation({
     mutationFn: (request: DiffReleaseRequest) =>
       projectReleaseApi.diff(request),
     onSuccess: (plan) => {
@@ -66,17 +60,14 @@ export function ProjectSelectionDialog({
           description: t('There are no differences to apply'),
           variant: 'default',
         });
-        setLoading(false);
         return;
       }
       setSyncPlan(plan);
-      setLoading(false);
       setOpen(false);
-      setDialogOpen(true);
+      setIsCreateReleaseDialogOpen(true);
     },
     onError: () => {
       toast(INTERNAL_ERROR_TOAST);
-      setLoading(false);
     },
   });
 
@@ -95,7 +86,6 @@ export function ProjectSelectionDialog({
       });
       return;
     }
-    setLoading(true);
     loadSyncPlan({
       type: ProjectReleaseType.PROJECT,
       targetProjectId: data.selectedProject,
@@ -128,42 +118,36 @@ export function ProjectSelectionDialog({
                 render={({ field }) => (
                   <FormItem className="grid gap-2">
                     <Label>{t('Project')}</Label>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('Project')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {projects && projects.length > 1 ? (
-                          projects
-                            .filter((project) => project.id !== projectId)
-                            .map((project) => (
-                              <SelectItem key={project.id} value={project.id}>
-                                {project.displayName}
-                              </SelectItem>
-                            ))
-                        ) : (
-                          <SelectItem disabled value="1">
-                            {t('No projects available')}
-                          </SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
+                    <SearchableSelect
+                      onChange={field.onChange}
+                      value={field.value}
+                      placeholder={t('Search projects...')}
+                      options={(projects ?? [])
+                        .filter((project) => project.id !== projectId)
+                        .map((project) => ({
+                          label: project.displayName,
+                          value: project.id,
+                        }))}
+                      loading={loadingProjects}
+                    ></SearchableSelect>
+
                     <FormMessage />
                   </FormItem>
                 )}
               ></FormField>
 
               <DialogFooter>
-                <Button variant={'outline'} onClick={() => setOpen(false)}>
+                <Button
+                  variant={'outline'}
+                  type="button"
+                  onClick={() => setOpen(false)}
+                >
                   {t('Cancel')}
                 </Button>
                 <Button
                   type="submit"
                   onClick={() => form.handleSubmit(onSubmit)}
-                  loading={loading}
+                  loading={isDoingDiff}
                 >
                   {t('Review Changes')}
                 </Button>
@@ -173,11 +157,11 @@ export function ProjectSelectionDialog({
         </DialogContent>
       </Dialog>
 
-      {dialogOpen && (
+      {isCreateReleaseDialogOpen && (
         <CreateReleaseDialog
-          loading={loading}
-          open={dialogOpen}
-          setOpen={setDialogOpen}
+          loading={isDoingDiff}
+          open={isCreateReleaseDialogOpen}
+          setOpen={setIsCreateReleaseDialogOpen}
           refetch={onSuccess}
           diffRequest={{
             targetProjectId: form.getValues('selectedProject'),

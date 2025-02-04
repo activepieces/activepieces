@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { PlatformSwitcher } from '@/features/platform-switcher/components/platform-switcher';
 import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
 import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
@@ -35,7 +36,11 @@ export const Header = () => {
               {t('Platform Admin')}
             </span>
           ) : (
-            <ProjectSwitcher />
+            <>
+              <PlatformSwitcher />
+
+              <ProjectSwitcher />
+            </>
           )}
           <div className="grow"></div>
           <div className="flex items-center justify-center gap-4">

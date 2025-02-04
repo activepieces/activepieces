@@ -95,7 +95,7 @@ const UsageLimitsButton = React.memo(() => {
         <FlagGuard flag={ApFlagId.SHOW_BILLING}>
           <Separator className="my-4" />
           <div className="flex justify-end ">
-            <Link to={'/plans'}>
+            <Link to={'/platform/setup/billing'}>
               <Button
                 variant={'outline'}
                 size="sm"

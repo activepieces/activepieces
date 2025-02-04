@@ -32,13 +32,14 @@ export const ApplyButton = ({
   const { toast } = useToast();
   const projectId = authenticationSession.getProjectId()!;
   const { gitSync } = gitSyncHooks.useGitSync(projectId, !isNil(projectId));
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [isCreateReleaseDialogOpen, setIsCreateReleaseDialogOpen] =
+    useState(false);
   const [syncPlan, setSyncPlan] = useState<any>(null);
   const [loadingRequestId, setLoadingRequestId] = useState<string | null>(null);
 
   const { mutate: loadSyncPlan } = useMutation({
     mutationFn: (request: DiffReleaseRequest) => {
-      setDialogOpen(true);
+      setIsCreateReleaseDialogOpen(true);
       return projectReleaseApi.diff(request);
     },
     onSuccess: (plan) => {
@@ -55,7 +56,7 @@ export const ApplyButton = ({
     },
   });
 
-  const [gitDialogOpen, setGitDialogOpen] = useState(false);
+  const [isConnectGitDialogOpen, setGitDialogOpen] = useState(false);
   const showGitDialog =
     isNil(gitSync) && request.type === ProjectReleaseType.GIT;
   const requestId = JSON.stringify(request);
@@ -79,18 +80,18 @@ export const ApplyButton = ({
         {children}
       </Button>
 
-      {gitDialogOpen ? (
+      {isConnectGitDialogOpen ? (
         <ConnectGitDialog
-          open={gitDialogOpen}
+          open={isConnectGitDialogOpen}
           setOpen={setGitDialogOpen}
           showButton={false}
         />
       ) : (
-        dialogOpen && (
+        isCreateReleaseDialogOpen && (
           <CreateReleaseDialog
-            open={dialogOpen}
+            open={isCreateReleaseDialogOpen}
             loading={isLoading}
-            setOpen={setDialogOpen}
+            setOpen={setIsCreateReleaseDialogOpen}
             refetch={onSuccess}
             plan={syncPlan}
             defaultName={defaultName}

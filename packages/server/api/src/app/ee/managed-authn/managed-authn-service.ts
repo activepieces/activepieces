@@ -1,3 +1,4 @@
+import { createHash } from 'crypto'
 import {
     DEFAULT_PLATFORM_LIMIT,
 } from '@activepieces/ee-shared'
@@ -10,6 +11,7 @@ import {
     PrincipalType,
     Project,
     User,
+    UserIdentity,
     UserIdentityProvider,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -113,17 +115,7 @@ const getOrCreateUser = async (
     if (!isNil(existingUser)) {
         return existingUser
     }
-
-    const identity = await userIdentityService(log).create({
-        email: `managed_${params.platformId}_${params.externalUserId}`,
-        password: await cryptoUtils.generateRandomPassword(),
-        firstName: params.externalFirstName,
-        lastName: params.externalLastName,
-        trackEvents: true,
-        newsLetter: false,
-        provider: UserIdentityProvider.JWT,
-    })
-    await userIdentityService(log).verify(identity.id)
+    const identity = await getOrCreateUserIdentity(params, log)
     const user = await userService.create({
         externalId: params.externalUserId,
         platformId: params.platformId,
@@ -133,6 +125,27 @@ const getOrCreateUser = async (
     return user
 }
 
+const getOrCreateUserIdentity = async (
+    params: GetOrCreateUserParams,
+    log: FastifyBaseLogger,
+): Promise<UserIdentity> => {
+    const cleanedEmail = generateEmailHash(params)
+    const existingIdentity = await userIdentityService(log).getIdentityByEmail(cleanedEmail)
+    if (!isNil(existingIdentity)) {
+        return existingIdentity
+    }
+    const identity = await userIdentityService(log).create({
+        email: cleanedEmail,
+        password: await cryptoUtils.generateRandomPassword(),
+        firstName: params.externalFirstName,
+        lastName: params.externalLastName,
+        trackEvents: true,
+        newsLetter: false,
+        provider: UserIdentityProvider.JWT,
+        verified: true
+    })
+    return identity
+}
 const getOrCreateProject = async ({
     platformId,
     externalProjectId,
@@ -174,6 +187,15 @@ const getPiecesList = async ({
             return []
         }
     }
+}
+
+function generateEmailHash(params: { platformId: string, externalUserId: string }): string {
+    const inputString = `managed_${params.platformId}_${params.externalUserId}`
+    return cleanEmailOtherwiseCompareFails(createHash('sha256').update(inputString).digest('hex'))
+}
+
+function cleanEmailOtherwiseCompareFails(email: string): string {
+    return email.trim().toLowerCase()
 }
 
 type AuthenticateParams = {

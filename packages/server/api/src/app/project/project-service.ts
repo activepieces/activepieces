@@ -12,7 +12,7 @@ import {
     spreadIfDefined,
     UserId,
 } from '@activepieces/shared'
-import { FindOptionsWhere, In, IsNull, Not } from 'typeorm'
+import { FindOptionsWhere, ILike, In, IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { projectMemberService } from '../ee/project-members/project-member.service'
 import { system } from '../helper/system/system'
@@ -53,7 +53,8 @@ export const projectService = {
     },
 
     async update(projectId: ProjectId, request: UpdateParams): Promise<Project> {
-        await assertExternalIdIsUnique(request.externalId, projectId)
+        const externalId = request.externalId?.trim() !== '' ? request.externalId : undefined
+        await assertExternalIdIsUnique(externalId, projectId)
 
         await projectRepo().update(
             {
@@ -61,7 +62,7 @@ export const projectService = {
                 deleted: IsNull(),
             },
             {
-                ...spreadIfDefined('externalId', request.externalId),
+                ...spreadIfDefined('externalId', externalId),
                 ...spreadIfDefined('displayName', request.displayName),
                 ...spreadIfDefined('notifyStatus', request.notifyStatus),
                 ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
@@ -116,34 +117,12 @@ export const projectService = {
 
     async getAllForUser(params: GetAllForUserParams): Promise<Project[]> {
         assertNotNullOrUndefined(params.platformId, 'platformId is undefined')
-        const filters: FindOptionsWhere<Project>[] = []
-        const projectIds = await projectMemberService(system.globalLogger()).getIdsOfProjects({
-            platformId: params.platformId,
-            userId: params.userId,
-        })
-        const user = await userService.getOneOrFail({ id: params.userId })
-        switch (user.platformRole) {
-            case PlatformRole.ADMIN:
-                filters.push({
-                    platformId: params.platformId,
-                    deleted: IsNull(),
-                })
-                break
-            case PlatformRole.MEMBER:
-                filters.push({
-                    ownerId: params.userId,
-                    platformId: params.platformId,
-                    deleted: IsNull(),
-                })
-                break
-        }
-        if (!isNil(projectIds)) {
-            filters.push({
-                id: In(projectIds),
-                deleted: IsNull(),
-            })
-        }
+        const filters = await getUsersFilters(params)
         return projectRepo().findBy(filters)
+    },
+    async userHasProjects(params: GetAllForUserParams): Promise<boolean> {
+        const filters = await getUsersFilters(params)
+        return projectRepo().existsBy(filters)
     },
     async addProjectToPlatform({ projectId, platformId }: AddProjectToPlatformParams): Promise<void> {
         const query = {
@@ -171,7 +150,32 @@ export const projectService = {
 }
 
 
-async function assertExternalIdIsUnique(externalId: string | undefined, projectId: ProjectId): Promise<void> {
+async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptionsWhere<Project>[]> {
+    const [projectIds, user] = await Promise.all([
+        projectMemberService(system.globalLogger()).getIdsOfProjects({
+            platformId: params.platformId,
+            userId: params.userId,
+        }),
+        userService.getOneOrFail({ id: params.userId }),
+    ])
+
+    const adminFilter = user.platformRole === PlatformRole.ADMIN
+        ? [{
+            deleted: IsNull(),
+            platformId: params.platformId,
+        }]
+        : []
+    const displayNameFilter = params.displayName ? { displayName: ILike(`%${params.displayName}%`) } : {}
+    const memberFilter = {
+        deleted: IsNull(),
+        platformId: params.platformId,
+        id: In(projectIds),
+        ...displayNameFilter,
+    }
+
+    return [...adminFilter, memberFilter]
+}
+async function assertExternalIdIsUnique(externalId: string | undefined | null, projectId: ProjectId): Promise<void> {
     if (!isNil(externalId)) {
         const externalIdAlreadyExists = await projectRepo().existsBy({
             id: Not(projectId),
@@ -193,6 +197,7 @@ async function assertExternalIdIsUnique(externalId: string | undefined, projectI
 type GetAllForUserParams = {
     platformId: string
     userId: string
+    displayName?: string
 }
 
 type GetOneByOwnerAndPlatformParams = {

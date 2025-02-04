@@ -1,8 +1,9 @@
-import { apVersionUtil, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { AppSystemProp, apVersionUtil, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PackageType, PlatformRole, TelemetryEventName, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { platformService } from '../../platform/platform.service'
@@ -16,7 +17,7 @@ const handleUnexpectedSecretsManagerError = (log: FastifyBaseLogger, message: st
 }
 
 export const licenseKeysService = (log: FastifyBaseLogger) => ({
-    async requestTrial(request: CreateTrialLicenseKeyRequestBody): Promise<void> {
+    async requestTrial(request: CreateTrialLicenseKeyRequestBody): Promise<string> {
         const response = await fetch(secretManagerLicenseKeysRoute, {
             method: 'POST',
             headers: {
@@ -34,8 +35,10 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
             const errorMessage = JSON.stringify(await response.json())
             handleUnexpectedSecretsManagerError(log, errorMessage)
         }
+        const responseBody = await response.json()
+        return responseBody.key
     },
-    async markAsActiviated(request: { key: string, platformId: string }): Promise<void> {
+    async markAsActiviated(request: { key: string, platformId?: string }): Promise<void> {
         try {
             const response = await fetch(`${secretManagerLicenseKeysRoute}/activate`, {
                 method: 'POST',
@@ -54,13 +57,15 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
                 const errorMessage = JSON.stringify(await response.json())
                 handleUnexpectedSecretsManagerError(log, errorMessage)
             }
-            rejectedPromiseHandler(telemetry(log).trackPlatform(request.platformId, {
-                name: TelemetryEventName.KEY_ACTIVIATED,
-                payload: {
-                    date: dayjs().toISOString(),
-                    key: request.key,
-                },
-            }), log)
+            if (request.platformId) {
+                rejectedPromiseHandler(telemetry(log).trackPlatform(request.platformId, {
+                    name: TelemetryEventName.KEY_ACTIVIATED,
+                    payload: {
+                        date: dayjs().toISOString(),
+                        key: request.key,
+                    },
+                }), log)
+            }
         }
         catch (e) {
             // ignore
@@ -88,6 +93,31 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
         const key = await this.getKey(license)
         const isExpired = isNil(key) || dayjs(key.expiresAt).isBefore(dayjs())
         return isExpired ? null : key
+    },
+    async extendTrial({ email, days }: { email: string, days: number }): Promise<void> {
+        const SECRET_MANAGER_API_KEY = system.getOrThrow(AppSystemProp.SECRET_MANAGER_API_KEY)
+        const response = await fetch(`${secretManagerLicenseKeysRoute}/extend-trial`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'api-key': SECRET_MANAGER_API_KEY,
+            },
+            body: JSON.stringify({ email, days }),
+        })
+
+        if (response.status === StatusCodes.NOT_FOUND) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    message: 'License key not found',
+                },
+            })
+        }
+
+        if (!response.ok) {
+            const errorMessage = JSON.stringify(await response.json())
+            handleUnexpectedSecretsManagerError(log, errorMessage)
+        }
     },
     async downgradeToFreePlan(platformId: string): Promise<void> {
         await platformService.update({

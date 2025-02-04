@@ -34,7 +34,6 @@ export const flagService = {
                 ApFlagId.ENVIRONMENT,
                 ApFlagId.PUBLIC_URL,
                 ApFlagId.LATEST_VERSION,
-                ApFlagId.OWN_AUTH2_ENABLED,
                 ApFlagId.PRIVACY_POLICY_URL,
                 ApFlagId.PIECES_SYNC_MODE,
                 ApFlagId.PRIVATE_PIECES_ENABLED,
@@ -81,12 +80,6 @@ export const flagService = {
             {
                 id: ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 value: system.getNumber(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS),
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.OWN_AUTH2_ENABLED,
-                value: true,
                 created,
                 updated,
             },
