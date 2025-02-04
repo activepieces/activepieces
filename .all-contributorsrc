@@ -1515,6 +1515,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "coat",
+      "name": "Kent Smith",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1661?v=4",
+      "profile": "https://github.com/coat",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
