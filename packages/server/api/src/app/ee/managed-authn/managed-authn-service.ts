@@ -142,7 +142,7 @@ const getOrCreateUserIdentity = async (
         trackEvents: true,
         newsLetter: false,
         provider: UserIdentityProvider.JWT,
-        verified: true
+        verified: true,
     })
     return identity
 }
