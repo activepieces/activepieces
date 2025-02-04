@@ -20,7 +20,7 @@ export const domainHelper = {
         return domainHelper.getPublicUrl({ path: `/api/${cleanLeadingSlash(path ?? '')}`, platformId })
     },
     async getInternalUrl({ path, platformId }: InternalUrlParams): Promise<string> {
-        const internalUrl = system.getOrThrow(AppSystemProp.INTERNAL_URL)
+        const internalUrl = system.get(AppSystemProp.INTERNAL_URL)
         if (!isNil(internalUrl)) {
             return networkUtils.combineUrl(internalUrl, path ?? '')
         }
