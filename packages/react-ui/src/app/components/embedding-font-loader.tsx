@@ -19,6 +19,12 @@ const useDownloadEmbeddingFont = ()=>{
             return embedState.fontFamily!;
           })
         }
+        if(embedState.isEmbedded && (isNil(embedState.fontUrl) && !isNil(embedState.fontFamily) || isNil(embedState.fontFamily) && !isNil(embedState.fontUrl))){
+          console.warn('fontUrl or fontFamily is not set, using default font', {
+            fontUrl: embedState.fontUrl,
+            fontFamily: embedState.fontFamily,
+          });
+        }
       } catch (error) {
         console.error(error);
         return defaultFont;
@@ -27,7 +33,7 @@ const useDownloadEmbeddingFont = ()=>{
     }
 })
 }
-const FontLoader = ({children}: {children: React.ReactNode}) => {
+const EmbeddingFontLoader = ({children}: {children: React.ReactNode}) => {
   useDownloadEmbeddingFont();
   
   return (
@@ -37,6 +43,6 @@ const FontLoader = ({children}: {children: React.ReactNode}) => {
   )
 }
 
-FontLoader.displayName = 'FontLoader';
+EmbeddingFontLoader.displayName = 'EmbeddingFontLoader';
 
-export {FontLoader};
+export {EmbeddingFontLoader};

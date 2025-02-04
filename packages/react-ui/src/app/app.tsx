@@ -12,7 +12,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 
 import { InitialDataGuard } from './components/initial-data-guard';
 import { ApRouter } from './router';
-import { FontLoader } from './components/font-loader';
+import { EmbeddingFontLoader } from './components/embedding-font-loader';
 
 const queryClient = new QueryClient();
 let typesFormatsAdded = false;
@@ -30,7 +30,7 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <EmbeddingProvider>
         <InitialDataGuard>
-          <FontLoader>
+          <EmbeddingFontLoader>
           <TelemetryProvider>
             <TooltipProvider>
               <ThemeProvider storageKey="vite-ui-theme">
@@ -39,7 +39,7 @@ export function App() {
               </ThemeProvider>
             </TooltipProvider>
           </TelemetryProvider>
-          </FontLoader>
+          </EmbeddingFontLoader>
         </InitialDataGuard>
       </EmbeddingProvider>
     </QueryClientProvider>
