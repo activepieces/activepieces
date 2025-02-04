@@ -1524,6 +1524,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "ArvindEnvoy",
+      "name": "Arvind Ramesh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25014185?v=4",
+      "profile": "https://github.com/ArvindEnvoy",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
