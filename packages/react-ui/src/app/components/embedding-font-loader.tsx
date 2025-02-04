@@ -15,7 +15,9 @@ const useDownloadEmbeddingFont = ()=>{
             link.href= embedState.fontUrl!;
             link.rel= 'stylesheet';
             document.head.appendChild(link);
-            document.body.style.fontFamily= `"${embedState.fontFamily!}", Roboto, sans-serif`;
+            const fontFamilySplit = embedState.fontFamily!.split(',').map(font => `"${font}"`).join(',');
+            debugger;
+            document.body.style.fontFamily= `${fontFamilySplit}, Roboto, sans-serif`;
             return embedState.fontFamily!;
           })
         }

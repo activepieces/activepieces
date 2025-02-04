@@ -71,5 +71,12 @@ Please check the [navigation](./navigation.mdx) section, as it's very important 
 | embedding.builder.hideFlowName | ❌ |  boolean | Hides the flow name and flow actions dropdown in the builder's header, by default it is false. |
 | embedding.dashboard.hideSidebar | ❌ | boolean | Controls the visibility of the sidebar in the dashboard, by default it is false. |
 | embedding.hideFolders | ❌ | boolean | Hides all things related to folders in both the flows table and builder by default it is false. |
+| embedding.styling.fontUrl | ❌ | string | The url of the font to be used in the embedding, by default it is `https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap`. |
+| embedding.styling.fontFamily | ❌ | string | The font family to be used in the embedding, by default it is `Roboto`. |
 | navigation.handler  | ❌ | `({route:string}) => void`  | If defined the callback will be triggered each time a route in Activepieces changes, you can read more about it [here](/embedding/navigation)
-
+<Tip>
+ For the font to be loaded, you need to set both the `fontUrl` and `fontFamily` properties.
+ If you only set one of them, the default font will be used.
+ The default font is `Roboto`.
+ The font weights we use are the default font-weights from [tailwind](https://tailwindcss.com/docs/font-weight).
+</Tip>
