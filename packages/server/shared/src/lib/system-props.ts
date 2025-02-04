@@ -24,7 +24,7 @@ export enum AppSystemProp {
     ENCRYPTION_KEY = 'ENCRYPTION_KEY',
     EXECUTION_DATA_RETENTION_DAYS = 'EXECUTION_DATA_RETENTION_DAYS',
     JWT_SECRET = 'JWT_SECRET',
-
+    INTERNAL_URL = 'INTERNAL_URL',
 
     /**
      * @deprecated this now can be done from the platform admin page.
