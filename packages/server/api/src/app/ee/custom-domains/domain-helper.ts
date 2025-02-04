@@ -1,4 +1,4 @@
-import { networkUtils, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, networkUtils, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, isNil } from '@activepieces/shared'
 import { system } from '../../helper/system/system'
 import { customDomainService } from './custom-domain.service'
@@ -6,7 +6,7 @@ import { customDomainService } from './custom-domain.service'
 export const domainHelper = {
     async getPublicUrl({ path, platformId }: PublicUrlParams): Promise<string> {
         const edition = system.getEdition()
-        if ([ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition) && !isNil(platformId)) {
+        if ([ApEdition.CLOUD].includes(edition) && !isNil(platformId)) {
             const customDomain = await customDomainService.getOneByPlatform({
                 platformId,
             })
@@ -20,6 +20,10 @@ export const domainHelper = {
         return domainHelper.getPublicUrl({ path: `/api/${cleanLeadingSlash(path ?? '')}`, platformId })
     },
     async getInternalUrl({ path, platformId }: InternalUrlParams): Promise<string> {
+        const internalUrl = system.getOrThrow(AppSystemProp.INTERNAL_URL)
+        if (!isNil(internalUrl)) {
+            return networkUtils.combineUrl(internalUrl, path ?? '')
+        }
         return this.getPublicUrl({ path, platformId })
     },
     async getInternalApiUrl({ path, platformId }: InternalUrlParams): Promise<string> {
