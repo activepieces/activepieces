@@ -11,6 +11,8 @@ type EmbeddingState = {
   hideFlowNameInBuilder: boolean;
   sdkVersion?: string;
   predefinedConnectionName?: string;
+  fontUrl?: string;
+  fontFamily?: string;
 };
 
 const defaultState: EmbeddingState = {
@@ -21,6 +23,7 @@ const defaultState: EmbeddingState = {
   disableNavigationInBuilder: false,
   hideFolders: false,
   hideFlowNameInBuilder: false,
+
 };
 
 const EmbeddingContext = createContext<{

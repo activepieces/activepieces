@@ -84,6 +84,8 @@ export interface ActivepiecesVendorInit {
     sdkVersion?: string;
     jwtToken?: string; // Added jwtToken here
     initialRoute?: string       //previously initialRoute was optional
+    fontUrl?: string;
+    fontFamily?: string;
   };
 }
 // We used to send JWT in query params, now we send it in local storage
@@ -100,6 +102,8 @@ class ActivepiecesEmbedded {
   _hideFlowNameInBuilder = false;
   _jwtToken = '';
   _disableNavigationInBuilder = true;
+  _fontUrl?: string;
+  _fontFamily?: string;
   readonly _CONNECTIONS_IFRAME_ID = 'ApConnectionsIframe';
   _resolveNewConnectionDialogClosed?: (result: ActivepiecesNewConnectionDialogClosed['data']) => void;
   _dashboardAndBuilderIframeWindow?: Window;
@@ -121,6 +125,10 @@ class ActivepiecesEmbedded {
     jwtToken: string;
     embedding?: {
       containerId?: string;
+      styling?: {
+        fontUrl?: string;
+        fontFamily?: string;
+      };
       builder?: {
         disableNavigation?: boolean;
         hideLogo?: boolean;
@@ -144,6 +152,8 @@ class ActivepiecesEmbedded {
     this._hideLogoInBuilder = embedding?.builder?.hideLogo ?? false;
     this._hideFlowNameInBuilder = embedding?.builder?.hideFlowName ?? false;
     this._jwtToken = jwtToken;
+    this._fontUrl = embedding?.styling?.fontUrl;
+    this._fontFamily = embedding?.styling?.fontFamily;
     this._navigationHandler = embedding?.navigation?.handler;
     if (embedding?.containerId) {
       return this._initializeBuilderAndDashboardIframe({
@@ -218,7 +228,9 @@ class ActivepiecesEmbedded {
                 hideLogoInBuilder: this._hideLogoInBuilder,
                 hideFlowNameInBuilder: this._hideFlowNameInBuilder,
                 jwtToken: this._jwtToken, // Pass the token here
-                initialRoute
+                initialRoute,
+                fontUrl: this._fontUrl,
+                fontFamily: this._fontFamily,
               },
             };
             iframeWindow.postMessage(apEvent, '*');

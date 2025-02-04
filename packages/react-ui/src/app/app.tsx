@@ -12,6 +12,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 
 import { InitialDataGuard } from './components/initial-data-guard';
 import { ApRouter } from './router';
+import { FontLoader } from './components/font-loader';
 
 const queryClient = new QueryClient();
 let typesFormatsAdded = false;
@@ -23,11 +24,13 @@ if (!typesFormatsAdded) {
   typesFormatsAdded = true;
 }
 
+
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <EmbeddingProvider>
         <InitialDataGuard>
+          <FontLoader>
           <TelemetryProvider>
             <TooltipProvider>
               <ThemeProvider storageKey="vite-ui-theme">
@@ -36,6 +39,7 @@ export function App() {
               </ThemeProvider>
             </TooltipProvider>
           </TelemetryProvider>
+          </FontLoader>
         </InitialDataGuard>
       </EmbeddingProvider>
     </QueryClientProvider>
