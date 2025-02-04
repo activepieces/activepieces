@@ -10,9 +10,9 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
+import { EmbeddingFontLoader } from './components/embedding-font-loader';
 import { InitialDataGuard } from './components/initial-data-guard';
 import { ApRouter } from './router';
-import { EmbeddingFontLoader } from './components/embedding-font-loader';
 
 const queryClient = new QueryClient();
 let typesFormatsAdded = false;
@@ -24,21 +24,20 @@ if (!typesFormatsAdded) {
   typesFormatsAdded = true;
 }
 
-
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <EmbeddingProvider>
         <InitialDataGuard>
           <EmbeddingFontLoader>
-          <TelemetryProvider>
-            <TooltipProvider>
-              <ThemeProvider storageKey="vite-ui-theme">
-                <ApRouter />
-                <Toaster />
-              </ThemeProvider>
-            </TooltipProvider>
-          </TelemetryProvider>
+            <TelemetryProvider>
+              <TooltipProvider>
+                <ThemeProvider storageKey="vite-ui-theme">
+                  <ApRouter />
+                  <Toaster />
+                </ThemeProvider>
+              </TooltipProvider>
+            </TelemetryProvider>
           </EmbeddingFontLoader>
         </InitialDataGuard>
       </EmbeddingProvider>

@@ -23,7 +23,6 @@ const defaultState: EmbeddingState = {
   disableNavigationInBuilder: false,
   hideFolders: false,
   hideFlowNameInBuilder: false,
-
 };
 
 const EmbeddingContext = createContext<{

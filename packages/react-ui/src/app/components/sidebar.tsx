@@ -4,6 +4,7 @@ import { FileTextIcon, LockKeyhole } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
+import { useEmbedding } from '@/components/embed-provider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Tooltip,
@@ -19,7 +20,6 @@ import { ShowPoweredBy } from '../../components/show-powered-by';
 import { platformHooks } from '../../hooks/platform-hooks';
 
 import { Header } from './header';
-import { useEmbedding } from '@/components/embed-provider';
 
 type Link = {
   icon: React.ReactNode;
