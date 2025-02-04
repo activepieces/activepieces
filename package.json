@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.40.0",
-  "rcVersion": "0.40.0-rc.1",
+  "rcVersion": "0.41.0-rc.1",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve react-ui",
@@ -16,6 +16,7 @@
     "create-action": "npx ts-node packages/cli/src/index.ts actions create",
     "create-trigger": "npx ts-node packages/cli/src/index.ts triggers create",
     "sync-pieces": "npx ts-node packages/cli/src/index.ts pieces sync",
+    "build-piece": "npx ts-node packages/cli/src/index.ts pieces build",
     "publish-piece-to-api": "npx ts-node packages/cli/src/index.ts pieces publish piece",
     "publish-piece": "npx ts-node tools/scripts/pieces/publish-piece.ts",
     "workers": "npx ts-node packages/cli/src/index.ts workers",
