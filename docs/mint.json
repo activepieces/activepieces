@@ -115,13 +115,22 @@
       ]
     },
     {
+      "group": "Architecture",
+      "pages": [
+        "architecture/overview",
+        "architecture/workers",
+        "architecture/engine",
+        "architecture/stack"
+      ]
+    },
+    {
       "group": "Hiring",
       "icon": "user",
       "pages": [
-        "handbook/hiring/hiring",
-        "handbook/hiring/levels",
-        "handbook/hiring/team",
-        "handbook/hiring/compensation"
+        "hiring/hiring",
+        "hiring/levels",
+        "hiring/team",
+        "hiring/compensation"
       ]
     },
 
@@ -235,15 +244,6 @@
             "endpoints/flow-templates/list"
           ]
         }
-      ]
-    },
-    {
-      "group": "Architecture",
-      "pages": [
-        "architecture/overview",
-        "architecture/workers",
-        "architecture/engine",
-        "architecture/stack"
       ]
     },
     {
