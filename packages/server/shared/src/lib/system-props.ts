@@ -1,4 +1,5 @@
 import { assertNotNullOrUndefined } from '@activepieces/shared'
+import axios from 'axios'
 
 export const systemConstants = {
     PACKAGE_ARCHIVE_PATH: 'cache/archives',
@@ -7,6 +8,8 @@ export const systemConstants = {
 }
 
 export type SystemProp = AppSystemProp | WorkerSystemProp
+
+let cachedVersion: string | undefined
 
 export enum AppSystemProp {
     API_KEY = 'API_KEY',
@@ -22,7 +25,7 @@ export enum AppSystemProp {
     EXECUTION_DATA_RETENTION_DAYS = 'EXECUTION_DATA_RETENTION_DAYS',
     JWT_SECRET = 'JWT_SECRET',
 
-    
+
     /**
      * @deprecated this now can be done from the platform admin page.
      */
@@ -92,7 +95,7 @@ export enum AppSystemProp {
     PAUSED_FLOW_TIMEOUT_DAYS = 'PAUSED_FLOW_TIMEOUT_DAYS',
     EXECUTION_MODE = 'EXECUTION_MODE',
     FLOW_TIMEOUT_SECONDS = 'FLOW_TIMEOUT_SECONDS',
-    
+
     LOG_LEVEL = 'LOG_LEVEL',
     LOG_PRETTY = 'LOG_PRETTY',
     ENVIRONMENT = 'ENVIRONMENT',
@@ -159,4 +162,33 @@ export const environmentVariables = {
         assertNotNullOrUndefined(value, `Environment variable ${prop} is not set`)
         return value
     },
+}
+
+export const apVersionUtil = {
+    async getCurrentRelease(): Promise<string> {
+        const packageJson = await import('package.json')
+        return packageJson.version
+    },
+    async getLatestRelease(): Promise<string> {
+        try {
+            if (cachedVersion) {
+                return cachedVersion
+            }
+            const response = await axios.get<PackageJson>(
+                'https://raw.githubusercontent.com/activepieces/activepieces/main/package.json',
+                {
+                    timeout: 5000,
+                },
+            )
+            cachedVersion = response.data.version
+            return response.data.version
+        }
+        catch (ex) {
+            return '0.0.0'
+        }
+    },
+}
+
+type PackageJson = {
+    version: string
 }

@@ -2,7 +2,7 @@ import { exec } from 'child_process'
 import fs from 'fs'
 import os from 'os'
 import { promisify } from 'util'
-import { environmentVariables, exceptionHandler, fileExists, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
+import { apVersionUtil, environmentVariables, exceptionHandler, fileExists, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, isNil, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 
 const execAsync = promisify(exec)
@@ -77,7 +77,9 @@ async function getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
         ramUsagePercentage: ramUsage,
         totalAvailableRamInBytes: totalRamInBytes,
         ip,
-        workerProps: {},
+        workerProps: {
+            version: await apVersionUtil.getCurrentRelease()
+        },
     }
 }
 

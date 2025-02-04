@@ -1,9 +1,8 @@
-import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { AppSystemProp, apVersionUtil, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PackageType, PlatformRole, TelemetryEventName, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { flagService } from '../../flags/flag.service'
 import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
@@ -169,7 +168,7 @@ const deactivatePlatformUsersOtherThanAdmin: (platformId: string) => Promise<voi
 
 
 const deletePrivatePieces = async (platformId: string, log: FastifyBaseLogger): Promise<void> => {
-    const latestRelease = await flagService.getCurrentRelease()
+    const latestRelease = await apVersionUtil.getCurrentRelease()
     const pieces = await pieceMetadataService(log).list({
         edition: ApEdition.ENTERPRISE,
         includeHidden: true,
