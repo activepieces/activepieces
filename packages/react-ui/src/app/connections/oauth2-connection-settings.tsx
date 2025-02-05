@@ -91,7 +91,6 @@ const OAuth2ConnectionSettings = ({
     edition!,
   );
 
-
   const redirectUrl =
     currentOAuth2Type === AppConnectionType.CLOUD_OAUTH2
       ? 'https://secrets.activepieces.com/redirect'
