@@ -1,32 +1,37 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { ColumnDef } from '@tanstack/react-table';
+import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Pencil, Trash, Plus, Eye } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import {
+  Breadcrumb,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbItem,
+} from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { TableTitle } from '@/components/ui/table-title';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { formatUtils } from '@/lib/utils';
-import { ProjectRole, RoleType } from '@activepieces/shared';
+import { platformUserApi } from '@/lib/platform-user-api';
+import { isNil, ProjectRole } from '@activepieces/shared';
 
-import ProjectMembersDialog from './project-members-dialog';
 import { ProjectRoleDialog } from './project-role-dialog';
+import { ProjectRoleUsersTable } from './project-role-users-table';
+import { ProjectRolesTable } from './project-roles-table';
 
 const ProjectRolePage = () => {
-  const { toast } = useToast();
   const { platform } = platformHooks.useCurrentPlatform();
+  const [selectedProjectRole, setSelectedProjectRole] =
+    useState<ProjectRole | null>(null);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['project-roles'],
@@ -34,72 +39,33 @@ const ProjectRolePage = () => {
     enabled: platform.projectRolesEnabled,
   });
 
-  const { mutate: deleteProjectRole, isPending: isDeleting } = useMutation({
-    mutationKey: ['delete-project-role'],
-    mutationFn: (name: string) => projectRoleApi.delete(name),
-    onSuccess: () => {
-      refetch();
-      toast({
-        title: t('Success'),
-        description: t('Project Role entry deleted successfully'),
-        duration: 3000,
-      });
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-    },
+  const { data: users } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => platformUserApi.list(),
+    enabled: platform.projectRolesEnabled,
   });
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedProjectRole, setSelectedProjectRole] =
-    useState<ProjectRole | null>(null);
+  const { data: usersWithProjectRoles } = useQuery({
+    queryKey: ['users-with-project-roles'],
+    queryFn: () =>
+      projectRoleApi.listUsersWithProjectRoles({
+        user:
+          users?.data.map((user) => ({ id: user.id, email: user.email })) ?? [],
+      }),
+    enabled: platform.projectRolesEnabled && !isNil(users),
+  });
 
-  const handleUserCountClick = (projectRole: ProjectRole) => {
-    setIsDialogOpen(true);
-    setSelectedProjectRole(projectRole);
+  const filterUsersByProjectRole = () => {
+    if (isNil(selectedProjectRole)) {
+      return [];
+    }
+    return (
+      usersWithProjectRoles?.filter(
+        (userWithProjectRole) =>
+          userWithProjectRole.projectRole.id === selectedProjectRole?.id,
+      ) ?? []
+    );
   };
-
-  const columns: ColumnDef<RowDataWithActions<ProjectRole>>[] = [
-    {
-      accessorKey: 'name',
-      accessorFn: (row) => row.name,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
-      ),
-      cell: ({ row }) => <div className="text-left">{row.original.name}</div>,
-    },
-    {
-      accessorKey: 'updated',
-      accessorFn: (row) => row.updated,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Updated')} />
-      ),
-      cell: ({ row }) => (
-        <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.updated))}
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'userCount',
-      accessorFn: (row) => row.userCount,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('Users')}
-          className="text-center"
-        />
-      ),
-      cell: ({ row }) => (
-        <div
-          className="text-left cursor-pointer"
-          onClick={() => handleUserCountClick(row.original)}
-        >
-          {row.original.userCount}
-        </div>
-      ),
-    },
-  ];
 
   return (
     <LockedFeatureGuard
@@ -114,12 +80,44 @@ const ProjectRolePage = () => {
       <div className="flex-col w-full">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex flex-col gap-2">
-            <TableTitle>{t('Project Role Management')}</TableTitle>
-            <div className="text-sm text-muted-foreground">
-              {t(
-                'Define custom roles and permissions that can be assigned to your team members',
-              )}
-            </div>
+            {isNil(selectedProjectRole) && (
+              <>
+                <TableTitle>{t('Project Role Management')}</TableTitle>
+                <div className="text-sm text-muted-foreground">
+                  {t(
+                    'Define custom roles and permissions that can be assigned to your team members',
+                  )}
+                </div>
+              </>
+            )}
+            {!isNil(selectedProjectRole) && (
+              <>
+                <Breadcrumb>
+                  <BreadcrumbList>
+                    <BreadcrumbItem>
+                      <BreadcrumbLink
+                        onClick={() => setSelectedProjectRole(null)}
+                        className="cursor-pointer hover:text-primary hover:underline"
+                      >
+                        {t('Roles')}
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                      <BreadcrumbPage>
+                        {selectedProjectRole?.name}
+                      </BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </BreadcrumbList>
+                </Breadcrumb>
+                <TableTitle>{`${selectedProjectRole?.name} ${t('Role')} ${t(
+                  'Users',
+                )}`}</TableTitle>
+                <div className="text-sm text-muted-foreground">
+                  {t('View the users assigned to this role')}
+                </div>
+              </>
+            )}
           </div>
           {!platform.customRolesEnabled && (
             <Tooltip>
@@ -134,7 +132,7 @@ const ProjectRolePage = () => {
               </TooltipContent>
             </Tooltip>
           )}
-          {platform.customRolesEnabled && (
+          {platform.customRolesEnabled && isNil(selectedProjectRole) && (
             <ProjectRoleDialog
               mode="create"
               onSave={() => refetch()}
@@ -148,89 +146,17 @@ const ProjectRolePage = () => {
           )}
         </div>
 
-        <DataTable
-          columns={columns}
-          page={data}
-          isLoading={isLoading}
-          actions={[
-            (row) => {
-              return (
-                <div className="flex items-center justify-center">
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <ProjectRoleDialog
-                        mode="edit"
-                        projectRole={row}
-                        platformId={platform.id}
-                        onSave={() => refetch()}
-                        disabled={row.type === RoleType.DEFAULT}
-                      >
-                        <Button variant="ghost">
-                          {row.type === RoleType.DEFAULT ? (
-                            <Eye className="size-4" />
-                          ) : (
-                            <Pencil className="size-4" />
-                          )}
-                        </Button>
-                      </ProjectRoleDialog>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      {row.type === RoleType.DEFAULT
-                        ? t('View Role')
-                        : t('Edit Role')}
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              );
-            },
-            (row) => {
-              if (row.type !== RoleType.DEFAULT) {
-                return (
-                  <div className="flex items-center justify-center">
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <ConfirmationDeleteDialog
-                          isDanger={true}
-                          title={t('Delete Role')}
-                          message={t(
-                            `Deleting this role will remove ${
-                              row.userCount
-                            } project member${
-                              row.userCount === 1 ? '' : 's'
-                            } and all associated invitations. Are you sure you want to proceed?`,
-                          )}
-                          entityName={`${t('Project Role')} ${row.name}`}
-                          mutationFn={async () => deleteProjectRole(row.name)}
-                        >
-                          <Button
-                            loading={isDeleting}
-                            variant="ghost"
-                            className="size-8 p-0"
-                          >
-                            <Trash className="size-4 text-destructive" />
-                          </Button>
-                        </ConfirmationDeleteDialog>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        {t('Delete Role')}
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                );
-              }
-              return <></>;
-            },
-          ]}
-        />
-        <ProjectMembersDialog
-          projectRole={selectedProjectRole}
-          isOpen={isDialogOpen}
-          onClose={() => {
-            setIsDialogOpen(false);
-            setSelectedProjectRole(null);
-          }}
-          refetch={refetch}
-        />
+        {isNil(selectedProjectRole) && (
+          <ProjectRolesTable
+            projectRoles={data}
+            isLoading={isLoading}
+            setSelectedProjectRole={setSelectedProjectRole}
+            refetch={refetch}
+          />
+        )}
+        {!isNil(selectedProjectRole) && (
+          <ProjectRoleUsersTable users={filterUsersByProjectRole()} />
+        )}
       </div>
     </LockedFeatureGuard>
   );

@@ -1,12 +1,16 @@
-import { ActivepiecesError, apId, ApId, CreateProjectRoleRequestBody, ErrorCode, isNil, PlatformId, ProjectRole, RoleType, SeekPage, spreadIfDefined } from '@activepieces/shared'
-import { Brackets, Equal } from 'typeorm'
+import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, CreateProjectRoleRequestBody, ErrorCode, isNil, PlatformId, ProjectRole, RoleType, SeekPage, spreadIfDefined, UserIdWithEmail, UserWithProjectRole } from '@activepieces/shared'
+import { Brackets, Equal, In } from 'typeorm'
+import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
+import { system } from '../../helper/system/system'
+import { ProjectEntity } from '../../project/project-entity'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { ProjectRoleEntity } from './project-role.entity'
 
 
 export const projectRoleRepo = repoFactory(ProjectRoleEntity)
 export const projectMemberRepo = repoFactory(ProjectMemberEntity)
+export const projectRepo = repoFactory(ProjectEntity)
 
 export const projectRoleService = {
 
@@ -67,6 +71,34 @@ export const projectRoleService = {
         }
     },
 
+    async listUsersWithProjectRoles({ user }: ListUsersWithProjectRolesParams): Promise<UserWithProjectRole[]> {
+        const projectMembers = await projectMemberRepo().find({ 
+            where: {
+                userId: In(user.map((user) => user.id)),
+            },
+        })
+
+        const usersWithProjectRoles = await Promise.all(projectMembers.map(async (projectMember) => {
+            const projectMemberEmail = user.find((user) => user.id === projectMember.userId)?.email
+            assertNotNullOrUndefined(projectMemberEmail, 'Project member email not found')
+            const userIdentity = await userIdentityService(system.globalLogger()).getBasicInformationByEmail(projectMemberEmail)
+            const currentProject = await projectRepo().findOneByOrFail({ id: projectMember.projectId })
+            const projectRole = await projectRoleRepo().findOneByOrFail({ id: projectMember.projectRoleId })
+            return {
+                id: projectMember.userId,
+                firstName: userIdentity.firstName,
+                lastName: userIdentity.lastName,
+                email: userIdentity.email,
+                projectRole,
+                project: {
+                    id: currentProject.id,
+                    displayName: currentProject.displayName,
+                },
+            }
+        }))
+        return usersWithProjectRoles
+    },
+
     async create(platformId: string, params: CreateProjectRoleRequestBody): Promise<ProjectRole> {
         const projectRoleExists = await this.getOne({
             name: params.name,
@@ -111,6 +143,10 @@ type UpdateParams = {
 
 type ListParams = {
     platformId: PlatformId
+}
+
+type ListUsersWithProjectRolesParams = {
+    user: UserIdWithEmail[]
 }
 
 type DeleteParams = {

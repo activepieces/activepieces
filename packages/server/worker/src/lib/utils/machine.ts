@@ -78,7 +78,7 @@ async function getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
         totalAvailableRamInBytes: totalRamInBytes,
         ip,
         workerProps: {
-            version: await apVersionUtil.getCurrentRelease()
+            version: await apVersionUtil.getCurrentRelease(),
         },
     }
 }
