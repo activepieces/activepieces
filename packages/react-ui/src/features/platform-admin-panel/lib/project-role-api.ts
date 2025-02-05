@@ -4,7 +4,7 @@ import {
   UpdateProjectRoleRequestBody,
   ProjectRole,
   SeekPage,
-  ListUsersWithProjectRolesRequestBody,
+  ListPlatformUsersWithRoleAndProjectRequestBody,
   UserWithProjectRole,
 } from '@activepieces/shared';
 
@@ -25,7 +25,7 @@ export const projectRoleApi = {
   },
 
   async listUsersWithProjectRoles(
-    requestBody: ListUsersWithProjectRolesRequestBody,
+    requestBody: ListPlatformUsersWithRoleAndProjectRequestBody,
   ) {
     return await api.post<UserWithProjectRole[]>(
       `/v1/project-roles/users`,

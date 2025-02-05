@@ -86,15 +86,6 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             newsLetter: user.newsLetter,
         }
     },
-    async getBasicInformationByEmail(email: string): Promise<Pick<UserIdentity, 'email' | 'firstName' | 'lastName'>> {
-        const user = await userIdentityRepository().findOneByOrFail({ email })
-        return {
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-        }
-    },
-    
     async updatePassword(params: UpdatePasswordParams): Promise<void> {
         const hashedPassword = await passwordHasher.hash(params.newPassword)
         await userIdentityRepository().update(params.id, {

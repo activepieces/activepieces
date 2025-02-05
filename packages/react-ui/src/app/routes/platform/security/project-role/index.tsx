@@ -21,8 +21,11 @@ import {
 } from '@/components/ui/tooltip';
 import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { platformUserApi } from '@/lib/platform-user-api';
-import { isNil, ProjectRole } from '@activepieces/shared';
+import {
+  assertNotNullOrUndefined,
+  isNil,
+  ProjectRole,
+} from '@activepieces/shared';
 
 import { ProjectRoleDialog } from './project-role-dialog';
 import { ProjectRoleUsersTable } from './project-role-users-table';
@@ -39,33 +42,19 @@ const ProjectRolePage = () => {
     enabled: platform.projectRolesEnabled,
   });
 
-  const { data: users } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => platformUserApi.list(),
-    enabled: platform.projectRolesEnabled,
-  });
-
-  const { data: usersWithProjectRoles } = useQuery({
+  const { data: usersWithProjectRoles, isLoading: usersLoading } = useQuery({
     queryKey: ['users-with-project-roles'],
-    queryFn: () =>
-      projectRoleApi.listUsersWithProjectRoles({
-        user:
-          users?.data.map((user) => ({ id: user.id, email: user.email })) ?? [],
-      }),
-    enabled: platform.projectRolesEnabled && !isNil(users),
+    queryFn: () => {
+      assertNotNullOrUndefined(
+        selectedProjectRole,
+        'Selected project role is not set',
+      );
+      return projectRoleApi.listUsersWithProjectRoles({
+        filterProjectRoleId: selectedProjectRole.id,
+      });
+    },
+    enabled: platform.projectRolesEnabled && !isNil(selectedProjectRole),
   });
-
-  const filterUsersByProjectRole = () => {
-    if (isNil(selectedProjectRole)) {
-      return [];
-    }
-    return (
-      usersWithProjectRoles?.filter(
-        (userWithProjectRole) =>
-          userWithProjectRole.projectRole.id === selectedProjectRole?.id,
-      ) ?? []
-    );
-  };
 
   return (
     <LockedFeatureGuard
@@ -155,7 +144,10 @@ const ProjectRolePage = () => {
           />
         )}
         {!isNil(selectedProjectRole) && (
-          <ProjectRoleUsersTable users={filterUsersByProjectRole()} />
+          <ProjectRoleUsersTable
+            users={usersWithProjectRoles ?? []}
+            isLoading={usersLoading}
+          />
         )}
       </div>
     </LockedFeatureGuard>

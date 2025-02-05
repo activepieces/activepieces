@@ -8,10 +8,12 @@ import { UserWithProjectRole } from '@activepieces/shared';
 
 interface ProjectRoleUsersTableProps {
   users: UserWithProjectRole[];
+  isLoading: boolean;
 }
 
 export const ProjectRoleUsersTable = ({
   users,
+  isLoading,
 }: ProjectRoleUsersTableProps) => {
   const navigate = useNavigate();
   const columns: ColumnDef<RowDataWithActions<UserWithProjectRole>>[] = [
@@ -73,7 +75,8 @@ export const ProjectRoleUsersTable = ({
         next: null,
         previous: null,
       }}
-      isLoading={false}
+      isLoading={isLoading}
+      hidePagination={true}
     />
   );
 };

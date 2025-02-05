@@ -20,13 +20,8 @@ export const UpdateProjectRoleRequestBody = Type.Object({
 
 export type UpdateProjectRoleRequestBody = Static<typeof UpdateProjectRoleRequestBody>
 
-export const ListUsersWithProjectRolesRequestBody = Type.Object({
-    user: Type.Array(
-        Type.Object({
-            id: Type.String(),
-            email: Type.String(),
-        }),
-    ),
+export const ListPlatformUsersWithRoleAndProjectRequestBody = Type.Object({
+    filterProjectRoleId: Type.String(),
 })
 
-export type ListUsersWithProjectRolesRequestBody = Static<typeof ListUsersWithProjectRolesRequestBody>
+export type ListPlatformUsersWithRoleAndProjectRequestBody = Static<typeof ListPlatformUsersWithRoleAndProjectRequestBody>

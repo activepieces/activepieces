@@ -1,9 +1,10 @@
-import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, CreateProjectRoleRequestBody, ErrorCode, isNil, PlatformId, ProjectRole, RoleType, SeekPage, spreadIfDefined, UserIdWithEmail, UserWithProjectRole } from '@activepieces/shared'
-import { Brackets, Equal, In } from 'typeorm'
+import { ActivepiecesError, apId, ApId, CreateProjectRoleRequestBody, ErrorCode, isNil, PlatformId, ProjectRole, RoleType, SeekPage, spreadIfDefined, UserWithProjectRole } from '@activepieces/shared'
+import { Brackets, Equal } from 'typeorm'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { system } from '../../helper/system/system'
 import { ProjectEntity } from '../../project/project-entity'
+import { userRepo } from '../../user/user-service'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { ProjectRoleEntity } from './project-role.entity'
 
@@ -71,17 +72,17 @@ export const projectRoleService = {
         }
     },
 
-    async listUsersWithProjectRoles({ user }: ListUsersWithProjectRolesParams): Promise<UserWithProjectRole[]> {
+    async listPlatformUsersWithRoleAndProject({ platformId, filterProjectRoleId }: ListUsersWithProjectRolesParams): Promise<UserWithProjectRole[]> {
         const projectMembers = await projectMemberRepo().find({ 
             where: {
-                userId: In(user.map((user) => user.id)),
+                platformId: Equal(platformId),
+                projectRoleId: Equal(filterProjectRoleId),
             },
         })
 
         const usersWithProjectRoles = await Promise.all(projectMembers.map(async (projectMember) => {
-            const projectMemberEmail = user.find((user) => user.id === projectMember.userId)?.email
-            assertNotNullOrUndefined(projectMemberEmail, 'Project member email not found')
-            const userIdentity = await userIdentityService(system.globalLogger()).getBasicInformationByEmail(projectMemberEmail)
+            const user = await userRepo().findOneByOrFail({ id: projectMember.userId })
+            const userIdentity = await userIdentityService(system.globalLogger()).getBasicInformation(user.identityId)
             const currentProject = await projectRepo().findOneByOrFail({ id: projectMember.projectId })
             const projectRole = await projectRoleRepo().findOneByOrFail({ id: projectMember.projectRoleId })
             return {
@@ -146,7 +147,8 @@ type ListParams = {
 }
 
 type ListUsersWithProjectRolesParams = {
-    user: UserIdWithEmail[]
+    platformId: PlatformId
+    filterProjectRoleId: ApId
 }
 
 type DeleteParams = {

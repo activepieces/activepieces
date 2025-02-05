@@ -94,6 +94,7 @@ export const ProjectRolesTable = ({
       columns={columns}
       page={projectRoles}
       isLoading={isLoading}
+      hidePagination={true}
       actions={[
         (row) => {
           return (
