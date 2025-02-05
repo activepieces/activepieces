@@ -83,7 +83,6 @@ function splitPayloadsIntoOneMegabyteBatches(payloads: unknown[]): unknown[][] {
     const batches: unknown[][] = [[]]
     const ONE_MB = 1024 * 1024
     let currentSize = 0
-
     for (const payload of payloads) {
         const payloadSize = Buffer.byteLength(JSON.stringify(payload))
         currentSize += payloadSize
