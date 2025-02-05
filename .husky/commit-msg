@@ -9,5 +9,3 @@ fi
 
 npx --no -- commitlint --edit ${1}
 
-# Run lint checks on specific projects
-npx nx affected --target=lint --fix
