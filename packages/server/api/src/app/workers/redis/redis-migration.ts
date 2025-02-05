@@ -48,6 +48,7 @@ async function updateLegacyRepeatableJobKey(repeatableJobs: RepeatableJob[], log
     const currentJobs: Job[] = await queue.getJobs()
 
     let count = 0
+    let broken = 0
     for (const repeatableJob of repeatableJobs) {
         const nextJob = currentJobs.find(job =>
             !isNil(job) &&
@@ -55,9 +56,17 @@ async function updateLegacyRepeatableJobKey(repeatableJobs: RepeatableJob[], log
             !isNil(job.data),
         )
 
-        const existingPattern = repeatableJob.pattern
+        const existingPattern = repeatableJob.pattern ?? nextJob?.opts?.repeat?.pattern
+        const existingTimeZone = repeatableJob.tz ?? nextJob?.opts?.repeat?.tz
         const flowVersionId = nextJob?.data?.flowVersionId
         if (isNil(nextJob) || isNil(existingPattern) || isNil(flowVersionId)) {
+            if (isNil(repeatableJob.name)) {
+                log.info({
+                    repeatableJob,
+                }, '[#redisMigrations] remove broken job')
+                broken++
+                await queue.removeJobScheduler(repeatableJob.key)
+            }
             continue
         }
 
@@ -67,7 +76,7 @@ async function updateLegacyRepeatableJobKey(repeatableJobs: RepeatableJob[], log
             flowVersionId,
             {
                 pattern: existingPattern,
-                tz: repeatableJob.tz ?? undefined,
+                tz: existingTimeZone,
             },
             {
                 name: flowVersionId,
@@ -81,6 +90,7 @@ async function updateLegacyRepeatableJobKey(repeatableJobs: RepeatableJob[], log
     }
     log.info({
         jobs: count,
+        brokenJobs: broken,
     }, '[#redisMigrations] legacy repeatable jobs migrated')
 }
 

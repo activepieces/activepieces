@@ -142,6 +142,7 @@ async function upsertRepeatingJob(params: AddParams<JobType.REPEATING>): Promise
             tz: scheduleOptions.timezone,
         },
         {
+            name: data.flowVersionId,
             data,
         },
     )

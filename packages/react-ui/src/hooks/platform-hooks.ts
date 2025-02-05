@@ -1,8 +1,13 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
+import {
+  QueryClient,
+  useSuspenseQuery,
+} from '@tanstack/react-query';
 
-import { authenticationSession } from '@/lib/authentication-session';
+import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 
 import { platformApi } from '../lib/platforms-api';
+import { authenticationSession } from '@/lib/authentication-session';
+
 
 export const platformHooks = {
   isCopilotEnabled: () => {
@@ -20,6 +25,12 @@ export const platformHooks = {
       platform: query.data,
       refetch: async () => {
         await query.refetch();
+      },
+      setCurrentPlatform: (
+        queryClient: QueryClient,
+        platform: PlatformWithoutSensitiveData,
+      ) => {
+        queryClient.setQueryData(['platform', currentPlatformId], platform);
       },
     };
   },

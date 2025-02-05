@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.39.9",
-  "rcVersion": "0.40.0-rc.1",
+  "version": "0.41.0",
+  "rcVersion": "0.42.0-rc.1",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve react-ui",
@@ -16,6 +16,7 @@
     "create-action": "npx ts-node packages/cli/src/index.ts actions create",
     "create-trigger": "npx ts-node packages/cli/src/index.ts triggers create",
     "sync-pieces": "npx ts-node packages/cli/src/index.ts pieces sync",
+    "build-piece": "npx ts-node packages/cli/src/index.ts pieces build",
     "publish-piece-to-api": "npx ts-node packages/cli/src/index.ts pieces publish piece",
     "publish-piece": "npx ts-node tools/scripts/pieces/publish-piece.ts",
     "workers": "npx ts-node packages/cli/src/index.ts workers",
@@ -33,6 +34,7 @@
     "@anthropic-ai/sdk": "0.33.1",
     "@authenio/samlify-node-xmllint": "2.0.0",
     "@aws-sdk/client-s3": "3.637.0",
+    "@aws-sdk/client-sns": "3.726.1",
     "@aws-sdk/s3-request-presigner": "3.658.1",
     "@azure/communication-email": "1.0.0",
     "@azure/openai": "1.0.0-beta.11",

@@ -53,7 +53,7 @@ import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { formatUtils } from '@/lib/utils';
+import { formatUtils, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import { GitBranchType } from '@activepieces/ee-shared';
 import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 
@@ -179,7 +179,7 @@ const FlowsPage = () => {
       return flow;
     },
     onSuccess: (flow) => {
-      navigate(`/flows/${flow.id}`);
+      navigate(`/flows/${flow.id}?${NEW_FLOW_QUERY_PARAM}=true`);
     },
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });

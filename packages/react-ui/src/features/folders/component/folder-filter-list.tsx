@@ -293,7 +293,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
   const isInUncategorized = selectedFolderId === 'NULL';
   const isInAllFlows = isNil(selectedFolderId);
   return (
-    <div className="p-2">
+    <div className="py-2 pr-2">
       <div className="flex flex-row items-center mb-2">
         <span className="flex">{t('Folders')}</span>
         <div className="grow"></div>

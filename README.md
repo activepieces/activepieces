@@ -367,6 +367,8 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://dammaretz.com"><img src="https://avatars.githubusercontent.com/u/14098167?v=4?s=100" width="100px;" alt="Theo Dammaretz"/><br /><sub><b>Theo Dammaretz</b></sub></a><br /><a href="#plugin-Blightwidow" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/s31w4n"><img src="https://avatars.githubusercontent.com/u/63353528?v=4?s=100" width="100px;" alt="s31w4n"/><br /><sub><b>s31w4n</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=s31w4n" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://kallabot.com"><img src="https://avatars.githubusercontent.com/u/94991678?v=4?s=100" width="100px;" alt="Abdul Rahman"/><br /><sub><b>Abdul Rahman</b></sub></a><br /><a href="#plugin-abdulrahmanmajid" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/coat"><img src="https://avatars.githubusercontent.com/u/1661?v=4?s=100" width="100px;" alt="Kent Smith"/><br /><sub><b>Kent Smith</b></sub></a><br /><a href="#plugin-coat" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ArvindEnvoy"><img src="https://avatars.githubusercontent.com/u/25014185?v=4?s=100" width="100px;" alt="Arvind Ramesh"/><br /><sub><b>Arvind Ramesh</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=ArvindEnvoy" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
