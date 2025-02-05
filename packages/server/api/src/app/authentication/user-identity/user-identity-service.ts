@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, UserIdentity } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -8,7 +8,7 @@ import { UserIdentityEntity } from './user-identity-entity'
 export const userIdentityRepository = repoFactory(UserIdentityEntity)
 
 export const userIdentityService = (log: FastifyBaseLogger) => ({
-    async create(params: Pick<UserIdentity, 'email' | 'password' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter' | 'provider'>): Promise<UserIdentity> {
+    async create(params: Pick<UserIdentity, 'email' | 'password' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter' | 'provider' | 'verified'>): Promise<UserIdentity> {
         log.info({
             email: params.email,
         }, 'Creating user identity')
@@ -25,7 +25,6 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        const verified = params.provider === UserIdentityProvider.GOOGLE || params.provider === UserIdentityProvider.JWT || params.provider === UserIdentityProvider.SAML
         const newUserIdentity: UserIdentity = {
             firstName: params.firstName,
             lastName: params.lastName,
@@ -33,7 +32,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             email: cleanedEmail,
             created: new Date().toISOString(),
             updated: new Date().toISOString(),
-            verified,
+            verified: params.verified,
             id: apId(),
             password: hashedPassword,
             trackEvents: params.trackEvents,
