@@ -1,5 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -12,6 +13,7 @@ interface ProjectRoleUsersTableProps {
 export const ProjectRoleUsersTable = ({
   users,
 }: ProjectRoleUsersTableProps) => {
+  const navigate = useNavigate();
   const columns: ColumnDef<RowDataWithActions<UserWithProjectRole>>[] = [
     {
       accessorKey: 'email',
@@ -28,7 +30,14 @@ export const ProjectRoleUsersTable = ({
         <DataTableColumnHeader column={column} title={t('Project')} />
       ),
       cell: ({ row }) => (
-        <div className="text-left">{row.original.project.displayName}</div>
+        <div
+          className="text-left cursor-pointer hover:underline hover:text-primary"
+          onClick={() => {
+            navigate(`/projects/${row.original.project.id}/settings/team`);
+          }}
+        >
+          {row.original.project.displayName}
+        </div>
       ),
     },
     {
