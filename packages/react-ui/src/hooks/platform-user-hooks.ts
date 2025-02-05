@@ -1,12 +1,7 @@
-import { QueryClient, useQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
-import { authenticationSession } from '@/lib/authentication-session';
 import { platformUserApi } from '@/lib/platform-user-api';
-import {
-  SeekPage,
-  UserWithMetaInformation,
-  UserWithMetaInformationAndProject,
-} from '@activepieces/shared';
+import { SeekPage, UserWithMetaInformation } from '@activepieces/shared';
 
 export const platformUserHooks = {
   useUsers: () => {

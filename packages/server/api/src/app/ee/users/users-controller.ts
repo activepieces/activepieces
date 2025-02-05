@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, EndpointScope, PrincipalType, UserWithMetaInformationAndProject } from '@activepieces/shared'
+import { assertNotNullOrUndefined, PrincipalType, UserWithMetaInformationAndProject } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
