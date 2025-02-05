@@ -4,12 +4,12 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useDeepCompareEffect } from 'react-use';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
+import { userHooks } from '@/hooks/user-hooks';
 import {
   ApFlagId,
-  AuthenticationResponse,
   isNil,
   TelemetryEvent,
+  UserWithMetaInformationAndProject,
 } from '@activepieces/shared';
 
 interface TelemetryProviderProps {
@@ -17,11 +17,12 @@ interface TelemetryProviderProps {
 }
 
 const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
+  const { data: currentUser } = userHooks.useCurrentUser();
   const [analytics, setAnalytics] = useState<AnalyticsBrowser | null>(null);
   const initializedUserEmail = useRef<string | null>(null);
 
-  const [user, setUser] = useState<AuthenticationResponse | null>(
-    authenticationSession.getCurrentUser(),
+  const [user, setUser] = useState<UserWithMetaInformationAndProject | null>(
+    currentUser ?? null,
   );
   const { data: telemetryEnabled } = flagsHooks.useFlag<boolean>(
     ApFlagId.TELEMETRY_ENABLED,
@@ -35,7 +36,7 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
 
   useEffect(() => {
     const handleStorageChange = (_event: StorageEvent) => {
-      setUser(authenticationSession.getCurrentUser());
+      setUser(currentUser ?? null);
     };
 
     window.addEventListener('storage', handleStorageChange);
