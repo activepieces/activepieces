@@ -28,7 +28,7 @@ export const ProjectRoleUsersTable = () => {
   const navigate = useNavigate();
 
   const { data: projectRole, isLoading: isProjectRoleLoading } = useQuery({
-    queryKey: ['project-role'],
+    queryKey: ['project-role', projectRoleId],
     queryFn: () => {
       assertNotNullOrUndefined(projectRoleId, 'projectRoleId is required');
       return projectRoleApi.get(projectRoleId);
@@ -37,7 +37,7 @@ export const ProjectRoleUsersTable = () => {
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ['users-with-project-roles'],
+    queryKey: ['users-with-project-roles', projectRoleId],
     queryFn: () => {
       const cursor = searchParams.get('cursor');
       const limit = searchParams.get('limit')
@@ -105,6 +105,7 @@ export const ProjectRoleUsersTable = () => {
       ),
     },
   ];
+
   return (
     <LockedFeatureGuard
       featureKey="TEAM"
