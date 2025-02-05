@@ -160,15 +160,10 @@ describe('Props resolver', () => {
                         name: 'Bob',
                     },
                 ],
-                usersLastNames: [
-                    {
-                        lastName: 'Smith',
-                    },
-                    {
-                        lastName: 'Doe',
-                    },
+                lastNames: [
+                    'Smith',
+                    'Doe',
                 ],
-                ages: [18, 24, 30],
             },
         )
     })
