@@ -19,9 +19,3 @@ export const UpdateProjectRoleRequestBody = Type.Object({
 })
 
 export type UpdateProjectRoleRequestBody = Static<typeof UpdateProjectRoleRequestBody>
-
-export const ListPlatformUsersWithRoleAndProjectRequestBody = Type.Object({
-    filterProjectRoleId: Type.String(),
-})
-
-export type ListPlatformUsersWithRoleAndProjectRequestBody = Static<typeof ListPlatformUsersWithRoleAndProjectRequestBody>

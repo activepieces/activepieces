@@ -1,4 +1,5 @@
 import {
+    PopulatedProjectMember,
     ProjectMember,
     ProjectMemberId,
     ProjectMemberWithUser,
@@ -25,8 +26,8 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
-import { userService } from '../../user/user-service'
-import { projectRoleService } from '../project-role/project-role.service'
+import { userRepo, userService } from '../../user/user-service'
+import { projectRepo, projectRoleRepo, projectRoleService } from '../project-role/project-role.service'
 import {
     ProjectMemberEntity,
 } from './project-member.entity'
@@ -109,6 +110,35 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             }),
         )
         return paginationHelper.createPage<ProjectMemberWithUser>(enrichedData, cursor)
+    },
+    async listPlatformProjectMembers({ platformId, projectRoleId: filterProjectRoleId }: ListPlatformProjectMembersParams): Promise<PopulatedProjectMember[]> {
+        const queryBuilder = repo().createQueryBuilder('project_member')
+            .where({ platformId })
+            
+        if (filterProjectRoleId) {
+            queryBuilder.andWhere({ projectRoleId: Equal(filterProjectRoleId) })
+        }
+
+        const projectMembers = await queryBuilder.getMany()
+
+        const usersWithProjectRoles = await Promise.all(projectMembers.map(async (projectMember) => {
+            const user = await userRepo().findOneByOrFail({ id: projectMember.userId })
+            const userIdentity = await userIdentityService(system.globalLogger()).getBasicInformation(user.identityId)
+            const currentProject = await projectRepo().findOneByOrFail({ id: projectMember.projectId })
+            const projectRole = await projectRoleRepo().findOneByOrFail({ id: projectMember.projectRoleId })
+            return {
+                id: projectMember.userId,
+                firstName: userIdentity.firstName,
+                lastName: userIdentity.lastName,
+                email: userIdentity.email,
+                projectRole,
+                project: {
+                    id: currentProject.id,
+                    displayName: currentProject.displayName,
+                },
+            }
+        }))
+        return usersWithProjectRoles
     },
     async getRole({
         userId,
@@ -203,6 +233,11 @@ type UpdateMemberRole = {
     projectId: ProjectId
     platformId: PlatformId
     role: string
+}
+
+type ListPlatformProjectMembersParams = {
+    platformId: PlatformId
+    projectRoleId?: ApId
 }
 
 async function enrichProjectMemberWithUser(

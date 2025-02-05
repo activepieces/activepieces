@@ -4,8 +4,6 @@ import {
   UpdateProjectRoleRequestBody,
   ProjectRole,
   SeekPage,
-  ListPlatformUsersWithRoleAndProjectRequestBody,
-  UserWithProjectRole,
 } from '@activepieces/shared';
 
 export const projectRoleApi = {
@@ -22,14 +20,5 @@ export const projectRoleApi = {
   },
   async delete(id: string) {
     return await api.delete<void>(`/v1/project-roles/${id}`);
-  },
-
-  async listUsersWithProjectRoles(
-    requestBody: ListPlatformUsersWithRoleAndProjectRequestBody,
-  ) {
-    return await api.post<UserWithProjectRole[]>(
-      `/v1/project-roles/users`,
-      requestBody,
-    );
   },
 };

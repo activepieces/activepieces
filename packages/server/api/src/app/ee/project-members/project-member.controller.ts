@@ -1,5 +1,7 @@
 import {
+    ListPlatformProjectMembersRequestQuery,
     ListProjectMembersRequestQuery,
+    PopulatedProjectMember,
     ProjectMemberWithUser,
     UpdateProjectMemberRoleRequestBody,
 } from '@activepieces/ee-shared'
@@ -36,6 +38,13 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
         )
     })
 
+    app.get('/platform-users', ListPlatformProjectMembersRequest, async (request) => {
+        return projectMemberService(request.log).listPlatformProjectMembers({
+            platformId: request.principal.platform.id,
+            projectRoleId: request.query.projectRoleId ?? undefined,
+        })
+    })
+
 
     app.post('/:id', UpdateProjectMemberRoleRequest, async (req) => {
         return projectMemberService(req.log).update({
@@ -56,7 +65,14 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
     })
 }
 
-
+const ListPlatformProjectMembersRequest = {
+    schema: {
+        querystring: ListPlatformProjectMembersRequestQuery,
+        response: {
+            [StatusCodes.OK]: Type.Array(PopulatedProjectMember),
+        },
+    },
+}
 
 const GetCurrentProjectMemberRoleRequest = {
     config: {

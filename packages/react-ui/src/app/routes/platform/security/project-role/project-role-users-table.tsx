@@ -4,10 +4,10 @@ import { useNavigate } from 'react-router-dom';
 
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { UserWithProjectRole } from '@activepieces/shared';
+import { PopulatedProjectMember } from '@activepieces/ee-shared';
 
 interface ProjectRoleUsersTableProps {
-  users: UserWithProjectRole[];
+  users: PopulatedProjectMember[];
   isLoading: boolean;
 }
 
@@ -16,7 +16,7 @@ export const ProjectRoleUsersTable = ({
   isLoading,
 }: ProjectRoleUsersTableProps) => {
   const navigate = useNavigate();
-  const columns: ColumnDef<RowDataWithActions<UserWithProjectRole>>[] = [
+  const columns: ColumnDef<RowDataWithActions<PopulatedProjectMember>>[] = [
     {
       accessorKey: 'email',
       accessorFn: (row) => row.email,

@@ -20,6 +20,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
+import { projectMembersApi } from '@/features/team/lib/project-members-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
   assertNotNullOrUndefined,
@@ -49,8 +50,8 @@ const ProjectRolePage = () => {
         selectedProjectRole,
         'Selected project role is not set',
       );
-      return projectRoleApi.listUsersWithProjectRoles({
-        filterProjectRoleId: selectedProjectRole.id,
+      return projectMembersApi.listPlatformProjectMembers({
+        projectRoleId: selectedProjectRole.id,
       });
     },
     enabled: platform.projectRolesEnabled && !isNil(selectedProjectRole),

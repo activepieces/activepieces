@@ -1,8 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
-import { ProjectMetaData } from '../project/project'
-import { ProjectRole } from '../project-role/project-role'
 
 export type UserId = ApId
 
@@ -60,16 +58,6 @@ export const UserIdWithEmail = Type.Object({
 
 export type UserIdWithEmail = Static<typeof UserIdWithEmail>
 
-export const UserWithProjectRole = Type.Object({
-    id: Type.String(),
-    email: Type.String(),
-    firstName: Type.String(),
-    lastName: Type.String(),
-    projectRole: ProjectRole,
-    project: ProjectMetaData,
-})
-
-export type UserWithProjectRole = Static<typeof UserWithProjectRole>
 export const UserWithMetaInformationAndProject = Type.Object({
     id: Type.String(),
     email: Type.String(),

@@ -1,5 +1,5 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { ApId, CreateProjectRoleRequestBody, ListPlatformUsersWithRoleAndProjectRequestBody, ProjectRole, SeekPage, UpdateProjectRoleRequestBody, UserWithProjectRole } from '@activepieces/shared'
+import { ApId, CreateProjectRoleRequestBody, ProjectRole, SeekPage, UpdateProjectRoleRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { eventsHooks } from '../../helper/application-events'
@@ -46,13 +46,6 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
         return projectRole
     })
 
-    app.post('/users', ListUsersWithProjectRolesRequest, async (req) => {
-        return projectRoleService.listPlatformUsersWithRoleAndProject({
-            platformId: req.principal.platform.id,
-            filterProjectRoleId: req.body.filterProjectRoleId,
-        })
-    })
-
     app.delete('/:name', DeleteProjectRoleRequest, async (req, reply) => {
         await platformMustBeOwnedByCurrentUser.call(app, req, reply)
         await platformMustHaveFeatureEnabled((platform) => platform.customRolesEnabled).call(app, req, reply)
@@ -78,15 +71,6 @@ const ListProjectRolesRequest = {
     schema: {
         response: {
             [StatusCodes.OK]: SeekPage(ProjectRole),
-        },
-    },
-}
-
-const ListUsersWithProjectRolesRequest = {
-    schema: {
-        body: ListPlatformUsersWithRoleAndProjectRequestBody,
-        response: {
-            [StatusCodes.OK]: Type.Array(UserWithProjectRole),
         },
     },
 }
