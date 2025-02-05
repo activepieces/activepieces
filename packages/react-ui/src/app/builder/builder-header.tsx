@@ -1,12 +1,13 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { ChevronDown, History, Home, Logs } from 'lucide-react';
-import { useMemo } from 'react';
+import { ChevronDown, History, Logs } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   createSearchParams,
   Link,
   useLocation,
   useNavigate,
+  useSearchParams,
 } from 'react-router-dom';
 
 import {
@@ -15,6 +16,7 @@ import {
 } from '@/app/builder/builder-hooks';
 import { useEmbedding, useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
+import EditableText from '@/components/ui/editable-text';
 import {
   Tooltip,
   TooltipContent,
@@ -25,8 +27,11 @@ import { UserAvatar } from '@/components/ui/user-avatar';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
+import { determineDefaultRoute, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import {
   ApFlagId,
+  FlowOperationType,
   FlowVersionState,
   Permission,
   supportUrl,
@@ -34,9 +39,10 @@ import {
 
 import FlowActionMenu from '../components/flow-actions-menu';
 
-import { BuilderPublishButton } from './builder-publish-button';
+import { BuilderFlowStatusSection } from './builder-flow-status-section';
 
 export const BuilderHeader = () => {
+  const [queryParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
   const openNewWindow = useNewWindow();
@@ -45,7 +51,7 @@ export const BuilderHeader = () => {
   );
   const branding = flagsHooks.useWebsiteBranding();
   const isInRunsPage = useMemo(
-    () => location.pathname.startsWith('/runs'),
+    () => location.pathname.includes('/runs'),
     [location.pathname],
   );
   const hasPermissionToReadRuns = useAuthorization().checkAccess(
@@ -55,14 +61,14 @@ export const BuilderHeader = () => {
     flow,
     flowVersion,
     setLeftSidebar,
-    renameFlowClientSide,
     moveToFolderClientSide,
+    applyOperation,
   ] = useBuilderStateContext((state) => [
     state.flow,
     state.flowVersion,
     state.setLeftSidebar,
-    state.renameFlowClientSide,
     state.moveToFolderClientSide,
+    state.applyOperation,
   ]);
 
   const { embedState } = useEmbedding();
@@ -72,26 +78,36 @@ export const BuilderHeader = () => {
   const isLatestVersion =
     flowVersion.state === FlowVersionState.DRAFT ||
     flowVersion.id === flow.publishedVersionId;
-
   const folderName = folderData?.displayName ?? t('Uncategorized');
-
+  const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
+  const [isEditingFlowName, setIsEditingFlowName] = useState(false);
+  useEffect(() => {
+    setIsEditingFlowName(queryParams.get(NEW_FLOW_QUERY_PARAM) === 'true');
+  }, []);
   return (
     <div className="bg-background select-none">
-      <div className="relative items-left flex h-[70px] w-full p-4 bg-muted/50 border-b">
-        <div className="flex h-full items-center justify-center gap-2">
-          {!embedState.disableNavigationInBuilder && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link to="/flows">
-                  <Button variant="ghost" size={'icon'}>
-                    <Home className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">{t('Home')}</TooltipContent>
-            </Tooltip>
-          )}
-          <span>
+      <div className="relative items-center flex h-[55px] w-full p-4 bg-muted/30">
+        <div className="flex items-center gap-2">
+          {!embedState.hideLogoInBuilder &&
+            !embedState.disableNavigationInBuilder && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link to={defaultRoute}>
+                    <Button variant="ghost" size={'icon'} className="size-10">
+                      <img
+                        className="h-7 w-7 object-contain"
+                        src={branding.logos.logoIconUrl}
+                        alt={branding.websiteName}
+                      />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {t('Go to Dashboard')}
+                </TooltipContent>
+              </Tooltip>
+            )}
+          <div className="flex gap-2 items-center">
             {!embedState.hideFolders && (
               <>
                 <TooltipProvider>
@@ -99,7 +115,10 @@ export const BuilderHeader = () => {
                     <TooltipTrigger
                       onClick={() =>
                         navigate({
-                          pathname: '/flows',
+                          pathname:
+                            authenticationSession.appendProjectRoutePrefix(
+                              '/flows',
+                            ),
                           search: createSearchParams({
                             folderId: folderData?.id ?? 'NULL',
                           }).toString(),
@@ -119,9 +138,23 @@ export const BuilderHeader = () => {
               </>
             )}
             {!embedState.hideFlowNameInBuilder && (
-              <strong>{flowVersion.displayName}</strong>
+              <EditableText
+                className="font-semibold"
+                value={flowVersion.displayName}
+                readonly={!isLatestVersion}
+                onValueChange={(value) =>
+                  applyOperation({
+                    type: FlowOperationType.CHANGE_NAME,
+                    request: {
+                      displayName: value,
+                    },
+                  })
+                }
+                isEditing={isEditingFlowName}
+                setIsEditing={setIsEditingFlowName}
+              />
             )}
-          </span>
+          </div>
           <FlowActionMenu
             insideBuilder={true}
             flow={flow}
@@ -130,24 +163,17 @@ export const BuilderHeader = () => {
             onDelete={() => {
               navigate('/flows');
             }}
-            onRename={(newName) => renameFlowClientSide(newName)}
+            onRename={() => {
+              setIsEditingFlowName(true);
+            }}
             onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
             onDuplicate={() => {}}
           >
             <ChevronDown className="h-8 w-8" />
           </FlowActionMenu>
         </div>
-        {!embedState.hideLogoInBuilder && (
-          <div className="absolute absolute w-full h-full left-0 top-0 flex items-center justify-center p-4 pointer-events-none">
-            <img
-              className="h-8 object-contain"
-              src={branding.logos.fullLogoUrl}
-              alt={branding.websiteName}
-            ></img>
-          </div>
-        )}
 
-        <div className="grow "></div>
+        <div className="grow"></div>
         <div className="flex items-center justify-center gap-4">
           {showSupport && (
             <Tooltip>
@@ -198,7 +224,7 @@ export const BuilderHeader = () => {
             </Tooltip>
           )}
 
-          <BuilderPublishButton></BuilderPublishButton>
+          <BuilderFlowStatusSection></BuilderFlowStatusSection>
           <UserAvatar></UserAvatar>
         </div>
       </div>

@@ -3,7 +3,6 @@ import {
   OAuth2PropertyValue,
   PieceAuth,
   Property,
-  StaticPropsValue,
 } from '@activepieces/pieces-framework';
 import { SpotifyWebApi } from './client';
 
@@ -34,6 +33,7 @@ export const spotifyCommon = {
       'playlist-read-collaborative',
       'playlist-modify-private',
       'playlist-modify-public',
+      'user-library-read',
     ],
   }),
   device_id: (required = true) =>

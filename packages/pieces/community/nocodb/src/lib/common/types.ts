@@ -96,7 +96,7 @@ export interface ColumnResponse {
 	colOptions?: {
 		options: Array<{ title: string; id: string }>;
 	};
-	meta: Record<string, any> | null;
+	meta: Record<string, unknown> | null;
 }
 
 export interface GetTableResponse {

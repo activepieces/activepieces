@@ -53,6 +53,11 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             type: String,
             nullable: true,
         },
+        releasesEnabled: {
+            type: Boolean,
+            nullable: false,
+            default: false,
+        },
     },
     indices: [
         {

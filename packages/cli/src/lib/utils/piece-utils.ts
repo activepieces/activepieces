@@ -1,6 +1,5 @@
-
 import { readdir, stat } from 'node:fs/promises'
-import path, { resolve, join } from 'node:path'
+import * as path from 'path'
 import { cwd } from 'node:process'
 import { readPackageJson, readProjectJson } from './files'
 import { exec } from './exec'
@@ -9,17 +8,44 @@ import chalk from 'chalk'
 import FormData from 'form-data';
 import fs from 'fs';
 
-export async function findAllPieces(path?: string): Promise<string[]> {
-    const piecesPath = path ?? resolve(cwd(), 'packages', 'pieces')
-    const paths = await traverseFolder(piecesPath)
-    return paths
-}
-export async function findPieceSourceDirectory(pieceName: string): Promise<string | null> {
-    const piecesPath =  await findAllPieces()
-    const piecePath = piecesPath.find((p) => p.endsWith('/'+pieceName))
-    return piecePath ?? null
+export const piecesPath = () => path.join(cwd(), 'packages', 'pieces')
+export const customPiecePath = () => path.join(piecesPath(), 'custom')
+
+/**
+ * Finds and returns the paths of specific pieces or all available pieces in a given directory.
+ *
+ * @param inputPath - The root directory to search for pieces. If not provided, a default path to custom pieces is used.
+ * @param pieces - An optional array of piece names to search for. If not provided, all pieces in the directory are returned.
+ * @returns A promise resolving to an array of strings representing the paths of the found pieces.
+ */
+export async function findPieces(inputPath?: string, pieces?: string[]): Promise<string[]> {
+    const piecesPath = inputPath ?? customPiecePath()
+    const piecesFolders = await traverseFolder(piecesPath)
+    if (pieces) {
+        return pieces.flatMap((piece) => {
+          const folder = piecesFolders.find((p) => {
+              const normalizedPath = path.normalize(p);
+              return normalizedPath.endsWith(path.sep + piece);
+          });
+          if (!folder) {
+              return [];
+          }
+          return [folder];
+      });
+    } else {
+        return piecesFolders
+    }
 }
 
+/**
+ * Finds and returns the path of a single piece. Exits the process if the piece is not found.
+ *
+ * @param pieceName - The name of the piece to search for.
+ * @returns A promise resolving to a string representing the path of the found piece. If not found, the process exits.
+ */
+export async function findPiece(pieceName: string): Promise<string | null> {
+    return (await findPieces(piecesPath(), [pieceName]))[0] ?? null;
+}
 
 export async function buildPiece(pieceFolder: string): Promise<{ outputFolder: string, outputFile: string }> {
     const projectJson = await readProjectJson(pieceFolder);
@@ -31,7 +57,7 @@ export async function buildPiece(pieceFolder: string): Promise<{ outputFolder: s
     const tarFileName = JSON.parse(stdout)[0].filename;
     return {
         outputFolder: compiledPath,
-        outputFile: join(compiledPath, tarFileName)
+        outputFile: path.join(compiledPath, tarFileName)
     };
 }
 
@@ -82,7 +108,7 @@ async function traverseFolder(folderPath: string): Promise<string[]> {
         const files = await readdir(folderPath)
 
         for (const file of files) {
-            const filePath = join(folderPath, file)
+            const filePath = path.join(folderPath, file)
             const fileStats = await stat(filePath)
             if (fileStats.isDirectory() && file !== 'node_modules' && file !== 'dist') {
                 paths.push(...await traverseFolder(filePath))
@@ -110,3 +136,10 @@ export function displayNameToCamelCase(input: string): string {
     });
     return camelCaseWords.join('');
   }
+
+export const assertPieceExists = async (pieceName: string | null) => {
+    if (!pieceName) {
+      console.error(chalk.red(`🚨 Piece ${pieceName} not found`));
+      process.exit(1);
+    }
+  };

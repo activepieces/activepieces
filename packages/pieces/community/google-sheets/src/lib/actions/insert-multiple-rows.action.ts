@@ -12,6 +12,8 @@ import { getWorkSheetName, getWorkSheetGridSize } from '../triggers/helpers';
 import { google, sheets_v4 } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { MarkdownVariant } from '@activepieces/shared';
+import {parse} from 'csv-parse/sync';
+
 
 type RowValueType = Record<string, any>
 
@@ -477,26 +479,22 @@ function convertCsvToRawValues(
 	labelHeaders: RowValueType,
 ) {
 	// Split CSV into rows
-	const rows = csvText.trim().split('\n');
+	const rows:Record<string,any>[] = parse(csvText,{delimiter: delimiter, columns: true});
 
-	// Extract the input headers from the first row
-	const headers = rows[0].split(delimiter);
+	const result = rows.map((row)=>{
+		// Normalize record keys to lowercase
+		const normalizedRow = Object.keys(row).reduce((acc, key) => {
+			acc[key.toLowerCase().trim()] = row[key];
+			return acc;	
+		},{} as Record<string,any>);
 
-	// Create a mapping of input headers to existing label names like "A", "B", "C", etc.
-	const newHeaders = Object.entries(labelHeaders).reduce((acc, [labelColumn, csvHeader]) => {
-		const index = headers.findIndex(header => header.toLocaleLowerCase() === csvHeader?.toLocaleLowerCase()?.trim());
-		if (index > -1) acc[index] = labelColumn;
-		return acc;
-	}, [] as string[]);
-
-	// Process each row of data and map it to the new labeled headers
-	const result = rows.slice(1).map((row) => {
-		const values = row.split(delimiter);
-		return newHeaders.reduce((obj, header, index) => {
-			obj[header] = values[index] ?? "";
-			return obj;
-		}, {} as RowValueType);
-	});
-
+		const transformedRow :Record<string,any>= {};
+		for(const key in labelHeaders){
+			// Match labels to normalized keys
+			const normalizedKey = labelHeaders[key].toLowerCase();
+			transformedRow[key] = normalizedRow[normalizedKey] || '';
+		}
+		return transformedRow;
+	})
 	return result;
 }

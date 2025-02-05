@@ -1,6 +1,6 @@
 import { LATEST_JOB_DATA_SCHEMA_VERSION, QueueName, RepeatableJobType, ScheduledJobData } from '@activepieces/server-shared'
 import { ExecutionType, isNil, RunEnvironment, ScheduleType } from '@activepieces/shared'
-import { Job } from 'bullmq'
+import { Job, RepeatableJob } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { distributedLock } from '../../helper/lock'
@@ -14,6 +14,10 @@ export const redisMigrations = (log: FastifyBaseLogger) => ({
             log,
         })
         try {
+            const repeatableJobs = await getLegacyRepeatableJobs()
+            if (repeatableJobs.length > 0) {
+                await updateLegacyRepeatableJobKey(repeatableJobs, log)
+            }
             const scheduledJobs = await getJobsToMigrate()
             if (scheduledJobs.length === 0) {
                 return
@@ -33,6 +37,72 @@ export const redisMigrations = (log: FastifyBaseLogger) => ({
         }
     },
 })
+
+async function updateLegacyRepeatableJobKey(repeatableJobs: RepeatableJob[], log: FastifyBaseLogger) {
+    log.info({
+        jobs: repeatableJobs.length,
+    }, '[#redisMigrations] found legacy repeatable jobs to update')
+
+    const queue = bullMqGroups[QueueName.SCHEDULED]
+    const client = await queue.client
+    const currentJobs: Job[] = await queue.getJobs()
+
+    let count = 0
+    let broken = 0
+    for (const repeatableJob of repeatableJobs) {
+        const nextJob = currentJobs.find(job =>
+            !isNil(job) &&
+            job.repeatJobKey === repeatableJob.key &&
+            !isNil(job.data),
+        )
+
+        const existingPattern = repeatableJob.pattern ?? nextJob?.opts?.repeat?.pattern
+        const existingTimeZone = repeatableJob.tz ?? nextJob?.opts?.repeat?.tz
+        const flowVersionId = nextJob?.data?.flowVersionId
+        if (isNil(nextJob) || isNil(existingPattern) || isNil(flowVersionId)) {
+            if (isNil(repeatableJob.name)) {
+                log.info({
+                    repeatableJob,
+                }, '[#redisMigrations] remove broken job')
+                broken++
+                await queue.removeJobScheduler(repeatableJob.key)
+            }
+            continue
+        }
+
+        // Remove old scheduler and create new one with flowVersionId as key
+        await queue.removeJobScheduler(repeatableJob.key)
+        await queue.upsertJobScheduler(
+            flowVersionId,
+            {
+                pattern: existingPattern,
+                tz: existingTimeZone,
+            },
+            {
+                name: flowVersionId,
+                data: nextJob.data,
+            },
+        )
+
+        // Clean up legacy key mapping
+        await client.del(`activepieces:repeatJobKey:${flowVersionId}`)
+        count++
+    }
+    log.info({
+        jobs: count,
+        brokenJobs: broken,
+    }, '[#redisMigrations] legacy repeatable jobs migrated')
+}
+
+async function getLegacyRepeatableJobs() {
+    const repeatableJobs = await bullMqGroups[QueueName.SCHEDULED].getJobSchedulers()
+    /*
+        BullMQ 5.0 introduced a new API for handling repeatable jobs. Previously, BullMQ would auto-generate keys
+        which required maintaining a separate mapping between flowVersionId and repeatableJobKey. With this update,
+        we can now directly use flowVersionId as the key, simplifying the mapping and maintenance.
+    */
+    return repeatableJobs.filter(job => !isNil(job) && job.key !== job.name)
+}
 
 async function getJobsToMigrate(): Promise<(Job<ScheduledJobData> | undefined)[]> {
     return (await bullMqGroups[QueueName.SCHEDULED].getJobs()).filter((job) => !isNil(job?.data) && job.data.schemaVersion !== LATEST_JOB_DATA_SCHEMA_VERSION)

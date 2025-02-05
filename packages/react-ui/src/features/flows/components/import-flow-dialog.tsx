@@ -221,6 +221,9 @@ const ImportFlowDialog = (
       return;
     }
 
+    console.log('handleFileChange 3');
+    console.log(newTemplates);
+
     setTemplates(newTemplates);
   };
 

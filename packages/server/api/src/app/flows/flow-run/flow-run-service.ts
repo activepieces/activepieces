@@ -1,4 +1,4 @@
-import { exceptionHandler } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -37,7 +37,6 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
 import { engineResponseWatcher } from '../../workers/engine-response-watcher'
 import { getJobPriority } from '../../workers/queue/queue-manager'
 import { flowService } from '../flow/flow.service'
@@ -107,25 +106,24 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId,
         })
 
-        const newFlowRun = {
-            ...oldFlowRun,
-            id: apId(),
-            status: FlowRunStatus.RUNNING,
-            startTime: new Date().toISOString(),
-            created: new Date().toISOString(),
-        }
-
-        await flowRunRepo().save(newFlowRun)
-
         switch (strategy) {
             case FlowRetryStrategy.FROM_FAILED_STEP:
                 return flowRunService(log).addToQueue({
-                    flowRunId: newFlowRun.id,
+                    flowRunId: oldFlowRun.id,
                     executionType: ExecutionType.RESUME,
                     progressUpdateType: ProgressUpdateType.NONE,
                     checkRequestId: false,
                 })
             case FlowRetryStrategy.ON_LATEST_VERSION: {
+                const newFlowRun = {
+                    ...oldFlowRun,
+                    id: apId(),
+                    status: FlowRunStatus.RUNNING,
+                    startTime: new Date().toISOString(),
+                    created: new Date().toISOString(),
+                }
+                await flowRunRepo().save(newFlowRun)
+
                 const payload = await updateFlowRunToLatestFlowVersionIdAndReturnPayload(newFlowRun.id, log)
                 return flowRunService(log).addToQueue({
                     payload,
@@ -149,7 +147,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         executionType,
         checkRequestId,
     }: AddToQueueParams): Promise<FlowRun | null> {
-        log.info(`[FlowRunService#resume] flowRunId=${flowRunId}`)
+        log.info({
+            flowRunId,
+        }, '[FlowRunService#resume] adding flow run to queue')
 
         const flowRunToResume = await flowRunRepo().findOneBy({
             id: flowRunId,
@@ -272,9 +272,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
     },
 
     async pause(params: PauseParams): Promise<void> {
-        log.info(
-            `[FlowRunService#pause] flowRunId=${params.flowRunId} pauseType=${params.pauseMetadata.type}`,
-        )
+        log.info({
+            flowRunId: params.flowRunId,
+            pauseType: params.pauseMetadata.type,
+        }, '[FlowRunService] pausing flow run')
 
         const { flowRunId, pauseMetadata } = params
         await flowRunRepo().update(flowRunId, {
@@ -342,6 +343,10 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             size: executionStateContentLength,
             type: FileType.FLOW_RUN_LOG,
             compression: FileCompression.NONE,
+            metadata: {
+                flowRunId,
+                projectId,
+            },
         })
         if (isNil(logsFileId)) {
             await flowRunRepo().update(flowRunId, {

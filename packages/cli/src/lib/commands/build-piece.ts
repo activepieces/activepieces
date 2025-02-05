@@ -1,20 +1,25 @@
 import { Command } from "commander";
-import { buildPiece, findAllPieces } from "../utils/piece-utils";
+import { buildPiece, findPiece } from '../utils/piece-utils';
 import chalk from "chalk";
+import inquirer from "inquirer";
 
 async function buildPieces(pieceName: string) {
-    const piecesFolder = await findAllPieces();
-    if (piecesFolder.length === 0) {
-        console.error(chalk.red(`Piece '${pieceName}' not found.`));
-        process.exit(1);
-    }
-    const { outputFolder } = await buildPiece(piecesFolder[0]);
+    const pieceFolder = await findPiece(pieceName);
+    const { outputFolder } = await buildPiece(pieceFolder);
     console.info(chalk.green(`Piece '${pieceName}' built and packed successfully at ${outputFolder}.`));
 }
 
 export const buildPieceCommand = new Command('build')
     .description('Build pieces without publishing')
-    .requiredOption('-n, --name <name>', 'Filter pieces by name')
-    .action(async (options) => {
-        await buildPieces(options.name);
+    .action(async () => {
+        const questions = [
+            {
+                type: 'input',
+                name: 'name',
+                message: 'Enter the piece folder name',
+                placeholder: 'google-drive',
+            },
+        ];
+        const answers = await inquirer.prompt(questions);
+        await buildPieces(answers.name);
     });

@@ -33,7 +33,7 @@ import {
 
 export default function GeneralPage() {
   const queryClient = useQueryClient();
-  const { project, updateProject } = projectHooks.useCurrentProject();
+  const { project, updateCurrentProject } = projectHooks.useCurrentProject();
 
   const { platform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
@@ -45,8 +45,8 @@ export default function GeneralPage() {
       displayName: project?.displayName,
       externalId: project?.externalId,
       plan: {
-        tasks: project?.plan?.tasks,
-        aiTokens: project?.plan?.aiTokens,
+        tasks: project?.plan?.tasks ?? undefined,
+        aiTokens: project?.plan?.aiTokens ?? undefined,
       },
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
@@ -59,11 +59,11 @@ export default function GeneralPage() {
     {
       displayName: string;
       externalId?: string;
-      plan: { tasks: number; aiTokens?: number };
+      plan: { tasks: number | undefined; aiTokens?: number | undefined };
     }
   >({
     mutationFn: (request) => {
-      updateProject(queryClient, request);
+      updateCurrentProject(queryClient, request);
       return projectApi.update(authenticationSession.getProjectId()!, {
         ...request,
         externalId:
@@ -75,6 +75,9 @@ export default function GeneralPage() {
         title: t('Success'),
         description: t('Your changes have been saved.'),
         duration: 3000,
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['current-project'],
       });
     },
     onError: (error) => {

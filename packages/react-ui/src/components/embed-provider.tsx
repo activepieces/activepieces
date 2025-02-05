@@ -11,6 +11,8 @@ type EmbeddingState = {
   hideFlowNameInBuilder: boolean;
   sdkVersion?: string;
   predefinedConnectionName?: string;
+  fontUrl?: string;
+  fontFamily?: string;
 };
 
 const defaultState: EmbeddingState = {

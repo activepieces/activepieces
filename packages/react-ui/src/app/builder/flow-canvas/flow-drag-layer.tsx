@@ -1,5 +1,4 @@
 import {
-  CollisionDetection,
   DndContext,
   DragEndEvent,
   DragOverlay,
@@ -10,9 +9,11 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
+import { useViewport } from '@xyflow/react';
 import { t } from 'i18next';
+import { useCallback, useState } from 'react';
 
-import { UNSAVED_CHANGES_TOAST, useToast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import {
   FlowOperationType,
   StepLocationRelativeToParent,
@@ -24,66 +25,73 @@ import { useBuilderStateContext } from '../builder-hooks';
 import StepDragOverlay from './step-drag-overlay';
 import { ApButtonData } from './utils/types';
 
-// https://github.com/clauderic/dnd-kit/pull/334#issuecomment-1965708784
-const fixCursorSnapOffset: CollisionDetection = (args) => {
-  // Bail out if keyboard activated
-  if (!args.pointerCoordinates) {
-    return rectIntersection(args);
-  }
-  const { x, y } = args.pointerCoordinates;
-  const { width, height } = args.collisionRect;
-  const updated = {
-    ...args,
-    // The collision rectangle is broken when using snapCenterToCursor. Reset
-    // the collision rectangle based on pointer location and overlay size.
-    collisionRect: {
-      width,
-      height,
-      bottom: y + height / 2,
-      left: x - width / 2,
-      right: x + width / 2,
-      top: y - height / 2,
-    },
-  };
-  return rectIntersection(updated);
-};
-
 const FlowDragLayer = ({
   children,
   lefSideBarContainerWidth,
+  cursorPosition,
 }: {
   children: React.ReactNode;
   lefSideBarContainerWidth: number;
+  cursorPosition: { x: number; y: number };
 }) => {
-  const { toast } = useToast();
+  const viewport = useViewport();
+  const [previousViewPort, setPreviousViewPort] = useState(viewport);
   const [
     setActiveDraggingStep,
     applyOperation,
     flowVersion,
     activeDraggingStep,
-    setAllowCanvasPanning,
   ] = useBuilderStateContext((state) => [
     state.setActiveDraggingStep,
     state.applyOperation,
     state.flowVersion,
     state.activeDraggingStep,
-    state.setAllowCanvasPanning,
   ]);
 
+  const fixCursorSnapOffset = useCallback(
+    (args: Parameters<typeof rectIntersection>[0]) => {
+      // Bail out if keyboard activated
+      if (!args.pointerCoordinates) {
+        return rectIntersection(args);
+      }
+      const { x, y } = args.pointerCoordinates;
+      const { width, height } = args.collisionRect;
+      const deltaViewport = {
+        x: previousViewPort.x - viewport.x,
+        y: previousViewPort.y - viewport.y,
+      };
+      const updated = {
+        ...args,
+        // The collision rectangle is broken when using snapCenterToCursor. Reset
+        // the collision rectangle based on pointer location and overlay size.
+        collisionRect: {
+          width,
+          height,
+          bottom: y + height / 2 + deltaViewport.y,
+          left: x - width / 2 + deltaViewport.x,
+          right: x + width / 2 + deltaViewport.x,
+          top: y - height / 2 + deltaViewport.y,
+        },
+      };
+      return rectIntersection(updated);
+    },
+    [viewport.x, viewport.y, previousViewPort.x, previousViewPort.y],
+  );
   const draggedStep = activeDraggingStep
     ? flowStructureUtil.getStep(activeDraggingStep, flowVersion.trigger)
     : undefined;
 
   const handleDragStart = (e: DragStartEvent) => {
     setActiveDraggingStep(e.active.id.toString());
+    setPreviousViewPort(viewport);
   };
 
   const handleDragCancel = () => {
     setActiveDraggingStep(null);
   };
+
   const handleDragEnd = (e: DragEndEvent) => {
     setActiveDraggingStep(null);
-    setAllowCanvasPanning(true);
     if (
       e.over &&
       e.over.data.current &&
@@ -111,23 +119,20 @@ const FlowDragLayer = ({
           });
           return;
         }
-        applyOperation(
-          {
-            type: FlowOperationType.MOVE_ACTION,
-            request: {
-              name: draggedStep.name,
-              newParentStep: droppedAtNodeData.parentStepName,
-              stepLocationRelativeToNewParent:
-                droppedAtNodeData.stepLocationRelativeToParent,
-              branchIndex:
-                droppedAtNodeData.stepLocationRelativeToParent ===
-                StepLocationRelativeToParent.INSIDE_BRANCH
-                  ? droppedAtNodeData.branchIndex
-                  : undefined,
-            },
+        applyOperation({
+          type: FlowOperationType.MOVE_ACTION,
+          request: {
+            name: draggedStep.name,
+            newParentStep: droppedAtNodeData.parentStepName,
+            stepLocationRelativeToNewParent:
+              droppedAtNodeData.stepLocationRelativeToParent,
+            branchIndex:
+              droppedAtNodeData.stepLocationRelativeToParent ===
+              StepLocationRelativeToParent.INSIDE_BRANCH
+                ? droppedAtNodeData.branchIndex
+                : undefined,
           },
-          () => toast(UNSAVED_CHANGES_TOAST),
-        );
+        });
       }
     }
   };
@@ -140,7 +145,6 @@ const FlowDragLayer = ({
     }),
     useSensor(TouchSensor),
   );
-
   return (
     <>
       <DndContext
@@ -156,6 +160,7 @@ const FlowDragLayer = ({
 
       {draggedStep && (
         <StepDragOverlay
+          cursorPosition={cursorPosition}
           lefSideBarContainerWidth={lefSideBarContainerWidth}
           step={draggedStep}
         ></StepDragOverlay>

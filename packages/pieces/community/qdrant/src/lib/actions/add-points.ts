@@ -38,14 +38,9 @@ export const addPointsToCollection = createAction({
       },
       required: true,
     }),
-    content: Property.File({
-      displayName: 'Content Chunks',
-      description: 'The content chunks of the doc to add to payload',
-      required: false,
-    }),
     payload: Property.Json({
       displayName: 'Additional Payload',
-      description: 'The additional information for the points',
+      description: `Please follow [payload documentation](https://qdrant.tech/documentation/concepts/payload/) to add additional information to the points.`,
       required: false,
     }),
     storage: Property.StaticDropdown({
@@ -66,7 +61,6 @@ export const addPointsToCollection = createAction({
       apiKey: auth.key,
       url: auth.serverAddress,
     });
-
     const embeddings = decodeEmbeddings(propsValue.embeddings.data);
 
     const numberOfEmbeddings = embeddings.length;
@@ -89,22 +83,17 @@ export const addPointsToCollection = createAction({
       );
 
     const payload = propsValue.payload ?? {};
-    const content = propsValue.content
-      ? (JSON.parse(propsValue.content.data.toString('utf-8')) as string[])
-      : null;
     const points = [];
 
     for (let i = 0; i < numberOfEmbeddings; i++) {
       const localPayload = { ...payload };
-      if (content) {
-        localPayload['content'] = content[i];
-      }
       points.push({
         id: autoEmbeddingsIds ? randomUUID() : embeddingsIds[i],
         payload: localPayload,
         vector: Array.from(embeddings[i]),
       });
     }
+
 
     const collections = (await client.getCollections()).collections;
     const collectionName = propsValue.collectionName as string;

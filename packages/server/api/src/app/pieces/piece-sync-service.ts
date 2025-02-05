@@ -1,13 +1,12 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
+import { AppSystemProp, apVersionUtil } from '@activepieces/server-shared'
 import { ListVersionsResponse, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { repoFactory } from '../core/db/repo-factory'
-import { flagService } from '../flags/flag.service'
 import { parseAndVerify } from '../helper/json-validator'
 import { system } from '../helper/system/system'
-import { AppSystemProp } from '../helper/system/system-prop'
 import { systemJobsSchedule } from '../helper/system-jobs'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
@@ -96,7 +95,7 @@ async function existsInDatabase({ name, version }: { name: string, version: stri
 async function getVersions({ name }: { name: string }): Promise<ListVersionsResponse> {
     const queryParams = new URLSearchParams()
     queryParams.append('edition', system.getEdition())
-    queryParams.append('release', await flagService.getCurrentRelease())
+    queryParams.append('release', await apVersionUtil.getCurrentRelease())
     queryParams.append('name', name)
     const url = `${CLOUD_API_URL}/versions?${queryParams.toString()}`
     const response = await fetch(url)
@@ -113,7 +112,7 @@ async function getOrThrow({ name, version }: { name: string, version: string }):
 async function listPieces(): Promise<PieceMetadataModelSummary[]> {
     const queryParams = new URLSearchParams()
     queryParams.append('edition', system.getEdition())
-    queryParams.append('release', await flagService.getCurrentRelease())
+    queryParams.append('release', await apVersionUtil.getCurrentRelease())
     const url = `${CLOUD_API_URL}?${queryParams.toString()}`
     const response = await fetch(url)
     if (response.status === StatusCodes.GONE.valueOf()) {

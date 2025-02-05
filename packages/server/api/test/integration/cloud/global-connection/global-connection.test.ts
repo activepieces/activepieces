@@ -4,7 +4,7 @@ import {
     PlatformRole,
     PrincipalType,
 } from '@activepieces/shared'
-import { FastifyInstance } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { pieceMetadataService } from '../../../../src/app/pieces/piece-metadata-service'
@@ -12,16 +12,17 @@ import { setupServer } from '../../../../src/app/server'
 import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockPieceMetadata,
-    createMockPlatform,
-    createMockProject,
-    createMockUser,
+    mockAndSaveBasicSetup,
+    mockBasicUser,
 } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
+let mockLog: FastifyBaseLogger
 
 beforeAll(async () => {
     await databaseConnection().initialize()
     app = await setupServer()
+    mockLog = app!.log!
 })
 
 afterAll(async () => {
@@ -29,22 +30,19 @@ afterAll(async () => {
     await app?.close()
 })
 
+const setupWithGlobalConnections = () => {
+    return mockAndSaveBasicSetup({
+        platform: {
+            globalConnectionsEnabled: true,
+        },
+    })
+}
+
 describe('GlobalConnection API', () => {
     describe('Upsert GlobalConnection endpoint', () => {
         it('Succeeds if user is platform owner', async () => {
             // arrange
-            const mockPlatformId = apId()
-            const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.ADMIN })
-            await databaseConnection().getRepository('user').save([mockUser])
-
-            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id, globalConnectionsEnabled: true })
-            await databaseConnection().getRepository('platform').save(mockPlatform)
-
-            const mockProject = createMockProject({
-                ownerId: mockUser.id,
-                platformId: mockPlatform.id,
-            })
-            await databaseConnection().getRepository('project').save([mockProject])
+            const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
 
             const mockPieceMetadata = createMockPieceMetadata({
                 projectId: mockProject.id,
@@ -53,10 +51,10 @@ describe('GlobalConnection API', () => {
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
-            pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
+            pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
 
             const mockToken = await generateMockToken({
-                id: mockUser.id,
+                id: mockOwner.id,
                 type: PrincipalType.USER,
                 projectId: mockProject.id,
                 platform: {
@@ -92,27 +90,21 @@ describe('GlobalConnection API', () => {
 
         it('Fails if user is not platform owner', async () => {
             // arrange
-            const mockPlatformId = apId()
-            const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.ADMIN })
-            const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            await databaseConnection().getRepository('user').save([mockOwner, mockUser])
+            const { mockPlatform, mockProject } = await setupWithGlobalConnections()
 
-            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockOwner.id, globalConnectionsEnabled: true })
-            await databaseConnection().getRepository('platform').save(mockPlatform)
-
-            const mockProject = createMockProject({
-                ownerId: mockOwner.id,
-                platformId: mockPlatform.id,
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
             })
-            await databaseConnection().getRepository('project').save([mockProject])
-
             const mockPieceMetadata = createMockPieceMetadata({
                 projectId: mockProject.id,
                 platformId: mockPlatform.id,
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
-            pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
+            pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
 
             const mockToken = await generateMockToken({
                 id: mockUser.id,
@@ -152,18 +144,7 @@ describe('GlobalConnection API', () => {
 
         it('Fails if project ids are invalid', async () => {
             // arrange
-            const mockPlatformId = apId()
-            const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.ADMIN })
-            await databaseConnection().getRepository('user').save([mockUser])
-
-            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id, globalConnectionsEnabled: true })
-            await databaseConnection().getRepository('platform').save(mockPlatform)
-
-            const mockProject = createMockProject({
-                ownerId: mockUser.id,
-                platformId: mockPlatform.id,
-            })
-            await databaseConnection().getRepository('project').save([mockProject])
+            const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
 
             const mockPieceMetadata = createMockPieceMetadata({
                 projectId: mockProject.id,
@@ -172,10 +153,10 @@ describe('GlobalConnection API', () => {
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
-            pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
+            pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
 
             const mockToken = await generateMockToken({
-                id: mockUser.id,
+                id: mockOwner.id,
                 type: PrincipalType.USER,
                 projectId: mockProject.id,
                 platform: {
@@ -213,21 +194,10 @@ describe('GlobalConnection API', () => {
     describe('List GlobalConnections endpoint', () => {
         it('Succeeds if user is platform owner', async () => {
             // arrange
-            const mockPlatformId = apId()
-            const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.ADMIN })
-            await databaseConnection().getRepository('user').save([mockUser])
-
-            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id, globalConnectionsEnabled: true })
-            await databaseConnection().getRepository('platform').save(mockPlatform)
-
-            const mockProject = createMockProject({
-                ownerId: mockUser.id,
-                platformId: mockPlatform.id,
-            })
-            await databaseConnection().getRepository('project').save([mockProject])
+            const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
 
             const mockToken = await generateMockToken({
-                id: mockUser.id,
+                id: mockOwner.id,
                 type: PrincipalType.USER,
                 projectId: mockProject.id,
                 platform: {
@@ -249,20 +219,14 @@ describe('GlobalConnection API', () => {
 
         it('Fails if user is not platform owner', async () => {
             // arrange
-            const mockPlatformId = apId()
-            const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.ADMIN })
-            const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            await databaseConnection().getRepository('user').save([mockOwner, mockUser])
+            const { mockPlatform, mockProject } = await setupWithGlobalConnections()
 
-            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockOwner.id, globalConnectionsEnabled: true })
-            await databaseConnection().getRepository('platform').save(mockPlatform)
-
-            const mockProject = createMockProject({
-                ownerId: mockOwner.id,
-                platformId: mockPlatform.id,
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
             })
-            await databaseConnection().getRepository('project').save([mockProject])
-
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
@@ -289,18 +253,7 @@ describe('GlobalConnection API', () => {
     describe('Delete GlobalConnection endpoint', () => {
         it('Succeeds if user is platform owner', async () => {
             // arrange
-            const mockPlatformId = apId()
-            const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.ADMIN })
-            await databaseConnection().getRepository('user').save([mockUser])
-
-            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id, globalConnectionsEnabled: true })
-            await databaseConnection().getRepository('platform').save(mockPlatform)
-
-            const mockProject = createMockProject({
-                ownerId: mockUser.id,
-                platformId: mockPlatform.id,
-            })
-            await databaseConnection().getRepository('project').save([mockProject])
+            const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
 
             const mockPieceMetadata = createMockPieceMetadata({
                 projectId: mockProject.id,
@@ -309,10 +262,10 @@ describe('GlobalConnection API', () => {
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
-            pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
+            pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
 
             const mockToken = await generateMockToken({
-                id: mockUser.id,
+                id: mockOwner.id,
                 type: PrincipalType.USER,
                 projectId: mockProject.id,
                 platform: {
@@ -358,20 +311,13 @@ describe('GlobalConnection API', () => {
 
         it('Fails if user is not platform owner', async () => {
             // arrange
-            const mockPlatformId = apId()
-            const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.ADMIN })
-            const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            await databaseConnection().getRepository('user').save([mockOwner, mockUser])
-
-            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockOwner.id, globalConnectionsEnabled: true })
-            await databaseConnection().getRepository('platform').save(mockPlatform)
-
-            const mockProject = createMockProject({
-                ownerId: mockOwner.id,
-                platformId: mockPlatform.id,
+            const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
             })
-            await databaseConnection().getRepository('project').save([mockProject])
-
             const mockPieceMetadata = createMockPieceMetadata({
                 projectId: mockProject.id,
                 platformId: mockPlatform.id,
@@ -379,7 +325,7 @@ describe('GlobalConnection API', () => {
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
-            pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
+            pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
 
             const mockOwnerToken = await generateMockToken({
                 id: mockOwner.id,
@@ -439,18 +385,7 @@ describe('GlobalConnection API', () => {
     describe('Update GlobalConnection endpoint', () => {
         it('Succeeds if user is platform owner', async () => {
             // arrange
-            const mockPlatformId = apId()
-            const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.ADMIN })
-            await databaseConnection().getRepository('user').save([mockUser])
-
-            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id, globalConnectionsEnabled: true })
-            await databaseConnection().getRepository('platform').save(mockPlatform)
-
-            const mockProject = createMockProject({
-                ownerId: mockUser.id,
-                platformId: mockPlatform.id,
-            })
-            await databaseConnection().getRepository('project').save([mockProject])
+            const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
 
             const mockPieceMetadata = createMockPieceMetadata({
                 projectId: mockProject.id,
@@ -459,10 +394,10 @@ describe('GlobalConnection API', () => {
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
-            pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
+            pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
 
             const mockToken = await generateMockToken({
-                id: mockUser.id,
+                id: mockOwner.id,
                 type: PrincipalType.USER,
                 projectId: mockProject.id,
                 platform: {
@@ -514,19 +449,14 @@ describe('GlobalConnection API', () => {
 
         it('Fails if user is not platform owner', async () => {
             // arrange
-            const mockPlatformId = apId()
-            const mockOwner = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.ADMIN })
-            const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.MEMBER })
-            await databaseConnection().getRepository('user').save([mockOwner, mockUser])
+            const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
 
-            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockOwner.id, globalConnectionsEnabled: true })
-            await databaseConnection().getRepository('platform').save(mockPlatform)
-
-            const mockProject = createMockProject({
-                ownerId: mockOwner.id,
-                platformId: mockPlatform.id,
+            const { mockUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                },
             })
-            await databaseConnection().getRepository('project').save([mockProject])
 
             const mockPieceMetadata = createMockPieceMetadata({
                 projectId: mockProject.id,
@@ -535,7 +465,7 @@ describe('GlobalConnection API', () => {
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
-            pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
+            pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
 
             const mockOwnerToken = await generateMockToken({
                 id: mockOwner.id,
@@ -598,18 +528,7 @@ describe('GlobalConnection API', () => {
 
         it('Fails if project ids are invalid', async () => {
             // arrange
-            const mockPlatformId = apId()
-            const mockUser = createMockUser({ platformId: mockPlatformId, platformRole: PlatformRole.ADMIN })
-            await databaseConnection().getRepository('user').save([mockUser])
-
-            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id, globalConnectionsEnabled: true })
-            await databaseConnection().getRepository('platform').save(mockPlatform)
-
-            const mockProject = createMockProject({
-                ownerId: mockUser.id,
-                platformId: mockPlatform.id,
-            })
-            await databaseConnection().getRepository('project').save([mockProject])
+            const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
 
             const mockPieceMetadata = createMockPieceMetadata({
                 projectId: mockProject.id,
@@ -618,10 +537,10 @@ describe('GlobalConnection API', () => {
             })
             await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
 
-            pieceMetadataService.getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
+            pieceMetadataService(mockLog).getOrThrow = jest.fn().mockResolvedValue(mockPieceMetadata)
 
             const mockToken = await generateMockToken({
-                id: mockUser.id,
+                id: mockOwner.id,
                 type: PrincipalType.USER,
                 projectId: mockProject.id,
                 platform: {
