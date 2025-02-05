@@ -1,4 +1,4 @@
-import { usePrefetchQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { useSuspenseQuery } from '@tanstack/react-query';
 
 import { ApFlagId } from '@activepieces/shared';
 
@@ -21,14 +21,6 @@ type WebsiteBrand = {
 };
 
 export const flagsHooks = {
-  prefetchFlags: () => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    usePrefetchQuery<FlagsMap, Error>({
-      queryKey: ['flags'],
-      queryFn: flagsApi.getAll,
-      staleTime: Infinity,
-    });
-  },
   useFlags: () => {
     return useSuspenseQuery<FlagsMap, Error>({
       queryKey: ['flags'],

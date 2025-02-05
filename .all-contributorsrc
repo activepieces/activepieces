@@ -1533,6 +1533,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "valentin-mourtialon",
+      "name": "valentin-mourtialon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/88686764?v=4",
+      "profile": "https://github.com/valentin-mourtialon",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
