@@ -30,6 +30,10 @@ const executionState = FlowExecutorContext.empty()
                         name: 'Bob',
                     },
                 ],
+                lastNames: [
+                    'Smith',
+                    'Doe',
+                ],
             },
         }),
     )
@@ -156,13 +160,27 @@ describe('Props resolver', () => {
                         name: 'Bob',
                     },
                 ],
+                usersLastNames: [
+                    {
+                        lastName: 'Smith',
+                    },
+                    {
+                        lastName: 'Doe',
+                    },
+                ],
+                ages: [18,24,30]
             },
         )
     })
 
     test('flatten array path', async () => {
-        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{flattenNestedKeys(trigger, \'users.name\')}}', executionState })
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{flattenNestedKeys(trigger, [\'users\',\'name\'])}}', executionState })
         expect(resolvedInput).toEqual(['Alice', 'Bob'])
+    })
+
+    test('merge multiple flatten array paths', async ()=>{
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{flattenNestedKeys(trigger, [\'users\',\'name\'])}} {{trigger.lastNames}}', executionState })
+        expect(resolvedInput).toEqual(['Alice Smith', 'Bob Doe'])
     })
 
     test('Test resolve steps variables', async () => {
@@ -272,7 +290,7 @@ describe('Props resolver', () => {
         })
         expect(
             resolvedInput,
-        ).toEqual('values from trigger step: {"items":[5,"a"],"name":"John","price":6.4}')
+        ).toEqual('values from trigger step: {"items":[5,"a"],"name":"John","price":6.4,"users":[{"name":"Alice"},{"name":"Bob"}],"lastNames":["Smith","Doe"]}')
     })
 
     test('Test use built-in Math Min function', async () => {

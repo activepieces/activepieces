@@ -94,8 +94,10 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
         currentState,
         censoredInput,
     }
+    
     if (inputContainsOnlyOneTokenToResolve) {
-        const variableName = input.substring(2, input.length - 2)
+        const trimmedInput = input.trim()
+        const variableName = trimmedInput.substring(2, trimmedInput.length - 2)
         return resolveSingleToken({
             ...resolveOptions,
             variableName,
