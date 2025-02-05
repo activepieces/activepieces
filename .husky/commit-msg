@@ -8,3 +8,6 @@ if git diff --cached --name-only -- packages/server/api/.env | grep -q '^package
 fi
 
 npx --no -- commitlint --edit ${1}
+
+# Run lint checks on specific projects
+npx nx affected --target=lint --fix
