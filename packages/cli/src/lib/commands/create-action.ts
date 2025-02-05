@@ -2,7 +2,7 @@ import { writeFile } from 'node:fs/promises';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import inquirer from 'inquirer';
-import { displayNameToCamelCase, displayNameToKebabCase, findPiece } from '../utils/piece-utils';
+import { assertPieceExists, displayNameToCamelCase, displayNameToKebabCase, findPiece } from '../utils/piece-utils';
 import { checkIfFileExists, makeFolderRecursive } from '../utils/files';
 import { join } from 'node:path';
 
@@ -35,6 +35,7 @@ const createAction = async (pieceName: string, displayActionName: string, action
   const actionTemplate = createActionTemplate(displayActionName, actionDescription)
   const actionName = displayNameToKebabCase(displayActionName)
   const pieceFolder = await findPiece(pieceName);
+  assertPieceExists(pieceFolder)
   console.log(chalk.blue(`Piece path: ${pieceFolder}`))
   const actionsFolder = join(pieceFolder, 'src', 'lib', 'actions')
   const actionPath = join(actionsFolder, `${actionName}.ts`)

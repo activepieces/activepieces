@@ -5,6 +5,7 @@ import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { checkIfFileExists, makeFolderRecursive } from '../utils/files';
 import {
+    assertPieceExists,
   customPiecePath,
   displayNameToCamelCase,
   displayNameToKebabCase, findPiece,
@@ -97,6 +98,7 @@ const createTrigger = async (pieceName: string, displayTriggerName: string, trig
     const triggerTemplate = createTriggerTemplate(displayTriggerName, triggerDescription, triggerTechnique)
     const triggerName = displayNameToKebabCase(displayTriggerName)
     const pieceFolder = await findPiece(pieceName);
+    assertPieceExists(pieceFolder)
     console.log(chalk.blue(`Piece path: ${pieceFolder}`))
 
     const triggersFolder = join(pieceFolder, 'src', 'lib', 'triggers')

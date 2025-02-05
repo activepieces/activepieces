@@ -27,7 +27,6 @@ export async function findPieces(inputPath?: string, pieces?: string[]): Promise
               return normalizedPath.endsWith(path.sep + piece);
           });
           if (!folder) {
-              console.error(chalk.red(`🚨 Piece ${piece} not found`));
               return [];
           }
           return [folder];
@@ -43,8 +42,8 @@ export async function findPieces(inputPath?: string, pieces?: string[]): Promise
  * @param pieceName - The name of the piece to search for.
  * @returns A promise resolving to a string representing the path of the found piece. If not found, the process exits.
  */
-export async function findPiece(pieceName: string): Promise<string> {
-    return (await findPieces(customPiecePath(), [pieceName]))[0] ?? process.exit(1);
+export async function findPiece(pieceName: string): Promise<string | null> {
+    return (await findPieces(customPiecePath(), [pieceName]))[0] ?? null;
 }
 
 export async function buildPiece(pieceFolder: string): Promise<{ outputFolder: string, outputFile: string }> {
@@ -136,3 +135,10 @@ export function displayNameToCamelCase(input: string): string {
     });
     return camelCaseWords.join('');
   }
+
+export const assertPieceExists = async (pieceName: string | null) => {
+    if (!pieceName) {
+      console.error(chalk.red(`🚨 Piece ${pieceName} not found`));
+      process.exit(1);
+    }
+  };
