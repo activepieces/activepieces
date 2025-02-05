@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/tooltip';
 import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
 import { platformHooks } from '@/hooks/platform-hooks';
+
 import { ProjectRoleDialog } from './project-role-dialog';
 import { ProjectRolesTable } from './project-roles-table';
 
@@ -72,11 +73,10 @@ const ProjectRolePage = () => {
         </div>
 
         <ProjectRolesTable
-            projectRoles={data}
-            isLoading={isLoading}
-            refetch={refetch}
+          projectRoles={data}
+          isLoading={isLoading}
+          refetch={refetch}
         />
-
       </div>
     </LockedFeatureGuard>
   );

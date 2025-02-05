@@ -1,6 +1,5 @@
 import { api } from '@/lib/api';
 import {
-  ListPlatformProjectMembersRequestQuery,
   ListProjectMembersRequestQuery,
   ProjectMemberWithUser,
   UpdateProjectMemberRoleRequestBody,

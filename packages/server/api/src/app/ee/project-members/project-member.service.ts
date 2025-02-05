@@ -25,8 +25,8 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
-import { userRepo, userService } from '../../user/user-service'
-import { projectRepo, projectRoleRepo, projectRoleService } from '../project-role/project-role.service'
+import { userService } from '../../user/user-service'
+import { projectRoleService } from '../project-role/project-role.service'
 import {
     ProjectMemberEntity,
 } from './project-member.entity'
@@ -79,7 +79,7 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             cursorRequest,
             limit,
             projectRoleId,
-        }: ListParams
+        }: ListParams,
     ): Promise<SeekPage<ProjectMemberWithUser>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
@@ -192,11 +192,11 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
 })
 
 type ListParams = {
-    platformId: PlatformId,
-    projectId?: ProjectId,
-    cursorRequest: Cursor | null,
-    limit: number,
-    projectRoleId?: string,
+    platformId: PlatformId
+    projectId?: ProjectId
+    cursorRequest: Cursor | null
+    limit: number
+    projectRoleId?: string
 }
 
 type GetIdsOfProjectsParams = {
@@ -218,11 +218,6 @@ type UpdateMemberRole = {
     projectId: ProjectId
     platformId: PlatformId
     role: string
-}
-
-type ListPlatformProjectMembersParams = {
-    platformId: PlatformId
-    projectRoleId?: ApId
 }
 
 async function enrichProjectMemberWithUser(

@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Eye, Pencil, Trash, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,6 @@ import { formatUtils } from '@/lib/utils';
 import { ProjectRole, RoleType, SeekPage } from '@activepieces/shared';
 
 import { ProjectRoleDialog } from './project-role-dialog';
-import { useNavigate } from 'react-router-dom';
 
 interface ProjectRolesTableProps {
   projectRoles: SeekPage<ProjectRole> | undefined;
@@ -106,7 +106,7 @@ export const ProjectRolesTable = ({
                     variant="ghost"
                     className="size-8 p-0"
                     onClick={() => {
-                      navigate(`/platform/security/project-roles/${row.id}`)
+                      navigate(`/platform/security/project-roles/${row.id}`);
                     }}
                   >
                     <Users className="size-4" />

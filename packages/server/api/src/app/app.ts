@@ -47,6 +47,7 @@ import { enterprisePieceMetadataServiceHooks } from './ee/pieces/filters/enterpr
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformPieceModule } from './ee/platform/admin-platform.controller'
 import { platformBillingModule } from './ee/platform-billing/platform-billing.module'
+import { platformProjectMemberModule } from './ee/project-members/platform-project-members/platform-project-member.module'
 import { projectMemberModule } from './ee/project-members/project-member.module'
 import { gitRepoModule } from './ee/project-release/git-sync/git-sync.module'
 import { projectReleaseModule } from './ee/project-release/project-release.module'
@@ -90,7 +91,6 @@ import { websocketService } from './websockets/websockets.service'
 import { flowConsumer } from './workers/consumer'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { workerModule } from './workers/worker-module'
-import { platformProjectMemberModule } from './ee/project-members/platform-project-members/platform-project-member.module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 

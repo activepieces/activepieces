@@ -1,6 +1,6 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { platformProjectMemberController } from './platform-project-member.controller'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../../authentication/ee-authorization'
+import { platformProjectMemberController } from './platform-project-member.controller'
 
 export const platformProjectMemberModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)

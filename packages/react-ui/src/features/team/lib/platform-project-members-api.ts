@@ -1,6 +1,6 @@
 import { api } from '@/lib/api';
 import {
-    ListPlatformProjectMembersRequestQuery,
+  ListPlatformProjectMembersRequestQuery,
   ProjectMemberWithUser,
 } from '@activepieces/ee-shared';
 import { SeekPage } from '@activepieces/shared';
