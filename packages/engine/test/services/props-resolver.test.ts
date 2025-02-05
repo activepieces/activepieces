@@ -168,7 +168,7 @@ describe('Props resolver', () => {
                         lastName: 'Doe',
                     },
                 ],
-                ages: [18,24,30]
+                ages: [18, 24, 30],
             },
         )
     })
