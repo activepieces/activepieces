@@ -167,15 +167,20 @@ function determineInitiallySelectedStep(
   );
 }
 
-export const createBuilderStore = (initialState: BuilderInitialState) =>
+export const createBuilderStore = (
+  initialState: BuilderInitialState,
+  newFlow: boolean,
+) =>
   create<BuilderState>((set) => {
     const failedStepInRun = initialState.run?.steps
       ? flowRunUtils.findFailedStepInOutput(initialState.run.steps)
       : null;
-    const initiallySelectedStep = determineInitiallySelectedStep(
-      failedStepInRun,
-      initialState.flowVersion,
-    );
+    const initiallySelectedStep = newFlow
+      ? null
+      : determineInitiallySelectedStep(
+          failedStepInRun,
+          initialState.flowVersion,
+        );
 
     return {
       loopsIndexes:

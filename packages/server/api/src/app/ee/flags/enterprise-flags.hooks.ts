@@ -54,7 +54,6 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             platformId,
         })
         modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] = await federatedAuthnService(request.log).getThirdPartyRedirectUrl(platformId)
-        modifiedFlags[ApFlagId.OWN_AUTH2_ENABLED] = false
         return modifiedFlags
     },
 }

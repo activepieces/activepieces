@@ -45,6 +45,9 @@
       "@activepieces/piece-amazon-s3": [
         "packages/pieces/community/amazon-s3/src/index.ts"
       ],
+      "@activepieces/piece-amazon-sns": [
+        "packages/pieces/community/amazon-sns/src/index.ts"
+      ],
       "@activepieces/piece-amazon-sqs": [
         "packages/pieces/community/amazon-sqs/src/index.ts"
       ],
@@ -175,6 +178,9 @@
       ],
       "@activepieces/piece-deepl": [
         "packages/pieces/community/deepl/src/index.ts"
+      ],
+      "@activepieces/piece-deepseek": [
+        "packages/pieces/community/deepseek/src/index.ts"
       ],
       "@activepieces/piece-delay": [
         "packages/pieces/community/delay/src/index.ts"

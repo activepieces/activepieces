@@ -90,9 +90,6 @@ const OAuth2ConnectionSettings = ({
     platform.cloudAuthEnabled,
     edition!,
   );
-  const { data: ownAuthEnabled } = flagsHooks.useFlag<ApEdition>(
-    ApFlagId.OWN_AUTH2_ENABLED,
-  );
 
   const redirectUrl =
     currentOAuth2Type === AppConnectionType.CLOUD_OAUTH2
@@ -210,132 +207,140 @@ const OAuth2ConnectionSettings = ({
 
   return (
     <Form {...form}>
-      {currentOAuth2Type === AppConnectionType.OAUTH2 &&
-        authProperty.grantType !== OAuth2GrantType.CLIENT_CREDENTIALS && (
-          <div className="flex flex-col gap-2">
-            <FormLabel>{t('Redirect URL')}</FormLabel>
-            <FormControl>
-              <Input disabled type="text" value={redirectUrl ?? ''} />
-            </FormControl>
-            <FormMessage />
-          </div>
-        )}
-
-      {currentOAuth2Type === AppConnectionType.OAUTH2 && (
-        <>
-          <FormField
-            name="request.value.client_id"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>{t('Client ID')}</FormLabel>
-                <FormControl>
-                  <Input {...field} type="text" placeholder={t('Client ID')} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          ></FormField>
-          <FormField
-            name="request.value.client_secret"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>{t('Client Secret')}</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    type="password"
-                    placeholder={t('Client Secret')}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          ></FormField>
-        </>
-      )}
-      {authProperty.props && (
-        <AutoPropertiesFormComponent
-          prefixValue="request.value.props"
-          props={authProperty.props}
-          useMentionTextInput={false}
-          allowDynamicValues={false}
-        />
-      )}
-
-      {authProperty.grantType !== OAuth2GrantType.CLIENT_CREDENTIALS && (
-        <div className="border border-solid p-2 rounded-lg gap-2 flex text-center items-center justify-center h-full">
-          <div className="rounded-full border border-solid p-1 flex items-center justify-center">
-            <img src={piece.logoUrl} className="w-5 h-5"></img>
-          </div>
-          <div className="text-sm">{piece.displayName}</div>
-          <div className="flex-grow"></div>
-          {!hasCode && (
-            <Button
-              size={'sm'}
-              variant={'basic'}
-              disabled={!readyToConnect}
-              type="button"
-              onClick={async () =>
-                openPopup(
-                  redirectUrl!,
-                  form.getValues().request.value.client_id,
-                  form.getValues().request.value.props,
-                )
-              }
-            >
-              {t('Connect')}
-            </Button>
+      <form
+        className="flex flex-col gap-4"
+        onSubmit={(e) => e.preventDefault()}
+      >
+        {currentOAuth2Type === AppConnectionType.OAUTH2 &&
+          authProperty.grantType !== OAuth2GrantType.CLIENT_CREDENTIALS && (
+            <div className="flex flex-col gap-2">
+              <FormLabel>{t('Redirect URL')}</FormLabel>
+              <FormControl>
+                <Input disabled type="text" value={redirectUrl ?? ''} />
+              </FormControl>
+              <FormMessage />
+            </div>
           )}
-          {hasCode && (
-            <Button
-              size={'sm'}
-              variant={'basic'}
-              className="text-destructive"
-              onClick={() => {
-                form.setValue('request.value.code', '', {
-                  shouldValidate: true,
-                });
-                form.setValue('request.value.code_challenge', '', {
-                  shouldValidate: true,
-                });
-              }}
-            >
-              {t('Disconnect')}
-            </Button>
-          )}
-        </div>
-      )}
 
-      {ownAuthEnabled &&
-        isNil(reconnectConnection) &&
-        currentOAuth2Type !== AppConnectionType.OAUTH2 && (
-          <div>
-            <Button
-              size="sm"
-              variant={'link'}
-              className="text-xs"
-              onClick={() => setOAuth2Type(AppConnectionType.OAUTH2)}
-            >
-              {t('I would like to use my own App Credentials')}
-            </Button>
+        {currentOAuth2Type === AppConnectionType.OAUTH2 && (
+          <>
+            <FormField
+              name="request.value.client_id"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>{t('Client ID')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="text"
+                      placeholder={t('Client ID')}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            ></FormField>
+            <FormField
+              name="request.value.client_secret"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>{t('Client Secret')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="password"
+                      placeholder={t('Client Secret')}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            ></FormField>
+          </>
+        )}
+        {authProperty.props && (
+          <AutoPropertiesFormComponent
+            prefixValue="request.value.props"
+            props={authProperty.props}
+            useMentionTextInput={false}
+            allowDynamicValues={false}
+          />
+        )}
+
+        {authProperty.grantType !== OAuth2GrantType.CLIENT_CREDENTIALS && (
+          <div className="border border-solid p-2 rounded-lg gap-2 flex text-center items-center justify-center h-full">
+            <div className="rounded-full border border-solid p-1 flex items-center justify-center">
+              <img src={piece.logoUrl} className="w-5 h-5"></img>
+            </div>
+            <div className="text-sm">{piece.displayName}</div>
+            <div className="flex-grow"></div>
+            {!hasCode && (
+              <Button
+                size={'sm'}
+                variant={'basic'}
+                disabled={!readyToConnect}
+                type="button"
+                onClick={async () =>
+                  openPopup(
+                    redirectUrl!,
+                    form.getValues().request.value.client_id,
+                    form.getValues().request.value.props,
+                  )
+                }
+              >
+                {t('Connect')}
+              </Button>
+            )}
+            {hasCode && (
+              <Button
+                size={'sm'}
+                variant={'basic'}
+                className="text-destructive"
+                onClick={() => {
+                  form.setValue('request.value.code', '', {
+                    shouldValidate: true,
+                  });
+                  form.setValue('request.value.code_challenge', '', {
+                    shouldValidate: true,
+                  });
+                }}
+              >
+                {t('Disconnect')}
+              </Button>
+            )}
           </div>
         )}
-      {currentOAuth2Type === AppConnectionType.OAUTH2 &&
-        isNil(reconnectConnection) &&
-        predefinedClientId && (
-          <div>
-            <Button
-              size="sm"
-              variant={'link'}
-              className="text-xs"
-              onClick={() => setOAuth2Type(AppConnectionType.CLOUD_OAUTH2)}
-            >
-              {t('I would like to use predefined App Credentials')}
-            </Button>
-          </div>
-        )}
+
+        {isNil(reconnectConnection) &&
+          currentOAuth2Type !== AppConnectionType.OAUTH2 && (
+            <div>
+              <Button
+                size="sm"
+                variant={'link'}
+                className="text-xs"
+                onClick={() => setOAuth2Type(AppConnectionType.OAUTH2)}
+              >
+                {t('I would like to use my own App Credentials')}
+              </Button>
+            </div>
+          )}
+        {currentOAuth2Type === AppConnectionType.OAUTH2 &&
+          isNil(reconnectConnection) &&
+          predefinedClientId && (
+            <div>
+              <Button
+                size="sm"
+                variant={'link'}
+                className="text-xs"
+                onClick={() => setOAuth2Type(AppConnectionType.CLOUD_OAUTH2)}
+              >
+                {t('I would like to use predefined App Credentials')}
+              </Button>
+            </div>
+          )}
+      </form>
     </Form>
   );
 };

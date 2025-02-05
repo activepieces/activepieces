@@ -3,6 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
 
+import { LoadingScreen } from '@/app/components/loading-screen';
 import { useEmbedding } from '@/components/embed-provider';
 import { authenticationSession } from '@/lib/authentication-session';
 import { managedAuthApi } from '@/lib/managed-auth-api';
@@ -63,6 +64,8 @@ const EmbedPage = React.memo(() => {
                   event.data.data.disableNavigationInBuilder,
                 hideFolders: event.data.data.hideFolders || false,
                 sdkVersion: event.data.data.sdkVersion,
+                fontUrl: event.data.data.fontUrl,
+                fontFamily: event.data.data.fontFamily,
               });
 
               //previously initialRoute was optional
@@ -88,6 +91,8 @@ const EmbedPage = React.memo(() => {
             },
           },
         );
+      } else {
+        console.error('Token sent via the sdk is empty');
       }
     }
   };
@@ -110,7 +115,7 @@ const EmbedPage = React.memo(() => {
     };
   });
 
-  return <></>;
+  return <LoadingScreen />;
 });
 
 EmbedPage.displayName = 'EmbedPage';

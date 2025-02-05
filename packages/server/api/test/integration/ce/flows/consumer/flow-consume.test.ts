@@ -131,7 +131,9 @@ describe('flow execution', () => {
             platformId: mockPlatform.id,
             projectId: mockProject.id,
         })
-        await flowWorker(mockLog).init(await accessTokenManager.generateWorkerToken())
+        await flowWorker(mockLog).init({
+            workerToken: await accessTokenManager.generateWorkerToken(),
+        })
 
         await flowJobExecutor(mockLog).executeFlow({
             flowVersionId: mockFlowVersion.id,

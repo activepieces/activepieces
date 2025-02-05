@@ -10,7 +10,6 @@ export const setupWorker = async (app: FastifyInstance): Promise<void> => {
     const piecesSource = system.getOrThrow<PiecesSource>(AppSystemProp.PIECES_SOURCE)
     const devPieces = system.get(AppSystemProp.DEV_PIECES)?.split(',') ?? []
     await piecesBuilder(app, app.io, devPieces, piecesSource)
-
     app.addHook('onClose', async () => {
         await flowWorker(app.log).close()
     })
@@ -18,7 +17,7 @@ export const setupWorker = async (app: FastifyInstance): Promise<void> => {
 
 export async function workerPostBoot(app: FastifyInstance): Promise<void> {
     const workerToken = await generateWorkerToken()
-    await flowWorker(app.log).init(workerToken)
+    await flowWorker(app.log).init({ workerToken })
 }
 
 

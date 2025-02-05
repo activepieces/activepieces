@@ -127,10 +127,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                     id: request.flowIds[0],
                     projectId: gitRepo.projectId,
                 })
-                const externalId = flow.externalId
-                if (isNil(externalId)) {
-                    break
-                }
+                const externalId = flow.externalId || flow.id
                 const deleted = await gitSyncHelper(log).deleteFlowFromGit({
                     flowId: externalId,
                     flowFolderPath,
