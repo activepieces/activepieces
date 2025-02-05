@@ -11,6 +11,7 @@ import { createDocumentBasedOnTemplate } from './lib/actions/create-document-bas
 import { readDocument } from './lib/actions/read-document.action';
 import { appendText } from './lib/actions/append-text';
 import { findDocumentAction } from './lib/actions/find-documnet';
+import { newDocumentTrigger } from './lib/triggers/new-document';
 
 export const googleDocsAuth = PieceAuth.OAuth2({
   authUrl: 'https://accounts.google.com/o/oauth2/auth',
@@ -52,5 +53,5 @@ export const googleDocs = createPiece({
     }),
     appendText,
   ],
-  triggers: [],
+  triggers: [newDocumentTrigger],
 });
