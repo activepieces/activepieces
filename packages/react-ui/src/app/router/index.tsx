@@ -75,6 +75,7 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
+import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/project-role-users-table';
 const SettingsRerouter = () => {
   const { hash } = useLocation();
   const fragmentWithoutHash = hash.slice(1).toLowerCase();
@@ -579,6 +580,18 @@ const routes = [
         <PlatformSecondSidebarLayout type="security">
           <PageTitle title="Project Roles">
             <ProjectRolePage />
+          </PageTitle>
+        </PlatformSecondSidebarLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/security/project-roles/:projectRoleId',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSecondSidebarLayout type="security">
+          <PageTitle title="Project Role Users">
+            <ProjectRoleUsersTable />
           </PageTitle>
         </PlatformSecondSidebarLayout>
       </PlatformAdminContainer>

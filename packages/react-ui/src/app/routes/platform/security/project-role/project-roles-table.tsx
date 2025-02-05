@@ -19,20 +19,20 @@ import { formatUtils } from '@/lib/utils';
 import { ProjectRole, RoleType, SeekPage } from '@activepieces/shared';
 
 import { ProjectRoleDialog } from './project-role-dialog';
+import { useNavigate } from 'react-router-dom';
 
 interface ProjectRolesTableProps {
   projectRoles: SeekPage<ProjectRole> | undefined;
   isLoading: boolean;
   refetch: () => void;
-  setSelectedProjectRole: (projectRole: ProjectRole) => void;
 }
 
 export const ProjectRolesTable = ({
   projectRoles,
   isLoading,
   refetch,
-  setSelectedProjectRole,
 }: ProjectRolesTableProps) => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { platform } = platformHooks.useCurrentPlatform();
 
@@ -105,7 +105,9 @@ export const ProjectRolesTable = ({
                     loading={isDeleting}
                     variant="ghost"
                     className="size-8 p-0"
-                    onClick={() => setSelectedProjectRole(row)}
+                    onClick={() => {
+                      navigate(`/platform/security/project-roles/${row.id}`)
+                    }}
                   >
                     <Users className="size-4" />
                   </Button>

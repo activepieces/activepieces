@@ -51,13 +51,6 @@ export const UserWithMetaInformation = Type.Object({
 
 export type UserWithMetaInformation = Static<typeof UserWithMetaInformation>
 
-export const UserIdWithEmail = Type.Object({
-    id: Type.String(),
-    email: Type.String(),
-})
-
-export type UserIdWithEmail = Static<typeof UserIdWithEmail>
-
 export const UserWithMetaInformationAndProject = Type.Object({
     id: Type.String(),
     email: Type.String(),

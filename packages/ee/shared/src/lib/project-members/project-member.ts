@@ -18,17 +18,7 @@ export type ProjectMember = Static<typeof ProjectMember>;
 export const ProjectMemberWithUser = Type.Composite([ProjectMember, Type.Object({
     user: UserWithMetaInformation,
     projectRole: ProjectRole,
+    project: ProjectMetaData,
 })])
 
 export type ProjectMemberWithUser = Static<typeof ProjectMemberWithUser>;
-
-export const PopulatedProjectMember = Type.Object({
-    id: Type.String(),
-    email: Type.String(),
-    firstName: Type.String(),
-    lastName: Type.String(),
-    projectRole: ProjectRole,
-    project: ProjectMetaData,
-})
-
-export type PopulatedProjectMember = Static<typeof PopulatedProjectMember>

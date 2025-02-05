@@ -2,7 +2,6 @@ import { api } from '@/lib/api';
 import {
   ListPlatformProjectMembersRequestQuery,
   ListProjectMembersRequestQuery,
-  PopulatedProjectMember,
   ProjectMemberWithUser,
   UpdateProjectMemberRoleRequestBody,
 } from '@activepieces/ee-shared';
@@ -20,11 +19,5 @@ export const projectMembersApi = {
   },
   delete(id: string): Promise<void> {
     return api.delete<void>(`/v1/project-members/${id}`);
-  },
-  listPlatformProjectMembers(request: ListPlatformProjectMembersRequestQuery) {
-    return api.get<PopulatedProjectMember[]>(
-      '/v1/project-members/platform-users',
-      request,
-    );
   },
 };

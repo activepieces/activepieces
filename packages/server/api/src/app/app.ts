@@ -90,6 +90,7 @@ import { websocketService } from './websockets/websockets.service'
 import { flowConsumer } from './workers/consumer'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { workerModule } from './workers/worker-module'
+import { platformProjectMemberModule } from './ee/project-members/platform-project-members/platform-project-member.module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
@@ -262,6 +263,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformProjectModule)
             await app.register(platformBillingModule)
             await app.register(projectMemberModule)
+            await app.register(platformProjectMemberModule)
             await app.register(appSumoModule)
             await app.register(adminPieceModule)
             await app.register(customDomainModule)
@@ -296,6 +298,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(customDomainModule)
             await app.register(platformProjectModule)
             await app.register(projectMemberModule)
+            await app.register(platformProjectMemberModule)
             await app.register(signingKeyModule)
             await app.register(authnSsoSamlModule)
             await app.register(managedAuthnModule)

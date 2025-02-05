@@ -1,5 +1,4 @@
 import {
-    PopulatedProjectMember,
     ProjectMember,
     ProjectMemberId,
     ProjectMemberWithUser,
@@ -74,10 +73,13 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         })
     },
     async list(
-        projectId: ProjectId,
-        cursorRequest: Cursor | null,
-        limit: number,
-        projectRoleId: string | undefined,
+        {
+            platformId,
+            projectId,
+            cursorRequest,
+            limit,
+            projectRoleId,
+        }: ListParams
     ): Promise<SeekPage<ProjectMemberWithUser>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
@@ -91,7 +93,11 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         })
         const queryBuilder = repo()
             .createQueryBuilder('project_member')
-            .where({ projectId })
+            .where({ platformId })
+
+        if (projectId) {
+            queryBuilder.andWhere({ projectId })
+        }
 
         if (projectRoleId) {
             queryBuilder.andWhere({ projectRoleId })
@@ -110,35 +116,6 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             }),
         )
         return paginationHelper.createPage<ProjectMemberWithUser>(enrichedData, cursor)
-    },
-    async listPlatformProjectMembers({ platformId, projectRoleId: filterProjectRoleId }: ListPlatformProjectMembersParams): Promise<PopulatedProjectMember[]> {
-        const queryBuilder = repo().createQueryBuilder('project_member')
-            .where({ platformId })
-            
-        if (filterProjectRoleId) {
-            queryBuilder.andWhere({ projectRoleId: Equal(filterProjectRoleId) })
-        }
-
-        const projectMembers = await queryBuilder.getMany()
-
-        const usersWithProjectRoles = await Promise.all(projectMembers.map(async (projectMember) => {
-            const user = await userRepo().findOneByOrFail({ id: projectMember.userId })
-            const userIdentity = await userIdentityService(system.globalLogger()).getBasicInformation(user.identityId)
-            const currentProject = await projectRepo().findOneByOrFail({ id: projectMember.projectId })
-            const projectRole = await projectRoleRepo().findOneByOrFail({ id: projectMember.projectRoleId })
-            return {
-                id: projectMember.userId,
-                firstName: userIdentity.firstName,
-                lastName: userIdentity.lastName,
-                email: userIdentity.email,
-                projectRole,
-                project: {
-                    id: currentProject.id,
-                    displayName: currentProject.displayName,
-                },
-            }
-        }))
-        return usersWithProjectRoles
     },
     async getRole({
         userId,
@@ -214,6 +191,14 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
     },
 })
 
+type ListParams = {
+    platformId: PlatformId,
+    projectId?: ProjectId,
+    cursorRequest: Cursor | null,
+    limit: number,
+    projectRoleId?: string,
+}
+
 type GetIdsOfProjectsParams = {
     userId: UserId
     platformId: PlatformId
@@ -251,9 +236,14 @@ async function enrichProjectMemberWithUser(
     const projectRole = await projectRoleService.getOneOrThrowById({
         id: projectMember.projectRoleId,
     })
+    const project = await projectService.getOneOrThrow(projectMember.projectId)
     return {
         ...projectMember,
         projectRole,
+        project: {
+            id: project.id,
+            displayName: project.displayName,
+        },
         user: {
             platformId: user.platformId,
             platformRole: user.platformRole,

@@ -1,17 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import {
-  Breadcrumb,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbItem,
-} from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { TableTitle } from '@/components/ui/table-title';
 import {
@@ -20,41 +11,17 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
-import { projectMembersApi } from '@/features/team/lib/project-members-api';
 import { platformHooks } from '@/hooks/platform-hooks';
-import {
-  assertNotNullOrUndefined,
-  isNil,
-  ProjectRole,
-} from '@activepieces/shared';
-
 import { ProjectRoleDialog } from './project-role-dialog';
-import { ProjectRoleUsersTable } from './project-role-users-table';
 import { ProjectRolesTable } from './project-roles-table';
 
 const ProjectRolePage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [selectedProjectRole, setSelectedProjectRole] =
-    useState<ProjectRole | null>(null);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['project-roles'],
     queryFn: () => projectRoleApi.list(),
     enabled: platform.projectRolesEnabled,
-  });
-
-  const { data: usersWithProjectRoles, isLoading: usersLoading } = useQuery({
-    queryKey: ['users-with-project-roles'],
-    queryFn: () => {
-      assertNotNullOrUndefined(
-        selectedProjectRole,
-        'Selected project role is not set',
-      );
-      return projectMembersApi.listPlatformProjectMembers({
-        projectRoleId: selectedProjectRole.id,
-      });
-    },
-    enabled: platform.projectRolesEnabled && !isNil(selectedProjectRole),
   });
 
   return (
@@ -70,44 +37,12 @@ const ProjectRolePage = () => {
       <div className="flex-col w-full">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex flex-col gap-2">
-            {isNil(selectedProjectRole) && (
-              <>
-                <TableTitle>{t('Project Role Management')}</TableTitle>
-                <div className="text-sm text-muted-foreground">
-                  {t(
-                    'Define custom roles and permissions that can be assigned to your team members',
-                  )}
-                </div>
-              </>
-            )}
-            {!isNil(selectedProjectRole) && (
-              <>
-                <Breadcrumb>
-                  <BreadcrumbList>
-                    <BreadcrumbItem>
-                      <BreadcrumbLink
-                        onClick={() => setSelectedProjectRole(null)}
-                        className="cursor-pointer hover:text-primary hover:underline"
-                      >
-                        {t('Roles')}
-                      </BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator />
-                    <BreadcrumbItem>
-                      <BreadcrumbPage>
-                        {selectedProjectRole?.name}
-                      </BreadcrumbPage>
-                    </BreadcrumbItem>
-                  </BreadcrumbList>
-                </Breadcrumb>
-                <TableTitle>{`${selectedProjectRole?.name} ${t('Role')} ${t(
-                  'Users',
-                )}`}</TableTitle>
-                <div className="text-sm text-muted-foreground">
-                  {t('View the users assigned to this role')}
-                </div>
-              </>
-            )}
+            <TableTitle>{t('Project Role Management')}</TableTitle>
+            <div className="text-sm text-muted-foreground">
+              {t(
+                'Define custom roles and permissions that can be assigned to your team members',
+              )}
+            </div>
           </div>
           {!platform.customRolesEnabled && (
             <Tooltip>
@@ -122,7 +57,7 @@ const ProjectRolePage = () => {
               </TooltipContent>
             </Tooltip>
           )}
-          {platform.customRolesEnabled && isNil(selectedProjectRole) && (
+          {platform.customRolesEnabled && (
             <ProjectRoleDialog
               mode="create"
               onSave={() => refetch()}
@@ -136,20 +71,12 @@ const ProjectRolePage = () => {
           )}
         </div>
 
-        {isNil(selectedProjectRole) && (
-          <ProjectRolesTable
+        <ProjectRolesTable
             projectRoles={data}
             isLoading={isLoading}
-            setSelectedProjectRole={setSelectedProjectRole}
             refetch={refetch}
-          />
-        )}
-        {!isNil(selectedProjectRole) && (
-          <ProjectRoleUsersTable
-            users={usersWithProjectRoles ?? []}
-            isLoading={usersLoading}
-          />
-        )}
+        />
+
       </div>
     </LockedFeatureGuard>
   );
