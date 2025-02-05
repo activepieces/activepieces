@@ -8,7 +8,8 @@ import chalk from 'chalk'
 import FormData from 'form-data';
 import fs from 'fs';
 
-export const customPiecePath = () => path.join(cwd(), 'packages', 'pieces', 'custom')
+export const piecesPath = () => path.join(cwd(), 'packages', 'pieces')
+export const customPiecePath = () => path.join(piecesPath(), 'custom')
 
 /**
  * Finds and returns the paths of specific pieces or all available pieces in a given directory.
@@ -43,7 +44,7 @@ export async function findPieces(inputPath?: string, pieces?: string[]): Promise
  * @returns A promise resolving to a string representing the path of the found piece. If not found, the process exits.
  */
 export async function findPiece(pieceName: string): Promise<string | null> {
-    return (await findPieces(customPiecePath(), [pieceName]))[0] ?? null;
+    return (await findPieces(piecesPath(), [pieceName]))[0] ?? null;
 }
 
 export async function buildPiece(pieceFolder: string): Promise<{ outputFolder: string, outputFile: string }> {
