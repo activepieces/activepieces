@@ -17,8 +17,8 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         continue
                     }
                     const flowUpdated = await projectStateHelper(log).updateFlowInProject(operation.flowState, operation.newFlowState, projectId)
-                    if (flowUpdated.status === FlowStatus.ENABLED) {
-                        publishJobs.push(projectStateHelper(log).republishFlow(flowUpdated.id, projectId))
+                    if (operation.newFlowState.status === FlowStatus.ENABLED) {
+                        publishJobs.push(projectStateHelper(log).republishFlow({ flowId: flowUpdated.id, projectId, status: operation.newFlowState.status }))
                     }
                     break
                 }
@@ -26,7 +26,10 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                     if (!isNil(selectedFlowsIds) && !selectedFlowsIds.includes(operation.flowState.id)) {
                         continue
                     }
-                    await projectStateHelper(log).createFlowInProject(operation.flowState, projectId)
+                    const flowCreated = await projectStateHelper(log).createFlowInProject(operation.flowState, projectId)
+                    if (operation.flowState.status === FlowStatus.ENABLED) {
+                        publishJobs.push(projectStateHelper(log).republishFlow({ flowId: flowCreated.id, projectId, status: operation.flowState.status }))
+                    }
                     break
                 }
                 case ProjectOperationType.DELETE_FLOW: {
