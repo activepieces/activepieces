@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
-import { Action, isNil, Trigger } from '@activepieces/shared';
+import { Action, Trigger } from '@activepieces/shared';
 
 import { ArrayPiecePropertyInInlineItemMode } from './array-property-in-inline-item-mode';
 import { TextInputWithMentions } from './text-input-with-mentions';
@@ -140,16 +140,15 @@ const AutoFormFieldWrapper = ({
         />
       )}
 
-      {isArrayProperty &&
-        dynamicInputModeToggled && (
-          <ArrayPiecePropertyInInlineItemMode
-            disabled={disabled}
-            arrayProperties={property.properties}
-            inputName={inputName}
-            onChange={field.onChange}
-            value={field.value ?? property.defaultValue ?? null}
-          />
-        )}
+      {isArrayProperty && dynamicInputModeToggled && (
+        <ArrayPiecePropertyInInlineItemMode
+          disabled={disabled}
+          arrayProperties={property.properties}
+          inputName={inputName}
+          onChange={field.onChange}
+          value={field.value ?? property.defaultValue ?? null}
+        />
+      )}
 
       {!placeBeforeLabelText && !dynamicInputModeToggled && (
         <div>{children}</div>
