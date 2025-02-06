@@ -1,4 +1,5 @@
 import {
+    ListPlatformProjectMembersRequestQuery,
     ListProjectMembersRequestQuery,
     ProjectMemberWithUser,
     UpdateProjectMemberRoleRequestBody,
@@ -28,12 +29,22 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
     })
 
     app.get('/', ListProjectMembersRequestQueryOptions, async (request) => {
-        return projectMemberService(request.log).list(
-            request.principal.projectId,
-            request.query.cursor ?? null,
-            request.query.limit ?? DEFAULT_LIMIT_SIZE,
-            request.query.projectRoleId ?? undefined,
-        )
+        return projectMemberService(request.log).list({
+            platformId: request.principal.platform.id,  
+            projectId: request.principal.projectId,
+            cursorRequest: request.query.cursor ?? null,
+            limit: request.query.limit ?? DEFAULT_LIMIT_SIZE,
+            projectRoleId: request.query.projectRoleId ?? undefined,
+        })
+    })
+
+    app.get('/platform-users', ListPlatformProjectMembersRequestQueryOptions, async (request) => {
+        return projectMemberService(request.log).list({
+            platformId: request.principal.platform.id,
+            cursorRequest: request.query.cursor ?? null,
+            limit: request.query.limit ?? DEFAULT_LIMIT_SIZE,
+            projectRoleId: request.query.projectRoleId ?? undefined,
+        })
     })
 
 
@@ -55,8 +66,6 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
         await reply.status(StatusCodes.NO_CONTENT).send()
     })
 }
-
-
 
 const GetCurrentProjectMemberRoleRequest = {
     config: {
@@ -92,6 +101,21 @@ const ListProjectMembersRequestQueryOptions = {
         tags: ['project-members'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListProjectMembersRequestQuery,
+        response: {
+            [StatusCodes.OK]: SeekPage(ProjectMemberWithUser),
+        },
+    },
+}
+
+const ListPlatformProjectMembersRequestQueryOptions = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.READ_PROJECT_MEMBER,
+    },
+    schema: {
+        tags: ['project-members'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        querystring: ListPlatformProjectMembersRequestQuery,
         response: {
             [StatusCodes.OK]: SeekPage(ProjectMemberWithUser),
         },

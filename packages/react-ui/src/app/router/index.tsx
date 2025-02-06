@@ -52,6 +52,7 @@ import { PlatformMessages } from '../routes/platform/notifications/platform-mess
 import ProjectsPage from '../routes/platform/projects';
 import AuditLogsPage from '../routes/platform/security/audit-logs';
 import { ProjectRolePage } from '../routes/platform/security/project-role';
+import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/project-role-users-table';
 import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
 import { LicenseKeyPage } from '../routes/platform/setup/license-key';
 import TemplatesPage from '../routes/platform/setup/templates';
@@ -579,6 +580,18 @@ const routes = [
         <PlatformSecondSidebarLayout type="security">
           <PageTitle title="Project Roles">
             <ProjectRolePage />
+          </PageTitle>
+        </PlatformSecondSidebarLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
+    path: '/platform/security/project-roles/:projectRoleId',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSecondSidebarLayout type="security">
+          <PageTitle title="Project Role Users">
+            <ProjectRoleUsersTable />
           </PageTitle>
         </PlatformSecondSidebarLayout>
       </PlatformAdminContainer>
