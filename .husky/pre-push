@@ -1,14 +1,10 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
 
-
-# Run lint checks on specific projects
-sudo npx nx affected --target=lint
-
-EXIT_CODE=$?
-
-# If linting fails, prevent the push
-if [ $EXIT_CODE -ne 0 ]; then
-  echo "❌ Linting failed. Push aborted, fix the linting errors and commit then push again"
+# Run lint checks on specific projects without fixing
+npx nx affected --target=lint || {
+  echo "❌ Lint check failed. Attempting to fix..."
+  npx nx affected --target=lint --fix
+  echo "Please review the changes and try pushing again."
   exit 1
-fi
-
-echo "✅ Linting passed. Proceeding with push."
+}
