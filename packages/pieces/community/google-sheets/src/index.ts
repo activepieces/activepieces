@@ -20,6 +20,7 @@ import { createWorksheetAction } from './lib/actions/create-worksheet';
 import { createSpreadsheetAction } from './lib/actions/create-spreadsheet';
 import { findSpreadsheets } from './lib/actions/find-spreadsheets';
 import { newSpreadsheetTrigger } from './lib/triggers/new-spreadsheet';
+import { newWorksheetTrigger } from './lib/triggers/new-worksheet';
 
 export const googleSheetsAuth = PieceAuth.OAuth2({
   description: '',
@@ -75,6 +76,6 @@ export const googleSheets = createPiece({
   ],
   displayName: 'Google Sheets',
   description: 'Create, edit, and collaborate on spreadsheets online',
-  triggers: [newRowAddedTrigger, newOrUpdatedRowTrigger,newSpreadsheetTrigger],
+  triggers: [newRowAddedTrigger, newOrUpdatedRowTrigger,newSpreadsheetTrigger,newWorksheetTrigger],
   auth: googleSheetsAuth,
 });
