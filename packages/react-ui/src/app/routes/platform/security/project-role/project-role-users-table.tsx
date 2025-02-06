@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
+import { Ellipsis } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
@@ -14,6 +15,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { Skeleton } from '@/components/ui/skeleton';
 import { TableTitle } from '@/components/ui/table-title';
 import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
 import { platformProjectMembersApi } from '@/features/team/lib/platform-project-members-api';
@@ -131,16 +133,32 @@ export const ProjectRoleUsersTable = () => {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>{projectRole?.name}</BreadcrumbPage>
+                  {!isNil(projectRole?.name) ? (
+                    <BreadcrumbPage>{projectRole?.name}</BreadcrumbPage>
+                  ) : (
+                    <BreadcrumbPage>
+                      <Ellipsis className="text-muted-foreground" />
+                    </BreadcrumbPage>
+                  )}
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-            <TableTitle>{`${projectRole?.name} ${t('Role')} ${t(
-              'Users',
-            )}`}</TableTitle>
-            <div className="text-sm text-muted-foreground">
-              {t('View the users assigned to this role')}
-            </div>
+
+            {!isNil(projectRole?.name) ? (
+              <TableTitle>{`${projectRole?.name} ${t('Role')} ${t(
+                'Users',
+              )}`}</TableTitle>
+            ) : (
+              <Skeleton className="h-6 w-40" />
+            )}
+
+            {!isNil(projectRole?.name) ? (
+              <div className="text-sm text-muted-foreground">
+                {t('View the users assigned to this role')}
+              </div>
+            ) : (
+              <Skeleton className="h-6 w-40" />
+            )}
           </div>
         </div>
 
