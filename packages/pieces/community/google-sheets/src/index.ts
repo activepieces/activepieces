@@ -21,6 +21,8 @@ import { createSpreadsheetAction } from './lib/actions/create-spreadsheet';
 import { findSpreadsheets } from './lib/actions/find-spreadsheets';
 import { newSpreadsheetTrigger } from './lib/triggers/new-spreadsheet';
 import { newWorksheetTrigger } from './lib/triggers/new-worksheet';
+import { findWorksheetAction } from './lib/actions/find-worksheet';
+import { copyWorksheetAction } from './lib/actions/copy-worksheet';
 
 export const googleSheetsAuth = PieceAuth.OAuth2({
   description: '',
@@ -62,6 +64,8 @@ export const googleSheets = createPiece({
     findRowByNumAction,
     getRowsAction,
     findSpreadsheets,
+    findWorksheetAction,
+    copyWorksheetAction,
     createCustomApiCallAction({
       auth: googleSheetsAuth,
       baseUrl: () => {
