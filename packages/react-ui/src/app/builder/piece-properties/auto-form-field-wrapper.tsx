@@ -141,7 +141,6 @@ const AutoFormFieldWrapper = ({
       )}
 
       {isArrayProperty &&
-        isNil(property.properties) &&
         dynamicInputModeToggled && (
           <ArrayPiecePropertyInInlineItemMode
             disabled={disabled}
@@ -149,15 +148,6 @@ const AutoFormFieldWrapper = ({
             inputName={inputName}
             onChange={field.onChange}
             value={field.value ?? property.defaultValue ?? null}
-          />
-        )}
-      {isArrayProperty &&
-        !isNil(property.properties) &&
-        dynamicInputModeToggled && (
-          <ArrayPiecePropertyInInlineItemMode
-            disabled={disabled}
-            arrayProperties={property.properties}
-            inputName={inputName}
           />
         )}
 
