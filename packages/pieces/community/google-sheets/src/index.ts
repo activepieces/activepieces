@@ -19,6 +19,7 @@ import { insertMultipleRowsAction } from './lib/actions/insert-multiple-rows.act
 import { createWorksheetAction } from './lib/actions/create-worksheet';
 import { createSpreadsheetAction } from './lib/actions/create-spreadsheet';
 import { findSpreadsheets } from './lib/actions/find-spreadsheets';
+import { newSpreadsheetTrigger } from './lib/triggers/new-spreadsheet';
 
 export const googleSheetsAuth = PieceAuth.OAuth2({
   description: '',
@@ -74,6 +75,6 @@ export const googleSheets = createPiece({
   ],
   displayName: 'Google Sheets',
   description: 'Create, edit, and collaborate on spreadsheets online',
-  triggers: [newRowAddedTrigger, newOrUpdatedRowTrigger],
+  triggers: [newRowAddedTrigger, newOrUpdatedRowTrigger,newSpreadsheetTrigger],
   auth: googleSheetsAuth,
 });
