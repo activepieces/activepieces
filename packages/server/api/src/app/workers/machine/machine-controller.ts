@@ -40,7 +40,7 @@ export const workerMachineController: FastifyPluginAsyncTypebox = async (app) =>
             APP_WEBHOOK_SECRETS: system.getOrThrow(AppSystemProp.APP_WEBHOOK_SECRETS),
             MAX_FILE_SIZE_MB: system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB),
             SANDBOX_MEMORY_LIMIT: system.getOrThrow(AppSystemProp.SANDBOX_MEMORY_LIMIT),
-            SANDBOX_PROPAGATED_ENV_VARS: system.get(AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS)?.split(',') ?? [],
+            SANDBOX_PROPAGATED_ENV_VARS: system.get(AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS)?.split(',').map(f => f.trim()) ?? [],
             PIECES_SOURCE: system.getOrThrow(AppSystemProp.PIECES_SOURCE),
             DEV_PIECES: system.get(AppSystemProp.DEV_PIECES)?.split(',') ?? [],
             SENTRY_DSN: system.get(AppSystemProp.SENTRY_DSN),
