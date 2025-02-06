@@ -39,7 +39,7 @@ const polling: Polling<PiecePropValueSchema<typeof googleDocsAuth>, Props> = {
 		do {
 			const response: any = await drive.files.list({
 				q: q.join(' and '),
-				fields: 'files(id, name, mimeType, webViewLink, kind)',
+				fields: '*',
 				orderBy: 'createdTime desc',
 				supportsAllDrives: true,
 				includeItemsFromAllDrives: true,
