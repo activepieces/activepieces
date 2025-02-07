@@ -1,12 +1,14 @@
 import { ActivepiecesError, apId, ApId, CreateProjectRoleRequestBody, ErrorCode, isNil, PlatformId, ProjectRole, RoleType, SeekPage, spreadIfDefined } from '@activepieces/shared'
 import { Brackets, Equal } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { ProjectEntity } from '../../project/project-entity'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { ProjectRoleEntity } from './project-role.entity'
 
 
 export const projectRoleRepo = repoFactory(ProjectRoleEntity)
 export const projectMemberRepo = repoFactory(ProjectMemberEntity)
+export const projectRepo = repoFactory(ProjectEntity)
 
 export const projectRoleService = {
 
