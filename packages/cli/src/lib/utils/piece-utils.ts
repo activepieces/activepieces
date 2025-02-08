@@ -65,7 +65,7 @@ export async function publishPieceFromFolder(
   pieceFolder: string,
   apiUrl: string,
   apiKey: string,
-  failOnError = true,
+  failOnError: boolean,
 ) {
     const projectJson = await readProjectJson(pieceFolder);
     const packageJson = await readPackageJson(pieceFolder);
