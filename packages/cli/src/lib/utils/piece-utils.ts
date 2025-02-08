@@ -61,7 +61,12 @@ export async function buildPiece(pieceFolder: string): Promise<{ outputFolder: s
     };
 }
 
-export async function publishPieceFromFolder(pieceFolder: string, apiUrl: string, apiKey: string) {
+export async function publishPieceFromFolder(
+  pieceFolder: string,
+  apiUrl: string,
+  apiKey: string,
+  failOnError = true,
+) {
     const projectJson = await readProjectJson(pieceFolder);
     const packageJson = await readPackageJson(pieceFolder);
 
@@ -92,11 +97,23 @@ export async function publishPieceFromFolder(pieceFolder: string, apiUrl: string
                 console.info(chalk.yellow(`Piece '${packageJson.name}' and '${packageJson.version}' already published.`));
             } else if (Math.floor(axiosError.response.status / 100) !== 2) {
                 console.info(chalk.red(`Error publishing piece '${packageJson.name}', ` + JSON.stringify(axiosError.response.data)));
+                if (failOnError) {
+                    process.exitCode = 1
+                    process.exit(1);
+                }
             } else {
                 console.error(chalk.red(`Unexpected error: ${error.message}`));
+                if (failOnError) {
+                    process.exitCode = 1
+                    process.exit(1);
+                }
             }
         } else {
             console.error(chalk.red(`Unexpected error: ${error.message}`));
+            if (failOnError) {
+              process.exitCode = 1
+              process.exit(1);
+            }
         }
     }
 }

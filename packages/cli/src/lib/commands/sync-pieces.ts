@@ -3,11 +3,16 @@ import { findPieces, publishPieceFromFolder } from '../utils/piece-utils';
 import chalk from "chalk";
 import { join } from "path";
 
-async function syncPieces(apiUrl: string, apiKey: string, pieces: string[] | null) {
-  const piecesDirectory = join(process.cwd(), 'packages', 'pieces', 'custom')
+async function syncPieces(
+  apiUrl: string,
+  apiKey: string,
+  pieces: string[] | null,
+  failOnError: boolean,
+) {
+  const piecesDirectory = join(process.cwd(), 'packages', 'pieces', 'community')
   const pieceFolders = await findPieces(piecesDirectory, pieces);
     for (const pieceFolder of pieceFolders) {
-      await publishPieceFromFolder(pieceFolder, apiUrl, apiKey);
+      await publishPieceFromFolder(pieceFolder, apiUrl, apiKey, failOnError);
     }
 }
 
@@ -16,13 +21,15 @@ export const syncPieceCommand = new Command('sync')
     .requiredOption('-h, --apiUrl <url>', 'API URL ex: https://cloud.activepieces.com/api')
     .option('-p, --pieces <pieces...>', 'Specify one or more piece names to sync. ' +
       'If not provided, all custom pieces in the directory will be synced.')
+    .option('-f, --fail-on-error', 'Exit the process if an error occurs while syncing a piece', false)
     .action(async (options) => {
         const apiKey = process.env.AP_API_KEY;
         const apiUrlWithoutTrailSlash = options.apiUrl.replace(/\/$/, '');
         const pieces = options.pieces ? [...new Set<string>(options.pieces)] : null;
+        const failOnError = options.failOnError;
         if (!apiKey) {
             console.error(chalk.red('AP_API_KEY environment variable is required'));
             process.exit(1);
         }
-        await syncPieces(apiUrlWithoutTrailSlash, apiKey, pieces);
+        await syncPieces(apiUrlWithoutTrailSlash, apiKey, pieces, failOnError);
     });
