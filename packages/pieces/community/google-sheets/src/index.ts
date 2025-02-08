@@ -24,6 +24,7 @@ import { newWorksheetTrigger } from './lib/triggers/new-worksheet';
 import { findWorksheetAction } from './lib/actions/find-worksheet';
 import { copyWorksheetAction } from './lib/actions/copy-worksheet';
 import { updateMultipleRowsAction } from './lib/actions/update-multiple-rows';
+import { createColumnAction } from './lib/actions/create-column';
 
 export const googleSheetsAuth = PieceAuth.OAuth2({
   description: '',
@@ -68,6 +69,7 @@ export const googleSheets = createPiece({
     findWorksheetAction,
     copyWorksheetAction,
     updateMultipleRowsAction,
+    createColumnAction,
     createCustomApiCallAction({
       auth: googleSheetsAuth,
       baseUrl: () => {
