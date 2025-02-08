@@ -98,20 +98,20 @@ export async function publishPieceFromFolder(
             } else if (Math.floor(axiosError.response.status / 100) !== 2) {
                 console.info(chalk.red(`Error publishing piece '${packageJson.name}', ` + JSON.stringify(axiosError.response.data)));
                 if (failOnError) {
-                    process.exitCode = 1
+                    console.info(chalk.yellow(`Terminating process due to publish failure for piece '${packageJson.name}' (fail-on-error is enabled)`));
                     process.exit(1);
                 }
             } else {
                 console.error(chalk.red(`Unexpected error: ${error.message}`));
                 if (failOnError) {
-                    process.exitCode = 1
+                    console.info(chalk.yellow(`Terminating process due to unexpected error for piece '${packageJson.name}' (fail-on-error is enabled)`));
                     process.exit(1);
                 }
             }
         } else {
             console.error(chalk.red(`Unexpected error: ${error.message}`));
             if (failOnError) {
-              process.exitCode = 1
+              console.info(chalk.yellow(`Terminating process due to unexpected error for piece '${packageJson.name}' (fail-on-error is enabled)`));
               process.exit(1);
             }
         }

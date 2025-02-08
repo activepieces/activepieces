@@ -9,7 +9,7 @@ async function syncPieces(
   pieces: string[] | null,
   failOnError: boolean,
 ) {
-  const piecesDirectory = join(process.cwd(), 'packages', 'pieces', 'community')
+  const piecesDirectory = join(process.cwd(), 'packages', 'pieces', 'custom')
   const pieceFolders = await findPieces(piecesDirectory, pieces);
     for (const pieceFolder of pieceFolders) {
       await publishPieceFromFolder(pieceFolder, apiUrl, apiKey, failOnError);
