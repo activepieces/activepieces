@@ -21,11 +21,11 @@ import {
     ProgressUpdateType,
     ProjectId,
     RunEnvironment,
-    SeekPage,
+    SeekPageWithTotal,
     spreadIfDefined,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { In } from 'typeorm'
+import { In, Not } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import {
     APArrayContains,
@@ -57,7 +57,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         tags,
         createdAfter,
         createdBefore,
-    }: ListParams): Promise<SeekPage<FlowRun>> {
+    }: ListParams): Promise<SeekPageWithTotal<FlowRun>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator<FlowRun>({
             entity: FlowRunEntity,
@@ -97,8 +97,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         if (tags) {
             query = query.andWhere(APArrayContains('tags', tags))
         }
+        const countQuery = query.clone()
+        const totalCount = await countQuery.getCount()
         const { data, cursor: newCursor } = await paginator.paginate(query)
-        return paginationHelper.createPage<FlowRun>(data, newCursor)
+        return {
+            ...paginationHelper.createPage<FlowRun>(data, newCursor),
+            totalCount,
+        }
     },
     async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun | null> {
         const oldFlowRun = await flowRunService(log).getOneOrThrow({
@@ -135,8 +140,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             }
         }
     },
-    async bulkRetry({ projectId, flowRunIds, strategy, status, flowId, createdAfter, createdBefore }: BulkRetryParams): Promise<(FlowRun | null)[]> {
-        const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(projectId, flowRunIds, status, flowId, createdAfter, createdBefore)
+    async bulkRetry({ projectId, flowRunIds, strategy, status, flowId, createdAfter, createdBefore, excludeFlowRunIds }: BulkRetryParams): Promise<(FlowRun | null)[]> {
+        const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(projectId, flowRunIds, status, flowId, createdAfter, createdBefore, excludeFlowRunIds)
         return Promise.all(filteredFlowRunIds.map(flowRunId => this.retry({ flowRunId, strategy, projectId })))
     },
     async addToQueue({
@@ -364,6 +369,7 @@ async function filterFlowRunsAndApplyFilters(
     flowId?: FlowId[],
     createdAfter?: string,
     createdBefore?: string,
+    excludeFlowRunIds?: FlowRunId[],
 ): Promise<FlowRunId[]> {
     let query = flowRunRepo().createQueryBuilder('flow_run').where({
         projectId,
@@ -393,6 +399,11 @@ async function filterFlowRunsAndApplyFilters(
     if (createdBefore) {
         query = query.andWhere('flow_run.created <= :createdBefore', {
             createdBefore,
+        })
+    }
+    if (excludeFlowRunIds && excludeFlowRunIds.length > 0) {
+        query = query.andWhere({
+            id: Not(In(excludeFlowRunIds)),
         })
     }
 
@@ -543,6 +554,7 @@ type BulkRetryParams = {
     flowId?: FlowId[]
     createdAfter?: string
     createdBefore?: string
+    excludeFlowRunIds?: FlowRunId[]
 }
 type AddToQueueParams = {
     flowRunId: FlowRunId

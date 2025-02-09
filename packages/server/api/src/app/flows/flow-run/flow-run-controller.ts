@@ -12,7 +12,7 @@ import {
     PrincipalType,
     ProgressUpdateType,
     RetryFlowRequestBody,
-    SeekPage,
+    SeekPageWithTotal,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
 import {
@@ -92,6 +92,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         return flowRunService(req.log).bulkRetry({
             projectId: req.principal.projectId,
             flowRunIds: req.body.flowRunIds,
+            excludeFlowRunIds: req.body.excludeFlowRunIds,
             strategy: req.body.strategy,
             status: req.body.status,
             flowId: req.body.flowId,
@@ -116,7 +117,7 @@ const ListRequest = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListFlowRunsRequestQuery,
         response: {
-            [StatusCodes.OK]: SeekPage(FlowRunFilteredWithNoSteps),
+            [StatusCodes.OK]: SeekPageWithTotal(FlowRunFilteredWithNoSteps),
         },
     },
 }
