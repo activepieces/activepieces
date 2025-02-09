@@ -1,5 +1,5 @@
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { Client } from 'intercom-client';
+import { IntercomClient } from 'intercom-client';
 import {
   OAuth2PropertyValue,
   OAuth2Props,
@@ -7,11 +7,10 @@ import {
 } from '@activepieces/pieces-framework';
 
 export const intercomClient = (auth: OAuth2PropertyValue<OAuth2Props>) => {
-  const client = new Client({
-    tokenAuth: { token: getAccessTokenOrThrow(auth) },
-  });
-  client.useRequestOpts({
-    baseURL: `https://api.${auth.props?.['region']}.io`,
+  const client = new IntercomClient({
+    token: getAccessTokenOrThrow(auth),
+    environment:`https://api.${auth.props?.['region']}.io`
+  
   });
   return client;
 };
@@ -83,3 +82,5 @@ export const commonProps = {
       refreshers: [],
     }),
 };
+
+export type Operator = "=" | "!=" | "IN" | "NIN" | "<" | ">" | "~" | "!~" | "^" | "$";
