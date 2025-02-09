@@ -100,10 +100,10 @@ const ArrayPieceProperty = React.memo(
         : '';
       const formValues = form.getValues(inputName);
       const newFields = [
-        ...formValues.map((value: string | Record<string, unknown>) => ({
+        ...(formValues ? formValues.map((value: string | Record<string, unknown>) => ({
           id: nanoid(),
-          value,
-        })),
+          value
+        })) : []),
         { id: nanoid(), value },
       ];
 
