@@ -53,10 +53,10 @@ export const workerApiService = (workerToken: string) => {
         async startRuns(request: SubmitPayloadsRequest): Promise<FlowRun[]> {
             const arrayOfPayloads = splitPayloadsIntoOneMegabyteBatches(request.payloads)
             const limit = pLimit(1)
-            const promises = arrayOfPayloads.map(payload =>
+            const promises = arrayOfPayloads.map(payloads =>
                 limit(() => client.post<FlowRun[]>('/v1/workers/submit-payloads', {
                     ...request,
-                    payloads: [payload],
+                    payloads,
                 })),
             )
 
