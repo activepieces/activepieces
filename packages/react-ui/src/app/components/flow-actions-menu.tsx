@@ -27,6 +27,7 @@ import {
   ImportFlowDialog,
   ImportFlowDialogProps,
 } from '@/features/flows/components/import-flow-dialog';
+import { RenameFlowDialog } from '@/features/flows/components/rename-flow-dialog';
 import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -137,24 +138,46 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         {!readonly && (
-          <PermissionNeededTooltip
-            hasPermission={userHasPermissionToUpdateFlow}
-          >
-            <DropdownMenuItem
-              onSelect={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setOpen(false);
-                onRename();
-              }}
-              disabled={!userHasPermissionToUpdateFlow}
-            >
-              <div className="flex cursor-pointer flex-row gap-2 items-center">
-                <Pencil className="h-4 w-4" />
-                <span>{t('Rename')}</span>
-              </div>
-            </DropdownMenuItem>
-          </PermissionNeededTooltip>
+          <>
+            {insideBuilder && (
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToUpdateFlow}
+              >
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setOpen(false);
+                    onRename();
+                  }}
+                  disabled={!userHasPermissionToUpdateFlow}
+                >
+                  <div className="flex cursor-pointer flex-row gap-2 items-center">
+                    <Pencil className="h-4 w-4" />
+                    <span>{t('Rename')}</span>
+                  </div>
+                </DropdownMenuItem>
+              </PermissionNeededTooltip>
+            )}
+
+            {!insideBuilder && (
+              <RenameFlowDialog
+                flowId={flow.id}
+                onRename={onRename}
+                flowName={flowVersion.displayName}
+              >
+                <DropdownMenuItem
+                  onSelect={(e) => e.preventDefault()}
+                  disabled={!userHasPermissionToUpdateFlow}
+                >
+                  <div className="flex cursor-pointer flex-row gap-2 items-center">
+                    <Pencil className="h-4 w-4" />
+                    <span>{t('Rename')}</span>
+                  </div>
+                </DropdownMenuItem>
+              </RenameFlowDialog>
+            )}
+          </>
         )}
         <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
           <PushToGitDialog flowIds={[flow.id]}>
