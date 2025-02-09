@@ -17,9 +17,12 @@ export const newConversationFromUser = createTrigger({
   type: TriggerStrategy.APP_WEBHOOK,
   async onEnable(context) {
     const client = intercomClient(context.auth);
-    const response: { app: { id_code: string } } = await client.get({
-      url: '/me',
-    });
+    const response = await client.admins.identify();
+
+		if (!response.app?.id_code) {
+			throw new Error('Could not find admin id code');
+		}
+
     context.app.createListeners({
       events: ['conversation.user.created'],
       identifierValue: response['app']['id_code'],
