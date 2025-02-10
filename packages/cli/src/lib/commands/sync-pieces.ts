@@ -4,20 +4,18 @@ import chalk from "chalk";
 import { join } from "path";
 
 async function syncPieces(
-  {apiUrl, apiKey, pieces, failOnError}:
+  params:
   {apiUrl: string,
   apiKey: string,
   pieces: string[] | null,
   failOnError: boolean,}
 ) {
   const piecesDirectory = join(process.cwd(), 'packages', 'pieces', 'custom')
-  const pieceFolders = await findPieces(piecesDirectory, pieces);
+  const pieceFolders = await findPieces(piecesDirectory, params.pieces);
     for (const pieceFolder of pieceFolders) {
       await publishPieceFromFolder({
-        pieceFolder: pieceFolder,
-        apiUrl: apiUrl,
-        apiKey: apiKey,
-        failOnError: failOnError
+        pieceFolder,
+       ...params
       });
     }
 }
@@ -30,7 +28,6 @@ export const syncPieceCommand = new Command('sync')
     .option('-f, --fail-on-error', 'Exit the process if an error occurs while syncing a piece', false)
     .action(async (options) => {
         const apiKey = process.env.AP_API_KEY;
-        const apiUrlWithoutTrailSlash = options.apiUrl.replace(/\/$/, '');
         const pieces = options.pieces ? [...new Set<string>(options.pieces)] : null;
         const failOnError = options.failOnError;
         if (!apiKey) {
@@ -38,9 +35,9 @@ export const syncPieceCommand = new Command('sync')
             process.exit(1);
         }
         await syncPieces({
-          apiUrl: apiUrlWithoutTrailSlash,
-          apiKey: apiKey,
-          pieces: pieces,
-          failOnError: failOnError
+          apiUrl: options.apiUrl.replace(/\/$/, ''),
+          apiKey,
+          pieces,
+          failOnError
         });
     });
