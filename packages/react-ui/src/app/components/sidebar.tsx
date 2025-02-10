@@ -4,6 +4,7 @@ import { FileTextIcon, LockKeyhole } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
+import { useEmbedding } from '@/components/embed-provider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Tooltip,
@@ -12,7 +13,7 @@ import {
 } from '@/components/ui/tooltip';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { determineDefaultRoute } from '@/lib/utils';
+import { cn, determineDefaultRoute } from '@/lib/utils';
 import { ApFlagId, supportUrl } from '@activepieces/shared';
 
 import { ShowPoweredBy } from '../../components/show-powered-by';
@@ -51,7 +52,6 @@ const CustomTooltipLink = ({
 
   const isLinkActive =
     location.pathname.startsWith(to) || isActive?.(location.pathname);
-
   return (
     <Link
       to={to}
@@ -108,6 +108,7 @@ export function Sidebar({
   const { data: showSupportAndDocs } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
+  const { embedState } = useEmbedding();
   const { platform } = platformHooks.useCurrentPlatform();
   const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
   return (
@@ -170,7 +171,13 @@ export function Sidebar({
         <div className="flex-1 p-4">
           <div className="flex flex-col">
             <Header />
-            <div className="container mx-auto flex py-10">{children}</div>
+            <div
+              className={cn('container mx-auto flex py-10 px-2', {
+                'py-4': embedState.isEmbedded,
+              })}
+            >
+              {children}
+            </div>
           </div>
         </div>
       </div>

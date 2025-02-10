@@ -52,7 +52,7 @@ const createBigAddButtonGraph: (
   };
 
   const straightLineEdge: ApStraightLineEdge = {
-    id: `big-button-starigh-line-for${nodeData.edgeId}`,
+    id: `big-button-straight-line-for${nodeData.edgeId}`,
     source: `${parentStep.name}-big-add-button-${nodeData.edgeId}`,
     target: `${parentStep.name}-subgraph-end-${nodeData.edgeId}`,
     type: ApEdgeType.STRAIGHT_LINE as const,

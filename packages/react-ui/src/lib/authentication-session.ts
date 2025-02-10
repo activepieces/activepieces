@@ -29,6 +29,14 @@ export const authenticationSession = {
     const decodedJwt = getDecodedJwt(token);
     return decodedJwt.projectId;
   },
+  getCurrentUserId(): string | null {
+    const token = this.getToken();
+    if (isNil(token)) {
+      return null;
+    }
+    const decodedJwt = getDecodedJwt(token);
+    return decodedJwt.id;
+  },
   appendProjectRoutePrefix(path: string): string {
     const projectId = this.getProjectId();
     if (isNil(projectId)) {

@@ -2,7 +2,7 @@ import { exec } from 'child_process'
 import fs from 'fs'
 import os from 'os'
 import { promisify } from 'util'
-import { environmentVariables, exceptionHandler, fileExists, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
+import { apVersionUtil, environmentVariables, exceptionHandler, fileExists, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, isNil, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 
 const execAsync = promisify(exec)
@@ -10,7 +10,46 @@ const execAsync = promisify(exec)
 let settings: WorkerMachineHealthcheckResponse | undefined
 
 export const workerMachine = {
-    getSystemInfo,
+    async getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
+        const { totalRamInBytes, ramUsage } = await getContainerMemoryUsage()
+
+        const cpus = os.cpus()
+        const cpuUsage = cpus.reduce((acc, cpu) => {
+            const total = Object.values(cpu.times).reduce((acc, time) => acc + time, 0)
+            const idle = cpu.times.idle
+            return acc + (1 - idle / total)
+        }, 0) / cpus.length * 100
+
+        const ip = (await networkUtils.getPublicIp()).ip
+        const diskInfo = await getDiskInfo()
+
+        return {
+            diskInfo,
+            cpuUsagePercentage: cpuUsage,
+            ramUsagePercentage: ramUsage,
+            totalAvailableRamInBytes: totalRamInBytes,
+            ip,
+            workerProps: {
+                ...spreadIfDefined('SANDBOX_PROPAGATED_ENV_VARS', settings?.SANDBOX_PROPAGATED_ENV_VARS?.join(',')),
+                ...spreadIfDefined('EXECUTION_MODE', settings?.EXECUTION_MODE),
+                ...spreadIfDefined('FILE_STORAGE_LOCATION', settings?.FILE_STORAGE_LOCATION),
+                ...spreadIfDefined('FLOW_WORKER_CONCURRENCY', settings?.FLOW_WORKER_CONCURRENCY?.toString()),
+                ...spreadIfDefined('SCHEDULED_WORKER_CONCURRENCY', settings?.SCHEDULED_WORKER_CONCURRENCY?.toString()),
+                ...spreadIfDefined('TRIGGER_TIMEOUT_SECONDS', settings?.TRIGGER_TIMEOUT_SECONDS?.toString()),
+                ...spreadIfDefined('PAUSED_FLOW_TIMEOUT_DAYS', settings?.PAUSED_FLOW_TIMEOUT_DAYS?.toString()),
+                ...spreadIfDefined('FLOW_TIMEOUT_SECONDS', settings?.FLOW_TIMEOUT_SECONDS?.toString()),
+                ...spreadIfDefined('LOG_LEVEL', settings?.LOG_LEVEL),
+                ...spreadIfDefined('LOG_PRETTY', settings?.LOG_PRETTY),
+                ...spreadIfDefined('ENVIRONMENT', settings?.ENVIRONMENT),
+                ...spreadIfDefined('MAX_FILE_SIZE_MB', settings?.MAX_FILE_SIZE_MB?.toString()),
+                ...spreadIfDefined('SANDBOX_MEMORY_LIMIT', settings?.SANDBOX_MEMORY_LIMIT),
+                ...spreadIfDefined('PIECES_SOURCE', settings?.PIECES_SOURCE),
+                ...spreadIfDefined('DEV_PIECES', settings?.DEV_PIECES?.join(',')),
+                ...spreadIfDefined('S3_USE_SIGNED_URLS', settings?.S3_USE_SIGNED_URLS),
+                version: await apVersionUtil.getCurrentRelease(),
+            },
+        }
+    },
     init: async (_settings: WorkerMachineHealthcheckResponse) => {
         settings = {
             ..._settings,
@@ -56,29 +95,6 @@ function replaceLocalhost(urlString: string): string {
 function appendSlashAndApi(url: string): string {
     const slash = url.endsWith('/') ? '' : '/'
     return `${url}${slash}api/`
-}
-
-async function getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
-    const { totalRamInBytes, ramUsage } = await getContainerMemoryUsage()
-
-    const cpus = os.cpus()
-    const cpuUsage = cpus.reduce((acc, cpu) => {
-        const total = Object.values(cpu.times).reduce((acc, time) => acc + time, 0)
-        const idle = cpu.times.idle
-        return acc + (1 - idle / total)
-    }, 0) / cpus.length * 100
-
-    const ip = (await networkUtils.getPublicIp()).ip
-    const diskInfo = await getDiskInfo()
-
-    return {
-        diskInfo,
-        cpuUsagePercentage: cpuUsage,
-        ramUsagePercentage: ramUsage,
-        totalAvailableRamInBytes: totalRamInBytes,
-        ip,
-        workerProps: {},
-    }
 }
 
 async function getContainerMemoryUsage() {

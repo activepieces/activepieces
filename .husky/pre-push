@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run lint checks on specific projects without fixing
+npx nx affected --target=lint || {
+  echo "❌ Lint check failed. Attempting to fix..."
+  npx nx affected --target=lint --fix
+  echo "Please review the changes and try pushing again."
+  exit 1
+}

@@ -10,6 +10,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
+import { EmbeddingFontLoader } from './components/embedding-font-loader';
 import { InitialDataGuard } from './components/initial-data-guard';
 import { ApRouter } from './router';
 
@@ -28,14 +29,16 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <EmbeddingProvider>
         <InitialDataGuard>
-          <TelemetryProvider>
-            <TooltipProvider>
-              <ThemeProvider storageKey="vite-ui-theme">
-                <ApRouter />
-                <Toaster />
-              </ThemeProvider>
-            </TooltipProvider>
-          </TelemetryProvider>
+          <EmbeddingFontLoader>
+            <TelemetryProvider>
+              <TooltipProvider>
+                <ThemeProvider storageKey="vite-ui-theme">
+                  <ApRouter />
+                  <Toaster />
+                </ThemeProvider>
+              </TooltipProvider>
+            </TelemetryProvider>
+          </EmbeddingFontLoader>
         </InitialDataGuard>
       </EmbeddingProvider>
     </QueryClientProvider>

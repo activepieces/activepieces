@@ -14,9 +14,9 @@ let workerToken: string
 let heartbeatInterval: NodeJS.Timeout
 
 export const flowWorker = (log: FastifyBaseLogger) => ({
-    async init(generatedToken: string): Promise<void> {
+    async init({ workerToken: token }: { workerToken: string }): Promise<void> {
         closed = false
-        workerToken = generatedToken
+        workerToken = token
         await initializeWorker(log)
         heartbeatInterval = setInterval(() => {
             rejectedPromiseHandler(workerApiService(workerToken).heartbeat(), log)

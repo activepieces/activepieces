@@ -26,7 +26,10 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             })
         }
         if (isNil(params.platformId)) {
-            const userIdentity = await userIdentityService(log).create(params)
+            const userIdentity = await userIdentityService(log).create({
+                ...params,
+                verified: params.provider === UserIdentityProvider.GOOGLE || params.provider === UserIdentityProvider.JWT || params.provider === UserIdentityProvider.SAML,
+            })
             return createUserAndPlatform(userIdentity, log)
         }
 
@@ -34,8 +37,10 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             email: params.email,
             platformId: params.platformId,
         })
-        const userIdentity = await userIdentityService(log).create(params)
-        await userIdentityService(log).verify(userIdentity.id)
+        const userIdentity = await userIdentityService(log).create({
+            ...params,
+            verified: true,
+        })
         const user = await userService.create({
             identityId: userIdentity.id,
             platformRole: PlatformRole.MEMBER,
@@ -114,11 +119,14 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 password: await cryptoUtils.generateRandomPassword(),
             })
         }
+        await userInvitationsService(log).provisionUserInvitation({
+            email: params.email,
+        })
         const user = await userService.getOneByIdentityAndPlatform({
             identityId: userIdentity.id,
             platformId,
         })
-        assertNotNullOrUndefined(user, 'User not found')
+        assertNotNullOrUndefined(user, 'User Identity is found but not the user')
         return authenticationUtils.getProjectAndToken({
             userId: user.id,
             platformId,
@@ -129,7 +137,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         const platforms = await platformService.listPlatformsForIdentityWithAtleastProject({ identityId: params.identityId })
         const platform = platforms.find((platform) => platform.id === params.platformId)
         await assertUserCanSwitchToPlatform(null, platform)
-        
+
         assertNotNullOrUndefined(platform, 'Platform not found')
         const user = await getUserForPlatform(params.identityId, platform)
         return authenticationUtils.getProjectAndToken({
