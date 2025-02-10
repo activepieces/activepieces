@@ -105,3 +105,41 @@ export const companyIdProp = (displayName: string, required= true) =>
 			};
 		},
 	});
+
+export const contactIdProp = (displayName: string, required= true) =>
+	Property.Dropdown({
+		displayName,
+		required,
+		refreshers: [],
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					options: [],
+					disabled: true,
+					placeholder: 'Please connect your account first.',
+				};
+			}
+
+			const authValue = auth as PiecePropValueSchema<typeof intercomAuth>;
+			const client = intercomClient(authValue);
+
+			const response = await client.contacts.list();
+			const options: DropdownOption<string>[] = [];
+
+			for await (const contact of response) {
+				if(contact.role === 'user')
+				{
+					options.push({
+						value: contact.id,
+						label: contact.email,
+					});
+				}
+				
+			}
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	});

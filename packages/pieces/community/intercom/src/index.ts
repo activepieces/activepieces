@@ -31,6 +31,7 @@ import { createOrUpdateUserAction } from './lib/actions/create-update-user';
 import { listAllTagsAction } from './lib/actions/list-all-tags';
 import { newLeadTrigger } from './lib/triggers/new-lead';
 import { newCompanyTrigger } from './lib/triggers/new-company';
+import { addOrRemoveTagOnContactAction } from './lib/actions/add-remove-tag-on-contact';
 
 export const intercomAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.{region}.com/oauth',
@@ -87,6 +88,7 @@ export const intercom = createPiece({
 		findUserAction,
 		addOrRemoveTagOnConversationAction,
 		addOrRemoveTagOnCompanyAction,
+		addOrRemoveTagOnContactAction,
 		createUserAction,
 		createOrUpdateUserAction,
 		sendMessageAction,
