@@ -120,8 +120,9 @@
       "icon": "code",
       "pages": [
         "handbook/engineering/how-we-work",
-        "handbook/engineering/pre-releases",
-        "handbook/engineering/on-call"
+        "handbook/engineering/on-call",
+        "handbook/engineering/incident-response",
+        "handbook/engineering/pre-releases"
       ]
     },
     {

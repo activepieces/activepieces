@@ -1,0 +1,60 @@
+---
+title: "Incident Response"
+icon: 'bell-ring'
+---
+
+Incident.io is our primary tool for managing and responding to urgent issues and service disruptions. This guide explains how we use incident.io to coordinate our on-call rotations and emergency response procedures.
+
+## Setup and Notifications
+
+### Personal Setup
+1. Download the incident.io mobile app from your device's app store
+2. Ask your team to add you to the incident.io workspace
+3. Configure your notification preferences:
+   - Phone calls for critical incidents
+   - Push notifications for high-priority issues
+   - Slack notifications for standard updates
+
+### On-Call Rotations
+Our team operates on a weekly rotation schedule through incident.io, where every team member participates. When you're on-call:
+- You'll receive priority notifications for all urgent issues
+- Phone calls will be placed for critical service disruptions
+- Rotations change every week, with handoffs occurring on Monday mornings
+- Response is expected within 15 minutes for critical incidents
+
+
+<Tip>
+  If you are unable to respond to an incident, please escalate to the engineering team.
+</Tip>
+
+
+## Creating an Incident
+
+There are three ways to create an incident:
+
+### Channel 1: Fire Emoji Reaction through Slack
+
+1. When a customer reports an issue in Slack
+2. React to the message with the 🔥 emoji
+3. This will automatically:
+   - Create a new incident
+   - Page the on-call engineer
+   - Create a dedicated incident channel
+   - Link the original message for context
+
+### Channel 2: GitHub Issue
+
+1. Create a new issue in the GitHub repository
+2. Add the `high priority` label
+3. This for immediate attention from the on-call engineer
+
+### Channel 3: Outage Notification through Digital Ocean / Checkly
+
+1. Digital Ocean will automatically notify us when there is an outage in CPU, Memory or Disk 
+2. Checkly will automatically notify us when the e2e test fails and the website is down
+
+
+## Best Practices
+- Always acknowledge incident notifications
+- Update the incident status regularly
+- Document any actions taken in the incident channel
