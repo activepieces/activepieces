@@ -181,13 +181,13 @@ const FlowRunsPage = () => {
                     <Button disabled={isDisabled} className="h-9 w-full">
                       <PlayIcon className="mr-2 h-3 w-4" />
                       {selectedRows.length > 0
-                        ? `${t('Retry')} (${
+                        ? `${t('Retry')} ${
                             selectedAll
-                              ? data?.totalCount
-                                ? data?.totalCount - excludedRows.size
-                                : selectedRows.length
-                              : selectedRows.length
-                          })`
+                              ? excludedRows.size > 0
+                                ? `${t('all except')} ${excludedRows.size}`
+                                : t('all')
+                              : `(${selectedRows.length})`
+                          }`
                         : t('Retry')}
                       <ChevronDown className="h-3 w-4 ml-2" />
                     </Button>
@@ -345,7 +345,7 @@ const FlowRunsPage = () => {
                     }
                   }}
                 >
-                  {t('Select all')} ({data?.totalCount || 0})
+                  {t('Select all')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

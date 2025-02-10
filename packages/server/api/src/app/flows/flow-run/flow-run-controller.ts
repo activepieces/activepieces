@@ -12,7 +12,7 @@ import {
     PrincipalType,
     ProgressUpdateType,
     RetryFlowRequestBody,
-    SeekPageWithTotal,
+    SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
 } from '@activepieces/shared'
 import {
@@ -117,7 +117,7 @@ const ListRequest = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListFlowRunsRequestQuery,
         response: {
-            [StatusCodes.OK]: SeekPageWithTotal(FlowRunFilteredWithNoSteps),
+            [StatusCodes.OK]: SeekPage(FlowRunFilteredWithNoSteps),
         },
     },
 }

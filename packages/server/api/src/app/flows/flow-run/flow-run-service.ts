@@ -21,7 +21,7 @@ import {
     ProgressUpdateType,
     ProjectId,
     RunEnvironment,
-    SeekPageWithTotal,
+    SeekPage,
     spreadIfDefined,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -57,7 +57,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         tags,
         createdAfter,
         createdBefore,
-    }: ListParams): Promise<SeekPageWithTotal<FlowRun>> {
+    }: ListParams): Promise<SeekPage<FlowRun>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator<FlowRun>({
             entity: FlowRunEntity,
@@ -97,13 +97,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         if (tags) {
             query = query.andWhere(APArrayContains('tags', tags))
         }
-        const countQuery = query.clone()
-        const totalCount = await countQuery.getCount()
         const { data, cursor: newCursor } = await paginator.paginate(query)
-        return {
-            ...paginationHelper.createPage<FlowRun>(data, newCursor),
-            totalCount,
-        }
+        return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
     async retry({ flowRunId, strategy, projectId }: RetryParams): Promise<FlowRun | null> {
         const oldFlowRun = await flowRunService(log).getOneOrThrow({

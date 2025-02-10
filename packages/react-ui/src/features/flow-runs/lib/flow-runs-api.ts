@@ -12,12 +12,12 @@ import {
   CreateStepRunRequestBody,
   StepRunResponse,
   BulkRetryFlowRequestBody,
-  SeekPageWithTotal,
+  SeekPage,
 } from '@activepieces/shared';
 
 export const flowRunsApi = {
-  list(request: ListFlowRunsRequestQuery): Promise<SeekPageWithTotal<FlowRun>> {
-    return api.get<SeekPageWithTotal<FlowRun>>('/v1/flow-runs', request);
+  list(request: ListFlowRunsRequestQuery): Promise<SeekPage<FlowRun>> {
+    return api.get<SeekPage<FlowRun>>('/v1/flow-runs', request);
   },
   getPopulated(id: string): Promise<FlowRun> {
     return api.get<FlowRun>(`/v1/flow-runs/${id}`);
