@@ -51,9 +51,9 @@ type SelectedRow = {
 const FlowRunsPage = () => {
   const [searchParams] = useSearchParams();
   const [selectedRows, setSelectedRows] = useState<Array<SelectedRow>>([]);
-
+  const projectId = authenticationSession.getProjectId()!;
   const { data, isLoading } = useQuery({
-    queryKey: ['flow-run-table', searchParams.toString()],
+    queryKey: ['flow-run-table', searchParams.toString(), projectId],
     staleTime: 0,
     gcTime: 0,
     queryFn: () => {
@@ -68,7 +68,7 @@ const FlowRunsPage = () => {
 
       return flowRunsApi.list({
         status: status ?? undefined,
-        projectId: authenticationSession.getProjectId()!,
+        projectId,
         flowId,
         cursor: cursor ?? undefined,
         limit,

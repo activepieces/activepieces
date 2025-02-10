@@ -52,6 +52,7 @@ import { PlatformMessages } from '../routes/platform/notifications/platform-mess
 import ProjectsPage from '../routes/platform/projects';
 import AuditLogsPage from '../routes/platform/security/audit-logs';
 import { ProjectRolePage } from '../routes/platform/security/project-role';
+import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/project-role-users-table';
 import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
 import { LicenseKeyPage } from '../routes/platform/setup/license-key';
 import TemplatesPage from '../routes/platform/setup/templates';
@@ -71,7 +72,10 @@ import { ShareTemplatePage } from '../routes/templates/share-template';
 import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 import { DefaultRoute } from './default-route';
 import { RoutePermissionGuard } from './permission-guard';
-import { ProjectRouterWrapper } from './project-route-wrapper';
+import {
+  ProjectRouterWrapper,
+  TokenCheckerWrapper,
+} from './project-route-wrapper';
 const SettingsRerouter = () => {
   const { hash } = useLocation();
   const fragmentWithoutHash = hash.slice(1).toLowerCase();
@@ -582,6 +586,18 @@ const routes = [
     ),
   },
   {
+    path: '/platform/security/project-roles/:projectRoleId',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSecondSidebarLayout type="security">
+          <PageTitle title="Project Role Users">
+            <ProjectRoleUsersTable />
+          </PageTitle>
+        </PlatformSecondSidebarLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
     path: '/platform/setup',
     element: (
       <PlatformAdminContainer>
@@ -614,6 +630,14 @@ const routes = [
   {
     path: '/redirect',
     element: <RedirectPage></RedirectPage>,
+  },
+  {
+    path: '/projects/:projectId',
+    element: (
+      <TokenCheckerWrapper>
+        <DefaultRoute></DefaultRoute>
+      </TokenCheckerWrapper>
+    ),
   },
   {
     path: '/*',

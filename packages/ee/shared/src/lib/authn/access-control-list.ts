@@ -58,5 +58,6 @@ export const rolePermissions: Record<DefaultProjectRole, Permission[]> = {
         Permission.READ_INVITATION,
         Permission.READ_ISSUES,
         Permission.READ_PROJECT,
+        Permission.READ_RUN,
     ],
 }

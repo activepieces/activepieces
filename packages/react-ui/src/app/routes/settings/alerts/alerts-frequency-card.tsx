@@ -25,7 +25,7 @@ import { AlertOption } from './alert-option';
 
 const AlertFrequencyCard = React.memo(() => {
   const queryClient = useQueryClient();
-  const { project, updateProject } = projectHooks.useCurrentProject();
+  const { project, updateCurrentProject } = projectHooks.useCurrentProject();
   const { toast } = useToast();
   const { checkAccess } = useAuthorization();
   const writeAlertPermission = checkAccess(Permission.WRITE_ALERT);
@@ -37,7 +37,7 @@ const AlertFrequencyCard = React.memo(() => {
     }
   >({
     mutationFn: (request) => {
-      updateProject(queryClient, request);
+      updateCurrentProject(queryClient, request);
       return projectApi.update(authenticationSession.getProjectId()!, request);
     },
     onSuccess: () => {

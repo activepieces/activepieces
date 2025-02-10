@@ -26,7 +26,10 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             })
         }
         if (isNil(params.platformId)) {
-            const userIdentity = await userIdentityService(log).create(params)
+            const userIdentity = await userIdentityService(log).create({
+                ...params,
+                verified: params.provider === UserIdentityProvider.GOOGLE || params.provider === UserIdentityProvider.JWT || params.provider === UserIdentityProvider.SAML,
+            })
             return createUserAndPlatform(userIdentity, log)
         }
 
@@ -34,8 +37,10 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             email: params.email,
             platformId: params.platformId,
         })
-        const userIdentity = await userIdentityService(log).create(params)
-        await userIdentityService(log).verify(userIdentity.id)
+        const userIdentity = await userIdentityService(log).create({
+            ...params,
+            verified: true,
+        })
         const user = await userService.create({
             identityId: userIdentity.id,
             platformRole: PlatformRole.MEMBER,
@@ -52,8 +57,8 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         })
     },
     async signInWithPassword(params: SignInWithPasswordParams): Promise<AuthenticationResponse> {
-        const identity = await userIdentityService(log).verifyIdenityPassword(params)
-        const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatforIdForSignWithPassword(identity.id) : params.predefinedPlatformId
+        const identity = await userIdentityService(log).verifyIdentityPassword(params)
+        const platformId = isNil(params.predefinedPlatformId) ? await getPersonalPlatformIdForIdentity(identity.id) : params.predefinedPlatformId
         if (isNil(platformId)) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHENTICATION,
@@ -114,11 +119,14 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 password: await cryptoUtils.generateRandomPassword(),
             })
         }
+        await userInvitationsService(log).provisionUserInvitation({
+            email: params.email,
+        })
         const user = await userService.getOneByIdentityAndPlatform({
             identityId: userIdentity.id,
             platformId,
         })
-        assertNotNullOrUndefined(user, 'User not found')
+        assertNotNullOrUndefined(user, 'User Identity is found but not the user')
         return authenticationUtils.getProjectAndToken({
             userId: user.id,
             platformId,
@@ -129,7 +137,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         const platforms = await platformService.listPlatformsForIdentityWithAtleastProject({ identityId: params.identityId })
         const platform = platforms.find((platform) => platform.id === params.platformId)
         await assertUserCanSwitchToPlatform(null, platform)
-        
+
         assertNotNullOrUndefined(platform, 'Platform not found')
         const user = await getUserForPlatform(params.identityId, platform)
         return authenticationUtils.getProjectAndToken({
@@ -248,15 +256,6 @@ async function getPersonalPlatformIdForFederatedAuthn(email: string, log: Fastif
         return null
     }
     return getPersonalPlatformIdForIdentity(identity.id)
-}
-
-async function getPersonalPlatforIdForSignWithPassword(identityId: string): Promise<string | null> {
-    const edition = system.getEdition()
-    if (edition === ApEdition.CLOUD) {
-        const platformId = await getPersonalPlatformIdForIdentity(identityId)
-        return platformId
-    }
-    return null
 }
 
 async function getPersonalPlatformIdForIdentity(identityId: string): Promise<string | null> {

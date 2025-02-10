@@ -8,6 +8,7 @@ import {
 } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { GetField, OrganizationCreateResponse } from '../common/types';
+import dayjs from 'dayjs';
 
 export const updateDealAction = createAction({
 	auth: pipedriveAuth,
@@ -50,7 +51,6 @@ export const updateDealAction = createAction({
 			status,
 			add_time: creationTime,
 			probability,
-			expected_close_date: expectedCloseDate,
 			visible_to: visibleTo,
 			user_id: ownerId,
 			org_id: organizationId,
@@ -61,6 +61,10 @@ export const updateDealAction = createAction({
 
 		if (labelIds.length > 0) {
 			dealDefaultFields.label = labelIds;
+		}
+
+		if (expectedCloseDate) {
+			dealDefaultFields.expected_close_date = dayjs(expectedCloseDate).format('YYYY-MM-DD');
 		}
 
 		const dealCustomFields: Record<string, any> = {};

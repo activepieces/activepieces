@@ -128,6 +128,7 @@ const systemPropValidators: {
     [AppSystemProp.STRIPE_SECRET_KEY]: stringValidator,
     [AppSystemProp.STRIPE_WEBHOOK_SECRET]: stringValidator,
     [AppSystemProp.CLOUD_PLATFORM_ID]: stringValidator,
+    [AppSystemProp.INTERNAL_URL]: stringValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
 
     // Copilot
@@ -140,6 +141,13 @@ const systemPropValidators: {
     // Cloud
     [AppSystemProp.GOOGLE_CLIENT_ID]: stringValidator,
     [AppSystemProp.GOOGLE_CLIENT_SECRET]: stringValidator,
+
+    // Cloudflare
+    [AppSystemProp.CLOUDFLARE_API_TOKEN]: stringValidator,
+    [AppSystemProp.CLOUDFLARE_API_BASE]: stringValidator,
+
+    // Secret Manager
+    [AppSystemProp.SECRET_MANAGER_API_KEY]: stringValidator,
 }
 
 

@@ -94,3 +94,10 @@ export const UpdateProjectRequestInCommunity = Type.Object({
 export type UpdateProjectRequestInCommunity = Static<typeof UpdateProjectRequestInCommunity>
 
 export type ProjectWithLimits = Static<typeof ProjectWithLimits>
+
+export const ProjectMetaData = Type.Object({
+    id: Type.String(),
+    displayName: Type.String(),
+})
+
+export type ProjectMetaData = Static<typeof ProjectMetaData>
