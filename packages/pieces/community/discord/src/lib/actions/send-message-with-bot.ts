@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 import {
   HttpRequest,
   HttpMethod,
@@ -9,14 +9,12 @@ import { discordCommon } from '../common';
 import FormData from 'form-data';
 
 interface FileObject {
-  file: {
-    data: Buffer | string;
-    filename: string;
-  };
+  file:ApFile
 }
 
 export const sendMessageWithBot = createAction({
   name: 'sendMessageWithBot',
+  auth:discordAuth,
   displayName: 'Send Message with Bot',
   description:
     'Send messages via bot to any channel or thread you want, with an optional file attachment.',
@@ -24,16 +22,15 @@ export const sendMessageWithBot = createAction({
     channel_id: discordCommon.channel,
     message: Property.LongText({
       displayName: 'Message',
-      description: 'Message content to send',
+      description: 'Message content to send.',
       required: false,
     }),
     files: Property.Array({
-      displayName: 'Fields',
-      description: 'Enter fields',
+      displayName: 'Attachments',
       properties: {
         file: Property.File({
           displayName: 'File',
-          description: 'Optional file to send with the message',
+          description: 'Optional file to send with the message.',
           required: false,
         }),
       },
@@ -44,7 +41,7 @@ export const sendMessageWithBot = createAction({
   async run(configValue) {
     const channelId = configValue.propsValue.channel_id;
     const message = configValue.propsValue.message;
-    const files = configValue.propsValue.files as FileObject[];
+    const files = configValue.propsValue.files as FileObject[] ?? [];
   
     const formData = new FormData();
     formData.append('content', message);
