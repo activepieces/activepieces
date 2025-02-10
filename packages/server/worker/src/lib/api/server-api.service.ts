@@ -51,30 +51,51 @@ export const workerApiService = (workerToken: string) => {
             await client.post('/v1/workers/save-payloads', request)
         },
         async startRuns(request: SubmitPayloadsRequest): Promise<FlowRun[]> {
-            const limit = pLimit(5)
-            const promises = request.payloads.map(payload => 
-                limit(() => client.post<FlowRun>('/v1/workers/submit-payloads', {
+            const arrayOfPayloads = splitPayloadsIntoOneMegabyteBatches(request.payloads)
+            const limit = pLimit(1)
+            const promises = arrayOfPayloads.map(payloads =>
+                limit(() => client.post<FlowRun[]>('/v1/workers/submit-payloads', {
                     ...request,
-                    payloads: [payload],
+                    payloads,
                 })),
             )
-            
+
             const results = await Promise.allSettled(promises)
             const errors = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
-            
+
             if (errors.length > 0) {
                 const errorMessages = errors.map(e => e.reason.message).join(', ')
                 throw new Error(`Failed to start runs: ${errorMessages}`)
             }
 
             return results
-                .filter((r): r is PromiseFulfilledResult<FlowRun> => r.status === 'fulfilled')
+                .filter((r): r is PromiseFulfilledResult<FlowRun[]> => r.status === 'fulfilled')
                 .map(r => r.value)
+                .flat()
         },
         async sendUpdate(request: SendEngineUpdateRequest): Promise<void> {
             await client.post('/v1/workers/send-engine-update', request)
         },
     }
+}
+
+function splitPayloadsIntoOneMegabyteBatches(payloads: unknown[]): unknown[][] {
+    const batches: unknown[][] = [[]]
+    const ONE_MB = 1024 * 1024
+    let currentSize = 0
+    for (const payload of payloads) {
+        const payloadSize = Buffer.byteLength(JSON.stringify(payload))
+        currentSize += payloadSize
+
+        if (currentSize > ONE_MB) {
+            batches.push([])
+            currentSize = payloadSize
+        }
+
+        batches[batches.length - 1].push(payload)
+    }
+
+    return batches
 }
 
 export const engineApiService = (engineToken: string, log: FastifyBaseLogger) => {
@@ -132,7 +153,7 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
                 const flow = await client.get<PopulatedFlow | null>('/v1/engine/flows', {
                     params: request,
                 })
-              
+
                 return flow
             }
             catch (e) {
