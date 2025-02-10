@@ -6,15 +6,21 @@ import * as dotenv from 'dotenv';
 
 dotenv.config({path: 'packages/server/api/.env'});
 
-async function publishPieces(
-  apiUrl: string,
-  apiKey: string,
-  pieceName: string,
-  failOnError: boolean,
+async function publishPiece(
+    {apiUrl, apiKey, pieceName, failOnError}:
+    {apiUrl: string,
+    apiKey: string,
+    pieceName: string,
+    failOnError: boolean,}
 ) {
-    const piecesFolder = await findPiece(pieceName);
-    assertPieceExists(piecesFolder)
-    await publishPieceFromFolder(piecesFolder, apiUrl, apiKey, failOnError);
+    const pieceFolder = await findPiece(pieceName);
+    assertPieceExists(pieceFolder)
+    await publishPieceFromFolder({
+        pieceFolder,
+        apiUrl,
+        apiKey,
+        failOnError
+    });
 }
 
 function assertNullOrUndefinedOrEmpty(value: any, message: string) {
@@ -67,5 +73,10 @@ export const publishPieceCommand = new Command('publish')
         const apiUrlWithoutTrailSlash = answers.apiUrl.replace(/\/$/, '');
         const { failOnError } = command.opts();
 
-        await publishPieces(apiUrlWithoutTrailSlash, apiKey, answers.name, failOnError);
+        await publishPiece({
+            apiUrl: apiUrlWithoutTrailSlash,
+            apiKey,
+            pieceName: answers.name,
+            failOnError
+        });
     });

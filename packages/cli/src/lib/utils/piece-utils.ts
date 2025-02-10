@@ -62,10 +62,11 @@ export async function buildPiece(pieceFolder: string): Promise<{ outputFolder: s
 }
 
 export async function publishPieceFromFolder(
-  pieceFolder: string,
+    {pieceFolder, apiUrl, apiKey, failOnError}:
+  {pieceFolder: string,
   apiUrl: string,
   apiKey: string,
-  failOnError: boolean,
+  failOnError: boolean,}
 ) {
     const projectJson = await readProjectJson(pieceFolder);
     const packageJson = await readPackageJson(pieceFolder);

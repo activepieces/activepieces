@@ -4,15 +4,21 @@ import chalk from "chalk";
 import { join } from "path";
 
 async function syncPieces(
-  apiUrl: string,
+  {apiUrl, apiKey, pieces, failOnError}:
+  {apiUrl: string,
   apiKey: string,
   pieces: string[] | null,
-  failOnError: boolean,
+  failOnError: boolean,}
 ) {
   const piecesDirectory = join(process.cwd(), 'packages', 'pieces', 'custom')
   const pieceFolders = await findPieces(piecesDirectory, pieces);
     for (const pieceFolder of pieceFolders) {
-      await publishPieceFromFolder(pieceFolder, apiUrl, apiKey, failOnError);
+      await publishPieceFromFolder({
+        pieceFolder: pieceFolder,
+        apiUrl: apiUrl,
+        apiKey: apiKey,
+        failOnError: failOnError
+      });
     }
 }
 
@@ -31,5 +37,10 @@ export const syncPieceCommand = new Command('sync')
             console.error(chalk.red('AP_API_KEY environment variable is required'));
             process.exit(1);
         }
-        await syncPieces(apiUrlWithoutTrailSlash, apiKey, pieces, failOnError);
+        await syncPieces({
+          apiUrl: apiUrlWithoutTrailSlash,
+          apiKey: apiKey,
+          pieces: pieces,
+          failOnError: failOnError
+        });
     });
