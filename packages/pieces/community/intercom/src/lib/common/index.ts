@@ -9,8 +9,7 @@ import {
 export const intercomClient = (auth: OAuth2PropertyValue<OAuth2Props>) => {
   const client = new IntercomClient({
     token: getAccessTokenOrThrow(auth),
-    environment:`https://api.${auth.props?.['region']}.io`
-  
+    environment: `https://api.${auth.props?.['region']}.io`,
   });
   return client;
 };
@@ -83,4 +82,25 @@ export const commonProps = {
     }),
 };
 
-export type Operator = "=" | "!=" | "IN" | "NIN" | "<" | ">" | "~" | "!~" | "^" | "$";
+export type Operator =
+  | '='
+  | '!='
+  | 'IN'
+  | 'NIN'
+  | '<'
+  | '>'
+  | '~'
+  | '!~'
+  | '^'
+  | '$';
+
+export type TriggerPayload = {
+  type: string;
+  app_id: string;
+  id: string;
+  topic: string;
+  data: {
+    type: string;
+    item: Record<string, any>;
+  };
+};

@@ -29,6 +29,8 @@ import { addOrRemoveTagOnCompanyAction } from './lib/actions/add-remove-tag-on-c
 import { createUserAction } from './lib/actions/create-user';
 import { createOrUpdateUserAction } from './lib/actions/create-update-user';
 import { listAllTagsAction } from './lib/actions/list-all-tags';
+import { newLeadTrigger } from './lib/triggers/new-lead';
+import { newCompanyTrigger } from './lib/triggers/new-company';
 
 export const intercomAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.{region}.com/oauth',
@@ -68,6 +70,8 @@ export const intercom = createPiece({
 		conversationUnsnoozed,
 		conversationRated,
 		conversationPartTagged,
+		newLeadTrigger,
+		newCompanyTrigger
 	],
 	authors: [
 		'kishanprmr',
