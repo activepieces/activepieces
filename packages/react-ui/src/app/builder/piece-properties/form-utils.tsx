@@ -446,6 +446,7 @@ export const formUtils = {
             Type.Array(arraySchema, {
               minItems: property.required ? 1 : undefined,
             }),
+            Type.Record(Type.String(), Type.Unknown()),
             Type.String({
               minLength: property.required ? 1 : undefined,
             }),

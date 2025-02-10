@@ -2,6 +2,7 @@ import { InputPropertyMap, PieceAuthProperty, PieceProperty, PiecePropertyMap, P
 import { AUTHENTICATION_PROPERTY_NAME, isNil, isObject } from '@activepieces/shared'
 import { z } from 'zod'
 import { processors } from './processors'
+import { arrayZipperProcessor } from './processors/array-zipper'
 
 
 
@@ -15,6 +16,7 @@ export const propsProcessor = {
         props: InputPropertyMap,
         auth: PieceAuthProperty | undefined,
         requireAuth: boolean,
+        dynamaicPropertiesSchema: Record<string, InputPropertyMap> | undefined | null,
     ): Promise<{ processedInput: StaticPropsValue<PiecePropertyMap>, errors: PropsValidationError }> => {
         const processedInput = { ...resolvedInput }
         const errors: PropsValidationError = {}
@@ -26,6 +28,7 @@ export const propsProcessor = {
                 auth.props,
                 undefined,
                 requireAuth,
+                undefined,
             )
             processedInput.auth = authProcessedInput
             if (Object.keys(authErrors).length > 0) {
@@ -38,8 +41,21 @@ export const propsProcessor = {
             if (isNil(property)) {
                 continue
             }
+            if (property.type === PropertyType.DYNAMIC && !isNil(dynamaicPropertiesSchema?.[key])) {
+                const { processedInput: itemProcessedInput, errors: itemErrors } = await propsProcessor.applyProcessorsAndValidators(
+                    value,
+                    dynamaicPropertiesSchema[key],
+                    undefined,
+                    false,
+                    undefined,
+                )
+                processedInput[key] = itemProcessedInput
+                if (Object.keys(itemErrors).length > 0) {
+                    errors[key] = itemErrors
+                }
+            }
             if (property.type === PropertyType.ARRAY && property.properties) {
-                const arrayOfObjects = value
+                const arrayOfObjects = arrayZipperProcessor(property, value)
                 const processedArray = []
                 const processedErrors = []
                 for (const item of arrayOfObjects) {
@@ -48,6 +64,7 @@ export const propsProcessor = {
                         property.properties,
                         undefined,
                         false,
+                        undefined,
                     )
                     processedArray.push(itemProcessedInput)
                     processedErrors.push(itemErrors)
@@ -62,7 +79,7 @@ export const propsProcessor = {
             }
             const processor = processors[property.type]
             if (processor) {
-                processedInput[key] = await processor(property, value)
+                processedInput[key] = await processor(property, processedInput[key])
             }
 
             const shouldValidate = key !== AUTHENTICATION_PROPERTY_NAME && property.type !== PropertyType.MARKDOWN
