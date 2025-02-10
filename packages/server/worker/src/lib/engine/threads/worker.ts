@@ -1,4 +1,4 @@
-import { ChildProcess, fork } from 'child_process'
+import { ChildProcess, spawn } from 'child_process'
 import { ApSemaphore, getEngineTimeout } from '@activepieces/server-shared'
 import { ApEnvironment, assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -34,16 +34,20 @@ export class EngineWorker {
 
         // Create the initial workers
         for (let i = 0; i < maxWorkers; i++) {
-            this.workers.push(fork(enginePath, [], {
-                env: options.env,
-                execArgv: [
-                    `--max-old-space-size=${options.resourceLimits.maxOldGenerationSizeMb}`,
-                    `--max-semi-space-size=${options.resourceLimits.maxYoungGenerationSizeMb}`,
-                    `--stack-size=${options.resourceLimits.stackSizeMb * 1024}`, // stack size is in KB
-                ],
-            }))
+            this.workers.push(this.spawnWorker())
             this.availableWorkerIndexes.push(i)
         }
+    }
+
+    private spawnWorker(): ChildProcess {
+        return spawn(this.enginePath, [
+            `--max-old-space-size=${this.options.resourceLimits.maxOldGenerationSizeMb}`,
+            `--max-semi-space-size=${this.options.resourceLimits.maxYoungGenerationSizeMb}`,
+            `--stack-size=${this.options.resourceLimits.stackSizeMb * 1024}`, // stack size is in KB
+        ], {
+            detached: false,
+            env: this.options.env,
+        })
     }
 
     async executeTask(operationType: EngineOperationType, operation: EngineOperation): Promise<WorkerResult> {
@@ -97,7 +101,7 @@ export class EngineWorker {
                             break
                         case 'error':
                             cleanUp(worker, timeoutWorker)
-                            this.workers[workerIndex] = fork(this.enginePath, [], this.options)
+                            this.workers[workerIndex] = this.spawnWorker()
                             reject({ status: EngineResponseStatus.ERROR, response: m.message })
                             break
                     }
@@ -105,7 +109,7 @@ export class EngineWorker {
 
                 worker.on('error', (error) => {
                     cleanUp(worker, timeoutWorker)
-                    this.workers[workerIndex] = fork(this.enginePath, [], this.options)
+                    this.workers[workerIndex] = this.spawnWorker()
                     this.log.info({
                         error,
                     }, 'Worker returned something in stderr')
@@ -125,7 +129,7 @@ export class EngineWorker {
                     }, 'Worker exited')
 
                     cleanUp(worker, timeoutWorker)
-                    this.workers[workerIndex] = fork(this.enginePath, [], this.options)
+                    this.workers[workerIndex] = this.spawnWorker()
 
                     if (isRamIssue) {
                         resolve({
@@ -155,7 +159,7 @@ export class EngineWorker {
                         error: e,
                     }, 'Error terminating worker')
                 }
-                this.workers[workerIndex] = fork(this.enginePath, [], this.options)
+                this.workers[workerIndex] = this.spawnWorker()
             }
             this.log.debug({
                 workerIndex,
