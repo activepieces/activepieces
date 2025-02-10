@@ -12,7 +12,7 @@ export const respaid = createPiece({
   displayName: "Respaid",
   auth: respaidAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: "https://cdn.prod.website-files.com/6633d7e9bd4516c8fbe711be/6642b52b31103ce1aca6428d_Respaid.svg",
+  logoUrl: "https://cdn.activepieces.com/pieces/respaid.jpg",
   authors: [],
   actions: respaidActions,
   triggers: respaidTriggers,
