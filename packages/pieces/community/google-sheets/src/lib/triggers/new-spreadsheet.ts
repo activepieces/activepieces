@@ -1,10 +1,11 @@
-import { createTrigger,Property,PiecePropValueSchema,TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger,PiecePropValueSchema,TriggerStrategy } from '@activepieces/pieces-framework';
 import { googleSheetsAuth } from '../../index';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
 import dayjs from 'dayjs';
 import { google, drive_v3 } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
+import { includeTeamDrivesProp } from '../common/props';
 type Props = {
     includeTeamDrives?: boolean;
 };
@@ -50,12 +51,7 @@ export const newSpreadsheetTrigger = createTrigger({
     description: 'Triggers when a new spreadsheet is created.',
     type: TriggerStrategy.POLLING,
     props: {
-        includeTeamDrives: Property.Checkbox({
-            displayName: 'Include Team Drive Sheets?',
-            description: 'Determines if sheets from Team Drives should be included in the results.',
-            defaultValue: false,
-            required: false,
-        }),
+        includeTeamDrives: includeTeamDrivesProp()
     },
     async onEnable(context) {
         await pollingHelper.onEnable(polling, {

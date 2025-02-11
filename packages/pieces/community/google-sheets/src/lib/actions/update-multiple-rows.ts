@@ -11,6 +11,7 @@ import { isString, MarkdownVariant } from '@activepieces/shared';
 import { getWorkSheetName } from '../triggers/helpers';
 import { google, sheets_v4 } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
+import { commonProps } from '../common/props';
 
 export const updateMultipleRowsAction = createAction({
 	auth: googleSheetsAuth,
@@ -18,23 +19,21 @@ export const updateMultipleRowsAction = createAction({
 	displayName: 'Update Multiple Rows',
 	description: 'Updates multiple rows in a specific spreadsheet.',
 	props: {
-		spreadsheet_id: googleSheetsCommon.spreadsheet_id,
-		include_team_drives: googleSheetsCommon.include_team_drives,
-		sheet_id: googleSheetsCommon.sheet_id,
+		...commonProps,
 		values: Property.DynamicProperties({
 			displayName: 'Values',
 			description: 'The values to update.',
 			required: true,
-			refreshers: ['sheet_id', 'spreadsheet_id'],
-			props: async ({ auth, spreadsheet_id, sheet_id }) => {
-				const sheetId = Number(sheet_id);
-				const spreadsheetId = spreadsheet_id as unknown as string;
+			refreshers: ['sheetId', 'spreadsheetId'],
+			props: async ({ auth, spreadsheetId, sheetId }) => {
+				const sheet_Id = Number(sheetId);
+				const spreadsheet_Id = spreadsheetId as unknown as string;
 				const authentication = auth as OAuth2PropertyValue;
 
 				if (
 					!auth ||
-					(spreadsheet_id ?? '').toString().length === 0 ||
-					(sheet_id ?? '').toString().length === 0
+					(spreadsheet_Id ?? '').toString().length === 0 ||
+					(sheet_Id ?? '').toString().length === 0
 				) {
 					return {};
 				}
@@ -42,9 +41,9 @@ export const updateMultipleRowsAction = createAction({
 				const fields: DynamicPropsValue = {};
 
 				const headers = await googleSheetsCommon.getGoogleSheetRows({
-					spreadsheetId: spreadsheetId,
+					spreadsheetId: spreadsheet_Id,
 					accessToken: getAccessTokenOrThrow(authentication),
-					sheetId: sheetId,
+					sheetId: sheet_Id,
 					rowIndex_s: 1,
 					rowIndex_e: 1,
 				});
@@ -94,13 +93,17 @@ export const updateMultipleRowsAction = createAction({
 	},
 	async run(context) {
 		const {
-			spreadsheet_id: spreadSheetId,
-			sheet_id: sheetId,
+			 spreadsheetId,
+			 sheetId,
 			values: { values: rowValuesInput },
 			as_string: asString,
 		} = context.propsValue;
 
-		const sheetName = await getWorkSheetName(context.auth, spreadSheetId, sheetId);
+		if (!spreadsheetId || !sheetId) {
+			throw new Error('Please select a spreadsheet and sheet first.');
+		}
+
+		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
 		const valueInputOption = asString ? ValueInputOption.RAW : ValueInputOption.USER_ENTERED;
 
 		const authClient = new OAuth2Client();
@@ -137,7 +140,7 @@ export const updateMultipleRowsAction = createAction({
 		}
 
 		const response = await sheets.spreadsheets.values.batchUpdate({
-			spreadsheetId: spreadSheetId,
+			spreadsheetId: spreadsheetId,
 
 			requestBody: {
 				valueInputOption: valueInputOption,

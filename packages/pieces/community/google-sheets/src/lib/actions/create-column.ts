@@ -3,12 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import {
 	columnToLabel,
 	getHeaderRow,
-	googleSheetsCommon,
 	ValueInputOption,
 } from '../common/common';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { getWorkSheetName } from '../triggers/helpers';
+import { commonProps } from '../common/props';
 
 export const createColumnAction = createAction({
 	auth: googleSheetsAuth,
@@ -16,9 +16,7 @@ export const createColumnAction = createAction({
 	displayName: 'Create Spreadsheet Column',
 	description: 'Adds a new column to a spreadsheet.',
 	props: {
-		spreadsheet_id: googleSheetsCommon.spreadsheet_id,
-		include_team_drives: googleSheetsCommon.include_team_drives,
-		sheet_id: googleSheetsCommon.sheet_id,
+		...commonProps,
 		columnName: Property.ShortText({
 			displayName: 'Column Name',
 			required: true,
@@ -26,17 +24,16 @@ export const createColumnAction = createAction({
 		columnIndex: Property.Number({
 			displayName: 'Column Index',
 			description:
-				'The column index starts from 0.For example, if you want to add a column to the third column, enter 2.',
+				'The column index starts from 1.For example, if you want to add a column to the third column, enter 3.Ff the input is less than 1 the column will be added after the last current column.',
 			required: false,
 		}),
 	},
 	async run(context) {
-		const {
-			spreadsheet_id: spreadsheetId,
-			sheet_id: sheetId,
-			columnName,
-			columnIndex,
-		} = context.propsValue;
+		const { spreadsheetId, sheetId, columnName, columnIndex } = context.propsValue;
+
+		if (!spreadsheetId || !sheetId) {
+			throw new Error('Please select a spreadsheet and sheet first.');
+		}
 
 		const authClient = new OAuth2Client();
 		authClient.setCredentials(context.auth);
@@ -44,7 +41,7 @@ export const createColumnAction = createAction({
 
 		let columnLabel;
 
-		if (columnIndex) {
+		if (columnIndex && columnIndex > 0) {
 			await sheets.spreadsheets.batchUpdate({
 				spreadsheetId,
 				requestBody: {
@@ -54,15 +51,15 @@ export const createColumnAction = createAction({
 								range: {
 									sheetId,
 									dimension: 'COLUMNS',
-									startIndex: columnIndex,
-									endIndex: columnIndex + 1,
+									startIndex: columnIndex -1,
+									endIndex: columnIndex,
 								},
 							},
 						},
 					],
 				},
 			});
-			columnLabel = columnToLabel(columnIndex);
+			columnLabel = columnToLabel(columnIndex-1);
 		} else {
 			const headers = await getHeaderRow({
 				spreadsheetId,
@@ -70,9 +67,7 @@ export const createColumnAction = createAction({
 				accessToken: context.auth.access_token,
 			});
 
-			if (!headers) {
-				throw Error('No headers found in the sheet');
-			}
+			const newColumnIndex = headers === undefined ? 0 : headers.length;
 
 			await sheets.spreadsheets.batchUpdate({
 				spreadsheetId,
@@ -83,15 +78,15 @@ export const createColumnAction = createAction({
 								range: {
 									sheetId,
 									dimension: 'COLUMNS',
-									startIndex: headers.length,
-									endIndex: headers.length + 1,
+									startIndex: newColumnIndex,
+									endIndex: newColumnIndex + 1,
 								},
 							},
 						},
 					],
 				},
 			});
-			columnLabel = columnToLabel(headers.length);
+			columnLabel = columnToLabel(newColumnIndex);
 		}
 
 		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
