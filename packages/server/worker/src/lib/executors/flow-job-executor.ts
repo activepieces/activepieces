@@ -1,10 +1,11 @@
 import { exceptionHandler, OneTimeJobData, pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, BeginExecuteFlowOperation, ErrorCode, ExecutionType, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequestType, isNil, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
+import { ActivepiecesError, apId, BeginExecuteFlowOperation, ErrorCode, ExecutionType, FileCompression, FileType, FlowRunStatus, FlowVersion, GetFlowVersionForWorkerRequestType, isNil, ResumeExecuteFlowOperation, ResumePayload } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { fileService } from '../../../../../server/api/src/app/file/file.service'
+import { flowRunRepo } from '../../../../../server/api/src/app/flows/flow-run/flow-run-service'
 import { engineApiService } from '../api/server-api.service'
 import { engineRunner } from '../engine'
 import { workerMachine } from '../utils/machine'
-
 type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
 
 
@@ -44,6 +45,8 @@ async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, e
 }
 
 async function handleMemoryIssueError(jobData: OneTimeJobData, engineToken: string, log: FastifyBaseLogger): Promise<void> {
+    await saveTriggerPayload(jobData, engineToken, log)
+
     await engineApiService(engineToken, log).updateRunStatus({
         runDetails: {
             duration: 0,
@@ -61,6 +64,8 @@ async function handleMemoryIssueError(jobData: OneTimeJobData, engineToken: stri
 
 
 async function handleQuotaExceededError(jobData: OneTimeJobData, engineToken: string, log: FastifyBaseLogger): Promise<void> {
+    await saveTriggerPayload(jobData, engineToken, log)
+
     await engineApiService(engineToken, log).updateRunStatus({
         runDetails: {
             duration: 0,
@@ -76,6 +81,8 @@ async function handleQuotaExceededError(jobData: OneTimeJobData, engineToken: st
     })
 }
 async function handleTimeoutError(jobData: OneTimeJobData, engineToken: string, log: FastifyBaseLogger): Promise<void> {
+    await saveTriggerPayload(jobData, engineToken, log)
+
     const timeoutFlowInSeconds = workerMachine.getSettings().FLOW_TIMEOUT_SECONDS * 1000
     await engineApiService(engineToken, log).updateRunStatus({
         runDetails: {
@@ -91,6 +98,8 @@ async function handleTimeoutError(jobData: OneTimeJobData, engineToken: string, 
 }
 
 async function handleInternalError(jobData: OneTimeJobData, engineToken: string, e: Error, log: FastifyBaseLogger): Promise<void> {
+    await saveTriggerPayload(jobData, engineToken, log)
+
     await engineApiService(engineToken, log).updateRunStatus({
         runDetails: {
             duration: 0,
@@ -105,6 +114,33 @@ async function handleInternalError(jobData: OneTimeJobData, engineToken: string,
         runId: jobData.runId,
     })
     exceptionHandler.handle(e, log)
+}
+
+async function saveTriggerPayload(jobData: OneTimeJobData, engineToken: string, log: FastifyBaseLogger): Promise<void> {
+    const flowRun = await engineApiService(engineToken, log).getRun({
+        runId: jobData.runId,
+    })
+    const logsFileId = flowRun.logsFileId || apId()
+    const payload = JSON.stringify(jobData.payload)
+
+    await fileService(log).save({
+        fileId: logsFileId,
+        projectId: jobData.projectId,
+        data: Buffer.from(payload),
+        size: payload.length,
+        type: FileType.FLOW_RUN_LOG,
+        compression: FileCompression.NONE,
+        metadata: {
+            flowRunId: jobData.runId,
+            projectId: jobData.projectId,
+        },
+    })
+
+    if (isNil(flowRun.logsFileId)) {
+        await flowRunRepo().update(jobData.runId, {
+            logsFileId,
+        })
+    }
 }
 
 export const flowJobExecutor = (log: FastifyBaseLogger) => ({

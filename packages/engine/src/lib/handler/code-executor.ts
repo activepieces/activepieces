@@ -43,7 +43,10 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             inputs: resolvedInput,
         })
 
-        return executionState.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask()
+        return executionState.upsertStep({
+            stepName: action.name,
+            stepOutput: stepOutput.setOutput(output),
+        }).increaseTask()
     }
     catch (e) {
         const handledError = handleExecutionError(e)
@@ -53,7 +56,10 @@ const executeAction: ActionHandler<CodeAction> = async ({ action, executionState
             .setErrorMessage(handledError.message)
 
         return executionState
-            .upsertStep(action.name, failedStepOutput)
+            .upsertStep({
+                stepName: action.name,
+                stepOutput: failedStepOutput,
+            })
             .setVerdict(ExecutionVerdict.FAILED, handledError.verdictResponse)
     }
 }

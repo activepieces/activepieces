@@ -33,15 +33,15 @@ export const testExecutionContext = {
             const stepType = step.type
             switch (stepType) {
                 case ActionType.ROUTER:
-                    flowExecutionContext = flowExecutionContext.upsertStep(
-                        step.name,
-                        RouterStepOutput.create({
+                    flowExecutionContext = flowExecutionContext.upsertStep({
+                        stepName: step.name,
+                        stepOutput: RouterStepOutput.create({
                             input: step.settings,
                             type: stepType,
                             status: StepOutputStatus.SUCCEEDED,
                             ...spreadIfDefined('output', sampleData?.[step.name]),
                         }),
-                    )
+                    })
                     break
                 case ActionType.LOOP_ON_ITEMS: {
                     const { resolvedInput } = await createPropsResolver({
@@ -52,28 +52,31 @@ export const testExecutionContext = {
                         unresolvedInput: step.settings,
                         executionState: flowExecutionContext,
                     })
-                    flowExecutionContext = flowExecutionContext.upsertStep(
-                        step.name,
-                        LoopStepOutput.init({
+                    flowExecutionContext = flowExecutionContext.upsertStep({
+                        stepName: step.name,
+                        stepOutput: LoopStepOutput.init({
                             input: step.settings,
                         }).setOutput({
                             item: resolvedInput.items[0],
                             index: 1,
                             iterations: [],
                         }),
-                    )
+                    })
                     break
                 }
                 case ActionType.PIECE:
                 case ActionType.CODE:
                 case TriggerType.EMPTY:
                 case TriggerType.PIECE:
-                    flowExecutionContext = flowExecutionContext.upsertStep(step.name, GenericStepOutput.create({
-                        input: step.settings,
-                        type: stepType,
-                        status: StepOutputStatus.SUCCEEDED,
-                        ...spreadIfDefined('output', sampleData?.[step.name]),
-                    }))
+                    flowExecutionContext = flowExecutionContext.upsertStep({
+                        stepName: step.name,
+                        stepOutput: GenericStepOutput.create({
+                            input: step.settings,
+                            type: stepType,
+                            status: StepOutputStatus.SUCCEEDED,
+                            ...spreadIfDefined('output', sampleData?.[step.name]),
+                        }),
+                    })
                     break
             }
         }

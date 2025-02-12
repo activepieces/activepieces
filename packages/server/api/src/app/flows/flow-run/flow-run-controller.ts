@@ -5,12 +5,16 @@ import {
     BulkRetryFlowRequestBody,
     ErrorCode,
     ExecutionType,
+    ExecutioOutputFile,
+    FileCompression,
+    FileType,
     FlowRun,
     isNil,
     ListFlowRunsRequestQuery,
     Permission,
     PrincipalType,
     ProgressUpdateType,
+    ResumePayload,
     RetryFlowRequestBody,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
@@ -19,7 +23,9 @@ import {
     FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
+import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { fileService } from '../../file/file.service'
 import { flowRunService } from './flow-run-service'
 
 const DEFAULT_PAGING_LIMIT = 10
@@ -53,6 +59,17 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
     app.all('/:id/requests/:requestId', ResumeFlowRunRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
+
+        await saveResumePayload({
+            flowRunId: req.params.id,
+            resumePayload: {
+                body: req.body,
+                headers,
+                queryParams,
+            },
+            log: req.log,
+        })
+
         await flowRunService(req.log).addToQueue({
             flowRunId: req.params.id,
             requestId: req.params.requestId,
@@ -100,6 +117,56 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
+}
+
+async function saveResumePayload({
+    flowRunId,
+    resumePayload,
+    log,
+}: {
+    flowRunId: ApId
+    resumePayload: ResumePayload
+    log: FastifyBaseLogger
+}) {
+    const flowRun = await flowRunService(log).getOneOrThrow({
+        id: flowRunId,
+        projectId: undefined,
+    })
+
+    if (isNil(flowRun.logsFileId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FLOW_RUN_LOGS_FILE_NOT_FOUND,
+            params: {
+                id: flowRunId,
+            },
+        })
+    }
+
+    const logsFile = await fileService(log).getFileOrThrow({
+        fileId: flowRun.logsFileId,
+    })
+
+    const dataFromBuffer = logsFile.data.toString('utf-8')
+    const executionOutput: ExecutioOutputFile = JSON.parse(
+        dataFromBuffer,
+    )
+    const executionStateWithResumeOutputFile: ExecutioOutputFile = {
+        ...executionOutput,
+        executionState: {
+            ...executionOutput.executionState,
+            resumePayload,
+        },
+    }
+    const executionStateWithResumePayloadString = JSON.stringify(executionStateWithResumeOutputFile)
+
+    await fileService(log).save({
+        fileId: flowRun.logsFileId,
+        projectId: flowRun.projectId,
+        data: Buffer.from(executionStateWithResumePayloadString),
+        size: executionStateWithResumePayloadString.length,
+        type: FileType.FLOW_RUN_LOG,
+        compression: FileCompression.NONE,
+    })
 }
 
 const FlowRunFiltered = Type.Omit(FlowRun, ['terminationReason', 'pauseMetadata'])

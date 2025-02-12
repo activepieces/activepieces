@@ -1,5 +1,5 @@
 import { AppSystemProp, GetRunForWorkerRequest, JobStatus, QueueName, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, NotifyFrontendRequest, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, RemoveStableJobEngineRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, ApId, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, ExecutionState, ExecutioOutputFile, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, NotifyFrontendRequest, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, RemoveStableJobEngineRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -95,12 +95,20 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         let uploadUrl: string | undefined
         const updateLogs = !isNil(executionStateContentLength) && executionStateContentLength > 0
         if (updateLogs) {
+            assertNotNullOrUndefined(executionStateBuffer, 'executionStateBuffer should not be null or undefined')
+            const populatedExecutionFileOutput = await mergeExecutionStates({
+                flowRunId: runId,
+                newExecutionStateBuffer: executionStateBuffer,
+                log: request.log,
+            })
+            const populatedExecutionFileOutputString = JSON.stringify(populatedExecutionFileOutput)
+            
             uploadUrl = await flowRunService(request.log).updateLogsAndReturnUploadUrl({
                 flowRunId: runId,
                 logsFileId: runWithoutSteps.logsFileId ?? undefined,
                 projectId: request.principal.projectId,
-                executionStateString: executionStateBuffer,
-                executionStateContentLength,
+                executionStateString: populatedExecutionFileOutputString,
+                executionStateContentLength: populatedExecutionFileOutputString.length,
             })
         }
         else {
@@ -188,6 +196,44 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
 
 
+}
+
+async function mergeExecutionStates({
+    flowRunId,
+    newExecutionStateBuffer,
+    log,
+}: {
+    flowRunId: ApId
+    newExecutionStateBuffer: string
+    log: FastifyBaseLogger
+}): Promise<ExecutioOutputFile> {
+    const flowRun = await flowRunService(log).getOneOrThrow({
+        id: flowRunId,
+        projectId: undefined,
+    })
+
+    if (isNil(flowRun.logsFileId)) {
+        const newExecutionOutputFile: ExecutioOutputFile = JSON.parse(newExecutionStateBuffer)
+        return newExecutionOutputFile
+    }
+
+    const logsFile = await fileService(log).getFileOrThrow({
+        fileId: flowRun.logsFileId,
+    })
+    const dataFromBuffer = logsFile.data.toString('utf-8')
+    const executionOutput: ExecutioOutputFile = JSON.parse(
+        dataFromBuffer,
+    )
+
+    const newExecutionOutputFile: ExecutioOutputFile = JSON.parse(newExecutionStateBuffer)
+    const populatedExecutionOutputFile: ExecutioOutputFile = {
+        executionState: {
+            steps: newExecutionOutputFile.executionState.steps ?? executionOutput.executionState.steps,
+            resumePayload: newExecutionOutputFile.executionState.resumePayload ?? executionOutput.executionState.resumePayload,
+        },
+    }
+
+    return populatedExecutionOutputFile
 }
 
 async function handleWebhookResponse(runDetails: FlowRunResponse, progressUpdateType: ProgressUpdateType, workerHandlerId: string | null | undefined, httpRequestId: string | null | undefined, log: FastifyBaseLogger): Promise<void> {

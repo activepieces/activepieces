@@ -74,6 +74,7 @@ export type ApErrorParams =
     | ProjectExternalIdAlreadyExistsParams
     | MemoryIssueParams
     | InvalidCustomDomainErrorParams
+    | FlowRunLogsFileNotFoundErrorParams
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
@@ -430,6 +431,10 @@ export type ProjectExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.PRO
     externalId: string
 }>
 
+export type FlowRunLogsFileNotFoundErrorParams = BaseErrorParams<ErrorCode.FLOW_RUN_LOGS_FILE_NOT_FOUND, {
+    id: FlowRunId
+}>
+
 export enum ErrorCode {
     INVALID_CUSTOM_DOMAIN = 'INVALID_CUSTOM_DOMAIN',
     NO_CHAT_RESPONSE = 'NO_CHAT_RESPONSE',
@@ -454,6 +459,7 @@ export enum ErrorCode {
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
     FLOW_IN_USE = 'FLOW_IN_USE',
     FLOW_RUN_NOT_FOUND = 'FLOW_RUN_NOT_FOUND',
+    FLOW_RUN_LOGS_FILE_NOT_FOUND = 'FLOW_RUN_LOGS_FILE_NOT_FOUND',
     INVALID_API_KEY = 'INVALID_API_KEY',
     INVALID_APP_CONNECTION = 'INVALID_APP_CONNECTION',
     INVALID_BEARER_TOKEN = 'INVALID_BEARER_TOKEN',

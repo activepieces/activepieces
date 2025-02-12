@@ -12,9 +12,9 @@ const propsResolverService = createPropsResolver({
 })
 
 const executionState = FlowExecutorContext.empty()
-    .upsertStep(
-        'trigger',
-        GenericStepOutput.create({
+    .upsertStep({
+        stepName: 'trigger',
+        stepOutput: GenericStepOutput.create({
             type: TriggerType.PIECE,
             status: StepOutputStatus.SUCCEEDED,
             input: {},
@@ -24,9 +24,11 @@ const executionState = FlowExecutorContext.empty()
                 price: 6.4,
             },
         }),
+    },
     )
-    .upsertStep('step_1',
-        GenericStepOutput.create({
+    .upsertStep({
+        stepName: 'step_1',
+        stepOutput: GenericStepOutput.create({
 
             type: ActionType.PIECE,
             status: StepOutputStatus.SUCCEEDED,
@@ -34,75 +36,83 @@ const executionState = FlowExecutorContext.empty()
             output: {
                 success: true,
             },
-        }))
-    .upsertStep('step_2', GenericStepOutput.create({
-        type: ActionType.PIECE,
-        status: StepOutputStatus.SUCCEEDED,
-        input: {},
-        output: 'memory://{"fileName":"hello.png","data":"iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z"}',
-    }))
+        }),
+    })
+    .upsertStep({
+        stepName: 'step_2',
+        stepOutput: GenericStepOutput.create({
+            type: ActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: 'memory://{"fileName":"hello.png","data":"iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z"}',
+        }),
+    })
 
 
 
 describe('Props resolver', () => {
     test('Test resolve inside nested loops', async () => {
 
-        const modifiedExecutionState = executionState.upsertStep('step_3', GenericStepOutput.create({
-            type: ActionType.LOOP_ON_ITEMS,
-            status: StepOutputStatus.SUCCEEDED,
-            input: {},
-            output: {
-                iterations: [
-                    {
-                        'step_8': GenericStepOutput.create({
-                            type: ActionType.PIECE,
-                            status: StepOutputStatus.SUCCEEDED,
-                            input: {},
-                            output: {
-                                delayForInMs: 20000,
-                                success: true,
-                            },
-                        }),
-                        'step_4': GenericStepOutput.create({
-                            type: ActionType.LOOP_ON_ITEMS,
-                            status: StepOutputStatus.SUCCEEDED,
-                            input: {},
-                            output: {
-                                iterations: [
-                                    {
-                                        'step_7': GenericStepOutput.create({
-                                            'type': ActionType.PIECE,
-                                            'status': StepOutputStatus.SUCCEEDED,
-                                            'input': {
-                                                'unit': 'seconds',
-                                                'delayFor': '20',
-                                            },
-                                            'output': {
-                                                'delayForInMs': 20000,
-                                                'success': true,
-                                            },
-                                        }),
-                                    },
-                                ],
-                                item: 1,
-                                index: 0,
-                            },
-                        }),
-                    },
-                ],
-                item: 1,
-                index: 0,
-            },
-        })).setCurrentPath(StepExecutionPath.empty()
-            .loopIteration({
-                loopName: 'step_3',
-                iteration: 0,
-            })
-            .loopIteration({
-                loopName: 'step_4',
-                iteration: 0,
+        const modifiedExecutionState = executionState.upsertStep({
+            stepName: 'step_3',
+            stepOutput: GenericStepOutput.create({
+                type: ActionType.LOOP_ON_ITEMS,
+                status: StepOutputStatus.SUCCEEDED,
+                input: {},
+                output: {
+                    iterations: [
+                        {
+                            'step_8': GenericStepOutput.create({
+                                type: ActionType.PIECE,
+                                status: StepOutputStatus.SUCCEEDED,
+                                input: {},
+                                output: {
+                                    delayForInMs: 20000,
+                                    success: true,
+                                },
+                            }),
+                            'step_4': GenericStepOutput.create({
+                                type: ActionType.LOOP_ON_ITEMS,
+                                status: StepOutputStatus.SUCCEEDED,
+                                input: {},
+                                output: {
+                                    iterations: [
+                                        {
+                                            'step_7': GenericStepOutput.create({
+                                                'type': ActionType.PIECE,
+                                                'status': StepOutputStatus.SUCCEEDED,
+                                                'input': {
+                                                    'unit': 'seconds',
+                                                    'delayFor': '20',
+                                                },
+                                                'output': {
+                                                    'delayForInMs': 20000,
+                                                    'success': true,
+                                                },
+                                            }),
+                                        },
+                                    ],
+                                    item: 1,
+                                    index: 0,
+                                },
+                            }),
+                        },
+                    ],
+                    item: 1,
+                    index: 0,
+                },
             }),
-        )
+        })
+            .setCurrentPath(StepExecutionPath.empty()
+                .loopIteration({
+                    loopName: 'step_3',
+                    iteration: 0,
+                })
+                .loopIteration({
+                    loopName: 'step_4',
+                    iteration: 0,
+                }),
+            )
 
         const { resolvedInput: secondLevelResolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{step_7.delayForInMs}}', executionState: modifiedExecutionState })
         expect(secondLevelResolvedInput).toEqual(20000)
