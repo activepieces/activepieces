@@ -130,7 +130,7 @@ export const contactIdProp = (displayName: string, required = true) =>
 				if (contact.role === 'user') {
 					options.push({
 						value: contact.id,
-						label: contact.email,
+						label: `${contact.name ?? ''}, ${contact.email}, ${contact.external_id ?? ''}`,
 					});
 				}
 			}
