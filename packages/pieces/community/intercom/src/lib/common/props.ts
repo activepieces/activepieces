@@ -25,9 +25,9 @@ export const conversationIdProp = (displayName: string, required = true) =>
 			for await (const conversation of response) {
 				options.push({
 					value: conversation.id,
-					label: `${conversation.source.author.email}, ${conversation.title ?? ''}, ${
-						conversation.id
-					}`,
+					label: `${conversation.source.author.email}${
+						conversation.title ? `, ${conversation.title}` : ''
+					}, ${conversation.id}`,
 				});
 			}
 
