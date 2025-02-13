@@ -18,7 +18,7 @@ export const platformBillingService = (log: FastifyBaseLogger) => ({
         const platformBilling = await platformBillingRepo().findOneBy({ platformId })
         if (isNil(platformBilling)) {
             const newPlatformBilling = await createInitialBilling(platformId, log)
-            await updateAllProjectsLimits(platformId, newPlatformBilling.tasksLimit, newPlatformBilling.aiCreditsLimit)
+            await updateAllProjectsLimits(platformId, newPlatformBilling.tasksLimit)
             return newPlatformBilling
         }
         return platformBilling
@@ -38,6 +38,15 @@ export const platformBillingService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
+        if (platformBilling.stripeSubscriptionStatus !== ApSubscriptionStatus.ACTIVE) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+
+                }
+            })
+        }
+        await updateAllProjectsLimits(platformId, tasksLimit);
         return platformBillingRepo().save({
             tasksLimit,
             id: platformBilling.id,
@@ -68,19 +77,6 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
         user,
         platformId,
     )
-    // TODO(@amrabuaza) remove this once we have migrated all platform on the cloud
-    const isEnterpriseCustomer = platformUtils.isEnterpriseCustomerOnCloud(platform)
-    if (isEnterpriseCustomer) {
-        return platformBillingRepo().save({
-            id: apId(),
-            platformId,
-            tasksLimit: undefined,
-            aiCreditsLimit: undefined,
-            includedTasks: 50000,
-            includedAiCredits: 0,
-            stripeCustomerId,
-        })
-    }
     return platformBillingRepo().save({
         id: apId(),
         platformId,
@@ -92,7 +88,7 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
     })
 }
 
-async function updateAllProjectsLimits(platformId: string, tasksLimit: number | undefined, aiCreditsLimit: number | undefined) {
+async function updateAllProjectsLimits(platformId: string, tasksLimit: number | undefined) {
     const platform = await platformService.getOneOrThrow(platformId)
     if (!platform.manageProjectsEnabled) {
         return
@@ -105,7 +101,6 @@ async function updateAllProjectsLimits(platformId: string, tasksLimit: number | 
     for (const project of projects) {
         await projectLimitsService.upsert({
             tasks: tasksLimit,
-            aiTokens: aiCreditsLimit,
         }, project.id)
     }
 }
