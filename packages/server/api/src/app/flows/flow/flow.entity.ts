@@ -5,6 +5,7 @@ import {
     FlowVersion,
     Folder,
     Project,
+    TableWebhook,
     TriggerEvent,
 } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
@@ -21,6 +22,7 @@ export type FlowSchema = Flow & {
     folder?: Folder
     events: TriggerEvent[]
     publishedVersion?: FlowVersion
+    tableWebhooks: TableWebhook[]
 }
 
 export const FlowEntity = new EntitySchema<FlowSchema>({
@@ -113,6 +115,11 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
                 referencedColumnName: 'id',
                 foreignKeyConstraintName: 'fk_flow_published_version',
             },
+        },
+        tableWebhooks: {
+            type: 'one-to-many',
+            target: 'table_webhook',
+            inverseSide: 'flow',
         },
     },
 })

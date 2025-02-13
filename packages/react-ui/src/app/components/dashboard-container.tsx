@@ -1,13 +1,16 @@
+import { createContext } from 'vm';
+
 import { t } from 'i18next';
 import {
   AlertCircle,
+  Database,
   Link2,
   Logs,
   Package,
   Workflow,
   Wrench,
 } from 'lucide-react';
-import { createContext, useState } from 'react';
+import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
@@ -24,6 +27,7 @@ import { Sidebar, SidebarLink } from './sidebar';
 
 type DashboardContainerProps = {
   children: React.ReactNode;
+  hideHeader?: boolean;
 };
 
 const ProjectChangedRedirector = ({
@@ -65,6 +69,13 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
       icon: Workflow,
       showInEmbed: true,
       hasPermission: checkAccess(Permission.READ_FLOW),
+    },
+    {
+      to: authenticationSession.appendProjectRoutePrefix('/tables'),
+      label: t('Tables'),
+      icon: Database,
+      showInEmbed: true,
+      hasPermission: checkAccess(Permission.READ_TABLE),
     },
     {
       to: authenticationSession.appendProjectRoutePrefix('/runs'),
