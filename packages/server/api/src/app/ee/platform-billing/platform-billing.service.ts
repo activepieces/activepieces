@@ -89,7 +89,7 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
 
 async function updateAllProjectsLimits(platformId: string, tasksLimit: number | undefined) {
     const platform = await platformService.getOneOrThrow(platformId)
-    if (!platform.manageProjectsEnabled) {
+    if (platform.manageProjectsEnabled) {
         return
     }
     const projects = await projectRepo().find({
