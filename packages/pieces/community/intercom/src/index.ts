@@ -35,6 +35,7 @@ import { addOrRemoveTagOnContactAction } from './lib/actions/add-remove-tag-on-c
 import { createArticleAction } from './lib/actions/create-article';
 import { createConversationAction } from './lib/actions/create-conversation';
 import { getConversationAction } from './lib/actions/get-conversation';
+import { createOrUpdateLeadAction } from './lib/actions/create-update-lead';
 
 export const intercomAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.{region}.com/oauth',
@@ -102,6 +103,7 @@ export const intercom = createPiece({
 		createArticleAction,
 		createConversationAction,
 		getConversationAction,
+		createOrUpdateLeadAction,
 		createCustomApiCallAction({
 			baseUrl: (auth) => `https://api.${(auth as OAuth2PropertyValue).props?.['region']}.io`,
 			auth: intercomAuth,

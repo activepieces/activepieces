@@ -22,7 +22,7 @@ export const createUserAction = createAction({
 			required: false,
 		}),
 		name: Property.ShortText({
-			displayName: 'FullName',
+			displayName: 'Full Name',
 			required: false,
 		}),
 		customAttributes: Property.Object({

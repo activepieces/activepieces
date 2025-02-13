@@ -14,7 +14,7 @@ export const createOrUpdateUserAction = createAction({
 			required: true,
 		}),
 		name: Property.ShortText({
-			displayName: 'FullName',
+			displayName: 'Full Name',
 			required: false,
 		}),
 		userId: Property.ShortText({
