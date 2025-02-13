@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { publishPieceFromFolder, findPieceSourceDirectory } from "../utils/piece-utils";
+import { publishPieceFromFolder, findPiece, assertPieceExists } from '../utils/piece-utils';
 import chalk from "chalk";
 import inquirer from 'inquirer';
 import * as dotenv from 'dotenv';
@@ -7,11 +7,8 @@ import * as dotenv from 'dotenv';
 dotenv.config({path: 'packages/server/api/.env'});
 
 async function publishPieces(apiUrl: string, apiKey: string, pieceName: string) {
-    const piecesFolder = await findPieceSourceDirectory (pieceName);
-    if (piecesFolder.length === 0) {
-        console.error(chalk.red(`Piece '${pieceName}' not found.`));
-        process.exit(1);
-    }
+    const piecesFolder = await findPiece(pieceName);
+    assertPieceExists(piecesFolder)
     await publishPieceFromFolder(piecesFolder, apiUrl, apiKey);
 }
 

@@ -1,15 +1,11 @@
 import { Command } from "commander";
-import { buildPiece, findPieceSourceDirectory } from "../utils/piece-utils";
+import { buildPiece, findPiece } from '../utils/piece-utils';
 import chalk from "chalk";
 import inquirer from "inquirer";
 
 async function buildPieces(pieceName: string) {
-    const piecesFolder = await findPieceSourceDirectory(pieceName);
-    if (!piecesFolder) {
-        console.error(chalk.red(`Piece '${pieceName}' not found.`));
-        process.exit(1);
-    }
-    const { outputFolder } = await buildPiece(piecesFolder);
+    const pieceFolder = await findPiece(pieceName);
+    const { outputFolder } = await buildPiece(pieceFolder);
     console.info(chalk.green(`Piece '${pieceName}' built and packed successfully at ${outputFolder}.`));
 }
 
