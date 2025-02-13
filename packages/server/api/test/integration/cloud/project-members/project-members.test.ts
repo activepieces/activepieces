@@ -191,7 +191,7 @@ describe('Project Member API', () => {
     describe('List project members Endpoint', () => {
         describe('List project members from api', () => {
             it('should return project members', async () => {
-                const { mockApiKey, mockProject, mockMember } = await createBasicEnvironment()
+                const { mockApiKey, mockProject, mockMember, mockPlatform } = await createBasicEnvironment()
 
                 const projectRole = await databaseConnection().getRepository('project_role').findOneByOrFail({ name: DefaultProjectRole.VIEWER }) as ProjectRole
 
@@ -199,6 +199,7 @@ describe('Project Member API', () => {
                     projectId: mockProject.id,
                     userId: mockMember.id,
                     projectRoleId: projectRole.id,
+                    platformId: mockPlatform.id,
                 })
                 await databaseConnection()
                     .getRepository('project_member')
