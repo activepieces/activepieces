@@ -4,7 +4,6 @@ import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { repoFactory } from '../../core/db/repo-factory'
 import { platformService } from '../../platform/platform.service'
-import { platformUtils } from '../../platform/platform.utils'
 import { projectRepo } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
@@ -43,10 +42,10 @@ export const platformBillingService = (log: FastifyBaseLogger) => ({
                 code: ErrorCode.AUTHORIZATION,
                 params: {
 
-                }
+                },
             })
         }
-        await updateAllProjectsLimits(platformId, tasksLimit);
+        await updateAllProjectsLimits(platformId, tasksLimit)
         return platformBillingRepo().save({
             tasksLimit,
             id: platformBilling.id,
