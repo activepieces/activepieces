@@ -50,7 +50,7 @@ export const newPayout = createTrigger({
     onEnable: respaidTriggersCommon.onEnable('new_payout'),
     onDisable: respaidTriggersCommon.onDisable('new_payout'),
     async run(context) {
-        const payload = context.payload as PayoutTriggerPayload; 
-        return [payload];
+        const payload = respaidTriggersCommon.getPayload(context);
+        return [payload as PayoutTriggerPayload];
     },
 })

@@ -42,7 +42,7 @@ export const newDisputedCase = createTrigger({
     onEnable: respaidTriggersCommon.onEnable('new_disputed_case'),
     onDisable: respaidTriggersCommon.onDisable('new_disputed_case'),
     async run(context) {
-        const payload = context.payload as NewDisputedCaseTriggerPayload; 
-        return [payload];
+        const payload = respaidTriggersCommon.getPayload(context);
+        return [payload as NewDisputedCaseTriggerPayload];
     },
 })

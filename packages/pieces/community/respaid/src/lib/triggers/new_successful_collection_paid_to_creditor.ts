@@ -36,7 +36,7 @@ export const newSuccessfulCollectionPaidToCreditor = createTrigger({
     onEnable: respaidTriggersCommon.onEnable('new_successful_collection_paid_to_creditor'),
     onDisable: respaidTriggersCommon.onDisable('new_successful_collection_paid_to_creditor'),
     async run(context) {
-        const payload = context.payload as NewPaidTriggerPayload; 
-        return [payload];
+        const payload = respaidTriggersCommon.getPayload(context);
+        return [payload as NewPaidTriggerPayload];
     },
 })
