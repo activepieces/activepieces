@@ -36,6 +36,7 @@ import { appConnectionUtils } from '@/features/connections/lib/app-connections-u
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import {
@@ -45,7 +46,6 @@ import {
   Permission,
   PlatformRole,
 } from '@activepieces/shared';
-
 function AppConnectionsPage() {
   const [refresh, setRefresh] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -54,7 +54,7 @@ function AppConnectionsPage() {
   >([]);
   const { toast } = useToast();
   const { checkAccess } = useAuthorization();
-  const userPlatformRole = authenticationSession.getUserPlatformRole();
+  const userPlatformRole = userHooks.getCurrentUserPlatformRole();
   const location = useLocation();
   const { pieces } = piecesHooks.usePieces({});
   const pieceOptions = (pieces ?? []).map((piece) => ({

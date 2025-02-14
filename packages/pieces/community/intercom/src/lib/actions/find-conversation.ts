@@ -1,7 +1,6 @@
 import { intercomAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { intercomClient } from '../common';
-import { Operators } from 'intercom-client';
+import { intercomClient, Operator } from '../common';
 import dayjs from 'dayjs';
 
 export const findConversationAction = createAction({
@@ -66,60 +65,50 @@ export const findConversationAction = createAction({
         const { searchField, matchType, searchTerm, status, updateAfter, updateBefore } =
             context.propsValue;
 
-        let operator = Operators.EQUALS;
-        if (matchType === 'contains') {
-            operator = Operators.CONTAINS;
-        }
-        if (matchType === 'equals') {
-            operator = Operators.EQUALS;
-        }
-        if (matchType === 'starts_with') {
-            operator = Operators.STARTS_WITH;
-        }
+        const operator = matchType === 'contains' ? '~' : matchType === 'starts_with' ? '^' : '=';
+
 
         const client = intercomClient(context.auth);
 
         const filter = [
             {
                 field: searchField,
-                operator: operator as Operators,
+                operator: operator as Operator,
                 value: searchTerm,
             },
         ];
         if (status) {
             filter.push({
                 field: 'state',
-                operator: Operators.EQUALS,
+                operator: "=",
                 value: status,
             });
         }
         if (updateAfter) {
             filter.push({
                 field: 'updated_at',
-                operator: Operators.GREATER_THAN,
+                operator: '>',
                 value: dayjs(updateAfter).unix().toString(),
             });
         }
         if (updateBefore) {
             filter.push({
                 field: 'updated_at',
-                operator: Operators.LESS_THAN,
+                operator: "<",
                 value: dayjs(updateBefore).unix().toString(),
             });
         }
 
         const response = await client.conversations.search({
-            data: {
-                query: {
-                    operator: Operators.AND,
-                    value: filter,
-                },
-            },
+            query: {
+				operator: 'AND',
+				value: filter,
+			},
         });
 
         return {
-            found: response.total_count > 0,
-            conversation: response.conversations,
+            found: response.data.length > 0,
+            conversation: response.data.length > 0 ? response.data[0] : {},
         };
     },
 });
