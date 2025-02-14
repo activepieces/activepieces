@@ -36,7 +36,7 @@ export const newSuccessfulCollectionViaLegalOfficer = createTrigger({
     onEnable: respaidTriggersCommon.onEnable('new_successful_collection_via_legal_officer'),
     onDisable: respaidTriggersCommon.onDisable('new_successful_collection_via_legal_officer'),
     async run(context) {
-        const payload = context.payload as NewPaidTriggerPayload; 
-        return [payload];
+        const payload = respaidTriggersCommon.getPayload(context);
+        return [payload as NewPaidTriggerPayload];
     },
 })

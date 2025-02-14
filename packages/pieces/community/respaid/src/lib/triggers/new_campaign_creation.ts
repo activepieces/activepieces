@@ -44,7 +44,7 @@ export const newCampaignCreation = createTrigger({
     onEnable: respaidTriggersCommon.onEnable('new_campaign_creation'),
     onDisable: respaidTriggersCommon.onDisable('new_campaign_creation'),
     async run(context) {
-        const payload = context.payload as NewCampaignTriggerPayload; 
-        return [payload];
+        const payload = respaidTriggersCommon.getPayload(context);
+        return [payload as NewCampaignTriggerPayload];
     },
 })

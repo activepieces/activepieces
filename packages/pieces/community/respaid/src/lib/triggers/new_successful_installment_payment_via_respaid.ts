@@ -44,7 +44,7 @@ export const newSuccessfulInstallmentPaymentViaRespaid = createTrigger({
     onEnable: respaidTriggersCommon.onEnable('new_successful_installment_payment_via_respaid'),
     onDisable: respaidTriggersCommon.onDisable('new_successful_installment_payment_via_respaid'),
     async run(context) {
-        const payload = context.payload as NewPaidTriggerPayload; 
-        return [payload];
+        const payload = respaidTriggersCommon.getPayload(context);
+        return [payload as NewPaidTriggerPayload];
     },
 })

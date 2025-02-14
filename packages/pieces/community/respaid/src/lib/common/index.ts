@@ -67,4 +67,9 @@ export const respaidTriggersCommon = {
       throw new Error('Failed to unsubscribe to webhook');
     }
   },
+  getPayload: (context: TriggerHookContext<SecretTextProperty<true>, Record<string, never>, TriggerStrategy.WEBHOOK>) => {
+    return typeof context.payload.body === 'string' 
+    ? JSON.parse(context.payload.body) 
+    : context.payload;
+  }
 }

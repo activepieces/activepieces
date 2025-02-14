@@ -37,7 +37,7 @@ export const newCancelledCase = createTrigger({
     onEnable: respaidTriggersCommon.onEnable('new_cancelled_case'),
     onDisable: respaidTriggersCommon.onDisable('new_cancelled_case'),
     async run(context) {
-        const payload = context.payload as NewCancelledCaseTriggerPayload; 
-        return [payload];
+        const payload = respaidTriggersCommon.getPayload(context);
+        return [payload as NewCancelledCaseTriggerPayload];
     },
 })
