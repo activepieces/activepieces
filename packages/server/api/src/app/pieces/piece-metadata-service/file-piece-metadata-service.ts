@@ -112,11 +112,6 @@ export const FilePieceMetadataService = (_log: FastifyBaseLogger): PieceMetadata
                 projectId,
             })
         },
-
-        async delete(): Promise<void> {
-            throw new Error('Deleting pieces is not supported in development mode')
-        },
-
         async create(): Promise<PieceMetadataModel> {
             throw new Error('Creating pieces is not supported in development mode')
         },
