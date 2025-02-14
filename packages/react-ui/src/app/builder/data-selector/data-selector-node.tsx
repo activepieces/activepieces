@@ -10,7 +10,7 @@ import { DataSelectorNodeContent } from './data-selector-node-content';
 import { MentionTreeNode } from './data-selector-utils';
 import { TestStepSection } from './test-step-section';
 
-type DataSelectoNodeProps = {
+type DataSelectorNodeProps = {
   node: MentionTreeNode;
   depth: number;
   searchTerm: string;
@@ -20,7 +20,7 @@ const DataSelectorNode = ({
   node,
   depth,
   searchTerm,
-}: DataSelectoNodeProps) => {
+}: DataSelectorNodeProps) => {
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {

@@ -1542,6 +1542,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "psgpsg16",
+      "name": "psgpsg16",
+      "avatar_url": "https://avatars.githubusercontent.com/u/188385621?v=4",
+      "profile": "https://github.com/psgpsg16",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
