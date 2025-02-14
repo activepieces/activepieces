@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { commonProps, intercomClient } from '../common';
 import { ticketIdProp, ticketPropertiesProp, ticketTypeIdProp } from '../common/props';
 import { UpdateTicketRequest } from 'intercom-client/api';
+
 import dayjs from 'dayjs';
 
 export const updateTicketAction = createAction({

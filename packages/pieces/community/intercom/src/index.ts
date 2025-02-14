@@ -119,20 +119,30 @@ export const intercom = createPiece({
 		}),
 	],
 	events: {
-		parseAndReply: ({ payload }) => {
-			const payloadBody = payload.body as PayloadBody;
-			return {
-				event: payloadBody.topic,
-				identifierValue: payloadBody.app_id,
-			};
-		},
-		verify: ({ payload, webhookSecret }) => {
-			const signature = payload.headers['x-hub-signature'];
-			const hmac = crypto.createHmac('sha1', webhookSecret);
-			hmac.update(`${payload.rawBody}`);
-			const computedSignature = `sha1=${hmac.digest('hex')}`;
-			return signature === computedSignature;
-		},
+    parseAndReply: ({ payload }) => {
+      const payloadBody = payload.body as PayloadBody;
+      return {
+        event: payloadBody.topic,
+        identifierValue: payloadBody.app_id,
+      };
+    },
+    verify: ({ payload, webhookSecret }) => {
+      const signature = payload.headers['x-hub-signature'];
+      let hmac: crypto.Hmac;
+      if (typeof webhookSecret === 'string') {
+        hmac = crypto.createHmac('sha1', webhookSecret);
+      } else {
+        const app_id = (payload.body as PayloadBody).app_id;
+        const webhookSecrets = webhookSecret as Record<string, string>;
+        if (!(app_id in webhookSecrets)) {
+          return false;
+        }
+        hmac = crypto.createHmac('sha1', webhookSecrets[app_id]);
+      }
+      hmac.update(`${payload.rawBody}`);
+      const computedSignature = `sha1=${hmac.digest('hex')}`;
+      return signature === computedSignature;
+    },
 	},
 });
 
