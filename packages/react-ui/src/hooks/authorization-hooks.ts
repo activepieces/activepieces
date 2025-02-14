@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { platformApi } from '@/lib/platforms-api';
@@ -42,7 +43,7 @@ export const useAuthorization = () => {
 };
 
 export const useShowPlatformAdminDashboard = () => {
-  const platformRole = authenticationSession.getUserPlatformRole();
+  const platformRole = userHooks.getCurrentUserPlatformRole();
   const { data: isPlatformDemo } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_PLATFORM_DEMO,
   );
