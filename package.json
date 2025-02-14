@@ -179,7 +179,7 @@
     "i18next-icu": "2.3.0",
     "imap": "0.8.17",
     "imapflow": "1.0.152",
-    "intercom-client": "5.0.0",
+    "intercom-client": "6.0.0",
     "intl-messageformat": "10.5.14",
     "ioredis": "5.4.1",
     "is-base64": "1.1.0",
