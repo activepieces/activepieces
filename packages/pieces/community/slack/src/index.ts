@@ -86,7 +86,7 @@ export const slack = createPiece({
       const timestamp = payload.headers['x-slack-request-timestamp'];
       const signature = payload.headers['x-slack-signature'];
       const signatureBaseString = `v0:${timestamp}:${payload.rawBody}`;
-      const hmac = crypto.createHmac('sha256', webhookSecret);
+      const hmac = crypto.createHmac('sha256', webhookSecret as string);
       hmac.update(signatureBaseString);
       const computedSignature = `v0=${hmac.digest('hex')}`;
       return signature === computedSignature;

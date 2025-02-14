@@ -126,9 +126,9 @@ export const PieceMetadataEntity =
           },
           archiveId: {
               type: 'one-to-one',
-              target: 'file',
-              onDelete: 'NO ACTION',
-              onUpdate: 'NO ACTION',
+              target: 'file', 
+              onDelete: 'RESTRICT',
+              onUpdate: 'RESTRICT',
               joinColumn: {
                   name: 'archiveId',
                   referencedColumnName: 'id',
