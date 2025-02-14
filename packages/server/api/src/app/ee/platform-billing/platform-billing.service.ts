@@ -12,6 +12,11 @@ import { stripeHelper } from './stripe-helper'
 
 const platformBillingRepo = repoFactory(PlatformBillingEntity)
 
+type UpdatePlatformBillingParams = {
+    platformId: string
+    tasksLimit: number | undefined
+}
+
 export const platformBillingService = (log: FastifyBaseLogger) => ({
     async getOrCreateForPlatform(platformId: string): Promise<PlatformBilling> {
         const platformBilling = await platformBillingRepo().findOneBy({ platformId })
@@ -23,31 +28,21 @@ export const platformBillingService = (log: FastifyBaseLogger) => ({
         return platformBilling
     },
 
-    async update(
-        { platformId, tasksLimit }: { platformId: string, tasksLimit: number | undefined },
-    ): Promise<PlatformBilling> {
-        const platformBilling = await platformBillingRepo().findOneBy({ platformId })
+    async update(params: UpdatePlatformBillingParams): Promise<PlatformBilling> {
+        const platformBilling = await platformBillingRepo().findOneBy({ platformId: params.platformId })
         if (isNil(platformBilling)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    entityId: platformId,
+                    entityId: params.platformId,
                     entityType: 'PlatformBilling',
                     message: 'Platform billing not found by platform id',
                 },
             })
         }
-        if (platformBilling.stripeSubscriptionStatus !== ApSubscriptionStatus.ACTIVE) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
-                params: {
-
-                },
-            })
-        }
-        await updateAllProjectsLimits(platformId, tasksLimit)
+        await updateAllProjectsLimits(params.platformId, params.tasksLimit)
         return platformBillingRepo().save({
-            tasksLimit,
+            tasksLimit: params.tasksLimit,
             id: platformBilling.id,
         })
     },

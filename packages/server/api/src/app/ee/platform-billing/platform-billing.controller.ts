@@ -1,5 +1,5 @@
 import { ApSubscriptionStatus, DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
-import { assertNotNullOrUndefined, PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { FastifyRequest } from 'fastify'
@@ -12,7 +12,7 @@ import { BillingEntityType, usageService } from './usage/usage-service'
 
 export const platformBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
-    
+
     fastify.get('/info', {
         config: {
             allowedPrincipals: [PrincipalType.USER],
@@ -51,7 +51,7 @@ export const platformBillingController: FastifyPluginAsyncTypebox = async (fasti
                 })
                 return
             }
-            
+
             await platformBillingService(request.log).update({ platformId: request.principal.platform.id, tasksLimit: DEFAULT_FREE_PLAN_LIMIT.tasks })
             return {
                 paymentLink: await stripeHelper(request.log).createCheckoutUrl(projectBilling.stripeCustomerId),
@@ -73,6 +73,15 @@ export const platformBillingController: FastifyPluginAsyncTypebox = async (fasti
         },
         async (request) => {
             const platformId = request.principal.platform.id
+            const platformBilling = await platformBillingService(request.log).getOrCreateForPlatform(platformId)
+            if (platformBilling.stripeSubscriptionStatus !== ApSubscriptionStatus.ACTIVE) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.AUTHORIZATION,
+                    params: {
+                        message: 'Platform does not have an active subscription',
+                    },
+                })
+            }
             return platformBillingService(request.log).update({ platformId, tasksLimit: request.body.tasksLimit })
         },
     )
