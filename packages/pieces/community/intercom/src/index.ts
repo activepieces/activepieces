@@ -1,14 +1,12 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
-  OAuth2PropertyValue,
-  PieceAuth,
-  createPiece,
-  Property,
+	OAuth2PropertyValue,
+	PieceAuth,
+	createPiece,
+	Property,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { createContact } from './lib/actions/create-contact.action';
-import { getOrCreateContact } from './lib/actions/create-or-get-contact.action';
-import { sendMessage } from './lib/actions/send-message.action';
+import { sendMessageAction } from './lib/actions/send-message.action';
 import crypto from 'node:crypto';
 import { noteAddedToConversation } from './lib/triggers/note-added-to-conversation';
 import { addNoteToConversation } from './lib/actions/add-note-to-conversation';
@@ -23,71 +21,104 @@ import { conversationUnsnoozed } from './lib/triggers/conversation-unsnoozed';
 import { conversationRated } from './lib/triggers/conversation-rated';
 import { conversationPartTagged } from './lib/triggers/conversation-part-tagged';
 import { findConversationAction } from './lib/actions/find-conversation';
+import { addNoteToUserAction } from './lib/actions/add-note-to-user';
+import { findUserAction } from './lib/actions/find-user';
+import { findLeadAction } from './lib/actions/find-lead';
+import { addOrRemoveTagOnConversationAction } from './lib/actions/add-remove-tag-on-conversation';
+import { addOrRemoveTagOnCompanyAction } from './lib/actions/add-remove-tag-on-company';
+import { createUserAction } from './lib/actions/create-user';
+import { createOrUpdateUserAction } from './lib/actions/create-update-user';
+import { listAllTagsAction } from './lib/actions/list-all-tags';
+import { newLeadTrigger } from './lib/triggers/new-lead';
+import { newCompanyTrigger } from './lib/triggers/new-company';
+import { addOrRemoveTagOnContactAction } from './lib/actions/add-remove-tag-on-contact';
+import { createArticleAction } from './lib/actions/create-article';
+import { createConversationAction } from './lib/actions/create-conversation';
+import { getConversationAction } from './lib/actions/get-conversation';
+import { createOrUpdateLeadAction } from './lib/actions/create-update-lead';
+import { createTicketAction } from './lib/actions/create-ticket';
+import { updateTicketAction } from './lib/actions/update-ticket';
+import { findCompanyAction } from './lib/actions/find-company';
 
 export const intercomAuth = PieceAuth.OAuth2({
-  authUrl: 'https://app.{region}.com/oauth',
-  tokenUrl: 'https://api.{region}.io/auth/eagle/token',
-  required: true,
-  scope: [],
-  props: {
-    region: Property.StaticDropdown({
-      displayName: 'Region',
-      required: true,
-      options: {
-        options: [
-          { label: 'US', value: 'intercom' },
-          { label: 'EU', value: 'eu.intercom' },
-          { label: 'AU', value: 'au.intercom' },
-        ],
-      },
-    }),
-  },
+	authUrl: 'https://app.{region}.com/oauth',
+	tokenUrl: 'https://api.{region}.io/auth/eagle/token',
+	required: true,
+	scope: [],
+	props: {
+		region: Property.StaticDropdown({
+			displayName: 'Region',
+			required: true,
+			options: {
+				options: [
+					{ label: 'US', value: 'intercom' },
+					{ label: 'EU', value: 'eu.intercom' },
+					{ label: 'AU', value: 'au.intercom' },
+				],
+			},
+		}),
+	},
 });
 
 export const intercom = createPiece({
-  displayName: 'Intercom',
-  description: 'Customer messaging platform for sales, marketing, and support',
-  minimumSupportedRelease: '0.29.0', // introduction of new intercom APP_WEBHOOK
-  logoUrl: 'https://cdn.activepieces.com/pieces/intercom.png',
-  categories: [PieceCategory.CUSTOMER_SUPPORT],
-  auth: intercomAuth,
-  triggers: [
-    newConversationFromUser,
-    replyFromUser,
-    replyFromAdmin,
-    noteAddedToConversation,
-    conversationAssigned,
-    conversationClosed,
-    conversationSnoozed,
-    conversationUnsnoozed,
-    conversationRated,
-    conversationPartTagged,
-  ],
-  authors: [
-    'kishanprmr',
-    'MoShizzle',
-    'AbdulTheActivePiecer',
-    'khaledmashaly',
-    'abuaboud',
-    'AdamSelene',
-  ],
-  actions: [
-    getOrCreateContact,
-    createContact,
-    sendMessage,
-    addNoteToConversation,
-    replyToConversation,
-    findConversationAction,
-    createCustomApiCallAction({
-      baseUrl: (auth) =>
-        `https://api.${(auth as OAuth2PropertyValue).props?.['region']}.io`,
-      auth: intercomAuth,
-      authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
-      }),
-    }),
-  ],
-  events: {
+	displayName: 'Intercom',
+	description: 'Customer messaging platform for sales, marketing, and support',
+	minimumSupportedRelease: '0.29.0', // introduction of new intercom APP_WEBHOOK
+	logoUrl: 'https://cdn.activepieces.com/pieces/intercom.png',
+	categories: [PieceCategory.CUSTOMER_SUPPORT],
+	auth: intercomAuth,
+	triggers: [
+		newConversationFromUser,
+		replyFromUser,
+		replyFromAdmin,
+		noteAddedToConversation,
+		conversationAssigned,
+		conversationClosed,
+		conversationSnoozed,
+		conversationUnsnoozed,
+		conversationRated,
+		conversationPartTagged,
+		newLeadTrigger,
+		newCompanyTrigger
+	],
+	authors: [
+		'kishanprmr',
+		'MoShizzle',
+		'AbdulTheActivePiecer',
+		'khaledmashaly',
+		'abuaboud',
+		'AdamSelene',
+	],
+	actions: [
+		addNoteToUserAction,
+		addNoteToConversation,
+		addOrRemoveTagOnContactAction,
+		addOrRemoveTagOnCompanyAction,
+		addOrRemoveTagOnConversationAction,
+		createArticleAction,
+		createConversationAction,
+		createTicketAction,
+		createUserAction,
+		createOrUpdateLeadAction,
+		createOrUpdateUserAction,
+		replyToConversation,
+		sendMessageAction,
+		updateTicketAction,
+		findCompanyAction,
+		findConversationAction,
+		findLeadAction,
+		findUserAction,
+		listAllTagsAction,
+		getConversationAction,
+		createCustomApiCallAction({
+			baseUrl: (auth) => `https://api.${(auth as OAuth2PropertyValue).props?.['region']}.io`,
+			auth: intercomAuth,
+			authMapping: async (auth) => ({
+				Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+			}),
+		}),
+	],
+	events: {
     parseAndReply: ({ payload }) => {
       const payloadBody = payload.body as PayloadBody;
       return {
@@ -112,12 +143,12 @@ export const intercom = createPiece({
       const computedSignature = `sha1=${hmac.digest('hex')}`;
       return signature === computedSignature;
     },
-  },
+	},
 });
 
 type PayloadBody = {
-  type: string;
-  topic: string;
-  id: string;
-  app_id: string;
+	type: string;
+	topic: string;
+	id: string;
+	app_id: string;
 };
