@@ -9,7 +9,7 @@ export const addOrRemoveTagOnContactAction = createAction({
 	displayName: 'Add/Remove Tag on Contact',
 	description: 'Attach or remove a tag from a specific contact.',
 	props: {
-		contactId: contactIdProp('Contact ID', true),
+		contactId: contactIdProp('Contact ID','user', true),
 		tagId: tagIdProp('Tag Name', true),
 		untag: Property.Checkbox({
 			displayName: 'Untag ?',

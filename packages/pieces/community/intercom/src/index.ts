@@ -36,6 +36,8 @@ import { createArticleAction } from './lib/actions/create-article';
 import { createConversationAction } from './lib/actions/create-conversation';
 import { getConversationAction } from './lib/actions/get-conversation';
 import { createOrUpdateLeadAction } from './lib/actions/create-update-lead';
+import { createTicketAction } from './lib/actions/create-ticket';
+import { updateTicketAction } from './lib/actions/update-ticket';
 
 export const intercomAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.{region}.com/oauth',
@@ -104,6 +106,8 @@ export const intercom = createPiece({
 		createConversationAction,
 		getConversationAction,
 		createOrUpdateLeadAction,
+		createTicketAction,
+		updateTicketAction,
 		createCustomApiCallAction({
 			baseUrl: (auth) => `https://api.${(auth as OAuth2PropertyValue).props?.['region']}.io`,
 			auth: intercomAuth,
