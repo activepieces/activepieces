@@ -28,7 +28,7 @@ export const conversationPartTagged = createTrigger({
 				const client = intercomClient(auth as OAuth2PropertyValue);
 				const tagsResponse = await client.tags.list();
 				return {
-					options: tagsResponse.data.map((tag) => {
+					options: tagsResponse.data.map((tag: { id: string; name: string }) => {
 						return {
 							label: tag.name,
 							value: tag.id,
