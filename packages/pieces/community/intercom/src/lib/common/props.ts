@@ -367,24 +367,27 @@ export const ticketPropertiesProp = (displayName: string, required = true) =>
 						});
 						break;
 					case 'list':
-						const options = field.input_options.list_options as Array<{
-							label: string;
-							id: string;
-						}>;
+						{
+							const options = field.input_options.list_options as Array<{
+								label: string;
+								id: string;
+							}>;
 
-						props[field.name] = Property.StaticDropdown({
-							displayName: field.name,
-							required: false,
-							options: {
-								disabled: false,
-								options: options
-									? options.map((option) => ({
-											value: option.id,
-											label: option.label,
-									  }))
-									: [],
-							},
-						});
+							props[field.name] = Property.StaticDropdown({
+								displayName: field.name,
+								required: false,
+								options: {
+									disabled: false,
+									options: options
+										? options.map((option) => ({
+												value: option.id,
+												label: option.label,
+										  }))
+										: [],
+								},
+							});
+						}
+
 						break;
 					default:
 						break;

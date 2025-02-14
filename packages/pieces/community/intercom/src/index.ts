@@ -38,6 +38,7 @@ import { getConversationAction } from './lib/actions/get-conversation';
 import { createOrUpdateLeadAction } from './lib/actions/create-update-lead';
 import { createTicketAction } from './lib/actions/create-ticket';
 import { updateTicketAction } from './lib/actions/update-ticket';
+import { findCompanyAction } from './lib/actions/find-company';
 
 export const intercomAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.{region}.com/oauth',
@@ -90,24 +91,25 @@ export const intercom = createPiece({
 	],
 	actions: [
 		addNoteToUserAction,
-		findLeadAction,
-		findUserAction,
-		addOrRemoveTagOnConversationAction,
-		addOrRemoveTagOnCompanyAction,
-		addOrRemoveTagOnContactAction,
-		createUserAction,
-		createOrUpdateUserAction,
-		sendMessageAction,
 		addNoteToConversation,
-		replyToConversation,
-		findConversationAction,
-		listAllTagsAction,
+		addOrRemoveTagOnContactAction,
+		addOrRemoveTagOnCompanyAction,
+		addOrRemoveTagOnConversationAction,
 		createArticleAction,
 		createConversationAction,
-		getConversationAction,
-		createOrUpdateLeadAction,
 		createTicketAction,
+		createUserAction,
+		createOrUpdateLeadAction,
+		createOrUpdateUserAction,
+		replyToConversation,
+		sendMessageAction,
 		updateTicketAction,
+		findCompanyAction,
+		findConversationAction,
+		findLeadAction,
+		findUserAction,
+		listAllTagsAction,
+		getConversationAction,
 		createCustomApiCallAction({
 			baseUrl: (auth) => `https://api.${(auth as OAuth2PropertyValue).props?.['region']}.io`,
 			auth: intercomAuth,
