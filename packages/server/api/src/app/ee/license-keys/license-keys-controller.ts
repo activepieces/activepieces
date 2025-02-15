@@ -13,8 +13,8 @@ const key = system.get<string>(AppSystemProp.LICENSE_KEY)
 export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/', GenerateTrialRequest, async (req, res) => {
-        const { email, companyName, selfHosting, ultimatePlan } = req.body as { email: string, companyName: string, selfHosting: boolean, ultimatePlan: boolean }
-        const { message } = await licenseKeysTrialService(req.log).requestTrial({ email, companyName, selfHosting, ultimatePlan })
+        const { email, companyName, selfHosting, ultimatePlan, productionKey } = req.body as { email: string, companyName: string, selfHosting: boolean, ultimatePlan: boolean, productionKey: boolean }
+        const { message } = await licenseKeysTrialService(req.log).requestTrial({ email, companyName, selfHosting, ultimatePlan, productionKey })
         return res.status(StatusCodes.OK).send({ message })
     })
 
@@ -74,8 +74,9 @@ const GenerateTrialRequest = {
                 companyName: { type: 'string' },
                 selfHosting: { type: 'boolean' },
                 ultimatePlan: { type: 'boolean' },
+                productionKey: { type: 'boolean' },
             },
-            required: ['email', 'companyName', 'selfHosting', 'ultimatePlan'],
+            required: ['email', 'companyName', 'selfHosting', 'ultimatePlan', 'productionKey'],
         },
     },
     config: {
