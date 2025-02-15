@@ -25,6 +25,7 @@ async function getPageWithContent(
 			username: auth.username,
 			password: auth.password,
 			method: HttpMethod.GET,
+			version: 'v2',
 			resourceUri: `/pages/${pageId}`,
 			query: {
 				'body-format': 'storage',
@@ -54,6 +55,7 @@ async function getChildPages(
 			username: auth.username,
 			password: auth.password,
 			method: HttpMethod.GET,
+			version: 'v2',
 			resourceUri: `/pages/${parentId}/children`,
 		});
 

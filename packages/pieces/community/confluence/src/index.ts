@@ -3,6 +3,7 @@ import { getPageContent } from "./lib/actions/get-page-content";
 import { newPageTrigger } from "./lib/triggers/new-page";
 import { PieceCategory } from "@activepieces/shared";
 import { createCustomApiCallAction } from "@activepieces/pieces-common";
+import { createPageFromTemplateAction } from "./lib/actions/create-page-from-template";
 
 export const confluenceAuth = PieceAuth.CustomAuth({
   description: 'Please refer to this guide to get your api credentials: https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account',
@@ -32,7 +33,7 @@ export const confluence = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: "https://cdn.activepieces.com/pieces/confluence.png",
   authors: ["geekyme"],
-  actions: [getPageContent,
+  actions: [getPageContent,createPageFromTemplateAction,
     createCustomApiCallAction({
       baseUrl:(auth)=>{
         const authValue = auth as PiecePropValueSchema<typeof confluenceAuth>;
