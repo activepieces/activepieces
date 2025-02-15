@@ -655,6 +655,9 @@
       "@activepieces/piece-text-helper": [
         "packages/pieces/community/text-helper/src/index.ts"
       ],
+      "@activepieces/piece-thankster": [
+        "packages/pieces/community/thankster/src/index.ts"
+      ],
       "@activepieces/piece-tidycal": [
         "packages/pieces/community/tidycal/src/index.ts"
       ],
