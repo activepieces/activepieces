@@ -3,7 +3,6 @@ import { intercomAuth } from '../..';
 import { intercomClient } from '../common';
 
 export const conversationAssigned = createTrigger({
-	// auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
 	name: 'conversationAssigned',
 	displayName: 'Conversation assigned to any Intercom admin',
 	description: 'Triggers when a conversation is assigned to an admin',
