@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { authenticationSession } from '@/lib/authentication-session';
+import { userHooks } from '@/hooks/user-hooks';
 import { PlatformRole } from '@activepieces/shared';
 
 import { Message } from './hooks/notifictions-hooks';
@@ -27,7 +27,7 @@ const PlatformDialog = ({ messages }: PlatformDialogProps) => {
   const shouldShow =
     messages.filter((message) => message.type === 'destructive').length > 0 &&
     (!lastDismissed || Date.now() - parseInt(lastDismissed) > 15 * 60 * 1000);
-  const platformRole = authenticationSession.getUserPlatformRole();
+  const platformRole = userHooks.getCurrentUserPlatformRole();
   const [isOpen, setIsOpen] = useState(
     shouldShow && platformRole === PlatformRole.ADMIN,
   );

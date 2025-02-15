@@ -19,6 +19,7 @@ import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { projectApi } from '@/lib/project-api';
@@ -38,7 +39,7 @@ export default function GeneralPage() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
   const { toast } = useToast();
-  const platformRole = authenticationSession.getUserPlatformRole();
+  const platformRole = userHooks.getCurrentUserPlatformRole();
 
   const form = useForm({
     defaultValues: {
