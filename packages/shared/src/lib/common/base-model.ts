@@ -1,5 +1,4 @@
-import { CreateType, Kind, SchemaOptions, Static, TEnum, TLiteral, TObject, TSchema, TUnion, Type, TypeRegistry } from '@sinclair/typebox'
-import { Value } from '@sinclair/typebox/value'
+import { CreateType, Kind, SchemaOptions, Static, TEnum, TLiteral, TObject, TSchema, TUnion, Type } from '@sinclair/typebox'
 
 export type BaseModel<T> = {
     id: T
