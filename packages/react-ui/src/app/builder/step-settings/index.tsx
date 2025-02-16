@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/resizable-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { projectHooks } from '@/hooks/project-hooks';
 import {
   Action,
   ActionType,
@@ -39,6 +40,7 @@ import { useStepSettingsContext } from './step-settings-context';
 
 const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
+  const { project } = projectHooks.useCurrentProject();
   const [
     readonly,
     exitStepSettings,
@@ -302,6 +304,7 @@ const StepSettingsContainer = () => {
                       type={modifiedStep.type}
                       flowId={flowVersion.flowId}
                       flowVersionId={flowVersion.id}
+                      projectId={project?.id}
                       isSaving={saving}
                     ></TestStepContainer>
                   )}

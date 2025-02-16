@@ -282,6 +282,12 @@
                       {
                         "type": "string",
                         "enum": [
+                          "MISSING"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
                           "ERROR"
                         ]
                       }
@@ -442,6 +448,12 @@
                         "type": "string",
                         "enum": [
                           "ACTIVE"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "MISSING"
                         ]
                       },
                       {
@@ -2395,9 +2407,6 @@
               "name": {
                 "type": "string"
               },
-              "minimumPollingInterval": {
-                "type": "number"
-              },
               "piecesFilterType": {
                 "anyOf": [
                   {
@@ -2420,17 +2429,13 @@
                   "type": "string"
                 }
               },
-              "connections": {
-                "type": "number"
-              },
-              "teamMembers": {
-                "type": "number"
-              },
               "tasks": {
-                "type": "number"
+                "type": "number",
+                "nullable": true
               },
               "aiTokens": {
-                "type": "number"
+                "type": "number",
+                "nullable": true
               }
             },
             "required": [
@@ -2439,13 +2444,8 @@
               "updated",
               "projectId",
               "name",
-              "minimumPollingInterval",
               "piecesFilterType",
-              "pieces",
-              "connections",
-              "teamMembers",
-              "tasks",
-              "aiTokens"
+              "pieces"
             ]
           },
           "analytics": {
@@ -2893,6 +2893,12 @@
                 "type": "string",
                 "enum": [
                   "ACTIVE"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "MISSING"
                 ]
               },
               {
@@ -10365,6 +10371,165 @@
         }
       }
     },
+    "/v1/sample-data": {
+      "post": {
+        "tags": [
+          "sample-data"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "flowVersionId": {
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  },
+                  "stepName": {
+                    "type": "string"
+                  },
+                  "payload": {}
+                },
+                "required": [
+                  "flowVersionId",
+                  "projectId",
+                  "stepName",
+                  "payload"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "size": {
+                      "type": "number"
+                    },
+                    "type": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "UNKNOWN"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "FLOW_RUN_LOG"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PACKAGE_ARCHIVE"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "FLOW_STEP_FILE"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "SAMPLE_DATA"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "TRIGGER_EVENT_FILE"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PROJECT_RELEASE"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "type"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "sample-data"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "flowId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "flowVersionId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "stepName",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "projectId",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/v1/flow-runs": {
       "get": {
         "tags": [
@@ -11394,6 +11559,12 @@
                   {
                     "type": "string",
                     "enum": [
+                      "MISSING"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
                       "ERROR"
                     ]
                   }
@@ -11523,6 +11694,12 @@
                                 "type": "string",
                                 "enum": [
                                   "ACTIVE"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "MISSING"
                                 ]
                               },
                               {
@@ -11732,6 +11909,78 @@
         }
       }
     },
+    "/v1/app-connections/owners": {
+      "get": {
+        "tags": [
+          "app-connections"
+        ],
+        "description": "List app connection owners",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "projectId",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "firstName": {
+                            "type": "string"
+                          },
+                          "lastName": {
+                            "type": "string"
+                          },
+                          "email": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "firstName",
+                          "lastName",
+                          "email"
+                        ]
+                      }
+                    },
+                    "next": {
+                      "description": "Cursor to the next page",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "description": "Cursor to the previous page",
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/platforms/{id}": {
       "get": {
         "tags": [
@@ -11820,7 +12069,8 @@
                     },
                     "smtp": {
                       "type": "object",
-                      "properties": {}
+                      "properties": {},
+                      "nullable": true
                     },
                     "id": {
                       "type": "string"
@@ -12482,7 +12732,8 @@
                     "type": "string"
                   },
                   "externalId": {
-                    "type": "string"
+                    "type": "string",
+                    "nullable": true
                   }
                 },
                 "required": [
@@ -12594,9 +12845,6 @@
                         "name": {
                           "type": "string"
                         },
-                        "minimumPollingInterval": {
-                          "type": "number"
-                        },
                         "piecesFilterType": {
                           "anyOf": [
                             {
@@ -12619,17 +12867,13 @@
                             "type": "string"
                           }
                         },
-                        "connections": {
-                          "type": "number"
-                        },
-                        "teamMembers": {
-                          "type": "number"
-                        },
                         "tasks": {
-                          "type": "number"
+                          "type": "number",
+                          "nullable": true
                         },
                         "aiTokens": {
-                          "type": "number"
+                          "type": "number",
+                          "nullable": true
                         }
                       },
                       "required": [
@@ -12638,13 +12882,8 @@
                         "updated",
                         "projectId",
                         "name",
-                        "minimumPollingInterval",
                         "piecesFilterType",
-                        "pieces",
-                        "connections",
-                        "teamMembers",
-                        "tasks",
-                        "aiTokens"
+                        "pieces"
                       ]
                     },
                     "analytics": {
@@ -12826,9 +13065,6 @@
                               "name": {
                                 "type": "string"
                               },
-                              "minimumPollingInterval": {
-                                "type": "number"
-                              },
                               "piecesFilterType": {
                                 "anyOf": [
                                   {
@@ -12851,17 +13087,13 @@
                                   "type": "string"
                                 }
                               },
-                              "connections": {
-                                "type": "number"
-                              },
-                              "teamMembers": {
-                                "type": "number"
-                              },
                               "tasks": {
-                                "type": "number"
+                                "type": "number",
+                                "nullable": true
                               },
                               "aiTokens": {
-                                "type": "number"
+                                "type": "number",
+                                "nullable": true
                               }
                             },
                             "required": [
@@ -12870,13 +13102,8 @@
                               "updated",
                               "projectId",
                               "name",
-                              "minimumPollingInterval",
                               "piecesFilterType",
-                              "pieces",
-                              "connections",
-                              "teamMembers",
-                              "tasks",
-                              "aiTokens"
+                              "pieces"
                             ]
                           },
                           "analytics": {
@@ -13131,9 +13358,6 @@
                         "name": {
                           "type": "string"
                         },
-                        "minimumPollingInterval": {
-                          "type": "number"
-                        },
                         "piecesFilterType": {
                           "anyOf": [
                             {
@@ -13156,17 +13380,13 @@
                             "type": "string"
                           }
                         },
-                        "connections": {
-                          "type": "number"
-                        },
-                        "teamMembers": {
-                          "type": "number"
-                        },
                         "tasks": {
-                          "type": "number"
+                          "type": "number",
+                          "nullable": true
                         },
                         "aiTokens": {
-                          "type": "number"
+                          "type": "number",
+                          "nullable": true
                         }
                       },
                       "required": [
@@ -13175,13 +13395,8 @@
                         "updated",
                         "projectId",
                         "name",
-                        "minimumPollingInterval",
                         "piecesFilterType",
-                        "pieces",
-                        "connections",
-                        "teamMembers",
-                        "tasks",
-                        "aiTokens"
+                        "pieces"
                       ]
                     },
                     "analytics": {
@@ -13446,6 +13661,21 @@
                               "permissions",
                               "type"
                             ]
+                          },
+                          "project": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "displayName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "displayName"
+                            ]
                           }
                         },
                         "required": [
@@ -13457,7 +13687,245 @@
                           "projectId",
                           "projectRoleId",
                           "user",
-                          "projectRole"
+                          "projectRole",
+                          "project"
+                        ]
+                      }
+                    },
+                    "next": {
+                      "description": "Cursor to the next page",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "description": "Cursor to the previous page",
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/project-members/platform-users": {
+      "get": {
+        "tags": [
+          "project-members"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "projectRoleId",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "number"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "created": {
+                            "type": "string"
+                          },
+                          "updated": {
+                            "type": "string"
+                          },
+                          "platformId": {
+                            "pattern": "^[0-9a-zA-Z]{21}$",
+                            "type": "string"
+                          },
+                          "userId": {
+                            "pattern": "^[0-9a-zA-Z]{21}$",
+                            "type": "string"
+                          },
+                          "projectId": {
+                            "type": "string"
+                          },
+                          "projectRoleId": {
+                            "pattern": "^[0-9a-zA-Z]{21}$",
+                            "type": "string"
+                          },
+                          "user": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "email": {
+                                "type": "string"
+                              },
+                              "firstName": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ACTIVE"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "INACTIVE"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "externalId": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "platformId": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "platformRole": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ADMIN"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "MEMBER"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "lastName": {
+                                "type": "string"
+                              },
+                              "created": {
+                                "type": "string"
+                              },
+                              "updated": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "email",
+                              "firstName",
+                              "status",
+                              "platformRole",
+                              "lastName",
+                              "created",
+                              "updated"
+                            ]
+                          },
+                          "projectRole": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "created": {
+                                "type": "string"
+                              },
+                              "updated": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "permissions": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "platformId": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string"
+                              },
+                              "userCount": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "created",
+                              "updated",
+                              "name",
+                              "permissions",
+                              "type"
+                            ]
+                          },
+                          "project": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "displayName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "displayName"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "created",
+                          "updated",
+                          "platformId",
+                          "userId",
+                          "projectId",
+                          "projectRoleId",
+                          "user",
+                          "projectRole",
+                          "project"
                         ]
                       }
                     },
@@ -13512,6 +13980,243 @@
                   "properties": {
                     "not": {}
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/platform-project-members/users": {
+      "get": {
+        "tags": [
+          "project-members"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "projectRoleId",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "number"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "created": {
+                            "type": "string"
+                          },
+                          "updated": {
+                            "type": "string"
+                          },
+                          "platformId": {
+                            "pattern": "^[0-9a-zA-Z]{21}$",
+                            "type": "string"
+                          },
+                          "userId": {
+                            "pattern": "^[0-9a-zA-Z]{21}$",
+                            "type": "string"
+                          },
+                          "projectId": {
+                            "type": "string"
+                          },
+                          "projectRoleId": {
+                            "pattern": "^[0-9a-zA-Z]{21}$",
+                            "type": "string"
+                          },
+                          "user": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "email": {
+                                "type": "string"
+                              },
+                              "firstName": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ACTIVE"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "INACTIVE"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "externalId": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "platformId": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "platformRole": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ADMIN"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "MEMBER"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "lastName": {
+                                "type": "string"
+                              },
+                              "created": {
+                                "type": "string"
+                              },
+                              "updated": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "email",
+                              "firstName",
+                              "status",
+                              "platformRole",
+                              "lastName",
+                              "created",
+                              "updated"
+                            ]
+                          },
+                          "projectRole": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "created": {
+                                "type": "string"
+                              },
+                              "updated": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "permissions": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "platformId": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string"
+                              },
+                              "userCount": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "created",
+                              "updated",
+                              "name",
+                              "permissions",
+                              "type"
+                            ]
+                          },
+                          "project": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "displayName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "displayName"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "created",
+                          "updated",
+                          "platformId",
+                          "userId",
+                          "projectId",
+                          "projectRoleId",
+                          "user",
+                          "projectRole",
+                          "project"
+                        ]
+                      }
+                    },
+                    "next": {
+                      "description": "Cursor to the next page",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "description": "Cursor to the previous page",
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -14099,7 +14804,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "anyOf": [
+                "oneOf": [
                   {
                     "type": "object",
                     "properties": {
@@ -14208,7 +14913,10 @@
                     ]
                   }
                 ],
-                "discriminator": "type"
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                }
               }
             }
           }

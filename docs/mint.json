@@ -200,6 +200,14 @@
           ]
         },
         {
+          "group": "Sample Data",
+          "icon": "database",
+          "pages": [
+            "endpoints/sample-data/get",
+            "endpoints/sample-data/save"
+          ]
+        },
+        {
           "group": "Pieces",
           "icon": "plug",
           "pages": [
