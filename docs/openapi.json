@@ -12068,15 +12068,9 @@
                       ]
                     },
                     "smtp": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "properties": {}
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
+                      "type": "object",
+                      "properties": {},
+                      "nullable": true
                     },
                     "id": {
                       "type": "string"
@@ -14810,7 +14804,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "anyOf": [
+                "oneOf": [
                   {
                     "type": "object",
                     "properties": {
@@ -14919,7 +14913,10 @@
                     ]
                   }
                 ],
-                "discriminator": "type"
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                }
               }
             }
           }
