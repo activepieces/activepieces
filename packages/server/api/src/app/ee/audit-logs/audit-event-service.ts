@@ -71,7 +71,7 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
             queryBuilder.andWhere({ userId })
         }
         if (!isNil(action)) {
-            queryBuilder.andWhere({ action })
+            queryBuilder.andWhere({ action: In(action) })
         }
         
         if (!isNil(projectId)) {
@@ -152,7 +152,7 @@ type ListParams = {
     cursorRequest: Cursor | null
     limit: number
     userId?: string
-    action?: string
+    action?: string[]
     projectId?: string[]
     createdBefore?: string
     createdAfter?: string
