@@ -40,7 +40,7 @@ type TDiscriminatedUnionObject<Discriminator extends string> = TObject<TDiscrimi
 // ------------------------------------------------------------------
 // DiscriminatedUnion
 // ------------------------------------------------------------------
-export interface TDiscriminatedUnion<Types extends TObject[] = TObject[]> extends TSchema {
+export type TDiscriminatedUnion<Types extends TObject[] = TObject[]> = {
     [Kind]: 'DiscriminatedUnion'
     static: Static<TUnion<Types>>
     oneOf: Types
@@ -49,7 +49,7 @@ export interface TDiscriminatedUnion<Types extends TObject[] = TObject[]> extend
         propertyName: string
         mapping?: Record<string, string>
     }
-}
+} & TSchema
 
 /** Creates a DiscriminatedUnion that works with OpenAPI. */
 export function DiscriminatedUnion<Discriminator extends string, Types extends TDiscriminatedUnionObject<Discriminator>[]>(
@@ -62,7 +62,7 @@ export function DiscriminatedUnion<Discriminator extends string, Types extends T
         oneOf: types,
         type: 'object',
         discriminator: {
-            propertyName: discriminator
-        }
+            propertyName: discriminator,
+        },
     }, options) as never
 }
