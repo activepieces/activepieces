@@ -56,7 +56,10 @@ async function handleRouterExecution({ action, executionState, constants, censor
     }).setOutput({
         branches: evaluatedConditions,
     })
-    executionState = executionState.upsertStep(action.name, routerOutput)
+    executionState = executionState.upsertStep({
+        stepName: action.name,
+        stepOutput: routerOutput,
+    })
 
     try {
         for (let i = 0; i < resolvedInput.branches.length; i++) {
@@ -79,7 +82,10 @@ async function handleRouterExecution({ action, executionState, constants, censor
     catch (e) {
         console.error(e)
         const failedStepOutput = routerOutput.setStatus(StepOutputStatus.FAILED)
-        return executionState.upsertStep(action.name, failedStepOutput).setVerdict(ExecutionVerdict.FAILED, undefined)
+        return executionState.upsertStep({
+            stepName: action.name,
+            stepOutput: failedStepOutput,
+        }).setVerdict(ExecutionVerdict.FAILED)
     }
 }
 

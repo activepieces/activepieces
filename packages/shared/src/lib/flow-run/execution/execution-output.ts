@@ -9,10 +9,12 @@ export enum ExecutionType {
 
 export type ExecutionState = {
     steps: Record<string, StepOutput>
+    resumePayload?: ResumePayload
 }
 
 export const ExecutionState = Type.Object({
     steps: Type.Record(Type.String(), Type.Unknown()),
+    resumePayload: Type.Optional(Type.Unknown()),
 })
 
 export type ExecutioOutputFile = {

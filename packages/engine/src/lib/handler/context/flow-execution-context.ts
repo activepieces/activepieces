@@ -29,7 +29,6 @@ export class FlowExecutorContext {
     verdictResponse: VerdictResponse | undefined
     currentPath: StepExecutionPath
     error?: FlowError
-
     /**
      * Execution time in milliseconds
      */
@@ -111,7 +110,7 @@ export class FlowExecutorContext {
         })
     }
 
-    public upsertStep(stepName: string, stepOutput: StepOutput): FlowExecutorContext {
+    public upsertStep({ stepName, stepOutput }: UpsertStepParams): FlowExecutorContext {
         const steps = {
             ...this.steps,
         }
@@ -281,4 +280,9 @@ function getStateAtPath({ currentPath, steps }: { currentPath: StepExecutionPath
 type SetStepDurationParams = {
     stepName: string
     duration: number
+}
+
+type UpsertStepParams = {
+    stepName: string
+    stepOutput: StepOutput
 }
