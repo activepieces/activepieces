@@ -17,6 +17,7 @@ export const licenseKeysTrialService = (log: FastifyBaseLogger): {
         companyName,
         selfHosting,
         ultimatePlan,
+        productionKey,
     }: RequestTrialParams): Promise<{ message: string }> {
         try {
             const disabledFeatures = getDisabledFeatures(ultimatePlan)
@@ -24,7 +25,7 @@ export const licenseKeysTrialService = (log: FastifyBaseLogger): {
             let message = ''
 
             if (selfHosting) {
-                const { trialLicenseKey } = await generateSelfHostingTrialLicense(email, companyName, disabledFeatures, log)
+                const { trialLicenseKey } = await generateSelfHostingTrialLicense(email, companyName, productionKey, disabledFeatures, log)
                 message = `Your license key is: ${trialLicenseKey}. <br><br> ${activationMessage}`
             }
             else {
@@ -36,7 +37,7 @@ export const licenseKeysTrialService = (log: FastifyBaseLogger): {
         }
         catch (e) {
             log.error(e, '[LicenseKeysTrialService#requestTrial] Failed to request trial')
-            return { message: 'Failed to request trial. Please try again later or contact support.' }
+            return { message: `Failed to request trial. Please try again later or contact support. (${e instanceof Error ? e.message : 'Unknown error'})` }
         }
     },
 
@@ -76,8 +77,8 @@ async function fetchPlatform(email: string, log: FastifyBaseLogger): Promise<Pla
     return platform
 }
 
-async function generateSelfHostingTrialLicense(email: string, companyName: string, disabledFeatures: string[], log: FastifyBaseLogger): Promise<{ trialLicenseKey: string }> {
-    const trialLicenseKey = await generateLicenseKey(email, companyName, disabledFeatures, 'production', log)
+async function generateSelfHostingTrialLicense(email: string, companyName: string, productionKey: boolean, disabledFeatures: string[], log: FastifyBaseLogger): Promise<{ trialLicenseKey: string }> {
+    const trialLicenseKey = await generateLicenseKey(email, companyName, disabledFeatures, productionKey ? 'production' : 'development', log)
     return { trialLicenseKey }
 }
 
@@ -195,6 +196,7 @@ type RequestTrialParams = {
     companyName: string
     selfHosting: boolean
     ultimatePlan: boolean
+    productionKey: boolean
 }
 
 type ExtendTrialParams = {
