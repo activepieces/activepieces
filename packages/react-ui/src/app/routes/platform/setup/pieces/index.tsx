@@ -170,7 +170,9 @@ const PlatformPiecesPage = () => {
       <div className="mx-auto w-full flex-col">
         <LockedAlert
           title={t('Control Pieces')}
-          description={t('Show the pieces that matter most to your users and hide the ones you don\'t like.')}
+          description={t(
+            "Show the pieces that matter most to your users and hide the ones you don't like.",
+          )}
           button={
             <RequestTrial
               featureKey="ENTERPRISE_PIECES"
