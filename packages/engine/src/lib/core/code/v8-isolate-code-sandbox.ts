@@ -87,8 +87,16 @@ const executeIsolate = async ({ isolate, isolateContext, code }: ExecuteIsolateP
 }
 
 const serializeCodeModule = (codeModule: CodeModule): string => {
-    const serializedCodeFunction = codeModule.code.toString()
-    return `const code = ${serializedCodeFunction}; code(inputs);`
+    let serializedCodeFunction = ''
+    for (const key in codeModule) {
+        serializedCodeFunction += `const ${key} = ${(codeModule as any)[key].toString()};`
+    }
+    // replace the exports.function_name with function_name
+    serializedCodeFunction = serializedCodeFunction.replace(/\(0, exports\.(\w+)\)/g, '$1');
+
+    serializedCodeFunction += `code(inputs);`
+
+    return serializedCodeFunction
 }
 
 type InitContextParams = {
