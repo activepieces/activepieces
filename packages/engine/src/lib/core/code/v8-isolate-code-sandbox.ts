@@ -90,7 +90,7 @@ const serializeCodeModule = (codeModule: CodeModule): string => {
     const serializedCodeFunction = Object.keys(codeModule)
         .reduce((acc, key) => 
             acc + `const ${key} = ${(codeModule as any)[key].toString()};`, 
-            '');
+        '')
 
     // replace the exports.function_name with function_name
     return serializedCodeFunction.replace(/\(0, exports\.(\w+)\)/g, '$1') + 'code(inputs);'
