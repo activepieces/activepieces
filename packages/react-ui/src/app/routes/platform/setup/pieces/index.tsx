@@ -4,7 +4,7 @@ import { CheckIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { RequestTrial } from '@/app/components/request-trial';
 import { ApplyTags } from '@/app/routes/platform/setup/pieces/apply-tags';
 import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
 import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces';
@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { LockedAlert } from '@/components/ui/locked-alert';
 import { oauth2AppsHooks } from '@/features/connections/lib/oauth2-apps-hooks';
 import { InstallPieceDialog } from '@/features/pieces/components/install-piece-dialog';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
@@ -26,7 +27,6 @@ import {
 import { ApEdition, ApFlagId, PieceScope } from '@activepieces/shared';
 
 import { TableTitle } from '../../../../../components/ui/table-title';
-
 const PlatformPiecesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.managePiecesEnabled;
@@ -146,9 +146,13 @@ const PlatformPiecesPage = () => {
                         refetchPieces();
                         refetchPiecesClientIdsMap();
                       }}
+                      isEnabled={isEnabled}
                     />
                   )}
-                <PieceActions pieceName={row.original.name} />
+                <PieceActions
+                  pieceName={row.original.name}
+                  isEnabled={isEnabled}
+                />
               </div>
             );
           },
@@ -162,57 +166,59 @@ const PlatformPiecesPage = () => {
   >([]);
 
   return (
-    <LockedFeatureGuard
-      featureKey="PIECES"
-      locked={!isEnabled}
-      lockTitle={t('Control Pieces')}
-      lockDescription={t(
-        "Show the pieces that matter most to your users and hide the ones that you don't like",
-      )}
-      lockVideoUrl="https://cdn.activepieces.com/videos/showcase/pieces.mp4"
-    >
-      <div className="flex w-full flex-col items-center justify-center gap-4">
-        <div className="mx-auto w-full flex-col">
-          <div className="mb-4 flex">
-            <TableTitle>{t('Pieces')}</TableTitle>
-            <div className="ml-auto">
-              <div className="flex gap-3">
-                <ApplyTags
-                  selectedPieces={selectedPieces}
-                  onApplyTags={() => {
-                    refetchPieces();
-                  }}
-                ></ApplyTags>
-                <SyncPiecesButton />
-                <InstallPieceDialog
-                  onInstallPiece={() => refetchPieces()}
-                  scope={PieceScope.PLATFORM}
-                />
-              </div>
+    <div className="flex w-full flex-col items-center justify-center gap-4">
+      <div className="mx-auto w-full flex-col">
+        <LockedAlert
+          title={t('Control Pieces')}
+          description={t(
+            "Show the pieces that matter most to your users and hide the ones you don't like.",
+          )}
+          button={
+            <RequestTrial
+              featureKey="ENTERPRISE_PIECES"
+              buttonVariant="outline-primary"
+            />
+          }
+        />
+        <div className="mb-4 flex">
+          <TableTitle>{t('Pieces')}</TableTitle>
+          <div className="ml-auto">
+            <div className="flex gap-3">
+              <ApplyTags
+                selectedPieces={selectedPieces}
+                onApplyTags={() => {
+                  refetchPieces();
+                }}
+              ></ApplyTags>
+              <SyncPiecesButton />
+              <InstallPieceDialog
+                onInstallPiece={() => refetchPieces()}
+                scope={PieceScope.PLATFORM}
+              />
             </div>
           </div>
-          <DataTable
-            columns={columns}
-            filters={[
-              {
-                type: 'input',
-                title: t('Piece Name'),
-                accessorKey: 'name',
-                options: [],
-                icon: CheckIcon,
-              } as const,
-            ]}
-            page={{
-              data: pieces ?? [],
-              next: null,
-              previous: null,
-            }}
-            isLoading={isLoading}
-            onSelectedRowsChange={setSelectedPieces}
-          />
         </div>
+        <DataTable
+          columns={columns}
+          filters={[
+            {
+              type: 'input',
+              title: t('Piece Name'),
+              accessorKey: 'name',
+              options: [],
+              icon: CheckIcon,
+            } as const,
+          ]}
+          page={{
+            data: pieces ?? [],
+            next: null,
+            previous: null,
+          }}
+          isLoading={isLoading}
+          onSelectedRowsChange={setSelectedPieces}
+        />
       </div>
-    </LockedFeatureGuard>
+    </div>
   );
 };
 
