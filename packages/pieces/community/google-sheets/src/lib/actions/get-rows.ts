@@ -14,6 +14,7 @@ import { HttpError } from '@activepieces/pieces-common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 import { getWorkSheetGridSize } from '../triggers/helpers';
+import { commonProps } from '../common/props';
 
 async function getRows(
   store: Store,
@@ -101,9 +102,7 @@ export const getRowsAction = createAction({
   description: 'Get next group of rows from a Google Sheet',
   displayName: 'Get next row(s)',
   props: {
-    spreadsheet_id: googleSheetsCommon.spreadsheet_id,
-    include_team_drives: googleSheetsCommon.include_team_drives,
-    sheet_id: googleSheetsCommon.sheet_id,
+    ...commonProps,
     startRow: Property.Number({
       displayName: 'Start Row',
       description: 'Which row to start from?',
@@ -127,6 +126,12 @@ export const getRowsAction = createAction({
     }),
   },
   async run({ store, auth, propsValue }) {
+    const { startRow, groupSize, memKey ,spreadsheetId,sheetId} = propsValue;
+
+    if (!spreadsheetId || !sheetId) {
+			throw new Error('Please select a spreadsheet and sheet first.');
+		}
+
     await propsValidation.validateZod(propsValue, {
       startRow: z.number().min(1),
       groupSize: z.number().min(1),
@@ -136,11 +141,11 @@ export const getRowsAction = createAction({
       return await getRows(
         store,
         auth,
-        propsValue['spreadsheet_id'],
-        propsValue['sheet_id'],
-        propsValue['memKey'],
-        propsValue['groupSize'],
-        propsValue['startRow'],
+        spreadsheetId,
+        sheetId,
+        memKey,
+        groupSize,
+        startRow,
         false
       );
     } catch (error) {
@@ -152,15 +157,21 @@ export const getRowsAction = createAction({
     }
   },
   async test({ store, auth, propsValue }) {
+    const { startRow, groupSize, memKey ,spreadsheetId,sheetId} = propsValue;
+
+    if (!spreadsheetId || !sheetId) {
+			throw new Error('Please select a spreadsheet and sheet first.');
+		}
+
     try {
       return await getRows(
         store,
         auth,
-        propsValue['spreadsheet_id'],
-        propsValue['sheet_id'],
-        propsValue['memKey'],
-        propsValue['groupSize'],
-        propsValue['startRow'],
+        spreadsheetId,
+        sheetId,
+        memKey,
+        groupSize,
+        startRow,
         true
       );
     } catch (error) {

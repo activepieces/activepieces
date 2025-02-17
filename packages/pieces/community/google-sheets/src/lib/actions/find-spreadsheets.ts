@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { googleSheetsCommon } from '../common/common';
 import { googleSheetsAuth } from '../..';
+import { includeTeamDrivesProp } from '../common/props';
 
 export const findSpreadsheets = createAction({
   name: 'find_spreadsheets',
@@ -9,7 +9,7 @@ export const findSpreadsheets = createAction({
   description: 'Find spreadsheet(s) by name.',
   auth: googleSheetsAuth,
   props: {
-    include_team_drives: googleSheetsCommon.include_team_drives,
+    includeTeamDrives: includeTeamDrivesProp(),
     spreadsheet_name: Property.ShortText({
       displayName: 'Spreadsheet Name',
       description: 'The name of the spreadsheet(s) to find.',
@@ -40,7 +40,7 @@ export const findSpreadsheets = createAction({
       url: 'https://www.googleapis.com/drive/v3/files',
       queryParams: {
         q: queries.join(' and '),
-        includeItemsFromAllDrives: propsValue.include_team_drives ? 'true' : 'false',
+        includeItemsFromAllDrives: propsValue.includeTeamDrives ? 'true' : 'false',
         supportsAllDrives: 'true',
         fields: 'files(id,name,webViewLink,createdTime,modifiedTime)',
       },

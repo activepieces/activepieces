@@ -19,6 +19,12 @@ import { insertMultipleRowsAction } from './lib/actions/insert-multiple-rows.act
 import { createWorksheetAction } from './lib/actions/create-worksheet';
 import { createSpreadsheetAction } from './lib/actions/create-spreadsheet';
 import { findSpreadsheets } from './lib/actions/find-spreadsheets';
+import { newSpreadsheetTrigger } from './lib/triggers/new-spreadsheet';
+import { newWorksheetTrigger } from './lib/triggers/new-worksheet';
+import { findWorksheetAction } from './lib/actions/find-worksheet';
+import { copyWorksheetAction } from './lib/actions/copy-worksheet';
+import { updateMultipleRowsAction } from './lib/actions/update-multiple-rows';
+import { createColumnAction } from './lib/actions/create-column';
 
 export const googleSheetsAuth = PieceAuth.OAuth2({
   description: '',
@@ -60,6 +66,10 @@ export const googleSheets = createPiece({
     findRowByNumAction,
     getRowsAction,
     findSpreadsheets,
+    findWorksheetAction,
+    copyWorksheetAction,
+    updateMultipleRowsAction,
+    createColumnAction,
     createCustomApiCallAction({
       auth: googleSheetsAuth,
       baseUrl: () => {
@@ -74,6 +84,6 @@ export const googleSheets = createPiece({
   ],
   displayName: 'Google Sheets',
   description: 'Create, edit, and collaborate on spreadsheets online',
-  triggers: [newRowAddedTrigger, newOrUpdatedRowTrigger],
+  triggers: [newRowAddedTrigger, newOrUpdatedRowTrigger,newSpreadsheetTrigger,newWorksheetTrigger],
   auth: googleSheetsAuth,
 });
