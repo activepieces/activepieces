@@ -44,6 +44,7 @@ type TestTriggerSectionProps = {
   isSaving: boolean;
   flowVersionId: string;
   flowId: string;
+  projectId: string;
 };
 
 function getSelectedId(
@@ -62,7 +63,7 @@ function getSelectedId(
 }
 
 const TestTriggerSection = React.memo(
-  ({ isSaving, flowVersionId, flowId }: TestTriggerSectionProps) => {
+  ({ isSaving, flowVersionId, flowId, projectId }: TestTriggerSectionProps) => {
     const form = useFormContext<Trigger>();
     const formValues = form.getValues();
     const isValid = form.formState.isValid;
@@ -212,6 +213,7 @@ const TestTriggerSection = React.memo(
           flowVersionId,
           stepName: formValues.name,
           payload: data.payload,
+          projectId: projectId,
         });
         sampleDataFileId = sampleFile.id;
       }

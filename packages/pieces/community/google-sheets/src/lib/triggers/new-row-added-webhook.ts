@@ -20,7 +20,7 @@ import {
 } from './helpers';
 
 import { googleSheetsAuth } from '../..';
-import { googleSheetsCommon } from '../common/common';
+import { commonProps } from '../common/props';
 
 export const newRowAddedTrigger = createTrigger({
 	auth: googleSheetsAuth,
@@ -32,9 +32,7 @@ export const newRowAddedTrigger = createTrigger({
 			value:
 				'Please note that there might be a delay of up to 3 minutes for the trigger to be fired, due to a delay from Google.',
 		}),
-		spreadsheet_id: googleSheetsCommon.spreadsheet_id,
-		sheet_id: googleSheetsCommon.sheet_id,
-		include_team_drives: googleSheetsCommon.include_team_drives,
+		...commonProps,
 	},
 	renewConfiguration: {
 		strategy: WebhookRenewStrategy.CRON,
@@ -42,20 +40,24 @@ export const newRowAddedTrigger = createTrigger({
 	},
 	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {
-		const { spreadsheet_id, sheet_id } = context.propsValue;
+		const { spreadsheetId, sheetId } = context.propsValue;
+
+		if (!spreadsheetId || !sheetId) {
+			throw new Error('Please select a spreadsheet and sheet first.');
+		}
 
 		// fetch current sheet values
-		const sheetName = await getWorkSheetName(context.auth, spreadsheet_id, sheet_id);
-		const currentSheetValues = await getWorkSheetValues(context.auth, spreadsheet_id, sheetName);
+		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
+		const currentSheetValues = await getWorkSheetValues(context.auth, spreadsheetId, sheetName);
 
 		// store current sheet row count
-		await context.store.put(`${sheet_id}`, currentSheetValues.length);
+		await context.store.put(`${sheetId}`, currentSheetValues.length);
 
 		const fileNotificationRes = await createFileNotification(
 			context.auth,
-			spreadsheet_id,
+			spreadsheetId,
 			context.webhookUrl,
-			context.propsValue.include_team_drives,
+			context.propsValue.includeTeamDrives,
 		);
 
 		// store channel response
@@ -78,14 +80,19 @@ export const newRowAddedTrigger = createTrigger({
 		if (!isChangeContentMessage(context.payload.headers)) {
 			return [];
 		}
-		const { spreadsheet_id, sheet_id } = context.propsValue;
+
+		const { spreadsheetId, sheetId } = context.propsValue;
+
+		if (!spreadsheetId || !sheetId) {
+			throw new Error('Please select a spreadsheet and sheet first.');
+		}
 
 		// fetch old row count for worksheet
-		const oldRowCount = (await context.store.get(`${sheet_id}`)) as number;
+		const oldRowCount = (await context.store.get(`${sheetId}`)) as number;
 
 		// fetch current row count for worksheet
-		const sheetName = await getWorkSheetName(context.auth, spreadsheet_id, sheet_id);
-		const currentRowValues = await getWorkSheetValues(context.auth, spreadsheet_id, sheetName);
+		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
+		const currentRowValues = await getWorkSheetValues(context.auth, spreadsheetId, sheetName);
 		const currentRowCount = currentRowValues.length;
 
 		const headers =  currentRowValues[0] ?? [];
@@ -95,7 +102,7 @@ export const newRowAddedTrigger = createTrigger({
 		if (oldRowCount >= currentRowCount) {
 			if (oldRowCount > currentRowCount) {
 				// Some rows were deleted
-				await context.store.put(`${sheet_id}`, currentRowCount);
+				await context.store.put(`${sheetId}`, currentRowCount);
 			}
 			return [];
 		}
@@ -105,12 +112,12 @@ export const newRowAddedTrigger = createTrigger({
 
 		const newRowValues = await getWorkSheetValues(
 			context.auth as PiecePropValueSchema<typeof googleSheetsAuth>,
-			spreadsheet_id,
+			spreadsheetId,
 			range,
 		);
 
 		// update row count value
-		await context.store.put(`${sheet_id}`, currentRowCount);
+		await context.store.put(`${sheetId}`, currentRowCount);
 
 		// transform row values
 		const transformedRowValues = transformWorkSheetValues(newRowValues, oldRowCount,headerCount);
@@ -124,14 +131,20 @@ export const newRowAddedTrigger = createTrigger({
 	async onRenew(context) {
 		// get current channel ID & resource ID
 		const webhook = await context.store.get<WebhookInformation>(`googlesheets_new_row_added`);
+
+		const { spreadsheetId, sheetId } = context.propsValue;
+		if (!spreadsheetId || !sheetId) {
+			throw new Error('Please select a spreadsheet and sheet first.');
+		}
+
 		if (webhook != null && webhook.id != null && webhook.resourceId != null) {
 			// delete current channel
 			await deleteFileNotification(context.auth, webhook.id, webhook.resourceId);
 			const fileNotificationRes = await createFileNotification(
 				context.auth,
-				context.propsValue.spreadsheet_id,
+				spreadsheetId,
 				context.webhookUrl,
-				context.propsValue.include_team_drives,
+				context.propsValue.includeTeamDrives,
 			);
 			// store channel response
 			await context.store.put<WebhookInformation>(
@@ -141,9 +154,12 @@ export const newRowAddedTrigger = createTrigger({
 		}
 	},
 	async test(context) {
-		const { spreadsheet_id, sheet_id } = context.propsValue;
-		const sheetName = await getWorkSheetName(context.auth, spreadsheet_id, sheet_id);
-		const currentSheetValues = await getWorkSheetValues(context.auth, spreadsheet_id, sheetName);
+		const { spreadsheetId, sheetId } = context.propsValue;
+		if (!spreadsheetId || !sheetId) {
+			throw new Error('Please select a spreadsheet and sheet first.');
+		}
+		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
+		const currentSheetValues = await getWorkSheetValues(context.auth, spreadsheetId, sheetName);
 
 		const headers =  currentSheetValues[0] ?? [];
 		const headerCount = headers.length;

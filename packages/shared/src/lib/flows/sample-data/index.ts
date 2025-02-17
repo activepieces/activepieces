@@ -3,6 +3,7 @@ import { File } from '../../file'
 
 export const SaveSampleDataRequest = Type.Object({
     flowVersionId: Type.String(),
+    projectId: Type.String(),
     stepName: Type.String(),
     payload: Type.Unknown(),
 })
@@ -12,6 +13,7 @@ export const GetSampleDataRequest = Type.Object({
     flowId: Type.String(),
     flowVersionId: Type.String(),
     stepName: Type.String(),
+    projectId: Type.String(),
 })
 export type GetSampleDataRequest = Static<typeof GetSampleDataRequest>
 

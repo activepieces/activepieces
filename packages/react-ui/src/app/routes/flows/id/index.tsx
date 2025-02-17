@@ -26,7 +26,7 @@ const FlowBuilderPage = () => {
   });
 
   const { data: sampleData, isLoading: isSampleDataLoading } =
-    sampleDataHooks.useSampleDataForFlow(flow?.version);
+    sampleDataHooks.useSampleDataForFlow(flow?.version, flow?.projectId);
 
   if (isError) {
     console.error('Error fetching flow', flowId);

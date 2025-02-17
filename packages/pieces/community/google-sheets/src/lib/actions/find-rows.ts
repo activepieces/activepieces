@@ -9,6 +9,7 @@ import {
 import { googleSheetsAuth } from '../..';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
+import { columnNameProp, commonProps } from '../common/props';
 
 export const findRowsAction = createAction({
   auth: googleSheetsAuth,
@@ -17,10 +18,8 @@ export const findRowsAction = createAction({
     'Find or get rows in a Google Sheet by column name and search value',
   displayName: 'Find Rows',
   props: {
-    spreadsheet_id: googleSheetsCommon.spreadsheet_id,
-    include_team_drives: googleSheetsCommon.include_team_drives,
-    sheet_id: googleSheetsCommon.sheet_id,
-    columnName: googleSheetsCommon.columnName,
+    ...commonProps,
+    columnName: columnNameProp(),
     searchValue: Property.ShortText({
       displayName: 'Search Value',
       description:
@@ -53,13 +52,17 @@ export const findRowsAction = createAction({
       numberOfRows: z.number().min(1).optional(),
     });
 
-    const spreadSheetId = propsValue.spreadsheet_id;
-    const sheetId = propsValue.sheet_id;
+    const spreadsheetId = propsValue.spreadsheetId;
+    const sheetId = propsValue.sheetId;
     const startingRow = propsValue.startingRow ?? 1;
     const numberOfRowsToReturn = propsValue.numberOfRows ?? 1;
 
+    if (!spreadsheetId || !sheetId) {
+			throw new Error('Please select a spreadsheet and sheet first.');
+		}
+
     const rows = await googleSheetsCommon.getGoogleSheetRows({
-      spreadsheetId: spreadSheetId,
+      spreadsheetId: spreadsheetId,
       accessToken: auth.access_token,
       sheetId: sheetId,
       rowIndex_s: startingRow,

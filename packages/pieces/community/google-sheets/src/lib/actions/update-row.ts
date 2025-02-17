@@ -1,11 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Dimension, objectToArray, ValueInputOption } from '../common/common';
-import { googleSheetsCommon } from '../common/common';
 import { googleSheetsAuth } from '../..';
 import { getWorkSheetName } from '../triggers/helpers';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { isString } from '@activepieces/shared';
+import { commonProps, rowValuesProp } from '../common/props';
 
 export const updateRowAction = createAction({
   auth: googleSheetsAuth,
@@ -13,9 +13,7 @@ export const updateRowAction = createAction({
   description: 'Overwrite values in an existing row',
   displayName: 'Update Row',
   props: {
-    spreadsheet_id: googleSheetsCommon.spreadsheet_id,
-    include_team_drives: googleSheetsCommon.include_team_drives,
-    sheet_id: googleSheetsCommon.sheet_id,
+    ...commonProps,
     row_id: Property.Number({
       displayName: 'Row Number',
       description: 'The row number to update',
@@ -27,14 +25,18 @@ export const updateRowAction = createAction({
       required: true,
       defaultValue: false,
     }),
-    values: googleSheetsCommon.values,
+    values: rowValuesProp(),
   },
   async run(context) {
-    const spreadSheetId = context.propsValue.spreadsheet_id;
-    const sheetId = context.propsValue.sheet_id;
+    const spreadsheetId = context.propsValue.spreadsheetId;
+    const sheetId = context.propsValue.sheetId;
     const rowId = context.propsValue.row_id;
     const isFirstRowHeaders = context.propsValue.first_row_headers;
     const rowValuesInput = context.propsValue.values;
+
+    if (!spreadsheetId || !sheetId) {
+			throw new Error('Please select a spreadsheet and sheet first.');
+		}
 
     const authClient = new OAuth2Client();
     authClient.setCredentials(context.auth);
@@ -43,7 +45,7 @@ export const updateRowAction = createAction({
 
     const sheetName = await getWorkSheetName(
       context.auth,
-      spreadSheetId,
+      spreadsheetId,
       sheetId
     );
 
@@ -66,7 +68,7 @@ export const updateRowAction = createAction({
     if (formattedValues.length > 0) {
       const response = await sheets.spreadsheets.values.update({
         range: `${sheetName}!A${rowId}:ZZZ${rowId}`,
-        spreadsheetId: spreadSheetId,
+        spreadsheetId: spreadsheetId,
         valueInputOption: ValueInputOption.USER_ENTERED,
         requestBody: {
           values: [formattedValues],
