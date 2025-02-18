@@ -123,7 +123,11 @@ export const newMention = createTrigger({
           event_ts: '1678231735.586539',
           channel_type: 'channel',
         };
-      }).sort((a,b)=>parseFloat(b.ts!)-parseFloat(a.ts!));
+      }).sort((a,b)=>{
+        const tsA = a.ts ? parseFloat(a.ts) : Number.MAX_VALUE;
+        const tsB = b.ts ? parseFloat(b.ts) : Number.MAX_VALUE;
+        return tsB - tsA;
+      });
 
     return getFirstFiveOrAll(messages);
 
