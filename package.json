@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.43.0",
-  "rcVersion": "0.43.0-rc.0",
+  "version": "0.44.0",
+  "rcVersion": "0.44.0-rc.0",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve react-ui",
@@ -217,7 +217,7 @@
     "npm": "10.8.2",
     "nx-cloud": "19.1.0",
     "object-sizeof": "2.6.3",
-    "octokit": "3.2.1",
+    "octokit": "4.1.2",
     "openai": "4.67.1",
     "p-limit": "2.3.0",
     "pako": "2.1.0",
