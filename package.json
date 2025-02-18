@@ -217,7 +217,7 @@
     "npm": "10.8.2",
     "nx-cloud": "19.1.0",
     "object-sizeof": "2.6.3",
-    "octokit": "3.2.1",
+    "octokit": "4.1.2",
     "openai": "4.67.1",
     "p-limit": "2.3.0",
     "pako": "2.1.0",
