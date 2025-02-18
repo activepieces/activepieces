@@ -220,6 +220,15 @@ export const Property = {
       ? DateTimeProperty<true>
       : DateTimeProperty<false>;
   },
+  External<R extends boolean>(
+    request: Properties<JsonProperty<R>>
+  ): R extends true ? JsonProperty<true> : JsonProperty<false> {
+    return {
+      ...request,
+      valueSchema: undefined,
+      type: PropertyType.EXTERNAL_PROPERTY,
+    } as unknown as R extends true ? JsonProperty<true> : JsonProperty<false>;
+  },
   File<R extends boolean>(
     request: Properties<FileProperty<R>>
   ): R extends true ? FileProperty<true> : FileProperty<false> {

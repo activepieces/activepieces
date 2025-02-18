@@ -25,6 +25,7 @@ import { BuilderJsonEditorWrapper } from './builder-json-wrapper';
 import { DictionaryProperty } from './dictionary-property';
 import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
 import { DynamicProperties } from './dynamic-piece-property';
+import { ExternalPieceProperty } from './external-property';
 import { TextInputWithMentions } from './text-input-with-mentions';
 
 type AutoFormProps = {
@@ -246,6 +247,23 @@ const selectFormComponentForProperty = ({
             multiple={property.type === PropertyType.MULTI_SELECT_DROPDOWN}
             showDeselect={!property.required}
           ></DynamicDropdownPieceProperty>
+        </AutoFormFieldWrapper>
+      );
+    case PropertyType.EXTERNAL_PROPERTY:
+      return (
+        <AutoFormFieldWrapper
+          inputName={inputName}
+          property={property}
+          propertyName={propertyName}
+          field={field}
+          disabled={disabled}
+          allowDynamicValues={allowDynamicValues}
+        >
+          <ExternalPieceProperty
+            field={field}
+            disabled={disabled}
+            property={property}
+          ></ExternalPieceProperty>
         </AutoFormFieldWrapper>
       );
     case PropertyType.DATE_TIME:
