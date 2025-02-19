@@ -37,7 +37,7 @@ export async function getProjects(auth: JiraAuth): Promise<JiraProject[]> {
 	const projects: JiraProject[] = [];
 	let startAt = 0;
 	let hasMore = true;
-	const maxResults = 50;
+	const maxResults = 100;
 
 	while (hasMore) {
 		const response = await sendJiraRequest({
