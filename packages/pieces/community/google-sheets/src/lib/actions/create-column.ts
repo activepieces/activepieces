@@ -9,6 +9,7 @@ import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { getWorkSheetName } from '../triggers/helpers';
 import { commonProps } from '../common/props';
+import { isNil } from '@activepieces/shared';
 
 export const createColumnAction = createAction({
 	auth: googleSheetsAuth,
@@ -31,7 +32,7 @@ export const createColumnAction = createAction({
 	async run(context) {
 		const { spreadsheetId, sheetId, columnName, columnIndex } = context.propsValue;
 
-		if (!spreadsheetId || !sheetId) {
+		if (isNil(spreadsheetId) || isNil(sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 

@@ -11,7 +11,7 @@ import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { getWorkSheetName, getWorkSheetGridSize } from '../triggers/helpers';
 import { google, sheets_v4 } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
-import { MarkdownVariant } from '@activepieces/shared';
+import { isNil, MarkdownVariant } from '@activepieces/shared';
 import {parse} from 'csv-parse/sync';
 import { commonProps } from '../common/props';
 
@@ -232,7 +232,7 @@ export const insertMultipleRowsAction = createAction({
 			as_string: asString,
 		} = context.propsValue;
 
-		if (!spreadsheetId || !sheetId) {
+		if (isNil(spreadsheetId) || isNil(sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 

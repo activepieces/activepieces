@@ -4,7 +4,7 @@ import { googleSheetsAuth } from '../..';
 import { getWorkSheetName } from '../triggers/helpers';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
-import { isString } from '@activepieces/shared';
+import { isNil, isString } from '@activepieces/shared';
 import { commonProps, rowValuesProp } from '../common/props';
 
 export const updateRowAction = createAction({
@@ -34,7 +34,7 @@ export const updateRowAction = createAction({
     const isFirstRowHeaders = context.propsValue.first_row_headers;
     const rowValuesInput = context.propsValue.values;
 
-    if (!spreadsheetId || !sheetId) {
+    if (isNil(spreadsheetId) || isNil(sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 

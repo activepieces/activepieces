@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { googleSheetsCommon } from '../common/common';
 import { googleSheetsAuth } from '../..';
 import { commonProps } from '../common/props';
+import { isNil } from '@activepieces/shared';
 
 export const findRowByNumAction = createAction({
   auth: googleSheetsAuth,
@@ -19,7 +20,7 @@ export const findRowByNumAction = createAction({
   async run(context) {
     const {spreadsheetId,sheetId,rowNumber} = context.propsValue;
 
-    if (!spreadsheetId || !sheetId) {
+    if (isNil(spreadsheetId) || isNil(sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 

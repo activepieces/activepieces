@@ -10,6 +10,7 @@ import { googleSheetsAuth } from '../..';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 import { columnNameProp, commonProps } from '../common/props';
+import { isNil } from '@activepieces/shared';
 
 export const findRowsAction = createAction({
   auth: googleSheetsAuth,
@@ -57,7 +58,7 @@ export const findRowsAction = createAction({
     const startingRow = propsValue.startingRow ?? 1;
     const numberOfRowsToReturn = propsValue.numberOfRows ?? 1;
 
-    if (!spreadsheetId || !sheetId) {
+    if (isNil(spreadsheetId) || isNil(sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 

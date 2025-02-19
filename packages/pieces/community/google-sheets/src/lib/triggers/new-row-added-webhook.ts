@@ -21,6 +21,7 @@ import {
 
 import { googleSheetsAuth } from '../..';
 import { commonProps } from '../common/props';
+import { isNil } from '@activepieces/shared';
 
 export const newRowAddedTrigger = createTrigger({
 	auth: googleSheetsAuth,
@@ -42,7 +43,7 @@ export const newRowAddedTrigger = createTrigger({
 	async onEnable(context) {
 		const { spreadsheetId, sheetId } = context.propsValue;
 
-		if (!spreadsheetId || !sheetId) {
+		if (isNil(spreadsheetId) || isNil(sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 
@@ -83,7 +84,7 @@ export const newRowAddedTrigger = createTrigger({
 
 		const { spreadsheetId, sheetId } = context.propsValue;
 
-		if (!spreadsheetId || !sheetId) {
+		if (isNil(spreadsheetId) || isNil(sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 
@@ -133,7 +134,7 @@ export const newRowAddedTrigger = createTrigger({
 		const webhook = await context.store.get<WebhookInformation>(`googlesheets_new_row_added`);
 
 		const { spreadsheetId, sheetId } = context.propsValue;
-		if (!spreadsheetId || !sheetId) {
+		if (isNil(spreadsheetId) || isNil(sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 
@@ -155,7 +156,7 @@ export const newRowAddedTrigger = createTrigger({
 	},
 	async test(context) {
 		const { spreadsheetId, sheetId } = context.propsValue;
-		if (!spreadsheetId || !sheetId) {
+		if (isNil(spreadsheetId) || isNil(sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);

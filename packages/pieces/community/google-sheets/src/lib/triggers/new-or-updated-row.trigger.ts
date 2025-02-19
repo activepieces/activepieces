@@ -95,7 +95,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 		const sheetId = context.propsValue.sheetId;
 		const triggerColumn = context.propsValue.trigger_column ?? ALL_COLUMNS;
 
-		if (!spreadsheetId || !sheetId) {
+		if (isNil(spreadsheetId) || isNil(sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 
@@ -161,7 +161,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 		const sheetId = context.propsValue.sheetId;
 		const triggerColumn = context.propsValue.trigger_column ?? ALL_COLUMNS;
 
-		if (!spreadsheetId || !sheetId) {
+		if (isNil(spreadsheetId) || isNil(sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 
@@ -244,7 +244,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 		const spreadsheetId = context.propsValue.spreadsheetId;
 		const sheetId = context.propsValue.sheetId;
 
-		if (!spreadsheetId || !sheetId) {
+		if (isNil(spreadsheetId) || isNil(sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 

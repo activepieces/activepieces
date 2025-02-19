@@ -128,7 +128,7 @@ export const getRowsAction = createAction({
   async run({ store, auth, propsValue }) {
     const { startRow, groupSize, memKey ,spreadsheetId,sheetId} = propsValue;
 
-    if (!spreadsheetId || !sheetId) {
+    if (isNil(spreadsheetId) || isNil(sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 
@@ -159,7 +159,7 @@ export const getRowsAction = createAction({
   async test({ store, auth, propsValue }) {
     const { startRow, groupSize, memKey ,spreadsheetId,sheetId} = propsValue;
 
-    if (!spreadsheetId || !sheetId) {
+    if (isNil(spreadsheetId) || isNil(sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 

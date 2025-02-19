@@ -35,7 +35,7 @@ export const insertRowAction = createAction({
     const { values, spreadsheetId, sheetId, as_string, first_row_headers } = propsValue;
     const accessToken = auth.access_token;
 
-    if (!spreadsheetId || !sheetId) {
+    if (isNil(spreadsheetId) || isNil(sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 

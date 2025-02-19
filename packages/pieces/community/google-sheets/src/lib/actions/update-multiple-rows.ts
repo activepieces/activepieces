@@ -7,7 +7,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { Dimension, googleSheetsCommon, objectToArray, ValueInputOption } from '../common/common';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { isString, MarkdownVariant } from '@activepieces/shared';
+import { isNil, isString, MarkdownVariant } from '@activepieces/shared';
 import { getWorkSheetName } from '../triggers/helpers';
 import { google, sheets_v4 } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
@@ -99,7 +99,7 @@ export const updateMultipleRowsAction = createAction({
 			as_string: asString,
 		} = context.propsValue;
 
-		if (!spreadsheetId || !sheetId) {
+		if (isNil(spreadsheetId) || isNil(sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 
