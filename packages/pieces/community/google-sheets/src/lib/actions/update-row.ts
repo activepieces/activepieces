@@ -1,10 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { Dimension, objectToArray, ValueInputOption } from '../common/common';
+import { areSheetIdsValid, Dimension, objectToArray, ValueInputOption } from '../common/common';
 import { googleSheetsAuth } from '../..';
 import { getWorkSheetName } from '../triggers/helpers';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
-import { isString } from '@activepieces/shared';
+import {  isString } from '@activepieces/shared';
 import { commonProps, rowValuesProp } from '../common/props';
 
 export const updateRowAction = createAction({
@@ -28,15 +28,18 @@ export const updateRowAction = createAction({
     values: rowValuesProp(),
   },
   async run(context) {
-    const spreadsheetId = context.propsValue.spreadsheetId;
-    const sheetId = context.propsValue.sheetId;
+    const inputSpreadsheetId = context.propsValue.spreadsheetId;
+    const inputSheetId = context.propsValue.sheetId;
     const rowId = context.propsValue.row_id;
     const isFirstRowHeaders = context.propsValue.first_row_headers;
     const rowValuesInput = context.propsValue.values;
 
-    if (!spreadsheetId || !sheetId) {
+    if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
+
+    const sheetId = Number(inputSheetId);
+		const spreadsheetId = inputSpreadsheetId as string;
 
     const authClient = new OAuth2Client();
     authClient.setCredentials(context.auth);
