@@ -1,6 +1,5 @@
 import {
 	AuthenticationType,
-	HttpError,
 	HttpMessageBody,
 	HttpMethod,
 	HttpRequest,
@@ -37,22 +36,23 @@ export async function getUsers(auth: JiraAuth) {
 export async function getProjects(auth: JiraAuth): Promise<JiraProject[]> {
 	const projects: JiraProject[] = [];
 	let startAt = 0;
-	while (true) {
+	let hasMore = true;
+	const maxResults = 50;
+
+	while (hasMore) {
 		const response = await sendJiraRequest({
 			url: 'project/search',
 			method: HttpMethod.GET,
 			auth: auth,
 			queryParams: {
 				startAt: startAt.toString(),
-				maxResults: '50',
+				maxResults: maxResults.toString(),
 			},
 		});
 
 		projects.push(...(response.body as any).values as JiraProject[]);
-		if ((response.body as any).isLast) {
-			break;
-		}
-		startAt += 50;
+		hasMore = !(response.body as any).isLast;
+		startAt += maxResults;
 	}
 	return projects;
 }
