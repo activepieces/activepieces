@@ -74,7 +74,7 @@ export const newMessage = createTrigger({
     const client = new WebClient(context.auth.access_token);
     const response = await client.conversations.history({
       channel: context.propsValue.channel,
-      limit: 10,
+      limit: 100,
     });
     if (!response.messages) {
       return [];
