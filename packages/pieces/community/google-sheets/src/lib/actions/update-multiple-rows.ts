@@ -5,9 +5,9 @@ import {
 	OAuth2PropertyValue,
 	Property,
 } from '@activepieces/pieces-framework';
-import { Dimension, googleSheetsCommon, objectToArray, ValueInputOption } from '../common/common';
+import { areSheetIdsValid, Dimension, googleSheetsCommon, objectToArray, ValueInputOption } from '../common/common';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { isString, MarkdownVariant } from '@activepieces/shared';
+import { isNil, isString, MarkdownVariant } from '@activepieces/shared';
 import { getWorkSheetName } from '../triggers/helpers';
 import { google, sheets_v4 } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
@@ -93,15 +93,18 @@ export const updateMultipleRowsAction = createAction({
 	},
 	async run(context) {
 		const {
-			 spreadsheetId,
-			 sheetId,
+			 spreadsheetId:inputSpreadsheetId,
+			 sheetId:inputSheetId,
 			values: { values: rowValuesInput },
 			as_string: asString,
 		} = context.propsValue;
 
-		if (!spreadsheetId || !sheetId) {
+		if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
+
+		const sheetId = Number(inputSheetId);
+		const spreadsheetId = inputSpreadsheetId as string;
 
 		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
 		const valueInputOption = asString ? ValueInputOption.RAW : ValueInputOption.USER_ENTERED;

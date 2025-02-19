@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleSheetsCommon } from '../common/common';
+import { areSheetIdsValid, googleSheetsCommon } from '../common/common';
 import { googleSheetsAuth } from '../..';
 import { commonProps } from '../common/props';
 
@@ -20,20 +20,20 @@ export const clearSheetAction = createAction({
   async run({ propsValue, auth }) {
     const { spreadsheetId, sheetId,is_first_row_headers:isFirstRowHeaders } = propsValue;
 
-    if (!spreadsheetId || !sheetId) {
+    if (!areSheetIdsValid(spreadsheetId, sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
     await googleSheetsCommon.findSheetName(
       auth.access_token,
-      spreadsheetId,
-      sheetId
+      spreadsheetId as string,
+      sheetId as number
     );
 
     const rowsToDelete: number[] = [];
     const values = await googleSheetsCommon.getGoogleSheetRows({
-      spreadsheetId: spreadsheetId,
+      spreadsheetId: spreadsheetId as string,
       accessToken: auth.access_token,
-      sheetId: sheetId,
+      sheetId: sheetId as number,
       rowIndex_s: 1,
       rowIndex_e: undefined,
     });
@@ -45,8 +45,8 @@ export const clearSheetAction = createAction({
     }
 
     const response = await googleSheetsCommon.clearSheet(
-      spreadsheetId,
-      sheetId,
+      spreadsheetId as string,
+      sheetId as number,
       auth.access_token,
       isFirstRowHeaders ? 1 : 0,
       rowsToDelete.length

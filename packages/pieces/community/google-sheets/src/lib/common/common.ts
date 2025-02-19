@@ -5,7 +5,7 @@ import {
 	AuthenticationType,
 	HttpRequest,
 } from '@activepieces/pieces-common';
-import { isString } from '@activepieces/shared';
+import { isNil, isString } from '@activepieces/shared';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { googleSheetsAuth } from '../../';
@@ -254,4 +254,9 @@ export async function createGoogleSheetClient(auth: PiecePropValueSchema<typeof 
 
 	const googleSheetClient = google.sheets({ version: 'v4', auth: authClient });
 	return googleSheetClient;
+}
+
+export function areSheetIdsValid(spreadsheetId: string | null | undefined, sheetId: string | number | null | undefined): boolean {
+    return !isNil(spreadsheetId) && spreadsheetId !== "" &&
+           !isNil(sheetId) && sheetId !== "";
 }

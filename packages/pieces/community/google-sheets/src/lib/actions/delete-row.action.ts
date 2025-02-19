@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleSheetsCommon } from '../common/common';
+import { areSheetIdsValid, googleSheetsCommon } from '../common/common';
 import { googleSheetsAuth } from '../../';
 import { commonProps } from '../common/props';
 
@@ -19,15 +19,15 @@ export const deleteRowAction = createAction({
   async run(context) {
     const { spreadsheetId, sheetId, rowId } = context.propsValue;
 
-    if (!spreadsheetId || !sheetId) {
+    if (!areSheetIdsValid(spreadsheetId,sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 
     // Subtract 1 from the row_id to convert it to 0-indexed
     const adjustedRowIndex = rowId - 1;
     const response = await googleSheetsCommon.deleteRow(
-      spreadsheetId,
-      sheetId,
+      spreadsheetId as string,
+      sheetId as number,
       adjustedRowIndex,
       context.auth.access_token
     );

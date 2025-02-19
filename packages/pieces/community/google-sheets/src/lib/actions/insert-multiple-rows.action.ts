@@ -6,12 +6,12 @@ import {
 	OAuth2PropertyValue,
 	Property,
 } from '@activepieces/pieces-framework';
-import { Dimension, googleSheetsCommon, objectToArray, ValueInputOption,columnToLabel } from '../common/common';
+import { Dimension, googleSheetsCommon, objectToArray, ValueInputOption,columnToLabel, areSheetIdsValid } from '../common/common';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { getWorkSheetName, getWorkSheetGridSize } from '../triggers/helpers';
 import { google, sheets_v4 } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
-import { MarkdownVariant } from '@activepieces/shared';
+import { isNil, MarkdownVariant } from '@activepieces/shared';
 import {parse} from 'csv-parse/sync';
 import { commonProps } from '../common/props';
 
@@ -223,8 +223,8 @@ export const insertMultipleRowsAction = createAction({
 
 	async run(context) {
 		const {
-			spreadsheetId,
-			 sheetId,
+			spreadsheetId:inputSpreadsheetId,
+			 sheetId:inputSheetId,
 			input_type: valuesInputType,
 			overwrite: overwriteValues,
 			check_for_duplicate: checkForDuplicateValues,
@@ -232,9 +232,12 @@ export const insertMultipleRowsAction = createAction({
 			as_string: asString,
 		} = context.propsValue;
 
-		if (!spreadsheetId || !sheetId) {
+		if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
+
+		const sheetId = Number(inputSheetId);
+		const spreadsheetId = inputSpreadsheetId as string;
 
 		const duplicateColumn = context.propsValue.check_for_duplicate_column?.['column_name'];
 		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);

@@ -21,6 +21,8 @@ import {
 
 import { googleSheetsAuth } from '../..';
 import { commonProps } from '../common/props';
+import { isNil } from '@activepieces/shared';
+import { areSheetIdsValid } from '../common/common';
 
 export const newRowAddedTrigger = createTrigger({
 	auth: googleSheetsAuth,
@@ -40,11 +42,14 @@ export const newRowAddedTrigger = createTrigger({
 	},
 	type: TriggerStrategy.WEBHOOK,
 	async onEnable(context) {
-		const { spreadsheetId, sheetId } = context.propsValue;
+		const { spreadsheetId:inputSpreadsheetId, sheetId:inputSheetId } = context.propsValue;
 
-		if (!spreadsheetId || !sheetId) {
-			throw new Error('Please select a spreadsheet and sheet first.');
-		}
+		 if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
+					throw new Error('Please select a spreadsheet and sheet first.');
+				}
+		
+		const sheetId = Number(inputSheetId);
+		const spreadsheetId = inputSpreadsheetId as string;
 
 		// fetch current sheet values
 		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
@@ -81,11 +86,14 @@ export const newRowAddedTrigger = createTrigger({
 			return [];
 		}
 
-		const { spreadsheetId, sheetId } = context.propsValue;
+		const { spreadsheetId:inputSpreadsheetId, sheetId:inputSheetId } = context.propsValue;
 
-		if (!spreadsheetId || !sheetId) {
-			throw new Error('Please select a spreadsheet and sheet first.');
-		}
+		 if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
+					throw new Error('Please select a spreadsheet and sheet first.');
+				}
+		
+		const sheetId = Number(inputSheetId);
+		const spreadsheetId = inputSpreadsheetId as string;
 
 		// fetch old row count for worksheet
 		const oldRowCount = (await context.store.get(`${sheetId}`)) as number;
@@ -132,10 +140,14 @@ export const newRowAddedTrigger = createTrigger({
 		// get current channel ID & resource ID
 		const webhook = await context.store.get<WebhookInformation>(`googlesheets_new_row_added`);
 
-		const { spreadsheetId, sheetId } = context.propsValue;
-		if (!spreadsheetId || !sheetId) {
-			throw new Error('Please select a spreadsheet and sheet first.');
-		}
+		const { spreadsheetId:inputSpreadsheetId, sheetId:inputSheetId } = context.propsValue;
+
+		 if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
+					throw new Error('Please select a spreadsheet and sheet first.');
+				}
+		
+		const sheetId = Number(inputSheetId);
+		const spreadsheetId = inputSpreadsheetId as string;
 
 		if (webhook != null && webhook.id != null && webhook.resourceId != null) {
 			// delete current channel
@@ -154,10 +166,15 @@ export const newRowAddedTrigger = createTrigger({
 		}
 	},
 	async test(context) {
-		const { spreadsheetId, sheetId } = context.propsValue;
-		if (!spreadsheetId || !sheetId) {
-			throw new Error('Please select a spreadsheet and sheet first.');
-		}
+		const { spreadsheetId:inputSpreadsheetId, sheetId:inputSheetId } = context.propsValue;
+
+		 if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
+					throw new Error('Please select a spreadsheet and sheet first.');
+				}
+		
+		const sheetId = Number(inputSheetId);
+		const spreadsheetId = inputSpreadsheetId as string;
+		
 		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
 		const currentSheetValues = await getWorkSheetValues(context.auth, spreadsheetId, sheetName);
 

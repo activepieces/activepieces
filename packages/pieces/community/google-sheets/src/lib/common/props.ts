@@ -103,12 +103,15 @@ export const sheetIdProp = (displayName: string, description: string, required =
 			const options: DropdownOption<number>[] = [];
 
 			for (const sheet of sheetsData) {
-				if (sheet.properties?.title && sheet.properties?.sheetId) {
-					options.push({
-						label: sheet.properties.title,
-						value: sheet.properties.sheetId,
-					});
+				const title = sheet.properties?.title;
+				const sheetId = sheet.properties?.sheetId;
+				if(isNil(title) || isNil(sheetId)){
+					continue;
 				}
+				options.push({
+					label: title,
+					value: sheetId,
+				});
 			}
 
 			return {
