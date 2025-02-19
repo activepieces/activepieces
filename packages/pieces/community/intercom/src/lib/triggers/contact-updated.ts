@@ -1,13 +1,27 @@
 import { intercomAuth } from '../../index';
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { intercomClient, TriggerPayload } from '../common';
 
-export const newLeadTrigger = createTrigger({
+export const contactUpdatedTrigger = createTrigger({
 	auth: intercomAuth,
-	name: 'new-lead',
-	displayName: 'New Lead',
-	description: 'Triggers when a new lead is created.',
-	props: {},
+	name: 'contact-updated',
+	displayName: 'Updated Contact',
+	description: 'Triggers when a contact is updated.',
+	props: {
+		type: Property.StaticDropdown({
+			displayName: 'Type',
+			required: true,
+			defaultValue: 'user',
+			options: {
+				disabled: false,
+
+				options: [
+					{ label: 'User', value: 'user' },
+					{ label: 'Lead', value: 'lead' },
+				],
+			},
+		}),
+	},
 	type: TriggerStrategy.APP_WEBHOOK,
 	async onEnable(context) {
 		const client = intercomClient(context.auth);
@@ -17,8 +31,10 @@ export const newLeadTrigger = createTrigger({
 			throw new Error('Could not find admin id code');
 		}
 
+		const event = context.propsValue.type === 'user' ? 'contact.user.updated' : 'contact.lead.updated';
+
 		context.app.createListeners({
-			events: ['contact.lead.created'],
+			events: [event],
 			identifierValue: response['app']['id_code'],
 		});
 	},
@@ -29,15 +45,16 @@ export const newLeadTrigger = createTrigger({
 		const client = intercomClient(context.auth);
 
 		const response = await client.contacts.search({
-			query: {
-				field: 'role',
-				operator: '=',
-				value: 'lead',
+			query:{
+				field:'role',
+				operator:'=',
+				value:context.propsValue.type
 			},
-			pagination: { per_page: 5 },
-		});
-
-		return response.data;
+			pagination:{per_page:5}
+			
+		  });
+	
+		  return response.data;
 	},
 	async run(context) {
 		const payload = context.payload.body as TriggerPayload;
@@ -48,7 +65,7 @@ export const newLeadTrigger = createTrigger({
 		id: '67a9b9dfcc14109e073fbe19',
 		workspace_id: 'nzekhfwb',
 		external_id: '5b803f65-bcec-4198-b4f4-a0588454b537',
-		role: 'lead',
+		role: 'user',
 		email: 'john.doe@example.com',
 		phone: null,
 		name: 'John Doe',

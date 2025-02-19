@@ -2,11 +2,11 @@ import { intercomAuth } from '../../index';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { intercomClient, TriggerPayload } from '../common';
 
-export const newLeadTrigger = createTrigger({
+export const newUserTrigger = createTrigger({
 	auth: intercomAuth,
-	name: 'new-lead',
-	displayName: 'New Lead',
-	description: 'Triggers when a new lead is created.',
+	name: 'new-user',
+	displayName: 'New User',
+	description: 'Triggers when a new user is created.',
 	props: {},
 	type: TriggerStrategy.APP_WEBHOOK,
 	async onEnable(context) {
@@ -18,7 +18,7 @@ export const newLeadTrigger = createTrigger({
 		}
 
 		context.app.createListeners({
-			events: ['contact.lead.created'],
+			events: ['contact.user.created'],
 			identifierValue: response['app']['id_code'],
 		});
 	},
@@ -32,7 +32,7 @@ export const newLeadTrigger = createTrigger({
 			query: {
 				field: 'role',
 				operator: '=',
-				value: 'lead',
+				value: 'user',
 			},
 			pagination: { per_page: 5 },
 		});
@@ -48,7 +48,7 @@ export const newLeadTrigger = createTrigger({
 		id: '67a9b9dfcc14109e073fbe19',
 		workspace_id: 'nzekhfwb',
 		external_id: '5b803f65-bcec-4198-b4f4-a0588454b537',
-		role: 'lead',
+		role: 'user',
 		email: 'john.doe@example.com',
 		phone: null,
 		name: 'John Doe',
