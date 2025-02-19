@@ -35,13 +35,26 @@ export async function getUsers(auth: JiraAuth) {
 }
 
 export async function getProjects(auth: JiraAuth): Promise<JiraProject[]> {
-	const response = await sendJiraRequest({
-		url: 'project/search',
-		method: HttpMethod.GET,
-		auth: auth,
-	});
+	const projects: JiraProject[] = [];
+	let startAt = 0;
+	while (true) {
+		const response = await sendJiraRequest({
+			url: 'project/search',
+			method: HttpMethod.GET,
+			auth: auth,
+			queryParams: {
+				startAt: startAt.toString(),
+				maxResults: '50',
+			},
+		});
 
-	return (response.body as any).values as JiraProject[];
+		projects.push(...(response.body as any).values as JiraProject[]);
+		if ((response.body as any).isLast) {
+			break;
+		}
+		startAt += 50;
+	}
+	return projects;
 }
 
 export async function getIssueTypes({ auth, projectId }: { auth: JiraAuth; projectId: string }) {
