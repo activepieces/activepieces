@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { githubCommon } from '../common';
 import { githubAuth } from '../../';
-import { Octokit } from 'octokit';
+import { Octokit } from '@octokit/rest';
 
 export const githubRegisterTrigger = ({
   name,
