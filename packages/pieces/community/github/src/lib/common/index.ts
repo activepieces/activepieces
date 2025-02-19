@@ -120,7 +120,7 @@ async function listIssueLabels(
   return await client.paginate('GET /repos/{owner}/{repo}/labels', {
     owner,
     repo,
-    per_page: 2,
+    per_page: 100
   });
 }
 
