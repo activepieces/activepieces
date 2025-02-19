@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
+  areSheetIdsValid,
   Dimension,
   googleSheetsCommon,
   objectToArray,
@@ -32,12 +33,15 @@ export const insertRowAction = createAction({
     values: rowValuesProp(),
   },
   async run({ propsValue, auth }) {
-    const { values, spreadsheetId, sheetId, as_string, first_row_headers } = propsValue;
+    const { values, spreadsheetId:inputSpreadsheetId, sheetId:inputSheetId, as_string, first_row_headers } = propsValue;
     const accessToken = auth.access_token;
 
-    if (isNil(spreadsheetId) || isNil(sheetId)) {
+    if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
+
+    const sheetId = Number(inputSheetId);
+		const spreadsheetId = inputSpreadsheetId as string;
 
     const sheetName = await googleSheetsCommon.findSheetName(
       accessToken,

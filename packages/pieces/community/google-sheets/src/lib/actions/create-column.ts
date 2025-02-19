@@ -1,6 +1,7 @@
 import { googleSheetsAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
+	areSheetIdsValid,
 	columnToLabel,
 	getHeaderRow,
 	ValueInputOption,
@@ -9,7 +10,6 @@ import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { getWorkSheetName } from '../triggers/helpers';
 import { commonProps } from '../common/props';
-import { isNil } from '@activepieces/shared';
 
 export const createColumnAction = createAction({
 	auth: googleSheetsAuth,
@@ -32,7 +32,7 @@ export const createColumnAction = createAction({
 	async run(context) {
 		const { spreadsheetId, sheetId, columnName, columnIndex } = context.propsValue;
 
-		if (isNil(spreadsheetId) || isNil(sheetId)) {
+		if (!areSheetIdsValid(spreadsheetId, sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 
@@ -63,8 +63,8 @@ export const createColumnAction = createAction({
 			columnLabel = columnToLabel(columnIndex-1);
 		} else {
 			const headers = await getHeaderRow({
-				spreadsheetId,
-				sheetId,
+				spreadsheetId:spreadsheetId as string,
+				sheetId :sheetId as number,
 				accessToken: context.auth.access_token,
 			});
 
@@ -90,7 +90,7 @@ export const createColumnAction = createAction({
 			columnLabel = columnToLabel(newColumnIndex);
 		}
 
-		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
+		const sheetName = await getWorkSheetName(context.auth, spreadsheetId as string	, sheetId as number);
 
 		const response = await sheets.spreadsheets.values.update({
 			range: `${sheetName}!${columnLabel}1`,

@@ -3,6 +3,7 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import {
+  areSheetIdsValid,
   googleSheetsCommon,
   labelToColumn,
 } from '../common/common';
@@ -10,7 +11,6 @@ import { googleSheetsAuth } from '../..';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 import { columnNameProp, commonProps } from '../common/props';
-import { isNil } from '@activepieces/shared';
 
 export const findRowsAction = createAction({
   auth: googleSheetsAuth,
@@ -58,14 +58,14 @@ export const findRowsAction = createAction({
     const startingRow = propsValue.startingRow ?? 1;
     const numberOfRowsToReturn = propsValue.numberOfRows ?? 1;
 
-    if (isNil(spreadsheetId) || isNil(sheetId)) {
+    if (!areSheetIdsValid(spreadsheetId,sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 
     const rows = await googleSheetsCommon.getGoogleSheetRows({
-      spreadsheetId: spreadsheetId,
+      spreadsheetId: spreadsheetId as string,
       accessToken: auth.access_token,
-      sheetId: sheetId,
+      sheetId: sheetId as number,
       rowIndex_s: startingRow,
       rowIndex_e: undefined,
     });

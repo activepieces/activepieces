@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/shared';
 import { googleSheetsAuth } from '../../';
-import { columnToLabel, labelToColumn } from '../common/common';
+import { areSheetIdsValid, columnToLabel, labelToColumn } from '../common/common';
 import {
 	createFileNotification,
 	deleteFileNotification,
@@ -91,13 +91,15 @@ export const newOrUpdatedRowTrigger = createTrigger({
 	type: TriggerStrategy.WEBHOOK,
 
 	async onEnable(context) {
-		const spreadsheetId = context.propsValue.spreadsheetId;
-		const sheetId = context.propsValue.sheetId;
+		const inputSpreadsheetId = context.propsValue.spreadsheetId;
+		const inputSheetId = context.propsValue.sheetId;
 		const triggerColumn = context.propsValue.trigger_column ?? ALL_COLUMNS;
 
-		if (isNil(spreadsheetId) || isNil(sheetId)) {
-			throw new Error('Please select a spreadsheet and sheet first.');
-		}
+		if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
+					throw new Error('Please select a spreadsheet and sheet first.');
+				}
+		const sheetId = Number(inputSheetId);
+		const spreadsheetId = inputSpreadsheetId as string;
 
 		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
 
@@ -157,13 +159,16 @@ export const newOrUpdatedRowTrigger = createTrigger({
 			return [];
 		}
 
-		const spreadsheetId = context.propsValue.spreadsheetId;
-		const sheetId = context.propsValue.sheetId;
+		const inputSpreadsheetId = context.propsValue.spreadsheetId;
+    	const inputSheetId = context.propsValue.sheetId;
 		const triggerColumn = context.propsValue.trigger_column ?? ALL_COLUMNS;
 
-		if (isNil(spreadsheetId) || isNil(sheetId)) {
+		if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
+
+		const sheetId = Number(inputSheetId);
+		const spreadsheetId = inputSpreadsheetId as string;
 
 		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
 
@@ -241,12 +246,15 @@ export const newOrUpdatedRowTrigger = createTrigger({
 	},
 
 	async test(context) {
-		const spreadsheetId = context.propsValue.spreadsheetId;
-		const sheetId = context.propsValue.sheetId;
+		const inputSpreadsheetId = context.propsValue.spreadsheetId;
+		const inputSheetId = context.propsValue.sheetId;
 
-		if (isNil(spreadsheetId) || isNil(sheetId)) {
+		if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
+
+    	const sheetId = Number(inputSheetId);
+		const spreadsheetId = inputSpreadsheetId as string;
 
 		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
 		const currentSheetValues = await getWorkSheetValues(context.auth, spreadsheetId, sheetName);

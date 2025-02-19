@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { googleSheetsAuth } from '../..';
 import {
+  areSheetIdsValid,
   googleSheetsCommon,
 } from '../common/common';
 import { isNil } from '@activepieces/shared';
@@ -128,7 +129,7 @@ export const getRowsAction = createAction({
   async run({ store, auth, propsValue }) {
     const { startRow, groupSize, memKey ,spreadsheetId,sheetId} = propsValue;
 
-    if (isNil(spreadsheetId) || isNil(sheetId)) {
+    if (!areSheetIdsValid(spreadsheetId, sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 
@@ -141,8 +142,8 @@ export const getRowsAction = createAction({
       return await getRows(
         store,
         auth,
-        spreadsheetId,
-        sheetId,
+        spreadsheetId as string,
+        sheetId as number,
         memKey,
         groupSize,
         startRow,
@@ -159,7 +160,7 @@ export const getRowsAction = createAction({
   async test({ store, auth, propsValue }) {
     const { startRow, groupSize, memKey ,spreadsheetId,sheetId} = propsValue;
 
-    if (isNil(spreadsheetId) || isNil(sheetId)) {
+    if (!areSheetIdsValid(spreadsheetId, sheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 
@@ -167,8 +168,8 @@ export const getRowsAction = createAction({
       return await getRows(
         store,
         auth,
-        spreadsheetId,
-        sheetId,
+        spreadsheetId as string,
+        sheetId as number,
         memKey,
         groupSize,
         startRow,
