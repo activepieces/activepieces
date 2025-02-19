@@ -1,4 +1,4 @@
-import { exceptionHandler } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
 import { apId, ApMultipartFile } from '@activepieces/shared'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
@@ -11,7 +11,6 @@ import { setupApp } from './app'
 import { healthModule } from './health/health.module'
 import { errorHandler } from './helper/error-handler'
 import { system } from './helper/system/system'
-import { AppSystemProp } from './helper/system/system-prop'
 import { setupWorker } from './worker'
 
 
@@ -41,6 +40,7 @@ async function setupBaseApp(): Promise<FastifyInstance> {
             customOptions: {
                 removeAdditional: 'all',
                 useDefaults: true,
+                keywords: ['discriminator'],
                 coerceTypes: 'array',
                 formats: {},
             },

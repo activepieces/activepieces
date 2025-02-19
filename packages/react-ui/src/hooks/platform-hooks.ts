@@ -1,19 +1,19 @@
-import { usePrefetchQuery, useSuspenseQuery } from '@tanstack/react-query';
+import { QueryClient, useSuspenseQuery } from '@tanstack/react-query';
+
+import { authenticationSession } from '@/lib/authentication-session';
+import { PlatformWithoutSensitiveData } from '@activepieces/shared';
 
 import { platformApi } from '../lib/platforms-api';
 
 export const platformHooks = {
-  prefetchPlatform: () => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    usePrefetchQuery({
-      queryKey: ['platform'],
-      queryFn: platformApi.getCurrentPlatform,
-      staleTime: Infinity,
-    });
+  isCopilotEnabled: () => {
+    const { platform } = platformHooks.useCurrentPlatform();
+    return Object.keys(platform?.copilotSettings?.providers ?? {}).length > 0;
   },
   useCurrentPlatform: () => {
+    const currentPlatformId = authenticationSession.getPlatformId();
     const query = useSuspenseQuery({
-      queryKey: ['platform'],
+      queryKey: ['platform', currentPlatformId],
       queryFn: platformApi.getCurrentPlatform,
       staleTime: Infinity,
     });
@@ -21,6 +21,12 @@ export const platformHooks = {
       platform: query.data,
       refetch: async () => {
         await query.refetch();
+      },
+      setCurrentPlatform: (
+        queryClient: QueryClient,
+        platform: PlatformWithoutSensitiveData,
+      ) => {
+        queryClient.setQueryData(['platform', currentPlatformId], platform);
       },
     };
   },

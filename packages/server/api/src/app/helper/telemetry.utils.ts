@@ -1,27 +1,26 @@
-import { ProjectId, TelemetryEvent, User, UserId } from '@activepieces/shared'
+import { AppSystemProp, apVersionUtil } from '@activepieces/server-shared'
+import { ProjectId, TelemetryEvent, User, UserId, UserIdentity } from '@activepieces/shared'
 import { Analytics } from '@segment/analytics-node'
 import { FastifyBaseLogger } from 'fastify'
-import { flagService } from '../flags/flag.service'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { system } from './system/system'
-import { AppSystemProp } from './system/system-prop'
 
 const telemetryEnabled = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)
 
 const analytics = new Analytics({ writeKey: '42TtMD2Fh9PEIcDO2CagCGFmtoPwOmqK' })
 
 export const telemetry = (log: FastifyBaseLogger) => ({
-    async identify(user: User, projectId: ProjectId): Promise<void> {
+    async identify(user: User, identity: UserIdentity, projectId: ProjectId): Promise<void> {
         if (!telemetryEnabled) {
             return
         }
         const identify = {
             userId: user.id,
             traits: {
-                email: user.email,
-                firstName: user.firstName,
-                lastName: user.lastName,
+                email: identity.email,
+                firstName: identity.firstName,
+                lastName: identity.lastName,
                 projectId,
                 firstSeenAt: user.created,
                 ...(await getMetadata()),
@@ -68,7 +67,7 @@ export const telemetry = (log: FastifyBaseLogger) => ({
 })
 
 async function getMetadata() {
-    const currentVersion = await flagService.getCurrentRelease()
+    const currentVersion = await apVersionUtil.getCurrentRelease()
     const edition = system.getEdition()
     return {
         activepiecesVersion: currentVersion,

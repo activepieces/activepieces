@@ -1,7 +1,5 @@
 import { argv } from 'process'
-import { parentPort } from 'worker_threads'
 import {
-    assertNotNullOrUndefined,
     EngineOperation,
     EngineOperationType,
 } from '@activepieces/shared'
@@ -17,10 +15,20 @@ async function executeFromFile(operationType: string): Promise<void> {
 }
 
 async function executeFromWorkerData(operation: EngineOperation, operationType: EngineOperationType): Promise<void> {
-    const result = await execute(operationType, operation)
-    assertNotNullOrUndefined(parentPort, 'parentPort')
-    const resultParsed = JSON.parse(JSON.stringify(result))
-    parentPort.postMessage({ type: 'result', message: resultParsed })
+    try {
+        const result = await execute(operationType, operation)
+        const resultParsed = JSON.parse(JSON.stringify(result))
+        process.send?.({
+            type: 'result',
+            message: resultParsed,
+        })
+    }
+    catch (error) {
+        process.send?.({
+            type: 'error',
+            message: error,
+        })
+    }
 }
 
 const operationType = argv[2]
@@ -29,22 +37,32 @@ if (operationType) {
     executeFromFile(operationType).catch(e => console.error(e))
 }
 else {
-    if (parentPort) {
+    if (process.send) {
         const originalLog = console.log
         console.log = function (...args) {
-            assertNotNullOrUndefined(parentPort, 'parentPort')
-            parentPort.postMessage({ type: 'stdout', message: args.join(' ') })
+            process.send?.({
+                type: 'stdout',
+                message: args.join(' ') + '\n',
+            })
             originalLog.apply(console, args)
         }
 
         const originalError = console.error
         console.error = function (...args) {
-            assertNotNullOrUndefined(parentPort, 'parentPort')
-            parentPort.postMessage({ type: 'stderr', message: args.join(' ') })
+            process.send?.({
+                type: 'stderr',
+                message: args.join(' ') + '\n',
+            })
             originalError.apply(console, args)
         }
-        parentPort.on('message', (m: { operation: EngineOperation, operationType: EngineOperationType }) => {
-            executeFromWorkerData(m.operation, m.operationType).catch(e => console.error(e))
+        
+        process.on('message', (m: { operation: EngineOperation, operationType: EngineOperationType }) => {
+            executeFromWorkerData(m.operation, m.operationType).catch(e => {
+                process.send?.({
+                    type: 'error',
+                    message: e,
+                })
+            })
         })
     }
 }

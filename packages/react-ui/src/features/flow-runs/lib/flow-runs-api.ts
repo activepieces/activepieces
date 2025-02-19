@@ -4,7 +4,6 @@ import { Socket } from 'socket.io-client';
 import { api } from '@/lib/api';
 import {
   FlowRun,
-  SeekPage,
   ListFlowRunsRequestQuery,
   RetryFlowRequestBody,
   TestFlowRunRequestBody,
@@ -13,6 +12,7 @@ import {
   CreateStepRunRequestBody,
   StepRunResponse,
   BulkRetryFlowRequestBody,
+  SeekPage,
 } from '@activepieces/shared';
 
 export const flowRunsApi = {
@@ -82,11 +82,12 @@ function getInitialRun(
       if (run.flowVersionId !== flowVersionId) {
         return;
       }
-
       socket.off(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
+      console.log('clear TEST_FLOW_RUN_STARTED listener' + run.id);
       resolve(run);
     };
 
     socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
+    console.log('listened to TEST_FLOW_RUN_STARTED');
   });
 }

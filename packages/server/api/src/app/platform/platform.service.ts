@@ -3,16 +3,19 @@ import {
     apId,
     ErrorCode,
     FilteredPieceBehavior,
-
     isNil,
     LocalesEnum,
     Platform,
     PlatformId,
+    PlatformWithoutSensitiveData,
     spreadIfDefined,
     UpdatePlatformRequestBody,
-    UserId } from '@activepieces/shared'
+    UserId,
+} from '@activepieces/shared'
+import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { defaultTheme } from '../flags/theme'
+import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
 
@@ -22,6 +25,28 @@ export const platformService = {
     async hasAnyPlatforms(): Promise<boolean> {
         const count = await repo().count()
         return count > 0
+    },
+    async listPlatformsForIdentityWithAtleastProject(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
+        const users = await userService.getByIdentityId({ identityId: params.identityId })
+
+        const platformsWithProjects = await Promise.all(users.map(async (user) => {
+            if (isNil(user.platformId)) {
+                return null
+            }
+            const hasProjects = await projectService.userHasProjects({
+                platformId: user.platformId,
+                userId: user.id,
+            })
+            return hasProjects ? user.platformId : null
+        }))
+
+        const platformIds = platformsWithProjects.filter((platformId) => !isNil(platformId))
+
+        return repo().find({
+            where: {
+                id: In(platformIds),
+            },
+        })
     },
     async create(params: AddParams): Promise<Platform> {
         const {
@@ -56,8 +81,8 @@ export const platformService = {
             ssoEnabled: false,
             federatedAuthProviders: {},
             cloudAuthEnabled: true,
-            flowIssuesEnabled: false,
-            gitSyncEnabled: false,
+            flowIssuesEnabled: true,
+            environmentsEnabled: false,
             managePiecesEnabled: false,
             manageTemplatesEnabled: false,
             manageProjectsEnabled: false,
@@ -75,7 +100,7 @@ export const platformService = {
             id: ownerId,
             platformId: savedPlatform.id,
         })
-        
+
         return savedPlatform
     },
 
@@ -102,7 +127,6 @@ export const platformService = {
             ...spreadIfDefined('favIconUrl', params.favIconUrl),
             ...spreadIfDefined('filteredPieceNames', params.filteredPieceNames),
             ...spreadIfDefined('filteredPieceBehavior', params.filteredPieceBehavior),
-            ...spreadIfDefined('smtp', params.smtp),
             ...spreadIfDefined('analyticsEnabled', params.analyticsEnabled),
             ...spreadIfDefined(
                 'federatedAuthProviders',
@@ -111,7 +135,7 @@ export const platformService = {
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
             ...spreadIfDefined('defaultLocale', params.defaultLocale),
             ...spreadIfDefined('showPoweredBy', params.showPoweredBy),
-            ...spreadIfDefined('gitSyncEnabled', params.gitSyncEnabled),
+            ...spreadIfDefined('environmentsEnabled', params.environmentsEnabled),
             ...spreadIfDefined('embeddingEnabled', params.embeddingEnabled),
             ...spreadIfDefined('globalConnectionsEnabled', params.globalConnectionsEnabled),
             ...spreadIfDefined('customRolesEnabled', params.customRolesEnabled),
@@ -133,6 +157,8 @@ export const platformService = {
             ...spreadIfDefined('alertsEnabled', params.alertsEnabled),
             ...spreadIfDefined('licenseKey', params.licenseKey),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
+            ...spreadIfDefined('copilotSettings', params.copilotSettings),
+            smtp: params.smtp,
         }
 
         return repo().save(updatedPlatform)
@@ -153,10 +179,9 @@ export const platformService = {
                 },
             })
         }
-        
+
         return platform
     },
-
     async getOne(id: PlatformId): Promise<Platform | null> {
         return repo().findOneBy({
             id,
@@ -180,7 +205,7 @@ type UpdateParams = UpdatePlatformRequestBody & {
     auditLogEnabled?: boolean
     showPoweredBy?: boolean
     ssoEnabled?: boolean
-    gitSyncEnabled?: boolean
+    environmentsEnabled?: boolean
     embeddingEnabled?: boolean
     globalConnectionsEnabled?: boolean
     customRolesEnabled?: boolean
@@ -192,7 +217,12 @@ type UpdateParams = UpdatePlatformRequestBody & {
     manageTemplatesEnabled?: boolean
     apiKeysEnabled?: boolean
     projectRolesEnabled?: boolean
-    alertsEnabled?: boolean 
-    analyticsEnabled?: boolean 
+    alertsEnabled?: boolean
+    analyticsEnabled?: boolean
     licenseKey?: string
+}
+
+
+type ListPlatformsForIdentityParams = {
+    identityId: string
 }

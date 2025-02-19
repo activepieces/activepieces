@@ -26,6 +26,6 @@ export const createRecordAction = createAction({
 		});
 
 		const client = makeClient(context.auth);
-		return await client.createRecord(tableId, recordInput);
+		return await client.createRecord(tableId, recordInput, context.auth.version || 3);
 	},
 });

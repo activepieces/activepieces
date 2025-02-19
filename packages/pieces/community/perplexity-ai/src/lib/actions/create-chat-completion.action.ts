@@ -28,33 +28,21 @@ export const createChatCompletionAction = createAction({
         options: [
           // https://docs.perplexity.ai/guides/model-cards
           {
-            label: 'llama-3.1-sonar-small-128k-online',
-            value: 'llama-3.1-sonar-small-128k-online',
+            label:'sonar-reasoning-pro',
+            value:'sonar-reasoning-pro'
           },
           {
-            label: 'llama-3.1-sonar-large-128k-online',
-            value: 'llama-3.1-sonar-large-128k-online',
+            label:'sonar-reasoning',
+            value:'sonar-reasoning'
           },
           {
-            label: 'llama-3.1-sonar-huge-128k-online',
-            value: 'llama-3.1-sonar-huge-128k-online',
+            label:'sonar-pro',
+            value:'sonar-pro'
           },
           {
-            label: 'llama-3.1-sonar-small-128k-chat',
-            value: 'llama-3.1-sonar-small-128k-chat',
-          },
-          {
-            label: 'llama-3.1-sonar-large-128k-chat',
-            value: 'llama-3.1-sonar-large-128k-chat',
-          },
-          {
-            label: 'llama-3.1-8b-instruct',
-            value: 'llama-3.1-8b-instruct',
-          },
-          {
-            label: 'llama-3.1-70b-instruct',
-            value: 'llama-3.1-70b-instruct',
-          },
+            label:'sonar',
+            value:'sonar'
+          }
         ],
       },
     }),
@@ -150,7 +138,11 @@ export const createChatCompletionAction = createAction({
     });
 
     if (response.status === 200) {
-      return response.body.choices[0].message.content;
+     
+      return {
+        result:response.body.choices[0].message.content,
+        citations:response.body.citations
+      }
     }
 
     return response.body;

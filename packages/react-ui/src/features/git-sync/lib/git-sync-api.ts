@@ -2,8 +2,6 @@ import { api } from '@/lib/api';
 import {
   ConfigureRepoRequest,
   GitRepo,
-  ProjectSyncPlan,
-  PullGitRepoRequest,
   PushGitRepoRequest,
 } from '@activepieces/ee-shared';
 import { SeekPage } from '@activepieces/shared';
@@ -26,8 +24,5 @@ export const gitSyncApi = {
   },
   push(repoId: string, request: PushGitRepoRequest) {
     return api.post<void>(`/v1/git-repos/${repoId}/push`, request);
-  },
-  pull(repoId: string, request: PullGitRepoRequest) {
-    return api.post<ProjectSyncPlan>(`/v1/git-repos/${repoId}/pull`, request);
   },
 };

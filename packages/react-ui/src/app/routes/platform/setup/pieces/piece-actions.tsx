@@ -14,9 +14,10 @@ import { platformApi } from '@/lib/platforms-api';
 
 type PieceActionsProps = {
   pieceName: string;
+  isEnabled: boolean;
 };
 
-const PieceActions = ({ pieceName }: PieceActionsProps) => {
+const PieceActions = ({ pieceName, isEnabled }: PieceActionsProps) => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
 
   const { mutate: togglePiece, isPending: isTogglePending } = useMutation({
@@ -84,7 +85,14 @@ const PieceActions = ({ pieceName }: PieceActionsProps) => {
             variant="ghost"
             size={'sm'}
             loading={isTogglePending}
-            onClick={() => togglePiece(pieceName)}
+            disabled={!isEnabled}
+            onClick={(e) => {
+              if (!isEnabled) {
+                e.preventDefault();
+                return;
+              }
+              togglePiece(pieceName);
+            }}
           >
             {filtered ? (
               <EyeOff className="size-4" />
@@ -106,7 +114,14 @@ const PieceActions = ({ pieceName }: PieceActionsProps) => {
             variant="ghost"
             size={'sm'}
             loading={isPinPending}
-            onClick={() => togglePin(pieceName)}
+            disabled={!isEnabled}
+            onClick={(e) => {
+              if (!isEnabled) {
+                e.preventDefault();
+                return;
+              }
+              togglePin(pieceName);
+            }}
           >
             {pinned ? (
               <PinOff className="size-4" />

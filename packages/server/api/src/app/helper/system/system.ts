@@ -1,6 +1,6 @@
 import os from 'os'
 import path from 'path'
-import { ContainerType, PiecesSource, pinoLogging, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, ContainerType, environmentVariables, PiecesSource, pinoLogging, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -12,7 +12,6 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Level } from 'pino'
-import { AppSystemProp, SystemProp } from './system-prop'
 
 
 export enum CopilotInstanceTypes {
@@ -51,14 +50,12 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: '30',
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: '30',
     [AppSystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
-    [AppSystemProp.COPILOT_INSTANCE_TYPE]: CopilotInstanceTypes.OPENAI,
-    [AppSystemProp.AZURE_OPENAI_API_VERSION]: '2023-06-01-preview',
     [AppSystemProp.TRIGGER_FAILURES_THRESHOLD]: '576',
     [AppSystemProp.ENVIRONMENT]: 'prod',
     [AppSystemProp.EXECUTION_MODE]: ExecutionMode.UNSANDBOXED,
-    [AppSystemProp.FLOW_WORKER_CONCURRENCY]: '10',
+    [WorkerSystemProp.FLOW_WORKER_CONCURRENCY]: '10',
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: '30',
-    [AppSystemProp.SCHEDULED_WORKER_CONCURRENCY]: '10',
+    [WorkerSystemProp.SCHEDULED_WORKER_CONCURRENCY]: '10',
     [AppSystemProp.LOG_LEVEL]: 'info',
     [AppSystemProp.LOG_PRETTY]: 'false',
     [AppSystemProp.PIECES_SOURCE]: PiecesSource.DB,
@@ -96,7 +93,7 @@ export const system = {
         return globalLogger
     },
     get<T extends string>(prop: SystemProp): T | undefined {
-        return getEnvVar(prop) as T | undefined
+        return getEnvVarOrReturnDefaultValue(prop) as T | undefined
     },
 
     getNumberOrThrow(prop: SystemProp): number {
@@ -117,7 +114,7 @@ export const system = {
 
     },
     getNumber(prop: SystemProp): number | null {
-        const stringNumber = getEnvVar(prop)
+        const stringNumber = getEnvVarOrReturnDefaultValue(prop)
 
         if (!stringNumber) {
             return null
@@ -133,7 +130,7 @@ export const system = {
     },
 
     getBoolean(prop: SystemProp): boolean | undefined {
-        const value = getEnvVar(prop)
+        const value = getEnvVarOrReturnDefaultValue(prop)
 
         if (isNil(value)) {
             return undefined
@@ -142,7 +139,7 @@ export const system = {
     },
 
     getList(prop: SystemProp): string[] {
-        const values = getEnvVar(prop)
+        const values = getEnvVarOrReturnDefaultValue(prop)
 
         if (isNil(values)) {
             return []
@@ -151,7 +148,7 @@ export const system = {
     },
 
     getOrThrow<T extends string>(prop: SystemProp): T {
-        const value = getEnvVar(prop) as T | undefined
+        const value = getEnvVarOrReturnDefaultValue(prop) as T | undefined
 
         if (value === undefined) {
             throw new ActivepiecesError(
@@ -182,6 +179,6 @@ export const system = {
     },
 }
 
-const getEnvVar = (prop: SystemProp): string | undefined => {
-    return process.env[`AP_${prop}`] ?? systemPropDefaultValues[prop]
+const getEnvVarOrReturnDefaultValue = (prop: SystemProp): string | undefined => {
+    return environmentVariables.getEnvironment(prop) ?? systemPropDefaultValues[prop]
 }

@@ -14,24 +14,26 @@ let workerToken: string
 let heartbeatInterval: NodeJS.Timeout
 
 export const flowWorker = (log: FastifyBaseLogger) => ({
-    async init(generatedToken: string): Promise<void> {
+    async init({ workerToken: token }: { workerToken: string }): Promise<void> {
         closed = false
-        workerToken = generatedToken
-        const heartbeatResponse = await workerApiService(workerToken).heartbeat()
-        if (isNil(heartbeatResponse)) {
-            throw new Error('The worker is enable to reach the server')
-        }
-        await workerMachine.init(heartbeatResponse)
+        workerToken = token
+        await initializeWorker(log)
         heartbeatInterval = setInterval(() => {
             rejectedPromiseHandler(workerApiService(workerToken).heartbeat(), log)
         }, 15000)
-    },
-    async start(): Promise<void> {
+
         const FLOW_WORKER_CONCURRENCY = workerMachine.getSettings().FLOW_WORKER_CONCURRENCY
         const SCHEDULED_WORKER_CONCURRENCY = workerMachine.getSettings().SCHEDULED_WORKER_CONCURRENCY
-
+        log.info({
+            FLOW_WORKER_CONCURRENCY,
+            SCHEDULED_WORKER_CONCURRENCY,
+        }, 'Starting worker')
         for (const queueName of Object.values(QueueName)) {
             const times = queueName === QueueName.SCHEDULED ? SCHEDULED_WORKER_CONCURRENCY : FLOW_WORKER_CONCURRENCY
+            log.info({
+                queueName,
+                times,
+            }, 'Starting polling queue with concurrency')
             for (let i = 0; i < times; i++) {
                 rejectedPromiseHandler(run(queueName, log), log)
             }
@@ -42,6 +44,26 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
         clearTimeout(heartbeatInterval)
     },
 })
+
+async function initializeWorker(log: FastifyBaseLogger): Promise<void> {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+        try {
+            const heartbeatResponse = await workerApiService(workerToken).heartbeat()
+            if (isNil(heartbeatResponse)) {
+                throw new Error('The worker is unable to reach the server')
+            }
+            await workerMachine.init(heartbeatResponse)
+            break
+        }
+        catch (error) {
+            log.error({
+                error,
+            }, 'The worker is unable to reach the server')
+            await new Promise(resolve => setTimeout(resolve, 5000))
+        }
+    }
+}
 
 async function run<T extends QueueName>(queueName: T, log: FastifyBaseLogger): Promise<void> {
     while (!closed) {

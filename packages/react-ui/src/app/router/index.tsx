@@ -16,7 +16,7 @@ import AnalyticsPage from '@/app/routes/platform/analytics';
 import { ApiKeysPage } from '@/app/routes/platform/security/api-keys';
 import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
 import { SSOPage } from '@/app/routes/platform/security/sso';
-import AIProvidersPage from '@/app/routes/platform/setup/ai-providers';
+import AIProvidersPage from '@/app/routes/platform/setup/ai';
 import { BrandingPage } from '@/app/routes/platform/setup/branding';
 import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
 import { RedirectPage } from '@/app/routes/redirect';
@@ -25,7 +25,7 @@ import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
-import { ApFlagId, Permission } from '@activepieces/shared';
+import { Permission } from '@activepieces/shared';
 import {
   ActivepiecesClientEventName,
   ActivepiecesVendorEventName,
@@ -45,22 +45,25 @@ import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
 import IssuesPage from '../routes/issues';
-import PlansPage from '../routes/plans';
+import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
 import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
 import ProjectsPage from '../routes/platform/projects';
 import AuditLogsPage from '../routes/platform/security/audit-logs';
 import { ProjectRolePage } from '../routes/platform/security/project-role';
+import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/project-role-users-table';
 import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
 import { LicenseKeyPage } from '../routes/platform/setup/license-key';
 import TemplatesPage from '../routes/platform/setup/templates';
 import UsersPage from '../routes/platform/users';
+import { ProjectReleasesPage } from '../routes/project-release';
+import ViewRelease from '../routes/project-release/view-release';
 import { FlowRunPage } from '../routes/runs/id';
 import AlertsPage from '../routes/settings/alerts';
 import AppearancePage from '../routes/settings/appearance';
+import { EnvironmentPage } from '../routes/settings/environment';
 import GeneralPage from '../routes/settings/general';
-import { GitSyncPage } from '../routes/settings/git-sync';
 import TeamPage from '../routes/settings/team';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
@@ -68,10 +71,11 @@ import { ShareTemplatePage } from '../routes/templates/share-template';
 
 import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 import { DefaultRoute } from './default-route';
-import { FlagRouteGuard } from './flag-route-guard';
 import { RoutePermissionGuard } from './permission-guard';
-import { ProjectRouterWrapper } from './project-route-wrapper';
-
+import {
+  ProjectRouterWrapper,
+  TokenCheckerWrapper,
+} from './project-route-wrapper';
 const SettingsRerouter = () => {
   const { hash } = useLocation();
   const fragmentWithoutHash = hash.slice(1).toLowerCase();
@@ -166,6 +170,16 @@ const routes = [
     ),
   },
   ...ProjectRouterWrapper({
+    path: '/releases/:releaseId',
+    element: (
+      <DashboardContainer>
+        <PageTitle title="Releases">
+          <ViewRelease />
+        </PageTitle>
+      </DashboardContainer>
+    ),
+  }),
+  ...ProjectRouterWrapper({
     path: '/runs',
     element: (
       <DashboardContainer>
@@ -202,15 +216,13 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/plans',
+    path: '/releases',
     element: (
-      <FlagRouteGuard flag={ApFlagId.SHOW_BILLING}>
-        <DashboardContainer>
-          <PageTitle title="Plans">
-            <PlansPage />
-          </PageTitle>
-        </DashboardContainer>
-      </FlagRouteGuard>
+      <DashboardContainer>
+        <PageTitle title="Releases">
+          <ProjectReleasesPage />
+        </PageTitle>
+      </DashboardContainer>
     ),
   }),
   ...ProjectRouterWrapper({
@@ -331,13 +343,13 @@ const routes = [
   },
 
   ...ProjectRouterWrapper({
-    path: '/settings/git-sync',
+    path: '/settings/environments',
     element: (
       <DashboardContainer>
-        <RoutePermissionGuard permission={Permission.READ_GIT_REPO}>
+        <RoutePermissionGuard permission={Permission.READ_PROJECT_RELEASE}>
           <ProjectSettingsLayout>
-            <PageTitle title="Git Sync">
-              <GitSyncPage />
+            <PageTitle title="Environments">
+              <EnvironmentPage />
             </PageTitle>
           </ProjectSettingsLayout>
         </RoutePermissionGuard>
@@ -458,7 +470,7 @@ const routes = [
     element: (
       <PlatformAdminContainer>
         <PlatformSecondSidebarLayout type="setup">
-          <PageTitle title="Universal AI">
+          <PageTitle title="AI">
             <AIProvidersPage />
           </PageTitle>
         </PlatformSecondSidebarLayout>
@@ -514,6 +526,18 @@ const routes = [
     ),
   },
   {
+    path: '/platform/setup/billing',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Billing">
+          <PlatformSecondSidebarLayout type="setup">
+            <SettingsBilling />
+          </PlatformSecondSidebarLayout>
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
     path: '/platform/security/signing-keys',
     element: (
       <PlatformAdminContainer>
@@ -562,6 +586,18 @@ const routes = [
     ),
   },
   {
+    path: '/platform/security/project-roles/:projectRoleId',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSecondSidebarLayout type="security">
+          <PageTitle title="Project Role Users">
+            <ProjectRoleUsersTable />
+          </PageTitle>
+        </PlatformSecondSidebarLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
     path: '/platform/setup',
     element: (
       <PlatformAdminContainer>
@@ -594,6 +630,14 @@ const routes = [
   {
     path: '/redirect',
     element: <RedirectPage></RedirectPage>,
+  },
+  {
+    path: '/projects/:projectId',
+    element: (
+      <TokenCheckerWrapper>
+        <DefaultRoute></DefaultRoute>
+      </TokenCheckerWrapper>
+    ),
   },
   {
     path: '/*',

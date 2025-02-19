@@ -23,6 +23,8 @@ const auditEventController: FastifyPluginAsyncTypebox = async (app) => {
             action: request.query.action ?? undefined,
             projectId: request.query.projectId ?? undefined,
             userId: request.query.userId ?? undefined,
+            createdBefore: request.query.createdBefore ?? undefined,
+            createdAfter: request.query.createdAfter ?? undefined,
         })
     })
 }

@@ -28,6 +28,7 @@ export class AxiosHttpClient extends BaseHttpClient {
       const axiosRequestMethod = this.getAxiosRequestMethod(request.method);
       const timeout = request.timeout ? request.timeout : 0;
       const queryParams = request.queryParams || {}
+      const responseType = request.responseType || 'json';
 
       for (const [key, value] of urlQueryParams) {
         queryParams[key] = value
@@ -40,6 +41,7 @@ export class AxiosHttpClient extends BaseHttpClient {
         headers,
         data: request.body,
         timeout,
+        responseType,
       };
 
       if (request.retries && request.retries > 0) {

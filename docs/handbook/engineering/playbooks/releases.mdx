@@ -1,0 +1,29 @@
+---
+title: 'How to create Release'
+icon: 'flask'
+---
+
+Pre-releases are versions of the software that are released before the final version. They are used to test new features and bug fixes before they are released to the public. Pre-releases are typically labeled with a version number that includes a pre-release identifier, such as `official` or `rc`.
+
+## Types of Releases
+
+There are several types of releases that can be used to indicate the stability of the software:
+
+- **Official**: Official releases are considered to be stable and are close to the final release.
+- **Release Candidate (RC)**: Release candidates are versions of the software that are feature-complete and have been tested by a larger group of users. They are considered to be stable and are close to the final release. They are typically used for final testing before the final release.
+
+## Why Use Pre-Releases
+
+We do pre-release when we release hot-fixes / bug fixes / small and beta features.
+
+## How to Release a Pre-Release
+
+To release a pre-release version of the software, follow these steps:
+
+1. **Create a new branch**: Create a new branch from the `main` branch. The branch name should be `release/vX.Y.Z` where `X.Y.Z` is the version number.
+2. **Increase the version number**: Update the `package.json` file with the new version number.
+3. **Open a Pull Request**: Open a pull request from the new branch to the `main` branch. Assign the `pre-release` label to the pull request.
+4. **Check the Changelog**: Check the [Activepieces Releases](https://github.com/activepieces/activepieces/releases) page to see if there are any new features or bug fixes that need to be included in the pre-release. Make sure all PRs are labeled correctly so they show in the correct auto-generated changelog. If not, assign the labels and rerun the changelog by removing the "pre-release" label and adding it again to the PR.
+5. Go to https://github.com/activepieces/activepieces/actions/workflows/release-rc.yml and run it on the release branch to build the rc image.
+6. **Merge the Pull Request**: Merge the pull request to the `main` branch.
+7. **Release the Notes**: Release the notes for the new version.

@@ -1,0 +1,94 @@
+---
+title: "Database Migrations"
+description: "Guide for creating database migrations in Activepieces"
+icon: "database"
+---
+
+Activepieces uses TypeORM as its database driver in Node.js. We support two database types across different editions of our platform.
+
+The database migration files contain both what to do to migrate (up method) and what to do when rolling back (down method).
+
+<Tip>
+Read more about TypeORM migrations here:
+https://orkhan.gitbook.io/typeorm/docs/migrations
+</Tip>
+
+## Database Support
+
+- PostgreSQL
+- SQLite
+
+<Tip>
+**Why Do we have SQLite?**
+We support SQLite to simplify development and self-hosting. It's particularly helpful for:
+
+- Developers creating pieces who want a quick setup
+- Self-hosters using platforms to manage docker images but doesn't support docker compose.
+</Tip>
+
+## Editions
+
+- **Enterprise & Cloud Edition** (Must use PostgreSQL)
+- **Community Edition** (Can use PostgreSQL or SQLite)
+
+<Tip>
+If you are generating a migration for an entity that will only be used in Cloud & Enterprise editions, you only need to create the PostgreSQL migration file. You can skip generating the SQLite migration.
+</Tip>
+
+
+### How To Generate
+
+<Steps>
+  <Step title="Uncomment Database Connection Export">
+    Uncomment the following line in `packages/server/api/src/app/database/database-connection.ts`:
+    ```typescript
+    export const exportedConnection = databaseConnection()
+    ```
+  </Step>
+
+  <Step title="Configure Database Type">
+    Edit your `.env` file to set the database type:
+
+    ```env
+    # For SQLite migrations (default)
+    AP_DATABASE_TYPE=SQLITE
+    ```
+
+    For PostgreSQL migrations:
+    ```env
+    AP_DATABASE_TYPE=POSTGRES
+    AP_POSTGRES_DATABASE=activepieces
+    AP_POSTGRES_HOST=db
+    AP_POSTGRES_PORT=5432
+    AP_POSTGRES_USERNAME=postgres
+    AP_POSTGRES_PASSWORD=password
+    ```
+  </Step>
+
+  <Step title="Generate Migration">
+    Run the migration generation command:
+    ```bash
+    nx db-migration server-api name=<MIGRATION_NAME>
+    ```
+    Replace `<MIGRATION_NAME>` with a descriptive name for your migration.
+  </Step>
+
+  <Step title="Move Migration File">
+    The command will generate a new migration file in `packages/server/api/src/app/database/migrations`. 
+    Review the generated file and:
+
+    - For PostgreSQL migrations: Move it to `postgres-connection.ts`
+    - For SQLite migrations: Move it to `sqlite-connection.ts`
+  </Step>
+
+  <Step title="Re-comment Export">
+    After moving the file, remember to re-comment the line from step 1:
+    ```typescript
+    // export const exportedConnection = databaseConnection()
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+Always test your migrations by running them both up and down to ensure they work as expected.
+</Tip>

@@ -3,15 +3,15 @@ import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { stripeHelper } from '../../../../src/app/ee/billing/project-billing/stripe-helper'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
+import { stripeHelper } from '../../../../src/app/ee/platform-billing/stripe-helper'
 import { setupServer } from '../../../../src/app/server'
 import {
     createMockCustomDomain,
-    createMockPlatform,
-    createMockUser,
+    mockAndSaveBasicSetup,
 } from '../../../../test/helpers/mocks'
 import { createMockSignUpRequest } from '../../../helpers/mocks/authn'
+
 
 let app: FastifyInstance | null = null
 let mockLog: FastifyBaseLogger
@@ -24,7 +24,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
     emailService(mockLog).sendOtp = jest.fn()
-    stripeHelper(mockLog).getOrCreateCustomer = jest
+    stripeHelper(mockLog).createCustomer = jest
         .fn()
         .mockResolvedValue(faker.string.alphanumeric())
     await databaseConnection().getRepository('flag').delete({})
@@ -72,17 +72,14 @@ describe('Authentication API', () => {
 
     it('fails to sign up invited user platform if no project exist', async () => {
     // arrange
-        const mockPlatformId = faker.string.nanoid(21)
 
-        const mockPlatformOwner = createMockUser({ platformId: mockPlatformId })
-        await databaseConnection().getRepository('user').save([mockPlatformOwner])
-
-        const mockPlatform = createMockPlatform({
-            id: mockPlatformId,
-            ownerId: mockPlatformOwner.id,
+        const { mockPlatform } = await mockAndSaveBasicSetup({
+            platform: {
+                emailAuthEnabled: true,
+                ssoEnabled: false,
+                enforceAllowedAuthDomains: false,
+            },
         })
-        await databaseConnection().getRepository('platform').save(mockPlatform)
-
         const mockCustomDomain = createMockCustomDomain({
             platformId: mockPlatform.id,
         })

@@ -7,5 +7,4 @@ if git diff --cached --name-only -- packages/server/api/.env | grep -q '^package
   exit 1
 fi
 
-# TODO: Temp disable commitlint for now
-# npx --no -- commitlint --edit ${1}
+npx --no -- commitlint --edit ${1}
