@@ -5,7 +5,7 @@ import { sendReviewInvite } from "./lib/actions/send-review-invite";
 export const cloutlyAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   required: true,
-  description: 'Please enter the API Key obtain from Cloutly.',
+  description: 'Please enter the API Key obtained from Cloutly.',
 });
 
 export const cloutly = createPiece({
