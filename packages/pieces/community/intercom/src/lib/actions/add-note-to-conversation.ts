@@ -3,7 +3,7 @@ import { intercomAuth } from '../..';
 import { commonProps, intercomClient } from '../common';
 import { conversationIdProp } from '../common/props';
 
-export const addNoteToConversation = createAction({
+export const addNoteToConversationAction = createAction({
 	auth: intercomAuth,
 	name: 'addNoteToConversation',
 	displayName: 'Add note to conversation',

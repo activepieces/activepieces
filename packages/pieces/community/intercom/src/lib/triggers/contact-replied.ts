@@ -2,10 +2,10 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { intercomAuth } from '../..';
 import { intercomClient, TriggerPayload } from '../common';
 
-export const conversationRated = createTrigger({
-	name: 'conversationRated',
-	displayName: 'Conversation was rated',
-	description: 'Triggers when a conversation is rated',
+export const contactRepliedTrigger = createTrigger({
+	name: 'contactReplied',
+	displayName: 'Contact Replied',
+	description: 'Triggers when a contact replies to a Conversation in Intercom.',
 	props: {},
 	auth: intercomAuth,
 	type: TriggerStrategy.APP_WEBHOOK,
@@ -18,7 +18,7 @@ export const conversationRated = createTrigger({
 		}
 
 		context.app.createListeners({
-			events: ['conversation.rating.added'],
+			events: ['conversation.user.replied'],
 			identifierValue: response['app']['id_code'],
 		});
 	},
