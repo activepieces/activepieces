@@ -1,11 +1,12 @@
+import { cloutlyAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import axios from 'axios';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const sendReviewInvite = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
+  auth:cloutlyAuth,
   name: 'sendReviewInvite',
   displayName: 'Send Review Invite',
-  description: 'Ask a customer to review your business',
+  description: 'Sends a review invite to your customer.',
   props: {
     firstName: Property.ShortText({
       displayName: 'First Name',
@@ -64,19 +65,19 @@ export const sendReviewInvite = createAction({
       salesRepEmail: context.propsValue.salesRepEmail,
     };
 
-    const apiKey = context.auth as string
+    const apiKey = context.auth as string;
 
-    const response = await axios.post(
-      'https://app.cloutly.com/api/v1/send-review-invite', 
-      data, 
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-app': 'activepieces',
-          'x-api-key': apiKey
-        }
-      },
-    );
-    return response.data;
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: 'https://app.cloutly.com/api/v1/send-review-invite',
+      body: data,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-app': 'activepieces',
+        'x-api-key': apiKey
+      }
+    })
+
+    return response.body;
   },
 });
