@@ -1560,6 +1560,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "joshuaheslin",
+      "name": "Joshua Heslin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/48037470?v=4",
+      "profile": "https://github.com/joshuaheslin",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
