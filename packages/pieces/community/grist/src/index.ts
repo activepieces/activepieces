@@ -40,7 +40,7 @@ export const gristAuth = PieceAuth.CustomAuth({
       });
 
       // https://support.getgrist.com/api/#tag/workspaces/operation/listWorkspaces
-      await client.listWorkspaces('0');
+      await client.listWorkspaces('docs');
 
       return {
         valid: true,
