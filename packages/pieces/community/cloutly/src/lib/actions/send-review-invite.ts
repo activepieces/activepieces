@@ -27,7 +27,7 @@ export const sendReviewInvite = createAction({
     }),
     sourceCustomerId: Property.ShortText({
       displayName: 'Source Customer ID',
-      required: true
+      required: false
     }),
     businessId: Property.ShortText({
       displayName: 'Business ID',
@@ -40,6 +40,11 @@ export const sendReviewInvite = createAction({
     inviteDelayDays: Property.Number({
       displayName: 'Invite Delay Days',
       description: 'The number of days to delay the invite (i.e send after X days)',
+      required: false
+    }),
+    salesRepEmail: Property.ShortText({
+      displayName: 'Sales Rep Email',
+      description: 'The email of the sales rep to associate the review and customer',
       required: false
     }),
   },
@@ -56,6 +61,7 @@ export const sendReviewInvite = createAction({
       businessId: context.propsValue.businessId,
       campaignId: context.propsValue.campaignId,
       inviteDelayDays: context.propsValue.inviteDelayDays,
+      salesRepEmail: context.propsValue.salesRepEmail,
     };
 
     const apiKey = context.auth as string
