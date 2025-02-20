@@ -12,7 +12,7 @@ export const stopCollectionForDirectPartialPayment = createAction({
   props: {
       unique_identifier: Property.ShortText({
         displayName: 'Unique Identifier',
-        required: true,
+        required: false,
       }),
       amount: Property.ShortText({
         displayName: 'Amount',
@@ -20,12 +20,18 @@ export const stopCollectionForDirectPartialPayment = createAction({
       }),
       email: Property.ShortText({
         displayName: 'Email',
-        required: true,
+        required: false,
+      }),
+      invoice_number: Property.ShortText({
+        displayName: 'Invoice Number',
+        required: false,
       }),
   },
   async run({ auth, propsValue }) {
-    if (!propsValue.unique_identifier && !propsValue.amount && !propsValue.email) {
-      throw new Error('At least one of unique_identifier, amount and email must be provided.');
+    respaidActionsCommon.validateProps(propsValue);
+
+    if (!propsValue.amount) {
+      throw new Error('Amount must be provided.');
     }
 
     const res = await httpClient.sendRequest<string[]>({
