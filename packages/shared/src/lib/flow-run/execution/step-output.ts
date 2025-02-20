@@ -88,6 +88,7 @@ export type StepOutput =
 
 type BranchResult = {
     branchName: string
+    branchIndex: number
     evaluation: boolean
 }
 
