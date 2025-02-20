@@ -23,7 +23,7 @@ export const createNewCampaign = createAction({
           "company_name": "Company XYZ",
           "email": "john@example.com",
           "invoice_number": "INV123",
-          "invoice_date": "2025-01-01",
+          "invoice_date": "01/01/2025",
           "description": "Invoice for service"
           "due_amount": 1000,
           "invoicing_entity_name": "Creditor ABC",
