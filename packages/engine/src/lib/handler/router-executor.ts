@@ -54,7 +54,10 @@ async function handleRouterExecution({ action, executionState, constants, censor
     const routerOutput = RouterStepOutput.init({
         input: censoredInput,
     }).setOutput({
-        branches: evaluatedConditions,
+        branches: resolvedInput.branches.map((branch, index) => ({
+            branchName: branch.branchName,
+            evaluation: evaluatedConditions[index],
+        })),
     })
     executionState = executionState.upsertStep(action.name, routerOutput)
 
