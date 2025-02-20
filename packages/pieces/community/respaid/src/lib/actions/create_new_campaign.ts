@@ -14,6 +14,11 @@ export const createNewCampaign = createAction({
       displayName: 'Campaign Name',
       required: true,
     }),
+    is_agency_collection: Property.Checkbox({
+      displayName: 'Agency collection?',
+      required: false,
+      defaultValue: false,
+    }),
     importData: Property.Json({
       displayName: 'Import Data (Array of Invoices)',
       required: true,
@@ -41,7 +46,7 @@ export const createNewCampaign = createAction({
 
     const requestBody = {
       campaign_name: propsValue.campaign_name,
-      is_agency_collection: true,
+      is_agency_collection: propsValue.is_agency_collection,
       import: propsValue.importData.map(invoice => ({
         unique_identifier: invoice.unique_identifier,
         full_name: invoice.full_name,
