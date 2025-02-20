@@ -1551,6 +1551,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "mariiawidrpay",
+      "name": "Mariia Shyn",
+      "avatar_url": "https://avatars.githubusercontent.com/u/110456120?v=4",
+      "profile": "https://github.com/mariiawidrpay",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
