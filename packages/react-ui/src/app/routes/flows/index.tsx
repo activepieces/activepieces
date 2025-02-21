@@ -47,14 +47,14 @@ import {
   folderIdParamName,
 } from '@/features/folders/component/folder-filter-list';
 import { foldersApi } from '@/features/folders/lib/folders-api';
-import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
-import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
+// import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
+// import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
-import { GitBranchType } from '@activepieces/ee-shared';
+// import { GitBranchType } from '@activepieces/ee-shared';
 import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 
 import FlowActionMenu from '../../../app/components/flow-actions-menu';
@@ -95,16 +95,18 @@ const FlowsPage = () => {
   const [searchParams] = useSearchParams();
 
   const { platform } = platformHooks.useCurrentPlatform();
-  const { gitSync } = gitSyncHooks.useGitSync(
-    authenticationSession.getProjectId()!,
-    platform.environmentsEnabled,
-  );
+  // const { gitSync } = gitSyncHooks.useGitSync(
+  //   authenticationSession.getProjectId()!,
+  //   platform.environmentsEnabled,
+  // );
   const userHasPermissionToUpdateFlow = checkAccess(Permission.WRITE_FLOW);
   const userHasPermissionToPushToGit = checkAccess(
     Permission.WRITE_PROJECT_RELEASE,
   );
-  const isDevelopmentBranch =
-    gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
+  // const isDevelopmentBranch =
+  //   gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
+
+  const isDevelopmentBranch = false;
 
   const { mutate: exportFlows, isPending: isExportPending } = useMutation({
     mutationFn: async (flows: PopulatedFlow[]) => {
@@ -401,7 +403,7 @@ const FlowsPage = () => {
                 ) : null}
 
                 <DropdownMenuContent>
-                  <PermissionNeededTooltip
+                  {/* <PermissionNeededTooltip
                     hasPermission={userHasPermissionToPushToGit}
                   >
                     <PushToGitDialog
@@ -419,7 +421,7 @@ const FlowsPage = () => {
                         </div>
                       </DropdownMenuItem>
                     </PushToGitDialog>
-                  </PermissionNeededTooltip>
+                  </PermissionNeededTooltip> */}
                   {!embedState.hideFolders && (
                     <PermissionNeededTooltip
                       hasPermission={userHasPermissionToUpdateFlow}

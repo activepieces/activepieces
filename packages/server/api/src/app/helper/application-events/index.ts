@@ -1,20 +1,20 @@
-import { AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FlowUpdatedEvent, FolderEvent, ProjectReleaseEvent, ProjectRoleEvent, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
+// import { AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FlowUpdatedEvent, FolderEvent, ProjectReleaseEvent, ProjectRoleEvent, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
 import { Static, Type } from '@sinclair/typebox'
 import { FastifyRequest } from 'fastify'
 import { hooksFactory } from '../hooks-factory'
 
 export const AuditEventParam = Type.Pick(Type.Union([
-    ConnectionEvent,
-    FlowCreatedEvent,
-    FlowDeletedEvent,
-    FlowUpdatedEvent,
-    AuthenticationEvent,
-    FolderEvent,
-    SignUpEvent,
-    SigningKeyEvent,
-    FlowRunEvent,
-    ProjectRoleEvent,
-    ProjectReleaseEvent,
+    // ConnectionEvent,
+    // FlowCreatedEvent,
+    // FlowDeletedEvent,
+    // FlowUpdatedEvent,
+    // AuthenticationEvent,
+    // FolderEvent,
+    // SignUpEvent,
+    // SigningKeyEvent,
+    // FlowRunEvent,
+    // ProjectRoleEvent,
+    // ProjectReleaseEvent,
 ]), ['data', 'action'])
 export type AuditEventParam = Static<typeof AuditEventParam>
 

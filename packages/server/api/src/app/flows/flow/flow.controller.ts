@@ -1,5 +1,5 @@
 
-import { ApplicationEventName } from '@activepieces/ee-shared'
+// import { ApplicationEventName } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApId,
@@ -29,9 +29,9 @@ import dayjs from 'dayjs'
 import { StatusCodes } from 'http-status-codes'
 import { authenticationUtils } from '../../authentication/authentication-utils'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
-import { gitRepoService } from '../../ee/project-release/git-sync/git-sync.service'
-import { eventsHooks } from '../../helper/application-events'
+// import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
+// import { gitRepoService } from '../../ee/project-release/git-sync/git-sync.service'
+// import { eventsHooks } from '../../helper/application-events'
 import { flowService } from './flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
@@ -45,32 +45,32 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             request: request.body,
         })
 
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-            action: ApplicationEventName.FLOW_CREATED,
-            data: {
-                flow: newFlow,
-            },
-        })
+        // eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+        //     action: ApplicationEventName.FLOW_CREATED,
+        //     data: {
+        //         flow: newFlow,
+        //     },
+        // })
 
         return reply.status(StatusCodes.CREATED).send(newFlow)
     })
 
     app.post('/:id', UpdateFlowRequestOptions, async (request) => {
         const userId = await authenticationUtils.extractUserIdFromPrincipal(request.principal)
-        await assertUserHasPermissionToFlow(request.principal, request.body.type, request.log)
+        // await assertUserHasPermissionToFlow(request.principal, request.body.type, request.log)
 
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
             id: request.params.id,
             projectId: request.principal.projectId,
         })
         await assertThatFlowIsNotBeingUsed(flow, userId)
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-            action: ApplicationEventName.FLOW_UPDATED,
-            data: {
-                request: request.body,
-                flowVersion: flow.version,
-            },
-        })
+        // eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+        //     action: ApplicationEventName.FLOW_UPDATED,
+        //     data: {
+        //         request: request.body,
+        //         flowVersion: flow.version,
+        //     },
+        // })
         const updatedFlow = await flowService(request.log).update({
             id: request.params.id,
             userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
@@ -120,19 +120,19 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             id: request.params.id,
             projectId: request.principal.projectId,
         })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-            action: ApplicationEventName.FLOW_DELETED,
-            data: {
-                flow,
-                flowVersion: flow.version,
-            },
-        })
-        await gitRepoService(request.log).onFlowDeleted({
-            flowId: request.params.id,
-            userId: request.principal.id,
-            projectId: request.principal.projectId,
-            log: request.log,
-        })
+        // eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+        //     action: ApplicationEventName.FLOW_DELETED,
+        //     data: {
+        //         flow,
+        //         flowVersion: flow.version,
+        //     },
+        // })
+        // await gitRepoService(request.log).onFlowDeleted({
+        //     flowId: request.params.id,
+        //     userId: request.principal.id,
+        //     projectId: request.principal.projectId,
+        //     log: request.log,
+        // })
         await flowService(request.log).delete({
             id: request.params.id,
             projectId: request.principal.projectId,

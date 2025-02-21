@@ -17,18 +17,12 @@
       "@activepieces/shared": [
         "../../packages/shared/src"
       ],
-      "@activepieces/ee-shared": [
-        "../../packages/ee/shared/src"  
-      ],
       "@activepieces/pieces-framework": [
         "../../packages/pieces/community/framework/src" 
       ],
       "@activepieces/pieces-common": [
         "../../packages/pieces/community/common/src" 
       ],
-      "ee-embed-sdk": [
-        "../../packages/ee/ui/embed-sdk/src"
-      ]
     }
   },
   "exclude": [

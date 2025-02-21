@@ -1,4 +1,4 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
+// import { ApplicationEventName } from '@activepieces/ee-shared'
 import { JobType, LATEST_JOB_DATA_SCHEMA_VERSION, RepeatableJobType } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -51,13 +51,13 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
         if (!isFlowUserTerminalState(flowRun.status)) {
             return
         }
-        await flowRunHooks.get(log).onFinish(flowRun)
-        eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {
-            action: ApplicationEventName.FLOW_RUN_FINISHED,
-            data: {
-                flowRun,
-            },
-        })
+        // await flowRunHooks.get(log).onFinish(flowRun)
+        // eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {
+        //     action: ApplicationEventName.FLOW_RUN_FINISHED,
+        //     data: {
+        //         flowRun,
+        //     },
+        // })
     },
     async start({
         flowRun,
@@ -88,12 +88,12 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
                 progressUpdateType,
             },
         })
-        eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {
-            action: ApplicationEventName.FLOW_RUN_STARTED,
-            data: {
-                flowRun,
-            },
-        })
+        // eventsHooks.get(log).sendWorkerEvent(flowRun.projectId, {
+        //     action: ApplicationEventName.FLOW_RUN_STARTED,
+        //     data: {
+        //         flowRun,
+        //     },
+        // })
     },
 
     async pause({ flowRun }: PauseParams): Promise<void> {

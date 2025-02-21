@@ -11,24 +11,24 @@ import { AiProviderEntity } from '../ai/ai-provider-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
-import { AlertEntity } from '../ee/alerts/alerts-entity'
-import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
-import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
-import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
-import { OtpEntity } from '../ee/authentication/otp/otp-entity'
-import { AppSumoEntity } from '../ee/billing/appsumo/appsumo.entity'
-import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
-import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
-import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
-import { IssueEntity } from '../ee/issues/issues-entity'
-import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
-import { PlatformBillingEntity } from '../ee/platform-billing/platform-billing.entity'
-import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
-import { ProjectPlanEntity } from '../ee/project-plan/project-plan.entity'
-import { GitRepoEntity } from '../ee/project-release/git-sync/git-sync.entity'
-import { ProjectReleaseEntity } from '../ee/project-release/project-release.entity'
-import { ProjectRoleEntity } from '../ee/project-role/project-role.entity'
-import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
+// import { AlertEntity } from '../ee/alerts/alerts-entity'
+// import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
+// import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
+// import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
+// import { OtpEntity } from '../ee/authentication/otp/otp-entity'
+// import { AppSumoEntity } from '../ee/billing/appsumo/appsumo.entity'
+// import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
+// import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
+// import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
+// import { IssueEntity } from '../ee/issues/issues-entity'
+// import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
+// import { PlatformBillingEntity } from '../ee/platform-billing/platform-billing.entity'
+// import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
+// import { ProjectPlanEntity } from '../ee/project-plan/project-plan.entity'
+// import { GitRepoEntity } from '../ee/project-release/git-sync/git-sync.entity'
+// import { ProjectReleaseEntity } from '../ee/project-release/project-release.entity'
+// import { ProjectRoleEntity } from '../ee/project-role/project-role.entity'
+// import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
 import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
@@ -73,37 +73,37 @@ function getEntities(): EntitySchema<unknown>[] {
         PlatformEntity,
         TagEntity,
         PieceTagEntity,
-        IssueEntity,
-        AlertEntity,
+        // IssueEntity,
+        // AlertEntity,
         UserInvitationEntity,
         WorkerMachineEntity,
         AiProviderEntity,
-        ProjectRoleEntity,
+        // ProjectRoleEntity,
         UserIdentityEntity,
     ]
 
     switch (edition) {
         case ApEdition.CLOUD:
         case ApEdition.ENTERPRISE:
-            entities.push(
-                ProjectMemberEntity,
-                ProjectPlanEntity,
-                CustomDomainEntity,
-                SigningKeyEntity,
-                OAuthAppEntity,
-                OtpEntity,
-                ApiKeyEntity,
-                FlowTemplateEntity,
-                GitRepoEntity,
-                AuditEventEntity,
-                ProjectReleaseEntity,
+            // entities.push(
+            //     ProjectMemberEntity,
+            //     ProjectPlanEntity,
+            //     CustomDomainEntity,
+            //     SigningKeyEntity,
+            //     OAuthAppEntity,
+            //     OtpEntity,
+            //     ApiKeyEntity,
+            //     FlowTemplateEntity,
+            //     GitRepoEntity,
+            //     AuditEventEntity,
+            //     ProjectReleaseEntity,
 
-                // CLOUD
-                AppSumoEntity,
-                ConnectionKeyEntity,
-                AppCredentialEntity,
-                PlatformBillingEntity,
-            )
+            //     // CLOUD
+            //     AppSumoEntity,
+            //     ConnectionKeyEntity,
+            //     AppCredentialEntity,
+            //     PlatformBillingEntity,
+            // )
             break
         case ApEdition.COMMUNITY:
             break

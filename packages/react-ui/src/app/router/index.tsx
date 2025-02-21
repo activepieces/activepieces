@@ -11,13 +11,13 @@ import { PageTitle } from '@/app/components/page-title';
 import PlatformSecondSidebarLayout from '@/app/components/platform-second-sidebar-layout';
 import ProjectSettingsLayout from '@/app/components/project-settings-layout';
 import { ChatPage } from '@/app/routes/chat';
-import { EmbedPage } from '@/app/routes/embed';
+// import { EmbedPage } from '@/app/routes/embed';
 import AnalyticsPage from '@/app/routes/platform/analytics';
-import { ApiKeysPage } from '@/app/routes/platform/security/api-keys';
-import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
-import { SSOPage } from '@/app/routes/platform/security/sso';
+// import { ApiKeysPage } from '@/app/routes/platform/security/api-keys';
+// import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
+// import { SSOPage } from '@/app/routes/platform/security/sso';
 import AIProvidersPage from '@/app/routes/platform/setup/ai';
-import { BrandingPage } from '@/app/routes/platform/setup/branding';
+// import { BrandingPage } from '@/app/routes/platform/setup/branding';
 import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
 import { RedirectPage } from '@/app/routes/redirect';
 import { FlowRunsPage } from '@/app/routes/runs';
@@ -26,11 +26,11 @@ import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
 import { Permission } from '@activepieces/shared';
-import {
-  ActivepiecesClientEventName,
-  ActivepiecesVendorEventName,
-  ActivepiecesVendorRouteChanged,
-} from 'ee-embed-sdk';
+// import {
+//   ActivepiecesClientEventName,
+//   ActivepiecesVendorEventName,
+//   ActivepiecesVendorRouteChanged,
+// } from 'ee-embed-sdk';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
 import { DashboardContainer } from '../components/dashboard-container';
@@ -39,30 +39,30 @@ import NotFoundPage from '../routes/404-page';
 import AuthenticatePage from '../routes/authenticate';
 import { ChangePasswordPage } from '../routes/change-password';
 import { AppConnectionsPage } from '../routes/connections';
-import { EmbeddedConnectionDialog } from '../routes/embed/embedded-connection-dialog';
+// import { EmbeddedConnectionDialog } from '../routes/embed/embedded-connection-dialog';
 import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
-import { ResetPasswordPage } from '../routes/forget-password';
+// import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
-import IssuesPage from '../routes/issues';
-import SettingsBilling from '../routes/platform/billing';
+// import IssuesPage from '../routes/issues';
+// import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
 import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
-import ProjectsPage from '../routes/platform/projects';
-import AuditLogsPage from '../routes/platform/security/audit-logs';
-import { ProjectRolePage } from '../routes/platform/security/project-role';
-import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/project-role-users-table';
+// import ProjectsPage from '../routes/platform/projects';
+// import AuditLogsPage from '../routes/platform/security/audit-logs';
+// import { ProjectRolePage } from '../routes/platform/security/project-role';
+// import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/project-role-users-table';
 import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
-import { LicenseKeyPage } from '../routes/platform/setup/license-key';
+// import { LicenseKeyPage } from '../routes/platform/setup/license-key';
 import TemplatesPage from '../routes/platform/setup/templates';
 import UsersPage from '../routes/platform/users';
-import { ProjectReleasesPage } from '../routes/project-release';
-import ViewRelease from '../routes/project-release/view-release';
+// import { ProjectReleasesPage } from '../routes/project-release';
+// import ViewRelease from '../routes/project-release/view-release';
 import { FlowRunPage } from '../routes/runs/id';
-import AlertsPage from '../routes/settings/alerts';
+// import AlertsPage from '../routes/settings/alerts';
 import AppearancePage from '../routes/settings/appearance';
-import { EnvironmentPage } from '../routes/settings/environment';
+// import { EnvironmentPage } from '../routes/settings/environment';
 import GeneralPage from '../routes/settings/general';
 import TeamPage from '../routes/settings/team';
 import { SignInPage } from '../routes/sign-in';
@@ -87,14 +87,14 @@ const SettingsRerouter = () => {
 };
 
 const routes = [
-  {
-    path: '/embed',
-    element: <EmbedPage></EmbedPage>,
-  },
-  {
-    path: '/embed/connections',
-    element: <EmbeddedConnectionDialog></EmbeddedConnectionDialog>,
-  },
+  // {
+  //   path: '/embed',
+  //   element: <EmbedPage></EmbedPage>,
+  // },
+  // {
+  //   path: '/embed/connections',
+  //   element: <EmbeddedConnectionDialog></EmbeddedConnectionDialog>,
+  // },
   {
     path: '/authenticate',
     element: <AuthenticatePage />,
@@ -169,16 +169,16 @@ const routes = [
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
   },
-  ...ProjectRouterWrapper({
-    path: '/releases/:releaseId',
-    element: (
-      <DashboardContainer>
-        <PageTitle title="Releases">
-          <ViewRelease />
-        </PageTitle>
-      </DashboardContainer>
-    ),
-  }),
+  // ...ProjectRouterWrapper({
+  //   path: '/releases/:releaseId',
+  //   element: (
+  //     <DashboardContainer>
+  //       <PageTitle title="Releases">
+  //         <ViewRelease />
+  //       </PageTitle>
+  //     </DashboardContainer>
+  //   ),
+  // }),
   ...ProjectRouterWrapper({
     path: '/runs',
     element: (
@@ -191,18 +191,18 @@ const routes = [
       </DashboardContainer>
     ),
   }),
-  ...ProjectRouterWrapper({
-    path: '/issues',
-    element: (
-      <DashboardContainer>
-        <RoutePermissionGuard permission={Permission.READ_ISSUES}>
-          <PageTitle title="Issues">
-            <IssuesPage />
-          </PageTitle>
-        </RoutePermissionGuard>
-      </DashboardContainer>
-    ),
-  }),
+  // ...ProjectRouterWrapper({
+  //   path: '/issues',
+  //   element: (
+  //     <DashboardContainer>
+  //       <RoutePermissionGuard permission={Permission.READ_ISSUES}>
+  //         <PageTitle title="Issues">
+  //           <IssuesPage />
+  //         </PageTitle>
+  //       </RoutePermissionGuard>
+  //     </DashboardContainer>
+  //   ),
+  // }),
   ...ProjectRouterWrapper({
     path: '/connections',
     element: (
@@ -215,16 +215,16 @@ const routes = [
       </DashboardContainer>
     ),
   }),
-  ...ProjectRouterWrapper({
-    path: '/releases',
-    element: (
-      <DashboardContainer>
-        <PageTitle title="Releases">
-          <ProjectReleasesPage />
-        </PageTitle>
-      </DashboardContainer>
-    ),
-  }),
+  // ...ProjectRouterWrapper({
+  //   path: '/releases',
+  //   element: (
+  //     <DashboardContainer>
+  //       <PageTitle title="Releases">
+  //         <ProjectReleasesPage />
+  //       </PageTitle>
+  //     </DashboardContainer>
+  //   ),
+  // }),
   ...ProjectRouterWrapper({
     path: '/settings',
     element: (
@@ -233,14 +233,14 @@ const routes = [
       </DashboardContainer>
     ),
   }),
-  {
-    path: '/forget-password',
-    element: (
-      <PageTitle title="Forget Password">
-        <ResetPasswordPage />
-      </PageTitle>
-    ),
-  },
+  // {
+  //   path: '/forget-password',
+  //   element: (
+  //     <PageTitle title="Forget Password">
+  //       <ResetPasswordPage />
+  //     </PageTitle>
+  //   ),
+  // },
   {
     path: '/reset-password',
     element: (
@@ -273,20 +273,20 @@ const routes = [
       </PageTitle>
     ),
   },
-  ...ProjectRouterWrapper({
-    path: '/settings/alerts',
-    element: (
-      <DashboardContainer>
-        <RoutePermissionGuard permission={Permission.READ_ALERT}>
-          <ProjectSettingsLayout>
-            <PageTitle title="Alerts">
-              <AlertsPage />
-            </PageTitle>
-          </ProjectSettingsLayout>
-        </RoutePermissionGuard>
-      </DashboardContainer>
-    ),
-  }),
+  // ...ProjectRouterWrapper({
+  //   path: '/settings/alerts',
+  //   element: (
+  //     <DashboardContainer>
+  //       <RoutePermissionGuard permission={Permission.READ_ALERT}>
+  //         <ProjectSettingsLayout>
+  //           <PageTitle title="Alerts">
+  //             <AlertsPage />
+  //           </PageTitle>
+  //         </ProjectSettingsLayout>
+  //       </RoutePermissionGuard>
+  //     </DashboardContainer>
+  //   ),
+  // }),
   ...ProjectRouterWrapper({
     path: '/settings/appearance',
     element: (
@@ -342,20 +342,20 @@ const routes = [
     element: <Navigate to="/settings/team" replace></Navigate>,
   },
 
-  ...ProjectRouterWrapper({
-    path: '/settings/environments',
-    element: (
-      <DashboardContainer>
-        <RoutePermissionGuard permission={Permission.READ_PROJECT_RELEASE}>
-          <ProjectSettingsLayout>
-            <PageTitle title="Environments">
-              <EnvironmentPage />
-            </PageTitle>
-          </ProjectSettingsLayout>
-        </RoutePermissionGuard>
-      </DashboardContainer>
-    ),
-  }),
+  // ...ProjectRouterWrapper({
+  //   path: '/settings/environments',
+  //   element: (
+  //     <DashboardContainer>
+  //       <RoutePermissionGuard permission={Permission.READ_PROJECT_RELEASE}>
+  //         <ProjectSettingsLayout>
+  //           <PageTitle title="Environments">
+  //             <EnvironmentPage />
+  //           </PageTitle>
+  //         </ProjectSettingsLayout>
+  //       </RoutePermissionGuard>
+  //     </DashboardContainer>
+  //   ),
+  // }),
 
   {
     path: '/invitation',
@@ -374,16 +374,16 @@ const routes = [
       </PageTitle>
     ),
   },
-  {
-    path: '/platform/projects',
-    element: (
-      <PlatformAdminContainer>
-        <PageTitle title="Projects">
-          <ProjectsPage />
-        </PageTitle>
-      </PlatformAdminContainer>
-    ),
-  },
+  // {
+  //   path: '/platform/projects',
+  //   element: (
+  //     <PlatformAdminContainer>
+  //       <PageTitle title="Projects">
+  //         <ProjectsPage />
+  //       </PageTitle>
+  //     </PlatformAdminContainer>
+  //   ),
+  // },
   {
     path: '/platform/setup/pieces',
     element: (
@@ -443,18 +443,18 @@ const routes = [
       </PlatformAdminContainer>
     ),
   },
-  {
-    path: '/platform/setup/branding',
-    element: (
-      <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="setup">
-          <PageTitle title="Branding">
-            <BrandingPage />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
-      </PlatformAdminContainer>
-    ),
-  },
+  // {
+  //   path: '/platform/setup/branding',
+  //   element: (
+  //     <PlatformAdminContainer>
+  //       <PlatformSecondSidebarLayout type="setup">
+  //         <PageTitle title="Branding">
+  //           <BrandingPage />
+  //         </PageTitle>
+  //       </PlatformSecondSidebarLayout>
+  //     </PlatformAdminContainer>
+  //   ),
+  // },
   {
     path: '/platform/users',
     element: (
@@ -477,30 +477,30 @@ const routes = [
       </PlatformAdminContainer>
     ),
   },
-  {
-    path: '/platform/security/api-keys',
-    element: (
-      <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="security">
-          <PageTitle title="API Keys">
-            <ApiKeysPage />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
-      </PlatformAdminContainer>
-    ),
-  },
-  {
-    path: '/platform/security/audit-logs',
-    element: (
-      <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="security">
-          <PageTitle title="Audit Logs">
-            <AuditLogsPage />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
-      </PlatformAdminContainer>
-    ),
-  },
+  // {
+  //   path: '/platform/security/api-keys',
+  //   element: (
+  //     <PlatformAdminContainer>
+  //       <PlatformSecondSidebarLayout type="security">
+  //         <PageTitle title="API Keys">
+  //           <ApiKeysPage />
+  //         </PageTitle>
+  //       </PlatformSecondSidebarLayout>
+  //     </PlatformAdminContainer>
+  //   ),
+  // },
+  // {
+  //   path: '/platform/security/audit-logs',
+  //   element: (
+  //     <PlatformAdminContainer>
+  //       <PlatformSecondSidebarLayout type="security">
+  //         <PageTitle title="Audit Logs">
+  //           <AuditLogsPage />
+  //         </PageTitle>
+  //       </PlatformSecondSidebarLayout>
+  //     </PlatformAdminContainer>
+  //   ),
+  // },
   {
     path: '/platform/infrastructure/workers',
     element: (
@@ -525,78 +525,78 @@ const routes = [
       </PlatformAdminContainer>
     ),
   },
-  {
-    path: '/platform/setup/billing',
-    element: (
-      <PlatformAdminContainer>
-        <PageTitle title="Billing">
-          <PlatformSecondSidebarLayout type="setup">
-            <SettingsBilling />
-          </PlatformSecondSidebarLayout>
-        </PageTitle>
-      </PlatformAdminContainer>
-    ),
-  },
-  {
-    path: '/platform/security/signing-keys',
-    element: (
-      <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="security">
-          <PageTitle title="Signing Keys">
-            <SigningKeysPage />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
-      </PlatformAdminContainer>
-    ),
-  },
-  {
-    path: '/platform/security/sso',
-    element: (
-      <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="security">
-          <PageTitle title="SSO">
-            <SSOPage />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
-      </PlatformAdminContainer>
-    ),
-  },
-  {
-    path: '/platform/setup/license-key',
-    element: (
-      <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="setup">
-          <PageTitle title="LicenseKey">
-            <LicenseKeyPage />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
-      </PlatformAdminContainer>
-    ),
-  },
-  {
-    path: '/platform/security/project-roles',
-    element: (
-      <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="security">
-          <PageTitle title="Project Roles">
-            <ProjectRolePage />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
-      </PlatformAdminContainer>
-    ),
-  },
-  {
-    path: '/platform/security/project-roles/:projectRoleId',
-    element: (
-      <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="security">
-          <PageTitle title="Project Role Users">
-            <ProjectRoleUsersTable />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
-      </PlatformAdminContainer>
-    ),
-  },
+  // {
+  //   path: '/platform/setup/billing',
+  //   element: (
+  //     <PlatformAdminContainer>
+  //       <PageTitle title="Billing">
+  //         <PlatformSecondSidebarLayout type="setup">
+  //           <SettingsBilling />
+  //         </PlatformSecondSidebarLayout>
+  //       </PageTitle>
+  //     </PlatformAdminContainer>
+  //   ),
+  // },
+  // {
+  //   path: '/platform/security/signing-keys',
+  //   element: (
+  //     <PlatformAdminContainer>
+  //       <PlatformSecondSidebarLayout type="security">
+  //         <PageTitle title="Signing Keys">
+  //           <SigningKeysPage />
+  //         </PageTitle>
+  //       </PlatformSecondSidebarLayout>
+  //     </PlatformAdminContainer>
+  //   ),
+  // },
+  // {
+  //   path: '/platform/security/sso',
+  //   element: (
+  //     <PlatformAdminContainer>
+  //       <PlatformSecondSidebarLayout type="security">
+  //         <PageTitle title="SSO">
+  //           <SSOPage />
+  //         </PageTitle>
+  //       </PlatformSecondSidebarLayout>
+  //     </PlatformAdminContainer>
+  //   ),
+  // },
+  // {
+  //   path: '/platform/setup/license-key',
+  //   element: (
+  //     <PlatformAdminContainer>
+  //       <PlatformSecondSidebarLayout type="setup">
+  //         <PageTitle title="LicenseKey">
+  //           <LicenseKeyPage />
+  //         </PageTitle>
+  //       </PlatformSecondSidebarLayout>
+  //     </PlatformAdminContainer>
+  //   ),
+  // },
+  // {
+  //   path: '/platform/security/project-roles',
+  //   element: (
+  //     <PlatformAdminContainer>
+  //       <PlatformSecondSidebarLayout type="security">
+  //         <PageTitle title="Project Roles">
+  //           <ProjectRolePage />
+  //         </PageTitle>
+  //       </PlatformSecondSidebarLayout>
+  //     </PlatformAdminContainer>
+  //   ),
+  // },
+  // {
+  //   path: '/platform/security/project-roles/:projectRoleId',
+  //   element: (
+  //     <PlatformAdminContainer>
+  //       <PlatformSecondSidebarLayout type="security">
+  //         <PageTitle title="Project Role Users">
+  //           <ProjectRoleUsersTable />
+  //         </PageTitle>
+  //       </PlatformSecondSidebarLayout>
+  //     </PlatformAdminContainer>
+  //   ),
+  // },
   {
     path: '/platform/setup',
     element: (
@@ -659,46 +659,46 @@ const ApRouter = () => {
       : createBrowserRouter(routes);
   }, [embedState.isEmbedded]);
 
-  useEffect(() => {
-    if (!embedState.isEmbedded) {
-      return;
-    }
+  // useEffect(() => {
+  //   if (!embedState.isEmbedded) {
+  //     return;
+  //   }
 
-    const handleVendorRouteChange = (
-      event: MessageEvent<ActivepiecesVendorRouteChanged>,
-    ) => {
-      if (
-        event.source === window.parent &&
-        event.data.type === ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED
-      ) {
-        const targetRoute = event.data.data.vendorRoute;
-        router.navigate(targetRoute);
-      }
-    };
+  //   const handleVendorRouteChange = (
+  //     event: MessageEvent<ActivepiecesVendorRouteChanged>,
+  //   ) => {
+  //     if (
+  //       event.source === window.parent &&
+  //       event.data.type === ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED
+  //     ) {
+  //       const targetRoute = event.data.data.vendorRoute;
+  //       router.navigate(targetRoute);
+  //     }
+  //   };
 
-    window.addEventListener('message', handleVendorRouteChange);
+  //   window.addEventListener('message', handleVendorRouteChange);
 
-    return () => {
-      window.removeEventListener('message', handleVendorRouteChange);
-    };
-  }, [embedState.isEmbedded, router.navigate]);
+  //   return () => {
+  //     window.removeEventListener('message', handleVendorRouteChange);
+  //   };
+  // }, [embedState.isEmbedded, router.navigate]);
 
-  useEffect(() => {
-    if (!embedState.isEmbedded) {
-      return;
-    }
-    router.subscribe((state) => {
-      window.parent.postMessage(
-        {
-          type: ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED,
-          data: {
-            route: state.location.pathname,
-          },
-        },
-        '*',
-      );
-    });
-  }, [router, embedState.isEmbedded]);
+  // useEffect(() => {
+  //   if (!embedState.isEmbedded) {
+  //     return;
+  //   }
+  //   router.subscribe((state) => {
+  //     window.parent.postMessage(
+  //       {
+  //         type: ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED,
+  //         data: {
+  //           route: state.location.pathname,
+  //         },
+  //       },
+  //       '*',
+  //     );
+  //   });
+  // }, [router, embedState.isEmbedded]);
 
   return <RouterProvider router={router}></RouterProvider>;
 };

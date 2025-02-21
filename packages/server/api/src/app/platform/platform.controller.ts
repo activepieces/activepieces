@@ -12,20 +12,20 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
-import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
+// import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
+// import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { userService } from '../user/user-service'
 import { platformService } from './platform.service'
 import { platformUtils } from './platform.utils'
 
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', UpdatePlatformRequest, async (req, res) => {
-        await platformMustBeOwnedByCurrentUser.call(app, req, res)
+        // await platformMustBeOwnedByCurrentUser.call(app, req, res)
 
-        const { smtp } = req.body
-        if (smtp) {
-            await smtpEmailSender(req.log).validateOrThrow(smtp)
-        }
+        // const { smtp } = req.body
+        // if (smtp) {
+        //     await smtpEmailSender(req.log).validateOrThrow(smtp)
+        // }
 
         return platformService.update({
             id: req.params.id,

@@ -11,7 +11,7 @@ import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
-import { issueHooks } from '@/features/issues/hooks/issue-hooks';
+// import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
@@ -43,9 +43,9 @@ export const CloseTaskLimitAlertContext = createContext({
 
 export function DashboardContainer({ children }: DashboardContainerProps) {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: showIssuesNotification } = issueHooks.useIssuesNotification(
-    platform.flowIssuesEnabled,
-  );
+  // const { data: showIssuesNotification } = issueHooks.useIssuesNotification(
+  //   platform.flowIssuesEnabled,
+  // );
   const { project } = projectHooks.useCurrentProject();
   const { embedState } = useEmbedding();
   const currentProjectId = authenticationSession.getProjectId();
@@ -73,14 +73,14 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
       showInEmbed: true,
       hasPermission: checkAccess(Permission.READ_RUN),
     },
-    {
-      to: authenticationSession.appendProjectRoutePrefix('/issues'),
-      label: t('Issues'),
-      icon: AlertCircle,
-      notification: showIssuesNotification,
-      showInEmbed: false,
-      hasPermission: checkAccess(Permission.READ_ISSUES),
-    },
+    // {
+    //   to: authenticationSession.appendProjectRoutePrefix('/issues'),
+    //   label: t('Issues'),
+    //   icon: AlertCircle,
+    //   notification: showIssuesNotification,
+    //   showInEmbed: false,
+    //   hasPermission: checkAccess(Permission.READ_ISSUES),
+    // },
     {
       to: authenticationSession.appendProjectRoutePrefix('/connections'),
       label: t('Connections'),

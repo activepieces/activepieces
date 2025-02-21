@@ -28,12 +28,12 @@ import {
   ImportFlowDialogProps,
 } from '@/features/flows/components/import-flow-dialog';
 import { RenameFlowDialog } from '@/features/flows/components/rename-flow-dialog';
-import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
-import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
+// import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
+// import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { GitBranchType } from '@activepieces/ee-shared';
+// import { GitBranchType } from '@activepieces/ee-shared';
 import {
   Flow,
   FlowOperationType,
@@ -71,10 +71,10 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
 }) => {
   const { platform } = platformHooks.useCurrentPlatform();
   const openNewWindow = useNewWindow();
-  const { gitSync } = gitSyncHooks.useGitSync(
-    authenticationSession.getProjectId()!,
-    platform.environmentsEnabled,
-  );
+  // const { gitSync } = gitSyncHooks.useGitSync(
+  //   authenticationSession.getProjectId()!,
+  //   platform.environmentsEnabled,
+  // );
   const { checkAccess } = useAuthorization();
   const userHasPermissionToUpdateFlow = checkAccess(Permission.WRITE_FLOW);
   const userHasPermissionToPushToGit = checkAccess(
@@ -85,8 +85,9 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
     flowId: flow.id,
   };
   const { embedState } = useEmbedding();
-  const isDevelopmentBranch =
-    gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
+  // const isDevelopmentBranch =
+  //   gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
+  const isDevelopmentBranch = false;
   const [open, setOpen] = useState(false);
   const { mutate: duplicateFlow, isPending: isDuplicatePending } = useMutation({
     mutationFn: async () => {
@@ -179,7 +180,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             )}
           </>
         )}
-        <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
+        {/* <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
           <PushToGitDialog flowIds={[flow.id]}>
             <DropdownMenuItem
               disabled={!userHasPermissionToPushToGit}
@@ -191,7 +192,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
               </div>
             </DropdownMenuItem>
           </PushToGitDialog>
-        </PermissionNeededTooltip>
+        </PermissionNeededTooltip> */}
 
         {!embedState.hideFolders && (
           <PermissionNeededTooltip

@@ -38,14 +38,6 @@ export default defineConfig({
         __dirname,
         '../../packages/shared/src',
       ),
-      'ee-embed-sdk': path.resolve(
-        __dirname,
-        '../../packages/ee/ui/embed-sdk/src',
-      ),
-      '@activepieces/ee-shared': path.resolve(
-        __dirname,
-        '../../packages/ee/shared/src',
-      ),
       '@activepieces/pieces-framework': path.resolve(
         __dirname,
         '../../packages/pieces/community/framework/src',

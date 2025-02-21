@@ -14,7 +14,7 @@ import {
 } from '@activepieces/shared'
 import { FindOptionsWhere, ILike, In, IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
-import { projectMemberService } from '../ee/project-members/project-member.service'
+// import { projectMemberService } from '../ee/project-members/project-member.service'
 import { system } from '../helper/system/system'
 import { userService } from '../user/user-service'
 import { ProjectEntity } from './project-entity'
@@ -151,13 +151,14 @@ export const projectService = {
 
 
 async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptionsWhere<Project>[]> {
-    const [projectIds, user] = await Promise.all([
-        projectMemberService(system.globalLogger()).getIdsOfProjects({
-            platformId: params.platformId,
-            userId: params.userId,
-        }),
-        userService.getOneOrFail({ id: params.userId }),
-    ])
+    // const [projectIds, user] = await Promise.all([
+    //     projectMemberService(system.globalLogger()).getIdsOfProjects({
+    //         platformId: params.platformId,
+    //         userId: params.userId,
+    //     }),
+    //     userService.getOneOrFail({ id: params.userId }),
+    // ])
+    const user = await userService.getOneOrFail({ id: params.userId })
 
     const adminFilter = user.platformRole === PlatformRole.ADMIN
         ? [{
@@ -169,7 +170,7 @@ async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptions
     const memberFilter = {
         deleted: IsNull(),
         platformId: params.platformId,
-        id: In(projectIds),
+        // id: In(projectIds),
         ...displayNameFilter,
     }
 

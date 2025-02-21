@@ -30,7 +30,7 @@ import { EngineHelperResponse, EngineHelperValidateAuthResult } from 'server-wor
 import { Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
-import { projectMemberService } from '../../ee/project-members/project-member.service'
+// import { projectMemberService } from '../../ee/project-members/project-member.service'
 import { encryptUtils } from '../../helper/encryption'
 import { distributedLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -317,19 +317,20 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             lastName: user.identity.lastName,
             email: user.identity.email,
         }))
-        const projectMembers = await projectMemberService(log).list({
-            platformId,
-            projectId,
-            cursorRequest: null,
-            limit: 1000,
-            projectRoleId: undefined,
-        })
-        const projectMembersDetails = projectMembers.data.map(pm=>({
-            firstName: pm.user.firstName,
-            lastName: pm.user.lastName,
-            email: pm.user.email,
-        }))
-        return [...platformAdmins, ...projectMembersDetails]
+        // const projectMembers = await projectMemberService(log).list({
+        //     platformId,
+        //     projectId,
+        //     cursorRequest: null,
+        //     limit: 1000,
+        //     projectRoleId: undefined,
+        // })
+        // const projectMembersDetails = projectMembers.data.map(pm=>({
+        //     firstName: pm.user.firstName,
+        //     lastName: pm.user.lastName,
+        //     email: pm.user.email,
+        // }))
+        // return [...platformAdmins, ...projectMembersDetails]
+        return [...platformAdmins]
     },
 })
 

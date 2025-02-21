@@ -24,7 +24,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
-import { emailService } from '../../ee/helper/email/email-service'
+// import { emailService } from '../../ee/helper/email/email-service'
 import { distributedLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -360,7 +360,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 newStatus: FlowStatus.DISABLED,
             })
 
-            await emailService(log).sendExceedFailureThresholdAlert(projectId, flow.version.displayName)
+            // await emailService(log).sendExceedFailureThresholdAlert(projectId, flow.version.displayName)
             rejectedPromiseHandler(telemetry(log).trackProject(projectId, {
                 name: TelemetryEventName.TRIGGER_FAILURES_EXCEEDED,
                 payload: {

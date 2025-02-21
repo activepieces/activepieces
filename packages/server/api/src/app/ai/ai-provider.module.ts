@@ -12,7 +12,7 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
+// import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { telemetry } from '../helper/telemetry.utils'
 import { proxyController } from './ai-provider-proxy'
 import { aiProviderService } from './ai-provider.service'
@@ -43,7 +43,7 @@ const aiProviderController: FastifyPluginCallbackTypebox = (
     _opts,
     done,
 ) => {
-    fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
+    // fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     fastify.post('/', CreateProxyConfigRequest, async (request) => {
         telemetry(request.log)
             .trackProject(request.principal.projectId, {

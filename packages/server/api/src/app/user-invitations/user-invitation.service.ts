@@ -3,11 +3,11 @@ import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
-import { domainHelper } from '../ee/custom-domains/domain-helper'
-import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
-import { emailService } from '../ee/helper/email/email-service'
-import { projectMemberService } from '../ee/project-members/project-member.service'
-import { projectRoleService } from '../ee/project-role/project-role.service'
+// import { domainHelper } from '../ee/custom-domains/domain-helper'
+// import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
+// import { emailService } from '../ee/helper/email/email-service'
+// import { projectMemberService } from '../ee/project-members/project-member.service'
+// import { projectRoleService } from '../ee/project-role/project-role.service'
 import { jwtUtils } from '../helper/jwt-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -75,15 +75,15 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                     const platform = await platformService.getOneOrThrow(invitation.platformId)
                     assertEqual(platform.projectRolesEnabled, true, 'Project roles are not enabled', 'PROJECT_ROLES_NOT_ENABLED')
 
-                    const projectRole = await projectRoleService.getOneOrThrowById({
-                        id: projectRoleId,
-                    })
+                    // const projectRole = await projectRoleService.getOneOrThrowById({
+                    //     id: projectRoleId,
+                    // })
 
-                    await projectMemberService(log).upsert({
-                        projectId,
-                        userId: user.id,
-                        projectRoleName: projectRole.name,
-                    })
+                    // await projectMemberService(log).upsert({
+                    //     projectId,
+                    //     userId: user.id,
+                    //     projectRoleName: projectRole.name,
+                    // })
                     break
                 }
             }
@@ -149,9 +149,10 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         const { data, cursor } = await paginator.paginate(queryBuilder)
         const enrichedData = await Promise.all(data.map(async (invitation) => {
             return {
-                projectRole: !isNil(invitation.projectRoleId) ? await projectRoleService.getOneOrThrowById({
-                    id: invitation.projectRoleId,
-                }) : null,
+                // projectRole: !isNil(invitation.projectRoleId) ? await projectRoleService.getOneOrThrowById({
+                //     id: invitation.projectRoleId,
+                // }) : null,
+                projectRole: null,
                 ...invitation,
             }
         }))
@@ -248,23 +249,24 @@ async function generateInvitationLink(userInvitation: UserInvitation, expireyInS
         key: await jwtUtils.getJwtSecret(),
     })
 
-    return domainHelper.getPublicUrl({
-        platformId: userInvitation.platformId,
-        path: `invitation?token=${token}&email=${encodeURIComponent(userInvitation.email)}`,
-    })
+    // return domainHelper.getPublicUrl({
+    //     platformId: userInvitation.platformId,
+    //     path: `invitation?token=${token}&email=${encodeURIComponent(userInvitation.email)}`,
+    // })
+    return `/invitation?token=${token}&email=${encodeURIComponent(userInvitation.email)}`
 }
 const enrichWithInvitationLink = async (platform: Platform, userInvitation: UserInvitation, expireyInSeconds: number, log: FastifyBaseLogger) => {
-    const invitationLink = await generateInvitationLink(userInvitation, expireyInSeconds)
-    if (!smtpEmailSender(log).isSmtpConfigured(platform)) {
-        return {
-            ...userInvitation,
-            link: invitationLink,
-        }
-    }
-    await emailService(log).sendInvitation({
-        userInvitation,
-        invitationLink,
-    })
+    // const invitationLink = await generateInvitationLink(userInvitation, expireyInSeconds)
+    // if (!smtpEmailSender(log).isSmtpConfigured(platform)) {
+    //     return {
+    //         ...userInvitation,
+    //         link: invitationLink,
+    //     }
+    // }
+    // await emailService(log).sendInvitation({
+    //     userInvitation,
+    //     invitationLink,
+    // })
     return userInvitation
 }
 type ListUserParams = {

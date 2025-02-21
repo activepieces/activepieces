@@ -1,4 +1,4 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
+// import { ApplicationEventName } from '@activepieces/ee-shared'
 import {
     ApId,
     AppConnectionOwners,
@@ -18,7 +18,7 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { eventsHooks } from '../helper/application-events'
+// import { eventsHooks } from '../helper/application-events'
 import { securityHelper } from '../helper/security-helper'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 
@@ -35,12 +35,12 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             ownerId: await securityHelper.getUserIdFromRequest(request),
             scope: AppConnectionScope.PROJECT,
         })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-            action: ApplicationEventName.CONNECTION_UPSERTED,
-            data: {
-                connection: appConnection,
-            },
-        })
+        // eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+        //     action: ApplicationEventName.CONNECTION_UPSERTED,
+        //     data: {
+        //         connection: appConnection,
+        //     },
+        // })
         await reply
             .status(StatusCodes.CREATED)
             .send(appConnection)
@@ -99,12 +99,12 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             platformId: request.principal.platform.id,
             projectId: request.principal.projectId,
         })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-            action: ApplicationEventName.CONNECTION_DELETED,
-            data: {
-                connection,
-            },
-        })
+        // eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+        //     action: ApplicationEventName.CONNECTION_DELETED,
+        //     data: {
+        //         connection,
+        //     },
+        // })
         await appConnectionService(request.log).delete({
             id: request.params.id,
             platformId: request.principal.platform.id,

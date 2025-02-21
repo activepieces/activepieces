@@ -18,7 +18,7 @@ import { HorizontalSeparatorWithText } from '../../../components/ui/separator';
 import { flagsHooks } from '../../../hooks/flags-hooks';
 
 import { SignInForm } from './sign-in-form';
-import { SignUpForm } from './sign-up-form';
+// import { SignUpForm } from './sign-up-form';
 import { ThirdPartyLogin } from './third-party-logins';
 
 const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
@@ -102,10 +102,11 @@ const AuthFormTemplate = React.memo(
           ></AuthSeparator>
           {isEmailAuthEnabled ? (
             isSignUp ? (
-              <SignUpForm
-                setShowCheckYourEmailNote={setShowCheckYourEmailNote}
-                showCheckYourEmailNote={showCheckYourEmailNote}
-              />
+              // <SignUpForm
+              //   setShowCheckYourEmailNote={setShowCheckYourEmailNote}
+              //   showCheckYourEmailNote={showCheckYourEmailNote}
+              // />
+              <SignInForm />
             ) : (
               <SignInForm />
             )
