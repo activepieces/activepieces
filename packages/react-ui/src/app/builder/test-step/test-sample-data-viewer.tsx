@@ -5,7 +5,7 @@ import { JsonViewer } from '@/components/json-viewer';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
-import { formatUtils } from '@/lib/utils';
+import { cn, formatUtils } from '@/lib/utils';
 import { StepOutputStatus } from '@activepieces/shared';
 
 import { TestButtonTooltip } from './test-step-tooltip';
@@ -80,31 +80,37 @@ const TestSampleDataViewer = React.memo(
             </TestButtonTooltip>
           </div>
 
-          {consoleLogs ? (
-            <Tabs defaultValue="Output">
-              <TabsList className="grid w-full grid-cols-2 w-[250px]">
-                <TabsTrigger value="Output">{t('Output')}</TabsTrigger>
+          <Tabs defaultValue="Output">
+            <TabsList
+              className={cn(
+                'grid w-full ',
+                consoleLogs ? 'grid-cols-3 w-[375px]' : 'grid-cols-2 w-[250px]',
+              )}
+            >
+              <TabsTrigger value="Input">{t('Input')}</TabsTrigger>
+              <TabsTrigger value="Output">{t('Output')}</TabsTrigger>
+              {consoleLogs && (
                 <TabsTrigger value="Logs">{t('Logs')}</TabsTrigger>
-              </TabsList>
-              <TabsContent value="Output">
-                <JsonViewer
-                  json={errorMessage ?? sampleData}
-                  title={t('Output')}
-                ></JsonViewer>
-              </TabsContent>
-
+              )}
+            </TabsList>
+            <TabsContent value="Input">
+              <JsonViewer
+                json={errorMessage ?? {}}
+                title={t('Input')}
+              ></JsonViewer>
+            </TabsContent>
+            <TabsContent value="Output">
+              <JsonViewer
+                json={errorMessage ?? sampleData}
+                title={t('Output')}
+              ></JsonViewer>
+            </TabsContent>
+            {consoleLogs && (
               <TabsContent value="Logs">
-                {consoleLogs && (
-                  <JsonViewer json={consoleLogs} title={t('Logs')}></JsonViewer>
-                )}
+                <JsonViewer json={consoleLogs} title={t('Logs')}></JsonViewer>
               </TabsContent>
-            </Tabs>
-          ) : (
-            <JsonViewer
-              json={errorMessage ?? sampleData}
-              title={t('Output')}
-            ></JsonViewer>
-          )}
+            )}
+          </Tabs>
         </div>
       </>
     );
