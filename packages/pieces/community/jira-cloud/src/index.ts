@@ -14,6 +14,7 @@ import { deleteIssueCommentAction } from './lib/actions/delete-issue-comment';
 import { updateIssueAction } from './lib/actions/update-issue';
 import { assignIssueAction } from './lib/actions/assign-issue';
 import { listIssueCommentsAction } from './lib/actions/list-issue-comments';
+import { findUserAction } from './lib/actions/find-user';
 
 export const jiraCloud = createPiece({
 	displayName: 'Jira Cloud',
@@ -27,6 +28,7 @@ export const jiraCloud = createPiece({
 	actions: [
 		createIssueAction,
 		updateIssueAction,
+		findUserAction,
 		searchIssues,
 		assignIssueAction,
 		addAttachmentToIssueAction,
