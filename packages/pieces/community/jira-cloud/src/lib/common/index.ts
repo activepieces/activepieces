@@ -8,6 +8,8 @@ import {
 } from '@activepieces/pieces-common';
 import { JiraAuth } from '../../auth';
 import { isNil } from '@activepieces/shared';
+import { IssueFieldMetaData } from './types';
+import dayjs from 'dayjs';
 
 export async function sendJiraRequest(request: HttpRequest & { auth: JiraAuth }) {
 	return httpClient.sendRequest({
@@ -340,7 +342,7 @@ export async function jiraPaginatedApiCall<T extends HttpMessageBody, K extends 
 	query,
 	body,
 	propertyName,
-}: JiraApiCallParams & { propertyName: K}): Promise<T[]> {
+}: JiraApiCallParams & { propertyName: K }): Promise<T[]> {
 	const qs = query ? query : {};
 
 	qs['startAt'] = 0;
@@ -357,7 +359,7 @@ export async function jiraPaginatedApiCall<T extends HttpMessageBody, K extends 
 	} & Record<K, T[]>;
 
 	do {
-		const response = await jiraApiCall<PaginatedResponse<T,K>>({
+		const response = await jiraApiCall<PaginatedResponse<T, K>>({
 			domain,
 			username,
 			password,

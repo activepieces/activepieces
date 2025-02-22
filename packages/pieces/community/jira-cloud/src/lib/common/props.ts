@@ -14,7 +14,9 @@ import {
 } from '@activepieces/pieces-framework';
 import { JiraAuth, jiraCloudAuth } from '../../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { IssueFieldMetaData, IssueTypeMetadata } from './types';
+import { IssueFieldMetaData, IssueTypeMetadata, VALID_CUSTOM_FIELD_TYPES } from './types';
+import { isNil } from '@activepieces/shared';
+import dayjs from 'dayjs';
 
 export function getProjectIdDropdown(data?: DropdownParams) {
 	return Property.Dropdown({
@@ -168,6 +170,30 @@ export interface SearchIssuesResponse {
 	}>;
 }
 
+async function fetchGroupsOptions(
+	auth: PiecePropValueSchema<typeof jiraCloudAuth>,
+): Promise<DropdownOption<string>[]> {
+	const response = await jiraApiCall<{
+		groups: Array<{ groupId: string; name: string }>;
+	}>({
+		domain: auth.instanceUrl,
+		username: auth.email,
+		password: auth.apiToken,
+		method: HttpMethod.GET,
+		resourceUri: `/groups/picker`,
+	});
+
+	const options: DropdownOption<string>[] = [];
+	for (const group of response.groups) {
+		options.push({
+			value: group.groupId,
+			label: group.name,
+		});
+	}
+
+	return options;
+}
+
 async function fetchProjectVersionsOptions(
 	auth: PiecePropValueSchema<typeof jiraCloudAuth>,
 	projectId: string,
@@ -216,10 +242,10 @@ async function fetchUsersOptions(
 export const issueTypeIdProp = (displayName: string, required = true) =>
 	Property.Dropdown({
 		displayName,
-		refreshers: [],
+		refreshers: ['projectId'],
 		required,
-		options: async ({ auth }) => {
-			if (!auth) {
+		options: async ({ auth,projectId }) => {
+			if (!auth || !projectId) {
 				return {
 					disabled: true,
 					options: [],
@@ -232,7 +258,7 @@ export const issueTypeIdProp = (displayName: string, required = true) =>
 				domain: authValue.instanceUrl,
 				username: authValue.email,
 				password: authValue.apiToken,
-				resourceUri: `/issue/createmeta/BP/issuetypes`,
+				resourceUri: `/issue/createmeta/${projectId}/issuetypes`,
 				propertyName: 'issueTypes',
 				method: HttpMethod.GET,
 			});
@@ -253,44 +279,7 @@ export const issueTypeIdProp = (displayName: string, required = true) =>
 		},
 	});
 
-function createPropertyDefination(property: IssueFieldMetaData) {
-	switch (property.schema.type) {
-		case 'string':
-			return Property.LongText({
-				displayName: property.name,
-				required: property.required,
-			});
-		case 'date':
-			return Property.DateTime({
-				displayName: property.name,
-				description: 'Provide date in YYYY-MM-DD format.',
-				required: property.required,
-			});
-		case 'datetime':
-			return Property.DateTime({
-				displayName: property.name,
-				required: property.required,
-			});
-		case 'number':
-			return Property.Number({
-				displayName: property.name,
-				required: property.required,
-			});
-		case 'option':
-			return Property.StaticDropdown({
-				displayName: property.name,
-				required: property.required,
-				options: {
-					disabled: false,
-					options: property.allowedValues
-						? property.allowedValues.map((option) => ({ label: option.value, value: option.value }))
-						: [],
-				},
-			});
-		default:
-			return null;
-	}
-}
+
 
 export const issueFieldsProp = Property.DynamicProperties({
 	displayName: 'Fields',
@@ -316,58 +305,255 @@ export const issueFieldsProp = Property.DynamicProperties({
 		if (!fields || !Array.isArray(fields)) return {};
 
 		for (const field of fields) {
-			if (field.schema.type === 'user') {
-				const userOptions = await fetchUsersOptions(authValue, projectId as unknown as string);
-				props[field.key] = Property.StaticDropdown({
-					displayName: field.name,
-					required: field.required,
-					options: {
-						disabled: false,
-						options: userOptions,
-					},
-				});
-			} else if (field.schema.type === 'array') {
-				if (field.schema.items === 'version') {
+			// skip invalid custom fields
+			if (field.schema.custom) {
+				const customFieldType = field.schema.custom.split(':')[1];
+				if (!VALID_CUSTOM_FIELD_TYPES.includes(customFieldType)) {
+					continue;
+				}
+			}
+			if (['project', 'issuetype'].includes(field.key)) {
+				continue;
+			}
+
+			// Determine if the field is an array type
+			const isArray = field.schema.type === 'array';
+			const fieldType = isArray ? field.schema.items : field.schema.type;
+
+			switch (fieldType) {
+				case 'user': {
+					const userOptions = await fetchUsersOptions(authValue, projectId as unknown as string);
+					props[field.key] = isArray
+						? Property.StaticMultiSelectDropdown({
+								displayName: field.name,
+								required: field.required,
+								options: { disabled: false, options: userOptions },
+						  })
+						: Property.StaticDropdown({
+								displayName: field.name,
+								required: field.required,
+								options: { disabled: false, options: userOptions },
+						  });
+					break;
+				}
+				case 'group': {
+					const groupOptions = await fetchGroupsOptions(authValue);
+					props[field.key] = isArray
+						? Property.StaticMultiSelectDropdown({
+								displayName: field.name,
+								required: field.required,
+								options: { disabled: false, options: groupOptions },
+						  })
+						: Property.StaticDropdown({
+								displayName: field.name,
+								required: field.required,
+								options: { disabled: false, options: groupOptions },
+						  });
+					break;
+				}
+				case 'version': {
 					const versionOptions = await fetchProjectVersionsOptions(
 						authValue,
 						projectId as unknown as string,
 					);
-					props[field.key] = Property.StaticMultiSelectDropdown({
+					props[field.key] = isArray
+						? Property.StaticMultiSelectDropdown({
+								displayName: field.name,
+								required: field.required,
+								options: { disabled: false, options: versionOptions },
+						  })
+						: Property.StaticDropdown({
+								displayName: field.name,
+								required: field.required,
+								options: { disabled: false, options: versionOptions },
+						  });
+					break;
+				}
+				case 'priority': {
+					const options = field.allowedValues
+						? field.allowedValues.map((option) => ({
+								label: option.name,
+								value: option.id,
+						  }))
+						: [];
+
+					props[field.key] = Property.StaticDropdown({
 						displayName: field.name,
 						required: field.required,
-						options: {
-							disabled: false,
-							options: versionOptions,
-						},
+						options: { disabled: false, options: options },
 					});
+					break;
 				}
-				if (field.schema.items === 'option') {
-					props[field.key] = Property.StaticMultiSelectDropdown({
+				case 'option': {
+					const options = field.allowedValues
+						? field.allowedValues.map((option) => ({
+								label: option.value,
+								value: option.id,
+						  }))
+						: [];
+
+					props[field.key] = isArray
+						? Property.StaticMultiSelectDropdown({
+								displayName: field.name,
+								required: field.required,
+								options: { disabled: false, options: options },
+						  })
+						: Property.StaticDropdown({
+								displayName: field.name,
+								required: field.required,
+								options: { disabled: false, options: options },
+						  });
+					break;
+				}
+				case 'string': {
+					props[field.key] = isArray
+						? Property.Array({
+								displayName: field.name,
+								required: field.required,
+						  })
+						: Property.LongText({
+								displayName: field.name,
+								required: field.required,
+						  });
+					break;
+				}
+				case 'date':
+					props[field.key] = Property.DateTime({
+						displayName: field.name,
+						description: 'Provide date in YYYY-MM-DD format.',
+						required: field.required,
+					});
+					break;
+				case 'datetime':
+					props[field.key] = Property.DateTime({
 						displayName: field.name,
 						required: field.required,
-						options: {
-							disabled: false,
-							options: field.allowedValues
-								? field.allowedValues.map((option) => ({
-										label: option.value,
-										value: option.value,
-								  }))
-								: [],
-						},
 					});
-				}
-				if(field.schema.items === 'string')
-				{
-					props[field.key] = Property.Array({
+					break;
+				case 'number':
+					props[field.key] = Property.Number({
 						displayName: field.name,
 						required: field.required,
 					});
-				}
-			} else {
-				props[field.key] = createPropertyDefination(field);
+					break;
+				case 'project':
+					props[field.key] = Property.ShortText({
+						displayName: field.name,
+						required: field.required,
+						description: 'Provide project key.',
+					});
+					break;
+				case 'issuelink':
+					props[field.key] = Property.ShortText({
+						displayName: field.name,
+						required: field.required,
+						description: 'Provide issue ID.',
+					});
+					break;
 			}
 		}
 		// Remove null props
 		return Object.fromEntries(Object.entries(props).filter(([_, prop]) => prop !== null));
 	},
 });
+
+function parseArray(value: Array<string> | string): Array<string> {
+	try {
+		if (Array.isArray(value)) {
+			return value;
+		}
+
+		const parsedValue = JSON.parse(value);
+		if (Array.isArray(parsedValue)) {
+			return parsedValue;
+		}
+
+		return [];
+	} catch (e) {
+		return [];
+	}
+}
+
+// Function to format issue fields
+// https://support.atlassian.com/cloud-automation/docs/advanced-field-editing-using-json/#Multi-user-picker-custom-field
+
+export function formatIssueFields(
+	fieldsMetadata: IssueFieldMetaData[],
+	fieldsInput: Record<string, any>,
+) {
+	const fieldsOutput: Record<string, any> = {};
+
+	for (const field of fieldsMetadata) {
+		const key = field.key;
+		const fieldInputValue = fieldsInput[key];
+
+		// Skip if value is null, undefined, or empty string
+		if (isNil(fieldInputValue) || fieldInputValue === '') continue;
+
+		switch (field.schema.type) {
+			case 'array': {
+				const parsedArrayValue = parseArray(fieldInputValue);
+				if (parsedArrayValue.length === 0) continue;
+
+				fieldsOutput[key] =
+					field.schema.items === 'string'
+						? parsedArrayValue // Keep as flat array of strings
+						: parsedArrayValue.map((item) =>
+								field.schema.items === 'group' ? { groupId: item } : { id: item },
+						  );
+				break;
+			}
+
+			case 'user':
+			case 'version':
+			case 'option':
+			case 'issuelink':
+			case 'priority':
+				fieldsOutput[key] = { id: fieldInputValue };
+				break;
+
+			case 'group':
+				fieldsOutput[key] = { groupId: fieldInputValue };
+				break;
+
+			case 'date':
+				fieldsOutput[key] = dayjs(fieldInputValue).format('YYYY-MM-DD');
+				break;
+
+			case 'datetime':
+				fieldsOutput[key] = dayjs(fieldInputValue).toISOString();
+				break;
+
+			case 'number':
+				fieldsOutput[key] = Number(fieldInputValue);
+				break;
+
+			case 'project':
+				fieldsOutput[key] = { key: fieldInputValue };
+				break;
+
+			case 'string': {
+				const isCustomTextArea =
+					field.schema.custom?.includes('textarea') || ['description', 'environment'].includes(key);
+
+				if (isCustomTextArea) {
+					fieldsOutput[key] = {
+						type: 'doc',
+						version: 1,
+						content: [
+							{
+								type: 'paragraph',
+								content: [{ text: fieldInputValue, type: 'text' }],
+							},
+						],
+					};
+				} else {
+					fieldsOutput[key] = fieldInputValue;
+				}
+				break;
+			}
+		}
+	}
+
+	return fieldsOutput;
+}
