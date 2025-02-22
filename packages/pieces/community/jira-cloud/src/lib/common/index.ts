@@ -289,9 +289,7 @@ export interface UpdateIssueParams {
 export type RequestParams = Record<string, string | number | string[] | undefined>;
 
 export type JiraApiCallParams = {
-	domain: string;
-	username: string;
-	password: string;
+	auth:JiraAuth,
 	method: HttpMethod;
 	resourceUri: string;
 	query?: RequestParams;
@@ -299,15 +297,13 @@ export type JiraApiCallParams = {
 };
 
 export async function jiraApiCall<T extends HttpMessageBody>({
-	domain,
-	username,
-	password,
+	auth,
 	method,
 	resourceUri,
 	query,
 	body,
 }: JiraApiCallParams): Promise<T> {
-	const baseUrl = `${domain}/rest/api/3`;
+	const baseUrl = `${auth.instanceUrl}/rest/api/3`;
 	const qs: QueryParams = {};
 	if (query) {
 		for (const [key, value] of Object.entries(query)) {
@@ -324,8 +320,8 @@ export async function jiraApiCall<T extends HttpMessageBody>({
 		body,
 		authentication: {
 			type: AuthenticationType.BASIC,
-			username,
-			password,
+			username:auth.email,
+			password:auth.apiToken,
 		},
 	};
 
@@ -334,9 +330,7 @@ export async function jiraApiCall<T extends HttpMessageBody>({
 }
 
 export async function jiraPaginatedApiCall<T extends HttpMessageBody, K extends string>({
-	domain,
-	username,
-	password,
+	auth,
 	method,
 	resourceUri,
 	query,
@@ -360,9 +354,7 @@ export async function jiraPaginatedApiCall<T extends HttpMessageBody, K extends 
 
 	do {
 		const response = await jiraApiCall<PaginatedResponse<T, K>>({
-			domain,
-			username,
-			password,
+			auth,
 			method,
 			resourceUri,
 			query: qs,

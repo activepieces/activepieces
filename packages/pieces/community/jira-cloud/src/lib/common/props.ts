@@ -6,21 +6,16 @@ import {
 	jiraPaginatedApiCall,
 	sendJiraRequest,
 } from '.';
-import {
-	DropdownOption,
-	DynamicPropsValue,
-	PiecePropValueSchema,
-	Property,
-} from '@activepieces/pieces-framework';
-import { JiraAuth, jiraCloudAuth } from '../../auth';
+import { DropdownOption, Property } from '@activepieces/pieces-framework';
+import { JiraAuth } from '../../auth';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { IssueFieldMetaData, IssueTypeMetadata, VALID_CUSTOM_FIELD_TYPES } from './types';
+import { IssueFieldMetaData, IssueTypeMetadata } from './types';
 import { isNil } from '@activepieces/shared';
 import dayjs from 'dayjs';
 
 export function getProjectIdDropdown(data?: DropdownParams) {
 	return Property.Dropdown({
-		displayName: data?.displayName ?? 'Project',
+		displayName: data?.displayName ?? 'Project ID or Key',
 		description: data?.description,
 		required: data?.required ?? true,
 		refreshers: data?.refreshers ?? [],
@@ -64,7 +59,7 @@ export function getIssueIdDropdown(data?: DropdownParams) {
 				const response = await sendJiraRequest({
 					method: HttpMethod.POST,
 					url: 'search',
-					auth: auth as PiecePropValueSchema<typeof jiraCloudAuth>,
+					auth: auth as JiraAuth,
 					body: {
 						fields: ['summary'],
 						jql: `project=${projectId}`,
@@ -170,15 +165,11 @@ export interface SearchIssuesResponse {
 	}>;
 }
 
-async function fetchGroupsOptions(
-	auth: PiecePropValueSchema<typeof jiraCloudAuth>,
-): Promise<DropdownOption<string>[]> {
+async function fetchGroupsOptions(auth: JiraAuth): Promise<DropdownOption<string>[]> {
 	const response = await jiraApiCall<{
 		groups: Array<{ groupId: string; name: string }>;
 	}>({
-		domain: auth.instanceUrl,
-		username: auth.email,
-		password: auth.apiToken,
+		auth,
 		method: HttpMethod.GET,
 		resourceUri: `/groups/picker`,
 	});
@@ -195,13 +186,11 @@ async function fetchGroupsOptions(
 }
 
 async function fetchProjectVersionsOptions(
-	auth: PiecePropValueSchema<typeof jiraCloudAuth>,
+	auth: JiraAuth,
 	projectId: string,
 ): Promise<DropdownOption<string>[]> {
 	const response = await jiraApiCall<Array<{ id: string; name: string }>>({
-		domain: auth.instanceUrl,
-		username: auth.email,
-		password: auth.apiToken,
+		auth,
 		method: HttpMethod.GET,
 		resourceUri: `/project/${projectId}/versions`,
 	});
@@ -217,10 +206,7 @@ async function fetchProjectVersionsOptions(
 	return options;
 }
 
-async function fetchUsersOptions(
-	auth: PiecePropValueSchema<typeof jiraCloudAuth>,
-	projectId: string,
-): Promise<DropdownOption<string>[]> {
+async function fetchUsersOptions(auth: JiraAuth): Promise<DropdownOption<string>[]> {
 	const response = (await getUsers(auth)) as Array<{
 		accountId: string;
 		accountType: string;
@@ -244,7 +230,7 @@ export const issueTypeIdProp = (displayName: string, required = true) =>
 		displayName,
 		refreshers: ['projectId'],
 		required,
-		options: async ({ auth,projectId }) => {
+		options: async ({ auth, projectId }) => {
 			if (!auth || !projectId) {
 				return {
 					disabled: true,
@@ -253,11 +239,9 @@ export const issueTypeIdProp = (displayName: string, required = true) =>
 				};
 			}
 
-			const authValue = auth as PiecePropValueSchema<typeof jiraCloudAuth>;
+			const authValue = auth as JiraAuth;
 			const response = await jiraPaginatedApiCall<IssueTypeMetadata, 'issueTypes'>({
-				domain: authValue.instanceUrl,
-				username: authValue.email,
-				password: authValue.apiToken,
+				auth: authValue,
 				resourceUri: `/issue/createmeta/${projectId}/issuetypes`,
 				propertyName: 'issueTypes',
 				method: HttpMethod.GET,
@@ -279,183 +263,219 @@ export const issueTypeIdProp = (displayName: string, required = true) =>
 		},
 	});
 
-
-
-export const issueFieldsProp = Property.DynamicProperties({
-	displayName: 'Fields',
-	required: true,
-	refreshers: ['projectId', 'issueTypeId'],
-	props: async ({ auth, projectId, issueTypeId }) => {
-		if (!auth || !issueTypeId || !projectId) {
-			return {};
-		}
-
-		const props: DynamicPropsValue = {};
-
-		const authValue = auth as PiecePropValueSchema<typeof jiraCloudAuth>;
-		const fields = await jiraPaginatedApiCall<IssueFieldMetaData, 'fields'>({
-			domain: authValue.instanceUrl,
-			username: authValue.email,
-			password: authValue.apiToken,
-			method: HttpMethod.GET,
-			resourceUri: `/issue/createmeta/${projectId}/issuetypes/${issueTypeId}`,
-			propertyName: 'fields',
-		});
-
-		if (!fields || !Array.isArray(fields)) return {};
-
-		for (const field of fields) {
-			// skip invalid custom fields
-			if (field.schema.custom) {
-				const customFieldType = field.schema.custom.split(':')[1];
-				if (!VALID_CUSTOM_FIELD_TYPES.includes(customFieldType)) {
-					continue;
-				}
+export const issueIdOrKeyProp = (displayName: string, required = true) =>
+	Property.Dropdown({
+		displayName,
+		refreshers: [],
+		required,
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please connect your account first',
+				};
 			}
-			if (['project', 'issuetype'].includes(field.key)) {
-				continue;
+			const authValue = auth as JiraAuth;
+			const response = await jiraPaginatedApiCall<{ id: string; key: string }, 'issues'>({
+				auth: authValue,
+				resourceUri: '/search',
+				propertyName: 'issues',
+				query: { fields: 'summary' },
+				method: HttpMethod.GET,
+			});
+
+			const options: DropdownOption<string>[] = [];
+
+			for (const issue of response) {
+				options.push({
+					value: issue.id,
+					label: issue.key,
+				});
 			}
 
-			// Determine if the field is an array type
-			const isArray = field.schema.type === 'array';
-			const fieldType = isArray ? field.schema.items : field.schema.type;
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	});
 
-			switch (fieldType) {
-				case 'user': {
-					const userOptions = await fetchUsersOptions(authValue, projectId as unknown as string);
-					props[field.key] = isArray
-						? Property.StaticMultiSelectDropdown({
-								displayName: field.name,
-								required: field.required,
-								options: { disabled: false, options: userOptions },
-						  })
-						: Property.StaticDropdown({
-								displayName: field.name,
-								required: field.required,
-								options: { disabled: false, options: userOptions },
-						  });
-					break;
-				}
-				case 'group': {
-					const groupOptions = await fetchGroupsOptions(authValue);
-					props[field.key] = isArray
-						? Property.StaticMultiSelectDropdown({
-								displayName: field.name,
-								required: field.required,
-								options: { disabled: false, options: groupOptions },
-						  })
-						: Property.StaticDropdown({
-								displayName: field.name,
-								required: field.required,
-								options: { disabled: false, options: groupOptions },
-						  });
-					break;
-				}
-				case 'version': {
-					const versionOptions = await fetchProjectVersionsOptions(
-						authValue,
-						projectId as unknown as string,
-					);
-					props[field.key] = isArray
-						? Property.StaticMultiSelectDropdown({
-								displayName: field.name,
-								required: field.required,
-								options: { disabled: false, options: versionOptions },
-						  })
-						: Property.StaticDropdown({
-								displayName: field.name,
-								required: field.required,
-								options: { disabled: false, options: versionOptions },
-						  });
-					break;
-				}
-				case 'priority': {
-					const options = field.allowedValues
-						? field.allowedValues.map((option) => ({
-								label: option.name,
-								value: option.id,
-						  }))
-						: [];
+export const issueStatusIdProp = (displayName: string, required = true) =>
+	Property.Dropdown({
+		displayName,
+		refreshers: ['issueId'],
+		required,
+		options: async ({ auth, issueId }) => {
+			if (!auth || !issueId) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please connect your account first and select an issue.',
+				};
+			}
 
-					props[field.key] = Property.StaticDropdown({
+			const authValue = auth as JiraAuth;
+			const response = await jiraApiCall<{ transitions: Array<{ id: string; name: string }> }>({
+				auth: authValue,
+				method: HttpMethod.GET,
+				resourceUri: `/issue/${issueId}/transitions`,
+			});
+
+			const options: DropdownOption<string>[] = [];
+
+			for (const status of response.transitions ?? []) {
+				options.push({
+					value: status.id,
+					label: status.name,
+				});
+			}
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	});
+
+export async function createPropertyDefinition(
+	auth: JiraAuth,
+	field: IssueFieldMetaData,
+	isRequired = false,
+) {
+	// Determine if the field is an array type
+	const isArray = field.schema.type === 'array';
+	const fieldType = isArray ? field.schema.items : field.schema.type;
+
+	switch (fieldType) {
+		case 'user': {
+			const userOptions = await fetchUsersOptions(auth);
+			return isArray
+				? Property.StaticMultiSelectDropdown({
 						displayName: field.name,
-						required: field.required,
+						required: isRequired,
+						options: { disabled: false, options: userOptions },
+				  })
+				: Property.StaticDropdown({
+						displayName: field.name,
+						required: isRequired,
+						options: { disabled: false, options: userOptions },
+				  });
+		}
+		case 'group': {
+			const groupOptions = await fetchGroupsOptions(auth);
+			return isArray
+				? Property.StaticMultiSelectDropdown({
+						displayName: field.name,
+						required: isRequired,
+						options: { disabled: false, options: groupOptions },
+				  })
+				: Property.StaticDropdown({
+						displayName: field.name,
+						required: isRequired,
+						options: { disabled: false, options: groupOptions },
+				  });
+		}
+		case 'version': {
+			const versionOptions = field.allowedValues
+				? field.allowedValues.map((option) => ({
+						label: option.name,
+						value: option.id,
+				  }))
+				: [];
+			return isArray
+				? Property.StaticMultiSelectDropdown({
+						displayName: field.name,
+						required: isRequired,
+						options: { disabled: false, options: versionOptions },
+				  })
+				: Property.StaticDropdown({
+						displayName: field.name,
+						required: isRequired,
+						options: { disabled: false, options: versionOptions },
+				  });
+		}
+		case 'priority': {
+			const priorityOptions = field.allowedValues
+				? field.allowedValues.map((option) => ({
+						label: option.name,
+						value: option.id,
+				  }))
+				: [];
+
+			return Property.StaticDropdown({
+				displayName: field.name,
+				required: isRequired,
+				options: { disabled: false, options: priorityOptions },
+			});
+		}
+		case 'option': {
+			const options = field.allowedValues
+				? field.allowedValues.map((option) => ({
+						label: option.value,
+						value: option.id,
+				  }))
+				: [];
+
+			return isArray
+				? Property.StaticMultiSelectDropdown({
+						displayName: field.name,
+						required: isRequired,
 						options: { disabled: false, options: options },
-					});
-					break;
-				}
-				case 'option': {
-					const options = field.allowedValues
-						? field.allowedValues.map((option) => ({
-								label: option.value,
-								value: option.id,
-						  }))
-						: [];
-
-					props[field.key] = isArray
-						? Property.StaticMultiSelectDropdown({
-								displayName: field.name,
-								required: field.required,
-								options: { disabled: false, options: options },
-						  })
-						: Property.StaticDropdown({
-								displayName: field.name,
-								required: field.required,
-								options: { disabled: false, options: options },
-						  });
-					break;
-				}
-				case 'string': {
-					props[field.key] = isArray
-						? Property.Array({
-								displayName: field.name,
-								required: field.required,
-						  })
-						: Property.LongText({
-								displayName: field.name,
-								required: field.required,
-						  });
-					break;
-				}
-				case 'date':
-					props[field.key] = Property.DateTime({
+				  })
+				: Property.StaticDropdown({
 						displayName: field.name,
-						description: 'Provide date in YYYY-MM-DD format.',
-						required: field.required,
-					});
-					break;
-				case 'datetime':
-					props[field.key] = Property.DateTime({
-						displayName: field.name,
-						required: field.required,
-					});
-					break;
-				case 'number':
-					props[field.key] = Property.Number({
-						displayName: field.name,
-						required: field.required,
-					});
-					break;
-				case 'project':
-					props[field.key] = Property.ShortText({
-						displayName: field.name,
-						required: field.required,
-						description: 'Provide project key.',
-					});
-					break;
-				case 'issuelink':
-					props[field.key] = Property.ShortText({
-						displayName: field.name,
-						required: field.required,
-						description: 'Provide issue ID.',
-					});
-					break;
-			}
+						required: isRequired,
+						options: { disabled: false, options: options },
+				  });
 		}
-		// Remove null props
-		return Object.fromEntries(Object.entries(props).filter(([_, prop]) => prop !== null));
-	},
-});
+		case 'string': {
+			return isArray
+				? Property.Array({
+						displayName: field.name,
+						required: isRequired,
+				  })
+				: Property.LongText({
+						displayName: field.name,
+						required: isRequired,
+				  });
+		}
+		case 'date':
+			return Property.DateTime({
+				displayName: field.name,
+				description: 'Provide date in YYYY-MM-DD format.',
+				required: isRequired,
+			});
+
+		case 'datetime':
+			return Property.DateTime({
+				displayName: field.name,
+				required: isRequired,
+			});
+
+		case 'number':
+			return Property.Number({
+				displayName: field.name,
+				required: isRequired,
+			});
+
+		case 'project':
+			return Property.ShortText({
+				displayName: field.name,
+				required: isRequired,
+				description: 'Provide project key.',
+			});
+
+		case 'issuelink':
+			return Property.ShortText({
+				displayName: field.name,
+				required: isRequired,
+				description: 'Provide issue ID.',
+			});
+		default:
+			return null;
+	}
+}
 
 function parseArray(value: Array<string> | string): Array<string> {
 	try {
@@ -509,6 +529,7 @@ export function formatIssueFields(
 			case 'option':
 			case 'issuelink':
 			case 'priority':
+			case 'issuetype':
 				fieldsOutput[key] = { id: fieldInputValue };
 				break;
 
@@ -556,4 +577,22 @@ export function formatIssueFields(
 	}
 
 	return fieldsOutput;
+}
+
+export function transformCustomFields(
+	fieldsMetadata: IssueFieldMetaData[],
+	fieldsInput: Record<string, any>,
+): Record<string, any> {
+	const result: Record<string, any> = {};
+
+	const fieldsMapping = fieldsMetadata.reduce((acc, field) => {
+		acc[field.key] = field.name;
+		return acc;
+	}, {} as Record<string, string>);
+
+	for (const [key, value] of Object.entries(fieldsInput)) {
+		result[key.startsWith('customfield_') ? fieldsMapping[key] ?? key : key] = value;
+	}
+
+	return result;
 }

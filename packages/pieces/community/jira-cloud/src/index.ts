@@ -3,7 +3,7 @@ import { createPiece } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
 import { JiraAuth, jiraCloudAuth } from './auth';
-import { createIssue } from './lib/actions/create-issue';
+import { createIssueAction } from './lib/actions/create-issue';
 import { searchIssues } from './lib/actions/search-issues';
 import { newIssue } from './lib/triggers/new-issue';
 import { updatedIssue } from './lib/triggers/updated-issue';
@@ -25,7 +25,7 @@ export const jiraCloud = createPiece({
 	categories: [PieceCategory.PRODUCTIVITY],
 	authors: ['kishanprmr', 'MoShizzle', 'abuaboud'],
 	actions: [
-		createIssue,
+		createIssueAction,
 		updateIssueAction,
 		searchIssues,
 		assignIssueAction,
