@@ -8,8 +8,6 @@ import {
 } from '@activepieces/pieces-common';
 import { JiraAuth } from '../../auth';
 import { isNil } from '@activepieces/shared';
-import { IssueFieldMetaData } from './types';
-import dayjs from 'dayjs';
 
 export async function sendJiraRequest(request: HttpRequest & { auth: JiraAuth }) {
 	return httpClient.sendRequest({
@@ -342,7 +340,7 @@ export async function jiraPaginatedApiCall<T extends HttpMessageBody, K extends 
 	qs['startAt'] = 0;
 	qs['maxResults'] = 100;
 
-	let resultData: T[] = [];
+	const resultData: T[] = [];
 	let hasMore = true;
 
 	type PaginatedResponse<T, K extends string> = {
