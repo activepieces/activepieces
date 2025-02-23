@@ -223,6 +223,17 @@
           ]
         },
         {
+          "group": "Global Connections",
+          "icon": "globe",
+          "pages": [
+            "endpoints/global-connections/schema",
+            "endpoints/global-connections/upsert",
+            "endpoints/global-connections/update",
+            "endpoints/global-connections/list",
+            "endpoints/global-connections/delete"
+          ]
+        },
+        {
           "group": "Git Sync",
           "icon": "git",
           "pages": [
