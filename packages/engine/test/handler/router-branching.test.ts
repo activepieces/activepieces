@@ -141,12 +141,12 @@ describe('router with branching different conditions', () => {
         expect(routerOutput.branches).toEqual([
             {
                 branchName: 'Test Branch',
-                branchIndex: 0,
+                branchIndex: 1,
                 evaluation: false,
             },
             {
                 branchName: 'Test Branch',
-                branchIndex: 1,
+                branchIndex: 2,
                 evaluation: false,
             },
         ])
