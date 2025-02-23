@@ -98,13 +98,15 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                 isGlobalConnection={isGlobalConnection}
                 predefinedConnectionName={null}
                 piece={params.piece}
-                onConnectionCreated={(connection) => {
-                  refetch();
-                  field.onChange(addBrackets(connection.externalId));
-                }}
                 key={`CreateOrEditConnectionDialog-open-${connectionDialogOpen}`}
                 open={connectionDialogOpen}
-                setOpen={setConnectionDialogOpen}
+                setOpen={(open, connection) => {
+                  setConnectionDialogOpen(open);
+                  if (connection) {
+                    refetch();
+                    field.onChange(addBrackets(connection.externalId));
+                  }
+                }}
               ></CreateOrEditConnectionDialog>
               <Select
                 open={selectConnectionOpen}
