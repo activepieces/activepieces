@@ -121,12 +121,12 @@ const CreateOrEditConnectionDialog = React.memo(
       mutationFn: async () => {
         setErrorMessage('');
         const formValues = form.getValues().request;
-        const isConenctionNameUnique = await isConnectionNameUnique(
+        const isNameUnique = await isConnectionNameUnique(
           isGlobalConnection,
           formValues.displayName,
         );
         if (
-          !isConenctionNameUnique &&
+          !isNameUnique &&
           reconnectConnection?.displayName !== formValues.displayName
         ) {
           throw new ConnectionNameAlreadyExists();
