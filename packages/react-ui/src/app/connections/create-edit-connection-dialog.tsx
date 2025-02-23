@@ -67,7 +67,7 @@ type ConnectionDialogProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
   open: boolean;
   onConnectionCreated: (
-    res: Pick<AppConnectionWithoutSensitiveData, 'id' | 'externalId'>,
+    res: Pick<AppConnectionWithoutSensitiveData, 'id' | 'externalId'>
   ) => void;
   setOpen: (open: boolean) => void;
   reconnectConnection: AppConnectionWithoutSensitiveData | null;
@@ -91,7 +91,7 @@ const CreateOrEditConnectionDialog = React.memo(
     const { externalId, displayName } = newConnectionUtils.getConnectionName(
       piece,
       reconnectConnection,
-      predefinedConnectionName,
+      predefinedConnectionName
     );
     const form = useForm<{
       request: UpsertAppConnectionRequestBody & {
@@ -103,7 +103,7 @@ const CreateOrEditConnectionDialog = React.memo(
           ...newConnectionUtils.createDefaultValues(
             piece,
             externalId,
-            displayName,
+            displayName
           ),
           projectIds: reconnectConnection?.projectIds ?? [],
         },
@@ -124,7 +124,7 @@ const CreateOrEditConnectionDialog = React.memo(
         const formValues = form.getValues().request;
         const isConenctionNameUnique = await isConnectionNameUnique(
           isGlobalConnection,
-          formValues.displayName,
+          formValues.displayName
         );
         if (
           !isConenctionNameUnique &&
@@ -145,7 +145,6 @@ const CreateOrEditConnectionDialog = React.memo(
         return appConnectionsApi.upsert(formValues);
       },
       onSuccess: (connection) => {
-        setOpen(false);
         onConnectionCreated({
           id: connection.id,
           externalId: connection.externalId,
@@ -167,8 +166,8 @@ const CreateOrEditConnectionDialog = React.memo(
             case ErrorCode.INVALID_CLOUD_CLAIM: {
               setErrorMessage(
                 t(
-                  'Could not claim the authorization code, make sure you have correct settings and try again.',
-                ),
+                  'Could not claim the authorization code, make sure you have correct settings and try again.'
+                )
               );
               break;
             }
@@ -176,14 +175,14 @@ const CreateOrEditConnectionDialog = React.memo(
               setErrorMessage(
                 t('Connection failed with error {msg}', {
                   msg: apError.params.error,
-                }),
+                })
               );
               break;
             }
             // can happen in embedding sdk connect method
             case ErrorCode.PERMISSION_DENIED: {
               setErrorMessage(
-                t(`You don't have the permission to create a connection.`),
+                t(`You don't have the permission to create a connection.`)
               );
               break;
             }
@@ -305,7 +304,7 @@ const CreateOrEditConnectionDialog = React.memo(
         </DialogContent>
       </Dialog>
     );
-  },
+  }
 );
 
 CreateOrEditConnectionDialog.displayName = 'CreateOrEditConnectionDialog';

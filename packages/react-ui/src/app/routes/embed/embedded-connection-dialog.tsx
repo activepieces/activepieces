@@ -155,7 +155,10 @@ const EmbeddedConnectionDialogContent = ({
       piece={pieceModel}
       isGlobalConnection={false}
       open={isDialogOpen}
-      onConnectionCreated={hideConnectionIframe}
+      onConnectionCreated={(connection) => {
+        setIsDialogOpen(false);
+        hideConnectionIframe(connection);
+      }}
       key={`CreateOrEditConnectionDialog-open-${isDialogOpen}`}
       setOpen={(open) => {
         setIsDialogOpen(open);
