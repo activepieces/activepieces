@@ -56,7 +56,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
     }).setOutput({
         branches: resolvedInput.branches.map((branch, index) => ({
             branchName: branch.branchName,
-            branchIndex: index,
+            branchIndex: index + 1,
             evaluation: evaluatedConditions[index],
         })),
     })
