@@ -35,27 +35,15 @@ export async function getUsers(auth: JiraAuth) {
 }
 
 export async function getProjects(auth: JiraAuth): Promise<JiraProject[]> {
-	const projects: JiraProject[] = [];
-	let startAt = 0;
-	let hasMore = true;
-	const maxResults = 100;
 
-	while (hasMore) {
-		const response = await sendJiraRequest({
-			url: 'project/search',
-			method: HttpMethod.GET,
-			auth: auth,
-			queryParams: {
-				startAt: startAt.toString(),
-				maxResults: maxResults.toString(),
-			},
-		});
+	const response = await jiraPaginatedApiCall<JiraProject,'values'>({
+		auth,
+		method:HttpMethod.GET,
+		resourceUri:'/project/search',
+		propertyName:'values'
+	})
 
-		projects.push(...((response.body as any).values as JiraProject[]));
-		hasMore = !(response.body as any).isLast;
-		startAt += maxResults;
-	}
-	return projects;
+	return response;
 }
 
 export async function getIssueTypes({ auth, projectId }: { auth: JiraAuth; projectId: string }) {
