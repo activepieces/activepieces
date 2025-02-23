@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { parentWindow } from '@/lib/utils';
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import {
   ActivepiecesClientConnectionNameIsInvalid,
@@ -82,7 +83,7 @@ const EmbeddedConnectionDialogContent = ({
       | ActivepiecesClientConnectionNameIsInvalid
       | ActivepiecesClientConnectionPieceNotFound,
   ) => {
-    window.parent.postMessage(event, '*');
+    parentWindow.postMessage(event, '*');
   };
 
   const validateConnectionName = (
