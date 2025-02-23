@@ -263,6 +263,43 @@ export const issueTypeIdProp = (displayName: string, required = true) =>
 		},
 	});
 
+export const issueLinkTypeIdProp = (displayName: string, required = true) =>
+	Property.Dropdown({
+		displayName,
+		refreshers: [],
+		required,
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					options: [],
+					placeholder: 'Please connect your account first',
+				};
+			}
+
+			const authValue = auth as JiraAuth;
+			const response = await jiraApiCall<{ issueLinkTypes: Array<{ id: string; inward: string }> }>({
+				auth: authValue,
+				resourceUri: `/issueLinkType`,
+				method: HttpMethod.GET,
+			});
+
+			const options: DropdownOption<string>[] = [];
+
+			for (const linkType of response.issueLinkTypes) {
+				options.push({
+					value: linkType.id,
+					label: linkType.inward,
+				});
+			}
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	});
+
 export const issueIdOrKeyProp = (displayName: string, required = true) =>
 	Property.Dropdown({
 		displayName,
