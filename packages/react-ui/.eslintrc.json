@@ -52,8 +52,7 @@
         //"plugin:jsx-a11y/recommended",
         "plugin:prettier/recommended",
         "plugin:testing-library/react",
-        "plugin:jest-dom/recommended",
-        "plugin:vitest/legacy-recommended"
+        "plugin:jest-dom/recommended"
       ],
       "rules": {
         "react-hooks/rules-of-hooks": "error",
