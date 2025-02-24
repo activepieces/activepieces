@@ -7,7 +7,6 @@ import {
   ActivepiecesClientConnectionPieceNotFound,
   ActivepiecesClientEventName,
   ActivepiecesNewConnectionDialogClosed,
-  connectionNameRegex,
   NEW_CONNECTION_QUERY_PARAMS,
 } from 'ee-embed-sdk';
 
@@ -50,7 +49,7 @@ const EmbeddedConnectionDialogContent = ({
 }: EmbeddedConnectionDialogContentProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(true);
   const hasErrorRef = useRef(false);
-
+  const [predefinedConnection,setPredefinedConnection] = useState<AppConnectionWithoutSensitiveData | null>(null);
   const { data: connections, isLoading: isLoadingConnections } =
     appConnectionsHooks.useConnections({});
   const {
@@ -87,25 +86,16 @@ const EmbeddedConnectionDialogContent = ({
   };
 
   const validateConnectionName = (
-    connectionName: string,
+    connectionExternalId: string,
     existingConnections: AppConnectionWithoutSensitiveData[],
   ): { isValid: boolean; error?: string } => {
-    const regex = new RegExp(`^${connectionNameRegex}$`);
     const isConnectionNameUsed = existingConnections.some(
-      (c) => c.externalId === connectionName,
+      (c) => c.externalId === connectionExternalId,
     );
 
-    if (isConnectionNameUsed) {
-      return { isValid: false, error: 'Connection name is already used' };
+    if (!isConnectionNameUsed) {
+      return { isValid: false, error: `There is no connection with this externalId: ${connectionExternalId}` };
     }
-
-    if (!regex.test(connectionName)) {
-      return {
-        isValid: false,
-        error: `Connection name must match the following regex ${connectionNameRegex}`,
-      };
-    }
-
     return { isValid: true };
   };
 
@@ -131,7 +121,7 @@ const EmbeddedConnectionDialogContent = ({
         connectionName,
         connections,
       );
-
+      setPredefinedConnection(connections.find(c => c.externalId === connectionName) ?? null);
       if (!validationResult.isValid) {
         postMessageToParent({
           type: ActivepiecesClientEventName.CLIENT_CONNECTION_NAME_IS_INVALID,
@@ -153,12 +143,11 @@ const EmbeddedConnectionDialogContent = ({
 
   return (
     <CreateOrEditConnectionDialog
-      reconnectConnection={null}
-      predefinedConnectionName={connectionName}
+      reconnectConnection={predefinedConnection}
       piece={pieceModel}
       isGlobalConnection={false}
       open={isDialogOpen}
-      key={`CreateOrEditConnectionDialog-open-${isDialogOpen}`}
+      key={`CreateOrEditConnectionDialog-open-${isDialogOpen}-${predefinedConnection?.id}`}
       setOpen={(open, connection) => {
         setIsDialogOpen(open);
         if (!open) {

@@ -37,8 +37,7 @@ export class NoProjectSelected extends Error {
 export const newConnectionUtils = {
   getConnectionName(
     piece: PieceMetadataModelSummary | PieceMetadataModel,
-    reconnectConnection: AppConnectionWithoutSensitiveData | null,
-    predefinedConnectionName: string | null,
+    reconnectConnection: AppConnectionWithoutSensitiveData | null
   ): {
     externalId: string;
     displayName: string;
@@ -49,12 +48,7 @@ export const newConnectionUtils = {
         displayName: reconnectConnection.displayName,
       };
     }
-    if (predefinedConnectionName) {
-      return {
-        externalId: predefinedConnectionName,
-        displayName: piece.displayName,
-      };
-    }
+    
     return {
       externalId: apId(),
       displayName: piece.displayName,
@@ -71,6 +65,7 @@ export const newConnectionUtils = {
     if (!piece.auth) {
       throw new Error(`Unsupported property type: ${piece.auth}`);
     }
+
     switch (piece.auth.type) {
       case PropertyType.SECRET_TEXT:
         return {

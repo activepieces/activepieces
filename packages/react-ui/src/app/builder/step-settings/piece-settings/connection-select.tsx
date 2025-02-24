@@ -96,7 +96,6 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
               <CreateOrEditConnectionDialog
                 reconnectConnection={reconnectConnection}
                 isGlobalConnection={isGlobalConnection}
-                predefinedConnectionName={null}
                 piece={params.piece}
                 key={`CreateOrEditConnectionDialog-open-${connectionDialogOpen}`}
                 open={connectionDialogOpen}
