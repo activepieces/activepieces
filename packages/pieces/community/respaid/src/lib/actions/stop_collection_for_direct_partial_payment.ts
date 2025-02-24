@@ -30,10 +30,6 @@ export const stopCollectionForDirectPartialPayment = createAction({
   async run({ auth, propsValue }) {
     respaidActionsCommon.validateProps(propsValue);
 
-    if (!propsValue.amount) {
-      throw new Error('Amount must be provided.');
-    }
-
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
       url: `${respaidCommon.baseUrl}/actions/stop_collection_for_direct_partial_payment`,
