@@ -87,7 +87,7 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
             return JSON.parse(data.toString('utf-8'))
         }
         if (fileType === FileType.SAMPLE_DATA_INPUT) {
-            return {}
+            return undefined
         }
         return currentSelectedData
 

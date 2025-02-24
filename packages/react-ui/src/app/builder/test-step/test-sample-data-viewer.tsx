@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
 import { formatUtils } from '@/lib/utils';
-import { StepOutputStatus } from '@activepieces/shared';
+import { isNil, StepOutputStatus } from '@activepieces/shared';
 
 import { TestButtonTooltip } from './test-step-tooltip';
 
@@ -16,11 +16,18 @@ type TestSampleDataViewerProps = {
   isSaving: boolean;
   isTesting: boolean;
   sampleData: unknown;
-  sampleDataInput: unknown;
+  sampleDataInput: unknown | null;
   errorMessage: string | undefined;
   lastTestDate: string | undefined;
   children?: React.ReactNode;
   consoleLogs?: string | null;
+};
+
+const isConsoleLogsValid = (value: unknown) => {
+  if (isNil(value)) {
+    return false;
+  }
+  return value !== '';
 };
 
 const TestSampleDataViewer = React.memo(
@@ -82,32 +89,46 @@ const TestSampleDataViewer = React.memo(
             </TestButtonTooltip>
           </div>
 
-          <Tabs defaultValue="Output">
-            <TabsList className="grid w-full grid-cols-2 w-[250px]">
-              <TabsTrigger value="Input">{t('Input')}</TabsTrigger>
-              <TabsTrigger value="Output">{t('Output')}</TabsTrigger>
-              {consoleLogs && (
-                <TabsTrigger value="Logs">{t('Logs')}</TabsTrigger>
+          {isNil(sampleDataInput) && !isConsoleLogsValid(consoleLogs) ? (
+            <JsonViewer
+              json={errorMessage ?? sampleData}
+              title={t('Output')}
+            ></JsonViewer>
+          ) : (
+              <Tabs defaultValue="Output">
+              <TabsList className="grid w-full grid-cols-2 w-[250px]">
+                {(!isNil(sampleDataInput) && (
+                  <TabsTrigger value="Input">{t('Input')}</TabsTrigger>
+                ))}
+                <TabsTrigger value="Output">{t('Output')}</TabsTrigger>
+                {isConsoleLogsValid(consoleLogs) && (
+                  <TabsTrigger value="Logs">{t('Logs')}</TabsTrigger>
+                )}
+              </TabsList>
+              {!isNil(sampleDataInput) && (
+                <TabsContent value="Input">
+                  <JsonViewer
+                    json={sampleDataInput}
+                    title={t('Input')}
+                  ></JsonViewer>
+                </TabsContent>
               )}
-            </TabsList>
-            <TabsContent value="Input">
-              <JsonViewer
-                json={sampleDataInput}
-                title={t('Input')}
-              ></JsonViewer>
-            </TabsContent>
-            <TabsContent value="Output">
-              <JsonViewer
-                json={errorMessage ?? sampleData}
-                title={t('Output')}
-              ></JsonViewer>
-            </TabsContent>
-            {consoleLogs && (
-              <TabsContent value="Logs">
-                <JsonViewer json={consoleLogs} title={t('Logs')}></JsonViewer>
+              <TabsContent value="Output">
+                <JsonViewer
+                  json={errorMessage ?? sampleData}
+                  title={t('Output')}
+                ></JsonViewer>
               </TabsContent>
-            )}
-          </Tabs>
+              {isConsoleLogsValid(consoleLogs) && (
+                <TabsContent value="Logs">
+                  <JsonViewer json={consoleLogs} title={t('Logs')}></JsonViewer>
+                </TabsContent>
+              )}
+            </Tabs>
+          )
+          }
+
+
         </div>
       </>
     );
