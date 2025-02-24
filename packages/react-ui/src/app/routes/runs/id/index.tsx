@@ -40,7 +40,7 @@ const FlowRunPage = () => {
     sampleDataHooks.useSampleDataForFlow(data?.flow?.version, projectId);
 
   const { data: sampleDataInput, isLoading: isSampleDataInputLoading } =
-    sampleDataHooks.useSampleDataInputForFlow(data?.flow?.version, projectId);  
+    sampleDataHooks.useSampleDataInputForFlow(data?.flow?.version, projectId);
 
   if (isLoading || isSampleDataLoading || isSampleDataInputLoading) {
     return (

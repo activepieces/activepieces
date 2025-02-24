@@ -50,7 +50,7 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
             projectId: request.principal.projectId,
             flowVersion: flow.version,
             stepName: request.query.stepName,
-            fileType: request.query.fileType
+            fileType: request.query.fileType,
         })
         return sampleData
     })

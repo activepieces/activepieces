@@ -67,12 +67,12 @@ export const sampleDataHooks = {
       retry: 4,
       refetchOnWindowFocus: false,
       queryFn: async () => {
-        const steps = flowStructureUtil.getAllSteps(flowVersion!.trigger);  
+        const steps = flowStructureUtil.getAllSteps(flowVersion!.trigger);
         const singleStepSampleDataInput = await Promise.all(
           steps.map(async (step) => {
             return {
               [step.name]: await getSampleData(
-                flowVersion!, 
+                flowVersion!,
                 step.name,
                 projectId!,
                 FileType.SAMPLE_DATA_INPUT,

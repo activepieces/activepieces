@@ -143,7 +143,13 @@ export type BuilderState = {
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
   BuilderState,
-  'flow' | 'flowVersion' | 'readonly' | 'run' | 'canExitRun' | 'sampleData' | 'sampleDataInput'
+  | 'flow'
+  | 'flowVersion'
+  | 'readonly'
+  | 'run'
+  | 'canExitRun'
+  | 'sampleData'
+  | 'sampleDataInput'
 >;
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
@@ -289,7 +295,7 @@ export const createBuilderStore = (
         set((state) => {
           return {
             sampleDataInput: {
-              ...state.sampleDataInput, 
+              ...state.sampleDataInput,
               [stepName]: payload,
             },
           };

@@ -88,17 +88,18 @@ const TestTriggerSection = React.memo(
       undefined,
     );
 
-    const { sampleData, setSampleData, sampleDataInput, setSampleDataInput } = useBuilderStateContext((state) => {
-      console.log('formValues.name', formValues.name);
-      console.log('state.sampleData', state.sampleData);
-      console.log('state.sampleDataInput', state.sampleDataInput);
-      return {
-        sampleData: state.sampleData[formValues.name],
-        setSampleData: state.setSampleData,
-        sampleDataInput: state.sampleDataInput[formValues.name],
-        setSampleDataInput: state.setSampleDataInput,
-      };
-    });
+    const { sampleData, setSampleData, sampleDataInput, setSampleDataInput } =
+      useBuilderStateContext((state) => {
+        console.log('formValues.name', formValues.name);
+        console.log('state.sampleData', state.sampleData);
+        console.log('state.sampleDataInput', state.sampleDataInput);
+        return {
+          sampleData: state.sampleData[formValues.name],
+          setSampleData: state.setSampleData,
+          sampleDataInput: state.sampleDataInput[formValues.name],
+          setSampleDataInput: state.setSampleDataInput,
+        };
+      });
 
     const [currentSelectedId, setCurrentSelectedId] = useState<
       string | undefined
@@ -216,7 +217,7 @@ const TestTriggerSection = React.memo(
 
     async function updateSampleData(data: TriggerEventWithPayload) {
       let sampleDataFileId: string | undefined = undefined;
-      let sampleDataInputFileId = await sampleDataApi.save({
+      const sampleDataInputFileId = await sampleDataApi.save({
         flowVersionId,
         stepName: formValues.name,
         payload: formValues.settings,
@@ -234,7 +235,7 @@ const TestTriggerSection = React.memo(
         });
         sampleDataFileId = sampleFile.id;
       }
-      
+
       form.setValue(
         'settings.inputUiInfo',
         {

@@ -81,33 +81,33 @@ const TestSampleDataViewer = React.memo(
               </Button>
             </TestButtonTooltip>
           </div>
-          
+
           <Tabs defaultValue="Output">
-              <TabsList className="grid w-full grid-cols-2 w-[250px]">
-                <TabsTrigger value="Input">{t('Input')}</TabsTrigger>
-                <TabsTrigger value="Output">{t('Output')}</TabsTrigger>
-                {consoleLogs && (
-                  <TabsTrigger value="Logs">{t('Logs')}</TabsTrigger>
-                )}
-              </TabsList>
-              <TabsContent value="Input">
-                <JsonViewer
-                  json={sampleDataInput}
-                  title={t('Input')}
-                ></JsonViewer>
-              </TabsContent>
-              <TabsContent value="Output">
-                <JsonViewer
-                  json={errorMessage ?? sampleData}
-                  title={t('Output')}
-                ></JsonViewer>
-              </TabsContent>
+            <TabsList className="grid w-full grid-cols-2 w-[250px]">
+              <TabsTrigger value="Input">{t('Input')}</TabsTrigger>
+              <TabsTrigger value="Output">{t('Output')}</TabsTrigger>
               {consoleLogs && (
-                <TabsContent value="Logs">
-                  <JsonViewer json={consoleLogs} title={t('Logs')}></JsonViewer>
-                </TabsContent>
+                <TabsTrigger value="Logs">{t('Logs')}</TabsTrigger>
               )}
-            </Tabs>
+            </TabsList>
+            <TabsContent value="Input">
+              <JsonViewer
+                json={sampleDataInput}
+                title={t('Input')}
+              ></JsonViewer>
+            </TabsContent>
+            <TabsContent value="Output">
+              <JsonViewer
+                json={errorMessage ?? sampleData}
+                title={t('Output')}
+              ></JsonViewer>
+            </TabsContent>
+            {consoleLogs && (
+              <TabsContent value="Logs">
+                <JsonViewer json={consoleLogs} title={t('Logs')}></JsonViewer>
+              </TabsContent>
+            )}
+          </Tabs>
 
           {/* {consoleLogs ? (
             <Tabs defaultValue="Output">
