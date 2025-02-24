@@ -258,6 +258,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId,
             flowVersion,
             stepName: flowVersion.trigger.name,
+            fileType: FileType.SAMPLE_DATA,
         })
         return this.start({
             projectId,

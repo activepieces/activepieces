@@ -30,6 +30,7 @@ import {
   TriggerTestStrategy,
   isNil,
   parseToJsonIfPossible,
+  FileType,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -87,10 +88,17 @@ const TestTriggerSection = React.memo(
       undefined,
     );
 
-    const { sampleData, setSampleData } = useBuilderStateContext((state) => ({
-      sampleData: state.sampleData[formValues.name],
-      setSampleData: state.setSampleData,
-    }));
+    const { sampleData, setSampleData, sampleDataInput, setSampleDataInput } = useBuilderStateContext((state) => {
+      console.log('formValues.name', formValues.name);
+      console.log('state.sampleData', state.sampleData);
+      console.log('state.sampleDataInput', state.sampleDataInput);
+      return {
+        sampleData: state.sampleData[formValues.name],
+        setSampleData: state.setSampleData,
+        sampleDataInput: state.sampleDataInput[formValues.name],
+        setSampleDataInput: state.setSampleDataInput,
+      };
+    });
 
     const [currentSelectedId, setCurrentSelectedId] = useState<
       string | undefined
@@ -208,21 +216,31 @@ const TestTriggerSection = React.memo(
 
     async function updateSampleData(data: TriggerEventWithPayload) {
       let sampleDataFileId: string | undefined = undefined;
+      let sampleDataInputFileId = await sampleDataApi.save({
+        flowVersionId,
+        stepName: formValues.name,
+        payload: formValues.settings,
+        projectId: projectId,
+        fileType: FileType.SAMPLE_DATA_INPUT,
+      });
+
       if (!isNil(data.payload)) {
         const sampleFile = await sampleDataApi.save({
           flowVersionId,
           stepName: formValues.name,
           payload: data.payload,
           projectId: projectId,
+          fileType: FileType.SAMPLE_DATA,
         });
         sampleDataFileId = sampleFile.id;
       }
-
+      
       form.setValue(
         'settings.inputUiInfo',
         {
           ...formValues.settings.inputUiInfo,
           sampleDataFileId,
+          sampleDataInputFileId,
           currentSelectedData: undefined,
           lastTestDate: dayjs().toISOString(),
         },
@@ -230,6 +248,8 @@ const TestTriggerSection = React.memo(
       );
       setLastTestDate(dayjs().toISOString());
       setSampleData(formValues.name, data.payload);
+      console.log('formValues.settings', formValues.settings);
+      setSampleDataInput(formValues.name, formValues.settings ?? {});
     }
 
     const { data: pollResults, refetch } = useQuery<
@@ -269,6 +289,7 @@ const TestTriggerSection = React.memo(
             isSaving={isSaving}
             isTesting={isPollingTesting}
             sampleData={sampleData}
+            sampleDataInput={sampleDataInput}
             errorMessage={errorMessage}
             lastTestDate={lastTestDate}
           >

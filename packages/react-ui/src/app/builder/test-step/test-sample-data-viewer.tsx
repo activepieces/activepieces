@@ -16,6 +16,7 @@ type TestSampleDataViewerProps = {
   isSaving: boolean;
   isTesting: boolean;
   sampleData: unknown;
+  sampleDataInput: unknown;
   errorMessage: string | undefined;
   lastTestDate: string | undefined;
   children?: React.ReactNode;
@@ -29,6 +30,7 @@ const TestSampleDataViewer = React.memo(
     isSaving,
     isTesting,
     sampleData,
+    sampleDataInput,
     errorMessage,
     lastTestDate,
     children,
@@ -79,8 +81,35 @@ const TestSampleDataViewer = React.memo(
               </Button>
             </TestButtonTooltip>
           </div>
+          
+          <Tabs defaultValue="Output">
+              <TabsList className="grid w-full grid-cols-2 w-[250px]">
+                <TabsTrigger value="Input">{t('Input')}</TabsTrigger>
+                <TabsTrigger value="Output">{t('Output')}</TabsTrigger>
+                {consoleLogs && (
+                  <TabsTrigger value="Logs">{t('Logs')}</TabsTrigger>
+                )}
+              </TabsList>
+              <TabsContent value="Input">
+                <JsonViewer
+                  json={sampleDataInput}
+                  title={t('Input')}
+                ></JsonViewer>
+              </TabsContent>
+              <TabsContent value="Output">
+                <JsonViewer
+                  json={errorMessage ?? sampleData}
+                  title={t('Output')}
+                ></JsonViewer>
+              </TabsContent>
+              {consoleLogs && (
+                <TabsContent value="Logs">
+                  <JsonViewer json={consoleLogs} title={t('Logs')}></JsonViewer>
+                </TabsContent>
+              )}
+            </Tabs>
 
-          {consoleLogs ? (
+          {/* {consoleLogs ? (
             <Tabs defaultValue="Output">
               <TabsList className="grid w-full grid-cols-2 w-[250px]">
                 <TabsTrigger value="Output">{t('Output')}</TabsTrigger>
@@ -104,7 +133,7 @@ const TestSampleDataViewer = React.memo(
               json={errorMessage ?? sampleData}
               title={t('Output')}
             ></JsonViewer>
-          )}
+          )} */}
         </div>
       </>
     );

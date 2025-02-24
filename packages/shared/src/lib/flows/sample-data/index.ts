@@ -1,11 +1,12 @@
 import { Pick, Static, Type } from '@sinclair/typebox'
-import { File } from '../../file'
+import { File, FileType } from '../../file'
 
 export const SaveSampleDataRequest = Type.Object({
     flowVersionId: Type.String(),
     projectId: Type.String(),
     stepName: Type.String(),
     payload: Type.Unknown(),
+    fileType: Type.Enum(FileType),
 })
 export type SaveSampleDataRequest = Static<typeof SaveSampleDataRequest>
 
@@ -14,6 +15,7 @@ export const GetSampleDataRequest = Type.Object({
     flowVersionId: Type.String(),
     stepName: Type.String(),
     projectId: Type.String(),
+    fileType: Type.Enum(FileType),
 })
 export type GetSampleDataRequest = Static<typeof GetSampleDataRequest>
 
@@ -30,6 +32,7 @@ export const StepRunResponse = Type.Object({
     success: Type.Boolean(),
     output: Type.Unknown(),
     sampleDataFileId: Type.Optional(Type.String()),
+    sampleDataInputFileId: Type.Optional(Type.String()),
     standardError: Type.String(),
     standardOutput: Type.String(),
 })
@@ -43,6 +46,7 @@ export type StepExecutionPath = Static<typeof StepExecutionPath>
 export const SampleDataSetting = Type.Object(
     {
         sampleDataFileId: Type.Optional(Type.String()),
+        sampleDataInputFileId: Type.Optional(Type.String()),
         lastTestDate: Type.Optional(Type.String()),
         customizedInputs: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
         /**
@@ -59,6 +63,7 @@ export type SampleDataSettings = Static<typeof SampleDataSetting>
 
 export const DEFAULT_SAMPLE_DATA_SETTINGS: SampleDataSettings = {
     sampleDataFileId: undefined,
+    sampleDataInputFileId: undefined,
     customizedInputs: undefined,
 }
 

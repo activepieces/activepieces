@@ -12,6 +12,8 @@ import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
 import {
   Action,
   ActionType,
+  CodeActionSettings,
+  FileType,
   StepRunResponse,
   flowStructureUtil,
   isNil,
@@ -30,20 +32,40 @@ type TestActionComponentProps = {
   projectId: string;
 };
 
+const getSampleDataInput = (formValues: Action) => {
+  switch (formValues.type) {
+    case ActionType.CODE:
+      return formValues.settings.input;
+    case ActionType.LOOP_ON_ITEMS:
+      return formValues.settings.items;
+    case ActionType.PIECE:
+      return formValues.settings.input;
+    case ActionType.ROUTER:
+      return {
+        executionType: formValues.settings.executionType,
+        branches: formValues.settings.branches,
+      };
+    default:
+      return {};
+  }
+}
+
 const TestActionSection = React.memo(
   ({ isSaving, flowVersionId, projectId }: TestActionComponentProps) => {
     const { toast } = useToast();
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
       undefined,
     );
-    const form = useFormContext<Pick<Action, 'settings' | 'name'>>();
+    const form = useFormContext<Pick<Action, 'settings' | 'name' | 'type'>>();
     const formValues = form.getValues();
     const [consoleLogs, setConsoleLogs] = useState<null | string>(null);
-    const { sampleData, setSampleData, selectedStep, trigger } =
+    const { sampleData, sampleDataInput, setSampleData, setSampleDataInput, selectedStep, trigger } =
       useBuilderStateContext((state) => {
         return {
           sampleData: state.sampleData[formValues.name],
+          sampleDataInput: state.sampleDataInput[formValues.name],
           setSampleData: state.setSampleData,
+          setSampleDataInput: state.setSampleDataInput,
           selectedStep: state.selectedStep,
           trigger: state.flowVersion.trigger,
         };
@@ -63,7 +85,7 @@ const TestActionSection = React.memo(
     const socket = useSocket();
 
     const { mutate, isPending: isTesting } = useMutation<
-      StepRunResponse & { sampleDataFileId?: string },
+      StepRunResponse & { sampleDataFileId?: string, sampleDataInputFileId?: string },
       Error,
       void
     >({
@@ -79,12 +101,21 @@ const TestActionSection = React.memo(
             stepName: formValues.name,
             payload: testStepResponse.output,
             projectId,
+            fileType: FileType.SAMPLE_DATA,
           });
           sampleDataFileId = sampleFile.id;
         }
+        const sampleDataInputFile = await sampleDataApi.save({
+          flowVersionId,
+          stepName: formValues.name,
+          payload: formValues.settings,
+          projectId,
+          fileType: FileType.SAMPLE_DATA_INPUT,
+        });
         return {
           ...testStepResponse,
           sampleDataFileId,
+          sampleDataInputFileId: sampleDataInputFile.id,
         };
       },
       onSuccess: ({
@@ -119,6 +150,7 @@ const TestActionSection = React.memo(
           );
         }
         setSampleData(formValues.name, output);
+        setSampleDataInput(formValues.name, getSampleDataInput(formValues as Action));
         setConsoleLogs(standardOutput || standardError);
         setLastTestDate(dayjs().toISOString());
       },
@@ -155,6 +187,7 @@ const TestActionSection = React.memo(
             isSaving={isSaving}
             isTesting={isTesting}
             sampleData={sampleData}
+            sampleDataInput={sampleDataInput}
             errorMessage={errorMessage}
             lastTestDate={lastTestDate}
             consoleLogs={

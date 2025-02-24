@@ -155,6 +155,7 @@ function isExecutionDataFileThatExpires(type: FileType) {
         case FileType.TRIGGER_EVENT_FILE:
             return true
         case FileType.SAMPLE_DATA:
+        case FileType.SAMPLE_DATA_INPUT:
         case FileType.PACKAGE_ARCHIVE:
         case FileType.PROJECT_RELEASE:
             return false

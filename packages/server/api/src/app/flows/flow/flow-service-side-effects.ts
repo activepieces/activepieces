@@ -1,5 +1,6 @@
 import {
     assertNotNullOrUndefined,
+    FileType,
     Flow,
     FlowScheduleOptions,
     FlowStatus,
@@ -134,6 +135,13 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
         await sampleDataService(log).deleteForFlow({
             projectId: flowToDelete.projectId,
             flowId: flowToDelete.id,
+            fileType: FileType.SAMPLE_DATA,
+        })
+
+        await sampleDataService(log).deleteForFlow({
+            projectId: flowToDelete.projectId,
+            flowId: flowToDelete.id,
+            fileType: FileType.SAMPLE_DATA_INPUT,
         })
     },
 })
