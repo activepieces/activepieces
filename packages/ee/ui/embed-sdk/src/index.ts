@@ -301,8 +301,8 @@ class ActivepiecesEmbedded {
 
   private _getNewWindowFeatures(requestedFeats:newWindowFeatures) {
     const windowFeats:newWindowFeatures = {
-      height: 600,
-      width: 600,
+      height: 700,
+      width: 700,
       top: 0,
       left: 0,
     }
@@ -311,7 +311,7 @@ class ActivepiecesEmbedded {
         windowFeats[key as keyof newWindowFeatures ] = requestedFeats[key as keyof typeof requestedFeats]
       }
     })
-    return 'width=600,height=600'
+    return `width=${windowFeats.width},height=${windowFeats.height},top=${windowFeats.top},left=${windowFeats.left}`
   }
     
   private _addConnectionIframe({pieceName, connectionName}:{pieceName:string, connectionName?:string}) {
