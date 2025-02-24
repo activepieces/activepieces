@@ -1,0 +1,66 @@
+{
+  "migrations": [
+    {
+      "version": "20.0.0-beta.7",
+      "description": "Migration for v20.0.0-beta.7",
+      "implementation": "./src/migrations/update-20-0-0/move-use-daemon-process",
+      "package": "nx",
+      "name": "move-use-daemon-process"
+    },
+    {
+      "version": "20.0.1",
+      "description": "Set `useLegacyCache` to true for migrating workspaces",
+      "implementation": "./src/migrations/update-20-0-1/use-legacy-cache",
+      "x-repair-skip": true,
+      "package": "nx",
+      "name": "use-legacy-cache"
+    },
+    {
+      "cli": "nx",
+      "version": "20.0.0-beta.5",
+      "description": "replace getJestProjects with getJestProjectsAsync",
+      "implementation": "./src/migrations/update-20-0-0/replace-getJestProjects-with-getJestProjectsAsync",
+      "package": "@nx/jest",
+      "name": "replace-getJestProjects-with-getJestProjectsAsync"
+    },
+    {
+      "version": "19.6.0-beta.0",
+      "description": "Add dependsOn: [build] to preview targets using preview-server",
+      "implementation": "./src/migrations/update-19-6-0/add-depends-on-for-preview",
+      "package": "@nx/vite",
+      "name": "update-19-6-0-add-depends-on-for-preview-server"
+    },
+    {
+      "cli": "nx",
+      "version": "19.6.3-beta.0",
+      "description": "Migrate proxy config files to match new format from webpack-dev-server v5.",
+      "implementation": "./src/migrations/update-19-6-3/proxy-config",
+      "package": "@nx/webpack",
+      "name": "update-19-6-3-proxy-config"
+    },
+    {
+      "cli": "nx",
+      "version": "19.6.0-beta.4",
+      "description": "Ensure Module Federation DTS is turned off by default.",
+      "factory": "./src/migrations/update-19-6-0/turn-off-dts-by-default",
+      "package": "@nx/react",
+      "name": "update-19-6-0-turn-module-federation-dts-off"
+    },
+    {
+      "cli": "nx",
+      "version": "19.6.0-beta.4",
+      "description": "Update the server file for Module Federation SSR port value to be the same as the 'serve' target port value.",
+      "factory": "./src/migrations/update-19-6-0/update-ssr-server-port",
+      "package": "@nx/react",
+      "name": "update-module-federation-ssr-server-file"
+    },
+    {
+      "cli": "nx",
+      "version": "19.6.1-beta.0",
+      "description": "Ensure Target Defaults are set correctly for Module Federation.",
+      "factory": "./src/migrations/update-19-6-1/ensure-depends-on-for-mf",
+      "package": "@nx/react",
+      "name": "update-19-6-1-ensure-module-federation-target-defaults"
+    }
+  ]
+}
