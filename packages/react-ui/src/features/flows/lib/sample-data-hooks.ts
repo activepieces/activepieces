@@ -71,12 +71,14 @@ export const sampleDataHooks = {
         const singleStepSampleDataInput = await Promise.all(
           steps.map(async (step) => {
             return {
-              [step.name]: await getSampleData(
-                flowVersion!,
-                step.name,
-                projectId!,
-                FileType.SAMPLE_DATA_INPUT,
-              ),
+              [step.name]: step.settings.inputUiInfo?.sampleDataInputFileId
+                ? await getSampleData(
+                    flowVersion!,
+                    step.name,
+                    projectId!,
+                    FileType.SAMPLE_DATA_INPUT,
+                  )
+                : undefined,
             };
           }),
         );
