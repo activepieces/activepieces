@@ -62,6 +62,3 @@ scratch.md
 
 # environment variables
 .env
-
-vite.config.*.timestamp*
-vitest.config.*.timestamp*
