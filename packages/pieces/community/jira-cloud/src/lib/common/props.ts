@@ -507,7 +507,7 @@ export async function createPropertyDefinition(
 			return Property.ShortText({
 				displayName: field.name,
 				required: isRequired,
-				description: 'Provide issue ID.',
+				description: 'Provide issue key.',
 			});
 		default:
 			return null;
@@ -564,10 +564,13 @@ export function formatIssueFields(
 			case 'user':
 			case 'version':
 			case 'option':
-			case 'issuelink':
 			case 'priority':
 			case 'issuetype':
 				fieldsOutput[key] = { id: fieldInputValue };
+				break;
+
+			case 'issuelink':
+				fieldsOutput[key] = { key: fieldInputValue };
 				break;
 
 			case 'group':
