@@ -16,7 +16,7 @@ export const stopCollectionForDirectPartialPayment = createAction({
       }),
       amount: Property.ShortText({
         displayName: 'Amount',
-        required: true,
+        required: false,
       }),
       email: Property.ShortText({
         displayName: 'Email',
