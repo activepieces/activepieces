@@ -130,6 +130,7 @@ const TestActionSection = React.memo(
         success,
         output,
         sampleDataFileId,
+        sampleDataInputFileId,
         standardOutput,
         standardError,
       }) => {
@@ -139,6 +140,7 @@ const TestActionSection = React.memo(
           const newInputUiInfo = {
             ...formValues.settings.inputUiInfo,
             sampleDataFileId,
+            sampleDataInputFileId,
             currentSelectedData: undefined,
             lastTestDate: dayjs().toISOString(),
           };

@@ -214,10 +214,10 @@ const TestTriggerSection = React.memo(
 
     async function updateSampleData(data: TriggerEventWithPayload) {
       let sampleDataFileId: string | undefined = undefined;
-      const sampleDataInputFileId = await sampleDataApi.save({
+      const sampleDataInputFile = await sampleDataApi.save({
         flowVersionId,
         stepName: formValues.name,
-        payload: formValues.settings,
+        payload: formValues.settings?.input ?? {},
         projectId: projectId,
         fileType: FileType.SAMPLE_DATA_INPUT,
       });
@@ -238,7 +238,7 @@ const TestTriggerSection = React.memo(
         {
           ...formValues.settings.inputUiInfo,
           sampleDataFileId,
-          sampleDataInputFileId,
+          sampleDataInputFileId: sampleDataInputFile.id,
           currentSelectedData: undefined,
           lastTestDate: dayjs().toISOString(),
         },
@@ -246,7 +246,7 @@ const TestTriggerSection = React.memo(
       );
       setLastTestDate(dayjs().toISOString());
       setSampleData(formValues.name, data.payload);
-      setSampleDataInput(formValues.name, formValues.settings ?? {});
+      setSampleDataInput(formValues.name, formValues.settings?.input ?? {});
     }
 
     const { data: pollResults, refetch } = useQuery<
