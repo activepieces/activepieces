@@ -139,6 +139,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                     piece: PieceMetadata,
                     'git-repo': GitRepoWithoutSensitiveData,
                     'project-release': ProjectRelease,
+                    'global-connection': AppConnectionWithoutSensitiveData,
                 },
             },
             info: {
