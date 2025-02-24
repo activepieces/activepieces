@@ -7,6 +7,7 @@ export enum ActivepiecesClientEventName {
   CLIENT_AUTHENTICATION_SUCCESS = 'CLIENT_AUTHENTICATION_SUCCESS',
   CLIENT_AUTHENTICATION_FAILED = 'CLIENT_AUTHENTICATION_FAILED',
   CLIENT_CONFIGURATION_FINISHED = 'CLIENT_CONFIGURATION_FINISHED',
+  CLIENT_CONNECTION_PIECE_NOT_FOUND = 'CLIENT_CONNECTION_PIECE_NOT_FOUND',
 }
 export const connectionNameRegex = '[A-Za-z0-9_\\-@\\+\\.]*'
 export interface ActivepiecesClientInit {
@@ -34,6 +35,13 @@ export interface ActivepiecesClientConnectionNameIsInvalid {
   type: ActivepiecesClientEventName.CLIENT_CONNECTION_NAME_IS_INVALID;
   data: {
     error: string;
+  };
+}
+
+export interface ActivepiecesClientConnectionPieceNotFound {
+  type: ActivepiecesClientEventName.CLIENT_CONNECTION_PIECE_NOT_FOUND;
+  data: {
+    error: string
   };
 }
 
@@ -370,7 +378,7 @@ class ActivepiecesEmbedded {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   private _cleanConnectionIframe = () => { };
   private _setConnectionIframeEventsListener() {
-    const connectionRelatedMessageHandler = (event: MessageEvent<ActivepiecesNewConnectionDialogClosed | ActivepiecesClientConnectionNameIsInvalid | ActivepiecesClientShowConnectionIframe>) => {
+    const connectionRelatedMessageHandler = (event: MessageEvent<ActivepiecesNewConnectionDialogClosed | ActivepiecesClientConnectionNameIsInvalid | ActivepiecesClientShowConnectionIframe | ActivepiecesClientConnectionPieceNotFound>) => {
       if (event.data.type) {
         switch (event.data.type) {
           case ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED: {
@@ -381,7 +389,8 @@ class ActivepiecesEmbedded {
             window.removeEventListener('message', connectionRelatedMessageHandler);
             break;
           }
-          case ActivepiecesClientEventName.CLIENT_CONNECTION_NAME_IS_INVALID: {
+          case ActivepiecesClientEventName.CLIENT_CONNECTION_NAME_IS_INVALID:
+          case ActivepiecesClientEventName.CLIENT_CONNECTION_PIECE_NOT_FOUND: {
             this._removeIframe(`#${this._CONNECTIONS_IFRAME_ID}`);
             if (this._rejectNewConnectionDialogClosed) {
               this._rejectNewConnectionDialogClosed(event.data.data);

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import {
   ActivepiecesClientConnectionNameIsInvalid,
+  ActivepiecesClientConnectionPieceNotFound,
   ActivepiecesClientEventName,
   ActivepiecesNewConnectionDialogClosed,
   connectionNameRegex,
@@ -78,7 +79,8 @@ const EmbeddedConnectionDialogContent = ({
   const postMessageToParent = (
     event:
       | ActivepiecesNewConnectionDialogClosed
-      | ActivepiecesClientConnectionNameIsInvalid,
+      | ActivepiecesClientConnectionNameIsInvalid
+      | ActivepiecesClientConnectionPieceNotFound,
   ) => {
     window.parent.postMessage(event, '*');
   };
@@ -109,7 +111,7 @@ const EmbeddedConnectionDialogContent = ({
   useEffect(() => {
     if (!isSuccess && !isLoadingPiece && !hasErrorRef.current) {
       postMessageToParent({
-        type: ActivepiecesClientEventName.CLIENT_CONNECTION_NAME_IS_INVALID,
+        type: ActivepiecesClientEventName.CLIENT_CONNECTION_PIECE_NOT_FOUND,
         data: {
           error: JSON.stringify({
             isValid: 'false',
@@ -155,12 +157,11 @@ const EmbeddedConnectionDialogContent = ({
       piece={pieceModel}
       isGlobalConnection={false}
       open={isDialogOpen}
-      onConnectionCreated={hideConnectionIframe}
       key={`CreateOrEditConnectionDialog-open-${isDialogOpen}`}
-      setOpen={(open) => {
+      setOpen={(open, connection) => {
         setIsDialogOpen(open);
         if (!open) {
-          hideConnectionIframe();
+          hideConnectionIframe(connection);
         }
       }}
     />

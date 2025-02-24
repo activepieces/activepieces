@@ -66,10 +66,10 @@ import { SecretTextConnectionSettings } from './secret-text-connection-settings'
 type ConnectionDialogProps = {
   piece: PieceMetadataModelSummary | PieceMetadataModel;
   open: boolean;
-  onConnectionCreated: (
-    res: Pick<AppConnectionWithoutSensitiveData, 'id' | 'externalId'>,
+  setOpen: (
+    open: boolean,
+    connection?: Pick<AppConnectionWithoutSensitiveData, 'id' | 'externalId'>,
   ) => void;
-  setOpen: (open: boolean) => void;
   reconnectConnection: AppConnectionWithoutSensitiveData | null;
   predefinedConnectionName: string | null;
   isGlobalConnection: boolean;
@@ -80,7 +80,6 @@ const CreateOrEditConnectionDialog = React.memo(
     piece,
     open,
     setOpen,
-    onConnectionCreated,
     reconnectConnection,
     predefinedConnectionName,
     isGlobalConnection,
@@ -122,12 +121,12 @@ const CreateOrEditConnectionDialog = React.memo(
       mutationFn: async () => {
         setErrorMessage('');
         const formValues = form.getValues().request;
-        const isConenctionNameUnique = await isConnectionNameUnique(
+        const isNameUnique = await isConnectionNameUnique(
           isGlobalConnection,
           formValues.displayName,
         );
         if (
-          !isConenctionNameUnique &&
+          !isNameUnique &&
           reconnectConnection?.displayName !== formValues.displayName
         ) {
           throw new ConnectionNameAlreadyExists();
@@ -145,8 +144,7 @@ const CreateOrEditConnectionDialog = React.memo(
         return appConnectionsApi.upsert(formValues);
       },
       onSuccess: (connection) => {
-        setOpen(false);
-        onConnectionCreated({
+        setOpen(false, {
           id: connection.id,
           externalId: connection.externalId,
         });
