@@ -246,7 +246,6 @@ const TestTriggerSection = React.memo(
       );
       setLastTestDate(dayjs().toISOString());
       setSampleData(formValues.name, data.payload);
-      console.log('formValues.settings', formValues.settings);
       setSampleDataInput(formValues.name, formValues.settings ?? {});
     }
 
