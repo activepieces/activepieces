@@ -71,7 +71,6 @@ type ConnectionDialogProps = {
     connection?: Pick<AppConnectionWithoutSensitiveData, 'id' | 'externalId'>,
   ) => void;
   reconnectConnection: AppConnectionWithoutSensitiveData | null;
-  predefinedConnectionName: string | null;
   isGlobalConnection: boolean;
 };
 
@@ -81,7 +80,6 @@ const CreateOrEditConnectionDialog = React.memo(
     open,
     setOpen,
     reconnectConnection,
-    predefinedConnectionName,
     isGlobalConnection,
   }: ConnectionDialogProps) => {
     const { auth } = piece;
@@ -90,7 +88,6 @@ const CreateOrEditConnectionDialog = React.memo(
     const { externalId, displayName } = newConnectionUtils.getConnectionName(
       piece,
       reconnectConnection,
-      predefinedConnectionName,
     );
     const form = useForm<{
       request: UpsertAppConnectionRequestBody & {
