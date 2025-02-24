@@ -44,9 +44,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -65,9 +65,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -86,9 +86,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -107,9 +107,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -128,9 +128,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -149,9 +149,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -170,9 +170,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -191,9 +191,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -212,9 +212,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -233,9 +233,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -254,9 +254,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -275,9 +275,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -296,9 +296,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -317,9 +317,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -338,9 +338,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -359,9 +359,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -378,9 +378,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -397,9 +397,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -416,9 +416,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -435,9 +435,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -455,9 +455,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -475,9 +475,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
@@ -495,9 +495,9 @@ describe('flow with branching different  branches', () => {
             branches: [
                 {
                     branchIndex: 1,
-                    branchName: "Test Branch",
+                    branchName: 'Test Branch',
                     evaluation: true,
-                }
+                },
             ],
         })
     })
