@@ -87,7 +87,7 @@ const CreateOrEditConnectionDialog = React.memo(
     const formSchema = formUtils.buildConnectionSchema(piece);
     const { externalId, displayName } = newConnectionUtils.getConnectionName(
       piece,
-      reconnectConnection
+      reconnectConnection,
     );
     const form = useForm<{
       request: UpsertAppConnectionRequestBody & {
@@ -203,7 +203,7 @@ const CreateOrEditConnectionDialog = React.memo(
         >
           <DialogHeader>
             <DialogTitle>
-            {reconnectConnection
+              {reconnectConnection
                 ? t('Reconnect {displayName} Connection', {
                     displayName: reconnectConnection.displayName,
                   })

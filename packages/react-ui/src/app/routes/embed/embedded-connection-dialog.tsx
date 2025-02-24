@@ -49,7 +49,8 @@ const EmbeddedConnectionDialogContent = ({
 }: EmbeddedConnectionDialogContentProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(true);
   const hasErrorRef = useRef(false);
-  const [predefinedConnection,setPredefinedConnection] = useState<AppConnectionWithoutSensitiveData | null>(null);
+  const [predefinedConnection, setPredefinedConnection] =
+    useState<AppConnectionWithoutSensitiveData | null>(null);
   const { data: connections, isLoading: isLoadingConnections } =
     appConnectionsHooks.useConnections({});
   const {
@@ -94,7 +95,10 @@ const EmbeddedConnectionDialogContent = ({
     );
 
     if (!isConnectionNameUsed) {
-      return { isValid: false, error: `There is no connection with this externalId: ${connectionExternalId}` };
+      return {
+        isValid: false,
+        error: `There is no connection with this externalId: ${connectionExternalId}`,
+      };
     }
     return { isValid: true };
   };
@@ -121,7 +125,9 @@ const EmbeddedConnectionDialogContent = ({
         connectionName,
         connections,
       );
-      setPredefinedConnection(connections.find(c => c.externalId === connectionName) ?? null);
+      setPredefinedConnection(
+        connections.find((c) => c.externalId === connectionName) ?? null,
+      );
       if (!validationResult.isValid) {
         postMessageToParent({
           type: ActivepiecesClientEventName.CLIENT_CONNECTION_NAME_IS_INVALID,

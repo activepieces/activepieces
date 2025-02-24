@@ -37,7 +37,7 @@ export class NoProjectSelected extends Error {
 export const newConnectionUtils = {
   getConnectionName(
     piece: PieceMetadataModelSummary | PieceMetadataModel,
-    reconnectConnection: AppConnectionWithoutSensitiveData | null
+    reconnectConnection: AppConnectionWithoutSensitiveData | null,
   ): {
     externalId: string;
     displayName: string;
@@ -48,7 +48,7 @@ export const newConnectionUtils = {
         displayName: reconnectConnection.displayName,
       };
     }
-    
+
     return {
       externalId: apId(),
       displayName: piece.displayName,
