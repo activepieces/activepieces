@@ -6,7 +6,7 @@ export const SaveSampleDataRequest = Type.Object({
     projectId: Type.String(),
     stepName: Type.String(),
     payload: Type.Unknown(),
-    fileType: Type.Enum(FileType),
+    fileType: Type.Optional(Type.Enum(FileType)),
 })
 export type SaveSampleDataRequest = Static<typeof SaveSampleDataRequest>
 
@@ -15,7 +15,7 @@ export const GetSampleDataRequest = Type.Object({
     flowVersionId: Type.String(),
     stepName: Type.String(),
     projectId: Type.String(),
-    fileType: Type.Enum(FileType),
+    fileType: Type.Optional(Type.Enum(FileType)),
 })
 export type GetSampleDataRequest = Static<typeof GetSampleDataRequest>
 

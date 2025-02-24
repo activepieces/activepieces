@@ -1,4 +1,4 @@
-import { CreateStepRunRequestBody, GetSampleDataRequest, PrincipalType, SaveSampleDataRequest, SaveSampleDataResponse, SERVICE_KEY_SECURITY_OPENAPI, StepRunResponse, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { CreateStepRunRequestBody, FileType, GetSampleDataRequest, PrincipalType, SaveSampleDataRequest, SaveSampleDataResponse, SERVICE_KEY_SECURITY_OPENAPI, StepRunResponse, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
@@ -36,7 +36,7 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
             flowVersionId: request.body.flowVersionId,
             stepName: request.body.stepName,
             payload: request.body.payload,
-            fileType: request.body.fileType,
+            fileType: request.body.fileType ?? FileType.SAMPLE_DATA,
         })
     })
 
@@ -50,7 +50,7 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
             projectId: request.principal.projectId,
             flowVersion: flow.version,
             stepName: request.query.stepName,
-            fileType: request.query.fileType,
+            fileType: request.query.fileType ?? FileType.SAMPLE_DATA,
         })
         return sampleData
     })
