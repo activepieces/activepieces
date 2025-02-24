@@ -16,7 +16,7 @@ icon: "cards"
 </Info>
 
 <Warning>
-**Breaking Change**: <br/>If your Activepieces instance version is > 0.45.0 and (you are using the connect method from the embed sdk, and need the connection externalId to be returned after the user creates it OR if you want to reconnect a specific connection with an externalId), you must upgrade your instance to >= 0.45.0
+**Breaking Change**: <br/> If your Activepieces instance version is < 0.45.0 and (you are using the connect method from the embed sdk, and need the connection externalId to be returned after the user creates it OR if you want to reconnect a specific connection with an externalId), you must upgrade your instance to >= 0.45.0
 </Warning>
 
 You can use the embedded SDK to create connections.
@@ -68,7 +68,7 @@ You can use the embedded SDK to create connections.
 
         <Info>
           When 'connectionName' is defined:
-          If a connection exists with an externalId that matches the `connectionName` parameter, the user will be asked to reconnect the connection.
+          If a connection exists with an externalId that matches the `connectionName` parameter, the user will be asked to reconnect the connection. <br/>
           If the connection does not exist, the promise returned will be rejected with an error message telling you why `connectionName` is invalid.
          </Info>
 
