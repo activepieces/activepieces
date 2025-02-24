@@ -90,9 +90,6 @@ const TestTriggerSection = React.memo(
 
     const { sampleData, setSampleData, sampleDataInput, setSampleDataInput } =
       useBuilderStateContext((state) => {
-        console.log('formValues.name', formValues.name);
-        console.log('state.sampleData', state.sampleData);
-        console.log('state.sampleDataInput', state.sampleDataInput);
         return {
           sampleData: state.sampleData[formValues.name],
           setSampleData: state.setSampleData,

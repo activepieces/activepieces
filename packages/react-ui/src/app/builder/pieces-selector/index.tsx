@@ -203,8 +203,7 @@ const PieceSelector = ({
     switch (operation.type) {
       case FlowOperationType.UPDATE_TRIGGER: {
         setSampleData(stepData.name, undefined);
-        // TODO THINK OF THAT WHAT TO DO WITH THE INPUT
-        setSampleDataInput(stepData.name, undefined);
+        setSampleDataInput(stepData.name, {});
         applyOperation({
           type: FlowOperationType.UPDATE_TRIGGER,
           request: stepData as Trigger,

@@ -108,32 +108,6 @@ const TestSampleDataViewer = React.memo(
               </TabsContent>
             )}
           </Tabs>
-
-          {/* {consoleLogs ? (
-            <Tabs defaultValue="Output">
-              <TabsList className="grid w-full grid-cols-2 w-[250px]">
-                <TabsTrigger value="Output">{t('Output')}</TabsTrigger>
-                <TabsTrigger value="Logs">{t('Logs')}</TabsTrigger>
-              </TabsList>
-              <TabsContent value="Output">
-                <JsonViewer
-                  json={errorMessage ?? sampleData}
-                  title={t('Output')}
-                ></JsonViewer>
-              </TabsContent>
-
-              <TabsContent value="Logs">
-                {consoleLogs && (
-                  <JsonViewer json={consoleLogs} title={t('Logs')}></JsonViewer>
-                )}
-              </TabsContent>
-            </Tabs>
-          ) : (
-            <JsonViewer
-              json={errorMessage ?? sampleData}
-              title={t('Output')}
-            ></JsonViewer>
-          )} */}
         </div>
       </>
     );
