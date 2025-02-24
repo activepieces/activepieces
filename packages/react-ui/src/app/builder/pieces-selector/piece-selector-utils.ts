@@ -132,7 +132,10 @@ const isUniversalAiPiece = (stepMetadata: StepMetadata) => {
   return false;
 };
 
-const isUtilityCorePiece = (stepMetadata: StepMetadata, platform: PlatformWithoutSensitiveData) => {
+const isUtilityCorePiece = (
+  stepMetadata: StepMetadata,
+  platform: PlatformWithoutSensitiveData,
+) => {
   if (stepMetadata.type === ActionType.CODE) {
     return true;
   }

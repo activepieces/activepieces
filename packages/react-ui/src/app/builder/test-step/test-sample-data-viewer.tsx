@@ -95,11 +95,11 @@ const TestSampleDataViewer = React.memo(
               title={t('Output')}
             ></JsonViewer>
           ) : (
-              <Tabs defaultValue="Output">
+            <Tabs defaultValue="Output">
               <TabsList className="grid w-full grid-cols-2 w-[250px]">
-                {(!isNil(sampleDataInput) && (
+                {!isNil(sampleDataInput) && (
                   <TabsTrigger value="Input">{t('Input')}</TabsTrigger>
-                ))}
+                )}
                 <TabsTrigger value="Output">{t('Output')}</TabsTrigger>
                 {isConsoleLogsValid(consoleLogs) && (
                   <TabsTrigger value="Logs">{t('Logs')}</TabsTrigger>
@@ -125,10 +125,7 @@ const TestSampleDataViewer = React.memo(
                 </TabsContent>
               )}
             </Tabs>
-          )
-          }
-
-
+          )}
         </div>
       </>
     );
