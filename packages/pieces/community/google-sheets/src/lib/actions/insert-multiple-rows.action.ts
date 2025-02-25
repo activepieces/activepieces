@@ -6,13 +6,14 @@ import {
 	OAuth2PropertyValue,
 	Property,
 } from '@activepieces/pieces-framework';
-import { Dimension, googleSheetsCommon, objectToArray, ValueInputOption,columnToLabel } from '../common/common';
+import { Dimension, googleSheetsCommon, objectToArray, ValueInputOption,columnToLabel, areSheetIdsValid } from '../common/common';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { getWorkSheetName, getWorkSheetGridSize } from '../triggers/helpers';
 import { google, sheets_v4 } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
-import { MarkdownVariant } from '@activepieces/shared';
+import { isNil, MarkdownVariant } from '@activepieces/shared';
 import {parse} from 'csv-parse/sync';
+import { commonProps } from '../common/props';
 
 
 type RowValueType = Record<string, any>
@@ -23,9 +24,7 @@ export const insertMultipleRowsAction = createAction({
 	displayName: 'Insert Multiple Rows',
 	description: 'Add one or more new rows in a specific spreadsheet.',
 	props: {
-		spreadsheet_id: googleSheetsCommon.spreadsheet_id,
-		include_team_drives: googleSheetsCommon.include_team_drives,
-		sheet_id: googleSheetsCommon.sheet_id,
+		...commonProps,
 		input_type: Property.StaticDropdown({
 			displayName: 'Rows Input Format',
 			description: 'Select the format of the input values to be inserted into the sheet.',
@@ -53,10 +52,10 @@ export const insertMultipleRowsAction = createAction({
 			displayName: 'Values',
 			description: 'The values to insert.',
 			required: true,
-			refreshers: ['sheet_id', 'spreadsheet_id', 'input_type'],
-			props: async ({ auth, sheet_id, spreadsheet_id, input_type }) => {
-				const sheetId = Number(sheet_id);
-				const spreadsheetId = spreadsheet_id as unknown as string;
+			refreshers: ['sheetId', 'spreadsheetId', 'input_type'],
+			props: async ({ auth, sheetId, spreadsheetId, input_type }) => {
+				const sheet_id = Number(sheetId);
+				const spreadsheet_id = spreadsheetId as unknown as string;
 				const valuesInputType = input_type as unknown as string;
 				const authentication = auth as OAuth2PropertyValue;
 
@@ -104,9 +103,9 @@ export const insertMultipleRowsAction = createAction({
 						break;
 					case 'column_names': {
 						const headers = await googleSheetsCommon.getGoogleSheetRows({
-							spreadsheetId: spreadsheetId,
+							spreadsheetId: spreadsheet_id,
 							accessToken: getAccessTokenOrThrow(authentication),
-							sheetId: sheetId,
+							sheetId: sheet_id,
 							rowIndex_s: 1,
 							rowIndex_e: 1,
 						});
@@ -159,11 +158,11 @@ export const insertMultipleRowsAction = createAction({
 		check_for_duplicate_column: Property.DynamicProperties({
 			displayName: 'Duplicate Value Column',
 			description: 'The column to check for duplicate values.',
-			refreshers: ['spreadsheet_id', 'sheet_id', 'check_for_duplicate'],
+			refreshers: ['spreadsheetId', 'sheetId', 'check_for_duplicate'],
 			required: false,
-			props: async ({ auth, spreadsheet_id, sheet_id, check_for_duplicate }) => {
-				const sheetId = Number(sheet_id);
-				const spreadsheetId = spreadsheet_id as unknown as string;
+			props: async ({ auth, spreadsheetId, sheetId, check_for_duplicate }) => {
+				const sheet_id = Number(sheetId);
+				const spreadsheet_id = spreadsheetId as unknown as string;
 				const authentication = auth as OAuth2PropertyValue;
 				const checkForExisting = check_for_duplicate as unknown as boolean;
 				if (
@@ -178,9 +177,9 @@ export const insertMultipleRowsAction = createAction({
 
 				if (checkForExisting) {
 					const headers = await googleSheetsCommon.getGoogleSheetRows({
-						spreadsheetId: spreadsheetId,
+						spreadsheetId: spreadsheet_id,
 						accessToken: getAccessTokenOrThrow(authentication),
-						sheetId: sheetId,
+						sheetId: sheet_id,
 						rowIndex_s: 1,
 						rowIndex_e: 1,
 					});
@@ -224,8 +223,8 @@ export const insertMultipleRowsAction = createAction({
 
 	async run(context) {
 		const {
-			spreadsheet_id: spreadSheetId,
-			sheet_id: sheetId,
+			spreadsheetId:inputSpreadsheetId,
+			 sheetId:inputSheetId,
 			input_type: valuesInputType,
 			overwrite: overwriteValues,
 			check_for_duplicate: checkForDuplicateValues,
@@ -233,11 +232,18 @@ export const insertMultipleRowsAction = createAction({
 			as_string: asString,
 		} = context.propsValue;
 
+		if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
+			throw new Error('Please select a spreadsheet and sheet first.');
+		}
+
+		const sheetId = Number(inputSheetId);
+		const spreadsheetId = inputSpreadsheetId as string;
+
 		const duplicateColumn = context.propsValue.check_for_duplicate_column?.['column_name'];
-		const sheetName = await getWorkSheetName(context.auth, spreadSheetId, sheetId);
+		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
 
 		const rowHeaders = await googleSheetsCommon.getGoogleSheetRows({
-			spreadsheetId: spreadSheetId,
+			spreadsheetId: spreadsheetId,
 			accessToken: context.auth.access_token,
 			sheetId: sheetId,
 			rowIndex_s: 1,
@@ -250,20 +256,20 @@ export const insertMultipleRowsAction = createAction({
 		authClient.setCredentials(context.auth);
 		const sheets = google.sheets({ version: 'v4', auth: authClient });
 
-		const formattedValues = await formatInputRows(sheets,spreadSheetId, sheetName,valuesInputType, rowValuesInput, sheetHeaders);
+		const formattedValues = await formatInputRows(sheets,spreadsheetId, sheetName,valuesInputType, rowValuesInput, sheetHeaders);
 
 		const valueInputOption = asString ? ValueInputOption.RAW : ValueInputOption.USER_ENTERED;
 
 
 		if (overwriteValues) {
-			const sheetGridRange = await getWorkSheetGridSize(context.auth, spreadSheetId, sheetId);
+			const sheetGridRange = await getWorkSheetGridSize(context.auth, spreadsheetId, sheetId);
 			const existingGridRowCount = sheetGridRange.rowCount ?? 0;
-			return handleOverwrite(sheets, spreadSheetId, sheetName, formattedValues, existingGridRowCount, valueInputOption);
+			return handleOverwrite(sheets, spreadsheetId, sheetName, formattedValues, existingGridRowCount, valueInputOption);
 		}
 
 		if (checkForDuplicateValues) {
 			const existingSheetValues = await googleSheetsCommon.getGoogleSheetRows({
-				spreadsheetId: spreadSheetId,
+				spreadsheetId: spreadsheetId,
 				accessToken: context.auth.access_token,
 				sheetId: sheetId,
 				rowIndex_s: 1,
@@ -271,7 +277,7 @@ export const insertMultipleRowsAction = createAction({
 			});
 			return handleDuplicates(
 				sheets,
-				spreadSheetId,
+				spreadsheetId,
 				sheetName,
 				formattedValues,
 				existingSheetValues,
@@ -280,7 +286,7 @@ export const insertMultipleRowsAction = createAction({
 			);
 		}
 
-		return normalInsert(sheets, spreadSheetId, sheetName, formattedValues, valueInputOption);
+		return normalInsert(sheets, spreadsheetId, sheetName, formattedValues, valueInputOption);
 	},
 });
 

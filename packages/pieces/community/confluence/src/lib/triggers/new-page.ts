@@ -34,6 +34,7 @@ const polling: Polling<PiecePropValueSchema<typeof confluenceAuth>, Props> = {
 				domain: auth.confluenceDomain,
 				username: auth.username,
 				password: auth.password,
+				version: 'v2',
 				method: HttpMethod.GET,
 				resourceUri: `/spaces/${propsValue.spaceId}/pages`,
 				query: {
@@ -51,6 +52,7 @@ const polling: Polling<PiecePropValueSchema<typeof confluenceAuth>, Props> = {
 				username: auth.username,
 				password: auth.password,
 				method: HttpMethod.GET,
+				version: 'v2',
 				resourceUri: `/spaces/${propsValue.spaceId}/pages`,
 				query: {
 					sort: '-created-date',

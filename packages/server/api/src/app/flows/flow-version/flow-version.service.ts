@@ -61,13 +61,13 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                     version: step.settings.pieceVersion,
                     entityManager,
                 })
-                pieceVersion[step.settings.pieceName] = pieceMetadata.version
+                pieceVersion[step.name] = pieceMetadata.version
             }
         }
         return flowStructureUtil.transferFlow(flowVersion, (step) => {
             const clonedStep = JSON.parse(JSON.stringify(step))
-            if (pieceVersion[step.settings.pieceName]) {
-                clonedStep.settings.pieceVersion = pieceVersion[step.settings.pieceName]
+            if (pieceVersion[step.name]) {
+                clonedStep.settings.pieceVersion = pieceVersion[step.name]
             }
             return clonedStep
         })

@@ -6,10 +6,21 @@ import * as dotenv from 'dotenv';
 
 dotenv.config({path: 'packages/server/api/.env'});
 
-async function publishPieces(apiUrl: string, apiKey: string, pieceName: string) {
-    const piecesFolder = await findPiece(pieceName);
-    assertPieceExists(piecesFolder)
-    await publishPieceFromFolder(piecesFolder, apiUrl, apiKey);
+async function publishPiece(
+    {apiUrl, apiKey, pieceName, failOnError}:
+    {apiUrl: string,
+    apiKey: string,
+    pieceName: string,
+    failOnError: boolean,}
+) {
+    const pieceFolder = await findPiece(pieceName);
+    assertPieceExists(pieceFolder)
+    await publishPieceFromFolder({
+        pieceFolder,
+        apiUrl,
+        apiKey,
+        failOnError
+    });
 }
 
 function assertNullOrUndefinedOrEmpty(value: any, message: string) {
@@ -21,7 +32,8 @@ function assertNullOrUndefinedOrEmpty(value: any, message: string) {
 
 export const publishPieceCommand = new Command('publish')
     .description('Publish pieces to the platform')
-    .action(async () => {
+    .option('-f, --fail-on-error', 'Exit the process if an error occurs while syncing a piece', false)
+    .action(async (command) => {
         const questions = [
             {
                 type: 'input',
@@ -59,6 +71,12 @@ export const publishPieceCommand = new Command('publish')
         assertNullOrUndefinedOrEmpty(apiKey, 'API Key is required');
 
         const apiUrlWithoutTrailSlash = answers.apiUrl.replace(/\/$/, '');
+        const { failOnError } = command.opts();
 
-        await publishPieces(apiUrlWithoutTrailSlash, apiKey, answers.name);
+        await publishPiece({
+            apiUrl: apiUrlWithoutTrailSlash,
+            apiKey,
+            pieceName: answers.name,
+            failOnError
+        });
     });

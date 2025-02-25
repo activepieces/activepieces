@@ -99,7 +99,7 @@ export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOper
     webhookUrl: string
     triggerPayload?: TriggerPayload
     appWebhookUrl?: string
-    webhookSecret?: string
+    webhookSecret?: string | Record<string, string>
 }
 
 

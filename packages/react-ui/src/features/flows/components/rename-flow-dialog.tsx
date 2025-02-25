@@ -101,6 +101,7 @@ const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({
                     id="displayName"
                     placeholder={t('New Flow Name')}
                     className="rounded-sm"
+                    defaultValue={flowName}
                   />
                   <FormMessage />
                 </FormItem>

@@ -372,6 +372,9 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/valentin-mourtialon"><img src="https://avatars.githubusercontent.com/u/88686764?v=4?s=100" width="100px;" alt="valentin-mourtialon"/><br /><sub><b>valentin-mourtialon</b></sub></a><br /><a href="#plugin-valentin-mourtialon" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/psgpsg16"><img src="https://avatars.githubusercontent.com/u/188385621?v=4?s=100" width="100px;" alt="psgpsg16"/><br /><sub><b>psgpsg16</b></sub></a><br /><a href="#plugin-psgpsg16" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/mariiawidrpay"><img src="https://avatars.githubusercontent.com/u/110456120?v=4?s=100" width="100px;" alt="Mariia Shyn"/><br /><sub><b>Mariia Shyn</b></sub></a><br /><a href="#plugin-mariiawidrpay" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/joshuaheslin"><img src="https://avatars.githubusercontent.com/u/48037470?v=4?s=100" width="100px;" alt="Joshua Heslin"/><br /><sub><b>Joshua Heslin</b></sub></a><br /><a href="#plugin-joshuaheslin" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

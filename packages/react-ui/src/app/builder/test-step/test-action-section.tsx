@@ -27,10 +27,11 @@ import { testStepUtils } from './test-step-utils';
 type TestActionComponentProps = {
   isSaving: boolean;
   flowVersionId: string;
+  projectId: string;
 };
 
 const TestActionSection = React.memo(
-  ({ isSaving, flowVersionId }: TestActionComponentProps) => {
+  ({ isSaving, flowVersionId, projectId }: TestActionComponentProps) => {
     const { toast } = useToast();
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
       undefined,
@@ -77,6 +78,7 @@ const TestActionSection = React.memo(
             flowVersionId,
             stepName: formValues.name,
             payload: testStepResponse.output,
+            projectId,
           });
           sampleDataFileId = sampleFile.id;
         }

@@ -4,7 +4,7 @@ import { CheckIcon, Trash } from 'lucide-react';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { RequestTrial } from '@/app/components/request-trial';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,6 +13,7 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { LockedAlert } from '@/components/ui/locked-alert';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
@@ -125,41 +126,45 @@ const ProjectPiecesPage = () => {
   );
 
   return (
-    <LockedFeatureGuard
-      featureKey="PIECES"
-      locked={!platform.managePiecesEnabled}
-      lockTitle={t('Control Pieces')}
-      lockDescription={t(
-        "Show the pieces that matter most to your users and hide the ones that you don't like",
-      )}
-      lockVideoUrl="https://cdn.activepieces.com/videos/showcase/pieces.mp4"
-    >
-      <div className="flex w-full flex-col items-center justify-center gap-4">
-        <div className="mx-auto w-full flex-col">
-          <TableTitle>{t('Pieces')}</TableTitle>
-          <DataTable
-            columns={columns}
-            filters={[
-              {
-                type: 'input',
-                title: t('Piece Name'),
-                accessorKey: 'name',
-                options: [],
-                icon: CheckIcon,
-              } as const,
-            ]}
-            page={{
-              data: pieces ?? [],
-              next: null,
-              previous: null,
-            }}
-            isLoading={isLoading}
-            hidePagination={true}
-            bulkActions={platform.managePiecesEnabled ? bulkActions : []}
+    <div className="flex w-full flex-col items-center justify-center gap-4">
+      <div className="mx-auto w-full flex-col">
+        {!platform.managePiecesEnabled && (
+          <LockedAlert
+            title={t('Control Pieces')}
+            description={t(
+              "Show the pieces that matter most to your users and hide the ones you don't like.",
+            )}
+            button={
+              <RequestTrial
+                featureKey="ENTERPRISE_PIECES"
+                buttonVariant="outline-primary"
+              />
+            }
           />
-        </div>
+        )}
+        <TableTitle>{t('Pieces')}</TableTitle>
+        <DataTable
+          columns={columns}
+          filters={[
+            {
+              type: 'input',
+              title: t('Piece Name'),
+              accessorKey: 'name',
+              options: [],
+              icon: CheckIcon,
+            } as const,
+          ]}
+          page={{
+            data: pieces ?? [],
+            next: null,
+            previous: null,
+          }}
+          isLoading={isLoading}
+          hidePagination={true}
+          bulkActions={platform.managePiecesEnabled ? bulkActions : []}
+        />
       </div>
-    </LockedFeatureGuard>
+    </div>
   );
 };
 

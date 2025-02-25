@@ -15,7 +15,6 @@ import {
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
-    Type,
 } from '@fastify/type-provider-typebox'
 import { EngineHelperPropResult, EngineHelperResponse } from 'server-worker'
 import { flowService } from '../flows/flow/flow.service'
@@ -144,13 +143,6 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         },
     )
 
-    app.delete('/:id', DeletePieceRequest, async (req): Promise<void> => {
-        return pieceMetadataService(req.log).delete({
-            projectId: req.principal.projectId,
-            id: req.params.id,
-        })
-    },
-    )
 }
 
 const ListPiecesRequest = {
@@ -196,13 +188,7 @@ const OptionsPieceRequest = {
         body: PieceOptionRequest,
     },
 }
-const DeletePieceRequest = {
-    schema: {
-        params: Type.Object({
-            id: Type.String(),
-        }),
-    },
-}
+
 
 const ListVersionsRequest = {
     config: {
