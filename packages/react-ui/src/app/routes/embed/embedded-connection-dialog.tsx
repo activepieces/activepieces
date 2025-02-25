@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { parentWindow } from '@/lib/utils';
-import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
+import {
+  apId,
+  AppConnectionWithoutSensitiveData,
+  isNil,
+} from '@activepieces/shared';
 import {
   ActivepiecesClientConnectionNameIsInvalid,
   ActivepiecesClientConnectionPieceNotFound,
@@ -14,18 +18,23 @@ import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
 import { LoadingScreen } from '../../components/loading-screen';
 import { CreateOrEditConnectionDialog } from '../../connections/create-edit-connection-dialog';
 
-export const EmbeddedConnectionDialog = () => {
+const extractIdFromQueryParams = () => {
   const connectionName = new URLSearchParams(window.location.search).get(
     NEW_CONNECTION_QUERY_PARAMS.connectionName,
   );
-
+  return isNil(connectionName) || connectionName.length === 0
+    ? apId()
+    : connectionName;
+};
+export const EmbeddedConnectionDialog = () => {
+  const connectionName = extractIdFromQueryParams();
   const pieceName = new URLSearchParams(window.location.search).get(
     NEW_CONNECTION_QUERY_PARAMS.name,
   );
   const randomId = new URLSearchParams(window.location.search).get(
     NEW_CONNECTION_QUERY_PARAMS.randomId,
   );
-
+  console.log(connectionName);
   return (
     <EmbeddedConnectionDialogContent
       connectionName={
