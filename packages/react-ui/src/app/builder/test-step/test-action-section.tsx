@@ -1,8 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import React, { useEffect, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import React, { useState } from 'react';
 
 import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
@@ -10,10 +9,12 @@ import { Dot } from '@/components/ui/dot';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
 import {
-  Action,
   ActionType,
   FileType,
+  FlowOperationType,
+  Step,
   StepRunResponse,
+  TriggerType,
   flowStructureUtil,
   isNil,
 } from '@activepieces/shared';
@@ -31,64 +32,49 @@ type TestActionComponentProps = {
   projectId: string;
 };
 
-const getSampleDataInput = (formValues: Action) => {
-  switch (formValues.type) {
+const getSampleDataInput = (currentStep: Step) => {
+  switch (currentStep.type) {
     case ActionType.CODE:
-      return formValues.settings.input;
+      return currentStep.settings.input;
     case ActionType.LOOP_ON_ITEMS:
-      return formValues.settings.items;
+      return currentStep.settings.items;
     case ActionType.PIECE:
-      return formValues.settings.input;
+      return currentStep.settings.input;
     case ActionType.ROUTER:
       return {
-        executionType: formValues.settings.executionType,
-        branches: formValues.settings.branches,
+        executionType: currentStep.settings.executionType,
+        branches: currentStep.settings.branches,
       };
     default:
-      return {};
+      console.warn(`Couldn't get sample data input for step ${currentStep.name} of type ${currentStep.type}`)
+      return undefined;
   }
 };
 
-const TestActionSection = React.memo(
-  ({ isSaving, flowVersionId, projectId }: TestActionComponentProps) => {
+
+const TestStepSectionImplementation =  React.memo(
+  ({ isSaving, flowVersionId, projectId, currentStep }: TestActionComponentProps & { currentStep: Step }) => {
     const { toast } = useToast();
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
       undefined,
     );
-    const form = useFormContext<Pick<Action, 'settings' | 'name' | 'type'>>();
-    const formValues = form.getValues();
     const [consoleLogs, setConsoleLogs] = useState<null | string>(null);
+    const socket = useSocket();
     const {
       sampleData,
       sampleDataInput,
       setSampleData,
       setSampleDataInput,
-      selectedStep,
-      trigger,
+      applyOperation,
     } = useBuilderStateContext((state) => {
       return {
-        sampleData: state.sampleData[formValues.name],
-        sampleDataInput: state.sampleDataInput[formValues.name],
+        sampleData: state.sampleData[currentStep.name],
+        sampleDataInput: state.sampleDataInput[currentStep.name],
         setSampleData: state.setSampleData,
         setSampleDataInput: state.setSampleDataInput,
-        selectedStep: state.selectedStep,
-        trigger: state.flowVersion.trigger,
+        applyOperation: state.applyOperation,
       };
     });
-    const [isValid, setIsValid] = useState(false);
-
-    useEffect(() => {
-      setIsValid(form.formState.isValid);
-    }, [form.formState.isValid]);
-
-    const [lastTestDate, setLastTestDate] = useState(
-      formValues.settings.inputUiInfo?.lastTestDate,
-    );
-
-    const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
-
-    const socket = useSocket();
-
     const { mutate, isPending: isTesting } = useMutation<
       StepRunResponse & {
         sampleDataFileId?: string;
@@ -100,13 +86,13 @@ const TestActionSection = React.memo(
       mutationFn: async () => {
         const testStepResponse = await flowRunsApi.testStep(socket, {
           flowVersionId,
-          stepName: formValues.name,
+          stepName: currentStep.name,
         });
         let sampleDataFileId: string | undefined = undefined;
         if (testStepResponse.success && !isNil(testStepResponse.output)) {
           const sampleFile = await sampleDataApi.save({
             flowVersionId,
-            stepName: formValues.name,
+            stepName: currentStep.name,
             payload: testStepResponse.output,
             projectId,
             fileType: FileType.SAMPLE_DATA,
@@ -115,8 +101,8 @@ const TestActionSection = React.memo(
         }
         const sampleDataInputFile = await sampleDataApi.save({
           flowVersionId,
-          stepName: formValues.name,
-          payload: formValues.settings,
+          stepName: currentStep.name,
+          payload: currentStep.settings,
           projectId,
           fileType: FileType.SAMPLE_DATA_INPUT,
         });
@@ -137,20 +123,34 @@ const TestActionSection = React.memo(
         if (success) {
           setErrorMessage(undefined);
 
-          const newInputUiInfo = {
-            ...formValues.settings.inputUiInfo,
+          const newInputUiInfo: Step['settings']['inputUiInfo'] = {
+            ...currentStep.settings.inputUiInfo,
             sampleDataFileId,
             sampleDataInputFileId,
             currentSelectedData: undefined,
             lastTestDate: dayjs().toISOString(),
           };
-          form.setValue(
-            'settings.inputUiInfo',
-            newInputUiInfo as typeof formValues.settings.inputUiInfo,
-            {
-              shouldValidate: true,
+          const currentStepCopy = {
+            ...currentStep,
+            settings: {
+              ...currentStep.settings,
+              inputUiInfo: newInputUiInfo,
             },
-          );
+          };
+          if(currentStepCopy.type === TriggerType.EMPTY || currentStepCopy.type === TriggerType.PIECE) {
+            applyOperation({
+              type: FlowOperationType.UPDATE_TRIGGER,
+              request: currentStepCopy,
+            });
+          }
+          else 
+          {
+            applyOperation({
+              type: FlowOperationType.UPDATE_ACTION,
+              request: currentStepCopy,
+            });
+          }
+          
         } else {
           setErrorMessage(
             testStepUtils.formatErrorMessage(
@@ -159,10 +159,10 @@ const TestActionSection = React.memo(
             ),
           );
         }
-        setSampleData(formValues.name, output);
+        setSampleData(currentStep.name, output);
         setSampleDataInput(
-          formValues.name,
-          getSampleDataInput(formValues as Action),
+          currentStep.name ,
+          getSampleDataInput(currentStep),
         );
         setConsoleLogs(standardOutput || standardError);
         setLastTestDate(dayjs().toISOString());
@@ -172,12 +172,19 @@ const TestActionSection = React.memo(
         toast(INTERNAL_ERROR_TOAST);
       },
     });
+  
+
+    const [lastTestDate, setLastTestDate] = useState(
+      currentStep.settings.inputUiInfo.lastTestDate,
+    );
+
+    const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
 
     return (
       <>
         {!sampleDataExists && (
           <div className="flex-grow flex justify-center items-center w-full h-full">
-            <TestButtonTooltip disabled={!isValid}>
+            <TestButtonTooltip disabled={!currentStep.valid}>
               <Button
                 variant="outline"
                 size="sm"
@@ -185,7 +192,7 @@ const TestActionSection = React.memo(
                 keyboardShortcut="G"
                 onKeyboardShortcut={mutate}
                 loading={isTesting}
-                disabled={!isValid}
+                disabled={!currentStep.valid}
               >
                 <Dot animation={true} variant={'primary'}></Dot>
                 {t('Test Step')}
@@ -196,7 +203,7 @@ const TestActionSection = React.memo(
         {sampleDataExists && (
           <TestSampleDataViewer
             onRetest={mutate}
-            isValid={isValid}
+            isValid={currentStep.valid}
             isSaving={isSaving}
             isTesting={isTesting}
             sampleData={sampleData}
@@ -204,9 +211,7 @@ const TestActionSection = React.memo(
             errorMessage={errorMessage}
             lastTestDate={lastTestDate}
             consoleLogs={
-              selectedStep &&
-              flowStructureUtil.getStep(selectedStep, trigger)?.type ===
-                ActionType.CODE
+              currentStep.type === ActionType.CODE
                 ? consoleLogs
                 : null
             }
@@ -214,6 +219,16 @@ const TestActionSection = React.memo(
         )}
       </>
     );
+  },
+);
+
+const TestActionSection = React.memo(
+  (props: TestActionComponentProps) => {
+    const currentStep = useBuilderStateContext((state) => state.selectedStep ? flowStructureUtil.getStep(state.selectedStep, state.flowVersion.trigger) : null);
+    if(isNil(currentStep)) {
+      return null;
+    }
+    return <TestStepSectionImplementation {...props} currentStep={currentStep} />;
   },
 );
 TestActionSection.displayName = 'TestActionSection';
