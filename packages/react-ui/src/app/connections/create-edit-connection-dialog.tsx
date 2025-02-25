@@ -47,6 +47,7 @@ import {
   AppConnectionScope,
   AppConnectionWithoutSensitiveData,
   ErrorCode,
+  isNil,
   UpsertAppConnectionRequestBody,
 } from '@activepieces/shared';
 
@@ -72,6 +73,7 @@ type ConnectionDialogProps = {
   ) => void;
   reconnectConnection: AppConnectionWithoutSensitiveData | null;
   isGlobalConnection: boolean;
+  externalIdComingFromSdk?: string | null;
 };
 
 const CreateOrEditConnectionDialog = React.memo(
@@ -81,6 +83,7 @@ const CreateOrEditConnectionDialog = React.memo(
     setOpen,
     reconnectConnection,
     isGlobalConnection,
+    externalIdComingFromSdk,
   }: ConnectionDialogProps) => {
     const { auth } = piece;
 
@@ -88,6 +91,7 @@ const CreateOrEditConnectionDialog = React.memo(
     const { externalId, displayName } = newConnectionUtils.getConnectionName(
       piece,
       reconnectConnection,
+      externalIdComingFromSdk,
     );
     const form = useForm<{
       request: UpsertAppConnectionRequestBody & {
@@ -124,7 +128,8 @@ const CreateOrEditConnectionDialog = React.memo(
         );
         if (
           !isNameUnique &&
-          reconnectConnection?.displayName !== formValues.displayName
+          reconnectConnection?.displayName !== formValues.displayName &&
+          (isNil(externalIdComingFromSdk) || externalIdComingFromSdk === '')
         ) {
           throw new ConnectionNameAlreadyExists();
         }
@@ -207,7 +212,7 @@ const CreateOrEditConnectionDialog = React.memo(
                 ? t('Reconnect {displayName} Connection', {
                     displayName: reconnectConnection.displayName,
                   })
-                : t('Create {displayName} Connection', {
+                : t('Connect to {displayName}', {
                     displayName: piece.displayName,
                   })}
             </DialogTitle>
@@ -221,27 +226,31 @@ const CreateOrEditConnectionDialog = React.memo(
                 onSubmit={() => console.log('submitted')}
                 className="flex flex-col gap-4"
               >
-                <FormField
-                  name="request.displayName"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col gap-2">
-                      <FormLabel htmlFor="displayName">
-                        {t('Connection Name')}
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          required
-                          id="displayName"
-                          type="text"
-                          placeholder={t('Connection name')}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                ></FormField>
+                {(isNil(externalIdComingFromSdk) ||
+                  externalIdComingFromSdk === '') && (
+                  <FormField
+                    name="request.displayName"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col gap-2">
+                        <FormLabel htmlFor="displayName">
+                          {t('Connection Name')}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            required
+                            id="displayName"
+                            type="text"
+                            placeholder={t('Connection name')}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  ></FormField>
+                )}
+
                 {isGlobalConnection && (
                   <AssignConnectionToProjectsControl
                     control={form.control}

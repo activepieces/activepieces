@@ -39,7 +39,7 @@ You can use the embedded SDK to create connections.
         | Parameter Name | Required | Type   | Description                                 |
         | -------------- | -------- | ------ | ------------------------------------------- |
         | pieceName      | ✅      | string | The name of the piece you want to create a connection for.
-        | connectionName | ❌      | string | The externalId of the connection (you can get it by hovering the connection name in the connections table), previously it was called `connectionName`
+        | connectionName | ❌      | string | The external Id of the connection (you can get it by hovering the connection name in the connections table), when provided the connection created/upserted will use this as the external Id and display name.
         | newWindow      | ❌      | \{ width?: number, height?: number, top?: number, left?: number \} | If set the connection dialog will be opened in a new window instead of an iframe taking the full page.
 
         **Connect Result**
@@ -55,22 +55,14 @@ You can use the embedded SDK to create connections.
         }
         ```
         <Info>
+        `name` is the externalId of the connection.
         `connection` is undefined if the user closes the dialog and doesn't create a connection.
         </Info>
 
-        Or if the `connectionName` parameter is defined, it could get rejected with an error message telling you why `connectionName` is invalid:
-        ```ts
-        {
-            error:string
-        }
-        ```
+       
         
 
-        <Info>
-          When 'connectionName' is defined:
-          If a connection exists with an externalId that matches the `connectionName` parameter, the user will be asked to reconnect the connection. <br/>
-          If the connection does not exist, the promise returned will be rejected with an error message telling you why `connectionName` is invalid.
-         </Info>
+     
 
         <Tip>
         You can use the `connections` piece in the builder to retrieve the created connection using its name.

@@ -126,7 +126,9 @@ const RenameConnectionDialog = forwardRef<
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('Rename Connection')}</DialogTitle>
+            <DialogTitle>
+              {t('Rename')} {currentName}
+            </DialogTitle>
           </DialogHeader>
           <Form {...renameConnectionForm}>
             <form

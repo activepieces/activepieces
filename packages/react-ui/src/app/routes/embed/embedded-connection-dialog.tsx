@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { parentWindow } from '@/lib/utils';
-import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
+import {
+  apId,
+  AppConnectionWithoutSensitiveData,
+  isNil,
+} from '@activepieces/shared';
 import {
   ActivepiecesClientConnectionNameIsInvalid,
   ActivepiecesClientConnectionPieceNotFound,
@@ -10,23 +14,27 @@ import {
   NEW_CONNECTION_QUERY_PARAMS,
 } from 'ee-embed-sdk';
 
-import { appConnectionsHooks } from '../../../features/connections/lib/app-connections-hooks';
 import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
 import { LoadingScreen } from '../../components/loading-screen';
 import { CreateOrEditConnectionDialog } from '../../connections/create-edit-connection-dialog';
 
-export const EmbeddedConnectionDialog = () => {
+const extractIdFromQueryParams = () => {
   const connectionName = new URLSearchParams(window.location.search).get(
     NEW_CONNECTION_QUERY_PARAMS.connectionName,
   );
-
+  return isNil(connectionName) || connectionName.length === 0
+    ? apId()
+    : connectionName;
+};
+export const EmbeddedConnectionDialog = () => {
+  const connectionName = extractIdFromQueryParams();
   const pieceName = new URLSearchParams(window.location.search).get(
     NEW_CONNECTION_QUERY_PARAMS.name,
   );
   const randomId = new URLSearchParams(window.location.search).get(
     NEW_CONNECTION_QUERY_PARAMS.randomId,
   );
-
+  console.log(connectionName);
   return (
     <EmbeddedConnectionDialogContent
       connectionName={
@@ -49,10 +57,7 @@ const EmbeddedConnectionDialogContent = ({
 }: EmbeddedConnectionDialogContentProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(true);
   const hasErrorRef = useRef(false);
-  const [predefinedConnection, setPredefinedConnection] =
-    useState<AppConnectionWithoutSensitiveData | null>(null);
-  const { data: connections, isLoading: isLoadingConnections } =
-    appConnectionsHooks.useConnections({});
+
   const {
     pieceModel,
     isLoading: isLoadingPiece,
@@ -86,23 +91,6 @@ const EmbeddedConnectionDialogContent = ({
     parentWindow.postMessage(event, '*');
   };
 
-  const validateConnectionName = (
-    connectionExternalId: string,
-    existingConnections: AppConnectionWithoutSensitiveData[],
-  ): { isValid: boolean; error?: string } => {
-    const isConnectionNameUsed = existingConnections.some(
-      (c) => c.externalId === connectionExternalId,
-    );
-
-    if (!isConnectionNameUsed) {
-      return {
-        isValid: false,
-        error: `There is no connection with this externalId: ${connectionExternalId}`,
-      };
-    }
-    return { isValid: true };
-  };
-
   useEffect(() => {
     if (!isSuccess && !isLoadingPiece && !hasErrorRef.current) {
       postMessageToParent({
@@ -119,27 +107,7 @@ const EmbeddedConnectionDialogContent = ({
     }
   }, [isSuccess, isLoadingPiece, pieceName]);
 
-  useEffect(() => {
-    if (connectionName && connections && !hasErrorRef.current) {
-      const validationResult = validateConnectionName(
-        connectionName,
-        connections,
-      );
-      setPredefinedConnection(
-        connections.find((c) => c.externalId === connectionName) ?? null,
-      );
-      if (!validationResult.isValid) {
-        postMessageToParent({
-          type: ActivepiecesClientEventName.CLIENT_CONNECTION_NAME_IS_INVALID,
-          data: { error: JSON.stringify(validationResult) },
-        });
-        hideConnectionIframe();
-        hasErrorRef.current = true;
-      }
-    }
-  }, [connectionName, connections]);
-
-  if (isLoadingPiece || isLoadingConnections) {
+  if (isLoadingPiece) {
     return <LoadingScreen useDarkBackground={true} />;
   }
 
@@ -149,11 +117,12 @@ const EmbeddedConnectionDialogContent = ({
 
   return (
     <CreateOrEditConnectionDialog
-      reconnectConnection={predefinedConnection}
+      reconnectConnection={null}
       piece={pieceModel}
+      externalIdComingFromSdk={connectionName}
       isGlobalConnection={false}
       open={isDialogOpen}
-      key={`CreateOrEditConnectionDialog-open-${isDialogOpen}-${predefinedConnection?.id}`}
+      key={`CreateOrEditConnectionDialog-open-${isDialogOpen}-${connectionName}}`}
       setOpen={(open, connection) => {
         setIsDialogOpen(open);
         if (!open) {
