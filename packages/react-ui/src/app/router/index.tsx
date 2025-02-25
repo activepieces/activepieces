@@ -25,6 +25,7 @@ import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
+import { parentWindow } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
 // import {
 //   ActivepiecesClientEventName,
@@ -668,7 +669,7 @@ const ApRouter = () => {
   //     event: MessageEvent<ActivepiecesVendorRouteChanged>,
   //   ) => {
   //     if (
-  //       event.source === window.parent &&
+  //       event.source === parentWindow &&
   //       event.data.type === ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED
   //     ) {
   //       const targetRoute = event.data.data.vendorRoute;
@@ -688,7 +689,7 @@ const ApRouter = () => {
   //     return;
   //   }
   //   router.subscribe((state) => {
-  //     window.parent.postMessage(
+  //     parentWindow.postMessage(
   //       {
   //         type: ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED,
   //         data: {

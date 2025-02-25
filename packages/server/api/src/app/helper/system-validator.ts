@@ -145,6 +145,7 @@ const systemPropValidators: {
     // Cloudflare
     [AppSystemProp.CLOUDFLARE_API_TOKEN]: stringValidator,
     [AppSystemProp.CLOUDFLARE_API_BASE]: stringValidator,
+    [AppSystemProp.CLOUDFLARE_ZONE_ID]: stringValidator,
 
     // Secret Manager
     [AppSystemProp.SECRET_MANAGER_API_KEY]: stringValidator,

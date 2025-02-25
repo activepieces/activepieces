@@ -9,7 +9,7 @@ interface ActionPayloadProps {
 }
 
 export const respaidCommon = {
-  baseUrl: 'https://backend.dev.widr.app/api/workflow',
+  baseUrl: 'https://backend.widr.app/api/workflow',
   getHeadersStructure: (auth: string) => ({
     'Content-Type': 'application/json',
     Accept: 'application/json',

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 
+import { parentWindow } from '@/lib/utils';
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import {
   ActivepiecesClientConnectionNameIsInvalid,
+  ActivepiecesClientConnectionPieceNotFound,
   ActivepiecesClientEventName,
   ActivepiecesNewConnectionDialogClosed,
-  connectionNameRegex,
   NEW_CONNECTION_QUERY_PARAMS,
 } from 'ee-embed-sdk';
 
@@ -48,7 +49,8 @@ const EmbeddedConnectionDialogContent = ({
 }: EmbeddedConnectionDialogContentProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(true);
   const hasErrorRef = useRef(false);
-
+  const [predefinedConnection, setPredefinedConnection] =
+    useState<AppConnectionWithoutSensitiveData | null>(null);
   const { data: connections, isLoading: isLoadingConnections } =
     appConnectionsHooks.useConnections({});
   const {
@@ -78,38 +80,33 @@ const EmbeddedConnectionDialogContent = ({
   const postMessageToParent = (
     event:
       | ActivepiecesNewConnectionDialogClosed
-      | ActivepiecesClientConnectionNameIsInvalid,
+      | ActivepiecesClientConnectionNameIsInvalid
+      | ActivepiecesClientConnectionPieceNotFound,
   ) => {
-    window.parent.postMessage(event, '*');
+    parentWindow.postMessage(event, '*');
   };
 
   const validateConnectionName = (
-    connectionName: string,
+    connectionExternalId: string,
     existingConnections: AppConnectionWithoutSensitiveData[],
   ): { isValid: boolean; error?: string } => {
-    const regex = new RegExp(`^${connectionNameRegex}$`);
     const isConnectionNameUsed = existingConnections.some(
-      (c) => c.externalId === connectionName,
+      (c) => c.externalId === connectionExternalId,
     );
 
-    if (isConnectionNameUsed) {
-      return { isValid: false, error: 'Connection name is already used' };
-    }
-
-    if (!regex.test(connectionName)) {
+    if (!isConnectionNameUsed) {
       return {
         isValid: false,
-        error: `Connection name must match the following regex ${connectionNameRegex}`,
+        error: `There is no connection with this externalId: ${connectionExternalId}`,
       };
     }
-
     return { isValid: true };
   };
 
   useEffect(() => {
     if (!isSuccess && !isLoadingPiece && !hasErrorRef.current) {
       postMessageToParent({
-        type: ActivepiecesClientEventName.CLIENT_CONNECTION_NAME_IS_INVALID,
+        type: ActivepiecesClientEventName.CLIENT_CONNECTION_PIECE_NOT_FOUND,
         data: {
           error: JSON.stringify({
             isValid: 'false',
@@ -128,7 +125,9 @@ const EmbeddedConnectionDialogContent = ({
         connectionName,
         connections,
       );
-
+      setPredefinedConnection(
+        connections.find((c) => c.externalId === connectionName) ?? null,
+      );
       if (!validationResult.isValid) {
         postMessageToParent({
           type: ActivepiecesClientEventName.CLIENT_CONNECTION_NAME_IS_INVALID,
@@ -150,17 +149,15 @@ const EmbeddedConnectionDialogContent = ({
 
   return (
     <CreateOrEditConnectionDialog
-      reconnectConnection={null}
-      predefinedConnectionName={connectionName}
+      reconnectConnection={predefinedConnection}
       piece={pieceModel}
       isGlobalConnection={false}
       open={isDialogOpen}
-      onConnectionCreated={hideConnectionIframe}
-      key={`CreateOrEditConnectionDialog-open-${isDialogOpen}`}
-      setOpen={(open) => {
+      key={`CreateOrEditConnectionDialog-open-${isDialogOpen}-${predefinedConnection?.id}`}
+      setOpen={(open, connection) => {
         setIsDialogOpen(open);
         if (!open) {
-          hideConnectionIframe();
+          hideConnectionIframe(connection);
         }
       }}
     />
