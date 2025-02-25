@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.44.0",
-  "rcVersion": "0.44.0-rc.0",
+  "version": "0.45.0",
+  "rcVersion": "0.46.0-rc.0",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve react-ui",
@@ -64,6 +64,7 @@
     "@microsoft/microsoft-graph-types": "2.40.0",
     "@notionhq/client": "2.2.11",
     "@nx/devkit": "20.0.1",
+    "@octokit/rest": "21.1.1",
     "@onfleet/node-onfleet": "1.3.3",
     "@qdrant/js-client-rest": "1.7.0",
     "@radix-ui/react-avatar": "1.1.0",

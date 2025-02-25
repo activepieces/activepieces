@@ -5,6 +5,17 @@ icon: "code-commit"
 ---
 
 
+
+<Warning>
+**Breaking Change**: <br/> If your Activepieces instance version is < 0.45.0 and (you are using the connect method from the embed sdk, and need the connection externalId to be returned after the user creates it OR if you want to reconnect a specific connection with an externalId), you must upgrade your instance to >= 0.45.0
+</Warning>
+
+
+### 02/24/2025 (3.0.5)
+- Added a new parameter to the connect method to make the connection dialog a popup instead of an iframe taking the full page.
+- Fixed a bug where the returned promise from the connect method was always resolved to \{connection: undefined\}
+- Now when you use the connect method with the "connectionName" parameter, the user will reconnect to the connection with the matching externalId instead of creating a new one.
+
 ### 02/04/2025 (3.0.4)
 
 - This version requires you to update Activepieces to 0.41.0
