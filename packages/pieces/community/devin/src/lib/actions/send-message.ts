@@ -22,7 +22,7 @@ export const sendMessage = createAction({
   async run({ auth, propsValue }) {
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `https://api.devin.ai/v1/sessions/${propsValue.sessionId}/messages`,
+      url: `https://api.devin.ai/v1/session/${propsValue.sessionId}/messages`,
       headers: {
         Authorization: `Bearer ${auth}`,
       },
