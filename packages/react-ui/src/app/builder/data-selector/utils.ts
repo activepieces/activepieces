@@ -300,12 +300,26 @@ function traverseStep(
   if (stepNeedsTesting) {
     return buildTestStepNode(displayName, step.name);
   }
+  if (step.type === ActionType.LOOP_ON_ITEMS) {
+    const copiedSampleData = JSON.parse(JSON.stringify(sampleData[step.name]));
+    delete copiedSampleData['iterations'];
+    const headNode = traverseOutput(
+      displayName,
+      [step.name],
+      copiedSampleData,
+      zipArraysOfProperties,
+      true,
+    );
+    headNode.isLoopStepNode = true;
+    return headNode;
+  }
+
   return traverseOutput(
     displayName,
     [step.name],
     sampleData[step.name],
     zipArraysOfProperties,
-    step.type !== ActionType.LOOP_ON_ITEMS,
+    true,
   );
 }
 

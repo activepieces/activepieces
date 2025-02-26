@@ -26,4 +26,5 @@ export type DataSelectorTreeNode<
   key: string;
   data: T;
   children?: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[];
+  isLoopStepNode?: boolean;
 };
