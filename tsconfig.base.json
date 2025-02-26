@@ -124,6 +124,9 @@
       "@activepieces/piece-certopus": [
         "packages/pieces/community/certopus/src/index.ts"
       ],
+      "@activepieces/piece-chainalysis-api": [
+        "packages/pieces/community/chainalysis-api/src/index.ts"
+      ],
       "@activepieces/piece-chargekeep": [
         "packages/pieces/community/chargekeep/src/index.ts"
       ],
