@@ -1,11 +1,3 @@
-import { useRef } from 'react';
-
-import {
-  PieceSelectorItem,
-  PieceStepMetadata,
-  StepMetadata,
-  StepMetadataWithSuggestions,
-} from '@/features/pieces/lib/types';
 import {
   ActionBase,
   PiecePropertyMap,
@@ -31,8 +23,16 @@ import {
   Platform,
   flowStructureUtil,
 } from '@activepieces/shared';
+import { useRef } from 'react';
 
 import { formUtils } from '../piece-properties/form-utils';
+
+import {
+  PieceSelectorItem,
+  PieceStepMetadata,
+  StepMetadata,
+  StepMetadataWithSuggestions,
+} from '@/features/pieces/lib/types';
 
 const defaultCode = `export const code = async (inputs) => {
   return true;
@@ -375,6 +375,48 @@ const useAdjustPieceListHeightToAvailableSpace = (
 const useIsMobile = () => {
   return (window.innerWidth || document.documentElement.clientWidth) < 768;
 };
+
+const groupActionsByCategory = (actionsOrTriggers: StepMetadata[]) => {
+  const grouped: Record<string, StepMetadata[]> = {};
+  const defaultCategory = 'Others';
+
+  const categoriesWithItems = actionsOrTriggers
+    .filter((item) => item.category)
+    .map((item) => item.category);
+  const uniqueCategories = Array.from(new Set(categoriesWithItems));
+
+  // Case: None of the actions or triggers have a category
+  if (uniqueCategories.length === 0) {
+    return undefined;
+  }
+
+  // Initialize categories in grouped object
+  uniqueCategories.forEach((category) => {
+    if (category) {
+      grouped[category] = [];
+    }
+  });
+  grouped[defaultCategory] = [];
+
+  actionsOrTriggers.forEach((item) => {
+    const category = item.category;
+
+    // Add to corresponding category or default to 'Others'
+    if (category && uniqueCategories.includes(category)) {
+      grouped[category].push(item);
+    } else {
+      grouped[defaultCategory].push(item);
+    }
+  });
+
+  // Remove 'Others' if it has no items
+  if (grouped[defaultCategory].length === 0) {
+    delete grouped[defaultCategory];
+  }
+
+  return { grouped, categories: Object.keys(grouped) };
+};
+
 export const pieceSelectorUtils = {
   getDefaultStep,
   isCorePiece,
@@ -388,4 +430,5 @@ export const pieceSelectorUtils = {
   isUniversalAiPiece,
   useAdjustPieceListHeightToAvailableSpace,
   useIsMobile,
+  groupActionsByCategory,
 };

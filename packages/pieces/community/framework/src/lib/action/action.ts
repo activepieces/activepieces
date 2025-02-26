@@ -27,6 +27,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends
   auth?: PieceAuth
   displayName: string
   description: string
+  category?: string
   props: ActionProps
   run: ActionRunner<PieceAuth, ActionProps>
   test?: ActionRunner<PieceAuth, ActionProps>
@@ -39,6 +40,7 @@ export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends In
     public readonly name: string,
     public readonly displayName: string,
     public readonly description: string,
+    public readonly category: string | undefined,
     public readonly props: ActionProps,
     public readonly run: ActionRunner<PieceAuth, ActionProps>,
     public readonly test: ActionRunner<PieceAuth, ActionProps>,
@@ -62,6 +64,7 @@ export const createAction = <
     params.name,
     params.displayName,
     params.description,
+    params.category,
     params.props,
     params.run,
     params.test ?? params.run,

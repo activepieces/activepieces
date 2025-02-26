@@ -43,6 +43,7 @@ export const ActionBase = Type.Object({
   name: Type.String(),
   displayName: Type.String(),
   description: Type.String(),
+  category: Type.Optional(Type.String()),
   props: PiecePropertyMap,
   requireAuth: Type.Boolean(),
   errorHandlingOptions: Type.Optional(ErrorHandlingOptionsParam),
@@ -52,6 +53,7 @@ export type ActionBase = {
   name: string,
   displayName: string,
   description: string,
+  category?: string,
   props: PiecePropertyMap,
   requireAuth: boolean;
   errorHandlingOptions?: ErrorHandlingOptionsParam;
