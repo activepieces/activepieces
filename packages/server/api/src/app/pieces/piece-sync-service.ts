@@ -115,7 +115,6 @@ async function syncLocalPiece(name: string, version: string, log: FastifyBaseLog
         const currentVersionSynced = await existsInDatabase({ name, version })
         if (!currentVersionSynced) {
             const piece = await filePiecesUtils([], log).findLocalPiece({ name })
-            console.log("piece", piece)
             await pieceMetadataService(log).create({
                 pieceMetadata: piece,
                 packageType: piece.packageType,

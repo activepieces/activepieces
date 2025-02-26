@@ -123,6 +123,9 @@ const getPackageAlias = ({ pieceName, pieceVersion, piecesSource }: {
     piecesSource: string
     pieceVersion: string
 }) => {
+    // Since we need only use LocalPackageManager
+    return pieceName
+
     if (piecesSource.trim() === 'FILE') {
         return pieceName
     }

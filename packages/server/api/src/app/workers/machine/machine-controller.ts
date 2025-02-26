@@ -1,4 +1,4 @@
-import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, networkUtils, WorkerSystemProp } from '@activepieces/server-shared'
 import { PrincipalType, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse, WorkerPrincipal } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 // import { platformMustBeOwnedByCurrentUser } from '../../ee/authentication/ee-authorization'
@@ -50,7 +50,7 @@ export const workerMachineController: FastifyPluginAsyncTypebox = async (app) =>
             // PUBLIC_URL: await domainHelper.getPublicUrl({
             //     path: '',
             // }),
-            PUBLIC_URL: '/',
+            PUBLIC_URL: networkUtils.combineUrl(system.getOrThrow(WorkerSystemProp.FRONTEND_URL), ''),
             FILE_STORAGE_LOCATION: system.getOrThrow(AppSystemProp.FILE_STORAGE_LOCATION),
             S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
         }
