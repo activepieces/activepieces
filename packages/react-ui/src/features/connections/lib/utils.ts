@@ -38,6 +38,7 @@ export const newConnectionUtils = {
   getConnectionName(
     piece: PieceMetadataModelSummary | PieceMetadataModel,
     reconnectConnection: AppConnectionWithoutSensitiveData | null,
+    externalIdComingFromSdk?: string | null,
   ): {
     externalId: string;
     displayName: string;
@@ -46,6 +47,12 @@ export const newConnectionUtils = {
       return {
         externalId: reconnectConnection.externalId,
         displayName: reconnectConnection.displayName,
+      };
+    }
+    if (externalIdComingFromSdk) {
+      return {
+        externalId: externalIdComingFromSdk,
+        displayName: externalIdComingFromSdk,
       };
     }
 

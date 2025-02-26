@@ -90,25 +90,22 @@ export const newTicketInView = createTrigger({
         await pollingHelper.onEnable(polling, {
             store: context.store,
             propsValue: context.propsValue,
+            auth: context.auth
         })
     },
     onDisable: async (context) => {
         await pollingHelper.onDisable(polling, {
             store: context.store,
             propsValue: context.propsValue,
+            auth: context.auth
+
         })
     },
     run: async (context) => {
-        return await pollingHelper.poll(polling, {
-            store: context.store,
-            propsValue: context.propsValue,
-        });
+        return await pollingHelper.poll(polling, context);
     },
     test: async (context) => {
-        return await pollingHelper.test(polling, {
-            store: context.store,
-            propsValue: context.propsValue,
-        });
+        return await pollingHelper.test(polling, context);
     }
 });
 ```
