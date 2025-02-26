@@ -676,6 +676,9 @@
       "@activepieces/piece-trello": [
         "packages/pieces/community/trello/src/index.ts"
       ],
+      "@activepieces/piece-truelayer-payments": [
+        "packages/pieces/community/truelayer-payments/src/index.ts"
+      ],
       "@activepieces/piece-twilio": [
         "packages/pieces/community/twilio/src/index.ts"
       ],
