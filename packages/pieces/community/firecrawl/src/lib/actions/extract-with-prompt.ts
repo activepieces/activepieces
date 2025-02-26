@@ -6,16 +6,16 @@ export const extractWithPrompt = createAction({
   auth: firecrawlAuth,
   name: 'extractWithPrompt',
   displayName: 'Extract with Prompt',
-  description: 'Extract structured data from any URL using a natural language prompt',
+  description: 'Extract structured data from any URL using a natural language prompt.',
   props: {
     url: Property.ShortText({
       displayName: 'Website URL',
-      description: 'The webpage URL to extract data from',
+      description: 'The webpage URL to extract data from.',
       required: true,
     }),
     prompt: Property.LongText({
       displayName: 'Extraction Prompt',
-      description: 'Describe what information you want to extract in natural language',
+      description: 'Describe what information you want to extract in natural language.',
       required: true,
     }),
   },

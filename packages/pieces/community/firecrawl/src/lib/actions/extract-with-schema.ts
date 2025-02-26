@@ -6,16 +6,16 @@ export const extractWithSchema = createAction({
   auth: firecrawlAuth,
   name: 'extractWithSchema',
   displayName: 'Extract with Schema',
-  description: 'Extract structured data from any URL using a predefined JSON schema',
+  description: 'Extract structured data from any URL using a predefined JSON schema.',
   props: {
     url: Property.ShortText({
       displayName: 'Website URL',
-      description: 'The webpage URL to extract data from',
+      description: 'The webpage URL to extract data from.',
       required: true,
     }),
     schema: Property.Json({
       displayName: 'Extraction Schema',
-      description: 'JSON schema defining the structure of data to extract',
+      description: 'JSON schema defining the structure of data to extract.',
       required: true,
       defaultValue: {
         "type": "object",
