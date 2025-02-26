@@ -79,7 +79,7 @@ export const updateIssueAction = createAction({
 		const inputIssueFields = context.propsValue.issueFields ?? {};
 
 		if (isNil(issueId)) {
-			throw new Error('Isue ID is required');
+			throw new Error('Issue ID is required');
 		}
 
 		if (!isNil(statusId) && statusId !== '') {
