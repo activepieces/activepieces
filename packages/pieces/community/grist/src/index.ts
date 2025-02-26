@@ -39,8 +39,8 @@ export const gristAuth = PieceAuth.CustomAuth({
         apiKey: authValue.apiKey,
       });
 
-      // https://support.getgrist.com/api/#tag/workspaces/operation/listWorkspaces
-      await client.listWorkspaces('docs');
+      // https://support.getgrist.com/api/#tag/orgs
+      await client.listOrgs();
 
       return {
         valid: true,
