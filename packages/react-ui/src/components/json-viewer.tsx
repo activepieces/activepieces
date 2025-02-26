@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { Copy, Download, Eye, EyeOff } from 'lucide-react';
-import React, { useLayoutEffect } from 'react';
+import React, { useLayoutEffect, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import ReactJson from 'react-json-view';
 
@@ -51,8 +51,24 @@ const FileButton = ({ fileUrl, handleDownloadFile }: FileButtonProps) => {
 const removeDoubleQuotes = (str: string): string =>
   str.startsWith('"') && str.endsWith('"') ? str.slice(1, -1) : str;
 
-const JsonViewer = React.memo(({ json, title }: JsonViewerProps) => {
+const removeUndefined = (obj: any): any => {
+  if (Array.isArray(obj)) {
+    return obj.map(removeUndefined);
+  } else if (typeof obj === 'object' && obj !== null) {
+    return Object.fromEntries(
+      Object.entries(obj)
+        .filter(([_, value]) => value !== undefined)
+        .map(([key, value]) => [key, removeUndefined(value)])
+    );
+  }
+  return obj;
+};
+
+const JsonViewer = React.memo(({ json: unclearJson, title }: JsonViewerProps) => {
   const { theme } = useTheme();
+  const json = useMemo(() => {
+    return removeUndefined(unclearJson);
+  }, [unclearJson]);
 
   const viewerTheme = theme === 'dark' ? 'bright' : 'rjv-default';
   const handleCopy = () => {

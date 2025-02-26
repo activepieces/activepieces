@@ -31,23 +31,6 @@ type TestActionComponentProps = {
   projectId: string;
 };
 
-const getSampleDataInput = (formValues: Action) => {
-  switch (formValues.type) {
-    case ActionType.CODE:
-      return formValues.settings.input;
-    case ActionType.LOOP_ON_ITEMS:
-      return formValues.settings.items;
-    case ActionType.PIECE:
-      return formValues.settings.input;
-    case ActionType.ROUTER:
-      return {
-        executionType: formValues.settings.executionType,
-        branches: formValues.settings.branches,
-      };
-    default:
-      return {};
-  }
-};
 
 const TestActionSection = React.memo(
   ({ isSaving, flowVersionId, projectId }: TestActionComponentProps) => {
@@ -128,6 +111,7 @@ const TestActionSection = React.memo(
       },
       onSuccess: ({
         success,
+        input,
         output,
         sampleDataFileId,
         sampleDataInputFileId,
@@ -160,10 +144,7 @@ const TestActionSection = React.memo(
           );
         }
         setSampleData(formValues.name, output);
-        setSampleDataInput(
-          formValues.name,
-          getSampleDataInput(formValues as Action),
-        );
+        setSampleDataInput(formValues.name, input);
         setConsoleLogs(standardOutput || standardError);
         setLastTestDate(dayjs().toISOString());
       },

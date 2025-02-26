@@ -68,6 +68,7 @@ async function executeStep(input: ExecuteStepOperation): Promise<ExecuteActionRe
     })
     return {
         success: output.verdict !== ExecutionVerdict.FAILED,
+        input: output.steps[step.name].input,
         output: cleanSampleData(output.steps[step.name]),
     }
 }

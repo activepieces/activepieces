@@ -30,6 +30,7 @@ export type CreateStepRunRequestBody = Static<typeof CreateStepRunRequestBody>
 export const StepRunResponse = Type.Object({
     id: Type.String(),
     success: Type.Boolean(),
+    input: Type.Unknown(),
     output: Type.Unknown(),
     sampleDataFileId: Type.Optional(Type.String()),
     sampleDataInputFileId: Type.Optional(Type.String()),

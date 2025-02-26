@@ -21,6 +21,7 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
             const response: StepRunResponse = {
                 id: data.id,
                 success: stepRun.success,
+                input: stepRun.input,
                 output: stepRun.output,
                 standardError: stepRun.standardError,
                 standardOutput: stepRun.standardOutput,

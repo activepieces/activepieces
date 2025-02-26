@@ -40,6 +40,7 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
 
         return {
             success: result.success,
+            input: result.input,
             output: result.output,
             standardError,
             standardOutput,
