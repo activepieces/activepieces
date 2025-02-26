@@ -203,10 +203,9 @@ export async function githubPaginatedApiCall<T extends HttpMessageBody>({
 			body,
 		});
 		qs.page = qs.page + 1;
-
 		resultData.push(...response.body);
 		const linkHeader = response.headers?.link;
-		hasMoreItems = !isNil(linkHeader) && linkHeader.includes(`rel=\"next\"`);
+		hasMoreItems = !isNil(linkHeader) && linkHeader.includes(`rel="next"`);
 	} while (hasMoreItems);
 
 	return resultData;
