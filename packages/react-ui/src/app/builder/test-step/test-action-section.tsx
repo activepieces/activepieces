@@ -31,7 +31,6 @@ type TestActionComponentProps = {
   projectId: string;
 };
 
-
 const TestActionSection = React.memo(
   ({ isSaving, flowVersionId, projectId }: TestActionComponentProps) => {
     const { toast } = useToast();
