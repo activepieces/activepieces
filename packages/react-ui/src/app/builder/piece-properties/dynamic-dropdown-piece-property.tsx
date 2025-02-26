@@ -16,6 +16,8 @@ import { Action, isNil, Trigger } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
 
+import { DynamicPropertiesErrorBoundary } from './dynamic-piece-properties-error-boundary';
+
 type SelectPiecePropertyProps = {
   refreshers: string[];
   propertyName: string;
@@ -25,7 +27,7 @@ type SelectPiecePropertyProps = {
   onChange: (value: unknown | undefined) => void;
   showDeselect?: boolean;
 };
-const DynamicDropdownPieceProperty = React.memo(
+const DynamicDropdownPiecePropertyImplementation = React.memo(
   (props: SelectPiecePropertyProps) => {
     const [flowVersion, readonly] = useBuilderStateContext((state) => [
       state.flowVersion,
@@ -149,5 +151,16 @@ const DynamicDropdownPieceProperty = React.memo(
   },
 );
 
+const DynamicDropdownPieceProperty = React.memo(
+  (props: SelectPiecePropertyProps) => {
+    return (
+      <DynamicPropertiesErrorBoundary>
+        <DynamicDropdownPiecePropertyImplementation {...props} />
+      </DynamicPropertiesErrorBoundary>
+    );
+  },
+);
 DynamicDropdownPieceProperty.displayName = 'DynamicDropdownPieceProperty';
+DynamicDropdownPiecePropertyImplementation.displayName =
+  'DynamicDropdownPiecePropertyImplementation';
 export { DynamicDropdownPieceProperty };
