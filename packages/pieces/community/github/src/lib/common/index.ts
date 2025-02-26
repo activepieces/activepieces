@@ -189,7 +189,7 @@ export async function githubPaginatedApiCall<T extends HttpMessageBody>({
 	const qs = query ? query : {};
 
 	qs.page = 1;
-	qs.per_page = 1;
+	qs.per_page = 100;
 
 	const resultData: T[] = [];
 	let hasMoreItems = true;
