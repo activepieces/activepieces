@@ -783,6 +783,9 @@
       "activepieces/piece-zuora": [
         "packages/pieces/community/zuora/src/index.ts"
       ],
+      "@activepieces/piece-blockscout": [
+        "packages/pieces/community/blockscout/src/index.ts"
+      ],
       "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
       "server-worker": ["packages/server/worker/src/index.ts"],
       "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"]
