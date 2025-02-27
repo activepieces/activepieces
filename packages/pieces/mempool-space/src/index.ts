@@ -1,5 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 // General Actions
 import { getDifficultyAdjustment } from './lib/actions/general/get-difficulty-adjustment';
@@ -44,15 +44,13 @@ import { getTransactionRbfTimeline } from './lib/actions/transactions/get-transa
 import { getTransactionStatus } from './lib/actions/transactions/get-transaction-status';
 import { getTransactionTimes } from './lib/actions/transactions/get-transaction-times';
 import { postTransaction } from './lib/actions/transactions/post-transaction';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const mempoolSpace = createPiece({
   displayName: 'mempool.space',
   description: 'The mempool.space website invented the concept of visualizing a Bitcoin node\'s mempool as projected blocks.',
-  categories: [PieceCategory.WEB3],
   logoUrl: 'https://imagedelivery.net/bHREz764QO9n_1kIQUR2sw/ed6fc874-e665-4b9f-438a-1bd3bbac1d00/public',
   minimumSupportedRelease: '0.20.0',
-  authors: ['Reem Ayoush'],
+  authors: ['Swanblocks/Reem Ayoush'],
   auth: PieceAuth.None(),
   actions: [
     // General Actions
