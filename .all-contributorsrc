@@ -1569,6 +1569,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "ahmad-swanblocks",
+      "name": "Ahmad",
+      "avatar_url": "https://avatars.githubusercontent.com/u/165162455?v=4",
+      "profile": "https://github.com/ahmad-swanblocks",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
