@@ -49,10 +49,9 @@ You can generate your API token from:
         valid: true,
       };
     } catch (e) {
-      const message = ((e as HttpError).response?.body as any)?.message;
       return {
         valid: false,
-        error: message ?? 'unexpected error',
+        error: ((e as HttpError).response.body as any).message,
       };
     }
   },
