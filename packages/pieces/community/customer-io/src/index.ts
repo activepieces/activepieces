@@ -69,7 +69,7 @@ export const customerIo: any = createPiece({
     'Create personalized journeys across all channels with our customer engagement platform.',
   categories: [PieceCategory.MARKETING],
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/customerio.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/communityerio.png',
   authors: ['hamedsh', 'AbuAboud', 'AdamSelene'],
   actions: [
     createEvent,
