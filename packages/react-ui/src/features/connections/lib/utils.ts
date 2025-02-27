@@ -38,7 +38,7 @@ export const newConnectionUtils = {
   getConnectionName(
     piece: PieceMetadataModelSummary | PieceMetadataModel,
     reconnectConnection: AppConnectionWithoutSensitiveData | null,
-    predefinedConnectionName: string | null,
+    externalIdComingFromSdk?: string | null,
   ): {
     externalId: string;
     displayName: string;
@@ -49,12 +49,13 @@ export const newConnectionUtils = {
         displayName: reconnectConnection.displayName,
       };
     }
-    if (predefinedConnectionName) {
+    if (externalIdComingFromSdk) {
       return {
-        externalId: predefinedConnectionName,
-        displayName: piece.displayName,
+        externalId: externalIdComingFromSdk,
+        displayName: externalIdComingFromSdk,
       };
     }
+
     return {
       externalId: apId(),
       displayName: piece.displayName,
@@ -71,6 +72,7 @@ export const newConnectionUtils = {
     if (!piece.auth) {
       throw new Error(`Unsupported property type: ${piece.auth}`);
     }
+
     switch (piece.auth.type) {
       case PropertyType.SECRET_TEXT:
         return {

@@ -42,14 +42,13 @@ export type StepRunResponse = Static<typeof StepRunResponse>
 
 export const StepExecutionPath = Type.Array(Type.Tuple([Type.String(), Type.Number()]))
 export type StepExecutionPath = Static<typeof StepExecutionPath>
-
-
 export const SampleDataSetting = Type.Object(
     {
         sampleDataFileId: Type.Optional(Type.String()),
         sampleDataInputFileId: Type.Optional(Type.String()),
         lastTestDate: Type.Optional(Type.String()),
         customizedInputs: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
+        schema: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
         /**
          * @deprecated This field is deprecated and will be removed in 2025.
          */

@@ -1,5 +1,4 @@
 import {
-    ActionType,
     EngineOperation,
     EngineOperationType,
     EngineResponse,
@@ -77,12 +76,7 @@ function cleanSampleData(stepOutput: StepOutput) {
     if (stepOutput.status === StepOutputStatus.FAILED) {
         return stepOutput.errorMessage
     }
-    if (stepOutput.type === ActionType.LOOP_ON_ITEMS) {
-        return {
-            item: stepOutput.output?.item,
-            index: stepOutput.output?.index,
-        }
-    }
+
     return stepOutput.output
 }
 

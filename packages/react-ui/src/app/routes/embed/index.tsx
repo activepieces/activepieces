@@ -7,6 +7,7 @@ import { LoadingScreen } from '@/app/components/loading-screen';
 import { useEmbedding } from '@/components/embed-provider';
 import { authenticationSession } from '@/lib/authentication-session';
 import { managedAuthApi } from '@/lib/managed-auth-api';
+import { parentWindow } from '@/lib/utils';
 import {
   _AP_JWT_TOKEN_QUERY_PARAM_NAME,
   ActivepiecesClientAuthenticationFailed,
@@ -24,12 +25,12 @@ const notifyVendorPostAuthentication = () => {
     type: ActivepiecesClientEventName.CLIENT_AUTHENTICATION_SUCCESS,
     data: {},
   };
-  window.parent.postMessage(authenticationSuccessEvent, '*');
+  parentWindow.postMessage(authenticationSuccessEvent, '*');
   const configurationFinishedEvent: ActivepiecesClientConfigurationFinished = {
     type: ActivepiecesClientEventName.CLIENT_CONFIGURATION_FINISHED,
     data: {},
   };
-  window.parent.postMessage(configurationFinishedEvent, '*');
+  parentWindow.postMessage(configurationFinishedEvent, '*');
 };
 
 const EmbedPage = React.memo(() => {
@@ -40,7 +41,7 @@ const EmbedPage = React.memo(() => {
   });
   const initState = (event: MessageEvent<ActivepiecesVendorInit>) => {
     if (
-      event.source === window.parent &&
+      event.source === parentWindow &&
       event.data.type === ActivepiecesVendorEventName.VENDOR_INIT
     ) {
       const token =
@@ -76,7 +77,7 @@ const EmbedPage = React.memo(() => {
                     type: ActivepiecesClientEventName.CLIENT_SHOW_CONNECTION_IFRAME,
                     data: {},
                   };
-                window.parent.postMessage(showConnectionIframeEvent, '*');
+                parentWindow.postMessage(showConnectionIframeEvent, '*');
                 document.body.style.background = 'transparent';
               }
               navigate(initialRoute);
@@ -87,7 +88,7 @@ const EmbedPage = React.memo(() => {
                 type: ActivepiecesClientEventName.CLIENT_AUTHENTICATION_FAILED,
                 data: error,
               };
-              window.parent.postMessage(errorEvent, '*');
+              parentWindow.postMessage(errorEvent, '*');
             },
           },
         );
@@ -108,7 +109,7 @@ const EmbedPage = React.memo(() => {
       type: ActivepiecesClientEventName.CLIENT_INIT,
       data: {},
     };
-    window.parent.postMessage(event, '*');
+    parentWindow.postMessage(event, '*');
     window.addEventListener('message', initState);
     return () => {
       window.removeEventListener('message', initState);
