@@ -7,6 +7,7 @@ import {
 	httpClient,
 } from '@activepieces/pieces-common';
 import { JiraAuth } from '../../auth';
+import { isNil } from '@activepieces/shared';
 
 export async function sendJiraRequest(request: HttpRequest & { auth: JiraAuth }) {
 	return httpClient.sendRequest({
@@ -34,27 +35,15 @@ export async function getUsers(auth: JiraAuth) {
 }
 
 export async function getProjects(auth: JiraAuth): Promise<JiraProject[]> {
-	const projects: JiraProject[] = [];
-	let startAt = 0;
-	let hasMore = true;
-	const maxResults = 100;
 
-	while (hasMore) {
-		const response = await sendJiraRequest({
-			url: 'project/search',
-			method: HttpMethod.GET,
-			auth: auth,
-			queryParams: {
-				startAt: startAt.toString(),
-				maxResults: maxResults.toString(),
-			},
-		});
+	const response = await jiraPaginatedApiCall<JiraProject,'values'>({
+		auth,
+		method:HttpMethod.GET,
+		resourceUri:'/project/search',
+		propertyName:'values'
+	})
 
-		projects.push(...(response.body as any).values as JiraProject[]);
-		hasMore = !(response.body as any).isLast;
-		startAt += maxResults;
-	}
-	return projects;
+	return response;
 }
 
 export async function getIssueTypes({ auth, projectId }: { auth: JiraAuth; projectId: string }) {
@@ -282,4 +271,96 @@ export interface UpdateIssueParams {
 	assignee?: string;
 	priority?: string;
 	parentKey?: string;
+}
+export type RequestParams = Record<string, string | number | string[] | undefined>;
+
+export type JiraApiCallParams = {
+	auth:JiraAuth,
+	method: HttpMethod;
+	resourceUri: string;
+	query?: RequestParams;
+	body?: any;
+};
+
+export async function jiraApiCall<T extends HttpMessageBody>({
+	auth,
+	method,
+	resourceUri,
+	query,
+	body,
+}: JiraApiCallParams): Promise<T> {
+	const baseUrl = `${auth.instanceUrl}/rest/api/3`;
+	const qs: QueryParams = {};
+	if (query) {
+		for (const [key, value] of Object.entries(query)) {
+			if (value !== null && value !== undefined) {
+				qs[key] = String(value);
+			}
+		}
+	}
+
+	const request: HttpRequest = {
+		method,
+		url: baseUrl + resourceUri,
+		queryParams: qs,
+		body,
+		authentication: {
+			type: AuthenticationType.BASIC,
+			username:auth.email,
+			password:auth.apiToken,
+		},
+	};
+
+	const response = await httpClient.sendRequest<T>(request);
+	return response.body;
+}
+
+export async function jiraPaginatedApiCall<T extends HttpMessageBody, K extends string>({
+	auth,
+	method,
+	resourceUri,
+	query,
+	body,
+	propertyName,
+}: JiraApiCallParams & { propertyName: K }): Promise<T[]> {
+	const qs = query ? query : {};
+
+	qs['startAt'] = 0;
+	qs['maxResults'] = 100;
+
+	const resultData: T[] = [];
+	let hasMore = true;
+
+	type PaginatedResponse<T, K extends string> = {
+		startAt: number;
+		maxResults: number;
+		total: number;
+		isLast?: boolean;
+	} & Record<K, T[]>;
+
+	do {
+		const response = await jiraApiCall<PaginatedResponse<T, K>>({
+			auth,
+			method,
+			resourceUri,
+			query: qs,
+			body,
+		});
+
+		if (isNil(response[propertyName])) {
+			break;
+		}
+
+		if (Array.isArray(response[propertyName])) {
+			resultData.push(...response[propertyName]);
+		}
+
+		qs['startAt'] += 100;
+		hasMore =
+			response.isLast === undefined
+				? response.startAt + response.maxResults < response.total
+				: !response.isLast;
+	} while (hasMore);
+
+	return resultData;
 }
