@@ -52,7 +52,7 @@ You can generate your API token from:
       const message = ((e as HttpError).response?.body as any)?.message;
       return {
         valid: false,
-        error: message ?? 'unexpected error',
+        error: message ?? 'Invalid credentials',
       };
     }
   },
