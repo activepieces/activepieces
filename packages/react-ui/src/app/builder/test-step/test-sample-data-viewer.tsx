@@ -96,7 +96,13 @@ const TestSampleDataViewer = React.memo(
             ></JsonViewer>
           ) : (
             <Tabs defaultValue="Output">
-              <TabsList className="grid w-full grid-cols-2 w-[250px]">
+              <TabsList
+                className={`grid w-full ${
+                  !isNil(sampleDataInput) && isConsoleLogsValid(consoleLogs)
+                    ? 'w-[300px] grid-cols-3'
+                    : 'w-[250px] grid-cols-2'
+                }`}
+              >
                 {!isNil(sampleDataInput) && (
                   <TabsTrigger value="Input">{t('Input')}</TabsTrigger>
                 )}
