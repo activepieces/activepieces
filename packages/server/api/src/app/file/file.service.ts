@@ -76,6 +76,18 @@ export const fileService = (log: FastifyBaseLogger) => ({
         }
         return file
     },
+    async getData({ projectId, fileId, type }: GetOneParams): Promise<GetDataResponse | undefined> {
+        try {
+            return await this.getDataOrThrow({ projectId, fileId, type })
+        }
+        catch (error) {
+            log.error({
+                error,
+            }, '[FileService#getData] error')
+            return undefined
+        }
+
+    },
     async getDataOrThrow({ projectId, fileId, type }: GetOneParams): Promise<GetDataResponse> {
         const file = await fileRepo().findOneBy({
             projectId,

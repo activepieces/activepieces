@@ -80,12 +80,15 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
             return {}
         }
         if (!isNil(fileId)) {
-            const { data } = await fileService(log).getDataOrThrow({
+            const response = await fileService(log).getData({
                 projectId: params.projectId,
                 fileId,
                 type: fileType,
             })
-            return JSON.parse(data.toString('utf-8'))
+            if (isNil(response)) {
+                return undefined
+            }
+            return JSON.parse(response.data.toString('utf-8'))
         }
         if (fileType === FileType.SAMPLE_DATA_INPUT) {
             return undefined
