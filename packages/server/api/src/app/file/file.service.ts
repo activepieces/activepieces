@@ -60,17 +60,21 @@ export const fileService = (log: FastifyBaseLogger) => ({
             }
         }
     },
-    async getFileOrThrow({ projectId, fileId, type }: GetOneParams): Promise<File> {
+    async getFile({ projectId, fileId, type }: GetOneParams): Promise<File | null> {
         const file = await fileRepo().findOneBy({
             projectId,
             id: fileId,
             type,
         })
+        return file
+    },
+    async getFileOrThrow(params: GetOneParams): Promise<File> {
+        const file = await this.getFile(params)
         if (isNil(file)) {
             throw new ActivepiecesError({
                 code: ErrorCode.FILE_NOT_FOUND,
                 params: {
-                    id: fileId,
+                    id: params.fileId,
                 },
             })
         }

@@ -130,13 +130,13 @@ async function useExistingOrCreateNewSampleId(projectId: ProjectId, flowVersion:
     if (isNil(sampleDataId)) {
         return apId()
     }
-    const file = await fileService(log).getFileOrThrow({
+    const file = await fileService(log).getFile({
         projectId,
         fileId: sampleDataId,
         type: fileType,
     })
-    const isNewVersion = file.metadata?.flowVersionId !== flowVersion.id
-    if (isNewVersion) {
+    const isNewVersion = file?.metadata?.flowVersionId !== flowVersion.id
+    if (isNewVersion || isNil(file)) {
         return apId()
     }
     return file.id
