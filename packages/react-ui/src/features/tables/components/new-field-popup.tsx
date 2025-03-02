@@ -16,10 +16,11 @@ import {
 } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useTableState } from '@/features/tables/components/table-state-provider';
 import { getColumnIcon } from '@/features/tables/lib/utils';
 import { cn } from '@/lib/utils';
 import { FieldType } from '@activepieces/shared';
-import { useTableState } from '@/app/routes/tables/id/table-state-provider';
+
 import { tableHooks } from '../lib/tables-hooks';
 
 const NewFieldSchema = Type.Object({
@@ -46,10 +47,14 @@ export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
     },
   });
 
-  const createFieldMutation = tableHooks.useCreateField({queryClient, tableId, onSuccess: () => {
-    setOpen(false);
-    form.reset();
-  }});
+  const createFieldMutation = tableHooks.useCreateField({
+    queryClient,
+    tableId,
+    onSuccess: () => {
+      setOpen(false);
+      form.reset();
+    },
+  });
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -61,7 +66,7 @@ export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
             onSubmit={form.handleSubmit(async (data) => {
               await enqueueMutation(createFieldMutation, {
                 ...data,
-                tableId
+                tableId,
               });
             })}
             className="space-y-4"

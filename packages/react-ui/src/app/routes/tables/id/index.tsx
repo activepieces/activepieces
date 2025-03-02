@@ -1,14 +1,6 @@
-import {
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  ChevronLeft,
-  Plus,
-  RefreshCw,
-  Trash2,
-} from 'lucide-react';
+import { ChevronLeft, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import DataGrid, {
   Column,
@@ -16,11 +8,7 @@ import DataGrid, {
   DataGridHandle,
 } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
-import {
-  useNavigate,
-  useParams,
-  useLocation,
-} from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useTheme } from '@/components/theme-provider';
@@ -33,43 +21,38 @@ import {
 import { EditableCell } from '@/features/tables/components/editable-cell';
 import { FiltersPopup } from '@/features/tables/components/filters-popup';
 import { NewFieldPopup } from '@/features/tables/components/new-field-popup';
+import RowHeightToggle, {
+  ROW_HEIGHT_MAP,
+  RowHeight,
+} from '@/features/tables/components/row-height-toggle';
 import { SelectColumn } from '@/features/tables/components/select-column';
 import { fieldsApi } from '@/features/tables/lib/fields-api';
 import { tableHooks } from '@/features/tables/lib/tables-hooks';
 import { Row } from '@/features/tables/lib/types';
-import { cn } from '@/lib/utils';
-import {
-  Field,
-  PopulatedRecord,
-} from '@activepieces/shared';
-import './react-data-grid.css';
-import RowHeightToggle, { ROW_HEIGHT_MAP, RowHeight } from '@/features/tables/components/row-height-toggle';
-import { useTableState } from './table-state-provider';
 import { projectHooks } from '@/hooks/project-hooks';
+import { cn } from '@/lib/utils';
+import { Field, PopulatedRecord } from '@activepieces/shared';
+import './react-data-grid.css';
 
+import { useTableState } from '../../../../features/tables/components/table-state-provider';
 
-
-const TablePage = ()=>{
+const TablePage = () => {
   const { tableId } = useParams();
   if (!tableId) {
-   console.error('Table ID is required');
-   return null;
+    console.error('Table ID is required');
+    return null;
   }
-  return <TablePageImplementation tableId={tableId} />
-}
-const TablePageImplementation = (
-  {
-    tableId
-  } :
-  {
-    tableId: string;
-  }
-) => {
-  const { data:project } = projectHooks.useCurrentProject();
+  return <TablePageImplementation tableId={tableId} />;
+};
+const TablePageImplementation = ({ tableId }: { tableId: string }) => {
+  const { data: project } = projectHooks.useCurrentProject();
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
-  const [isSaving, enqueueMutation] = useTableState((state) => [state.isSaving, state.enqueueMutation]);
+  const [isSaving, enqueueMutation] = useTableState((state) => [
+    state.isSaving,
+    state.enqueueMutation,
+  ]);
   const [selectedRows, setSelectedRows] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
@@ -89,7 +72,7 @@ const TablePageImplementation = (
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } =  tableHooks.useFetchRecords(tableId)
+  } = tableHooks.useFetchRecords({ tableId, location });
 
   useEffect(() => {
     if (recordsPages) {
@@ -101,17 +84,35 @@ const TablePageImplementation = (
     }
   }, [recordsPages]);
 
-  const { data: tableData, isLoading: isTableLoading } = tableHooks.useFetchTable(tableId)
+  const { data: tableData, isLoading: isTableLoading } =
+    tableHooks.useFetchTable(tableId);
 
-  const updateRecordMutation = tableHooks.useUpdateRecord({queryClient,tableId});
+  const updateRecordMutation = tableHooks.useUpdateRecord({
+    queryClient,
+    tableId,
+    location,
+  });
 
-  const deleteFieldMutation =  tableHooks.useDeleteField({queryClient,tableId});
+  const deleteFieldMutation = tableHooks.useDeleteField({
+    queryClient,
+    tableId,
+    location,
+  });
 
-  const deleteRecordsMutation = tableHooks.useDeleteRecords({queryClient,tableId, onSuccess: () => {
-    setSelectedRows(new Set());
-  }});
+  const deleteRecordsMutation = tableHooks.useDeleteRecords({
+    queryClient,
+    tableId,
+    onSuccess: () => {
+      setSelectedRows(new Set());
+    },
+    location,
+  });
 
-  const createRecordMutation = tableHooks.useCreateRecord({queryClient,tableId});
+  const createRecordMutation = tableHooks.useCreateRecord({
+    queryClient,
+    tableId,
+    location,
+  });
 
   const columns: readonly Column<Row, { id: string }>[] = [
     {
@@ -350,7 +351,10 @@ const TablePageImplementation = (
             <span className="text-sm text-muted-foreground ml-2">
               {t('Row Height')}
             </span>
-           <RowHeightToggle rowHeight={rowHeight} setRowHeight={setRowHeight} />
+            <RowHeightToggle
+              rowHeight={rowHeight}
+              setRowHeight={setRowHeight}
+            />
           </div>
           <div className="flex items-center gap-2 mr-2">
             {selectedRows.size > 0 && (
@@ -394,7 +398,10 @@ const TablePageImplementation = (
           rowKeyGetter={(row: Row) => row.id}
           selectedRows={selectedRows}
           onSelectedRowsChange={onSelectedRowsChange}
-          className={cn( 'h-full max-w-full max-h-full', theme === 'dark' ? 'rdg-dark' : 'rdg-light')}
+          className={cn(
+            'h-full max-w-full max-h-full',
+            theme === 'dark' ? 'rdg-dark' : 'rdg-light',
+          )}
           bottomSummaryRows={[{ id: 'new-record' }]}
           rowHeight={ROW_HEIGHT_MAP[rowHeight]}
           headerRowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
@@ -404,6 +411,6 @@ const TablePageImplementation = (
       </div>
     </div>
   );
-}
+};
 
 export { TablePage };

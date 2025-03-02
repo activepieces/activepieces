@@ -1,14 +1,27 @@
-import { QueryClient, useInfiniteQuery, useMutation, UseMutationResult, useQuery } from '@tanstack/react-query';
+import {
+  QueryClient,
+  useInfiniteQuery,
+  useMutation,
+  UseMutationResult,
+  useQuery,
+} from '@tanstack/react-query';
+import { Location, useSearchParams } from 'react-router-dom';
 import { create } from 'zustand';
-import { PromiseQueue } from '@/lib/promise-queue';
-import { useLocation } from 'react-use';
-import { CreateFieldRequest, Field, FilterOperator, PopulatedRecord, SeekPage, UpdateRecordRequest } from '@activepieces/shared';
-import { recordsApi } from './records-api';
-import { useSearchParams } from 'react-router-dom';
-import { tablesApi } from './tables-api';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { fieldsApi } from './fields-api';
 
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { PromiseQueue } from '@/lib/promise-queue';
+import {
+  CreateFieldRequest,
+  Field,
+  FilterOperator,
+  PopulatedRecord,
+  SeekPage,
+  UpdateRecordRequest,
+} from '@activepieces/shared';
+
+import { fieldsApi } from './fields-api';
+import { recordsApi } from './records-api';
+import { tablesApi } from './tables-api';
 
 export type TableState = {
   isSaving: boolean;
@@ -18,7 +31,6 @@ export type TableState = {
   ) => Promise<TData>;
 };
 
-
 export const tableHooks = {
   useFetchTable: (tableId: string | undefined) => {
     return useQuery({
@@ -26,10 +38,15 @@ export const tableHooks = {
       queryFn: () => tablesApi.getById(tableId!),
     });
   },
-  useFetchRecords: (tableId: string | undefined) => {
-  const location = useLocation();
-  const [searchParams] = useSearchParams(location.search);
-   return useInfiniteQuery<SeekPage<PopulatedRecord>>({
+  useFetchRecords: ({
+    location,
+    tableId,
+  }: {
+    location: Location;
+    tableId: string;
+  }) => {
+    const [searchParams] = useSearchParams(location.search);
+    return useInfiniteQuery<SeekPage<PopulatedRecord>>({
       queryKey: ['records', tableId, location.search],
       queryFn: async ({ pageParam }) => {
         const filters = searchParams.getAll('filter').map((f) => {
@@ -51,53 +68,51 @@ export const tableHooks = {
       initialPageParam: undefined as string | undefined,
     });
   },
-  createTableStore: () => { 
-   return create<TableState>((set) => ({
-    isSaving: false,
-    enqueueMutation: async <TData, TError, TVariables>(
-      mutation: UseMutationResult<TData, TError, TVariables>,
-      variables: TVariables,
-    ): Promise<TData> => {
-    const mutationsQueue = new PromiseQueue();
-      const executeMutation = () =>
-        mutation
-          .mutateAsync(variables)
-          .then((result) => {
-            set({ isSaving: mutationsQueue.size() !== 0 });
-            return result;
-          })
-          .catch((error) => {
-            console.error(error);
-            mutationsQueue.halt();
-            throw error;
+  createTableStore: () => {
+    return create<TableState>((set) => ({
+      isSaving: false,
+      enqueueMutation: async <TData, TError, TVariables>(
+        mutation: UseMutationResult<TData, TError, TVariables>,
+        variables: TVariables,
+      ): Promise<TData> => {
+        const mutationsQueue = new PromiseQueue();
+        const executeMutation = () =>
+          mutation
+            .mutateAsync(variables)
+            .then((result) => {
+              set({ isSaving: mutationsQueue.size() !== 0 });
+              return result;
+            })
+            .catch((error) => {
+              console.error(error);
+              mutationsQueue.halt();
+              throw error;
+            });
+        set({ isSaving: true });
+        return new Promise((resolve, reject) => {
+          mutationsQueue.add(async () => {
+            try {
+              const result = await executeMutation();
+              resolve(result);
+            } catch (error) {
+              reject(error);
+            }
           });
-      set({ isSaving: true });
-      return new Promise((resolve, reject) => {
-        mutationsQueue.add(async () => {
-          try {
-            const result = await executeMutation();
-            resolve(result);
-          } catch (error) {
-            reject(error);
-          }
         });
-      });
-    },
-  }))
+      },
+    }));
   },
 
-  useUpdateRecord: ( 
-    {
-      queryClient,
-      tableId
-    }:
-    {
-      queryClient: QueryClient;
-      tableId: string;
-    }
-  )=>{
- 
-   return useMutation({
+  useUpdateRecord: ({
+    queryClient,
+    tableId,
+    location,
+  }: {
+    queryClient: QueryClient;
+    tableId: string;
+    location: Location;
+  }) => {
+    return useMutation({
       mutationKey: ['updateRecord'],
       mutationFn: async ({
         recordId,
@@ -117,27 +132,31 @@ export const tableHooks = {
           tableId,
           location.search,
         ]);
-          
+
         // Update the cache optimistically
         queryClient.setQueryData(
           ['records', tableId, location.search],
           (old: { pages: { data: PopulatedRecord[] }[] }) => ({
             ...old,
-            pages: old.pages.map(page => ({
+            pages: old.pages.map((page) => ({
               ...page,
-              data: page.data.map(record => 
-                record.id !== recordId ? record : {
-                  ...record,
-                  cells: record.cells.map(cell => {
-                    const update = request.cells?.find(c => c.key === cell.fieldId);
-                    return update ? { ...cell, value: update.value } : cell;
-                  })
-                }
-              )
-            }))
-          })
+              data: page.data.map((record) =>
+                record.id !== recordId
+                  ? record
+                  : {
+                      ...record,
+                      cells: record.cells.map((cell) => {
+                        const update = request.cells?.find(
+                          (c) => c.key === cell.fieldId,
+                        );
+                        return update ? { ...cell, value: update.value } : cell;
+                      }),
+                    },
+              ),
+            })),
+          }),
         );
-  
+
         return { previousRecords };
       },
       onError: (error, variables, context) => {
@@ -169,12 +188,13 @@ export const tableHooks = {
   useDeleteField: ({
     queryClient,
     tableId,
+    location,
   }: {
     queryClient: QueryClient;
     tableId: string;
-  }) =>{
-
-  return  useMutation({
+    location: Location;
+  }) => {
+    return useMutation({
       mutationKey: ['deleteField'],
       mutationFn: (fieldId: string) => {
         return fieldsApi.delete(fieldId);
@@ -182,13 +202,13 @@ export const tableHooks = {
       onMutate: async (fieldId) => {
         await queryClient.cancelQueries({ queryKey: ['fields', tableId] });
         const previousFields = queryClient.getQueryData(['fields', tableId]);
-  
+
         queryClient.setQueryData(
           ['fields', tableId],
           (old: Field[] | undefined) =>
             old ? old.filter((field) => field.id !== fieldId) : [],
         );
-  
+
         return { previousFields };
       },
       onError: (err, variables, context) => {
@@ -203,12 +223,14 @@ export const tableHooks = {
     onSuccess,
     queryClient,
     tableId,
+    location,
   }: {
     onSuccess: () => void;
     queryClient: QueryClient;
     tableId: string;
-  })=>{
-  return  useMutation({
+    location: Location;
+  }) => {
+    return useMutation({
       mutationKey: ['deleteRecords'],
       mutationFn: async (recordIds: string[]) => {
         await Promise.all(recordIds.map((id) => recordsApi.delete(id)));
@@ -222,7 +244,7 @@ export const tableHooks = {
           tableId,
           location.search,
         ]);
-  
+
         // Update the cache optimistically
         queryClient.setQueryData(
           ['records', tableId, location.search],
@@ -230,14 +252,16 @@ export const tableHooks = {
             ...old,
             pages: old.pages.map((page) => ({
               ...page,
-              data: page.data.filter((record) => !recordIds.includes(record.id)),
+              data: page.data.filter(
+                (record) => !recordIds.includes(record.id),
+              ),
             })),
           }),
         );
-  
+
         return { previousRecords };
       },
-      onError: (error, variables, context) => {
+      onError: (_, __, context) => {
         if (context?.previousRecords) {
           queryClient.setQueryData(
             ['records', tableId, location.search],
@@ -246,21 +270,23 @@ export const tableHooks = {
         }
         toast(INTERNAL_ERROR_TOAST);
       },
-      onSuccess
+      onSuccess,
     });
   },
   useCreateRecord: ({
     queryClient,
     tableId,
+    location,
   }: {
     queryClient: QueryClient;
     tableId: string;
-  }) => { 
+    location: Location;
+  }) => {
     return useMutation({
       mutationKey: ['createRecord'],
       mutationFn: async ({
         field,
-        value
+        value,
       }: {
         field: Field;
         value: string;
@@ -287,7 +313,7 @@ export const tableHooks = {
           tableId,
           location.search,
         ]);
-  
+
         return { previousRecords, tempId };
       },
       onError: (_, __, context) => {
@@ -315,19 +341,17 @@ export const tableHooks = {
           }),
         );
       },
-    })
+    });
   },
-  useCreateField:({
+  useCreateField: ({
     queryClient,
     tableId,
-    onSuccess
-    }:
-    {
-      queryClient: QueryClient;
-      tableId: string;
-      onSuccess: () => void;
-    }
-  )=>{
+    onSuccess,
+  }: {
+    queryClient: QueryClient;
+    tableId: string;
+    onSuccess: () => void;
+  }) => {
     return useMutation({
       mutationFn: async (request: CreateFieldRequest) => {
         return fieldsApi.create(request);
@@ -335,7 +359,7 @@ export const tableHooks = {
       onMutate: async (data) => {
         await queryClient.cancelQueries({ queryKey: ['fields', tableId] });
         const previousFields = queryClient.getQueryData(['fields', tableId]);
-  
+
         // Create an optimistic field
         const optimisticField: Field = {
           id: 'temp-' + Date.now(),
@@ -346,12 +370,12 @@ export const tableHooks = {
           tableId,
           projectId: '',
         };
-  
+
         queryClient.setQueryData(['fields', tableId], (old: Field[]) => [
           ...(old || []),
           optimisticField,
         ]);
-  
+
         return { previousFields, optimisticField };
       },
       onError: (_, __, context) => {
@@ -372,11 +396,7 @@ export const tableHooks = {
         }
       },
     });
-  }
-}
-
-
+  },
+};
 
 export type TableStore = ReturnType<typeof tableHooks.createTableStore>;
-
-

@@ -1,8 +1,6 @@
-
 import { t } from 'i18next';
 import {
   AlertCircle,
-  Database,
   Link2,
   Logs,
   Package,

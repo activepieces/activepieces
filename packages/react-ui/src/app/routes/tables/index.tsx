@@ -1,9 +1,12 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Trash2, Plus, Download, Loader2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+import * as z from 'zod';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useNewWindow } from '@/components/embed-provider';
@@ -22,27 +25,33 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+  Form,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { TableTitle } from '@/components/ui/table-title';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { tablesApi } from '@/features/tables/lib/tables-api';
+import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
 import { Table } from '@activepieces/shared';
-import { projectHooks } from '@/hooks/project-hooks';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage,Form } from '@/components/ui/form';
-const TablesPage= () => {
+
+const TablesPage = () => {
   const queryClient = useQueryClient();
-  const form = useForm<{name: string}>({
+  const form = useForm<{ name: string }>({
     defaultValues: {
-      name: ''
+      name: '',
     },
-    resolver: zodResolver(z.object({
-      name: z.string().min(1, {message: t('Name is required')})
-    }))
-  })
+    resolver: zodResolver(
+      z.object({
+        name: z.string().min(1, { message: t('Name is required') }),
+      }),
+    ),
+  });
   const openNewWindow = useNewWindow();
   const navigate = useNavigate();
   const [showNewTableDialog, setShowNewTableDialog] = useState(false);
@@ -50,14 +59,14 @@ const TablesPage= () => {
   const [exportingTableIds, setExportingTableIds] = useState<Set<string>>(
     new Set(),
   );
-  const { data:project } = projectHooks.useCurrentProject();
+  const { data: project } = projectHooks.useCurrentProject();
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['tables', project.id],
     queryFn: () => tablesApi.list(),
   });
 
   const createTableMutation = useMutation({
-    mutationFn: async (data: {name: string}) => {
+    mutationFn: async (data: { name: string }) => {
       return tablesApi.create({ name: data.name });
     },
     onSuccess: (table) => {
@@ -135,8 +144,6 @@ const TablesPage= () => {
       });
     }
   };
-
-
 
   const columns: ColumnDef<RowDataWithActions<Table>, unknown>[] = [
     {
@@ -334,49 +341,46 @@ const TablesPage= () => {
 
       <Dialog open={showNewTableDialog} onOpenChange={setShowNewTableDialog}>
         <DialogContent>
-        <Form {...form}>
-        <form onSubmit={form.handleSubmit((data) => createTableMutation.mutate(data))}>
-          <DialogHeader>
-            <DialogTitle>{t('New Table')}</DialogTitle>
-          </DialogHeader>
-          <div className="mb-4">
-               <FormField
-               control={form.control}
-               name='name'
-               render={({field}) => (
-                <FormItem>
-                  <FormControl>
-                    <Input {...field} placeholder={t('Table name')}/>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>)}
-                >
-               </FormField>
-       
-          </div>
-          <div className="flex justify-end gap-2">
-            <DialogClose asChild>
-            <Button
-              variant="outline"
-              type='button'
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit((data) =>
+                createTableMutation.mutate(data),
+              )}
             >
-              {t('Cancel')}
-            </Button>
-            </DialogClose>
-            
-            <Button
-              type='submit'
-              loading={createTableMutation.isPending}
-            >
-              {t('Create')}
-            </Button>
-          </div>
-          </form>
+              <DialogHeader>
+                <DialogTitle>{t('New Table')}</DialogTitle>
+              </DialogHeader>
+              <div className="mb-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input {...field} placeholder={t('Table name')} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                ></FormField>
+              </div>
+              <div className="flex justify-end gap-2">
+                <DialogClose asChild>
+                  <Button variant="outline" type="button">
+                    {t('Cancel')}
+                  </Button>
+                </DialogClose>
+
+                <Button type="submit" loading={createTableMutation.isPending}>
+                  {t('Create')}
+                </Button>
+              </div>
+            </form>
           </Form>
         </DialogContent>
       </Dialog>
     </div>
   );
-}
+};
 
 export { TablesPage };

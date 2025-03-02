@@ -32,6 +32,7 @@ import {
   ActivepiecesVendorRouteChanged,
 } from 'ee-embed-sdk';
 
+import { TableStateProvider } from '../../features/tables/components/table-state-provider';
 import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
 import { DashboardContainer } from '../components/dashboard-container';
 import { PlatformAdminContainer } from '../components/platform-admin-container';
@@ -77,7 +78,6 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
-import { TableStateProvider } from '../routes/tables/id/table-state-provider';
 const SettingsRerouter = () => {
   const { hash } = useLocation();
   const fragmentWithoutHash = hash.slice(1).toLowerCase();
