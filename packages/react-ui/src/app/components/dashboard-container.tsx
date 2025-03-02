@@ -1,4 +1,3 @@
-import { createContext } from 'vm';
 
 import { t } from 'i18next';
 import {
@@ -7,10 +6,11 @@ import {
   Link2,
   Logs,
   Package,
+  Table2,
   Workflow,
   Wrench,
 } from 'lucide-react';
-import { useState } from 'react';
+import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
@@ -73,7 +73,7 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
     {
       to: authenticationSession.appendProjectRoutePrefix('/tables'),
       label: t('Tables'),
-      icon: Database,
+      icon: Table2,
       showInEmbed: true,
       hasPermission: checkAccess(Permission.READ_TABLE),
     },
