@@ -1,6 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -16,12 +16,11 @@ import {
 } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { fieldsApi } from '@/features/tables/lib/fields-api';
-import { useSequentialMutationsStore } from '@/features/tables/lib/tables-mutations-hooks';
 import { getColumnIcon } from '@/features/tables/lib/utils';
 import { cn } from '@/lib/utils';
-import { Field, FieldType } from '@activepieces/shared';
+import { FieldType } from '@activepieces/shared';
+import { useTableState } from '@/app/routes/tables/id/table-state-provider';
+import { tableHooks } from '../lib/tables-hooks';
 
 const NewFieldSchema = Type.Object({
   name: Type.String({ minLength: 1 }),
@@ -38,7 +37,7 @@ type NewFieldDialogProps = {
 export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
-  const { enqueueMutation } = useSequentialMutationsStore();
+  const [enqueueMutation] = useTableState((state) => [state.enqueueMutation]);
 
   const form = useForm<NewFieldSchema>({
     resolver: typeboxResolver(NewFieldSchema),
@@ -47,58 +46,10 @@ export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
     },
   });
 
-  const createFieldMutation = useMutation({
-    mutationKey: ['createField'],
-    mutationFn: async (data: NewFieldSchema) => {
-      return fieldsApi.create({
-        tableId,
-        name: data.name,
-        type: data.type,
-      });
-    },
-    onMutate: async (data) => {
-      await queryClient.cancelQueries({ queryKey: ['fields', tableId] });
-      const previousFields = queryClient.getQueryData(['fields', tableId]);
-
-      // Create an optimistic field
-      const optimisticField: Field = {
-        id: 'temp-' + Date.now(),
-        name: data.name,
-        type: data.type,
-        created: new Date().toISOString(),
-        updated: new Date().toISOString(),
-        tableId,
-        projectId: '',
-      };
-
-      queryClient.setQueryData(['fields', tableId], (old: Field[]) => [
-        ...(old || []),
-        optimisticField,
-      ]);
-
-      return { previousFields, optimisticField };
-    },
-    onError: (error, variables, context) => {
-      if (context?.previousFields) {
-        queryClient.setQueryData(['fields', tableId], context.previousFields);
-      }
-      toast(INTERNAL_ERROR_TOAST);
-    },
-    onSuccess: () => {
-      setOpen(false);
-      form.reset();
-    },
-    onSettled: (data, error, variables, context) => {
-      if (data && context?.optimisticField) {
-        // Replace the optimistic field with the real one
-        queryClient.setQueryData(['fields', tableId], (old: Field[]) =>
-          old.map((field: Field) =>
-            field.id === context.optimisticField.id ? data : field,
-          ),
-        );
-      }
-    },
-  });
+  const createFieldMutation = tableHooks.useCreateField({queryClient, tableId, onSuccess: () => {
+    setOpen(false);
+    form.reset();
+  }});
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -108,7 +59,10 @@ export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(async (data) => {
-              await enqueueMutation(createFieldMutation, data);
+              await enqueueMutation(createFieldMutation, {
+                ...data,
+                tableId
+              });
             })}
             className="space-y-4"
           >

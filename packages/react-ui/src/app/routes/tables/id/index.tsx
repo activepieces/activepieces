@@ -1,16 +1,11 @@
 import {
-  useMutation,
   useQuery,
   useQueryClient,
-  useInfiniteQuery,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   ChevronLeft,
   Plus,
-  Rows4,
-  Rows3,
-  Rows2,
   RefreshCw,
   Trash2,
 } from 'lucide-react';
@@ -24,16 +19,13 @@ import 'react-data-grid/lib/styles.css';
 import {
   useNavigate,
   useParams,
-  useSearchParams,
   useLocation,
 } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { toast } from '@/components/ui/use-toast';
 import {
   ColumnHeader,
   ColumnActionType,
@@ -43,44 +35,41 @@ import { FiltersPopup } from '@/features/tables/components/filters-popup';
 import { NewFieldPopup } from '@/features/tables/components/new-field-popup';
 import { SelectColumn } from '@/features/tables/components/select-column';
 import { fieldsApi } from '@/features/tables/lib/fields-api';
-import { recordsApi } from '@/features/tables/lib/records-api';
-import { tablesApi } from '@/features/tables/lib/tables-api';
-import { useSequentialMutationsStore } from '@/features/tables/lib/tables-mutations-hooks';
+import { tableHooks } from '@/features/tables/lib/tables-hooks';
 import { Row } from '@/features/tables/lib/types';
 import { cn } from '@/lib/utils';
 import {
   Field,
   PopulatedRecord,
-  UpdateRecordRequest,
-  SeekPage,
-  FilterOperator,
 } from '@activepieces/shared';
 import './react-data-grid.css';
+import RowHeightToggle, { ROW_HEIGHT_MAP, RowHeight } from '@/features/tables/components/row-height-toggle';
+import { useTableState } from './table-state-provider';
+import { projectHooks } from '@/hooks/project-hooks';
 
-enum RowHeight {
-  COMPACT = 'compact',
-  DEFAULT = 'default',
-  RELAXED = 'relaxed',
-}
 
-const getRowHeight = (type: RowHeight = RowHeight.DEFAULT): number => {
-  switch (type) {
-    case RowHeight.COMPACT:
-      return 28;
-    case RowHeight.RELAXED:
-      return 52;
-    default:
-      return 37;
-  }
-};
 
-function TablePage() {
+const TablePage = ()=>{
   const { tableId } = useParams();
+  if (!tableId) {
+   console.error('Table ID is required');
+   return null;
+  }
+  return <TablePageImplementation tableId={tableId} />
+}
+const TablePageImplementation = (
+  {
+    tableId
+  } :
+  {
+    tableId: string;
+  }
+) => {
+  const { data:project } = projectHooks.useCurrentProject();
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams(location.search);
   const queryClient = useQueryClient();
-  const { saving, enqueueMutation } = useSequentialMutationsStore();
+  const [isSaving, enqueueMutation] = useTableState((state) => [state.isSaving, state.enqueueMutation]);
   const [selectedRows, setSelectedRows] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
@@ -100,28 +89,7 @@ function TablePage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteQuery<SeekPage<PopulatedRecord>>({
-    queryKey: ['records', tableId, location.search],
-    queryFn: async ({ pageParam }) => {
-      const filters = searchParams.getAll('filter').map((f) => {
-        const [fieldId, operator, value] = f.split(':');
-        return {
-          fieldId,
-          operator: operator as FilterOperator,
-          value: decodeURIComponent(value),
-        };
-      });
-
-      return recordsApi.list({
-        tableId: tableId!,
-        cursor: pageParam as string | undefined,
-        limit: 200,
-        filters: filters.length > 0 ? filters : undefined,
-      });
-    },
-    getNextPageParam: (lastPage) => lastPage.next,
-    initialPageParam: undefined as string | undefined,
-  });
+  } =  tableHooks.useFetchRecords(tableId)
 
   useEffect(() => {
     if (recordsPages) {
@@ -133,242 +101,17 @@ function TablePage() {
     }
   }, [recordsPages]);
 
-  const { data: tableData, isLoading: isTableLoading } = useQuery({
-    queryKey: ['table', tableId],
-    queryFn: () => tablesApi.getById(tableId!),
-  });
+  const { data: tableData, isLoading: isTableLoading } = tableHooks.useFetchTable(tableId)
 
-  const updateRecordMutation = useMutation({
-    mutationKey: ['updateRecord'],
-    mutationFn: async ({
-      recordId,
-      request,
-    }: {
-      recordId: string;
-      request: UpdateRecordRequest;
-    }) => {
-      return recordsApi.update(recordId, request);
-    },
-    onMutate: async ({ recordId, request }) => {
-      await queryClient.cancelQueries({
-        queryKey: ['records', tableId, location.search],
-      });
-      const previousRecords = queryClient.getQueryData([
-        'records',
-        tableId,
-        location.search,
-      ]);
+  const updateRecordMutation = tableHooks.useUpdateRecord({queryClient,tableId});
 
-      // Update the cache optimistically
-      queryClient.setQueryData(
-        ['records', tableId, location.search],
-        (old: { pages: { data: PopulatedRecord[] }[] }) => ({
-          ...old,
-          pages: old.pages.map((page) => ({
-            ...page,
-            data: page.data.map((record) => {
-              if (record.id === recordId) {
-                return {
-                  ...record,
-                  cells: record.cells.map((cell) => {
-                    const updatedCell = request.cells?.find(
-                      (c) => c.key === cell.fieldId,
-                    );
-                    if (updatedCell) {
-                      return {
-                        ...cell,
-                        value: updatedCell.value,
-                      };
-                    }
-                    return cell;
-                  }),
-                };
-              }
-              return record;
-            }),
-          })),
-        }),
-      );
+  const deleteFieldMutation =  tableHooks.useDeleteField({queryClient,tableId});
 
-      return { previousRecords };
-    },
-    onError: (error, variables, context) => {
-      if (context?.previousRecords) {
-        queryClient.setQueryData(
-          ['records', tableId, location.search],
-          context.previousRecords,
-        );
-      }
-      toast({
-        title: t('Error'),
-        description: t('Failed to update record.'),
-        duration: 3000,
-      });
-    },
-    onSuccess: (data, { recordId }) => {
-      // Update the cache with the server response
-      queryClient.setQueryData(
-        ['records', tableId, location.search],
-        (old: { pages: { data: PopulatedRecord[] }[] }) => ({
-          ...old,
-          pages: old.pages.map((page) => ({
-            ...page,
-            data: page.data.map((record) =>
-              record.id === recordId ? data : record,
-            ),
-          })),
-        }),
-      );
-    },
-  });
+  const deleteRecordsMutation = tableHooks.useDeleteRecords({queryClient,tableId, onSuccess: () => {
+    setSelectedRows(new Set());
+  }});
 
-  const deleteFieldMutation = useMutation({
-    mutationKey: ['deleteField'],
-    mutationFn: (fieldId: string) => {
-      return fieldsApi.delete(fieldId);
-    },
-    onMutate: async (fieldId) => {
-      await queryClient.cancelQueries({ queryKey: ['fields', tableId] });
-      const previousFields = queryClient.getQueryData(['fields', tableId]);
-
-      queryClient.setQueryData(
-        ['fields', tableId],
-        (old: Field[] | undefined) =>
-          old ? old.filter((field) => field.id !== fieldId) : [],
-      );
-
-      return { previousFields };
-    },
-    onError: (err, variables, context) => {
-      if (context?.previousFields) {
-        queryClient.setQueryData(['fields', tableId], context.previousFields);
-      }
-      toast({
-        title: t('Error'),
-        description: t('Failed to delete field.'),
-        duration: 3000,
-      });
-    },
-  });
-
-  const deleteRecordsMutation = useMutation({
-    mutationKey: ['deleteRecords'],
-    mutationFn: async (recordIds: string[]) => {
-      await Promise.all(recordIds.map((id) => recordsApi.delete(id)));
-    },
-    onMutate: async (recordIds) => {
-      await queryClient.cancelQueries({
-        queryKey: ['records', tableId, location.search],
-      });
-      const previousRecords = queryClient.getQueryData([
-        'records',
-        tableId,
-        location.search,
-      ]);
-
-      // Update the cache optimistically
-      queryClient.setQueryData(
-        ['records', tableId, location.search],
-        (old: { pages: { data: PopulatedRecord[] }[] }) => ({
-          ...old,
-          pages: old.pages.map((page) => ({
-            ...page,
-            data: page.data.filter((record) => !recordIds.includes(record.id)),
-          })),
-        }),
-      );
-
-      return { previousRecords };
-    },
-    onError: (error, variables, context) => {
-      if (context?.previousRecords) {
-        queryClient.setQueryData(
-          ['records', tableId, location.search],
-          context.previousRecords,
-        );
-      }
-      toast({
-        title: t('Error'),
-        description: t('Failed to delete records.'),
-        duration: 3000,
-      });
-    },
-    onSuccess: () => {
-      setSelectedRows(new Set());
-    },
-  });
-
-  const createRecordMutation = useMutation({
-    mutationKey: ['createRecord'],
-    mutationFn: async ({
-      field,
-      value,
-      tempId,
-    }: {
-      field: Field;
-      value: string;
-      tempId: string;
-    }) => {
-      return recordsApi.create({
-        records: [
-          [
-            {
-              key: field.name,
-              value: value,
-            },
-          ],
-        ],
-        tableId: tableId!,
-      });
-    },
-    onMutate: async ({ field, value, tempId }) => {
-      await queryClient.cancelQueries({
-        queryKey: ['records', tableId, location.search],
-      });
-      const previousRecords = queryClient.getQueryData([
-        'records',
-        tableId,
-        location.search,
-      ]);
-
-      return { previousRecords, tempId };
-    },
-    onError: (error, variables, context) => {
-      if (context?.previousRecords) {
-        // Restore the previous records and remove the temporary record
-        queryClient.setQueryData(
-          ['records', tableId, location.search],
-          (old: { pages: { data: PopulatedRecord[] }[] }) => ({
-            ...old,
-            pages: old.pages.map((page) => ({
-              ...page,
-              data: page.data.filter((record) => record.id !== context.tempId),
-            })),
-          }),
-        );
-      }
-      toast({
-        title: t('Error'),
-        description: t('Failed to create record.'),
-        duration: 3000,
-      });
-    },
-    onSuccess: (data, { tempId }) => {
-      // Replace the temporary record with the real one
-      queryClient.setQueryData(
-        ['records', tableId, location.search],
-        (old: { pages: { data: PopulatedRecord[] }[] }) => ({
-          ...old,
-          pages: old.pages.map((page) => ({
-            ...page,
-            data: page.data.map((record) =>
-              record.id === tempId ? data[0] : record,
-            ),
-          })),
-        }),
-      );
-    },
-  });
+  const createRecordMutation = tableHooks.useCreateRecord({queryClient,tableId});
 
   const columns: readonly Column<Row, { id: string }>[] = [
     {
@@ -575,20 +318,20 @@ function TablePage() {
   }
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col">
+    <div className=" overflow-hidden flex flex-col">
       <div className="flex flex-col gap-4 ml-3 pt-4 flex-none">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
             className="p-2"
-            onClick={() => navigate('/tables')}
+            onClick={() => navigate(`/projects/${project.id}/tables`)}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-xl">{tableData?.name}</span>
 
-          {saving && (
+          {isSaving && (
             <div className="flex items-center gap-2 text-muted-foreground animate-fade-in">
               <RefreshCw className="h-4 w-4 animate-spin" />
               <span className="text-sm">{t('Saving...')}</span>
@@ -607,81 +350,7 @@ function TablePage() {
             <span className="text-sm text-muted-foreground ml-2">
               {t('Row Height')}
             </span>
-            <RadioGroup
-              value={rowHeight}
-              onValueChange={(value) => setRowHeight(value as RowHeight)}
-              className="flex items-center gap-1 bg-muted p-1 rounded-md"
-            >
-              <div className="flex items-center">
-                <RadioGroupItem
-                  value={RowHeight.COMPACT}
-                  id={RowHeight.COMPACT}
-                  className="sr-only"
-                />
-                <label
-                  htmlFor={RowHeight.COMPACT}
-                  className={cn(
-                    'flex items-center justify-center p-2 rounded-sm cursor-pointer hover:bg-background transition-colors',
-                    rowHeight === RowHeight.COMPACT ? 'bg-background' : '',
-                  )}
-                >
-                  <Rows4
-                    className={cn(
-                      'h-4 w-4',
-                      rowHeight === RowHeight.COMPACT
-                        ? 'text-primary'
-                        : 'text-muted-foreground',
-                    )}
-                  />
-                </label>
-              </div>
-              <div className="flex items-center">
-                <RadioGroupItem
-                  value={RowHeight.DEFAULT}
-                  id={RowHeight.DEFAULT}
-                  className="sr-only"
-                />
-                <label
-                  htmlFor={RowHeight.DEFAULT}
-                  className={cn(
-                    'flex items-center justify-center p-2 rounded-sm cursor-pointer hover:bg-background transition-colors',
-                    rowHeight === RowHeight.DEFAULT ? 'bg-background' : '',
-                  )}
-                >
-                  <Rows3
-                    className={cn(
-                      'h-4 w-4',
-                      rowHeight === RowHeight.DEFAULT
-                        ? 'text-primary'
-                        : 'text-muted-foreground',
-                    )}
-                  />
-                </label>
-              </div>
-              <div className="flex items-center">
-                <RadioGroupItem
-                  value={RowHeight.RELAXED}
-                  id={RowHeight.RELAXED}
-                  className="sr-only"
-                />
-                <label
-                  htmlFor={RowHeight.RELAXED}
-                  className={cn(
-                    'flex items-center justify-center p-2 rounded-sm cursor-pointer hover:bg-background transition-colors',
-                    rowHeight === RowHeight.RELAXED ? 'bg-background' : '',
-                  )}
-                >
-                  <Rows2
-                    className={cn(
-                      'h-4 w-4',
-                      rowHeight === RowHeight.RELAXED
-                        ? 'text-primary'
-                        : 'text-muted-foreground',
-                    )}
-                  />
-                </label>
-              </div>
-            </RadioGroup>
+           <RowHeightToggle rowHeight={rowHeight} setRowHeight={setRowHeight} />
           </div>
           <div className="flex items-center gap-2 mr-2">
             {selectedRows.size > 0 && (
@@ -717,7 +386,7 @@ function TablePage() {
           </div>
         </div>
       </div>
-      <div className="flex-1 min-h-0 mt-4 grid-wrapper">
+      <div className="flex-1 min-h-0 mt-4 grid-wrapper overflow-hidden">
         <DataGrid
           ref={gridRef}
           columns={columns}
@@ -725,11 +394,11 @@ function TablePage() {
           rowKeyGetter={(row: Row) => row.id}
           selectedRows={selectedRows}
           onSelectedRowsChange={onSelectedRowsChange}
-          className={cn('h-full', theme === 'dark' ? 'rdg-dark' : 'rdg-light')}
+          className={cn( 'h-full max-w-full max-h-full', theme === 'dark' ? 'rdg-dark' : 'rdg-light')}
           bottomSummaryRows={[{ id: 'new-record' }]}
-          rowHeight={getRowHeight(rowHeight)}
-          headerRowHeight={getRowHeight()}
-          summaryRowHeight={getRowHeight()}
+          rowHeight={ROW_HEIGHT_MAP[rowHeight]}
+          headerRowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
+          summaryRowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
           onScroll={handleScroll}
         />
       </div>

@@ -77,6 +77,7 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
+import { TableStateProvider } from '../routes/tables/id/table-state-provider';
 const SettingsRerouter = () => {
   const { hash } = useLocation();
   const fragmentWithoutHash = hash.slice(1).toLowerCase();
@@ -210,7 +211,9 @@ const routes = [
       <DashboardContainer hideHeader={true}>
         <RoutePermissionGuard permission={Permission.READ_TABLE}>
           <PageTitle title="Table">
-            <TablePage />
+            <TableStateProvider>
+              <TablePage />
+            </TableStateProvider>
           </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>

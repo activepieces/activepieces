@@ -27,8 +27,9 @@ import { toast } from '@/components/ui/use-toast';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import { formatUtils } from '@/lib/utils';
 import { Table } from '@activepieces/shared';
+import { projectHooks } from '@/hooks/project-hooks';
 
-function TablesPage() {
+const TablesPage= () => {
   const queryClient = useQueryClient();
   const openNewWindow = useNewWindow();
   const navigate = useNavigate();
@@ -38,9 +39,9 @@ function TablesPage() {
   const [exportingTableIds, setExportingTableIds] = useState<Set<string>>(
     new Set(),
   );
-
+  const { data:project } = projectHooks.useCurrentProject();
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['tables'],
+    queryKey: ['tables', project.id],
     queryFn: () => tablesApi.list(),
   });
 
@@ -319,10 +320,11 @@ function TablesPage() {
         hidePagination={true}
         isLoading={isLoading}
         onRowClick={(row, newWindow) => {
+          const path = `/projects/${project.id}/tables/${row.id}`;
           if (newWindow) {
-            openNewWindow(`/tables/${row.id}`);
+            openNewWindow(path);
           } else {
-            navigate(`/tables/${row.id}`);
+            navigate(path);
           }
         }}
         bulkActions={bulkActions}

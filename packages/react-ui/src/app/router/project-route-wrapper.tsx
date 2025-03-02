@@ -36,6 +36,7 @@ export const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
   }
   //TODO: after upgrading react, we should use (use) hook to trigger suspense instead of this
   if (isLoading || isFetching) {
+    console.log("loading project")
     return <LoadingScreen></LoadingScreen>;
   }
   return <>{children}</>;
