@@ -1,7 +1,8 @@
-import { networkUtls, WorkerSystemProp } from '@activepieces/server-shared'
+import { networkUtils, WorkerSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEnvironment,
+    ApFlagId,
     apId,
     CreateRecordsRequest,
     Cursor,
@@ -21,12 +22,11 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { system } from '../../helper/system/system'
-import { AppSystemProp } from '../../helper/system/system-prop'
 import { FieldEntity } from '../field/field.entity'
 import { tableService } from '../table/table.service'
 import { CellEntity } from './cell.entity'
 import { RecordEntity } from './record.entity'
+import { flagService } from '../../flags/flag.service'
 
 const recordRepo = repoFactory(RecordEntity)
 
@@ -331,14 +331,19 @@ export const recordService = {
                 },
             }))
 
-            const publicUrl = await networkUtls.getPublicUrl(
-                system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT),
-                system.getOrThrow(WorkerSystemProp.FRONTEND_URL),
-            )
+            const publicUrl = await flagService.getOne(ApFlagId.PUBLIC_URL)
+            if (isNil(publicUrl)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENTITY_NOT_FOUND,
+                    params: { entityType: 'Flag', entityId: ApFlagId.PUBLIC_URL },
+                })
+            }
 
             const promises = webhookRequests.map((webhookRequest) => {
+                const webhooksUrl = networkUtils.combineUrl(publicUrl.value as string, `v1/webhooks/${webhookRequest.flowId}`)
+
                 return axios.post(
-                    `${publicUrl}v1/webhooks/${webhookRequest.flowId}`,
+                    webhooksUrl,
                     webhookRequest.request,
                     {
                         headers: {
