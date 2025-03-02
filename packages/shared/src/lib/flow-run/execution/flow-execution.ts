@@ -48,6 +48,14 @@ export const StopResponse = Type.Object({
 
 export type StopResponse = Static<typeof StopResponse>
 
+export const RespondResponse = Type.Object({
+    status: Type.Optional(Type.Number()),
+    body: Type.Optional(Type.Unknown()),
+    headers: Type.Optional(Type.Record(Type.String(), Type.String())),
+})
+
+export type RespondResponse = Static<typeof RespondResponse>
+
 export const FlowError = Type.Object({
     stepName: Type.String(),
     message: Type.String(),
