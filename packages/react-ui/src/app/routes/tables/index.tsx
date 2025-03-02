@@ -17,24 +17,35 @@ import {
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { TableTitle } from '@/components/ui/table-title';
-import { toast } from '@/components/ui/use-toast';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import { formatUtils } from '@/lib/utils';
 import { Table } from '@activepieces/shared';
 import { projectHooks } from '@/hooks/project-hooks';
-
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage,Form } from '@/components/ui/form';
 const TablesPage= () => {
   const queryClient = useQueryClient();
+  const form = useForm<{name: string}>({
+    defaultValues: {
+      name: ''
+    },
+    resolver: zodResolver(z.object({
+      name: z.string().min(1, {message: t('Name is required')})
+    }))
+  })
   const openNewWindow = useNewWindow();
   const navigate = useNavigate();
   const [showNewTableDialog, setShowNewTableDialog] = useState(false);
-  const [newTableName, setNewTableName] = useState('');
   const [selectedRows, setSelectedRows] = useState<Array<{ id: string }>>([]);
   const [exportingTableIds, setExportingTableIds] = useState<Set<string>>(
     new Set(),
@@ -46,18 +57,14 @@ const TablesPage= () => {
   });
 
   const createTableMutation = useMutation({
-    mutationFn: async () => {
-      return tablesApi.create({ name: newTableName });
+    mutationFn: async (data: {name: string}) => {
+      return tablesApi.create({ name: data.name });
     },
-    onSuccess: () => {
-      setNewTableName('');
+    onSuccess: (table) => {
       setShowNewTableDialog(false);
       refetch();
-      toast({
-        title: t('Success'),
-        description: t('Table has been created'),
-        duration: 3000,
-      });
+      form.reset();
+      navigate(`/projects/${project.id}/tables/${table.id}`);
     },
   });
 
@@ -69,10 +76,7 @@ const TablesPage= () => {
       refetch();
     },
     onError: () => {
-      toast({
-        title: t('Error deleting table.'),
-        variant: 'destructive',
-      });
+      toast(INTERNAL_ERROR_TOAST);
     },
   });
 
@@ -132,9 +136,7 @@ const TablesPage= () => {
     }
   };
 
-  const handleCreateTable = () => {
-    createTableMutation.mutate();
-  };
+
 
   const columns: ColumnDef<RowDataWithActions<Table>, unknown>[] = [
     {
@@ -332,36 +334,45 @@ const TablesPage= () => {
 
       <Dialog open={showNewTableDialog} onOpenChange={setShowNewTableDialog}>
         <DialogContent>
+        <Form {...form}>
+        <form onSubmit={form.handleSubmit((data) => createTableMutation.mutate(data))}>
           <DialogHeader>
             <DialogTitle>{t('New Table')}</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
-            <Input
-              placeholder={t('Table name')}
-              value={newTableName}
-              onChange={(e) => setNewTableName(e.target.value)}
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleCreateTable();
-                }
-              }}
-            />
+          <div className="mb-4">
+               <FormField
+               control={form.control}
+               name='name'
+               render={({field}) => (
+                <FormItem>
+                  <FormControl>
+                    <Input {...field} placeholder={t('Table name')}/>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>)}
+                >
+               </FormField>
+       
           </div>
           <div className="flex justify-end gap-2">
+            <DialogClose asChild>
             <Button
               variant="outline"
-              onClick={() => setShowNewTableDialog(false)}
+              type='button'
             >
               {t('Cancel')}
             </Button>
+            </DialogClose>
+            
             <Button
-              onClick={handleCreateTable}
-              disabled={!newTableName.trim() || createTableMutation.isPending}
+              type='submit'
+              loading={createTableMutation.isPending}
             >
-              {createTableMutation.isPending ? t('Creating...') : t('Create')}
+              {t('Create')}
             </Button>
           </div>
+          </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>
