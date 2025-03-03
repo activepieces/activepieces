@@ -32,26 +32,6 @@ type TestActionComponentProps = {
   projectId: string;
 };
 
-const getSampleDataInput = (currentStep: Step) => {
-  switch (currentStep.type) {
-    case ActionType.CODE:
-      return currentStep.settings.input;
-    case ActionType.LOOP_ON_ITEMS:
-      return currentStep.settings.items;
-    case ActionType.PIECE:
-      return currentStep.settings.input;
-    case ActionType.ROUTER:
-      return {
-        executionType: currentStep.settings.executionType,
-        branches: currentStep.settings.branches,
-      };
-    default:
-      console.warn(`Couldn't get sample data input for step ${currentStep.name} of type ${currentStep.type}`)
-      return undefined;
-  }
-};
-
-
 const TestStepSectionImplementation =  React.memo(
   ({ isSaving, flowVersionId, projectId, currentStep }: TestActionComponentProps & { currentStep: Step }) => {
     const { toast } = useToast();
@@ -161,10 +141,7 @@ const TestStepSectionImplementation =  React.memo(
           );
         }
         setSampleData(currentStep.name, output);
-        setSampleDataInput(
-          currentStep.name ,
-          getSampleDataInput(currentStep),
-        );
+        setSampleDataInput(currentStep.name, input);
         setConsoleLogs(standardOutput || standardError);
         setLastTestDate(dayjs().toISOString());
       },
