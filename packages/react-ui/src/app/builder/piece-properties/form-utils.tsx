@@ -481,6 +481,9 @@ export const formUtils = {
         case PropertyType.DYNAMIC:
           propsSchema[name] = Type.Record(Type.String(), Type.Any());
           break;
+        case PropertyType.CUSTOM:
+          propsSchema[name] = Type.Unknown();
+          break;
       }
 
       //optional array is checked against its children
@@ -526,6 +529,7 @@ export function getDefaultValueForStep(
       case PropertyType.BASIC_AUTH:
       case PropertyType.CUSTOM_AUTH:
       case PropertyType.SECRET_TEXT:
+      case PropertyType.CUSTOM:
       case PropertyType.OAUTH2: {
         defaultValues[name] = existingInput[name] ?? property.defaultValue;
         break;

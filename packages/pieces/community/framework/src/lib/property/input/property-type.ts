@@ -18,4 +18,5 @@ export enum PropertyType {
     CUSTOM_AUTH = 'CUSTOM_AUTH',
     DATE_TIME = 'DATE_TIME',
     FILE = 'FILE',
+    CUSTOM = 'CUSTOM',
 }
