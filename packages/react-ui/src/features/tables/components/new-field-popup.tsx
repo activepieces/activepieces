@@ -16,12 +16,12 @@ import {
 } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useTableState } from '@/features/tables/components/table-state-provider';
+import { useTableState } from '@/features/tables/components/ap-table-state-provider';
 import { getColumnIcon } from '@/features/tables/lib/utils';
 import { cn } from '@/lib/utils';
 import { FieldType } from '@activepieces/shared';
 
-import { tableHooks } from '../lib/tables-hooks';
+import { tableHooks } from '../lib/ap-tables-hooks';
 
 const NewFieldSchema = Type.Object({
   name: Type.String({ minLength: 1 }),

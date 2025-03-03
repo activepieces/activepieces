@@ -40,7 +40,7 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
 import { Table } from '@activepieces/shared';
 
-const TablesPage = () => {
+const ApTablesPage = () => {
   const queryClient = useQueryClient();
   const form = useForm<{ name: string }>({
     defaultValues: {
@@ -383,4 +383,6 @@ const TablesPage = () => {
   );
 };
 
-export { TablesPage };
+ApTablesPage.displayName = 'ApTablesPage';
+
+export { ApTablesPage };

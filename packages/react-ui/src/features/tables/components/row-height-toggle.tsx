@@ -8,18 +8,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { RowHeight } from '../lib/types';
 
-export enum RowHeight {
-  COMPACT = 'compact',
-  DEFAULT = 'default',
-  EXPANDED = 'expanded',
-}
-
-export const ROW_HEIGHT_MAP: Record<RowHeight, number> = {
-  [RowHeight.COMPACT]: 28,
-  [RowHeight.DEFAULT]: 37,
-  [RowHeight.EXPANDED]: 52,
-};
 
 const ToggleTooltip = ({
   children,

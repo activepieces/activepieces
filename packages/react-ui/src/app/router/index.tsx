@@ -32,7 +32,7 @@ import {
   ActivepiecesVendorRouteChanged,
 } from 'ee-embed-sdk';
 
-import { TableStateProvider } from '../../features/tables/components/table-state-provider';
+import { ApTableStateProvider } from '../../features/tables/components/ap-table-state-provider';
 import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
 import { DashboardContainer } from '../components/dashboard-container';
 import { PlatformAdminContainer } from '../components/platform-admin-container';
@@ -67,8 +67,6 @@ import GeneralPage from '../routes/settings/general';
 import TeamPage from '../routes/settings/team';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
-import { TablesPage } from '../routes/tables';
-import { TablePage } from '../routes/tables/id';
 import { ShareTemplatePage } from '../routes/templates/share-template';
 
 import { AfterImportFlowRedirect } from './after-import-flow-redirect';
@@ -78,6 +76,8 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
+import { ApTableEditorPage } from '../routes/ap-tables/id';
+import { ApTablesPage } from '../routes/ap-tables';
 const SettingsRerouter = () => {
   const { hash } = useLocation();
   const fragmentWithoutHash = hash.slice(1).toLowerCase();
@@ -199,7 +199,7 @@ const routes = [
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_TABLE}>
           <PageTitle title="Tables">
-            <TablesPage />
+          <ApTablesPage />
           </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>
@@ -208,15 +208,13 @@ const routes = [
   ...ProjectRouterWrapper({
     path: '/tables/:tableId',
     element: (
-      <DashboardContainer hideHeader={true}>
         <RoutePermissionGuard permission={Permission.READ_TABLE}>
           <PageTitle title="Table">
-            <TableStateProvider>
-              <TablePage />
-            </TableStateProvider>
+            <ApTableStateProvider>
+             <ApTableEditorPage />
+            </ApTableStateProvider>
           </PageTitle>
         </RoutePermissionGuard>
-      </DashboardContainer>
     ),
   }),
   ...ProjectRouterWrapper({

@@ -4,17 +4,17 @@ import { useStore } from 'zustand';
 import {
   tableHooks,
   TableState,
-  TableStore,
-} from '@/features/tables/lib/tables-hooks';
+  ApTableStore,
+} from '@/features/tables/lib/ap-tables-hooks';
 
-const TableContext = createContext<TableStore | null>(null);
+const TableContext = createContext<ApTableStore | null>(null);
 
-export function TableStateProvider({
+export function ApTableStateProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const tableStoreRef = useRef<TableStore>(tableHooks.createTableStore());
+  const tableStoreRef = useRef<ApTableStore>(tableHooks.createApTableStore());
   return (
     <TableContext.Provider value={tableStoreRef.current}>
       {children}

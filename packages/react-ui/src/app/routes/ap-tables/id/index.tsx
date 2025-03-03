@@ -1,6 +1,5 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { ChevronLeft, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Plus } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import DataGrid, {
   Column,
@@ -8,63 +7,42 @@ import DataGrid, {
   DataGridHandle,
 } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
-
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { useParams, useLocation } from 'react-router-dom';
 import { useTheme } from '@/components/theme-provider';
-import { Button } from '@/components/ui/button';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   ColumnHeader,
   ColumnActionType,
 } from '@/features/tables/components/column-header';
 import { EditableCell } from '@/features/tables/components/editable-cell';
-import { FiltersPopup } from '@/features/tables/components/filters-popup';
 import { NewFieldPopup } from '@/features/tables/components/new-field-popup';
-import RowHeightToggle, {
-  ROW_HEIGHT_MAP,
-  RowHeight,
-} from '@/features/tables/components/row-height-toggle';
 import { SelectColumn } from '@/features/tables/components/select-column';
-import { fieldsApi } from '@/features/tables/lib/fields-api';
-import { tableHooks } from '@/features/tables/lib/tables-hooks';
-import { Row } from '@/features/tables/lib/types';
-import { projectHooks } from '@/hooks/project-hooks';
+import { tableHooks } from '@/features/tables/lib/ap-tables-hooks';
+import { Row, ROW_HEIGHT_MAP, RowHeight } from '@/features/tables/lib/types';
 import { cn } from '@/lib/utils';
 import { Field, PopulatedRecord } from '@activepieces/shared';
 import './react-data-grid.css';
 
-import { useTableState } from '../../../../features/tables/components/table-state-provider';
+import { useTableState } from '../../../../features/tables/components/ap-table-state-provider';
+import { LoadingScreen } from '@/app/components/loading-screen';
+import ApTableHeader from '@/features/tables/components/ap-table-header';
 
-const TablePage = () => {
+const ApTableEditorPage = () => {
   const { tableId } = useParams();
   if (!tableId) {
     console.error('Table ID is required');
     return null;
   }
-  return <TablePageImplementation tableId={tableId} />;
+  return <ApTableEditorPageImplementation tableId={tableId} />;
 };
-const TablePageImplementation = ({ tableId }: { tableId: string }) => {
-  const { data: project } = projectHooks.useCurrentProject();
-  const navigate = useNavigate();
+const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
   const location = useLocation();
   const queryClient = useQueryClient();
-  const [isSaving, enqueueMutation] = useTableState((state) => [
-    state.isSaving,
-    state.enqueueMutation,
-  ]);
-  const [selectedRows, setSelectedRows] = useState<ReadonlySet<string>>(
-    () => new Set(),
-  );
-  const [rowHeight, setRowHeight] = useState<RowHeight>(RowHeight.DEFAULT);
+  const [enqueueMutation, rowHeight, selectedRows, setSelectedRows] = useTableState((state) => [state.enqueueMutation,state.rowHeight,state.selectedRows,state.setSelectedRows]);
   const [lastRowIdx, setLastRowIdx] = useState<number>(0);
   const gridRef = useRef<DataGridHandle>(null);
   const { theme } = useTheme();
 
-  const { data: fieldsData, isLoading: isFieldsLoading } = useQuery({
-    queryKey: ['fields', tableId],
-    queryFn: () => fieldsApi.list(tableId!),
-  });
+  const { data: fieldsData, isLoading: isFieldsLoading } = tableHooks.useFetchFields(tableId);
 
   const {
     data: recordsPages,
@@ -84,7 +62,7 @@ const TablePageImplementation = ({ tableId }: { tableId: string }) => {
     }
   }, [recordsPages]);
 
-  const { data: tableData, isLoading: isTableLoading } =
+  const { isLoading: isTableLoading } =
     tableHooks.useFetchTable(tableId);
 
   const updateRecordMutation = tableHooks.useUpdateRecord({
@@ -99,14 +77,6 @@ const TablePageImplementation = ({ tableId }: { tableId: string }) => {
     location,
   });
 
-  const deleteRecordsMutation = tableHooks.useDeleteRecords({
-    queryClient,
-    tableId,
-    onSuccess: () => {
-      setSelectedRows(new Set());
-    },
-    location,
-  });
 
   const createRecordMutation = tableHooks.useCreateRecord({
     queryClient,
@@ -297,100 +267,14 @@ const TablePageImplementation = ({ tableId }: { tableId: string }) => {
 
   if (isLoading) {
     return (
-      <div className="mt-4">
-        <div className="flex flex-col gap-4 ml-3">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="p-2"
-              onClick={() => navigate('/tables')}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <div className="flex items-center gap-2">
-              <LoadingSpinner />
-              <span className="text-muted-foreground">{t('Loading...')}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+     <LoadingScreen></LoadingScreen>
     );
   }
 
   return (
-    <div className=" overflow-hidden flex flex-col">
-      <div className="flex flex-col gap-4 ml-3 pt-4 flex-none">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="p-2"
-            onClick={() => navigate(`/projects/${project.id}/tables`)}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-xl">{tableData?.name}</span>
-
-          {isSaving && (
-            <div className="flex items-center gap-2 text-muted-foreground animate-fade-in">
-              <RefreshCw className="h-4 w-4 animate-spin" />
-              <span className="text-sm">{t('Saving...')}</span>
-            </div>
-          )}
-          {isFetchingNextPage && (
-            <div className="flex items-center gap-2 text-muted-foreground animate-fade-in">
-              <RefreshCw className="h-4 w-4 animate-spin" />
-              <span className="text-sm">{t('Loading more...')}</span>
-            </div>
-          )}
-        </div>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {fieldsData && <FiltersPopup fields={fieldsData} />}
-            <span className="text-sm text-muted-foreground ml-2">
-              {t('Row Height')}
-            </span>
-            <RowHeightToggle
-              rowHeight={rowHeight}
-              setRowHeight={setRowHeight}
-            />
-          </div>
-          <div className="flex items-center gap-2 mr-2">
-            {selectedRows.size > 0 && (
-              <div onClick={(e) => e.stopPropagation()}>
-                <ConfirmationDeleteDialog
-                  title={t('Delete Records')}
-                  message={t(
-                    'Are you sure you want to delete the selected records? This action cannot be undone.',
-                  )}
-                  entityName={
-                    selectedRows.size === 1 ? t('record') : t('records')
-                  }
-                  mutationFn={async () => {
-                    await enqueueMutation(
-                      deleteRecordsMutation,
-                      Array.from(selectedRows),
-                    );
-                    setSelectedRows(new Set());
-                  }}
-                >
-                  <Button
-                    className="w-full mr-2"
-                    size="sm"
-                    variant="destructive"
-                    loading={false}
-                  >
-                    <Trash2 className="mr-2 w-4" />
-                    {`${t('Delete')} (${selectedRows.size})`}
-                  </Button>
-                </ConfirmationDeleteDialog>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="flex-1 min-h-0 mt-4 grid-wrapper overflow-hidden">
+    <div className="overflow-hidden flex flex-col">
+      <ApTableHeader tableId={tableId} isFetchingNextPage={isFetchingNextPage}></ApTableHeader>
+      <div className="flex-1 min-h-0 mt-4 grid-wrapper   overflow-hidden">
         <DataGrid
           ref={gridRef}
           columns={columns}
@@ -399,7 +283,7 @@ const TablePageImplementation = ({ tableId }: { tableId: string }) => {
           selectedRows={selectedRows}
           onSelectedRowsChange={onSelectedRowsChange}
           className={cn(
-            'h-full max-w-full max-h-full',
+            'h-[calc(100vh-10rem)] bg-muted/30',
             theme === 'dark' ? 'rdg-dark' : 'rdg-light',
           )}
           bottomSummaryRows={[{ id: 'new-record' }]}
@@ -413,4 +297,6 @@ const TablePageImplementation = ({ tableId }: { tableId: string }) => {
   );
 };
 
-export { TablePage };
+ApTableEditorPage.displayName = 'ApTableEditorPage';
+
+export { ApTableEditorPage };

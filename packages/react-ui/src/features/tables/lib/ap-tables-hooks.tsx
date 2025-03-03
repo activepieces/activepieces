@@ -22,6 +22,7 @@ import {
 import { fieldsApi } from './fields-api';
 import { recordsApi } from './records-api';
 import { tablesApi } from './tables-api';
+import { RowHeight } from './types';
 
 export type TableState = {
   isSaving: boolean;
@@ -29,6 +30,10 @@ export type TableState = {
     mutation: UseMutationResult<TData, TError, TVariables>,
     variables: TVariables,
   ) => Promise<TData>;
+  rowHeight: RowHeight;
+  setRowHeight: (rowHeight: RowHeight) => void;
+  selectedRows: ReadonlySet<string>;
+  setSelectedRows: (selectedRows: ReadonlySet<string>) => void;
 };
 
 export const tableHooks = {
@@ -68,9 +73,19 @@ export const tableHooks = {
       initialPageParam: undefined as string | undefined,
     });
   },
-  createTableStore: () => {
+  useFetchFields: (tableId: string) => {
+    return useQuery({
+      queryKey: ['fields', tableId],
+      queryFn: () => fieldsApi.list(tableId),
+    });
+  },
+  createApTableStore: () => {
     return create<TableState>((set) => ({
       isSaving: false,
+      rowHeight: RowHeight.DEFAULT,
+      setRowHeight: (rowHeight: RowHeight) => set({ rowHeight }),
+      selectedRows: new Set(),
+      setSelectedRows: (selectedRows: ReadonlySet<string>) => set({ selectedRows }),
       enqueueMutation: async <TData, TError, TVariables>(
         mutation: UseMutationResult<TData, TError, TVariables>,
         variables: TVariables,
@@ -399,4 +414,4 @@ export const tableHooks = {
   },
 };
 
-export type TableStore = ReturnType<typeof tableHooks.createTableStore>;
+export type ApTableStore = ReturnType<typeof tableHooks.createApTableStore>;
