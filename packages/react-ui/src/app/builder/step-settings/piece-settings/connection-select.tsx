@@ -179,13 +179,12 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                             removeBrackets(field.value) &&
                           connection.scope !== AppConnectionScope.PLATFORM,
                       ) && (
-                        <Button
-                          variant="ghost"
-                          size="xs"
+                        <span
+                          role="button"
                           className="z-50 opacity-0 pointer-events-none"
                         >
                           {t('Reconnect')}
-                        </Button>
+                        </span>
                       )}
                   </SelectTrigger>
                 </div>

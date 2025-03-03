@@ -22,6 +22,18 @@ const executionState = FlowExecutorContext.empty()
                 items: [5, 'a'],
                 name: 'John',
                 price: 6.4,
+                users: [
+                    {
+                        name: 'Alice',
+                    },
+                    {
+                        name: 'Bob',
+                    },
+                ],
+                lastNames: [
+                    'Smith',
+                    'Doe',
+                ],
             },
         }),
     )
@@ -140,8 +152,30 @@ describe('Props resolver', () => {
                 items: [5, 'a'],
                 name: 'John',
                 price: 6.4,
+                users: [
+                    {
+                        name: 'Alice',
+                    },
+                    {
+                        name: 'Bob',
+                    },
+                ],
+                lastNames: [
+                    'Smith',
+                    'Doe',
+                ],
             },
         )
+    })
+
+    test('flatten array path', async () => {
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{flattenNestedKeys(trigger, [\'users\',\'name\'])}}', executionState })
+        expect(resolvedInput).toEqual(['Alice', 'Bob'])
+    })
+
+    test('merge multiple flatten array paths', async ()=>{
+        const { resolvedInput } = await propsResolverService.resolve({ unresolvedInput: '{{flattenNestedKeys(trigger, [\'users\',\'name\'])}} {{trigger.lastNames}}', executionState })
+        expect(resolvedInput).toEqual(['Alice Smith', 'Bob Doe'])
     })
 
     test('Test resolve steps variables', async () => {
@@ -251,7 +285,7 @@ describe('Props resolver', () => {
         })
         expect(
             resolvedInput,
-        ).toEqual('values from trigger step: {"items":[5,"a"],"name":"John","price":6.4}')
+        ).toEqual('values from trigger step: {"items":[5,"a"],"name":"John","price":6.4,"users":[{"name":"Alice"},{"name":"Bob"}],"lastNames":["Smith","Doe"]}')
     })
 
     test('Test use built-in Math Min function', async () => {
@@ -311,7 +345,7 @@ describe('Props resolver', () => {
                 required: true,
             }),
         }
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, null)
         expect(processedInput).toEqual({
             base64: null,
             base64WithMime: new ApFile('unknown.png', Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z', 'base64'), 'png'),
@@ -344,12 +378,14 @@ describe('Props resolver', () => {
             }),
         }
 
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, null)
         expect(processedInput.documents[0].file).toBeDefined()
         expect(processedInput.documents[0].file.extension).toBe('svg')
         expect(processedInput.documents[0].file.filename).toBe('logo.svg')
         expect(errors).toEqual({})
     })
+
+
 
     it('should return error for invalid file inside the array properties', async () => {
         const input = {
@@ -372,7 +408,7 @@ describe('Props resolver', () => {
             }),
         }
 
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, null)
         expect(processedInput.documents[0].file).toBeNull()
         expect(errors).toEqual({
             'documents': {
@@ -395,7 +431,7 @@ describe('Props resolver', () => {
             }),
 
         }
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, null)
         expect(processedInput.file).toBeDefined()
         expect(processedInput.file.extension).toBe('svg')
         expect(processedInput.file.filename).toBe('logo.svg')
@@ -423,7 +459,7 @@ describe('Props resolver', () => {
                 required: false,
             }),
         }
-        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false)
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, null)
 
         expect(processedInput.file).toBeDefined()
         expect(processedInput.file.extension).toBe('html')
@@ -460,7 +496,7 @@ describe('Props resolver', () => {
                     required: true,
                 }),
             },
-        }), true)
+        }), true, undefined)
 
         expect(processedInput).toEqual({
             auth: {
@@ -484,7 +520,7 @@ describe('Props resolver', () => {
         const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.CustomAuth({
             required: true,
             props: {},
-        }), false)
+        }), false, undefined)
 
         expect(processedInput).toEqual({
             price: 0,
@@ -493,4 +529,185 @@ describe('Props resolver', () => {
     })
 
 
+    it('should flatten arrays inside DYNAMIC properties', async () => {
+        const input = {
+            dynamicProp: {
+                items: {
+                    id: [1, 2],
+                    name: ['Item 1', 'Item 2'],
+                },
+            },
+        }
+        const dynamicPropertiesSchema = {
+            dynamicProp: {
+                items: Property.Array({
+                    displayName: 'Items',
+                    required: true,
+                    properties: {
+                        id: Property.Number({
+                            displayName: 'ID',
+                            required: true,
+                        }),
+                        name: Property.LongText({
+                            displayName: 'Name',
+                            required: true,
+                        }),
+                    },
+                }),
+            },
+        }
+        const props = {
+            dynamicProp: Property.DynamicProperties({
+                displayName: 'Dynamic Property',
+                required: true,
+                props: async () => {
+                    return {}
+                },
+                refreshers: [],
+            }),
+        }
+
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, dynamicPropertiesSchema)
+
+        expect(processedInput.dynamicProp.items).toEqual([
+            { id: 1, name: 'Item 1' },
+            { id: 2, name: 'Item 2' },
+        ])
+        expect(errors).toEqual({})
+    })
+
+})
+
+describe('Array Flatter Processor', () => {
+    it('should flatten array of objects', async () => {
+        const input = {
+            items: {
+                id: [1, 2],
+                name: ['Item 1', 'Item 2'],
+            },
+        }
+        const props = {
+            items: Property.Array({
+                displayName: 'Items',
+                required: true,
+                properties: {
+                    id: Property.Number({
+                        displayName: 'ID',
+                        required: true,
+                    }),
+                    name: Property.LongText({
+                        displayName: 'Name',
+                        required: true,
+                    }),
+                },
+            }),
+        }
+
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, null)
+
+        expect(processedInput.items).toEqual([
+            { id: 1, name: 'Item 1' },
+            { id: 2, name: 'Item 2' },
+        ])
+        expect(errors).toEqual({})
+    })
+
+    it('should handle non-array properties gracefully', async () => {
+        const input = {
+            items: {
+                id: [1, 2],
+                name: 'Single Item', // Non-array property
+            },
+        }
+        const props = {
+            items: Property.Array({
+                displayName: 'Items',
+                required: true,
+                properties: {
+                    id: Property.Number({
+                        displayName: 'ID',
+                        required: true,
+                    }),
+                    name: Property.LongText({
+                        displayName: 'Name',
+                        required: true,
+                    }),
+                },
+            }),
+        }
+
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, null)
+
+        expect(processedInput.items).toEqual([
+            { id: 1, name: 'Single Item' },
+            { id: 2, name: 'Single Item' },
+        ])
+        expect(errors).toEqual({})
+    })
+
+    it('should handle arrays of unequal length', async () => {
+        const input = {
+            items: {
+                id: [1, 2, 3], // Longer array
+                name: ['Item 1', 'Item 2'], // Shorter array
+            },
+        }
+        const props = {
+            items: Property.Array({
+                displayName: 'Items',
+                required: true,
+                properties: {
+                    id: Property.Number({
+                        displayName: 'ID',
+                        required: true,
+                    }),
+                    name: Property.LongText({
+                        displayName: 'Name',
+                        required: false,
+                    }),
+                },
+            }),
+        }
+
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, null)
+
+        expect(processedInput.items).toEqual([
+            { id: 1, name: 'Item 1' },
+            { id: 2, name: 'Item 2' },
+            { id: 3, name: undefined }, // Handle missing name
+        ])
+        expect(errors).toEqual({})
+    })
+
+    it('should handle arrays with string values', async () => {
+        const input = {
+            items: {
+                id: '1',
+                name: 'item1',
+            },
+        }
+        const props = {
+            items: Property.Array({
+                displayName: 'Items',
+                required: true,
+                properties: {
+                    id: Property.ShortText({
+                        displayName: 'ID',
+                        required: true,
+                    }),
+                    name: Property.LongText({
+                        displayName: 'Name',
+                        required: true,
+                    }),
+                },
+            }),
+        }
+
+        const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(input, props, PieceAuth.None(), false, null)
+
+        expect(processedInput.items).toEqual([
+            { id: '1', name: 'item1' },
+        ])
+        expect(errors).toEqual({})
+    })
 })
