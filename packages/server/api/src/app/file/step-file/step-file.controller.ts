@@ -40,7 +40,7 @@ export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
         return reply
             .header(
                 'Content-Disposition',
-                `attachment; filename="${file.fileName}"`,
+                `attachment; filename="${encodeURI(file.fileName ?? '')}"`,
             )
             .type('application/octet-stream')
             .status(StatusCodes.OK)
