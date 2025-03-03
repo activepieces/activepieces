@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, isNil, Platform } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, LicenseKeyEntity, Platform } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { system } from '../../helper/system/system'
@@ -80,7 +80,7 @@ async function fetchPlatform(email: string, log: FastifyBaseLogger): Promise<Pla
 
 async function generateSelfHostingTrialLicense(email: string, companyName: string, disabledFeatures: string[], isEmbeddingsEnabled: boolean, productionKey: boolean, log: FastifyBaseLogger): Promise<{ trialLicenseKey: string }> {
     const trialLicenseKey = await generateLicenseKey(email, companyName, disabledFeatures, isEmbeddingsEnabled, productionKey ? 'production' : 'development', log)
-    return { trialLicenseKey }
+    return { trialLicenseKey: trialLicenseKey.key }
 }
 
 async function generateCloudTrialLicense(workEmail: string, platformId: string, companyName: string, disabledFeatures: string[], isEmbeddingsEnabled: boolean, log: FastifyBaseLogger): Promise<{ developmentTrialLicenseKey: string, productionTrialLicenseKey: string, subdomain: string }> {
@@ -94,14 +94,15 @@ async function generateCloudTrialLicense(workEmail: string, platformId: string, 
     })
     const developmentTrialLicenseKey = await generateLicenseKey(workEmail, companyName, disabledFeatures, isEmbeddingsEnabled, 'development', log, platformId)
     const productionTrialLicenseKey = await generateLicenseKey(workEmail, companyName, disabledFeatures, isEmbeddingsEnabled, 'production', log, platformId)
+    await applyLicenseKeyToPlatform(platformId, productionTrialLicenseKey, log)
     return {
-        developmentTrialLicenseKey,
-        productionTrialLicenseKey,
+        developmentTrialLicenseKey: developmentTrialLicenseKey.key,
+        productionTrialLicenseKey: productionTrialLicenseKey.key,
         subdomain: `${subdomain}.${domain}`,
     }
 }
 
-async function generateLicenseKey(workEmail: string, companyName: string, disabledFeatures: string[], isEmbeddingsEnabled: boolean, keyType: 'development' | 'production', log: FastifyBaseLogger, platformId?: string): Promise<string> {
+async function generateLicenseKey(workEmail: string, companyName: string, disabledFeatures: string[], isEmbeddingsEnabled: boolean, keyType: 'development' | 'production', log: FastifyBaseLogger, platformId?: string): Promise<LicenseKeyEntity> {
     const trialLicenseKey = await licenseKeysService(log).requestTrial({
         email: workEmail,
         companyName,
@@ -112,11 +113,22 @@ async function generateLicenseKey(workEmail: string, companyName: string, disabl
     })
 
     await licenseKeysService(log).markAsActiviated({
-        key: trialLicenseKey,
+        key: trialLicenseKey.key,
         platformId,
     })
 
-    return trialLicenseKey
+    return {
+        ...trialLicenseKey,
+        key: trialLicenseKey.key,
+    }
+}
+
+async function applyLicenseKeyToPlatform(platformId: string, licenseKey: LicenseKeyEntity, log: FastifyBaseLogger) {
+    await platformService.update({
+        id: platformId,
+        licenseKey: licenseKey.key,
+    })
+    await licenseKeysService(log).applyLimits(platformId, licenseKey)
 }
 
 async function addCNAMERecord(
