@@ -1,6 +1,6 @@
 import { useEmbedding } from "@/components/embed-provider";
 import { projectHooks } from "@/hooks/project-hooks";
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 
 const CUSTOM_PROPERTY_CONTAINER_ID = 'custom-property-container';
 
@@ -16,6 +16,8 @@ const CustomProperty = ({
   const {project} = projectHooks.useCurrentProject();
   const {embedState} = useEmbedding();
   const alreadyRendered = useRef(false);
+  const id = useId();
+  const containerId = CUSTOM_PROPERTY_CONTAINER_ID+'-'+id;
   useEffect(() => {
     if (alreadyRendered.current) return;
     alreadyRendered.current = true;
@@ -26,7 +28,7 @@ const CustomProperty = ({
       `);
       // Execute the function with args as the params object
       const result = fn({
-        containerId: CUSTOM_PROPERTY_CONTAINER_ID,
+        containerId,
         value,
         onChange,
         isEmbeded: embedState.isEmbedded,
@@ -44,7 +46,7 @@ const CustomProperty = ({
     }
   }, [])
     
-  return <div id={CUSTOM_PROPERTY_CONTAINER_ID}></div>;
+  return <div id={containerId}></div>;
 };
 
 CustomProperty.displayName = 'CustomProperty';
