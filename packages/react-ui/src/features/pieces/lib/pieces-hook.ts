@@ -8,6 +8,7 @@ import {
 import {
   Action,
   ActionType,
+  flowPieceUtil,
   SuggestionType,
   Trigger,
   TriggerType,
@@ -24,7 +25,7 @@ import {
 
 type UsePieceAndMostRecentPatchProps = {
   name: string;
-  version: string;
+  version: string | undefined;
   enabled?: boolean;
 };
 
@@ -78,8 +79,8 @@ export const piecesHooks = {
     version,
     enabled = true,
   }: UsePieceAndMostRecentPatchProps) => {
-    const exactVersion = version?.startsWith('~') ? version.slice(1) : version;
-    const latestPatchVersion = `~${exactVersion}`;
+    const exactVersion = version ? flowPieceUtil.getExactVersion(version) : undefined;
+    const latestPatchVersion = exactVersion ? flowPieceUtil.getNextVersion(exactVersion) : undefined;
     const pieceQuery = piecesHooks.usePiece({
       name,
       version: exactVersion,
