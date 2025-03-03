@@ -4,7 +4,6 @@ import { ChevronDown, History, Logs } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import {
   createSearchParams,
-  Link,
   useLocation,
   useNavigate,
   useSearchParams,
@@ -28,7 +27,7 @@ import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { determineDefaultRoute, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
+import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import {
   ApFlagId,
   FlowOperationType,
@@ -40,6 +39,7 @@ import {
 import FlowActionMenu from '../components/flow-actions-menu';
 
 import { BuilderFlowStatusSection } from './builder-flow-status-section';
+import { HomeButton } from '@/components/ui/home-button';
 
 export const BuilderHeader = () => {
   const [queryParams] = useSearchParams();
@@ -49,7 +49,6 @@ export const BuilderHeader = () => {
   const { data: showSupport } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
-  const branding = flagsHooks.useWebsiteBranding();
   const isInRunsPage = useMemo(
     () => location.pathname.includes('/runs'),
     [location.pathname],
@@ -79,7 +78,6 @@ export const BuilderHeader = () => {
     flowVersion.state === FlowVersionState.DRAFT ||
     flowVersion.id === flow.publishedVersionId;
   const folderName = folderData?.displayName ?? t('Uncategorized');
-  const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
   const [isEditingFlowName, setIsEditingFlowName] = useState(false);
   useEffect(() => {
     setIsEditingFlowName(queryParams.get(NEW_FLOW_QUERY_PARAM) === 'true');
@@ -88,25 +86,7 @@ export const BuilderHeader = () => {
     <div className="bg-background select-none">
       <div className="relative items-center flex h-[55px] w-full p-4 bg-muted/30">
         <div className="flex items-center gap-2">
-          {!embedState.hideLogoInBuilder &&
-            !embedState.disableNavigationInBuilder && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link to={defaultRoute}>
-                    <Button variant="ghost" size={'icon'} className="size-10">
-                      <img
-                        className="h-7 w-7 object-contain"
-                        src={branding.logos.logoIconUrl}
-                        alt={branding.websiteName}
-                      />
-                    </Button>
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  {t('Go to Dashboard')}
-                </TooltipContent>
-              </Tooltip>
-            )}
+        <HomeButton route={'/flows'}/>
           <div className="flex gap-2 items-center">
             {!embedState.hideFolders && (
               <>
@@ -161,7 +141,9 @@ export const BuilderHeader = () => {
             flowVersion={flowVersion}
             readonly={!isLatestVersion}
             onDelete={() => {
-              navigate('/flows');
+              navigate(authenticationSession.appendProjectRoutePrefix(
+                '/flows',
+              ));
             }}
             onRename={() => {
               setIsEditingFlowName(true);
