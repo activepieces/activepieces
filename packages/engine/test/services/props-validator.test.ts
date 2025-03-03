@@ -15,6 +15,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(validErrors).toEqual({})
 
@@ -23,6 +24,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(nullErrors).toEqual({
                 text: ['Expected string, received: null'],
@@ -33,6 +35,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(undefinedErrors).toEqual({
                 text: ['Expected string, received: undefined'],
@@ -52,6 +55,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(validErrors).toEqual({})
 
@@ -60,6 +64,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(nullErrors).toEqual({
                 number: ['Expected number, received: null'],
@@ -70,6 +75,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(typeErrors).toEqual({
                 number: ['Expected number, received: not a number'],
@@ -89,6 +95,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(validErrors).toEqual({})
 
@@ -97,6 +104,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(invalidErrors).toEqual({
                 date: ['Invalid datetime format. Expected ISO format (e.g. 2024-03-14T12:00:00.000Z), received: not a date'],
@@ -116,6 +124,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(validErrors).toEqual({})
 
@@ -124,6 +133,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(typeErrors).toEqual({
                 array: ['Expected array, received: not an array'],
@@ -143,6 +153,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(validErrors).toEqual({})
 
@@ -151,6 +162,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(validJsonStringErrors).toEqual({})
 
@@ -159,6 +171,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(validArrayErrors).toEqual({})
 
@@ -167,6 +180,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(validArrayStringErrors).toEqual({})
 
@@ -175,6 +189,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(invalidJsonErrors).toEqual({
                 json: ['Expected JSON, received: not a json object'],
@@ -185,6 +200,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(nullErrors).toEqual({
                 json: ['Expected JSON, received: null'],
@@ -203,6 +219,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(validErrors).toEqual({})
 
@@ -211,6 +228,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(nullErrors).toEqual({
                 object: ['Expected object, received: null'],
@@ -221,6 +239,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(typeErrors).toEqual({
                 object: ['Expected object, received: not an object'],
@@ -231,6 +250,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(jsonStringErrors).toEqual({})
 
@@ -239,6 +259,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(undefinedErrors).toEqual({})
         })
@@ -265,6 +286,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
             expect(errors).toEqual({})
         })
@@ -306,6 +328,7 @@ describe('Property Validation', () => {
                 props,
                 PieceAuth.None(),
                 false,
+                null,
             )
 
             expect(errors).toEqual({

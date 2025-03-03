@@ -114,6 +114,7 @@ const TestStepSectionImplementation =  React.memo(
       },
       onSuccess: ({
         success,
+        input,
         output,
         sampleDataFileId,
         sampleDataInputFileId,
@@ -195,7 +196,6 @@ const TestStepSectionImplementation =  React.memo(
                 disabled={!currentStep.valid}
               >
                 <Dot animation={true} variant={'primary'}></Dot>
-                {t('Test Step')}
               </Button>
             </TestButtonTooltip>
           </div>

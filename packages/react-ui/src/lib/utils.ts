@@ -239,3 +239,4 @@ export const determineDefaultRoute = (
 };
 
 export const NEW_FLOW_QUERY_PARAM = 'newFlow';
+export const parentWindow = window.opener ?? window.parent;

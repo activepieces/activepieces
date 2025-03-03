@@ -1,5 +1,4 @@
 import {
-    ActionType,
     EngineOperation,
     EngineOperationType,
     EngineResponse,
@@ -68,6 +67,7 @@ async function executeStep(input: ExecuteStepOperation): Promise<ExecuteActionRe
     })
     return {
         success: output.verdict !== ExecutionVerdict.FAILED,
+        input: output.steps[step.name].input,
         output: cleanSampleData(output.steps[step.name]),
     }
 }
@@ -76,12 +76,7 @@ function cleanSampleData(stepOutput: StepOutput) {
     if (stepOutput.status === StepOutputStatus.FAILED) {
         return stepOutput.errorMessage
     }
-    if (stepOutput.type === ActionType.LOOP_ON_ITEMS) {
-        return {
-            item: stepOutput.output?.item,
-            index: stepOutput.output?.index,
-        }
-    }
+
     return stepOutput.output
 }
 
