@@ -54,6 +54,12 @@
       "@activepieces/piece-aminos": [
         "packages/pieces/community/aminos/src/index.ts"
       ],
+      "@activepieces/piece-anyhook-graphql": [
+        "packages/pieces/community/anyhook-graphql/src/index.ts"
+      ],
+      "@activepieces/piece-anyhook-websocket": [
+        "packages/pieces/community/anyhook-websocket/src/index.ts"
+      ],
       "@activepieces/piece-apify": [
         "packages/pieces/community/apify/src/index.ts"
       ],
@@ -215,11 +221,11 @@
       "@activepieces/piece-figma": [
         "packages/pieces/community/figma/src/index.ts"
       ],
-      "@activepieces/piece-firecrawl":[
-        "packages/pieces/community/firecrawl/src/index.ts"
-      ],
       "@activepieces/piece-file-helper": [
         "packages/pieces/community/file-helper/src/index.ts"
+      ],
+      "@activepieces/piece-firecrawl": [
+        "packages/pieces/community/firecrawl/src/index.ts"
       ],
       "@activepieces/piece-fliqr-ai": [
         "packages/pieces/community/fliqr-ai/src/index.ts"
