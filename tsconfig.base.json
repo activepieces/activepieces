@@ -188,6 +188,9 @@
       "@activepieces/piece-delay": [
         "packages/pieces/community/delay/src/index.ts"
       ],
+      "@activepieces/piece-devin": [
+        "packages/pieces/community/devin/src/index.ts"
+      ],
       "@activepieces/piece-discord": [
         "packages/pieces/community/discord/src/index.ts"
       ],
@@ -211,6 +214,9 @@
       ],
       "@activepieces/piece-figma": [
         "packages/pieces/community/figma/src/index.ts"
+      ],
+      "@activepieces/piece-firecrawl":[
+        "packages/pieces/community/firecrawl/src/index.ts"
       ],
       "@activepieces/piece-file-helper": [
         "packages/pieces/community/file-helper/src/index.ts"

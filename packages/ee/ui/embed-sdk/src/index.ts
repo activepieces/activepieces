@@ -347,6 +347,17 @@ class ActivepiecesEmbedded {
       },
       method: async () => {
         const target = newWindow? this._openNewWindowForConnections({pieceName, connectionName,newWindow}) : this._addConnectionIframe({pieceName, connectionName});
+        //don't check for window because (instanceof Window) is false for popups
+        if(!(target instanceof HTMLIFrameElement)) {
+          const checkClosed = setInterval(() => {
+            if (target.closed) {
+              clearInterval(checkClosed);
+              if(this._resolveNewConnectionDialogClosed) {
+                this._resolveNewConnectionDialogClosed({connection:undefined})
+              }
+            }
+          }, 500);
+        }
         return new Promise<ActivepiecesNewConnectionDialogClosed['data']>((resolve, reject) => {
           this._resolveNewConnectionDialogClosed = resolve;
           this._rejectNewConnectionDialogClosed = reject;

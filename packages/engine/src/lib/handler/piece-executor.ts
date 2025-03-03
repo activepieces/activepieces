@@ -1,5 +1,5 @@
 import { URL } from 'url'
-import { ActionContext, ConnectionsManager, InputPropertyMap, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
+import { ActionContext, ConnectionsManager, InputPropertyMap, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
 import { ActionType, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
@@ -13,7 +13,7 @@ import { propsProcessor } from '../variables/props-processor'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict } from './context/flow-execution-context'
 
-type HookResponse = { stopResponse: StopHookParams | undefined, pauseResponse: PauseHookParams | undefined, tags: string[], stopped: boolean, paused: boolean }
+type HookResponse = { stopResponse: StopHookParams | undefined, pauseResponse: PauseHookParams | undefined, respondResponse: RespondHookParams | undefined, tags: string[], stopped: boolean, paused: boolean }
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
 
@@ -66,6 +66,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             pauseResponse: undefined,
             paused: false,
             tags: [],
+            respondResponse: undefined,
         }
         const isPaused = executionState.isPaused({ stepName: action.name })
         const context: ActionContext = {
@@ -111,6 +112,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 id: constants.flowRunId,
                 stop: createStopHook(hookResponse),
                 pause: createPauseHook(hookResponse, executionState.pauseRequestId),
+                respond: createRespondHook(hookResponse),
             },
             project: {
                 id: constants.projectId,
@@ -188,6 +190,12 @@ function createStopHook(hookResponse: HookResponse): StopHook {
     return (req?: StopHookParams) => {
         hookResponse.stopped = true
         hookResponse.stopResponse = req ?? { response: {} }
+    }
+}
+
+function createRespondHook(hookResponse: HookResponse): RespondHook {
+    return (req?: RespondHookParams) => {
+        hookResponse.respondResponse = req ?? { response: {} }
     }
 }
 
