@@ -80,12 +80,15 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
             return {}
         }
         if (!isNil(fileId)) {
-            const { data } = await fileService(log).getDataOrThrow({
+            const response = await fileService(log).getDataOrUndefined({
                 projectId: params.projectId,
                 fileId,
                 type: fileType,
             })
-            return JSON.parse(data.toString('utf-8'))
+            if (isNil(response)) {
+                return undefined
+            }
+            return JSON.parse(response.data.toString('utf-8'))
         }
         if (fileType === FileType.SAMPLE_DATA_INPUT) {
             return undefined
@@ -127,13 +130,13 @@ async function useExistingOrCreateNewSampleId(projectId: ProjectId, flowVersion:
     if (isNil(sampleDataId)) {
         return apId()
     }
-    const file = await fileService(log).getFileOrThrow({
+    const file = await fileService(log).getFile({
         projectId,
         fileId: sampleDataId,
         type: fileType,
     })
-    const isNewVersion = file.metadata?.flowVersionId !== flowVersion.id
-    if (isNewVersion) {
+    const isNewVersion = file?.metadata?.flowVersionId !== flowVersion.id
+    if (isNewVersion || isNil(file)) {
         return apId()
     }
     return file.id
