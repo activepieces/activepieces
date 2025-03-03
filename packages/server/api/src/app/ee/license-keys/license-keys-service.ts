@@ -16,7 +16,7 @@ const handleUnexpectedSecretsManagerError = (log: FastifyBaseLogger, message: st
 }
 
 export const licenseKeysService = (log: FastifyBaseLogger) => ({
-    async  requestTrial(request: CreateTrialLicenseKeyRequestBody): Promise<string> {
+    async requestTrial(request: CreateTrialLicenseKeyRequestBody): Promise<LicenseKeyEntity> {
         const response = await fetch(secretManagerLicenseKeysRoute, {
             method: 'POST',
             headers: {
@@ -35,7 +35,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
             handleUnexpectedSecretsManagerError(log, errorMessage)
         }
         const responseBody = await response.json()
-        return responseBody.key
+        return responseBody
     },
     async markAsActiviated(request: { key: string, platformId?: string }): Promise<void> {
         try {
