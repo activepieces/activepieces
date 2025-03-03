@@ -401,7 +401,7 @@ It has a "code" property which is your JS script, it should be a function that t
 ```
 
 here is how to define such a property:
-
+```typescript
  Property.Custom({
       code: `
       (params) => {
@@ -430,5 +430,6 @@ here is how to define such a property:
       required: true,
       defaultValue: "Default Value", 
       description: "Custom Property Made By You",
-    }),
+    })
+  ```
 
