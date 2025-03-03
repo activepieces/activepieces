@@ -56,8 +56,7 @@ const DataSelectorNodeContent = ({
     : undefined;
   const showInsertButton =
     node.data.type === 'value' && node.data.insertable && !node.isLoopStepNode;
-  const showNodeValue =
-    !node.children && node.data.type === 'value' && !!node.data.value;
+  const showNodeValue = !node.children && node.data.type === 'value';
 
   return (
     <div
