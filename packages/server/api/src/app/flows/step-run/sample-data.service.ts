@@ -80,7 +80,7 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
             return {}
         }
         if (!isNil(fileId)) {
-            const response = await fileService(log).getData({
+            const response = await fileService(log).getDataOrUndefined({
                 projectId: params.projectId,
                 fileId,
                 type: fileType,

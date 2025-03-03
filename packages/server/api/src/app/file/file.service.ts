@@ -80,7 +80,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
         }
         return file
     },
-    async getData({ projectId, fileId, type }: GetOneParams): Promise<GetDataResponse | undefined> {
+    async getDataOrUndefined({ projectId, fileId, type }: GetOneParams): Promise<GetDataResponse | undefined> {
         try {
             return await this.getDataOrThrow({ projectId, fileId, type })
         }
