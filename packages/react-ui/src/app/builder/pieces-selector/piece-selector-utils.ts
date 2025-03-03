@@ -28,8 +28,8 @@ import {
   RouterExecutionType,
   spreadIfDefined,
   isNil,
-  Platform,
   flowStructureUtil,
+  PlatformWithoutSensitiveData,
 } from '@activepieces/shared';
 
 import { formUtils } from '../piece-properties/form-utils';
@@ -88,7 +88,7 @@ const isPieceStepMetadata = (
 
 const isPopularPieces = (
   stepMetadata: StepMetadataWithSuggestions,
-  platform: Platform,
+  platform: PlatformWithoutSensitiveData,
 ) => {
   if (
     stepMetadata.type !== TriggerType.PIECE &&
@@ -132,7 +132,10 @@ const isUniversalAiPiece = (stepMetadata: StepMetadata) => {
   return false;
 };
 
-const isUtilityCorePiece = (stepMetadata: StepMetadata, platform: Platform) => {
+const isUtilityCorePiece = (
+  stepMetadata: StepMetadata,
+  platform: PlatformWithoutSensitiveData,
+) => {
   if (stepMetadata.type === ActionType.CODE) {
     return true;
   }

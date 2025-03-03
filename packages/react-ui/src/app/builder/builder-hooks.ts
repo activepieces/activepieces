@@ -82,6 +82,7 @@ export type BuilderState = {
   flowVersion: FlowVersion;
   readonly: boolean;
   sampleData: Record<string, unknown>;
+  sampleDataInput: Record<string, unknown>;
   loopsIndexes: Record<string, number>;
   run: FlowRun | null;
   leftSidebar: LeftSideBarType;
@@ -109,6 +110,7 @@ export type BuilderState = {
   setActiveDraggingStep: (stepName: string | null) => void;
   setFlow: (flow: PopulatedFlow) => void;
   setSampleData: (stepName: string, payload: unknown) => void;
+  setSampleDataInput: (stepName: string, payload: unknown) => void;
   exitPieceSelector: () => void;
   setVersion: (flowVersion: FlowVersion) => void;
   insertMention: InsertMentionHandler | null;
@@ -146,7 +148,13 @@ export type BuilderState = {
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
   BuilderState,
-  'flow' | 'flowVersion' | 'readonly' | 'run' | 'canExitRun' | 'sampleData'
+  | 'flow'
+  | 'flowVersion'
+  | 'readonly'
+  | 'run'
+  | 'canExitRun'
+  | 'sampleData'
+  | 'sampleDataInput'
 >;
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
@@ -192,6 +200,7 @@ export const createBuilderStore = (
             )
           : {},
       sampleData: initialState.sampleData,
+      sampleDataInput: initialState.sampleDataInput,
       flow: initialState.flow,
       flowVersion: initialState.flowVersion,
       leftSidebar: initialState.run
@@ -283,6 +292,15 @@ export const createBuilderStore = (
           return {
             sampleData: {
               ...state.sampleData,
+              [stepName]: payload,
+            },
+          };
+        }),
+      setSampleDataInput: (stepName: string, payload: unknown) =>
+        set((state) => {
+          return {
+            sampleDataInput: {
+              ...state.sampleDataInput,
               [stepName]: payload,
             },
           };

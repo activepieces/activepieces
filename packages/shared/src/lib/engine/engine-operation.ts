@@ -170,6 +170,7 @@ export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends Trigge
 
 export type ExecuteActionResponse = {
     success: boolean
+    input: unknown
     output: unknown
     message?: string
 }

@@ -75,13 +75,11 @@ const PieceSelector = ({
     applyOperation,
     selectStepByName,
     flowVersion,
-    setSampleData,
     setAskAiButtonProps,
   ] = useBuilderStateContext((state) => [
     state.applyOperation,
     state.selectStepByName,
     state.flowVersion,
-    state.setSampleData,
     state.setAskAiButtonProps,
   ]);
 
@@ -200,7 +198,6 @@ const PieceSelector = ({
 
     switch (operation.type) {
       case FlowOperationType.UPDATE_TRIGGER: {
-        setSampleData(stepData.name, undefined);
         applyOperation({
           type: FlowOperationType.UPDATE_TRIGGER,
           request: stepData as Trigger,

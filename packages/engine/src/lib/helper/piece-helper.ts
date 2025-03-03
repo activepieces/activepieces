@@ -31,7 +31,7 @@ export const pieceHelper = {
             piecesSource,
         })
         if (property.type !== PropertyType.DROPDOWN && property.type !== PropertyType.MULTI_SELECT_DROPDOWN && property.type !== PropertyType.DYNAMIC) {
-            throw new Error(`Property type is not excutable: ${property.type} for ${property.displayName}`)
+            throw new Error(`Property type is not executable: ${property.type} for ${property.displayName}`)
         }
         try {
             const { resolvedInput } = await createPropsResolver({
