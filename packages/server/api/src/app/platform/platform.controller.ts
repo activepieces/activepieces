@@ -14,6 +14,7 @@ import {
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
+import { licenseKeysService } from '../ee/license-keys/license-keys-service'
 import { userService } from '../user/user-service'
 import { platformService } from './platform.service'
 import { platformUtils } from './platform.utils'
@@ -47,7 +48,12 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
             'paramId',
         )
         const platform = await platformService.getOneOrThrow(req.params.id)
-        return platform
+        const licenseKey = await licenseKeysService(req.log).getKey(platform.licenseKey)
+       
+        const platformWithoutSensitiveData = platform as PlatformWithoutSensitiveData
+        platformWithoutSensitiveData.licenseExpiresAt = licenseKey?.expiresAt
+        platformWithoutSensitiveData.hasLicenseKey = licenseKey !== null
+        return platformWithoutSensitiveData
     })
 }
 
