@@ -32,8 +32,13 @@ type TestActionComponentProps = {
   projectId: string;
 };
 
-const TestStepSectionImplementation =  React.memo(
-  ({ isSaving, flowVersionId, projectId, currentStep }: TestActionComponentProps & { currentStep: Step }) => {
+const TestStepSectionImplementation = React.memo(
+  ({
+    isSaving,
+    flowVersionId,
+    projectId,
+    currentStep,
+  }: TestActionComponentProps & { currentStep: Step }) => {
     const { toast } = useToast();
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
       undefined,
@@ -118,20 +123,20 @@ const TestStepSectionImplementation =  React.memo(
               inputUiInfo: newInputUiInfo,
             },
           };
-          if(currentStepCopy.type === TriggerType.EMPTY || currentStepCopy.type === TriggerType.PIECE) {
+          if (
+            currentStepCopy.type === TriggerType.EMPTY ||
+            currentStepCopy.type === TriggerType.PIECE
+          ) {
             applyOperation({
               type: FlowOperationType.UPDATE_TRIGGER,
               request: currentStepCopy,
             });
-          }
-          else 
-          {
+          } else {
             applyOperation({
               type: FlowOperationType.UPDATE_ACTION,
               request: currentStepCopy,
             });
           }
-          
         } else {
           setErrorMessage(
             testStepUtils.formatErrorMessage(
@@ -150,7 +155,6 @@ const TestStepSectionImplementation =  React.memo(
         toast(INTERNAL_ERROR_TOAST);
       },
     });
-  
 
     const [lastTestDate, setLastTestDate] = useState(
       currentStep.settings.inputUiInfo.lastTestDate,
@@ -174,7 +178,6 @@ const TestStepSectionImplementation =  React.memo(
               >
                 <Dot animation={true} variant={'primary'}></Dot>
                 {t('Test Step')}
-
               </Button>
             </TestButtonTooltip>
           </div>
@@ -190,9 +193,7 @@ const TestStepSectionImplementation =  React.memo(
             errorMessage={errorMessage}
             lastTestDate={lastTestDate}
             consoleLogs={
-              currentStep.type === ActionType.CODE
-                ? consoleLogs
-                : null
+              currentStep.type === ActionType.CODE ? consoleLogs : null
             }
           ></TestSampleDataViewer>
         )}
@@ -201,15 +202,19 @@ const TestStepSectionImplementation =  React.memo(
   },
 );
 
-const TestActionSection = React.memo(
-  (props: TestActionComponentProps) => {
-    const currentStep = useBuilderStateContext((state) => state.selectedStep ? flowStructureUtil.getStep(state.selectedStep, state.flowVersion.trigger) : null);
-    if(isNil(currentStep)) {
-      return null;
-    }
-    return <TestStepSectionImplementation {...props} currentStep={currentStep} />;
-  },
-);
+const TestActionSection = React.memo((props: TestActionComponentProps) => {
+  const currentStep = useBuilderStateContext((state) =>
+    state.selectedStep
+      ? flowStructureUtil.getStep(state.selectedStep, state.flowVersion.trigger)
+      : null,
+  );
+  if (isNil(currentStep)) {
+    return null;
+  }
+  return <TestStepSectionImplementation {...props} currentStep={currentStep} />;
+});
+
+TestStepSectionImplementation.displayName = 'TestStepSectionImplementation';
 TestActionSection.displayName = 'TestActionSection';
 
 export { TestActionSection };
