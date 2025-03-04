@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Bot, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
@@ -14,23 +14,25 @@ import { ConfigureProviderDialog } from './configure-provider-dialog';
 
 const CopilotSetup = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const { platform, refetch } = platformHooks.useCurrentPlatform();
-
-  const deleteMutation = useMutation({
+  const { platform, setCurrentPlatform } = platformHooks.useCurrentPlatform();
+  const queryClient = useQueryClient();
+  const { mutate: deleteMutation, isPending: isDeleting } = useMutation({
     mutationFn: async () => {
       const platformId = authenticationSession.getPlatformId();
-      if (!platformId) return;
-      await platformApi.update(
+      if (!platformId) return null;
+      return( await platformApi.update(
         {
           copilotSettings: {
             providers: {},
           },
         },
         platformId,
-      );
+      ));
     },
-    onSuccess: () => {
-      refetch();
+    onSuccess: (response) => {
+      if (response) {
+        setCurrentPlatform(queryClient, response);
+      }
     },
   });
 
@@ -85,6 +87,7 @@ const CopilotSetup = () => {
             <Button
               variant={configuredProvider ? 'ghost' : 'basic'}
               size={'sm'}
+              disabled={isDeleting}
               onClick={handleConfigure}
             >
               {configuredProvider ? <Pencil className="size-4" /> : t('Enable')}
@@ -93,7 +96,10 @@ const CopilotSetup = () => {
               <Button
                 variant="ghost"
                 size={'sm'}
-                onClick={() => deleteMutation.mutate()}
+                onClick={() => {
+                  deleteMutation();
+                }}
+                loading={isDeleting}
                 className="text-destructive hover:text-destructive/90 hover:bg-destructive/10 flex items-center gap-2"
               >
                 <Trash2 className="size-4" />

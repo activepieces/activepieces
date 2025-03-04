@@ -117,8 +117,18 @@ export const platformService = {
     },
     async update(params: UpdateParams): Promise<Platform> {
         const platform = await this.getOneOrThrow(params.id)
+        const federatedAuthProviders = {
+            ...platform.federatedAuthProviders,
+            ...(params.federatedAuthProviders ?? {}),
+        }
+        const copilotSettings = params.copilotSettings? {
+            ...platform.copilotSettings,
+            ...params.copilotSettings
+        }: platform.copilotSettings;
         const updatedPlatform: Platform = {
             ...platform,
+            copilotSettings,
+            federatedAuthProviders,
             ...spreadIfDefined('name', params.name),
             ...spreadIfDefined('auditLogEnabled', params.auditLogEnabled),
             ...spreadIfDefined('primaryColor', params.primaryColor),
@@ -128,10 +138,6 @@ export const platformService = {
             ...spreadIfDefined('filteredPieceNames', params.filteredPieceNames),
             ...spreadIfDefined('filteredPieceBehavior', params.filteredPieceBehavior),
             ...spreadIfDefined('analyticsEnabled', params.analyticsEnabled),
-            ...spreadIfDefined(
-                'federatedAuthProviders',
-                params.federatedAuthProviders,
-            ),
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
             ...spreadIfDefined('defaultLocale', params.defaultLocale),
             ...spreadIfDefined('showPoweredBy', params.showPoweredBy),
@@ -157,10 +163,8 @@ export const platformService = {
             ...spreadIfDefined('alertsEnabled', params.alertsEnabled),
             ...spreadIfDefined('licenseKey', params.licenseKey),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
-            ...spreadIfDefined('copilotSettings', params.copilotSettings),
             smtp: params.smtp,
         }
-
         return repo().save(updatedPlatform)
     },
 

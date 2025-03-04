@@ -96,7 +96,7 @@ export const ConfigureSamlDialog = ({
             onClick={(e) => {
               mutate({
                 federatedAuthProviders: {
-                  saml: undefined,
+                  saml: null,
                 },
               });
               e.preventDefault();

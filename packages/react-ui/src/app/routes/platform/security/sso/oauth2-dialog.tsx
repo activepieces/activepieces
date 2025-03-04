@@ -94,7 +94,7 @@ export const NewOAuth2Dialog = ({
             onClick={(e) => {
               mutate({
                 federatedAuthProviders: {
-                  [providerName]: undefined,
+                  [providerName]: null,
                 },
               });
               e.preventDefault();

@@ -28,10 +28,11 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
             await smtpEmailSender(req.log).validateOrThrow(smtp)
         }
 
-        return platformService.update({
+        const platform = await platformService.update({
             id: req.params.id,
             ...req.body,
         })
+        return platform
     })
 
     app.get('/', ListPlatformsForIdentityRequest, async (req) => {
