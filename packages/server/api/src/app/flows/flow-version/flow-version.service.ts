@@ -294,6 +294,7 @@ async function removeSecretsFromFlow(
         }
         if (removeSampleData && !isNil(clonedStep?.settings?.inputUiInfo)) {
             clonedStep.settings.inputUiInfo.sampleDataFileId = undefined
+            clonedStep.settings.inputUiInfo.sampleDataInputFileId = undefined
             clonedStep.settings.inputUiInfo.currentSelectedData = undefined
             clonedStep.settings.inputUiInfo.lastTestDate = undefined
         }

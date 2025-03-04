@@ -4,6 +4,7 @@ import {
   FlowRunId,
   PopulatedFlow,
   ProjectId,
+  RespondResponse,
   ResumePayload,
   SeekPage,
   TriggerPayload,
@@ -87,7 +88,13 @@ export type StopHookParams = {
   response: StopResponse;
 };
 
+export type RespondHookParams = {
+  response: RespondResponse;
+};
+
 export type StopHook = (params?: StopHookParams) => void;
+
+export type RespondHook = (params?: RespondHookParams) => void;
 
 export type PauseHookParams = {
   pauseMetadata: PauseMetadata;
@@ -129,6 +136,7 @@ export type RunContext = {
   id: FlowRunId;
   stop: StopHook;
   pause: PauseHook;
+  respond: RespondHook;
 }
 
 export type OnStartContext<

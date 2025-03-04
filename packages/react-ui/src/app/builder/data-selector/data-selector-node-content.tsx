@@ -9,7 +9,7 @@ import { PieceIcon } from '../../../features/pieces/components/piece-icon';
 import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
 import { useBuilderStateContext } from '../builder-hooks';
 
-import { MentionTreeNode } from './data-selector-utils';
+import { DataSelectorTreeNode } from './type';
 
 const ToggleIcon = ({ expanded }: { expanded: boolean }) => {
   const toggleIconSize = 15;
@@ -24,7 +24,7 @@ type DataSelectorNodeContentProps = {
   expanded: boolean;
   setExpanded: (expanded: boolean) => void;
   depth: number;
-  node: MentionTreeNode;
+  node: DataSelectorTreeNode;
 };
 const handleKeyPress = (event: React.KeyboardEvent<HTMLDivElement>) => {
   if (event.key === 'Enter' || event.key === ' ') {
@@ -45,22 +45,18 @@ const DataSelectorNodeContent = ({
   const insertMention = useBuilderStateContext((state) => state.insertMention);
 
   const [ripple, rippleEvent] = useApRipple();
-  const step = !node.data.isSlice
-    ? flowStructureUtil.getStep(node.data.propertyPath, flowVersion.trigger)
-    : undefined;
+  const step =
+    node.data.type === 'value'
+      ? flowStructureUtil.getStep(node.data.propertyPath, flowVersion.trigger)
+      : node.data.type === 'test'
+      ? flowStructureUtil.getStep(node.data.stepName, flowVersion.trigger)
+      : undefined;
   const stepMetadata = step
     ? piecesHooks.useStepMetadata({ step }).stepMetadata
     : undefined;
-
   const showInsertButton =
-    !node.data.isSlice &&
-    !(
-      node.children &&
-      node.children.length > 0 &&
-      node.children[0].data.isTestStepNode
-    ) &&
-    node.data.insertable;
-  const showNodeValue = !node.children && !!node.data.value;
+    node.data.type === 'value' && node.data.insertable && !node.isLoopStepNode;
+  const showNodeValue = !node.children && node.data.type === 'value';
 
   return (
     <div
@@ -71,7 +67,11 @@ const DataSelectorNodeContent = ({
         if (node.children && node.children.length > 0) {
           rippleEvent(e);
           setExpanded(!expanded);
-        } else if (insertMention && node.data.insertable) {
+        } else if (
+          insertMention &&
+          node.data.type === 'value' &&
+          node.data.insertable
+        ) {
           rippleEvent(e);
           insertMention(node.data.propertyPath);
         }
@@ -96,13 +96,15 @@ const DataSelectorNodeContent = ({
             ></PieceIcon>
           </div>
         )}
-        <div className=" truncate">{node.data.displayName}</div>
+        {node.data.type !== 'test' && (
+          <div className=" truncate">{node.data.displayName}</div>
+        )}
 
         {showNodeValue && (
           <>
             <div className="flex-shrink-0">:</div>
             <div className="flex-1 text-primary truncate">
-              {`${node.data.value}`}
+              {`${node.data.type === 'value' ? node.data.value : ''}`}
             </div>
           </>
         )}
@@ -116,7 +118,9 @@ const DataSelectorNodeContent = ({
               onClick={(e) => {
                 e.stopPropagation();
                 if (insertMention) {
-                  insertMention(node.data.propertyPath);
+                  insertMention(
+                    node.data.type === 'value' ? node.data.propertyPath : '',
+                  );
                 }
               }}
             >
