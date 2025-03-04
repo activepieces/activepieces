@@ -121,10 +121,10 @@ export const platformService = {
             ...platform.federatedAuthProviders,
             ...(params.federatedAuthProviders ?? {}),
         }
-        const copilotSettings = params.copilotSettings? {
+        const copilotSettings = params.copilotSettings ? {
             ...platform.copilotSettings,
-            ...params.copilotSettings
-        }: platform.copilotSettings;
+            ...params.copilotSettings,
+        } : platform.copilotSettings
         const updatedPlatform: Platform = {
             ...platform,
             copilotSettings,

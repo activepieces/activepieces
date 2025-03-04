@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
-import { ThirdPartyAuthnProviderEnum } from './authn-provider-name'
 import { Nullable } from '../common'
+import { ThirdPartyAuthnProviderEnum } from './authn-provider-name'
 
 export * from './authn-provider-name'
 

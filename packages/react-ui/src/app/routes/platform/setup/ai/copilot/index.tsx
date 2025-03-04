@@ -20,14 +20,14 @@ const CopilotSetup = () => {
     mutationFn: async () => {
       const platformId = authenticationSession.getPlatformId();
       if (!platformId) return null;
-      return( await platformApi.update(
+      return await platformApi.update(
         {
           copilotSettings: {
             providers: {},
           },
         },
         platformId,
-      ));
+      );
     },
     onSuccess: (response) => {
       if (response) {
