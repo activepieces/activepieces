@@ -1,9 +1,7 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { FieldErrors, useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -19,29 +17,54 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTableState } from '@/features/tables/components/ap-table-state-provider';
 import { getColumnIcon } from '@/features/tables/lib/utils';
 import { cn } from '@/lib/utils';
-import { FieldType } from '@activepieces/shared';
+import { FieldType, isNil } from '@activepieces/shared';
 
 import { tableHooks } from '../lib/ap-tables-hooks';
 
-const NewFieldSchema = Type.Object({
-  name: Type.String({ minLength: 1 }),
-  type: Type.Enum(FieldType),
-});
 
-type NewFieldSchema = Static<typeof NewFieldSchema>;
 
 type NewFieldDialogProps = {
   children: React.ReactNode;
   tableId: string;
 };
+type NewFieldFormData = {
+  name: string;
+  type: FieldType;
+}
 
 export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const [enqueueMutation] = useTableState((state) => [state.enqueueMutation]);
-
-  const form = useForm<NewFieldSchema>({
-    resolver: typeboxResolver(NewFieldSchema),
+  const {data: fields} = tableHooks.useFetchFields(tableId);
+  const form = useForm<NewFieldFormData>({
+    resolver: (data)=>{
+      const errors:FieldErrors<NewFieldFormData> = {};
+      if(data.name.length === 0){
+       errors['name'] = {
+        message: t('Please enter a field name'),
+        type: 'required',
+       }
+      }
+      else {
+        if(fields?.find(field => field.name === data.name)){
+          errors['name'] = {
+            message: t('Please pick a unique field name'),
+            type: 'unique',
+          }
+        }
+      }
+      if(isNil(data.type)){
+        errors['type'] = {
+          message: t('Type is required'),
+          type: 'required',
+        }
+      }
+      return {
+        values: Object.keys(errors).length === 0 ? data : {},
+        errors,
+      }
+    },
     defaultValues: {
       type: FieldType.TEXT,
     },
@@ -49,21 +72,19 @@ export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
 
   const createFieldMutation = tableHooks.useCreateField({
     queryClient,
-    tableId,
-    onSuccess: () => {
-      setOpen(false);
-      form.reset();
-    },
+    tableId
   });
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="w-[400px] p-4" align="start">
+      <PopoverContent className="w-[400px] p-4 drop-shadow-xl" align="start">
         <div className="text-lg font-semibold mb-4">{t('New Field')}</div>
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(async (data) => {
+              form.reset();
+              setOpen(false);
               await enqueueMutation(createFieldMutation, {
                 ...data,
                 tableId,
@@ -77,7 +98,7 @@ export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
                   <Label htmlFor="name">{t('Name')}</Label>
-                  <Input {...field} id="name" />
+                  <Input className='p-2 h-8' {...field} id="name" />
                   <FormMessage />
                 </FormItem>
               )}
@@ -121,18 +142,17 @@ export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
               )}
             />
             <div className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
+                <Button
+                  type="button"
+                  size="sm"
+                variant="ghost"
                 onClick={() => setOpen(false)}
-                disabled={createFieldMutation.isPending}
               >
                 {t('Cancel')}
               </Button>
               <Button
                 type="submit"
-                disabled={!form.formState.isValid}
-                onClick={() => setOpen(false)}
+                size="sm"
               >
                 {t('Create')}
               </Button>

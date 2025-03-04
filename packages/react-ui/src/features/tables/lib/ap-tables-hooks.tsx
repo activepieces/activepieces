@@ -361,11 +361,9 @@ export const tableHooks = {
   useCreateField: ({
     queryClient,
     tableId,
-    onSuccess,
   }: {
     queryClient: QueryClient;
     tableId: string;
-    onSuccess: () => void;
   }) => {
     return useMutation({
       mutationFn: async (request: CreateFieldRequest) => {
@@ -399,7 +397,6 @@ export const tableHooks = {
         }
         toast(INTERNAL_ERROR_TOAST);
       },
-      onSuccess,
       onSettled: (data, error, variables, context) => {
         if (data && context?.optimisticField) {
           // Replace the optimistic field with the real one
