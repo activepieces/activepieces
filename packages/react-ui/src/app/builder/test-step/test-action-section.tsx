@@ -157,7 +157,7 @@ const TestStepSectionImplementation = React.memo(
     });
 
     const [lastTestDate, setLastTestDate] = useState(
-      currentStep.settings.inputUiInfo.lastTestDate,
+      currentStep.settings.inputUiInfo?.lastTestDate,
     );
 
     const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
