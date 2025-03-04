@@ -79,8 +79,12 @@ export const piecesHooks = {
     version,
     enabled = true,
   }: UsePieceAndMostRecentPatchProps) => {
-    const exactVersion = version ? flowPieceUtil.getExactVersion(version) : undefined;
-    const latestPatchVersion = exactVersion ? flowPieceUtil.getNextVersion(exactVersion) : undefined;
+    const exactVersion = version
+      ? flowPieceUtil.getExactVersion(version)
+      : undefined;
+    const latestPatchVersion = exactVersion
+      ? flowPieceUtil.getNextVersion(exactVersion)
+      : undefined;
     const pieceQuery = piecesHooks.usePiece({
       name,
       version: exactVersion,
