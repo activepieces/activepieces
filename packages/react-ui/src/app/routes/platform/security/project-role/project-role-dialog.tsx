@@ -10,6 +10,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/components/ui/use-toast';
 import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
 import { Permission, ProjectRole, RoleType } from '@activepieces/shared';
@@ -53,6 +54,18 @@ const initialPermissions = [
     description: 'Read and write issues',
     read: [Permission.READ_ISSUES],
     write: [Permission.READ_ISSUES, Permission.WRITE_ISSUES],
+  },
+  {
+    name: 'Alerts',
+    description: 'Read and write alerts',
+    read: [Permission.READ_ALERT],
+    write: [Permission.READ_ALERT, Permission.WRITE_ALERT],
+  },
+  {
+    name: 'Folders',
+    description: 'Read and write folders',
+    read: [Permission.READ_FOLDER],
+    write: [Permission.READ_FOLDER, Permission.WRITE_FOLDER],
   },
   {
     name: 'Project Members',
@@ -201,7 +214,7 @@ export const ProjectRoleDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="w-full max-w-2xl">
+      <DialogContent className="w-full max-w-3xl">
         <DialogTitle>
           {mode === 'create'
             ? t('Create New Role')
@@ -230,59 +243,61 @@ export const ProjectRoleDialog = ({
               {t('Permissions')}
             </span>
             <div className="overflow-y-auto p-2 rounded-md">
-              {initialPermissions.map((permission, index) => (
-                <div
-                  key={permission.name}
-                  className={`w-full flex flex-col justify-between py-2 ${
-                    index !== initialPermissions.length - 1 ? 'border-b' : ''
-                  }`}
-                >
-                  <div className="w-full flex flex-row justify-between">
-                    <span className="font-bold text-gray-700">
-                      {permission.name}
-                    </span>
-                    <div className="flex bg-gray-100 rounded-sm space-x-2">
-                      {!permission.disableNone && (
+              <ScrollArea className="h-[70vh] pr-4">
+                {initialPermissions.map((permission, index) => (
+                  <div
+                    key={permission.name}
+                    className={`w-full flex flex-col justify-between py-2 ${
+                      index !== initialPermissions.length - 1 ? 'border-b' : ''
+                    }`}
+                  >
+                    <div className="w-full flex flex-row justify-between">
+                      <span className="font-bold text-gray-700">
+                        {permission.name}
+                      </span>
+                      <div className="flex bg-gray-100 rounded-sm space-x-2">
+                        {!permission.disableNone && (
+                          <Button
+                            className="h-9 px-4"
+                            variant={getButtonVariant(permission.name, 'None')}
+                            onClick={() =>
+                              handlePermissionChange(permission.name, 'None')
+                            }
+                            disabled={disabled}
+                          >
+                            {t('None')}
+                          </Button>
+                        )}
+                        {!permission.disableRead && (
+                          <Button
+                            className="h-9 px-4"
+                            variant={getButtonVariant(permission.name, 'Read')}
+                            onClick={() =>
+                              handlePermissionChange(permission.name, 'Read')
+                            }
+                            disabled={disabled}
+                          >
+                            {t('Read')}
+                          </Button>
+                        )}
                         <Button
                           className="h-9 px-4"
-                          variant={getButtonVariant(permission.name, 'None')}
+                          variant={getButtonVariant(permission.name, 'Write')}
                           onClick={() =>
-                            handlePermissionChange(permission.name, 'None')
+                            handlePermissionChange(permission.name, 'Write')
                           }
                           disabled={disabled}
                         >
-                          {t('None')}
+                          {t('Write')}
                         </Button>
-                      )}
-                      {!permission.disableRead && (
-                        <Button
-                          className="h-9 px-4"
-                          variant={getButtonVariant(permission.name, 'Read')}
-                          onClick={() =>
-                            handlePermissionChange(permission.name, 'Read')
-                          }
-                          disabled={disabled}
-                        >
-                          {t('Read')}
-                        </Button>
-                      )}
-                      <Button
-                        className="h-9 px-4"
-                        variant={getButtonVariant(permission.name, 'Write')}
-                        onClick={() =>
-                          handlePermissionChange(permission.name, 'Write')
-                        }
-                        disabled={disabled}
-                      >
-                        {t('Write')}
-                      </Button>
+                      </div>
                     </div>
+                    <span className="text-sm text-gray-500">
+                      {permission.description}
+                    </span>
                   </div>
-                  <span className="text-sm text-gray-500">
-                    {permission.description}
-                  </span>
-                </div>
-              ))}
+                ))}
+              </ScrollArea>
             </div>
           </div>
           {!disabled && (

@@ -48,6 +48,7 @@ import {
 } from './flow-canvas/context-menu/canvas-context-menu';
 import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
 import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
+import { textMentionUtils } from './piece-properties/text-input-with-mentions/text-input-utils';
 
 const flowUpdatesQueue = new PromiseQueue();
 
@@ -81,6 +82,7 @@ export type BuilderState = {
   flowVersion: FlowVersion;
   readonly: boolean;
   sampleData: Record<string, unknown>;
+  sampleDataInput: Record<string, unknown>;
   loopsIndexes: Record<string, number>;
   run: FlowRun | null;
   leftSidebar: LeftSideBarType;
@@ -108,6 +110,7 @@ export type BuilderState = {
   setActiveDraggingStep: (stepName: string | null) => void;
   setFlow: (flow: PopulatedFlow) => void;
   setSampleData: (stepName: string, payload: unknown) => void;
+  setSampleDataInput: (stepName: string, payload: unknown) => void;
   exitPieceSelector: () => void;
   setVersion: (flowVersion: FlowVersion) => void;
   insertMention: InsertMentionHandler | null;
@@ -137,11 +140,21 @@ export type BuilderState = {
   setPanningMode: (mode: 'grab' | 'pan') => void;
   pieceSelectorStep: string | null;
   setPieceSelectorStep: (step: string | null) => void;
+  isFocusInsideListMapperModeInput: boolean;
+  setIsFocusInsideListMapperModeInput: (
+    isFocusInsideListMapperModeInput: boolean,
+  ) => void;
 };
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
   BuilderState,
-  'flow' | 'flowVersion' | 'readonly' | 'run' | 'canExitRun' | 'sampleData'
+  | 'flow'
+  | 'flowVersion'
+  | 'readonly'
+  | 'run'
+  | 'canExitRun'
+  | 'sampleData'
+  | 'sampleDataInput'
 >;
 
 export type BuilderStore = ReturnType<typeof createBuilderStore>;
@@ -187,6 +200,7 @@ export const createBuilderStore = (
             )
           : {},
       sampleData: initialState.sampleData,
+      sampleDataInput: initialState.sampleDataInput,
       flow: initialState.flow,
       flowVersion: initialState.flowVersion,
       leftSidebar: initialState.run
@@ -278,6 +292,15 @@ export const createBuilderStore = (
           return {
             sampleData: {
               ...state.sampleData,
+              [stepName]: payload,
+            },
+          };
+        }),
+      setSampleDataInput: (stepName: string, payload: unknown) =>
+        set((state) => {
+          return {
+            sampleDataInput: {
+              ...state.sampleDataInput,
               [stepName]: payload,
             },
           };
@@ -486,6 +509,14 @@ export const createBuilderStore = (
           };
         });
       },
+      isFocusInsideListMapperModeInput: false,
+      setIsFocusInsideListMapperModeInput: (
+        isFocusInsideListMapperModeInput: boolean,
+      ) => {
+        return set(() => ({
+          isFocusInsideListMapperModeInput,
+        }));
+      },
     };
   });
 
@@ -675,6 +706,38 @@ export const usePasteActionsInClipboard = () => {
   return { actionsToPaste, fetchClipboardOperations };
 };
 
+export const useIsFocusInsideListMapperModeInput = ({
+  containerRef,
+  setIsFocusInsideListMapperModeInput,
+  isFocusInsideListMapperModeInput,
+}: {
+  containerRef: React.RefObject<HTMLDivElement>;
+  setIsFocusInsideListMapperModeInput: (
+    isFocusInsideListMapperModeInput: boolean,
+  ) => void;
+  isFocusInsideListMapperModeInput: boolean;
+}) => {
+  useEffect(() => {
+    const focusInListener = () => {
+      const focusedElement = document.activeElement;
+      const isFocusedInside = !!containerRef.current?.contains(focusedElement);
+      const isFocusedInsideDataSelector =
+        !isNil(document.activeElement) &&
+        document.activeElement instanceof HTMLElement &&
+        textMentionUtils.isDataSelectorOrChildOfDataSelector(
+          document.activeElement,
+        );
+      setIsFocusInsideListMapperModeInput(
+        isFocusedInside ||
+          (isFocusedInsideDataSelector && isFocusInsideListMapperModeInput),
+      );
+    };
+    document.addEventListener('focusin', focusInListener);
+    return () => {
+      document.removeEventListener('focusin', focusInListener);
+    };
+  }, [setIsFocusInsideListMapperModeInput, isFocusInsideListMapperModeInput]);
+};
 export const useFocusedFailedStep = () => {
   const currentRun = useBuilderStateContext((state) => state.run);
   const previousRun = usePrevious(currentRun);

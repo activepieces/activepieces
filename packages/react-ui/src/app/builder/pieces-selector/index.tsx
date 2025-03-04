@@ -71,19 +71,13 @@ const PieceSelector = ({
   const [selectedTag, setSelectedTag] = useState<PieceTagEnum>(
     PieceTagEnum.ALL,
   );
-  const [
-    applyOperation,
-    selectStepByName,
-    flowVersion,
-    setSampleData,
-    setAskAiButtonProps,
-  ] = useBuilderStateContext((state) => [
-    state.applyOperation,
-    state.selectStepByName,
-    state.flowVersion,
-    state.setSampleData,
-    state.setAskAiButtonProps,
-  ]);
+  const [applyOperation, selectStepByName, flowVersion, setAskAiButtonProps] =
+    useBuilderStateContext((state) => [
+      state.applyOperation,
+      state.selectStepByName,
+      state.flowVersion,
+      state.setAskAiButtonProps,
+    ]);
 
   const isTrigger = operation.type === FlowOperationType.UPDATE_TRIGGER;
   const { metadata, isLoading: isLoadingPieces } =
@@ -200,7 +194,6 @@ const PieceSelector = ({
 
     switch (operation.type) {
       case FlowOperationType.UPDATE_TRIGGER: {
-        setSampleData(stepData.name, undefined);
         applyOperation({
           type: FlowOperationType.UPDATE_TRIGGER,
           request: stepData as Trigger,
