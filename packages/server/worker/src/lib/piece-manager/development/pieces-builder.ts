@@ -34,8 +34,13 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
         const cmd = `npx nx run-many -t build --projects=${pieceProjectName}`
         await runCommandWithLiveOutput(cmd)
         await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
+        
         const cache = cacheHandler(globalCachePath)
+        await cache.setCache('@activepieces/pieces-framework', CacheState.PENDING)
+        await cache.setCache('@activepieces/pieces-common', CacheState.PENDING)
+        await cache.setCache('@activepieces/shared', CacheState.PENDING)
         await cache.setCache(piecePackageName, CacheState.PENDING)
+
         io.emit(WebsocketClientEvent.REFRESH_PIECE)
     }
     catch (error) {
