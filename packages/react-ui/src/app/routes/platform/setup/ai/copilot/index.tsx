@@ -37,7 +37,6 @@ const CopilotSetup = () => {
   const getConfiguredProvider = () => {
     if (!platform?.copilotSettings?.providers) return null;
     const { providers } = platform.copilotSettings;
-
     if (!isNil(providers[CopilotProviderType.OPENAI])) {
       return {
         type: CopilotProviderType.OPENAI,

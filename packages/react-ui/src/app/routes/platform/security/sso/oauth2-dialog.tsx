@@ -20,12 +20,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { platformApi } from '@/lib/platforms-api';
-import { Platform, UpdatePlatformRequestBody } from '@activepieces/shared';
+import {
+  PlatformWithoutSensitiveData,
+  UpdatePlatformRequestBody,
+} from '@activepieces/shared';
 
 type NewOAuth2DialogProps = {
   providerName: 'google' | 'github';
   providerDisplayName: string;
-  platform: Platform;
+  platform: PlatformWithoutSensitiveData;
   connected: boolean;
   refetch: () => Promise<void>;
 };
@@ -91,7 +94,6 @@ export const NewOAuth2Dialog = ({
             onClick={(e) => {
               mutate({
                 federatedAuthProviders: {
-                  ...platform.federatedAuthProviders,
                   [providerName]: undefined,
                 },
               });
@@ -132,7 +134,6 @@ export const NewOAuth2Dialog = ({
             onSubmit={form.handleSubmit((data) => {
               mutate({
                 federatedAuthProviders: {
-                  ...platform.federatedAuthProviders,
                   [providerName]: data,
                 },
               });
