@@ -121,15 +121,19 @@ const FolderItem = ({
           <div onClick={(e) => e.stopPropagation()} className="flex flex-row ">
             <span
               className={cn(
-                'text-muted-foreground self-end group-hover:hidden',
-                { invisible: isActionMenuOpen },
+                'text-muted-foreground self-end',
+                { 
+                  'group-hover:hidden': userHasPermissionToUpdateFolders,
+                  'invisible': isActionMenuOpen 
+                }
               )}
             >
               {folder.numberOfFlows}
             </span>
-            <DropdownMenu onOpenChange={setIsActionMenuOpen} modal={true}>
-              <DropdownMenuTrigger asChild>
-                <div
+            {userHasPermissionToUpdateFolders && (
+              <DropdownMenu onOpenChange={setIsActionMenuOpen} modal={true}>
+                <DropdownMenuTrigger asChild>
+                  <div
                   className={cn('w-0 group-hover:w-3 overflow-hidden', {
                     '!w-3': isActionMenuOpen,
                   })}
@@ -185,8 +189,9 @@ const FolderItem = ({
                     </DropdownMenuItem>
                   </ConfirmationDeleteDialog>
                 </PermissionNeededTooltip>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </TextWithIcon>
       </Button>
@@ -197,7 +202,7 @@ const FolderItem = ({
 const FolderFilterList = ({ refresh }: { refresh: number }) => {
   const location = useLocation();
   const { checkAccess } = useAuthorization();
-  const userHasPermissionToUpdateFolders = checkAccess(Permission.WRITE_FLOW);
+  const userHasPermissionToUpdateFolders = checkAccess(Permission.WRITE_FOLDER);
   const [searchParams, setSearchParams] = useSearchParams(location.search);
   const selectedFolderId = searchParams.get(folderIdParamName);
   const [
