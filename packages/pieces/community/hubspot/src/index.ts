@@ -70,6 +70,7 @@ import { getLandingPageAction } from './lib/actions/get-landing-page';
 import { getSitePageAction } from './lib/actions/get-site-page';
 import { deleteLandingPageAction } from './lib/actions/delete-landing-page';
 import { deleteSitePageAction } from './lib/actions/delete-site-page';
+import { createLandingPageAction } from './lib/actions/create-landing-page';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -124,6 +125,7 @@ export const hubspot = createPiece({
 		createCustomObjectAction,
 		createDealAction,
 		createLineItemAction,
+		createLandingPageAction,
 		createOrUpdateContactAction,
 		createProductAction,
 		createTicketAction,
