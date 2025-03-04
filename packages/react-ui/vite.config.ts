@@ -26,7 +26,6 @@ export default defineConfig({
     port: 4200,
     host: '0.0.0.0',
   },
-
   preview: {
     port: 4300,
     host: 'localhost',
@@ -56,7 +55,11 @@ export default defineConfig({
     react(),
     nxViteTsPaths(),
     checker({
-      typescript: true,
+      typescript: {
+        buildMode: true,
+        tsconfigPath: './tsconfig.json',
+        root: __dirname
+      }
     }),
   ],
 
@@ -67,6 +70,7 @@ export default defineConfig({
     commonjsOptions: {
       transformMixedEsModules: true,
     },
+  
     rollupOptions: {
       onLog(level, log, handler) {
         if (
