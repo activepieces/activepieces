@@ -423,7 +423,10 @@ const FlowsPage = () => {
                   </PermissionNeededTooltip>
                   {!embedState.hideFolders && (
                     <PermissionNeededTooltip
-                      hasPermission={userHasPermissionToUpdateFlow || userHasPermissionToWriteFolder}
+                      hasPermission={
+                        userHasPermissionToUpdateFlow ||
+                        userHasPermissionToWriteFolder
+                      }
                     >
                       <MoveFlowDialog
                         flows={selectedRows}
@@ -436,7 +439,10 @@ const FlowsPage = () => {
                         }}
                       >
                         <DropdownMenuItem
-                          disabled={!userHasPermissionToUpdateFlow || !userHasPermissionToWriteFolder}
+                          disabled={
+                            !userHasPermissionToUpdateFlow ||
+                            !userHasPermissionToWriteFolder
+                          }
                           onSelect={(e) => e.preventDefault()}
                         >
                           <div className="flex cursor-pointer  flex-row gap-2 items-center">
