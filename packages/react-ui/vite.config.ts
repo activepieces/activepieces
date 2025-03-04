@@ -58,8 +58,8 @@ export default defineConfig({
       typescript: {
         buildMode: true,
         tsconfigPath: './tsconfig.json',
-        root: __dirname
-      }
+        root: __dirname,
+      },
     }),
   ],
 
@@ -70,7 +70,7 @@ export default defineConfig({
     commonjsOptions: {
       transformMixedEsModules: true,
     },
-  
+
     rollupOptions: {
       onLog(level, log, handler) {
         if (
