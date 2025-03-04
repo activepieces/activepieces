@@ -85,10 +85,22 @@ export const returnResponse = createAction({
         return fields;
       },
     }),
+    respond: Property.StaticDropdown({
+      displayName: 'Flow Execution',
+      required: false,
+      defaultValue: 'stop',
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Stop', value: 'stop' },
+          { label: 'Respond and Continue', value: 'respond' },
+        ],
+      },
+    }),
   },
 
   async run(context) {
-    const { fields, responseType } = context.propsValue;
+    const { fields, responseType, respond } = context.propsValue;
     const bodyInput = fields ['body'];
     const headers = fields['headers'];
     const status = fields['status'];
@@ -111,9 +123,15 @@ export const returnResponse = createAction({
         break;
     }
     
-    context.run.stop({
-      response: response,
-    });
+    if (respond === 'respond') {
+      context.run.respond({
+        response: response,
+      });
+    } else {
+      context.run.stop({
+        response: response,
+      });
+    }
     return response;
   },
 });
