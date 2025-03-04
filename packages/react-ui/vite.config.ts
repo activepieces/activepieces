@@ -26,6 +26,7 @@ export default defineConfig({
     port: 4200,
     host: '0.0.0.0',
   },
+
   preview: {
     port: 4300,
     host: 'localhost',
@@ -70,7 +71,6 @@ export default defineConfig({
     commonjsOptions: {
       transformMixedEsModules: true,
     },
-
     rollupOptions: {
       onLog(level, log, handler) {
         if (

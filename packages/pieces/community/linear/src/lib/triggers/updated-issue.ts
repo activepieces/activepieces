@@ -9,7 +9,7 @@ export const linearUpdatedIssue = createTrigger({
   displayName: 'Updated Issue',
   description: 'Triggers when an existing Linear issue is updated',
   props: {
-    team_id: props.team_id()
+    team_id: props.team_id(false)
   },
   sampleData: {
     // Sample data structure based on Linear's webhook payload for issues
@@ -77,12 +77,22 @@ export const linearUpdatedIssue = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const client = makeClient(context.auth as string);
-    const webhook = await client.createWebhook({
+    
+    // Create webhook configuration
+    const webhookConfig: any = {
       label: 'ActivePieces Updated Issue',
       url: context.webhookUrl,
-      teamId: context.propsValue['team_id'],
+      allPublicTeams: true,
       resourceTypes: ['Issue']
-    });
+    };
+    
+    // Only add teamId if it's provided
+    if (context.propsValue['team_id']) {
+      webhookConfig.teamId = context.propsValue['team_id'];
+    }
+    
+    const webhook = await client.createWebhook(webhookConfig);
+    
     if (webhook.success && webhook.webhook) {
       await context.store?.put<WebhookInformation>('_updated_issue_trigger', {
         webhookId: (await webhook.webhook).id
