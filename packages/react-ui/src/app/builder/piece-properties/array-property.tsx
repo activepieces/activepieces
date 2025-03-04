@@ -41,6 +41,7 @@ const getDefaultValuesForInputs = (arrayProperties: ArraySubProps<boolean>) => {
       case PropertyType.LONG_TEXT:
       case PropertyType.SHORT_TEXT:
       case PropertyType.NUMBER:
+      case PropertyType.JSON:
         return {
           ...acc,
           [key]: '',
