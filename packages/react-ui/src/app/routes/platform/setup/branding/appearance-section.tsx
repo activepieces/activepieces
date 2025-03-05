@@ -65,7 +65,7 @@ export const AppearanceSection = () => {
           fullLogoUrl: form.getValues().logoUrl,
           logoIconUrl: form.getValues().iconUrl,
           favIconUrl: form.getValues().faviconUrl,
-          defaultLocale: form.getValues().language,
+          defaultLocale: form.getValues().language as LocalesEnum,
           primaryColor: form.getValues().color,
         },
         platform.id,

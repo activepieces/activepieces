@@ -33,7 +33,7 @@ export const flowPieceUtil = {
     getUsedPieces(trigger: Trigger): string[] {
         return flowStructureUtil.getAllSteps(trigger)
             .filter((step) => step.type === ActionType.PIECE || step.type === TriggerType.PIECE)
-            .map((step) => step.settings.pieceVersion)
+            .map((step) => step.settings.pieceName)
     },
     getNextVersion(pieceVersion: string): string {
         if (pieceVersion.startsWith('^') || pieceVersion.startsWith('~')) {
