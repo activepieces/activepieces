@@ -275,6 +275,9 @@ function buildSchema(props: PiecePropertyMap): TSchema {
             case PropertyType.DYNAMIC:
                 propsSchema[name] = Type.Record(Type.String(), Type.Any())
                 break
+            case PropertyType.CUSTOM:
+                propsSchema[name] = Type.Unknown()
+                break
         }
 
         if (!property.required) {

@@ -58,7 +58,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
             }
             if (request.platformId) {
                 rejectedPromiseHandler(telemetry(log).trackPlatform(request.platformId, {
-                    name: TelemetryEventName.KEY_ACTIVIATED,
+                    name: TelemetryEventName.KEY_ACTIVATED,
                     payload: {
                         date: dayjs().toISOString(),
                         key: request.key,
