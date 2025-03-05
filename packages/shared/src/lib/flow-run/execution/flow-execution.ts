@@ -69,7 +69,7 @@ const BaseExecutionResponse = {
     tasks: Type.Optional(Type.Number()),
     tags: Type.Optional(Type.Array(Type.String())),
     error: Type.Optional(FlowError),
-    stopResponse: Type.Optional(StopResponse),
+    response: Type.Optional(Type.Union([RespondResponse, PauseMetadata, StopResponse])),
 }
 
 export const FlowRunResponse = Type.Union([

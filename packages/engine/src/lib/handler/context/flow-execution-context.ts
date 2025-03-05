@@ -229,7 +229,7 @@ export class FlowExecutorContext {
                     return {
                         ...baseExecutionOutput,
                         status: FlowRunStatus.STOPPED,
-                        stopResponse: verdictResponse.stopResponse,
+                        response: verdictResponse.stopResponse,
                     }
                 }
                 return {

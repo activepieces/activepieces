@@ -1,5 +1,5 @@
 import { AppSystemProp, GetRunForWorkerRequest, JobStatus, QueueName, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, NotifyFrontendRequest, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, RemoveStableJobEngineRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, NotifyFrontendRequest, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, RemoveStableJobEngineRequest, StopResponse, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -301,11 +301,7 @@ async function getFlowResponse(
                 headers: {},
             }
         case FlowRunStatus.STOPPED:
-            return {
-                status: result.stopResponse?.status ?? StatusCodes.OK,
-                body: result.stopResponse?.body,
-                headers: result.stopResponse?.headers ?? {},
-            }
+            return stoppedResponse(result)
         case FlowRunStatus.INTERNAL_ERROR:
             return {
                 status: StatusCodes.INTERNAL_SERVER_ERROR,
@@ -430,4 +426,13 @@ const UpdateFlowResponseParams = {
             }),
         }),
     },
+}
+
+const stoppedResponse = (result: FlowRunResponse): EngineHttpResponse => {
+    const response = result.response as StopResponse
+    return {
+        status: response.status ?? StatusCodes.OK,
+        body: response.body,
+        headers: response.headers ?? {},
+    }
 }
