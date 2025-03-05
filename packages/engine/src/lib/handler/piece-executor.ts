@@ -126,6 +126,20 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const output = await runMethodToExecute(context)
         const newExecutionContext = executionState.addTags(hookResponse.tags)
 
+        if (hookResponse.response) {
+            const respondResponse = hookResponse.response as RespondHookParams
+            await progressService.sendFlowResponse(constants, {
+                runId: constants.flowRunId,
+                workerHandlerId: constants.serverHandlerId,
+                httpRequestId: constants.httpRequestId,
+                runResponse: {
+                    status: respondResponse.response.status ?? 200,
+                    body: respondResponse.response.body,
+                    headers: respondResponse.response.headers ?? {},
+                },
+            })
+        }
+
         if (hookResponse.stopped) {
             assertNotNullOrUndefined(hookResponse.response, 'stopResponse')
             return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).setVerdict(ExecutionVerdict.SUCCEEDED, {
@@ -140,20 +154,6 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                     reason: FlowRunStatus.PAUSED,
                     pauseMetadata: (hookResponse.response as PauseHookParams).pauseMetadata,
                 })
-        }
-
-        if (hookResponse.response){
-            const respondResponse = hookResponse.response as RespondHookParams
-            await progressService.sendFlowResponse(constants, {
-                runId: constants.flowRunId,
-                workerHandlerId: constants.serverHandlerId,
-                httpRequestId: constants.httpRequestId,
-                runResponse: {
-                    status: respondResponse.response.status ?? 200,
-                    body: respondResponse.response.body,
-                    headers: respondResponse.response.headers ?? {},
-                },
-            })
         }
         return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).increaseTask().setVerdict(ExecutionVerdict.RUNNING, undefined)
     }

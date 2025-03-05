@@ -82,8 +82,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/update-run', UpdateRunProgress, async (request) => {
         const { runId, workerHandlerId, runDetails, httpRequestId, executionStateBuffer, executionStateContentLength } = request.body
         const progressUpdateType = request.body.progressUpdateType ?? ProgressUpdateType.NONE
-        await handleWebhookResponse(runDetails, progressUpdateType, workerHandlerId, httpRequestId, request.log)
-
         const runWithoutSteps = await flowRunService(request.log).updateStatus({
             flowRunId: runId,
             status: getTerminalStatus(runDetails.status),
@@ -203,15 +201,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
 }
 
-async function handleWebhookResponse(runDetails: FlowRunResponse, progressUpdateType: ProgressUpdateType, workerHandlerId: string | null | undefined, httpRequestId: string | null | undefined, log: FastifyBaseLogger): Promise<void> {
-    if (runDetails.status !== FlowRunStatus.RUNNING && progressUpdateType === ProgressUpdateType.WEBHOOK_RESPONSE && workerHandlerId && httpRequestId) {
-        await engineResponseWatcher(log).publish(
-            httpRequestId,
-            workerHandlerId,
-            await getFlowResponse(runDetails),
-        )
-    }
-}
 async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePrincipal: EnginePrincipal, error: unknown, log: FastifyBaseLogger): Promise<void> {
     switch (status) {
         case FlowRunStatus.FAILED:
@@ -282,62 +271,6 @@ const getTerminalStatus = (
         ? FlowRunStatus.SUCCEEDED
         : status
 }
-
-async function getFlowResponse(
-    result: FlowRunResponse,
-): Promise<EngineHttpResponse> {
-    switch (result.status) {
-        case FlowRunStatus.PAUSED:
-            if (result.pauseMetadata && result.pauseMetadata.type === PauseType.WEBHOOK) {
-                return {
-                    status: StatusCodes.OK,
-                    body: result.pauseMetadata.response,
-                    headers: {},
-                }
-            }
-            return {
-                status: StatusCodes.NO_CONTENT,
-                body: {},
-                headers: {},
-            }
-        case FlowRunStatus.STOPPED:
-            return stoppedResponse(result)
-        case FlowRunStatus.INTERNAL_ERROR:
-            return {
-                status: StatusCodes.INTERNAL_SERVER_ERROR,
-                body: {
-                    message: 'An internal error has occurred',
-                },
-                headers: {},
-            }
-        case FlowRunStatus.FAILED:
-        case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
-            return {
-                status: StatusCodes.INTERNAL_SERVER_ERROR,
-                body: {
-                    message: 'The flow has failed and there is no response returned',
-                },
-                headers: {},
-            }
-        case FlowRunStatus.TIMEOUT:
-        case FlowRunStatus.RUNNING:
-            return {
-                status: StatusCodes.GATEWAY_TIMEOUT,
-                body: {
-                    message: 'The request took too long to reply',
-                },
-                headers: {},
-            }
-        case FlowRunStatus.SUCCEEDED:
-        case FlowRunStatus.QUOTA_EXCEEDED:
-            return {
-                status: StatusCodes.NO_CONTENT,
-                body: {},
-                headers: {},
-            }
-    }
-}
-
 
 const GetAllFlowsByProjectParams = {
     config: {
