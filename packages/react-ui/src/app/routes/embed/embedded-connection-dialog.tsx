@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { parentWindow } from '@/lib/utils';
+import { cn, parentWindow } from '@/lib/utils';
 import {
   apId,
   AppConnectionWithoutSensitiveData,
@@ -10,13 +10,15 @@ import {
   ActivepiecesClientConnectionNameIsInvalid,
   ActivepiecesClientConnectionPieceNotFound,
   ActivepiecesClientEventName,
+  ActivepiecesClientShowConnectionIframe,
   ActivepiecesNewConnectionDialogClosed,
   NEW_CONNECTION_QUERY_PARAMS,
 } from 'ee-embed-sdk';
 
 import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
-import { LoadingScreen } from '../../components/loading-screen';
-import { CreateOrEditConnectionDialog } from '../../connections/create-edit-connection-dialog';
+import { CreateOrEditConnectionDialogContent } from '../../connections/create-edit-connection-dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { LoadingSpinner } from '@/components/ui/spinner';
 
 const extractIdFromQueryParams = () => {
   const connectionName = new URLSearchParams(window.location.search).get(
@@ -65,7 +67,6 @@ const EmbeddedConnectionDialogContent = ({
   } = piecesHooks.usePiece({
     name: pieceName ?? '',
   });
-
   const hideConnectionIframe = (
     connection?: Pick<AppConnectionWithoutSensitiveData, 'id' | 'externalId'>,
   ) => {
@@ -90,6 +91,15 @@ const EmbeddedConnectionDialogContent = ({
   ) => {
     parentWindow.postMessage(event, '*');
   };
+  useEffect(()=>{
+    const showConnectionIframeEvent: ActivepiecesClientShowConnectionIframe =
+    {
+      type: ActivepiecesClientEventName.CLIENT_SHOW_CONNECTION_IFRAME,
+      data: {},
+    };
+  parentWindow.postMessage(showConnectionIframeEvent, '*');
+  document.body.style.background = 'transparent';
+  },[])
 
   useEffect(() => {
     if (!isSuccess && !isLoadingPiece && !hasErrorRef.current) {
@@ -107,28 +117,51 @@ const EmbeddedConnectionDialogContent = ({
     }
   }, [isSuccess, isLoadingPiece, pieceName]);
 
-  if (isLoadingPiece) {
-    return <LoadingScreen useDarkBackground={true} />;
-  }
 
-  if (!pieceModel) {
-    return null;
-  }
 
   return (
-    <CreateOrEditConnectionDialog
-      reconnectConnection={null}
-      piece={pieceModel}
-      externalIdComingFromSdk={connectionName}
-      isGlobalConnection={false}
-      open={isDialogOpen}
-      key={`CreateOrEditConnectionDialog-open-${isDialogOpen}-${connectionName}}`}
-      setOpen={(open, connection) => {
-        setIsDialogOpen(open);
-        if (!open) {
-          hideConnectionIframe(connection);
-        }
-      }}
-    />
+   <Dialog open={isDialogOpen}  onOpenChange={(open)=>{
+    setIsDialogOpen(open);
+    if (!open) {
+      hideConnectionIframe();
+    }
+   }}>
+
+  <DialogContent
+      showOverlay={false}
+      onInteractOutside={(e) => e.preventDefault()}
+      className={cn("max-h-[70vh]  min-w-[450px] max-w-[450px] lg:min-w-[650px] lg:max-w-[650px] overflow-y-auto", {
+        '!bg-transparent !border-none focus:outline-none !border-transparent !shadow-none': isLoadingPiece,
+      })}
+      withCloseButton={!isLoadingPiece}
+
+    >
+     {
+        isLoadingPiece && 
+        <div className='flex justify-center items-center'>
+          <LoadingSpinner size={50} className='stroke-background'></LoadingSpinner>
+        </div>
+    }
+
+    {
+      !isLoadingPiece && pieceModel && (
+        <CreateOrEditConnectionDialogContent
+          reconnectConnection={null}
+          piece={pieceModel}
+          externalIdComingFromSdk={connectionName}
+          isGlobalConnection={false}
+          setOpen={(open, connection) => {
+            if (!open) {
+              hideConnectionIframe(connection);
+            }
+            setIsDialogOpen(open);
+          }}
+        />
+      )
+    }
+
+    </DialogContent>
+   
+   </Dialog>
   );
 };

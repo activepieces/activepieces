@@ -35,7 +35,7 @@ const notifyVendorPostAuthentication = () => {
 
 const EmbedPage = React.memo(() => {
   const navigate = useNavigate();
-  const { setEmbedState } = useEmbedding();
+  const { setEmbedState,embedState } = useEmbedding();
   const { mutateAsync } = useMutation({
     mutationFn: managedAuthApi.generateApToken,
   });
@@ -54,6 +54,7 @@ const EmbedPage = React.memo(() => {
           {
             onSuccess: (data) => {
               authenticationSession.saveResponse(data);
+              const initialRoute = event.data.data.initialRoute ?? '/';
               setEmbedState({
                 hideSideNav: event.data.data.hideSidebar,
                 isEmbedded: true,
@@ -67,19 +68,10 @@ const EmbedPage = React.memo(() => {
                 sdkVersion: event.data.data.sdkVersion,
                 fontUrl: event.data.data.fontUrl,
                 fontFamily: event.data.data.fontFamily,
+                useDarkBackground: initialRoute.startsWith('/embed/connections')
               });
 
               //previously initialRoute was optional
-              const initialRoute = event.data.data.initialRoute ?? '/';
-              if (initialRoute.startsWith('/embed/connections')) {
-                const showConnectionIframeEvent: ActivepiecesClientShowConnectionIframe =
-                  {
-                    type: ActivepiecesClientEventName.CLIENT_SHOW_CONNECTION_IFRAME,
-                    data: {},
-                  };
-                parentWindow.postMessage(showConnectionIframeEvent, '*');
-                document.body.style.background = 'transparent';
-              }
               navigate(initialRoute);
               notifyVendorPostAuthentication();
             },
@@ -116,7 +108,7 @@ const EmbedPage = React.memo(() => {
     };
   });
 
-  return <LoadingScreen />;
+  return <LoadingScreen brightSpinner={embedState.useDarkBackground} />;
 });
 
 EmbedPage.displayName = 'EmbedPage';
