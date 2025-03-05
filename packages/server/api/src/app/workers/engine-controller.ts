@@ -124,6 +124,19 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
         return response
     })
 
+    app.post('/update-flow-response', UpdateFlowResponseParams, async (request) => {
+        const { runId, workerHandlerId, httpRequestId, runResponse } = request.body
+
+        if (!isNil(runId)) {
+            await engineResponseWatcher(request.log).publish(
+                httpRequestId,
+                workerHandlerId,
+                runResponse,
+            )
+        }
+        return {}
+    })
+
     app.get('/check-task-limit', CheckTaskLimitParams, async (request) => {
         const edition = system.getEdition()
         if (edition === ApEdition.COMMUNITY) {
@@ -398,5 +411,23 @@ const RemoveFlowRequest = {
     },
     schema: {
         body: RemoveStableJobEngineRequest,
+    },
+}
+
+const UpdateFlowResponseParams = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE],
+    },
+    schema: {
+        body: Type.Object({
+            runId: Type.String(),
+            workerHandlerId: Type.String(),
+            httpRequestId: Type.String(),
+            runResponse: Type.Object({
+                status: Type.Number(),
+                body: Type.Any(),
+                headers: Type.Record(Type.String(), Type.String()),
+            }),
+        }),
     },
 }

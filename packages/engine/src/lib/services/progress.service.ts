@@ -36,6 +36,25 @@ export const progressService = {
             }, DEBOUNCE_THRESHOLD)
         })
     },
+    sendFlowResponse: async (engineConstants: EngineConstants, request: {
+        runId: string
+        workerHandlerId: string | null
+        httpRequestId: string | null
+        runResponse: {
+            status: number
+            body: unknown
+            headers: Record<string, string>
+        }
+    }): Promise<void> => {
+        await fetchWithRetry(new URL(`${engineConstants.internalApiUrl}v1/engine/update-flow-response`).toString(), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${engineConstants.engineToken}`,
+            },
+            body: JSON.stringify(request),
+        })
+    },
 }
 
 const sendUpdateRunRequest = async (params: UpdateStepProgressParams): Promise<void> => {
