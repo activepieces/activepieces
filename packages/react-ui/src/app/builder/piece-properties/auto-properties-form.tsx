@@ -298,6 +298,7 @@ const selectFormComponentForProperty = ({
         code={property.code}
         value={field.value}
         onChange={field.onChange}
+        disabled={disabled}
       ></CustomProperty>
   }
 };

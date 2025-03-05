@@ -383,7 +383,7 @@ Property.DynamicProperties({
 ### Custom Property (BETA)
 
 <Warning>
- This feature is still in BETA and not fully released yet, please let us know if you use it and face any issues and consider it a posibility that this could have breaking changes in the future
+ This feature is still in BETA and not fully released yet, please let us know if you use it and face any issues and consider it a possibility could have breaking changes in the future
 </Warning>
 This is a property that basically lets you inject JS code into the frontend and manipulate the DOM of this content however you like.
 It has a "code" property which is your JS script, it should be a function that takes in an object parameter which will have the following schema:
@@ -395,8 +395,9 @@ It has a "code" property which is your JS script, it should be a function that t
         value,
         onChange,
         //in case you want to hide your property for embedding.
-        isEmbeded,
+        isEmbedded,
         projectId,
+        disabled
 }
 ```
 

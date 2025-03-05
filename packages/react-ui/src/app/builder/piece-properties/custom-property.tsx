@@ -7,11 +7,13 @@ const CUSTOM_PROPERTY_CONTAINER_ID = 'custom-property-container';
 const CustomProperty = ({
     value,
     onChange,
-    code
+    code,
+    disabled
 } : {
     value: unknown;
     onChange: (value: unknown) => void;
     code: string;
+    disabled: boolean;
 }) => {
   const {project} = projectHooks.useCurrentProject();
   const {embedState} = useEmbedding();
@@ -31,8 +33,9 @@ const CustomProperty = ({
         containerId,
         value,
         onChange,
-        isEmbeded: embedState.isEmbedded,
+        isEmbedded: embedState.isEmbedded,
         projectId: project.id,
+        disabled
       });
       
       // If the result is a Promise, handle it
