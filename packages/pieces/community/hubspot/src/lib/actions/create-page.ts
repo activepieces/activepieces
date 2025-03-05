@@ -1,13 +1,15 @@
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { hubspotAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { pageType } from '../common/props';
 
-export const createLandingPageAction = createAction({
+export const createPageAction = createAction({
 	auth: hubspotAuth,
-	name: 'create-landing-page',
-	displayName: 'Create Landing Page',
-	description: 'Creates a new landing page.',
+	name: 'create-page',
+	displayName: 'Create Page',
+	description: 'Creates a new landing/site page.',
 	props: {
+		pageType: pageType,
 		pageTitle: Property.ShortText({
 			displayName: 'Page Title',
 			required: true,
@@ -63,6 +65,9 @@ export const createLandingPageAction = createAction({
 		}),
 	},
 	async run(context) {
+		const url = `https://api.hubapi.com/cms/v3/pages/${
+			context.propsValue.pageType === 'site_page' ? 'site-pages' : 'landing-pages'
+		}`;
 		const {
 			pageTitle,
 			internalPageName,
@@ -75,9 +80,9 @@ export const createLandingPageAction = createAction({
 			slug,
 		} = context.propsValue;
 
-		const response = await httpClient.sendRequest({
+		const createdPage = await httpClient.sendRequest<{ id: string }>({
 			method: HttpMethod.POST,
-			url: 'https://api.hubapi.com/cms/v3/pages/landing-pages',
+			url,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: context.auth.access_token,
@@ -89,12 +94,29 @@ export const createLandingPageAction = createAction({
 				templatePath,
 				slug,
 				language,
-				state,
 				headHtml,
 				footerHtml,
 			},
 		});
 
-		return response.body;
+		if (state === 'PUBLISHED_OR_SCHEDULED') {
+			await httpClient.sendRequest({
+				method: HttpMethod.POST,
+				url: `https://api.hubapi.com/content/api/v2/pages/${createdPage.body.id}/publish-action`,
+				authentication: {
+					type: AuthenticationType.BEARER_TOKEN,
+					token: context.auth.access_token,
+				},
+				body: { action: 'schedule-publish' },
+			});
+		}
+
+		const pageDeatils = await httpClient.sendRequest({
+			method: HttpMethod.GET,
+			url: `${url}/${createdPage.body.id}`,
+			authentication: { type: AuthenticationType.BEARER_TOKEN, token: context.auth.access_token },
+		});
+
+		return pageDeatils.body;
 	},
 });

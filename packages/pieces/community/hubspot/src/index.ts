@@ -66,11 +66,9 @@ import { newContactInListTrigger } from './lib/triggers/new-contact-in-list';
 import { newEngagementTrigger } from './lib/triggers/new-engagement';
 import { newEmailSubscriptionsTimelineTrigger } from './lib/triggers/email-subscriptions-timeline';
 import { createBlogPostAction } from './lib/actions/create-blog-post';
-import { getLandingPageAction } from './lib/actions/get-landing-page';
-import { getSitePageAction } from './lib/actions/get-site-page';
-import { deleteLandingPageAction } from './lib/actions/delete-landing-page';
-import { deleteSitePageAction } from './lib/actions/delete-site-page';
-import { createLandingPageAction } from './lib/actions/create-landing-page';
+import {  createPageAction } from './lib/actions/create-page';
+import { getPageAction } from './lib/actions/get-page';
+import { deletePageAction } from './lib/actions/delete-page';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -125,7 +123,7 @@ export const hubspot = createPiece({
 		createCustomObjectAction,
 		createDealAction,
 		createLineItemAction,
-		createLandingPageAction,
+		createPageAction,
 		createOrUpdateContactAction,
 		createProductAction,
 		createTicketAction,
@@ -134,12 +132,10 @@ export const hubspot = createPiece({
 		getCustomObjectAction,
 		getDealAction,
 		getLineItemAction,
-		getLandingPageAction,
 		getProductAction,
-		getSitePageAction,
+		getPageAction,
 		getTicketAction,
-		deleteLandingPageAction,
-		deleteSitePageAction,
+		deletePageAction,
 		removeAssociationsAction,
 		removeContactFromListAction,
 		removeEmailSubscriptionAction,
