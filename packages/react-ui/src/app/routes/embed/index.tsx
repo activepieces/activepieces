@@ -15,7 +15,6 @@ import {
   ActivepiecesClientConfigurationFinished,
   ActivepiecesClientEventName,
   ActivepiecesClientInit,
-  ActivepiecesClientShowConnectionIframe,
   ActivepiecesVendorEventName,
   ActivepiecesVendorInit,
 } from 'ee-embed-sdk';
@@ -35,7 +34,7 @@ const notifyVendorPostAuthentication = () => {
 
 const EmbedPage = React.memo(() => {
   const navigate = useNavigate();
-  const { setEmbedState,embedState } = useEmbedding();
+  const { setEmbedState, embedState } = useEmbedding();
   const { mutateAsync } = useMutation({
     mutationFn: managedAuthApi.generateApToken,
   });
@@ -68,7 +67,8 @@ const EmbedPage = React.memo(() => {
                 sdkVersion: event.data.data.sdkVersion,
                 fontUrl: event.data.data.fontUrl,
                 fontFamily: event.data.data.fontFamily,
-                useDarkBackground: initialRoute.startsWith('/embed/connections')
+                useDarkBackground:
+                  initialRoute.startsWith('/embed/connections'),
               });
 
               //previously initialRoute was optional

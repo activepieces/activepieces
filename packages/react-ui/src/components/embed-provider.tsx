@@ -1,6 +1,7 @@
-import { cn } from '@/lib/utils';
 import React, { createContext, useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+import { cn } from '@/lib/utils';
 
 type EmbeddingState = {
   isEmbedded: boolean;
@@ -14,7 +15,7 @@ type EmbeddingState = {
   predefinedConnectionName?: string;
   fontUrl?: string;
   fontFamily?: string;
-  useDarkBackground:boolean
+  useDarkBackground: boolean;
 };
 
 const defaultState: EmbeddingState = {
@@ -66,9 +67,11 @@ const EmbeddingProvider = ({ children }: EmbeddingProviderProps) => {
     <EmbeddingContext.Provider
       value={{ embedState: state, setEmbedState: setState }}
     >
-      <div className={cn({
-        'bg-black/80 h-screen w-screen': state.useDarkBackground,
-      })}>
+      <div
+        className={cn({
+          'bg-black/80 h-screen w-screen': state.useDarkBackground,
+        })}
+      >
         {children}
       </div>
     </EmbeddingContext.Provider>
