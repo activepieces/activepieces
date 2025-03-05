@@ -25,7 +25,8 @@ import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
-import { parentWindow } from '@/lib/utils';
+import { authenticationSession } from '@/lib/authentication-session';
+import { combinePaths, parentWindow } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
 import {
   ActivepiecesClientEventName,
@@ -649,9 +650,10 @@ const routes = [
     ),
   },
 ];
+
 const ApRouter = () => {
   const { embedState } = useEmbedding();
-
+  const projectId = authenticationSession.getProjectId();
   const router = useMemo(() => {
     return embedState.isEmbedded
       ? createMemoryRouter(routes, {
@@ -673,7 +675,20 @@ const ApRouter = () => {
         event.data.type === ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED
       ) {
         const targetRoute = event.data.data.vendorRoute;
-        router.navigate(targetRoute);
+        const targetRouteRequiresProjectId =
+          targetRoute.includes('/runs') ||
+          targetRoute.includes('/flows') ||
+          targetRoute.includes('/connections');
+        if (!targetRouteRequiresProjectId) {
+          router.navigate(targetRoute);
+        } else {
+          router.navigate(
+            combinePaths({
+              secondPath: targetRoute,
+              firstPath: `/projects/${projectId}`,
+            }),
+          );
+        }
       }
     };
 
@@ -689,11 +704,15 @@ const ApRouter = () => {
       return;
     }
     router.subscribe((state) => {
+      const pathNameWithoutProjectOrProjectId = state.location.pathname.replace(
+        /\/projects\/[^/]+/,
+        '',
+      );
       parentWindow.postMessage(
         {
           type: ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED,
           data: {
-            route: state.location.pathname + state.location.search,
+            route: pathNameWithoutProjectOrProjectId + state.location.search,
           },
         },
         '*',
