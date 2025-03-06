@@ -785,6 +785,9 @@
       "activepieces/piece-zuora": [
         "packages/pieces/community/zuora/src/index.ts"
       ],
+      "avalant-piece-knowledgebase": [
+        "packages/pieces/community/knowledgebase/src/index.ts"
+      ],
       "server-worker": ["packages/server/worker/src/index.ts"],
       "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"]
     },

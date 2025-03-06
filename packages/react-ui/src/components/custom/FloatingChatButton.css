@@ -1,0 +1,141 @@
+.floating-btn {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.floating-chat-container {
+  width: 27.313rem;
+  height: 40.313rem;
+  padding: 20px 24px;
+  position: fixed;
+  bottom: 5rem;
+  right: 1.25rem;
+  background-color: #fff;
+}
+
+/* Styling สำหรับ ReactQuill และ toolbar */
+.ql-toolbar.ql-snow {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  padding: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.ql-container.ql-snow {
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  border: 1px solid #e2e8f0;
+  border-top: none;
+  background-color: #ffffff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  padding-right: 48px;
+  position: relative;
+}
+
+.send-chat-button {
+  position: absolute;
+  right: 28px;
+  top: 88%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  transition: all 0.2s ease;
+  padding: 8px;
+  border-radius: 50%;
+}
+
+.send-chat-button:hover {
+  background-color: #f1f5f9;
+}
+
+.ql-editor {
+  height: 96px;
+  padding: 16px;
+  background-color: #ffffff;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  overflow-y: auto;
+}
+
+.ql-toolbar.ql-snow .ql-formats {
+  margin-right: 12px;
+}
+
+.ql-toolbar.ql-snow button {
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.ql-toolbar.ql-snow button:hover {
+  background-color: #f1f5f9;
+}
+
+/* Media Queries สำหรับ responsive */
+@media (max-width: 1024px) {
+  .floating-chat-container {
+    width: 22rem;
+    height: 35rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .floating-chat-container {
+    width: 18rem;
+    height: 30rem;
+  }
+
+  .ql-editor {
+    height: 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .floating-chat-container {
+    width: 16rem;
+    height: 28rem;
+  }
+
+
+  .ql-editor {
+    height: 70px;
+  }
+}
+
+@media (max-width: 480px) {
+  .fixed.bottom-5.right-5 {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+  }
+}
+
+.custom-scroll {
+  scrollbar-width: auto;
+}
+
+.custom-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

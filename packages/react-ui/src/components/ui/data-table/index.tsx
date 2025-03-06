@@ -352,7 +352,7 @@ export function DataTable<
         </Table>
       </div>
       {!hidePagination && (
-        <div className="flex items-center justify-end space-x-2 py-4">
+         <div className="flex flex-col md:flex-row items-end md:items-center justify-end space-x-2 py-4">
           <p className="text-sm font-medium">Rows per page</p>
           <Select
             value={`${table.getState().pagination.pageSize}`}
@@ -372,6 +372,7 @@ export function DataTable<
               ))}
             </SelectContent>
           </Select>
+          <div>
           <Button
             variant="outline"
             size="sm"
@@ -390,6 +391,7 @@ export function DataTable<
           >
             {t('Next')}
           </Button>
+          </div>
         </div>
       )}
     </div>

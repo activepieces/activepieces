@@ -29,7 +29,7 @@ export const Header = () => {
     !embedState.isEmbedded && (
       <div>
         <PlatformDialog messages={messages} />
-        <div className="flex h-[60px] items-center">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center pb-2">
           {isInPlatformAdmin ? (
             <span className="text-3xl font-bold px-4 py-2">
               {t('Platform Admin')}
@@ -43,20 +43,20 @@ export const Header = () => {
           )}
           <div className="grow"></div>
           <div className="flex items-center justify-center gap-4">
-            <InviteUserDialog />
+            {/* <InviteUserDialog /> */}
             <UsageLimitsButton />
-            {showPlatformAdminDashboard && (
+            {/* {showPlatformAdminDashboard && (
               <Link to={isInPlatformAdmin ? '/' : '/platform'}>
                 <Button
                   variant={'outline'}
                   size="sm"
                   className="flex items-center justify-center gap-2 relative"
                 >
-                  {isInPlatformAdmin ? (
+                   {isInPlatformAdmin ? (
                     <LogOut className="size-4" />
                   ) : (
                     <Shield className="size-4" />
-                  )}
+                  )} 
                   <span>
                     {t(
                       isInPlatformAdmin
@@ -71,7 +71,7 @@ export const Header = () => {
                     )}
                 </Button>
               </Link>
-            )}
+            )} */}
 
             <UserAvatar />
           </div>

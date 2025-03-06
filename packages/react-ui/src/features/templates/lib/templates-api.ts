@@ -13,6 +13,12 @@ export const templatesApi = {
   create(request: CreateFlowTemplateRequest) {
     return api.post<FlowTemplate>(`/v1/flow-templates`, request);
   },
+  saveTemplateWorkflow(request: CreateFlowTemplateRequest) {
+    return api.post<FlowTemplate>(`/v1/templates/saveTemplateWorkflow`, request);
+  },
+  getTemplateWorkflows(request?: ListFlowTemplatesRequest) {
+    return api.get<Array<FlowTemplate>>(`/v1/templates/getTemplateWorkflows`, request ?? {});
+  },
   list(request?: ListFlowTemplatesRequest) {
     return api.get<SeekPage<FlowTemplate>>(`/v1/flow-templates`, request ?? {});
   },

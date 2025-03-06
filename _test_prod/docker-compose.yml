@@ -1,0 +1,31 @@
+version: '3.0'
+services:
+  workflow:
+    image: avalantglobal/workflow:0.0.4_rc1
+    container_name: workflow
+    restart: unless-stopped
+    ## Enable the following line if you already use AP_EXECUTION_MODE with SANDBOXED or old workflow, checking the breaking change documentation for more info.
+    ## privileged: true
+    ports:
+      - '8085:80'
+    depends_on:
+      - redis
+    env_file: .env
+    networks:
+      - workflow
+    # use cmd override CMD on Dockerfile
+    # command: ["/bin/sh", "-c", "nginx -g 'daemon off;' & node --enable-source-maps dist/packages/server/api/main.js"]
+    # command: ["/bin/sh", "-c", "docker-entrypoint.sh"]
+    # entrypoint: ["/bin/sh", "-c", "docker-entrypoint.sh"]
+  redis:
+    image: 'redis:7.0.7'
+    container_name: redis
+    restart: unless-stopped
+    volumes:
+      - 'redis_data:/data'
+    networks:
+      - workflow
+volumes:
+  redis_data:
+networks:
+  workflow:

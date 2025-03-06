@@ -20,6 +20,8 @@ import { ShowPoweredBy } from '../../components/show-powered-by';
 import { platformHooks } from '../../hooks/platform-hooks';
 
 import { Header } from './header';
+import { FloatingChatButton } from '@/components/custom/FloatingChatButton';
+
 
 type Link = {
   icon: React.ReactNode;
@@ -113,7 +115,7 @@ export function Sidebar({
   const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
   return (
     <div>
-      <div className="flex min-h-screen w-full  ">
+      <div className="flex h-screen w-full">
         {!hideSideNav && (
           <aside className=" border-r sticky  top-0 h-screen bg-muted/50 w-[65px] ">
             <ScrollArea>
@@ -148,7 +150,7 @@ export function Sidebar({
                 ))}
 
                 <div className="grow"></div>
-                {isHomeDashboard && showSupportAndDocs && (
+                {/* {isHomeDashboard && showSupportAndDocs && (
                   <>
                     <CustomTooltipLink
                       to={supportUrl}
@@ -163,12 +165,12 @@ export function Sidebar({
                       newWindow={true}
                     />
                   </>
-                )}
+                )} */}
               </nav>
             </ScrollArea>
           </aside>
         )}
-        <div className="flex-1 p-4">
+        <div className="flex-1 p-4 overflow-y-auto">
           <div className="flex flex-col">
             <Header />
             <div
@@ -182,6 +184,9 @@ export function Sidebar({
         </div>
       </div>
       <ShowPoweredBy show={platform?.showPoweredBy && isHomeDashboard} />
+      <div className="absolute bottom-0 right-0 w-full">
+        <FloatingChatButton />
+      </div>
     </div>
   );
 }

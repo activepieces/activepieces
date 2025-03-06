@@ -93,7 +93,7 @@ export default function TeamPage() {
             </div>
             <div className="mt-4 flex items-center  space-x-2">
               <div className="flex-grow">
-                <InviteUserDialog></InviteUserDialog>
+                {/* <InviteUserDialog></InviteUserDialog> */}
               </div>
             </div>
           </CardContent>

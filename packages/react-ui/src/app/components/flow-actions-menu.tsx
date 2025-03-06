@@ -5,6 +5,7 @@ import {
   CornerUpLeft,
   Download,
   Import,
+  Save,
   Pencil,
   Share2,
   Trash2,
@@ -45,6 +46,7 @@ import { MoveFlowDialog } from '../../features/flows/components/move-flow-dialog
 import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
 import { flowsApi } from '../../features/flows/lib/flows-api';
 import { flowsUtils } from '../../features/flows/lib/flows-utils';
+import { SaveAsTemplateDialog } from '../../features/flows/components/save-as-template-dialog';
 
 interface FlowActionMenuProps {
   flow: Flow;
@@ -256,6 +258,14 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             <span>{isExportPending ? t('Exporting') : t('Export')}</span>
           </div>
         </DropdownMenuItem>
+        <SaveAsTemplateDialog flowId={flow.id} flowVersion={flowVersion}>
+          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+            <div className="flex cursor-pointer flex-row gap-2 items-center">
+              <Save className="h-4 w-4" />
+              <span>{t('Save as Template')}</span>
+            </div>
+          </DropdownMenuItem>
+        </SaveAsTemplateDialog>
         {!embedState.isEmbedded && (
           <ShareTemplateDialog flowId={flow.id} flowVersionId={flowVersion.id}>
             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>

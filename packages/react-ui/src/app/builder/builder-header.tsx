@@ -175,7 +175,7 @@ export const BuilderHeader = () => {
 
         <div className="grow"></div>
         <div className="flex items-center justify-center gap-4">
-          {showSupport && (
+          {/* {showSupport && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -189,7 +189,7 @@ export const BuilderHeader = () => {
               </TooltipTrigger>
               <TooltipContent side="bottom">{t('Support')}</TooltipContent>
             </Tooltip>
-          )}
+          )} */}
           {hasPermissionToReadRuns && (
             <Tooltip>
               <TooltipTrigger asChild>

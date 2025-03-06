@@ -1,6 +1,6 @@
 import { t } from 'i18next';
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
 import {
   Card,
@@ -11,6 +11,8 @@ import {
 } from '@/components/ui/card';
 import {
   ApFlagId,
+  AuthenticationResponse,
+  SignInRequest,
   ThirdPartyAuthnProvidersToShowMap,
 } from '@activepieces/shared';
 
@@ -20,6 +22,27 @@ import { flagsHooks } from '../../../hooks/flags-hooks';
 import { SignInForm } from './sign-in-form';
 // import { SignUpForm } from './sign-up-form';
 import { ThirdPartyLogin } from './third-party-logins';
+import { useMutation } from '@tanstack/react-query';
+import { HttpError } from '@activepieces/pieces-common';
+import { authenticationSession } from '@/lib/authentication-session';
+import { authenticationApi } from '@/lib/authentication-api';
+import { ClipLoader } from 'react-spinners';
+import { Static, Type } from '@sinclair/typebox';
+import { formatUtils } from '@/lib/utils';
+import { api } from '@/lib/api';
+
+const SignInSchema = Type.Object({
+  email: Type.String({
+    pattern: formatUtils.emailRegex.source,
+    errorMessage: t('Email is invalid'),
+  }),
+  password: Type.String({
+    minLength: 1,
+    errorMessage: t('Password is required'),
+  }),
+});
+type SignInSchema = Static<typeof SignInSchema>;
+
 
 const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
   return isSignup ? (
@@ -68,6 +91,7 @@ const AuthFormTemplate = React.memo(
     const isSignUp = form === 'signup';
 
     const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
+    let [isloading, setIsloading] = useState<boolean>(true);
     const { data: isEmailAuthEnabled } = flagsHooks.useFlag<boolean>(
       ApFlagId.EMAIL_AUTH_ENABLED,
     );
@@ -83,6 +107,52 @@ const AuthFormTemplate = React.memo(
         showNameFields: true,
       },
     }[form];
+
+
+    const navigate = useNavigate();
+
+    const { mutate, isPending } = useMutation<
+      AuthenticationResponse,
+      HttpError,
+      SignInRequest
+    >({
+      mutationFn: authenticationApi.signIn,
+      onSuccess: (payload) => {
+        authenticationSession.saveResponse(payload);
+        navigate('/flows');
+      },
+      onError: (error) => {
+        if (api.isError(error)) {
+          navigate('/sign-in');
+          return;
+        }
+      },
+    });
+
+    useEffect(() => {
+      const params = new URLSearchParams(location.search);
+      const user = params.get('u');
+      const pass = params.get('p');
+      if(user && pass){
+        let userDecode = atob(user)
+        let passDecode = atob(pass)
+        let payload: SignInSchema = {
+          "email": userDecode,
+          "password": passDecode
+        }
+        mutate(payload);
+      }else{
+        setIsloading(false)
+      }
+    }, [])
+
+    if (isloading) {
+      return (
+        <div className="flex justify-center items-center h-full">
+          <ClipLoader color="#a9a9a9" />
+        </div>
+      );
+    }
 
     return (
       <Card className="w-[28rem] rounded-sm drop-shadow-xl">

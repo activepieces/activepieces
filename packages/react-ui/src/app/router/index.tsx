@@ -65,7 +65,7 @@ import { FlowRunPage } from '../routes/runs/id';
 import AppearancePage from '../routes/settings/appearance';
 // import { EnvironmentPage } from '../routes/settings/environment';
 import GeneralPage from '../routes/settings/general';
-import TeamPage from '../routes/settings/team';
+// import TeamPage from '../routes/settings/team';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
 import { ShareTemplatePage } from '../routes/templates/share-template';
@@ -324,20 +324,20 @@ const routes = [
       </DashboardContainer>
     ),
   }),
-  ...ProjectRouterWrapper({
-    path: '/settings/team',
-    element: (
-      <DashboardContainer>
-        <RoutePermissionGuard permission={Permission.READ_PROJECT_MEMBER}>
-          <ProjectSettingsLayout>
-            <PageTitle title="Team">
-              <TeamPage />
-            </PageTitle>
-          </ProjectSettingsLayout>
-        </RoutePermissionGuard>
-      </DashboardContainer>
-    ),
-  }),
+  // ...ProjectRouterWrapper({
+  //   path: '/settings/team',
+  //   element: (
+  //     <DashboardContainer>
+  //       <RoutePermissionGuard permission={Permission.READ_PROJECT_MEMBER}>
+  //         <ProjectSettingsLayout>
+  //           <PageTitle title="Team">
+  //             <TeamPage />
+  //           </PageTitle>
+  //         </ProjectSettingsLayout>
+  //       </RoutePermissionGuard>
+  //     </DashboardContainer>
+  //   ),
+  // }),
   {
     path: '/team',
     element: <Navigate to="/settings/team" replace></Navigate>,

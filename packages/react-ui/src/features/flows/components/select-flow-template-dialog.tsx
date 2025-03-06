@@ -137,7 +137,12 @@ const SelectFlowTemplateDialog = ({
     queryKey: ['templates'],
     queryFn: async () => {
       const templates = await templatesApi.list();
-      return templates.data;
+      const templatesData = templates.data;
+      const templatesResult = await templatesApi.getTemplateWorkflows();
+      for(let index=0; index<templatesData.length; index++){
+        templatesResult.push(templatesData[index]);
+      }
+      return templatesResult;
     },
     staleTime: 0,
   });

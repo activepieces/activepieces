@@ -138,3 +138,7 @@
   /* If necessary, add !important to the rule */
   pointer-events: none !important;
 }
+
+.container2 {
+  width: unset !important;
+}

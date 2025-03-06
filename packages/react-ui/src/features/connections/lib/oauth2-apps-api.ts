@@ -26,4 +26,7 @@ export const oauthAppsApi = {
   upsert(request: UpsertOAuth2AppRequest) {
     return api.post<OAuthApp>('/v1/oauth-apps', request);
   },
+  listWfApps(requestStr: string) {
+    return api.get<SeekPage<OAuthApp>>('/v1/templates/wf-apps'+requestStr);
+  },
 };

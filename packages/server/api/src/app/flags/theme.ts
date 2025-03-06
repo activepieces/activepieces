@@ -64,9 +64,11 @@ export function generateTheme({
 }
 
 export const defaultTheme = generateTheme({
-    primaryColor: '#6e41e2',
-    websiteName: 'Activepieces',
-    fullLogoUrl: 'https://cdn.activepieces.com/brand/full-logo.png',
-    favIconUrl: 'https://cdn.activepieces.com/brand/favicon.ico',
-    logoIconUrl: 'https://cdn.activepieces.com/brand/logo.svg',
+    primaryColor: '#1677ff',
+    websiteName: 'Workflow',
+    // fullLogoUrl: './public/img/promptx_icon_full.png',
+    fullLogoUrl: './img/promptx_icon.png',
+    favIconUrl: './promptx_blue.ico"',
+    logoIconUrl: './img/promptx_icon.png',
+    // logoIconUrl: './public/img/promptx_icon.png',
 })
