@@ -437,13 +437,13 @@ export const formUtils = {
           ]);
           break;
         case PropertyType.ARRAY: {
-          const arraySchema = isNil(property.properties)
+          const arrayItemSchema = isNil(property.properties)
             ? Type.String({
                 minLength: property.required ? 1 : undefined,
               })
             : formUtils.buildSchema(property.properties);
           propsSchema[name] = Type.Union([
-            Type.Array(arraySchema, {
+            Type.Array(arrayItemSchema, {
               minItems: property.required ? 1 : undefined,
             }),
             Type.Record(Type.String(), Type.Unknown()),
@@ -507,19 +507,28 @@ export const formUtils = {
 export function getDefaultValueForStep(
   props: PiecePropertyMap | OAuth2Props,
   existingInput: Record<string, unknown>,
+  customizedInput?: Record<string, boolean>,
 ): Record<string, unknown> {
   const defaultValues: Record<string, unknown> = {};
   const entries = Object.entries(props);
   for (const [name, property] of entries) {
     switch (property.type) {
-      case PropertyType.CHECKBOX:
+      case PropertyType.CHECKBOX: {
         defaultValues[name] =
           existingInput[name] ?? property.defaultValue ?? false;
         break;
-      case PropertyType.ARRAY:
+      }
+      case PropertyType.ARRAY: {
+        const isCustomizedArrayOfProperties =
+          !isNil(customizedInput) &&
+          customizedInput[name] &&
+          !isNil(property.properties);
         defaultValues[name] =
-          existingInput[name] ?? property.defaultValue ?? [];
+          existingInput[name] ?? isCustomizedArrayOfProperties
+            ? {}
+            : property.defaultValue ?? [];
         break;
+      }
       case PropertyType.MARKDOWN:
       case PropertyType.DATE_TIME:
       case PropertyType.SHORT_TEXT:
