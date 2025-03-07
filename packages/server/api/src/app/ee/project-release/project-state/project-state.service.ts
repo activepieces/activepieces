@@ -1,4 +1,4 @@
-import { ConnectionOperationType, DiffState, FileCompression, FileId, FileType, FlowStatus, isNil, ProjectId, ProjectOperationType, ProjectState, ProjectSyncError } from '@activepieces/shared'
+import { AppConnectionScope, AppConnectionStatus, AppConnectionType, ConnectionOperationType, DiffState, FileCompression, FileId, FileType, FlowStatus, isNil, ProjectId, ProjectOperationType, ProjectState, ProjectSyncError } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../file/file.service'
@@ -45,23 +45,41 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         for (const state of connections) {
             switch (state.type) {
                 case ConnectionOperationType.CREATE_CONNECTION: {
-                    await appConnectionService(log).upsertMissingConnection({
-                        projectId,
+                    await appConnectionService(log).upsert({
+                        scope: AppConnectionScope.PROJECT,
                         platformId,
+                        projectIds: [projectId],
                         externalId: state.connectionState.externalId,
-                        pieceName: state.connectionState.pieceName,
                         displayName: state.connectionState.displayName,
+                        pieceName: state.connectionState.pieceName,
+                        type: AppConnectionType.CUSTOM_AUTH,
+                        status: AppConnectionStatus.MISSING,
+                        value: {
+                            type: AppConnectionType.CUSTOM_AUTH,
+                            props: {},
+                        },
+                        ownerId: null,
                     })
                     break
                 }
                 case ConnectionOperationType.UPDATE_CONNECTION: {
-                    await appConnectionService(log).upsertMissingConnection({
-                        projectId,
-                        platformId,
+                    const existingConnection = await appConnectionService(log).getOne({
                         externalId: state.newConnectionState.externalId,
-                        pieceName: state.newConnectionState.pieceName,
-                        displayName: state.newConnectionState.displayName,
+                        platformId,
+                        projectId,
                     })
+                    if (!isNil(existingConnection)) {
+                        await appConnectionService(log).update({
+                            projectIds: [projectId],
+                            platformId,
+                            id: existingConnection.id,
+                            scope: AppConnectionScope.PROJECT,
+                            request: {
+                                displayName: state.newConnectionState.displayName,
+                                projectIds: null,
+                            },
+                        })
+                    }
                     break
                 }
             }
