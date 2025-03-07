@@ -99,10 +99,11 @@ const FlowsPage = () => {
   //   authenticationSession.getProjectId()!,
   //   platform.environmentsEnabled,
   // );
+  const userHasPermissionToWriteFolder = checkAccess(Permission.WRITE_FOLDER);
   const userHasPermissionToUpdateFlow = checkAccess(Permission.WRITE_FLOW);
-  const userHasPermissionToPushToGit = checkAccess(
-    Permission.WRITE_PROJECT_RELEASE,
-  );
+  // const userHasPermissionToPushToGit = checkAccess(
+  //   Permission.WRITE_PROJECT_RELEASE,
+  // );
   // const isDevelopmentBranch =
   //   gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
 
@@ -424,7 +425,10 @@ const FlowsPage = () => {
                   </PermissionNeededTooltip> */}
                   {!embedState.hideFolders && (
                     <PermissionNeededTooltip
-                      hasPermission={userHasPermissionToUpdateFlow}
+                      hasPermission={
+                        userHasPermissionToUpdateFlow ||
+                        userHasPermissionToWriteFolder
+                      }
                     >
                       <MoveFlowDialog
                         flows={selectedRows}
@@ -437,7 +441,10 @@ const FlowsPage = () => {
                         }}
                       >
                         <DropdownMenuItem
-                          disabled={!userHasPermissionToUpdateFlow}
+                          disabled={
+                            !userHasPermissionToUpdateFlow ||
+                            !userHasPermissionToWriteFolder
+                          }
                           onSelect={(e) => e.preventDefault()}
                         >
                           <div className="flex cursor-pointer  flex-row gap-2 items-center">

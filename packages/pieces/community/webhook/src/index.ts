@@ -8,7 +8,7 @@ export const webhook = createPiece({
   description: 'Receive HTTP requests and trigger flows using unique URLs.',
   auth: PieceAuth.None(),
   categories: [PieceCategory.CORE],
-  minimumSupportedRelease: '0.27.1',
+  minimumSupportedRelease: '0.46.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/webhook.svg',
   authors: ['abuaboud', 'pfernandez98', 'kishanprmr'],
   actions: [returnResponse],

@@ -76,17 +76,24 @@ type ConnectionDialogProps = {
   externalIdComingFromSdk?: string | null;
 };
 
-const CreateOrEditConnectionDialog = React.memo(
+const CreateOrEditConnectionDialogContent = React.memo(
   ({
     piece,
-    open,
-    setOpen,
     reconnectConnection,
     isGlobalConnection,
     externalIdComingFromSdk,
-  }: ConnectionDialogProps) => {
+    setOpen,
+  }: {
+    piece: PieceMetadataModelSummary | PieceMetadataModel;
+    reconnectConnection: AppConnectionWithoutSensitiveData | null;
+    isGlobalConnection: boolean;
+    externalIdComingFromSdk?: string | null;
+    setOpen: (
+      open: boolean,
+      connection?: Pick<AppConnectionWithoutSensitiveData, 'id' | 'externalId'>,
+    ) => void;
+  }) => {
     const { auth } = piece;
-
     const formSchema = formUtils.buildConnectionSchema(piece);
     const { externalId, displayName } = newConnectionUtils.getConnectionName(
       piece,
@@ -197,6 +204,125 @@ const CreateOrEditConnectionDialog = React.memo(
       },
     });
     return (
+      <>
+        <DialogHeader>
+          <DialogTitle>
+            {reconnectConnection
+              ? t('Reconnect {displayName} Connection', {
+                  displayName: reconnectConnection.displayName,
+                })
+              : t('Connect to {displayName}', {
+                  displayName: piece.displayName,
+                })}
+          </DialogTitle>
+          <DialogDescription></DialogDescription>
+        </DialogHeader>
+        <ScrollArea className="h-full">
+          <ApMarkdown markdown={auth?.description}></ApMarkdown>
+          {auth?.description && <Separator className="my-4" />}
+          <Form {...form}>
+            <form
+              onSubmit={() => console.log('submitted')}
+              className="flex flex-col gap-4"
+            >
+              {(isNil(externalIdComingFromSdk) ||
+                externalIdComingFromSdk === '') && (
+                <FormField
+                  name="request.displayName"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col gap-2">
+                      <FormLabel htmlFor="displayName">
+                        {t('Connection Name')}
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          required
+                          id="displayName"
+                          type="text"
+                          placeholder={t('Connection name')}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                ></FormField>
+              )}
+
+              {isGlobalConnection && (
+                <AssignConnectionToProjectsControl
+                  control={form.control}
+                  name="request.projectIds"
+                />
+              )}
+              {auth?.type === PropertyType.SECRET_TEXT && (
+                <SecretTextConnectionSettings
+                  authProperty={piece.auth as SecretTextProperty<boolean>}
+                />
+              )}
+              {auth?.type === PropertyType.BASIC_AUTH && (
+                <BasicAuthConnectionSettings
+                  authProperty={piece.auth as BasicAuthProperty}
+                />
+              )}
+              {auth?.type === PropertyType.CUSTOM_AUTH && (
+                <CustomAuthConnectionSettings
+                  authProperty={piece.auth as CustomAuthProperty<any>}
+                />
+              )}
+
+              {auth?.type === PropertyType.OAUTH2 && (
+                <div className="mt-3.5">
+                  <OAuth2ConnectionSettings
+                    authProperty={piece.auth as OAuth2Property<OAuth2Props>}
+                    piece={piece}
+                    reconnectConnection={reconnectConnection}
+                  />
+                </div>
+              )}
+
+              <DialogFooter>
+                <Button
+                  onClick={(e) => form.handleSubmit(() => mutate())(e)}
+                  className="w-full"
+                  loading={isPending}
+                  type="submit"
+                  disabled={!form.formState.isValid}
+                >
+                  {t('Save')}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </ScrollArea>
+
+        {errorMessage && (
+          <FormError
+            formMessageId="create-connection-server-error-message"
+            className="text-left mt-4"
+          >
+            {errorMessage}
+          </FormError>
+        )}
+      </>
+    );
+  },
+);
+
+CreateOrEditConnectionDialogContent.displayName =
+  'CreateOrEditConnectionDialogContent';
+
+const CreateOrEditConnectionDialog = React.memo(
+  ({
+    piece,
+    open,
+    setOpen,
+    reconnectConnection,
+    isGlobalConnection,
+    externalIdComingFromSdk,
+  }: ConnectionDialogProps) => {
+    return (
       <Dialog
         open={open}
         onOpenChange={(open) => setOpen(open)}
@@ -206,106 +332,13 @@ const CreateOrEditConnectionDialog = React.memo(
           onInteractOutside={(e) => e.preventDefault()}
           className="max-h-[70vh]  min-w-[450px] max-w-[450px] lg:min-w-[650px] lg:max-w-[650px] overflow-y-auto"
         >
-          <DialogHeader>
-            <DialogTitle>
-              {reconnectConnection
-                ? t('Reconnect {displayName} Connection', {
-                    displayName: reconnectConnection.displayName,
-                  })
-                : t('Connect to {displayName}', {
-                    displayName: piece.displayName,
-                  })}
-            </DialogTitle>
-            <DialogDescription></DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="h-full">
-            <ApMarkdown markdown={auth?.description}></ApMarkdown>
-            {auth?.description && <Separator className="my-4" />}
-            <Form {...form}>
-              <form
-                onSubmit={() => console.log('submitted')}
-                className="flex flex-col gap-4"
-              >
-                {(isNil(externalIdComingFromSdk) ||
-                  externalIdComingFromSdk === '') && (
-                  <FormField
-                    name="request.displayName"
-                    control={form.control}
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col gap-2">
-                        <FormLabel htmlFor="displayName">
-                          {t('Connection Name')}
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            required
-                            id="displayName"
-                            type="text"
-                            placeholder={t('Connection name')}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  ></FormField>
-                )}
-
-                {isGlobalConnection && (
-                  <AssignConnectionToProjectsControl
-                    control={form.control}
-                    name="request.projectIds"
-                  />
-                )}
-                {auth?.type === PropertyType.SECRET_TEXT && (
-                  <SecretTextConnectionSettings
-                    authProperty={piece.auth as SecretTextProperty<boolean>}
-                  />
-                )}
-                {auth?.type === PropertyType.BASIC_AUTH && (
-                  <BasicAuthConnectionSettings
-                    authProperty={piece.auth as BasicAuthProperty}
-                  />
-                )}
-                {auth?.type === PropertyType.CUSTOM_AUTH && (
-                  <CustomAuthConnectionSettings
-                    authProperty={piece.auth as CustomAuthProperty<any>}
-                  />
-                )}
-
-                {auth?.type === PropertyType.OAUTH2 && (
-                  <div className="mt-3.5">
-                    <OAuth2ConnectionSettings
-                      authProperty={piece.auth as OAuth2Property<OAuth2Props>}
-                      piece={piece}
-                      reconnectConnection={reconnectConnection}
-                    />
-                  </div>
-                )}
-
-                <DialogFooter>
-                  <Button
-                    onClick={(e) => form.handleSubmit(() => mutate())(e)}
-                    className="w-full"
-                    loading={isPending}
-                    type="submit"
-                    disabled={!form.formState.isValid}
-                  >
-                    {t('Save')}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </ScrollArea>
-
-          {errorMessage && (
-            <FormError
-              formMessageId="create-connection-server-error-message"
-              className="text-left mt-4"
-            >
-              {errorMessage}
-            </FormError>
-          )}
+          <CreateOrEditConnectionDialogContent
+            piece={piece}
+            setOpen={setOpen}
+            reconnectConnection={reconnectConnection}
+            isGlobalConnection={isGlobalConnection}
+            externalIdComingFromSdk={externalIdComingFromSdk}
+          />
         </DialogContent>
       </Dialog>
     );
@@ -313,4 +346,4 @@ const CreateOrEditConnectionDialog = React.memo(
 );
 
 CreateOrEditConnectionDialog.displayName = 'CreateOrEditConnectionDialog';
-export { CreateOrEditConnectionDialog };
+export { CreateOrEditConnectionDialog, CreateOrEditConnectionDialogContent };

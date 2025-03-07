@@ -92,6 +92,8 @@ const systemPropValidators: {
     [AppSystemProp.QUEUE_UI_PASSWORD]: stringValidator,
     [AppSystemProp.QUEUE_UI_USERNAME]: stringValidator,
     [AppSystemProp.REDIS_TYPE]: enumValidator(Object.values(RedisType)),
+    [AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS]: numberValidator,
+    [AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT]: numberValidator,
     [AppSystemProp.REDIS_SSL_CA_FILE]: stringValidator,
     [AppSystemProp.REDIS_DB]: numberValidator,
     [AppSystemProp.REDIS_HOST]: stringValidator,

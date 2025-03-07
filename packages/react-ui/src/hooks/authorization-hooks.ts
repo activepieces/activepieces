@@ -22,7 +22,7 @@ export const useAuthorization = () => {
     queryFn: async () => {
       const platform = await platformApi.getCurrentPlatform();
       if (platform.projectRolesEnabled) {
-        const projectRole = await authenticationApi.me();
+        const projectRole = await authenticationApi.getCurrentProjectRole();
         return projectRole;
       }
       return null;

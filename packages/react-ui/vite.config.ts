@@ -48,7 +48,11 @@ export default defineConfig({
     react(),
     nxViteTsPaths(),
     checker({
-      typescript: true,
+      typescript: {
+        buildMode: true,
+        tsconfigPath: './tsconfig.json',
+        root: __dirname,
+      },
     }),
   ],
 
