@@ -7,29 +7,29 @@ import { PausedFlowTimeoutError } from '../helper/execution-errors'
 import { pieceLoader } from '../helper/piece-loader'
 import { createConnectionService } from '../services/connections.service'
 import { createFlowsContext } from '../services/flows.service'
+import { progressService } from '../services/progress.service'
 import { createFilesService } from '../services/step-files.service'
 import { createContextStore } from '../services/storage.service'
 import { propsProcessor } from '../variables/props-processor'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict } from './context/flow-execution-context'
-import { progressService } from '../services/progress.service'
 
 
 type HookResponse = {
-    type: 'paused',
-    tags: string[],
+    type: 'paused'
+    tags: string[]
     response: PauseHookParams
 } | {
-    type: 'stopped',
-    tags: string[],
+    type: 'stopped'
+    tags: string[]
     response: StopHookParams
 } | {
-    type: 'respond',
-    tags: string[],
+    type: 'respond'
+    tags: string[]
     response: RespondHookParams
 } | {
-    type: 'none',
-    tags: string[],
+    type: 'none'
+    tags: string[]
 }
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
@@ -77,7 +77,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         }
 
         const params: {
-            hookResponse: HookResponse,
+            hookResponse: HookResponse
         } = {
             hookResponse: {
                 type: 'none',
@@ -220,7 +220,7 @@ type addTagsParams = {
 }
 
 type createTagsManagerParams = {
-    hookResponse: HookResponse,
+    hookResponse: HookResponse
 }
 
 const createConnectionManager = ({ engineToken, projectId, hookResponse, apiUrl }: { projectId: string, engineToken: string, hookResponse: HookResponse, apiUrl: string }): ConnectionsManager => {
@@ -250,7 +250,7 @@ function createStopHook(params: CreateStopHookParams): StopHook {
     }
 }
 type CreateStopHookParams = {
-    hookResponse: HookResponse,
+    hookResponse: HookResponse
 }
 
 function createRespondHook(params: CreateRespondHookParams): RespondHook {
@@ -264,7 +264,7 @@ function createRespondHook(params: CreateRespondHookParams): RespondHook {
 }
 
 type CreateRespondHookParams = {
-    hookResponse: HookResponse,
+    hookResponse: HookResponse
 }
 
 function createPauseHook(params: CreatePauseHookParams, pauseId: string): PauseHook {
@@ -302,5 +302,5 @@ function createPauseHook(params: CreatePauseHookParams, pauseId: string): PauseH
 }
 
 type CreatePauseHookParams = {
-    hookResponse: HookResponse,
+    hookResponse: HookResponse
 }
