@@ -30,6 +30,7 @@ export const FlowTemplateEntity = new EntitySchema<FlowTemplateSchema>({
         },
         projectId: {
             type: String,
+            nullable: true,
         },
         template: {
             type: JSONB_COLUMN_TYPE,
