@@ -7,7 +7,11 @@ icon: "code-commit"
 
 
 <Warning>
-**Breaking Change**: <br/> If your Activepieces instance version is < 0.45.0 and (you are using the connect method from the embed sdk, and need the connection externalId to be returned after the user creates it OR if you want to reconnect a specific connection with an externalId), you must upgrade your instance to >= 0.45.0
+**Breaking Change**: <br/> If your Activepieces image version is < 0.45.0 and (you are using the connect method from the embed SDk, and need the connection externalId to be returned after the user creates it OR if you want to reconnect a specific connection with an externalId), you must upgrade your instance to >= 0.45.0
+</Warning>
+
+<Warning> 
+ Between Acitvepieces image version 0.32.1 and 0.46.4 the navigation handler was including the project id in the path, this might have broken implementation logic for people using the navigation handler, this has been fixed from 0.46.5 and onwards, the handler won't show the project id prepended to routes.
 </Warning>
 
 

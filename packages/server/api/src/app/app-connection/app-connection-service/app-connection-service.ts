@@ -1,6 +1,7 @@
 import { AppSystemProp, exceptionHandler, UserInteractionJobType } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
+    ApEdition,
     ApEnvironment,
     apId,
     AppConnection,
@@ -312,11 +313,15 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         })
     },
     async getOwners({ projectId, platformId }: { projectId: ProjectId, platformId: PlatformId }): Promise<AppConnectionOwners[]> {
-        const platformAdmins = (await userService.getByPlatformRole(platformId, PlatformRole.ADMIN)).map(user=>({
-            firstName: user.identity.firstName, 
+        const platformAdmins = (await userService.getByPlatformRole(platformId, PlatformRole.ADMIN)).map(user => ({
+            firstName: user.identity.firstName,
             lastName: user.identity.lastName,
             email: user.identity.email,
         }))
+        const edition = system.getOrThrow(AppSystemProp.EDITION)
+        if (edition === ApEdition.COMMUNITY) {
+            return platformAdmins
+        }
         const projectMembers = await projectMemberService(log).list({
             platformId,
             projectId,
@@ -324,7 +329,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             limit: 1000,
             projectRoleId: undefined,
         })
-        const projectMembersDetails = projectMembers.data.map(pm=>({
+        const projectMembersDetails = projectMembers.data.map(pm => ({
             firstName: pm.user.firstName,
             lastName: pm.user.lastName,
             email: pm.user.email,

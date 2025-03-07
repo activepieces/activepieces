@@ -1,20 +1,17 @@
-import { LoadingSpinner } from '../../components/ui/spinner';
+import { LoadingSpinner } from '@/components/ui/spinner';
+
 import { cn } from '../../lib/utils';
 
 export const LoadingScreen = ({
-  useDarkBackground = false,
+  brightSpinner = false,
 }: {
-  useDarkBackground?: boolean;
+  brightSpinner?: boolean;
 }) => {
   return (
-    <div
-      className={cn('flex h-screen w-screen items-center justify-center ', {
-        'bg-black/80': useDarkBackground,
-      })}
-    >
+    <div className="flex h-screen w-screen items-center justify-center">
       <LoadingSpinner
         className={cn({
-          'stroke-foreground': useDarkBackground,
+          '!stroke-background': brightSpinner,
         })}
         size={50}
       ></LoadingSpinner>

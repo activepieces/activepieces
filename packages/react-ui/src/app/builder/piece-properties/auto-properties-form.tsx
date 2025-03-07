@@ -22,6 +22,7 @@ import { MultiSelectPieceProperty } from '../../../components/custom/multi-selec
 import { ArrayPieceProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
 import { BuilderJsonEditorWrapper } from './builder-json-wrapper';
+import CustomProperty from './custom-property';
 import { DictionaryProperty } from './dictionary-property';
 import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
 import { DynamicProperties } from './dynamic-piece-property';
@@ -46,7 +47,6 @@ const AutoPropertiesFormComponent = React.memo(
     useMentionTextInput,
   }: AutoFormProps) => {
     const form = useFormContext();
-
     return (
       Object.keys(props).length > 0 && (
         <div className="flex flex-col gap-4 w-full">
@@ -295,6 +295,15 @@ const selectFormComponentForProperty = ({
     case PropertyType.BASIC_AUTH:
     case PropertyType.OAUTH2:
       return <></>;
+    case PropertyType.CUSTOM:
+      return (
+        <CustomProperty
+          code={property.code}
+          value={field.value}
+          onChange={field.onChange}
+          disabled={disabled}
+        ></CustomProperty>
+      );
   }
 };
 AutoPropertiesFormComponent.displayName = 'AutoFormComponent';

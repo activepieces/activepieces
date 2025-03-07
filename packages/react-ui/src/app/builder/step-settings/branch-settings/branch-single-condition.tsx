@@ -143,9 +143,11 @@ const BranchSingleCondition = ({
                       e !== null &&
                       !singleValueConditions.includes(e as BranchOperator)
                     ) {
+                      //TODO: fix this
+                      //@ts-expect-ignore
                       form.setValue(
                         `settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.secondValue`,
-                        '',
+                        '' as any,
                       );
                     }
                     field.onChange(e);

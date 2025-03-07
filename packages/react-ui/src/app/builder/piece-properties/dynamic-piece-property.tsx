@@ -115,11 +115,16 @@ const DynamicPropertiesImplementation = React.memo(
             const currentValue = form.getValues(
               `settings.input.${props.propertyName}`,
             );
+            const customizedInput = form.getValues(
+              'settings.inputUiInfo.customizedInputs',
+            );
             const defaultValue = formUtils.getDefaultValueForStep(
               response.options,
               currentValue ?? {},
+              customizedInput,
             );
             setPropertyMap(response.options);
+
             updateFormSchema(
               `settings.input.${props.propertyName}`,
               response.options,
