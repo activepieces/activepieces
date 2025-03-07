@@ -135,7 +135,6 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/update-flow-response', UpdateFlowResponseParams, async (request) => {
         const { workerHandlerId, httpRequestId, runResponse } = request.body
 
-        console.log("RESPPPPPPPPOND " + httpRequestId)
         await engineResponseWatcher(request.log).publish(
             httpRequestId,
             workerHandlerId,
