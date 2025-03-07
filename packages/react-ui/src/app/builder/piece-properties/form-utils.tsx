@@ -523,19 +523,14 @@ export function getDefaultValueForStep(
           !isNil(customizedInput) &&
           customizedInput[name] &&
           !isNil(property.properties);
-          const existingValue = existingInput[name];
-          if(!isNil(existingValue))
-          {
-            defaultValues[name] = existingValue;
-          }
-          else if(isCustomizedArrayOfProperties)
-          {
-            defaultValues[name] = {};
-          }
-          else
-          {
-            defaultValues[name] = property.defaultValue ?? [];
-          }     
+        const existingValue = existingInput[name];
+        if (!isNil(existingValue)) {
+          defaultValues[name] = existingValue;
+        } else if (isCustomizedArrayOfProperties) {
+          defaultValues[name] = {};
+        } else {
+          defaultValues[name] = property.defaultValue ?? [];
+        }
         break;
       }
       case PropertyType.MARKDOWN:
