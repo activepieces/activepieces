@@ -1,31 +1,42 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { LoadingSpinner } from '@/components/ui/spinner';
+import { cn, parentWindow } from '@/lib/utils';
+import {
+  apId,
+  AppConnectionWithoutSensitiveData,
+  isNil,
+} from '@activepieces/shared';
 import {
   ActivepiecesClientConnectionNameIsInvalid,
+  ActivepiecesClientConnectionPieceNotFound,
   ActivepiecesClientEventName,
+  ActivepiecesClientShowConnectionIframe,
   ActivepiecesNewConnectionDialogClosed,
-  connectionNameRegex,
   NEW_CONNECTION_QUERY_PARAMS,
 } from 'ee-embed-sdk';
 
-import { appConnectionsHooks } from '../../../features/connections/lib/app-connections-hooks';
 import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
-import { LoadingScreen } from '../../components/loading-screen';
-import { CreateOrEditConnectionDialog } from '../../connections/create-edit-connection-dialog';
+import { CreateOrEditConnectionDialogContent } from '../../connections/create-edit-connection-dialog';
 
-export const EmbeddedConnectionDialog = () => {
+const extractIdFromQueryParams = () => {
   const connectionName = new URLSearchParams(window.location.search).get(
     NEW_CONNECTION_QUERY_PARAMS.connectionName,
   );
-
+  return isNil(connectionName) || connectionName.length === 0
+    ? apId()
+    : connectionName;
+};
+export const EmbeddedConnectionDialog = () => {
+  const connectionName = extractIdFromQueryParams();
   const pieceName = new URLSearchParams(window.location.search).get(
     NEW_CONNECTION_QUERY_PARAMS.name,
   );
   const randomId = new URLSearchParams(window.location.search).get(
     NEW_CONNECTION_QUERY_PARAMS.randomId,
   );
-
+  console.log(connectionName);
   return (
     <EmbeddedConnectionDialogContent
       connectionName={
@@ -49,8 +60,6 @@ const EmbeddedConnectionDialogContent = ({
   const [isDialogOpen, setIsDialogOpen] = useState(true);
   const hasErrorRef = useRef(false);
 
-  const { data: connections, isLoading: isLoadingConnections } =
-    appConnectionsHooks.useConnections({});
   const {
     pieceModel,
     isLoading: isLoadingPiece,
@@ -58,7 +67,6 @@ const EmbeddedConnectionDialogContent = ({
   } = piecesHooks.usePiece({
     name: pieceName ?? '',
   });
-
   const hideConnectionIframe = (
     connection?: Pick<AppConnectionWithoutSensitiveData, 'id' | 'externalId'>,
   ) => {
@@ -78,38 +86,24 @@ const EmbeddedConnectionDialogContent = ({
   const postMessageToParent = (
     event:
       | ActivepiecesNewConnectionDialogClosed
-      | ActivepiecesClientConnectionNameIsInvalid,
+      | ActivepiecesClientConnectionNameIsInvalid
+      | ActivepiecesClientConnectionPieceNotFound,
   ) => {
-    window.parent.postMessage(event, '*');
+    parentWindow.postMessage(event, '*');
   };
-
-  const validateConnectionName = (
-    connectionName: string,
-    existingConnections: AppConnectionWithoutSensitiveData[],
-  ): { isValid: boolean; error?: string } => {
-    const regex = new RegExp(`^${connectionNameRegex}$`);
-    const isConnectionNameUsed = existingConnections.some(
-      (c) => c.externalId === connectionName,
-    );
-
-    if (isConnectionNameUsed) {
-      return { isValid: false, error: 'Connection name is already used' };
-    }
-
-    if (!regex.test(connectionName)) {
-      return {
-        isValid: false,
-        error: `Connection name must match the following regex ${connectionNameRegex}`,
-      };
-    }
-
-    return { isValid: true };
-  };
+  useEffect(() => {
+    const showConnectionIframeEvent: ActivepiecesClientShowConnectionIframe = {
+      type: ActivepiecesClientEventName.CLIENT_SHOW_CONNECTION_IFRAME,
+      data: {},
+    };
+    parentWindow.postMessage(showConnectionIframeEvent, '*');
+    document.body.style.background = 'transparent';
+  }, []);
 
   useEffect(() => {
     if (!isSuccess && !isLoadingPiece && !hasErrorRef.current) {
       postMessageToParent({
-        type: ActivepiecesClientEventName.CLIENT_CONNECTION_NAME_IS_INVALID,
+        type: ActivepiecesClientEventName.CLIENT_CONNECTION_PIECE_NOT_FOUND,
         data: {
           error: JSON.stringify({
             isValid: 'false',
@@ -122,47 +116,52 @@ const EmbeddedConnectionDialogContent = ({
     }
   }, [isSuccess, isLoadingPiece, pieceName]);
 
-  useEffect(() => {
-    if (connectionName && connections && !hasErrorRef.current) {
-      const validationResult = validateConnectionName(
-        connectionName,
-        connections,
-      );
-
-      if (!validationResult.isValid) {
-        postMessageToParent({
-          type: ActivepiecesClientEventName.CLIENT_CONNECTION_NAME_IS_INVALID,
-          data: { error: JSON.stringify(validationResult) },
-        });
-        hideConnectionIframe();
-        hasErrorRef.current = true;
-      }
-    }
-  }, [connectionName, connections]);
-
-  if (isLoadingPiece || isLoadingConnections) {
-    return <LoadingScreen useDarkBackground={true} />;
-  }
-
-  if (!pieceModel) {
-    return null;
-  }
-
   return (
-    <CreateOrEditConnectionDialog
-      reconnectConnection={null}
-      predefinedConnectionName={connectionName}
-      piece={pieceModel}
-      isGlobalConnection={false}
+    <Dialog
       open={isDialogOpen}
-      onConnectionCreated={hideConnectionIframe}
-      key={`CreateOrEditConnectionDialog-open-${isDialogOpen}`}
-      setOpen={(open) => {
+      onOpenChange={(open) => {
         setIsDialogOpen(open);
         if (!open) {
           hideConnectionIframe();
         }
       }}
-    />
+    >
+      <DialogContent
+        showOverlay={false}
+        onInteractOutside={(e) => e.preventDefault()}
+        className={cn(
+          'max-h-[70vh]  min-w-[450px] max-w-[450px] lg:min-w-[650px] lg:max-w-[650px] overflow-y-auto',
+          {
+            '!bg-transparent !border-none focus:outline-none !border-transparent !shadow-none':
+              isLoadingPiece,
+          },
+        )}
+        withCloseButton={!isLoadingPiece}
+      >
+        {isLoadingPiece && (
+          <div className="flex justify-center items-center">
+            <LoadingSpinner
+              size={50}
+              className="stroke-background"
+            ></LoadingSpinner>
+          </div>
+        )}
+
+        {!isLoadingPiece && pieceModel && (
+          <CreateOrEditConnectionDialogContent
+            reconnectConnection={null}
+            piece={pieceModel}
+            externalIdComingFromSdk={connectionName}
+            isGlobalConnection={false}
+            setOpen={(open, connection) => {
+              if (!open) {
+                hideConnectionIframe(connection);
+              }
+              setIsDialogOpen(open);
+            }}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
   );
 };

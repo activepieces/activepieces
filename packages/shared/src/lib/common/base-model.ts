@@ -1,5 +1,4 @@
-import { CreateType, Kind, SchemaOptions, Static, TEnum, TLiteral, TObject, TSchema, TUnion, Type, TypeRegistry } from '@sinclair/typebox'
-import { Value } from '@sinclair/typebox/value'
+import { CreateType, Kind, SchemaOptions, Static, TEnum, TLiteral, TObject, TSchema, TUnion, Type } from '@sinclair/typebox'
 
 export type BaseModel<T> = {
     id: T
@@ -40,22 +39,29 @@ type TDiscriminatedUnionObject<Discriminator extends string> = TObject<TDiscrimi
 // ------------------------------------------------------------------
 // DiscriminatedUnion
 // ------------------------------------------------------------------
-// prettier-ignore
-TypeRegistry.Set('DiscriminatedUnion', (schema: TDiscriminatedUnion, value) => {
-    return schema.anyOf.some(variant => Value.Check(variant, [], value))
-})
-// prettier-ignore
-export type TDiscriminatedUnion<Discriminator extends string = string, Types extends TObject[] = TObject[]> = {
+export type TDiscriminatedUnion<Types extends TObject[] = TObject[]> = {
     [Kind]: 'DiscriminatedUnion'
     static: Static<TUnion<Types>>
-    discriminator: Discriminator
-    anyOf: Types
+    oneOf: Types
+    type: 'object'
+    discriminator: {
+        propertyName: string
+        mapping?: Record<string, string>
+    }
 } & TSchema
 
-/** Creates a DiscriminatedUnion. */
-// prettier-ignore
+/** Creates a DiscriminatedUnion that works with OpenAPI. */
 export function DiscriminatedUnion<Discriminator extends string, Types extends TDiscriminatedUnionObject<Discriminator>[]>(
-    discriminator: Discriminator, types: [...Types], options?: SchemaOptions,
-): TDiscriminatedUnion<Discriminator, Types> {
-    return CreateType({ [Kind]: 'DiscriminatedUnion', anyOf: types, discriminator }, options) as never
+    discriminator: Discriminator,
+    types: [...Types],
+    options?: SchemaOptions,
+): TDiscriminatedUnion<Types> {
+    return CreateType({
+        [Kind]: 'DiscriminatedUnion',
+        oneOf: types,
+        type: 'object',
+        discriminator: {
+            propertyName: discriminator,
+        },
+    }, options) as never
 }

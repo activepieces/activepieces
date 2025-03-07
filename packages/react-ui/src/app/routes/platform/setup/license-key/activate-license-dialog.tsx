@@ -95,7 +95,7 @@ export const ActivateLicenseDialog = ({
         <DialogHeader>
           <DialogTitle className="text-center">
             {showCelebration
-              ? t('Woohoo! It worked')
+              ? t('License activated! Let the magic begin!')
               : t('Activate License Key')}
           </DialogTitle>
         </DialogHeader>

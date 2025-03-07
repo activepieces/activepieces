@@ -9,7 +9,7 @@ interface ActionPayloadProps {
 }
 
 export const respaidCommon = {
-  baseUrl: 'https://backend.dev.widr.app/api/workflow',
+  baseUrl: 'https://backend.widr.app/api/workflow',
   getHeadersStructure: (auth: string) => ({
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -27,6 +27,12 @@ export const respaidActionsCommon = {
       ...(propsValue.email && { email: propsValue.email }),
     })
   }),
+  validateProps: (propsValue: ActionPayloadProps) => {
+    const { unique_identifier, email, invoice_number } = propsValue;
+    if (!unique_identifier && (!email || !invoice_number)) {
+      throw new Error('You must provide either a unique_identifier OR both email and invoice_number.');
+    }
+  }
 }
 
 

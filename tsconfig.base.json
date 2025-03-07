@@ -142,6 +142,9 @@
       "@activepieces/piece-clockodo": [
         "packages/pieces/community/clockodo/src/index.ts"
       ],
+      "@activepieces/piece-cloutly": [
+        "packages/pieces/community/cloutly/src/index.ts"
+      ],
       "@activepieces/piece-confluence": [
         "packages/pieces/community/confluence/src/index.ts"
       ],
@@ -185,6 +188,9 @@
       "@activepieces/piece-delay": [
         "packages/pieces/community/delay/src/index.ts"
       ],
+      "@activepieces/piece-devin": [
+        "packages/pieces/community/devin/src/index.ts"
+      ],
       "@activepieces/piece-discord": [
         "packages/pieces/community/discord/src/index.ts"
       ],
@@ -211,6 +217,9 @@
       ],
       "@activepieces/piece-file-helper": [
         "packages/pieces/community/file-helper/src/index.ts"
+      ],
+      "@activepieces/piece-firecrawl": [
+        "packages/pieces/community/firecrawl/src/index.ts"
       ],
       "@activepieces/piece-fliqr-ai": [
         "packages/pieces/community/fliqr-ai/src/index.ts"
@@ -241,9 +250,6 @@
       ],
       "@activepieces/piece-gcloud-pubsub": [
         "packages/pieces/community/gcloud-pubsub/src/index.ts"
-      ],
-      "@activepieces/piece-gelato": [
-        "packages/pieces/community/gelato/src/index.ts"
       ],
       "@activepieces/piece-generatebanners": [
         "packages/pieces/community/generatebanners/src/index.ts"

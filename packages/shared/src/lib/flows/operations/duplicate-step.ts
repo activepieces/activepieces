@@ -2,7 +2,7 @@ import { isNil } from '../../common'
 import { Action, BranchExecutionType, RouterAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
-import { addActionUtls } from './add-action-util'
+import { addActionUtils } from './add-action-util'
 import { _getImportOperations } from './import-flow'
 import { FlowOperationRequest, FlowOperationType, StepLocationRelativeToParent } from '.'
 
@@ -13,9 +13,9 @@ function _duplicateStep(stepName: string, flowVersion: FlowVersion): FlowOperati
         ...clonedAction,
         nextAction: undefined,
     }
-    const oldNameToNewName = addActionUtls.mapToNewNames(flowVersion, [clonedActionWithoutNextAction])
+    const oldNameToNewName = addActionUtils.mapToNewNames(flowVersion, [clonedActionWithoutNextAction])
     const clonedSubflow = flowStructureUtil.transferStep(clonedActionWithoutNextAction, (step: Action) => {
-        return addActionUtls.clone(step, oldNameToNewName)
+        return addActionUtils.clone(step, oldNameToNewName)
     })
     const importOperations = _getImportOperations(clonedSubflow)
 
@@ -51,9 +51,9 @@ function _duplicateBranch(
 
     const childRouter = clonedRouter.children[childIndex]
     if (!isNil(childRouter)) {
-        const oldNameToNewName = addActionUtls.mapToNewNames(flowVersion, [childRouter])
+        const oldNameToNewName = addActionUtils.mapToNewNames(flowVersion, [childRouter])
         const clonedSubflow = flowStructureUtil.transferStep(childRouter, (step: Action) => {
-            return addActionUtls.clone(step, oldNameToNewName)
+            return addActionUtils.clone(step, oldNameToNewName)
         })
         const importOperations = _getImportOperations(clonedSubflow)
         operations.push({

@@ -131,6 +131,7 @@ const FlowStepDetailsCardItem = ({
               </Button>
             )}
             <img
+              alt={stepMetadata?.displayName}
               className="w-6 h-6 object-contain"
               src={stepMetadata?.logoUrl}
             />

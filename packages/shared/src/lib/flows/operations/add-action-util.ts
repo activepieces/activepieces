@@ -69,6 +69,7 @@ function clone(step: Action, oldNameToNewName: Record<string, string>): Action {
                 ...step.settings.inputUiInfo,
                 currentSelectedData: undefined,
                 sampleDataFileId: undefined,
+                sampleDataInputFileId: undefined,
                 lastTestDate: undefined,
             },
         }
@@ -76,7 +77,7 @@ function clone(step: Action, oldNameToNewName: Record<string, string>): Action {
     return step
 }
 
-export const addActionUtls = {
+export const addActionUtils = {
     mapToNewNames,
     clone,
 }

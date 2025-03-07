@@ -6,6 +6,8 @@ import {
 import { singleSelectChannelInfo, slackChannel } from '../common/props';
 import { slackAuth } from '../../';
 import { WebClient } from '@slack/web-api';
+import { isNil } from '@activepieces/shared';
+import { getFirstFiveOrAll } from '../common/utils';
 
 const sampleData = {
   client_msg_id: '2767cf34-0651-44e0-b9c8-1b167ce9b7a9',
@@ -72,12 +74,13 @@ export const newMessage = createTrigger({
     const client = new WebClient(context.auth.access_token);
     const response = await client.conversations.history({
       channel: context.propsValue.channel,
-      limit: 10,
+      limit: 100,
     });
     if (!response.messages) {
       return [];
     }
-    return response.messages
+    const messages = response.messages
+			.filter((message) => !isNil(message.ts))
       .filter((message) => !(context.propsValue.ignoreBots && message.bot_id))
       .map((message) => {
         return {
@@ -86,7 +89,8 @@ export const newMessage = createTrigger({
           event_ts: '1678231735.586539',
           channel_type: 'channel',
         };
-      });
+      }).sort((a, b) => parseFloat(b.ts!) - parseFloat(a.ts!))
+      return getFirstFiveOrAll(messages);
   },
 
   run: async (context) => {

@@ -22,6 +22,7 @@ import { MultiSelectPieceProperty } from '../../../components/custom/multi-selec
 import { ArrayPieceProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
 import { BuilderJsonEditorWrapper } from './builder-json-wrapper';
+import CustomProperty from './custom-property';
 import { DictionaryProperty } from './dictionary-property';
 import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
 import { DynamicProperties } from './dynamic-piece-property';
@@ -46,31 +47,32 @@ const AutoPropertiesFormComponent = React.memo(
     useMentionTextInput,
   }: AutoFormProps) => {
     const form = useFormContext();
-
     return (
-      <div className="flex flex-col gap-4 w-full">
-        {Object.entries(props).map(([propertyName]) => {
-          return (
-            <FormField
-              key={propertyName}
-              name={`${prefixValue}.${propertyName}`}
-              control={form.control}
-              render={({ field }) =>
-                selectFormComponentForProperty({
-                  field,
-                  propertyName,
-                  inputName: `${prefixValue}.${propertyName}`,
-                  property: props[propertyName],
-                  allowDynamicValues,
-                  markdownVariables: markdownVariables ?? {},
-                  useMentionTextInput: useMentionTextInput,
-                  disabled: disabled ?? false,
-                })
-              }
-            />
-          );
-        })}
-      </div>
+      Object.keys(props).length > 0 && (
+        <div className="flex flex-col gap-4 w-full">
+          {Object.entries(props).map(([propertyName]) => {
+            return (
+              <FormField
+                key={propertyName}
+                name={`${prefixValue}.${propertyName}`}
+                control={form.control}
+                render={({ field }) =>
+                  selectFormComponentForProperty({
+                    field,
+                    propertyName,
+                    inputName: `${prefixValue}.${propertyName}`,
+                    property: props[propertyName],
+                    allowDynamicValues,
+                    markdownVariables: markdownVariables ?? {},
+                    useMentionTextInput: useMentionTextInput,
+                    disabled: disabled ?? false,
+                  })
+                }
+              />
+            );
+          })}
+        </div>
+      )
     );
   },
 );
@@ -293,6 +295,15 @@ const selectFormComponentForProperty = ({
     case PropertyType.BASIC_AUTH:
     case PropertyType.OAUTH2:
       return <></>;
+    case PropertyType.CUSTOM:
+      return (
+        <CustomProperty
+          code={property.code}
+          value={field.value}
+          onChange={field.onChange}
+          disabled={disabled}
+        ></CustomProperty>
+      );
   }
 };
 AutoPropertiesFormComponent.displayName = 'AutoFormComponent';

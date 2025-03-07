@@ -17,7 +17,7 @@ import { SigningKey } from '../signing-key';
 export const ListAuditEventsRequest = Type.Object({
   limit: Type.Optional(Type.Number()),
   cursor: Type.Optional(Type.String()),
-  action: Type.Optional(Type.String()),
+  action: Type.Optional(Type.Array(Type.String())),
   projectId: Type.Optional(Type.Array(Type.String())),
   userId: Type.Optional(Type.String()),
   createdBefore: Type.Optional(Type.String()),

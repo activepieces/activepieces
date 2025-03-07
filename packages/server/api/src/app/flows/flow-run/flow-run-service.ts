@@ -25,7 +25,7 @@ import {
     spreadIfDefined,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { In } from 'typeorm'
+import { In, Not } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import {
     APArrayContains,
@@ -135,8 +135,8 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             }
         }
     },
-    async bulkRetry({ projectId, flowRunIds, strategy, status, flowId, createdAfter, createdBefore }: BulkRetryParams): Promise<(FlowRun | null)[]> {
-        const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(projectId, flowRunIds, status, flowId, createdAfter, createdBefore)
+    async bulkRetry({ projectId, flowRunIds, strategy, status, flowId, createdAfter, createdBefore, excludeFlowRunIds }: BulkRetryParams): Promise<(FlowRun | null)[]> {
+        const filteredFlowRunIds = await filterFlowRunsAndApplyFilters(projectId, flowRunIds, status, flowId, createdAfter, createdBefore, excludeFlowRunIds)
         return Promise.all(filteredFlowRunIds.map(flowRunId => this.retry({ flowRunId, strategy, projectId })))
     },
     async addToQueue({
@@ -258,6 +258,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId,
             flowVersion,
             stepName: flowVersion.trigger.name,
+            fileType: FileType.SAMPLE_DATA,
         })
         return this.start({
             projectId,
@@ -364,6 +365,7 @@ async function filterFlowRunsAndApplyFilters(
     flowId?: FlowId[],
     createdAfter?: string,
     createdBefore?: string,
+    excludeFlowRunIds?: FlowRunId[],
 ): Promise<FlowRunId[]> {
     let query = flowRunRepo().createQueryBuilder('flow_run').where({
         projectId,
@@ -393,6 +395,11 @@ async function filterFlowRunsAndApplyFilters(
     if (createdBefore) {
         query = query.andWhere('flow_run.created <= :createdBefore', {
             createdBefore,
+        })
+    }
+    if (excludeFlowRunIds && excludeFlowRunIds.length > 0) {
+        query = query.andWhere({
+            id: Not(In(excludeFlowRunIds)),
         })
     }
 
@@ -543,6 +550,7 @@ type BulkRetryParams = {
     flowId?: FlowId[]
     createdAfter?: string
     createdBefore?: string
+    excludeFlowRunIds?: FlowRunId[]
 }
 type AddToQueueParams = {
     flowRunId: FlowRunId

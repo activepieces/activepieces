@@ -82,7 +82,7 @@ export const Platform = Type.Object({
     * @deprecated Use projects filter instead.
     */
     filteredPieceBehavior: Type.Enum(FilteredPieceBehavior),
-    smtp: Type.Optional(Type.Union([SMTPInformation, Type.Null()])),
+    smtp: Nullable(SMTPInformation),
     cloudAuthEnabled: Type.Boolean(),
     environmentsEnabled: Type.Boolean(),
     analyticsEnabled: Type.Boolean(),
@@ -115,10 +115,12 @@ export type Platform = Static<typeof Platform>
 
 
 export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
-    federatedAuthProviders: FederatedAuthnProviderConfigWithoutSensitiveData,
+    federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
     defaultLocale: Nullable(Type.String()),
     copilotSettings: Type.Optional(CopilotSettingsWithoutSensitiveData),
-    smtp: Type.Optional(Type.Union([Type.Object({}), Type.Null()])),
+    smtp: Nullable(Type.Object({})),
+    hasLicenseKey: Type.Optional(Type.Boolean()),
+    licenseExpiresAt: Type.Optional(Type.String()),
 }), Type.Pick(Platform, [
     'id',
     'created',

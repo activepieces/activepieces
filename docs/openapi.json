@@ -282,6 +282,12 @@
                       {
                         "type": "string",
                         "enum": [
+                          "MISSING"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
                           "ERROR"
                         ]
                       }
@@ -442,6 +448,12 @@
                         "type": "string",
                         "enum": [
                           "ACTIVE"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "MISSING"
                         ]
                       },
                       {
@@ -2395,9 +2407,6 @@
               "name": {
                 "type": "string"
               },
-              "minimumPollingInterval": {
-                "type": "number"
-              },
               "piecesFilterType": {
                 "anyOf": [
                   {
@@ -2420,17 +2429,13 @@
                   "type": "string"
                 }
               },
-              "connections": {
-                "type": "number"
-              },
-              "teamMembers": {
-                "type": "number"
-              },
               "tasks": {
-                "type": "number"
+                "type": "number",
+                "nullable": true
               },
               "aiTokens": {
-                "type": "number"
+                "type": "number",
+                "nullable": true
               }
             },
             "required": [
@@ -2439,13 +2444,8 @@
               "updated",
               "projectId",
               "name",
-              "minimumPollingInterval",
               "piecesFilterType",
-              "pieces",
-              "connections",
-              "teamMembers",
-              "tasks",
-              "aiTokens"
+              "pieces"
             ]
           },
           "analytics": {
@@ -2893,6 +2893,12 @@
                 "type": "string",
                 "enum": [
                   "ACTIVE"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "MISSING"
                 ]
               },
               {
@@ -6547,6 +6553,209 @@
           "name",
           "fileId",
           "type"
+        ]
+      },
+      "global-connection": {
+        "description": "App connection is a connection to an external app.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string"
+          },
+          "updated": {
+            "type": "string"
+          },
+          "externalId": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "OAUTH2"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "PLATFORM_OAUTH2"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "CLOUD_OAUTH2"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "SECRET_TEXT"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "BASIC_AUTH"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "CUSTOM_AUTH"
+                ]
+              }
+            ]
+          },
+          "pieceName": {
+            "type": "string"
+          },
+          "projectIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^[0-9a-zA-Z]{21}$",
+              "type": "string"
+            }
+          },
+          "platformId": {
+            "type": "string",
+            "nullable": true
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "PROJECT"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "PLATFORM"
+                ]
+              }
+            ]
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ACTIVE"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "MISSING"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "ERROR"
+                ]
+              }
+            ]
+          },
+          "ownerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "owner": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "firstName": {
+                "type": "string"
+              },
+              "status": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "ACTIVE"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "INACTIVE"
+                    ]
+                  }
+                ]
+              },
+              "externalId": {
+                "type": "string",
+                "nullable": true
+              },
+              "platformId": {
+                "type": "string",
+                "nullable": true
+              },
+              "platformRole": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "ADMIN"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "MEMBER"
+                    ]
+                  }
+                ]
+              },
+              "lastName": {
+                "type": "string"
+              },
+              "created": {
+                "type": "string"
+              },
+              "updated": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "email",
+              "firstName",
+              "status",
+              "platformRole",
+              "lastName",
+              "created",
+              "updated"
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "created",
+          "updated",
+          "externalId",
+          "displayName",
+          "type",
+          "pieceName",
+          "projectIds",
+          "scope",
+          "status"
         ]
       }
     }
@@ -10365,6 +10574,165 @@
         }
       }
     },
+    "/v1/sample-data": {
+      "post": {
+        "tags": [
+          "sample-data"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "flowVersionId": {
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  },
+                  "stepName": {
+                    "type": "string"
+                  },
+                  "payload": {}
+                },
+                "required": [
+                  "flowVersionId",
+                  "projectId",
+                  "stepName",
+                  "payload"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "size": {
+                      "type": "number"
+                    },
+                    "type": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "UNKNOWN"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "FLOW_RUN_LOG"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PACKAGE_ARCHIVE"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "FLOW_STEP_FILE"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "SAMPLE_DATA"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "TRIGGER_EVENT_FILE"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PROJECT_RELEASE"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "type"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "sample-data"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "flowId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "flowVersionId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "stepName",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "projectId",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/v1/flow-runs": {
       "get": {
         "tags": [
@@ -11394,6 +11762,12 @@
                   {
                     "type": "string",
                     "enum": [
+                      "MISSING"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
                       "ERROR"
                     ]
                   }
@@ -11523,6 +11897,12 @@
                                 "type": "string",
                                 "enum": [
                                   "ACTIVE"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "MISSING"
                                 ]
                               },
                               {
@@ -11732,6 +12112,78 @@
         }
       }
     },
+    "/v1/app-connections/owners": {
+      "get": {
+        "tags": [
+          "app-connections"
+        ],
+        "description": "List app connection owners",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "projectId",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "firstName": {
+                            "type": "string"
+                          },
+                          "lastName": {
+                            "type": "string"
+                          },
+                          "email": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "firstName",
+                          "lastName",
+                          "email"
+                        ]
+                      }
+                    },
+                    "next": {
+                      "description": "Cursor to the next page",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "description": "Cursor to the previous page",
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/platforms/{id}": {
       "get": {
         "tags": [
@@ -11820,7 +12272,8 @@
                     },
                     "smtp": {
                       "type": "object",
-                      "properties": {}
+                      "properties": {},
+                      "nullable": true
                     },
                     "id": {
                       "type": "string"
@@ -12482,7 +12935,8 @@
                     "type": "string"
                   },
                   "externalId": {
-                    "type": "string"
+                    "type": "string",
+                    "nullable": true
                   }
                 },
                 "required": [
@@ -12594,9 +13048,6 @@
                         "name": {
                           "type": "string"
                         },
-                        "minimumPollingInterval": {
-                          "type": "number"
-                        },
                         "piecesFilterType": {
                           "anyOf": [
                             {
@@ -12619,17 +13070,13 @@
                             "type": "string"
                           }
                         },
-                        "connections": {
-                          "type": "number"
-                        },
-                        "teamMembers": {
-                          "type": "number"
-                        },
                         "tasks": {
-                          "type": "number"
+                          "type": "number",
+                          "nullable": true
                         },
                         "aiTokens": {
-                          "type": "number"
+                          "type": "number",
+                          "nullable": true
                         }
                       },
                       "required": [
@@ -12638,13 +13085,8 @@
                         "updated",
                         "projectId",
                         "name",
-                        "minimumPollingInterval",
                         "piecesFilterType",
-                        "pieces",
-                        "connections",
-                        "teamMembers",
-                        "tasks",
-                        "aiTokens"
+                        "pieces"
                       ]
                     },
                     "analytics": {
@@ -12826,9 +13268,6 @@
                               "name": {
                                 "type": "string"
                               },
-                              "minimumPollingInterval": {
-                                "type": "number"
-                              },
                               "piecesFilterType": {
                                 "anyOf": [
                                   {
@@ -12851,17 +13290,13 @@
                                   "type": "string"
                                 }
                               },
-                              "connections": {
-                                "type": "number"
-                              },
-                              "teamMembers": {
-                                "type": "number"
-                              },
                               "tasks": {
-                                "type": "number"
+                                "type": "number",
+                                "nullable": true
                               },
                               "aiTokens": {
-                                "type": "number"
+                                "type": "number",
+                                "nullable": true
                               }
                             },
                             "required": [
@@ -12870,13 +13305,8 @@
                               "updated",
                               "projectId",
                               "name",
-                              "minimumPollingInterval",
                               "piecesFilterType",
-                              "pieces",
-                              "connections",
-                              "teamMembers",
-                              "tasks",
-                              "aiTokens"
+                              "pieces"
                             ]
                           },
                           "analytics": {
@@ -13131,9 +13561,6 @@
                         "name": {
                           "type": "string"
                         },
-                        "minimumPollingInterval": {
-                          "type": "number"
-                        },
                         "piecesFilterType": {
                           "anyOf": [
                             {
@@ -13156,17 +13583,13 @@
                             "type": "string"
                           }
                         },
-                        "connections": {
-                          "type": "number"
-                        },
-                        "teamMembers": {
-                          "type": "number"
-                        },
                         "tasks": {
-                          "type": "number"
+                          "type": "number",
+                          "nullable": true
                         },
                         "aiTokens": {
-                          "type": "number"
+                          "type": "number",
+                          "nullable": true
                         }
                       },
                       "required": [
@@ -13175,13 +13598,8 @@
                         "updated",
                         "projectId",
                         "name",
-                        "minimumPollingInterval",
                         "piecesFilterType",
-                        "pieces",
-                        "connections",
-                        "teamMembers",
-                        "tasks",
-                        "aiTokens"
+                        "pieces"
                       ]
                     },
                     "analytics": {
@@ -13446,6 +13864,21 @@
                               "permissions",
                               "type"
                             ]
+                          },
+                          "project": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "displayName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "displayName"
+                            ]
                           }
                         },
                         "required": [
@@ -13457,7 +13890,245 @@
                           "projectId",
                           "projectRoleId",
                           "user",
-                          "projectRole"
+                          "projectRole",
+                          "project"
+                        ]
+                      }
+                    },
+                    "next": {
+                      "description": "Cursor to the next page",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "description": "Cursor to the previous page",
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/project-members/platform-users": {
+      "get": {
+        "tags": [
+          "project-members"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "projectRoleId",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "number"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "created": {
+                            "type": "string"
+                          },
+                          "updated": {
+                            "type": "string"
+                          },
+                          "platformId": {
+                            "pattern": "^[0-9a-zA-Z]{21}$",
+                            "type": "string"
+                          },
+                          "userId": {
+                            "pattern": "^[0-9a-zA-Z]{21}$",
+                            "type": "string"
+                          },
+                          "projectId": {
+                            "type": "string"
+                          },
+                          "projectRoleId": {
+                            "pattern": "^[0-9a-zA-Z]{21}$",
+                            "type": "string"
+                          },
+                          "user": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "email": {
+                                "type": "string"
+                              },
+                              "firstName": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ACTIVE"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "INACTIVE"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "externalId": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "platformId": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "platformRole": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ADMIN"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "MEMBER"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "lastName": {
+                                "type": "string"
+                              },
+                              "created": {
+                                "type": "string"
+                              },
+                              "updated": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "email",
+                              "firstName",
+                              "status",
+                              "platformRole",
+                              "lastName",
+                              "created",
+                              "updated"
+                            ]
+                          },
+                          "projectRole": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "created": {
+                                "type": "string"
+                              },
+                              "updated": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "permissions": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "platformId": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string"
+                              },
+                              "userCount": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "created",
+                              "updated",
+                              "name",
+                              "permissions",
+                              "type"
+                            ]
+                          },
+                          "project": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "displayName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "displayName"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "created",
+                          "updated",
+                          "platformId",
+                          "userId",
+                          "projectId",
+                          "projectRoleId",
+                          "user",
+                          "projectRole",
+                          "project"
                         ]
                       }
                     },
@@ -13512,6 +14183,243 @@
                   "properties": {
                     "not": {}
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/platform-project-members/users": {
+      "get": {
+        "tags": [
+          "project-members"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "projectRoleId",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "number"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "created": {
+                            "type": "string"
+                          },
+                          "updated": {
+                            "type": "string"
+                          },
+                          "platformId": {
+                            "pattern": "^[0-9a-zA-Z]{21}$",
+                            "type": "string"
+                          },
+                          "userId": {
+                            "pattern": "^[0-9a-zA-Z]{21}$",
+                            "type": "string"
+                          },
+                          "projectId": {
+                            "type": "string"
+                          },
+                          "projectRoleId": {
+                            "pattern": "^[0-9a-zA-Z]{21}$",
+                            "type": "string"
+                          },
+                          "user": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "email": {
+                                "type": "string"
+                              },
+                              "firstName": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ACTIVE"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "INACTIVE"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "externalId": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "platformId": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "platformRole": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ADMIN"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "MEMBER"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "lastName": {
+                                "type": "string"
+                              },
+                              "created": {
+                                "type": "string"
+                              },
+                              "updated": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "email",
+                              "firstName",
+                              "status",
+                              "platformRole",
+                              "lastName",
+                              "created",
+                              "updated"
+                            ]
+                          },
+                          "projectRole": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "created": {
+                                "type": "string"
+                              },
+                              "updated": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "permissions": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "platformId": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string"
+                              },
+                              "userCount": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "created",
+                              "updated",
+                              "name",
+                              "permissions",
+                              "type"
+                            ]
+                          },
+                          "project": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "displayName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "displayName"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "created",
+                          "updated",
+                          "platformId",
+                          "userId",
+                          "projectId",
+                          "projectRoleId",
+                          "user",
+                          "projectRole",
+                          "project"
+                        ]
+                      }
+                    },
+                    "next": {
+                      "description": "Cursor to the next page",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "description": "Cursor to the previous page",
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
                 }
               }
             }
@@ -14099,7 +15007,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "anyOf": [
+                "oneOf": [
                   {
                     "type": "object",
                     "properties": {
@@ -14208,7 +15116,10 @@
                     ]
                   }
                 ],
-                "discriminator": "type"
+                "type": "object",
+                "discriminator": {
+                  "propertyName": "type"
+                }
               }
             }
           }
@@ -14357,6 +15268,1147 @@
                     "fileId",
                     "type"
                   ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/global-connections": {
+      "post": {
+        "tags": [
+          "global-connections"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "displayName": {
+                        "type": "string"
+                      },
+                      "pieceName": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "SECRET_TEXT"
+                        ]
+                      },
+                      "value": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "SECRET_TEXT"
+                            ]
+                          },
+                          "secret_text": {
+                            "minLength": 1,
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "secret_text"
+                        ]
+                      },
+                      "scope": {
+                        "type": "string",
+                        "enum": [
+                          "PLATFORM"
+                        ]
+                      },
+                      "projectIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "externalId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "displayName",
+                      "pieceName",
+                      "type",
+                      "value",
+                      "scope",
+                      "projectIds"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "displayName": {
+                        "type": "string"
+                      },
+                      "pieceName": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "OAUTH2"
+                        ]
+                      },
+                      "value": {
+                        "type": "object",
+                        "properties": {
+                          "client_id": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "code": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "code_challenge": {
+                            "type": "string"
+                          },
+                          "scope": {
+                            "type": "string"
+                          },
+                          "authorization_method": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "HEADER"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "BODY"
+                                ]
+                              }
+                            ]
+                          },
+                          "client_secret": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "grant_type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "authorization_code"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "client_credentials"
+                                ]
+                              }
+                            ]
+                          },
+                          "props": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          "redirect_url": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "OAUTH2"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "client_id",
+                          "code",
+                          "scope",
+                          "client_secret",
+                          "redirect_url",
+                          "type"
+                        ]
+                      },
+                      "scope": {
+                        "type": "string",
+                        "enum": [
+                          "PLATFORM"
+                        ]
+                      },
+                      "projectIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "externalId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "displayName",
+                      "pieceName",
+                      "type",
+                      "value",
+                      "scope",
+                      "projectIds"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "displayName": {
+                        "type": "string"
+                      },
+                      "pieceName": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "CLOUD_OAUTH2"
+                        ]
+                      },
+                      "value": {
+                        "type": "object",
+                        "properties": {
+                          "client_id": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "code": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "code_challenge": {
+                            "type": "string"
+                          },
+                          "scope": {
+                            "type": "string"
+                          },
+                          "authorization_method": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "HEADER"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "BODY"
+                                ]
+                              }
+                            ]
+                          },
+                          "props": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "CLOUD_OAUTH2"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "client_id",
+                          "code",
+                          "scope",
+                          "type"
+                        ]
+                      },
+                      "scope": {
+                        "type": "string",
+                        "enum": [
+                          "PLATFORM"
+                        ]
+                      },
+                      "projectIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "externalId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "displayName",
+                      "pieceName",
+                      "type",
+                      "value",
+                      "scope",
+                      "projectIds"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "displayName": {
+                        "type": "string"
+                      },
+                      "pieceName": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "PLATFORM_OAUTH2"
+                        ]
+                      },
+                      "value": {
+                        "type": "object",
+                        "properties": {
+                          "client_id": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "code": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "code_challenge": {
+                            "type": "string"
+                          },
+                          "scope": {
+                            "type": "string"
+                          },
+                          "authorization_method": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "HEADER"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "BODY"
+                                ]
+                              }
+                            ]
+                          },
+                          "props": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "PLATFORM_OAUTH2"
+                            ]
+                          },
+                          "redirect_url": {
+                            "minLength": 1,
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "client_id",
+                          "code",
+                          "scope",
+                          "type",
+                          "redirect_url"
+                        ]
+                      },
+                      "scope": {
+                        "type": "string",
+                        "enum": [
+                          "PLATFORM"
+                        ]
+                      },
+                      "projectIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "externalId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "displayName",
+                      "pieceName",
+                      "type",
+                      "value",
+                      "scope",
+                      "projectIds"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "displayName": {
+                        "type": "string"
+                      },
+                      "pieceName": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "BASIC_AUTH"
+                        ]
+                      },
+                      "value": {
+                        "type": "object",
+                        "properties": {
+                          "username": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "password": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "BASIC_AUTH"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "username",
+                          "password",
+                          "type"
+                        ]
+                      },
+                      "scope": {
+                        "type": "string",
+                        "enum": [
+                          "PLATFORM"
+                        ]
+                      },
+                      "projectIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "externalId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "displayName",
+                      "pieceName",
+                      "type",
+                      "value",
+                      "scope",
+                      "projectIds"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "displayName": {
+                        "type": "string"
+                      },
+                      "pieceName": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "CUSTOM_AUTH"
+                        ]
+                      },
+                      "value": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "CUSTOM_AUTH"
+                            ]
+                          },
+                          "props": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "props"
+                        ]
+                      },
+                      "scope": {
+                        "type": "string",
+                        "enum": [
+                          "PLATFORM"
+                        ]
+                      },
+                      "projectIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "externalId": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "displayName",
+                      "pieceName",
+                      "type",
+                      "value",
+                      "scope",
+                      "projectIds"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "App connection is a connection to an external app.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "App connection is a connection to an external app.",
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "created": {
+                      "type": "string"
+                    },
+                    "updated": {
+                      "type": "string"
+                    },
+                    "externalId": {
+                      "type": "string"
+                    },
+                    "displayName": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "OAUTH2"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PLATFORM_OAUTH2"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "CLOUD_OAUTH2"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "SECRET_TEXT"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "BASIC_AUTH"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "CUSTOM_AUTH"
+                          ]
+                        }
+                      ]
+                    },
+                    "pieceName": {
+                      "type": "string"
+                    },
+                    "projectIds": {
+                      "type": "array",
+                      "items": {
+                        "pattern": "^[0-9a-zA-Z]{21}$",
+                        "type": "string"
+                      }
+                    },
+                    "platformId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "scope": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PROJECT"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PLATFORM"
+                          ]
+                        }
+                      ]
+                    },
+                    "status": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ACTIVE"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "MISSING"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ERROR"
+                          ]
+                        }
+                      ]
+                    },
+                    "ownerId": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "owner": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "firstName": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "ACTIVE"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "INACTIVE"
+                              ]
+                            }
+                          ]
+                        },
+                        "externalId": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "platformId": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "platformRole": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "ADMIN"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "MEMBER"
+                              ]
+                            }
+                          ]
+                        },
+                        "lastName": {
+                          "type": "string"
+                        },
+                        "created": {
+                          "type": "string"
+                        },
+                        "updated": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "email",
+                        "firstName",
+                        "status",
+                        "platformRole",
+                        "lastName",
+                        "created",
+                        "updated"
+                      ],
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "created",
+                    "updated",
+                    "externalId",
+                    "displayName",
+                    "type",
+                    "pieceName",
+                    "projectIds",
+                    "scope",
+                    "status"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "global-connections"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "PROJECT"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "PLATFORM"
+                  ]
+                }
+              ]
+            },
+            "in": "query",
+            "name": "scope",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "pieceName",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "displayName",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "ACTIVE"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "MISSING"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "ERROR"
+                    ]
+                  }
+                ]
+              }
+            },
+            "in": "query",
+            "name": "status",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "number"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "description": "App connection is a connection to an external app.",
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "created": {
+                            "type": "string"
+                          },
+                          "updated": {
+                            "type": "string"
+                          },
+                          "externalId": {
+                            "type": "string"
+                          },
+                          "displayName": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "OAUTH2"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "PLATFORM_OAUTH2"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CLOUD_OAUTH2"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "SECRET_TEXT"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "BASIC_AUTH"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "CUSTOM_AUTH"
+                                ]
+                              }
+                            ]
+                          },
+                          "pieceName": {
+                            "type": "string"
+                          },
+                          "projectIds": {
+                            "type": "array",
+                            "items": {
+                              "pattern": "^[0-9a-zA-Z]{21}$",
+                              "type": "string"
+                            }
+                          },
+                          "platformId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "scope": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "PROJECT"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "PLATFORM"
+                                ]
+                              }
+                            ]
+                          },
+                          "status": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "ACTIVE"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "MISSING"
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "ERROR"
+                                ]
+                              }
+                            ]
+                          },
+                          "ownerId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "owner": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "email": {
+                                "type": "string"
+                              },
+                              "firstName": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ACTIVE"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "INACTIVE"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "externalId": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "platformId": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "platformRole": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ADMIN"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "MEMBER"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "lastName": {
+                                "type": "string"
+                              },
+                              "created": {
+                                "type": "string"
+                              },
+                              "updated": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "email",
+                              "firstName",
+                              "status",
+                              "platformRole",
+                              "lastName",
+                              "created",
+                              "updated"
+                            ],
+                            "nullable": true
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "created",
+                          "updated",
+                          "externalId",
+                          "displayName",
+                          "type",
+                          "pieceName",
+                          "projectIds",
+                          "scope",
+                          "status"
+                        ]
+                      }
+                    },
+                    "next": {
+                      "description": "Cursor to the next page",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "description": "Cursor to the previous page",
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/global-connections/{id}": {
+      "post": {
+        "tags": [
+          "global-connections"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "displayName": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "projectIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "displayName"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-zA-Z]{21}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "global-connections"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-zA-Z]{21}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "not": {}
+                  }
                 }
               }
             }

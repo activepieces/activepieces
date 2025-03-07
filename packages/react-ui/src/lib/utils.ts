@@ -239,3 +239,22 @@ export const determineDefaultRoute = (
 };
 
 export const NEW_FLOW_QUERY_PARAM = 'newFlow';
+export const parentWindow = window.opener ?? window.parent;
+export const cleanLeadingSlash = (url: string) => {
+  return url.startsWith('/') ? url.slice(1) : url;
+};
+
+export const cleanTrailingSlash = (url: string) => {
+  return url.endsWith('/') ? url.slice(0, -1) : url;
+};
+export const combinePaths = ({
+  firstPath,
+  secondPath,
+}: {
+  firstPath: string;
+  secondPath: string;
+}) => {
+  const cleanedFirstPath = cleanTrailingSlash(firstPath);
+  const cleanedSecondPath = cleanLeadingSlash(secondPath);
+  return `${cleanedFirstPath}/${cleanedSecondPath}`;
+};

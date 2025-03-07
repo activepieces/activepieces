@@ -12,6 +12,7 @@ export type ConfluenceApiCallParams = {
 	domain: string;
 	username: string;
 	password: string;
+    version: 'v1' | 'v2';
 	method: HttpMethod;
 	resourceUri: string;
 	query?: QueryParams;
@@ -30,11 +31,12 @@ export async function confluenceApiCall<T extends HttpMessageBody>({
 	username,
 	password,
 	method,
+	version,
 	resourceUri,
 	query,
 	body,
 }: ConfluenceApiCallParams): Promise<T> {
-	const baseUrl = `${domain}/wiki/api/v2`;
+	const baseUrl = version === 'v2' ? `${domain}/wiki/api/v2` : `${domain}/wiki/rest/api`;
 
 	const request: HttpRequest = {
 		method,
@@ -50,7 +52,6 @@ export async function confluenceApiCall<T extends HttpMessageBody>({
 
 	const response = await httpClient.sendRequest<T>(request);
 	return response.body;
-	
 }
 
 export async function confluencePaginatedApiCall<T extends HttpMessageBody>({
@@ -58,6 +59,7 @@ export async function confluencePaginatedApiCall<T extends HttpMessageBody>({
 	username,
 	password,
 	method,
+	version,
 	resourceUri,
 	query,
 	body,
@@ -65,27 +67,52 @@ export async function confluencePaginatedApiCall<T extends HttpMessageBody>({
 	const qs = query ? query : {};
 	const resultData: T[] = [];
 
-	let nextUrl = `${domain}/wiki/api/v2/${resourceUri}?limit=200`;
+	if (version === 'v2') {
+		let nextUrl = `${domain}/wiki/api/v2${resourceUri}?limit=200`;
 
-	do {
-		const response = await httpClient.sendRequest<PaginatedResponse<T>>({
-			method,
-			url: nextUrl,
-			authentication: {
-				type: AuthenticationType.BASIC,
-				username,
-				password,
-			},
-			queryParams: qs,
-			body,
-		});
+		do {
+			const response = await httpClient.sendRequest<PaginatedResponse<T>>({
+				method,
+				url: nextUrl,
+				authentication: {
+					type: AuthenticationType.BASIC,
+					username,
+					password,
+				},
+				queryParams: qs,
+				body,
+			});
 
-		if (isNil(response.body.results)) {
-			break;
-		}
-		resultData.push(...response.body.results);
-		nextUrl = response.body?._links?.next ? `${domain}${response.body._links.next}` : '';
-	} while (nextUrl);
+			if (isNil(response.body.results)) {
+				break;
+			}
+			resultData.push(...response.body.results);
+			nextUrl = response.body?._links?.next ? `${domain}${response.body._links.next}` : '';
+		} while (nextUrl);
+	} else {
+		let start = 0;
+		let hasMoreData = true;
+
+		do {
+			const response = await httpClient.sendRequest<{ results: T[] }>({
+				method,
+				url: `${domain}/wiki/rest/api${resourceUri}?start=${start}&limit=100`,
+				authentication: {
+					type: AuthenticationType.BASIC,
+					username,
+					password,
+				},
+				queryParams: qs,
+				body,
+			});
+			if (isNil(response.body.results) || response.body.results.length === 0) {
+				hasMoreData = false;
+			} else {
+				resultData.push(...response.body.results);
+				start += 100;
+			}
+		} while (hasMoreData);
+	}
 
 	return resultData;
 }

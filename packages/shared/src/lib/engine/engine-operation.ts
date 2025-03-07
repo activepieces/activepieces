@@ -99,7 +99,7 @@ export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOper
     webhookUrl: string
     triggerPayload?: TriggerPayload
     appWebhookUrl?: string
-    webhookSecret?: string
+    webhookSecret?: string | Record<string, string>
 }
 
 
@@ -170,6 +170,7 @@ export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends Trigge
 
 export type ExecuteActionResponse = {
     success: boolean
+    input: unknown
     output: unknown
     message?: string
 }

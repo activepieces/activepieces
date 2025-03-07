@@ -7,8 +7,8 @@ export enum ActivepiecesClientEventName {
   CLIENT_AUTHENTICATION_SUCCESS = 'CLIENT_AUTHENTICATION_SUCCESS',
   CLIENT_AUTHENTICATION_FAILED = 'CLIENT_AUTHENTICATION_FAILED',
   CLIENT_CONFIGURATION_FINISHED = 'CLIENT_CONFIGURATION_FINISHED',
+  CLIENT_CONNECTION_PIECE_NOT_FOUND = 'CLIENT_CONNECTION_PIECE_NOT_FOUND',
 }
-export const connectionNameRegex = '[A-Za-z0-9_\\-@\\+\\.]*'
 export interface ActivepiecesClientInit {
   type: ActivepiecesClientEventName.CLIENT_INIT;
   data: Record<string, never>;
@@ -34,6 +34,13 @@ export interface ActivepiecesClientConnectionNameIsInvalid {
   type: ActivepiecesClientEventName.CLIENT_CONNECTION_NAME_IS_INVALID;
   data: {
     error: string;
+  };
+}
+
+export interface ActivepiecesClientConnectionPieceNotFound {
+  type: ActivepiecesClientEventName.CLIENT_CONNECTION_PIECE_NOT_FOUND;
+  data: {
+    error: string
   };
 }
 
@@ -90,10 +97,15 @@ export interface ActivepiecesVendorInit {
 }
 // We used to send JWT in query params, now we send it in local storage
 export const _AP_JWT_TOKEN_QUERY_PARAM_NAME = "jwtToken"
-
+type newWindowFeatures = {
+  height?: number,
+  width?: number,
+  top?: number,
+  left?: number,
+}
 export const _AP_MANAGED_TOKEN_LOCAL_STORAGE_KEY = "ap_managed_token"
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.3.4";
+  readonly _sdkVersion = "0.3.5";
   _prefix = '';
   _instanceUrl = '';
   _hideSidebar = false;
@@ -104,7 +116,6 @@ class ActivepiecesEmbedded {
   _disableNavigationInBuilder = true;
   _fontUrl?: string;
   _fontFamily?: string;
-  readonly _CONNECTIONS_IFRAME_ID = 'ApConnectionsIframe';
   _resolveNewConnectionDialogClosed?: (result: ActivepiecesNewConnectionDialogClosed['data']) => void;
   _dashboardAndBuilderIframeWindow?: Window;
   _navigationHandler?: (data: { route: string }) => void;
@@ -202,20 +213,9 @@ class ActivepiecesEmbedded {
 
   };
 
-  private connectToEmbed({ iframeContainer, initialRoute, callbackAfterConfigurationFinished }: {
-    iframeContainer: Element,
-    initialRoute: string,
-    callbackAfterConfigurationFinished?: () => void
-  }
-  ): IframeWithWindow {
-    const iframe = this._createIframe({ src: `${this._instanceUrl}/embed` });
-    iframeContainer.appendChild(iframe);
-    if (!this._doesFrameHaveWindow(iframe)) {
-       this._errorCreator('iframe window not accessible');
-    }
-    const iframeWindow = iframe.contentWindow;
+  private _setupInitialMessageHandler(targetWindow: Window, initialRoute: string, callbackAfterConfigurationFinished?: () => void) {
     const initialMessageHandler = (event: MessageEvent<ActivepiecesClientEvent>) => {
-      if (event.source === iframeWindow) {
+      if (event.source === targetWindow) {
         switch (event.data.type) {
           case ActivepiecesClientEventName.CLIENT_INIT: {
             const apEvent: ActivepiecesVendorInit = {
@@ -227,16 +227,16 @@ class ActivepiecesEmbedded {
                 hideFolders: this._hideFolders,
                 hideLogoInBuilder: this._hideLogoInBuilder,
                 hideFlowNameInBuilder: this._hideFlowNameInBuilder,
-                jwtToken: this._jwtToken, // Pass the token here
+                jwtToken: this._jwtToken,
                 initialRoute,
                 fontUrl: this._fontUrl,
                 fontFamily: this._fontFamily,
               },
             };
-            iframeWindow.postMessage(apEvent, '*');
-            this._createAuthenticationSuccessListener();
-            this._createAuthenticationFailedListener();
-            this._createConfigurationFinishedListener(callbackAfterConfigurationFinished);
+            targetWindow.postMessage(apEvent, '*');
+            this._createAuthenticationSuccessListener(targetWindow);
+            this._createAuthenticationFailedListener(targetWindow);
+            this._createConfigurationFinishedListener(targetWindow, callbackAfterConfigurationFinished);
             window.removeEventListener('message', initialMessageHandler);
             break;
           }
@@ -245,12 +245,25 @@ class ActivepiecesEmbedded {
     };
 
     window.addEventListener('message', initialMessageHandler);
+  }
+  private connectToEmbed({ iframeContainer, initialRoute, callbackAfterConfigurationFinished }: {
+    iframeContainer: Element,
+    initialRoute: string,
+    callbackAfterConfigurationFinished?: () => void
+  }): IframeWithWindow {
+    const iframe = this._createIframe({ src: `${this._instanceUrl}/embed` });
+    iframeContainer.appendChild(iframe);
+    if (!this._doesFrameHaveWindow(iframe)) {
+      this._errorCreator('iframe window not accessible');
+    }
+    const iframeWindow = iframe.contentWindow;
+    this._setupInitialMessageHandler(iframeWindow, initialRoute, callbackAfterConfigurationFinished);
     return iframe;
   }
 
-  private _createConfigurationFinishedListener = (callbackAfterConfigurationFinished?: () => void) => {
+  private _createConfigurationFinishedListener = (targetWindow: Window, callbackAfterConfigurationFinished?: () => void) => {
     const configurationFinishedHandler = (event: MessageEvent<ActivepiecesClientConfigurationFinished>) => {
-      if (event.data.type === ActivepiecesClientEventName.CLIENT_CONFIGURATION_FINISHED) {
+      if (event.data.type === ActivepiecesClientEventName.CLIENT_CONFIGURATION_FINISHED && event.source === targetWindow) {
         this._logger().log('Configuration finished')
         if (callbackAfterConfigurationFinished) {
           callbackAfterConfigurationFinished();
@@ -260,22 +273,19 @@ class ActivepiecesEmbedded {
     window.addEventListener('message', configurationFinishedHandler);
   }
 
-  private _createAuthenticationFailedListener = () => {
+  private _createAuthenticationFailedListener = (targetWindow: Window) => {
     const authenticationFailedHandler = (event: MessageEvent<ActivepiecesClientAuthenticationFailed>) => {
-        if (event.data.type === ActivepiecesClientEventName.CLIENT_AUTHENTICATION_FAILED) {
+        if (event.data.type === ActivepiecesClientEventName.CLIENT_AUTHENTICATION_FAILED && event.source === targetWindow) {
            this._errorCreator('Authentication failed',event.data.data);
       }
     }
     window.addEventListener('message', authenticationFailedHandler);
   }
 
-  private _createAuthenticationSuccessListener = (authenticationSuccessCallback?: () => void) => {
+  private _createAuthenticationSuccessListener = (targetWindow: Window) => {
     const authenticationSuccessHandler = (event: MessageEvent<ActivepiecesClientAuthenticationSuccess>) => {
-      if (event.data.type === ActivepiecesClientEventName.CLIENT_AUTHENTICATION_SUCCESS) {
+      if (event.data.type === ActivepiecesClientEventName.CLIENT_AUTHENTICATION_SUCCESS && event.source === targetWindow) {
         this._logger().log('Authentication success')
-        if (authenticationSuccessCallback) {
-          authenticationSuccessCallback();
-        }
         window.removeEventListener('message', authenticationSuccessHandler);
       }
     }
@@ -288,27 +298,73 @@ class ActivepiecesEmbedded {
     return iframe;
   }
 
-  async connect({ pieceName, connectionName }: { pieceName: string, connectionName?: string }) {
+  private _getNewWindowFeatures(requestedFeats:newWindowFeatures) {
+    const windowFeats:newWindowFeatures = {
+      height: 700,
+      width: 700,
+      top: 0,
+      left: 0,
+    }
+    Object.keys(windowFeats).forEach((key) => {
+      if(typeof requestedFeats === 'object' && requestedFeats[key as keyof newWindowFeatures]){
+        windowFeats[key as keyof newWindowFeatures ] = requestedFeats[key as keyof typeof requestedFeats]
+      }
+    })
+    return `width=${windowFeats.width},height=${windowFeats.height},top=${windowFeats.top},left=${windowFeats.left}`
+  }
+    
+  private _addConnectionIframe({pieceName, connectionName}:{pieceName:string, connectionName?:string}) {
+    const connectionsIframe = this.connectToEmbed({
+      iframeContainer: document.body,
+      initialRoute: `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&randomId=${Date.now()}&${NEW_CONNECTION_QUERY_PARAMS.connectionName}=${connectionName || ''}`
+    });
+    connectionsIframe.style.cssText = ['display:none', 'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%', 'border:none'].join(';');
+    return connectionsIframe;
+  }
+
+  private _openNewWindowForConnections({pieceName, connectionName,newWindow}:{pieceName:string, connectionName?:string, newWindow:newWindowFeatures}) {
+    const popup = window.open(`${this._instanceUrl}/embed`, '_blank', this._getNewWindowFeatures(newWindow));
+    if (!popup) {
+      this._errorCreator('Failed to open popup window');
+    }
+    this._setupInitialMessageHandler(popup, `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&randomId=${Date.now()}&${NEW_CONNECTION_QUERY_PARAMS.connectionName}=${connectionName || ''}`);
+    return popup;
+  }
+  async connect({ pieceName, connectionName, newWindow }: { 
+    pieceName: string, 
+    connectionName?: string, 
+    newWindow?:{
+      height?: number,
+      width?: number,
+      top?: number,
+      left?: number,
+    }
+  }) {
     this._cleanConnectionIframe();
     return this._addGracePeriodBeforeMethod({
       condition: () => {
         return !!document.body;
       },
       method: async () => {
-        const connectionsIframe = this.connectToEmbed({
-          iframeContainer: document.body,
-          initialRoute: `/embed/connections?${NEW_CONNECTION_QUERY_PARAMS.name}=${pieceName}&randomId=${Date.now()}&${NEW_CONNECTION_QUERY_PARAMS.connectionName}=${connectionName || ''}`
-        });
-        const connectionsIframeStyle = ['display:none', 'position:fixed', 'top:0', 'left:0', 'width:100%', 'height:100%', 'border:none'].join(';');
-        connectionsIframe.style.cssText = connectionsIframeStyle;
-        connectionsIframe.id = this._CONNECTIONS_IFRAME_ID;
-        this._setConnectionIframeEventsListener();
+        const target = newWindow? this._openNewWindowForConnections({pieceName, connectionName,newWindow}) : this._addConnectionIframe({pieceName, connectionName});
+        //don't check for window because (instanceof Window) is false for popups
+        if(!(target instanceof HTMLIFrameElement)) {
+          const checkClosed = setInterval(() => {
+            if (target.closed) {
+              clearInterval(checkClosed);
+              if(this._resolveNewConnectionDialogClosed) {
+                this._resolveNewConnectionDialogClosed({connection:undefined})
+              }
+            }
+          }, 500);
+        }
         return new Promise<ActivepiecesNewConnectionDialogClosed['data']>((resolve, reject) => {
           this._resolveNewConnectionDialogClosed = resolve;
           this._rejectNewConnectionDialogClosed = reject;
+          this._setConnectionIframeEventsListener(target);
         });
       },
-      errorMessage: 'document body not found while trying to add connections iframe'
+      errorMessage: 'unable to add connection embedding'
     });
   }
 
@@ -369,20 +425,21 @@ class ActivepiecesEmbedded {
   }
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   private _cleanConnectionIframe = () => { };
-  private _setConnectionIframeEventsListener() {
-    const connectionRelatedMessageHandler = (event: MessageEvent<ActivepiecesNewConnectionDialogClosed | ActivepiecesClientConnectionNameIsInvalid | ActivepiecesClientShowConnectionIframe>) => {
+  private _setConnectionIframeEventsListener(target: Window | HTMLIFrameElement ) {
+    const connectionRelatedMessageHandler = (event: MessageEvent<ActivepiecesNewConnectionDialogClosed | ActivepiecesClientConnectionNameIsInvalid | ActivepiecesClientShowConnectionIframe | ActivepiecesClientConnectionPieceNotFound>) => {
       if (event.data.type) {
         switch (event.data.type) {
           case ActivepiecesClientEventName.CLIENT_NEW_CONNECTION_DIALOG_CLOSED: {
             if (this._resolveNewConnectionDialogClosed) {
               this._resolveNewConnectionDialogClosed(event.data.data);
             }
-            this._removeIframe(`#${this._CONNECTIONS_IFRAME_ID}`);
+            this._removeEmbedding(target);
             window.removeEventListener('message', connectionRelatedMessageHandler);
             break;
           }
-          case ActivepiecesClientEventName.CLIENT_CONNECTION_NAME_IS_INVALID: {
-            this._removeIframe(`#${this._CONNECTIONS_IFRAME_ID}`);
+          case ActivepiecesClientEventName.CLIENT_CONNECTION_NAME_IS_INVALID:
+          case ActivepiecesClientEventName.CLIENT_CONNECTION_PIECE_NOT_FOUND: {
+            this._removeEmbedding(target);
             if (this._rejectNewConnectionDialogClosed) {
               this._rejectNewConnectionDialogClosed(event.data.data);
             }
@@ -393,12 +450,8 @@ class ActivepiecesEmbedded {
             break;
           }
           case ActivepiecesClientEventName.CLIENT_SHOW_CONNECTION_IFRAME: {
-            const connectionsIframe: HTMLElement | null = document.querySelector(`#${this._CONNECTIONS_IFRAME_ID}`);
-            if (connectionsIframe) {
-              connectionsIframe.style.display = 'block';
-            }
-            else {
-               this._errorCreator('Connections iframe not found when trying to show it')
+            if (target instanceof HTMLIFrameElement) {
+              target.style.display = 'block';
             }
             break;
           }
@@ -413,9 +466,7 @@ class ActivepiecesEmbedded {
       window.removeEventListener('message', connectionRelatedMessageHandler);
       this._resolveNewConnectionDialogClosed = undefined;
       this._rejectNewConnectionDialogClosed = undefined;
-      if (document.querySelector(`#${this._CONNECTIONS_IFRAME_ID}`)) {
-        this._removeIframe(`#${this._CONNECTIONS_IFRAME_ID}`);
-      }
+      this._removeEmbedding(target);
     }
   }
 
@@ -464,15 +515,17 @@ class ActivepiecesEmbedded {
     this._logger().error(message,...args)
     throw new Error(`Activepieces: ${message}`,);
   }
-  private _removeIframe(selector: string) {
-    const iframe = document.querySelector(selector);
-    if (iframe) {
-      iframe.remove();
+  private _removeEmbedding(target:HTMLIFrameElement | Window) {
+    if (target) {
+      if (target instanceof HTMLIFrameElement) {
+        target.remove();
+      } else {
+        target.close();
+      }
     }
     else {
-      this._logger().warn(`iframe not found when trying to remove it`)
+      this._logger().warn(`couldn't remove embedding`)
     }
-
   }
   private _logger() {
     return{

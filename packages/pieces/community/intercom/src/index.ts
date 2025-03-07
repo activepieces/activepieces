@@ -9,13 +9,13 @@ import { PieceCategory } from '@activepieces/shared';
 import { sendMessageAction } from './lib/actions/send-message.action';
 import crypto from 'node:crypto';
 import { noteAddedToConversation } from './lib/triggers/note-added-to-conversation';
-import { addNoteToConversation } from './lib/actions/add-note-to-conversation';
+import { addNoteToConversationAction } from './lib/actions/add-note-to-conversation';
 import { replyToConversation } from './lib/actions/reply-to-conversation';
 import { newConversationFromUser } from './lib/triggers/new-conversation-from-user';
 import { replyFromUser } from './lib/triggers/reply-from-user';
 import { replyFromAdmin } from './lib/triggers/reply-from-admin';
 import { conversationAssigned } from './lib/triggers/conversation-assigned';
-import { conversationClosed } from './lib/triggers/conversation-closed';
+import { conversationClosedTrigger } from './lib/triggers/conversation-closed';
 import { conversationSnoozed } from './lib/triggers/conversation-snoozed';
 import { conversationUnsnoozed } from './lib/triggers/conversation-unsnoozed';
 import { conversationRated } from './lib/triggers/conversation-rated';
@@ -39,11 +39,30 @@ import { createOrUpdateLeadAction } from './lib/actions/create-update-lead';
 import { createTicketAction } from './lib/actions/create-ticket';
 import { updateTicketAction } from './lib/actions/update-ticket';
 import { findCompanyAction } from './lib/actions/find-company';
+import { leadAddedEmailTrigger } from './lib/triggers/lead-added-email';
+import { newTicketTrigger } from './lib/triggers/new-ticket';
+import { tagAddedToLeadTrigger } from './lib/triggers/tag-added-to-lead';
+import { contactRepliedTrigger } from './lib/triggers/contact-replied';
+import { leadConvertedToUserTrigger } from './lib/triggers/lead-converted-to-user';
+import { newUserTrigger } from './lib/triggers/new-user';
+import { tagAddedToUserTrigger } from './lib/triggers/tag-added-to-user';
+import { contactUpdatedTrigger } from './lib/triggers/contact-updated';
+
+const description = `
+Please follow the instructions to create Intercom Oauth2 app.
+
+1.Log in to your Intercom account and navigate to **Settings > Integrations > Developer Hub**.
+2.Click on **Create a new app** and select the appropriate workspace.
+3.In **Authentication** section, add Redirect URL.
+4.In **Webhooks** section, select the events you want to receive.
+5.Go to the **Basic Information** section and copy the Client ID and Client Secret.
+`;
 
 export const intercomAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.{region}.com/oauth',
 	tokenUrl: 'https://api.{region}.io/auth/eagle/token',
 	required: true,
+	description,
 	scope: [],
 	props: {
 		region: Property.StaticDropdown({
@@ -67,20 +86,6 @@ export const intercom = createPiece({
 	logoUrl: 'https://cdn.activepieces.com/pieces/intercom.png',
 	categories: [PieceCategory.CUSTOMER_SUPPORT],
 	auth: intercomAuth,
-	triggers: [
-		newConversationFromUser,
-		replyFromUser,
-		replyFromAdmin,
-		noteAddedToConversation,
-		conversationAssigned,
-		conversationClosed,
-		conversationSnoozed,
-		conversationUnsnoozed,
-		conversationRated,
-		conversationPartTagged,
-		newLeadTrigger,
-		newCompanyTrigger
-	],
 	authors: [
 		'kishanprmr',
 		'MoShizzle',
@@ -91,7 +96,7 @@ export const intercom = createPiece({
 	],
 	actions: [
 		addNoteToUserAction,
-		addNoteToConversation,
+		addNoteToConversationAction,
 		addOrRemoveTagOnContactAction,
 		addOrRemoveTagOnCompanyAction,
 		addOrRemoveTagOnConversationAction,
@@ -118,21 +123,53 @@ export const intercom = createPiece({
 			}),
 		}),
 	],
+	triggers: [
+		contactRepliedTrigger,
+		leadAddedEmailTrigger,
+		leadConvertedToUserTrigger,
+		conversationClosedTrigger,
+		conversationAssigned,
+		conversationSnoozed,
+		conversationUnsnoozed,
+		newCompanyTrigger,
+		newConversationFromUser,
+		conversationRated,
+		newLeadTrigger,
+		newTicketTrigger,
+		newUserTrigger,
+		conversationPartTagged,
+		tagAddedToLeadTrigger,
+		tagAddedToUserTrigger,
+		contactUpdatedTrigger,
+		replyFromUser,
+		replyFromAdmin,
+		noteAddedToConversation,
+	],
 	events: {
-		parseAndReply: ({ payload }) => {
-			const payloadBody = payload.body as PayloadBody;
-			return {
-				event: payloadBody.topic,
-				identifierValue: payloadBody.app_id,
-			};
-		},
-		verify: ({ payload, webhookSecret }) => {
-			const signature = payload.headers['x-hub-signature'];
-			const hmac = crypto.createHmac('sha1', webhookSecret);
-			hmac.update(`${payload.rawBody}`);
-			const computedSignature = `sha1=${hmac.digest('hex')}`;
-			return signature === computedSignature;
-		},
+    parseAndReply: ({ payload }) => {
+      const payloadBody = payload.body as PayloadBody;
+      return {
+        event: payloadBody.topic,
+        identifierValue: payloadBody.app_id,
+      };
+    },
+    verify: ({ payload, webhookSecret }) => {
+      const signature = payload.headers['x-hub-signature'];
+      let hmac: crypto.Hmac;
+      if (typeof webhookSecret === 'string') {
+        hmac = crypto.createHmac('sha1', webhookSecret);
+      } else {
+        const app_id = (payload.body as PayloadBody).app_id;
+        const webhookSecrets = webhookSecret as Record<string, string>;
+        if (!(app_id in webhookSecrets)) {
+          return false;
+        }
+        hmac = crypto.createHmac('sha1', webhookSecrets[app_id]);
+      }
+      hmac.update(`${payload.rawBody}`);
+      const computedSignature = `sha1=${hmac.digest('hex')}`;
+      return signature === computedSignature;
+    },
 	},
 });
 
