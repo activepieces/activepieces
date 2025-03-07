@@ -948,3 +948,22 @@ type DropdownParams = {
 	required: boolean;
 	description?: string;
 };
+
+export const 	pageType=Property.StaticDropdown({
+	displayName:'Page Type',
+	required:true,
+	defaultValue:'landing_page',
+	options:{
+		disabled:false,
+		options:[
+			{
+				label:'Landing Page',
+				value:'landing_page'
+			},
+			{
+				label:'Site Page',
+				value:'site_page'
+			}
+		]
+	}
+})
