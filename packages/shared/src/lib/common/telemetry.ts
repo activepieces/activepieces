@@ -73,7 +73,7 @@ type RequestTrialClicked = {
     location: string
 }
 
-type KeyActiviated = {
+type KeyActivated = {
     date: string
     key: string
 }
@@ -107,7 +107,7 @@ type FlowShared = {
     projectId: ProjectId
 }
 
-type OpenedFromDasahboard = {
+type OpenedFromDashboard = {
     location: 'sidenav' | 'tasks-progress'
 }
 type CopilotGeneratedCode = {
@@ -143,7 +143,7 @@ export enum TelemetryEventName {
     QUOTA_ALERT = 'quota.alert',
     REQUEST_TRIAL_CLICKED = 'request.trial.clicked',
     REQUEST_TRIAL_SUBMITTED = 'request.trial.submitted',
-    KEY_ACTIVIATED = 'key.activated',
+    KEY_ACTIVATED = 'key.activated',
     FLOW_ISSUE_CLICKED = 'flow.issue.clicked',
     FLOW_ISSUE_RESOLVED = 'flow.issue.resolved',
     UPGRADE_CLICKED = 'upgrade.clicked',
@@ -185,7 +185,7 @@ export type TelemetryEvent =
   TelemetryEventName.REQUEST_TRIAL_CLICKED,
   RequestTrialClicked
   >
-  | BaseTelemetryEvent<TelemetryEventName.KEY_ACTIVIATED, KeyActiviated>
+  | BaseTelemetryEvent<TelemetryEventName.KEY_ACTIVATED, KeyActivated>
   | BaseTelemetryEvent<
   TelemetryEventName.REQUEST_TRIAL_SUBMITTED,
   RequestTrialSubmitted
@@ -216,7 +216,7 @@ export type TelemetryEvent =
   | BaseTelemetryEvent<TelemetryEventName.DEMO_IMPORTED, Record<string, never>>
   | BaseTelemetryEvent<
   TelemetryEventName.OPENED_PRICING_FROM_DASHBOARD,
-  OpenedFromDasahboard
+  OpenedFromDashboard
   >
   | BaseTelemetryEvent<
   TelemetryEventName.COPILOT_GENERATED_CODE,

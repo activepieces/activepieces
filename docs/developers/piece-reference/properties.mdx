@@ -377,3 +377,60 @@ Property.DynamicProperties({
   },
 });
 ```
+
+
+
+### Custom Property (BETA)
+
+<Warning>
+ This feature is still in BETA and not fully released yet, please let us know if you use it and face any issues and consider it a possibility could have breaking changes in the future
+</Warning>
+This is a property that basically lets you inject JS code into the frontend and manipulate the DOM of this content however you like.
+It has a "code" property which is your JS script, it should be a function that takes in an object parameter which will have the following schema:
+
+```typescript
+{
+        //the container in which you will add your html, you can use tailwind to stylize your template
+        containerId,
+        value,
+        onChange,
+        //in case you want to hide your property for embedding.
+        isEmbedded,
+        projectId,
+        disabled
+}
+```
+
+here is how to define such a property:
+```typescript
+ Property.Custom({
+      code: `
+      (params) => {
+        const containerId = params.containerId;
+        const label = document.createElement('div');
+        label.textContent = 'Hello from custom property';
+        const labelClasses = 'text-sm font-medium text-gray-900'.split(' ');
+        label.classList.add(...labelClasses);
+        const container = document.getElementById(containerId);
+        container.appendChild(label);
+        container.appendChild(button);
+        const containerClasses = 'flex items-center justify-between'.split(' ');
+        container.classList.add(...containerClasses);
+        const input = document.createElement('input');
+        const inputClassList = 'border border-solid border-border rounded-md'.split(' ');
+        input.classList.add(...inputClassList)
+        input.type = 'text';
+        input.value = params.value?? "Default value";
+        input.oninput = (e) => {
+          console.log("input changed", e.target.value);
+          params.onChange(e.target.value);
+        }
+        container.appendChild(input);
+      }`,
+      displayName: 'Custom Property',
+      required: true,
+      defaultValue: "Default Value", 
+      description: "Custom Property Made By You",
+    })
+  ```
+

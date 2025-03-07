@@ -115,10 +115,12 @@ export type Platform = Static<typeof Platform>
 
 
 export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
-    federatedAuthProviders: FederatedAuthnProviderConfigWithoutSensitiveData,
+    federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
     defaultLocale: Nullable(Type.String()),
     copilotSettings: Type.Optional(CopilotSettingsWithoutSensitiveData),
     smtp: Nullable(Type.Object({})),
+    hasLicenseKey: Type.Optional(Type.Boolean()),
+    licenseExpiresAt: Type.Optional(Type.String()),
 }), Type.Pick(Platform, [
     'id',
     'created',

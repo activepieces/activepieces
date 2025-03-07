@@ -212,11 +212,11 @@
       "@activepieces/piece-figma": [
         "packages/pieces/community/figma/src/index.ts"
       ],
-      "@activepieces/piece-firecrawl":[
-        "packages/pieces/community/firecrawl/src/index.ts"
-      ],
       "@activepieces/piece-file-helper": [
         "packages/pieces/community/file-helper/src/index.ts"
+      ],
+      "@activepieces/piece-firecrawl": [
+        "packages/pieces/community/firecrawl/src/index.ts"
       ],
       "@activepieces/piece-fliqr-ai": [
         "packages/pieces/community/fliqr-ai/src/index.ts"
@@ -247,9 +247,6 @@
       ],
       "@activepieces/piece-gcloud-pubsub": [
         "packages/pieces/community/gcloud-pubsub/src/index.ts"
-      ],
-      "@activepieces/piece-gelato": [
-        "packages/pieces/community/gelato/src/index.ts"
       ],
       "@activepieces/piece-generatebanners": [
         "packages/pieces/community/generatebanners/src/index.ts"

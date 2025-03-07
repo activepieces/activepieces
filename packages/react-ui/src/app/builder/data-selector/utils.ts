@@ -349,7 +349,7 @@ function filterBy(
       const searchableValue =
         isNil(item) || item.data.type === 'test' || item.data.type === 'chunk'
           ? ''
-          : JSON.stringify(item?.data?.value).toLowerCase();
+          : JSON.stringify(item?.data?.value)?.toLowerCase();
 
       const displayName =
         item?.data?.type === 'value'
