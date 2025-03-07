@@ -1,5 +1,5 @@
 import { AppSystemProp, GetRunForWorkerRequest, JobStatus, QueueName, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isNil, NotifyFrontendRequest, PauseType, PopulatedFlow, PrincipalType, ProgressUpdateType, RemoveStableJobEngineRequest, StopResponse, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, assertNotEqual, assertNotNullOrUndefined, EngineHttpResponse, EnginePrincipal, ErrorCode, FileType, FlowRunResponse, FlowRunStatus, GetFlowVersionForWorkerRequest, GetFlowVersionForWorkerRequestType, isFailedState, isNil, NotifyFrontendRequest, PopulatedFlow, PrincipalType, ProgressUpdateType, RemoveStableJobEngineRequest, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateRunProgressResponse, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -82,6 +82,16 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/update-run', UpdateRunProgress, async (request) => {
         const { runId, workerHandlerId, runDetails, httpRequestId, executionStateBuffer, executionStateContentLength } = request.body
         const progressUpdateType = request.body.progressUpdateType ?? ProgressUpdateType.NONE
+
+
+        const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED, FlowRunStatus.STOPPED]
+        if (!nonSupportedStatuses.includes(runDetails.status) && !isNil(workerHandlerId) && !isNil(httpRequestId)) {
+            await engineResponseWatcher(request.log).publish(
+                httpRequestId,
+                workerHandlerId,
+                await getFlowResponse(runDetails),
+            )
+        }
         const runWithoutSteps = await flowRunService(request.log).updateStatus({
             flowRunId: runId,
             status: getTerminalStatus(runDetails.status),
@@ -123,15 +133,14 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/update-flow-response', UpdateFlowResponseParams, async (request) => {
-        const { runId, workerHandlerId, httpRequestId, runResponse } = request.body
+        const { workerHandlerId, httpRequestId, runResponse } = request.body
 
-        if (!isNil(runId)) {
-            await engineResponseWatcher(request.log).publish(
-                httpRequestId,
-                workerHandlerId,
-                runResponse,
-            )
-        }
+        console.log("RESPPPPPPPPOND " + httpRequestId)
+        await engineResponseWatcher(request.log).publish(
+            httpRequestId,
+            workerHandlerId,
+            runResponse,
+        )
         return {}
     })
 
@@ -199,6 +208,47 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
 
 
+}
+
+async function getFlowResponse(
+    result: FlowRunResponse,
+): Promise<EngineHttpResponse> {
+    switch (result.status) {
+        case FlowRunStatus.INTERNAL_ERROR:
+            return {
+                status: StatusCodes.INTERNAL_SERVER_ERROR,
+                body: {
+                    message: 'An internal error has occurred',
+                },
+                headers: {},
+            }
+        case FlowRunStatus.FAILED:
+        case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
+            return {
+                status: StatusCodes.INTERNAL_SERVER_ERROR,
+                body: {
+                    message: 'The flow has failed and there is no response returned',
+                },
+                headers: {},
+            }
+        case FlowRunStatus.TIMEOUT:
+            return {
+                status: StatusCodes.GATEWAY_TIMEOUT,
+                body: {
+                    message: 'The request took too long to reply',
+                },
+                headers: {},
+            }
+        case FlowRunStatus.QUOTA_EXCEEDED:
+            return {
+                status: StatusCodes.NO_CONTENT,
+                body: {},
+                headers: {},
+            }
+        // Case that should be handled before
+        default:
+            throw new Error(`Unexpected flow run status: ${result.status}`)
+    }
 }
 
 async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePrincipal: EnginePrincipal, error: unknown, log: FastifyBaseLogger): Promise<void> {
@@ -348,24 +398,7 @@ const UpdateFlowResponseParams = {
         allowedPrincipals: [PrincipalType.ENGINE],
     },
     schema: {
-        body: Type.Object({
-            runId: Type.String(),
-            workerHandlerId: Type.String(),
-            httpRequestId: Type.String(),
-            runResponse: Type.Object({
-                status: Type.Number(),
-                body: Type.Any(),
-                headers: Type.Record(Type.String(), Type.String()),
-            }),
-        }),
+        body: SendFlowResponseRequest,
     },
 }
 
-const stoppedResponse = (result: FlowRunResponse): EngineHttpResponse => {
-    const response = result.response as StopResponse
-    return {
-        status: response.status ?? StatusCodes.OK,
-        body: response.body,
-        headers: response.headers ?? {},
-    }
-}
