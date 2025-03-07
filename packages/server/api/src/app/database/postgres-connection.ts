@@ -23,6 +23,7 @@ import { AddPlatform1697717995884 } from '../ee/database/migrations/postgres/169
 import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
 import { system } from '../helper/system/system'
 import { commonProperties } from './database-connection'
+import { ProjectIdNullableInTemplate1741357285896 } from './migration/1741357285896-ProjectIdNullableInTemplate'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
@@ -372,6 +373,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddPlatformBilling1734971881345,
                 CreateProjectReleaseTable1734418823028,
                 RemoveUnusedProjectBillingFields1736607721367,
+                ProjectIdNullableInTemplate1741357285896,
             )
             break
         case ApEdition.COMMUNITY:

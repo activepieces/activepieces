@@ -49,7 +49,7 @@ export const flowTemplateService = {
                 created: new Date().toISOString(),
                 updated: new Date().toISOString(),
                 platformId,
-                projectId,
+                projectId: type === TemplateType.PLATFORM ? undefined : projectId,
             },
             ['id'],
         )
