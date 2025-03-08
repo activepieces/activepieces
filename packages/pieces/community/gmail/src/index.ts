@@ -5,7 +5,7 @@ import {
   createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { gmailSendEmailAction} from './lib/actions/send-email-action';
+import { gmailSendEmailAction } from './lib/actions/send-email-action';
 import { gmailGetEmail} from './lib/actions/get-mail-action';
 import { gmailGetThread } from './lib/actions/get-thread-action';
 import { gmailSearchMail } from './lib/actions/search-email-action';
