@@ -49,6 +49,7 @@ import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
+import { ApprovalTaskEntity, ApprovalTaskCommentEntity } from '../ee/approval-tasks/apporval-task.entity'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
@@ -103,6 +104,8 @@ function getEntities(): EntitySchema<unknown>[] {
                 ConnectionKeyEntity,
                 AppCredentialEntity,
                 PlatformBillingEntity,
+                ApprovalTaskEntity,
+                ApprovalTaskCommentEntity,
             )
             break
         case ApEdition.COMMUNITY:

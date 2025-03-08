@@ -91,7 +91,7 @@ import { websocketService } from './websockets/websockets.service'
 import { flowConsumer } from './workers/consumer'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { workerModule } from './workers/worker-module'
-
+import { approvalTaskModule } from './ee/approval-tasks/apporval-task.module'
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
     await app.register(swagger, {
@@ -317,6 +317,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
             await app.register(globalConnectionModule)
+            await app.register(approvalTaskModule)
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
