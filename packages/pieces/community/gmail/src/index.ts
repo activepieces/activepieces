@@ -5,7 +5,10 @@ import {
   createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { gmailSendEmailAction } from './lib/actions/send-email-action';
+import { gmailSendEmailAction} from './lib/actions/send-email-action';
+import { gmailGetEmail} from './lib/actions/get-mail-action';
+import { gmailGetThread } from './lib/actions/get-thread-action';
+import { gmailSearchMail } from './lib/actions/search-email-action';
 import { gmailNewEmailTrigger } from './lib/triggers/new-email';
 import { gmailNewLabeledEmailTrigger } from './lib/triggers/new-labeled-email';
 
@@ -31,6 +34,9 @@ export const gmail = createPiece({
   ],
   actions: [
     gmailSendEmailAction,
+    gmailGetEmail,
+    gmailGetThread,
+    gmailSearchMail,
     createCustomApiCallAction({
       baseUrl: () => 'https://gmail.googleapis.com/gmail/v1',
       auth: gmailAuth,
