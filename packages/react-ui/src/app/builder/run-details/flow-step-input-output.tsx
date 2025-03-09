@@ -18,7 +18,7 @@ const FlowStepInputOutput = React.memo(
       state.selectedStep,
     ]);
     const selectedStep = selectedStepName
-      ? flowStructureUtil.getStepOrThrow(selectedStepName, flowVersion.trigger)
+      ? flowStructureUtil.getStep(selectedStepName, flowVersion.trigger)
       : undefined;
     return (
       <ScrollArea className="h-full p-4 ">

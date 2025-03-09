@@ -146,6 +146,7 @@ function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
         const clearInputUiInfo = {
             currentSelectedData: undefined,
             sampleDataFileId: undefined,
+            sampleDataInputFileId: undefined,
             lastTestDate: undefined,
         }
         const trigger = flowStructureUtil.transferStep(operation.request.trigger, (step) => {

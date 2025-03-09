@@ -24,7 +24,7 @@ export const FlowTemplate = Type.Object({
     schemaVersion: Nullable(Type.String()),
     blogUrl: Type.Optional(Type.String()),
     template: FlowVersionTemplate,
-    projectId: Type.String(),
+    projectId: Type.Optional(Type.String()),
     platformId: Type.String(),
 })
 

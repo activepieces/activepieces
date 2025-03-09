@@ -4,7 +4,6 @@ import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { repoFactory } from '../../core/db/repo-factory'
 import { platformService } from '../../platform/platform.service'
-import { platformUtils } from '../../platform/platform.utils'
 import { projectRepo } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
@@ -13,33 +12,37 @@ import { stripeHelper } from './stripe-helper'
 
 const platformBillingRepo = repoFactory(PlatformBillingEntity)
 
+type UpdatePlatformBillingParams = {
+    platformId: string
+    tasksLimit: number | undefined
+}
+
 export const platformBillingService = (log: FastifyBaseLogger) => ({
     async getOrCreateForPlatform(platformId: string): Promise<PlatformBilling> {
         const platformBilling = await platformBillingRepo().findOneBy({ platformId })
         if (isNil(platformBilling)) {
             const newPlatformBilling = await createInitialBilling(platformId, log)
-            await updateAllProjectsLimits(platformId, newPlatformBilling.tasksLimit, newPlatformBilling.aiCreditsLimit)
+            await updateAllProjectsLimits(platformId, newPlatformBilling.tasksLimit)
             return newPlatformBilling
         }
         return platformBilling
     },
 
-    async update(
-        { platformId, tasksLimit }: { platformId: string, tasksLimit: number | undefined },
-    ): Promise<PlatformBilling> {
-        const platformBilling = await platformBillingRepo().findOneBy({ platformId })
+    async update(params: UpdatePlatformBillingParams): Promise<PlatformBilling> {
+        const platformBilling = await platformBillingRepo().findOneBy({ platformId: params.platformId })
         if (isNil(platformBilling)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    entityId: platformId,
+                    entityId: params.platformId,
                     entityType: 'PlatformBilling',
                     message: 'Platform billing not found by platform id',
                 },
             })
         }
+        await updateAllProjectsLimits(params.platformId, params.tasksLimit)
         return platformBillingRepo().save({
-            tasksLimit,
+            tasksLimit: params.tasksLimit,
             id: platformBilling.id,
         })
     },
@@ -68,19 +71,6 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
         user,
         platformId,
     )
-    // TODO(@amrabuaza) remove this once we have migrated all platform on the cloud
-    const isEnterpriseCustomer = platformUtils.isEnterpriseCustomerOnCloud(platform)
-    if (isEnterpriseCustomer) {
-        return platformBillingRepo().save({
-            id: apId(),
-            platformId,
-            tasksLimit: undefined,
-            aiCreditsLimit: undefined,
-            includedTasks: 50000,
-            includedAiCredits: 0,
-            stripeCustomerId,
-        })
-    }
     return platformBillingRepo().save({
         id: apId(),
         platformId,
@@ -92,9 +82,9 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
     })
 }
 
-async function updateAllProjectsLimits(platformId: string, tasksLimit: number | undefined, aiCreditsLimit: number | undefined) {
+async function updateAllProjectsLimits(platformId: string, tasksLimit: number | undefined) {
     const platform = await platformService.getOneOrThrow(platformId)
-    if (!platform.manageProjectsEnabled) {
+    if (platform.manageProjectsEnabled) {
         return
     }
     const projects = await projectRepo().find({
@@ -105,7 +95,6 @@ async function updateAllProjectsLimits(platformId: string, tasksLimit: number | 
     for (const project of projects) {
         await projectLimitsService.upsert({
             tasks: tasksLimit,
-            aiTokens: aiCreditsLimit,
         }, project.id)
     }
 }

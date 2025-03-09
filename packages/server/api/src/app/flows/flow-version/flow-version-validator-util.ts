@@ -253,7 +253,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
                 propsSchema[name] = Type.String()
                 break
             case PropertyType.ARRAY:
-                propsSchema[name] = Type.Union([Type.Array(Type.Unknown({})), Type.String()])
+                propsSchema[name] = Type.Union([Type.Array(Type.Unknown({})), Type.String(), Type.Record(Type.String(), Type.Unknown())])
                 break
             case PropertyType.OBJECT:
                 propsSchema[name] = Type.Union([
@@ -274,6 +274,9 @@ function buildSchema(props: PiecePropertyMap): TSchema {
                 break
             case PropertyType.DYNAMIC:
                 propsSchema[name] = Type.Record(Type.String(), Type.Any())
+                break
+            case PropertyType.CUSTOM:
+                propsSchema[name] = Type.Unknown()
                 break
         }
 

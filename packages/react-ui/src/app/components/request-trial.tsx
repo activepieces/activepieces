@@ -27,9 +27,13 @@ export type FeatureKey =
 type RequestTrialProps = {
   featureKey: FeatureKey;
   customButton?: React.ReactNode;
+  buttonVariant?: 'default' | 'outline-primary';
 };
 
-export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
+export const RequestTrial = ({
+  featureKey,
+  buttonVariant = 'default',
+}: RequestTrialProps) => {
   const { data: currentUser } = userHooks.useCurrentUser();
   const { data: flags } = flagsHooks.useFlags();
 
@@ -55,5 +59,9 @@ export const RequestTrial = ({ featureKey }: RequestTrialProps) => {
     );
   };
 
-  return <Button onClick={handleClick}>{t('Contact Sales')}</Button>;
+  return (
+    <Button variant={buttonVariant} onClick={handleClick}>
+      {t('Contact Sales')}
+    </Button>
+  );
 };

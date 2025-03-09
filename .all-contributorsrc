@@ -1542,6 +1542,51 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "psgpsg16",
+      "name": "psgpsg16",
+      "avatar_url": "https://avatars.githubusercontent.com/u/188385621?v=4",
+      "profile": "https://github.com/psgpsg16",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "mariiawidrpay",
+      "name": "Mariia Shyn",
+      "avatar_url": "https://avatars.githubusercontent.com/u/110456120?v=4",
+      "profile": "https://github.com/mariiawidrpay",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "joshuaheslin",
+      "name": "Joshua Heslin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/48037470?v=4",
+      "profile": "https://github.com/joshuaheslin",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "ahmad-swanblocks",
+      "name": "Ahmad",
+      "avatar_url": "https://avatars.githubusercontent.com/u/165162455?v=4",
+      "profile": "https://github.com/ahmad-swanblocks",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "you",
+      "name": "you",
+      "avatar_url": "https://avatars.githubusercontent.com/u/57100752?v=4",
+      "profile": "https://github.com/you",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"

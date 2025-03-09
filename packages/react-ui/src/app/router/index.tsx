@@ -25,6 +25,8 @@ import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
 import { AcceptInvitation } from '@/features/team/component/accept-invitation';
+import { authenticationSession } from '@/lib/authentication-session';
+import { combinePaths, parentWindow } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
 import {
   ActivepiecesClientEventName,
@@ -53,6 +55,7 @@ import { PlatformMessages } from '../routes/platform/notifications/platform-mess
 import ProjectsPage from '../routes/platform/projects';
 import AuditLogsPage from '../routes/platform/security/audit-logs';
 import { ProjectRolePage } from '../routes/platform/security/project-role';
+import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/project-role-users-table';
 import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
 import { LicenseKeyPage } from '../routes/platform/setup/license-key';
 import TemplatesPage from '../routes/platform/setup/templates';
@@ -612,6 +615,18 @@ const routes = [
     ),
   },
   {
+    path: '/platform/security/project-roles/:projectRoleId',
+    element: (
+      <PlatformAdminContainer>
+        <PlatformSecondSidebarLayout type="security">
+          <PageTitle title="Project Role Users">
+            <ProjectRoleUsersTable />
+          </PageTitle>
+        </PlatformSecondSidebarLayout>
+      </PlatformAdminContainer>
+    ),
+  },
+  {
     path: '/platform/setup',
     element: (
       <PlatformAdminContainer>
@@ -662,9 +677,10 @@ const routes = [
     ),
   },
 ];
+
 const ApRouter = () => {
   const { embedState } = useEmbedding();
-
+  const projectId = authenticationSession.getProjectId();
   const router = useMemo(() => {
     return embedState.isEmbedded
       ? createMemoryRouter(routes, {
@@ -682,11 +698,24 @@ const ApRouter = () => {
       event: MessageEvent<ActivepiecesVendorRouteChanged>,
     ) => {
       if (
-        event.source === window.parent &&
+        event.source === parentWindow &&
         event.data.type === ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED
       ) {
         const targetRoute = event.data.data.vendorRoute;
-        router.navigate(targetRoute);
+        const targetRouteRequiresProjectId =
+          targetRoute.includes('/runs') ||
+          targetRoute.includes('/flows') ||
+          targetRoute.includes('/connections');
+        if (!targetRouteRequiresProjectId) {
+          router.navigate(targetRoute);
+        } else {
+          router.navigate(
+            combinePaths({
+              secondPath: targetRoute,
+              firstPath: `/projects/${projectId}`,
+            }),
+          );
+        }
       }
     };
 
@@ -702,11 +731,15 @@ const ApRouter = () => {
       return;
     }
     router.subscribe((state) => {
-      window.parent.postMessage(
+      const pathNameWithoutProjectOrProjectId = state.location.pathname.replace(
+        /\/projects\/[^/]+/,
+        '',
+      );
+      parentWindow.postMessage(
         {
           type: ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED,
           data: {
-            route: state.location.pathname,
+            route: pathNameWithoutProjectOrProjectId + state.location.search,
           },
         },
         '*',

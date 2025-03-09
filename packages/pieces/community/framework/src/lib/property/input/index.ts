@@ -19,6 +19,7 @@ import { NumberProperty } from './number-property';
 import { ObjectProperty } from './object-property';
 import { PropertyType } from './property-type';
 import { LongTextProperty, ShortTextProperty } from './text-property';
+import { CustomProperty } from './custom-property';
 
 export const InputProperty = Type.Union([
   ShortTextProperty,
@@ -53,7 +54,8 @@ export type InputProperty =
   | StaticMultiSelectDropdownProperty<unknown, boolean>
   | DynamicProperties<boolean>
   | DateTimeProperty<boolean>
-  | FileProperty<boolean>;
+  | FileProperty<boolean>
+  | CustomProperty<boolean>;
 
 type Properties<T> = Omit<
   T,
@@ -228,5 +230,14 @@ export const Property = {
       valueSchema: undefined,
       type: PropertyType.FILE,
     } as unknown as R extends true ? FileProperty<true> : FileProperty<false>;
+  },
+  Custom<R extends boolean>(
+    request: Properties<CustomProperty<R>>
+  ): R extends true ? CustomProperty<true> : CustomProperty<false> {
+    return {
+      ...request,
+      valueSchema: undefined,
+      type: PropertyType.CUSTOM,
+    } as unknown as R extends true ? CustomProperty<true> : CustomProperty<false>;
   },
 };

@@ -17,6 +17,7 @@ type BuilderStateProviderProps = React.PropsWithChildren<BuilderInitialState>;
 export function BuilderStateProvider({
   children,
   sampleData,
+  sampleDataInput,
   ...props
 }: BuilderStateProviderProps) {
   const storeRef = useRef<BuilderStore>();
@@ -30,6 +31,7 @@ export function BuilderStateProvider({
         ...props,
         readonly,
         sampleData,
+        sampleDataInput,
       },
       queryParams.get(NEW_FLOW_QUERY_PARAM) === 'true',
     );

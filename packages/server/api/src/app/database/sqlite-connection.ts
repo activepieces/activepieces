@@ -84,6 +84,7 @@ import { AddCellUniqueIndex1735057433052 } from './migration/sqlite/173505743305
 import { AddExternalIdForFlowSqlite1735262810939 } from './migration/sqlite/1735262810939-AddExternalIdForFlowSqlite'
 import { AddUserIdentitySqlite1735602676499 } from './migration/sqlite/1735602676499-AddUserIdentitySqlite'
 import { TableWebhooksSqlite1737550783153 } from './migration/sqlite/1737550783153-TableWebhooksSqlite'
+import { RestrictPiecesSqlite1739544872722 } from './migration/sqlite/1739544872722-RestrictPiecesSqlite'
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
     mkdirSync(apConfigDirectoryPath, { recursive: true })
@@ -184,6 +185,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddCopilotSettingsSqlite1734479435668,
         AddExternalIdForFlowSqlite1735262810939,
         AddUserIdentitySqlite1735602676499,
+        RestrictPiecesSqlite1739544872722,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

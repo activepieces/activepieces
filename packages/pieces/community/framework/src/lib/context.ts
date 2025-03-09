@@ -4,6 +4,7 @@ import {
   FlowRunId,
   PopulatedFlow,
   ProjectId,
+  RespondResponse,
   ResumePayload,
   SeekPage,
   TriggerPayload,
@@ -15,7 +16,7 @@ import {
   StaticPropsValue,
 } from './property';
 import { PieceAuthProperty } from './property/authentication';
-import { StopResponse, DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@activepieces/shared';
+import { DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@activepieces/shared';
 
 type BaseContext<
   PieceAuth extends PieceAuthProperty,
@@ -85,10 +86,16 @@ export type TestOrRunHookContext<
 };
 
 export type StopHookParams = {
-  response: StopResponse;
+  response: RespondResponse;
+};
+
+export type RespondHookParams = {
+  response: RespondResponse;
 };
 
 export type StopHook = (params?: StopHookParams) => void;
+
+export type RespondHook = (params?: RespondHookParams) => void;
 
 export type PauseHookParams = {
   pauseMetadata: PauseMetadata;
@@ -130,6 +137,7 @@ export type RunContext = {
   id: FlowRunId;
   stop: StopHook;
   pause: PauseHook;
+  respond: RespondHook;
 }
 
 export type OnStartContext<

@@ -96,15 +96,16 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
               <CreateOrEditConnectionDialog
                 reconnectConnection={reconnectConnection}
                 isGlobalConnection={isGlobalConnection}
-                predefinedConnectionName={null}
                 piece={params.piece}
-                onConnectionCreated={(connection) => {
-                  refetch();
-                  field.onChange(addBrackets(connection.externalId));
-                }}
                 key={`CreateOrEditConnectionDialog-open-${connectionDialogOpen}`}
                 open={connectionDialogOpen}
-                setOpen={setConnectionDialogOpen}
+                setOpen={(open, connection) => {
+                  setConnectionDialogOpen(open);
+                  if (connection) {
+                    refetch();
+                    field.onChange(addBrackets(connection.externalId));
+                  }
+                }}
               ></CreateOrEditConnectionDialog>
               <Select
                 open={selectConnectionOpen}
@@ -178,13 +179,12 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                             removeBrackets(field.value) &&
                           connection.scope !== AppConnectionScope.PLATFORM,
                       ) && (
-                        <Button
-                          variant="ghost"
-                          size="xs"
+                        <span
+                          role="button"
                           className="z-50 opacity-0 pointer-events-none"
                         >
                           {t('Reconnect')}
-                        </Button>
+                        </span>
                       )}
                   </SelectTrigger>
                 </div>

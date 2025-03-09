@@ -1,15 +1,17 @@
-import { exceptionHandler, JobType, QueueName } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, JobType, QueueName } from '@activepieces/server-shared'
 import { ActivepiecesError, ApId, ErrorCode, isNil } from '@activepieces/shared'
 import { DefaultJobOptions, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { createRedisClient } from '../../database/redis-connection'
 import { apDayjsDuration } from '../../helper/dayjs-helper'
+import { system } from '../../helper/system/system'
 import { AddParams, JOB_PRIORITY, QueueManager } from '../queue/queue-manager'
 import { redisMigrations } from './redis-migration'
 import { redisRateLimiter } from './redis-rate-limiter'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
-const ONE_MONTH = apDayjsDuration(1, 'month').asMilliseconds()
+const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asMilliseconds()
+const REDIS_FAILED_JOB_RETRY_COUNT = system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT)
 
 const defaultJobOptions: DefaultJobOptions = {
     attempts: 5,
@@ -19,7 +21,8 @@ const defaultJobOptions: DefaultJobOptions = {
     },
     removeOnComplete: true,
     removeOnFail: {
-        age: ONE_MONTH,
+        age: REDIS_FAILED_JOB_RETENTION_DAYS,
+        count: REDIS_FAILED_JOB_RETRY_COUNT,
     },
 }
 export const bullMqGroups: Record<string, Queue> = {}

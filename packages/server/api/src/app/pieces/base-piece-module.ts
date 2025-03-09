@@ -3,6 +3,7 @@ import { apVersionUtil, UserInteractionJobType } from '@activepieces/server-shar
 import {
     ALL_PRINCIPAL_TYPES,
     ApEdition,
+    FileType,
     GetPieceRequestParams,
     GetPieceRequestQuery,
     GetPieceRequestWithScopeParams,
@@ -15,7 +16,6 @@ import {
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
-    Type,
 } from '@fastify/type-provider-typebox'
 import { EngineHelperPropResult, EngineHelperResponse } from 'server-worker'
 import { flowService } from '../flows/flow/flow.service'
@@ -129,7 +129,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 id: req.body.flowId,
                 versionId: req.body.flowVersionId,
             })
-            const sampleData = await sampleDataService(req.log).getSampleDataForFlow(projectId, flow.version)
+            const sampleData = await sampleDataService(req.log).getSampleDataForFlow(projectId, flow.version, FileType.SAMPLE_DATA)
             const { result } = await userInteractionWatcher(req.log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperPropResult>>({
                 jobType: UserInteractionJobType.EXECUTE_PROPERTY,
                 projectId,
@@ -144,13 +144,6 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         },
     )
 
-    app.delete('/:id', DeletePieceRequest, async (req): Promise<void> => {
-        return pieceMetadataService(req.log).delete({
-            projectId: req.principal.projectId,
-            id: req.params.id,
-        })
-    },
-    )
 }
 
 const ListPiecesRequest = {
@@ -196,13 +189,7 @@ const OptionsPieceRequest = {
         body: PieceOptionRequest,
     },
 }
-const DeletePieceRequest = {
-    schema: {
-        params: Type.Object({
-            id: Type.String(),
-        }),
-    },
-}
+
 
 const ListVersionsRequest = {
     config: {

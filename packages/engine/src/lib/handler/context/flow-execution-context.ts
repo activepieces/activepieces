@@ -1,4 +1,4 @@
-import { ActionType, assertEqual, FlowError, FlowRunResponse, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, spreadIfDefined, StepOutput, StepOutputStatus, StopResponse } from '@activepieces/shared'
+import { ActionType, assertEqual, FlowError, FlowRunResponse, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, RespondResponse, spreadIfDefined, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { loggingUtils } from '../../helper/logging-utils'
 import { StepExecutionPath } from './step-execution-path'
@@ -15,7 +15,7 @@ export type VerdictResponse = {
     pauseMetadata: PauseMetadata
 } | {
     reason: FlowRunStatus.STOPPED
-    stopResponse: StopResponse
+    stopResponse: RespondResponse
 } | {
     reason: FlowRunStatus.INTERNAL_ERROR
 }
@@ -229,7 +229,7 @@ export class FlowExecutorContext {
                     return {
                         ...baseExecutionOutput,
                         status: FlowRunStatus.STOPPED,
-                        stopResponse: verdictResponse.stopResponse,
+                        response: verdictResponse.stopResponse,
                     }
                 }
                 return {

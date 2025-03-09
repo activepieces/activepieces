@@ -2,6 +2,7 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { googleDriveAuth } from '../../index';
 import { Property, createAction } from "@activepieces/pieces-framework";
 import querystring from 'querystring';
+import { common } from '../common';
 
 export const googleDriveListFiles = createAction({
   auth: googleDriveAuth,
@@ -14,6 +15,8 @@ export const googleDriveListFiles = createAction({
       description: 'Folder ID coming from | New Folder -> id | (or any other source)',
       required: true,
     }),
+        include_team_drives: common.properties.include_team_drives,
+    
     includeTrashed: Property.Checkbox({
       displayName: 'Include Trashed',
       description: 'Include new files that have been trashed.',
@@ -39,6 +42,8 @@ export const googleDriveListFiles = createAction({
     const params: Record<string, string> = {
       q: q,
       fields: 'files(id,kind,mimeType,name,trashed)',
+      supportsAllDrives:'true',
+      includeItemsFromAllDrives: context.propsValue.include_team_drives?'true':'false',
     }
 
     let response = await httpClient.sendRequest({

@@ -73,6 +73,11 @@ export const AI_PROVIDERS = [
         value: 'claude-3-haiku-20240307',
         supported: ['text', 'function'],
       }),
+      model({
+        label:'claude-3-7-sonnet',
+        value:'claude-3-7-sonnet-latest',
+        supported:['text','function']
+      })
     ],
     auth: authHeader({ name: 'x-api-key', bearer: false }),
     factory: anthropic,

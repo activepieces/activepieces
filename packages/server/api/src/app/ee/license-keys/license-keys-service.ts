@@ -1,11 +1,10 @@
-import { AppSystemProp, apVersionUtil, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PackageType, PlatformRole, TelemetryEventName, UserStatus } from '@activepieces/shared'
+import { AppSystemProp, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { ActivepiecesError, CreateTrialLicenseKeyRequestBody, ErrorCode, isNil, LicenseKeyEntity, PlatformRole, TelemetryEventName, UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
-import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { platformService } from '../../platform/platform.service'
 import { userService } from '../../user/user-service'
 
@@ -17,7 +16,7 @@ const handleUnexpectedSecretsManagerError = (log: FastifyBaseLogger, message: st
 }
 
 export const licenseKeysService = (log: FastifyBaseLogger) => ({
-    async requestTrial(request: CreateTrialLicenseKeyRequestBody): Promise<string> {
+    async requestTrial(request: CreateTrialLicenseKeyRequestBody): Promise<LicenseKeyEntity> {
         const response = await fetch(secretManagerLicenseKeysRoute, {
             method: 'POST',
             headers: {
@@ -36,7 +35,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
             handleUnexpectedSecretsManagerError(log, errorMessage)
         }
         const responseBody = await response.json()
-        return responseBody.key
+        return responseBody
     },
     async markAsActiviated(request: { key: string, platformId?: string }): Promise<void> {
         try {
@@ -59,7 +58,7 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
             }
             if (request.platformId) {
                 rejectedPromiseHandler(telemetry(log).trackPlatform(request.platformId, {
-                    name: TelemetryEventName.KEY_ACTIVIATED,
+                    name: TelemetryEventName.KEY_ACTIVATED,
                     payload: {
                         date: dayjs().toISOString(),
                         key: request.key,
@@ -125,7 +124,6 @@ export const licenseKeysService = (log: FastifyBaseLogger) => ({
             ...turnedOffFeatures,
         })
         await deactivatePlatformUsersOtherThanAdmin(platformId)
-        await deletePrivatePieces(platformId, log)
     },
     async applyLimits(platformId: string, key: LicenseKeyEntity): Promise<void> {
         await platformService.update({
@@ -165,25 +163,6 @@ const deactivatePlatformUsersOtherThanAdmin: (platformId: string) => Promise<voi
     })
     await Promise.all(users)
 }
-
-
-const deletePrivatePieces = async (platformId: string, log: FastifyBaseLogger): Promise<void> => {
-    const latestRelease = await apVersionUtil.getCurrentRelease()
-    const pieces = await pieceMetadataService(log).list({
-        edition: ApEdition.ENTERPRISE,
-        includeHidden: true,
-        release: latestRelease,
-        platformId,
-    })
-    const piecesToDelete = pieces.filter((piece) => piece.packageType === PackageType.ARCHIVE && piece.id).map((piece) =>
-        pieceMetadataService(log).delete({
-            id: piece.id!,
-            projectId: piece.projectId,
-        }),
-    )
-    await Promise.all(piecesToDelete)
-}
-
 
 const turnedOffFeatures: Omit<LicenseKeyEntity, 'id' | 'createdAt' | 'expiresAt' | 'activatedAt' | 'isTrial' | 'email' | 'customerName' | 'key'> = {
     ssoEnabled: false,
