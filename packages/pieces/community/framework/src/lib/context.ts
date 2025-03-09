@@ -16,7 +16,7 @@ import {
   StaticPropsValue,
 } from './property';
 import { PieceAuthProperty } from './property/authentication';
-import { StopResponse, DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@activepieces/shared';
+import { DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@activepieces/shared';
 
 type BaseContext<
   PieceAuth extends PieceAuthProperty,
@@ -85,7 +85,7 @@ export type TestOrRunHookContext<
 };
 
 export type StopHookParams = {
-  response: StopResponse;
+  response: RespondResponse;
 };
 
 export type RespondHookParams = {
