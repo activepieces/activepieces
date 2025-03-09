@@ -1,15 +1,15 @@
-import { repoFactory } from '../../core/db/repo-factory'
-import { ApprovalTaskEntity } from './apporval-task.entity'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { Order } from '../../helper/pagination/paginator'
+import { ApprovalTask } from '@activepieces/ee-shared'
 import {
     isNil,
     ProjectId,
     SeekPage,
 } from '@activepieces/shared'
-import { ApprovalTask } from '@activepieces/ee-shared'
 import { FastifyBaseLogger } from 'fastify'
+import { repoFactory } from '../../core/db/repo-factory'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { Order } from '../../helper/pagination/paginator'
+import { ApprovalTaskEntity } from './apporval-task.entity'
 
 
 type ListParams = {
@@ -21,7 +21,7 @@ type ListParams = {
 
 const approvalTaskRepo = repoFactory(ApprovalTaskEntity)
 
-export const approvalTaskService = (log: FastifyBaseLogger) => ({
+export const approvalTaskService = (_log: FastifyBaseLogger) => ({
     async list(params: ListParams): Promise<SeekPage<ApprovalTask>> {
         const decodedCursor = paginationHelper.decodeCursor(params.cursor ?? null)
         const paginator = buildPaginator<ApprovalTask>({
@@ -46,12 +46,12 @@ export const approvalTaskService = (log: FastifyBaseLogger) => ({
         return paginationHelper.createPage<ApprovalTask>(data, newCursor)
     },
     async getOne(params: { id: string }): Promise<ApprovalTask> {
-        return await approvalTaskRepo().findOneByOrFail({ id: params.id })
+        return approvalTaskRepo().findOneByOrFail({ id: params.id })
     },
     async updateSelectedOption(params: { id: string, option: string }): Promise<ApprovalTask> {
         const approvalTask = await approvalTaskRepo().findOneByOrFail({ id: params.id })
         approvalTask.selectedOption = params.option
-        return await approvalTaskRepo().save(approvalTask)
-    }
+        return approvalTaskRepo().save(approvalTask)
+    },
 })
 

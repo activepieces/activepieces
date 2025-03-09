@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddApprovalTaskComment1741460953908 implements MigrationInterface {
     name = 'AddApprovalTaskComment1741460953908'
@@ -17,16 +17,16 @@ export class AddApprovalTaskComment1741460953908 implements MigrationInterface {
                 "title" varchar NOT NULL,
                 "description" varchar NOT NULL
             )
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_approval_task_project_id" ON "approval_task" ("projectId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_approval_task_flow_id" ON "approval_task" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_approval_task_assigned_user_id" ON "approval_task" ("assignedUserId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "approval_task_comment" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -36,22 +36,22 @@ export class AddApprovalTaskComment1741460953908 implements MigrationInterface {
                 "userId" varchar(21) NOT NULL,
                 "comment" varchar NOT NULL
             )
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_approval_task_comment_task_id" ON "approval_task_comment" ("taskId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_approval_task_comment_user_id" ON "approval_task_comment" ("userId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_approval_task_project_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_approval_task_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_approval_task_assigned_user_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_approval_task" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -68,7 +68,7 @@ export class AddApprovalTaskComment1741460953908 implements MigrationInterface {
                 CONSTRAINT "FK_b4e1191cceb1f1731b61288d21f" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "FK_61f1fa2281bf7f457d2968bdf13" FOREIGN KEY ("assignedUserId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_approval_task"(
                     "id",
@@ -93,29 +93,29 @@ export class AddApprovalTaskComment1741460953908 implements MigrationInterface {
                 "title",
                 "description"
             FROM "approval_task"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "approval_task"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_approval_task"
                 RENAME TO "approval_task"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_approval_task_project_id" ON "approval_task" ("projectId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_approval_task_flow_id" ON "approval_task" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_approval_task_assigned_user_id" ON "approval_task" ("assignedUserId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_approval_task_comment_task_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_approval_task_comment_user_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_approval_task_comment" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -126,7 +126,7 @@ export class AddApprovalTaskComment1741460953908 implements MigrationInterface {
                 "comment" varchar NOT NULL,
                 CONSTRAINT "FK_11efcd682a749470f3de6705a54" FOREIGN KEY ("taskId") REFERENCES "approval_task" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_approval_task_comment"(
                     "id",
@@ -143,33 +143,33 @@ export class AddApprovalTaskComment1741460953908 implements MigrationInterface {
                 "userId",
                 "comment"
             FROM "approval_task_comment"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "approval_task_comment"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_approval_task_comment"
                 RENAME TO "approval_task_comment"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_approval_task_comment_task_id" ON "approval_task_comment" ("taskId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_approval_task_comment_user_id" ON "approval_task_comment" ("userId")
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_approval_task_comment_user_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_approval_task_comment_task_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "approval_task_comment"
                 RENAME TO "temporary_approval_task_comment"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "approval_task_comment" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -179,7 +179,7 @@ export class AddApprovalTaskComment1741460953908 implements MigrationInterface {
                 "userId" varchar(21) NOT NULL,
                 "comment" varchar NOT NULL
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "approval_task_comment"(
                     "id",
@@ -196,29 +196,29 @@ export class AddApprovalTaskComment1741460953908 implements MigrationInterface {
                 "userId",
                 "comment"
             FROM "temporary_approval_task_comment"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_approval_task_comment"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_approval_task_comment_user_id" ON "approval_task_comment" ("userId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_approval_task_comment_task_id" ON "approval_task_comment" ("taskId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_approval_task_assigned_user_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_approval_task_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_approval_task_project_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "approval_task"
                 RENAME TO "temporary_approval_task"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "approval_task" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -232,7 +232,7 @@ export class AddApprovalTaskComment1741460953908 implements MigrationInterface {
                 "title" varchar NOT NULL,
                 "description" varchar NOT NULL
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "approval_task"(
                     "id",
@@ -257,40 +257,40 @@ export class AddApprovalTaskComment1741460953908 implements MigrationInterface {
                 "title",
                 "description"
             FROM "temporary_approval_task"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_approval_task"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_approval_task_assigned_user_id" ON "approval_task" ("assignedUserId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_approval_task_flow_id" ON "approval_task" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_approval_task_project_id" ON "approval_task" ("projectId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_approval_task_comment_user_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_approval_task_comment_task_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "approval_task_comment"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_approval_task_assigned_user_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_approval_task_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_approval_task_project_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "approval_task"
-        `);
+        `)
     }
 
 }

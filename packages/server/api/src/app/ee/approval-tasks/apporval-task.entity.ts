@@ -1,5 +1,5 @@
 import { ApprovalTask, ApprovalTaskComment } from '@activepieces/ee-shared'
-import { Project, Flow, User } from '@activepieces/shared'
+import { Flow, Project, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,

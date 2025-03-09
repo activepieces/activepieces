@@ -14,6 +14,7 @@ import { UserIdentityEntity } from '../authentication/user-identity/user-identit
 import { AlertEntity } from '../ee/alerts/alerts-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
+import { ApprovalTaskCommentEntity, ApprovalTaskEntity } from '../ee/approval-tasks/apporval-task.entity'
 import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
 import { OtpEntity } from '../ee/authentication/otp/otp-entity'
 import { AppSumoEntity } from '../ee/billing/appsumo/appsumo.entity'
@@ -49,7 +50,6 @@ import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
-import { ApprovalTaskEntity, ApprovalTaskCommentEntity } from '../ee/approval-tasks/apporval-task.entity'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
