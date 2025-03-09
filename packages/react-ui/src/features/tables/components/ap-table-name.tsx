@@ -18,7 +18,7 @@ const ApTableName = ({tableId, tableName}: {tableId: string , tableName: string}
         tableId,
     })
     const isReadOnly =  !useAuthorization().checkAccess(Permission.WRITE_TABLE)
-
+    
     return <div  onClick={()=>{
         if(!isReadOnly && !isEditing){
             setIsEditing(true)

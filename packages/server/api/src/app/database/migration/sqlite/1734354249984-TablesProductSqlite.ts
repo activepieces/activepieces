@@ -14,7 +14,7 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
             )
         `)
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_table_project_id_name_unique" ON "table" ("projectId", "name")
+            CREATE INDEX "idx_table_project_id_name" ON "table" ("projectId", "name")
         `)
         await queryRunner.query(`
             CREATE TABLE "field" (
@@ -27,7 +27,7 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
             )
         `)
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_field_table_id_name_unique" ON "field" ("tableId", "name")
+            CREATE INDEX "idx_field_table_id_name" ON "field" ("tableId", "name")
         `)
         await queryRunner.query(`
             CREATE TABLE "record" (
@@ -48,7 +48,7 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
             )
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_table_project_id_name_unique"
+            DROP INDEX "idx_table_project_id_name"
         `)
         await queryRunner.query(`
             CREATE TABLE "temporary_table" (
@@ -77,10 +77,10 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 RENAME TO "table"
         `)
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_table_project_id_name_unique" ON "table" ("projectId", "name")
+            CREATE INDEX "idx_table_project_id_name" ON "table" ("projectId", "name")
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_field_table_id_name_unique"
+            DROP INDEX "idx_field_table_id_name"
         `)
         await queryRunner.query(`
             CREATE TABLE "temporary_field" (
@@ -118,7 +118,7 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 RENAME TO "field"
         `)
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_field_table_id_name_unique" ON "field" ("tableId", "name")
+            CREATE INDEX "idx_field_table_id_name" ON "field" ("tableId", "name")
         `)
         await queryRunner.query(`
             CREATE TABLE "temporary_record" (
@@ -241,7 +241,7 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
             DROP TABLE "temporary_record"
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_field_table_id_name_unique"
+            DROP INDEX "idx_field_table_id_name"
         `)
         await queryRunner.query(`
             ALTER TABLE "field"
@@ -278,10 +278,10 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
             DROP TABLE "temporary_field"
         `)
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_field_table_id_name_unique" ON "field" ("tableId", "name")
+              CREATE UNIQUE INDEX "idx_field_table_id_name_unique" ON "field" ("tableId", "name")
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_table_project_id_name_unique"
+            DROP INDEX "idx_table_project_id_name"
         `)
         await queryRunner.query(`
             ALTER TABLE "table"
@@ -309,7 +309,7 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
             DROP TABLE "temporary_table"
         `)
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_table_project_id_name_unique" ON "table" ("projectId", "name")
+                     CREATE UNIQUE INDEX "idx_table_project_id_name_unique" ON "table" ("projectId", "name")
         `)
         await queryRunner.query(`
             DROP TABLE "cell"
@@ -324,7 +324,7 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
             DROP TABLE "field"
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_table_project_id_name_unique"
+            DROP INDEX "idx_table_project_id_name"
         `)
         await queryRunner.query(`
             DROP TABLE "table"

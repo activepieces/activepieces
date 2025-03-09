@@ -23,7 +23,7 @@ export const TableEntity = new EntitySchema<TableSchema>({
     },
     indices: [  
         {
-            name: 'idx_table_project_id_name_unique',
+            name: 'idx_table_project_id_name',
             columns: ['projectId', 'name'],
             unique: true,
         },
