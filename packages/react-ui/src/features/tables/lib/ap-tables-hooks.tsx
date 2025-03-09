@@ -69,6 +69,7 @@ export const tableHooks = {
           filters: filters.length > 0 ? filters : undefined,
         });
       },
+      refetchOnWindowFocus: false,
       getNextPageParam: (lastPage) => lastPage.next,
       initialPageParam: undefined as string | undefined,
     });
@@ -77,6 +78,7 @@ export const tableHooks = {
     return useQuery({
       queryKey: ['fields', tableId],
       queryFn: () => fieldsApi.list(tableId),
+      refetchOnWindowFocus: false
     });
   },
   createApTableStore: () => {

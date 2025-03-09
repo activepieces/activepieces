@@ -301,7 +301,7 @@ const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
           selectedRows={selectedRows}
           onSelectedRowsChange={onSelectedRowsChange}
           className={cn(
-            'h-[calc(100vh-10rem)] bg-muted/30',
+            'h-[calc(100vh-8rem)] bg-muted/30 scroll-smooth',
             theme === 'dark' ? 'rdg-dark' : 'rdg-light',
           )}
           bottomSummaryRows={[{ id: 'new-record' }]}
