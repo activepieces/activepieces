@@ -177,6 +177,8 @@ import { AddUserIdentity1735590074879 } from './migration/postgres/1735590074879
 import { RemoveUnusedProjectBillingFields1736607721367 } from './migration/postgres/1736607721367-RemoveUnusedProjectBillingFields'
 import { RenameGitRepoPermission1736813103505 } from './migration/postgres/1736813103505-RenameGitRepoPermission'
 import { RestrictPieces1739546878775 } from './migration/postgres/1739546878775-RestrictPieces'
+import { AddApprovalTask1741460938342 } from './migration/postgres/1741460938342-AddApprovalTask'
+import { AddApprovalTaskComment1741460953908 } from './migration/postgres/1741460953908-AddApprovalTaskComment'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -374,6 +376,10 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 CreateProjectReleaseTable1734418823028,
                 RemoveUnusedProjectBillingFields1736607721367,
                 ProjectIdNullableInTemplate1741357285896,
+
+                // Approval Task Migrations
+                AddApprovalTask1741460938342,
+                AddApprovalTaskComment1741460953908,
             )
             break
         case ApEdition.COMMUNITY:
