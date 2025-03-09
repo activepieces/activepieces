@@ -8,7 +8,10 @@ import DataGrid, {
 } from 'react-data-grid';
 import 'react-data-grid/lib/styles.css';
 import { useParams, useLocation } from 'react-router-dom';
+
 import { useTheme } from '@/components/theme-provider';
+import { LoadingSpinner } from '@/components/ui/spinner';
+import ApTableHeader from '@/features/tables/components/ap-table-header';
 import {
   ColumnHeader,
   ColumnActionType,
@@ -23,8 +26,8 @@ import { Field, PopulatedRecord } from '@activepieces/shared';
 import './react-data-grid.css';
 
 import { useTableState } from '../../../../features/tables/components/ap-table-state-provider';
-import { LoadingScreen } from '@/app/components/loading-screen';
-import ApTableHeader from '@/features/tables/components/ap-table-header';
+
+import { authenticationSession } from '@/lib/authentication-session';
 
 const ApTableEditorPage = () => {
   const { tableId } = useParams();
@@ -37,13 +40,61 @@ const ApTableEditorPage = () => {
 const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
   const location = useLocation();
   const queryClient = useQueryClient();
-  const [enqueueMutation, rowHeight, selectedRows, setSelectedRows] = useTableState((state) => [state.enqueueMutation,state.rowHeight,state.selectedRows,state.setSelectedRows]);
+  const [enqueueMutation, rowHeight, selectedRows, setSelectedRows] =
+    useTableState((state) => [
+      state.enqueueMutation,
+      state.rowHeight,
+      state.selectedRows,
+      state.setSelectedRows,
+    ]);
   const [lastRowIdx, setLastRowIdx] = useState<number>(0);
   const gridRef = useRef<DataGridHandle>(null);
   const { theme } = useTheme();
+  const currentProjectId = authenticationSession.getProjectId();
+  const { data: fieldsData, isLoading: isFieldsLoading } =
+    tableHooks.useFetchFields(tableId);
+  const createEmptyRecord = () => {
+    const tempId = 'temp-' + Date.now();
+    // Create an empty record in the grid
+    const emptyRecord: PopulatedRecord = {
+      id: tempId,
+      cells: [],
+      created: new Date().toISOString(),
+      updated: new Date().toISOString(),
+      projectId: currentProjectId!,
+      tableId: tableId!,
+    };
 
-  const { data: fieldsData, isLoading: isFieldsLoading } = tableHooks.useFetchFields(tableId);
+    queryClient.setQueryData(
+      ['records', tableId, location.search],
+      (old: { pages: { data: PopulatedRecord[] }[] }) => {
+        if (!old) {
+          return { pages: [{ data: [emptyRecord] }] };
+        }
 
+        const updatedData = {
+          ...old,
+          pages: old.pages.map((page, index) =>
+            index === old.pages.length - 1
+              ? {
+                  ...page,
+                  data: [...page.data, emptyRecord],
+                }
+              : page,
+          ),
+        };
+
+        return updatedData;
+      },
+    );
+
+    setTimeout(() => {
+      gridRef.current?.scrollToCell({
+        rowIdx: lastRowIdx,
+        idx: 0,
+      });
+    }, 0);
+  };
   const {
     data: recordsPages,
     isLoading: isRecordsLoading,
@@ -62,8 +113,7 @@ const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
     }
   }, [recordsPages]);
 
-  const { isLoading: isTableLoading } =
-    tableHooks.useFetchTable(tableId);
+  const { isLoading: isTableLoading } = tableHooks.useFetchTable(tableId);
 
   const updateRecordMutation = tableHooks.useUpdateRecord({
     queryClient,
@@ -77,7 +127,6 @@ const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
     location,
   });
 
-
   const createRecordMutation = tableHooks.useCreateRecord({
     queryClient,
     tableId,
@@ -90,48 +139,7 @@ const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
       renderSummaryCell: () => (
         <div
           className="w-full h-full flex items-center justify-start cursor-pointer pl-4"
-          onClick={() => {
-            // Create an empty record in the grid
-            const emptyRecord: PopulatedRecord = {
-              id: 'temp-' + Date.now(),
-              cells: [],
-              created: new Date().toISOString(),
-              updated: new Date().toISOString(),
-              projectId: '',
-              tableId: tableId!,
-            };
-
-            queryClient.setQueryData(
-              ['records', tableId, location.search],
-              (old: { pages: { data: PopulatedRecord[] }[] }) => {
-                console.log('old', old);
-                if (!old) {
-                  return { pages: [{ data: [emptyRecord] }] };
-                }
-
-                const updatedData = {
-                  ...old,
-                  pages: old.pages.map((page, index) =>
-                    index === old.pages.length - 1
-                      ? {
-                          ...page,
-                          data: [...page.data, emptyRecord],
-                        }
-                      : page,
-                  ),
-                };
-
-                return updatedData;
-              },
-            );
-
-            setTimeout(() => {
-              gridRef.current?.scrollToCell({
-                rowIdx: lastRowIdx,
-                idx: 0,
-              });
-            }, 0);
-          }}
+          onClick={createEmptyRecord}
         >
           <Plus className="h-4 w-4" />
         </div>
@@ -179,6 +187,12 @@ const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
             }
           }}
         />
+      ),
+      renderSummaryCell: () => (
+        <div
+          className="w-full h-full flex items-center justify-start cursor-pointer pl-4"
+          onClick={createEmptyRecord}
+        ></div>
       ),
     })) ?? []),
     {
@@ -267,13 +281,18 @@ const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
 
   if (isLoading) {
     return (
-     <LoadingScreen></LoadingScreen>
+      <div className="h-screen w-full flex items-center justify-center">
+        <LoadingSpinner size={50}></LoadingSpinner>
+      </div>
     );
   }
 
   return (
     <div className="overflow-hidden flex flex-col">
-      <ApTableHeader tableId={tableId} isFetchingNextPage={isFetchingNextPage}></ApTableHeader>
+      <ApTableHeader
+        tableId={tableId}
+        isFetchingNextPage={isFetchingNextPage}
+      ></ApTableHeader>
       <div className="flex-1 min-h-0 mt-4 grid-wrapper   overflow-hidden">
         <DataGrid
           ref={gridRef}
