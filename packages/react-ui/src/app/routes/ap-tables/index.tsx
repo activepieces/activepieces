@@ -38,7 +38,9 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
-import { Table } from '@activepieces/shared';
+import { FieldType, Table } from '@activepieces/shared';
+import { fieldsApi } from '@/features/tables/lib/fields-api';
+import { recordsApi } from '@/features/tables/lib/records-api';
 
 const ApTablesPage = () => {
   const queryClient = useQueryClient();
@@ -67,7 +69,29 @@ const ApTablesPage = () => {
 
   const createTableMutation = useMutation({
     mutationFn: async (data: { name: string }) => {
-      return tablesApi.create({ name: data.name });
+      const table = await tablesApi.create({ name: data.name });
+      try {
+          debugger;
+          await fieldsApi.create({
+            name: 'Name',
+            type: FieldType.TEXT,
+            tableId: table.id,
+          })
+         await recordsApi.create({
+            records: [...Array.from({length: 10}, () => ([{
+              key: 'Name',
+              value: '',
+            }]))],
+            tableId: table.id,
+          })
+
+      }
+      catch (error) {
+        console.error(error);
+      }
+      finally {
+        return table
+      }
     },
     onSuccess: (table) => {
       setShowNewTableDialog(false);
