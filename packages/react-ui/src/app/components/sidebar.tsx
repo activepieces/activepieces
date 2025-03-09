@@ -172,10 +172,12 @@ export function Sidebar({
             </ScrollArea>
           </aside>
         )}
-        <div className={cn("flex-1 p-4",{
-          'py-0': hideHeader,
-          'px-0': removeGutters,
-        })}>
+        <div
+          className={cn('flex-1 p-4', {
+            'py-0': hideHeader,
+            'px-0': removeGutters,
+          })}
+        >
           {!hideHeader ? (
             <div className="flex flex-col">
               <Header />
@@ -183,7 +185,7 @@ export function Sidebar({
                 className={cn('flex', {
                   'py-4': embedState.isEmbedded,
                   'container mx-auto px-2': !removeGutters,
-                  'py-10': !hideHeader
+                  'py-10': !hideHeader,
                 })}
               >
                 {children}

@@ -39,6 +39,8 @@ import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-us
 import { DashboardContainer } from '../components/dashboard-container';
 import { PlatformAdminContainer } from '../components/platform-admin-container';
 import NotFoundPage from '../routes/404-page';
+import { ApTablesPage } from '../routes/ap-tables';
+import { ApTableEditorPage } from '../routes/ap-tables/id';
 import AuthenticatePage from '../routes/authenticate';
 import { ChangePasswordPage } from '../routes/change-password';
 import { AppConnectionsPage } from '../routes/connections';
@@ -79,8 +81,6 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
-import { ApTableEditorPage } from '../routes/ap-tables/id';
-import { ApTablesPage } from '../routes/ap-tables';
 const SettingsRerouter = () => {
   const { hash } = useLocation();
   const fragmentWithoutHash = hash.slice(1).toLowerCase();
@@ -202,7 +202,7 @@ const routes = [
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_TABLE}>
           <PageTitle title="Tables">
-          <ApTablesPage />
+            <ApTablesPage />
           </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>
@@ -211,16 +211,15 @@ const routes = [
   ...ProjectRouterWrapper({
     path: '/tables/:tableId',
     element: (
-        <RoutePermissionGuard permission={Permission.READ_TABLE}>
-            <DashboardContainer hideHeader removeGutters>
-            <PageTitle title="Table">
+      <RoutePermissionGuard permission={Permission.READ_TABLE}>
+        <DashboardContainer hideHeader removeGutters>
+          <PageTitle title="Table">
             <ApTableStateProvider>
-             <ApTableEditorPage />
+              <ApTableEditorPage />
             </ApTableStateProvider>
           </PageTitle>
-            </DashboardContainer>
-         
-        </RoutePermissionGuard>
+        </DashboardContainer>
+      </RoutePermissionGuard>
     ),
   }),
   ...ProjectRouterWrapper({

@@ -35,12 +35,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { TableTitle } from '@/components/ui/table-title';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { fieldsApi } from '@/features/tables/lib/fields-api';
+import { recordsApi } from '@/features/tables/lib/records-api';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
 import { FieldType, Table } from '@activepieces/shared';
-import { fieldsApi } from '@/features/tables/lib/fields-api';
-import { recordsApi } from '@/features/tables/lib/records-api';
 
 const ApTablesPage = () => {
   const queryClient = useQueryClient();
@@ -71,27 +71,26 @@ const ApTablesPage = () => {
     mutationFn: async (data: { name: string }) => {
       const table = await tablesApi.create({ name: data.name });
       try {
-          debugger;
-          await fieldsApi.create({
-            name: 'Name',
-            type: FieldType.TEXT,
-            tableId: table.id,
-          })
-         await recordsApi.create({
-            records: [...Array.from({length: 10}, () => ([{
-              key: 'Name',
-              value: '',
-            }]))],
-            tableId: table.id,
-          })
-
-      }
-      catch (error) {
+        await fieldsApi.create({
+          name: 'Name',
+          type: FieldType.TEXT,
+          tableId: table.id,
+        });
+        await recordsApi.create({
+          records: [
+            ...Array.from({ length: 10 }, () => [
+              {
+                key: 'Name',
+                value: '',
+              },
+            ]),
+          ],
+          tableId: table.id,
+        });
+      } catch (error) {
         console.error(error);
       }
-      finally {
-        return table
-      }
+      return table;
     },
     onSuccess: (table) => {
       setShowNewTableDialog(false);

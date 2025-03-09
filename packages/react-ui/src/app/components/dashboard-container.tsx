@@ -44,7 +44,11 @@ export const CloseTaskLimitAlertContext = createContext({
   setIsAlertClosed: (isAlertClosed: boolean) => {},
 });
 
-export function DashboardContainer({ children, removeGutters, hideHeader }: DashboardContainerProps) {
+export function DashboardContainer({
+  children,
+  removeGutters,
+  hideHeader,
+}: DashboardContainerProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification(
     platform.flowIssuesEnabled,

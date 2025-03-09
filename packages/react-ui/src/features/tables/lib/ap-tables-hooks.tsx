@@ -85,7 +85,8 @@ export const tableHooks = {
       rowHeight: RowHeight.DEFAULT,
       setRowHeight: (rowHeight: RowHeight) => set({ rowHeight }),
       selectedRows: new Set(),
-      setSelectedRows: (selectedRows: ReadonlySet<string>) => set({ selectedRows }),
+      setSelectedRows: (selectedRows: ReadonlySet<string>) =>
+        set({ selectedRows }),
       enqueueMutation: async <TData, TError, TVariables>(
         mutation: UseMutationResult<TData, TError, TVariables>,
         variables: TVariables,

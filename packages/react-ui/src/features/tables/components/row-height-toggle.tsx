@@ -8,8 +8,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { RowHeight } from '../lib/types';
 
+import { RowHeight } from '../lib/types';
 
 const ToggleTooltip = ({
   children,

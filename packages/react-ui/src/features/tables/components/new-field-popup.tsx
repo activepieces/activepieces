@@ -21,8 +21,6 @@ import { FieldType, isNil } from '@activepieces/shared';
 
 import { tableHooks } from '../lib/ap-tables-hooks';
 
-
-
 type NewFieldDialogProps = {
   children: React.ReactNode;
   tableId: string;
@@ -30,40 +28,39 @@ type NewFieldDialogProps = {
 type NewFieldFormData = {
   name: string;
   type: FieldType;
-}
+};
 
 export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const [enqueueMutation] = useTableState((state) => [state.enqueueMutation]);
-  const {data: fields} = tableHooks.useFetchFields(tableId);
+  const { data: fields } = tableHooks.useFetchFields(tableId);
   const form = useForm<NewFieldFormData>({
-    resolver: (data)=>{
-      const errors:FieldErrors<NewFieldFormData> = {};
-      if(data.name.length === 0){
-       errors['name'] = {
-        message: t('Please enter a field name'),
-        type: 'required',
-       }
-      }
-      else {
-        if(fields?.find(field => field.name === data.name)){
+    resolver: (data) => {
+      const errors: FieldErrors<NewFieldFormData> = {};
+      if (data.name.length === 0) {
+        errors['name'] = {
+          message: t('Please enter a field name'),
+          type: 'required',
+        };
+      } else {
+        if (fields?.find((field) => field.name === data.name)) {
           errors['name'] = {
             message: t('Please pick a unique field name'),
             type: 'unique',
-          }
+          };
         }
       }
-      if(isNil(data.type)){
+      if (isNil(data.type)) {
         errors['type'] = {
           message: t('Type is required'),
           type: 'required',
-        }
+        };
       }
       return {
         values: Object.keys(errors).length === 0 ? data : {},
         errors,
-      }
+      };
     },
     defaultValues: {
       type: FieldType.TEXT,
@@ -72,7 +69,7 @@ export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
 
   const createFieldMutation = tableHooks.useCreateField({
     queryClient,
-    tableId
+    tableId,
   });
 
   return (
@@ -98,7 +95,7 @@ export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
                   <Label htmlFor="name">{t('Name')}</Label>
-                  <Input className='p-2 h-8' {...field} id="name" />
+                  <Input className="p-2 h-8" {...field} id="name" />
                   <FormMessage />
                 </FormItem>
               )}
@@ -142,18 +139,15 @@ export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
               )}
             />
             <div className="flex justify-end gap-2 pt-2">
-                <Button
-                  type="button"
-                  size="sm"
+              <Button
+                type="button"
+                size="sm"
                 variant="ghost"
                 onClick={() => setOpen(false)}
               >
                 {t('Cancel')}
               </Button>
-              <Button
-                type="submit"
-                size="sm"
-              >
+              <Button type="submit" size="sm">
                 {t('Create')}
               </Button>
             </div>

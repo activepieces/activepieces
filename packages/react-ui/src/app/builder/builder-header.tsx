@@ -16,6 +16,7 @@ import {
 import { useEmbedding, useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import EditableText from '@/components/ui/editable-text';
+import { HomeButton } from '@/components/ui/home-button';
 import {
   Tooltip,
   TooltipContent,
@@ -39,7 +40,6 @@ import {
 import FlowActionMenu from '../components/flow-actions-menu';
 
 import { BuilderFlowStatusSection } from './builder-flow-status-section';
-import { HomeButton } from '@/components/ui/home-button';
 
 export const BuilderHeader = () => {
   const [queryParams] = useSearchParams();
@@ -86,7 +86,7 @@ export const BuilderHeader = () => {
     <div className="bg-background select-none">
       <div className="relative items-center flex h-[55px] w-full p-4 bg-muted/30">
         <div className="flex items-center gap-2">
-        <HomeButton route={'/flows'}/>
+          <HomeButton route={'/flows'} />
           <div className="flex gap-2 items-center">
             {!embedState.hideFolders && (
               <>
@@ -141,9 +141,9 @@ export const BuilderHeader = () => {
             flowVersion={flowVersion}
             readonly={!isLatestVersion}
             onDelete={() => {
-              navigate(authenticationSession.appendProjectRoutePrefix(
-                '/flows',
-              ));
+              navigate(
+                authenticationSession.appendProjectRoutePrefix('/flows'),
+              );
             }}
             onRename={() => {
               setIsEditingFlowName(true);

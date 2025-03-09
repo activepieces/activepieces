@@ -21,13 +21,12 @@ import { NewFieldPopup } from '@/features/tables/components/new-field-popup';
 import { SelectColumn } from '@/features/tables/components/select-column';
 import { tableHooks } from '@/features/tables/lib/ap-tables-hooks';
 import { Row, ROW_HEIGHT_MAP, RowHeight } from '@/features/tables/lib/types';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { Field, PopulatedRecord } from '@activepieces/shared';
 import './react-data-grid.css';
 
 import { useTableState } from '../../../../features/tables/components/ap-table-state-provider';
-
-import { authenticationSession } from '@/lib/authentication-session';
 
 const ApTableEditorPage = () => {
   const { tableId } = useParams();
