@@ -4,19 +4,26 @@ import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces
 
 export const deleteRecord = createAction({
   name: 'tables-delete-record',
-  displayName: 'Delete Record',
-  description: 'Delete a record in a table',
+  displayName: 'Delete Record(s)',
+  description: 'Delete record(s) from a table',
   auth: PieceAuth.None(),
   props: {
     table_name: tablesCommon.table_name,
-    record_id: tablesCommon.record_id,
+    records_ids:  Property.Array({
+      displayName: 'Records IDs',
+      required: true,
+      description: 'The IDs of the records to delete'
+    }),
   },
   async run(context) {
-    const { record_id } = context.propsValue;
+    const { records_ids } = context.propsValue;
 
     await httpClient.sendRequest({
       method: HttpMethod.DELETE,
-      url: `${context.server.apiUrl}v1/records/${record_id}`,
+      url: `${context.server.apiUrl}v1/records/`,
+      body: {
+        ids: records_ids,
+      },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,

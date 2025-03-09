@@ -123,7 +123,6 @@ const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
   const deleteFieldMutation = tableHooks.useDeleteField({
     queryClient,
     tableId,
-    location,
   });
 
   const createRecordMutation = tableHooks.useCreateRecord({

@@ -98,10 +98,11 @@ export const api = {
       },
       ...config,
     }),
-  delete: <TResponse>(url: string, query?: Record<string, string>) =>
+  delete: <TResponse>(url: string, query?: Record<string, string>, body?: unknown) =>
     request<TResponse>(url, {
       method: 'DELETE',
       params: query,
+      data: body,
       paramsSerializer: (params) => {
         return qs.stringify(params, {
           arrayFormat: 'repeat',

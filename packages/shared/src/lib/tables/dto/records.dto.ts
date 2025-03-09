@@ -21,6 +21,7 @@ export const UpdateRecordRequest = Type.Object({
 
 export type UpdateRecordRequest = Static<typeof UpdateRecordRequest>
 
+
 export enum FilterOperator {
     EQ = 'eq',
     NEQ = 'neq',
@@ -46,3 +47,10 @@ export const ListRecordsRequest = Type.Object({
 })
 
 export type ListRecordsRequest = Omit<Static<typeof ListRecordsRequest>, 'cursor'> & { cursor: Cursor | undefined }
+
+export const DeleteRecordsRequest = Type.Object({
+    ids: Type.Array(Type.String()),
+})
+
+export type DeleteRecordsRequest = Static<typeof DeleteRecordsRequest>
+

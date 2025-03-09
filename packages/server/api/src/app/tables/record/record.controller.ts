@@ -1,5 +1,6 @@
 import {
     CreateRecordsRequest,
+    DeleteRecordsRequest,
     ListRecordsRequest,
     PopulatedRecord,
     PrincipalType,
@@ -60,24 +61,22 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
         })
     })
 
-    fastify.delete('/:id', DeleteRecordRequest, async (request, reply) => {
-        const deletedRecord = await recordService.delete({
-            id: request.params.id,
-            projectId: request.principal.projectId,
-        })
-
-        if (!deletedRecord) {
-            return reply.status(StatusCodes.NOT_FOUND).send()
-        }
-
+    fastify.delete('/', DeleteRecordRequest, async (request, reply) => {
+      const deletedRecords = await recordService.delete({
+        ids: request.body.ids,
+        projectId: request.principal.projectId,
+      }) 
         await reply.status(StatusCodes.NO_CONTENT).send()
-        await recordService.triggerWebhooks({
-            projectId: request.principal.projectId,
-            tableId: deletedRecord.tableId,
-            eventType: TableWebhookEventType.RECORD_DELETED,
-            data: { record: deletedRecord },
-            authorization: request.headers.authorization as string,
-        })
+        //TODO: Move this to a background job that can be re-run in case of failure
+        for(const deletedRecord of deletedRecords) {
+            await recordService.triggerWebhooks({
+                projectId: request.principal.projectId,
+                tableId: deletedRecord.tableId,
+                eventType: TableWebhookEventType.RECORD_DELETED,
+                data: { record: deletedRecord },
+                authorization: request.headers.authorization as string,
+            })
+      }
     })
 
     fastify.post('/list', ListRequest, async (request) => {
@@ -138,9 +137,10 @@ const DeleteRecordRequest = {
         allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
     },
     schema: {
-        params: Type.Object({
-            id: Type.String(),
-        }),
+        body: DeleteRecordsRequest,
+        response: {
+            [StatusCodes.OK]: Type.Array(PopulatedRecord),
+        },
     },
 }
 

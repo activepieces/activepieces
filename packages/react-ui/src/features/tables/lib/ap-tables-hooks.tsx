@@ -206,11 +206,9 @@ export const tableHooks = {
   useDeleteField: ({
     queryClient,
     tableId,
-    location,
   }: {
     queryClient: QueryClient;
     tableId: string;
-    location: Location;
   }) => {
     return useMutation({
       mutationKey: ['deleteField'],
@@ -229,7 +227,8 @@ export const tableHooks = {
 
         return { previousFields };
       },
-      onError: (err, variables, context) => {
+      onError: (error, __, context) => {
+        console.error(error)
         if (context?.previousFields) {
           queryClient.setQueryData(['fields', tableId], context.previousFields);
         }
@@ -251,7 +250,7 @@ export const tableHooks = {
     return useMutation({
       mutationKey: ['deleteRecords'],
       mutationFn: async (recordIds: string[]) => {
-        await Promise.all(recordIds.map((id) => recordsApi.delete(id)));
+        await recordsApi.delete({ ids: recordIds });
       },
       onMutate: async (recordIds) => {
         await queryClient.cancelQueries({
@@ -279,7 +278,8 @@ export const tableHooks = {
 
         return { previousRecords };
       },
-      onError: (_, __, context) => {
+      onError: (error, __, context) => {
+        console.error(error);
         if (context?.previousRecords) {
           queryClient.setQueryData(
             ['records', tableId, location.search],

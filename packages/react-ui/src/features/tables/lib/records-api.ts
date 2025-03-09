@@ -1,6 +1,7 @@
 import { api } from '@/lib/api';
 import {
   CreateRecordsRequest,
+  DeleteRecordsRequest,
   ListRecordsRequest,
   PopulatedRecord,
   SeekPage,
@@ -24,7 +25,7 @@ export const recordsApi = {
     return api.post<PopulatedRecord>(`/v1/records/${id}`, request);
   },
 
-  delete(id: string): Promise<void> {
-    return api.delete<void>(`/v1/records/${id}`);
+  delete(request: DeleteRecordsRequest): Promise<void> {
+    return api.delete<void>(`/v1/records/`, undefined, request);
   },
 };

@@ -100,20 +100,8 @@ export const recordService = {
     async list({
         tableId,
         projectId,
-        cursorRequest,
-        limit,
         filters,
     }: ListParams): Promise<SeekPage<PopulatedRecord>> {
-        const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
-
-        const paginator = buildPaginator({
-            entity: RecordEntity,
-            query: {
-                limit,
-                afterCursor: decodedCursor.nextCursor,
-                beforeCursor: decodedCursor.previousCursor,
-            },
-        })
 
         const queryBuilder = recordRepo()
             .createQueryBuilder('record')
@@ -168,11 +156,12 @@ export const recordService = {
             })
         }
 
-        const paginationResult = await paginator.paginate(queryBuilder)
-        return paginationHelper.createPage(
-            paginationResult.data,
-            paginationResult.cursor,
-        )
+        const data = await queryBuilder.getMany();
+        return {
+            data,
+            next: null,
+            previous: null,
+        }
     },
 
     async getById({
@@ -280,25 +269,18 @@ export const recordService = {
     },
 
     async delete({
-        id,
+        ids,
         projectId,
-    }: {
-        id: string
-        projectId: string
-    }): Promise<PopulatedRecord | undefined> {
-        const record = await recordRepo().findOne({
-            where: { id, projectId },
+    }: DeleteParams): Promise<PopulatedRecord[]> {
+        const records = await recordRepo().find({
+            where: { id: In(ids), projectId },
             relations: ['cells'],
         })
-
-        if (!isNil(record)) {
-            await recordRepo().delete({
-                id,
-                projectId,
-            })
-            return record
-        }
-        return
+        await recordRepo().delete({
+            id: In(ids),
+            projectId,
+        })
+        return records
     },
 
     async triggerWebhooks({
@@ -363,4 +345,9 @@ type ListParams = {
     cursorRequest: Cursor | null
     limit: number
     filters: Filter[] | null
+}
+
+type DeleteParams = {
+    ids: string[]
+    projectId: string
 }
