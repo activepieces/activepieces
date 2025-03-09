@@ -1,4 +1,4 @@
-import { CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, PrincipalType, Table } from '@activepieces/shared'
+import { CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, Permission, PrincipalType, Table } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { tableService } from './table.service'
@@ -66,6 +66,7 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
 const CreateRequest =  {
     config: {
         allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        permission: Permission.WRITE_TABLE,
     },
     schema: {
         body: CreateTableRequest,
@@ -78,12 +79,14 @@ const CreateRequest =  {
 const GetTablesRequest = {
     config: {
         allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        permission: Permission.READ_TABLE,
     },
 }
 
 const DeleteRequest = {
     config: {
         allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        permission: Permission.WRITE_TABLE,
     },
     schema: {
         params: Type.Object({
@@ -95,6 +98,7 @@ const DeleteRequest = {
 const GetTableByIdRequest = {
     config: {
         allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        permission: Permission.READ_TABLE,
     },
     schema: {
         params: Type.Object({
@@ -109,6 +113,7 @@ const GetTableByIdRequest = {
 const ExportTableRequest = {
     config: {
         allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        permission: Permission.READ_TABLE,
     },
     schema: {
         params: Type.Object({
@@ -123,6 +128,7 @@ const ExportTableRequest = {
 const CreateTableWebhook = {
     config: {
         allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        permission: Permission.WRITE_TABLE,
     },
     schema: {
         params: Type.Object({
@@ -135,6 +141,7 @@ const CreateTableWebhook = {
 const DeleteTableWebhook = {
     config: {
         allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        permission: Permission.WRITE_TABLE,
     },
     schema: {
         params: Type.Object({
