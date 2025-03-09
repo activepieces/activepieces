@@ -12,6 +12,7 @@ import { tableHooks } from '../lib/ap-tables-hooks';
 import { useTableState } from './ap-table-state-provider';
 import { FiltersPopup } from './filters-popup';
 import RowHeightToggle from './row-height-toggle';
+import ApTableName from './ap-table-name';
 
 const ApTableHeader = ({
   tableId,
@@ -50,9 +51,9 @@ const ApTableHeader = ({
   });
   return (
     <div className="flex flex-col gap-4 ml-3 pt-4 flex-none">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         <HomeButton route={'/tables'} showBackButton />
-        <span className="text-xl">{tableData?.name}</span>
+        <ApTableName tableId={tableId} tableName={tableData?.name ?? ""} />
 
         {isSaving && (
           <div className="flex items-center gap-2 text-muted-foreground animate-fade-in">

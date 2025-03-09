@@ -1,4 +1,4 @@
-import { CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, Permission, PrincipalType, Table } from '@activepieces/shared'
+import { CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, Permission, PrincipalType, Table, UpdateTableRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { tableService } from './table.service'
@@ -13,6 +13,15 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
         await reply.status(StatusCodes.CREATED).send(response)
     },
     )
+
+    fastify.post('/:id', UpdateRequest, async (request, reply) => {
+        const response = await tableService.update({
+            projectId: request.principal.projectId,
+            id: request.params.id,
+            request: request.body,
+        })
+        await reply.status(StatusCodes.OK).send(response)
+    })
 
     fastify.get('/', GetTablesRequest, async (request, reply) => {
         const response = await tableService.getAll({
@@ -148,5 +157,18 @@ const DeleteTableWebhook = {
             id: Type.String(),
             webhookId: Type.String(),
         }),
+    },
+}
+
+const UpdateRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        permission: Permission.WRITE_TABLE,
+    },
+    schema: {
+        params: Type.Object({
+            id: Type.String(),
+        }),
+        body: UpdateTableRequest,
     },
 }

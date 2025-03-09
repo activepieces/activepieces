@@ -9,6 +9,7 @@ import {
     Table,
     TableWebhook,
     TableWebhookEventType,
+    UpdateTableRequest,
 } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { fieldService } from '../field/field.service'
@@ -158,4 +159,24 @@ export const tableService = {
             where: { projectId, tableId: id, eventType },
         })
     },
+
+    async update({
+        projectId,
+        id,
+        request,
+    }: {
+        projectId: string
+        id: string
+        request: UpdateTableRequest
+    }): Promise<Table> {
+        await tableRepo().update({
+            id,
+            projectId
+        }, {
+            name: request.name,
+        })
+        return this.getById({ projectId, id })
+    }
+
+    
 }

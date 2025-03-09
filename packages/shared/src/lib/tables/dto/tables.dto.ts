@@ -21,3 +21,9 @@ export const CreateTableWebhookRequest = Type.Object({
 })
 
 export type CreateTableWebhookRequest = Static<typeof CreateTableWebhookRequest>
+
+export const UpdateTableRequest = Type.Object({
+    name: Type.String(),
+})
+
+export type UpdateTableRequest = Static<typeof UpdateTableRequest>

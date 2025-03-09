@@ -16,7 +16,9 @@ import {
   FilterOperator,
   PopulatedRecord,
   SeekPage,
+  Table,
   UpdateRecordRequest,
+  UpdateTableRequest,
 } from '@activepieces/shared';
 
 import { fieldsApi } from './fields-api';
@@ -409,6 +411,23 @@ export const tableHooks = {
             ),
           );
         }
+      },
+    });
+  },
+  useUpdateTable: ({
+    queryClient,
+    tableId,
+  }: {
+    queryClient: QueryClient;
+    tableId: string;
+  }) => {
+    return useMutation({
+      mutationFn: (request: UpdateTableRequest) => {
+        queryClient.setQueryData(['table', tableId], (old: Table) => ({
+          ...old,
+          name: request.name,
+        }));
+        return tablesApi.update(tableId, request);
       },
     });
   },

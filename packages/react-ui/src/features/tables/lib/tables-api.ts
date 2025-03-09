@@ -4,6 +4,7 @@ import {
   ExportTableResponse,
   SeekPage,
   Table,
+  UpdateTableRequest,
 } from '@activepieces/shared';
 
 export const tablesApi = {
@@ -30,5 +31,8 @@ export const tablesApi = {
 
   export(id: string): Promise<ExportTableResponse> {
     return api.get<ExportTableResponse>(`/v1/tables/${id}/export`);
+  },
+  update(id: string, request: UpdateTableRequest): Promise<Table> {
+    return api.post<Table>(`/v1/tables/${id}`, request);
   },
 };
