@@ -49,7 +49,7 @@ function SelectCell({ row, rowIndex }: { row: Row, rowIndex: number }) {
         onClick={(e) => e.stopPropagation()}
       />
       </div>
-      <div className={cn("group-hover:hidden block", isRowSelected && "!hidden")}>
+      <div className={cn("group-hover:hidden block select-none", isRowSelected && "!hidden")}>
         {rowIndex}
       </div>
     </div>

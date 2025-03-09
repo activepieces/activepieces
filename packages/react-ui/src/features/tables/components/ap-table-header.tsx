@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { projectHooks } from "@/hooks/project-hooks";
 import { RefreshCw, Trash2 } from "lucide-react";
 import { useTableState } from "./ap-table-state-provider";
 import RowHeightToggle from "./row-height-toggle";
@@ -7,17 +6,14 @@ import { FiltersPopup } from "./filters-popup";
 import { ConfirmationDeleteDialog } from "@/components/delete-dialog";
 import { t } from "i18next";
 import { tableHooks } from "../lib/ap-tables-hooks";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEmbedding } from "@/components/embed-provider";
 import { HomeButton } from "@/components/ui/home-button";
 
 
 const ApTableHeader = ({tableId, isFetchingNextPage}: {tableId: string, isFetchingNextPage: boolean}) => {
 
-    const navigate = useNavigate();
-    const {project} = projectHooks.useCurrentProject();
-    const {embedState} = useEmbedding();
+ 
     const [isSaving, enqueueMutation, rowHeight, setRowHeight,selectedRows, setSelectedRows] = useTableState(state => [state.isSaving, state.enqueueMutation, state.rowHeight, state.setRowHeight, state.selectedRows, state.setSelectedRows]);
     const { data: tableData } =
     tableHooks.useFetchTable(tableId);
@@ -35,7 +31,7 @@ const ApTableHeader = ({tableId, isFetchingNextPage}: {tableId: string, isFetchi
     });
     return ( <div className="flex flex-col gap-4 ml-3 pt-4 flex-none">
         <div className="flex items-center gap-4">
-          <HomeButton route={'/tables'}/>
+          <HomeButton route={'/tables'} showBackButton/>
           <span className="text-xl">{tableData?.name}</span>
 
           {isSaving && (

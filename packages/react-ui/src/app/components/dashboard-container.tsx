@@ -26,6 +26,7 @@ import { Sidebar, SidebarLink } from './sidebar';
 type DashboardContainerProps = {
   children: React.ReactNode;
   hideHeader?: boolean;
+  removeGutters?: boolean;
 };
 
 const ProjectChangedRedirector = ({
@@ -43,7 +44,7 @@ export const CloseTaskLimitAlertContext = createContext({
   setIsAlertClosed: (isAlertClosed: boolean) => {},
 });
 
-export function DashboardContainer({ children }: DashboardContainerProps) {
+export function DashboardContainer({ children, removeGutters, hideHeader }: DashboardContainerProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification(
     platform.flowIssuesEnabled,
@@ -122,7 +123,9 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
           }}
         >
           <Sidebar
+            removeGutters={removeGutters}
             isHomeDashboard={true}
+            hideHeader={hideHeader}
             links={links}
             hideSideNav={embedState.hideSideNav}
           >

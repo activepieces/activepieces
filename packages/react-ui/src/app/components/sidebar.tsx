@@ -98,6 +98,7 @@ type SidebarProps = {
   isHomeDashboard?: boolean;
   hideSideNav?: boolean;
   hideHeader?: boolean;
+  removeGutters?: boolean;
 };
 export function Sidebar({
   children,
@@ -105,6 +106,7 @@ export function Sidebar({
   isHomeDashboard = false,
   hideSideNav = false,
   hideHeader = false,
+  removeGutters = false,
 }: SidebarProps) {
   const branding = flagsHooks.useWebsiteBranding();
   const { data: showSupportAndDocs } = flagsHooks.useFlag<boolean>(
@@ -170,13 +172,18 @@ export function Sidebar({
             </ScrollArea>
           </aside>
         )}
-        <div className="flex-1 p-4">
+        <div className={cn("flex-1 p-4",{
+          'py-0': hideHeader,
+          'px-0': removeGutters,
+        })}>
           {!hideHeader ? (
             <div className="flex flex-col">
               <Header />
               <div
-                className={cn('container mx-auto flex py-10 px-2', {
+                className={cn('flex', {
                   'py-4': embedState.isEmbedded,
+                  'container mx-auto px-2': !removeGutters,
+                  'py-10': !hideHeader
                 })}
               >
                 {children}
