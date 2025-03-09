@@ -1,7 +1,5 @@
-import { networkUtils, WorkerSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
-    ApEnvironment,
     ApFlagId,
     apId,
     CreateRecordsRequest,
@@ -15,18 +13,16 @@ import {
     TableWebhookEventType,
     UpdateRecordRequest,
 } from '@activepieces/shared'
-import axios from 'axios'
-import { FastifyRequest } from 'fastify'
+import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { FieldEntity } from '../field/field.entity'
 import { tableService } from '../table/table.service'
 import { CellEntity } from './cell.entity'
 import { RecordEntity } from './record.entity'
 import { flagService } from '../../flags/flag.service'
+import { webhookService } from '../../webhooks/webhook.service'
 
 const recordRepo = repoFactory(RecordEntity)
 
@@ -288,12 +284,14 @@ export const recordService = {
         tableId,
         eventType,
         data,
-        authorization,
+        logger,
+        authorization
     }: {
         projectId: string
         tableId: string
         eventType: TableWebhookEventType
         data: Record<string, unknown>
+        logger: FastifyBaseLogger
         authorization: string
     }): Promise<void> {
         const webhooks = await tableService.getWebhooks({
@@ -322,17 +320,24 @@ export const recordService = {
             }
 
             const promises = webhookRequests.map((webhookRequest) => {
-                const webhooksUrl = networkUtils.combineUrl(publicUrl.value as string, `v1/webhooks/${webhookRequest.flowId}`)
-
-                return axios.post(
-                    webhooksUrl,
-                    webhookRequest.request,
-                    {
+                return webhookService.handleWebhook({
+                   async: true,
+                   flowId: webhookRequest.flowId,
+                   flowVersionToRun: undefined,
+                   saveSampleData: false,
+                   data: {
+                    isFastifyRequest: false,
+                    payload: {
+                        method: 'POST',
                         headers: {
-                            authorization,
+                            authorization
                         },
-                    },
-                )
+                        body: webhookRequest.request.body,
+                        queryParams:{}
+                    }
+                   },
+                   logger: logger,
+                })
             })
             await Promise.all(promises)
         }

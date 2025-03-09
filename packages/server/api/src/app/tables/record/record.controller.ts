@@ -33,6 +33,7 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
                 tableId: request.body.tableId,
                 eventType: TableWebhookEventType.RECORD_CREATED,
                 data: { records },
+                logger: request.log,
                 authorization: request.headers.authorization as string,
             })
         }
@@ -57,6 +58,7 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
             tableId: request.body.tableId,
             eventType: TableWebhookEventType.RECORD_UPDATED,
             data: { record },
+            logger: request.log,
             authorization: request.headers.authorization as string,
         })
     })
@@ -74,9 +76,10 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
                 tableId: deletedRecord.tableId,
                 eventType: TableWebhookEventType.RECORD_DELETED,
                 data: { record: deletedRecord },
+                logger: request.log,
                 authorization: request.headers.authorization as string,
             })
-      }
+        }
     })
 
     fastify.post('/list', ListRequest, async (request) => {
