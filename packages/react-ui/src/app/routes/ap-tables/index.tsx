@@ -231,6 +231,35 @@ const ApTablesPage = () => {
                 userHasTableWritePermission={userHasTableWritePermission}
               />
             </PermissionNeededTooltip>
+           
+            <Tooltip>
+              <TooltipTrigger
+                asChild
+                disabled={exportingTableIds.has(row.original.id)}
+              >
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={exportingTableIds.has(row.original.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleExportTable(row.original.id, row.original.name);
+                  }}
+                >
+                  {exportingTableIds.has(row.original.id) ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              {exportingTableIds.has(row.original.id) && (
+                <TooltipContent>{t('Exporting...')}</TooltipContent>
+              )}
+              {!exportingTableIds.has(row.original.id) && (
+                <TooltipContent>{t('Export')}</TooltipContent>
+              )}
+            </Tooltip>
             <PermissionNeededTooltip
               hasPermission={userHasTableWritePermission}
             >
@@ -264,34 +293,6 @@ const ApTablesPage = () => {
                 )}
               </Tooltip>
             </PermissionNeededTooltip>
-            <Tooltip>
-              <TooltipTrigger
-                asChild
-                disabled={exportingTableIds.has(row.original.id)}
-              >
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={exportingTableIds.has(row.original.id)}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleExportTable(row.original.id, row.original.name);
-                  }}
-                >
-                  {exportingTableIds.has(row.original.id) ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              {exportingTableIds.has(row.original.id) && (
-                <TooltipContent>{t('Exporting...')}</TooltipContent>
-              )}
-              {!exportingTableIds.has(row.original.id) && (
-                <TooltipContent>{t('Export')}</TooltipContent>
-              )}
-            </Tooltip>
           </div>
         );
       },

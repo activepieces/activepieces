@@ -30,7 +30,7 @@ export const formatUtils = {
   },
   formatDateOnly(date: Date) {
     return Intl.DateTimeFormat('en-US', {
-      month: 'short',
+      month: 'numeric',
       day: 'numeric',
       year: 'numeric',
     }).format(date);

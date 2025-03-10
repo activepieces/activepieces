@@ -313,6 +313,7 @@ const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
           rows={mapRecordsToRows(recordsPages, fieldsData ?? [])}
           rowKeyGetter={(row: Row) => row.id}
           selectedRows={selectedRows}
+          
           onSelectedRowsChange={onSelectedRowsChange}
           className={cn(
             'h-[calc(100vh-8rem)] bg-muted/30 scroll-smooth',

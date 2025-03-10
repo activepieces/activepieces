@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { Calendar as CalendarIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { RenderEditCellProps } from 'react-data-grid';
 
 import { Calendar } from '@/components/ui/calendar';
@@ -13,6 +13,9 @@ import { cn, formatUtils } from '@/lib/utils';
 
 import { Row } from '../lib/types';
 
+function isValidDate(date: string) {
+  return !isNaN(new Date(date).getTime());
+}
 function DateEditor({
   row,
   column,
@@ -23,15 +26,21 @@ function DateEditor({
   value: string;
 }) {
   const [date, setDate] = useState<Date | undefined>(
-    initialValue ? new Date(initialValue) : undefined,
+    isValidDate(initialValue) ? new Date(initialValue) : undefined,
+  );
+  const [month, setMonth] = useState<Date | undefined>(
+    isValidDate(initialValue) ? new Date(initialValue) : undefined,
   );
   const [isOpen, setIsOpen] = useState(true);
+  const [inputValue, setInputValue] = useState(isValidDate(initialValue) ? formatUtils.formatDateOnly(new Date(initialValue)) : '');
 
-  useEffect(() => {
-    // Auto-focus the calendar when the editor opens
-    setIsOpen(true);
-  }, []);
 
+  const commitChanges = () => {
+    if (date) {
+      onRowChange({ ...row, [column.key]: date.toISOString() }, true);
+      onClose();
+    }
+  };
   const handleSelect = (newDate: Date | undefined) => {
     setDate(newDate);
     if (newDate) {
@@ -47,9 +56,10 @@ function DateEditor({
       onClose();
     }
   };
-
+  const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   return (
-    <div className="h-full">
+    <div className="h-full" ref={containerRef}>
       <Popover open={isOpen} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
           <button
@@ -59,10 +69,57 @@ function DateEditor({
               'bg-background text-sm px-2',
               'focus:outline-none',
             )}
+            onClick={(e)=>{
+              e.stopPropagation();
+              setIsOpen(true)
+             }}
           >
-            <span className="flex-1 text-left truncate">
-              {date ? formatUtils.formatDateOnly(date) : t('Pick a date')}
-            </span>
+
+            <input
+                ref={inputRef}
+                 onClick={(e)=>{
+                  e.stopPropagation();
+                  setIsOpen(true)
+                 }}
+                  placeholder={t('mm/dd/yyy')}
+                  value={inputValue}
+                  type='text'
+                  onChange={(e)=>{
+                    setInputValue(e.target.value)
+                    if(isValidDate(e.target.value)){
+                      setDate(new Date(e.target.value))
+                      setMonth(new Date(e.target.value))
+                    }
+                    else{
+                      setDate(undefined)
+                    }
+                  }}
+                  onBlur={(e)=>{
+                    if(!containerRef.current?.contains(e.target as Node)){
+                      commitChanges();
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    e.stopPropagation();
+                    if (e.key === 'Enter') {
+                      commitChanges();
+                      e.preventDefault();
+                    }
+                    if (e.key === 'Escape') {
+                      onClose();
+                      e.preventDefault();
+                    }
+                  }}
+                  className={cn(
+                    'flex-1 h-full min-w-0',
+                    'border-none text-sm px-2',
+                    'focus:outline-none',
+                    'placeholder:text-muted-foreground',
+                  )}
+                  autoComplete="off"
+                />
+
+            
             <div className="flex-none bg-primary/10 p-1">
               <CalendarIcon className="h-4 w-4 text-primary" />
             </div>
@@ -72,8 +129,11 @@ function DateEditor({
           <Calendar
             mode="single"
             selected={date}
+            month={month}
+            onMonthChange={setMonth}
             onSelect={handleSelect}
             initialFocus
+
           />
         </PopoverContent>
       </Popover>
