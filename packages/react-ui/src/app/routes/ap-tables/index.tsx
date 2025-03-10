@@ -1,12 +1,10 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Trash2, Plus, Download, Loader2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import * as z from 'zod';
+
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useNewWindow } from '@/components/embed-provider';
@@ -18,45 +16,23 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-  Form,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { TableTitle } from '@/components/ui/table-title';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { fieldsApi } from '@/features/tables/lib/fields-api';
 import { recordsApi } from '@/features/tables/lib/records-api';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import { projectHooks } from '@/hooks/project-hooks';
-import { formatUtils } from '@/lib/utils';
-import { FieldType, Table } from '@activepieces/shared';
+import { formatUtils, NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
+import { FieldType, Permission, Table } from '@activepieces/shared';
+import RenameTableDialog from '@/features/tables/components/rename-table-dialog';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 
 const ApTablesPage = () => {
   const queryClient = useQueryClient();
-  const form = useForm<{ name: string }>({
-    defaultValues: {
-      name: '',
-    },
-    resolver: zodResolver(
-      z.object({
-        name: z.string().min(1, { message: t('Name is required') }),
-      }),
-    ),
-  });
+  
   const openNewWindow = useNewWindow();
   const navigate = useNavigate();
-  const [showNewTableDialog, setShowNewTableDialog] = useState(false);
   const [selectedRows, setSelectedRows] = useState<Array<{ id: string }>>([]);
   const [exportingTableIds, setExportingTableIds] = useState<Set<string>>(
     new Set(),
@@ -66,8 +42,8 @@ const ApTablesPage = () => {
     queryKey: ['tables', project.id],
     queryFn: () => tablesApi.list(),
   });
-
-  const createTableMutation = useMutation({
+  const userHasTableWritePermission = useAuthorization().checkAccess(Permission.WRITE_ALERT)
+  const { mutate: createTable, isPending: isCreatingTable } = useMutation({
     mutationFn: async (data: { name: string }) => {
       const table = await tablesApi.create({ name: data.name });
       try {
@@ -93,10 +69,8 @@ const ApTablesPage = () => {
       return table;
     },
     onSuccess: (table) => {
-      setShowNewTableDialog(false);
       refetch();
-      form.reset();
-      navigate(`/projects/${project.id}/tables/${table.id}`);
+      navigate(`/projects/${project.id}/tables/${table.id}?${NEW_TABLE_QUERY_PARAM}=true`); 
     },
   });
 
@@ -254,6 +228,7 @@ const ApTablesPage = () => {
                 <Download className="h-4 w-4" />
               )}
             </Button>
+            <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
             <ConfirmationDeleteDialog
               title={t('Delete Table')}
               message={t(
@@ -268,10 +243,20 @@ const ApTablesPage = () => {
                 variant="ghost"
                 size="sm"
                 onClick={(e) => e.stopPropagation()}
+                disabled={!userHasTableWritePermission}
               >
                 <Trash2 className="h-4 w-4 text-destructive" />
               </Button>
             </ConfirmationDeleteDialog>
+            </PermissionNeededTooltip>
+           <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
+           <RenameTableDialog
+              tableName={row.original.name}
+              tableId={row.original.id}
+              onRename={() => refetch()}
+            />
+           </PermissionNeededTooltip>
+            
           </div>
         );
       },
@@ -328,14 +313,20 @@ const ApTablesPage = () => {
       },
       {
         render: () => (
-          <Button
+          <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
+            <Button
             size="sm"
-            onClick={() => setShowNewTableDialog(true)}
+            onClick={() => createTable({ name: t('New Table') })}
             className="flex items-center gap-2"
+            loading={isCreatingTable}
+            disabled={!userHasTableWritePermission}
           >
             <Plus className="h-4 w-4" />
             {t('New Table')}
           </Button>
+
+          </PermissionNeededTooltip>
+          
         ),
       },
     ],
@@ -362,46 +353,7 @@ const ApTablesPage = () => {
         bulkActions={bulkActions}
       />
 
-      <Dialog open={showNewTableDialog} onOpenChange={setShowNewTableDialog}>
-        <DialogContent>
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit((data) =>
-                createTableMutation.mutate(data),
-              )}
-            >
-              <DialogHeader>
-                <DialogTitle>{t('New Table')}</DialogTitle>
-              </DialogHeader>
-              <div className="mb-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input {...field} placeholder={t('Table name')} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                ></FormField>
-              </div>
-              <div className="flex justify-end gap-2">
-                <DialogClose asChild>
-                  <Button variant="outline" type="button">
-                    {t('Cancel')}
-                  </Button>
-                </DialogClose>
-
-                <Button type="submit" loading={createTableMutation.isPending}>
-                  {t('Create')}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+      
     </div>
   );
 };

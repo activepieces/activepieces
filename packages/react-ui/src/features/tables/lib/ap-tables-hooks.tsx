@@ -417,9 +417,11 @@ export const tableHooks = {
   useUpdateTable: ({
     queryClient,
     tableId,
+    onSuccess,
   }: {
     queryClient: QueryClient;
     tableId: string;
+    onSuccess?: () => void;
   }) => {
     return useMutation({
       mutationFn: (request: UpdateTableRequest) => {
@@ -429,6 +431,7 @@ export const tableHooks = {
         }));
         return tablesApi.update(tableId, request);
       },
+      onSuccess,
     });
   },
 };
