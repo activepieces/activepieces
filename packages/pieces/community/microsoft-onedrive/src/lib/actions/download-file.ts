@@ -22,6 +22,15 @@ export const downloadFile = createAction({
   async run(context) {
     const fileId = context.propsValue.fileId;
 
+    const fileDetails = await httpClient.sendRequest<{name:string}>({
+      method:HttpMethod.GET,
+      url:`${oneDriveCommon.baseUrl}/items/${fileId}?$select=name`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: context.auth.access_token,
+      },
+    })
+
     const result = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${oneDriveCommon.baseUrl}/items/${fileId}/content`,
@@ -29,6 +38,7 @@ export const downloadFile = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
+      responseType:'arraybuffer'
     });
 
     const desiredHeaders = [
@@ -45,6 +55,13 @@ export const downloadFile = createAction({
       }
     }
 
-    return filteredHeaders;
+    return {
+      ...filteredHeaders,
+      data:await context.files.write({
+        fileName: fileDetails.body.name,
+        data: Buffer.from(result.body),
+      })
+
+    }
   },
 });
