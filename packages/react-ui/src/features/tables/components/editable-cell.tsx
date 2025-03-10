@@ -21,7 +21,27 @@ type EditableCellProps = {
   disabled?: boolean;
 };
 
-const EditorSelector = ({type, row, rowIdx, column, value, onRowChange, setValue, setIsEditing, setIsHovered}: {type: FieldType, row: Row, rowIdx: number, column: CalculatedColumn<Row, { id: string }>, value: string, onRowChange: (row: Row, commitChanges: boolean) => void, setValue: (value: string) => void, setIsEditing: (isEditing: boolean) => void, setIsHovered: (isHovered: boolean) => void}) => {
+const EditorSelector = ({
+  type,
+  row,
+  rowIdx,
+  column,
+  value,
+  onRowChange,
+  setValue,
+  setIsEditing,
+  setIsHovered,
+}: {
+  type: FieldType;
+  row: Row;
+  rowIdx: number;
+  column: CalculatedColumn<Row, { id: string }>;
+  value: string;
+  onRowChange: (row: Row, commitChanges: boolean) => void;
+  setValue: (value: string) => void;
+  setIsEditing: (isEditing: boolean) => void;
+  setIsHovered: (isHovered: boolean) => void;
+}) => {
   let Editor;
   switch (type) {
     case FieldType.DATE:
@@ -51,7 +71,7 @@ const EditorSelector = ({type, row, rowIdx, column, value, onRowChange, setValue
       }}
     />
   );
-}
+};
 export function EditableCell({
   type,
   value: initialValue,
@@ -86,11 +106,22 @@ export function EditableCell({
     return () => document.removeEventListener('click', handleClickOutside);
   }, [isSelected]);
 
- 
-  if(isEditing) {
-    return <EditorSelector type={type} row={row} rowIdx={rowIdx} column={column} value={value} onRowChange={onRowChange} setValue={setValue} setIsEditing={setIsEditing} setIsHovered={setIsHovered} />
+  if (isEditing) {
+    return (
+      <EditorSelector
+        type={type}
+        row={row}
+        rowIdx={rowIdx}
+        column={column}
+        value={value}
+        onRowChange={onRowChange}
+        setValue={setValue}
+        setIsEditing={setIsEditing}
+        setIsHovered={setIsHovered}
+      />
+    );
   }
- 
+
   return (
     <div
       id={`editable-cell-${rowIdx}-${column.idx}`}
@@ -100,14 +131,14 @@ export function EditableCell({
         isSelected ? 'border-primary' : 'border-transparent',
       )}
       onMouseEnter={() => {
-        if(!disabled) {
+        if (!disabled) {
           setIsHovered(true);
-         }
+        }
       }}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => setIsSelected(true)}
       onDoubleClick={() => {
-        if(!disabled) {
+        if (!disabled) {
           setIsEditing(true);
         }
       }}

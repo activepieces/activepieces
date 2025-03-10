@@ -1,23 +1,23 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { RefreshCw, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { HomeButton } from '@/components/ui/home-button';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
+import { Permission } from '@activepieces/shared';
 
 import { tableHooks } from '../lib/ap-tables-hooks';
 
+import ApTableName from './ap-table-name';
 import { useTableState } from './ap-table-state-provider';
 import { FiltersPopup } from './filters-popup';
 import RowHeightToggle from './row-height-toggle';
-import ApTableName from './ap-table-name';
-import { useEffect, useState } from 'react';
-import { NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { Permission } from '@activepieces/shared';
 
 const ApTableHeader = ({
   tableId,
@@ -42,11 +42,13 @@ const ApTableHeader = ({
     state.setSelectedRows,
   ]);
   const { data: tableData } = tableHooks.useFetchTable(tableId);
-  const [searchParams] = useSearchParams()
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const location = useLocation();
   const { data: fieldsData } = tableHooks.useFetchFields(tableId);
-  const userHasTableWritePermission = useAuthorization().checkAccess(Permission.WRITE_TABLE)
+  const userHasTableWritePermission = useAuthorization().checkAccess(
+    Permission.WRITE_TABLE,
+  );
   const deleteRecordsMutation = tableHooks.useDeleteRecords({
     location,
     tableId: tableId,
@@ -55,7 +57,7 @@ const ApTableHeader = ({
     },
     queryClient: queryClient,
   });
-  const [isEditingTableName,setIsEditingTableName]= useState(false);
+  const [isEditingTableName, setIsEditingTableName] = useState(false);
   useEffect(() => {
     setIsEditingTableName(searchParams.get(NEW_TABLE_QUERY_PARAM) === 'true');
   }, []);
@@ -63,7 +65,12 @@ const ApTableHeader = ({
     <div className="flex flex-col gap-4 ml-3 pt-4 flex-none">
       <div className="flex items-center gap-2">
         <HomeButton route={'/tables'} showBackButton />
-        <ApTableName tableId={tableId} tableName={tableData?.name ?? ""} isEditingTableName={isEditingTableName} setIsEditingTableName={setIsEditingTableName} />
+        <ApTableName
+          tableId={tableId}
+          tableName={tableData?.name ?? ''}
+          isEditingTableName={isEditingTableName}
+          setIsEditingTableName={setIsEditingTableName}
+        />
 
         {isSaving && (
           <div className="flex items-center gap-2 text-muted-foreground animate-fade-in">
@@ -89,35 +96,36 @@ const ApTableHeader = ({
         <div className="flex items-center gap-2 mr-2">
           {selectedRows.size > 0 && (
             <div onClick={(e) => e.stopPropagation()}>
-              <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
-              <ConfirmationDeleteDialog
-                title={t('Delete Records')}
-                message={t(
-                  'Are you sure you want to delete the selected records? This action cannot be undone.',
-                )}
-                entityName={
-                  selectedRows.size === 1 ? t('record') : t('records')
-                }
-                mutationFn={async () => {
-                  await enqueueMutation(
-                    deleteRecordsMutation,
-                    Array.from(selectedRows),
-                  );
-                  setSelectedRows(new Set());
-                }}
+              <PermissionNeededTooltip
+                hasPermission={userHasTableWritePermission}
               >
-                <Button
-                  className="w-full mr-2"
-                  size="sm"
-                  variant="destructive"
-                  disabled={!userHasTableWritePermission}
+                <ConfirmationDeleteDialog
+                  title={t('Delete Records')}
+                  message={t(
+                    'Are you sure you want to delete the selected records? This action cannot be undone.',
+                  )}
+                  entityName={
+                    selectedRows.size === 1 ? t('record') : t('records')
+                  }
+                  mutationFn={async () => {
+                    await enqueueMutation(
+                      deleteRecordsMutation,
+                      Array.from(selectedRows),
+                    );
+                    setSelectedRows(new Set());
+                  }}
                 >
-                  <Trash2 className="mr-2 w-4" />
-                  {`${t('Delete')} (${selectedRows.size})`}
-                </Button>
-              </ConfirmationDeleteDialog>
+                  <Button
+                    className="w-full mr-2"
+                    size="sm"
+                    variant="destructive"
+                    disabled={!userHasTableWritePermission}
+                  >
+                    <Trash2 className="mr-2 w-4" />
+                    {`${t('Delete')} (${selectedRows.size})`}
+                  </Button>
+                </ConfirmationDeleteDialog>
               </PermissionNeededTooltip>
-             
             </div>
           )}
         </div>

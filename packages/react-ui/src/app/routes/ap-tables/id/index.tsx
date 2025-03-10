@@ -21,13 +21,14 @@ import { NewFieldPopup } from '@/features/tables/components/new-field-popup';
 import { SelectColumn } from '@/features/tables/components/select-column';
 import { tableHooks } from '@/features/tables/lib/ap-tables-hooks';
 import { Row, ROW_HEIGHT_MAP, RowHeight } from '@/features/tables/lib/types';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { Field, Permission, PopulatedRecord } from '@activepieces/shared';
 import './react-data-grid.css';
 
 import { useTableState } from '../../../../features/tables/components/ap-table-state-provider';
-import { useAuthorization } from '@/hooks/authorization-hooks';
+
 
 const ApTableEditorPage = () => {
   const { tableId } = useParams();
@@ -131,7 +132,9 @@ const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
     tableId,
     location,
   });
-  const userHasTableWritePermission = useAuthorization().checkAccess(Permission.WRITE_TABLE)
+  const userHasTableWritePermission = useAuthorization().checkAccess(
+    Permission.WRITE_TABLE,
+  );
   const newFieldColumn = {
     key: 'new-field',
     minWidth: 67,
@@ -146,20 +149,20 @@ const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
       </NewFieldPopup>
     ),
     renderCell: () => <div className="empty-cell"></div>,
-  }
+  };
   const columns: Column<Row, { id: string }>[] = [
     {
       ...SelectColumn,
-      renderSummaryCell: userHasTableWritePermission ? () => (
-        
+      renderSummaryCell: userHasTableWritePermission
+        ? () => (
             <div
-          className="w-full h-full flex items-center justify-start cursor-pointer pl-4"
-          onClick={createEmptyRecord}
-        >
-          <Plus className="h-4 w-4" />
-        </div>
-        
-      ) : undefined,
+              className="w-full h-full flex items-center justify-start cursor-pointer pl-4"
+              onClick={createEmptyRecord}
+            >
+              <Plus className="h-4 w-4" />
+            </div>
+          )
+        : undefined,
     },
     ...(fieldsData?.map((field) => ({
       key: field.name,
@@ -172,14 +175,18 @@ const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
         <ColumnHeader
           label={field.name}
           type={field.type}
-          actions={userHasTableWritePermission ? [
-            {
-              type: ColumnActionType.DELETE,
-              onClick: async () => {
-                await enqueueMutation(deleteFieldMutation, field.id);
-              },
-            },
-          ] : []}
+          actions={
+            userHasTableWritePermission
+              ? [
+                  {
+                    type: ColumnActionType.DELETE,
+                    onClick: async () => {
+                      await enqueueMutation(deleteFieldMutation, field.id);
+                    },
+                  },
+                ]
+              : []
+          }
         />
       ),
       renderCell: ({
@@ -205,20 +212,19 @@ const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
           }}
         />
       ),
-      renderSummaryCell:userHasTableWritePermission ? () => (
-       
-          <div
-            className="w-full h-full flex items-center justify-start cursor-pointer pl-4"
-           onClick={createEmptyRecord}
-          >
-          </div>
-       
-      )  : undefined,
+      renderSummaryCell: userHasTableWritePermission
+        ? () => (
+            <div
+              className="w-full h-full flex items-center justify-start cursor-pointer pl-4"
+              onClick={createEmptyRecord}
+            ></div>
+          )
+        : undefined,
     })) ?? []),
   ];
- if(userHasTableWritePermission) {
-  columns.push(newFieldColumn)
- }
+  if (userHasTableWritePermission) {
+    columns.push(newFieldColumn);
+  }
   function onSelectedRowsChange(newSelectedRows: ReadonlySet<string>) {
     setSelectedRows(newSelectedRows);
   }
@@ -312,7 +318,9 @@ const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
             'h-[calc(100vh-8rem)] bg-muted/30 scroll-smooth',
             theme === 'dark' ? 'rdg-dark' : 'rdg-light',
           )}
-          bottomSummaryRows={ userHasTableWritePermission ? [{ id: 'new-record' }] : []}
+          bottomSummaryRows={
+            userHasTableWritePermission ? [{ id: 'new-record' }] : []
+          }
           rowHeight={ROW_HEIGHT_MAP[rowHeight]}
           headerRowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
           summaryRowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}

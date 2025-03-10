@@ -5,7 +5,6 @@ import { Trash2, Plus, Download, Loader2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -16,22 +15,26 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { TableTitle } from '@/components/ui/table-title';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import RenameTableDialog from '@/features/tables/components/rename-table-dialog';
 import { fieldsApi } from '@/features/tables/lib/fields-api';
 import { recordsApi } from '@/features/tables/lib/records-api';
 import { tablesApi } from '@/features/tables/lib/tables-api';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils, NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
 import { FieldType, Permission, Table } from '@activepieces/shared';
-import RenameTableDialog from '@/features/tables/components/rename-table-dialog';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const ApTablesPage = () => {
   const queryClient = useQueryClient();
-  
+
   const openNewWindow = useNewWindow();
   const navigate = useNavigate();
   const [selectedRows, setSelectedRows] = useState<Array<{ id: string }>>([]);
@@ -43,7 +46,9 @@ const ApTablesPage = () => {
     queryKey: ['tables', project.id],
     queryFn: () => tablesApi.list(),
   });
-  const userHasTableWritePermission = useAuthorization().checkAccess(Permission.WRITE_ALERT)
+  const userHasTableWritePermission = useAuthorization().checkAccess(
+    Permission.WRITE_ALERT,
+  );
   const { mutate: createTable, isPending: isCreatingTable } = useMutation({
     mutationFn: async (data: { name: string }) => {
       const table = await tablesApi.create({ name: data.name });
@@ -71,7 +76,9 @@ const ApTablesPage = () => {
     },
     onSuccess: (table) => {
       refetch();
-      navigate(`/projects/${project.id}/tables/${table.id}?${NEW_TABLE_QUERY_PARAM}=true`); 
+      navigate(
+        `/projects/${project.id}/tables/${table.id}?${NEW_TABLE_QUERY_PARAM}=true`,
+      );
     },
   });
 
@@ -214,88 +221,77 @@ const ApTablesPage = () => {
       cell: ({ row }) => {
         return (
           <div className="flex items-center justify-end">
-           <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
-           <RenameTableDialog
-              tableName={row.original.name}
-              tableId={row.original.id}
-              onRename={() => refetch()}
-              userHasTableWritePermission={userHasTableWritePermission}
-            />
-           </PermissionNeededTooltip>
-            <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
-            <Tooltip>
-            <ConfirmationDeleteDialog
-              title={`${t('Delete')} ${row.original.name}`}
-              message={t(
-                'Are you sure you want to delete this table? This action cannot be undone.',
-              )}
-              mutationFn={async () =>
-                deleteTableMutation.mutate(row.original.id)
-              }
-              entityName={t('table')}
+            <PermissionNeededTooltip
+              hasPermission={userHasTableWritePermission}
             >
-          
-              <TooltipTrigger asChild disabled={!userHasTableWritePermission}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => e.stopPropagation()}
-                disabled={!userHasTableWritePermission}
-              >
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
-              </TooltipTrigger>
-            
-
-             
-           
-            </ConfirmationDeleteDialog>
-            {
-                userHasTableWritePermission && (
-                  <TooltipContent>
-                    {t('Delete')}
-                  </TooltipContent>
-                )
-              }
-            </Tooltip>
-
+              <RenameTableDialog
+                tableName={row.original.name}
+                tableId={row.original.id}
+                onRename={() => refetch()}
+                userHasTableWritePermission={userHasTableWritePermission}
+              />
             </PermissionNeededTooltip>
-          <Tooltip>
-            <TooltipTrigger asChild disabled={exportingTableIds.has(row.original.id)}>
-              <Button
-              variant="ghost"
-              size="sm"
-              disabled={exportingTableIds.has(row.original.id)}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleExportTable(row.original.id, row.original.name);
-              }}
+            <PermissionNeededTooltip
+              hasPermission={userHasTableWritePermission}
             >
-              {exportingTableIds.has(row.original.id) ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Download className="h-4 w-4" />
+              <Tooltip>
+                <ConfirmationDeleteDialog
+                  title={`${t('Delete')} ${row.original.name}`}
+                  message={t(
+                    'Are you sure you want to delete this table? This action cannot be undone.',
+                  )}
+                  mutationFn={async () =>
+                    deleteTableMutation.mutate(row.original.id)
+                  }
+                  entityName={t('table')}
+                >
+                  <TooltipTrigger
+                    asChild
+                    disabled={!userHasTableWritePermission}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => e.stopPropagation()}
+                      disabled={!userHasTableWritePermission}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </TooltipTrigger>
+                </ConfirmationDeleteDialog>
+                {userHasTableWritePermission && (
+                  <TooltipContent>{t('Delete')}</TooltipContent>
+                )}
+              </Tooltip>
+            </PermissionNeededTooltip>
+            <Tooltip>
+              <TooltipTrigger
+                asChild
+                disabled={exportingTableIds.has(row.original.id)}
+              >
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={exportingTableIds.has(row.original.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleExportTable(row.original.id, row.original.name);
+                  }}
+                >
+                  {exportingTableIds.has(row.original.id) ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              {exportingTableIds.has(row.original.id) && (
+                <TooltipContent>{t('Exporting...')}</TooltipContent>
               )}
-            </Button>
-            </TooltipTrigger>
-            {
-              exportingTableIds.has(row.original.id) && (
-                <TooltipContent>
-                  {t('Exporting...')}
-                </TooltipContent>
-              )
-            }  
-            {
-              !exportingTableIds.has(row.original.id) && (
-                <TooltipContent>
-                  {t('Export')}
-                </TooltipContent>
-              )
-            }  
-
-
-           
-          </Tooltip>
+              {!exportingTableIds.has(row.original.id) && (
+                <TooltipContent>{t('Export')}</TooltipContent>
+              )}
+            </Tooltip>
           </div>
         );
       },
@@ -354,18 +350,16 @@ const ApTablesPage = () => {
         render: () => (
           <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
             <Button
-            size="sm"
-            onClick={() => createTable({ name: t('New Table') })}
-            className="flex items-center gap-2"
-            loading={isCreatingTable}
-            disabled={!userHasTableWritePermission}
-          >
-            <Plus className="h-4 w-4" />
-            {t('New Table')}
-          </Button>
-
+              size="sm"
+              onClick={() => createTable({ name: t('New Table') })}
+              className="flex items-center gap-2"
+              loading={isCreatingTable}
+              disabled={!userHasTableWritePermission}
+            >
+              <Plus className="h-4 w-4" />
+              {t('New Table')}
+            </Button>
           </PermissionNeededTooltip>
-          
         ),
       },
     ],
@@ -391,8 +385,6 @@ const ApTablesPage = () => {
         }}
         bulkActions={bulkActions}
       />
-
-      
     </div>
   );
 };

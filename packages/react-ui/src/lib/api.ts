@@ -98,7 +98,11 @@ export const api = {
       },
       ...config,
     }),
-  delete: <TResponse>(url: string, query?: Record<string, string>, body?: unknown) =>
+  delete: <TResponse>(
+    url: string,
+    query?: Record<string, string>,
+    body?: unknown,
+  ) =>
     request<TResponse>(url, {
       method: 'DELETE',
       params: query,

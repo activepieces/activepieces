@@ -80,7 +80,7 @@ export const tableHooks = {
     return useQuery({
       queryKey: ['fields', tableId],
       queryFn: () => fieldsApi.list(tableId),
-      refetchOnWindowFocus: false
+      refetchOnWindowFocus: false,
     });
   },
   createApTableStore: () => {
@@ -230,7 +230,7 @@ export const tableHooks = {
         return { previousFields };
       },
       onError: (error, __, context) => {
-        console.error(error)
+        console.error(error);
         if (context?.previousFields) {
           queryClient.setQueryData(['fields', tableId], context.previousFields);
         }
