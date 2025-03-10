@@ -41,12 +41,14 @@ const ApTableEditorPage = () => {
 const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
   const location = useLocation();
   const queryClient = useQueryClient();
-  const [enqueueMutation, rowHeight, selectedRows, setSelectedRows] =
+  const [enqueueMutation, rowHeight, selectedRows, setSelectedRows, selectedCell, setSelectedCell] =
     useTableState((state) => [
       state.enqueueMutation,
       state.rowHeight,
       state.selectedRows,
       state.setSelectedRows,
+      state.selectedCell,
+      state.setSelectedCell,
     ]);
   const [lastRowIdx, setLastRowIdx] = useState<number>(0);
   const gridRef = useRef<DataGridHandle>(null);
@@ -135,6 +137,21 @@ const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        selectedCell &&
+        !(event.target as HTMLElement).closest(
+          `#editable-cell-${selectedCell.rowIdx}-${selectedCell.columnIdx}`,
+        )
+      ) {
+        setSelectedCell(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [selectedCell]);
   const newFieldColumn = {
     key: 'new-field',
     minWidth: 67,
@@ -195,6 +212,7 @@ const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
         rowIdx,
       }: RenderCellProps<Row, { id: string }>) => (
         <EditableCell
+          key={row[field.name]}
           type={field.type}
           value={row[field.name]}
           row={row}

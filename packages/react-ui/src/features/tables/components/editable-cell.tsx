@@ -10,6 +10,7 @@ import { Row } from '../lib/types';
 
 import { DateEditor } from './date-editor';
 import { TextEditor } from './text-editor';
+import { useTableState } from './ap-table-state-provider';
 
 type EditableCellProps = {
   type: FieldType;
@@ -83,29 +84,9 @@ export function EditableCell({
 }: EditableCellProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [isSelected, setIsSelected] = useState(false);
+  const [selectedCell, setSelectedCell]= useTableState((state) => [state.selectedCell, state.setSelectedCell]);
   const [value, setValue] = useState(initialValue);
-
-  useEffect(() => {
-    setValue(initialValue);
-  }, [initialValue]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        isSelected &&
-        !(event.target as HTMLElement).closest(
-          `#editable-cell-${rowIdx}-${column.idx}`,
-        )
-      ) {
-        setIsSelected(false);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [isSelected]);
-
+  const isSelected = selectedCell?.rowIdx === rowIdx && selectedCell?.columnIdx === column.idx;
   if (isEditing) {
     return (
       <EditorSelector
@@ -126,7 +107,7 @@ export function EditableCell({
     <div
       id={`editable-cell-${rowIdx}-${column.idx}`}
       className={cn(
-        'h-full flex items-center justify-between gap-2 pl-2 py-2',
+        'h-full flex items-center justify-between gap-2 pl-2 py-2  focus:outline-none  ',
         'group cursor-pointer border',
         isSelected ? 'border-primary' : 'border-transparent',
       )}
@@ -135,10 +116,21 @@ export function EditableCell({
           setIsHovered(true);
         }
       }}
+      tabIndex={0}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={() => setIsSelected(true)}
+      onClick={() => {
+        setSelectedCell({rowIdx, columnIdx: column.idx})
+      }}
+      onFocus={() => {
+        setSelectedCell({rowIdx, columnIdx: column.idx})
+      }}
       onDoubleClick={() => {
         if (!disabled) {
+          setIsEditing(true);
+        }
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && !disabled) {
           setIsEditing(true);
         }
       }}

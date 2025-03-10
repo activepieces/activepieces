@@ -58,6 +58,10 @@ function DateEditor({
   };
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  useEffect(()=>{
+    //clear selection frrom browser
+    inputRef.current?.focus();
+  },[])
   return (
     <div className="h-full" ref={containerRef}>
       <Popover open={isOpen} onOpenChange={handleOpenChange}>

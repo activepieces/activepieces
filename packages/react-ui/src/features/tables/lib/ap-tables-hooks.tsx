@@ -36,6 +36,11 @@ export type TableState = {
   setRowHeight: (rowHeight: RowHeight) => void;
   selectedRows: ReadonlySet<string>;
   setSelectedRows: (selectedRows: ReadonlySet<string>) => void;
+  selectedCell: {
+    rowIdx: number;
+    columnIdx: number;
+  } | null;
+  setSelectedCell: (selectedCell: { rowIdx: number; columnIdx: number } | null) => void;
 };
 
 export const tableHooks = {
@@ -56,6 +61,7 @@ export const tableHooks = {
     return useInfiniteQuery<SeekPage<PopulatedRecord>>({
       queryKey: ['records', tableId, location.search],
       queryFn: async ({ pageParam }) => {
+     
         const filters = searchParams.getAll('filter').map((f) => {
           const [fieldId, operator, value] = f.split(':');
           return {
@@ -64,12 +70,14 @@ export const tableHooks = {
             value: decodeURIComponent(value),
           };
         });
-        return recordsApi.list({
+        const records = await recordsApi.list({
           tableId: tableId!,
           cursor: pageParam as string | undefined,
           limit: 200,
           filters: filters.length > 0 ? filters : undefined,
         });
+        console.log(records);
+        return records;
       },
       refetchOnWindowFocus: false,
       getNextPageParam: (lastPage) => lastPage.next,
@@ -91,6 +99,9 @@ export const tableHooks = {
       selectedRows: new Set(),
       setSelectedRows: (selectedRows: ReadonlySet<string>) =>
         set({ selectedRows }),
+      selectedCell: null,
+      setSelectedCell: (selectedCell: { rowIdx: number; columnIdx: number } | null) =>
+        set({ selectedCell }),
       enqueueMutation: async <TData, TError, TVariables>(
         mutation: UseMutationResult<TData, TError, TVariables>,
         variables: TVariables,
