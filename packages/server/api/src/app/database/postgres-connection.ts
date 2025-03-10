@@ -167,10 +167,13 @@ import { AddGlobalConnectionsAndRbacForPlatform1731532843905 } from './migration
 import { AddAuditLogIndicies1731711188507 } from './migration/postgres/1731711188507-AddAuditLogIndicies'
 import { AddIndiciesToRunAndTriggerData1732324567513 } from './migration/postgres/1732324567513-AddIndiciesToRunAndTriggerData'
 import { AddProjectRelationInUserInvitation1732790412900 } from './migration/postgres/1732790673766-AddProjectRelationInUserInvitation'
+import { TablesProduct1734355488179 } from './migration/postgres/1734355488179-TablesProduct'
 import { CreateProjectReleaseTable1734418823028 } from './migration/postgres/1734418823028-CreateProjectReleaseTable'
 import { RemoveWorkerType1734439097357 } from './migration/postgres/1734439097357-RemoveWorkerType'
 import { AddCopilotSettings1734479886363 } from './migration/postgres/1734479886363-AddCopilotSettings'
+import { FieldAndRecordAndCellProjectId1734969829406 } from './migration/postgres/1734969829406-FieldAndRecordAndCell_ProjectId'
 import { AddPlatformBilling1734971881345 } from './migration/postgres/1734971881345-AddPlatformBilling'
+import { AddCellUniqueIndex1735057498882 } from './migration/postgres/1735057498882-AddCellUniqueIndex'
 import { AddExternalIdForFlow1735262417593 } from './migration/postgres/1735262417593-AddExternalIdForFlow'
 import { AddEnvironmentsEnabled1735267452262 } from './migration/postgres/1735267452262-AddEnvironmentsEnabled'
 import { AddUserIdentity1735590074879 } from './migration/postgres/1735590074879-AddUserIdentity'
@@ -288,7 +291,10 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddGlobalConnectionsAndRbacForPlatform1731532843905,
         AddIndiciesToRunAndTriggerData1732324567513,
         AddProjectRelationInUserInvitation1732790412900,
+        TablesProduct1734355488179,
         RemoveWorkerType1734439097357,
+        FieldAndRecordAndCellProjectId1734969829406,
+        AddCellUniqueIndex1735057498882,
         AddCopilotSettings1734479886363,
         AddExternalIdForFlow1735262417593,
         AddEnvironmentsEnabled1735267452262,

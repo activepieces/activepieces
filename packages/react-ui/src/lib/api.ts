@@ -69,7 +69,11 @@ function request<TResponse>(
           : `Bearer ${authenticationSession.getToken()}`,
     },
   })
-    .then((response) => response.data as TResponse)
+    .then((response) =>
+      config.responseType === 'blob'
+        ? response.data
+        : (response.data as TResponse),
+    )
     .catch((error) => {
       if (isAxiosError(error)) {
         globalErrorHandler(error);
@@ -84,7 +88,7 @@ export const api = {
   isError(error: unknown): error is HttpError {
     return isAxiosError(error);
   },
-  get: <TResponse>(url: string, query?: unknown) =>
+  get: <TResponse>(url: string, query?: unknown, config?: AxiosRequestConfig) =>
     request<TResponse>(url, {
       params: query,
       paramsSerializer: (params) => {
@@ -92,11 +96,17 @@ export const api = {
           arrayFormat: 'repeat',
         });
       },
+      ...config,
     }),
-  delete: <TResponse>(url: string, query?: Record<string, string>) =>
+  delete: <TResponse>(
+    url: string,
+    query?: Record<string, string>,
+    body?: unknown,
+  ) =>
     request<TResponse>(url, {
       method: 'DELETE',
       params: query,
+      data: body,
       paramsSerializer: (params) => {
         return qs.stringify(params, {
           arrayFormat: 'repeat',
