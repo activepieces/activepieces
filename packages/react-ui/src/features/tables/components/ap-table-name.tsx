@@ -1,5 +1,4 @@
 import { useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
 import { tableHooks } from "../lib/ap-tables-hooks"
 import EditableText from "@/components/ui/editable-text"
 import { useTableState } from "./ap-table-state-provider"
@@ -9,8 +8,7 @@ import { Pencil } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 
-const ApTableName = ({tableId, tableName}: {tableId: string , tableName: string}) => {
-    const [isEditing, setIsEditing] = useState(false)
+const ApTableName = ({tableId, tableName, isEditingTableName, setIsEditingTableName}: {tableId: string , tableName: string, isEditingTableName: boolean, setIsEditingTableName: (val:boolean) => void}) => {
     const queryClient = useQueryClient()
     const enqueueMutation = useTableState((state) => state.enqueueMutation)
     const updateTableMutation = tableHooks.useUpdateTable({
@@ -20,17 +18,17 @@ const ApTableName = ({tableId, tableName}: {tableId: string , tableName: string}
     const isReadOnly =  !useAuthorization().checkAccess(Permission.WRITE_TABLE)
     
     return <div  onClick={()=>{
-        if(!isReadOnly && !isEditing){
-            setIsEditing(true)
+        if(!isReadOnly && !isEditingTableName){
+            setIsEditingTableName(true)
         }
     }} className={cn("flex items-center gap-2" )} >
         <EditableText value={tableName} readonly={isReadOnly} onValueChange={(newName) => {
         enqueueMutation(updateTableMutation, {
             name: newName,
         })
-    }} isEditing={isEditing} setIsEditing={setIsEditing} />
+    }} isEditing={isEditingTableName} setIsEditing={setIsEditingTableName} />
      {
-        !isReadOnly && !isEditing && <Pencil className="w-4 h-4" />
+        !isReadOnly && !isEditingTableName && <Pencil className="w-4 h-4" />
      }
     </div>
 }

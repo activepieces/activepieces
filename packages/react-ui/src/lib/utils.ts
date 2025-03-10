@@ -239,6 +239,7 @@ export const determineDefaultRoute = (
 };
 
 export const NEW_FLOW_QUERY_PARAM = 'newFlow';
+export const NEW_TABLE_QUERY_PARAM = 'newTable';
 export const parentWindow = window.opener ?? window.parent;
 export const cleanLeadingSlash = (url: string) => {
   return url.startsWith('/') ? url.slice(1) : url;

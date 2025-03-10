@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { RefreshCw, Trash2 } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,8 @@ import { useTableState } from './ap-table-state-provider';
 import { FiltersPopup } from './filters-popup';
 import RowHeightToggle from './row-height-toggle';
 import ApTableName from './ap-table-name';
+import { useEffect, useState } from 'react';
+import { NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
 
 const ApTableHeader = ({
   tableId,
@@ -37,7 +39,7 @@ const ApTableHeader = ({
     state.setSelectedRows,
   ]);
   const { data: tableData } = tableHooks.useFetchTable(tableId);
-
+  const [searchParams] = useSearchParams()
   const queryClient = useQueryClient();
   const location = useLocation();
   const { data: fieldsData } = tableHooks.useFetchFields(tableId);
@@ -49,11 +51,15 @@ const ApTableHeader = ({
     },
     queryClient: queryClient,
   });
+  const [isEditingTableName,setIsEditingTableName]= useState(false);
+  useEffect(() => {
+    setIsEditingTableName(searchParams.get(NEW_TABLE_QUERY_PARAM) === 'true');
+  }, []);
   return (
     <div className="flex flex-col gap-4 ml-3 pt-4 flex-none">
       <div className="flex items-center gap-2">
         <HomeButton route={'/tables'} showBackButton />
-        <ApTableName tableId={tableId} tableName={tableData?.name ?? ""} />
+        <ApTableName tableId={tableId} tableName={tableData?.name ?? ""} isEditingTableName={isEditingTableName} setIsEditingTableName={setIsEditingTableName} />
 
         {isSaving && (
           <div className="flex items-center gap-2 text-muted-foreground animate-fade-in">
