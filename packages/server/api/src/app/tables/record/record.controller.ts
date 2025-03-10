@@ -2,6 +2,7 @@ import {
     CreateRecordsRequest,
     DeleteRecordsRequest,
     ListRecordsRequest,
+    Permission,
     PopulatedRecord,
     PrincipalType,
     SeekPage,
@@ -123,6 +124,7 @@ const GetRecordByIdRequest = {
 const UpdateRequest = {
     config: {
         allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        permission: Permission.WRITE_TABLE,
     },
     schema: {
         params: Type.Object({
@@ -138,6 +140,7 @@ const UpdateRequest = {
 const DeleteRecordRequest = {
     config: {
         allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        permission: Permission.WRITE_TABLE,
     },
     schema: {
         body: DeleteRecordsRequest,
@@ -150,6 +153,7 @@ const DeleteRecordRequest = {
 const ListRequest = {
     config: {
         allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        permission: Permission.READ_TABLE,
     },
     schema: {
         body: ListRecordsRequest,

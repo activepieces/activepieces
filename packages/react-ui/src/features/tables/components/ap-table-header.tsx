@@ -15,6 +15,9 @@ import RowHeightToggle from './row-height-toggle';
 import ApTableName from './ap-table-name';
 import { useEffect, useState } from 'react';
 import { NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { Permission } from '@activepieces/shared';
 
 const ApTableHeader = ({
   tableId,
@@ -43,6 +46,7 @@ const ApTableHeader = ({
   const queryClient = useQueryClient();
   const location = useLocation();
   const { data: fieldsData } = tableHooks.useFetchFields(tableId);
+  const userHasTableWritePermission = useAuthorization().checkAccess(Permission.WRITE_TABLE)
   const deleteRecordsMutation = tableHooks.useDeleteRecords({
     location,
     tableId: tableId,
@@ -85,6 +89,7 @@ const ApTableHeader = ({
         <div className="flex items-center gap-2 mr-2">
           {selectedRows.size > 0 && (
             <div onClick={(e) => e.stopPropagation()}>
+              <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
               <ConfirmationDeleteDialog
                 title={t('Delete Records')}
                 message={t(
@@ -105,12 +110,14 @@ const ApTableHeader = ({
                   className="w-full mr-2"
                   size="sm"
                   variant="destructive"
-                  loading={false}
+                  disabled={!userHasTableWritePermission}
                 >
                   <Trash2 className="mr-2 w-4" />
                   {`${t('Delete')} (${selectedRows.size})`}
                 </Button>
               </ConfirmationDeleteDialog>
+              </PermissionNeededTooltip>
+             
             </div>
           )}
         </div>

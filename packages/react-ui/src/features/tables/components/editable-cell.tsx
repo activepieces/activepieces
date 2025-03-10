@@ -18,8 +18,40 @@ type EditableCellProps = {
   column: CalculatedColumn<Row, { id: string }>;
   onRowChange: (row: Row, commitChanges: boolean) => void;
   rowIdx: number;
+  disabled?: boolean;
 };
 
+const EditorSelector = ({type, row, rowIdx, column, value, onRowChange, setValue, setIsEditing, setIsHovered}: {type: FieldType, row: Row, rowIdx: number, column: CalculatedColumn<Row, { id: string }>, value: string, onRowChange: (row: Row, commitChanges: boolean) => void, setValue: (value: string) => void, setIsEditing: (isEditing: boolean) => void, setIsHovered: (isHovered: boolean) => void}) => {
+  let Editor;
+  switch (type) {
+    case FieldType.DATE:
+      Editor = DateEditor;
+      break;
+    default:
+      Editor = TextEditor; // TextEditor is used for numbers too
+  }
+
+  return (
+    <Editor
+      row={row}
+      rowIdx={rowIdx}
+      column={column}
+      type={type}
+      value={value}
+      onRowChange={(newRow, commitChanges) => {
+        if (commitChanges) {
+          setValue(newRow[column.key]);
+          onRowChange(newRow, commitChanges);
+          setIsEditing(false);
+        }
+      }}
+      onClose={() => {
+        setIsEditing(false);
+        setIsHovered(false);
+      }}
+    />
+  );
+}
 export function EditableCell({
   type,
   value: initialValue,
@@ -27,6 +59,7 @@ export function EditableCell({
   column,
   onRowChange,
   rowIdx,
+  disabled = false,
 }: EditableCellProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -53,38 +86,11 @@ export function EditableCell({
     return () => document.removeEventListener('click', handleClickOutside);
   }, [isSelected]);
 
-  if (isEditing) {
-    let Editor;
-    switch (type) {
-      case FieldType.DATE:
-        Editor = DateEditor;
-        break;
-      default:
-        Editor = TextEditor; // TextEditor is used for numbers too
-    }
-
-    return (
-      <Editor
-        row={row}
-        rowIdx={rowIdx}
-        column={column}
-        type={type}
-        value={value}
-        onRowChange={(newRow, commitChanges) => {
-          if (commitChanges) {
-            setValue(newRow[column.key]);
-            onRowChange(newRow, commitChanges);
-            setIsEditing(false);
-          }
-        }}
-        onClose={() => {
-          setIsEditing(false);
-          setIsHovered(false);
-        }}
-      />
-    );
+ 
+  if(isEditing) {
+    return <EditorSelector type={type} row={row} rowIdx={rowIdx} column={column} value={value} onRowChange={onRowChange} setValue={setValue} setIsEditing={setIsEditing} setIsHovered={setIsHovered} />
   }
-
+ 
   return (
     <div
       id={`editable-cell-${rowIdx}-${column.idx}`}
@@ -93,10 +99,18 @@ export function EditableCell({
         'group cursor-pointer border',
         isSelected ? 'border-primary' : 'border-transparent',
       )}
-      onMouseEnter={() => setIsHovered(true)}
+      onMouseEnter={() => {
+        if(!disabled) {
+          setIsHovered(true);
+         }
+      }}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => setIsSelected(true)}
-      onDoubleClick={() => setIsEditing(true)}
+      onDoubleClick={() => {
+        if(!disabled) {
+          setIsEditing(true);
+        }
+      }}
     >
       <span className="flex-1 truncate">
         {type === FieldType.DATE && value
