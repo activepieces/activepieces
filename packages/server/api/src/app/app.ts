@@ -41,6 +41,7 @@ import { emailService } from './ee/helper/email/email-service'
 import { issuesModule } from './ee/issues/issues-module'
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
+import { manualTaskModule } from './ee/manual-task/manual-task.module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { adminPieceModule } from './ee/pieces/admin-piece-module'
 import { enterprisePieceMetadataServiceHooks } from './ee/pieces/filters/enterprise-piece-metadata-service-hooks'
@@ -285,6 +286,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(analyticsModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
+            await app.register(manualTaskModule)
             await app.register(globalConnectionModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
@@ -316,6 +318,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(analyticsModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
+            await app.register(manualTaskModule)
             await app.register(globalConnectionModule)
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
             setPlatformOAuthService(platformOAuth2Service(app.log))
