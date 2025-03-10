@@ -11,15 +11,18 @@ import { tableHooks } from "../lib/ap-tables-hooks"
 import { useQueryClient } from "@tanstack/react-query"
 import { Pencil } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 const RenameTableDialog = ({
     tableName,
     tableId,
     onRename,
+    userHasTableWritePermission,
 }: {
     tableName: string;
     tableId: string;
     onRename: () => void;
+    userHasTableWritePermission: boolean;
 }) => {
     const form = useForm<{ name: string }>({
         defaultValues: {
@@ -45,12 +48,22 @@ const RenameTableDialog = ({
             });
         }
       });
-   return <Dialog open={showRenameTableDialog} onOpenChange={setShowRenameTableDialog}>
+   return <Tooltip>
+    <Dialog open={showRenameTableDialog} onOpenChange={setShowRenameTableDialog}>
+    <TooltipTrigger asChild disabled={!userHasTableWritePermission}>
       <DialogTrigger asChild>
-        <Button variant="ghost" type="button" size="icon"     onClick={(e) => e.stopPropagation()}>
-            <Pencil className="h-4 w-4" />
-        </Button>
+          <Button variant="ghost" type="button" size="icon" disabled={!userHasTableWritePermission} onClick={(e) => e.stopPropagation()}>
+              <Pencil className="h-4 w-4" />
+          </Button>
       </DialogTrigger>
+      </TooltipTrigger>
+      {
+          userHasTableWritePermission && (
+            <TooltipContent>
+              {t('Rename')}
+            </TooltipContent>
+          )
+        }
         <DialogContent onClick={(e) => e.stopPropagation()}>
           <Form {...form}>
             <form
@@ -90,6 +103,7 @@ const RenameTableDialog = ({
           </Form>
         </DialogContent>
       </Dialog>
+   </Tooltip>
 }
 
 RenameTableDialog.displayName = 'RenameTableDialog';
