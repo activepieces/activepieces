@@ -171,12 +171,12 @@ export const tableService = {
     }): Promise<Table> {
         await tableRepo().update({
             id,
-            projectId
+            projectId,
         }, {
             name: request.name,
         })
         return this.getById({ projectId, id })
-    }
+    },
 
     
 }

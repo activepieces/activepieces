@@ -1,31 +1,31 @@
-import { AppSystemProp, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, pinoLogging } from "@activepieces/server-shared"
-import { ActivepiecesError, apId, EngineHttpResponse, ErrorCode, EventPayload, Flow, FlowStatus, GetFlowVersionForWorkerRequestType, isMultipartFile, isNil } from "@activepieces/shared"
-import { FastifyBaseLogger, FastifyRequest } from "fastify"
-import { flowService } from "../flows/flow/flow.service"
-import { StatusCodes } from "http-status-codes"
-import { engineResponseWatcher } from "../workers/engine-response-watcher"
-import { jobQueue } from "../workers/queue"
-import { getJobPriority } from "../workers/queue/queue-manager"
-import { system } from "../helper/system/system"
-import { usageService } from "../ee/platform-billing/usage/usage-service"
-import { projectService } from "../project/project-service"
-import { stepFileService } from "../file/step-file/step-file.service"
+import { AppSystemProp, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, pinoLogging } from '@activepieces/server-shared'
+import { ActivepiecesError, apId, EngineHttpResponse, ErrorCode, EventPayload, Flow, FlowStatus, GetFlowVersionForWorkerRequestType, isMultipartFile, isNil } from '@activepieces/shared'
+import { FastifyBaseLogger, FastifyRequest } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
+import { usageService } from '../ee/platform-billing/usage/usage-service'
+import { stepFileService } from '../file/step-file/step-file.service'
+import { flowService } from '../flows/flow/flow.service'
+import { system } from '../helper/system/system'
+import { projectService } from '../project/project-service'
+import { engineResponseWatcher } from '../workers/engine-response-watcher'
+import { jobQueue } from '../workers/queue'
+import { getJobPriority } from '../workers/queue/queue-manager'
 
 const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 
 type WebhookData = {
-    isFastifyRequest: true,
+    isFastifyRequest: true
     request: FastifyRequest
 } | {
-    isFastifyRequest: false,
+    isFastifyRequest: false
     payload: EventPayload
 }
 type HandleWebhookParams = {
     flowId: string
     async: boolean
     saveSampleData: boolean
-    flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED | undefined,
-    data: WebhookData,
+    flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED | undefined
+    data: WebhookData
     logger: FastifyBaseLogger
 } 
 
@@ -108,7 +108,7 @@ export const webhookService = {
                 [webhookHeader]: webhookRequestId,
             },
         }
-    }
+    },
 }
 
 async function assertExceedsLimit(flow: Flow, log: FastifyBaseLogger): Promise<void> {

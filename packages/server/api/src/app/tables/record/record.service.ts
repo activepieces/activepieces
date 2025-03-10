@@ -17,12 +17,12 @@ import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
+import { flagService } from '../../flags/flag.service'
+import { webhookService } from '../../webhooks/webhook.service'
 import { FieldEntity } from '../field/field.entity'
 import { tableService } from '../table/table.service'
 import { CellEntity } from './cell.entity'
 import { RecordEntity } from './record.entity'
-import { flagService } from '../../flags/flag.service'
-import { webhookService } from '../../webhooks/webhook.service'
 
 const recordRepo = repoFactory(RecordEntity)
 
@@ -152,7 +152,7 @@ export const recordService = {
             })
         }
 
-        const data = await queryBuilder.getMany();
+        const data = await queryBuilder.getMany()
         return {
             data,
             next: null,
@@ -285,7 +285,7 @@ export const recordService = {
         eventType,
         data,
         logger,
-        authorization
+        authorization,
     }: {
         projectId: string
         tableId: string
@@ -321,22 +321,22 @@ export const recordService = {
 
             const promises = webhookRequests.map((webhookRequest) => {
                 return webhookService.handleWebhook({
-                   async: true,
-                   flowId: webhookRequest.flowId,
-                   flowVersionToRun: undefined,
-                   saveSampleData: false,
-                   data: {
-                    isFastifyRequest: false,
-                    payload: {
-                        method: 'POST',
-                        headers: {
-                            authorization
+                    async: true,
+                    flowId: webhookRequest.flowId,
+                    flowVersionToRun: undefined,
+                    saveSampleData: false,
+                    data: {
+                        isFastifyRequest: false,
+                        payload: {
+                            method: 'POST',
+                            headers: {
+                                authorization,
+                            },
+                            body: webhookRequest.request.body,
+                            queryParams: {},
                         },
-                        body: webhookRequest.request.body,
-                        queryParams:{}
-                    }
-                   },
-                   logger: logger,
+                    },
+                    logger,
                 })
             })
             await Promise.all(promises)
