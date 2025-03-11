@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
+
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { HomeButton } from '@/components/ui/home-button';
@@ -10,7 +11,9 @@ import { PermissionNeededTooltip } from '@/components/ui/permission-needed-toolt
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
+
 import { tableHooks } from '../lib/ap-tables-hooks';
+
 import ApTableName from './ap-table-name';
 import { useTableState } from './ap-table-state-provider';
 import { FiltersPopup } from './filters-popup';
@@ -22,17 +25,13 @@ const ApTableHeader = ({
   tableId: string;
   isFetchingNextPage: boolean;
 }) => {
-  const [
-    isSaving,
-    enqueueMutation,
-    selectedRows,
-    setSelectedRows,
-  ] = useTableState((state) => [
-    state.isSaving,
-    state.enqueueMutation,
-    state.selectedRows,
-    state.setSelectedRows,
-  ]);
+  const [isSaving, enqueueMutation, selectedRows, setSelectedRows] =
+    useTableState((state) => [
+      state.isSaving,
+      state.enqueueMutation,
+      state.selectedRows,
+      state.setSelectedRows,
+    ]);
   const { data: tableData } = tableHooks.useFetchTable(tableId);
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();

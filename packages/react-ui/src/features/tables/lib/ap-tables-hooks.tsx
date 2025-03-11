@@ -40,7 +40,9 @@ export type TableState = {
     rowIdx: number;
     columnIdx: number;
   } | null;
-  setSelectedCell: (selectedCell: { rowIdx: number; columnIdx: number } | null) => void;
+  setSelectedCell: (
+    selectedCell: { rowIdx: number; columnIdx: number } | null,
+  ) => void;
 };
 
 export const tableHooks = {
@@ -61,7 +63,6 @@ export const tableHooks = {
     return useInfiniteQuery<SeekPage<PopulatedRecord>>({
       queryKey: ['records', tableId, location.search],
       queryFn: async ({ pageParam }) => {
-     
         const filters = searchParams.getAll('filter').map((f) => {
           const [fieldId, operator, value] = f.split(':');
           return {
@@ -100,8 +101,9 @@ export const tableHooks = {
       setSelectedRows: (selectedRows: ReadonlySet<string>) =>
         set({ selectedRows }),
       selectedCell: null,
-      setSelectedCell: (selectedCell: { rowIdx: number; columnIdx: number } | null) =>
-        set({ selectedCell }),
+      setSelectedCell: (
+        selectedCell: { rowIdx: number; columnIdx: number } | null,
+      ) => set({ selectedCell }),
       enqueueMutation: async <TData, TError, TVariables>(
         mutation: UseMutationResult<TData, TError, TVariables>,
         variables: TVariables,
@@ -448,5 +450,3 @@ export const tableHooks = {
 };
 
 export type ApTableStore = ReturnType<typeof tableHooks.createApTableStore>;
-
-

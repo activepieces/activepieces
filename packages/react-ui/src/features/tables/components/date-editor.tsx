@@ -32,8 +32,11 @@ function DateEditor({
     isValidDate(initialValue) ? new Date(initialValue) : undefined,
   );
   const [isOpen, setIsOpen] = useState(true);
-  const [inputValue, setInputValue] = useState(isValidDate(initialValue) ? formatUtils.formatDateOnly(new Date(initialValue)) : '');
-
+  const [inputValue, setInputValue] = useState(
+    isValidDate(initialValue)
+      ? formatUtils.formatDateOnly(new Date(initialValue))
+      : '',
+  );
 
   const commitChanges = () => {
     if (date) {
@@ -58,10 +61,10 @@ function DateEditor({
   };
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  useEffect(()=>{
+  useEffect(() => {
     //clear selection frrom browser
     inputRef.current?.focus();
-  },[])
+  }, []);
   return (
     <div className="h-full" ref={containerRef}>
       <Popover open={isOpen} onOpenChange={handleOpenChange}>
@@ -73,57 +76,54 @@ function DateEditor({
               'bg-background text-sm px-2',
               'focus:outline-none',
             )}
-            onClick={(e)=>{
+            onClick={(e) => {
               e.stopPropagation();
-              setIsOpen(true)
-             }}
+              setIsOpen(true);
+            }}
           >
-
             <input
-                ref={inputRef}
-                 onClick={(e)=>{
-                  e.stopPropagation();
-                  setIsOpen(true)
-                 }}
-                  placeholder={t('mm/dd/yyy')}
-                  value={inputValue}
-                  type='text'
-                  onChange={(e)=>{
-                    setInputValue(e.target.value)
-                    if(isValidDate(e.target.value)){
-                      setDate(new Date(e.target.value))
-                      setMonth(new Date(e.target.value))
-                    }
-                    else{
-                      setDate(undefined)
-                    }
-                  }}
-                  onBlur={(e)=>{
-                    if(!containerRef.current?.contains(e.target as Node)){
-                      commitChanges();
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    e.stopPropagation();
-                    if (e.key === 'Enter') {
-                      commitChanges();
-                      e.preventDefault();
-                    }
-                    if (e.key === 'Escape') {
-                      onClose();
-                      e.preventDefault();
-                    }
-                  }}
-                  className={cn(
-                    'flex-1 h-full min-w-0',
-                    'border-none text-sm px-2',
-                    'focus:outline-none',
-                    'placeholder:text-muted-foreground',
-                  )}
-                  autoComplete="off"
-                />
+              ref={inputRef}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsOpen(true);
+              }}
+              placeholder={t('mm/dd/yyy')}
+              value={inputValue}
+              type="text"
+              onChange={(e) => {
+                setInputValue(e.target.value);
+                if (isValidDate(e.target.value)) {
+                  setDate(new Date(e.target.value));
+                  setMonth(new Date(e.target.value));
+                } else {
+                  setDate(undefined);
+                }
+              }}
+              onBlur={(e) => {
+                if (!containerRef.current?.contains(e.target as Node)) {
+                  commitChanges();
+                }
+              }}
+              onKeyDown={(e) => {
+                e.stopPropagation();
+                if (e.key === 'Enter') {
+                  commitChanges();
+                  e.preventDefault();
+                }
+                if (e.key === 'Escape') {
+                  onClose();
+                  e.preventDefault();
+                }
+              }}
+              className={cn(
+                'flex-1 h-full min-w-0',
+                'border-none text-sm px-2',
+                'focus:outline-none',
+                'placeholder:text-muted-foreground',
+              )}
+              autoComplete="off"
+            />
 
-            
             <div className="flex-none bg-primary/10 p-1">
               <CalendarIcon className="h-4 w-4 text-primary" />
             </div>
@@ -137,7 +137,6 @@ function DateEditor({
             onMonthChange={setMonth}
             onSelect={handleSelect}
             initialFocus
-
           />
         </PopoverContent>
       </Popover>

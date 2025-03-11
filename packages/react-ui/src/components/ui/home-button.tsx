@@ -15,10 +15,7 @@ type HomeButtonProps = {
   showBackButton?: boolean;
 };
 
-const HomeButton = ({
-  route,
-  showBackButton,
-}: HomeButtonProps) => {
+const HomeButton = ({ route, showBackButton }: HomeButtonProps) => {
   const { embedState } = useEmbedding();
   const branding = flagsHooks.useWebsiteBranding();
   return (

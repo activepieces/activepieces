@@ -29,7 +29,6 @@ import './react-data-grid.css';
 
 import { useTableState } from '../../../../features/tables/components/ap-table-state-provider';
 
-
 const ApTableEditorPage = () => {
   const { tableId } = useParams();
   if (!tableId) {
@@ -41,15 +40,21 @@ const ApTableEditorPage = () => {
 const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
   const location = useLocation();
   const queryClient = useQueryClient();
-  const [enqueueMutation, rowHeight, selectedRows, setSelectedRows, selectedCell, setSelectedCell] =
-    useTableState((state) => [
-      state.enqueueMutation,
-      state.rowHeight,
-      state.selectedRows,
-      state.setSelectedRows,
-      state.selectedCell,
-      state.setSelectedCell,
-    ]);
+  const [
+    enqueueMutation,
+    rowHeight,
+    selectedRows,
+    setSelectedRows,
+    selectedCell,
+    setSelectedCell,
+  ] = useTableState((state) => [
+    state.enqueueMutation,
+    state.rowHeight,
+    state.selectedRows,
+    state.setSelectedRows,
+    state.selectedCell,
+    state.setSelectedCell,
+  ]);
   const [lastRowIdx, setLastRowIdx] = useState<number>(0);
   const gridRef = useRef<DataGridHandle>(null);
   const { theme } = useTheme();
@@ -331,7 +336,6 @@ const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
           rows={mapRecordsToRows(recordsPages, fieldsData ?? [])}
           rowKeyGetter={(row: Row) => row.id}
           selectedRows={selectedRows}
-          
           onSelectedRowsChange={onSelectedRowsChange}
           className={cn(
             'h-[calc(100vh-8rem)] bg-muted/30 scroll-smooth',

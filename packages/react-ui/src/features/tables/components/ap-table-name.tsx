@@ -39,7 +39,7 @@ const ApTableName = ({
       className={cn('flex items-center gap-2')}
     >
       <EditableText
-       className='text-xl font-bold'
+        className="text-xl font-bold"
         value={tableName}
         readonly={isReadOnly}
         onValueChange={(newName) => {
