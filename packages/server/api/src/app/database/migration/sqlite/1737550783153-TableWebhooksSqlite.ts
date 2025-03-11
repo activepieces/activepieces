@@ -22,7 +22,7 @@ export class TableWebhooksSqlite1737550783153 implements MigrationInterface {
             )
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_field_project_id_table_id_name_unique"
+            DROP INDEX "idx_field_project_id_table_id_name"
         `)
         await queryRunner.query(`
             CREATE TABLE "temporary_field" (
@@ -64,7 +64,7 @@ export class TableWebhooksSqlite1737550783153 implements MigrationInterface {
                 RENAME TO "field"
         `)
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_field_project_id_table_id_name_unique" ON "field" ("projectId", "tableId", "name")
+            CREATE INDEX "idx_field_project_id_table_id_name" ON "field" ("projectId", "tableId", "name")
         `)
         await queryRunner.query(`
             CREATE INDEX "idx_record_project_id_table_id" ON "record" ("projectId", "tableId")
@@ -165,7 +165,7 @@ export class TableWebhooksSqlite1737550783153 implements MigrationInterface {
             DROP INDEX "idx_record_project_id_table_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_field_project_id_table_id_name_unique"
+            DROP INDEX "idx_field_project_id_table_id_name"
         `)
         await queryRunner.query(`
             ALTER TABLE "field"
@@ -207,7 +207,7 @@ export class TableWebhooksSqlite1737550783153 implements MigrationInterface {
             DROP TABLE "temporary_field"
         `)
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_field_project_id_table_id_name_unique" ON "field" ("projectId", "tableId", "name")
+            CREATE INDEX "idx_field_project_id_table_id_name" ON "field" ("projectId", "tableId", "name")
         `)
         await queryRunner.query(`
             DROP TABLE "table_webhook"

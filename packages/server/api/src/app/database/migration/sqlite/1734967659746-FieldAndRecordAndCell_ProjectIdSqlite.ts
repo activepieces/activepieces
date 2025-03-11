@@ -106,10 +106,10 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 RENAME TO "cell"
         `)
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_field_project_id_table_id_name_unique" ON "field" ("projectId", "tableId", "name")
+            CREATE INDEX "idx_field_project_id_table_id_name" ON "field" ("projectId", "tableId", "name")
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_field_project_id_table_id_name_unique"
+            DROP INDEX "idx_field_project_id_table_id_name"
         `)
         await queryRunner.query(`
             CREATE TABLE "temporary_field" (
@@ -151,7 +151,7 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 RENAME TO "field"
         `)
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_field_project_id_table_id_name_unique" ON "field" ("projectId", "tableId", "name")
+            CREATE  INDEX "idx_field_project_id_table_id_name" ON "field" ("projectId", "tableId", "name")
         `)
         await queryRunner.query(`
             CREATE TABLE "temporary_record" (
@@ -301,7 +301,7 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
             DROP TABLE "temporary_record"
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_field_project_id_table_id_name_unique"
+            DROP INDEX "idx_field_project_id_table_id_name"
         `)
         await queryRunner.query(`
             ALTER TABLE "field"
@@ -342,10 +342,10 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
             DROP TABLE "temporary_field"
         `)
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_field_project_id_table_id_name_unique" ON "field" ("projectId", "tableId", "name")
+            CREATE INDEX "idx_field_project_id_table_id_name" ON "field" ("projectId", "tableId", "name")
         `)
         await queryRunner.query(`
-            DROP INDEX "idx_field_project_id_table_id_name_unique"
+            DROP INDEX "idx_field_project_id_table_id_name"
         `)
         await queryRunner.query(`
             ALTER TABLE "cell"

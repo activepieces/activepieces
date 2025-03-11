@@ -30,9 +30,8 @@ export const FieldEntity = new EntitySchema<FieldSchema>({
     },
     indices: [
         {
-            name: 'idx_field_project_id_table_id_name_unique',
+            name: 'idx_field_project_id_table_id_name',
             columns: ['projectId', 'tableId', 'name'],
-            unique: true,
         },
     ],
     relations: {
