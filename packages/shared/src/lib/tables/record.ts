@@ -6,6 +6,7 @@ export const Record = Type.Object({
     ...BaseModelSchema,
     tableId: Type.String(),
     projectId: Type.String(),
+    order: Type.Number(),
 })
 
 export type Record = Static<typeof Record>

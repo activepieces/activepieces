@@ -71,6 +71,7 @@ const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
       updated: new Date().toISOString(),
       projectId: currentProjectId!,
       tableId: tableId!,
+      order:0
     };
 
     queryClient.setQueryData(

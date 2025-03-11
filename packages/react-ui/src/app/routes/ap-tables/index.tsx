@@ -59,10 +59,10 @@ const ApTablesPage = () => {
       });
       await recordsApi.create({
         records: [
-          ...Array.from({ length: 1 }, () => [
+          ...Array.from({ length: 10 }, (_, k) => [
             {
               fieldId: field.id,
-              value: '',
+              value: `Row ${k}`,
             },
           ]),
         ],
