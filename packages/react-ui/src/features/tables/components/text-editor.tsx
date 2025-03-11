@@ -1,31 +1,30 @@
-import { Edit2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { RenderEditCellProps } from 'react-data-grid';
 
 import { cn } from '@/lib/utils';
-import { FieldType } from '@activepieces/shared';
 
 import { Row } from '../lib/types';
+import { Textarea } from '@/components/ui/textarea';
 
-function TextEditor({
+
+
+const TextEditor = ({
   row,
   column,
   onRowChange,
   onClose,
-  type,
   value: initialValue,
 }: RenderEditCellProps<Row, { id: string }> & {
-  type: FieldType;
   value: string;
-}) {
+}) => {
   const [value, setValue] = useState(initialValue);
-  const inputRef = useRef<HTMLInputElement>(null);
-
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
-    inputRef.current?.focus();
+    textAreaRef.current?.focus();
   }, []);
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+
+  const handleChange = (event: React.ChangeEvent< HTMLTextAreaElement  >) => {
     const newValue = event.target.value;
     setValue(newValue);
     onRowChange({ ...row, [column.key]: newValue }, false);
@@ -39,45 +38,49 @@ function TextEditor({
   };
 
   return (
-    <div className="h-full">
-      <div
-        className={cn(
-          'h-full flex items-center gap-2',
-          'border-2 border-primary',
-          'bg-background overflow-hidden',
-        )}
-      >
-        <input
-          ref={inputRef}
-          value={value ?? ''}
-          type={type === FieldType.NUMBER ? 'number' : 'text'}
-          onChange={handleChange}
-          onBlur={commitChanges}
-          onKeyDown={(e) => {
-            e.stopPropagation();
-            if (e.key === 'Enter') {
-              commitChanges();
-              e.preventDefault();
-            }
-            if (e.key === 'Escape') {
-              onClose();
-              e.preventDefault();
-            }
-          }}
-          className={cn(
-            'flex-1 h-full min-w-0',
-            'border-none text-sm px-2',
-            'focus:outline-none',
-            'placeholder:text-muted-foreground',
-          )}
-          autoComplete="off"
-        />
-        <div className="flex-none bg-primary/10 p-1 mr-2">
-          <Edit2 className="h-4 w-4 text-primary" />
+    <div className="h-full relative w-full relative">
+       <div
+  className={cn(
+    'h-min-[300px] w-min-[calc(100%+50px)] w-full absolute top-0  z-50',
+    'border-2 border-primary rounded-md drop-shadow-md',
+    'bg-background',
+  )}
+>
+
+    <Textarea
+    ref={textAreaRef}
+    value={value ?? ''}
+    onChange={handleChange}
+    onBlur={commitChanges}
+    onKeyDown={(e) => {
+      e.stopPropagation();
+      e.stopPropagation();
+      if (e.key === 'Enter' && !e.shiftKey) {
+        commitChanges();
+        e.preventDefault();
+      }
+      if (e.key === 'Escape') {
+        onClose();
+        e.preventDefault();
+      }
+    }}
+    minRows={4}
+    maxRows={6}
+    className={cn(
+        'flex-1 h-full min-w-0',
+        'border-none text-sm px-2 resize-none ',
+        'focus:outline-none',
+        'placeholder:text-muted-foreground',
+      )}
+      autoComplete="off"
+    />
+         
         </div>
-      </div>
+  
     </div>
   );
 }
-
+TextEditor.displayName = 'TextEditor';
 export { TextEditor };
+
+

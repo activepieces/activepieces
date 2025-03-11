@@ -10,6 +10,7 @@ import { Row } from '../lib/types';
 
 import { useTableState } from './ap-table-state-provider';
 import { DateEditor } from './date-editor';
+import { NumberEditor } from './number-editor';
 import { TextEditor } from './text-editor';
 
 type EditableCellProps = {
@@ -43,35 +44,47 @@ const EditorSelector = ({
   setIsEditing: (isEditing: boolean) => void;
   setIsHovered: (isHovered: boolean) => void;
 }) => {
-  let Editor;
-  switch (type) {
-    case FieldType.DATE:
-      Editor = DateEditor;
-      break;
-    default:
-      Editor = TextEditor; // TextEditor is used for numbers too
+  const handleRowChange = (newRow: Row, commitChanges?: boolean) => {
+    if (commitChanges) {
+      setValue(newRow[column.key]);
+      onRowChange(newRow, commitChanges);
+      setIsEditing(false);
+    }
   }
-
-  return (
-    <Editor
-      row={row}
-      rowIdx={rowIdx}
-      column={column}
-      type={type}
-      value={value}
-      onRowChange={(newRow, commitChanges) => {
-        if (commitChanges) {
-          setValue(newRow[column.key]);
-          onRowChange(newRow, commitChanges);
-          setIsEditing(false);
-        }
-      }}
-      onClose={() => {
-        setIsEditing(false);
-        setIsHovered(false);
-      }}
+ const onClose = () => {
+  setIsEditing(false);
+  setIsHovered(false);
+ }
+ switch(type){
+  case FieldType.DATE:
+    return  <DateEditor
+    row={row}
+    rowIdx={rowIdx}
+    column={column}
+    value={value}
+    onRowChange={handleRowChange}
+    onClose={onClose}
+  />
+  case FieldType.NUMBER:
+    return  <NumberEditor
+    row={row}
+    rowIdx={rowIdx}
+    column={column}
+    value={value}
+    onRowChange={handleRowChange}
+    onClose={onClose}
+  ></NumberEditor>
+  default:
+    return <TextEditor
+    row={row}
+    rowIdx={rowIdx}
+    column={column}
+    value={value}
+    onRowChange={handleRowChange}
+    onClose={onClose}
     />
-  );
+
+ }
 };
 export function EditableCell({
   type,
@@ -106,7 +119,7 @@ export function EditableCell({
       />
     );
   }
-
+ const displayedValue = value.trim().replace(/\n/g, ' ')
   return (
     <div
       id={`editable-cell-${rowIdx}-${column.idx}`}
@@ -140,9 +153,9 @@ export function EditableCell({
       }}
     >
       <span className="flex-1 truncate">
-        {type === FieldType.DATE && value
-          ? formatUtils.formatDateOnly(new Date(value))
-          : value}
+        {type === FieldType.DATE && displayedValue
+          ? formatUtils.formatDateOnly(new Date(displayedValue))
+          : displayedValue}
       </span>
       {isHovered && (
         <Button

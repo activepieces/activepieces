@@ -219,7 +219,7 @@ const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
         <EditableCell
           key={row[field.name]}
           type={field.type}
-          value={row[field.name]}
+          value={row[field.name]?? ''}
           row={row}
           column={column}
           rowIdx={rowIdx}
@@ -262,7 +262,7 @@ const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
       hasNextPage &&
       !isFetchingNextPage
     ) {
-      fetchNextPage();
+      fetchNextPage( );
     }
   };
 

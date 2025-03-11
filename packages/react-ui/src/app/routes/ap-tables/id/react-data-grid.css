@@ -38,6 +38,9 @@
     }
 }
 
+div[role="gridcell"]:focus-within {
+    overflow: visible !important;
+}
 
 .grid-wrapper {
   /* Base scrollbar styles */

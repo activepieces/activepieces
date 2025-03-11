@@ -23,6 +23,8 @@ import { FieldEntity } from '../field/field.entity'
 import { tableService } from '../table/table.service'
 import { CellEntity } from './cell.entity'
 import { RecordEntity } from './record.entity'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
 
 const recordRepo = repoFactory(RecordEntity)
 
@@ -96,8 +98,18 @@ export const recordService = {
         tableId,
         projectId,
         filters,
+        cursorRequest,
+        limit
     }: ListParams): Promise<SeekPage<PopulatedRecord>> {
-
+        // const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
+        // const paginator = buildPaginator({
+        //     entity: RecordEntity,
+        //     query: {
+        //         limit,
+        //         afterCursor: decodedCursor.nextCursor,
+        //         beforeCursor: decodedCursor.previousCursor,
+        //     },
+        // })
         const queryBuilder = recordRepo()
             .createQueryBuilder('record')
             .leftJoinAndSelect('record.cells', 'cell')
@@ -105,7 +117,6 @@ export const recordService = {
             .where('record.tableId = :tableId', { tableId })
             .andWhere('record.projectId = :projectId', { projectId })
             .orderBy('record.created', 'ASC')
-
         if (filters?.length) {
             filters.forEach((filter, _index) => {
                 const operator = filter.operator || FilterOperator.EQ
@@ -152,6 +163,10 @@ export const recordService = {
             })
         }
 
+        // const paginationResult = await paginator.paginate(
+        //   queryBuilder
+        // )
+        // return paginationHelper.createPage(paginationResult.data, paginationResult.cursor)
         const data = await queryBuilder.getMany()
         return {
             data,
