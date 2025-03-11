@@ -12,6 +12,7 @@ export const ListManualTasksQueryParams = Type.Object({
     limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
     assigneeId: Type.Optional(ApId),
     statusOptions: Type.Optional(StatusOptionsSchema),
+    title: Type.Optional(Type.String()),
 })
 export type ListManualTasksQueryParams = Static<typeof ListManualTasksQueryParams>
 

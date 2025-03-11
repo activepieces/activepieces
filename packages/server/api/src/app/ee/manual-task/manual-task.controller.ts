@@ -7,7 +7,7 @@ const DEFAULT_LIMIT = 10
 
 export const manualTaskController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListManualTasksRequest, async (request) => {
-        const { platformId, projectId, assigneeId, limit, cursor, statusOptions } = request.query
+        const { platformId, projectId, assigneeId, limit, cursor, statusOptions, title } = request.query
         return manualTaskService(request.log).list({
             platformId,
             projectId,
@@ -15,6 +15,7 @@ export const manualTaskController: FastifyPluginAsyncTypebox = async (app) => {
             limit: limit ?? DEFAULT_LIMIT,
             cursor: cursor ?? null,
             statusOptions,
+            title,
         })
     })
 

@@ -1,10 +1,11 @@
-import { BaseModelSchema, Nullable } from "@activepieces/shared";
+import { BaseModelSchema, Nullable, UserWithMetaInformation } from "@activepieces/shared";
 import { Static, Type } from "@sinclair/typebox";
 
 export const StatusOption = Type.Object({
     name: Type.String(),
     description: Nullable(Type.String()),
     color: Type.String(),
+    textColor: Type.String(),
 })
 
 export type StatusOption = Static<typeof StatusOption>
@@ -32,5 +33,11 @@ export const ManualTaskComment = Type.Object({
 })
 
 export type ManualTaskComment = Static<typeof ManualTaskComment>
+
+export const ManualTaskWithAssignee = Type.Composite([ManualTask, Type.Object({
+    assignee: Nullable(UserWithMetaInformation),
+})])
+
+export type ManualTaskWithAssignee = Static<typeof ManualTaskWithAssignee>;
 
 

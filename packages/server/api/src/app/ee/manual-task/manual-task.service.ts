@@ -1,18 +1,23 @@
-import { ManualTask, StatusOption } from '@activepieces/ee-shared'
-import { ActivepiecesError, Cursor, ErrorCode, FlowId, FlowRunId, PlatformId, ProjectId, SeekPage, spreadIfDefined, UserId } from '@activepieces/shared'
+import { ManualTask, ManualTaskWithAssignee, StatusOption } from '@activepieces/ee-shared'
+import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, PlatformId, ProjectId, SeekPage, spreadIfDefined, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { In } from 'typeorm'
+import { In, Like } from 'typeorm'
+import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
+import { userService } from '../../user/user-service'
 import { ManualTaskEntity } from './manual-task.entity'
 
 const repo = repoFactory(ManualTaskEntity)  
 
 export const manualTaskService = (_log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<ManualTask> {
-        return repo().create(params)
+        return repo().save({
+            id: apId(),
+            ...params,
+        })
     },
     async getOne(params: GetParams): Promise<ManualTask | null> {
         return repo().findOneBy({ id: params.id, platformId: params.platformId, projectId: params.projectId })
@@ -42,7 +47,7 @@ export const manualTaskService = (_log: FastifyBaseLogger) => ({
         })
         return this.getOneOrThrow(params)
     },
-    async list(params: ListParams): Promise<SeekPage<ManualTask>> {
+    async list(params: ListParams): Promise<SeekPage<ManualTaskWithAssignee>> {
         const decodedCursor = paginationHelper.decodeCursor(params.cursor)
         const paginator = buildPaginator<ManualTask>({
             entity: ManualTaskEntity,
@@ -58,8 +63,7 @@ export const manualTaskService = (_log: FastifyBaseLogger) => ({
         let query = repo().createQueryBuilder('manual_task').where({
             platformId: params.platformId,
             projectId: params.projectId,
-            flowId: params.flowId,
-            runId: params.runId,
+            ...spreadIfDefined('flowId', params.flowId),
         })
         if (params.assigneeId) {
             query = query.andWhere({
@@ -71,11 +75,56 @@ export const manualTaskService = (_log: FastifyBaseLogger) => ({
                 status: In(params.statusOptions.map((option) => option.name)),
             })
         }
+        if (params.title) {
+            query = query.andWhere({
+                title: Like(`%${params.title}%`),
+            })
+        }
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
-        return paginationHelper.createPage<ManualTask>(data, newCursor)
+        const enrichedData = await Promise.all(
+            data.map(async (task) => {
+                const enrichedTask = await enrichManualTaskWithAssignee(task, _log)
+                return {
+                    ...enrichedTask,
+                }
+            }),
+        )
+        return paginationHelper.createPage<ManualTaskWithAssignee>(enrichedData, newCursor)
     },
 })
+
+
+async function enrichManualTaskWithAssignee(
+    manualTask: ManualTask,
+    log: FastifyBaseLogger,
+): Promise<ManualTaskWithAssignee> {
+    if (!manualTask.assigneeId) {
+        return {
+            ...manualTask,
+            assignee: null,
+        }
+    }
+    const user = await userService.getOneOrFail({
+        id: manualTask.assigneeId,
+    })
+    const identity = await userIdentityService(log).getBasicInformation(user.identityId)
+    return {
+        ...manualTask,
+        assignee: {
+            platformId: user.platformId,
+            platformRole: user.platformRole,
+            status: user.status,
+            externalId: user.externalId,
+            email: identity.email,
+            id: user.id,
+            firstName: identity.firstName,
+            lastName: identity.lastName,
+            created: user.created,
+            updated: user.updated,
+        },
+    }
+}
 
 type GetParams = {
     id: string
@@ -85,13 +134,13 @@ type GetParams = {
 
 type ListParams = {
     platformId: PlatformId
-    projectId?: ProjectId
+    projectId: ProjectId
     flowId?: FlowId
-    runId?: FlowRunId
     assigneeId?: UserId
     limit: number
     cursor: Cursor | null
     statusOptions?: StatusOption[]
+    title?: string
 }
 
 type CreateParams = {
