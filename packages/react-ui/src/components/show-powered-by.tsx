@@ -65,7 +65,7 @@ const ShowPoweredBy = ({ show, position = 'sticky' }: ShowPoweredByProps) => {
               top: '-1px',
             }}
             className="h-8 object-contain"
-            src="./img/promptx_icon.ico"
+            src="./img/promptx_blue_full.ico"
             alt="Workflow"
           ></img>
           <div className="font-semibold">PromptX</div>

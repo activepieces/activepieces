@@ -1,4 +1,4 @@
-import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-shared'
+import { AppSystemProp, apVersionUtil, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
@@ -12,6 +12,8 @@ const flagRepo = repoFactory(FlagEntity)
 
 
 export const flagService = {
+   
+    
     save: async (flag: FlagType): Promise<Flag> => {
         return flagRepo().save({
             id: flag.id,
@@ -22,6 +24,34 @@ export const flagService = {
         return flagRepo().findOneBy({ id: flagId })
     },
     async getAll(): Promise<Flag[]> {
+
+        function getPublicUrl (): string {
+            let url:string = system.getOrThrow(WorkerSystemProp.FRONTEND_URL);
+            if(url) {
+                if(!url.endsWith("/"))
+                    url+="/";
+                return url;
+            }
+            return "/";
+        }
+
+        function replaceLocalhost(urlString: string): string {
+            const url = new URL(urlString)
+            if (url.hostname === 'localhost') {
+                url.hostname = '127.0.0.1'
+            }
+            return url.toString()
+        }
+        
+        function appendSlashAndApi(url: string): string {
+            const slash = url.endsWith('/') ? '' : '/'
+            return `${url}${slash}api/`
+        }
+
+        function getPublicApiUrl (): string  {
+            return appendSlashAndApi(replaceLocalhost(getPublicUrl()))
+        }
+
         const flags = await flagRepo().findBy({
             id: In([
                 ApFlagId.SHOW_POWERED_BY_IN_FORM,
@@ -173,7 +203,8 @@ export const flagService = {
                 // value: await domainHelper.getPublicUrl({
                 //     path: '',
                 // }),
-                value: '/',
+                // value: '/',
+                value:getPublicUrl(),
                 created,
                 updated,
             },
@@ -228,6 +259,7 @@ export const flagService = {
                     // value: await domainHelper.getPublicApiUrl({
                     //     path: 'v1/webhooks',
                     // }),
+                    
                     value: '/v1/webhooks',
                     created,
                     updated,
