@@ -1,10 +1,10 @@
 import { t } from 'i18next';
 import {
   AlertCircle,
+  Database,
   Link2,
   Logs,
   Package,
-  Table2,
   Workflow,
   Wrench,
 } from 'lucide-react';
@@ -76,7 +76,7 @@ export function DashboardContainer({
     {
       to: authenticationSession.appendProjectRoutePrefix('/tables'),
       label: t('Tables'),
-      icon: Table2,
+      icon: Database,
       showInEmbed: true,
       hasPermission: checkAccess(Permission.READ_TABLE),
     },

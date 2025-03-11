@@ -36,8 +36,8 @@ export const updateRecord = createAction({
 
     const cells: UpdateRecordRequest['cells'] = Object.entries(values)
       .filter(([_, value]) => value !== null && value !== undefined && value !== '')
-      .map(([key, value]) => ({
-        key,
+      .map(([fieldId, value]) => ({
+        fieldId,
         value,
       }));
 

@@ -52,26 +52,22 @@ const ApTablesPage = () => {
   const { mutate: createTable, isPending: isCreatingTable } = useMutation({
     mutationFn: async (data: { name: string }) => {
       const table = await tablesApi.create({ name: data.name });
-      try {
-        await fieldsApi.create({
-          name: 'Name',
-          type: FieldType.TEXT,
-          tableId: table.id,
-        });
-        await recordsApi.create({
-          records: [
-            ...Array.from({ length: 10 }, () => [
-              {
-                key: 'Name',
-                value: '',
-              },
-            ]),
-          ],
-          tableId: table.id,
-        });
-      } catch (error) {
-        console.error(error);
-      }
+      const field = await fieldsApi.create({
+        name: 'Name',
+        type: FieldType.TEXT,
+        tableId: table.id,
+      });
+      await recordsApi.create({
+        records: [
+          ...Array.from({ length: 1 }, () => [
+            {
+              fieldId: field.id,
+              value: '',
+            },
+          ]),
+        ],
+        tableId: table.id,
+      });
       return table;
     },
     onSuccess: (table) => {
@@ -231,7 +227,7 @@ const ApTablesPage = () => {
                 userHasTableWritePermission={userHasTableWritePermission}
               />
             </PermissionNeededTooltip>
-           
+
             <Tooltip>
               <TooltipTrigger
                 asChild

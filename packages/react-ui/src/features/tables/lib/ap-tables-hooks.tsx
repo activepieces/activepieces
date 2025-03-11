@@ -178,7 +178,7 @@ export const tableHooks = {
                       ...record,
                       cells: record.cells.map((cell) => {
                         const update = request.cells?.find(
-                          (c) => c.key === cell.fieldId,
+                          (c) => c.fieldId === cell.fieldId,
                         );
                         return update ? { ...cell, value: update.value } : cell;
                       }),
@@ -327,7 +327,7 @@ export const tableHooks = {
           records: [
             [
               {
-                key: field.name,
+                fieldId: field.id,
                 value: value,
               },
             ],
@@ -448,3 +448,5 @@ export const tableHooks = {
 };
 
 export type ApTableStore = ReturnType<typeof tableHooks.createApTableStore>;
+
+

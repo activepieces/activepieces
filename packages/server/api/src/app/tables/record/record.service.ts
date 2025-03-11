@@ -45,7 +45,7 @@ export const recordService = {
             // Filter out cells with non-existing fields during record creation
             const validRecords = request.records.map((recordData) =>
                 recordData.filter((cellData) =>
-                    existingFields.some((field) => field.name === cellData.key),
+                    existingFields.some((field) => field.id === cellData.fieldId),
                 ),
             )
 
@@ -60,10 +60,9 @@ export const recordService = {
             // Prepare cells for insertion
             const cellInsertions = validRecords.flatMap((recordData, index) =>
                 recordData.map((cellData) => {
-                    const field = existingFields.find((f) => f.name === cellData.key)
                     return {
                         recordId: recordInsertions[index].id,
-                        fieldId: field?.id,
+                        fieldId: cellData.fieldId,
                         projectId,
                         value: cellData.value,
                         id: apId(),
@@ -105,6 +104,8 @@ export const recordService = {
             .leftJoinAndSelect('cell.field', 'field')
             .where('record.tableId = :tableId', { tableId })
             .andWhere('record.projectId = :projectId', { projectId })
+            .orderBy('record.created', 'ASC')
+            .addOrderBy('record.id', 'ASC')
 
         if (filters?.length) {
             filters.forEach((filter, _index) => {
@@ -219,15 +220,14 @@ export const recordService = {
 
                 // Filter out cells with non-existing fields
                 const validCells = request.cells.filter((cellData) =>
-                    existingFields.some((field) => field.name === cellData.key),
+                    existingFields.some((field) => field.id === cellData.fieldId),
                 )
 
                 // Prepare cells for upsert
                 const cellsToUpsert = validCells.map((cellData) => {
-                    const field = existingFields.find((f) => f.name === cellData.key)
                     return {
                         recordId: id,
-                        fieldId: field?.id,
+                        fieldId: cellData.fieldId,
                         projectId,
                         value: cellData.value,
                         id: apId(),
@@ -286,18 +286,11 @@ export const recordService = {
         data,
         logger,
         authorization,
-    }: {
-        projectId: string
-        tableId: string
-        eventType: TableWebhookEventType
-        data: Record<string, unknown>
-        logger: FastifyBaseLogger
-        authorization: string
-    }): Promise<void> {
+    }: TriggerWebhooksParams): Promise<void> {
         const webhooks = await tableService.getWebhooks({
             projectId,
             id: tableId,
-            eventType,
+            events: [eventType],
         })
 
         if (webhooks.length > 0) {
@@ -342,6 +335,16 @@ export const recordService = {
             await Promise.all(promises)
         }
     },
+}
+
+type TriggerWebhooksParams = {
+
+    projectId: string
+    tableId: string
+    eventType: TableWebhookEventType
+    data: Record<string, unknown>
+    logger: FastifyBaseLogger
+    authorization: string
 }
 
 type ListParams = {

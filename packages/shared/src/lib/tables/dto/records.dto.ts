@@ -3,7 +3,7 @@ import { Cursor } from '../../common/seek-page'
 
 export const CreateRecordsRequest = Type.Object({
     records: Type.Array(Type.Array(Type.Object({
-        key: Type.String(),
+        fieldId: Type.String(),
         value: Type.String(),
     }))),
     tableId: Type.String(),
@@ -13,7 +13,7 @@ export type CreateRecordsRequest = Static<typeof CreateRecordsRequest>
 
 export const UpdateRecordRequest = Type.Object({
     cells: Type.Optional(Type.Array(Type.Object({
-        key: Type.String(),
+        fieldId: Type.String(),
         value: Type.String(),
     }))),
     tableId: Type.String(),

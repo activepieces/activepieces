@@ -10,13 +10,15 @@ import { useEmbedding } from '../embed-provider';
 import { Button } from './button';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
+type HomeButtonProps = {
+  route: string;
+  showBackButton?: boolean;
+};
+
 const HomeButton = ({
   route,
   showBackButton,
-}: {
-  route: string;
-  showBackButton?: boolean;
-}) => {
+}: HomeButtonProps) => {
   const { embedState } = useEmbedding();
   const branding = flagsHooks.useWebsiteBranding();
   return (

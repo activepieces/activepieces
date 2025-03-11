@@ -43,8 +43,8 @@ export const createRecords = createAction({
     const records: CreateRecordsRequest['records'] = values['values'].map((record: Record<string, unknown>) =>
       Object.entries(record)
         .filter(([_, value]) => value !== null && value !== undefined && value !== '')
-        .map(([key, value]) => ({
-          key,
+        .map(([fieldId, value]) => ({
+          fieldId,
           value,
         }))
     );

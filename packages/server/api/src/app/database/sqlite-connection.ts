@@ -85,6 +85,8 @@ import { AddExternalIdForFlowSqlite1735262810939 } from './migration/sqlite/1735
 import { AddUserIdentitySqlite1735602676499 } from './migration/sqlite/1735602676499-AddUserIdentitySqlite'
 import { TableWebhooksSqlite1737550783153 } from './migration/sqlite/1737550783153-TableWebhooksSqlite'
 import { RestrictPiecesSqlite1739544872722 } from './migration/sqlite/1739544872722-RestrictPiecesSqlite'
+import { TableWebhooksIsArraySqlite1741668828922 } from './migration/sqlite/1741668828922-TableWebhooksIsArraySqlite'
+
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
     mkdirSync(apConfigDirectoryPath, { recursive: true })
@@ -186,6 +188,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddExternalIdForFlowSqlite1735262810939,
         AddUserIdentitySqlite1735602676499,
         RestrictPiecesSqlite1739544872722,
+        TableWebhooksIsArraySqlite1741668828922
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

@@ -15,7 +15,7 @@ export const ExportTableResponse = Type.Object({
 export type ExportTableResponse = Static<typeof ExportTableResponse>
 
 export const CreateTableWebhookRequest = Type.Object({
-    eventType: Type.Enum(TableWebhookEventType),
+    events: Type.Array(Type.Enum(TableWebhookEventType)),
     webhookUrl: Type.String(),
     flowId: Type.String(),
 })

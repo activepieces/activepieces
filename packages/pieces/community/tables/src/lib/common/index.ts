@@ -1,6 +1,6 @@
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { DynamicPropsValue, Property, TriggerHookContext } from "@activepieces/pieces-framework";
-import { Field, FieldType, MarkdownVariant, Table, TableWebhookEventType } from "@activepieces/shared";
+import { CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, Table, TableWebhookEventType } from "@activepieces/shared";
 import { z } from 'zod';
 
 export const tablesCommon = {
@@ -71,21 +71,21 @@ export const tablesCommon = {
     tableFields.forEach(field => {
       switch (field.type) {
         case FieldType.NUMBER:
-          fieldValidations[field.name] = z.union([z.number(), z.string().transform(val => {
+          fieldValidations[field.id] = z.union([z.number(), z.string().transform(val => {
             const num = Number(val);
             if (isNaN(num)) throw new Error(`Invalid number for field "${field.name}"`);
             return num;
           })]).optional();
           break;
         case FieldType.DATE:
-          fieldValidations[field.name] = z.union([z.date(), z.string().transform(val => {
+          fieldValidations[field.id] = z.union([z.date(), z.string().transform(val => {
             const date = new Date(val);
             if (isNaN(date.getTime())) throw new Error(`Invalid date for field "${field.name}"`);
             return date;
           })]).optional();
           break;
         default:
-          fieldValidations[field.name] = z.string().optional();
+          fieldValidations[field.id] = z.string().optional();
       }
     });
     return fieldValidations;
@@ -109,21 +109,21 @@ export const tablesCommon = {
 
         switch (field.type) {
           case FieldType.NUMBER:
-            fields[field.name] = Property.Number({
+            fields[field.id] = Property.Number({
               displayName: field.name,
               description,
               required: false,
             });
             break;
           case FieldType.DATE:
-            fields[field.name] = Property.DateTime({
+            fields[field.id] = Property.DateTime({
               displayName: field.name,
               description,
               required: false,
             });
             break;
           default:
-            fields[field.name] = Property.ShortText({
+            fields[field.id] = Property.ShortText({
               displayName: field.name,
               description,
               required: false,
@@ -146,25 +146,26 @@ export const tablesCommon = {
 
   async createWebhook({
     tableId,
-    eventType,
+    events,
     webhookUrl,
     flowId,
     server,
   }: {
     tableId: string;
-    eventType: TableWebhookEventType;
+    events: TableWebhookEventType[];
     webhookUrl: string;
     flowId: string;
     server: { apiUrl: string, token: string };
   }) {
+    const request: CreateTableWebhookRequest = {
+      events,
+      webhookUrl,
+      flowId,
+    }
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${server.apiUrl}v1/tables/${tableId}/webhooks`,
-      body: {
-        eventType,
-        webhookUrl,
-        flowId,
-      },
+      body: request,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: server.token,

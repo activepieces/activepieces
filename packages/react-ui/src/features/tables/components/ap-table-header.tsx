@@ -14,7 +14,6 @@ import { tableHooks } from '../lib/ap-tables-hooks';
 import ApTableName from './ap-table-name';
 import { useTableState } from './ap-table-state-provider';
 import { FiltersPopup } from './filters-popup';
-import RowHeightToggle from './row-height-toggle';
 
 const ApTableHeader = ({
   tableId,
@@ -26,15 +25,11 @@ const ApTableHeader = ({
   const [
     isSaving,
     enqueueMutation,
-    rowHeight,
-    setRowHeight,
     selectedRows,
     setSelectedRows,
   ] = useTableState((state) => [
     state.isSaving,
     state.enqueueMutation,
-    state.rowHeight,
-    state.setRowHeight,
     state.selectedRows,
     state.setSelectedRows,
   ]);
@@ -85,10 +80,6 @@ const ApTableHeader = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {fieldsData && <FiltersPopup fields={fieldsData} />}
-          <span className="text-sm text-muted-foreground ml-2">
-            {t('Row Height')}
-          </span>
-          <RowHeightToggle rowHeight={rowHeight} setRowHeight={setRowHeight} />
         </div>
         <div className="flex items-center gap-2 mr-2">
           {selectedRows.size > 0 && (

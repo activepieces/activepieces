@@ -301,7 +301,7 @@ const ApTableEditorPageImplementation = ({ tableId }: { tableId: string }) => {
           tableId: tableId!,
           cells: [
             {
-              key: field.name,
+              fieldId: field.id,
               value: newValue,
             },
           ],

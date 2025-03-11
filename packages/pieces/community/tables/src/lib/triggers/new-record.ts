@@ -20,7 +20,7 @@ export const newRecordTrigger = createTrigger({
 
         const { id: webhookId } = await tablesCommon.createWebhook({
             tableId,
-            eventType: TableWebhookEventType.RECORD_CREATED,
+            events: [TableWebhookEventType.RECORD_CREATED],
             webhookUrl: context.webhookUrl,
             flowId: context.flows.current.id,
             server: {

@@ -5,7 +5,7 @@ import { FieldEntity } from './field.entity'
 const fieldRepo = repoFactory<Field>(FieldEntity)
 
 export const fieldService = {
-    async create({ request, projectId }: { request: CreateFieldRequest, projectId: string } ): Promise<Field> {
+    async create({ request, projectId }: CreateParams): Promise<Field> {
         const field = await fieldRepo().save({
             ...request,
             projectId,
@@ -14,7 +14,7 @@ export const fieldService = {
         return field
     },
 
-    async getAll({ projectId, tableId }: { projectId: string, tableId: string }): Promise<Field[]> {
+    async getAll({ projectId, tableId }: GetAllParams): Promise<Field[]> {
         return fieldRepo().find({
             where: { projectId, tableId },
             order: {
@@ -23,7 +23,7 @@ export const fieldService = {
         })
     },
 
-    async getById({ id, projectId }: { id: string, projectId: string }): Promise<Field> {
+    async getById({ id, projectId }: GetByIdParams): Promise<Field> {
         const field = await fieldRepo().findOne({
             where: { id, projectId },
         })
@@ -41,10 +41,30 @@ export const fieldService = {
         return field
     },
 
-    async delete({ id, projectId }: { id: string, projectId: string }): Promise<void> {
+    async delete({ id, projectId }: DeleteParams): Promise<void> {
         await fieldRepo().delete({
             id,
             projectId,
         })
     },
+}
+
+type CreateParams = {
+    projectId: string
+    request: CreateFieldRequest
+}
+
+type GetAllParams = {
+    projectId: string
+    tableId: string
+}
+
+type GetByIdParams = {
+    id: string
+    projectId: string
+}
+
+type DeleteParams = {
+    id: string
+    projectId: string
 }

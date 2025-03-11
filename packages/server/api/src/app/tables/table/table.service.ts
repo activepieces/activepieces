@@ -16,6 +16,7 @@ import { fieldService } from '../field/field.service'
 import { RecordEntity } from '../record/record.entity'
 import { TableWebhookEntity } from './table-webhook.entity'
 import { TableEntity } from './table.entity'
+import { APArrayContains } from '../../database/database-connection'
 
 const tableRepo = repoFactory(TableEntity)
 const recordRepo = repoFactory(RecordEntity)
@@ -25,10 +26,7 @@ export const tableService = {
     async create({
         projectId,
         request,
-    }: {
-        projectId: string
-        request: CreateTableRequest
-    }): Promise<Table> {
+    }: CreateParams): Promise<Table> {
         const table = await tableRepo().save({
             id: apId(),
             name: request.name,
@@ -38,7 +36,7 @@ export const tableService = {
         return table
     },
 
-    async getAll({ projectId }: { projectId: string }): Promise<Table[]> {
+    async getAll({ projectId }: GetAllParams): Promise<Table[]> {
         return tableRepo().find({
             where: { projectId },
         })
@@ -47,10 +45,7 @@ export const tableService = {
     async getById({
         projectId,
         id,
-    }: {
-        projectId: string
-        id: string
-    }): Promise<Table> {
+    }: GetByIdParams): Promise<Table> {
         const table = await tableRepo().findOne({
             where: { projectId, id },
         })
@@ -71,10 +66,7 @@ export const tableService = {
     async delete({
         projectId,
         id,
-    }: {
-        projectId: string
-        id: string
-    }): Promise<void> {
+    }: DeleteParams): Promise<void> {
         await tableRepo().delete({
             projectId,
             id,
@@ -84,10 +76,7 @@ export const tableService = {
     async exportTable({
         projectId,
         id,
-    }: {
-        projectId: string
-        id: string
-    }): Promise<ExportTableResponse> {
+    }: ExportTableParams): Promise<ExportTableResponse> {
         await this.getById({ projectId, id })
 
         // TODO: Change field sorting to use position when it's added
@@ -117,16 +106,13 @@ export const tableService = {
         projectId,
         id,
         request,
-    }: {
-        projectId: string
-        id: string
-        request: CreateTableWebhookRequest
-    }): Promise<TableWebhook> {
+    }: CreateWebhookParams): Promise<TableWebhook> {
         return tableWebhookRepo().save({
             id: apId(),
             projectId,
             tableId: id,
-            ...request,
+            events: request.events,
+            flowId: request.flowId,
         })
     },
 
@@ -134,11 +120,7 @@ export const tableService = {
         projectId,
         id,
         webhookId,
-    }: {
-        projectId: string
-        id: string
-        webhookId: string
-    }): Promise<void> {
+    }: DeleteWebhookParams): Promise<void> {
         await tableWebhookRepo().delete({
             projectId,
             tableId: id,
@@ -149,14 +131,10 @@ export const tableService = {
     async getWebhooks({
         projectId,
         id,
-        eventType,
-    }: {
-        projectId: string
-        id: string
-        eventType: TableWebhookEventType
-    }): Promise<TableWebhook[]> {
+        events,
+    }: GetWebhooksParams): Promise<TableWebhook[]> {
         return tableWebhookRepo().find({
-            where: { projectId, tableId: id, eventType },
+            where: { projectId, tableId: id, events: APArrayContains('events', events) },
         })
     },
 
@@ -164,11 +142,7 @@ export const tableService = {
         projectId,
         id,
         request,
-    }: {
-        projectId: string
-        id: string
-        request: UpdateTableRequest
-    }): Promise<Table> {
+    }: UpdateParams): Promise<Table> {
         await tableRepo().update({
             id,
             projectId,
@@ -179,4 +153,52 @@ export const tableService = {
     },
 
     
+}
+
+type CreateParams = {
+    projectId: string
+    request: CreateTableRequest
+}
+
+type GetAllParams = {
+    projectId: string
+}
+
+type GetByIdParams = {
+    projectId: string
+    id: string
+}
+
+type DeleteParams = {
+    projectId: string
+    id: string
+}
+
+type ExportTableParams = {
+    projectId: string
+    id: string
+}
+
+type CreateWebhookParams = {
+    projectId: string
+    id: string
+    request: CreateTableWebhookRequest
+}
+
+type DeleteWebhookParams = {
+    projectId: string
+    id: string
+    webhookId: string
+}
+
+type GetWebhooksParams = {
+    projectId: string
+    id: string
+    events: TableWebhookEventType[]
+}
+
+type UpdateParams = {
+    projectId: string
+    id: string
+    request: UpdateTableRequest
 }

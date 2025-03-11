@@ -11,7 +11,7 @@ export const TableWebhook = Type.Object({
     ...BaseModelSchema,
     projectId: Type.String(),
     tableId: Type.String(),
-    eventType: Type.Enum(TableWebhookEventType),
+    events: Type.Array(Type.Enum(TableWebhookEventType)),
     flowId: Type.String(),
 })
 

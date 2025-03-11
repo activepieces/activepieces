@@ -20,7 +20,7 @@ export const deletedRecordTrigger = createTrigger({
 
         const { id: webhookId } = await tablesCommon.createWebhook({
             tableId,
-            eventType: TableWebhookEventType.RECORD_DELETED,
+            events: [TableWebhookEventType.RECORD_DELETED],
             webhookUrl: context.webhookUrl,
             flowId: context.flows.current.id,
             server: {
