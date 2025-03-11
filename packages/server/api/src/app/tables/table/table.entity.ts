@@ -25,7 +25,6 @@ export const TableEntity = new EntitySchema<TableSchema>({
         {
             name: 'idx_table_project_id_name',
             columns: ['projectId', 'name'],
-            unique: true,
         },
     ],
     relations: {
