@@ -105,7 +105,6 @@ export const recordService = {
             .where('record.tableId = :tableId', { tableId })
             .andWhere('record.projectId = :projectId', { projectId })
             .orderBy('record.created', 'ASC')
-            .addOrderBy('record.id', 'ASC')
 
         if (filters?.length) {
             filters.forEach((filter, _index) => {

@@ -5,7 +5,7 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "idx_field_table_id_name_unique"
+            DROP INDEX "idx_field_table_id_name"
         `)
         await queryRunner.query(`
             CREATE TABLE "temporary_field" (
@@ -443,7 +443,7 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
             DROP TABLE "temporary_field"
         `)
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_field_table_id_name_unique" ON "field" ("tableId", "name")
+            CREATE INDEX "idx_field_table_id_name" ON "field" ("tableId", "name")
         `)
     }
 

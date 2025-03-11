@@ -5,7 +5,7 @@ export class TableWebhooksIsArraySqlite1741668828922 implements MigrationInterfa
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "idx_table_project_id_name_unique"
+            DROP INDEX "idx_table_project_id_name"
         `);
         await queryRunner.query(`
             CREATE TABLE "temporary_table_webhook" (
@@ -94,7 +94,7 @@ export class TableWebhooksIsArraySqlite1741668828922 implements MigrationInterfa
                 RENAME TO "table_webhook"
         `);
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_table_project_id_name" ON "table" ("projectId", "name")
+            CREATE INDEX "idx_table_project_id_name" ON "table" ("projectId", "name")
         `);
     }
 
@@ -195,7 +195,7 @@ export class TableWebhooksIsArraySqlite1741668828922 implements MigrationInterfa
             DROP TABLE "temporary_table_webhook"
         `);
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_table_project_id_name_unique" ON "table" ("projectId", "name")
+            CREATE INDEX "idx_table_project_id_name" ON "table" ("projectId", "name")
         `);
     }
 

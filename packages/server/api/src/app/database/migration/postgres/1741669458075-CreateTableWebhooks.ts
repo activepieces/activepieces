@@ -20,7 +20,7 @@ export class CreateTableWebhooks1741669458075 implements MigrationInterface {
             )
         `);
         await queryRunner.query(`
-            CREATE UNIQUE INDEX "idx_table_project_id_name" ON "table" ("projectId", "name")
+            CREATE INDEX "idx_table_project_id_name" ON "table" ("projectId", "name")
         `);
         await queryRunner.query(`
             CREATE INDEX "idx_record_project_id_table_id" ON "record" ("projectId", "tableId")

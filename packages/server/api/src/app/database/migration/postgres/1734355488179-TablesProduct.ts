@@ -29,7 +29,7 @@ export class TablesProduct1734355488179 implements MigrationInterface {
             )
         `)
         await queryRunner.query(`
-             CREATE UNIQUE INDEX "idx_field_table_id_name_unique" ON "field" ("tableId", "name")
+             CREATE INDEX "idx_field_table_id_name" ON "field" ("tableId", "name")
         `)
         await queryRunner.query(`
             CREATE TABLE "record" (
@@ -96,7 +96,7 @@ export class TablesProduct1734355488179 implements MigrationInterface {
             DROP TABLE "record"
         `)
         await queryRunner.query(`
-              DROP INDEX "public"."idx_field_table_id_name_unique"
+              DROP INDEX "public"."idx_field_table_id_name"
         `)
         await queryRunner.query(`
             DROP TABLE "field"
