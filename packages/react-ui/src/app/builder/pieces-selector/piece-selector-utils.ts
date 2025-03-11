@@ -42,8 +42,7 @@ function toKey(stepMetadata: StepMetadata): string {
   switch (stepMetadata.type) {
     case ActionType.PIECE:
     case TriggerType.PIECE: {
-      const pieceMetadata: PieceStepMetadata =
-        stepMetadata as PieceStepMetadata;
+      const pieceMetadata: PieceStepMetadata = stepMetadata;
       return `${stepMetadata.type}-${pieceMetadata.pieceName}-${pieceMetadata.pieceVersion}`;
     }
     default:
@@ -65,9 +64,7 @@ const getStepName = (piece: StepMetadata, flowVersion: FlowVersion) => {
 
 const isAiPiece = (piece: StepMetadata) =>
   piece.type === TriggerType.PIECE || piece.type === ActionType.PIECE
-    ? (piece as PieceStepMetadata).categories.includes(
-        PieceCategory.ARTIFICIAL_INTELLIGENCE,
-      )
+    ? piece.categories.includes(PieceCategory.ARTIFICIAL_INTELLIGENCE)
     : false;
 
 const isAppPiece = (piece: StepMetadata) =>
@@ -114,9 +111,7 @@ const isPopularPieces = (
 
 const isFlowController = (stepMetadata: StepMetadata) => {
   if (stepMetadata.type === ActionType.PIECE) {
-    return (stepMetadata as PieceStepMetadata).categories.includes(
-      PieceCategory.FLOW_CONTROL,
-    );
+    return stepMetadata.categories.includes(PieceCategory.FLOW_CONTROL);
   }
   return [ActionType.LOOP_ON_ITEMS, ActionType.ROUTER].includes(
     stepMetadata.type as ActionType,
@@ -125,9 +120,7 @@ const isFlowController = (stepMetadata: StepMetadata) => {
 
 const isUniversalAiPiece = (stepMetadata: StepMetadata) => {
   if (stepMetadata.type === ActionType.PIECE) {
-    return (stepMetadata as PieceStepMetadata).categories.includes(
-      PieceCategory.UNIVERSAL_AI,
-    );
+    return stepMetadata.categories.includes(PieceCategory.UNIVERSAL_AI);
   }
   return false;
 };
@@ -214,7 +207,7 @@ const getDefaultStep = ({
             inputUiInfo: {
               customizedInputs: {},
             },
-            errorHandlingOptions: errorHandlingOptions,
+            errorHandlingOptions,
           },
         },
         common,
@@ -277,7 +270,7 @@ const getDefaultStep = ({
             actionName: actionOrTrigger.name,
             pieceVersion: stepMetadata.pieceVersion,
             input,
-            errorHandlingOptions: errorHandlingOptions,
+            errorHandlingOptions,
           },
         },
         common,
