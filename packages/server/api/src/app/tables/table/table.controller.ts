@@ -25,7 +25,7 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
     })
 
     fastify.get('/', GetTablesRequest, async (request) => {
-        
+
         return await tableService.list({
             projectId: request.principal.projectId,
             cursor: request.query.cursor,

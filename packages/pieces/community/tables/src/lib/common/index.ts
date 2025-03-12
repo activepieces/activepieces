@@ -1,6 +1,6 @@
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { DynamicPropsValue, Property, TriggerHookContext } from "@activepieces/pieces-framework";
-import { CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, Table, TableWebhookEventType } from "@activepieces/shared";
+import { CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, SeekPage, Table, TableWebhookEventType } from "@activepieces/shared";
 import { z } from 'zod';
 
 export const tablesCommon = {
@@ -14,20 +14,34 @@ export const tablesCommon = {
       try {
         const res = await httpClient.sendRequest({
           method: HttpMethod.GET,
-          url: `${context.server.apiUrl}v1/tables`,
+          url: `${context.server.apiUrl}v1/tables?limit=100`,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
             token: context.server.token,
           },
         });
-
-        const tables = res.body;
+        const resultBody = res.body as SeekPage<Table>
+        const tables = [...resultBody.data];
         if (!Array.isArray(tables) || tables.length === 0) {
           return {
             options: [],
             disabled: true,
             placeholder: 'No tables found. Please create a table first.',
           };
+        }
+        let next = resultBody.next;
+        while (next) {
+          const nextPage = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: `${context.server.apiUrl}v1/tables?cursor=${next}&limit=100`,
+            authentication: {
+              type: AuthenticationType.BEARER_TOKEN,
+              token: context.server.token,
+            },
+          });
+          const nextPageBody = nextPage.body as SeekPage<Table>
+          tables.push(...nextPageBody.data)
+          next = nextPageBody.next
         }
 
         return {

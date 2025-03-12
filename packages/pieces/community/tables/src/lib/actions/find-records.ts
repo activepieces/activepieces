@@ -70,6 +70,7 @@ export const findRecords = createAction({
                     { label: 'Greater Than or Equal', value: FilterOperator.GTE },
                     { label: 'Less Than', value: FilterOperator.LT },
                     { label: 'Less Than or Equal', value: FilterOperator.LTE },
+                    { label: 'Contains', value: FilterOperator.CO },
                   ],
                 },
               }),

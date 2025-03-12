@@ -107,26 +107,29 @@ export const recordService = {
         if (filters?.length) {
             filters.forEach((filter, _index) => {
                 const operator = filter.operator || FilterOperator.EQ
-                let condition: string
+                let condition: string =''
 
                 switch (operator) {
                     case FilterOperator.EQ:
-                        condition = '='
+                        condition = 'c.value = :fieldValue'
                         break
                     case FilterOperator.NEQ:
-                        condition = '!='
+                        condition = 'c.value != :fieldValue'
                         break
                     case FilterOperator.GT:
-                        condition = '>'
+                        condition = 'c.value > :fieldValue'
                         break
                     case FilterOperator.GTE:
-                        condition = '>='
+                        condition = 'c.value >= :fieldValue'
                         break
                     case FilterOperator.LT:
-                        condition = '<'
+                        condition = 'c.value < :fieldValue'
                         break
                     case FilterOperator.LTE:
-                        condition = '<='
+                        condition = 'c.value <= :fieldValue'
+                        break
+                    case FilterOperator.CO:
+                        condition = 'LOWER(c.value) LIKE LOWER(:fieldValue)'
                         break
                 }
 
@@ -138,11 +141,11 @@ export const recordService = {
                     .where('c.projectId = :projectId') // To use the index
                     .andWhere('c.fieldId = :fieldId')
                     .andWhere('r.id = record.id')
-                    .andWhere(`c.value ${condition} :fieldValue`)
+                    .andWhere(condition)
                     .setParameters({
                         projectId,
                         fieldId: filter.fieldId,
-                        fieldValue: filter.value,
+                        fieldValue:  filter.operator === FilterOperator.CO ? `%${filter.value}%` : filter.value,
                     })
 
                 queryBuilder.andWhere(`EXISTS (${subQuery.getQuery()})`)
