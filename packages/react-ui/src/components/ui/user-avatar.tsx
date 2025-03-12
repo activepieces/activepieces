@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
 } from './dropdown-menu';
 import { TextWithIcon } from './text-with-icon';
+import { CaretSortIcon } from '@radix-ui/react-icons';
 export function UserAvatar() {
   const { reset } = useTelemetry();
   const { embedState } = useEmbedding();
@@ -30,15 +31,24 @@ export function UserAvatar() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Avatar className="cursor-pointer">
-          <AvatarFallback>
-            <AvatarLetter
-              name={user.firstName + ' ' + user.lastName}
-              email={user.email}
-              disablePopup={true}
-            ></AvatarLetter>
-          </AvatarFallback>
-        </Avatar>
+        <div className='flex items-center gap-2 justify-between hover:bg-accent rounded-lg transition-colors cursor-pointer p-2'>
+          <div className='flex items-center gap-2'>
+          <Avatar className="cursor-pointer">
+            <AvatarFallback>
+              <AvatarLetter
+                name={user.firstName + ' ' + user.lastName}
+                email={user.email}
+                disablePopup={true}
+              ></AvatarLetter>
+            </AvatarFallback>
+          </Avatar>
+          <div className='flex flex-col'> 
+            <span className="text-sm  font-bold"> {user.firstName} {user.lastName}</span>
+            <span className="w-[140px] text-xs text-muted-foreground truncate"> {user.email}</span>
+          </div>
+          </div>
+          <CaretSortIcon className="ml-auto size-4 shrink-0 opacity-50" />
+        </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[220px]">
         <DropdownMenuLabel>

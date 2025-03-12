@@ -30,21 +30,14 @@ export const Header = () => {
       <div>
         <PlatformDialog messages={messages} />
         <div className="flex h-[60px] items-center">
-          {isInPlatformAdmin ? (
+          {isInPlatformAdmin && (
             <span className="text-3xl font-bold px-4 py-2">
               {t('Platform Admin')}
             </span>
-          ) : (
-            <>
-              <PlatformSwitcher />
-
-              <ProjectSwitcher />
-            </>
           )}
           <div className="grow"></div>
           <div className="flex items-center justify-center gap-4">
             <InviteUserDialog />
-            <UsageLimitsButton />
             {showPlatformAdminDashboard && (
               <Link to={isInPlatformAdmin ? '/' : '/platform'}>
                 <Button
@@ -72,8 +65,6 @@ export const Header = () => {
                 </Button>
               </Link>
             )}
-
-            <UserAvatar />
           </div>
         </div>
         <Separator></Separator>

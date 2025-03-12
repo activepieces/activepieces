@@ -13,6 +13,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { EmbeddingFontLoader } from './components/embedding-font-loader';
 import { InitialDataGuard } from './components/initial-data-guard';
 import { ApRouter } from './router';
+import { SidebarProvider } from '@/components/ui/sidebar-shadcn';
 
 const queryClient = new QueryClient();
 let typesFormatsAdded = false;
@@ -33,8 +34,10 @@ export function App() {
             <TelemetryProvider>
               <TooltipProvider>
                 <ThemeProvider storageKey="vite-ui-theme">
-                  <ApRouter />
-                  <Toaster />
+                  <SidebarProvider>
+                    <ApRouter />
+                    <Toaster />
+                  </SidebarProvider>
                 </ThemeProvider>
               </TooltipProvider>
             </TelemetryProvider>

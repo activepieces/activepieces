@@ -25,10 +25,14 @@ import { cn } from '@/lib/utils';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { projectHooks } from '../../../hooks/project-hooks';
+import { ApEdition } from '@activepieces/shared';
+import { ApFlagId } from '@activepieces/shared';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 function ProjectSwitcher() {
   const location = useLocation();
   const queryClient = useQueryClient();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { data: projects } = projectHooks.useProjects();
   const [open, setOpen] = React.useState(false);
   const { embedState } = useEmbedding();
@@ -65,9 +69,16 @@ function ProjectSwitcher() {
           size={'sm'}
           aria-expanded={open}
           aria-label="Select a project"
-          className="gap-2 max-w-[200px] justify-between"
+          className="gap-2 max-w-[200px] justify-between gap-10"
         >
-          <span className="truncate">{currentProject?.displayName}</span>
+          <div className="flex flex-col justify-start items-start">
+            <span className="truncate">{currentProject?.displayName}</span>
+            <span className="text-xs text-muted-foreground">
+              {edition === ApEdition.CLOUD && 'Cloud' }
+              {edition === ApEdition.ENTERPRISE && 'Enterprise'}
+              {edition === ApEdition.COMMUNITY && 'Community'}
+            </span>
+          </div>
           <CaretSortIcon className="ml-auto size-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>

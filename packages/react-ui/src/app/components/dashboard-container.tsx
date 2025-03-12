@@ -21,7 +21,7 @@ import { isNil, Permission } from '@activepieces/shared';
 import { authenticationSession } from '../../lib/authentication-session';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
-import { Sidebar, SidebarLink } from './sidebar';
+import { SidebarComponent, SidebarGroup, SidebarItem, SidebarLink } from './sidebar';
 
 type DashboardContainerProps = {
   children: React.ReactNode;
@@ -61,62 +61,91 @@ export function DashboardContainer({
   if (isNil(currentProjectId) || currentProjectId === '') {
     return <Navigate to="/sign-in" replace />;
   }
-  const embedFilter = (link: SidebarLink) =>
-    !embedState.isEmbedded || !!link.showInEmbed;
-  const permissionFilter = (link: SidebarLink) =>
-    isNil(link.hasPermission) || link.hasPermission;
-  const links: SidebarLink[] = [
+  const embedFilter = (link: SidebarItem) => {
+    if (link.type === 'link') {
+      return !embedState.isEmbedded || !!link.showInEmbed;
+    }
+    return true;
+  };
+  const permissionFilter = (link: SidebarItem) => {
+    if (link.type === 'link') {
+      return isNil(link.hasPermission) || link.hasPermission;
+    }
+    return true;
+  };
+  const items: SidebarItem[] = [
     {
-      to: authenticationSession.appendProjectRoutePrefix('/flows'),
-      label: t('Flows'),
+      type: 'group',
+      name: t('Platform'),
+      label: t('Automation'),
       icon: Workflow,
-      showInEmbed: true,
-      hasPermission: checkAccess(Permission.READ_FLOW),
-    },
-    {
+      isActive: true,
+      defaultOpen: true,
+      items: [
+        {
+          type: 'link',
+          to: authenticationSession.appendProjectRoutePrefix('/flows'),
+          label: t('Flows'),
+          showInEmbed: true,
+          hasPermission: checkAccess(Permission.READ_FLOW),
+        },
+        {
+          type: 'link',
+          to: authenticationSession.appendProjectRoutePrefix('/issues'),
+          label: t('Issues'),
+          notification: showIssuesNotification,
+          showInEmbed: false,
+          hasPermission: checkAccess(Permission.READ_ISSUES),
+        },
+
+        {
+          type: 'link',
+          to: authenticationSession.appendProjectRoutePrefix('/runs'),
+          label: t('Runs'),
+          showInEmbed: true,
+          hasPermission: checkAccess(Permission.READ_RUN),
+        },
+        {
+          type: 'link',
+          to: authenticationSession.appendProjectRoutePrefix('/connections'),
+          label: t('Connections'),
+          showInEmbed: true,
+          hasPermission: checkAccess(Permission.READ_APP_CONNECTION),
+        },
+        {
+          type: 'link',
+          to: authenticationSession.appendProjectRoutePrefix('/releases'),
+          label: t('Releases'),
+          hasPermission: project.releasesEnabled,
+        },
+
+      ],
+    } as SidebarGroup, {
+      type: 'link',
       to: authenticationSession.appendProjectRoutePrefix('/tables'),
       label: t('Tables'),
       icon: Table2,
       showInEmbed: true,
       hasPermission: checkAccess(Permission.READ_TABLE),
-    },
+    } as SidebarLink,
     {
-      to: authenticationSession.appendProjectRoutePrefix('/runs'),
-      label: t('Runs'),
-      icon: Logs,
-      showInEmbed: true,
-      hasPermission: checkAccess(Permission.READ_RUN),
-    },
-    {
-      to: authenticationSession.appendProjectRoutePrefix('/issues'),
-      label: t('Issues'),
-      icon: AlertCircle,
-      notification: showIssuesNotification,
-      showInEmbed: false,
-      hasPermission: checkAccess(Permission.READ_ISSUES),
-    },
-    {
-      to: authenticationSession.appendProjectRoutePrefix('/connections'),
-      label: t('Connections'),
-      icon: Link2,
-      showInEmbed: true,
-      hasPermission: checkAccess(Permission.READ_APP_CONNECTION),
-    },
-    {
-      to: authenticationSession.appendProjectRoutePrefix('/releases'),
-      label: t('Releases'),
-      icon: Package,
-      hasPermission: project.releasesEnabled,
-    },
-    {
+      type: 'link',
       to: authenticationSession.appendProjectRoutePrefix('/settings/general'),
       label: t('Settings'),
       icon: Wrench,
       isActive: (pathname: string) => pathname.includes('/settings'),
-    },
+    } as SidebarLink,
   ]
     .filter(embedFilter)
     .filter(permissionFilter);
+
+  for (const item of items){
+    if (item.type === 'group'){
+      const newItems = item.items.filter(embedFilter).filter(permissionFilter);
+      item.items = newItems;
+    }
+  }
+  
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
       <ProjectChangedRedirector currentProjectId={currentProjectId}>
@@ -126,15 +155,15 @@ export function DashboardContainer({
             setIsAlertClosed,
           }}
         >
-          <Sidebar
+          <SidebarComponent
             removeGutters={removeGutters}
             isHomeDashboard={true}
             hideHeader={hideHeader}
-            links={links}
+            items={items}
             hideSideNav={embedState.hideSideNav}
           >
             {children}
-          </Sidebar>
+          </SidebarComponent>
         </CloseTaskLimitAlertContext.Provider>
       </ProjectChangedRedirector>
     </AllowOnlyLoggedInUserOnlyGuard>

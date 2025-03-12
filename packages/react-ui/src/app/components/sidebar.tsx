@@ -1,11 +1,10 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { FileTextIcon, LockKeyhole } from 'lucide-react';
+import { ChevronDownIcon, FileTextIcon, LockKeyhole, Workflow } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Tooltip,
   TooltipContent,
@@ -20,6 +19,12 @@ import { ShowPoweredBy } from '../../components/show-powered-by';
 import { platformHooks } from '../../hooks/platform-hooks';
 
 import { Header } from './header';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuSubItem, SidebarMenuSub, SidebarMenuItem, SidebarMenuAction } from '@/components/ui/sidebar-shadcn';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
+import { UserAvatar } from '@/components/ui/user-avatar';
+import UsageLimitsButton from './usage-limits-button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 type Link = {
   icon: React.ReactNode;
@@ -31,7 +36,7 @@ type Link = {
 type CustomTooltipLinkProps = {
   to: string;
   label: string;
-  Icon: React.ElementType;
+  Icon?: React.ElementType;
   extraClasses?: string;
   notification?: boolean;
   locked?: boolean;
@@ -59,32 +64,47 @@ const CustomTooltipLink = ({
       rel={newWindow ? 'noopener noreferrer' : ''}
     >
       <div
-        className={`relative flex flex-col items-center justify-center gap-1`}
+        className={`relative flex items-center gap-1 justify-between hover:text-primary rounded-lg transition-colors ${extraClasses || ''}${
+          isLinkActive ? 'bg-accent text-primary' : ''
+        }`}
       >
-        {locked && (
-          <LockKeyhole
-            className="absolute right-[-1px] bottom-[20px] size-3"
-            color="grey"
-          />
-        )}
-        <Icon
-          className={`size-10 p-2.5 hover:text-primary rounded-lg transition-colors ${
-            isLinkActive ? 'bg-accent text-primary' : ''
-          } ${extraClasses || ''}`}
-        />
-        <span className="text-[10px]">{label}</span>
+        <div className={`flex items-center gap-1 ${!Icon ? 'p-2' : ''}`}>
+          {locked && (
+            <LockKeyhole
+              className="absolute right-[-1px] bottom-[20px] size-3"
+              color="grey"
+            />
+          )}
+          {Icon && (
+            <Icon
+              className={`size-9 p-2.5`}
+            />
+          )}
+          <span className={`text-sm`}>{label}</span>
+        </div>
         {notification && (
-          <span className="bg-destructive absolute right-[1px] top-[3px] size-2 rounded-full"></span>
+          <span className="bg-destructive  right-[1px] top-[3px] size-2 rounded-full "></span>
         )}
       </div>
     </Link>
   );
 };
 
+export type SidebarGroup = {
+  name?: string;
+  label: string;
+  icon: React.ElementType;
+  items: SidebarLink[];
+  type: 'group';
+  defaultOpen: boolean;
+}
+
+
 export type SidebarLink = {
   to: string;
   label: string;
-  icon: React.ElementType;
+  icon?: React.ElementType;
+  type: 'link';
   notification?: boolean;
   locked?: boolean;
   hasPermission?: boolean;
@@ -92,17 +112,19 @@ export type SidebarLink = {
   isActive?: (pathname: string) => boolean;
 };
 
+export type SidebarItem = SidebarLink | SidebarGroup;
+
 type SidebarProps = {
   children: React.ReactNode;
-  links: SidebarLink[];
+  items: SidebarItem[];
   isHomeDashboard?: boolean;
   hideSideNav?: boolean;
   hideHeader?: boolean;
   removeGutters?: boolean;
 };
-export function Sidebar({
+export function SidebarComponent({
   children,
-  links,
+  items,
   isHomeDashboard = false,
   hideSideNav = false,
   hideHeader = false,
@@ -116,61 +138,130 @@ export function Sidebar({
   const { platform } = platformHooks.useCurrentPlatform();
   const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
   return (
-    <div>
+    <div className='flex min-h-screen w-full'>
       <div className="flex min-h-screen w-full">
         {!hideSideNav && (
-          <aside className="border-r sticky top-0 h-screen bg-muted/50 w-[65px]">
-            <ScrollArea>
-              <nav className="flex flex-col items-center h-screen sm:py-5 gap-5 p-2">
-                <Link
+          <Sidebar className="bg-muted/50 w-[255px]">
+          <SidebarContent>
+            <SidebarHeader>
+              <div className='flex items-center justify-center'>
+              <Link
                   to={isHomeDashboard ? defaultRoute : '/platform'}
-                  className="h-[48px] items-center justify-center"
+                  className="h-[48px] flex items-center justify-center"
                 >
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <img
                         src={branding.logos.logoIconUrl}
                         alt={t('home')}
-                        width={28}
-                        height={28}
+                        width={40}
+                        height={40}
+                        className='border-2 border-primary p-2 rounded-lg'
                       />
                     </TooltipTrigger>
                     <TooltipContent side="right">{t('Home')}</TooltipContent>
                   </Tooltip>
                 </Link>
-
-                {links.map((link, index) => (
-                  <CustomTooltipLink
-                    to={link.to}
-                    label={link.label}
-                    Icon={link.icon}
-                    key={index}
-                    notification={link.notification}
-                    locked={link.locked}
-                    isActive={link.isActive}
-                  />
-                ))}
-
-                <div className="grow"></div>
-                {isHomeDashboard && showSupportAndDocs && (
-                  <>
+                <ProjectSwitcher />
+              </div>
+            </SidebarHeader>
+            <SidebarContent className='gap-0'>
+              <ScrollArea className='h-[calc(100vh-100px)]'>
+              {items.map((item, index) => (
+                item.type === 'group' ? (
+                  <SidebarGroup key={item.name} className='py-0'>
+                    {item.name && (
+                      <SidebarGroupLabel>
+                        {item.name}
+                      </SidebarGroupLabel>
+                    )}
+                    <SidebarMenu className='py-0'>
+                      <Collapsible defaultOpen={item.defaultOpen} className="group/collapsible">
+                        <SidebarMenuItem>
+                          <CollapsibleTrigger asChild>
+                            <SidebarMenuButton className='py-0 gap-4'>
+                              {item.icon && (
+                                <item.icon className="size-5" />
+                              )}
+                              <span>{item.label}</span>
+                              <SidebarMenuAction>
+                                <ChevronDownIcon />
+                              </SidebarMenuAction>
+                            </SidebarMenuButton>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <SidebarMenuSub>
+                            {item.items.map((link, index) => (
+                              <SidebarMenuSubItem key={link.label}>
+                                <SidebarMenuButton asChild>
+                                <CustomTooltipLink
+                                    to={link.to}
+                                    label={link.label}
+                                    Icon={link.icon}
+                                    key={index}
+                                    notification={link.notification}
+                                    locked={link.locked}
+                                    isActive={link.isActive}
+                                  />
+                                </SidebarMenuButton>
+                              </SidebarMenuSubItem>
+                            ))}
+                            </SidebarMenuSub>
+                          </CollapsibleContent>
+                        </SidebarMenuItem>
+                      </Collapsible>
+                      </SidebarMenu>
+                  </SidebarGroup>
+                ) : (
+                  <SidebarGroup key={item.label} className='py-0'>
+                   <SidebarMenu className='gap-0 p-0'>
+                  <SidebarMenuItem key={item.label}>
+                    <SidebarMenuButton asChild>
                     <CustomTooltipLink
-                      to={supportUrl}
-                      label={t('Support')}
-                      Icon={QuestionMarkCircledIcon}
-                      newWindow={true}
-                    />
-                    <CustomTooltipLink
-                      to="https://activepieces.com/docs"
-                      label={t('Docs')}
-                      Icon={FileTextIcon}
-                      newWindow={true}
-                    />
+                        to={item.to}
+                        label={item.label}
+                        Icon={item.icon}
+                        key={index}
+                        notification={item.notification}
+                        locked={item.locked}
+                        isActive={item.isActive}
+                      />
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  </SidebarMenu>
+                  </SidebarGroup>
+                )
+              ))}
+              </ScrollArea>
+            </SidebarContent>
+            <SidebarFooter>
+              <SidebarMenu className='gap-4'>
+              {isHomeDashboard && showSupportAndDocs && (
+                <>
+                <SidebarMenuItem>
+                   <SidebarMenuButton asChild>
+                   <Link to={supportUrl} target="_blank" rel="noopener noreferrer">
+                   <QuestionMarkCircledIcon className="size-5" />
+                      <span>{t('Support')}</span>
+                   </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <Link to="https://activepieces.com/docs" target="_blank" rel="noopener noreferrer">
+                        <FileTextIcon className="size-5" />
+                        <span>{t('Docs')}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                   </>
                 )}
-              </nav>
-            </ScrollArea>
-          </aside>
+                <UsageLimitsButton />
+                <UserAvatar />
+              </SidebarMenu>  
+            </SidebarFooter>
+          </SidebarContent>
+          </Sidebar>
         )}
         <div
           className={cn('flex-1 p-4', {
