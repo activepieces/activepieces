@@ -11,6 +11,6 @@ export enum RowHeight {
 
 export const ROW_HEIGHT_MAP: Record<RowHeight, number> = {
   [RowHeight.COMPACT]: 28,
-  [RowHeight.DEFAULT]: 37,
+  [RowHeight.DEFAULT]: 42,
   [RowHeight.EXPANDED]: 52,
 };

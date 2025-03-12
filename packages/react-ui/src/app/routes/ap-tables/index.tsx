@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Trash2, Plus, Download, Loader2 } from 'lucide-react';
+import { Trash2, Plus, Download, Loader2, CheckIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { BetaBadge } from '@/app/components/beta-badge';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -22,7 +23,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import RenameTableDialog from '@/features/tables/components/rename-table-dialog';
 import { fieldsApi } from '@/features/tables/lib/fields-api';
 import { recordsApi } from '@/features/tables/lib/records-api';
@@ -42,9 +43,17 @@ const ApTablesPage = () => {
     new Set(),
   );
   const { data: project } = projectHooks.useCurrentProject();
+  const [searchParams] = useSearchParams();
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['tables', project.id],
-    queryFn: () => tablesApi.list(),
+    queryKey: ['tables', searchParams.toString(), project.id],
+    queryFn: () =>
+      tablesApi.list({
+        cursor: searchParams.get('cursor') ?? undefined,
+        limit: searchParams.get('limit')
+          ? parseInt(searchParams.get('limit')!)
+          : undefined,
+        name: searchParams.get('name') ?? undefined,
+      }),
   });
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_ALERT,
@@ -59,10 +68,10 @@ const ApTablesPage = () => {
       });
       await recordsApi.create({
         records: [
-          ...Array.from({ length: 10 }, (_, k) => [
+          ...Array.from({ length: 10 }, (_) => [
             {
               fieldId: field.id,
-              value: `Row ${k}`,
+              value: '',
             },
           ]),
         ],
@@ -78,18 +87,6 @@ const ApTablesPage = () => {
     },
   });
 
-  const deleteTableMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return tablesApi.delete(id);
-    },
-    onSuccess: () => {
-      refetch();
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-    },
-  });
-
   const handleExportTable = async (id: string, name: string) => {
     try {
       setExportingTableIds((prev) => new Set(prev).add(id));
@@ -98,14 +95,10 @@ const ApTablesPage = () => {
         queryFn: async () => {
           const data = await tablesApi.export(id);
           const csvRows: string[][] = [];
-          // Add header row
           csvRows.push(data.fields.map((f) => f.name));
-          // Add data rows
           data.rows.forEach((row) => {
             csvRows.push(data.fields.map((field) => row[field.name] ?? ''));
           });
-
-          // Convert to CSV string
           const csvContent = csvRows
             .map((row) =>
               row
@@ -118,7 +111,6 @@ const ApTablesPage = () => {
             )
             .join('\n');
 
-          // Create and download file
           const blob = new Blob([csvContent], { type: 'text/csv' });
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
@@ -256,39 +248,6 @@ const ApTablesPage = () => {
                 <TooltipContent>{t('Export')}</TooltipContent>
               )}
             </Tooltip>
-            <PermissionNeededTooltip
-              hasPermission={userHasTableWritePermission}
-            >
-              <Tooltip>
-                <ConfirmationDeleteDialog
-                  title={`${t('Delete')} ${row.original.name}`}
-                  message={t(
-                    'Are you sure you want to delete this table? This action cannot be undone.',
-                  )}
-                  mutationFn={async () =>
-                    deleteTableMutation.mutate(row.original.id)
-                  }
-                  entityName={t('table')}
-                >
-                  <TooltipTrigger
-                    asChild
-                    disabled={!userHasTableWritePermission}
-                  >
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => e.stopPropagation()}
-                      disabled={!userHasTableWritePermission}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </TooltipTrigger>
-                </ConfirmationDeleteDialog>
-                {userHasTableWritePermission && (
-                  <TooltipContent>{t('Delete')}</TooltipContent>
-                )}
-              </Tooltip>
-            </PermissionNeededTooltip>
           </div>
         );
       },
@@ -343,34 +302,43 @@ const ApTablesPage = () => {
           </div>
         ),
       },
-      {
-        render: () => (
-          <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
-            <Button
-              size="sm"
-              onClick={() => createTable({ name: t('New Table') })}
-              className="flex items-center gap-2"
-              loading={isCreatingTable}
-              disabled={!userHasTableWritePermission}
-            >
-              <Plus className="h-4 w-4" />
-              {t('New Table')}
-            </Button>
-          </PermissionNeededTooltip>
-        ),
-      },
     ],
     [bulkDeleteMutation, selectedRows],
   );
 
   return (
     <div className="flex-col w-full">
-      <TableTitle>{t('Tables')}</TableTitle>
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-2">
+          <TableTitle>{t('Tables')}</TableTitle>
+          <BetaBadge />
+        </div>
+        <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
+          <Button
+            size="sm"
+            onClick={() => createTable({ name: t('New Table') })}
+            className="flex items-center gap-2"
+            loading={isCreatingTable}
+            disabled={!userHasTableWritePermission}
+          >
+            <Plus className="h-4 w-4" />
+            {t('New Table')}
+          </Button>
+        </PermissionNeededTooltip>
+      </div>
 
       <DataTable
+        filters={[
+          {
+            accessorKey: 'name',
+            type: 'input',
+            title: t('Name'),
+            icon: CheckIcon,
+            options: [],
+          },
+        ]}
         columns={columns}
         page={data}
-        hidePagination={true}
         isLoading={isLoading}
         onRowClick={(row, newWindow) => {
           const path = `/projects/${project.id}/tables/${row.id}`;

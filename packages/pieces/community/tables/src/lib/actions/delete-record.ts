@@ -8,7 +8,7 @@ export const deleteRecord = createAction({
   description: 'Delete record(s) from a table',
   auth: PieceAuth.None(),
   props: {
-    table_name: tablesCommon.table_name,
+    table_id: tablesCommon.table_id,
     records_ids:  Property.Array({
       displayName: 'Records IDs',
       required: true,

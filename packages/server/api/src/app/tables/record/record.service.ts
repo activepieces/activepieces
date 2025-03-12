@@ -1,29 +1,29 @@
 import {
     ActivepiecesError,
-    ApFlagId,
     apId,
     CreateRecordsRequest,
     Cursor,
     ErrorCode,
+    Field,
     Filter,
     FilterOperator,
+    GetFlowVersionForWorkerRequestType,
     isNil,
     PopulatedRecord,
     SeekPage,
     TableWebhookEventType,
     UpdateRecordRequest,
 } from '@activepieces/shared'
-import { FastifyBaseLogger, FastifyRequest } from 'fastify'
+import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
-import { flagService } from '../../flags/flag.service'
 import { webhookService } from '../../webhooks/webhook.service'
 import { FieldEntity } from '../field/field.entity'
+import { fieldService } from '../field/field.service'
 import { tableService } from '../table/table.service'
 import { CellEntity } from './cell.entity'
-import { RecordEntity } from './record.entity'
-
+import { RecordEntity, RecordSchema } from './record.entity'
 
 const recordRepo = repoFactory(RecordEntity)
 
@@ -31,36 +31,29 @@ export const recordService = {
     async create({
         request,
         projectId,
-    }: {
-        request: CreateRecordsRequest
-        projectId: string
-    }): Promise<PopulatedRecord[]> {
+    }: CreateParams): Promise<PopulatedRecord[]> {
         return transaction(async (entityManager: EntityManager) => {
-            // Find existing fields for the table
             const existingFields = await entityManager
                 .getRepository(FieldEntity)
                 .find({
                     where: { tableId: request.tableId, projectId },
                 })
-             //find max order 
-             const maxOrder = await entityManager.getRepository(RecordEntity).maximum('order', {
-                tableId: request.tableId,
-                projectId,
-            })??0
-            
-            // Filter out cells with non-existing fields during record creation
+
             const validRecords = request.records.map((recordData) =>
                 recordData.filter((cellData) =>
                     existingFields.some((field) => field.id === cellData.fieldId),
                 ),
             )
-
-            const recordInsertions = validRecords.map((_, index) => ({
-                tableId: request.tableId,
-                projectId,
-                id: apId(),
-                order: maxOrder +  index +1,
-            }))
+            const now = new Date()
+            const recordInsertions = validRecords.map((_, index) => {
+                const created = new Date(now.getTime() + index).toISOString()
+                return {
+                    tableId: request.tableId,
+                    projectId,
+                    created,
+                    id: apId(),
+                }
+            })
 
             await entityManager.getRepository(RecordEntity).insert(recordInsertions)
 
@@ -95,7 +88,11 @@ export const recordService = {
                     },
                 })
 
-            return fullyPopulatedRecords
+            const fields = await fieldService.getAll({
+                tableId: request.tableId,
+                projectId,
+            })
+            return fullyPopulatedRecords.map((record) => formatRecord(record, fields))
         })
     },
 
@@ -103,40 +100,41 @@ export const recordService = {
         tableId,
         projectId,
         filters,
-        cursorRequest,
-        limit
+
     }: ListParams): Promise<SeekPage<PopulatedRecord>> {
-   
         const queryBuilder = recordRepo()
             .createQueryBuilder('record')
             .leftJoinAndSelect('record.cells', 'cell')
             .leftJoinAndSelect('cell.field', 'field')
             .where('record.tableId = :tableId', { tableId })
             .andWhere('record.projectId = :projectId', { projectId })
-            .orderBy('record.order', 'ASC')
+            .orderBy('record.created', 'ASC')
         if (filters?.length) {
             filters.forEach((filter, _index) => {
                 const operator = filter.operator || FilterOperator.EQ
-                let condition: string
+                let condition = ''
 
                 switch (operator) {
                     case FilterOperator.EQ:
-                        condition = '='
+                        condition = 'c.value = :fieldValue'
                         break
                     case FilterOperator.NEQ:
-                        condition = '!='
+                        condition = 'c.value != :fieldValue'
                         break
                     case FilterOperator.GT:
-                        condition = '>'
+                        condition = 'c.value > :fieldValue'
                         break
                     case FilterOperator.GTE:
-                        condition = '>='
+                        condition = 'c.value >= :fieldValue'
                         break
                     case FilterOperator.LT:
-                        condition = '<'
+                        condition = 'c.value < :fieldValue'
                         break
                     case FilterOperator.LTE:
-                        condition = '<='
+                        condition = 'c.value <= :fieldValue'
+                        break
+                    case FilterOperator.CO:
+                        condition = 'LOWER(c.value) LIKE LOWER(:fieldValue)'
                         break
                 }
 
@@ -148,11 +146,11 @@ export const recordService = {
                     .where('c.projectId = :projectId') // To use the index
                     .andWhere('c.fieldId = :fieldId')
                     .andWhere('r.id = record.id')
-                    .andWhere(`c.value ${condition} :fieldValue`)
+                    .andWhere(condition)
                     .setParameters({
                         projectId,
                         fieldId: filter.fieldId,
-                        fieldValue: filter.value,
+                        fieldValue: filter.operator === FilterOperator.CO ? `%${filter.value}%` : filter.value,
                     })
 
                 queryBuilder.andWhere(`EXISTS (${subQuery.getQuery()})`)
@@ -160,13 +158,9 @@ export const recordService = {
             })
         }
 
-        // const paginationResult = await paginator.paginate(
-        //   queryBuilder
-        // )
-        // return paginationHelper.createPage(paginationResult.data, paginationResult.cursor)
         const data = await queryBuilder.getMany()
         return {
-            data,
+            data: await Promise.all(data.map((record) => formatRecordAndFetchField(record))),
             next: null,
             previous: null,
         }
@@ -175,10 +169,7 @@ export const recordService = {
     async getById({
         id,
         projectId,
-    }: {
-        id: string
-        projectId: string
-    }): Promise<PopulatedRecord> {
+    }: GetByIdParams): Promise<PopulatedRecord> {
         const record = await recordRepo().findOne({
             where: { id, projectId },
             relations: ['cells'],
@@ -194,18 +185,14 @@ export const recordService = {
             })
         }
 
-        return record
+        return formatRecordAndFetchField(record)
     },
 
     async update({
         id,
         projectId,
         request,
-    }: {
-        id: string
-        projectId: string
-        request: UpdateRecordRequest
-    }): Promise<PopulatedRecord> {
+    }: UpdateParams): Promise<PopulatedRecord> {
         const { tableId } = request
         return transaction(async (entityManager: EntityManager) => {
             const record = await entityManager.getRepository(RecordEntity).findOne({
@@ -271,7 +258,7 @@ export const recordService = {
                 })
             }
 
-            return updatedRecord
+            return formatRecordAndFetchField(updatedRecord)
         })
     },
 
@@ -279,51 +266,19 @@ export const recordService = {
         ids,
         projectId,
     }: DeleteParams): Promise<PopulatedRecord[]> {
-
-        return transaction(async (entityManager: EntityManager)=>{
-            const records = await entityManager.getRepository(RecordEntity).find({
-                where: { id: In(ids), projectId },
-                relations: ['cells'],
-                order: {
-                    order: 'ASC',
-                }
-            })
-            if(records.length === 0){
-                return []
-            }
-            const tableId = records[0].tableId
-            //doesn't currently work like it should, it says updated X rows but in reality all orders stay the same,
-            // maybe if we use deferred unique constraint instead of unique index it will work, but we need to keep the order indexed so we can fetch fast
-            await entityManager.createQueryBuilder()
-            .update(RecordEntity)
-            .set({
-                order: () => `
-                    CASE 
-                        WHEN "order" > (
-                            SELECT MIN("order") 
-                            FROM record 
-                            WHERE id IN (:...ids)
-                        )
-                        THEN "order" - (
-                            SELECT COUNT(*) 
-                            FROM record 
-                            WHERE id IN (:...ids) 
-                            AND "order" < record."order"
-                        )
-                        ELSE "order"
-                    END
-                `,
-            })
-            .where('tableId = :tableId', { tableId })
-            .andWhere('projectId = :projectId', { projectId })
-            .andWhere('id NOT IN (:...ids)', { ids })
-            .setParameters({ ids })
-            await entityManager.getRepository(RecordEntity).delete({
-                id: In(ids),
-                projectId,
-            })
-            return records
+        const records = await recordRepo().find({
+            where: { id: In(ids), projectId },
+            relations: ['cells'],
         })
+        await recordRepo().delete({
+            id: In(ids),
+            projectId,
+        })
+        const fields = await fieldService.getAll({
+            tableId: records[0].tableId,
+            projectId,
+        })
+        return records.map((record) => formatRecord(record, fields))
     },
 
     async triggerWebhooks({
@@ -340,58 +295,32 @@ export const recordService = {
             events: [eventType],
         })
 
-        if (webhooks.length > 0) {
-            const webhookRequests: {
-                flowId: string
-                request: Pick<FastifyRequest, 'body'>
-            }[] = webhooks.map((webhook) => ({
-                flowId: webhook.flowId,
-                request: {
-                    body: data,
-                },
-            }))
-
-            const publicUrl = await flagService.getOne(ApFlagId.PUBLIC_URL)
-            if (isNil(publicUrl)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.ENTITY_NOT_FOUND,
-                    params: { entityType: 'Flag', entityId: ApFlagId.PUBLIC_URL },
-                })
-            }
-
-            const promises = webhookRequests.map((webhookRequest) => {
-                return webhookService.handleWebhook({
-                    async: true,
-                    flowId: webhookRequest.flowId,
-                    flowVersionToRun: undefined,
-                    saveSampleData: false,
-                    data: {
-                        isFastifyRequest: false,
-                        payload: {
-                            method: 'POST',
-                            headers: {
-                                authorization,
-                            },
-                            body: webhookRequest.request.body,
-                            queryParams: {},
-                        },
-                    },
-                    logger,
-                })
-            })
-            await Promise.all(promises)
+        if (webhooks.length === 0) {
+            return
         }
+        await Promise.all(webhooks.map((webhook) => {
+            return webhookService.handleWebhook({
+                async: true,
+                flowId: webhook.flowId,
+                flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
+                saveSampleData: false,
+                data: async (_projectId: string) => ({
+                    method: 'POST',
+                    headers: {
+                        authorization,
+                    },
+                    body: data,
+                    queryParams: {},
+                }),
+                logger,
+            })
+        }))
     },
 }
 
-type TriggerWebhooksParams = {
-
+type CreateParams = {
+    request: CreateRecordsRequest
     projectId: string
-    tableId: string
-    eventType: TableWebhookEventType
-    data: Record<string, unknown>
-    logger: FastifyBaseLogger
-    authorization: string
 }
 
 type ListParams = {
@@ -402,7 +331,51 @@ type ListParams = {
     filters: Filter[] | null
 }
 
+type GetByIdParams = {
+    id: string
+    projectId: string
+}
+
+type UpdateParams = {
+    id: string
+    projectId: string
+    request: UpdateRecordRequest
+}
+
 type DeleteParams = {
     ids: string[]
     projectId: string
+}
+
+type TriggerWebhooksParams = {
+    projectId: string
+    tableId: string
+    eventType: TableWebhookEventType
+    data: Record<string, unknown>
+    logger: FastifyBaseLogger
+    authorization: string
+}
+
+
+async function formatRecordAndFetchField(record: RecordSchema): Promise<PopulatedRecord> {
+    const fields = await fieldService.getAll({
+        tableId: record.tableId,
+        projectId: record.projectId,
+    })
+    return formatRecord(record, fields)
+}
+
+function formatRecord(record: RecordSchema, fields: Field[]): PopulatedRecord {
+    return {
+        ...record,
+        cells: Object.fromEntries(record.cells.map((cell) => {
+            const field = fields.find((field) => field.id === cell.fieldId)
+            return [cell.fieldId, {
+                fieldName: field!.name,
+                value: cell.value,
+                updated: cell.updated,
+                created: cell.created,
+            }]
+        })),
+    }
 }

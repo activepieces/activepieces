@@ -86,7 +86,6 @@ import { AddUserIdentitySqlite1735602676499 } from './migration/sqlite/173560267
 import { TableWebhooksSqlite1737550783153 } from './migration/sqlite/1737550783153-TableWebhooksSqlite'
 import { RestrictPiecesSqlite1739544872722 } from './migration/sqlite/1739544872722-RestrictPiecesSqlite'
 import { TableWebhooksIsArraySqlite1741668828922 } from './migration/sqlite/1741668828922-TableWebhooksIsArraySqlite'
-import { AddRecordOrderColumn1741695545298 } from './migration/sqlite/1741695545298-AddRecordOrderColumn'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -190,7 +189,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddUserIdentitySqlite1735602676499,
         RestrictPiecesSqlite1739544872722,
         TableWebhooksIsArraySqlite1741668828922,
-        AddRecordOrderColumn1741695545298
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

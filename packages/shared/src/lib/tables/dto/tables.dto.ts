@@ -27,3 +27,12 @@ export const UpdateTableRequest = Type.Object({
 })
 
 export type UpdateTableRequest = Static<typeof UpdateTableRequest>
+
+
+export const ListTablesRequest = Type.Object({
+    limit: Type.Optional(Type.Number({})),
+    cursor: Type.Optional(Type.String({})),
+    name: Type.Optional(Type.String({})),
+})
+
+export type ListTablesRequest = Static<typeof ListTablesRequest>

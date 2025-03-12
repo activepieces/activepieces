@@ -1,5 +1,5 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { nanoid } from 'nanoid';
 import { useState } from 'react';
 import { FieldErrors, useForm } from 'react-hook-form';
 
@@ -19,22 +19,20 @@ import { getColumnIcon } from '@/features/tables/lib/utils';
 import { cn } from '@/lib/utils';
 import { FieldType, isNil } from '@activepieces/shared';
 
-import { tableHooks } from '../lib/ap-tables-hooks';
-
 type NewFieldDialogProps = {
   children: React.ReactNode;
-  tableId: string;
 };
+
 type NewFieldFormData = {
   name: string;
   type: FieldType;
 };
 
-export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
+export function NewFieldPopup({ children }: NewFieldDialogProps) {
   const [open, setOpen] = useState(false);
-  const queryClient = useQueryClient();
-  const [enqueueMutation] = useTableState((state) => [state.enqueueMutation]);
-  const { data: fields } = tableHooks.useFetchFields(tableId);
+  const fields = useTableState((state) => state.fields);
+  const createField = useTableState((state) => state.createField);
+
   const form = useForm<NewFieldFormData>({
     resolver: (data) => {
       const errors: FieldErrors<NewFieldFormData> = {};
@@ -67,11 +65,6 @@ export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
     },
   });
 
-  const createFieldMutation = tableHooks.useCreateField({
-    queryClient,
-    tableId,
-  });
-
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
@@ -82,9 +75,10 @@ export function NewFieldPopup({ children, tableId }: NewFieldDialogProps) {
             onSubmit={form.handleSubmit(async (data) => {
               form.reset();
               setOpen(false);
-              await enqueueMutation(createFieldMutation, {
-                ...data,
-                tableId,
+              createField({
+                uuid: nanoid(),
+                name: data.name,
+                type: data.type,
               });
             })}
             className="space-y-4"

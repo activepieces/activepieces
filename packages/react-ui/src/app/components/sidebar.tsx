@@ -180,12 +180,14 @@ export function Sidebar({
         >
           {!hideHeader ? (
             <div className="flex flex-col">
-              <Header />
+              <div className={removeGutters ? 'px-4' : ''}>
+                <Header />
+              </div>
               <div
                 className={cn('flex', {
                   'py-4': embedState.isEmbedded,
                   'container mx-auto px-2': !removeGutters,
-                  'py-10': !hideHeader,
+                  'pt-10': !hideHeader,
                 })}
               >
                 {children}

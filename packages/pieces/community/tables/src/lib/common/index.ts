@@ -1,10 +1,21 @@
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { DynamicPropsValue, Property, TriggerHookContext } from "@activepieces/pieces-framework";
-import { CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, Table, TableWebhookEventType } from "@activepieces/shared";
+import { CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, PopulatedRecord, SeekPage, Table, TableWebhookEventType } from "@activepieces/shared";
 import { z } from 'zod';
 
+type FormattedRecord = {
+  id: string;
+  created: string;
+  updated: string;
+  cells: Record<string, {
+    fieldName: string;
+    updated: string;
+    created: string;
+    value: unknown;
+  }>;
+}
 export const tablesCommon = {
-  table_name: Property.Dropdown({ // TODO: change to table_id
+  table_id: Property.Dropdown({
     displayName: 'Table Name',
     description: 'The name of the table to insert records into.',
     required: true,
@@ -14,20 +25,34 @@ export const tablesCommon = {
       try {
         const res = await httpClient.sendRequest({
           method: HttpMethod.GET,
-          url: `${context.server.apiUrl}v1/tables`,
+          url: `${context.server.apiUrl}v1/tables?limit=100`,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
             token: context.server.token,
           },
         });
-
-        const tables = res.body;
+        const resultBody = res.body as SeekPage<Table>
+        const tables = [...resultBody.data];
         if (!Array.isArray(tables) || tables.length === 0) {
           return {
             options: [],
             disabled: true,
             placeholder: 'No tables found. Please create a table first.',
           };
+        }
+        let next = resultBody.next;
+        while (next) {
+          const nextPage = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: `${context.server.apiUrl}v1/tables?cursor=${next}&limit=100`,
+            authentication: {
+              type: AuthenticationType.BEARER_TOKEN,
+              token: context.server.token,
+            },
+          });
+          const nextPageBody = nextPage.body as SeekPage<Table>
+          tables.push(...nextPageBody.data)
+          next = nextPageBody.next
         }
 
         return {
@@ -194,5 +219,52 @@ export const tablesCommon = {
     });
 
     return response.body;
+  },
+
+  async getRecentRecords({
+    tableId,
+    limit = 5,
+    context
+  }: {
+    tableId: string,
+    limit?: number,
+    context: { server: { apiUrl: string, token: string } }
+  }) {
+    if ((tableId ?? '').toString().length === 0) {
+        throw new Error(JSON.stringify({
+            message: 'Please add some records to the table before testing this trigger'
+        }))
+    }
+
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: `${context.server.apiUrl}v1/records/list`,
+      body: {
+        tableId,
+        limit
+      },
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: context.server.token,
+      },
+    });
+
+    return response.body.data.map(this.formatRecord);
+
+  },
+  formatRecord(record: PopulatedRecord): FormattedRecord {
+    return {
+      id: record.id,
+      created: record.created,
+      updated: record.updated,
+      cells: Object.fromEntries(Object.entries(record.cells).map(([fieldId, cell]) => {
+        return [fieldId, {
+          fieldName: cell.fieldName,
+          updated: cell.updated,
+          created: cell.created,
+          value: cell.value 
+        }]
+      })),
+    }
   }
 }

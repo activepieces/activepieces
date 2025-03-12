@@ -6,17 +6,21 @@ import {
     ErrorCode,
     ExportTableResponse,
     isNil,
+    SeekPage,
     Table,
     TableWebhook,
     TableWebhookEventType,
     UpdateTableRequest,
 } from '@activepieces/shared'
+import { ILike } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { APArrayContains } from '../../database/database-connection'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { fieldService } from '../field/field.service'
 import { RecordEntity } from '../record/record.entity'
 import { TableWebhookEntity } from './table-webhook.entity'
 import { TableEntity } from './table.entity'
-import { APArrayContains } from '../../database/database-connection'
 
 const tableRepo = repoFactory(TableEntity)
 const recordRepo = repoFactory(RecordEntity)
@@ -35,11 +39,27 @@ export const tableService = {
 
         return table
     },
+    async list({ projectId, cursor, limit, name }: ListParams): Promise<SeekPage<Table>> {
+        const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
 
-    async getAll({ projectId }: GetAllParams): Promise<Table[]> {
-        return tableRepo().find({
-            where: { projectId },
+        const paginator = buildPaginator({
+            entity: TableEntity,
+            query: {
+                limit,
+                order: 'DESC',
+                afterCursor: decodedCursor.nextCursor,
+                beforeCursor: decodedCursor.previousCursor,
+            },
         })
+        const queryWhere: Record<string, unknown> = { projectId }
+        if (!isNil(name)) {
+            queryWhere.name = ILike(`%${name}%`)
+        }
+        const paginationResult = await paginator.paginate(
+            tableRepo().createQueryBuilder('table').where(queryWhere),
+        )
+
+        return paginationHelper.createPage(paginationResult.data, paginationResult.cursor)
     },
 
     async getById({
@@ -160,8 +180,11 @@ type CreateParams = {
     request: CreateTableRequest
 }
 
-type GetAllParams = {
+type ListParams = {
     projectId: string
+    cursor: string | undefined
+    limit: number
+    name: string | undefined
 }
 
 type GetByIdParams = {

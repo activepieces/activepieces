@@ -6,8 +6,6 @@ import { cn } from '@/lib/utils';
 
 import { Row } from '../lib/types';
 
-
-
 const NumberEditor = ({
   row,
   column,
@@ -22,7 +20,6 @@ const NumberEditor = ({
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
-
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.value;
@@ -39,17 +36,17 @@ const NumberEditor = ({
 
   return (
     <div className="h-full relative w-full">
-       <div
-  className={cn(
-    'h-full flex items-center gap-2',
-    'border-2 border-primary',
-    'bg-background',
-  )}
->
+      <div
+        className={cn(
+          'h-full flex items-center gap-2',
+          'border-2 border-primary',
+          'bg-background',
+        )}
+      >
         <input
           ref={inputRef}
           value={value ?? ''}
-          type={ 'number'}
+          type={'number'}
           onChange={handleChange}
           onBlur={commitChanges}
           onKeyDown={(e) => {
@@ -74,13 +71,9 @@ const NumberEditor = ({
         <div className="flex-none bg-primary/10 p-1 mr-2">
           <Edit2 className="h-4 w-4 text-primary" />
         </div>
-         
-        </div>
-  
+      </div>
     </div>
   );
-}
+};
 NumberEditor.displayName = 'NumberEditor';
 export { NumberEditor };
-
-

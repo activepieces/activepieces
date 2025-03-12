@@ -2,19 +2,15 @@ import { api } from '@/lib/api';
 import {
   CreateTableRequest,
   ExportTableResponse,
+  ListTablesRequest,
   SeekPage,
   Table,
   UpdateTableRequest,
 } from '@activepieces/shared';
 
 export const tablesApi = {
-  async list(): Promise<SeekPage<Table>> {
-    const response = await api.get<Table[]>('/v1/tables');
-    return {
-      data: response,
-      next: null,
-      previous: null,
-    };
+  async list(request: ListTablesRequest): Promise<SeekPage<Table>> {
+    return await api.get<SeekPage<Table>>('/v1/tables', request);
   },
 
   create(request: CreateTableRequest): Promise<Table> {

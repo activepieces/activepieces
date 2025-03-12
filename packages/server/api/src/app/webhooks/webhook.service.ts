@@ -1,31 +1,22 @@
 import { AppSystemProp, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, EngineHttpResponse, ErrorCode, EventPayload, Flow, FlowStatus, GetFlowVersionForWorkerRequestType, isMultipartFile, isNil } from '@activepieces/shared'
-import { FastifyBaseLogger, FastifyRequest } from 'fastify'
+import { ActivepiecesError, apId, EngineHttpResponse, ErrorCode, EventPayload, Flow, FlowStatus, GetFlowVersionForWorkerRequestType, isNil } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { usageService } from '../ee/platform-billing/usage/usage-service'
-import { stepFileService } from '../file/step-file/step-file.service'
 import { flowService } from '../flows/flow/flow.service'
 import { system } from '../helper/system/system'
-import { projectService } from '../project/project-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue } from '../workers/queue'
 import { getJobPriority } from '../workers/queue/queue-manager'
 
 const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 
-type WebhookData = {
-    isFastifyRequest: true
-    request: FastifyRequest
-} | {
-    isFastifyRequest: false
-    payload: EventPayload
-}
 type HandleWebhookParams = {
     flowId: string
     async: boolean
     saveSampleData: boolean
     flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED | undefined
-    data: WebhookData
+    data: (projectId: string) => Promise<EventPayload>
     logger: FastifyBaseLogger
 } 
 
@@ -77,7 +68,7 @@ export const webhookService = {
                 schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                 requestId: webhookRequestId,
                 synchronousHandlerId,
-                payload: data.isFastifyRequest ?  await convertRequest(data.request, flow.projectId, flow.id) : data.payload,
+                payload: await data(flow.projectId),
                 flowId: flow.id,
                 saveSampleData,
                 flowVersionToRun,
@@ -123,54 +114,4 @@ async function assertExceedsLimit(flow: Flow, log: FastifyBaseLogger): Promise<v
         },
     })
 }
-
-async function convertBody(
-    request: FastifyRequest,
-    projectId: string,
-    flowId: string,
-): Promise<unknown> {
-    if (request.isMultipart()) {
-        const jsonResult: Record<string, unknown> = {}
-        const requestBodyEntries = Object.entries(
-            request.body as Record<string, unknown>,
-        )
-
-        const platformId = await projectService.getPlatformId(projectId)
-
-        for (const [key, value] of requestBodyEntries) {
-            if (isMultipartFile(value)) {
-                const file = await stepFileService(request.log).saveAndEnrich({
-                    data: value.data as Buffer,
-                    fileName: value.filename,
-                    stepName: 'trigger',
-                    flowId,
-                    contentLength: value.data.length,
-                    platformId,
-                    projectId,
-                })
-                jsonResult[key] = file.url
-            }
-            else {
-                jsonResult[key] = value
-            }
-        }
-        return jsonResult
-    }
-    return request.body
-}
-
-async function convertRequest(
-    request: FastifyRequest,
-    projectId: string,
-    flowId: string,
-): Promise<EventPayload> {
-    const payload: EventPayload = {
-        method: request.method,
-        headers: request.headers as Record<string, string>,
-        body: await convertBody(request, projectId, flowId),
-        queryParams: request.query as Record<string, string>,
-    }
-    return payload
-}
-
 

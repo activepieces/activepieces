@@ -1,6 +1,7 @@
 import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { PopulatedRecord } from '@activepieces/shared';
 
 export const getRecord = createAction({
   name: 'tables-get-record',
@@ -8,7 +9,7 @@ export const getRecord = createAction({
   description: 'Get single record by its id.',
   auth: PieceAuth.None(),
   props: {
-    table_name: tablesCommon.table_name,
+    table_id: tablesCommon.table_id,
     record_id: tablesCommon.record_id,
   },
   async run(context) {
@@ -23,6 +24,6 @@ export const getRecord = createAction({
       },
     });
 
-    return response.body;
+    return tablesCommon.formatRecord(response.body as PopulatedRecord);
   },
 });
