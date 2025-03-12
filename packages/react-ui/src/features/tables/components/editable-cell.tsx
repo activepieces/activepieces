@@ -4,7 +4,7 @@ import { CalculatedColumn } from 'react-data-grid';
 
 import { Button } from '@/components/ui/button';
 import { cn, formatUtils } from '@/lib/utils';
-import { FieldType, isNil } from '@activepieces/shared';
+import { FieldType } from '@activepieces/shared';
 
 import { Row } from '../lib/types';
 

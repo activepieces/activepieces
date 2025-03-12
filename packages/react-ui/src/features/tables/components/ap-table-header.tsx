@@ -8,10 +8,12 @@ import { Permission } from '@activepieces/shared';
 
 import ApTableName from './ap-table-name';
 import { useTableState } from './ap-table-state-provider';
-import { ArrowLeft, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, RefreshCw, Trash2 } from 'lucide-react';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
+import { authenticationSession } from '@/lib/authentication-session';
+import { HomeButton } from '@/components/ui/home-button';
 
 type ApTableHeaderProps = {
   isFetchingNextPage: boolean;
@@ -35,15 +37,19 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
     setIsEditingTableName(searchParams.get(NEW_TABLE_QUERY_PARAM) === 'true');
   }, []);
 
+
   const tableData = useTableState((state) => state.table);
   return (
-    <div className="flex flex-col gap-4 flex-none">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-4 flex-none px-4">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Link to="/tables" className="text-sm font-medium">
-            <h1 className="text-2xl font-semibold">Tables</h1>
-          </Link>
-          <ArrowLeft className="h-4 w-4 rotate-180 text-muted-foreground" />
+        <div className="flex items-center gap-2">
+           <HomeButton
+           showBackButton={true}
+           route={'/tables'}
+           >
+           </HomeButton>
+        
           <ApTableName
             tableName={tableData?.name ?? ''}
             isEditingTableName={isEditingTableName}
@@ -65,10 +71,6 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
         )}
       </div>
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {/* Left side content can go here */}
-        </div>
-
         <div className="flex items-center gap-2">
           <div onClick={(e) => e.stopPropagation()}>
             <PermissionNeededTooltip
@@ -104,10 +106,13 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
           </div>
         </div>
       </div>
+      </div>
+      
+     
     </div>
   );
 };
 
-ApTableHeader.displayName = '   ';
+ApTableHeader.displayName = 'ApTableHeader';
 
 export default ApTableHeader;
