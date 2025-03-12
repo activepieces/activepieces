@@ -41,6 +41,11 @@ import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
 import { StoreEntryEntity } from '../store-entry/store-entry-entity'
+import { FieldEntity } from '../tables/field/field.entity'
+import { CellEntity } from '../tables/record/cell.entity'
+import { RecordEntity } from '../tables/record/record.entity'
+import { TableWebhookEntity } from '../tables/table/table-webhook.entity'
+import { TableEntity } from '../tables/table/table.entity'
 import { PieceTagEntity } from '../tags/pieces/piece-tag.entity'
 import { TagEntity } from '../tags/tag-entity'
 import { UserEntity } from '../user/user-entity'
@@ -79,6 +84,11 @@ function getEntities(): EntitySchema<unknown>[] {
         WorkerMachineEntity,
         AiProviderEntity,
         ProjectRoleEntity,
+        TableEntity,
+        FieldEntity,
+        RecordEntity,
+        CellEntity,
+        TableWebhookEntity,
         UserIdentityEntity,
     ]
 

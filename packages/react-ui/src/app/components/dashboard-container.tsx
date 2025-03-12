@@ -4,6 +4,7 @@ import {
   Link2,
   Logs,
   Package,
+  Table2,
   Workflow,
   Wrench,
 } from 'lucide-react';
@@ -24,6 +25,8 @@ import { Sidebar, SidebarLink } from './sidebar';
 
 type DashboardContainerProps = {
   children: React.ReactNode;
+  hideHeader?: boolean;
+  removeGutters?: boolean;
 };
 
 const ProjectChangedRedirector = ({
@@ -41,7 +44,11 @@ export const CloseTaskLimitAlertContext = createContext({
   setIsAlertClosed: (isAlertClosed: boolean) => {},
 });
 
-export function DashboardContainer({ children }: DashboardContainerProps) {
+export function DashboardContainer({
+  children,
+  removeGutters,
+  hideHeader,
+}: DashboardContainerProps) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification(
     platform.flowIssuesEnabled,
@@ -65,6 +72,13 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
       icon: Workflow,
       showInEmbed: true,
       hasPermission: checkAccess(Permission.READ_FLOW),
+    },
+    {
+      to: authenticationSession.appendProjectRoutePrefix('/tables'),
+      label: t('Tables'),
+      icon: Table2,
+      showInEmbed: true,
+      hasPermission: checkAccess(Permission.READ_TABLE),
     },
     {
       to: authenticationSession.appendProjectRoutePrefix('/runs'),
@@ -113,7 +127,9 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
           }}
         >
           <Sidebar
+            removeGutters={removeGutters}
             isHomeDashboard={true}
+            hideHeader={hideHeader}
             links={links}
             hideSideNav={embedState.hideSideNav}
           >

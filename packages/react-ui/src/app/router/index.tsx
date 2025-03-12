@@ -34,10 +34,13 @@ import {
   ActivepiecesVendorRouteChanged,
 } from 'ee-embed-sdk';
 
+import { ApTableStateProvider } from '../../features/tables/components/ap-table-state-provider';
 import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
 import { DashboardContainer } from '../components/dashboard-container';
 import { PlatformAdminContainer } from '../components/platform-admin-container';
 import NotFoundPage from '../routes/404-page';
+import { ApTablesPage } from '../routes/ap-tables';
+import { ApTableEditorPage } from '../routes/ap-tables/id';
 import AuthenticatePage from '../routes/authenticate';
 import { ChangePasswordPage } from '../routes/change-password';
 import { AppConnectionsPage } from '../routes/connections';
@@ -191,6 +194,32 @@ const routes = [
           </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/tables',
+    element: (
+      <DashboardContainer>
+        <RoutePermissionGuard permission={Permission.READ_TABLE}>
+          <PageTitle title="Tables">
+            <ApTablesPage />
+          </PageTitle>
+        </RoutePermissionGuard>
+      </DashboardContainer>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/tables/:tableId',
+    element: (
+      <RoutePermissionGuard permission={Permission.READ_TABLE}>
+        <DashboardContainer removeGutters>
+          <PageTitle title="Table">
+            <ApTableStateProvider>
+              <ApTableEditorPage />
+            </ApTableStateProvider>
+          </PageTitle>
+        </DashboardContainer>
+      </RoutePermissionGuard>
     ),
   }),
   ...ProjectRouterWrapper({

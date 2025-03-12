@@ -97,12 +97,16 @@ type SidebarProps = {
   links: SidebarLink[];
   isHomeDashboard?: boolean;
   hideSideNav?: boolean;
+  hideHeader?: boolean;
+  removeGutters?: boolean;
 };
 export function Sidebar({
   children,
   links,
   isHomeDashboard = false,
   hideSideNav = false,
+  hideHeader = false,
+  removeGutters = false,
 }: SidebarProps) {
   const branding = flagsHooks.useWebsiteBranding();
   const { data: showSupportAndDocs } = flagsHooks.useFlag<boolean>(
@@ -113,14 +117,14 @@ export function Sidebar({
   const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
   return (
     <div>
-      <div className="flex min-h-screen w-full  ">
+      <div className="flex min-h-screen w-full">
         {!hideSideNav && (
-          <aside className=" border-r sticky  top-0 h-screen bg-muted/50 w-[65px] ">
+          <aside className="border-r sticky top-0 h-screen bg-muted/50 w-[65px]">
             <ScrollArea>
-              <nav className="flex flex-col items-center h-screen  sm:py-5  gap-5 p-2 ">
+              <nav className="flex flex-col items-center h-screen sm:py-5 gap-5 p-2">
                 <Link
                   to={isHomeDashboard ? defaultRoute : '/platform'}
-                  className="h-[48px] items-center justify-center "
+                  className="h-[48px] items-center justify-center"
                 >
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -168,17 +172,30 @@ export function Sidebar({
             </ScrollArea>
           </aside>
         )}
-        <div className="flex-1 p-4">
-          <div className="flex flex-col">
-            <Header />
-            <div
-              className={cn('container mx-auto flex py-10 px-2', {
-                'py-4': embedState.isEmbedded,
-              })}
-            >
-              {children}
+        <div
+          className={cn('flex-1 p-4', {
+            'py-0': hideHeader,
+            'px-0': removeGutters,
+          })}
+        >
+          {!hideHeader ? (
+            <div className="flex flex-col">
+              <div className={removeGutters ? 'px-4' : ''}>
+                <Header />
+              </div>
+              <div
+                className={cn('flex', {
+                  'py-4': embedState.isEmbedded,
+                  'container mx-auto px-2': !removeGutters,
+                  'pt-10': !hideHeader,
+                })}
+              >
+                {children}
+              </div>
             </div>
-          </div>
+          ) : (
+            children
+          )}
         </div>
       </div>
       <ShowPoweredBy show={platform?.showPoweredBy && isHomeDashboard} />
