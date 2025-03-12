@@ -21,6 +21,8 @@ import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
 import { IssueEntity } from '../ee/issues/issues-entity'
+import { ManualTaskCommentEntity } from '../ee/manual-task/comment/manual-task-comment.entity'
+import { ManualTaskEntity } from '../ee/manual-task/manual-task.entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
 import { PlatformBillingEntity } from '../ee/platform-billing/platform-billing.entity'
 import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
@@ -97,6 +99,8 @@ function getEntities(): EntitySchema<unknown>[] {
                 GitRepoEntity,
                 AuditEventEntity,
                 ProjectReleaseEntity,
+                ManualTaskEntity,
+                ManualTaskCommentEntity,
 
                 // CLOUD
                 AppSumoEntity,
@@ -165,4 +169,4 @@ export function APArrayContains<T>(
 }
 
 // Uncomment the below line when running `nx db-migration server-api name=<MIGRATION_NAME>` and recomment it after the migration is generated
-// export const exportedConnection = databaseConnection()
+export const exportedConnection = databaseConnection()

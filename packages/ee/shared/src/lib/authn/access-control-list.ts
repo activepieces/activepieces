@@ -23,6 +23,8 @@ export const rolePermissions: Record<DefaultProjectRole, Permission[]> = {
         Permission.READ_PROJECT,
         Permission.WRITE_FOLDER,
         Permission.READ_FOLDER,
+        Permission.READ_MANUAL_TASKS,
+        Permission.WRITE_MANUAL_TASK,
     ],
     [DefaultProjectRole.EDITOR]: [
         Permission.READ_APP_CONNECTION,
@@ -41,6 +43,8 @@ export const rolePermissions: Record<DefaultProjectRole, Permission[]> = {
         Permission.READ_PROJECT,
         Permission.WRITE_FOLDER,
         Permission.READ_FOLDER,
+        Permission.READ_MANUAL_TASKS,
+        Permission.WRITE_MANUAL_TASK,
     ],
     [DefaultProjectRole.OPERATOR]: [
         Permission.READ_APP_CONNECTION,
@@ -55,6 +59,7 @@ export const rolePermissions: Record<DefaultProjectRole, Permission[]> = {
         Permission.READ_ISSUES,
         Permission.READ_PROJECT,
         Permission.READ_FOLDER,
+        Permission.READ_MANUAL_TASKS,
     ],
     [DefaultProjectRole.VIEWER]: [
         Permission.READ_APP_CONNECTION,
@@ -65,5 +70,6 @@ export const rolePermissions: Record<DefaultProjectRole, Permission[]> = {
         Permission.READ_PROJECT,
         Permission.READ_RUN,
         Permission.READ_FOLDER,
+        Permission.READ_MANUAL_TASKS,
     ],
 }

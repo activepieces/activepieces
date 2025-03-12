@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import {
   AlertCircle,
   Link2,
+  ListTodo,
   Logs,
   Package,
   Workflow,
@@ -80,6 +81,13 @@ export function DashboardContainer({ children }: DashboardContainerProps) {
       notification: showIssuesNotification,
       showInEmbed: false,
       hasPermission: checkAccess(Permission.READ_ISSUES),
+    },
+    {
+      to: authenticationSession.appendProjectRoutePrefix('/manual-tasks'),
+      label: t('Tasks'),
+      icon: ListTodo,
+      showInEmbed: true,
+      hasPermission: checkAccess(Permission.READ_MANUAL_TASKS),
     },
     {
       to: authenticationSession.appendProjectRoutePrefix('/connections'),

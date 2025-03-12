@@ -59,7 +59,7 @@ const CustomTooltipLink = ({
       rel={newWindow ? 'noopener noreferrer' : ''}
     >
       <div
-        className={`relative flex flex-col items-center justify-center gap-1`}
+        className={`relative flex flex-col items-center justify-center gap-1 text-center`}
       >
         {locked && (
           <LockKeyhole
