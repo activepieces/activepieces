@@ -5,13 +5,11 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { activePieceAuth } from '../../index';
 
 export const createTask = createAction({
   name: 'createTask',
   displayName: 'Create Task',
   description: 'Creates a task for a user, requiring them to respond or take action.',
-  auth: activePieceAuth,
   props: {
     title: Property.ShortText({
       displayName: 'Title',
@@ -26,14 +24,18 @@ export const createTask = createAction({
     assigneeId: Property.Dropdown({
       displayName: 'Assignee',
       description: 'The user to assign the task to',
-      required: true,
-      options: async ({ auth }, context) => {
-        const baseApiUrl = (auth as any).baseApiUrl;
-        const apiKey = (auth as any).apiKey;
+      required: false,
+      options: async (_, context) => {
+        const baseApiUrl = context.server.publicUrl;
+        const apiKey = context.server.token;
         // TODO: need to make it get all pages and make the limit 100 not 1 page with all members
         const request: HttpRequest = {
           method: HttpMethod.GET,
-          url: `${baseApiUrl}/project-members?limit=1000&projectId=${context.project.id}`,
+          url: `${baseApiUrl}v1/project-members`,
+          queryParams: {
+            limit: '1000',
+            projectId: context.project.id,
+          },
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
             token: apiKey,  
@@ -70,23 +72,24 @@ export const createTask = createAction({
       }
     }),
   },
-  async run({ propsValue, auth, flows, run }) {
+  async run({ propsValue, flows, run, server }) {
     const requestBody = {
       title: propsValue.title,
-      description: propsValue.description,
+      description: propsValue.description ?? undefined,
       statusOptions: propsValue.statusOptions['options'],
       flowId: flows.current.id,
       runId: run.id,
-      assigneeId: propsValue.assigneeId,
+      assigneeId: propsValue.assigneeId ?? undefined,
     };
+    
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${auth.baseApiUrl}/manual-tasks`,
+      url: `${server.publicUrl}v1/manual-tasks`,
       body: requestBody,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth.apiKey,
+        token: server.token,
       },
     };
 
