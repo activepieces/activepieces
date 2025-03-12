@@ -132,7 +132,8 @@
         "handbook/engineering/playbooks/releases",
         "handbook/engineering/playbooks/infrastructure",
         "handbook/engineering/playbooks/bullboard",
-        "handbook/engineering/playbooks/database-migration"
+        "handbook/engineering/playbooks/database-migration",
+        "handbook/engineering/playbooks/product-announcement"
       ]
     },
     {
