@@ -37,6 +37,16 @@ export enum GetFlowVersionForWorkerRequestType {
     EXACT = 'EXACT',
 }
 
+export const SendFlowResponseRequest = Type.Object({
+    workerHandlerId: Type.String(),
+    httpRequestId: Type.String(),
+    runResponse: Type.Object({
+        status: Type.Number(),
+        body: Type.Any(),
+        headers: Type.Record(Type.String(), Type.String()),
+    }),
+})
+export type SendFlowResponseRequest = Static<typeof SendFlowResponseRequest>
 export const GetFlowVersionForWorkerRequest = Type.Union([
     Type.Object({
         type: Type.Literal(GetFlowVersionForWorkerRequestType.LATEST),

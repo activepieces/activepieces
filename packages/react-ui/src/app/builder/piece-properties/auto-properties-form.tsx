@@ -22,11 +22,11 @@ import { MultiSelectPieceProperty } from '../../../components/custom/multi-selec
 import { ArrayPieceProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
 import { BuilderJsonEditorWrapper } from './builder-json-wrapper';
+import CustomProperty from './custom-property';
 import { DictionaryProperty } from './dictionary-property';
 import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
 import { DynamicProperties } from './dynamic-piece-property';
 import { TextInputWithMentions } from './text-input-with-mentions';
-import CustomProperty from './custom-property';
 
 type AutoFormProps = {
   props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;
@@ -296,12 +296,14 @@ const selectFormComponentForProperty = ({
     case PropertyType.OAUTH2:
       return <></>;
     case PropertyType.CUSTOM:
-      return <CustomProperty
-        code={property.code}
-        value={field.value}
-        onChange={field.onChange}
-        disabled={disabled}
-      ></CustomProperty>
+      return (
+        <CustomProperty
+          code={property.code}
+          value={field.value}
+          onChange={field.onChange}
+          disabled={disabled}
+        ></CustomProperty>
+      );
   }
 };
 AutoPropertiesFormComponent.displayName = 'AutoFormComponent';
