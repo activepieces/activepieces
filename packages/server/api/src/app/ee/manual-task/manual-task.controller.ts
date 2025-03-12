@@ -30,7 +30,7 @@ export const manualTaskController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/', CreateManualTaskRequest, async (request) => {
         const { title, description, statusOptions, flowId, runId, assigneeId } = request.body
-        return await manualTaskService(request.log).create({
+        return manualTaskService(request.log).create({
             title,
             description,
             statusOptions,

@@ -24,7 +24,6 @@ import { formatUtils } from '@/lib/utils';
 import {
   ManualTask,
   ManualTaskWithAssignee,
-  StatusOption,
 } from '@activepieces/ee-shared';
 
 function ManualTasksPage() {
