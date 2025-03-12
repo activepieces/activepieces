@@ -85,8 +85,8 @@ export const createApTableStore = (
       })),
       records: records.map((record) => ({
         uuid: nanoid(),
-        values: record.cells.map((cell) => ({
-          fieldIndex: fields.findIndex((field) => field.id === cell.fieldId),
+        values: Object.entries(record.cells).map(([fieldId, cell]) => ({
+          fieldIndex: fields.findIndex((field) => field.id === fieldId),
           value: cell.value,
         })),
       })),

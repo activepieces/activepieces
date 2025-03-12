@@ -1,7 +1,7 @@
 import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
-import { UpdateRecordRequest } from '@activepieces/shared';
+import { PopulatedRecord, UpdateRecordRequest } from '@activepieces/shared';
 
 export const updateRecord = createAction({
   name: 'tables-update-record',
@@ -9,15 +9,15 @@ export const updateRecord = createAction({
   description: 'Update values in an existing record',
   auth: PieceAuth.None(),
   props: {
-    table_name: tablesCommon.table_name,
+    table_id: tablesCommon.table_id,
     record_id: tablesCommon.record_id,
     values: Property.DynamicProperties({
       displayName: 'Values',
       description: 'The values to update. Leave empty to keep current value.',
       required: true,
-      refreshers: ['table_name', 'record_id'],
-      props: async ({ table_name, record_id }, context) => {
-        const tableId = table_name as unknown as string;
+      refreshers: ['table_id', 'record_id'],
+      props: async ({ table_id, record_id }, context) => {
+        const tableId = table_id as unknown as string;
         const recordId = record_id as unknown as string;
         if ((tableId ?? '').toString().length === 0 || (recordId ?? '').toString().length === 0) {
           return {};
@@ -28,7 +28,7 @@ export const updateRecord = createAction({
     }),
   },
   async run(context) {
-    const { table_name: tableId, record_id, values } = context.propsValue;
+    const { table_id: tableId, record_id, values } = context.propsValue;
 
     const tableFields = await tablesCommon.getTableFields({ tableId, context });
     const fieldValidations = tablesCommon.createFieldValidations(tableFields);
@@ -56,6 +56,6 @@ export const updateRecord = createAction({
       },
     });
 
-    return response.body;
+    return tablesCommon.formatRecord(response.body as PopulatedRecord);
   },
 });

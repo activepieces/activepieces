@@ -9,14 +9,14 @@ export const createRecords = createAction({
   description: 'Insert one or more new records to a table.',
   auth: PieceAuth.None(),
   props: {
-    table_name: tablesCommon.table_name,
+    table_id: tablesCommon.table_id,
     values: Property.DynamicProperties({
       displayName: 'Records',
       description: 'The records to create.',
       required: true,
-      refreshers: ['table_name'],
-      props: async ({ table_name }, context) => {
-        const tableId = table_name as unknown as string;
+      refreshers: ['table_id'],
+      props: async ({ table_id }, context) => {
+        const tableId = table_id as unknown as string;
         if ((tableId ?? '').toString().length === 0) {
           return {};
         }
@@ -38,7 +38,7 @@ export const createRecords = createAction({
     }),
   },
   async run(context) {
-    const { table_name: tableId, values } = context.propsValue;
+    const { table_id: tableId, values } = context.propsValue;
 
     const records: CreateRecordsRequest['records'] = values['values'].map((record: Record<string, unknown>) =>
       Object.entries(record)
@@ -68,6 +68,6 @@ export const createRecords = createAction({
       },
     });
 
-    return response.body;
+    return response.body.map(tablesCommon.formatRecord);
   },
 });

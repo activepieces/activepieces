@@ -29,14 +29,14 @@ export const createServerState = (
   return {
     deleteField: (fieldIndex: number) => {
       addPromiseToQueue(async () => {
+        const fieldId = clonedFields[fieldIndex].id
         await fieldsApi.delete(clonedFields[fieldIndex].id);
         clonedFields.splice(fieldIndex, 1);
         clonedRecords = clonedRecords.map((record) => {
-          const updatedRecord = { ...record };
-          updatedRecord.cells = record.cells.filter(
-            (_, index) => index !== fieldIndex,
-          );
-          return updatedRecord;
+          return {
+            ...record,
+            cells: Object.fromEntries(Object.entries(record.cells).filter(([key]) => key !== fieldId)),
+          };
         });
       });
     },

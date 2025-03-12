@@ -4,6 +4,7 @@ import {
     CreateRecordsRequest,
     Cursor,
     ErrorCode,
+    Field,
     Filter,
     FilterOperator,
     GetFlowVersionForWorkerRequestType,
@@ -21,7 +22,8 @@ import { webhookService } from '../../webhooks/webhook.service'
 import { FieldEntity } from '../field/field.entity'
 import { tableService } from '../table/table.service'
 import { CellEntity } from './cell.entity'
-import { RecordEntity } from './record.entity'
+import { RecordEntity, RecordSchema } from './record.entity'
+import { fieldService } from '../field/field.service'
 
 const recordRepo = repoFactory(RecordEntity)
 
@@ -42,9 +44,8 @@ export const recordService = {
                     existingFields.some((field) => field.id === cellData.fieldId),
                 ),
             )
-           //TODO: remove this logic once we have a proper way to order records, this is a workaround so multiple reocrds inserted remain in the same order
             const now = new Date()
-            const recordInsertions= validRecords.map((_,index) => {
+            const recordInsertions = validRecords.map((_, index) => {
                 const created = new Date(now.getTime() + index).toISOString()
                 return {
                     tableId: request.tableId,
@@ -87,7 +88,11 @@ export const recordService = {
                     },
                 })
 
-            return fullyPopulatedRecords
+            const fields = await fieldService.getAll({
+                tableId: request.tableId,
+                projectId,
+            })
+            return fullyPopulatedRecords.map((record) => formatRecord(record, fields))
         })
     },
 
@@ -95,7 +100,7 @@ export const recordService = {
         tableId,
         projectId,
         filters,
-     
+
     }: ListParams): Promise<SeekPage<PopulatedRecord>> {
         const queryBuilder = recordRepo()
             .createQueryBuilder('record')
@@ -107,7 +112,7 @@ export const recordService = {
         if (filters?.length) {
             filters.forEach((filter, _index) => {
                 const operator = filter.operator || FilterOperator.EQ
-                let condition: string =''
+                let condition: string = ''
 
                 switch (operator) {
                     case FilterOperator.EQ:
@@ -145,7 +150,7 @@ export const recordService = {
                     .setParameters({
                         projectId,
                         fieldId: filter.fieldId,
-                        fieldValue:  filter.operator === FilterOperator.CO ? `%${filter.value}%` : filter.value,
+                        fieldValue: filter.operator === FilterOperator.CO ? `%${filter.value}%` : filter.value,
                     })
 
                 queryBuilder.andWhere(`EXISTS (${subQuery.getQuery()})`)
@@ -155,7 +160,7 @@ export const recordService = {
 
         const data = await queryBuilder.getMany()
         return {
-            data,
+            data: await Promise.all(data.map((record) => formatRecordAndFetchField(record))),
             next: null,
             previous: null,
         }
@@ -180,7 +185,7 @@ export const recordService = {
             })
         }
 
-        return record
+        return formatRecordAndFetchField(record)
     },
 
     async update({
@@ -253,7 +258,7 @@ export const recordService = {
                 })
             }
 
-            return updatedRecord
+            return formatRecordAndFetchField(updatedRecord)
         })
     },
 
@@ -269,7 +274,11 @@ export const recordService = {
             id: In(ids),
             projectId,
         })
-        return records
+        const fields = await fieldService.getAll({
+            tableId: records[0].tableId,
+            projectId,
+        })
+        return records.map((record) => formatRecord(record, fields))
     },
 
     async triggerWebhooks({
@@ -345,4 +354,28 @@ type TriggerWebhooksParams = {
     data: Record<string, unknown>
     logger: FastifyBaseLogger
     authorization: string
+}
+
+
+async function formatRecordAndFetchField(record: RecordSchema): Promise<PopulatedRecord> {
+    const fields = await fieldService.getAll({
+        tableId: record.tableId,
+        projectId: record.projectId,
+    })
+    return formatRecord(record, fields)
+}
+
+function formatRecord(record: RecordSchema, fields: Field[]): PopulatedRecord {
+    return {
+        ...record,
+        cells: Object.fromEntries(record.cells.map((cell) => {
+            const field = fields.find((field) => field.id === cell.fieldId)
+            return [cell.fieldId, {
+                fieldName: field!.name,
+                value: cell.value,
+                updated: cell.updated,
+                created: cell.created,
+            }]
+        })),
+    }
 }

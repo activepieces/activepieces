@@ -16,7 +16,7 @@ export const findRecords = createAction({
   description: 'Find records in a table with filters.',
   auth: PieceAuth.None(),
   props: {
-    table_name: tablesCommon.table_name,
+    table_id: tablesCommon.table_id,
     limit: Property.Number({
       displayName: 'Limit',
       description: 'Maximum number of records to return (default no limit).',
@@ -26,10 +26,10 @@ export const findRecords = createAction({
       displayName: 'Filters',
       description: 'Filter conditions to apply',
       required: false,
-      refreshers: ['table_name'],
+      refreshers: ['table_id'],
       props: async (propsValue, context) => {
-        const table_name = propsValue['table_name'];
-        if (!table_name || typeof table_name !== 'string') {
+        const table_id = propsValue['table_id'];
+        if (!table_id || typeof table_id !== 'string') {
           return {
             filters: Property.Array({
               displayName: 'Filters',
@@ -40,7 +40,7 @@ export const findRecords = createAction({
         }
 
         const fields = await tablesCommon.getTableFields({
-          tableId: table_name,
+          tableId: table_id,
           context,
         });
 
@@ -85,7 +85,7 @@ export const findRecords = createAction({
     }),
   },
   async run(context) {
-    const { table_name: tableId, limit, filters } = context.propsValue;
+    const { table_id: tableId, limit, filters } = context.propsValue;
     const filtersArray: { field: FieldInfo; operator: FilterOperator; value: unknown }[] = filters?.['filters'] ?? [];
 
     for (const filter of filtersArray) {
@@ -144,6 +144,6 @@ export const findRecords = createAction({
       },
     });
 
-    return response.body;
+    return response.body.map(tablesCommon.formatRecord);
   },
 });

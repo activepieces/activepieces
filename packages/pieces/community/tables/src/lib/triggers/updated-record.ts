@@ -1,6 +1,6 @@
 import { createTrigger, PieceAuth, TriggerStrategy } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
-import { TableWebhookEventType } from '@activepieces/shared';
+import { PopulatedRecord, TableWebhookEventType } from '@activepieces/shared';
 
 export const updatedRecordTrigger = createTrigger({
     // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -9,12 +9,12 @@ export const updatedRecordTrigger = createTrigger({
     description: 'Triggers when a record is updated in the selected table.',
     auth: PieceAuth.None(),
     props: {
-        table_name: tablesCommon.table_name,
+        table_id: tablesCommon.table_id,
     },
     sampleData: {},
     type: TriggerStrategy.WEBHOOK,
-    async onEnable(context){
-        const tableId = context.propsValue.table_name;
+    async onEnable(context) {
+        const tableId = context.propsValue.table_id;
         if ((tableId ?? '').toString().length === 0) {
             return;
         }
@@ -32,8 +32,8 @@ export const updatedRecordTrigger = createTrigger({
 
         context.store.put('webhookId', webhookId);
     },
-    async onDisable(context){
-        const tableId = context.propsValue.table_name;
+    async onDisable(context) {
+        const tableId = context.propsValue.table_id;
         if ((tableId ?? '').toString().length === 0) {
             return;
         }
@@ -52,7 +52,13 @@ export const updatedRecordTrigger = createTrigger({
             },
         });
     },
-    async run(context){
-        return [context.payload.body]
+    async run(context) {
+        return [tablesCommon.formatRecord(context.payload.body as PopulatedRecord)]
+    },
+    async test(context) {
+        return tablesCommon.getRecentRecords({
+            tableId: context.propsValue.table_id,
+            context
+        });
     }
 })

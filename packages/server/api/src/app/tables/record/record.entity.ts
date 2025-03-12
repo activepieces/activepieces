@@ -2,7 +2,7 @@ import { Cell, Project, Record, Table } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
-type RecordSchema = Record & {
+export type RecordSchema = Record & {
     table: Table
     project: Project
     cells: Cell[]
