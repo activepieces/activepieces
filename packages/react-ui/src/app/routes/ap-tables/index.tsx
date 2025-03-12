@@ -68,7 +68,7 @@ const ApTablesPage = () => {
       });
       await recordsApi.create({
         records: [
-          ...Array.from({ length: 1 }, () => [
+          ...Array.from({ length: 10 }, (_) => [
             {
               fieldId: field.id,
               value: '',
@@ -95,14 +95,10 @@ const ApTablesPage = () => {
         queryFn: async () => {
           const data = await tablesApi.export(id);
           const csvRows: string[][] = [];
-          // Add header row
           csvRows.push(data.fields.map((f) => f.name));
-          // Add data rows
           data.rows.forEach((row) => {
             csvRows.push(data.fields.map((field) => row[field.name] ?? ''));
           });
-
-          // Convert to CSV string
           const csvContent = csvRows
             .map((row) =>
               row
@@ -115,7 +111,6 @@ const ApTablesPage = () => {
             )
             .join('\n');
 
-          // Create and download file
           const blob = new Blob([csvContent], { type: 'text/csv' });
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
