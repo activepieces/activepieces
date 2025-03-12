@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Trash2, Plus, Download, Loader2 } from 'lucide-react';
+import { Trash2, Plus, Download, Loader2, CheckIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { BetaBadge } from '@/app/components/beta-badge';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -43,9 +43,14 @@ const ApTablesPage = () => {
     new Set(),
   );
   const { data: project } = projectHooks.useCurrentProject();
+  const [searchParams] = useSearchParams();
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['tables', project.id],
-    queryFn: () => tablesApi.list(),
+    queryKey: ['tables',searchParams.toString(), project.id],
+    queryFn: () => tablesApi.list({
+      cursor: searchParams.get('cursor') ?? undefined,
+      limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined,
+      name: searchParams.get('name') ?? undefined,
+    }),
   });
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_ALERT,
@@ -325,9 +330,17 @@ const ApTablesPage = () => {
       </div>
 
       <DataTable
+      filters={[
+        {
+          accessorKey:'name',
+          type:'input',
+          title:t('Name'),
+          icon:CheckIcon,
+          options:[]
+        }
+      ]}
         columns={columns}
         page={data}
-        hidePagination={true}
         isLoading={isLoading}
         onRowClick={(row, newWindow) => {
           const path = `/projects/${project.id}/tables/${row.id}`;

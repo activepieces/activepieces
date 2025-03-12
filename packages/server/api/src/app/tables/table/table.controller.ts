@@ -1,33 +1,38 @@
-import { CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, Permission, PrincipalType, Table, UpdateTableRequest } from '@activepieces/shared'
+import { ApId, CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, ListTablesRequest, Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, Table, UpdateTableRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { tableService } from './table.service'
 
+const DEFAULT_PAGE_SIZE = 10
+
 export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
 
-    fastify.post('/', CreateRequest, async (request, reply) => {
-        const response = await tableService.create({
+    fastify.post('/', CreateRequest, async (request) => {
+        return await tableService.create({
             projectId: request.principal.projectId,
             request: request.body,
         })
-        await reply.status(StatusCodes.CREATED).send(response)
     },
     )
 
-    fastify.post('/:id', UpdateRequest, async (request, reply) => {
-        const response = await tableService.update({
+    fastify.post('/:id', UpdateRequest, async (request) => {
+        return await tableService.update({
             projectId: request.principal.projectId,
             id: request.params.id,
             request: request.body,
         })
-        await reply.status(StatusCodes.OK).send(response)
+         
     })
 
-    fastify.get('/', GetTablesRequest, async (request, reply) => {
-        const response = await tableService.getAll({
+    fastify.get('/', GetTablesRequest, async (request) => {
+        
+        return await tableService.list({
             projectId: request.principal.projectId,
+            cursor: request.query.cursor,
+            limit: request.query.limit??DEFAULT_PAGE_SIZE,
+            name: request.query.name,
         })
-        await reply.status(StatusCodes.OK).send(response)
+   
     },
     )
 
@@ -90,6 +95,15 @@ const GetTablesRequest = {
         allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
         permission: Permission.READ_TABLE,
     },
+    schema: {
+        tags: ['tables'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'List tables',
+        querystring: ListTablesRequest,
+        response: {
+            [StatusCodes.OK]: SeekPage(Table),
+        },
+    },
 }
 
 const DeleteRequest = {
@@ -97,10 +111,17 @@ const DeleteRequest = {
         allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
         permission: Permission.WRITE_TABLE,
     },
+    
     schema: {
+        tags: ['tables'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Delete a table',
         params: Type.Object({
-            id: Type.String(),
+            id: ApId,
         }),
+        response: {
+            [StatusCodes.NO_CONTENT]: Type.Never(),
+        },
     },
 }
 
@@ -110,8 +131,11 @@ const GetTableByIdRequest = {
         permission: Permission.READ_TABLE,
     },
     schema: {
+        tags: ['tables'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Get a table by id',
         params: Type.Object({
-            id: Type.String(),
+            id: ApId,
         }),
         response: {
             [StatusCodes.OK]: Table,
@@ -125,6 +149,9 @@ const ExportTableRequest = {
         permission: Permission.READ_TABLE,
     },
     schema: {
+        tags: ['tables'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Export a table', 
         params: Type.Object({
             id: Type.String(),
         }),
@@ -140,6 +167,9 @@ const CreateTableWebhook = {
         permission: Permission.WRITE_TABLE,
     },
     schema: {
+        tags: ['tables'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Create a table webhook',
         params: Type.Object({
             id: Type.String(),
         }),
@@ -153,6 +183,9 @@ const DeleteTableWebhook = {
         permission: Permission.WRITE_TABLE,
     },
     schema: {
+        tags: ['tables'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Delete a table webhook',
         params: Type.Object({
             id: Type.String(),
             webhookId: Type.String(),
@@ -166,6 +199,9 @@ const UpdateRequest = {
         permission: Permission.WRITE_TABLE,
     },
     schema: {
+        tags: ['tables'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Update a table',
         params: Type.Object({
             id: Type.String(),
         }),
