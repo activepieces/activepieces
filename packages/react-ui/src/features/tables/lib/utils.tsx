@@ -15,4 +15,3 @@ export function getColumnIcon(type: FieldType): ReactNode {
       return null;
   }
 }
-

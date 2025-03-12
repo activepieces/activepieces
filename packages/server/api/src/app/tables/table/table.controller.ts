@@ -8,7 +8,7 @@ const DEFAULT_PAGE_SIZE = 10
 export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
 
     fastify.post('/', CreateRequest, async (request) => {
-        return await tableService.create({
+        return tableService.create({
             projectId: request.principal.projectId,
             request: request.body,
         })
@@ -16,7 +16,7 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
     )
 
     fastify.post('/:id', UpdateRequest, async (request) => {
-        return await tableService.update({
+        return tableService.update({
             projectId: request.principal.projectId,
             id: request.params.id,
             request: request.body,
@@ -26,10 +26,10 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
 
     fastify.get('/', GetTablesRequest, async (request) => {
 
-        return await tableService.list({
+        return tableService.list({
             projectId: request.principal.projectId,
             cursor: request.query.cursor,
-            limit: request.query.limit??DEFAULT_PAGE_SIZE,
+            limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
             name: request.query.name,
         })
    

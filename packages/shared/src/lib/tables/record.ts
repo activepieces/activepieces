@@ -19,7 +19,7 @@ export const PopulatedRecord = Type.Composite([
                 fieldName: Type.String(),
             }),
         ])),
-    })
+    }),
 ])
 
 export type PopulatedRecord = Static<typeof PopulatedRecord>

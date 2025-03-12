@@ -29,13 +29,15 @@ export const createServerState = (
   return {
     deleteField: (fieldIndex: number) => {
       addPromiseToQueue(async () => {
-        const fieldId = clonedFields[fieldIndex].id
+        const fieldId = clonedFields[fieldIndex].id;
         await fieldsApi.delete(clonedFields[fieldIndex].id);
         clonedFields.splice(fieldIndex, 1);
         clonedRecords = clonedRecords.map((record) => {
           return {
             ...record,
-            cells: Object.fromEntries(Object.entries(record.cells).filter(([key]) => key !== fieldId)),
+            cells: Object.fromEntries(
+              Object.entries(record.cells).filter(([key]) => key !== fieldId),
+            ),
           };
         });
       });

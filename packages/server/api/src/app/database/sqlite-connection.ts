@@ -188,7 +188,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddExternalIdForFlowSqlite1735262810939,
         AddUserIdentitySqlite1735602676499,
         RestrictPiecesSqlite1739544872722,
-        TableWebhooksIsArraySqlite1741668828922
+        TableWebhooksIsArraySqlite1741668828922,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

@@ -29,7 +29,7 @@ export enum FilterOperator {
     GTE = 'gte',
     LT = 'lt',
     LTE = 'lte',
-    CO = 'co'
+    CO = 'co',
 }
 
 export const Filter = Type.Object({

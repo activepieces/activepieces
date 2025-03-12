@@ -28,11 +28,12 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { GitBranchType } from '@activepieces/ee-shared';
 import { Permission, PopulatedFlow } from '@activepieces/shared';
 
+import { MoveFlowDialog } from '../components/move-flow-dialog';
+
 import { flowsApi } from './flows-api';
 import { flowsHooks } from './flows-hooks';
 
-import { MoveFlowDialog } from '../components/move-flow-dialog';
-// TODO: this should be divded to more components 
+// TODO: this should be divded to more components
 export const useFlowsBulkActions = ({
   selectedRows,
   isDropdownOpen,

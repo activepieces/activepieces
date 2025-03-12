@@ -28,8 +28,8 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { SelectFlowTemplateDialog } from '@/features/flows/components/select-flow-template-dialog';
-import { useFlowsBulkActions } from '@/features/flows/lib/use-flows-bulk-actions';
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import { useFlowsBulkActions } from '@/features/flows/lib/use-flows-bulk-actions';
 import { FolderBadge } from '@/features/folders/component/folder-badge';
 import {
   FolderFilterList,

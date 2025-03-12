@@ -20,10 +20,10 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { webhookService } from '../../webhooks/webhook.service'
 import { FieldEntity } from '../field/field.entity'
+import { fieldService } from '../field/field.service'
 import { tableService } from '../table/table.service'
 import { CellEntity } from './cell.entity'
 import { RecordEntity, RecordSchema } from './record.entity'
-import { fieldService } from '../field/field.service'
 
 const recordRepo = repoFactory(RecordEntity)
 
@@ -112,7 +112,7 @@ export const recordService = {
         if (filters?.length) {
             filters.forEach((filter, _index) => {
                 const operator = filter.operator || FilterOperator.EQ
-                let condition: string = ''
+                let condition = ''
 
                 switch (operator) {
                     case FilterOperator.EQ:
@@ -299,7 +299,7 @@ export const recordService = {
             return
         }
         await Promise.all(webhooks.map((webhook) => {
-            webhookService.handleWebhook({
+            return webhookService.handleWebhook({
                 async: true,
                 flowId: webhook.flowId,
                 flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,

@@ -3,7 +3,6 @@ import {
     apId,
     CreateTableRequest,
     CreateTableWebhookRequest,
-    Cursor,
     ErrorCode,
     ExportTableResponse,
     isNil,
@@ -13,15 +12,15 @@ import {
     TableWebhookEventType,
     UpdateTableRequest,
 } from '@activepieces/shared'
+import { ILike } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { APArrayContains } from '../../database/database-connection'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { fieldService } from '../field/field.service'
 import { RecordEntity } from '../record/record.entity'
 import { TableWebhookEntity } from './table-webhook.entity'
 import { TableEntity } from './table.entity'
-import { APArrayContains } from '../../database/database-connection'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { ILike } from 'typeorm'
 
 const tableRepo = repoFactory(TableEntity)
 const recordRepo = repoFactory(RecordEntity)
@@ -41,7 +40,7 @@ export const tableService = {
         return table
     },
     async list({ projectId, cursor, limit, name }: ListParams): Promise<SeekPage<Table>> {
-        const decodedCursor = paginationHelper.decodeCursor(cursor??null)
+        const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
 
         const paginator = buildPaginator({
             entity: TableEntity,
@@ -57,7 +56,7 @@ export const tableService = {
             queryWhere.name = ILike(`%${name}%`)
         }
         const paginationResult = await paginator.paginate(
-            tableRepo().createQueryBuilder('table').where(queryWhere)
+            tableRepo().createQueryBuilder('table').where(queryWhere),
         )
 
         return paginationHelper.createPage(paginationResult.data, paginationResult.cursor)
@@ -182,10 +181,10 @@ type CreateParams = {
 }
 
 type ListParams = {
-    projectId: string;
-    cursor: string | undefined;
-    limit: number;
-    name: string | undefined;
+    projectId: string
+    cursor: string | undefined
+    limit: number
+    name: string | undefined
 }
 
 type GetByIdParams = {
