@@ -119,7 +119,7 @@ export function EditableCell({
       />
     );
   }
- const displayedValue = value.trim().replace(/\n/g, ' ')
+ const displayedValue = value?.trim()?.replace(/\n/g, ' ')
   return (
     <div
       id={`editable-cell-${rowIdx}-${column.idx}`}

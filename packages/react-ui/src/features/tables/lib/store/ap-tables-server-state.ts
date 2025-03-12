@@ -62,7 +62,7 @@ export const createServerState = (
           ],
         });
         if (createdRecords.length > 0) {
-          clonedRecords.push(createdRecords[0]);
+          clonedRecords.push(...createdRecords);
         }
         updateSavingStatus(queue.size() === 1);
       });
@@ -86,6 +86,7 @@ export const createServerState = (
     },
     deleteRecords: (recordIndices: string[]) => {
       addPromiseToQueue(async () => {
+     
         const recordIds = recordIndices.map(
           (index) => clonedRecords[parseInt(index)].id,
         );

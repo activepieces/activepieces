@@ -17,12 +17,13 @@ type ApTableHeaderProps = {
   isFetchingNextPage: boolean;
 };
 const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
-  const [isSaving, selectedRows, setSelectedRows, deleteRecords] =
+  const [isSaving, selectedRows, setSelectedRows, deleteRecords, records] =
     useTableState((state) => [
       state.isSaving,
       state.selectedRows,
       state.setSelectedRows,
       state.deleteRecords,
+      state.records,
     ]);
   const [searchParams] = useSearchParams();
   const userHasTableWritePermission = useAuthorization().checkAccess(
@@ -82,7 +83,8 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
                   selectedRows.size === 1 ? t('record') : t('records')
                 }
                 mutationFn={async () => {
-                  deleteRecords(Array.from(selectedRows));
+                  const indices = Array.from(selectedRows).map((row) => records.findIndex((r) => r.uuid === row));
+                  deleteRecords(indices.map((index) => index.toString()));
                   setSelectedRows(new Set());
                 }}
               >
