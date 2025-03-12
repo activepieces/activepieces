@@ -14,6 +14,7 @@ export type DataSelectorTreeNodeData = {
 export type DataSelectorTestNodeData = {
   type: 'test';
   stepName: string;
+  parentDisplayName: string;
 };
 
 export type DataSelectorTreeNodeDataUnion =
