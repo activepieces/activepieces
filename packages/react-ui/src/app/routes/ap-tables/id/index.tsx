@@ -192,9 +192,9 @@ const ApTableEditorPage = () => {
   }
 
   return (
-    <div className="overflow-hidden flex flex-col h-full">
+    <div className="w-full h-full">
       <ApTableHeader isFetchingNextPage={false}></ApTableHeader>
-      <div className="flex-1 flex flex-col mt-4 overflow-hidden">
+      <div className="flex-1 flex flex-col mt-8 overflow-hidden">
         <DataGrid
           ref={gridRef}
           columns={columns}
@@ -203,7 +203,7 @@ const ApTableEditorPage = () => {
           selectedRows={selectedRows}
           onSelectedRowsChange={onSelectedRowsChange}
           className={cn(
-            'scroll-smooth flex-1',
+            'scroll-smooth  w-full h-[calc(100vh-7rem-92px)] bg-muted/30',
             theme === 'dark' ? 'rdg-dark' : 'rdg-light',
           )}
           bottomSummaryRows={

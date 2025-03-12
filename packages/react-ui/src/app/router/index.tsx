@@ -212,7 +212,7 @@ const routes = [
     path: '/tables/:tableId',
     element: (
       <RoutePermissionGuard permission={Permission.READ_TABLE}>
-        <DashboardContainer>
+        <DashboardContainer removeGutters>
           <PageTitle title="Table">
             <ApTableStateProvider>
               <ApTableEditorPage />
