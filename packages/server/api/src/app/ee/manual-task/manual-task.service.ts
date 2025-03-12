@@ -12,10 +12,18 @@ import { ManualTaskEntity } from './manual-task.entity'
 
 const repo = repoFactory(ManualTaskEntity)  
 
+const NO_ANSWER_STATUS = {
+    name: 'No Answer',
+    description: 'No Answer',
+    color: '#e5efe7',
+    textColor: '#348848',
+}
+
 export const manualTaskService = (_log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<ManualTask> {
         return repo().save({
             id: apId(),
+            status: NO_ANSWER_STATUS,
             ...params,
         })
     },
@@ -146,7 +154,6 @@ type ListParams = {
 type CreateParams = {
     title: string
     description?: string
-    status: StatusOption
     statusOptions: StatusOption[]
     platformId: string
     projectId: string

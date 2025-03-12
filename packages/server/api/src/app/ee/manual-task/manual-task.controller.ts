@@ -29,11 +29,10 @@ export const manualTaskController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/', CreateManualTaskRequest, async (request) => {
-        const { title, description, status, statusOptions, flowId, runId, assigneeId } = request.body
-        return manualTaskService(request.log).create({
+        const { title, description, statusOptions, flowId, runId, assigneeId } = request.body
+        return await manualTaskService(request.log).create({
             title,
             description,
-            status,
             statusOptions,
             flowId,
             runId,
@@ -64,7 +63,7 @@ const ListManualTasksRequest = {
         querystring: ListManualTasksQueryParams,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
     },
 }
 
@@ -73,7 +72,7 @@ const CreateManualTaskRequest = {
         body: CreateManualTaskRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
     },
 }
 
@@ -84,7 +83,7 @@ const GetManualTaskRequest = {
         }),
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
     },
 }
 
@@ -96,6 +95,6 @@ const UpdateManualTaskRequest = {
         body: UpdateManualTaskRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
     },
 }

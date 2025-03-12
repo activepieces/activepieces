@@ -113,12 +113,13 @@ function ManualTasksPage() {
       type: 'select',
       title: t('Status'),
       accessorKey: 'status',
-      options: Object.values(StatusOption).map((status) => {
-        return {
-          label: status.name,
-          value: status.name,
-        };
-      }),
+      // TODO: need to the real status options
+      options: [
+        {
+          label: 'Test Status',
+          value: 'Test Status',
+        },
+      ],
       icon: CheckIcon,
     } as const,
     {

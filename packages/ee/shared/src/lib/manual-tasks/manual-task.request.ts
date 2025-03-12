@@ -29,7 +29,6 @@ export type UpdateManualTaskRequestBody = Static<typeof UpdateManualTaskRequestB
 export const CreateManualTaskRequestBody = Type.Object({
     title: Type.String(),
     description: Type.Optional(Type.String()),
-    status: StatusOption,
     statusOptions: StatusOptionsSchema,
     flowId: ApId,
     runId: ApId,
