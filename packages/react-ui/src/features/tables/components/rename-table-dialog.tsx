@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Pencil } from 'lucide-react';
 import { useState } from 'react';
@@ -30,19 +30,20 @@ import {
 } from '@/components/ui/tooltip';
 import { toast } from '@/components/ui/use-toast';
 
-import { tableHooks } from '../lib/ap-tables-hooks';
+import { tablesApi } from '../lib/tables-api';
 
+type RenameTableDialogProps = {
+  tableName: string;
+  tableId: string;
+  onRename: () => void;
+  userHasTableWritePermission: boolean;
+};
 const RenameTableDialog = ({
   tableName,
   tableId,
   onRename,
   userHasTableWritePermission,
-}: {
-  tableName: string;
-  tableId: string;
-  onRename: () => void;
-  userHasTableWritePermission: boolean;
-}) => {
+}: RenameTableDialogProps) => {
   const form = useForm<{ name: string }>({
     defaultValues: {
       name: tableName,
@@ -54,22 +55,21 @@ const RenameTableDialog = ({
     ),
   });
   const [showRenameTableDialog, setShowRenameTableDialog] = useState(false);
-  const queryClient = useQueryClient();
-  const { mutate: updateTable, isPending: isUpdatingTable } =
-    tableHooks.useUpdateTable({
-      queryClient: queryClient,
-      tableId: tableId,
-      onSuccess: () => {
-        setShowRenameTableDialog(false);
-        onRename();
-        toast({
-          title: t('Table renamed'),
-          description: `${tableName} ${t('renamed to')} ${form.getValues(
-            'name',
-          )}`,
-        });
-      },
-    });
+  const { mutate: renameTable, isPending: isRenamingTable } = useMutation({
+    mutationFn: (newName: string) =>
+      tablesApi.update(tableId, { name: newName }),
+    onSuccess: () => {
+      setShowRenameTableDialog(false);
+      onRename();
+      toast({
+        title: t('Table renamed'),
+        description: `${tableName} ${t('renamed to')} ${form.getValues(
+          'name',
+        )}`,
+      });
+    },
+  });
+
   return (
     <Tooltip>
       <Dialog
@@ -95,9 +95,7 @@ const RenameTableDialog = ({
         <DialogContent onClick={(e) => e.stopPropagation()}>
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit((data) =>
-                updateTable({ name: data.name }),
-              )}
+              onSubmit={form.handleSubmit((data) => renameTable(data.name))}
             >
               <DialogHeader>
                 <DialogTitle>
@@ -125,7 +123,7 @@ const RenameTableDialog = ({
                   </Button>
                 </DialogClose>
 
-                <Button type="submit" loading={isUpdatingTable}>
+                <Button type="submit" loading={isRenamingTable}>
                   {t('Confirm')}
                 </Button>
               </div>

@@ -1,20 +1,48 @@
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { createContext, useContext, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 import { useStore } from 'zustand';
 
 import {
-  tableHooks,
   TableState,
   ApTableStore,
-} from '@/features/tables/lib/ap-tables-hooks';
+  createApTableStore,
+} from '@/features/tables/lib/store/ap-tables-client-state';
+
+import { fieldsApi } from '../lib/fields-api';
+import { recordsApi } from '../lib/records-api';
+import { tablesApi } from '../lib/tables-api';
 
 const TableContext = createContext<ApTableStore | null>(null);
 
-export function ApTableStateProvider({
-  children,
-}: {
+type ApTableStateProviderProps = {
   children: React.ReactNode;
-}) {
-  const tableStoreRef = useRef<ApTableStore>(tableHooks.createApTableStore());
+};
+export function ApTableStateProvider({ children }: ApTableStateProviderProps) {
+  const tableId = useParams().tableId;
+
+  const { data: table } = useSuspenseQuery({
+    queryKey: ['table', tableId],
+    queryFn: () => tablesApi.getById(tableId!),
+  });
+
+  const { data: fields } = useSuspenseQuery({
+    queryKey: ['fields', tableId],
+    queryFn: () => fieldsApi.list(tableId!),
+  });
+
+  const { data: records } = useSuspenseQuery({
+    queryKey: ['records', tableId],
+    queryFn: () =>
+      recordsApi.list({
+        tableId: tableId!,
+        cursor: undefined,
+      }),
+  });
+
+  const tableStoreRef = useRef<ApTableStore>(
+    createApTableStore(table, fields, records.data),
+  );
   return (
     <TableContext.Provider value={tableStoreRef.current}>
       {children}

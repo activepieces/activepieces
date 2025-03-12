@@ -1,23 +1,22 @@
 import {
     ActivepiecesError,
-    ApFlagId,
     apId,
     CreateRecordsRequest,
     Cursor,
     ErrorCode,
     Filter,
     FilterOperator,
+    GetFlowVersionForWorkerRequestType,
     isNil,
     PopulatedRecord,
     SeekPage,
     TableWebhookEventType,
     UpdateRecordRequest,
 } from '@activepieces/shared'
-import { FastifyBaseLogger, FastifyRequest } from 'fastify'
+import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
-import { flagService } from '../../flags/flag.service'
 import { webhookService } from '../../webhooks/webhook.service'
 import { FieldEntity } from '../field/field.entity'
 import { tableService } from '../table/table.service'
@@ -31,10 +30,7 @@ export const recordService = {
     async create({
         request,
         projectId,
-    }: {
-        request: CreateRecordsRequest
-        projectId: string
-    }): Promise<PopulatedRecord[]> {
+    }: CreateParams): Promise<PopulatedRecord[]> {
         return transaction(async (entityManager: EntityManager) => {
             // Find existing fields for the table
             const existingFields = await entityManager
@@ -175,10 +171,7 @@ export const recordService = {
     async getById({
         id,
         projectId,
-    }: {
-        id: string
-        projectId: string
-    }): Promise<PopulatedRecord> {
+    }: GetByIdParams): Promise<PopulatedRecord> {
         const record = await recordRepo().findOne({
             where: { id, projectId },
             relations: ['cells'],
@@ -201,11 +194,7 @@ export const recordService = {
         id,
         projectId,
         request,
-    }: {
-        id: string
-        projectId: string
-        request: UpdateRecordRequest
-    }): Promise<PopulatedRecord> {
+    }: UpdateParams): Promise<PopulatedRecord> {
         const { tableId } = request
         return transaction(async (entityManager: EntityManager) => {
             const record = await entityManager.getRepository(RecordEntity).findOne({
@@ -340,58 +329,32 @@ export const recordService = {
             events: [eventType],
         })
 
-        if (webhooks.length > 0) {
-            const webhookRequests: {
-                flowId: string
-                request: Pick<FastifyRequest, 'body'>
-            }[] = webhooks.map((webhook) => ({
-                flowId: webhook.flowId,
-                request: {
-                    body: data,
-                },
-            }))
-
-            const publicUrl = await flagService.getOne(ApFlagId.PUBLIC_URL)
-            if (isNil(publicUrl)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.ENTITY_NOT_FOUND,
-                    params: { entityType: 'Flag', entityId: ApFlagId.PUBLIC_URL },
-                })
-            }
-
-            const promises = webhookRequests.map((webhookRequest) => {
-                return webhookService.handleWebhook({
-                    async: true,
-                    flowId: webhookRequest.flowId,
-                    flowVersionToRun: undefined,
-                    saveSampleData: false,
-                    data: {
-                        isFastifyRequest: false,
-                        payload: {
-                            method: 'POST',
-                            headers: {
-                                authorization,
-                            },
-                            body: webhookRequest.request.body,
-                            queryParams: {},
-                        },
-                    },
-                    logger,
-                })
-            })
-            await Promise.all(promises)
+        if (webhooks.length === 0) {
+            return
         }
+        await Promise.all(webhooks.map((webhook) => {
+            webhookService.handleWebhook({
+                async: true,
+                flowId: webhook.flowId,
+                flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
+                saveSampleData: false,
+                data: async (_projectId: string) => ({
+                    method: 'POST',
+                    headers: {
+                        authorization,
+                    },
+                    body: data,
+                    queryParams: {},
+                }),
+                logger,
+            })
+        }))
     },
 }
 
-type TriggerWebhooksParams = {
-
+type CreateParams = {
+    request: CreateRecordsRequest
     projectId: string
-    tableId: string
-    eventType: TableWebhookEventType
-    data: Record<string, unknown>
-    logger: FastifyBaseLogger
-    authorization: string
 }
 
 type ListParams = {
@@ -402,7 +365,27 @@ type ListParams = {
     filters: Filter[] | null
 }
 
+type GetByIdParams = {
+    id: string
+    projectId: string
+}
+
+type UpdateParams = {
+    id: string
+    projectId: string
+    request: UpdateRecordRequest
+}
+
 type DeleteParams = {
     ids: string[]
     projectId: string
+}
+
+type TriggerWebhooksParams = {
+    projectId: string
+    tableId: string
+    eventType: TableWebhookEventType
+    data: Record<string, unknown>
+    logger: FastifyBaseLogger
+    authorization: string
 }

@@ -5,6 +5,7 @@ import { Trash2, Plus, Download, Loader2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { BetaBadge } from '@/app/components/beta-badge';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -22,7 +23,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import RenameTableDialog from '@/features/tables/components/rename-table-dialog';
 import { fieldsApi } from '@/features/tables/lib/fields-api';
 import { recordsApi } from '@/features/tables/lib/records-api';
@@ -75,18 +76,6 @@ const ApTablesPage = () => {
       navigate(
         `/projects/${project.id}/tables/${table.id}?${NEW_TABLE_QUERY_PARAM}=true`,
       );
-    },
-  });
-
-  const deleteTableMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return tablesApi.delete(id);
-    },
-    onSuccess: () => {
-      refetch();
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
     },
   });
 
@@ -256,39 +245,6 @@ const ApTablesPage = () => {
                 <TooltipContent>{t('Export')}</TooltipContent>
               )}
             </Tooltip>
-            <PermissionNeededTooltip
-              hasPermission={userHasTableWritePermission}
-            >
-              <Tooltip>
-                <ConfirmationDeleteDialog
-                  title={`${t('Delete')} ${row.original.name}`}
-                  message={t(
-                    'Are you sure you want to delete this table? This action cannot be undone.',
-                  )}
-                  mutationFn={async () =>
-                    deleteTableMutation.mutate(row.original.id)
-                  }
-                  entityName={t('table')}
-                >
-                  <TooltipTrigger
-                    asChild
-                    disabled={!userHasTableWritePermission}
-                  >
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => e.stopPropagation()}
-                      disabled={!userHasTableWritePermission}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </TooltipTrigger>
-                </ConfirmationDeleteDialog>
-                {userHasTableWritePermission && (
-                  <TooltipContent>{t('Delete')}</TooltipContent>
-                )}
-              </Tooltip>
-            </PermissionNeededTooltip>
           </div>
         );
       },
@@ -343,29 +299,30 @@ const ApTablesPage = () => {
           </div>
         ),
       },
-      {
-        render: () => (
-          <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
-            <Button
-              size="sm"
-              onClick={() => createTable({ name: t('New Table') })}
-              className="flex items-center gap-2"
-              loading={isCreatingTable}
-              disabled={!userHasTableWritePermission}
-            >
-              <Plus className="h-4 w-4" />
-              {t('New Table')}
-            </Button>
-          </PermissionNeededTooltip>
-        ),
-      },
     ],
     [bulkDeleteMutation, selectedRows],
   );
 
   return (
     <div className="flex-col w-full">
-      <TableTitle>{t('Tables')}</TableTitle>
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-2">
+          <TableTitle>{t('Tables')}</TableTitle>
+          <BetaBadge />
+        </div>
+        <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
+          <Button
+            size="sm"
+            onClick={() => createTable({ name: t('New Table') })}
+            className="flex items-center gap-2"
+            loading={isCreatingTable}
+            disabled={!userHasTableWritePermission}
+          >
+            <Plus className="h-4 w-4" />
+            {t('New Table')}
+          </Button>
+        </PermissionNeededTooltip>
+      </div>
 
       <DataTable
         columns={columns}

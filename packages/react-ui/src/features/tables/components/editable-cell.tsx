@@ -1,10 +1,10 @@
 import { Edit2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { CalculatedColumn } from 'react-data-grid';
 
 import { Button } from '@/components/ui/button';
 import { cn, formatUtils } from '@/lib/utils';
-import { FieldType } from '@activepieces/shared';
+import { FieldType, isNil } from '@activepieces/shared';
 
 import { Row } from '../lib/types';
 

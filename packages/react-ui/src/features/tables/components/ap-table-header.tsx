@@ -1,67 +1,54 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { Button } from '@/components/ui/button';
-import { HomeButton } from '@/components/ui/home-button';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
+import { cn, NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
-
-import { tableHooks } from '../lib/ap-tables-hooks';
 
 import ApTableName from './ap-table-name';
 import { useTableState } from './ap-table-state-provider';
-import { FiltersPopup } from './filters-popup';
+import { ArrowLeft, RefreshCw, Trash2 } from 'lucide-react';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { Button } from '@/components/ui/button';
 
-const ApTableHeader = ({
-  tableId,
-  isFetchingNextPage,
-}: {
-  tableId: string;
+type ApTableHeaderProps = {
   isFetchingNextPage: boolean;
-}) => {
-  const [isSaving, enqueueMutation, selectedRows, setSelectedRows] =
+};
+const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
+  const [isSaving, selectedRows, setSelectedRows, deleteRecords] =
     useTableState((state) => [
       state.isSaving,
-      state.enqueueMutation,
       state.selectedRows,
       state.setSelectedRows,
+      state.deleteRecords,
     ]);
-  const { data: tableData } = tableHooks.useFetchTable(tableId);
   const [searchParams] = useSearchParams();
-  const queryClient = useQueryClient();
-  const location = useLocation();
-  const { data: fieldsData } = tableHooks.useFetchFields(tableId);
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
-  const deleteRecordsMutation = tableHooks.useDeleteRecords({
-    location,
-    tableId: tableId,
-    onSuccess: () => {
-      setSelectedRows(new Set());
-    },
-    queryClient: queryClient,
-  });
+
   const [isEditingTableName, setIsEditingTableName] = useState(false);
   useEffect(() => {
     setIsEditingTableName(searchParams.get(NEW_TABLE_QUERY_PARAM) === 'true');
   }, []);
+
+  const tableData = useTableState((state) => state.table);
   return (
-    <div className="flex flex-col gap-4 ml-3 pt-4 flex-none">
+    <div className="flex flex-col gap-4 flex-none">
       <div className="flex items-center gap-2">
-        <HomeButton route={'/tables'} showBackButton />
-        <ApTableName
-          tableId={tableId}
-          tableName={tableData?.name ?? ''}
-          isEditingTableName={isEditingTableName}
-          setIsEditingTableName={setIsEditingTableName}
-        />
+        <div className="flex items-center gap-2">
+          <Link to="/tables" className="text-sm font-medium">
+            <h1 className="text-2xl font-semibold">Tables</h1>
+          </Link>
+          <ArrowLeft className="h-4 w-4 rotate-180 text-muted-foreground" />
+          <ApTableName
+            tableName={tableData?.name ?? ''}
+            isEditingTableName={isEditingTableName}
+            setIsEditingTableName={setIsEditingTableName}
+          />
+        </div>
 
         {isSaving && (
           <div className="flex items-center gap-2 text-muted-foreground animate-fade-in">
@@ -78,43 +65,41 @@ const ApTableHeader = ({
       </div>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {fieldsData && <FiltersPopup fields={fieldsData} />}
+          {/* Left side content can go here */}
         </div>
-        <div className="flex items-center gap-2 mr-2">
-          {selectedRows.size > 0 && (
-            <div onClick={(e) => e.stopPropagation()}>
-              <PermissionNeededTooltip
-                hasPermission={userHasTableWritePermission}
+
+        <div className="flex items-center gap-2">
+          <div onClick={(e) => e.stopPropagation()}>
+            <PermissionNeededTooltip
+              hasPermission={userHasTableWritePermission}
+            >
+              <ConfirmationDeleteDialog
+                title={t('Delete Records')}
+                message={t(
+                  'Are you sure you want to delete the selected records? This action cannot be undone.',
+                )}
+                entityName={
+                  selectedRows.size === 1 ? t('record') : t('records')
+                }
+                mutationFn={async () => {
+                  deleteRecords(Array.from(selectedRows));
+                  setSelectedRows(new Set());
+                }}
               >
-                <ConfirmationDeleteDialog
-                  title={t('Delete Records')}
-                  message={t(
-                    'Are you sure you want to delete the selected records? This action cannot be undone.',
+                <Button
+                  size="sm"
+                  className={cn(
+                    selectedRows.size > 0 ? 'visible' : 'invisible',
                   )}
-                  entityName={
-                    selectedRows.size === 1 ? t('record') : t('records')
-                  }
-                  mutationFn={async () => {
-                    await enqueueMutation(
-                      deleteRecordsMutation,
-                      Array.from(selectedRows),
-                    );
-                    setSelectedRows(new Set());
-                  }}
+                  variant="destructive"
+                  disabled={!userHasTableWritePermission}
                 >
-                  <Button
-                    className="w-full mr-2"
-                    size="sm"
-                    variant="destructive"
-                    disabled={!userHasTableWritePermission}
-                  >
-                    <Trash2 className="mr-2 w-4" />
-                    {`${t('Delete')} (${selectedRows.size})`}
-                  </Button>
-                </ConfirmationDeleteDialog>
-              </PermissionNeededTooltip>
-            </div>
-          )}
+                  <Trash2 className="mr-2 w-4" />
+                  {`${t('Delete')} (${selectedRows.size})`}
+                </Button>
+              </ConfirmationDeleteDialog>
+            </PermissionNeededTooltip>
+          </div>
         </div>
       </div>
     </div>
