@@ -13,7 +13,6 @@ import { requestApprovalDirectMessageAction } from './lib/actions/request-approv
 import { requestSendApprovalMessageAction } from './lib/actions/request-approval-message';
 import { slackSendDirectMessageAction } from './lib/actions/send-direct-message-action';
 import { slackSendMessageAction } from './lib/actions/send-message-action';
-import { newMessage } from './lib/triggers/new-message';
 import { newReactionAdded } from './lib/triggers/new-reaction-added';
 import { uploadFile } from './lib/actions/upload-file';
 import { searchMessages } from './lib/actions/search-messages';
@@ -28,6 +27,8 @@ import { findUserByHandleAction } from './lib/actions/find-user-by-handle';
 import { setUserStatusAction } from './lib/actions/set-user-status';
 import { newMention } from './lib/triggers/new-mention';
 import { markdownToSlackFormat } from './lib/actions/markdown-to-slack-format';
+import { newMessageTrigger } from './lib/triggers/new-message';
+import { newMessageInChannelTrigger } from './lib/triggers/new-message-in-channel';
 
 export const slackAuth = PieceAuth.OAuth2({
   description: '',
@@ -151,7 +152,7 @@ export const slack = createPiece({
       },
     }),
   ],
-  triggers: [newMessage, newMention, newReactionAdded, channelCreated],
+  triggers: [newMessageTrigger,newMessageInChannelTrigger, newMention, newReactionAdded, channelCreated],
 });
 
 type PayloadBody = {
