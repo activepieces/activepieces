@@ -50,41 +50,46 @@ const EditorSelector = ({
       onRowChange(newRow, commitChanges);
       setIsEditing(false);
     }
+  };
+  const onClose = () => {
+    setIsEditing(false);
+    setIsHovered(false);
+  };
+  switch (type) {
+    case FieldType.DATE:
+      return (
+        <DateEditor
+          row={row}
+          rowIdx={rowIdx}
+          column={column}
+          value={value}
+          onRowChange={handleRowChange}
+          onClose={onClose}
+        />
+      );
+    case FieldType.NUMBER:
+      return (
+        <NumberEditor
+          row={row}
+          rowIdx={rowIdx}
+          column={column}
+          value={value}
+          onRowChange={handleRowChange}
+          onClose={onClose}
+        ></NumberEditor>
+      );
+    default:
+      return (
+        <TextEditor
+          row={row}
+          rowIdx={rowIdx}
+          column={column}
+          value={value}
+          onRowChange={handleRowChange}
+          onClose={onClose}
+        />
+      );
   }
- const onClose = () => {
-  setIsEditing(false);
-  setIsHovered(false);
- }
- switch(type){
-  case FieldType.DATE:
-    return  <DateEditor
-    row={row}
-    rowIdx={rowIdx}
-    column={column}
-    value={value}
-    onRowChange={handleRowChange}
-    onClose={onClose}
-  />
-  case FieldType.NUMBER:
-    return  <NumberEditor
-    row={row}
-    rowIdx={rowIdx}
-    column={column}
-    value={value}
-    onRowChange={handleRowChange}
-    onClose={onClose}
-  ></NumberEditor>
-  default:
-    return <TextEditor
-    row={row}
-    rowIdx={rowIdx}
-    column={column}
-    value={value}
-    onRowChange={handleRowChange}
-    onClose={onClose}
-    />
-
- }
 };
 export function EditableCell({
   type,
@@ -119,7 +124,7 @@ export function EditableCell({
       />
     );
   }
- const displayedValue = value?.trim()?.replace(/\n/g, ' ')
+  const displayedValue = value?.trim()?.replace(/\n/g, ' ');
   return (
     <div
       id={`editable-cell-${rowIdx}-${column.idx}`}

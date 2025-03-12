@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import type { RenderEditCellProps } from 'react-data-grid';
 
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
 import { Row } from '../lib/types';
-import { Textarea } from '@/components/ui/textarea';
-
-
 
 const TextEditor = ({
   row,
@@ -23,8 +21,7 @@ const TextEditor = ({
     textAreaRef.current?.focus();
   }, []);
 
-
-  const handleChange = (event: React.ChangeEvent< HTMLTextAreaElement  >) => {
+  const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = event.target.value;
     setValue(newValue);
     onRowChange({ ...row, [column.key]: newValue }, false);
@@ -39,48 +36,43 @@ const TextEditor = ({
 
   return (
     <div className="h-full relative w-full relative">
-       <div
-  className={cn(
-    'h-min-[300px] w-min-[calc(100%+50px)] w-full absolute top-0  z-50',
-    'border-2 border-primary  drop-shadow-md',
-    'bg-background',
-  )}
->
-
-    <Textarea
-    ref={textAreaRef}
-    value={value ?? ''}
-    onChange={handleChange}
-    onBlur={commitChanges}
-    onKeyDown={(e) => {
-      e.stopPropagation();
-      e.stopPropagation();
-      if (e.key === 'Enter' && !e.shiftKey) {
-        commitChanges();
-        e.preventDefault();
-      }
-      if (e.key === 'Escape') {
-        onClose();
-        e.preventDefault();
-      }
-    }}
-    minRows={4}
-    maxRows={6}
-    className={cn(
-        'flex-1 h-full min-w-0 rounded-none',
-        'border-none text-sm px-2 resize-none ',
-        'focus:outline-none',
-        'placeholder:text-muted-foreground',
-      )}
-      autoComplete="off"
-    />
-         
-        </div>
-  
+      <div
+        className={cn(
+          'h-min-[300px] w-min-[calc(100%+50px)] w-full absolute top-0  z-50',
+          'border-2 border-primary  drop-shadow-md',
+          'bg-background',
+        )}
+      >
+        <Textarea
+          ref={textAreaRef}
+          value={value ?? ''}
+          onChange={handleChange}
+          onBlur={commitChanges}
+          onKeyDown={(e) => {
+            e.stopPropagation();
+            e.stopPropagation();
+            if (e.key === 'Enter' && !e.shiftKey) {
+              commitChanges();
+              e.preventDefault();
+            }
+            if (e.key === 'Escape') {
+              onClose();
+              e.preventDefault();
+            }
+          }}
+          minRows={4}
+          maxRows={6}
+          className={cn(
+            'flex-1 h-full min-w-0 rounded-none',
+            'border-none text-sm px-2 resize-none ',
+            'focus:outline-none',
+            'placeholder:text-muted-foreground',
+          )}
+          autoComplete="off"
+        />
+      </div>
     </div>
   );
-}
+};
 TextEditor.displayName = 'TextEditor';
 export { TextEditor };
-
-

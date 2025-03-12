@@ -181,8 +181,7 @@ export function Sidebar({
           {!hideHeader ? (
             <div className="flex flex-col">
               <div className={removeGutters ? 'px-4' : ''}>
-
-              <Header />
+                <Header />
               </div>
               <div
                 className={cn('flex', {

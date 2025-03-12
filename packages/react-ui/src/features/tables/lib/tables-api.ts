@@ -11,7 +11,6 @@ import {
 export const tablesApi = {
   async list(request: ListTablesRequest): Promise<SeekPage<Table>> {
     return await api.get<SeekPage<Table>>('/v1/tables', request);
-
   },
 
   create(request: CreateTableRequest): Promise<Table> {

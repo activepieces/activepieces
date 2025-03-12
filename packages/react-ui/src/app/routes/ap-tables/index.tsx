@@ -45,12 +45,15 @@ const ApTablesPage = () => {
   const { data: project } = projectHooks.useCurrentProject();
   const [searchParams] = useSearchParams();
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['tables',searchParams.toString(), project.id],
-    queryFn: () => tablesApi.list({
-      cursor: searchParams.get('cursor') ?? undefined,
-      limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined,
-      name: searchParams.get('name') ?? undefined,
-    }),
+    queryKey: ['tables', searchParams.toString(), project.id],
+    queryFn: () =>
+      tablesApi.list({
+        cursor: searchParams.get('cursor') ?? undefined,
+        limit: searchParams.get('limit')
+          ? parseInt(searchParams.get('limit')!)
+          : undefined,
+        name: searchParams.get('name') ?? undefined,
+      }),
   });
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_ALERT,
@@ -330,15 +333,15 @@ const ApTablesPage = () => {
       </div>
 
       <DataTable
-      filters={[
-        {
-          accessorKey:'name',
-          type:'input',
-          title:t('Name'),
-          icon:CheckIcon,
-          options:[]
-        }
-      ]}
+        filters={[
+          {
+            accessorKey: 'name',
+            type: 'input',
+            title: t('Name'),
+            icon: CheckIcon,
+            options: [],
+          },
+        ]}
         columns={columns}
         page={data}
         isLoading={isLoading}

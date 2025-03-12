@@ -1,19 +1,18 @@
 import { t } from 'i18next';
+import { RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { Button } from '@/components/ui/button';
+import { HomeButton } from '@/components/ui/home-button';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { cn, NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
 
 import ApTableName from './ap-table-name';
 import { useTableState } from './ap-table-state-provider';
-import { ArrowLeft, ChevronLeft, RefreshCw, Trash2 } from 'lucide-react';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { Button } from '@/components/ui/button';
-import { authenticationSession } from '@/lib/authentication-session';
-import { HomeButton } from '@/components/ui/home-button';
 
 type ApTableHeaderProps = {
   isFetchingNextPage: boolean;
@@ -37,78 +36,73 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
     setIsEditingTableName(searchParams.get(NEW_TABLE_QUERY_PARAM) === 'true');
   }, []);
 
-
   const tableData = useTableState((state) => state.table);
   return (
     <div className="flex flex-col gap-4 flex-none px-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-        <div className="flex items-center gap-2">
-           <HomeButton
-           showBackButton={true}
-           route={'/tables'}
-           >
-           </HomeButton>
-        
-          <ApTableName
-            tableName={tableData?.name ?? ''}
-            isEditingTableName={isEditingTableName}
-            setIsEditingTableName={setIsEditingTableName}
-          />
-        </div>
+          <div className="flex items-center gap-2">
+            <HomeButton showBackButton={true} route={'/tables'}></HomeButton>
 
-        {isSaving && (
-          <div className="flex items-center gap-2 text-muted-foreground animate-fade-in">
-            <RefreshCw className="h-4 w-4 animate-spin" />
-            <span className="text-sm">{t('Saving...')}</span>
+            <ApTableName
+              tableName={tableData?.name ?? ''}
+              isEditingTableName={isEditingTableName}
+              setIsEditingTableName={setIsEditingTableName}
+            />
           </div>
-        )}
-        {isFetchingNextPage && (
-          <div className="flex items-center gap-2 text-muted-foreground animate-fade-in">
-            <RefreshCw className="h-4 w-4 animate-spin" />
-            <span className="text-sm">{t('Loading more...')}</span>
-          </div>
-        )}
-      </div>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div onClick={(e) => e.stopPropagation()}>
-            <PermissionNeededTooltip
-              hasPermission={userHasTableWritePermission}
-            >
-              <ConfirmationDeleteDialog
-                title={t('Delete Records')}
-                message={t(
-                  'Are you sure you want to delete the selected records? This action cannot be undone.',
-                )}
-                entityName={
-                  selectedRows.size === 1 ? t('record') : t('records')
-                }
-                mutationFn={async () => {
-                  const indices = Array.from(selectedRows).map((row) => records.findIndex((r) => r.uuid === row));
-                  deleteRecords(indices.map((index) => index.toString()));
-                  setSelectedRows(new Set());
-                }}
+
+          {isSaving && (
+            <div className="flex items-center gap-2 text-muted-foreground animate-fade-in">
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              <span className="text-sm">{t('Saving...')}</span>
+            </div>
+          )}
+          {isFetchingNextPage && (
+            <div className="flex items-center gap-2 text-muted-foreground animate-fade-in">
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              <span className="text-sm">{t('Loading more...')}</span>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div onClick={(e) => e.stopPropagation()}>
+              <PermissionNeededTooltip
+                hasPermission={userHasTableWritePermission}
               >
-                <Button
-                  size="sm"
-                  className={cn(
-                    selectedRows.size > 0 ? 'visible' : 'invisible',
+                <ConfirmationDeleteDialog
+                  title={t('Delete Records')}
+                  message={t(
+                    'Are you sure you want to delete the selected records? This action cannot be undone.',
                   )}
-                  variant="destructive"
-                  disabled={!userHasTableWritePermission}
+                  entityName={
+                    selectedRows.size === 1 ? t('record') : t('records')
+                  }
+                  mutationFn={async () => {
+                    const indices = Array.from(selectedRows).map((row) =>
+                      records.findIndex((r) => r.uuid === row),
+                    );
+                    deleteRecords(indices.map((index) => index.toString()));
+                    setSelectedRows(new Set());
+                  }}
                 >
-                  <Trash2 className="mr-2 w-4" />
-                  {`${t('Delete')} (${selectedRows.size})`}
-                </Button>
-              </ConfirmationDeleteDialog>
-            </PermissionNeededTooltip>
+                  <Button
+                    size="sm"
+                    className={cn(
+                      selectedRows.size > 0 ? 'visible' : 'invisible',
+                    )}
+                    variant="destructive"
+                    disabled={!userHasTableWritePermission}
+                  >
+                    <Trash2 className="mr-2 w-4" />
+                    {`${t('Delete')} (${selectedRows.size})`}
+                  </Button>
+                </ConfirmationDeleteDialog>
+              </PermissionNeededTooltip>
+            </div>
           </div>
         </div>
       </div>
-      </div>
-      
-     
     </div>
   );
 };

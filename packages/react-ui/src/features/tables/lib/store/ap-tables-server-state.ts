@@ -86,7 +86,6 @@ export const createServerState = (
     },
     deleteRecords: (recordIndices: string[]) => {
       addPromiseToQueue(async () => {
-     
         const recordIds = recordIndices.map(
           (index) => clonedRecords[parseInt(index)].id,
         );
