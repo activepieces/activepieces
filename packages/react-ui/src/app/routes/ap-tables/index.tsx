@@ -276,6 +276,7 @@ const ApTablesPage = () => {
           <div onClick={(e) => e.stopPropagation()}>
             <ConfirmationDeleteDialog
               title={t('Delete Tables')}
+              showToast={false}
               message={t(
                 'Are you sure you want to delete the selected tables? This action cannot be undone.',
               )}
