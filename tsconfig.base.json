@@ -323,6 +323,12 @@
       "@activepieces/piece-http": [
         "packages/pieces/community/http/src/index.ts"
       ],
+      "@activepieces/piece-http-oauth2-authorization-code": [
+        "packages/pieces/community/http-oauth2-authorization-code/src/index.ts"
+      ],
+      "@activepieces/piece-http-oauth2-client-credentials": [
+        "packages/pieces/community/http-oauth2-client-credentials/src/index.ts"
+      ],
       "@activepieces/piece-hubspot": [
         "packages/pieces/community/hubspot/src/index.ts"
       ],
