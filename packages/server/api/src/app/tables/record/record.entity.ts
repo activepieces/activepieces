@@ -20,22 +20,12 @@ export const RecordEntity = new EntitySchema<RecordSchema>({
             ...ApIdSchema,
             nullable: false,
         },
-        order: {
-            type: 'int',
-            nullable: false,
-            default: 0,
-        }
     },
     indices: [
         {
             name: 'idx_record_project_id_table_id',
             columns: ['projectId', 'tableId'],
         },
-        {
-            name: 'idx_record_project_id_table_id_order_unique',
-            columns: ['projectId', 'tableId', 'order'],
-         
-        }
     ],
     relations: {
         table: {

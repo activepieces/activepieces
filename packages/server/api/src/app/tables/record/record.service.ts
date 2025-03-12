@@ -22,7 +22,8 @@ import { FieldEntity } from '../field/field.entity'
 import { tableService } from '../table/table.service'
 import { CellEntity } from './cell.entity'
 import { RecordEntity } from './record.entity'
-
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
 
 const recordRepo = repoFactory(RecordEntity)
 
@@ -38,12 +39,7 @@ export const recordService = {
                 .find({
                     where: { tableId: request.tableId, projectId },
                 })
-             //find max order 
-             const maxOrder = await entityManager.getRepository(RecordEntity).maximum('order', {
-                tableId: request.tableId,
-                projectId,
-            })??0
-            
+
             // Filter out cells with non-existing fields during record creation
             const validRecords = request.records.map((recordData) =>
                 recordData.filter((cellData) =>
@@ -51,11 +47,10 @@ export const recordService = {
                 ),
             )
 
-            const recordInsertions = validRecords.map((_, index) => ({
+            const recordInsertions = validRecords.map(() => ({
                 tableId: request.tableId,
                 projectId,
                 id: apId(),
-                order: maxOrder +  index +1,
             }))
 
             await entityManager.getRepository(RecordEntity).insert(recordInsertions)
@@ -102,14 +97,22 @@ export const recordService = {
         cursorRequest,
         limit
     }: ListParams): Promise<SeekPage<PopulatedRecord>> {
-   
+        // const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
+        // const paginator = buildPaginator({
+        //     entity: RecordEntity,
+        //     query: {
+        //         limit,
+        //         afterCursor: decodedCursor.nextCursor,
+        //         beforeCursor: decodedCursor.previousCursor,
+        //     },
+        // })
         const queryBuilder = recordRepo()
             .createQueryBuilder('record')
             .leftJoinAndSelect('record.cells', 'cell')
             .leftJoinAndSelect('cell.field', 'field')
             .where('record.tableId = :tableId', { tableId })
             .andWhere('record.projectId = :projectId', { projectId })
-            .orderBy('record.order', 'ASC')
+            .orderBy('record.created', 'ASC')
         if (filters?.length) {
             filters.forEach((filter, _index) => {
                 const operator = filter.operator || FilterOperator.EQ
@@ -268,51 +271,15 @@ export const recordService = {
         ids,
         projectId,
     }: DeleteParams): Promise<PopulatedRecord[]> {
-
-        return transaction(async (entityManager: EntityManager)=>{
-            const records = await entityManager.getRepository(RecordEntity).find({
-                where: { id: In(ids), projectId },
-                relations: ['cells'],
-                order: {
-                    order: 'ASC',
-                }
-            })
-            if(records.length === 0){
-                return []
-            }
-            const tableId = records[0].tableId
-            //doesn't currently work like it should, it says updated X rows but in reality all orders stay the same,
-            // maybe if we use deferred unique constraint instead of unique index it will work, but we need to keep the order indexed so we can fetch fast
-            await entityManager.createQueryBuilder()
-            .update(RecordEntity)
-            .set({
-                order: () => `
-                    CASE 
-                        WHEN "order" > (
-                            SELECT MIN("order") 
-                            FROM record 
-                            WHERE id IN (:...ids)
-                        )
-                        THEN "order" - (
-                            SELECT COUNT(*) 
-                            FROM record 
-                            WHERE id IN (:...ids) 
-                            AND "order" < record."order"
-                        )
-                        ELSE "order"
-                    END
-                `,
-            })
-            .where('tableId = :tableId', { tableId })
-            .andWhere('projectId = :projectId', { projectId })
-            .andWhere('id NOT IN (:...ids)', { ids })
-            .setParameters({ ids })
-            await entityManager.getRepository(RecordEntity).delete({
-                id: In(ids),
-                projectId,
-            })
-            return records
+        const records = await recordRepo().find({
+            where: { id: In(ids), projectId },
+            relations: ['cells'],
         })
+        await recordRepo().delete({
+            id: In(ids),
+            projectId,
+        })
+        return records
     },
 
     async triggerWebhooks({

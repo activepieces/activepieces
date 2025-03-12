@@ -181,7 +181,6 @@ import { RemoveUnusedProjectBillingFields1736607721367 } from './migration/postg
 import { RenameGitRepoPermission1736813103505 } from './migration/postgres/1736813103505-RenameGitRepoPermission'
 import { RestrictPieces1739546878775 } from './migration/postgres/1739546878775-RestrictPieces'
 import { CreateTableWebhooks1741669458075 } from './migration/postgres/1741669458075-CreateTableWebhooks'
-import { AddRecordOrderColumn1741696200187 } from './migration/postgres/1741696200187-AddRecordOrderColumn'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -303,8 +302,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddUserIdentity1735590074879,
         RenameGitRepoPermission1736813103505,
         RestrictPieces1739546878775,
-        CreateTableWebhooks1741669458075,
-        AddRecordOrderColumn1741696200187
+        CreateTableWebhooks1741669458075
     ]
 
     const edition = system.getEdition()
