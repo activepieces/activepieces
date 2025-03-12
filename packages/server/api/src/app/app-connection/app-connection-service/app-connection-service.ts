@@ -55,7 +55,7 @@ const repo = repoFactory(AppConnectionEntity)
 
 export const appConnectionService = (log: FastifyBaseLogger) => ({
     async upsert(params: UpsertParams): Promise<AppConnectionWithoutSensitiveData> {
-        const { projectIds, externalId, value, displayName, pieceName, ownerId, platformId, scope, type } = params
+        const { projectIds, externalId, value, displayName, pieceName, ownerId, platformId, scope, type, status } = params
 
         await assertProjectIds(projectIds, platformId)
         const validatedConnectionValue = await validateConnectionValue({
@@ -81,7 +81,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         const connection = {
             displayName,
             ...spreadIfDefined('ownerId', ownerId),
-            status: AppConnectionStatus.ACTIVE,
+            status: status ?? AppConnectionStatus.ACTIVE,
             value: encryptedConnectionValue,
             externalId,
             pieceName,
@@ -124,34 +124,6 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         const updatedConnection = await repo().findOneByOrFail(filter)
         return this.removeSensitiveData(updatedConnection)
     },
-
-    async upsertMissingConnection(params: UpsertPlaceholderParams): Promise<void> {
-        const { projectId, platformId, externalId, pieceName, displayName } = params
-
-        const existingConnection = await repo().findOne({
-            where: {
-                ...(params.projectId ? { projectIds: APArrayContains('projectIds', [params.projectId]) } : {}),
-                externalId,
-                platformId,
-            },
-        })
-
-        const connection = {
-            displayName,
-            status: existingConnection?.status ?? AppConnectionStatus.MISSING,
-            externalId,
-            pieceName,
-            value: encryptUtils.encryptObject({}),
-            type: existingConnection?.type ?? AppConnectionType.CUSTOM_AUTH,
-            id: existingConnection?.id ?? apId(),
-            scope: existingConnection?.scope ?? AppConnectionScope.PROJECT,
-            projectIds: existingConnection?.projectIds ?? [projectId],
-            platformId,
-        }
-
-        await repo().upsert(connection, ['id'])
-    },
-
     async getOne({
         projectId,
         platformId,
@@ -629,16 +601,10 @@ type UpsertParams = {
     value: UpsertAppConnectionRequestBody['value']
     displayName: string
     type: AppConnectionType
+    status?: AppConnectionStatus
     pieceName: string
 }
 
-type UpsertPlaceholderParams = {
-    projectId: ProjectId
-    platformId: string
-    externalId: string
-    pieceName: string
-    displayName: string
-}
 
 type GetOneByName = {
     projectId: ProjectId
