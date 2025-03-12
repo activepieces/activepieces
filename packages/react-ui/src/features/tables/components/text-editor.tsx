@@ -42,7 +42,7 @@ const TextEditor = ({
        <div
   className={cn(
     'h-min-[300px] w-min-[calc(100%+50px)] w-full absolute top-0  z-50',
-    'border-2 border-primary rounded-md drop-shadow-md',
+    'border-2 border-primary  drop-shadow-md',
     'bg-background',
   )}
 >
@@ -67,7 +67,7 @@ const TextEditor = ({
     minRows={4}
     maxRows={6}
     className={cn(
-        'flex-1 h-full min-w-0',
+        'flex-1 h-full min-w-0 rounded-none',
         'border-none text-sm px-2 resize-none ',
         'focus:outline-none',
         'placeholder:text-muted-foreground',
