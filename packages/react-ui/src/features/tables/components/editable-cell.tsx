@@ -1,16 +1,16 @@
 import { Edit2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { CalculatedColumn } from 'react-data-grid';
 
 import { Button } from '@/components/ui/button';
 import { cn, formatUtils } from '@/lib/utils';
-import { FieldType } from '@activepieces/shared';
+import { FieldType, isNil } from '@activepieces/shared';
 
 import { Row } from '../lib/types';
 
+import { useTableState } from './ap-table-state-provider';
 import { DateEditor } from './date-editor';
 import { TextEditor } from './text-editor';
-import { useTableState } from './ap-table-state-provider';
 
 type EditableCellProps = {
   type: FieldType;
@@ -84,9 +84,13 @@ export function EditableCell({
 }: EditableCellProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [selectedCell, setSelectedCell]= useTableState((state) => [state.selectedCell, state.setSelectedCell]);
+  const [selectedCell, setSelectedCell] = useTableState((state) => [
+    state.selectedCell,
+    state.setSelectedCell,
+  ]);
   const [value, setValue] = useState(initialValue);
-  const isSelected = selectedCell?.rowIdx === rowIdx && selectedCell?.columnIdx === column.idx;
+  const isSelected =
+    selectedCell?.rowIdx === rowIdx && selectedCell?.columnIdx === column.idx;
   if (isEditing) {
     return (
       <EditorSelector
@@ -119,10 +123,10 @@ export function EditableCell({
       tabIndex={0}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => {
-        setSelectedCell({rowIdx, columnIdx: column.idx})
+        setSelectedCell({ rowIdx, columnIdx: column.idx });
       }}
       onFocus={() => {
-        setSelectedCell({rowIdx, columnIdx: column.idx})
+        setSelectedCell({ rowIdx, columnIdx: column.idx });
       }}
       onDoubleClick={() => {
         if (!disabled) {
@@ -136,8 +140,8 @@ export function EditableCell({
       }}
     >
       <span className="flex-1 truncate">
-        {type === FieldType.DATE && value
-          ? formatUtils.formatDateOnly(new Date(value))
+        {type === FieldType.DATE && !isNil(value)
+          ? formatUtils.formatDateOnlyOrFail(new Date(value), '')
           : value}
       </span>
       {isHovered && (

@@ -185,7 +185,7 @@ export function Sidebar({
                 className={cn('flex', {
                   'py-4': embedState.isEmbedded,
                   'container mx-auto px-2': !removeGutters,
-                  'py-10': !hideHeader,
+                  'py-5': !hideHeader,
                 })}
               >
                 {children}

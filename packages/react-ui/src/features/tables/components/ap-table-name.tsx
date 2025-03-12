@@ -1,4 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { Pencil } from 'lucide-react';
 
 import EditableText from '@/components/ui/editable-text';
@@ -6,27 +6,29 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { cn } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
 
-import { tableHooks } from '../lib/ap-tables-hooks';
+import { tablesApi } from '../lib/tables-api';
 
 import { useTableState } from './ap-table-state-provider';
 
-const ApTableName = ({
-  tableId,
-  tableName,
-  isEditingTableName,
-  setIsEditingTableName,
-}: {
-  tableId: string;
+type ApTableNameProps = {
   tableName: string;
   isEditingTableName: boolean;
   setIsEditingTableName: (val: boolean) => void;
-}) => {
-  const queryClient = useQueryClient();
-  const enqueueMutation = useTableState((state) => state.enqueueMutation);
-  const updateTableMutation = tableHooks.useUpdateTable({
-    queryClient,
-    tableId,
+};
+
+const ApTableName = ({
+  tableName,
+  isEditingTableName,
+  setIsEditingTableName,
+}: ApTableNameProps) => {
+  const renameTable = useTableState((state) => state.renameTable);
+  const tableId = useTableState((state) => state.table?.id);
+  const { mutate: updateTable } = useMutation({
+    mutationFn: (newName: string) =>
+      tablesApi.update(tableId, { name: newName }),
+    onSuccess: () => {},
   });
+
   const isReadOnly = !useAuthorization().checkAccess(Permission.WRITE_TABLE);
 
   return (
@@ -39,13 +41,12 @@ const ApTableName = ({
       className={cn('flex items-center gap-2')}
     >
       <EditableText
-       className='text-xl font-bold'
+        className="text-2xl font-bold"
         value={tableName}
         readonly={isReadOnly}
         onValueChange={(newName) => {
-          enqueueMutation(updateTableMutation, {
-            name: newName,
-          });
+          renameTable(newName);
+          updateTable(newName);
         }}
         isEditing={isEditingTableName}
         setIsEditing={setIsEditingTableName}

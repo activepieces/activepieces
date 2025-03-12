@@ -68,7 +68,7 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
         const deletedRecords = await recordService.delete({
             ids: request.body.ids,
             projectId: request.principal.projectId,
-        }) 
+        })
         await reply.status(StatusCodes.NO_CONTENT).send()
         //TODO: Move this to a background job that can be re-run in case of failure
         for (const deletedRecord of deletedRecords) {
