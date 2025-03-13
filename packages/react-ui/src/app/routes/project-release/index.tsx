@@ -32,9 +32,14 @@ import { ProjectRelease, ProjectReleaseType } from '@activepieces/shared';
 
 import { ApplyButton } from './apply-plan';
 import { SelectionButton } from './selection-dialog';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import { Permission } from '@activepieces/shared';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 
 const ProjectReleasesPage = () => {
   const navigate = useNavigate();
+  const { checkAccess } = useAuthorization();
+  const doesUserHavePermissionToWriteFlow = checkAccess(Permission.WRITE_PROJECT_RELEASE);
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['project-releases'],
     queryFn: () => projectReleaseApi.list(),
@@ -158,9 +163,12 @@ const ProjectReleasesPage = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
+        <PermissionNeededTooltip
+              hasPermission={doesUserHavePermissionToWriteFlow}
+            >
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
-              <Button className="h-9 w-full">
+              <Button className="h-9 w-full" disabled={!doesUserHavePermissionToWriteFlow}>
                 {t('Create Release')}
                 <ChevronDown className="h-3 w-4 ml-2" />
               </Button>
@@ -194,6 +202,7 @@ const ProjectReleasesPage = () => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          </PermissionNeededTooltip>
         </div>
       </div>
       <DataTable
