@@ -254,10 +254,11 @@ export function SidebarComponent({
             </SidebarContent>
             <SidebarFooter className='pb-4 gap-4'>
               <Separator/> 
-              <SidebarMenu className='gap-4'>
-              {isHomeDashboard && showSupportAndDocs && (
+              <SidebarMenu>
+                <UsageLimitsButton />
+                {isHomeDashboard && showSupportAndDocs && (
                 <>
-                <SidebarMenuItem>
+                <SidebarMenuItem className='hover:bg-accent hover:text-primary rounded-lg transition-colors'>
                    <SidebarMenuButton asChild>
                    <Link to={supportUrl} target="_blank" rel="noopener noreferrer">
                    <QuestionMarkCircledIcon className="size-5" />
@@ -265,7 +266,7 @@ export function SidebarComponent({
                    </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  <SidebarMenuItem>
+                  <SidebarMenuItem className='hover:bg-accent hover:text-primary rounded-lg transition-colors'>
                     <SidebarMenuButton asChild>
                       <Link to="https://activepieces.com/docs" target="_blank" rel="noopener noreferrer">
                         <FileTextIcon className="size-5" />
@@ -275,7 +276,6 @@ export function SidebarComponent({
                   </SidebarMenuItem>
                   </>
                 )}
-                <UsageLimitsButton />
               </SidebarMenu>  
             </SidebarFooter>
           </SidebarContent>
