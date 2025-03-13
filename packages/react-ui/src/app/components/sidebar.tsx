@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import {
   ChevronDownIcon,
   ChevronUpIcon,
+  ExternalLink,
   FileTextIcon,
   LockKeyhole,
 } from 'lucide-react';
@@ -40,7 +41,7 @@ import { ProjectSwitcher } from '@/features/projects/components/project-switcher
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
-import { ApFlagId, supportUrl } from '@activepieces/shared';
+import { supportUrl } from '@activepieces/shared';
 
 import { ShowPoweredBy } from '../../components/show-powered-by';
 import { platformHooks } from '../../hooks/platform-hooks';
@@ -160,9 +161,6 @@ export function SidebarComponent({
   removeGutters = false,
 }: SidebarProps) {
   const branding = flagsHooks.useWebsiteBranding();
-  const { data: showSupportAndDocs } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_COMMUNITY,
-  );
   const { embedState } = useEmbedding();
   const { platform } = platformHooks.useCurrentPlatform();
   const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
@@ -282,7 +280,7 @@ export function SidebarComponent({
               </SidebarContent>
               <SidebarFooter className="pb-4 gap-4">
                 <SidebarMenu>
-                  {isHomeDashboard && showSupportAndDocs && (
+                  {true && (
                     <>
                       <SidebarMenuItem className="hover:bg-accent hover:text-primary rounded-lg transition-colors">
                         <SidebarMenuButton asChild>
@@ -290,9 +288,13 @@ export function SidebarComponent({
                             to={supportUrl}
                             target="_blank"
                             rel="noopener noreferrer"
+                            className="flex justify-between"
                           >
-                            <QuestionMarkCircledIcon className="size-5" />
-                            <span>{t('Support')}</span>
+                            <div className="flex items-center gap-2">
+                              <QuestionMarkCircledIcon className="size-5" />
+                              <span>{t('Community Support')}</span>
+                            </div>
+                            <ExternalLink className="size-5" />
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -302,9 +304,13 @@ export function SidebarComponent({
                             to="https://activepieces.com/docs"
                             target="_blank"
                             rel="noopener noreferrer"
+                            className="flex justify-between"
                           >
-                            <FileTextIcon className="size-5" />
-                            <span>{t('Docs')}</span>
+                            <div className="flex items-center gap-2">
+                              <FileTextIcon className="size-5" />
+                              <span>{t('Docs')}</span>
+                            </div>
+                            <ExternalLink className="size-5" />
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
