@@ -13,7 +13,7 @@ export default function AppearancePage() {
   };
 
   return (
-    <div className="flex flex-col items-center  gap-4">
+    <div className="flex flex-col items-center w-full gap-4">
       <div className="space-y-6 w-full">
         <div>
           <h3 className="text-xl font-semibold">{t('Appearance')}</h3>

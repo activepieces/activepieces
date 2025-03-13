@@ -1,12 +1,14 @@
 import { t } from 'i18next';
 import {
-  AlertCircle,
-  Link2,
-  Logs,
-  Package,
+  Puzzle,
+  SunMoon,
+  Users,
+  Settings,
   Table2,
   Workflow,
   Wrench,
+  GitBranch,
+  Bell,
 } from 'lucide-react';
 import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
@@ -73,13 +75,20 @@ export function DashboardContainer({
     }
     return true;
   };
+
+  const filterAlerts = (item: SidebarItem) =>
+    platform.alertsEnabled || item.label !== t('Alerts');
+
   const items: SidebarItem[] = [
     {
       type: 'group',
-      name: t('Platform'),
       label: t('Automation'),
+      putEmptySpaceTop: true,
       icon: Workflow,
-      isActive: true,
+      isActive: (pathname: string) => {
+        const paths = ['/flows', '/issues', '/runs', '/connections', '/releases', '/tables'];
+        return paths.some((path) => pathname.includes(path));
+      },
       defaultOpen: true,
       items: [
         {
@@ -129,19 +138,65 @@ export function DashboardContainer({
       hasPermission: checkAccess(Permission.READ_TABLE),
     } as SidebarLink,
     {
-      type: 'link',
-      to: authenticationSession.appendProjectRoutePrefix('/settings/general'),
+      type: 'group',
       label: t('Settings'),
+      defaultOpen: false,
       icon: Wrench,
       isActive: (pathname: string) => pathname.includes('/settings'),
-    } as SidebarLink,
+      items: [
+        {
+          type: 'link',
+          to: authenticationSession.appendProjectRoutePrefix('/settings/general'),
+          label: t('General'),
+          icon: Settings,
+        } as SidebarLink,
+        {
+          type: 'link',
+          to: authenticationSession.appendProjectRoutePrefix(
+            '/settings/appearance',
+          ),
+          label: t('Appearance'),
+          icon: SunMoon,
+        } as SidebarLink,
+        {
+          type: 'link',
+          to: authenticationSession.appendProjectRoutePrefix('/settings/team'),
+          label: t('Team'),
+          icon: Users,
+          hasPermission: checkAccess(Permission.READ_PROJECT_MEMBER),
+        } as SidebarLink,
+        {
+          type: 'link',
+          to: authenticationSession.appendProjectRoutePrefix('/settings/pieces'),
+          label: t('Pieces'),
+          icon: Puzzle,
+        } as SidebarLink,
+        {
+          type: 'link',
+          to: authenticationSession.appendProjectRoutePrefix('/settings/alerts'),
+          label: t('Alerts'),
+          icon: Bell,
+          hasPermission: checkAccess(Permission.READ_ALERT),
+        } as SidebarLink,
+        {
+          type: 'link',
+          to: authenticationSession.appendProjectRoutePrefix(
+            '/settings/environments',
+          ),
+          label: t('Environments'),
+          icon: GitBranch,
+          hasPermission: checkAccess(Permission.READ_PROJECT_RELEASE),
+        } as SidebarLink,
+      ],
+    } as SidebarGroup,
   ]
     .filter(embedFilter)
-    .filter(permissionFilter);
+    .filter(permissionFilter)
+    .filter(filterAlerts);
 
   for (const item of items){
     if (item.type === 'group'){
-      const newItems = item.items.filter(embedFilter).filter(permissionFilter);
+      const newItems = item.items.filter(embedFilter).filter(permissionFilter).filter(filterAlerts);
       item.items = newItems;
     }
   }

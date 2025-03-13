@@ -25,6 +25,7 @@ import { ProjectSwitcher } from '@/features/projects/components/project-switcher
 import { UserAvatar } from '@/components/ui/user-avatar';
 import UsageLimitsButton from './usage-limits-button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
 type Link = {
   icon: React.ReactNode;
@@ -64,25 +65,27 @@ const CustomTooltipLink = ({
       rel={newWindow ? 'noopener noreferrer' : ''}
     >
       <div
-        className={`relative flex items-center gap-1 justify-between hover:text-primary rounded-lg transition-colors ${extraClasses || ''}${
-          isLinkActive ? 'bg-accent text-primary' : ''
+        className={`relative flex items-center gap-1 justify-between hover:bg-accent hover:text-primary rounded-lg transition-colors ${extraClasses || ''}${
+          isLinkActive ? '!bg-primary/10 text-primary' : ''
         }`}
       >
-        <div className={`flex items-center gap-1 ${!Icon ? 'p-2' : ''}`}>
+        <div className={`w-full flex items-center justify-between gap-2 p-2 ${!Icon ? 'p-2' : ''}`}>
+          <div className='flex items-center gap-2'>
+            {Icon && (
+              <Icon
+                className={`size-4`}
+              />
+            )}
+            <span className={`text-sm`}>{label}</span>
+          </div>
           {locked && (
-            <LockKeyhole
-              className="absolute right-[-1px] bottom-[20px] size-3"
+          <LockKeyhole
+              className="size-3"
               color="grey"
             />
           )}
-          {Icon && (
-            <Icon
-              className={`size-9 p-2.5`}
-            />
-          )}
-          <span className={`text-sm`}>{label}</span>
         </div>
-        {notification && (
+        {notification && !locked && (
           <span className="bg-destructive  right-[1px] top-[3px] size-2 rounded-full "></span>
         )}
       </div>
@@ -92,11 +95,13 @@ const CustomTooltipLink = ({
 
 export type SidebarGroup = {
   name?: string;
+  putEmptySpaceTop?: boolean;
   label: string;
   icon: React.ElementType;
   items: SidebarLink[];
   type: 'group';
   defaultOpen: boolean;
+  isActive?: (pathname: string) => boolean;
 }
 
 
@@ -143,7 +148,7 @@ export function SidebarComponent({
         {!hideSideNav && (
           <Sidebar className="bg-muted/50 w-[255px]">
           <SidebarContent>
-            <SidebarHeader>
+            <SidebarHeader className='pt-4'>
               <div className='flex items-center justify-center'>
               <Link
                   to={isHomeDashboard ? defaultRoute : '/platform'}
@@ -170,16 +175,19 @@ export function SidebarComponent({
               {items.map((item, index) => (
                 item.type === 'group' ? (
                   <SidebarGroup key={item.name} className='py-0'>
+                    {item.putEmptySpaceTop && (
+                      <Separator className='mb-8' />  
+                    )}
                     {item.name && (
                       <SidebarGroupLabel>
                         {item.name}
                       </SidebarGroupLabel>
                     )}
                     <SidebarMenu className='py-0'>
-                      <Collapsible defaultOpen={item.defaultOpen} className="group/collapsible">
+                      <Collapsible defaultOpen={item.defaultOpen || item.isActive?.(location.pathname)} className="group/collapsible">
                         <SidebarMenuItem>
                           <CollapsibleTrigger asChild>
-                            <SidebarMenuButton className='py-0 gap-4'>
+                            <SidebarMenuButton className='py-0 gap-2'>
                               {item.icon && (
                                 <item.icon className="size-5" />
                               )}
@@ -213,7 +221,7 @@ export function SidebarComponent({
                       </SidebarMenu>
                   </SidebarGroup>
                 ) : (
-                  <SidebarGroup key={item.label} className='py-0'>
+                  <SidebarGroup key={item.label} className='py-1'>
                    <SidebarMenu className='gap-0 p-0'>
                   <SidebarMenuItem key={item.label}>
                     <SidebarMenuButton asChild>
@@ -234,7 +242,8 @@ export function SidebarComponent({
               ))}
               </ScrollArea>
             </SidebarContent>
-            <SidebarFooter>
+            <SidebarFooter className='pb-4 gap-4'>
+              <Separator/> 
               <SidebarMenu className='gap-4'>
               {isHomeDashboard && showSupportAndDocs && (
                 <>
@@ -257,7 +266,6 @@ export function SidebarComponent({
                   </>
                 )}
                 <UsageLimitsButton />
-                <UserAvatar />
               </SidebarMenu>  
             </SidebarFooter>
           </SidebarContent>
@@ -277,7 +285,7 @@ export function SidebarComponent({
               <div
                 className={cn('flex', {
                   'py-4': embedState.isEmbedded,
-                  'container mx-auto px-2': !removeGutters,
+                  ' px-2': !removeGutters,
                   'pt-10': !hideHeader,
                 })}
               >

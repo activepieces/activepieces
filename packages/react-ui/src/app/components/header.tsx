@@ -65,9 +65,10 @@ export const Header = () => {
                 </Button>
               </Link>
             )}
+            <UserAvatar />
           </div>
         </div>
-        <Separator></Separator>
+        <Separator className='mt-1' />
       </div>
     )
   );

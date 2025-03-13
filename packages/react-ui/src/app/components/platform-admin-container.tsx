@@ -68,7 +68,8 @@ export function PlatformAdminContainer({
       type: 'group',
       label: t('Setup'),
       icon: Wrench,
-      defaultOpen: true,
+      defaultOpen: false,
+      isActive: (pathname: string) => pathname.includes('/setup'),
       items: [
         {
           type: 'link',
@@ -100,7 +101,8 @@ export function PlatformAdminContainer({
     {
       type: 'group',
       label: t('Security'),
-      defaultOpen: true,
+      defaultOpen: false,
+      isActive: (pathname: string) => pathname.includes('/security'),
       icon: Shield,
       items: [
         {
@@ -134,7 +136,8 @@ export function PlatformAdminContainer({
       type: 'group',
       label: t('Infrastructure'),
       icon: Server,
-      defaultOpen: true,
+      defaultOpen: false,
+      isActive: (pathname: string) => pathname.includes('/infrastructure'),
       items: [
         {
           type: 'link',

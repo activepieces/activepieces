@@ -53,32 +53,41 @@ const UsageLimitsButton = React.memo(() => {
 
   const usageCardComponent = () => {
     return (
-    <div className='flex flex-col gap-2 w-full bg-white rounded-lg shadow-md p-4'>
-       <div className="flex flex-col gap-3">
-          <div className='flex gap-2 justify-between'>
-            <div className='flex items-center gap-2'>
-              <BarChartBig className='size-4' />
-              <span className='text-sm font-bold'>{t('Usage')}</span>
-            </div>
-            <div className='flex items-center gap-2'>
-              {project.usage.nextLimitResetDate && (
-                <div className="text-xs flex justify-end ">
-                  {t('Resets in')}{' '}
-                  {getTimeUntilNextReset(project.usage.nextLimitResetDate)}{' '}
-                </div>
-              )}
-            </div>
+    <div className='flex flex-col gap-2 w-full py-1 px-2'>
+       <div className="flex flex-col gap-6">
+        <div className='flex flex-col gap-2'>
+          <div className='flex items-center gap-2 mb-2'>
+              <BarChartBig className='size-5' />
+              <span className='text-md'>{t('Usage')}</span>
           </div>
-          <UsageProgress
-              name={t('Tasks')}
-              value={project.usage.tasks}
-              max={project.plan.tasks}
-          />
-          <UsageProgress
-            name={t('AI Credits')}
-            value={project.usage.aiTokens}
-            max={project.plan.aiTokens}
-          />
+          <div className='flex flex-col gap-3'>
+            <UsageProgress
+                name={t('Tasks')}
+                value={project.usage.tasks}
+                max={project.plan.tasks}
+            />
+            <UsageProgress
+              name={t('AI Credits')}
+              value={project.usage.aiTokens}
+              max={project.plan.aiTokens}
+            />
+          </div>
+        </div>
+        <div className='flex flex-col gap-2'>
+            <div className='flex items-center gap-2'>
+                {project.usage.nextLimitResetDate && (
+                  <div className="text-xs text-muted-foreground ">
+                    {t('Usage resets in')}{' '}
+                    {getTimeUntilNextReset(project.usage.nextLimitResetDate)}{' '}
+                  </div>
+                )}
+            </div>
+            {/* <FlagGuard flag={ApFlagId.SHOW_BILLING}> */}
+                <Link to={'/platform/setup/billing'} className='w-fit'>
+                  <span className='text-xs text-primary underline'>{t('Manage plan')}</span>
+                </Link>
+            {/* </FlagGuard> */}
+          </div>
         </div>
     </div>
   )
@@ -105,20 +114,18 @@ type UsageProgressProps = {
 
 const UsageProgress = ({ value, max, name }: UsageProgressProps) => {
   return (
-    <div className="flex items-center flex-col justify-between gap-0.5  w-full">
-      <Progress value={30} className="h-[7px]" />
-      {/* {!isNil(max) && (
-        <Progress value={(value / max) * 100} className="h-[5px]" />
-      )} */}
-      <div className="w-full flex text-sm justify-between">
-        <span>{name}</span>
-        <div className='text-sm'>
-          <span className='text-muted-foreground'>{t('Used')}: {formatUtils.formatNumber(value)}{' / '}</span> 
-          <span className='font-bold'>{!isNil(max) ? formatUtils.formatNumber(max) : t('Unlimited')}
+    <div className="flex items-center flex-col justify-between gap-2  w-full">
+      <div className="w-full flex text-xs justify-between">
+        <span className='text-muted-foreground'>{name}</span>
+        <div className='text-xs'>
+          <span>{formatUtils.formatNumber(value)}{' / '}</span> 
+          <span>{!isNil(max) ? formatUtils.formatNumber(max) : t('Unlimited')}
           </span>
         </div>
       </div>
-
+      {!isNil(max) && (
+        <Progress value={(100 / max) * 100} className="h-[6px]" />
+      )}
     </div>
   );
 };
