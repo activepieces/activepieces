@@ -1,15 +1,5 @@
 import { t } from 'i18next';
-import {
-  Puzzle,
-  SunMoon,
-  Users,
-  Settings,
-  Table2,
-  Workflow,
-  Wrench,
-  GitBranch,
-  Bell,
-} from 'lucide-react';
+import { Settings, Table2, Workflow } from 'lucide-react';
 import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
@@ -176,7 +166,6 @@ export function DashboardContainer({
             '/settings/general',
           ),
           label: t('General'),
-          icon: Wrench,
           isSubItem: true,
         } as SidebarLink,
         {
@@ -185,14 +174,12 @@ export function DashboardContainer({
             '/settings/appearance',
           ),
           label: t('Appearance'),
-          icon: SunMoon,
           isSubItem: true,
         } as SidebarLink,
         {
           type: 'link',
           to: authenticationSession.appendProjectRoutePrefix('/settings/team'),
           label: t('Team'),
-          icon: Users,
           hasPermission: checkAccess(Permission.READ_PROJECT_MEMBER),
           isSubItem: true,
         } as SidebarLink,
@@ -202,7 +189,6 @@ export function DashboardContainer({
             '/settings/pieces',
           ),
           label: t('Pieces'),
-          icon: Puzzle,
           isSubItem: true,
         } as SidebarLink,
         {
@@ -211,7 +197,6 @@ export function DashboardContainer({
             '/settings/alerts',
           ),
           label: t('Alerts'),
-          icon: Bell,
           hasPermission: checkAccess(Permission.READ_ALERT),
           isSubItem: true,
         } as SidebarLink,
@@ -221,7 +206,6 @@ export function DashboardContainer({
             '/settings/environments',
           ),
           label: t('Environments'),
-          icon: GitBranch,
           hasPermission: checkAccess(Permission.READ_PROJECT_RELEASE),
           isSubItem: true,
         } as SidebarLink,
