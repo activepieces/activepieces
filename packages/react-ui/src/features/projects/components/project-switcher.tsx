@@ -84,37 +84,37 @@ function ProjectSwitcher() {
                 <CommandGroup
                   key={platform.platformName}
                   heading={platform.platformName}
-              >
-                <ScrollArea viewPortClassName="max-h-[200px]">
-                  {platform.projects &&
-                    platform.projects.map((project) => (
-                      <CommandItem
-                        key={project.id}
-                        onSelect={() => {
-                          setCurrentProject(
-                            queryClient,
-                            project,
-                            location.pathname,
-                          );
-                          setOpen(false);
-                        }}
-                        value={project.id}
-                        className="text-sm break-all"
-                      >
-                        {project.displayName}
-                        <CheckIcon
-                          className={cn(
-                            'ml-auto h-4 w-4 shrink-0',
-                            currentProject?.id === project.id
-                              ? 'opacity-100'
-                              : 'opacity-0',
-                          )}
-                        />
-                      </CommandItem>
-                    ))}
-                </ScrollArea>
-              </CommandGroup>
-            ))}
+                >
+                  <ScrollArea viewPortClassName="max-h-[200px]">
+                    {platform.projects &&
+                      platform.projects.map((project) => (
+                        <CommandItem
+                          key={project.id}
+                          onSelect={() => {
+                            setCurrentProject(
+                              queryClient,
+                              project,
+                              location.pathname,
+                            );
+                            setOpen(false);
+                          }}
+                          value={project.id}
+                          className="text-sm break-all"
+                        >
+                          {project.displayName}
+                          <CheckIcon
+                            className={cn(
+                              'ml-auto h-4 w-4 shrink-0',
+                              currentProject?.id === project.id
+                                ? 'opacity-100'
+                                : 'opacity-0',
+                            )}
+                          />
+                        </CommandItem>
+                      ))}
+                  </ScrollArea>
+                </CommandGroup>
+              ))}
           </CommandList>
         </Command>
       </PopoverContent>

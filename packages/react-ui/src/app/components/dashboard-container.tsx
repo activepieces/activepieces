@@ -145,7 +145,9 @@ export function DashboardContainer({
           type: 'link',
           to: authenticationSession.appendProjectRoutePrefix('/releases'),
           label: t('Releases'),
-          hasPermission: project.releasesEnabled && checkAccess(Permission.READ_PROJECT_RELEASE),
+          hasPermission:
+            project.releasesEnabled &&
+            checkAccess(Permission.READ_PROJECT_RELEASE),
           isSubItem: true,
         },
       ],
