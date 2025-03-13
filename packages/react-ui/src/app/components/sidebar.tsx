@@ -176,7 +176,7 @@ export function SidebarComponent({
               <ScrollArea className='h-[calc(100vh-100px)]'>
               {items.map((item, index) => (
                 item.type === 'group' ? (
-                  <SidebarGroup key={item.name} className='py-0'>
+                  <SidebarGroup key={item.name} className='py-2'>
                     {item.putEmptySpaceTop && (
                       <Separator className='mb-8' />  
                     )}
