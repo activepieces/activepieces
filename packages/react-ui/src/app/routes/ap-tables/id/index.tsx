@@ -57,13 +57,12 @@ const ApTableEditorPage = () => {
       uuid: nanoid(),
       values: [],
     });
-    requestAnimationFrame(()=>{
+    requestAnimationFrame(() => {
       gridRef.current?.scrollToCell({
         rowIdx: records.length,
         idx: 0,
       });
-    })
-   
+    });
   };
 
   const userHasTableWritePermission = useAuthorization().checkAccess(

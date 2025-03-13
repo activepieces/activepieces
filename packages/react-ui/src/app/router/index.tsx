@@ -597,7 +597,7 @@ const routes = [
     element: (
       <PlatformAdminContainer>
         <PlatformSecondSidebarLayout type="setup">
-          <PageTitle title="LicenseKey">
+          <PageTitle title="License Key">
             <LicenseKeyPage />
           </PageTitle>
         </PlatformSecondSidebarLayout>
