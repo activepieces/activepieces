@@ -2,21 +2,10 @@ import { t } from 'i18next';
 import {
   LayoutGrid,
   LineChart,
-  Receipt,
-  Puzzle,
-  Link,
-  Palette,
-  Workflow,
   Server,
   Shield,
-  Sparkles,
   Users,
   Wrench,
-  ShieldPlus,
-  ScrollText,
-  Lock,
-  ScanFace,
-  Key,
 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
@@ -26,6 +15,7 @@ import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import { SidebarComponent, SidebarGroup, SidebarItem, SidebarLink } from './sidebar';
+import { useState } from 'react';
 
 type PlatformAdminContainerProps = {
   children: React.ReactNode;
@@ -34,6 +24,9 @@ type PlatformAdminContainerProps = {
 export function PlatformAdminContainer({
   children,
 }: PlatformAdminContainerProps) {
+  const [setupOpen, setSetupOpen] = useState(false);
+  const [securityOpen, setSecurityOpen] = useState(false);
+  const [infrastructureOpen, setInfrastructureOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
@@ -69,6 +62,8 @@ export function PlatformAdminContainer({
       label: t('Setup'),
       icon: Wrench,
       defaultOpen: false,
+      open: setupOpen,
+      setOpen: setSetupOpen,
       isActive: (pathname: string) => pathname.includes('/setup'),
       items: [
         {
@@ -102,6 +97,8 @@ export function PlatformAdminContainer({
       type: 'group',
       label: t('Security'),
       defaultOpen: false,
+      open: securityOpen,
+      setOpen: setSecurityOpen,
       isActive: (pathname: string) => pathname.includes('/security'),
       icon: Shield,
       items: [
@@ -137,6 +134,8 @@ export function PlatformAdminContainer({
       label: t('Infrastructure'),
       icon: Server,
       defaultOpen: false,
+      open: infrastructureOpen,
+      setOpen: setInfrastructureOpen,
       isActive: (pathname: string) => pathname.includes('/infrastructure'),
       items: [
         {

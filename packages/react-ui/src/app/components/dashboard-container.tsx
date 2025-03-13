@@ -51,6 +51,8 @@ export function DashboardContainer({
   removeGutters,
   hideHeader,
 }: DashboardContainerProps) {
+  const [automationOpen, setAutomationOpen] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification(
     platform.flowIssuesEnabled,
@@ -90,6 +92,8 @@ export function DashboardContainer({
         return paths.some((path) => pathname.includes(path));
       },
       defaultOpen: true,
+      open: automationOpen,
+      setOpen: setAutomationOpen,
       items: [
         {
           type: 'link',
@@ -141,6 +145,8 @@ export function DashboardContainer({
       type: 'group',
       label: t('Settings'),
       defaultOpen: false,
+      open: settingsOpen,
+      setOpen: setSettingsOpen,
       icon: Settings,
       isActive: (pathname: string) => pathname.includes('/settings'),
       items: [

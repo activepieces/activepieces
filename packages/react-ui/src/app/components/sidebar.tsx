@@ -1,6 +1,6 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { ChevronDownIcon, FileTextIcon, LockKeyhole, Workflow } from 'lucide-react';
+import { ChevronDownIcon, ChevronUpIcon, FileTextIcon, LockKeyhole, Workflow } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -101,6 +101,8 @@ export type SidebarGroup = {
   items: SidebarLink[];
   type: 'group';
   defaultOpen: boolean;
+  open: boolean;
+  setOpen: (open: boolean) => void;
   isActive?: (pathname: string) => boolean;
 }
 
@@ -184,16 +186,24 @@ export function SidebarComponent({
                       </SidebarGroupLabel>
                     )}
                     <SidebarMenu className='py-0'>
-                      <Collapsible defaultOpen={item.defaultOpen || item.isActive?.(location.pathname)} className="group/collapsible">
+                      <Collapsible defaultOpen={item.defaultOpen || item.isActive?.(location.pathname)} className="group/collapsible" 
+                      onOpenChange={(open) => {
+                        item.setOpen(open);
+                      }}
+                      >
                         <SidebarMenuItem>
                           <CollapsibleTrigger asChild>
-                            <SidebarMenuButton className='py-0 gap-2'>
+                            <SidebarMenuButton className='py-0 gap-2 hover:bg-accent hover:text-primary rounded-lg transition-colors'>
                               {item.icon && (
                                 <item.icon className="size-5" />
                               )}
                               <span>{item.label}</span>
                               <SidebarMenuAction>
-                                <ChevronDownIcon />
+                                {item.open ? (
+                                  <ChevronUpIcon />
+                                ) : (
+                                  <ChevronDownIcon />
+                                )}
                               </SidebarMenuAction>
                             </SidebarMenuButton>
                           </CollapsibleTrigger>
