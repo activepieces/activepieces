@@ -79,10 +79,11 @@ function ProjectSwitcher() {
           <CommandList>
             <CommandInput placeholder="Search project..." />
             <CommandEmpty>{t('No projects found')}</CommandEmpty>
-            {allProjects?.map((platform) => (
-              <CommandGroup
-                key={platform.platformName}
-                heading={platform.platformName}
+            {allProjects &&
+              allProjects.map((platform) => (
+                <CommandGroup
+                  key={platform.platformName}
+                  heading={platform.platformName}
               >
                 <ScrollArea viewPortClassName="max-h-[200px]">
                   {platform.projects &&

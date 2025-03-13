@@ -171,7 +171,7 @@ export function SidebarComponent({
     <div className="flex min-h-screen w-full">
       <div className="flex min-h-screen w-full">
         {!hideSideNav && (
-          <Sidebar className="bg-muted/50 w-[255px]">
+          <Sidebar className="w-[255px]">
             <SidebarContent>
               <SidebarHeader className="pt-4 pb-0">
                 <div className="flex items-center justify-center">

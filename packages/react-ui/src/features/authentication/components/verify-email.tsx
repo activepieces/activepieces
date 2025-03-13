@@ -56,7 +56,7 @@ const VerifyEmail = () => {
     return <Navigate to="/sign-in" replace />;
   }
   return (
-    <div className="h-screen w-screen flex flex-col  items-center justify-center gap-2">
+    <div className="mx-auto h-screen w-screen flex flex-col items-center justify-center gap-2">
       <FullLogo />
 
       <Card className="w-[28rem] rounded-sm drop-shadow-xl p-4">
