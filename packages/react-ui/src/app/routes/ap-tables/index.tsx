@@ -47,7 +47,7 @@ const ApTablesPage = () => {
       }),
   });
   const userHasTableWritePermission = useAuthorization().checkAccess(
-    Permission.WRITE_ALERT,
+    Permission.WRITE_TABLE,
   );
   const { mutate: createTable, isPending: isCreatingTable } = useMutation({
     mutationFn: async (data: { name: string }) => {
