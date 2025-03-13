@@ -86,7 +86,7 @@ const CustomTooltipLink = ({
           )}
         </div>
         {notification && !locked && (
-          <span className="bg-destructive  right-[1px] top-[3px] size-2 rounded-full "></span>
+          <span className="bg-destructive mr-1 size-2 rounded-full "></span>
         )}
       </div>
     </Link>

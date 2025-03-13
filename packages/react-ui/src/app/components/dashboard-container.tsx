@@ -141,14 +141,14 @@ export function DashboardContainer({
       type: 'group',
       label: t('Settings'),
       defaultOpen: false,
-      icon: Wrench,
+      icon: Settings,
       isActive: (pathname: string) => pathname.includes('/settings'),
       items: [
         {
           type: 'link',
           to: authenticationSession.appendProjectRoutePrefix('/settings/general'),
           label: t('General'),
-          icon: Settings,
+          icon: Wrench,
         } as SidebarLink,
         {
           type: 'link',
