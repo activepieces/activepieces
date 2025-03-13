@@ -118,7 +118,7 @@ const UsageProgress = ({ value, max, name }: UsageProgressProps) => {
         </div>
       </div>
       {!isNil(max) && (
-        <Progress value={(100 / max) * 100} className="h-[6px]" />
+        <Progress value={(value / max) * 100} className="h-[6px]" />
       )}
     </div>
   );
