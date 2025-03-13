@@ -1,4 +1,5 @@
 import {
+    assertNotNullOrUndefined,
     ListProjectRequestForUserQueryParams,
     PrincipalType,
     ProjectWithLimits,
@@ -34,13 +35,15 @@ export const usersProjectController: FastifyPluginAsyncTypebox = async (
     })
 
     fastify.get('/platforms', ListProjectsForPlatforms, async (request) => {
-        const userId = await userService.getOneOrFail({ id: request.principal.id })
-        const platforms = await platformService.listPlatformsForIdentityWithAtleastProject({ identityId: userId.identityId })
+        const loggedInUser = await userService.getOneOrFail({ id: request.principal.id })
+        const platforms = await platformService.listPlatformsForIdentityWithAtleastProject({ identityId: loggedInUser.identityId })
         const filteredPlatforms = platforms.filter((platform) => !platformUtils.isEnterpriseCustomerOnCloud(platform))
         const projects = await Promise.all(filteredPlatforms.map(async (platform) => {
+            const platformUser = await userService.getOneByIdentityAndPlatform({ identityId: loggedInUser.identityId, platformId: platform.id })
+            assertNotNullOrUndefined(platformUser, `Platform user not found for platform ${platform.id}`)
             const projects = await platformProjectService(request.log).getAllForPlatform({
                 platformId: platform.id,
-                userId: request.principal.id,
+                userId: platformUser.id,
                 cursorRequest: null,
                 displayName: undefined,
                 limit: 1000,
