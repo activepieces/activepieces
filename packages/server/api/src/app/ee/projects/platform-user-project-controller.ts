@@ -10,10 +10,10 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { platformProjectService } from './platform-project-service'
-import { platformUtils } from '../../platform/platform.utils'
 import { platformService } from '../../platform/platform.service'
+import { platformUtils } from '../../platform/platform.utils'
 import { userService } from '../../user/user-service'
+import { platformProjectService } from './platform-project-service'
 
 export const usersProjectController: FastifyPluginAsyncTypebox = async (
     fastify,
@@ -47,7 +47,7 @@ export const usersProjectController: FastifyPluginAsyncTypebox = async (
             }).then((projects) => projects.data)
             return {
                 platformName: platform.name,
-                projects: projects,
+                projects,
             }
         }))
         return projects.flat()

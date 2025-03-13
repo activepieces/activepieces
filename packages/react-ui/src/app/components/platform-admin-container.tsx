@@ -7,15 +7,21 @@ import {
   Users,
   Wrench,
 } from 'lucide-react';
+import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
+
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
-import { SidebarComponent, SidebarGroup, SidebarItem, SidebarLink } from './sidebar';
-import { useState } from 'react';
+import {
+  SidebarComponent,
+  SidebarGroup,
+  SidebarItem,
+  SidebarLink,
+} from './sidebar';
 
 type PlatformAdminContainerProps = {
   children: React.ReactNode;
@@ -128,7 +134,7 @@ export function PlatformAdminContainer({
           label: t('Signing Keys'),
           isSubItem: true,
         } as SidebarLink,
-        { 
+        {
           type: 'link',
           to: '/platform/security/project-roles',
           label: t('Project Roles'),
@@ -167,7 +173,9 @@ export function PlatformAdminContainer({
     } as SidebarGroup,
   ];
   if (edition === ApEdition.CLOUD && !showPlatformDemo) {
-    const setupGroup = items.find(item => item.type === 'group' && item.label === t('Setup')) as SidebarGroup;
+    const setupGroup = items.find(
+      (item) => item.type === 'group' && item.label === t('Setup'),
+    ) as SidebarGroup;
     if (setupGroup) {
       setupGroup.items.push({
         type: 'link',

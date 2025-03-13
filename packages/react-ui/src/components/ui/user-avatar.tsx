@@ -18,7 +18,6 @@ import {
   DropdownMenuItem,
 } from './dropdown-menu';
 import { TextWithIcon } from './text-with-icon';
-import { CaretSortIcon } from '@radix-ui/react-icons';
 export function UserAvatar() {
   const { reset } = useTelemetry();
   const { embedState } = useEmbedding();
@@ -31,7 +30,7 @@ export function UserAvatar() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-      <Avatar className="cursor-pointer">
+        <Avatar className="cursor-pointer">
           <AvatarFallback>
             <AvatarLetter
               name={user.firstName + ' ' + user.lastName}

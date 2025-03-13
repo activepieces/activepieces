@@ -328,9 +328,9 @@ const routes = [
     path: '/settings/general',
     element: (
       <DashboardContainer>
-          <PageTitle title="General">
-            <GeneralPage />
-          </PageTitle>
+        <PageTitle title="General">
+          <GeneralPage />
+        </PageTitle>
       </DashboardContainer>
     ),
   }),
@@ -338,9 +338,9 @@ const routes = [
     path: '/settings/pieces',
     element: (
       <DashboardContainer>
-          <PageTitle title="Pieces">
-            <ProjectPiecesPage />
-          </PageTitle>
+        <PageTitle title="Pieces">
+          <ProjectPiecesPage />
+        </PageTitle>
       </DashboardContainer>
     ),
   }),
@@ -349,9 +349,9 @@ const routes = [
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_PROJECT_MEMBER}>
-            <PageTitle title="Team">
-              <TeamPage />
-            </PageTitle>
+          <PageTitle title="Team">
+            <TeamPage />
+          </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>
     ),
@@ -366,9 +366,9 @@ const routes = [
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_PROJECT_RELEASE}>
-            <PageTitle title="Environments">
-              <EnvironmentPage />
-            </PageTitle>
+          <PageTitle title="Environments">
+            <EnvironmentPage />
+          </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>
     ),
@@ -448,9 +448,9 @@ const routes = [
     path: '/platform/setup/templates',
     element: (
       <PlatformAdminContainer>
-          <PageTitle title="Templates">
-            <TemplatesPage />
-          </PageTitle>
+        <PageTitle title="Templates">
+          <TemplatesPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -458,9 +458,9 @@ const routes = [
     path: '/platform/setup/branding',
     element: (
       <PlatformAdminContainer>
-          <PageTitle title="Branding">
-            <BrandingPage />
-          </PageTitle>
+        <PageTitle title="Branding">
+          <BrandingPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -478,9 +478,9 @@ const routes = [
     path: '/platform/setup/ai',
     element: (
       <PlatformAdminContainer>
-          <PageTitle title="AI">
-            <AIProvidersPage />
-          </PageTitle>
+        <PageTitle title="AI">
+          <AIProvidersPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -488,9 +488,9 @@ const routes = [
     path: '/platform/security/api-keys',
     element: (
       <PlatformAdminContainer>
-          <PageTitle title="API Keys">
-            <ApiKeysPage />
-          </PageTitle>
+        <PageTitle title="API Keys">
+          <ApiKeysPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -498,9 +498,9 @@ const routes = [
     path: '/platform/security/audit-logs',
     element: (
       <PlatformAdminContainer>
-          <PageTitle title="Audit Logs">
-            <AuditLogsPage />
-          </PageTitle>
+        <PageTitle title="Audit Logs">
+          <AuditLogsPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -508,9 +508,9 @@ const routes = [
     path: '/platform/infrastructure/workers',
     element: (
       <PlatformAdminContainer>
-          <PageTitle title="Workers">
-            <SettingsWorkersPage />
-          </PageTitle>
+        <PageTitle title="Workers">
+          <SettingsWorkersPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -518,9 +518,9 @@ const routes = [
     path: '/platform/infrastructure/health',
     element: (
       <PlatformAdminContainer>
-          <PageTitle title="System Health">
-            <SettingsHealthPage />
-          </PageTitle>
+        <PageTitle title="System Health">
+          <SettingsHealthPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -529,7 +529,7 @@ const routes = [
     element: (
       <PlatformAdminContainer>
         <PageTitle title="Billing">
-            <SettingsBilling />
+          <SettingsBilling />
         </PageTitle>
       </PlatformAdminContainer>
     ),
@@ -538,9 +538,9 @@ const routes = [
     path: '/platform/security/signing-keys',
     element: (
       <PlatformAdminContainer>
-          <PageTitle title="Signing Keys">
-            <SigningKeysPage />
-          </PageTitle>
+        <PageTitle title="Signing Keys">
+          <SigningKeysPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -548,9 +548,9 @@ const routes = [
     path: '/platform/security/sso',
     element: (
       <PlatformAdminContainer>
-          <PageTitle title="SSO">
-            <SSOPage />
-          </PageTitle>
+        <PageTitle title="SSO">
+          <SSOPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -558,9 +558,9 @@ const routes = [
     path: '/platform/setup/license-key',
     element: (
       <PlatformAdminContainer>
-          <PageTitle title="LicenseKey">
-            <LicenseKeyPage />
-          </PageTitle>
+        <PageTitle title="LicenseKey">
+          <LicenseKeyPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -568,9 +568,9 @@ const routes = [
     path: '/platform/security/project-roles',
     element: (
       <PlatformAdminContainer>
-          <PageTitle title="Project Roles">
-            <ProjectRolePage />
-          </PageTitle>
+        <PageTitle title="Project Roles">
+          <ProjectRolePage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -578,9 +578,9 @@ const routes = [
     path: '/platform/security/project-roles/:projectRoleId',
     element: (
       <PlatformAdminContainer>
-          <PageTitle title="Project Role Users">
-            <ProjectRoleUsersTable />
-          </PageTitle>
+        <PageTitle title="Project Role Users">
+          <ProjectRoleUsersTable />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },

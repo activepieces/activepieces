@@ -37,13 +37,13 @@ function ProjectSwitcher() {
   const filterProjects = React.useCallback(
     (projectId: string, search: string) => {
       //Radix UI lowercases the value string (projectId)
-      const project = allProjects?.find(
-        (platform) => platform.projects.find(
-          (project) => project.id.toLowerCase() === projectId
+      const project = allProjects
+        ?.find((platform) =>
+          platform.projects.find(
+            (project) => project.id.toLowerCase() === projectId,
+          ),
         )
-      )?.projects.find(
-        (project) => project.id.toLowerCase() === projectId
-      );
+        ?.projects.find((project) => project.id.toLowerCase() === projectId);
       if (!project) {
         return 0;
       }
@@ -80,34 +80,37 @@ function ProjectSwitcher() {
             <CommandInput placeholder="Search project..." />
             <CommandEmpty>{t('No projects found')}</CommandEmpty>
             {allProjects?.map((platform) => (
-              <CommandGroup key={platform.platformName} heading={platform.platformName}>
+              <CommandGroup
+                key={platform.platformName}
+                heading={platform.platformName}
+              >
                 <ScrollArea viewPortClassName="max-h-[200px]">
                   {platform.projects &&
-                  platform.projects.map((project) => (
-                    <CommandItem
-                      key={project.id}
-                      onSelect={() => {
-                        setCurrentProject(
-                          queryClient,
-                          project,
-                          location.pathname,
-                        );
-                        setOpen(false);
-                      }}
-                      value={project.id}
-                      className="text-sm break-all"
-                    >
-                      {project.displayName}
-                      <CheckIcon
-                        className={cn(
-                          'ml-auto h-4 w-4 shrink-0',
-                          currentProject?.id === project.id
-                            ? 'opacity-100'
-                            : 'opacity-0',
-                        )}
-                      />
-                    </CommandItem>
-                  ))}
+                    platform.projects.map((project) => (
+                      <CommandItem
+                        key={project.id}
+                        onSelect={() => {
+                          setCurrentProject(
+                            queryClient,
+                            project,
+                            location.pathname,
+                          );
+                          setOpen(false);
+                        }}
+                        value={project.id}
+                        className="text-sm break-all"
+                      >
+                        {project.displayName}
+                        <CheckIcon
+                          className={cn(
+                            'ml-auto h-4 w-4 shrink-0',
+                            currentProject?.id === project.id
+                              ? 'opacity-100'
+                              : 'opacity-0',
+                          )}
+                        />
+                      </CommandItem>
+                    ))}
                 </ScrollArea>
               </CommandGroup>
             ))}

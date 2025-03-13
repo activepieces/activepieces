@@ -52,7 +52,7 @@ export const projectHooks = {
       queryKey: ['projects-for-platforms'],
       queryFn: async () => {
         return projectApi.listForPlatforms();
-      },  
+      },
     });
   },
   useReloadPageIfProjectIdChanged: (projectId: string) => {

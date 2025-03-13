@@ -23,7 +23,12 @@ import { isNil, Permission } from '@activepieces/shared';
 import { authenticationSession } from '../../lib/authentication-session';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
-import { SidebarComponent, SidebarGroup, SidebarItem, SidebarLink } from './sidebar';
+import {
+  SidebarComponent,
+  SidebarGroup,
+  SidebarItem,
+  SidebarLink,
+} from './sidebar';
 
 type DashboardContainerProps = {
   children: React.ReactNode;
@@ -88,7 +93,14 @@ export function DashboardContainer({
       putEmptySpaceTop: true,
       icon: Workflow,
       isActive: (pathname: string) => {
-        const paths = ['/flows', '/issues', '/runs', '/connections', '/releases', '/tables'];
+        const paths = [
+          '/flows',
+          '/issues',
+          '/runs',
+          '/connections',
+          '/releases',
+          '/tables',
+        ];
         return paths.some((path) => pathname.includes(path));
       },
       defaultOpen: true,
@@ -117,7 +129,7 @@ export function DashboardContainer({
           type: 'link',
           to: authenticationSession.appendProjectRoutePrefix('/runs'),
           label: t('Runs'),
-          showInEmbed: true,  
+          showInEmbed: true,
           hasPermission: checkAccess(Permission.READ_RUN),
           isSubItem: true,
         },
@@ -136,9 +148,9 @@ export function DashboardContainer({
           hasPermission: project.releasesEnabled,
           isSubItem: true,
         },
-
       ],
-    } as SidebarGroup, {
+    } as SidebarGroup,
+    {
       type: 'link',
       to: authenticationSession.appendProjectRoutePrefix('/tables'),
       label: t('Tables'),
@@ -158,7 +170,9 @@ export function DashboardContainer({
       items: [
         {
           type: 'link',
-          to: authenticationSession.appendProjectRoutePrefix('/settings/general'),
+          to: authenticationSession.appendProjectRoutePrefix(
+            '/settings/general',
+          ),
           label: t('General'),
           icon: Wrench,
           isSubItem: true,
@@ -182,14 +196,18 @@ export function DashboardContainer({
         } as SidebarLink,
         {
           type: 'link',
-          to: authenticationSession.appendProjectRoutePrefix('/settings/pieces'),
+          to: authenticationSession.appendProjectRoutePrefix(
+            '/settings/pieces',
+          ),
           label: t('Pieces'),
           icon: Puzzle,
           isSubItem: true,
         } as SidebarLink,
         {
           type: 'link',
-          to: authenticationSession.appendProjectRoutePrefix('/settings/alerts'),
+          to: authenticationSession.appendProjectRoutePrefix(
+            '/settings/alerts',
+          ),
           label: t('Alerts'),
           icon: Bell,
           hasPermission: checkAccess(Permission.READ_ALERT),
@@ -212,13 +230,16 @@ export function DashboardContainer({
     .filter(permissionFilter)
     .filter(filterAlerts);
 
-  for (const item of items){
-    if (item.type === 'group'){
-      const newItems = item.items.filter(embedFilter).filter(permissionFilter).filter(filterAlerts);
+  for (const item of items) {
+    if (item.type === 'group') {
+      const newItems = item.items
+        .filter(embedFilter)
+        .filter(permissionFilter)
+        .filter(filterAlerts);
       item.items = newItems;
     }
   }
-  
+
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
       <ProjectChangedRedirector currentProjectId={currentProjectId}>
