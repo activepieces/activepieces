@@ -73,7 +73,7 @@ const UsageLimitsButton = React.memo(() => {
             />
           </div>
         </div>
-        <div className='flex flex-col gap-2'>
+        <div className='flex flex-col'>
             <div className='flex items-center gap-2'>
                 {project.usage.nextLimitResetDate && (
                   <div className="text-xs text-muted-foreground ">
@@ -82,11 +82,11 @@ const UsageLimitsButton = React.memo(() => {
                   </div>
                 )}
             </div>
-            {/* <FlagGuard flag={ApFlagId.SHOW_BILLING}> */}
+            <FlagGuard flag={ApFlagId.SHOW_BILLING}>
                 <Link to={'/platform/setup/billing'} className='w-fit'>
                   <span className='text-xs text-primary underline'>{t('Manage plan')}</span>
                 </Link>
-            {/* </FlagGuard> */}
+            </FlagGuard>
           </div>
         </div>
     </div>

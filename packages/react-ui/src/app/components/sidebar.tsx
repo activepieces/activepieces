@@ -22,7 +22,6 @@ import { Header } from './header';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuSubItem, SidebarMenuSub, SidebarMenuItem, SidebarMenuAction } from '@/components/ui/sidebar-shadcn';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
-import { UserAvatar } from '@/components/ui/user-avatar';
 import UsageLimitsButton from './usage-limits-button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -43,6 +42,7 @@ type CustomTooltipLinkProps = {
   locked?: boolean;
   newWindow?: boolean;
   isActive?: (pathname: string) => boolean;
+  isSubItem: boolean;
 };
 const CustomTooltipLink = ({
   to,
@@ -53,6 +53,7 @@ const CustomTooltipLink = ({
   locked,
   newWindow,
   isActive,
+  isSubItem,
 }: CustomTooltipLinkProps) => {
   const location = useLocation();
 
@@ -65,9 +66,9 @@ const CustomTooltipLink = ({
       rel={newWindow ? 'noopener noreferrer' : ''}
     >
       <div
-        className={`relative flex items-center gap-1 justify-between hover:bg-accent hover:text-primary rounded-lg transition-colors ${extraClasses || ''}${
-          isLinkActive ? '!bg-primary/10 text-primary' : ''
-        }`}
+        className={`relative flex  items-center gap-1 justify-between hover:bg-accent hover:text-primary rounded-lg transition-colors ${extraClasses || ''}${
+          isLinkActive ? '!bg-primary/10 !text-primary hover:text-[#3F3F46]' : '' 
+        } ${isSubItem ? 'text-[#3F3F46] ' : ''}`}
       >
         <div className={`w-full flex items-center justify-between gap-2 p-2 ${!Icon ? 'p-2' : ''}`}>
           <div className='flex items-center gap-2'>
@@ -116,6 +117,7 @@ export type SidebarLink = {
   locked?: boolean;
   hasPermission?: boolean;
   showInEmbed?: boolean;
+  isSubItem: boolean;
   isActive?: (pathname: string) => boolean;
 };
 
@@ -220,6 +222,7 @@ export function SidebarComponent({
                                     notification={link.notification}
                                     locked={link.locked}
                                     isActive={link.isActive}
+                                    isSubItem={link.isSubItem}
                                   />
                                 </SidebarMenuButton>
                               </SidebarMenuSubItem>
@@ -243,6 +246,7 @@ export function SidebarComponent({
                         notification={item.notification}
                         locked={item.locked}
                         isActive={item.isActive}
+                        isSubItem={item.isSubItem}
                       />
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -253,10 +257,8 @@ export function SidebarComponent({
               </ScrollArea>
             </SidebarContent>
             <SidebarFooter className='pb-4 gap-4'>
-              <Separator/> 
-              <SidebarMenu>
-                <UsageLimitsButton />
-                {isHomeDashboard && showSupportAndDocs && (
+            <SidebarMenu>
+              {isHomeDashboard && showSupportAndDocs && (
                 <>
                 <SidebarMenuItem className='hover:bg-accent hover:text-primary rounded-lg transition-colors'>
                    <SidebarMenuButton asChild>
@@ -276,6 +278,10 @@ export function SidebarComponent({
                   </SidebarMenuItem>
                   </>
                 )}
+              </SidebarMenu>  
+              <Separator/> 
+              <SidebarMenu>
+                <UsageLimitsButton />
               </SidebarMenu>  
             </SidebarFooter>
           </SidebarContent>

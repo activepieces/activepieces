@@ -101,6 +101,7 @@ export function DashboardContainer({
           label: t('Flows'),
           showInEmbed: true,
           hasPermission: checkAccess(Permission.READ_FLOW),
+          isSubItem: true,
         },
         {
           type: 'link',
@@ -109,14 +110,16 @@ export function DashboardContainer({
           notification: showIssuesNotification,
           showInEmbed: false,
           hasPermission: checkAccess(Permission.READ_ISSUES),
+          isSubItem: true,
         },
 
         {
           type: 'link',
           to: authenticationSession.appendProjectRoutePrefix('/runs'),
           label: t('Runs'),
-          showInEmbed: true,
+          showInEmbed: true,  
           hasPermission: checkAccess(Permission.READ_RUN),
+          isSubItem: true,
         },
         {
           type: 'link',
@@ -124,12 +127,14 @@ export function DashboardContainer({
           label: t('Connections'),
           showInEmbed: true,
           hasPermission: checkAccess(Permission.READ_APP_CONNECTION),
+          isSubItem: true,
         },
         {
           type: 'link',
           to: authenticationSession.appendProjectRoutePrefix('/releases'),
           label: t('Releases'),
           hasPermission: project.releasesEnabled,
+          isSubItem: true,
         },
 
       ],
@@ -140,6 +145,7 @@ export function DashboardContainer({
       icon: Table2,
       showInEmbed: true,
       hasPermission: checkAccess(Permission.READ_TABLE),
+      isSubItem: false,
     } as SidebarLink,
     {
       type: 'group',
@@ -155,6 +161,7 @@ export function DashboardContainer({
           to: authenticationSession.appendProjectRoutePrefix('/settings/general'),
           label: t('General'),
           icon: Wrench,
+          isSubItem: true,
         } as SidebarLink,
         {
           type: 'link',
@@ -163,6 +170,7 @@ export function DashboardContainer({
           ),
           label: t('Appearance'),
           icon: SunMoon,
+          isSubItem: true,
         } as SidebarLink,
         {
           type: 'link',
@@ -170,12 +178,14 @@ export function DashboardContainer({
           label: t('Team'),
           icon: Users,
           hasPermission: checkAccess(Permission.READ_PROJECT_MEMBER),
+          isSubItem: true,
         } as SidebarLink,
         {
           type: 'link',
           to: authenticationSession.appendProjectRoutePrefix('/settings/pieces'),
           label: t('Pieces'),
           icon: Puzzle,
+          isSubItem: true,
         } as SidebarLink,
         {
           type: 'link',
@@ -183,6 +193,7 @@ export function DashboardContainer({
           label: t('Alerts'),
           icon: Bell,
           hasPermission: checkAccess(Permission.READ_ALERT),
+          isSubItem: true,
         } as SidebarLink,
         {
           type: 'link',
@@ -192,6 +203,7 @@ export function DashboardContainer({
           label: t('Environments'),
           icon: GitBranch,
           hasPermission: checkAccess(Permission.READ_PROJECT_RELEASE),
+          isSubItem: true,
         } as SidebarLink,
       ],
     } as SidebarGroup,

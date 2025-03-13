@@ -43,6 +43,7 @@ export function PlatformAdminContainer({
       label: t('Overview'),
       icon: LineChart,
       locked: isLocked(!platform.analyticsEnabled),
+      isSubItem: false,
     } as SidebarLink,
     {
       type: 'link',
@@ -50,12 +51,14 @@ export function PlatformAdminContainer({
       label: t('Projects'),
       icon: LayoutGrid,
       locked: isLocked(!platform.manageProjectsEnabled),
+      isSubItem: false,
     } as SidebarLink,
     {
       type: 'link',
       to: '/platform/users',
       label: t('Users'),
       icon: Users,
+      isSubItem: false,
     } as SidebarLink,
     {
       type: 'group',
@@ -70,26 +73,31 @@ export function PlatformAdminContainer({
           type: 'link',
           to: '/platform/setup/ai',
           label: t('AI'),
+          isSubItem: true,
         } as SidebarLink,
         {
           type: 'link',
           to: '/platform/setup/branding',
           label: t('Branding'),
+          isSubItem: true,
         } as SidebarLink,
         {
           type: 'link',
           to: '/platform/setup/connections',
           label: t('Global Connections'),
+          isSubItem: true,
         },
         {
           type: 'link',
           to: '/platform/setup/pieces',
           label: t('Pieces'),
+          isSubItem: true,
         },
         {
           type: 'link',
           to: '/platform/setup/templates',
           label: t('Templates'),
+          isSubItem: true,
         } as SidebarLink,
       ],
     } as SidebarGroup,
@@ -106,26 +114,31 @@ export function PlatformAdminContainer({
           type: 'link',
           to: '/platform/security/audit-logs',
           label: t('Audit Logs'),
+          isSubItem: true,
         } as SidebarLink,
         {
           type: 'link',
           to: '/platform/security/sso',
           label: t('Single Sign On'),
+          isSubItem: true,
         } as SidebarLink,
         {
           type: 'link',
           to: '/platform/security/signing-keys',
           label: t('Signing Keys'),
+          isSubItem: true,
         } as SidebarLink,
         { 
           type: 'link',
           to: '/platform/security/project-roles',
           label: t('Project Roles'),
+          isSubItem: true,
         } as SidebarLink,
         {
           type: 'link',
           to: '/platform/security/api-keys',
           label: t('API Keys'),
+          isSubItem: true,
         } as SidebarLink,
       ],
     } as SidebarGroup,
@@ -142,11 +155,13 @@ export function PlatformAdminContainer({
           type: 'link',
           to: '/platform/infrastructure/workers',
           label: t('Workers'),
+          isSubItem: true,
         } as SidebarLink,
         {
           type: 'link',
           to: '/platform/infrastructure/health',
           label: t('Health'),
+          isSubItem: true,
         } as SidebarLink,
       ],
     } as SidebarGroup,
@@ -158,6 +173,7 @@ export function PlatformAdminContainer({
         type: 'link',
         to: '/platform/setup/billing',
         label: t('Billing'),
+        isSubItem: true,
       } as SidebarLink);
     }
   }
