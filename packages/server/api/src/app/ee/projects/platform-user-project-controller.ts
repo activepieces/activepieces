@@ -2,13 +2,18 @@ import {
     ListProjectRequestForUserQueryParams,
     PrincipalType,
     ProjectWithLimits,
+    ProjectWithLimitsWithPlatform,
     SeekPage,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
+    Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformProjectService } from './platform-project-service'
+import { platformUtils } from '../../platform/platform.utils'
+import { platformService } from '../../platform/platform.service'
+import { userService } from '../../user/user-service'
 
 export const usersProjectController: FastifyPluginAsyncTypebox = async (
     fastify,
@@ -28,6 +33,26 @@ export const usersProjectController: FastifyPluginAsyncTypebox = async (
         })
     })
 
+    fastify.get('/platforms', ListProjectsForPlatforms, async (request) => {
+        const userId = await userService.getOneOrFail({ id: request.principal.id })
+        const platforms = await platformService.listPlatformsForIdentityWithAtleastProject({ identityId: userId.identityId })
+        const filteredPlatforms = platforms.filter((platform) => !platformUtils.isEnterpriseCustomerOnCloud(platform))
+        const projects = await Promise.all(filteredPlatforms.map(async (platform) => {
+            const projects = await platformProjectService(request.log).getAllForPlatform({
+                platformId: platform.id,
+                userId: request.principal.id,
+                cursorRequest: null,
+                displayName: undefined,
+                limit: 1000,
+            }).then((projects) => projects.data)
+            return {
+                platformName: platform.name,
+                projects: projects,
+            }
+        }))
+        return projects.flat()
+    })
+
 }
 
 
@@ -40,5 +65,16 @@ const ListProjectRequestForUser = {
             [StatusCodes.OK]: SeekPage(ProjectWithLimits),
         },
         querystring: ListProjectRequestForUserQueryParams,
+    },
+}
+
+const ListProjectsForPlatforms = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER],
+    },
+    schema: {
+        response: {
+            [StatusCodes.OK]: Type.Array(ProjectWithLimitsWithPlatform),
+        },
     },
 }

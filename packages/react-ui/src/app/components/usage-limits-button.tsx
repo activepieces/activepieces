@@ -56,10 +56,6 @@ const UsageLimitsButton = React.memo(() => {
     <div className='flex flex-col gap-2 w-full py-1 px-2'>
        <div className="flex flex-col gap-6">
         <div className='flex flex-col gap-2'>
-          <div className='flex items-center gap-2 mb-2'>
-              <BarChartBig className='size-5' />
-              <span className='text-md'>{t('Usage')}</span>
-          </div>
           <div className='flex flex-col gap-3'>
             <UsageProgress
                 name={t('Tasks')}

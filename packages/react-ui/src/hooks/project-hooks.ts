@@ -13,6 +13,7 @@ import {
   ApFlagId,
   isNil,
   ProjectWithLimits,
+  ProjectWithLimitsWithPlatform,
 } from '@activepieces/shared';
 
 import { projectApi } from '../lib/project-api';
@@ -44,6 +45,14 @@ export const projectHooks = {
         });
         return results.data;
       },
+    });
+  },
+  useProjectsForPlatforms: () => {
+    return useQuery<ProjectWithLimitsWithPlatform[], Error>({
+      queryKey: ['projects-for-platforms'],
+      queryFn: async () => {
+        return projectApi.listForPlatforms();
+      },  
     });
   },
   useReloadPageIfProjectIdChanged: (projectId: string) => {

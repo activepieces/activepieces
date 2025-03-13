@@ -25,14 +25,11 @@ import { cn } from '@/lib/utils';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { projectHooks } from '../../../hooks/project-hooks';
-import { ApEdition } from '@activepieces/shared';
-import { ApFlagId } from '@activepieces/shared';
-import { flagsHooks } from '@/hooks/flags-hooks';
 
 function ProjectSwitcher() {
   const location = useLocation();
   const queryClient = useQueryClient();
-  const { data: projects } = projectHooks.useProjects();
+  const { data: allProjects } = projectHooks.useProjectsForPlatforms();
   const [open, setOpen] = React.useState(false);
   const { embedState } = useEmbedding();
   const { data: currentProject, setCurrentProject } =
@@ -40,8 +37,12 @@ function ProjectSwitcher() {
   const filterProjects = React.useCallback(
     (projectId: string, search: string) => {
       //Radix UI lowercases the value string (projectId)
-      const project = projects?.find(
-        (project) => project.id.toLowerCase() === projectId,
+      const project = allProjects?.find(
+        (platform) => platform.projects.find(
+          (project) => project.id.toLowerCase() === projectId
+        )
+      )?.projects.find(
+        (project) => project.id.toLowerCase() === projectId
       );
       if (!project) {
         return 0;
@@ -50,11 +51,8 @@ function ProjectSwitcher() {
         ? 1
         : 0;
     },
-    [projects],
+    [allProjects],
   );
-  const sortedProjects = (projects ?? []).sort((a, b) => {
-    return a.displayName.localeCompare(b.displayName);
-  });
 
   if (embedState.isEmbedded) {
     return null;
@@ -81,10 +79,11 @@ function ProjectSwitcher() {
           <CommandList>
             <CommandInput placeholder="Search project..." />
             <CommandEmpty>{t('No projects found')}</CommandEmpty>
-            <CommandGroup key="projects" heading="Projects">
-              <ScrollArea viewPortClassName="max-h-[200px]">
-                {sortedProjects &&
-                  sortedProjects.map((project) => (
+            {allProjects?.map((platform) => (
+              <CommandGroup key={platform.platformName} heading={platform.platformName}>
+                <ScrollArea viewPortClassName="max-h-[200px]">
+                  {platform.projects &&
+                  platform.projects.map((project) => (
                     <CommandItem
                       key={project.id}
                       onSelect={() => {
@@ -109,8 +108,9 @@ function ProjectSwitcher() {
                       />
                     </CommandItem>
                   ))}
-              </ScrollArea>
-            </CommandGroup>
+                </ScrollArea>
+              </CommandGroup>
+            ))}
           </CommandList>
         </Command>
       </PopoverContent>

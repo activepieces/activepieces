@@ -152,7 +152,7 @@ export function SidebarComponent({
         {!hideSideNav && (
           <Sidebar className="bg-muted/50 w-[255px]">
           <SidebarContent>
-            <SidebarHeader className='pt-4'>
+            <SidebarHeader  className='pt-4 pb-0'>
               <div className='flex items-center justify-center'>
               <Link
                   to={isHomeDashboard ? defaultRoute : '/platform'}
