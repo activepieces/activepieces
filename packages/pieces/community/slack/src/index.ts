@@ -29,6 +29,7 @@ import { setUserStatusAction } from './lib/actions/set-user-status';
 import { newMention } from './lib/triggers/new-mention';
 import { markdownToSlackFormat } from './lib/actions/markdown-to-slack-format';
 import { newCommand } from './lib/triggers/new-command';
+import { getFileAction } from './lib/actions/get-file';
 
 export const slackAuth = PieceAuth.OAuth2({
   description: '',
@@ -113,6 +114,7 @@ export const slack = createPiece({
     requestActionDirectMessageAction,
     requestActionMessageAction,
     uploadFile,
+    getFileAction,
     searchMessages,
     findUserByEmailAction,
     findUserByHandleAction,

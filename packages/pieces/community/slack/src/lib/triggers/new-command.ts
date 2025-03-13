@@ -43,21 +43,23 @@ const sampleData = {
   channel_type: 'channel',
   parsed_command: {
     command: 'help',
-    args: ['argument1', 'argument2']
-  }
+    args: ['argument1', 'argument2'],
+  },
 };
 
 export const newCommand = createTrigger({
   auth: slackAuth,
   name: 'new_command',
   displayName: 'New Command',
-  description: 'Triggers when a specific command is sent to the bot (e.g., @bot command arg1 arg2)',
+  description:
+    'Triggers when a specific command is sent to the bot (e.g., @bot command arg1 arg2)',
   props: {
     info: multiSelectChannelInfo,
     user: userId,
     commands: Property.Array({
       displayName: 'Commands',
-      description: 'List of valid commands that the bot should respond to (e.g., help, ocr, remind)',
+      description:
+        'List of valid commands that the bot should respond to (e.g., help, ocr, remind)',
       required: true,
       defaultValue: ['help'],
     }),
@@ -117,9 +119,9 @@ export const newCommand = createTrigger({
           ...sampleData,
           parsed_command: {
             command: commands.length > 0 ? commands[0] : 'help',
-            args: ['argument1', 'argument2']
-          }
-        }
+            args: ['argument1', 'argument2'],
+          },
+        },
       ];
     }
 
@@ -147,7 +149,7 @@ export const newCommand = createTrigger({
       .map((message) => {
         // Parse the command
         const parsedCommand = parseCommand(message.text || '', user, commands);
-        
+
         // Only include messages with valid commands
         if (parsedCommand && commands.includes(parsedCommand.command)) {
           return {
@@ -155,7 +157,7 @@ export const newCommand = createTrigger({
             channel: channels[0],
             event_ts: '1678231735.586539',
             channel_type: 'channel',
-            parsed_command: parsedCommand
+            parsed_command: parsedCommand,
           };
         }
         return null;
@@ -168,12 +170,14 @@ export const newCommand = createTrigger({
 
   run: async (context) => {
     const payloadBody = context.payload.body as PayloadBody;
-    const channels = context.propsValue.channels as string[];
-    const commands = context.propsValue.commands as string[];
+    const channels = (context.propsValue.channels as string[]) ?? [];
+    const commands = (context.propsValue.commands as string[]) ?? [];
     const user = context.propsValue.user as string;
 
     // Check if we should process this channel
-    if (!(channels.length === 0 || channels.includes(payloadBody.event.channel))) {
+    if (
+      !(channels.length === 0 || channels.includes(payloadBody.event.channel))
+    ) {
       return [];
     }
 
@@ -192,10 +196,12 @@ export const newCommand = createTrigger({
 
       if (parsedCommand && commands.includes(parsedCommand.command)) {
         // Return event with parsed command
-        return [{
-          ...payloadBody.event,
-          parsed_command: parsedCommand
-        }];
+        return [
+          {
+            ...payloadBody.event,
+            parsed_command: parsedCommand,
+          },
+        ];
       }
     }
 
@@ -214,31 +220,31 @@ function parseCommand(
   if (!botUserId) {
     return null;
   }
-  
+
   // Check if the message mentions the bot
   const mentionRegex = new RegExp(`<@${botUserId}>\\s+(.+)`, 's');
   const mentionMatch = text.match(mentionRegex);
-  
+
   if (!mentionMatch) {
     return null;
   }
-  
+
   // Extract the text after the mention
   const commandText = mentionMatch[1].trim();
-  
+
   // Split into command and arguments (first word is command, rest are args)
   const parts = commandText.split(/\s+/);
   const command = parts[0].toLowerCase();
   const args = parts.slice(1);
-  
+
   // Check if it's a valid command
   if (!validCommands.includes(command)) {
     return null;
   }
-  
+
   return {
     command,
-    args
+    args,
   };
 }
 
@@ -248,4 +254,4 @@ type PayloadBody = {
     bot_id?: string;
     text?: string;
   };
-}; 
+};
