@@ -1,7 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Trash2, Plus, Download, Loader2, CheckIcon } from 'lucide-react';
+import { Trash2, Plus, CheckIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -18,13 +18,8 @@ import {
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { TableTitle } from '@/components/ui/table-title';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { toast } from '@/components/ui/use-toast';
-import RenameTableDialog from '@/features/tables/components/rename-table-dialog';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { ApTableActionsMenu } from '@/features/tables/components/ap-table-actions-menu';
 import { fieldsApi } from '@/features/tables/lib/fields-api';
 import { recordsApi } from '@/features/tables/lib/records-api';
 import { tablesApi } from '@/features/tables/lib/tables-api';
@@ -34,14 +29,10 @@ import { formatUtils, NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
 import { FieldType, Permission, Table } from '@activepieces/shared';
 
 const ApTablesPage = () => {
-  const queryClient = useQueryClient();
-
   const openNewWindow = useNewWindow();
   const navigate = useNavigate();
   const [selectedRows, setSelectedRows] = useState<Array<{ id: string }>>([]);
-  const [exportingTableIds, setExportingTableIds] = useState<Set<string>>(
-    new Set(),
-  );
+
   const { data: project } = projectHooks.useCurrentProject();
   const [searchParams] = useSearchParams();
   const { data, isLoading, refetch } = useQuery({
@@ -56,7 +47,7 @@ const ApTablesPage = () => {
       }),
   });
   const userHasTableWritePermission = useAuthorization().checkAccess(
-    Permission.WRITE_ALERT,
+    Permission.WRITE_TABLE,
   );
   const { mutate: createTable, isPending: isCreatingTable } = useMutation({
     mutationFn: async (data: { name: string }) => {
@@ -86,57 +77,6 @@ const ApTablesPage = () => {
       );
     },
   });
-
-  const handleExportTable = async (id: string, name: string) => {
-    try {
-      setExportingTableIds((prev) => new Set(prev).add(id));
-      await queryClient.fetchQuery({
-        queryKey: ['table-export', id],
-        queryFn: async () => {
-          const data = await tablesApi.export(id);
-          const csvRows: string[][] = [];
-          csvRows.push(data.fields.map((f) => f.name));
-          data.rows.forEach((row) => {
-            csvRows.push(data.fields.map((field) => row[field.name] ?? ''));
-          });
-          const csvContent = csvRows
-            .map((row) =>
-              row
-                .map((cell) =>
-                  typeof cell === 'string'
-                    ? `"${cell.replace(/"/g, '""')}"`
-                    : cell,
-                )
-                .join(','),
-            )
-            .join('\n');
-
-          const blob = new Blob([csvContent], { type: 'text/csv' });
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.style.display = 'none';
-          link.href = url;
-          link.download = `table-${name}.csv`;
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-          window.URL.revokeObjectURL(url);
-        },
-      });
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: t('Error exporting table.'),
-        variant: 'destructive',
-      });
-    } finally {
-      setExportingTableIds((prev) => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
-    }
-  };
 
   const columns: ColumnDef<RowDataWithActions<Table>, unknown>[] = [
     {
@@ -208,46 +148,24 @@ const ApTablesPage = () => {
       id: 'actions',
       cell: ({ row }) => {
         return (
-          <div className="flex items-center justify-end">
-            <PermissionNeededTooltip
-              hasPermission={userHasTableWritePermission}
-            >
-              <RenameTableDialog
-                tableName={row.original.name}
-                tableId={row.original.id}
-                onRename={() => refetch()}
-                userHasTableWritePermission={userHasTableWritePermission}
-              />
-            </PermissionNeededTooltip>
-
-            <Tooltip>
-              <TooltipTrigger
-                asChild
-                disabled={exportingTableIds.has(row.original.id)}
-              >
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={exportingTableIds.has(row.original.id)}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleExportTable(row.original.id, row.original.name);
-                  }}
-                >
-                  {exportingTableIds.has(row.original.id) ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              {exportingTableIds.has(row.original.id) && (
-                <TooltipContent>{t('Exporting...')}</TooltipContent>
-              )}
-              {!exportingTableIds.has(row.original.id) && (
-                <TooltipContent>{t('Export')}</TooltipContent>
-              )}
-            </Tooltip>
+          <div
+            onAuxClick={(e) => {
+              e.stopPropagation();
+            }}
+            onContextMenu={(e) => {
+              e.stopPropagation();
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+            className="flex justify-center"
+          >
+            <ApTableActionsMenu
+              table={row.original}
+              refetch={refetch}
+              deleteMutation={bulkDeleteMutation}
+            />
           </div>
         );
       },
@@ -262,10 +180,7 @@ const ApTablesPage = () => {
       refetch();
     },
     onError: () => {
-      toast({
-        title: t('Error deleting connections'),
-        variant: 'destructive',
-      });
+      toast(INTERNAL_ERROR_TOAST);
     },
   });
 

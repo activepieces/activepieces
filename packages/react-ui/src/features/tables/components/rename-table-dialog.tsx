@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Pencil } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -23,11 +22,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { toast } from '@/components/ui/use-toast';
 
 import { tablesApi } from '../lib/tables-api';
@@ -36,14 +30,15 @@ type RenameTableDialogProps = {
   tableName: string;
   tableId: string;
   onRename: () => void;
-  userHasTableWritePermission: boolean;
+  children: React.ReactNode;
 };
 const RenameTableDialog = ({
   tableName,
   tableId,
   onRename,
-  userHasTableWritePermission,
+  children,
 }: RenameTableDialogProps) => {
+  console.log(tableName);
   const form = useForm<{ name: string }>({
     defaultValues: {
       name: tableName,
@@ -71,67 +66,49 @@ const RenameTableDialog = ({
   });
 
   return (
-    <Tooltip>
-      <Dialog
-        open={showRenameTableDialog}
-        onOpenChange={setShowRenameTableDialog}
-      >
-        <TooltipTrigger asChild disabled={!userHasTableWritePermission}>
-          <DialogTrigger asChild>
-            <Button
-              variant="ghost"
-              type="button"
-              size="icon"
-              disabled={!userHasTableWritePermission}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-          </DialogTrigger>
-        </TooltipTrigger>
-        {userHasTableWritePermission && (
-          <TooltipContent>{t('Rename')}</TooltipContent>
-        )}
-        <DialogContent onClick={(e) => e.stopPropagation()}>
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit((data) => renameTable(data.name))}
-            >
-              <DialogHeader>
-                <DialogTitle>
-                  {t('Rename')} {tableName}
-                </DialogTitle>
-              </DialogHeader>
-              <div className="mb-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input {...field} placeholder={t('Table name')} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                ></FormField>
-              </div>
-              <div className="flex justify-end gap-2">
-                <DialogClose asChild>
-                  <Button variant="outline" type="button">
-                    {t('Cancel')}
-                  </Button>
-                </DialogClose>
+    <Dialog
+      open={showRenameTableDialog}
+      onOpenChange={setShowRenameTableDialog}
+    >
+      <DialogTrigger asChild>{children}</DialogTrigger>
 
-                <Button type="submit" loading={isRenamingTable}>
-                  {t('Confirm')}
+      <DialogContent onClick={(e) => e.stopPropagation()}>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit((data) => renameTable(data.name))}>
+            <DialogHeader>
+              <DialogTitle>
+                {t('Rename')} {tableName}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="mb-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input {...field} placeholder={t('Table name')} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              ></FormField>
+            </div>
+            <div className="flex justify-end gap-2">
+              <DialogClose asChild>
+                <Button variant="outline" type="button">
+                  {t('Cancel')}
                 </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-    </Tooltip>
+              </DialogClose>
+
+              <Button type="submit" loading={isRenamingTable}>
+                {t('Confirm')}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 };
 

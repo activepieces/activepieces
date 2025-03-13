@@ -1,6 +1,7 @@
 import { AxiosError } from 'axios';
 import { clsx, type ClassValue } from 'clsx';
 import dayjs from 'dayjs';
+import JSZip from 'jszip';
 import { useEffect, useRef, useState, RefObject } from 'react';
 import { twMerge } from 'tailwind-merge';
 
@@ -265,4 +266,49 @@ export const combinePaths = ({
   const cleanedFirstPath = cleanTrailingSlash(firstPath);
   const cleanedSecondPath = cleanLeadingSlash(secondPath);
   return `${cleanedFirstPath}/${cleanedSecondPath}`;
+};
+
+const getBlobType = (extension: 'json' | 'txt' | 'csv') => {
+  switch (extension) {
+    case 'csv':
+      return 'text/csv';
+    case 'json':
+      return 'application/json';
+    case 'txt':
+      return 'text/plain';
+    default:
+      return `text/plain`;
+  }
+};
+
+type downloadFileProps =
+  | {
+      obj: string;
+      fileName: string;
+      extension: 'json' | 'txt' | 'csv';
+    }
+  | {
+      obj: JSZip;
+      fileName: string;
+      extension: 'zip';
+    };
+export const downloadFile = async ({
+  obj,
+  fileName,
+  extension,
+}: downloadFileProps) => {
+  const blob =
+    extension === 'zip'
+      ? await obj.generateAsync({ type: 'blob' })
+      : new Blob([obj], {
+          type: getBlobType(extension),
+        });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${fileName}.${extension}`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
