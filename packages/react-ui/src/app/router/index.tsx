@@ -8,8 +8,6 @@ import {
 } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
-import PlatformSecondSidebarLayout from '@/app/components/platform-second-sidebar-layout';
-import ProjectSettingsLayout from '@/app/components/project-settings-layout';
 import { ChatPage } from '@/app/routes/chat';
 import { EmbedPage } from '@/app/routes/embed';
 import AnalyticsPage from '@/app/routes/platform/analytics';
@@ -309,11 +307,9 @@ const routes = [
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_ALERT}>
-          <ProjectSettingsLayout>
-            <PageTitle title="Alerts">
-              <AlertsPage />
-            </PageTitle>
-          </ProjectSettingsLayout>
+          <PageTitle title="Alerts">
+            <AlertsPage />
+          </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>
     ),
@@ -322,11 +318,9 @@ const routes = [
     path: '/settings/appearance',
     element: (
       <DashboardContainer>
-        <ProjectSettingsLayout>
-          <PageTitle title="Appearance">
-            <AppearancePage />
-          </PageTitle>
-        </ProjectSettingsLayout>
+        <PageTitle title="Appearance">
+          <AppearancePage />
+        </PageTitle>
       </DashboardContainer>
     ),
   }),
@@ -334,11 +328,9 @@ const routes = [
     path: '/settings/general',
     element: (
       <DashboardContainer>
-        <ProjectSettingsLayout>
-          <PageTitle title="General">
-            <GeneralPage />
-          </PageTitle>
-        </ProjectSettingsLayout>
+        <PageTitle title="General">
+          <GeneralPage />
+        </PageTitle>
       </DashboardContainer>
     ),
   }),
@@ -346,11 +338,9 @@ const routes = [
     path: '/settings/pieces',
     element: (
       <DashboardContainer>
-        <ProjectSettingsLayout>
-          <PageTitle title="Pieces">
-            <ProjectPiecesPage />
-          </PageTitle>
-        </ProjectSettingsLayout>
+        <PageTitle title="Pieces">
+          <ProjectPiecesPage />
+        </PageTitle>
       </DashboardContainer>
     ),
   }),
@@ -359,11 +349,9 @@ const routes = [
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_PROJECT_MEMBER}>
-          <ProjectSettingsLayout>
-            <PageTitle title="Team">
-              <TeamPage />
-            </PageTitle>
-          </ProjectSettingsLayout>
+          <PageTitle title="Team">
+            <TeamPage />
+          </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>
     ),
@@ -378,11 +366,9 @@ const routes = [
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_PROJECT_RELEASE}>
-          <ProjectSettingsLayout>
-            <PageTitle title="Environments">
-              <EnvironmentPage />
-            </PageTitle>
-          </ProjectSettingsLayout>
+          <PageTitle title="Environments">
+            <EnvironmentPage />
+          </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>
     ),
@@ -419,11 +405,9 @@ const routes = [
     path: '/platform/setup/pieces',
     element: (
       <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="setup">
-          <PageTitle title="Pieces">
-            <PlatformPiecesPage />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
+        <PageTitle title="Pieces">
+          <PlatformPiecesPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -454,11 +438,9 @@ const routes = [
     path: '/platform/setup/connections',
     element: (
       <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="setup">
-          <PageTitle title="Connections">
-            <GlobalConnectionsTable />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
+        <PageTitle title="Connections">
+          <GlobalConnectionsTable />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -466,11 +448,9 @@ const routes = [
     path: '/platform/setup/templates',
     element: (
       <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="setup">
-          <PageTitle title="Templates">
-            <TemplatesPage />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
+        <PageTitle title="Templates">
+          <TemplatesPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -478,11 +458,9 @@ const routes = [
     path: '/platform/setup/branding',
     element: (
       <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="setup">
-          <PageTitle title="Branding">
-            <BrandingPage />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
+        <PageTitle title="Branding">
+          <BrandingPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -500,11 +478,9 @@ const routes = [
     path: '/platform/setup/ai',
     element: (
       <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="setup">
-          <PageTitle title="AI">
-            <AIProvidersPage />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
+        <PageTitle title="AI">
+          <AIProvidersPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -512,11 +488,9 @@ const routes = [
     path: '/platform/security/api-keys',
     element: (
       <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="security">
-          <PageTitle title="API Keys">
-            <ApiKeysPage />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
+        <PageTitle title="API Keys">
+          <ApiKeysPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -524,11 +498,9 @@ const routes = [
     path: '/platform/security/audit-logs',
     element: (
       <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="security">
-          <PageTitle title="Audit Logs">
-            <AuditLogsPage />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
+        <PageTitle title="Audit Logs">
+          <AuditLogsPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -536,11 +508,9 @@ const routes = [
     path: '/platform/infrastructure/workers',
     element: (
       <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="infrastructure">
-          <PageTitle title="Workers">
-            <SettingsWorkersPage />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
+        <PageTitle title="Workers">
+          <SettingsWorkersPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -548,11 +518,9 @@ const routes = [
     path: '/platform/infrastructure/health',
     element: (
       <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="infrastructure">
-          <PageTitle title="System Health">
-            <SettingsHealthPage />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
+        <PageTitle title="System Health">
+          <SettingsHealthPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -561,9 +529,7 @@ const routes = [
     element: (
       <PlatformAdminContainer>
         <PageTitle title="Billing">
-          <PlatformSecondSidebarLayout type="setup">
-            <SettingsBilling />
-          </PlatformSecondSidebarLayout>
+          <SettingsBilling />
         </PageTitle>
       </PlatformAdminContainer>
     ),
@@ -572,11 +538,9 @@ const routes = [
     path: '/platform/security/signing-keys',
     element: (
       <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="security">
-          <PageTitle title="Signing Keys">
-            <SigningKeysPage />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
+        <PageTitle title="Signing Keys">
+          <SigningKeysPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -584,11 +548,9 @@ const routes = [
     path: '/platform/security/sso',
     element: (
       <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="security">
-          <PageTitle title="SSO">
-            <SSOPage />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
+        <PageTitle title="SSO">
+          <SSOPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -596,11 +558,9 @@ const routes = [
     path: '/platform/setup/license-key',
     element: (
       <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="setup">
-          <PageTitle title="License Key">
-            <LicenseKeyPage />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
+        <PageTitle title="LicenseKey">
+          <LicenseKeyPage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -608,11 +568,9 @@ const routes = [
     path: '/platform/security/project-roles',
     element: (
       <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="security">
-          <PageTitle title="Project Roles">
-            <ProjectRolePage />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
+        <PageTitle title="Project Roles">
+          <ProjectRolePage />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },
@@ -620,11 +578,9 @@ const routes = [
     path: '/platform/security/project-roles/:projectRoleId',
     element: (
       <PlatformAdminContainer>
-        <PlatformSecondSidebarLayout type="security">
-          <PageTitle title="Project Role Users">
-            <ProjectRoleUsersTable />
-          </PageTitle>
-        </PlatformSecondSidebarLayout>
+        <PageTitle title="Project Role Users">
+          <ProjectRoleUsersTable />
+        </PageTitle>
       </PlatformAdminContainer>
     ),
   },

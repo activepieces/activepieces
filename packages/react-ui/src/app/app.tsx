@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { EmbeddingProvider } from '@/components/embed-provider';
 import TelemetryProvider from '@/components/telemetry-provider';
 import { ThemeProvider } from '@/components/theme-provider';
+import { SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
@@ -33,8 +34,10 @@ export function App() {
             <TelemetryProvider>
               <TooltipProvider>
                 <ThemeProvider storageKey="vite-ui-theme">
-                  <ApRouter />
-                  <Toaster />
+                  <SidebarProvider>
+                    <ApRouter />
+                    <Toaster />
+                  </SidebarProvider>
                 </ThemeProvider>
               </TooltipProvider>
             </TelemetryProvider>

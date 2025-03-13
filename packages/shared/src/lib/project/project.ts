@@ -101,3 +101,10 @@ export const ProjectMetaData = Type.Object({
 })
 
 export type ProjectMetaData = Static<typeof ProjectMetaData>
+
+export const ProjectWithLimitsWithPlatform = Type.Object({
+    platformName: Type.String(),
+    projects: Type.Array(ProjectWithLimits),
+})
+
+export type ProjectWithLimitsWithPlatform = Static<typeof ProjectWithLimitsWithPlatform>
