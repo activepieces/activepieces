@@ -12,7 +12,7 @@ import {
 import { cn } from '@/lib/utils';
 import { FieldType } from '@activepieces/shared';
 
-import { getColumnIcon } from '../lib/utils';
+import { tablesUtils } from '../lib/utils';
 
 export enum ColumnActionType {
   DELETE,
@@ -71,7 +71,7 @@ export function ColumnHeader({ label, type, actions }: ColumnHeaderProps) {
           )}
         >
           <div className="flex items-center gap-2">
-            {getColumnIcon(type)}
+            {tablesUtils.getColumnIcon(type)}
             <span className="text-sm">{label}</span>
           </div>
           {actions && actions.length > 0 && (

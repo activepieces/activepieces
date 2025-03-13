@@ -107,10 +107,9 @@ export async function getConversationContent(
         `Could not load conversation ${conversationId} after ${timeout}s - ${conversationStatus} - consider increasing timeout value`
       );
     } else {
+      const error = getConversationError(conversation.body);
       throw new Error(
-        `Could not load conversation ${conversationId} - ${conversationStatus}: ${
-          conversation.body['conversation']['content']?.at(-1)?.at(0)?.error
-        }`
+        `Could not load conversation ${conversationId} - ${conversationStatus}: ${error.message} (${error.code})`
       );
     }
   }
@@ -120,4 +119,11 @@ export async function getConversationContent(
 
 function getConversationStatus(conversation: HttpMessageBody): string {
   return conversation['conversation']['content']?.at(-1)?.at(0)?.status;
+}
+
+function getConversationError(conversation: HttpMessageBody): {
+  code: string;
+  message: string;
+} {
+  return conversation['conversation']['content']?.at(-1)?.at(0)?.error;
 }
