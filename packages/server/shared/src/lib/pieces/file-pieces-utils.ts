@@ -3,8 +3,8 @@ import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
 import { sep } from 'path'
 import importFresh from '@activepieces/import-fresh-webpack'
-import { Piece, PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framework'
-import { ActivepiecesError, ErrorCode, extractPieceFromModule, PackageType, PieceType } from '@activepieces/shared'
+import { Piece, PieceMetadata } from '@activepieces/pieces-framework'
+import { extractPieceFromModule } from '@activepieces/shared'
 import clearModule from 'clear-module'
 import { FastifyBaseLogger } from 'fastify'
 import { exceptionHandler } from '../exception-handler'
@@ -77,47 +77,6 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
         return pieces
     }
 
-    async function findAllLocalPieces(): Promise<PieceMetadata[]> {
-        const pieces = await loadAllPiecesFromFolder(resolve(cwd(), 'dist', 'packages', 'pieces'))
-        return pieces
-    }
-
-    async function findLocalPiece({ name, projectId }: { name: string, projectId?: string }): Promise<PieceMetadataModel> {
-        const piecesMetadata = await filePiecesUtils([], log).findAllLocalPieces()
-        const pieceMetadata = piecesMetadata.find((p) => p.name === name)
-
-        if (!pieceMetadata) {
-            throw new ActivepiecesError({
-                code: ErrorCode.PIECE_NOT_FOUND,
-                params: {
-                    pieceName: name,
-                    pieceVersion: undefined,
-                    message: 'Local Piece is not found in file system',
-                },
-            })
-        }
-
-        return {
-            name: pieceMetadata.name,
-            displayName: pieceMetadata.displayName,
-            description: pieceMetadata.description,
-            logoUrl: pieceMetadata.logoUrl,
-            version: pieceMetadata.version,
-            auth: pieceMetadata.auth,
-            projectUsage: 0,
-            minimumSupportedRelease: pieceMetadata.minimumSupportedRelease ?? '0.0.0',
-            maximumSupportedRelease: pieceMetadata.maximumSupportedRelease ?? '999.999.999',
-            actions: pieceMetadata.actions,
-            authors: pieceMetadata.authors,
-            categories: pieceMetadata.categories,
-            triggers: pieceMetadata.triggers,
-            directoryPath: pieceMetadata.directoryPath,
-            projectId,
-            packageType: PackageType.REGISTRY,
-            pieceType: PieceType.OFFICIAL,
-        }
-    }
-
     async function loadPiecesFromFolder(folderPath: string): Promise<PieceMetadata[]> {
         try {
             const paths = (await findAllPiecesFolder(folderPath)).filter(p => packages.some(packageName => p.includes(packageName)))
@@ -127,19 +86,6 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
         catch (e) {
             const err = e as Error
             log.warn({ name: 'FilePieceMetadataService#loadPiecesFromFolder', message: err.message, stack: err.stack })
-            return []
-        }
-    }
-
-    async function loadAllPiecesFromFolder(folderPath: string): Promise<PieceMetadata[]> {
-        try {
-            const paths = await findAllPiecesFolder(folderPath)
-            const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
-            return pieces.filter((p): p is PieceMetadata => p !== null)
-        }
-        catch (e) {
-            const err = e as Error
-            log.warn({ name: 'FilePieceMetadataService#loadAllPiecesFromFolder', message: err.message, stack: err.stack })
             return []
         }
     }
@@ -184,7 +130,6 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
 
             pieceCache[folderPath] = metadata
 
-            return pieceCache[folderPath]
         }
         catch (ex) {
             pieceCache[folderPath] = null
@@ -210,8 +155,6 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
         findDirectoryByPackageName,
         findPieceDirectoryByFolderName,
         findAllPieces,
-        findLocalPiece,
-        findAllLocalPieces,
         clearPieceCache,
         getPackageNameFromFolderPath,
     }

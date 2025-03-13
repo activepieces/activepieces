@@ -1,20 +1,21 @@
-import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import axios, { AxiosError } from 'axios';
 
-export const searchKnowledgebase = createAction({
-  name: 'search_knowledgebase',
-  displayName: 'Search Knowledgebase',
-  description: 'Search Dify knowledgebase using a query',
+export const searchKnowledgeBase = createAction({
+  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
+  name: 'searchKnowledgeBase',
+  displayName: 'Search Knowledge Base',
+  description: "Search for any information in Avalant's knowledge base",
   auth: PieceAuth.None(),
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',
-      description: 'The query to search for in the knowledgebase',
+      description: 'The query to search for in the knowledge base',
       required: true,
     }),
-    knowledgebase: Property.ShortText({
-      displayName: 'Knowledgebase',
-      description: 'The knowledgebase ID to search in',
+    knowledgeBaseId: Property.ShortText({
+      displayName: 'Knowledge Base ID',
+      description: 'The knowledge base ID to search in',
       required: true,
     }),
     topK: Property.Number({
@@ -31,16 +32,17 @@ export const searchKnowledgebase = createAction({
     }),
   },
   async run(context) {
-    const { query, knowledgebase, topK, scoreThreshold } = context.propsValue;
+    const URL = 'https://ml.oneweb.tech/api/dify_kb/retrieval'
+    const { query, knowledgeBaseId, topK, scoreThreshold } = context.propsValue;
     let openID = JSON.parse(localStorage.getItem("openID") || '""');
     let apiKey = openID?.access_token;
 
     try {
       const response = await axios.post(
-        `https://ml.oneweb.tech/api/dify_kb/retrieval`,
+        URL,
         {
           query: query,
-          knowledge_id: knowledgebase,
+          knowledge_id: knowledgeBaseId,
           retrieval_setting: {
             top_k: topK,
             score_threshold: scoreThreshold,
@@ -60,12 +62,11 @@ export const searchKnowledgebase = createAction({
       };
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const axiosError:any = error as AxiosError;
+        const axiosError: any = error as AxiosError;
         throw new Error(
-          `Dify API Error: ${
-            axiosError.response?.data?.message || 
-            axiosError.message || 
-            'Unknown error occurred'
+          `Dify API Error: ${axiosError.response?.data?.message ||
+          axiosError.message ||
+          'Unknown error occurred'
           }`
         );
       }

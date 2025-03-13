@@ -1,5 +1,5 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { AppSystemProp, apVersionUtil, filePiecesUtils } from '@activepieces/server-shared'
+import { AppSystemProp, apVersionUtil } from '@activepieces/server-shared'
 import { ListVersionsResponse, PackageType, PieceSyncMode, PieceType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -19,7 +19,7 @@ const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
 
 export const pieceSyncService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
-        if (syncMode === PieceSyncMode.NONE) {
+        if (syncMode !== PieceSyncMode.OFFICIAL_AUTO) {
             log.info('Piece sync service is disabled')
             return
         }
@@ -39,16 +39,10 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
         })
     },
     async sync(): Promise<void> {
-        if (syncMode === PieceSyncMode.NONE) {
+        if (syncMode !== PieceSyncMode.OFFICIAL_AUTO) {
             log.info('Piece sync service is disabled')
             return
         }
-
-        if (syncMode === PieceSyncMode.LOCAL) {
-            await pieceSyncService(log).syncLocal()
-            return
-        }
-
         try {
             log.info({ time: dayjs().toISOString() }, 'Syncing pieces')
             const pieces = await listPieces()
@@ -66,25 +60,6 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
             log.error({ error }, 'Error syncing pieces')
         }
     },
-    async syncLocal(): Promise<void> {
-        try {
-            log.info({ time: dayjs().toISOString() }, 'Syncing local pieces')
-            const pieces = await filePiecesUtils([], log).findAllLocalPieces()
-            const promises: Promise<void>[] = []
-
-            for (const summary of pieces) {
-                const lastVersionSynced = await existsInDatabase({ name: summary.name, version: summary.version })
-                log.info(`${summary.name} ${summary.version} exists in db ${lastVersionSynced}`)
-                if (!lastVersionSynced) {
-                    promises.push(syncLocalPiece(summary.name, summary.version, log))
-                }
-            }
-            await Promise.all(promises)
-        }
-        catch (error) {
-            log.error({ error }, 'Error syncing pieces')
-        }
-    }
 })
 
 async function syncPiece(name: string, log: FastifyBaseLogger): Promise<void> {
@@ -108,25 +83,6 @@ async function syncPiece(name: string, log: FastifyBaseLogger): Promise<void> {
     }
 
 }
-
-async function syncLocalPiece(name: string, version: string, log: FastifyBaseLogger): Promise<void> {
-    try {
-        log.info({ name, version }, 'Syncing local piece metadata into database')
-        const currentVersionSynced = await existsInDatabase({ name, version })
-        if (!currentVersionSynced) {
-            const piece = await filePiecesUtils([], log).findLocalPiece({ name })
-            await pieceMetadataService(log).create({
-                pieceMetadata: piece,
-                packageType: piece.packageType,
-                pieceType: piece.pieceType,
-            })
-        }
-    }
-    catch (error) {
-        log.error({ error }, 'Error syncing local piece')
-    }
-}
-
 async function existsInDatabase({ name, version }: { name: string, version: string }): Promise<boolean> {
     return piecesRepo().existsBy({
         name,

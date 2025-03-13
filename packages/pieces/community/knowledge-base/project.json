@@ -1,7 +1,7 @@
 {
-  "name": "pieces-knowledgebase",
+  "name": "pieces-knowledge-base",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/knowledgebase/src",
+  "sourceRoot": "packages/pieces/community/knowledge-base/src",
   "projectType": "library",
   "release": {
     "version": {
@@ -19,12 +19,12 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/community/knowledgebase",
-        "tsConfig": "packages/pieces/community/knowledgebase/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/knowledgebase/package.json",
-        "main": "packages/pieces/community/knowledgebase/src/index.ts",
+        "outputPath": "dist/packages/pieces/community/knowledge-base",
+        "tsConfig": "packages/pieces/community/knowledge-base/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/knowledge-base/package.json",
+        "main": "packages/pieces/community/knowledge-base/src/index.ts",
         "assets": [
-          "packages/pieces/community/knowledgebase/*.md"
+          "packages/pieces/community/knowledge-base/*.md"
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

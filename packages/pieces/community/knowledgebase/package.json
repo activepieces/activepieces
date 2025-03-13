@@ -1,7 +1,0 @@
-{
-  "name": "avalant-piece-knowledgebase",
-  "version": "0.0.7",
-  "dependencies": {
-    "avalant-piece-knowledgebase": "file:"
-  }
-}
