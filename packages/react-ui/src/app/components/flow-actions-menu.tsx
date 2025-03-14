@@ -5,7 +5,6 @@ import {
   CornerUpLeft,
   Download,
   Import,
-  Save,
   Pencil,
   Share2,
   Trash2,
@@ -29,6 +28,7 @@ import {
   ImportFlowDialogProps,
 } from '@/features/flows/components/import-flow-dialog';
 import { RenameFlowDialog } from '@/features/flows/components/rename-flow-dialog';
+import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 // import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 // import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -36,20 +36,18 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 // import { GitBranchType } from '@activepieces/ee-shared';
 import {
-  Flow,
   FlowOperationType,
   FlowVersion,
   Permission,
+  PopulatedFlow,
 } from '@activepieces/shared';
 
 import { MoveFlowDialog } from '../../features/flows/components/move-flow-dialog';
 import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
 import { flowsApi } from '../../features/flows/lib/flows-api';
-import { flowsUtils } from '../../features/flows/lib/flows-utils';
-import { SaveAsTemplateDialog } from '../../features/flows/components/save-as-template-dialog';
 
 interface FlowActionMenuProps {
-  flow: Flow;
+  flow: PopulatedFlow;
   flowVersion: FlowVersion;
   children?: React.ReactNode;
   readonly: boolean;
@@ -120,17 +118,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
-  const { mutate: exportFlow, isPending: isExportPending } = useMutation({
-    mutationFn: () => flowsUtils.downloadFlow(flow.id),
-    onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Flow has been exported.'),
-        duration: 3000,
-      });
-    },
-    onError: () => toast(INTERNAL_ERROR_TOAST),
-  });
+  const { mutate: exportFlow, isPending: isExportPending } =
+    flowsHooks.useExportFlows();
 
   return (
     <DropdownMenu modal={true} open={open} onOpenChange={setOpen}>
@@ -254,7 +243,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             </ImportFlowDialog>
           </PermissionNeededTooltip>
         )}
-        <DropdownMenuItem onClick={() => exportFlow()}>
+        <DropdownMenuItem onClick={() => exportFlow([flow])}>
           <div className="flex cursor-pointer  flex-row gap-2 items-center">
             {isExportPending ? (
               <LoadingSpinner />
@@ -264,14 +253,6 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             <span>{isExportPending ? t('Exporting') : t('Export')}</span>
           </div>
         </DropdownMenuItem>
-        <SaveAsTemplateDialog flowId={flow.id} flowVersion={flowVersion}>
-          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-            <div className="flex cursor-pointer flex-row gap-2 items-center">
-              <Save className="h-4 w-4" />
-              <span>{t('Save as Template')}</span>
-            </div>
-          </DropdownMenuItem>
-        </SaveAsTemplateDialog>
         {!embedState.isEmbedded && (
           <ShareTemplateDialog flowId={flow.id} flowVersionId={flowVersion.id}>
             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>

@@ -7,6 +7,7 @@ import { commonProperties } from './database-connection'
 import { AddPgLocaleCollation1740031341436 } from './migration/postgres/1740031341436-add-pg-locale-collation'
 import { InitialPg1740031656104 } from './migration/postgres/1740031656104-initial-pg'
 import { SwitchToRouter1741578250432 } from './migration/common/1741578250432-switch-to-router'
+import { AddTables1741862762328 } from './migration/postgres/1741862762328-add-tables'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -20,6 +21,7 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+      AddTables1741862762328,
       SwitchToRouter1741578250432,
       AddPgLocaleCollation1740031341436,
       InitialPg1740031656104,

@@ -42,7 +42,7 @@ export const transcribe = createAction({
       handleWebhookUrl(context, transcriptParams);
       handlePiiAudio(context);
       handleEmptyArrays(transcriptParams);
-      const transcript = await client.transcripts.submit(transcriptParams);
+      const transcript = await client.transcripts.submit(transcriptParams) as any;
       if (context.propsValue.wait_until_ready) {
         context.run.pause({
           pauseMetadata: {

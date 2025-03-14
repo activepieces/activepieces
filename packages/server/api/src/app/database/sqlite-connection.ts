@@ -7,6 +7,7 @@ import { system } from '../helper/system/system'
 import { commonProperties } from './database-connection'
 import { InitialSqlite1740031972943 } from './migration/sqlite/1740031972943-initial-sqlite'
 import { SwitchToRouter1741578250432 } from './migration/common/1741578250432-switch-to-router'
+import { AddTables1741862813806 } from './migration/sqlite/1741862813806-add-tables'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -29,6 +30,7 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+      AddTables1741862813806,
       SwitchToRouter1741578250432,
       InitialSqlite1740031972943
     ]
