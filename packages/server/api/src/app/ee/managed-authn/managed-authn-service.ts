@@ -6,6 +6,7 @@ import { cryptoUtils } from '@activepieces/server-shared'
 import {
     AuthenticationResponse,
     isNil,
+    NotificationStatus,
     PiecesFilterType,
     PlatformRole,
     PrincipalType,
@@ -155,7 +156,7 @@ const getOrCreateProject = async ({
         externalId: externalProjectId,
     })
 
-    if (existingProject) {
+    if (!isNil(existingProject)) {
         return existingProject
     }
 
@@ -165,6 +166,7 @@ const getOrCreateProject = async ({
         displayName: externalProjectId,
         ownerId: platform.ownerId,
         platformId,
+        notifyStatus: NotificationStatus.NEVER,
         externalId: externalProjectId,
     })
 
