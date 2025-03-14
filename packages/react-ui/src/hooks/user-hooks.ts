@@ -11,6 +11,9 @@ export const userHooks = {
     return useSuspenseQuery<UserWithMetaInformationAndProject | null, Error>({
       queryKey: ['currentUser', userId],
       queryFn: async () => {
+        // Skip user data fetch if JWT is expired to prevent redirect to sign-in page
+        // This is especially important for embedding scenarios where we need to accept
+        // a new JWT token rather than triggering the global error handler
         if (!userId || isJwtExpired) {
           return null;
         }
