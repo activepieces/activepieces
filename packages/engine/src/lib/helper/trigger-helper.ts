@@ -112,6 +112,11 @@ export const triggerHelper = {
                 id: params.projectId,
                 externalId: constants.externalProjectId,
             },
+            server: {
+                token: params.engineToken,
+                apiUrl: constants.internalApiUrl,
+                publicUrl: params.publicApiUrl,
+            },
         }
         switch (params.hookType) {
             case TriggerHookType.ON_DISABLE:

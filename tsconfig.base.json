@@ -637,6 +637,9 @@
       "@activepieces/piece-surveymonkey": [
         "packages/pieces/community/surveymonkey/src/index.ts"
       ],
+      "@activepieces/piece-tables": [
+        "packages/pieces/community/tables/src/index.ts"
+      ],
       "@activepieces/piece-tags": [
         "packages/pieces/community/tags/src/index.ts"
       ],

@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.46.7",
+  "version": "0.46.9",
   "rcVersion": "0.47.0-rc.0",
   "scripts": {
     "prepare": "husky install",
@@ -237,6 +237,7 @@
     "qs": "6.11.2",
     "react": "18.3.1",
     "react-colorful": "5.6.1",
+    "react-data-grid": "7.0.0-beta.47",
     "react-day-picker": "8.10.1",
     "react-dom": "18.3.1",
     "react-error-boundary": "5.0.0",

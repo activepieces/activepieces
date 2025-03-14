@@ -28,9 +28,16 @@ export const formatUtils = {
   formatNumber(number: number) {
     return new Intl.NumberFormat('en-US').format(number);
   },
+  formatDateOnlyOrFail(date: Date, fallback: string) {
+    try {
+      return this.formatDateOnly(date);
+    } catch (error) {
+      return fallback;
+    }
+  },
   formatDateOnly(date: Date) {
     return Intl.DateTimeFormat('en-US', {
-      month: 'short',
+      month: 'numeric',
       day: 'numeric',
       year: 'numeric',
     }).format(date);
@@ -239,6 +246,7 @@ export const determineDefaultRoute = (
 };
 
 export const NEW_FLOW_QUERY_PARAM = 'newFlow';
+export const NEW_TABLE_QUERY_PARAM = 'newTable';
 export const parentWindow = window.opener ?? window.parent;
 export const cleanLeadingSlash = (url: string) => {
   return url.startsWith('/') ? url.slice(1) : url;
