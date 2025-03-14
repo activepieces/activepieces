@@ -5,23 +5,31 @@ import { AuthenticationResponse, isNil, Principal } from '@activepieces/shared';
 import { authenticationApi } from './authentication-api';
 import dayjs from 'dayjs';
 
+
 const tokenKey = 'token';
 export const authenticationSession = {
   saveResponse(response: AuthenticationResponse) {
     localStorage.setItem(tokenKey, response.token);
     window.dispatchEvent(new Event('storage'));
   },
+  isJwtExpired(token: string): boolean {
+    if (!token) {
+      return true;
+    }
+    try {
+      const decoded = jwtDecode(token);
+      if (decoded && decoded.exp && dayjs().isAfter(dayjs.unix(decoded.exp))) {
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return true;
+    }
+  },
   getToken(): string | null {
     return localStorage.getItem(tokenKey) ?? null;
   },
-  isJwtExpired(): boolean {
-    const token = this.getToken();
-    if (isNil(token)) {
-      return true;
-    }
-    const decodedJwt = getDecodedJwt(token);
-    return decodedJwt.exp < dayjs().unix();
-  },
+
   getProjectId(): string | null {
     const token = this.getToken();
     if (isNil(token)) {
