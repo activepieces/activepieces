@@ -13,6 +13,7 @@ import { jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
 import { fileService } from '../file.service'
 import { s3Helper } from '../s3-helper'
+import { domainHelper } from '../../helper/domain-helper'
 
 const executionRetentionInDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 
@@ -54,11 +55,10 @@ async function constructDownloadUrl(platformId: string, file: File): Promise<str
         expiresInSeconds: dayjs.duration(executionRetentionInDays, 'days').asSeconds(),
         key: await jwtUtils.getJwtSecret(),
     })
-    // return domainHelper.getPublicApiUrl({
-    //     path: `v1/step-files/signed?token=${accessToken}`,
-    //     platformId,
-    // })
-    return `/v1/step-files/signed?token=${accessToken}&platformId=${platformId}`
+    return domainHelper.getPublicApiUrl({
+        path: `v1/step-files/signed?token=${accessToken}`,
+        platformId,
+    })
 }
 
 

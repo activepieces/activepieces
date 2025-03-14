@@ -1,4 +1,4 @@
-import { AppSystemProp, apVersionUtil, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-shared'
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
@@ -7,13 +7,12 @@ import { repoFactory } from '../core/db/repo-factory'
 import { system } from '../helper/system/system'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
+import { domainHelper } from '../helper/domain-helper'
 
 const flagRepo = repoFactory(FlagEntity)
 
 
 export const flagService = {
-   
-    
     save: async (flag: FlagType): Promise<Flag> => {
         return flagRepo().save({
             id: flag.id,
@@ -24,34 +23,6 @@ export const flagService = {
         return flagRepo().findOneBy({ id: flagId })
     },
     async getAll(): Promise<Flag[]> {
-
-        function getPublicUrl (): string {
-            let url:string = system.getOrThrow(WorkerSystemProp.FRONTEND_URL);
-            if(url) {
-                if(!url.endsWith("/"))
-                    url+="/";
-                return url;
-            }
-            return "/";
-        }
-
-        function replaceLocalhost(urlString: string): string {
-            const url = new URL(urlString)
-            if (url.hostname === 'localhost') {
-                url.hostname = '127.0.0.1'
-            }
-            return url.toString()
-        }
-        
-        function appendSlashAndApi(url: string): string {
-            const slash = url.endsWith('/') ? '' : '/'
-            return `${url}${slash}api/`
-        }
-
-        function getPublicApiUrl (): string  {
-            return appendSlashAndApi(replaceLocalhost(getPublicUrl()))
-        }
-
         const flags = await flagRepo().findBy({
             id: In([
                 ApFlagId.SHOW_POWERED_BY_IN_FORM,
@@ -146,7 +117,9 @@ export const flagService = {
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
                 // value: await federatedAuthnService(system.globalLogger()).getThirdPartyRedirectUrl(undefined),
-                value: {},
+                value: domainHelper.getInternalUrl({
+                    path: '/redirect',
+                }),
                 created,
                 updated,
             },
@@ -200,11 +173,9 @@ export const flagService = {
             },
             {
                 id: ApFlagId.PUBLIC_URL,
-                // value: await domainHelper.getPublicUrl({
-                //     path: '',
-                // }),
-                // value: '/',
-                value:getPublicUrl(),
+                value: await domainHelper.getPublicUrl({
+                    path: '',
+                }),
                 created,
                 updated,
             },
@@ -256,11 +227,9 @@ export const flagService = {
             flags.push(
                 {
                     id: ApFlagId.WEBHOOK_URL_PREFIX,
-                    // value: await domainHelper.getPublicApiUrl({
-                    //     path: 'v1/webhooks',
-                    // }),
-                    
-                    value: '/v1/webhooks',
+                    value: await domainHelper.getPublicApiUrl({
+                        path: 'v1/webhooks',
+                    }),
                     created,
                     updated,
                 },
@@ -274,7 +243,7 @@ export const flagService = {
         }
         return flags
     },
-    
+
     isCloudPlatform(platformId: string | null): boolean {
         const cloudPlatformId = system.get(AppSystemProp.CLOUD_PLATFORM_ID)
         if (!cloudPlatformId || !platformId) {

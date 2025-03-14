@@ -5,6 +5,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 // import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { system } from '../../helper/system/system'
 import { machineService } from './machine-service'
+import { domainHelper } from '../../helper/domain-helper'
 
 export const workerMachineController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -47,10 +48,9 @@ export const workerMachineController: FastifyPluginAsyncTypebox = async (app) =>
             LOKI_PASSWORD: system.get(AppSystemProp.LOKI_PASSWORD),
             LOKI_URL: system.get(AppSystemProp.LOKI_URL),
             LOKI_USERNAME: system.get(AppSystemProp.LOKI_USERNAME),
-            // PUBLIC_URL: await domainHelper.getPublicUrl({
-            //     path: '',
-            // }),
-            PUBLIC_URL: networkUtils.combineUrl(system.getOrThrow(WorkerSystemProp.FRONTEND_URL), ''),
+            PUBLIC_URL: await domainHelper.getPublicUrl({
+                path: '',
+            }),
             FILE_STORAGE_LOCATION: system.getOrThrow(AppSystemProp.FILE_STORAGE_LOCATION),
             S3_USE_SIGNED_URLS: system.getOrThrow(AppSystemProp.S3_USE_SIGNED_URLS),
         }

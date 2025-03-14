@@ -14,6 +14,7 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { platformService } from '../platform/platform.service'
 import { userService } from '../user/user-service'
 import { UserInvitationEntity } from './user-invitation.entity'
+import { domainHelper } from '../helper/domain-helper'
 
 const repo = repoFactory(UserInvitationEntity)
 
@@ -249,11 +250,10 @@ async function generateInvitationLink(userInvitation: UserInvitation, expireyInS
         key: await jwtUtils.getJwtSecret(),
     })
 
-    // return domainHelper.getPublicUrl({
-    //     platformId: userInvitation.platformId,
-    //     path: `invitation?token=${token}&email=${encodeURIComponent(userInvitation.email)}`,
-    // })
-    return `/invitation?token=${token}&email=${encodeURIComponent(userInvitation.email)}`
+    return domainHelper.getPublicUrl({
+        platformId: userInvitation.platformId,
+        path: `invitation?token=${token}&email=${encodeURIComponent(userInvitation.email)}`,
+    })
 }
 const enrichWithInvitationLink = async (platform: Platform, userInvitation: UserInvitation, expireyInSeconds: number, log: FastifyBaseLogger) => {
     // const invitationLink = await generateInvitationLink(userInvitation, expireyInSeconds)
