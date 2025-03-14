@@ -24,13 +24,19 @@ export function ApTableStateProvider({ children }: ApTableStateProviderProps) {
   const { data: table } = useSuspenseQuery({
     queryKey: ['table', tableId],
     queryFn: () => tablesApi.getById(tableId!),
+    refetchOnWindowFocus: true,
     refetchOnMount: true,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: fields } = useSuspenseQuery({
     queryKey: ['fields', tableId],
     queryFn: () => fieldsApi.list(tableId!),
+    refetchOnWindowFocus: true,
     refetchOnMount: true,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: records } = useSuspenseQuery({
@@ -40,7 +46,10 @@ export function ApTableStateProvider({ children }: ApTableStateProviderProps) {
         tableId: tableId!,
         cursor: undefined,
       }),
+    refetchOnWindowFocus: true,
     refetchOnMount: true,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const tableStoreRef = useRef<ApTableStore>(

@@ -1,10 +1,9 @@
+import dayjs from 'dayjs';
 import { jwtDecode } from 'jwt-decode';
 
 import { AuthenticationResponse, isNil, Principal } from '@activepieces/shared';
 
 import { authenticationApi } from './authentication-api';
-import dayjs from 'dayjs';
-
 
 const tokenKey = 'token';
 export const authenticationSession = {

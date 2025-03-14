@@ -1,5 +1,3 @@
-import dayjs from 'dayjs';
-import { jwtDecode } from 'jwt-decode';
 import { Navigate } from 'react-router-dom';
 
 import { SocketProvider } from '@/components/socket-provider';
@@ -9,7 +7,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 
 import { authenticationSession } from '../../lib/authentication-session';
-
 
 type AllowOnlyLoggedInUserOnlyGuardProps = {
   children: React.ReactNode;
