@@ -3,6 +3,7 @@ import { jwtDecode } from 'jwt-decode';
 import { AuthenticationResponse, isNil, Principal } from '@activepieces/shared';
 
 import { authenticationApi } from './authentication-api';
+import dayjs from 'dayjs';
 
 const tokenKey = 'token';
 export const authenticationSession = {
@@ -12,6 +13,14 @@ export const authenticationSession = {
   },
   getToken(): string | null {
     return localStorage.getItem(tokenKey) ?? null;
+  },
+  isJwtExpired(): boolean {
+    const token = this.getToken();
+    if (isNil(token)) {
+      return true;
+    }
+    const decodedJwt = getDecodedJwt(token);
+    return decodedJwt.exp < dayjs().unix();
   },
   getProjectId(): string | null {
     const token = this.getToken();

@@ -11,6 +11,7 @@ export type Principal = {
         id: ApId
     }
     tokenVersion?: string
+    exp: number
 }
 
 export type WorkerPrincipal = {

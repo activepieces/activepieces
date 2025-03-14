@@ -7,10 +7,11 @@ import { UserWithMetaInformationAndProject } from '@activepieces/shared';
 export const userHooks = {
   useCurrentUser: () => {
     const userId = authenticationSession.getCurrentUserId();
+    const isJwtExpired = authenticationSession.isJwtExpired();
     return useSuspenseQuery<UserWithMetaInformationAndProject | null, Error>({
       queryKey: ['currentUser', userId],
       queryFn: async () => {
-        if (!userId) {
+        if (!userId || isJwtExpired) {
           return null;
         }
         const result = await userApi.getCurrentUser();
