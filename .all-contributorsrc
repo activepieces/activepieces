@@ -1587,6 +1587,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "danielpoonwj",
+      "name": "Daniel Poon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17039704?v=4",
+      "profile": "https://github.com/danielpoonwj",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"

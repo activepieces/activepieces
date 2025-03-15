@@ -11,7 +11,7 @@ import { updatedRecordTrigger } from "./lib/triggers/updated-record";
 
 export const tables = createPiece({
   displayName: 'Tables',
-  logoUrl: 'https://cdn.activepieces.com/pieces/tables.svg',
+  logoUrl: 'https://cdn.activepieces.com/pieces/tables_piece.svg',
   categories: [PieceCategory.CORE],
   minimumSupportedRelease: '0.46.8',
   authors: ['amrdb'],

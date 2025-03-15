@@ -97,7 +97,7 @@ export const tableService = {
         projectId,
         id,
     }: ExportTableParams): Promise<ExportTableResponse> {
-        await this.getById({ projectId, id })
+        const table = await this.getById({ projectId, id })
 
         // TODO: Change field sorting to use position when it's added
         const fields = await fieldService.getAll({ projectId, tableId: id })
@@ -119,6 +119,7 @@ export const tableService = {
         return {
             fields: fields.map((f) => ({ id: f.id, name: f.name })),
             rows,
+            name: table.name,
         }
     },
 
