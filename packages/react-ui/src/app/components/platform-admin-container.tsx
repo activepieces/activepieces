@@ -16,12 +16,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
-import {
-  SidebarComponent,
-  SidebarGroup,
-  SidebarItem,
-  SidebarLink,
-} from './sidebar';
+import { SidebarComponent, SidebarItem } from './sidebar';
 
 type PlatformAdminContainerProps = {
   children: React.ReactNode;
@@ -50,7 +45,7 @@ export function PlatformAdminContainer({
       icon: LineChart,
       locked: isLocked(!platform.analyticsEnabled),
       isSubItem: false,
-    } as SidebarLink,
+    },
     {
       type: 'link',
       to: '/platform/projects',
@@ -58,14 +53,14 @@ export function PlatformAdminContainer({
       icon: LayoutGrid,
       locked: isLocked(!platform.manageProjectsEnabled),
       isSubItem: false,
-    } as SidebarLink,
+    },
     {
       type: 'link',
       to: '/platform/users',
       label: t('Users'),
       icon: Users,
       isSubItem: false,
-    } as SidebarLink,
+    },
     {
       type: 'group',
       label: t('Setup'),
@@ -80,13 +75,13 @@ export function PlatformAdminContainer({
           to: '/platform/setup/ai',
           label: t('AI'),
           isSubItem: true,
-        } as SidebarLink,
+        },
         {
           type: 'link',
           to: '/platform/setup/branding',
           label: t('Branding'),
           isSubItem: true,
-        } as SidebarLink,
+        },
         {
           type: 'link',
           to: '/platform/setup/connections',
@@ -104,9 +99,15 @@ export function PlatformAdminContainer({
           to: '/platform/setup/templates',
           label: t('Templates'),
           isSubItem: true,
-        } as SidebarLink,
+        },
+        {
+          type: 'link',
+          to: '/platform/setup/license-key',
+          label: t('License Key'),
+          isSubItem: true,
+        },
       ],
-    } as SidebarGroup,
+    },
     {
       type: 'group',
       label: t('Security'),
@@ -121,33 +122,33 @@ export function PlatformAdminContainer({
           to: '/platform/security/audit-logs',
           label: t('Audit Logs'),
           isSubItem: true,
-        } as SidebarLink,
+        },
         {
           type: 'link',
           to: '/platform/security/sso',
           label: t('Single Sign On'),
           isSubItem: true,
-        } as SidebarLink,
+        },
         {
           type: 'link',
           to: '/platform/security/signing-keys',
           label: t('Signing Keys'),
           isSubItem: true,
-        } as SidebarLink,
+        },
         {
           type: 'link',
           to: '/platform/security/project-roles',
           label: t('Project Roles'),
           isSubItem: true,
-        } as SidebarLink,
+        },
         {
           type: 'link',
           to: '/platform/security/api-keys',
           label: t('API Keys'),
           isSubItem: true,
-        } as SidebarLink,
+        },
       ],
-    } as SidebarGroup,
+    },
     {
       type: 'group',
       label: t('Infrastructure'),
@@ -162,27 +163,27 @@ export function PlatformAdminContainer({
           to: '/platform/infrastructure/workers',
           label: t('Workers'),
           isSubItem: true,
-        } as SidebarLink,
+        },
         {
           type: 'link',
           to: '/platform/infrastructure/health',
           label: t('Health'),
           isSubItem: true,
-        } as SidebarLink,
+        },
       ],
-    } as SidebarGroup,
+    },
   ];
   if (edition === ApEdition.CLOUD && !showPlatformDemo) {
     const setupGroup = items.find(
       (item) => item.type === 'group' && item.label === t('Setup'),
-    ) as SidebarGroup;
-    if (setupGroup) {
+    );
+    if (setupGroup && setupGroup.type === 'group') {
       setupGroup.items.push({
         type: 'link',
         to: '/platform/setup/billing',
         label: t('Billing'),
         isSubItem: true,
-      } as SidebarLink);
+      });
     }
   }
   return (

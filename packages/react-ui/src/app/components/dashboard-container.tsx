@@ -76,142 +76,136 @@ export function DashboardContainer({
   const filterAlerts = (item: SidebarItem) =>
     platform.alertsEnabled || item.label !== t('Alerts');
 
-  const items: SidebarItem[] = [
-    {
-      type: 'group',
-      label: t('Automation'),
-      putEmptySpaceTop: true,
-      icon: Workflow,
-      isActive: (pathname: string) => {
-        const paths = [
-          '/flows',
-          '/issues',
-          '/runs',
-          '/connections',
-          '/releases',
-          '/tables',
-        ];
-        return paths.some((path) => pathname.includes(path));
+  const automationGroup: SidebarGroup = {
+    type: 'group',
+    label: t('Automation'),
+    putEmptySpaceTop: true,
+    icon: Workflow,
+    isActive: (pathname: string) => {
+      const paths = [
+        '/flows',
+        '/issues',
+        '/runs',
+        '/connections',
+        '/releases',
+        '/tables',
+      ];
+      return paths.some((path) => pathname.includes(path));
+    },
+    defaultOpen: true,
+    open: automationOpen,
+    setOpen: setAutomationOpen,
+    items: [
+      {
+        type: 'link',
+        to: authenticationSession.appendProjectRoutePrefix('/flows'),
+        label: t('Flows'),
+        showInEmbed: true,
+        hasPermission: checkAccess(Permission.READ_FLOW),
+        isSubItem: true,
       },
-      defaultOpen: true,
-      open: automationOpen,
-      setOpen: setAutomationOpen,
-      items: [
-        {
-          type: 'link',
-          to: authenticationSession.appendProjectRoutePrefix('/flows'),
-          label: t('Flows'),
-          showInEmbed: true,
-          hasPermission: checkAccess(Permission.READ_FLOW),
-          isSubItem: true,
-        },
-        {
-          type: 'link',
-          to: authenticationSession.appendProjectRoutePrefix('/issues'),
-          label: t('Issues'),
-          notification: showIssuesNotification,
-          showInEmbed: false,
-          hasPermission: checkAccess(Permission.READ_ISSUES),
-          isSubItem: true,
-        },
+      {
+        type: 'link',
+        to: authenticationSession.appendProjectRoutePrefix('/issues'),
+        label: t('Issues'),
+        notification: showIssuesNotification,
+        showInEmbed: false,
+        hasPermission: checkAccess(Permission.READ_ISSUES),
+        isSubItem: true,
+      },
 
-        {
-          type: 'link',
-          to: authenticationSession.appendProjectRoutePrefix('/runs'),
-          label: t('Runs'),
-          showInEmbed: true,
-          hasPermission: checkAccess(Permission.READ_RUN),
-          isSubItem: true,
-        },
-        {
-          type: 'link',
-          to: authenticationSession.appendProjectRoutePrefix('/connections'),
-          label: t('Connections'),
-          showInEmbed: true,
-          hasPermission: checkAccess(Permission.READ_APP_CONNECTION),
-          isSubItem: true,
-        },
-        {
-          type: 'link',
-          to: authenticationSession.appendProjectRoutePrefix('/releases'),
-          label: t('Releases'),
-          hasPermission:
-            project.releasesEnabled &&
-            checkAccess(Permission.READ_PROJECT_RELEASE),
-          isSubItem: true,
-        },
-      ],
-    } as SidebarGroup,
-    {
-      type: 'link',
-      to: authenticationSession.appendProjectRoutePrefix('/tables'),
-      label: t('Tables'),
-      icon: Table2,
-      showInEmbed: true,
-      hasPermission: checkAccess(Permission.READ_TABLE),
-      isSubItem: false,
-    } as SidebarLink,
-    {
-      type: 'group',
-      label: t('Settings'),
-      defaultOpen: false,
-      open: settingsOpen,
-      setOpen: setSettingsOpen,
-      icon: Settings,
-      isActive: (pathname: string) => pathname.includes('/settings'),
-      items: [
-        {
-          type: 'link',
-          to: authenticationSession.appendProjectRoutePrefix(
-            '/settings/general',
-          ),
-          label: t('General'),
-          isSubItem: true,
-        } as SidebarLink,
-        {
-          type: 'link',
-          to: authenticationSession.appendProjectRoutePrefix(
-            '/settings/appearance',
-          ),
-          label: t('Appearance'),
-          isSubItem: true,
-        } as SidebarLink,
-        {
-          type: 'link',
-          to: authenticationSession.appendProjectRoutePrefix('/settings/team'),
-          label: t('Team'),
-          hasPermission: checkAccess(Permission.READ_PROJECT_MEMBER),
-          isSubItem: true,
-        } as SidebarLink,
-        {
-          type: 'link',
-          to: authenticationSession.appendProjectRoutePrefix(
-            '/settings/pieces',
-          ),
-          label: t('Pieces'),
-          isSubItem: true,
-        } as SidebarLink,
-        {
-          type: 'link',
-          to: authenticationSession.appendProjectRoutePrefix(
-            '/settings/alerts',
-          ),
-          label: t('Alerts'),
-          hasPermission: checkAccess(Permission.READ_ALERT),
-          isSubItem: true,
-        } as SidebarLink,
-        {
-          type: 'link',
-          to: authenticationSession.appendProjectRoutePrefix(
-            '/settings/environments',
-          ),
-          label: t('Environments'),
-          hasPermission: checkAccess(Permission.READ_PROJECT_RELEASE),
-          isSubItem: true,
-        } as SidebarLink,
-      ],
-    } as SidebarGroup,
-  ]
+      {
+        type: 'link',
+        to: authenticationSession.appendProjectRoutePrefix('/runs'),
+        label: t('Runs'),
+        showInEmbed: true,
+        hasPermission: checkAccess(Permission.READ_RUN),
+        isSubItem: true,
+      },
+      {
+        type: 'link',
+        to: authenticationSession.appendProjectRoutePrefix('/connections'),
+        label: t('Connections'),
+        showInEmbed: true,
+        hasPermission: checkAccess(Permission.READ_APP_CONNECTION),
+        isSubItem: true,
+      },
+      {
+        type: 'link',
+        to: authenticationSession.appendProjectRoutePrefix('/releases'),
+        label: t('Releases'),
+        hasPermission:
+          project.releasesEnabled &&
+          checkAccess(Permission.READ_PROJECT_RELEASE),
+        isSubItem: true,
+      },
+    ],
+  };
+  const tablesLink: SidebarLink = {
+    type: 'link',
+    to: authenticationSession.appendProjectRoutePrefix('/tables'),
+    label: t('Tables'),
+    icon: Table2,
+    showInEmbed: true,
+    hasPermission: checkAccess(Permission.READ_TABLE),
+    isSubItem: false,
+  };
+
+  const settingsGroup: SidebarGroup = {
+    type: 'group',
+    label: t('Settings'),
+    defaultOpen: false,
+    open: settingsOpen,
+    setOpen: setSettingsOpen,
+    icon: Settings,
+    isActive: (pathname: string) => pathname.includes('/settings'),
+    items: [
+      {
+        type: 'link',
+        to: authenticationSession.appendProjectRoutePrefix('/settings/general'),
+        label: t('General'),
+        isSubItem: true,
+      },
+      {
+        type: 'link',
+        to: authenticationSession.appendProjectRoutePrefix(
+          '/settings/appearance',
+        ),
+        label: t('Appearance'),
+        isSubItem: true,
+      },
+      {
+        type: 'link',
+        to: authenticationSession.appendProjectRoutePrefix('/settings/team'),
+        label: t('Team'),
+        hasPermission: checkAccess(Permission.READ_PROJECT_MEMBER),
+        isSubItem: true,
+      },
+      {
+        type: 'link',
+        to: authenticationSession.appendProjectRoutePrefix('/settings/pieces'),
+        label: t('Pieces'),
+        isSubItem: true,
+      },
+      {
+        type: 'link',
+        to: authenticationSession.appendProjectRoutePrefix('/settings/alerts'),
+        label: t('Alerts'),
+        hasPermission: checkAccess(Permission.READ_ALERT),
+        isSubItem: true,
+      },
+      {
+        type: 'link',
+        to: authenticationSession.appendProjectRoutePrefix(
+          '/settings/environments',
+        ),
+        label: t('Environments'),
+        hasPermission: checkAccess(Permission.READ_PROJECT_RELEASE),
+        isSubItem: true,
+      },
+    ],
+  };
+  const items: SidebarItem[] = [automationGroup, tablesLink, settingsGroup]
     .filter(embedFilter)
     .filter(permissionFilter)
     .filter(filterAlerts);
