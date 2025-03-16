@@ -84,6 +84,7 @@ import { platformService } from './platform/platform.service'
 import { projectHooks } from './project/project-hooks'
 import { projectModule } from './project/project-module'
 import { storeEntryModule } from './store-entry/store-entry.module'
+import { tablesModule } from './tables/tables.module'
 import { tagsModule } from './tags/tags-module'
 import { platformUserModule } from './user/platform/platform-user-module'
 import { invitationModule } from './user-invitations/user-invitation.module'
@@ -226,6 +227,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(workerModule)
     await app.register(aiProviderModule)
     await app.register(licenseKeysModule)
+    await app.register(tablesModule)
     await app.register(userModule)
 
     app.get(
