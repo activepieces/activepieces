@@ -27,7 +27,7 @@
       document.addEventListener('DOMContentLoaded', function (event) {
         window.onmessage = function (e) {
           try {
-            if (e.data) {
+            if (e.data && typeof e.data === 'string') {
               console.log('=== onmessage data not empty ===');
               var playload = JSON.parse(e.data);
               localStorage.setItem(playload.key, playload.data);
