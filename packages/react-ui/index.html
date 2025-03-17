@@ -1,31 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>AutomationX</title>
+    <base href="/" />
 
-<head>
-  <meta charset="utf-8" />
-  <title>AutomationX</title>
-  <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- <link rel="icon" type="image/x-icon" href="https://cdn.activepieces.com/brand/favicon.ico" /> -->
+    <link rel="icon" type="image/x-icon" href="/promptx_blue.ico" />
+    <link rel="stylesheet" href="/src/styles.css" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- <link rel="icon" type="image/x-icon" href="https://cdn.activepieces.com/brand/favicon.ico" /> -->
-  <link rel="icon" type="image/x-icon" href="/promptx_blue.ico" />
-  <link rel="stylesheet" href="/src/styles.css" />
+    <!-- Link to Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
 
-  <!-- Link to Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Apply Roberto font -->
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        /* Use Roberto font as the primary font */
+      }
+    </style>
+    <script>
+      document.addEventListener('DOMContentLoaded', function (event) {
+        window.onmessage = function (e) {
+          try {
+            if (e.data) {
+              console.log('=== onmessage data not empty ===');
+              var playload = JSON.parse(e.data);
+              localStorage.setItem(playload.key, playload.data);
+              if (playload.key == 'openID') {
+                let openID = JSON.parse(playload.data);
+                let access_token = openID?.access_token;
+                localStorage.setItem('access_token', access_token);
+              }
+            }
+          } catch (error) {
+            console.log(e, error);
+          }
+        };
+      });
+    </script>
+  </head>
 
-  <!-- Apply Roberto font -->
-  <style>
-    body {
-      font-family: 'Roboto', sans-serif;
-      /* Use Roberto font as the primary font */
-    }
-  </style>
-</head>
-
-<body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
-</body>
-
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
