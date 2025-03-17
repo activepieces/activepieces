@@ -51,8 +51,8 @@ export type ManualTaskWithAssignee = Static<typeof ManualTaskWithAssignee>;
 export const NO_ANSWER_STATUS = {
     name: 'No Answer',
     description: 'No Answer',
-    color: '#e5efe7',
-    textColor: '#348848',
+    color: '#f6f6f6',
+    textColor: '#2c2c2c',
 }
 
 
