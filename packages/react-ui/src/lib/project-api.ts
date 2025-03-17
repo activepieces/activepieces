@@ -7,6 +7,7 @@ import {
 import {
   ListProjectRequestForUserQueryParams,
   ProjectWithLimits,
+  ProjectWithLimitsWithPlatform,
   SeekPage,
 } from '@activepieces/shared';
 
@@ -28,5 +29,10 @@ export const projectApi = {
   },
   delete: async (projectId: string) => {
     return api.delete<void>(`/v1/projects/${projectId}`);
+  },
+  listForPlatforms: async () => {
+    return api.get<ProjectWithLimitsWithPlatform[]>(
+      '/v1/users/projects/platforms',
+    );
   },
 };

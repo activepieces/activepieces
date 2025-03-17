@@ -1,25 +1,53 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { FileTextIcon, LockKeyhole } from 'lucide-react';
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  ExternalLink,
+  FileTextIcon,
+  LockKeyhole,
+} from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuSubItem,
+  SidebarMenuSub,
+  SidebarMenuItem,
+  SidebarMenuAction,
+} from '@/components/ui/sidebar-shadcn';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
-import { ApFlagId, supportUrl } from '@activepieces/shared';
+import { supportUrl } from '@activepieces/shared';
 
 import { ShowPoweredBy } from '../../components/show-powered-by';
 import { platformHooks } from '../../hooks/platform-hooks';
 
 import { Header } from './header';
+import UsageLimitsButton from './usage-limits-button';
 
 type Link = {
   icon: React.ReactNode;
@@ -31,12 +59,13 @@ type Link = {
 type CustomTooltipLinkProps = {
   to: string;
   label: string;
-  Icon: React.ElementType;
+  Icon?: React.ElementType;
   extraClasses?: string;
   notification?: boolean;
   locked?: boolean;
   newWindow?: boolean;
   isActive?: (pathname: string) => boolean;
+  isSubItem: boolean;
 };
 const CustomTooltipLink = ({
   to,
@@ -47,6 +76,7 @@ const CustomTooltipLink = ({
   locked,
   newWindow,
   isActive,
+  isSubItem,
 }: CustomTooltipLinkProps) => {
   const location = useLocation();
 
@@ -59,126 +89,266 @@ const CustomTooltipLink = ({
       rel={newWindow ? 'noopener noreferrer' : ''}
     >
       <div
-        className={`relative flex flex-col items-center justify-center gap-1`}
+        className={`relative flex  items-center gap-1 justify-between hover:bg-accent hover:text-primary rounded-lg transition-colors ${
+          extraClasses || ''
+        }${
+          isLinkActive
+            ? '!bg-primary/10 !text-primary hover:text-[#3F3F46]'
+            : ''
+        } ${isSubItem ? 'text-[#3F3F46] ' : ''}`}
       >
-        {locked && (
-          <LockKeyhole
-            className="absolute right-[-1px] bottom-[20px] size-3"
-            color="grey"
-          />
-        )}
-        <Icon
-          className={`size-10 p-2.5 hover:text-primary rounded-lg transition-colors ${
-            isLinkActive ? 'bg-accent text-primary' : ''
-          } ${extraClasses || ''}`}
-        />
-        <span className="text-[10px]">{label}</span>
-        {notification && (
-          <span className="bg-destructive absolute right-[1px] top-[3px] size-2 rounded-full"></span>
+        <div
+          className={`w-full flex items-center justify-between gap-2 p-2 ${
+            !Icon ? 'p-2' : ''
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {Icon && <Icon className={`size-4`} />}
+            <span className={`text-sm`}>{label}</span>
+          </div>
+          {locked && <LockKeyhole className="size-3" color="grey" />}
+        </div>
+        {notification && !locked && (
+          <span className="bg-destructive mr-1 size-2 rounded-full "></span>
         )}
       </div>
     </Link>
   );
 };
 
+export type SidebarGroup = {
+  name?: string;
+  putEmptySpaceTop?: boolean;
+  label: string;
+  icon: React.ElementType;
+  items: SidebarLink[];
+  type: 'group';
+  defaultOpen: boolean;
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  isActive?: (pathname: string) => boolean;
+};
+
 export type SidebarLink = {
   to: string;
   label: string;
-  icon: React.ElementType;
+  icon?: React.ElementType;
+  type: 'link';
   notification?: boolean;
   locked?: boolean;
   hasPermission?: boolean;
   showInEmbed?: boolean;
+  isSubItem: boolean;
   isActive?: (pathname: string) => boolean;
 };
 
+export type SidebarItem = SidebarLink | SidebarGroup;
+
 type SidebarProps = {
   children: React.ReactNode;
-  links: SidebarLink[];
+  items: SidebarItem[];
   isHomeDashboard?: boolean;
   hideSideNav?: boolean;
+  hideHeader?: boolean;
+  removeGutters?: boolean;
 };
-export function Sidebar({
+export function SidebarComponent({
   children,
-  links,
+  items,
   isHomeDashboard = false,
   hideSideNav = false,
+  hideHeader = false,
+  removeGutters = false,
 }: SidebarProps) {
   const branding = flagsHooks.useWebsiteBranding();
-  const { data: showSupportAndDocs } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_COMMUNITY,
-  );
   const { embedState } = useEmbedding();
   const { platform } = platformHooks.useCurrentPlatform();
   const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
+  const location = useLocation();
   return (
-    <div>
-      <div className="flex min-h-screen w-full  ">
+    <div className="flex min-h-screen w-full">
+      <div className="flex min-h-screen w-full">
         {!hideSideNav && (
-          <aside className=" border-r sticky  top-0 h-screen bg-muted/50 w-[65px] ">
-            <ScrollArea>
-              <nav className="flex flex-col items-center h-screen  sm:py-5  gap-5 p-2 ">
-                <Link
-                  to={isHomeDashboard ? defaultRoute : '/platform'}
-                  className="h-[48px] items-center justify-center "
-                >
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <img
-                        src={branding.logos.logoIconUrl}
-                        alt={t('home')}
-                        width={28}
-                        height={28}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent side="right">{t('Home')}</TooltipContent>
-                  </Tooltip>
-                </Link>
-
-                {links.map((link, index) => (
-                  <CustomTooltipLink
-                    to={link.to}
-                    label={link.label}
-                    Icon={link.icon}
-                    key={index}
-                    notification={link.notification}
-                    locked={link.locked}
-                    isActive={link.isActive}
-                  />
-                ))}
-
-                <div className="grow"></div>
-                {isHomeDashboard && showSupportAndDocs && (
-                  <>
-                    <CustomTooltipLink
-                      to={supportUrl}
-                      label={t('Support')}
-                      Icon={QuestionMarkCircledIcon}
-                      newWindow={true}
-                    />
-                    <CustomTooltipLink
-                      to="https://activepieces.com/docs"
-                      label={t('Docs')}
-                      Icon={FileTextIcon}
-                      newWindow={true}
-                    />
-                  </>
-                )}
-              </nav>
-            </ScrollArea>
-          </aside>
+          <Sidebar className="w-[255px]">
+            <SidebarContent>
+              <SidebarHeader className="pt-4 pb-0">
+                <div className="flex items-center justify-center">
+                  <Link
+                    to={isHomeDashboard ? defaultRoute : '/platform'}
+                    className="h-[48px] flex items-center justify-center"
+                  >
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <img
+                          src={branding.logos.logoIconUrl}
+                          alt={t('home')}
+                          width={40}
+                          height={40}
+                          className="border-2 border-primary p-2 rounded-lg"
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="right">{t('Home')}</TooltipContent>
+                    </Tooltip>
+                  </Link>
+                  <ProjectSwitcher />
+                </div>
+              </SidebarHeader>
+              <SidebarContent className="gap-0">
+                <ScrollArea className="h-[calc(100vh-100px)]">
+                  {items.map((item, index) =>
+                    item.type === 'group' ? (
+                      <SidebarGroup key={item.name} className="py-2">
+                        {item.putEmptySpaceTop && (
+                          <Separator className="mb-8" />
+                        )}
+                        {item.name && (
+                          <SidebarGroupLabel>{item.name}</SidebarGroupLabel>
+                        )}
+                        <SidebarMenu className="py-0">
+                          <Collapsible
+                            defaultOpen={
+                              item.defaultOpen ||
+                              item.isActive?.(location.pathname)
+                            }
+                            className="group/collapsible"
+                            onOpenChange={(open) => {
+                              item.setOpen(open);
+                            }}
+                          >
+                            <SidebarMenuItem>
+                              <CollapsibleTrigger asChild>
+                                <SidebarMenuButton className="py-0 gap-2 hover:bg-accent hover:text-primary rounded-lg transition-colors">
+                                  {item.icon && (
+                                    <item.icon className="size-5" />
+                                  )}
+                                  <span>{item.label}</span>
+                                  <SidebarMenuAction>
+                                    {item.open ? (
+                                      <ChevronUpIcon />
+                                    ) : (
+                                      <ChevronDownIcon />
+                                    )}
+                                  </SidebarMenuAction>
+                                </SidebarMenuButton>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent>
+                                <SidebarMenuSub>
+                                  {item.items.map((link, index) => (
+                                    <SidebarMenuSubItem key={link.label}>
+                                      <SidebarMenuButton asChild>
+                                        <CustomTooltipLink
+                                          to={link.to}
+                                          label={link.label}
+                                          Icon={link.icon}
+                                          key={index}
+                                          notification={link.notification}
+                                          locked={link.locked}
+                                          isActive={link.isActive}
+                                          isSubItem={link.isSubItem}
+                                        />
+                                      </SidebarMenuButton>
+                                    </SidebarMenuSubItem>
+                                  ))}
+                                </SidebarMenuSub>
+                              </CollapsibleContent>
+                            </SidebarMenuItem>
+                          </Collapsible>
+                        </SidebarMenu>
+                      </SidebarGroup>
+                    ) : (
+                      <SidebarGroup key={item.label} className="py-1">
+                        <SidebarMenu className="gap-0 p-0">
+                          <SidebarMenuItem key={item.label}>
+                            <SidebarMenuButton asChild>
+                              <CustomTooltipLink
+                                to={item.to}
+                                label={item.label}
+                                Icon={item.icon}
+                                key={index}
+                                notification={item.notification}
+                                locked={item.locked}
+                                isActive={item.isActive}
+                                isSubItem={item.isSubItem}
+                              />
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        </SidebarMenu>
+                      </SidebarGroup>
+                    ),
+                  )}
+                </ScrollArea>
+              </SidebarContent>
+              <SidebarFooter className="pb-4 gap-4">
+                <SidebarMenu>
+                  {true && (
+                    <>
+                      <SidebarMenuItem className="hover:bg-accent hover:text-primary rounded-lg transition-colors">
+                        <SidebarMenuButton asChild>
+                          <Link
+                            to={supportUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex justify-between"
+                          >
+                            <div className="flex items-center gap-2">
+                              <QuestionMarkCircledIcon className="size-5" />
+                              <span>{t('Community Support')}</span>
+                            </div>
+                            <ExternalLink className="size-5" />
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem className="hover:bg-accent hover:text-primary rounded-lg transition-colors">
+                        <SidebarMenuButton asChild>
+                          <Link
+                            to="https://activepieces.com/docs"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex justify-between"
+                          >
+                            <div className="flex items-center gap-2">
+                              <FileTextIcon className="size-5" />
+                              <span>{t('Docs')}</span>
+                            </div>
+                            <ExternalLink className="size-5" />
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </>
+                  )}
+                </SidebarMenu>
+                <Separator />
+                <SidebarMenu>
+                  <UsageLimitsButton />
+                </SidebarMenu>
+              </SidebarFooter>
+            </SidebarContent>
+          </Sidebar>
         )}
-        <div className="flex-1 p-4">
-          <div className="flex flex-col">
-            <Header />
-            <div
-              className={cn('container mx-auto flex py-10 px-2', {
-                'py-4': embedState.isEmbedded,
-              })}
-            >
-              {children}
+        <div
+          className={cn('flex-1 p-4', {
+            'py-0': hideHeader,
+            'px-0': removeGutters,
+          })}
+        >
+          {!hideHeader ? (
+            <div className="flex flex-col">
+              <div className={removeGutters ? 'px-4' : ''}>
+                <Header />
+              </div>
+              <div
+                className={cn('flex', {
+                  'py-4': embedState.isEmbedded,
+                  ' px-2': !removeGutters,
+                  'pt-10': !hideHeader,
+                })}
+              >
+                {children}
+              </div>
             </div>
-          </div>
+          ) : (
+            children
+          )}
         </div>
       </div>
       <ShowPoweredBy show={platform?.showPoweredBy && isHomeDashboard} />

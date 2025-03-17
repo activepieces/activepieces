@@ -3,7 +3,7 @@ import { ChangePasswordForm } from '@/features/authentication/components/change-
 
 const ChangePasswordPage = () => {
   return (
-    <div className="flex h-screen flex-col items-center justify-center gap-2">
+    <div className="mx-auto flex h-screen flex-col items-center justify-center gap-2">
       <FullLogo />
       <ChangePasswordForm />
     </div>
