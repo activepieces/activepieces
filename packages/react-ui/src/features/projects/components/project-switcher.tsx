@@ -22,8 +22,10 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
+import { flagsHooks } from '../../../hooks/flags-hooks';
 import { projectHooks } from '../../../hooks/project-hooks';
 
 function ProjectSwitcher() {
@@ -32,6 +34,7 @@ function ProjectSwitcher() {
   const { data: allProjects } = projectHooks.useProjectsForPlatforms();
   const [open, setOpen] = React.useState(false);
   const { embedState } = useEmbedding();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { data: currentProject, setCurrentProject } =
     projectHooks.useCurrentProject();
   const filterProjects = React.useCallback(
@@ -53,10 +56,10 @@ function ProjectSwitcher() {
     },
     [allProjects],
   );
-
-  if (embedState.isEmbedded) {
+  if (embedState.isEmbedded || edition === ApEdition.COMMUNITY) {
     return null;
   }
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
