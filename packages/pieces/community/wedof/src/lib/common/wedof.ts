@@ -78,6 +78,74 @@ export const wedofCommon = {
     },
   }),
 
+  partnershipState : Property.StaticDropdown({
+          displayName: 'État du partenariat de certification',
+          required: false,
+          options: {
+            disabled: false,
+            options: [
+              {
+                  value: 'processing',
+                  label: 'Demande en traitement',
+              },
+              {
+                  value: 'active',
+                  label: 'Partenariat actif',
+              },
+              {
+                  value: 'aborted',
+                  label: 'Demande abondonnée',
+              },
+              {
+                  value: 'refused',
+                  label: 'Demande refusée',
+              },
+              {
+                  value: 'suspended',
+                  label: 'Partenariat suspendu',
+              },
+              {
+                  value: 'revoked',
+                  label: 'Partenariat révoqué',
+              },             
+          ],
+      },
+  }),
+
+  habilitation : Property.StaticDropdown({
+    displayName: 'Habilitation du partenaire',
+    required: false,
+    options: {
+      disabled: false,
+      options: [
+        {
+            value: 'evaluate',
+            label: 'Habilitation pour organiser l’évaluation',
+        },
+        {
+            value: 'train',
+            label: 'Habilitation pour former',
+        },
+        {
+            value: 'train_evaluate',
+            label: 'Habilitation pour former et organiser l’évaluation',
+        },
+    ],
+  },
+  }),
+
+  compliance: Property.StaticDropdown({
+  displayName: 'Conformité',
+  required: false,
+  options: {
+    options: [
+      { label: 'Conforme', value: 'compliant' },
+      { label: 'Partiellement Conforme', value: 'partiallyCompliant' },
+      { label: 'Non Conforme', value: 'nonCompliant' }
+    ]
+  }
+  }),
+
   events: Property.StaticMultiSelectDropdown({
     displayName: 'Événement sur le dossier de formation',
     required: true,
