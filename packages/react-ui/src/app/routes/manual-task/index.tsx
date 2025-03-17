@@ -21,7 +21,12 @@ import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import { ANSWERED_STATUS, ManualTask, ManualTaskWithAssignee, NO_ANSWER_STATUS } from '@activepieces/ee-shared';
+import {
+  ANSWERED_STATUS,
+  ManualTask,
+  ManualTaskWithAssignee,
+  NO_ANSWER_STATUS,
+} from '@activepieces/ee-shared';
 
 import { TaskDetails } from './task-details';
 
@@ -60,9 +65,16 @@ function ManualTasksPage() {
       const flowId = searchParams.get('flowId') ?? undefined;
       const title = searchParams.get('title') ?? undefined;
       const status = searchParams.getAll('status') ?? undefined;
-      const isNoAnswer = (status.length === 1 && status[0] === NO_ANSWER_STATUS.name) ? true : false;
+      const isNoAnswer =
+        status.length === 1 && status[0] === NO_ANSWER_STATUS.name
+          ? true
+          : false;
       const isAllStatus = status.length === 0 || status.length === 2;
-      const statusOptions = isAllStatus ? undefined : isNoAnswer ? [NO_ANSWER_STATUS.name] : [ANSWERED_STATUS.name];
+      const statusOptions = isAllStatus
+        ? undefined
+        : isNoAnswer
+        ? [NO_ANSWER_STATUS.name]
+        : [ANSWERED_STATUS.name];
       return manualTaskApi.list({
         projectId,
         cursor: cursor ?? undefined,

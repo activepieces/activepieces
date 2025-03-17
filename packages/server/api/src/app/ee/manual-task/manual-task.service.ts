@@ -77,11 +77,12 @@ export const manualTaskService = (_log: FastifyBaseLogger) => ({
         }
         if (params.statusOptions) {
             if (params.statusOptions[0] === NO_ANSWER_STATUS.name) {
-                query = query.andWhere(`status->>'name' = :statusName`, {
+                query = query.andWhere('status->>\'name\' = :statusName', {
                     statusName: NO_ANSWER_STATUS.name,
                 })
-            } else {
-                query = query.andWhere(`status->>'name' != :statusName`, {
+            }
+            else {
+                query = query.andWhere('status->>\'name\' != :statusName', {
                     statusName: NO_ANSWER_STATUS.name,
                 })
             }

@@ -5,6 +5,7 @@ import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 import { JsonEditor } from '@/components/custom/json-editor';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { SearchableSelect } from '@/components/custom/searchable-select';
+import { ColorPicker } from '@/components/ui/color-picker';
 import { FormControl, FormField } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -27,7 +28,6 @@ import { DictionaryProperty } from './dictionary-property';
 import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
 import { DynamicProperties } from './dynamic-piece-property';
 import { TextInputWithMentions } from './text-input-with-mentions';
-import { ColorPicker } from '@/components/ui/color-picker';
 
 type AutoFormProps = {
   props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;
@@ -315,10 +315,7 @@ const selectFormComponentForProperty = ({
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
         >
-          <ColorPicker
-            value={field.value}
-            onChange={field.onChange}
-          />
+          <ColorPicker value={field.value} onChange={field.onChange} />
         </AutoFormFieldWrapper>
       );
   }

@@ -45,6 +45,7 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { manualTaskApi } from '@/features/manual-tasks/lib/manual-task-api';
 import { manualTaskCommentApi } from '@/features/manual-tasks/lib/manual-task-comment-api';
 import { userHooks } from '@/hooks/user-hooks';
+import { formatUtils } from '@/lib/utils';
 import {
   ManualTaskCommentWithUser,
   ManualTaskWithAssignee,
@@ -58,7 +59,6 @@ import {
 } from '@activepieces/shared';
 
 import { CommentCard } from './comment-card';
-import { formatUtils } from '@/lib/utils';
 
 type TaskDetailsProps = {
   open: boolean;
