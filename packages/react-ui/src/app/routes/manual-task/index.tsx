@@ -21,13 +21,15 @@ import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import {
-  ManualTask,
-  ManualTaskWithAssignee,
-} from '@activepieces/ee-shared';
+import { ManualTask, ManualTaskWithAssignee } from '@activepieces/ee-shared';
+
+import { TaskDetails } from './taks-deatils';
 
 function ManualTasksPage() {
   const [selectedRows, setSelectedRows] = useState<Array<ManualTask>>([]);
+  const [selectedTask, setSelectedTask] =
+    useState<ManualTaskWithAssignee | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const location = useLocation();
   const projectId = authenticationSession.getProjectId()!;
@@ -45,6 +47,27 @@ function ManualTasksPage() {
       });
     }
   }, []);
+
+  // const { mutate: createManualTask } = useMutation({
+  //   mutationFn: () => {
+  //     return manualTaskApi.create({
+  //       flowId: 'o1MaUtPiluURq3P2lkWR8',
+  //       runId: 'jwQ07REMNOsTquY5DXiO6',
+  //       description: 'The rise of automation has transformed industries across the globe, and the freelance economy is no exception. As artificial intelligence (AI), machine learning, and robotic process automation (RPA) become more sophisticated, freelancers are experiencing both opportunities and challenges in their work. This article explores how automation is reshaping freelance business work, the benefits it brings, and the potential pitfalls freelancers must navigate.',
+  //       title: 'The Impact of Automation on Freelance Business Work: Opportunities and Challenges',
+  //       assigneeId: currentUser?.id,
+  //       statusOptions: [{
+  //         name: 'Test Status',
+  //         color: '#ff0000',
+  //         textColor: '#000000',
+  //       }],
+  //     });
+  //   },
+  // });
+
+  // useEffect(() => {
+  //   createManualTask();
+  // }, []);
 
   const { data, isLoading } = useQuery({
     queryKey: ['manualTasks', searchParams, projectId],
@@ -275,7 +298,18 @@ function ManualTasksPage() {
         page={filteredData}
         isLoading={isLoading}
         filters={filters}
+        onRowClick={(row) => {
+          setSelectedTask(row);
+          setDrawerOpen(true);
+        }}
       />
+      {selectedTask && (
+        <TaskDetails
+          task={selectedTask}
+          open={drawerOpen}
+          onOpenChange={setDrawerOpen}
+        />
+      )}
     </div>
   );
 }
