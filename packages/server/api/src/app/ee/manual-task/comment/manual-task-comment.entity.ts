@@ -23,7 +23,7 @@ export const ManualTaskCommentEntity = new EntitySchema<ManualTaskCommentSchema>
             ...ApIdSchema,
             nullable: false,
         },
-        comment: {
+        content: {
             type: String,
             nullable: false,
         },

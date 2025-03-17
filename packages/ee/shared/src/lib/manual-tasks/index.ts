@@ -29,10 +29,17 @@ export const ManualTaskComment = Type.Object({
     ...BaseModelSchema,
     taskId: Type.String(),
     userId: Type.String(),
-    comment: Type.String(),
+    content: Type.String(),
 })
 
 export type ManualTaskComment = Static<typeof ManualTaskComment>
+
+
+export const ManualTaskCommentWithUser = Type.Composite([ManualTaskComment, Type.Object({
+    user: UserWithMetaInformation,
+})])
+
+export type ManualTaskCommentWithUser = Static<typeof ManualTaskCommentWithUser>
 
 export const ManualTaskWithAssignee = Type.Composite([ManualTask, Type.Object({
     assignee: Nullable(UserWithMetaInformation),

@@ -1,5 +1,7 @@
 import { User2 } from 'lucide-react';
 
+import { formatUtils } from '@/lib/utils';
+
 type CommentCardProps = {
   firstName: string;
   lastName: string;
@@ -25,7 +27,7 @@ function CommentCard({
         {content}
       </span>
       <span className="text-xs text-muted-foreground flex justify-end">
-        {createdAt}
+        {formatUtils.formatDate(new Date(createdAt))}
       </span>
     </div>
   );

@@ -37,7 +37,7 @@ export class AddManualTask1741617317944 implements MigrationInterface {
                 "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 "taskId" character varying(21) NOT NULL,
                 "userId" character varying(21) NOT NULL,
-                "comment" character varying NOT NULL,
+                "content" character varying NOT NULL,
                 CONSTRAINT "PK_5d60c01f4c4a9d8120f284bacab" PRIMARY KEY ("id")
             )
         `)

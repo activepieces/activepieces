@@ -7,5 +7,5 @@ export const manualTaskModule: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
 
     await fastify.register(manualTaskController, { prefix: '/v1/manual-tasks' })
-    await fastify.register(manualTaskCommentController, { prefix: '/v1/manual-tasks' })
+    await fastify.register(manualTaskCommentController, { prefix: '/v1/manual-tasks/:taskId/comments' })
 }

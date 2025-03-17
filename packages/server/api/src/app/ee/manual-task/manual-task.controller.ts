@@ -4,6 +4,7 @@ import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { manualTaskService } from './manual-task.service'
 
 const DEFAULT_LIMIT = 10
+const DEFAULT_CURSOR = null
 
 export const manualTaskController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListManualTasksRequest, async (request) => {
@@ -13,7 +14,7 @@ export const manualTaskController: FastifyPluginAsyncTypebox = async (app) => {
             projectId,
             assigneeId,
             limit: limit ?? DEFAULT_LIMIT,
-            cursor: cursor ?? null,
+            cursor: cursor ?? DEFAULT_CURSOR,
             statusOptions,
             title,
         })
@@ -63,7 +64,7 @@ const ListManualTasksRequest = {
         querystring: ListManualTasksQueryParams,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER],
     },
 }
 
@@ -72,7 +73,7 @@ const CreateManualTaskRequest = {
         body: CreateManualTaskRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER],
     },
 }
 
@@ -83,7 +84,7 @@ const GetManualTaskRequest = {
         }),
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER],
     },
 }
 
@@ -95,6 +96,6 @@ const UpdateManualTaskRequest = {
         body: UpdateManualTaskRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER],
     },
 }

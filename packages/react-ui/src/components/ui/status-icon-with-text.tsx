@@ -35,7 +35,6 @@ const StatusIconWithText = React.memo(
     color,
     textColor,
   }: StatusIconWithTextProps) => {
-    console.log(color);
     if (isNil(color) || isNil(textColor)) {
       return (
         <span className={statusCodeVariants({ variant })}>

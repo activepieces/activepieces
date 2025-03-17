@@ -19,7 +19,7 @@ export type ListManualTasksQueryParams = Static<typeof ListManualTasksQueryParam
 export const UpdateManualTaskRequestBody = Type.Object({
     title: Type.Optional(Type.String()),
     description: Type.Optional(Type.String()),
-    status: Type.Enum(StatusOption),
+    status: Type.Optional(StatusOption),
     statusOptions: Type.Optional(StatusOptionsSchema),
     assigneeId: Type.Optional(ApId),
 })

@@ -9,6 +9,9 @@ import {
 import { SeekPage } from '@activepieces/shared';
 
 export const manualTaskApi = {
+  async get(id: string) {
+    return await api.get<ManualTaskWithAssignee>(`/v1/manual-tasks/${id}`);
+  },
   async list(request: ListManualTasksQueryParams) {
     return await api.get<SeekPage<ManualTaskWithAssignee>>(
       `/v1/manual-tasks`,

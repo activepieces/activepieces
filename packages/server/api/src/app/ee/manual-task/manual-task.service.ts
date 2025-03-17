@@ -28,7 +28,11 @@ export const manualTaskService = (_log: FastifyBaseLogger) => ({
         })
     },
     async getOne(params: GetParams): Promise<ManualTask | null> {
-        return repo().findOneBy({ id: params.id, platformId: params.platformId, projectId: params.projectId })
+        const manualTask = await repo().findOneBy({ id: params.id, platformId: params.platformId, projectId: params.projectId })
+        if (manualTask) {
+            manualTask.statusOptions = manualTask.statusOptions.map((option) => JSON.parse(option as unknown as string))
+        }
+        return manualTask
     },
     async getOneOrThrow(params: GetParams): Promise<ManualTask> {
         const manualTask = await this.getOne(params)
@@ -93,8 +97,18 @@ export const manualTaskService = (_log: FastifyBaseLogger) => ({
         const enrichedData = await Promise.all(
             data.map(async (task) => {
                 const enrichedTask = await enrichManualTaskWithAssignee(task, _log)
+                const statusOptions = task.statusOptions.map((option) => {
+                    const parsedOption = JSON.parse(option as unknown as string)
+                    return {
+                        name: parsedOption.name,
+                        description: parsedOption.description,
+                        color: parsedOption.color,
+                        textColor: parsedOption.textColor,
+                    }
+                })
                 return {
                     ...enrichedTask,
+                    statusOptions,
                 }
             }),
         )
