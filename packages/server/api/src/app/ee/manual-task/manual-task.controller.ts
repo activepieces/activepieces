@@ -73,7 +73,7 @@ const CreateManualTaskRequest = {
         body: CreateManualTaskRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE, PrincipalType.ENGINE],
     },
 }
 

@@ -1,7 +1,7 @@
-import { ManualTask, ManualTaskWithAssignee, StatusOption } from '@activepieces/ee-shared'
+import { ManualTask, ManualTaskWithAssignee, NO_ANSWER_STATUS, StatusOption } from '@activepieces/ee-shared'
 import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, PlatformId, ProjectId, SeekPage, spreadIfDefined, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { In, Like } from 'typeorm'
+import { Like } from 'typeorm'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -11,13 +11,6 @@ import { userService } from '../../user/user-service'
 import { ManualTaskEntity } from './manual-task.entity'
 
 const repo = repoFactory(ManualTaskEntity)  
-
-const NO_ANSWER_STATUS = {
-    name: 'No Answer',
-    description: 'No Answer',
-    color: '#e5efe7',
-    textColor: '#348848',
-}
 
 export const manualTaskService = (_log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<ManualTask> {
@@ -83,9 +76,15 @@ export const manualTaskService = (_log: FastifyBaseLogger) => ({
             })
         }
         if (params.statusOptions) {
-            query = query.andWhere({
-                status: In(params.statusOptions.map((option) => option.name)),
-            })
+            if (params.statusOptions[0] === NO_ANSWER_STATUS.name) {
+                query = query.andWhere(`status->>'name' = :statusName`, {
+                    statusName: NO_ANSWER_STATUS.name,
+                })
+            } else {
+                query = query.andWhere(`status->>'name' != :statusName`, {
+                    statusName: NO_ANSWER_STATUS.name,
+                })
+            }
         }
         if (params.title) {
             query = query.andWhere({
@@ -161,7 +160,7 @@ type ListParams = {
     assigneeId?: UserId
     limit: number
     cursor: Cursor | null
-    statusOptions?: StatusOption[]
+    statusOptions?: string[]
     title?: string
 }
 

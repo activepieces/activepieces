@@ -21,7 +21,7 @@ import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import { ManualTask, ManualTaskWithAssignee } from '@activepieces/ee-shared';
+import { ANSWERED_STATUS, ManualTask, ManualTaskWithAssignee, NO_ANSWER_STATUS } from '@activepieces/ee-shared';
 
 import { TaskDetails } from './task-details';
 
@@ -43,6 +43,7 @@ function ManualTasksPage() {
         if (currentUser) {
           prev.set('assignee', currentUser.email);
         }
+        prev.set('status', 'No Answer');
         return prev;
       });
     }
@@ -58,6 +59,10 @@ function ManualTasksPage() {
       const assigneeId = searchParams.get('assigneeId') ?? undefined;
       const flowId = searchParams.get('flowId') ?? undefined;
       const title = searchParams.get('title') ?? undefined;
+      const status = searchParams.getAll('status') ?? undefined;
+      const isNoAnswer = (status.length === 1 && status[0] === NO_ANSWER_STATUS.name) ? true : false;
+      const isAllStatus = status.length === 0 || status.length === 2;
+      const statusOptions = isAllStatus ? undefined : isNoAnswer ? [NO_ANSWER_STATUS.name] : [ANSWERED_STATUS.name];
       return manualTaskApi.list({
         projectId,
         cursor: cursor ?? undefined,
@@ -65,7 +70,7 @@ function ManualTasksPage() {
         platformId,
         assigneeId,
         flowId,
-        statusOptions: undefined, // TODO: need to add status options
+        statusOptions,
         title,
       });
     },
@@ -114,11 +119,14 @@ function ManualTasksPage() {
       type: 'select',
       title: t('Status'),
       accessorKey: 'status',
-      // TODO: need to the real status options
       options: [
         {
-          label: 'Test Status',
-          value: 'Test Status',
+          label: t('No Answer'),
+          value: NO_ANSWER_STATUS.name,
+        },
+        {
+          label: t('Answered'),
+          value: ANSWERED_STATUS.name,
         },
       ],
       icon: CheckIcon,

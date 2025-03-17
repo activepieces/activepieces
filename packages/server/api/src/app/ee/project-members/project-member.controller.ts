@@ -94,7 +94,7 @@ const UpdateProjectMemberRoleRequest = {
 
 const ListProjectMembersRequestQueryOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE, PrincipalType.ENGINE],
         permission: Permission.READ_PROJECT_MEMBER,
     },
     schema: {
@@ -109,7 +109,7 @@ const ListProjectMembersRequestQueryOptions = {
 
 const ListPlatformProjectMembersRequestQueryOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE, PrincipalType.ENGINE],
         permission: Permission.READ_PROJECT_MEMBER,
     },
     schema: {

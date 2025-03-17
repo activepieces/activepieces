@@ -50,6 +50,8 @@ export type TPropertyValue<
     ? string
     : U extends PropertyType.FILE
     ? ApFile
+    : U extends PropertyType.COLOR
+    ? string
     : unknown;
 };
 

@@ -58,6 +58,7 @@ import {
 } from '@activepieces/shared';
 
 import { CommentCard } from './comment-card';
+import { formatUtils } from '@/lib/utils';
 
 type TaskDetailsProps = {
   open: boolean;
@@ -163,13 +164,6 @@ function TaskDetails({
     },
   });
 
-  const getTimeAgo = (date: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const diffMinutes = Math.floor(diff / (1000 * 60));
-    return diffMinutes;
-  };
-
   return (
     <RightDrawer
       dismissible={false}
@@ -216,8 +210,7 @@ function TaskDetails({
             <div className="flex items-center gap-2 mb-2">
               <Clock2 className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">
-                {' '}
-                {getTimeAgo(new Date(task.created))} minutes ago{' '}
+                {formatUtils.formatDateToAgo(new Date(task.created))}
               </span>
             </div>
             <div className="flex flex-col gap-2">

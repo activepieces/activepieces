@@ -56,44 +56,61 @@ export const createTask = createAction({
       },
       refreshers: [],
     }),
-    statusOptions: Property.Json({
+    statusOptions: Property.Array({
       displayName: 'Status Options',
       required: true,
-      description: 'The status options of the task',
-      defaultValue: {
-        options: [
-          {
-            name: 'Example Status 1',
-            description: 'Example Description 1',
-            color: '#e5efe7',
-            textColor: '#348848',
-          },
-        ],
-      }
+      properties: {
+        name: Property.ShortText({
+          displayName: 'Name',
+          required: true,
+        }),
+        description: Property.ShortText({
+          displayName: 'Description',
+          required: true,
+        }),
+        color: Property.Color({
+          displayName: 'Color',
+          required: true,
+        }),
+        textColor: Property.Color({
+          displayName: 'Text Color',
+          required: true,
+        }),
+      },
     }),
   },
   async run({ propsValue, flows, run, server }) {
-    const requestBody = {
-      title: propsValue.title,
-      description: propsValue.description ?? undefined,
-      statusOptions: propsValue.statusOptions['options'],
-      flowId: flows.current.id,
-      runId: run.id,
-      assigneeId: propsValue.assigneeId ?? undefined,
-    };
-    
+    try {
+        const requestBody = {
+          title: propsValue.title,
+          description: propsValue.description ?? undefined,
+          statusOptions: propsValue.statusOptions.map((option: any) => ({
+            name: option.name,
+            description: option.description,
+            color: option.color,
+            textColor: option.textColor,
+          })),
+          flowId: flows.current.id,
+          runId: run.id,
+          assigneeId: propsValue.assigneeId ?? undefined,
+      };
+      
 
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: `${server.publicUrl}v1/manual-tasks`,
-      body: requestBody,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: server.token,
-      },
-    };
+      const request: HttpRequest = {
+        method: HttpMethod.POST,
+        url: `${server.publicUrl}v1/manual-tasks`,
+        body: requestBody,
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: server.token,
+        },
+      };
 
-    const response = await httpClient.sendRequest(request);
-    return response.body;
+      const response = await httpClient.sendRequest(request);
+      return response.body;
+    } catch (error) {
+      console.error('Error while creating task', error);
+      throw error;
+    }
   },
 });
