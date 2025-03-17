@@ -3,6 +3,7 @@ import { t } from 'i18next';
 
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { authenticationSession } from '@/lib/authentication-session';
+import { downloadFile } from '@/lib/utils';
 import { ListFlowsRequest, PopulatedFlow } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
@@ -31,17 +32,11 @@ export const flowsHooks = {
           await flowsUtils.downloadFlow(flows[0].id);
           return flows;
         }
-        const zip = await flowsUtils.downloadFlowsIntoZip(flows);
-        const content = await zip.generateAsync({ type: 'blob' });
-        const url = URL.createObjectURL(content);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = 'flows.zip';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        await downloadFile({
+          obj: await flowsUtils.zipFlows(flows),
+          fileName: 'flows',
+          extension: 'zip',
+        });
         return flows;
       },
       onSuccess: (res) => {

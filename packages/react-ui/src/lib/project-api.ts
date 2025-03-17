@@ -7,6 +7,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import {
   ListProjectRequestForUserQueryParams,
   ProjectWithLimits,
+  ProjectWithLimitsWithPlatform,
   SeekPage,
   SwitchProjectResponse,
 } from '@activepieces/shared';
@@ -30,20 +31,11 @@ export const projectApi = {
   delete: async (projectId: string) => {
     return api.delete<void>(`/v1/projects/${projectId}`);
   },
-  getTokenForProject: async (projectId: string) => {
-    return api.post<SwitchProjectResponse>(
-      `/v1/users/projects/${projectId}/token`,
-      {
-        projectId,
-      },
-    );
+  listForPlatforms: async () => {
+    // ee endpoint, hence, removed
+    // return api.get<ProjectWithLimitsWithPlatform[]>(
+    //   '/v1/users/projects/platforms',
+    // );
+    return [] as ProjectWithLimitsWithPlatform[]
   },
-
-  create: async (request: any) => {
-    return api.post<ProjectWithLimits>('/v1/projects', request);
-  },
-  update: async (projectId: string, request: any) => {
-    return api.post<ProjectWithLimits>(`/v1/projects/${projectId}`, request);
-  },
-  
 };
