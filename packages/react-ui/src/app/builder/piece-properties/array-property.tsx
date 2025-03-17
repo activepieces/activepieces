@@ -42,6 +42,7 @@ const getDefaultValuesForInputs = (arrayProperties: ArraySubProps<boolean>) => {
       case PropertyType.SHORT_TEXT:
       case PropertyType.NUMBER:
       case PropertyType.JSON:
+      case PropertyType.COLOR:
         return {
           ...acc,
           [key]: '',

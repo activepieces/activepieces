@@ -89,7 +89,7 @@ const ignoreRequest = (req: FastifyRequest): boolean => {
         return true
     }
 
-    if (req.principal.type === PrincipalType.SERVICE) {
+    if (req.principal.type === PrincipalType.SERVICE || req.principal.type === PrincipalType.ENGINE) {
         return true
     }
 

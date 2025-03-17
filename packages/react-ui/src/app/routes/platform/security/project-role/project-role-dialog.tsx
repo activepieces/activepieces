@@ -92,6 +92,13 @@ const initialPermissions = [
     write: [Permission.READ_TABLE, Permission.WRITE_TABLE],
     disableNone: true,
   },
+  {
+    name: 'Manual Tasks',
+    description: 'Read and write manual tasks',
+    read: [Permission.READ_MANUAL_TASKS],
+    write: [Permission.READ_MANUAL_TASKS, Permission.WRITE_MANUAL_TASK],
+    disableNone: true,
+  },
 ];
 interface ProjectRoleDialogProps {
   mode: 'create' | 'edit';

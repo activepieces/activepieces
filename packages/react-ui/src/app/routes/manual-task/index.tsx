@@ -106,19 +106,20 @@ function ManualTasksPage() {
 
   const { projectMembers } = projectMembersHooks.useProjectMembers();
   const assigneeOptions = [
-    ...(currentUser
-      ? [
-          {
-            label: t('Me Only'),
-            value: currentUser.email,
-          },
-        ]
-      : []),
-    ...(projectMembers?.map((member) => ({
-      label: `${member.user.firstName} ${member.user.lastName} (${member.user.email})`,
-      value: member.user.email,
-    })) ?? []),
+    ...(projectMembers?.map((member) => {
+      if (member.user.email === currentUser?.email) {
+        return {
+          label: t('Me Only'),
+          value: member.user.email,
+        };
+      }
+      return {
+        label: `${member.user.firstName} ${member.user.lastName} (${member.user.email})`,
+        value: member.user.email,
+      };
+    }) ?? []),
   ];
+  
   const filters = [
     {
       type: 'select',
