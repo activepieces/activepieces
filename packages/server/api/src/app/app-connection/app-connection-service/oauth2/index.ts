@@ -10,6 +10,7 @@ import {
 } from './oauth2-service'
 import { cloudOAuth2Service } from './services/cloud-oauth2-service'
 import { credentialsOauth2Service } from './services/credentials-oauth2-service'
+import { globalOAuth2Service } from './services/global-oauth2-service'
 
 const unimplementedService = (_log: FastifyBaseLogger): OAuth2Service<PlatformOAuth2ConnectionValue> => ({
     claim: async (
@@ -25,7 +26,8 @@ const unimplementedService = (_log: FastifyBaseLogger): OAuth2Service<PlatformOA
 })
 
 export const oauth2Handler = {
-    [AppConnectionType.CLOUD_OAUTH2]: cloudOAuth2Service,
+    // [AppConnectionType.CLOUD_OAUTH2]: cloudOAuth2Service,
+    [AppConnectionType.CLOUD_OAUTH2]: globalOAuth2Service,
     [AppConnectionType.OAUTH2]: credentialsOauth2Service,
     [AppConnectionType.PLATFORM_OAUTH2]: unimplementedService,
 }

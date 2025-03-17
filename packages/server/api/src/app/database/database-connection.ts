@@ -54,6 +54,9 @@ import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
+import { FlowTemplateEntity } from '../flow-templates/flow-template.entity'
+import { OAuthAppEntity } from '../oauth-apps/oauth-app.entity'
+import { GlobalOAuthAppEntity } from '../oauth-apps/global-oauth-app.entity'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
@@ -68,6 +71,7 @@ function getEntities(): EntitySchema<unknown>[] {
         FlowEntity,
         FlowVersionEntity,
         FlowRunEntity,
+        FlowTemplateEntity,
         ProjectEntity,
         StoreEntryEntity,
         UserEntity,
@@ -90,6 +94,8 @@ function getEntities(): EntitySchema<unknown>[] {
         CellEntity,
         TableWebhookEntity,
         UserIdentityEntity,
+        OAuthAppEntity,
+        GlobalOAuthAppEntity,
     ]
 
     switch (edition) {

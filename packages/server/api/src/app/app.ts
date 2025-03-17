@@ -8,7 +8,7 @@ import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import fastifySocketIO from 'fastify-socket.io'
 import { Socket } from 'socket.io'
 import { aiProviderModule } from './ai/ai-provider.module'
-import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
+// import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
 import { authenticationModule } from './authentication/authentication.module'
@@ -93,7 +93,11 @@ import { websocketService } from './websockets/websockets.service'
 import { flowConsumer } from './workers/consumer'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { workerModule } from './workers/worker-module'
-import { templateModule } from './template/template.module'
+import { flowTemplateModule } from './flow-templates/flow-template.module'
+import { globalOAuthAppModule } from './oauth-apps/global-oauth-app.module'
+import { oauthAppModule } from './oauth-apps/oauth-app.module'
+import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
+import { userOAuth2Service } from './app-connection/app-connection-service/oauth2/services/user-oauth2-service'
 
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
@@ -217,7 +221,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(triggerEventModule)
     await app.register(appEventRoutingModule)
     await app.register(authenticationModule)
-    await app.register(templateModule)
     await app.register(copilotModule),
     await app.register(platformModule)
     await app.register(humanInputModule)
@@ -232,6 +235,10 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     // await app.register(licenseKeysModule)
     await app.register(tablesModule)
     await app.register(userModule)
+    await app.register(flowTemplateModule)
+    await app.register(globalOAuthAppModule)
+    await app.register(oauthAppModule)
+    setPlatformOAuthService(userOAuth2Service(app.log))
 
     app.get(
         '/redirect',

@@ -11,7 +11,8 @@ import { system } from '../helper/system/system'
 export const communityFlowTemplateModule: FastifyPluginAsyncTypebox = async (
     app,
 ) => {
-    await app.register(flowTemplateController, { prefix: '/v1/flow-templates' })
+    // todo(Rupal): Eventually remove this as we don't want to depend on activepieces in case we can't keep our version up-to-date
+    await app.register(flowTemplateController, { prefix: '/v1/flow-templates/community' })
 }
 
 const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {

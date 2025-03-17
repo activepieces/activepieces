@@ -19,7 +19,6 @@ import { INTERNAL_ERROR_TOAST, toast } from '../../../components/ui/use-toast';
 import { flowsApi } from '../lib/flows-api';
 import { templatesApi } from '../../templates/lib/templates-api';
 import { FlowTemplate, FlowVersion, TemplateType } from '@activepieces/shared';
-import { projectApi } from '@/lib/project-api';
 
 const SaveAsTemplateSchema = Type.Object({
   name: Type.String(),
@@ -51,20 +50,15 @@ const SaveAsTemplateDialog: React.FC<{
       const template = await flowsApi.getTemplate(flowId, {
         versionId: flowVersion.id,
       });
-      const project = await projectApi.current();
-      const flowTemplate = await templatesApi.saveTemplateWorkflow({
-        name: data.name,
+      const flowTemplate = await templatesApi.create({
         description: data.description,
-        type: TemplateType.PROJECT,
+        type: TemplateType.PLATFORM,
         tags: data.tags || [],
-        pieces: template.pieces,
         blogUrl: template.blogUrl || '',
         template: {
           ...flowVersion,
           displayName: data.name
         },
-        projectId: project.id,
-        platformId: project.platformId,
       });
       return flowTemplate;
     },

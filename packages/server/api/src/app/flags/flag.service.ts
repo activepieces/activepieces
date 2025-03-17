@@ -1,4 +1,4 @@
-import { AppSystemProp, apVersionUtil, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-shared'
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
@@ -58,9 +58,6 @@ export const flagService = {
         const updated = now
         const currentVersion = await apVersionUtil.getCurrentRelease()
         const latestVersion = await apVersionUtil.getLatestRelease()
-        const internalUrl = await domainHelper.getInternalUrl({
-            path: '/redirect',
-        })
         flags.push(
             {
                 id: ApFlagId.ENVIRONMENT,
@@ -119,7 +116,9 @@ export const flagService = {
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
                 // value: await federatedAuthnService(system.globalLogger()).getThirdPartyRedirectUrl(undefined),
-                value: internalUrl,
+                value: await domainHelper.getInternalUrl({
+                    path: '/redirect',
+                }),
                 created,
                 updated,
             },
