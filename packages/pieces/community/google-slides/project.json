@@ -1,7 +1,7 @@
 {
-  "name": "pieces-google-slide",
+  "name": "pieces-google-slides",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/google-slide/src",
+  "sourceRoot": "packages/pieces/community/google-slides/src",
   "projectType": "library",
   "release": {
     "version": {
@@ -19,12 +19,12 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/community/google-slide",
-        "tsConfig": "packages/pieces/community/google-slide/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/google-slide/package.json",
-        "main": "packages/pieces/community/google-slide/src/index.ts",
+        "outputPath": "dist/packages/pieces/community/google-slides",
+        "tsConfig": "packages/pieces/community/google-slides/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/google-slides/package.json",
+        "main": "packages/pieces/community/google-slides/src/index.ts",
         "assets": [
-          "packages/pieces/community/google-slide/*.md"
+          "packages/pieces/community/google-slides/*.md"
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

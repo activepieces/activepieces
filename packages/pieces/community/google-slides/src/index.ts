@@ -15,10 +15,10 @@ export const googleSlidesAuth = PieceAuth.OAuth2({
 });
 
 export const googleSlide = createPiece({
-  displayName: "Google-slide",
+  displayName: "Google Slides",
   auth: googleSlidesAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: "https://cdn.activepieces.com/pieces/google-slide.png",
+  logoUrl: "https://cdn.activepieces.com/pieces/google-slides.png",
   authors: ["Kevinyu-alan"],
   actions: [
     createCustomApiCallAction({
