@@ -22,7 +22,7 @@ export const googleSlide = createPiece({
   authors: ["Kevinyu-alan"],
   actions: [
     createCustomApiCallAction({
-      baseUrl: () => 'https://docs.googleapis.com/v1',
+      baseUrl: () => 'https://slides.googleapis.com/v1/presentations/',
       auth: googleSlidesAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
