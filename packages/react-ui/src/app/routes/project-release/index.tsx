@@ -19,6 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { TableTitle } from '@/components/ui/table-title';
 import {
   Tooltip,
@@ -26,15 +27,24 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
-import { ProjectRelease, ProjectReleaseType } from '@activepieces/shared';
+import {
+  ProjectRelease,
+  ProjectReleaseType,
+  Permission,
+} from '@activepieces/shared';
 
 import { ApplyButton } from './apply-plan';
 import { SelectionButton } from './selection-dialog';
 
 const ProjectReleasesPage = () => {
   const navigate = useNavigate();
+  const { checkAccess } = useAuthorization();
+  const doesUserHavePermissionToWriteFlow = checkAccess(
+    Permission.WRITE_PROJECT_RELEASE,
+  );
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['project-releases'],
     queryFn: () => projectReleaseApi.list(),
@@ -158,42 +168,49 @@ const ProjectReleasesPage = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger asChild>
-              <Button className="h-9 w-full">
-                {t('Create Release')}
-                <ChevronDown className="h-3 w-4 ml-2" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem className="cursor-pointer" asChild>
-                <ApplyButton
-                  variant="ghost"
-                  onSuccess={refetch}
-                  className="w-full justify-start"
-                  request={{ type: ProjectReleaseType.GIT }}
+          <PermissionNeededTooltip
+            hasPermission={doesUserHavePermissionToWriteFlow}
+          >
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  className="h-9 w-full"
+                  disabled={!doesUserHavePermissionToWriteFlow}
                 >
-                  <div className="flex flex-row gap-2 items-center">
-                    <GitBranch className="size-4" />
-                    <span>{t('From Git')}</span>
-                  </div>
-                </ApplyButton>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" asChild>
-                <SelectionButton
-                  variant="ghost"
-                  onSuccess={refetch}
-                  className="w-full justify-start"
-                  ReleaseType={ProjectReleaseType.PROJECT}
-                >
-                  <div className="flex flex-row gap-2 items-center">
-                    <FolderOpenDot className="size-4" />
-                    <span>{t('From Project')}</span>
-                  </div>
-                </SelectionButton>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  {t('Create Release')}
+                  <ChevronDown className="h-3 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem className="cursor-pointer" asChild>
+                  <ApplyButton
+                    variant="ghost"
+                    onSuccess={refetch}
+                    className="w-full justify-start"
+                    request={{ type: ProjectReleaseType.GIT }}
+                  >
+                    <div className="flex flex-row gap-2 items-center">
+                      <GitBranch className="size-4" />
+                      <span>{t('From Git')}</span>
+                    </div>
+                  </ApplyButton>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" asChild>
+                  <SelectionButton
+                    variant="ghost"
+                    onSuccess={refetch}
+                    className="w-full justify-start"
+                    ReleaseType={ProjectReleaseType.PROJECT}
+                  >
+                    <div className="flex flex-row gap-2 items-center">
+                      <FolderOpenDot className="size-4" />
+                      <span>{t('From Project')}</span>
+                    </div>
+                  </SelectionButton>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </PermissionNeededTooltip>
         </div>
       </div>
       <DataTable

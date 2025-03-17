@@ -252,19 +252,21 @@ export const tablesCommon = {
     return response.body.data.map(this.formatRecord);
 
   },
-  formatRecord(record: PopulatedRecord): FormattedRecord {
+  formatRecord(record: PopulatedRecord | { record: PopulatedRecord }): FormattedRecord {
+    const actualRecord = 'record' in record ? record.record : record;
+    
     return {
-      id: record.id,
-      created: record.created,
-      updated: record.updated,
-      cells: Object.fromEntries(Object.entries(record.cells).map(([fieldId, cell]) => {
+      id: actualRecord.id,
+      created: actualRecord.created,
+      updated: actualRecord.updated,
+      cells: actualRecord.cells ? Object.fromEntries(Object.entries(actualRecord.cells).map(([fieldId, cell]) => {
         return [fieldId, {
           fieldName: cell.fieldName,
           updated: cell.updated,
           created: cell.created,
           value: cell.value 
         }]
-      })),
+      })) : {},
     }
   }
 }

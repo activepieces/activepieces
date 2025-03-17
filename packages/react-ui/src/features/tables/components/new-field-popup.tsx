@@ -15,7 +15,7 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTableState } from '@/features/tables/components/ap-table-state-provider';
-import { getColumnIcon } from '@/features/tables/lib/utils';
+import { tablesUtils } from '@/features/tables/lib/utils';
 import { cn } from '@/lib/utils';
 import { FieldType, isNil } from '@activepieces/shared';
 
@@ -121,7 +121,7 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                               field.value === type && 'bg-muted text-primary',
                             )}
                           >
-                            {getColumnIcon(type)}
+                            {tablesUtils.getColumnIcon(type)}
                             {type.charAt(0) + type.slice(1).toLowerCase()}
                           </Label>
                         </div>

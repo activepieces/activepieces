@@ -10,6 +10,7 @@ export type CreateTableRequest = Static<typeof CreateTableRequest>
 export const ExportTableResponse = Type.Object({
     fields: Type.Array(Type.Object({ id: Type.String(), name: Type.String() })),
     rows: Type.Array(Type.Record(Type.String(), Type.String())),
+    name: Type.String(),
 })
 
 export type ExportTableResponse = Static<typeof ExportTableResponse>

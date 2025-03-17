@@ -40,7 +40,6 @@ export const flagService = {
                 ApFlagId.PRIVATE_PIECES_ENABLED,
                 ApFlagId.FLOW_RUN_TIME_SECONDS,
                 ApFlagId.SHOW_COMMUNITY,
-                ApFlagId.SHOW_DOCS,
                 ApFlagId.SUPPORTED_APP_WEBHOOKS,
                 ApFlagId.TELEMETRY_ENABLED,
                 ApFlagId.TEMPLATES_PROJECT_ID,
@@ -133,12 +132,6 @@ export const flagService = {
             {
                 id: ApFlagId.THEME,
                 value: defaultTheme,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.SHOW_DOCS,
-                value: system.getEdition() !== ApEdition.ENTERPRISE,
                 created,
                 updated,
             },

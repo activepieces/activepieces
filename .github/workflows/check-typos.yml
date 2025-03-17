@@ -1,9 +1,4 @@
 name: Typos Check
-on:
-  workflow_dispatch:
-  push:
-    paths:
-      - '**/*'
 
 jobs:
   run:

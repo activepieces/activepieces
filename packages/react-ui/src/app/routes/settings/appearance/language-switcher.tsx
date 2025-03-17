@@ -66,9 +66,10 @@ export function LanguageSwitcher() {
   const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const openNewIndow = useNewWindow();
-  const { data: showCommunity } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_COMMUNITY,
-  );
+  // const { data: showCommunity } = flagsHooks.useFlag<boolean>(
+  //   ApFlagId.SHOW_COMMUNITY,
+  // );
+  const showCommunity = false;
   const languageWithoutLocale = i18n.language?.includes('-')
     ? i18n.language.split('-')[0]
     : i18n.language;
