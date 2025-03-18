@@ -41,7 +41,7 @@ import { ProjectSwitcher } from '@/features/projects/components/project-switcher
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
-import { supportUrl } from '@activepieces/shared';
+import { ApFlagId, ApEdition, supportUrl } from '@activepieces/shared';
 
 import { ShowPoweredBy } from '../../components/show-powered-by';
 import { platformHooks } from '../../hooks/platform-hooks';
@@ -163,6 +163,7 @@ export function SidebarComponent({
   removeGutters = false,
 }: SidebarProps) {
   const branding = flagsHooks.useWebsiteBranding();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { embedState } = useEmbedding();
   const { platform } = platformHooks.useCurrentPlatform();
   const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
@@ -181,13 +182,24 @@ export function SidebarComponent({
                   >
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <img
-                          src={branding.logos.logoIconUrl}
-                          alt={t('home')}
-                          width={40}
-                          height={40}
-                          className="border-2 border-primary p-2 rounded-lg"
-                        />
+                        {edition === ApEdition.COMMUNITY ||
+                        embedState.isEmbedded ? (
+                          <img
+                            src={branding.logos.fullLogoUrl}
+                            alt={t('home')}
+                            width={200}
+                            height={200}
+                            className="p-2 rounded-lg"
+                          />
+                        ) : (
+                          <img
+                            src={branding.logos.logoIconUrl}
+                            alt={t('home')}
+                            width={40}
+                            height={40}
+                            className="border-2 border-primary p-2 rounded-lg"
+                          />
+                        )}
                       </TooltipTrigger>
                       <TooltipContent side="right">{t('Home')}</TooltipContent>
                     </Tooltip>

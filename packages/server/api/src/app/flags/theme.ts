@@ -65,10 +65,8 @@ export function generateTheme({
 
 export const defaultTheme = generateTheme({
     primaryColor: '#1677ff',
-    websiteName: 'Workflow',
-    // fullLogoUrl: './public/img/promptx_icon_full.png',
-    fullLogoUrl: './img/promptx_icon.png',
-    favIconUrl: './promptx_blue.ico"',
+    websiteName: 'AutomationX',
+    fullLogoUrl: './img/automationx-full-logo.png',
     logoIconUrl: './img/promptx_icon.png',
-    // logoIconUrl: './public/img/promptx_icon.png',
+    favIconUrl: './img/promptx_blue_full.ico',
 })
