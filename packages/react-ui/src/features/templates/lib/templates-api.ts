@@ -16,6 +16,9 @@ export const templatesApi = {
   list(request?: ListFlowTemplatesRequest) {
     return api.get<SeekPage<FlowTemplate>>(`/v1/flow-templates`, request ?? {});
   },
+  listCommunity(request?: ListFlowTemplatesRequest) {
+    return api.get<SeekPage<FlowTemplate>>(`/v1/flow-templates/community`, request ?? {});
+  },
   delete(templateId: string) {
     return api.delete<void>(`/v1/flow-templates/${templateId}`);
   },
