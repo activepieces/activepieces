@@ -8,7 +8,6 @@ import {
   ChevronDown,
   Tag,
 } from 'lucide-react';
-import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { LoadingScreen } from '@/app/components/loading-screen';
@@ -33,26 +32,22 @@ import { userHooks } from '@/hooks/user-hooks';
 import { formatUtils } from '@/lib/utils';
 import {
   isNil,
-  ManualTaskWithAssignee,
   STATUS_COLORS,
   UNRESOLVED_STATUS,
   StatusOption,
   MarkdownVariant,
 } from '@activepieces/shared';
+import { Badge } from '@/components/ui/badge';
 
 function ManualTaskTestingPage() {
-  const [isStatusChanged, setIsStatusChanged] = useState(false);
-  const [task, setTask] = useState<ManualTaskWithAssignee | null>(null);
   const { manualTaskId } = useParams();
   const { data: currentUser } = userHooks.useCurrentUser();
 
-  const { isLoading } = useQuery({
+  const { isLoading, data: task, refetch } = useQuery({
     queryKey: ['manualTask', manualTaskId],
     queryFn: async () => {
       if (!manualTaskId) return null;
-      const fetchedTask = await manualTaskApi.get(manualTaskId);
-      setTask(fetchedTask);
-      return fetchedTask;
+      return await manualTaskApi.get(manualTaskId);
     },
     enabled: !!manualTaskId,
     staleTime: 0,
@@ -64,12 +59,9 @@ function ManualTaskTestingPage() {
       await manualTaskApi.update(task.id, {
         status: status,
       });
-      setTask({
-        ...task,
-        status: status,
-      });
+      refetch();
       setTimeout(() => {
-        setIsStatusChanged(true);
+       // setIsStatusChanged(true);
       }, 2000);
     },
   });
@@ -78,34 +70,13 @@ function ManualTaskTestingPage() {
     return <LoadingScreen />;
   }
 
-  if (isNil(task) || isStatusChanged) {
-    return (
-      <div className="flex w-full flex-col items-center justify-center py-8 text-center">
-        <h3 className="text-lg font-medium">
-          {t('Manual task already resolved')}
-        </h3>
-        <p className="text-sm text-gray-500 mt-1">
-          {t('You can only resolve a manual task once.')}
-        </p>
-      </div>
-    );
-  }
 
   return (
     <>
-      {!isLoading && (
+      {!isLoading && !isNil(task) && (
         <div className="container mx-auto flex flex-col p-10">
-          <div className="mb-6 p-3 bg-slate-50 rounded gap-2 flex flex-col">
-            <div className="flex items-center gap-2 mb-1">
-              <Tag className="h-4 w-4 text-gray-600" />
-              <div className="font-medium text-base">{t('Instructions')}</div>
-            </div>
-            <ApMarkdown
-              markdown={
-                'This is only for testing purposes. Do not use this page to resolve a manual task.'
-              }
-              variant={MarkdownVariant.INFO}
-            />
+          <div className="flex items-center mb-4">
+            <Badge variant="outline" className="text-xs">Test Environment</Badge>
           </div>
           <div className="flex items-center gap-2 mb-2">
             <Clock2 className="h-4 w-4 text-muted-foreground" />
@@ -183,7 +154,9 @@ function ManualTaskTestingPage() {
           <Separator className="mt-4 mb-6" />
 
           <div className="text-sm leading-6">
-            <ScrollArea className="h-[420px]">{task.description}</ScrollArea>
+            <ScrollArea className="h-full">
+              <ApMarkdown markdown={task.description ?? ''} variant={MarkdownVariant.BORDERLESS} />
+            </ScrollArea>
           </div>
         </div>
       )}

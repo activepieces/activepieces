@@ -1,6 +1,9 @@
-import { CreateManualTaskRequestBody, ListManualTasksQueryParams, PrincipalType, UpdateManualTaskRequestBody } from '@activepieces/shared'
+import { CreateManualTaskRequestBody, ListManualTaskAssigneesRequestQuery, ListManualTasksQueryParams, PrincipalType, SeekPage, UpdateManualTaskRequestBody, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { manualTaskService } from './manual-task.service'
+import { userService } from '../user/user-service'
+import { StatusCodes } from 'http-status-codes'
+import { paginationHelper } from '../helper/pagination/pagination-utils'
 
 const DEFAULT_LIMIT = 10
 const DEFAULT_CURSOR = null
@@ -57,7 +60,32 @@ export const manualTaskController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.principal.projectId,
         })
     })
+
+    app.get('/assignees', ListManualTaskAssigneesRequest, async (request) => {
+        const users = await userService.listProjectUsers({
+            platformId: request.principal.platform.id,
+            projectId: request.principal.projectId,
+        })
+        return paginationHelper.createPage(users, null)
+    })
+
+
 }
+
+
+const ListManualTaskAssigneesRequest = {
+    schema: {
+        querystring: ListManualTaskAssigneesRequestQuery,
+        response: {
+            [StatusCodes.OK]: SeekPage(UserWithMetaInformation),
+        },
+    },
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE],
+    },
+
+}
+
 
 const ListManualTasksRequest = {
     schema: {

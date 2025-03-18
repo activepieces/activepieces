@@ -20,11 +20,7 @@ export const manualTaskService = (_log: FastifyBaseLogger) => ({
         })
     },
     async getOne(params: GetParams): Promise<ManualTask | null> {
-        const manualTask = await repo().findOneBy({ id: params.id, platformId: params.platformId, projectId: params.projectId })
-        if (manualTask) {
-            manualTask.statusOptions = manualTask.statusOptions.map((option: unknown) => JSON.parse(option as unknown as string))
-        }
-        return manualTask
+        return await repo().findOneBy({ id: params.id, platformId: params.platformId, projectId: params.projectId })
     },
     async getOneOrThrow(params: GetParams): Promise<ManualTask> {
         const manualTask = await this.getOne(params)
@@ -51,11 +47,6 @@ export const manualTaskService = (_log: FastifyBaseLogger) => ({
         const manualTask = await this.getOneOrThrow(params)
         if (params.status && manualTask.approvalUrl) {
             await sendApprovalRequest(manualTask.approvalUrl, params.status)
-            if (isNil(manualTask.runId)) {
-                // THIS IS FOR TESTING PURPOSES
-                await this.delete(params)
-                return null
-            }
         }
         await repo().update({
             id: params.id,
@@ -113,31 +104,8 @@ export const manualTaskService = (_log: FastifyBaseLogger) => ({
         }
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
-        const enrichedData = await Promise.all(
-            data.map(async (task) => {
-                const enrichedTask = await enrichManualTaskWithAssignee(task, _log)
-                const statusOptions = task.statusOptions.map((option) => {
-                    const parsedOption = JSON.parse(option as unknown as string)
-                    return {
-                        name: parsedOption.name,
-                        description: parsedOption.description,
-                        variant: parsedOption.variant,
-                    }
-                })
-                return {
-                    ...enrichedTask,
-                    statusOptions,
-                }
-            }),
-        )
+        const enrichedData = await Promise.all(data.map((task) => enrichManualTaskWithAssignee(task, _log)))
         return paginationHelper.createPage<ManualTaskWithAssignee>(enrichedData, newCursor)
-    },
-    async delete(params: GetParams) {
-        await repo().delete({
-            id: params.id,
-            platformId: params.platformId,
-            projectId: params.projectId,
-        })
     },
 })
 

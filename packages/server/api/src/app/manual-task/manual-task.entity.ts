@@ -2,9 +2,7 @@ import { Flow, FlowRun, ManualTask, Platform, Project, User } from '@activepiece
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
-    ARRAY_COLUMN_TYPE,
     BaseColumnSchemaPart,
-    isPostgres,
     JSONB_COLUMN_TYPE,
 } from '../database/database-common'
 
@@ -33,8 +31,7 @@ export const ManualTaskEntity = new EntitySchema<ManualTaskSchema>({
             nullable: false,
         },
         statusOptions: {
-            type: ARRAY_COLUMN_TYPE,
-            array: isPostgres(),
+            type: JSONB_COLUMN_TYPE,
             nullable: false,
         },
         assigneeId: {

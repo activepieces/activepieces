@@ -5,54 +5,36 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { ExecutionType, PauseType, STATUS_VARIANT } from '@activepieces/shared';
+import { CreateManualTaskRequestBody, ExecutionType, ManualTask, PauseType, SeekPage, STATUS_VARIANT, UserWithMetaInformation } from '@activepieces/shared';
 
 export const createTask = createAction({
   name: 'createTask',
-  displayName: 'Create Task and Wait for Approval',
+  displayName: 'Create Task',
   description: 'Creates a task for a user, requiring them to respond or take action.',
   props: {
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'The title of the task',
       required: true,
     }),
     description: Property.LongText({
       displayName: 'Description',
-      description: 'The description of the task',
+      description: 'These details will be displayed for the assignee. Add the full context so they can take proper action, You can also use markdown formatting.',
       required: false,
     }),
     assigneeId: Property.Dropdown({
       displayName: 'Assignee',
-      description: 'The user to assign the task to',
       required: false,
       options: async (_, context) => {
         const baseApiUrl = context.server.publicUrl;
         const apiKey = context.server.token;
-        // TODO: need to make it get all pages and make the limit 100 not 1 page with all members
-        const request: HttpRequest = {
-          method: HttpMethod.GET,
-          url: `${baseApiUrl}v1/project-members`,
-          queryParams: {
-            limit: '1000',
-            projectId: context.project.id,
-          },
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: apiKey,  
-          }
-        };
-        const res = await httpClient.sendRequest(request);
-        if (res.status === 200) {
-          return {
-            options: res.body.data.map((projectMember: any) => ({
-              value: projectMember.user.id,
-              label: `${projectMember.user.firstName} ${projectMember.user.lastName}`,
-            })),
-          };
-        }
+        const users = await listAssignee(baseApiUrl, apiKey);
+        console.log("HELLLOOOO")
+        console.log(JSON.stringify(users, null, 2))
         return {
-          options: [],
+          options: users.data.map((user) => ({
+            value: user.id,
+            label: `${user.firstName} ${user.lastName}`,
+          })),
         };
       },
       refreshers: [],
@@ -63,10 +45,6 @@ export const createTask = createAction({
       properties: {
         name: Property.ShortText({
           displayName: 'Name',
-          required: true,
-        }),
-        description: Property.ShortText({
-          displayName: 'Description',
           required: true,
         }),
         variant: Property.StaticDropdown({
@@ -131,7 +109,7 @@ export const createTask = createAction({
 });
 
 async function sendTaskApproval(context: any, isTest: boolean) {
-    const requestBody = {
+    const requestBody: CreateManualTaskRequestBody = {
       title: context.propsValue.title,
       description: context.propsValue.description ?? undefined,
       statusOptions: context.propsValue.statusOptions.map((option: any) => ({
@@ -157,5 +135,18 @@ async function sendTaskApproval(context: any, isTest: boolean) {
     }
   };
 
-  return await httpClient.sendRequest(request);
+  return await httpClient.sendRequest<ManualTask>(request);
+}
+
+async function listAssignee(publicUrl: string, token: string): Promise<SeekPage<UserWithMetaInformation>> {
+  const request: HttpRequest = {
+    method: HttpMethod.GET,
+    url: `${publicUrl}v1/manual-tasks/assignees`,
+    authentication: {
+      type: AuthenticationType.BEARER_TOKEN,
+      token: token
+    }
+  }
+  const res = await httpClient.sendRequest<SeekPage<UserWithMetaInformation>>(request);
+  return res.body;
 }

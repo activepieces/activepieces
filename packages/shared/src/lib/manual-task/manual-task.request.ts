@@ -16,6 +16,11 @@ export const ListManualTasksQueryParams = Type.Object({
 })
 export type ListManualTasksQueryParams = Static<typeof ListManualTasksQueryParams>
 
+
+export const ListManualTaskAssigneesRequestQuery = Type.Object({
+})
+export type ListManualTaskAssigneesRequestQuery = Static<typeof ListManualTaskAssigneesRequestQuery>
+
 export const UpdateManualTaskRequestBody = Type.Object({
     title: Type.Optional(Type.String()),
     description: Type.Optional(Type.String()),

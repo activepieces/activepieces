@@ -1,9 +1,11 @@
 import { api } from '@/lib/api';
+import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import {
   CreateProjectRoleRequestBody,
   UpdateProjectRoleRequestBody,
   ProjectRole,
   SeekPage,
+  ListProjectMembersForProjectRoleRequestQuery,
 } from '@activepieces/shared';
 
 export const projectRoleApi = {
@@ -21,5 +23,8 @@ export const projectRoleApi = {
   },
   async delete(id: string) {
     return await api.delete<void>(`/v1/project-roles/${id}`);
+  },
+  async listProjectMembers(id: string, requestQuery: ListProjectMembersForProjectRoleRequestQuery) {
+    return await api.get<SeekPage<ProjectMemberWithUser>>(`/v1/project-roles/${id}/project-members`, requestQuery);
   },
 };

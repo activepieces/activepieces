@@ -4,9 +4,10 @@ import { createTask } from "./lib/actions/create-task";
 import { PieceCategory } from "@activepieces/shared";
 
 export const manualTask = createPiece({
-  displayName: "Manual Task",
+  displayName: "Manual Tasks",
+  description: "Create tasks for project members to take actions, useful for approvals, reviews, and manual actions performed by humans",
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.48.0',
   logoUrl: "https://cdn.activepieces.com/pieces/approval.svg",
   authors: ['hazemadelkhalel'],
   categories: [PieceCategory.CORE, PieceCategory.FLOW_CONTROL],

@@ -1,5 +1,4 @@
 import {
-    ListPlatformProjectMembersRequestQuery,
     ListProjectMembersRequestQuery,
     ProjectMemberWithUser,
     UpdateProjectMemberRoleRequestBody,
@@ -38,14 +37,6 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
         })
     })
 
-    app.get('/platform-users', ListPlatformProjectMembersRequestQueryOptions, async (request) => {
-        return projectMemberService(request.log).list({
-            platformId: request.principal.platform.id,
-            cursorRequest: request.query.cursor ?? null,
-            limit: request.query.limit ?? DEFAULT_LIMIT_SIZE,
-            projectRoleId: request.query.projectRoleId ?? undefined,
-        })
-    })
 
 
     app.post('/:id', UpdateProjectMemberRoleRequest, async (req) => {
@@ -94,28 +85,13 @@ const UpdateProjectMemberRoleRequest = {
 
 const ListProjectMembersRequestQueryOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE, PrincipalType.ENGINE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         permission: Permission.READ_PROJECT_MEMBER,
     },
     schema: {
         tags: ['project-members'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListProjectMembersRequestQuery,
-        response: {
-            [StatusCodes.OK]: SeekPage(ProjectMemberWithUser),
-        },
-    },
-}
-
-const ListPlatformProjectMembersRequestQueryOptions = {
-    config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE, PrincipalType.ENGINE],
-        permission: Permission.READ_PROJECT_MEMBER,
-    },
-    schema: {
-        tags: ['project-members'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        querystring: ListPlatformProjectMembersRequestQuery,
         response: {
             [StatusCodes.OK]: SeekPage(ProjectMemberWithUser),
         },

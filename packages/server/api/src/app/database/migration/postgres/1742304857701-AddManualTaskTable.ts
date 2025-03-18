@@ -12,7 +12,7 @@ export class AddManualTaskTable1742304857701 implements MigrationInterface {
                 "title" character varying NOT NULL,
                 "description" character varying,
                 "status" jsonb NOT NULL,
-                "statusOptions" character varying array NOT NULL,
+                "statusOptions" jsonb NOT NULL,
                 "assigneeId" character varying(21),
                 "platformId" character varying(21) NOT NULL,
                 "projectId" character varying(21) NOT NULL,
