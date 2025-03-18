@@ -10,8 +10,7 @@ import { ClaimOAuth2Request, RefreshOAuth2Request } from '../oauth2-service'
 import { pieceMetadataService } from '../../../../pieces/piece-metadata-service'
 import { credentialsOauth2Service } from './credentials-oauth2-service'
 import { globalOAuthAppService } from '../../../../oauth-apps/global-oauth-app.service'
-import { AppSystemProp, networkUtils } from '@activepieces/server-shared'
-import { system } from '../../../../helper/system/system'
+import { domainHelper } from '../../../../helper/domain-helper'
 
 export const globalOAuth2Service = (log: FastifyBaseLogger) => ({
   claim: async ({
@@ -40,6 +39,7 @@ export const globalOAuth2Service = (log: FastifyBaseLogger) => ({
         ...request,
         clientId: oauth2App.clientId,
         clientSecret: oauth2App.clientSecret,
+        redirectUrl: await domainHelper.getInternalUrl({ path: '/redirect' }),
       },
       projectId,
       platformId,
@@ -64,7 +64,7 @@ export const globalOAuth2Service = (log: FastifyBaseLogger) => ({
       connectionValue: {
         ...connectionValue,
         type: AppConnectionType.OAUTH2,
-        redirect_url: networkUtils.combineUrl(system.getOrThrow(AppSystemProp.INTERNAL_URL), '/redirect'),
+        redirect_url: await domainHelper.getInternalUrl({ path: '/redirect' }),
         client_secret: oauth2App.clientSecret,
       },
     })
