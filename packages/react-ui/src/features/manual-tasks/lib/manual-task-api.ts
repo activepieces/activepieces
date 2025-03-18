@@ -1,12 +1,12 @@
 import { api } from '@/lib/api';
 import {
   CreateManualTaskRequestBody,
-  ManualTask,
-  UpdateManualTaskRequestBody,
   ListManualTasksQueryParams,
+  ManualTask,
   ManualTaskWithAssignee,
-} from '@activepieces/ee-shared';
-import { SeekPage } from '@activepieces/shared';
+  SeekPage,
+  UpdateManualTaskRequestBody,
+} from '@activepieces/shared';
 
 export const manualTaskApi = {
   async get(id: string) {

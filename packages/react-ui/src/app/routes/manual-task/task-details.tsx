@@ -34,7 +34,6 @@ import {
 } from '@/components/ui/resizable-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -46,23 +45,24 @@ import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { manualTaskApi } from '@/features/manual-tasks/lib/manual-task-api';
 import { manualTaskCommentApi } from '@/features/manual-tasks/lib/manual-task-comment-api';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { formatUtils } from '@/lib/utils';
-import {
-  ManualTaskCommentWithUser,
-  ManualTaskWithAssignee,
-  NO_ANSWER_STATUS,
-  StatusOption,
-} from '@activepieces/ee-shared';
 import {
   FlowRunStatus,
   isFailedState,
   PopulatedFlow,
   FlowRun,
   isNil,
+  ManualTaskWithAssignee,
+  StatusOption,
+  UNRESOLVED_STATUS,
+  STATUS_COLORS,
+  ApFlagId,
+  ApEdition,
 } from '@activepieces/shared';
 
-import { CommentCard } from './comment-card';
+import { Comments } from './comment/comments';
 
 type TaskDetailsProps = {
   open: boolean;
@@ -90,6 +90,7 @@ function TaskDetails({
   const [inputMessage, setInputMessage] = useState('');
   const { data: currentUser } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   const { data } = useQuery<
     {
@@ -112,28 +113,6 @@ function TaskDetails({
     staleTime: 0,
     gcTime: 0,
     enabled: !isNil(task.runId),
-  });
-
-  const { data: comments, isLoading: isLoadingComments } = useQuery<
-    {
-      comments: ManualTaskCommentWithUser[];
-    },
-    Error
-  >({
-    queryKey: ['comments', task.id],
-    queryFn: async () => {
-      const response = await manualTaskCommentApi.list(task.id, {
-        platformId: task.platformId,
-        projectId: task.projectId,
-        taskId: task.id,
-        cursor: undefined,
-        limit: 10,
-      });
-      return { comments: response.data };
-    },
-    staleTime: 0,
-    gcTime: 0,
-    enabled: task.id !== undefined,
   });
 
   const { mutate: createComment } = useMutation({
@@ -290,7 +269,7 @@ function TaskDetails({
                   </Tooltip>
                 )}
                 <span className="text-sm text-muted-foreground">Status</span>
-                {task.status.name === NO_ANSWER_STATUS.name && (
+                {task.status.name === UNRESOLVED_STATUS.name && (
                   <DropdownMenu>
                     <DropdownMenuTrigger>
                       <Button
@@ -324,12 +303,12 @@ function TaskDetails({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 )}
-                {task.status.name !== NO_ANSWER_STATUS.name && (
+                {task.status.name !== UNRESOLVED_STATUS.name && (
                   <StatusIconWithText
                     icon={CheckIcon}
                     text={task.status.name}
-                    color={task.status.color}
-                    textColor={task.status.textColor}
+                    color={STATUS_COLORS[task.status.variant].color}
+                    textColor={STATUS_COLORS[task.status.variant].textColor}
                   />
                 )}
               </div>
@@ -338,86 +317,64 @@ function TaskDetails({
 
           <Separator className="mt-4 mb-6" />
 
-          <ResizablePanelGroup direction="vertical">
-            <ResizablePanel defaultSize={50}>
-              <div className="text-sm leading-6">
-                <ScrollArea className="h-[420px]">
-                  {task.description}
-                </ScrollArea>
-              </div>
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={100} minSize={50}>
-              <div className="flex flex-col w-full pt-2 gap-2">
-                <span className="text-md"> Comments </span>
-                {comments?.comments.length === 0 && (
-                  <span className="text-sm text-muted-foreground">
-                    No comments yet
-                  </span>
-                )}
+          {edition === ApEdition.COMMUNITY && (
+            <div className="text-sm leading-6">
+              <ScrollArea className="h-[420px]">{task.description}</ScrollArea>
+            </div>
+          )}
 
-                {isLoadingComments && (
-                  <div className="flex flex-col gap-4">
-                    <div className="flex flex-col gap-2">
-                      <div className="flex gap-2">
-                        <Skeleton className="h-[30px] w-[30px] rounded-xl" />
-                        <Skeleton className="h-[30px] w-[100px] rounded-xl" />
-                      </div>
-                      <Skeleton className="h-[50px] w-full rounded-xl" />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <div className="flex gap-2">
-                        <Skeleton className="h-[30px] w-[30px] rounded-xl" />
-                        <Skeleton className="h-[30px] w-[100px] rounded-xl" />
-                      </div>
-                      <Skeleton className="h-[50px] w-full rounded-xl" />
-                    </div>
-                  </div>
-                )}
-                {!isLoadingComments &&
-                  comments?.comments.map((comment) => (
-                    <CommentCard
-                      key={comment.id}
-                      firstName={comment.user.firstName}
-                      lastName={comment.user.lastName}
-                      content={comment.content}
-                      createdAt={comment.created}
-                    />
-                  ))}
-              </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
+          {edition !== ApEdition.COMMUNITY && (
+            <ResizablePanelGroup direction="vertical">
+              <ResizablePanel defaultSize={50}>
+                <div className="text-sm leading-6">
+                  <ScrollArea className="h-[420px]">
+                    {task.description}
+                  </ScrollArea>
+                </div>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize={100} minSize={50}>
+                <Comments task={task} />
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          )}
         </div>
-        <div className="relative w-full mb-5">
-          <Textarea
-            className="w-full focus:outline-none pb-10 pt-3 border rounded-xl bg-gray-100 dark:bg-gray-700 dark:text-gray-100 pr-12 resize-none"
-            minRows={1}
-            autoFocus={true}
-            maxRows={4}
-            placeholder={t('Write a comment...')}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey && inputMessage.length > 0) {
+        {edition !== ApEdition.COMMUNITY && (
+          <div className="relative w-full mb-5">
+            <Textarea
+              className="w-full focus:outline-none pb-10 pt-3 border rounded-xl bg-gray-100 dark:bg-gray-700 dark:text-gray-100 pr-12 resize-none"
+              minRows={1}
+              autoFocus={true}
+              maxRows={4}
+              placeholder={t('Write a comment...')}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (
+                  e.key === 'Enter' &&
+                  !e.shiftKey &&
+                  inputMessage.length > 0
+                ) {
+                  createComment(inputMessage);
+                  setInputMessage('');
+                  e.preventDefault();
+                }
+              }}
+              value={inputMessage}
+              ref={textAreaRef}
+            />
+            <Button
+              variant="transparent"
+              className="absolute bottom-0 right-0"
+              disabled={inputMessage.length === 0}
+              onClick={() => {
                 createComment(inputMessage);
                 setInputMessage('');
-                e.preventDefault();
-              }
-            }}
-            value={inputMessage}
-            ref={textAreaRef}
-          />
-          <Button
-            variant="transparent"
-            className="absolute bottom-0 right-0"
-            disabled={inputMessage.length === 0}
-            onClick={() => {
-              createComment(inputMessage);
-              setInputMessage('');
-            }}
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
+              }}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </RightDrawerContent>
     </RightDrawer>
   );

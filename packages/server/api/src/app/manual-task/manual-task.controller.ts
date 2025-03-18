@@ -1,5 +1,4 @@
-import { CreateManualTaskRequestBody, ListManualTasksQueryParams, UpdateManualTaskRequestBody } from '@activepieces/ee-shared'
-import { PrincipalType } from '@activepieces/shared'
+import { CreateManualTaskRequestBody, ListManualTasksQueryParams, PrincipalType, UpdateManualTaskRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { manualTaskService } from './manual-task.service'
 

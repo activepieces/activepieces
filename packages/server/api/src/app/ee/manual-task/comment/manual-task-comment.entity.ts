@@ -1,5 +1,5 @@
-import { ManualTask, ManualTaskComment } from '@activepieces/ee-shared'
-import { User } from '@activepieces/shared'
+import { ManualTaskComment } from '@activepieces/ee-shared'
+import { ManualTask, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,

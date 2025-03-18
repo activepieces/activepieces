@@ -1,6 +1,6 @@
-import { Static, Type } from "@sinclair/typebox"
-import { ApId } from "@activepieces/shared"
-import { StatusOption } from "."
+import { Static, Type } from '@sinclair/typebox'
+import { ApId } from '../common/id-generator'
+import { StatusOption } from '.'
 
 const StatusOptionsSchema = Type.Array(StatusOption, { minItems: 1 })
 

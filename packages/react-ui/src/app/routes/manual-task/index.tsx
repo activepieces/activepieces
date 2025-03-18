@@ -22,11 +22,12 @@ import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import {
-  ANSWERED_STATUS,
   ManualTask,
   ManualTaskWithAssignee,
-  NO_ANSWER_STATUS,
-} from '@activepieces/ee-shared';
+  UNRESOLVED_STATUS,
+  RESOLVED_STATUS,
+  STATUS_COLORS,
+} from '@activepieces/shared';
 
 import { TaskDetails } from './task-details';
 
@@ -48,7 +49,7 @@ function ManualTasksPage() {
         if (currentUser) {
           prev.set('assignee', currentUser.email);
         }
-        prev.set('status', 'No Answer');
+        prev.set('status', UNRESOLVED_STATUS.name);
         return prev;
       });
     }
@@ -65,16 +66,16 @@ function ManualTasksPage() {
       const flowId = searchParams.get('flowId') ?? undefined;
       const title = searchParams.get('title') ?? undefined;
       const status = searchParams.getAll('status') ?? undefined;
-      const isNoAnswer =
-        status.length === 1 && status[0] === NO_ANSWER_STATUS.name
+      const isUnresolved =
+        status.length === 1 && status[0] === UNRESOLVED_STATUS.name
           ? true
           : false;
       const isAllStatus = status.length === 0 || status.length === 2;
       const statusOptions = isAllStatus
         ? undefined
-        : isNoAnswer
-        ? [NO_ANSWER_STATUS.name]
-        : [ANSWERED_STATUS.name];
+        : isUnresolved
+        ? [UNRESOLVED_STATUS.name]
+        : [RESOLVED_STATUS.name];
       return manualTaskApi.list({
         projectId,
         cursor: cursor ?? undefined,
@@ -136,12 +137,12 @@ function ManualTasksPage() {
       accessorKey: 'status',
       options: [
         {
-          label: t('No Answer'),
-          value: NO_ANSWER_STATUS.name,
+          label: t('Unresolved'),
+          value: UNRESOLVED_STATUS.name,
         },
         {
-          label: t('Answered'),
-          value: ANSWERED_STATUS.name,
+          label: t('Resolved'),
+          value: RESOLVED_STATUS.name,
         },
       ],
       icon: CheckIcon,
@@ -268,8 +269,8 @@ function ManualTasksPage() {
             <StatusIconWithText
               icon={CheckIcon}
               text={row.original.status.name}
-              color={row.original.status.color}
-              textColor={row.original.status.textColor}
+              color={STATUS_COLORS[row.original.status.variant].color}
+              textColor={STATUS_COLORS[row.original.status.variant].textColor}
             />
           </div>
         );

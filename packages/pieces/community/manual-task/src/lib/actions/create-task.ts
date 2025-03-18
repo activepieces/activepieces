@@ -5,7 +5,7 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { ExecutionType, PauseType } from '@activepieces/shared';
+import { ExecutionType, PauseType, STATUS_VARIANT } from '@activepieces/shared';
 
 export const createTask = createAction({
   name: 'createTask',
@@ -69,13 +69,16 @@ export const createTask = createAction({
           displayName: 'Description',
           required: true,
         }),
-        color: Property.Color({
-          displayName: 'Color',
+        variant: Property.StaticDropdown({
+          displayName: 'Variant',
           required: true,
-        }),
-        textColor: Property.Color({
-          displayName: 'Text Color',
-          required: true,
+          defaultValue: STATUS_VARIANT.POSITIVE,
+          options: {
+            options: Object.values(STATUS_VARIANT).map((variant) => ({
+              value: variant,
+              label: variant,
+            })),
+          },
         }),
       },
     }),
@@ -134,8 +137,7 @@ async function sendTaskApproval(context: any, isTest: boolean) {
       statusOptions: context.propsValue.statusOptions.map((option: any) => ({
         name: option.name,
         description: option.description,
-        color: option.color,
-        textColor: option.textColor,
+        variant: option.variant,
       })),
       flowId: context.flows.current.id,
       runId: isTest ? undefined : context.run.id,

@@ -180,10 +180,10 @@ import { RemoveUnusedProjectBillingFields1736607721367 } from './migration/postg
 import { RenameGitRepoPermission1736813103505 } from './migration/postgres/1736813103505-RenameGitRepoPermission'
 import { RestrictPieces1739546878775 } from './migration/postgres/1739546878775-RestrictPieces'
 import { ProjectIdNullableInTemplate1741357285896 } from './migration/postgres/1741357285896-ProjectIdNullableInTemplate'
-import { AddManualTask1741617317944 } from './migration/postgres/1741617317944-AddManualTask'
 import { CreateTableWebhooks1741669458075 } from './migration/postgres/1741669458075-CreateTableWebhooks'
 import { UpdateNotifyStatusOnEmbedding1741963410825 } from './migration/postgres/1741963410825-UpdateNotifyStatusOnEmbedding'
-import { MakeRunIdOptionalManualTasks1742247665482 } from './migration/postgres/1742247665482-MakeRunIdOptionalManualTasks'
+import { AddManualTaskTable1742304857701 } from './migration/postgres/1742304857701-AddManualTaskTable'
+import { AddManualTaskCommentTable1742305104390 } from './migration/postgres/1742305104390-AddManualTaskCommentTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -385,9 +385,9 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 CreateProjectReleaseTable1734418823028,
                 RemoveUnusedProjectBillingFields1736607721367,
                 ProjectIdNullableInTemplate1741357285896,
-                AddManualTask1741617317944,
                 UpdateNotifyStatusOnEmbedding1741963410825,
-                MakeRunIdOptionalManualTasks1742247665482,
+                AddManualTaskTable1742304857701,
+                AddManualTaskCommentTable1742305104390,
             )
             break
         case ApEdition.COMMUNITY:

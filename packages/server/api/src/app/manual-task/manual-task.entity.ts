@@ -1,5 +1,4 @@
-import { ManualTask } from '@activepieces/ee-shared'
-import { Flow, FlowRun, Platform, Project, User } from '@activepieces/shared'
+import { Flow, FlowRun, ManualTask, Platform, Project, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -7,7 +6,7 @@ import {
     BaseColumnSchemaPart,
     isPostgres,
     JSONB_COLUMN_TYPE,
-} from '../../database/database-common'
+} from '../database/database-common'
 
 export type ManualTaskSchema = ManualTask & {
     platform: Platform

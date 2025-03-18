@@ -1,13 +1,12 @@
-import { ManualTask, ManualTaskWithAssignee, NO_ANSWER_STATUS, StatusOption } from '@activepieces/ee-shared'
-import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, PlatformId, ProjectId, SeekPage, spreadIfDefined, UserId } from '@activepieces/shared'
+import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, ManualTask, ManualTaskWithAssignee, PlatformId, ProjectId, SeekPage, spreadIfDefined, StatusOption, UNRESOLVED_STATUS, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Like } from 'typeorm'
-import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
-import { repoFactory } from '../../core/db/repo-factory'
-import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { Order } from '../../helper/pagination/paginator'
-import { userService } from '../../user/user-service'
+import { userIdentityService } from '../authentication/user-identity/user-identity-service'
+import { repoFactory } from '../core/db/repo-factory'
+import { buildPaginator } from '../helper/pagination/build-paginator'
+import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { Order } from '../helper/pagination/paginator'
+import { userService } from '../user/user-service'
 import { ManualTaskEntity } from './manual-task.entity'
 
 const repo = repoFactory(ManualTaskEntity)  
@@ -16,14 +15,14 @@ export const manualTaskService = (_log: FastifyBaseLogger) => ({
     async create(params: CreateParams): Promise<ManualTask> {
         return repo().save({
             id: apId(),
-            status: NO_ANSWER_STATUS,
+            status: UNRESOLVED_STATUS,
             ...params,
         })
     },
     async getOne(params: GetParams): Promise<ManualTask | null> {
         const manualTask = await repo().findOneBy({ id: params.id, platformId: params.platformId, projectId: params.projectId })
         if (manualTask) {
-            manualTask.statusOptions = manualTask.statusOptions.map((option) => JSON.parse(option as unknown as string))
+            manualTask.statusOptions = manualTask.statusOptions.map((option: unknown) => JSON.parse(option as unknown as string))
         }
         return manualTask
     },
@@ -96,14 +95,14 @@ export const manualTaskService = (_log: FastifyBaseLogger) => ({
             })
         }
         if (params.statusOptions) {
-            if (params.statusOptions[0] === NO_ANSWER_STATUS.name) {
+            if (params.statusOptions[0] === UNRESOLVED_STATUS.name) {
                 query = query.andWhere('status->>\'name\' = :statusName', {
-                    statusName: NO_ANSWER_STATUS.name,
+                    statusName: UNRESOLVED_STATUS.name,
                 })
             }
             else {
                 query = query.andWhere('status->>\'name\' != :statusName', {
-                    statusName: NO_ANSWER_STATUS.name,
+                    statusName: UNRESOLVED_STATUS.name,
                 })
             }
         }
@@ -122,8 +121,7 @@ export const manualTaskService = (_log: FastifyBaseLogger) => ({
                     return {
                         name: parsedOption.name,
                         description: parsedOption.description,
-                        color: parsedOption.color,
-                        textColor: parsedOption.textColor,
+                        variant: parsedOption.variant,
                     }
                 })
                 return {
