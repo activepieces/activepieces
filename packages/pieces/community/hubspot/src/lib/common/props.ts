@@ -178,9 +178,22 @@ async function createReferencedPropertyDefinition(
 function createPropertyDefinition(property: HubspotProperty, propertyDisplayName: string) {
 	switch (property.fieldType) {
 		case HubspotFieldType.BooleanCheckBox:
-			return Property.Checkbox({
+			return Property.StaticDropdown({
 				displayName: propertyDisplayName,
 				required: false,
+				options:{
+					disabled:false,
+					options:[
+						{
+							label:'Yes',
+							value:'true'
+						},
+						{
+							label:'No',
+							value:'false'
+						}
+					]
+				}
 			});
 		case HubspotFieldType.Date:
 			return Property.DateTime({
