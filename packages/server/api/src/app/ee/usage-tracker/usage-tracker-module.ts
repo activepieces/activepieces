@@ -1,11 +1,10 @@
-import { AppSystemProp, apVersionUtil } from '@activepieces/server-shared'
+import { apVersionUtil } from '@activepieces/server-shared'
 import { Platform } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
 import { Between, Equal, IsNull, Not } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { flagService } from '../../flags/flag.service'
-import { system } from '../../helper/system/system'
 import { systemJobsSchedule } from '../../helper/system-jobs'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
@@ -57,7 +56,7 @@ async function sendUsageReport(job: SystemJobData<SystemJobName.USAGE_REPORT>): 
 }
 
 async function constructUsageReport(platform: Platform, startDate: string, endDate: string): Promise<UsageReport> {
-    const licenseKey = system.getOrThrow(AppSystemProp.LICENSE_KEY)
+    const licenseKey = platform.licenseKey;
     const version = await apVersionUtil.getCurrentRelease()
     const addedProjects = await getAddedProjects(platform.id, startDate, endDate)
     const addedUsers = await getAddedUsers(platform.id, startDate, endDate)
@@ -113,7 +112,7 @@ async function getAddedProjects(platformId: string, startDate: string, endDate: 
 type UsageReport = {
     timestamp: string
     version: string
-    licenseKey: string
+    licenseKey?: string
     platformId: string
     platformName: string
     activeUsers: number
