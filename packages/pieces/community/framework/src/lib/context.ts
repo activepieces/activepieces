@@ -63,7 +63,6 @@ type WebhookTriggerHookContext<
   webhookUrl: string;
   payload: TriggerPayload;
 };
-
 export type TriggerHookContext<
   PieceAuth extends PieceAuthProperty,
   TriggerProps extends InputPropertyMap,
@@ -73,7 +72,9 @@ export type TriggerHookContext<
   : S extends TriggerStrategy.POLLING
   ? PollingTriggerHookContext<PieceAuth, TriggerProps>
   : S extends TriggerStrategy.WEBHOOK
-  ? WebhookTriggerHookContext<PieceAuth, TriggerProps>
+  ? WebhookTriggerHookContext<PieceAuth, TriggerProps> & {
+      server: ServerContext;
+    }
   : never;
 
 export type TestOrRunHookContext<

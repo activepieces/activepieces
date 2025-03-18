@@ -27,10 +27,11 @@ import { findUserByHandleAction } from './lib/actions/find-user-by-handle';
 import { setUserStatusAction } from './lib/actions/set-user-status';
 import { newMention } from './lib/triggers/new-mention';
 import { markdownToSlackFormat } from './lib/actions/markdown-to-slack-format';
+import { newCommand } from './lib/triggers/new-command';
+import { getFileAction } from './lib/actions/get-file';
 import { newMessageTrigger } from './lib/triggers/new-message';
 import { newMessageInChannelTrigger } from './lib/triggers/new-message-in-channel';
 import { newDirectMessageTrigger } from './lib/triggers/new-direct-message';
-import { getFileAction } from './lib/actions/get-file';
 
 export const slackAuth = PieceAuth.OAuth2({
 	description: '',
@@ -160,7 +161,7 @@ export const slack = createPiece({
 		newDirectMessageTrigger,
 		newMention,
 		newReactionAdded,
-		channelCreated,
+		channelCreated, newCommand,
 	],
 });
 

@@ -26,7 +26,7 @@ export const projectService = {
         const newProject: NewProject = {
             id: apId(),
             ...params,
-            notifyStatus: NotificationStatus.ALWAYS,
+            notifyStatus: params.notifyStatus ?? NotificationStatus.ALWAYS,
             releasesEnabled: false,
         }
         const savedProject = await projectRepo().save(newProject)
@@ -218,6 +218,7 @@ type CreateParams = {
     displayName: string
     platformId: string
     externalId?: string
+    notifyStatus?: NotificationStatus
 }
 
 type GetByPlatformIdAndExternalIdParams = {
