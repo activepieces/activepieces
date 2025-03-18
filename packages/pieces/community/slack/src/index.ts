@@ -30,6 +30,7 @@ import { newMention } from './lib/triggers/new-mention';
 import { markdownToSlackFormat } from './lib/actions/markdown-to-slack-format';
 import { newCommand } from './lib/triggers/new-command';
 import { getFileAction } from './lib/actions/get-file';
+import { retrieveThreadMessages } from './lib/actions/retrieve-thread-messages';
 
 export const slackAuth = PieceAuth.OAuth2({
   description: '',
@@ -124,6 +125,7 @@ export const slack = createPiece({
     getChannelHistory,
     setUserStatusAction,
     markdownToSlackFormat,
+    retrieveThreadMessages,
     createCustomApiCallAction({
       baseUrl: () => {
         return 'https://slack.com/api';
