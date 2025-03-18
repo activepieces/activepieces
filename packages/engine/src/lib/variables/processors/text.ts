@@ -10,7 +10,7 @@ export const textProcessor: ProcessorFn = (_property, value) => {
     }
     
     const result = value.toString()
-    if(result.length === 0){
+    if (result.length === 0) {
         return undefined
     }
     return result
