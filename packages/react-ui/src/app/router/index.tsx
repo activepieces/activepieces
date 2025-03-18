@@ -49,6 +49,7 @@ import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
 import IssuesPage from '../routes/issues';
 import { ManualTasksPage } from '../routes/manual-task';
+import { ManualTaskTestingPage } from '../routes/manual-task/id';
 import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
@@ -264,6 +265,14 @@ const routes = [
           <ManualTasksPage />
         </PageTitle>
       </DashboardContainer>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/manual-tasks/:manualTaskId',
+    element: (
+      <PageTitle title="Manual Task Testing">
+        <ManualTaskTestingPage />
+      </PageTitle>
     ),
   }),
   ...ProjectRouterWrapper({

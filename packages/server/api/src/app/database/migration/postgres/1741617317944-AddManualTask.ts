@@ -18,6 +18,7 @@ export class AddManualTask1741617317944 implements MigrationInterface {
                 "projectId" character varying(21) NOT NULL,
                 "flowId" character varying(21) NOT NULL,
                 "runId" character varying(21) NOT NULL,
+                "approvalUrl" character varying,
                 CONSTRAINT "PK_b6956ec0d1c639c863c5254a1af" PRIMARY KEY ("id")
             )
         `)

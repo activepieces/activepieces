@@ -1,5 +1,5 @@
 import { ManualTask, ManualTaskWithAssignee, NO_ANSWER_STATUS, StatusOption } from '@activepieces/ee-shared'
-import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, PlatformId, ProjectId, SeekPage, spreadIfDefined, UserId } from '@activepieces/shared'
+import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, PlatformId, ProjectId, SeekPage, spreadIfDefined, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Like } from 'typeorm'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
@@ -37,8 +37,27 @@ export const manualTaskService = (_log: FastifyBaseLogger) => ({
         }
         return manualTask
     },
-    async update(params: UpdateParams): Promise<ManualTask> {
-        await this.getOneOrThrow(params)
+    async getOnePopulatedOrThrow(params: GetParams): Promise<ManualTaskWithAssignee> {
+        const manualTask = await this.getOne(params)
+        if (!manualTask) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'manual_task', entityId: params.id, message: 'Manual task by id not found' },
+            })
+        }
+        const enrichedTask = await enrichManualTaskWithAssignee(manualTask, _log)
+        return enrichedTask
+    },
+    async update(params: UpdateParams): Promise<ManualTask | null> {
+        const manualTask = await this.getOneOrThrow(params)
+        if (params.status && manualTask.approvalUrl) {
+            await sendApprovalRequest(manualTask.approvalUrl, params.status)
+            if (isNil(manualTask.runId)) {
+                // THIS IS FOR TESTING PURPOSES
+                await this.delete(params)
+                return null
+            }
+        }
         await repo().update({
             id: params.id,
             platformId: params.platformId,
@@ -49,6 +68,7 @@ export const manualTaskService = (_log: FastifyBaseLogger) => ({
             ...spreadIfDefined('status', params.status),
             ...spreadIfDefined('statusOptions', params.statusOptions),
             ...spreadIfDefined('assigneeId', params.assigneeId),
+            ...(params.status ? { approvalUrl: null } : {}),
         })
         return this.getOneOrThrow(params)
     },
@@ -114,8 +134,22 @@ export const manualTaskService = (_log: FastifyBaseLogger) => ({
         )
         return paginationHelper.createPage<ManualTaskWithAssignee>(enrichedData, newCursor)
     },
+    async delete(params: GetParams) {
+        await repo().delete({
+            id: params.id,
+            platformId: params.platformId,
+            projectId: params.projectId,
+        })
+    },
 })
 
+async function sendApprovalRequest(approvalUrl: string, status: StatusOption) {
+    const url = new URL(approvalUrl)
+    url.searchParams.append('status', status.name)
+    await fetch(url.toString(), {
+        method: 'POST',
+    })
+}
 
 async function enrichManualTaskWithAssignee(
     manualTask: ManualTask,
@@ -172,8 +206,9 @@ type CreateParams = {
     platformId: string
     projectId: string
     flowId: string
-    runId: string
+    runId?: string
     assigneeId?: string
+    approvalUrl?: string
 }
 
 type UpdateParams = {

@@ -115,7 +115,7 @@ function ManualTasksPage() {
         ]
       : []),
     ...(projectMembers
-      ?.filter(member => member.user.email !== currentUser?.email)
+      ?.filter((member) => member.user.email !== currentUser?.email)
       .map((member) => ({
         label: `${member.user.firstName} ${member.user.lastName} (${member.user.email})`,
         value: member.user.email,

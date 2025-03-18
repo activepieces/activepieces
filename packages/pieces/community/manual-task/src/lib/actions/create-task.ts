@@ -5,10 +5,11 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
+import { ExecutionType, PauseType } from '@activepieces/shared';
 
 export const createTask = createAction({
   name: 'createTask',
-  displayName: 'Create Task',
+  displayName: 'Create Task and Wait for Approval',
   description: 'Creates a task for a user, requiring them to respond or take action.',
   props: {
     title: Property.ShortText({
@@ -79,38 +80,80 @@ export const createTask = createAction({
       },
     }),
   },
-  async run({ propsValue, flows, run, server }) {
-    try {
-        const requestBody = {
-          title: propsValue.title,
-          description: propsValue.description ?? undefined,
-          statusOptions: propsValue.statusOptions.map((option: any) => ({
-            name: option.name,
-            description: option.description,
-            color: option.color,
-            textColor: option.textColor,
-          })),
-          flowId: flows.current.id,
-          runId: run.id,
-          assigneeId: propsValue.assigneeId ?? undefined,
+  errorHandlingOptions: {
+    continueOnFailure: {
+      hide: true,
+    },
+    retryOnFailure: {
+      hide: true,
+    },
+  },
+  async test(context) {
+    if (context.executionType === ExecutionType.BEGIN) {
+      context.run.pause({
+        pauseMetadata: {
+          type: PauseType.WEBHOOK,
+          response: {}
+        }
+      });
+      const response = await sendTaskApproval(context, true);
+      const publicUrlWithoutAPI = context.server.publicUrl.replace('/api', '');
+      return {
+        url: `${publicUrlWithoutAPI}projects/${context.project.id}/manual-tasks/${response.body.id}`
       };
-      
-
-      const request: HttpRequest = {
-        method: HttpMethod.POST,
-        url: `${server.publicUrl}v1/manual-tasks`,
-        body: requestBody,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: server.token,
-        },
+    } else {
+      return {
+        status: context.resumePayload.queryParams['status']
       };
-
-      const response = await httpClient.sendRequest(request);
-      return response.body;
-    } catch (error) {
-      console.error('Error while creating task', error);
-      throw error;
+    }
+  },
+  async run(context) {
+    if (context.executionType === ExecutionType.BEGIN) {
+        context.run.pause({
+          pauseMetadata: {
+            type: PauseType.WEBHOOK,
+            response: {}
+          }
+        });
+        await sendTaskApproval(context, false);
+        return {
+          success: true,
+        };
+    } else {
+      return {
+        status: context.resumePayload.queryParams['status']
+      };
     }
   },
 });
+
+async function sendTaskApproval(context: any, isTest: boolean) {
+    const requestBody = {
+      title: context.propsValue.title,
+      description: context.propsValue.description ?? undefined,
+      statusOptions: context.propsValue.statusOptions.map((option: any) => ({
+        name: option.name,
+        description: option.description,
+        color: option.color,
+        textColor: option.textColor,
+      })),
+      flowId: context.flows.current.id,
+      runId: isTest ? undefined : context.run.id,
+      assigneeId: context.propsValue.assigneeId ?? undefined,
+      approvalUrl: context.generateResumeUrl({
+        queryParams: { action: 'approve' }
+      }),
+  };
+
+  const request: HttpRequest = {
+    method: HttpMethod.POST,
+    url: `${context.server.publicUrl}v1/manual-tasks`,
+    body: requestBody,
+    authentication: {
+      type: AuthenticationType.BEARER_TOKEN,
+      token: context.server.token
+    }
+  };
+
+  return await httpClient.sendRequest(request);
+}

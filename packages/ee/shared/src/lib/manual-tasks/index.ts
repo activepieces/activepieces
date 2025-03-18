@@ -21,6 +21,7 @@ export const ManualTask = Type.Object({
     flowId: Type.String(),
     runId: Type.String(),
     assigneeId: Nullable(Type.String()),
+    approvalUrl: Nullable(Type.String()),
 })
 
 export type ManualTask = Static<typeof ManualTask>

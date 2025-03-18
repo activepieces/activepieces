@@ -22,7 +22,7 @@ export const manualTaskController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/:id', GetManualTaskRequest, async (request) => {
         const { id } = request.params
-        return manualTaskService(request.log).getOneOrThrow({
+        return manualTaskService(request.log).getOnePopulatedOrThrow({
             id,
             platformId: request.principal.platform.id,
             projectId: request.principal.projectId,
@@ -30,7 +30,7 @@ export const manualTaskController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/', CreateManualTaskRequest, async (request) => {
-        const { title, description, statusOptions, flowId, runId, assigneeId } = request.body
+        const { title, description, statusOptions, flowId, runId, assigneeId, approvalUrl } = request.body
         return manualTaskService(request.log).create({
             title,
             description,
@@ -38,6 +38,7 @@ export const manualTaskController: FastifyPluginAsyncTypebox = async (app) => {
             flowId,
             runId,
             assigneeId,
+            approvalUrl,
             platformId: request.principal.platform.id,
             projectId: request.principal.projectId,
         })

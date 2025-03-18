@@ -31,7 +31,8 @@ export const CreateManualTaskRequestBody = Type.Object({
     description: Type.Optional(Type.String()),
     statusOptions: StatusOptionsSchema,
     flowId: ApId,
-    runId: ApId,
+    runId: Type.Optional(ApId),
     assigneeId: Type.Optional(ApId),
+    approvalUrl: Type.Optional(Type.String()),
 })
 export type CreateManualTaskRequestBody = Static<typeof CreateManualTaskRequestBody>

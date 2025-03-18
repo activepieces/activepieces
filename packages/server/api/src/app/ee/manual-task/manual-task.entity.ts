@@ -56,7 +56,11 @@ export const ManualTaskEntity = new EntitySchema<ManualTaskSchema>({
         },
         runId: {
             ...ApIdSchema,
-            nullable: false,
+            nullable: true,
+        },
+        approvalUrl: {
+            type: String,
+            nullable: true,
         },
     },
     indices: [

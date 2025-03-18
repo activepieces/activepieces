@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
+  CheckIcon,
   ChevronDown,
   ChevronUp,
   CircleCheck,
@@ -34,6 +35,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Tooltip,
@@ -49,6 +51,7 @@ import { formatUtils } from '@/lib/utils';
 import {
   ManualTaskCommentWithUser,
   ManualTaskWithAssignee,
+  NO_ANSWER_STATUS,
   StatusOption,
 } from '@activepieces/ee-shared';
 import {
@@ -56,6 +59,7 @@ import {
   isFailedState,
   PopulatedFlow,
   FlowRun,
+  isNil,
 } from '@activepieces/shared';
 
 import { CommentCard } from './comment-card';
@@ -63,19 +67,23 @@ import { CommentCard } from './comment-card';
 type TaskDetailsProps = {
   open: boolean;
   currentTask: ManualTaskWithAssignee;
+  isTesting?: boolean;
   onOpenChange: (open: boolean) => void;
   onClose: () => void;
   onNext: () => void;
   onPrevious: () => void;
+  setIsStatusChanged?: () => void;
 };
 
 function TaskDetails({
   open,
   currentTask,
+  isTesting = false,
   onOpenChange,
   onClose,
   onNext,
   onPrevious,
+  setIsStatusChanged,
 }: TaskDetailsProps) {
   const [task, setTask] = useState<ManualTaskWithAssignee>(currentTask);
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -103,7 +111,7 @@ function TaskDetails({
     },
     staleTime: 0,
     gcTime: 0,
-    enabled: task.runId !== undefined,
+    enabled: !isNil(task.runId),
   });
 
   const { data: comments, isLoading: isLoadingComments } = useQuery<
@@ -157,10 +165,21 @@ function TaskDetails({
       await manualTaskApi.update(task.id, {
         status: status,
       });
+      if (isTesting) {
+        setTask({
+          ...task,
+          status: status,
+        });
+        setTimeout(() => {
+          setIsStatusChanged?.();
+        }, 2000);
+      }
     },
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['manualTasks'] });
-      getTask();
+      if (!isTesting) {
+        getTask();
+      }
     },
   });
 
@@ -240,64 +259,79 @@ function TaskDetails({
               </div>
               <span className="text-sm"> / </span>
               <div className="flex items-center gap-2">
-                <Tooltip>
-                  <TooltipTrigger>
-                    {data?.run.status &&
-                      data?.run.status === FlowRunStatus.RUNNING && (
-                        <Loader className="h-4 w-4" />
+                {!isNil(data) && (
+                  <Tooltip>
+                    <TooltipTrigger>
+                      {data?.run.status &&
+                        data?.run.status === FlowRunStatus.RUNNING && (
+                          <Loader className="h-4 w-4" />
+                        )}
+                      {data?.run.status && isFailedState(data?.run.status) && (
+                        <CircleX className="h-4 w-4 text-destructive" />
                       )}
-                    {data?.run.status && isFailedState(data?.run.status) && (
-                      <CircleX className="h-4 w-4 text-destructive" />
-                    )}
-                    {data?.run.status &&
-                      data?.run.status === FlowRunStatus.SUCCEEDED && (
-                        <CircleCheck className="h-4 w-4 text-success" />
+                      {data?.run.status &&
+                        data?.run.status === FlowRunStatus.SUCCEEDED && (
+                          <CircleCheck className="h-4 w-4 text-success" />
+                        )}
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {data?.run.status &&
+                        data?.run.status === FlowRunStatus.RUNNING && (
+                          <span className="text-xs">Flow is running</span>
+                        )}
+                      {data?.run.status && isFailedState(data?.run.status) && (
+                        <span className="text-xs">Flow failed</span>
                       )}
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {data?.run.status &&
-                      data?.run.status === FlowRunStatus.RUNNING && (
-                        <span className="text-xs">Flow is running</span>
-                      )}
-                    {data?.run.status && isFailedState(data?.run.status) && (
-                      <span className="text-xs">Flow failed</span>
-                    )}
-                    {data?.run.status &&
-                      data?.run.status === FlowRunStatus.SUCCEEDED && (
-                        <span className="text-xs">Flow succeeded</span>
-                      )}
-                  </TooltipContent>
-                </Tooltip>
+                      {data?.run.status &&
+                        data?.run.status === FlowRunStatus.SUCCEEDED && (
+                          <span className="text-xs">Flow succeeded</span>
+                        )}
+                    </TooltipContent>
+                  </Tooltip>
+                )}
                 <span className="text-sm text-muted-foreground">Status</span>
-                <DropdownMenu>
-                  <DropdownMenuTrigger>
-                    <Button
-                      variant="outline"
-                      className="h-8 flex gap-2 items-center justify-between"
-                    >
-                      {isUpdatingStatus ? (
-                        <Loader className="h-4 w-4" />
-                      ) : (
-                        <>
-                          <span className="text-sm"> {task.status.name} </span>
-                          <ChevronDown className="h-4 w-4" />
-                        </>
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    {task.statusOptions.map((status) => (
-                      <DropdownMenuItem
-                        key={status.name}
-                        onClick={() => {
-                          updateStatus(status);
-                        }}
+                {task.status.name === NO_ANSWER_STATUS.name && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger>
+                      <Button
+                        variant="outline"
+                        className="h-8 flex gap-2 items-center justify-between"
                       >
-                        <span className="text-sm"> {status.name} </span>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                        {isUpdatingStatus ? (
+                          <Loader className="h-4 w-4" />
+                        ) : (
+                          <>
+                            <span className="text-sm">
+                              {' '}
+                              {task.status.name}{' '}
+                            </span>
+                            <ChevronDown className="h-4 w-4" />
+                          </>
+                        )}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      {task.statusOptions.map((status) => (
+                        <DropdownMenuItem
+                          key={status.name}
+                          onClick={() => {
+                            updateStatus(status);
+                          }}
+                        >
+                          <span className="text-sm"> {status.name} </span>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+                {task.status.name !== NO_ANSWER_STATUS.name && (
+                  <StatusIconWithText
+                    icon={CheckIcon}
+                    text={task.status.name}
+                    color={task.status.color}
+                    textColor={task.status.textColor}
+                  />
+                )}
               </div>
             </div>
           </RightDrawerHeader>

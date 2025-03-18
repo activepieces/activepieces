@@ -183,6 +183,7 @@ import { ProjectIdNullableInTemplate1741357285896 } from './migration/postgres/1
 import { AddManualTask1741617317944 } from './migration/postgres/1741617317944-AddManualTask'
 import { CreateTableWebhooks1741669458075 } from './migration/postgres/1741669458075-CreateTableWebhooks'
 import { UpdateNotifyStatusOnEmbedding1741963410825 } from './migration/postgres/1741963410825-UpdateNotifyStatusOnEmbedding'
+import { MakeRunIdOptionalManualTasks1742247665482 } from './migration/postgres/1742247665482-MakeRunIdOptionalManualTasks'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -386,6 +387,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 ProjectIdNullableInTemplate1741357285896,
                 AddManualTask1741617317944,
                 UpdateNotifyStatusOnEmbedding1741963410825,
+                MakeRunIdOptionalManualTasks1742247665482,
             )
             break
         case ApEdition.COMMUNITY:
