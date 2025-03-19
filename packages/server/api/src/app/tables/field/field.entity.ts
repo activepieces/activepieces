@@ -1,11 +1,12 @@
 import { Cell, Field, FieldType, Project, Table } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
 
 type FieldSchema = Field & {
     table: Table
     project: Project
     cells: Cell[]
+    data: Record<string, any> | null
 }
 
 export const FieldEntity = new EntitySchema<FieldSchema>({
@@ -27,6 +28,10 @@ export const FieldEntity = new EntitySchema<FieldSchema>({
             ...ApIdSchema,
             nullable: false,
         },
+        data: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: true,
+        }
     },
     indices: [
         {
