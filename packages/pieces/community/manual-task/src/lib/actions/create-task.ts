@@ -5,13 +5,22 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { CreateManualTaskRequestBody, ExecutionType, ManualTask, PauseType, SeekPage, STATUS_VARIANT, UserWithMetaInformation } from '@activepieces/shared';
+import { CreateManualTaskRequestBody, ExecutionType, ManualTask, MarkdownVariant, PauseType, SeekPage, STATUS_VARIANT, UserWithMetaInformation } from '@activepieces/shared';
+
+
+const routerMarkdown = `
+Use the **Router piece** to create different paths based on the task's status.
+`
 
 export const createTask = createAction({
   name: 'createTask',
   displayName: 'Create Task',
   description: 'Creates a task for a user, requiring them to respond or take action.',
   props: {
+    routerMarkdown: Property.MarkDown({
+      value: routerMarkdown,
+      variant: MarkdownVariant.INFO,
+    }),
     title: Property.ShortText({
       displayName: 'Title',
       required: true,

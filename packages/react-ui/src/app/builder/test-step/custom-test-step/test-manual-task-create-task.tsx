@@ -102,7 +102,9 @@ function ManualTaskTestingDialog({
         const sampleFile = await sampleDataApi.save({
           flowVersionId,
           stepName: currentStep.name,
-          payload: response,
+          payload: {
+            status: response.status.name,
+          },
           projectId,
           fileType: FileType.SAMPLE_DATA,
         });
@@ -172,8 +174,10 @@ function ManualTaskTestingDialog({
           ),
         );
       }
-      const outputStatus = (output as ManualTaskWithAssignee)['status'];
-      setSampleData(currentStep.name, outputStatus);
+      const outputStatus = (output as ManualTaskWithAssignee)['status'].name;
+      setSampleData(currentStep.name, {
+        status: outputStatus,
+      });
       setSampleDataInput(currentStep.name, input);
       setLastTestDate(dayjs().toISOString());
       onOpenChange(false);
