@@ -11,6 +11,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
+import { Button } from '@/components/ui/button';
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -184,13 +185,15 @@ export function SidebarComponent({
                       <TooltipTrigger asChild>
                         {edition === ApEdition.COMMUNITY ||
                         embedState.isEmbedded ? (
-                          <img
-                            src={branding.logos.fullLogoUrl}
-                            alt={t('home')}
-                            width={200}
-                            height={200}
-                            className="p-2 rounded-lg"
-                          />
+                          <Button variant="ghost">
+                            <img
+                              src={branding.logos.fullLogoUrl}
+                              alt={t('home')}
+                              width={160}
+                              height={36}
+                              className="p-2 rounded-lg"
+                            />
+                          </Button>
                         ) : (
                           <img
                             src={branding.logos.logoIconUrl}
@@ -201,7 +204,7 @@ export function SidebarComponent({
                           />
                         )}
                       </TooltipTrigger>
-                      <TooltipContent side="right">{t('Home')}</TooltipContent>
+                      <TooltipContent side="bottom">{t('Home')}</TooltipContent>
                     </Tooltip>
                   </Link>
                   <ProjectSwitcher />
