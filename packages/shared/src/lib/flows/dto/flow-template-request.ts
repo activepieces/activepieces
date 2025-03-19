@@ -57,3 +57,8 @@ export const CreateFlowTemplateRequest = Type.Object({
 })
 
 export type CreateFlowTemplateRequest = Static<typeof CreateFlowTemplateRequest>
+
+export type TemplateTabProps = {
+  activeTab: string;
+  selectActiveTab: (id: string) => void;
+}
