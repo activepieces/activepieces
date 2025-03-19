@@ -293,6 +293,9 @@
       "@activepieces/piece-google-sheets": [
         "packages/pieces/community/google-sheets/src/index.ts"
       ],
+      "@activepieces/piece-google-slides": [
+        "packages/pieces/community/google-slides/src/index.ts"
+      ],
       "@activepieces/piece-google-tasks": [
         "packages/pieces/community/google-tasks/src/index.ts"
       ],
