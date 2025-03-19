@@ -1,4 +1,5 @@
 import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { singleSelectChannelInfo, slackChannel } from '../common/props';
 import { slackAuth } from '../../';
 import { WebClient } from '@slack/web-api';
 import { isNil } from '@activepieces/shared';
@@ -33,12 +34,14 @@ const sampleData = {
 	channel_type: 'channel',
 };
 
-export const newMessageTrigger = createTrigger({
+export const newMessageInChannelTrigger = createTrigger({
 	auth: slackAuth,
-	name: 'new-message',
-	displayName: 'New Public Message Posted Anywhere',
-	description: 'Triggers when a new message is posted to any channel.',
+	name: 'new-message-in-channel',
+	displayName: 'New Message Posted to Channel',
+	description: 'Triggers when a new message is posted to a specific #channel you choose.',
 	props: {
+		info: singleSelectChannelInfo,
+		channel: slackChannel(true),
 		ignoreBots: Property.Checkbox({
 			displayName: 'Ignore Bot Messages ?',
 			required: true,
@@ -47,7 +50,7 @@ export const newMessageTrigger = createTrigger({
 	},
 	type: TriggerStrategy.APP_WEBHOOK,
 	sampleData: sampleData,
-	onEnable: async (context) => {
+	async onEnable(context) {
 		// Older OAuth2 has team_id, newer has team.id
 		const teamId = context.auth.data['team_id'] ?? context.auth.data['team']['id'];
 		context.app.createListeners({
@@ -55,39 +58,29 @@ export const newMessageTrigger = createTrigger({
 			identifierValue: teamId,
 		});
 	},
-	onDisable: async (context) => {
+	async onDisable(context) {
 		// Ignored
 	},
 
-	test: async (context) => {
-		const client = new WebClient(context.auth.access_token);
-
-		const channelList = await client.conversations.list({
-			types: 'public_channel,private_channel',
-			exclude_archived: true,
-			limit: 1,
-		});
-
-		if (!channelList.channels || channelList.channels.length === 0) {
+	async test(context) {
+		if (!context.propsValue.channel) {
 			return [sampleData];
 		}
-
-		const channel = channelList.channels[0].id ?? '';
+		const client = new WebClient(context.auth.access_token);
 		const response = await client.conversations.history({
-			channel: channel,
+			channel: context.propsValue.channel,
 			limit: 100,
 		});
-
 		if (!response.messages) {
-			return [sampleData];
+			return [];
 		}
-
 		const messages = response.messages
 			.filter((message) => !isNil(message.ts))
 			.filter((message) => !(context.propsValue.ignoreBots && message.bot_id))
 			.map((message) => {
 				return {
 					...message,
+					channel: context.propsValue.channel,
 					event_ts: '1678231735.586539',
 					channel_type: 'channel',
 				};
@@ -96,14 +89,17 @@ export const newMessageTrigger = createTrigger({
 		return getFirstFiveOrAll(messages);
 	},
 
-	run: async (context) => {
+	async run(context) {
 		const payloadBody = context.payload.body as PayloadBody;
-
-		// check for bot messages
-		if (context.propsValue.ignoreBots && payloadBody.event.bot_id) {
-			return [];
+		if (payloadBody.event.channel === context.propsValue.channel) {
+			// check for bot messages
+			if (context.propsValue.ignoreBots && payloadBody.event.bot_id) {
+				return [];
+			}
+			return [payloadBody.event];
 		}
-		return [payloadBody.event];
+
+		return [];
 	},
 });
 
