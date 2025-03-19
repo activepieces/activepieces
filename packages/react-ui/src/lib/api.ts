@@ -28,7 +28,8 @@ const disallowedRoutes = [
   '/v1/authn/local/reset-password',
   '/v1/user-invitations/accept',
 ];
-
+//This is important to avoid redirecting to sign-in page when the user is deleted for embedding scenarios
+const ignroedGlobalErrorHandlerRoutes = ['/v1/users/me'];
 function isUrlRelative(url: string) {
   return !url.startsWith('http') && !url.startsWith('https');
 }
@@ -75,7 +76,10 @@ function request<TResponse>(
         : (response.data as TResponse),
     )
     .catch((error) => {
-      if (isAxiosError(error)) {
+      if (
+        isAxiosError(error) &&
+        !ignroedGlobalErrorHandlerRoutes.includes(url)
+      ) {
         globalErrorHandler(error);
       }
       throw error;

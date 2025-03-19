@@ -21,6 +21,7 @@ import {
   StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Action,
   ActionType,
@@ -260,7 +261,7 @@ const PieceSelector = ({
     }
     setAskAiButtonProps(null);
   };
-  const isMobile = pieceSelectorUtils.useIsMobile();
+  const isMobile = useIsMobile();
   return (
     <Popover
       open={open}
