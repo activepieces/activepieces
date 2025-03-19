@@ -18,7 +18,6 @@ import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-col
 import { Skeleton } from '@/components/ui/skeleton';
 import { TableTitle } from '@/components/ui/table-title';
 import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
-import { platformProjectMembersApi } from '@/features/team/lib/platform-project-members-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared';
@@ -45,8 +44,7 @@ export const ProjectRoleUsersTable = () => {
       const limit = searchParams.get('limit')
         ? parseInt(searchParams.get('limit')!)
         : 10;
-      return platformProjectMembersApi.list({
-        projectRoleId: projectRoleId,
+      return projectRoleApi.listProjectMembers(projectRoleId!, {
         cursor: cursor ?? undefined,
         limit: limit,
       });

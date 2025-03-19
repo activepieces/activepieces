@@ -65,7 +65,7 @@ export async function assertUserHasPermissionToFlow(
 }
 
 export const assertRoleHasPermission = async (principal: Principal, permission: Permission | undefined, log: FastifyBaseLogger): Promise<void> => {
-    if (principal.type === PrincipalType.SERVICE) { 
+    if (principal.type === PrincipalType.SERVICE || principal.type === PrincipalType.ENGINE) { 
         return
     }
     const principalRole = await getPrincipalRoleOrThrow(principal, log)

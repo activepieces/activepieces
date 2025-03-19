@@ -8,10 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
+import { manualTaskApi } from '@/features/manual-tasks/lib/manual-task-api';
 import {
   ActionType,
   FileType,
   FlowOperationType,
+  ManualTaskWithAssignee,
   Step,
   StepRunResponse,
   TriggerType,
@@ -22,6 +24,7 @@ import {
 import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
 import { useBuilderStateContext } from '../builder-hooks';
 
+import { ManualTaskTestingDialog } from './custom-test-step/test-manual-task-create-task';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
 import { testStepUtils } from './test-step-utils';
@@ -31,6 +34,14 @@ type TestActionComponentProps = {
   flowVersionId: string;
   projectId: string;
 };
+
+function isManualTaskCreateTask(step: Step): boolean {
+  return (
+    step.type === ActionType.PIECE &&
+    step.settings.pieceName === '@activepieces/piece-manual-task' &&
+    step.settings.actionName === 'createTask'
+  );
+}
 
 const TestStepSectionImplementation = React.memo(
   ({
@@ -45,6 +56,13 @@ const TestStepSectionImplementation = React.memo(
     );
     const [consoleLogs, setConsoleLogs] = useState<null | string>(null);
     const socket = useSocket();
+    const [
+      isManualTaskCreateTaskDialogOpen,
+      setIsManualTaskCreateTaskDialogOpen,
+    ] = useState(false);
+    const [manualTask, setManualTask] = useState<ManualTaskWithAssignee | null>(
+      null,
+    );
     const {
       sampleData,
       sampleDataInput,
@@ -162,6 +180,19 @@ const TestStepSectionImplementation = React.memo(
 
     const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
 
+    const handleManualTaskCreateTask = async () => {
+      setIsManualTaskCreateTaskDialogOpen(true);
+      const testStepResponse = await flowRunsApi.testStep(socket, {
+        flowVersionId,
+        stepName: currentStep.name,
+      });
+      const output = testStepResponse.output as ManualTaskWithAssignee;
+      if (testStepResponse.success && !isNil(output)) {
+        const task = await manualTaskApi.get(output.id as string);
+        setManualTask(task);
+      }
+    };
+
     return (
       <>
         {!sampleDataExists && (
@@ -170,10 +201,16 @@ const TestStepSectionImplementation = React.memo(
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => mutate()}
+                onClick={async () => {
+                  if (isManualTaskCreateTask(currentStep)) {
+                    handleManualTaskCreateTask();
+                  } else {
+                    mutate();
+                  }
+                }}
                 keyboardShortcut="G"
                 onKeyboardShortcut={mutate}
-                loading={isTesting}
+                loading={isTesting || isManualTaskCreateTaskDialogOpen}
                 disabled={!currentStep.valid}
               >
                 <Dot animation={true} variant={'primary'}></Dot>
@@ -184,10 +221,16 @@ const TestStepSectionImplementation = React.memo(
         )}
         {sampleDataExists && (
           <TestSampleDataViewer
-            onRetest={mutate}
+            onRetest={() => {
+              if (isManualTaskCreateTask(currentStep)) {
+                handleManualTaskCreateTask();
+              } else {
+                mutate();
+              }
+            }}
             isValid={currentStep.valid}
             isSaving={isSaving}
-            isTesting={isTesting}
+            isTesting={isTesting || isManualTaskCreateTaskDialogOpen}
             sampleData={sampleData}
             sampleDataInput={sampleDataInput ?? null}
             errorMessage={errorMessage}
@@ -196,6 +239,18 @@ const TestStepSectionImplementation = React.memo(
               currentStep.type === ActionType.CODE ? consoleLogs : null
             }
           ></TestSampleDataViewer>
+        )}
+        {isManualTaskCreateTaskDialogOpen && manualTask && (
+          <ManualTaskTestingDialog
+            open={isManualTaskCreateTaskDialogOpen}
+            onOpenChange={setIsManualTaskCreateTaskDialogOpen}
+            task={manualTask}
+            flowVersionId={flowVersionId}
+            projectId={projectId}
+            currentStep={currentStep}
+            setErrorMessage={setErrorMessage}
+            setLastTestDate={setLastTestDate}
+          />
         )}
       </>
     );

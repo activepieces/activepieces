@@ -20,6 +20,7 @@ import {
 } from '@/features/pieces/lib/types';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   ApFlagId,
   FlowOperationType,
@@ -220,7 +221,7 @@ const PieceCardListItem = React.forwardRef<
         clearTimeout(timeoutRef.current);
       }
     };
-    const isMobile = pieceSelectorUtils.useIsMobile();
+    const isMobile = useIsMobile();
     return (
       <div onMouseLeave={handleMouseLeave} ref={ref}>
         <CardListItem

@@ -32,6 +32,7 @@ import { getFileAction } from './lib/actions/get-file';
 import { newMessageTrigger } from './lib/triggers/new-message';
 import { newMessageInChannelTrigger } from './lib/triggers/new-message-in-channel';
 import { newDirectMessageTrigger } from './lib/triggers/new-direct-message';
+import { retrieveThreadMessages } from './lib/actions/retrieve-thread-messages';
 
 export const slackAuth = PieceAuth.OAuth2({
 	description: '',
@@ -117,7 +118,7 @@ export const slack = createPiece({
 		requestActionDirectMessageAction,
 		requestActionMessageAction,
 		uploadFile,
-    getFileAction,
+		getFileAction,
 		searchMessages,
 		findUserByEmailAction,
 		findUserByHandleAction,
@@ -127,6 +128,7 @@ export const slack = createPiece({
 		getChannelHistory,
 		setUserStatusAction,
 		markdownToSlackFormat,
+		retrieveThreadMessages,
 		createCustomApiCallAction({
 			baseUrl: () => {
 				return 'https://slack.com/api';
@@ -135,13 +137,13 @@ export const slack = createPiece({
 			authMapping: async (auth, propsValue) => {
 				if (propsValue.useUserToken) {
 					return {
-						Authorization: `Bearer ${
-							(auth as OAuth2PropertyValue).data['authed_user']?.access_token
-						}`,
+						Authorization: `Bearer ${(auth as OAuth2PropertyValue).data['authed_user']?.access_token
+							}`,
 					};
 				} else {
 					return {
-						Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+						Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token
+							}`,
 					};
 				}
 			},

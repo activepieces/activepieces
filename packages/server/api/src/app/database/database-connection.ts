@@ -21,6 +21,7 @@ import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
 import { IssueEntity } from '../ee/issues/issues-entity'
+import { ManualTaskCommentEntity } from '../ee/manual-task/comment/manual-task-comment.entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
 import { PlatformBillingEntity } from '../ee/platform-billing/platform-billing.entity'
 import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
@@ -37,6 +38,7 @@ import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
 import { DatabaseType, system } from '../helper/system/system'
+import { ManualTaskEntity } from '../manual-task/manual-task.entity'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
@@ -90,6 +92,7 @@ function getEntities(): EntitySchema<unknown>[] {
         CellEntity,
         TableWebhookEntity,
         UserIdentityEntity,
+        ManualTaskEntity,
     ]
 
     switch (edition) {
@@ -107,6 +110,7 @@ function getEntities(): EntitySchema<unknown>[] {
                 GitRepoEntity,
                 AuditEventEntity,
                 ProjectReleaseEntity,
+                ManualTaskCommentEntity,
 
                 // CLOUD
                 AppSumoEntity,

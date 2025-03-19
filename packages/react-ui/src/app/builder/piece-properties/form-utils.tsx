@@ -393,6 +393,7 @@ export const formUtils = {
         case PropertyType.DATE_TIME:
         case PropertyType.SHORT_TEXT:
         case PropertyType.LONG_TEXT:
+        case PropertyType.COLOR:
         case PropertyType.FILE:
           propsSchema[name] = Type.String({
             minLength: property.required ? 1 : undefined,
@@ -544,6 +545,7 @@ export function getDefaultValueForStep(
       case PropertyType.CUSTOM_AUTH:
       case PropertyType.SECRET_TEXT:
       case PropertyType.CUSTOM:
+      case PropertyType.COLOR:
       case PropertyType.OAUTH2: {
         defaultValues[name] = existingInput[name] ?? property.defaultValue;
         break;
