@@ -140,7 +140,7 @@ export const userService = {
 
 async function getUsersForProject(platformId: PlatformId, projectId: string) {
     const platformAdmins = await userRepo().find({ where: { platformId, platformRole: PlatformRole.ADMIN } }).then((users) => users.map((user) => user.id))
-    const edition = await system.getEdition()
+    const edition = system.getEdition()
     if (edition === ApEdition.COMMUNITY) {
         return platformAdmins
     }
