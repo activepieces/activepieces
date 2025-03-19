@@ -172,14 +172,8 @@ function ManualTaskTestingDialog({
           ),
         );
       }
-      if (typeof output === 'object' && output !== null && 'status' in output) {
-        setSampleData(
-          currentStep.name,
-          (output as { status: unknown })['status'],
-        );
-      } else {
-        setSampleData(currentStep.name, output);
-      }
+      const outputStatus = (output as ManualTaskWithAssignee)['status'];
+      setSampleData(currentStep.name, outputStatus);
       setSampleDataInput(currentStep.name, input);
       setLastTestDate(dayjs().toISOString());
       onOpenChange(false);
@@ -225,7 +219,7 @@ function ManualTaskTestingDialog({
                 <span className="text-sm">
                   {task.assignee && (
                     <Tooltip>
-                      <TooltipTrigger>
+                      <TooltipTrigger asChild>
                         <span className="text-sm font-medium">
                           {task.assignee.firstName} {task.assignee.lastName}{' '}
                           {task.assigneeId === currentUser?.id ? '(Me)' : ''}

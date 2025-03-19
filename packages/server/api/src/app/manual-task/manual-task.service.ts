@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, ManualTask, ManualTaskWithAssignee, PlatformId, ProjectId, SeekPage, spreadIfDefined, StatusOption, UNRESOLVED_STATUS, UserId } from '@activepieces/shared'
+import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, ManualTask, ManualTaskWithAssignee, PlatformId, ProjectId, SeekPage, spreadIfDefined, StatusOption, UNRESOLVED_STATUS, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull, Like, Not } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'

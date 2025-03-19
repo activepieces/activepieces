@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
+import { manualTaskApi } from '@/features/manual-tasks/lib/manual-task-api';
 import {
   ActionType,
   FileType,
@@ -185,8 +186,10 @@ const TestStepSectionImplementation = React.memo(
         flowVersionId,
         stepName: currentStep.name,
       });
-      if (testStepResponse.success && !isNil(testStepResponse.output)) {
-        setManualTask(testStepResponse.output as ManualTaskWithAssignee);
+      const output = testStepResponse.output as ManualTaskWithAssignee;
+      if (testStepResponse.success && !isNil(output)) {
+        const task = await manualTaskApi.get(output.id as string);
+        setManualTask(task);
       }
     };
 
