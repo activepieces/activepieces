@@ -1,5 +1,9 @@
 import { api } from '@/lib/api';
-import { CreateFieldRequest, Field, UpdateFieldRequest } from '@activepieces/shared';
+import {
+  CreateFieldRequest,
+  Field,
+  UpdateFieldRequest,
+} from '@activepieces/shared';
 
 export const fieldsApi = {
   list(tableId: string): Promise<Field[]> {

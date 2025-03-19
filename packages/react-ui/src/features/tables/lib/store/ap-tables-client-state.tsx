@@ -155,7 +155,9 @@ export const createApTableStore = (
         serverState.renameField(fieldIndex, newName);
         return set((state) => {
           return {
-            fields: state.fields.map((field, index) => index === fieldIndex ? { ...field, name: newName } : field),
+            fields: state.fields.map((field, index) =>
+              index === fieldIndex ? { ...field, name: newName } : field,
+            ),
           };
         });
       },

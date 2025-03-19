@@ -4,6 +4,7 @@ import { createContext, ReactNode } from 'react';
 
 import { downloadFile } from '@/lib/utils';
 import { ExportTableResponse, FieldType } from '@activepieces/shared';
+
 import { ClientField } from './store/ap-tables-client-state';
 
 function getColumnIcon(type: FieldType): ReactNode {
@@ -64,6 +65,6 @@ export const tablesUtils = {
 export const FieldHeaderContext = createContext<{
   setIsPopoverOpen: (open: boolean) => void;
   setPopoverContent: (content: React.ReactNode) => void;
-  field: ClientField & {index: number};
+  field: ClientField & { index: number };
   userHasTableWritePermission: boolean;
-}| null> (null);
+} | null>(null);

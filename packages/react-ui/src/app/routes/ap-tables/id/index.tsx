@@ -9,10 +9,8 @@ import DataGrid, {
 import 'react-data-grid/lib/styles.css';
 
 import { useTheme } from '@/components/theme-provider';
+import { ApFieldHeader } from '@/features/tables/components/ap-field-header';
 import ApTableHeader from '@/features/tables/components/ap-table-header';
-import {
-  ApFieldHeader,
-} from '@/features/tables/components/ap-field-header';
 import { EditableCell } from '@/features/tables/components/editable-cell';
 import { NewFieldPopup } from '@/features/tables/components/new-field-popup';
 import { SelectColumn } from '@/features/tables/components/select-column';
@@ -116,12 +114,7 @@ const ApTableEditorPage = () => {
       minHeight: 37,
       resizable: true,
       name: '',
-      renderHeaderCell: () => (
-        <ApFieldHeader
-          field={{...field, index}}
-          
-        />
-      ),
+      renderHeaderCell: () => <ApFieldHeader field={{ ...field, index }} />,
       renderCell: ({
         row,
         column,

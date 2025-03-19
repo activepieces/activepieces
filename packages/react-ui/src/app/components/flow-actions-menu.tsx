@@ -128,7 +128,10 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
       >
         {children}
       </DropdownMenuTrigger>
-      <DropdownMenuContent noAnimationOnOut={true} onCloseAutoFocus={(e)=>e.preventDefault()}>
+      <DropdownMenuContent
+        noAnimationOnOut={true}
+        onCloseAutoFocus={(e) => e.preventDefault()}
+      >
         {!readonly && (
           <>
             {insideBuilder && (
