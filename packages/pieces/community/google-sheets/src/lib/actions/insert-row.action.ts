@@ -77,7 +77,7 @@ async function appendGoogleSheetValues(params: AppendGoogleSheetValuesParams) {
 
   const request: HttpRequest = {
     method: HttpMethod.POST,
-    url: `https://sheets.googleapis.com/v4/spreadsheets/${spreadSheetId}/values/${range}!A:A:append`,
+    url: `https://sheets.googleapis.com/v4/spreadsheets/${spreadSheetId}/values/${encodeURIComponent(`${range}!A:A`)}:append`,
     body: {
       majorDimension,
       range: `${range}!A:A`,
