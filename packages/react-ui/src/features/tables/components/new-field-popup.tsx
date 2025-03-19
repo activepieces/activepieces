@@ -18,6 +18,7 @@ import { useTableState } from '@/features/tables/components/ap-table-state-provi
 import { tablesUtils } from '@/features/tables/lib/utils';
 import { cn } from '@/lib/utils';
 import { FieldType, isNil } from '@activepieces/shared';
+import { ArrayInput } from '@/components/ui/array-input';
 
 type NewFieldDialogProps = {
   children: React.ReactNode;
@@ -25,7 +26,14 @@ type NewFieldDialogProps = {
 
 type NewFieldFormData = {
   name: string;
-  type: FieldType;
+  type: FieldType.STATIC_DROPDOWN;
+  data: {
+    options: string[];
+  };
+} | {
+  name: string;
+  type: FieldType.DATE | FieldType.NUMBER | FieldType.TEXT;
+  data: null;
 };
 
 export function NewFieldPopup({ children }: NewFieldDialogProps) {
@@ -38,13 +46,13 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
       const errors: FieldErrors<NewFieldFormData> = {};
       if (data.name.length === 0) {
         errors['name'] = {
-          message: t('Please enter a field name'),
+          message: t('Name is required'),
           type: 'required',
         };
       } else {
         if (fields?.find((field) => field.name === data.name)) {
           errors['name'] = {
-            message: t('Please pick a unique field name'),
+            message: t('Name must be unique'),
             type: 'unique',
           };
         }
@@ -55,6 +63,14 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
           type: 'required',
         };
       }
+      if (data.type === FieldType.STATIC_DROPDOWN && isNil(data.data) || data.data?.options.length === 0 || !data.data?.options.some((option) => option.length > 0)) {
+        errors['data'] = {
+          options: {
+            message: t('Please add at least one option'),
+            type: 'required',
+          },
+        };
+      }
       return {
         values: Object.keys(errors).length === 0 ? data : {},
         errors,
@@ -62,27 +78,44 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
     },
     defaultValues: {
       type: FieldType.TEXT,
+      data: null,
+      name: ""
     },
   });
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="w-[400px] p-4 drop-shadow-xl" align="start">
-        <div className="text-lg font-semibold mb-4">{t('New Field')}</div>
+      <PopoverContent className="w-[400px] py-4 px-2 drop-shadow-xl" >
+        <div className="text-lg font-semibold mb-4 px-2">{t('New Field')}</div>
+       
         <Form {...form}>
-          <form
+          <form 
             onSubmit={form.handleSubmit(async (data) => {
               form.reset();
               setOpen(false);
-              createField({
-                uuid: nanoid(),
-                name: data.name,
-                type: data.type,
-              });
+              if(data.type === FieldType.STATIC_DROPDOWN){
+                createField({
+                  uuid: nanoid(),
+                  name: data.name,
+                  type: data.type,
+                  data: {
+                    options: data.data.options.filter((option) => option.length > 0).map((option) => ({
+                      value: option,
+                    })),
+                  },
+                });
+              } else {
+                createField({
+                  uuid: nanoid(),
+                  name: data.name,
+                  type: data.type,
+                });
+              }
             })}
-            className="space-y-4"
+            className="mx-2"
           >
+             <div className="max-h-[80vh]  overflow-y-auto space-y-4 ">
             <FormField
               control={form.control}
               name="name"
@@ -103,7 +136,16 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                   <ScrollArea className="max-h-[200px] rounded-md border">
                     <RadioGroup
                       value={field.value}
-                      onValueChange={field.onChange}
+                      onValueChange={(value)=>{
+                        if(value === FieldType.STATIC_DROPDOWN){
+                          form.setValue('data', {
+                            options: ["Option 1", "Option 2", "Option 3"],
+                          });
+                        } else {
+                          form.setValue('data', null);
+                        }
+                        field.onChange(value);
+                      }}
                       className="p-1"
                     >
                       {Object.values(FieldType).map((type) => (
@@ -132,6 +174,20 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                 </FormItem>
               )}
             />
+            {form.watch('type') === FieldType.STATIC_DROPDOWN && (
+              <FormField
+                control={form.control}
+                name="data.options"
+                render={({ field }) => (
+                  <FormItem className="grid space-y-2">
+                    <Label>{t('Options')}</Label>
+                    <ArrayInput inputName="data.options" disabled={false} required={true} />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+            </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button
                 type="button"
@@ -147,6 +203,7 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
             </div>
           </form>
         </Form>
+       
       </PopoverContent>
     </Popover>
   );

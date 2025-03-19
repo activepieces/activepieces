@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid';
 import { create } from 'zustand';
 
-import { Field, FieldType, PopulatedRecord, Table } from '@activepieces/shared';
+import { CreateFieldRequest, Field, FieldType, PopulatedRecord, Table } from '@activepieces/shared';
 
 import { createServerState } from './ap-tables-server-state';
 
@@ -15,11 +15,18 @@ export type ClientRecordData = {
   values: ClientCellData[];
 };
 
-export type ClientField = {
+
+export type ClientField = {   
   uuid: string;
   name: string;
-  type: FieldType;
-};
+} & ({
+  type: FieldType.DATE | FieldType.NUMBER | FieldType.TEXT;
+} | {
+  type: FieldType.STATIC_DROPDOWN;
+  data: {
+    options: {value:string}[];
+  };
+});
 
 export type TableState = {
   isSaving: boolean;
@@ -78,11 +85,21 @@ export const createApTableStore = (
       setSelectedCell: (
         selectedCell: { rowIdx: number; columnIdx: number } | null,
       ) => set({ selectedCell }),
-      fields: fields.map((field) => ({
-        uuid: nanoid(),
-        name: field.name,
-        type: field.type,
-      })),
+      fields: fields.map((field) => {
+        if(field.type === FieldType.STATIC_DROPDOWN){
+          return {
+            uuid: field.id,
+            name: field.name,
+            type: field.type,
+            data: field.data,
+          };
+        }
+        return {
+          uuid: field.id,
+          name: field.name,
+          type: field.type,
+        };
+      }),
       records: records.map((record) => ({
         uuid: nanoid(),
         values: Object.entries(record.cells).map(([fieldId, cell]) => ({
@@ -121,9 +138,10 @@ export const createApTableStore = (
           };
         }),
       createField: (field: ClientField) => {
-        serverState.createField(field);
-        return set((state) => {
-          return {
+       serverState.createField({...field, tableId: table.id});
+        set((state) => {
+          const newState:TableState ={
+            ...state,
             fields: [...state.fields, field],
             records: state.records.map((record) => ({
               ...record,
@@ -136,6 +154,7 @@ export const createApTableStore = (
               ],
             })),
           };
+          return newState;
         });
       },
       deleteField: (fieldIndex: number) => {

@@ -1,10 +1,22 @@
 import { Static, Type } from '@sinclair/typebox'
 import { FieldType } from '../field'
 
-export const CreateFieldRequest = Type.Object({
-    name: Type.String(),
-    type: Type.Enum(FieldType),
-    tableId: Type.String(),
+
+const StaticDropdownData = Type.Object({
+    options: Type.Array(Type.Object({
+        value: Type.String(),
+    })),
 })
+
+export const CreateFieldRequest = Type.Union([Type.Object({
+    name: Type.String(),
+    type: Type.Literal(FieldType.STATIC_DROPDOWN),
+    tableId: Type.String(),
+    data: StaticDropdownData,
+}),Type.Object({
+    name: Type.String(),
+    type: Type.Union([Type.Literal(FieldType.TEXT), Type.Literal(FieldType.NUMBER), Type.Literal(FieldType.DATE)]),
+    tableId: Type.String(),
+})])
 
 export type CreateFieldRequest = Static<typeof CreateFieldRequest>

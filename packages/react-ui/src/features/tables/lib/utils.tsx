@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import { Type, Calendar, Hash } from 'lucide-react';
+import { Type, Calendar, Hash, ChevronDownCircle } from 'lucide-react';
 import { ReactNode } from 'react';
 
 import { downloadFile } from '@/lib/utils';
@@ -13,6 +13,8 @@ function getColumnIcon(type: FieldType): ReactNode {
       return <Calendar className="h-4 w-4" />;
     case FieldType.NUMBER:
       return <Hash className="h-4 w-4" />;
+    case FieldType.STATIC_DROPDOWN:
+      return <ChevronDownCircle className="h-4 w-4" />;
     default:
       return null;
   }
