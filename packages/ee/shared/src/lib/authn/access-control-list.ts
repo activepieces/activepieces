@@ -64,6 +64,7 @@ export const rolePermissions: Record<DefaultProjectRole, Permission[]> = {
         Permission.READ_PROJECT,
         Permission.READ_FOLDER,
         Permission.READ_MANUAL_TASKS,
+        Permission.WRITE_MANUAL_TASK,
         Permission.READ_TABLE,
     ],
     [DefaultProjectRole.VIEWER]: [

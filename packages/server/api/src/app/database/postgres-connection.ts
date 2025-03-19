@@ -306,6 +306,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RenameGitRepoPermission1736813103505,
         RestrictPieces1739546878775,
         CreateTableWebhooks1741669458075,
+        AddManualTaskTable1742304857701,
     ]
 
     const edition = system.getEdition()
@@ -386,7 +387,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 RemoveUnusedProjectBillingFields1736607721367,
                 ProjectIdNullableInTemplate1741357285896,
                 UpdateNotifyStatusOnEmbedding1741963410825,
-                AddManualTaskTable1742304857701,
                 AddManualTaskCommentTable1742305104390,
             )
             break
