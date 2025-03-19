@@ -41,13 +41,13 @@ import { emailService } from './ee/helper/email/email-service'
 import { issuesModule } from './ee/issues/issues-module'
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
+import { manualTaskCommentModule } from './ee/manual-task/comment/manual-task-comment.module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { adminPieceModule } from './ee/pieces/admin-piece-module'
 import { enterprisePieceMetadataServiceHooks } from './ee/pieces/filters/enterprise-piece-metadata-service-hooks'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformPieceModule } from './ee/platform/admin-platform.controller'
 import { platformBillingModule } from './ee/platform-billing/platform-billing.module'
-import { platformProjectMemberModule } from './ee/project-members/platform-project-members/platform-project-member.module'
 import { projectMemberModule } from './ee/project-members/project-member.module'
 import { gitRepoModule } from './ee/project-release/git-sync/git-sync.module'
 import { projectReleaseModule } from './ee/project-release/project-release.module'
@@ -74,6 +74,7 @@ import { systemJobsSchedule } from './helper/system-jobs'
 import { SystemJobName } from './helper/system-jobs/common'
 import { systemJobHandlers } from './helper/system-jobs/job-handlers'
 import { validateEnvPropsOnStartup } from './helper/system-validator'
+import { manualTaskModule } from './manual-task/manual-task.module'
 import { pieceModule } from './pieces/base-piece-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks'
@@ -228,6 +229,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(licenseKeysModule)
     await app.register(tablesModule)
     await app.register(userModule)
+    await app.register(manualTaskModule)
 
     app.get(
         '/redirect',
@@ -266,7 +268,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformProjectModule)
             await app.register(platformBillingModule)
             await app.register(projectMemberModule)
-            await app.register(platformProjectMemberModule)
             await app.register(appSumoModule)
             await app.register(adminPieceModule)
             await app.register(customDomainModule)
@@ -287,6 +288,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(analyticsModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
+            await app.register(manualTaskCommentModule)
             await app.register(globalConnectionModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
@@ -301,7 +303,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(customDomainModule)
             await app.register(platformProjectModule)
             await app.register(projectMemberModule)
-            await app.register(platformProjectMemberModule)
             await app.register(signingKeyModule)
             await app.register(authnSsoSamlModule)
             await app.register(managedAuthnModule)
@@ -318,6 +319,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(analyticsModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
+            await app.register(manualTaskCommentModule)
             await app.register(globalConnectionModule)
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
             setPlatformOAuthService(platformOAuth2Service(app.log))

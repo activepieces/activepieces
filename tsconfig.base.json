@@ -404,6 +404,9 @@
       "@activepieces/piece-maileroo": [
         "packages/pieces/community/maileroo/src/index.ts"
       ],
+      "@activepieces/piece-manual-task": [
+        "packages/pieces/community/manual-task/src/index.ts"
+      ],
       "@activepieces/piece-mastodon": [
         "packages/pieces/community/mastodon/src/index.ts"
       ],
