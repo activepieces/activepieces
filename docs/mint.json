@@ -1,11 +1,11 @@
 {
   "name": "Activepieces",
   "logo": {
-    "light": "./resources/logo/light.svg",
-    "dark": "./resources/logo/dark.svg",
+    "light": "./resources/logo/syralogo.png",
+    "dark": "./resources/logo/syralogo.png",
     "href": "https://www.activepieces.com"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "/favicon.png",
   "colors": {
     "primary": "#6e41e2",
     "dark": "#6838e0",

@@ -64,9 +64,9 @@ export function generateTheme({
 }
 
 export const defaultTheme = generateTheme({
-    primaryColor: '#6e41e2',
-    websiteName: 'Activepieces',
-    fullLogoUrl: 'https://cdn.activepieces.com/brand/full-logo.png',
-    favIconUrl: 'https://cdn.activepieces.com/brand/favicon.ico',
-    logoIconUrl: 'https://cdn.activepieces.com/brand/logo.svg',
+    primaryColor: '#2562eb',
+    websiteName: 'Syra',
+    fullLogoUrl: '/assets/img/syralogo.png',
+    favIconUrl: '/assets/img/syrafavicon.png',
+    logoIconUrl: '/assets/img/syralogo.png',
 })
