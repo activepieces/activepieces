@@ -9,7 +9,12 @@ import { useContext } from "react"
 
 
 const RenameFieldPopoverContent = ({name}: {name: string}) => {
-    const fields = useTableState((state) => state.fields)
+    const [fields, renameField] = useTableState((state) => [state.fields,state.renameField])
+    const fieldHeaderContext = useContext(FieldHeaderContext)
+    if(!fieldHeaderContext){
+        console.error('FieldHeaderContext not found')
+       return null;
+    }
     const form = useForm<{name: string}>({
         reValidateMode:'onChange',
         defaultValues: {
@@ -37,7 +42,8 @@ const RenameFieldPopoverContent = ({name}: {name: string}) => {
         },
     })
     const onSubmit = (data: {name: string}) => {
-      console.log(data)
+       renameField(fieldHeaderContext.field.index,data.name)
+       fieldHeaderContext.setIsPopoverOpen(false)
     }
 
     return (
