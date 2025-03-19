@@ -36,7 +36,7 @@ function Comments({ task }: CommentsProps) {
 
   return (
     <div className="flex flex-col w-full pt-2 gap-2">
-      <span className="text-md"> Comments </span>
+      <span className="text-lg font-bold mb-2"> Comments </span>
       {comments?.comments.length === 0 && (
         <span className="text-sm text-muted-foreground">No comments yet</span>
       )}

@@ -4,8 +4,8 @@ import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { eventsHooks } from '../../helper/application-events'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
-import { projectRoleService } from './project-role.service'
 import { projectMemberService } from '../project-members/project-member.service'
+import { projectRoleService } from './project-role.service'
 
 const DEFAULT_LIMIT_SIZE = 10
 

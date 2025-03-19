@@ -1,6 +1,8 @@
 import { User2 } from 'lucide-react';
 
+import { ApMarkdown } from '@/components/custom/markdown';
 import { formatUtils } from '@/lib/utils';
+import { MarkdownVariant } from '@activepieces/shared';
 
 type CommentCardProps = {
   firstName: string;
@@ -23,8 +25,12 @@ function CommentCard({
           {firstName} {lastName}
         </span>
       </div>
-      <span className="w-full text-sm bg-muted p-3 rounded-md border ">
-        {content}
+      <span className="w-full text-sm bg-muted p-3 rounded-md border b ">
+        <ApMarkdown
+          markdown={content}
+          variant={MarkdownVariant.BORDERLESS}
+          className="bg-muted"
+        />
       </span>
       <span className="text-xs text-muted-foreground flex justify-end">
         {formatUtils.formatDate(new Date(createdAt))}

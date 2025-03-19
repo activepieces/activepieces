@@ -20,7 +20,7 @@ export const manualTaskService = (_log: FastifyBaseLogger) => ({
         })
     },
     async getOne(params: GetParams): Promise<ManualTask | null> {
-        return await repo().findOneBy({ id: params.id, platformId: params.platformId, projectId: params.projectId })
+        return repo().findOneBy({ id: params.id, platformId: params.platformId, projectId: params.projectId })
     },
     async getOneOrThrow(params: GetParams): Promise<ManualTask> {
         const manualTask = await this.getOne(params)

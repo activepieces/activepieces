@@ -1,17 +1,16 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { t } from 'i18next';
 import {
   CheckIcon,
   UserRoundPen,
   Clock2,
   Loader,
   ChevronDown,
-  Tag,
 } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 
 import { LoadingScreen } from '@/app/components/loading-screen';
 import { ApMarkdown } from '@/components/custom/markdown';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -37,13 +36,16 @@ import {
   StatusOption,
   MarkdownVariant,
 } from '@activepieces/shared';
-import { Badge } from '@/components/ui/badge';
 
 function ManualTaskTestingPage() {
   const { manualTaskId } = useParams();
   const { data: currentUser } = userHooks.useCurrentUser();
 
-  const { isLoading, data: task, refetch } = useQuery({
+  const {
+    isLoading,
+    data: task,
+    refetch,
+  } = useQuery({
     queryKey: ['manualTask', manualTaskId],
     queryFn: async () => {
       if (!manualTaskId) return null;
@@ -61,7 +63,7 @@ function ManualTaskTestingPage() {
       });
       refetch();
       setTimeout(() => {
-       // setIsStatusChanged(true);
+        // setIsStatusChanged(true);
       }, 2000);
     },
   });
@@ -70,13 +72,14 @@ function ManualTaskTestingPage() {
     return <LoadingScreen />;
   }
 
-
   return (
     <>
       {!isLoading && !isNil(task) && (
         <div className="container mx-auto flex flex-col p-10">
           <div className="flex items-center mb-4">
-            <Badge variant="outline" className="text-xs">Test Environment</Badge>
+            <Badge variant="outline" className="text-xs">
+              Test Environment
+            </Badge>
           </div>
           <div className="flex items-center gap-2 mb-2">
             <Clock2 className="h-4 w-4 text-muted-foreground" />
@@ -155,7 +158,10 @@ function ManualTaskTestingPage() {
 
           <div className="text-sm leading-6">
             <ScrollArea className="h-full">
-              <ApMarkdown markdown={task.description ?? ''} variant={MarkdownVariant.BORDERLESS} />
+              <ApMarkdown
+                markdown={task.description ?? ''}
+                variant={MarkdownVariant.BORDERLESS}
+              />
             </ScrollArea>
           </div>
         </div>

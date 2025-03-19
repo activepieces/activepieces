@@ -14,12 +14,12 @@ import {
     UserWithMetaInformation,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { In } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
+import { projectMemberRepo } from '../ee/project-role/project-role.service'
 import { system } from '../helper/system/system'
 import { UserEntity, UserSchema } from './user-entity'
-import { projectMemberRepo } from '../ee/project-role/project-role.service'
-import { In } from 'typeorm'
 
 
 export const userRepo = repoFactory(UserEntity)
