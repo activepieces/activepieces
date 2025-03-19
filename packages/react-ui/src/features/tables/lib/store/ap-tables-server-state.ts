@@ -102,5 +102,13 @@ export const createServerState = (
         }
       });
     },
+    renameField: (fieldIndex: number, newName: string) => {
+      addPromiseToQueue(async () => {
+        clonedFields[fieldIndex].name = newName;
+        await fieldsApi.update(clonedFields[fieldIndex].id, {
+          name: newName,
+        });
+      });
+    },
   };
 };

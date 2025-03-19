@@ -19,4 +19,9 @@ export const CreateFieldRequest = Type.Union([Type.Object({
     tableId: Type.String(),
 })])
 
+export const UpdateFieldRequest = Type.Object({
+    name: Type.String(),
+})
+
 export type CreateFieldRequest = Static<typeof CreateFieldRequest>
+export type UpdateFieldRequest = Static<typeof UpdateFieldRequest>

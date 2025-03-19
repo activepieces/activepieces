@@ -9,11 +9,8 @@ import DataGrid, {
 import 'react-data-grid/lib/styles.css';
 
 import { useTheme } from '@/components/theme-provider';
+import { ApFieldHeader } from '@/features/tables/components/ap-field-header';
 import ApTableHeader from '@/features/tables/components/ap-table-header';
-import {
-  ColumnHeader,
-  ColumnActionType,
-} from '@/features/tables/components/column-header';
 import { EditableCell } from '@/features/tables/components/editable-cell';
 import { NewFieldPopup } from '@/features/tables/components/new-field-popup';
 import { SelectColumn } from '@/features/tables/components/select-column';
@@ -36,7 +33,6 @@ const ApTableEditorPage = () => {
     updateRecord,
     fields,
     records,
-    deleteField,
   ] = useTableState((state) => [
     state.selectedRows,
     state.setSelectedRows,
@@ -46,7 +42,6 @@ const ApTableEditorPage = () => {
     state.updateRecord,
     state.fields,
     state.records,
-    state.deleteField,
   ]);
 
   const gridRef = useRef<DataGridHandle>(null);
@@ -119,24 +114,7 @@ const ApTableEditorPage = () => {
       minHeight: 37,
       resizable: true,
       name: '',
-      renderHeaderCell: () => (
-        <ColumnHeader
-          label={field.name}
-          type={field.type}
-          actions={
-            userHasTableWritePermission
-              ? [
-                  {
-                    type: ColumnActionType.DELETE,
-                    onClick: async () => {
-                      deleteField(index);
-                    },
-                  },
-                ]
-              : []
-          }
-        />
-      ),
+      renderHeaderCell: () => <ApFieldHeader field={{ ...field, index }} />,
       renderCell: ({
         row,
         column,
