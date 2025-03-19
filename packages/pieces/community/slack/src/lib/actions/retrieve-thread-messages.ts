@@ -2,11 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../..';
 import { WebClient } from '@slack/web-api';
 import { slackChannel } from '../common/props';
+import { processMessageTimestamp } from '../common/utils';
 
 export const retrieveThreadMessages = createAction({
   name: 'retrieveThreadMessages',
-  displayName: 'Retrieve thread messages',
-  description: 'Retrieves thread messages by channel and thread timestamp',
+  displayName: 'Retrieve Thread Messages',
+  description: 'Retrieves thread messages by channel and thread timestamp.',
   auth: slackAuth,
   props: {
     channel: slackChannel(true),
@@ -19,9 +20,13 @@ export const retrieveThreadMessages = createAction({
   },
   async run({ auth, propsValue }) {
     const client = new WebClient(auth.access_token);
+      const messageTimestamp = processMessageTimestamp(propsValue.threadTs);
+        if (!messageTimestamp) {
+          throw new Error('Invalid Timestamp Value.');
+        }
     return await client.conversations.replies({
       channel: propsValue.channel,
-      ts: propsValue.threadTs,
+      ts: messageTimestamp,
     });
   },
 });
