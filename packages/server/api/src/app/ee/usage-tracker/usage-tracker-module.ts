@@ -56,7 +56,7 @@ async function sendUsageReport(job: SystemJobData<SystemJobName.USAGE_REPORT>): 
 }
 
 async function constructUsageReport(platform: Platform, startDate: string, endDate: string): Promise<UsageReport> {
-    const licenseKey = platform.licenseKey;
+    const licenseKey = platform.licenseKey
     const version = await apVersionUtil.getCurrentRelease()
     const addedProjects = await getAddedProjects(platform.id, startDate, endDate)
     const addedUsers = await getAddedUsers(platform.id, startDate, endDate)
