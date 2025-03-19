@@ -1,4 +1,10 @@
 
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyRequest } from 'fastify'
+import { stepFileService } from '../file/step-file/step-file.service'
+import { projectService } from '../project/project-service'
+import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
+import { webhookService } from './webhook.service'
 import {
     ALL_PRINCIPAL_TYPES,
     EventPayload,
@@ -6,12 +12,6 @@ import {
     isMultipartFile,
     WebhookUrlParams,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { FastifyRequest } from 'fastify'
-import { stepFileService } from '../file/step-file/step-file.service'
-import { projectService } from '../project/project-service'
-import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
-import { webhookService } from './webhook.service'
 
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
@@ -110,6 +110,7 @@ const WEBHOOK_PARAMS = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
         skipAuth: true,
+        rawBody: true,
     },
     schema: {
         params: WebhookUrlParams,
@@ -127,6 +128,7 @@ async function convertRequest(
         headers: request.headers as Record<string, string>,
         body: await convertBody(request, projectId, flowId),
         queryParams: request.query as Record<string, string>,
+        rawBody: request.rawBody,
     }
     return payload
 }
