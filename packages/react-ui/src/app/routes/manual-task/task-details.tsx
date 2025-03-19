@@ -267,7 +267,12 @@ function TaskDetails({
                       <DropdownMenuTrigger>
                         <Button
                           variant="outline"
-                          className="h-8 flex gap-2 items-center justify-between"
+                          className="h-8 px-2 flex gap-2 items-center justify-between border-1 border"
+                          style={{
+                            backgroundColor:
+                              STATUS_COLORS[task.status.variant].color,
+                            color: STATUS_COLORS[task.status.variant].textColor,
+                          }}
                         >
                           {isUpdatingStatus ? (
                             <Loader className="h-4 w-4" />
@@ -290,10 +295,15 @@ function TaskDetails({
                               onClick={() => {
                                 updateStatus(status);
                               }}
-                              className="px-1"
+                              className="px-1 border-1 border"
+                              style={{
+                                backgroundColor:
+                                  STATUS_COLORS[status.variant].color,
+                                color: STATUS_COLORS[status.variant].textColor,
+                              }}
                             >
                               <span
-                                className="text-sm flex items-center justify-center py-0.5 px-2 rounded-full"
+                                className="text-sm flex items-center justify-center px-2 rounded-full"
                                 style={{
                                   backgroundColor:
                                     STATUS_COLORS[status.variant].color,

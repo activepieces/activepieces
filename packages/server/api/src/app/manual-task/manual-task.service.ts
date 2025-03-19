@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, ManualTask, ManualTaskWithAssignee, PlatformId, ProjectId, SeekPage, spreadIfDefined, StatusOption, UNRESOLVED_STATUS, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { Like } from 'typeorm'
+import { IsNull, Like, Not } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { buildPaginator } from '../helper/pagination/build-paginator'
@@ -102,6 +102,11 @@ export const manualTaskService = (_log: FastifyBaseLogger) => ({
                 title: Like(`%${params.title}%`),
             })
         }
+
+        // To avoid fetching tasks for testing purposes
+        query = query.andWhere({
+            runId: Not(IsNull()),
+        })
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
         const enrichedData = await Promise.all(data.map((task) => enrichManualTaskWithAssignee(task, _log)))

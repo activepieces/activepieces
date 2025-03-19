@@ -70,18 +70,15 @@ export const createTask = createAction({
     },
   },
   async test(context) {
-    if (context.executionType === ExecutionType.BEGIN) {
-      context.run.pause({
-        pauseMetadata: {
-          type: PauseType.WEBHOOK,
-          response: {}
-        }
-      });
-      const response = await sendTaskApproval(context, true);
-      const publicUrlWithoutAPI = context.server.publicUrl.replace('/api', '');
-      return {
-        url: `${publicUrlWithoutAPI}projects/${context.project.id}/manual-tasks/${response.body.id}`
-      };
+      if (context.executionType === ExecutionType.BEGIN) {
+        context.run.pause({
+          pauseMetadata: {
+            type: PauseType.WEBHOOK,
+            response: {}
+          }
+        });
+        const response = await sendTaskApproval(context, true);
+        return response.body;
     } else {
       return {
         status: context.resumePayload.queryParams['status']
@@ -96,10 +93,8 @@ export const createTask = createAction({
             response: {}
           }
         });
-        await sendTaskApproval(context, false);
-        return {
-          success: true,
-        };
+        const response = await sendTaskApproval(context, false);
+        return response.body;
     } else {
       return {
         status: context.resumePayload.queryParams['status']
