@@ -62,9 +62,6 @@ function ManualTaskTestingPage() {
         status: status,
       });
       refetch();
-      setTimeout(() => {
-        // setIsStatusChanged(true);
-      }, 2000);
     },
   });
 
