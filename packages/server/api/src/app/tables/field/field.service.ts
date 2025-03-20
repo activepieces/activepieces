@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, CreateFieldRequest, ErrorCode, Field, isNil } from '@activepieces/shared'
+import { ActivepiecesError, apId, CreateFieldRequest, ErrorCode, Field, isNil, UpdateFieldRequest } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { FieldEntity } from './field.entity'
 
@@ -47,6 +47,16 @@ export const fieldService = {
             projectId,
         })
     },
+
+    async update({ id, projectId, request }: UpdateParams): Promise<Field> {
+        await fieldRepo().update({
+            id,
+            projectId,
+        }, {
+            name: request.name,
+        })
+        return this.getById({ id, projectId })
+    },
 }
 
 type CreateParams = {
@@ -67,4 +77,10 @@ type GetByIdParams = {
 type DeleteParams = {
     id: string
     projectId: string
+}
+
+type UpdateParams = {
+    id: string
+    projectId: string
+    request: UpdateFieldRequest
 }

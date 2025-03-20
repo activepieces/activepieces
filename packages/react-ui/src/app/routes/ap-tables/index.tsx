@@ -1,11 +1,10 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Trash2, Plus, CheckIcon } from 'lucide-react';
+import { Trash2, Plus, CheckIcon, Table2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { BetaBadge } from '@/app/components/beta-badge';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -223,12 +222,16 @@ const ApTablesPage = () => {
   );
 
   return (
-    <div className="flex-col w-full">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2">
-          <TableTitle>{t('Tables')}</TableTitle>
-          <BetaBadge />
-        </div>
+    <div className="flex-col w-full gap-4">
+      <div className="flex justify-between items-center">
+        <TableTitle
+          beta={true}
+          description={t(
+            'Create and manage your tables to store your automation data',
+          )}
+        >
+          {t('Tables')}
+        </TableTitle>
         <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
           <Button
             size="sm"
@@ -253,6 +256,11 @@ const ApTablesPage = () => {
             options: [],
           },
         ]}
+        emptyStateIcon={<Table2 className="size-14" />}
+        emptyStateTextTitle={t('No tables have been created yet')}
+        emptyStateTextDescription={t(
+          'Create a table to get started and start managing your automation data',
+        )}
         columns={columns}
         page={data}
         isLoading={isLoading}

@@ -209,7 +209,7 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
     const isValidHexKey = encryptionKey && /^[A-Za-z0-9]{32}$/.test(encryptionKey)
     if (!isValidHexKey) {
         throw new Error(JSON.stringify({
-            message: 'AP_ENCRYPTION_KEY is either undefined or not a valid 32 hex string.',
+            message: 'AP_ENCRYPTION_KEY is missing or invalid. It must be a 32-character hexadecimal string (representing 16 bytes). You can generate one using the command: `openssl rand -hex 16`',
             docUrl: 'https://www.activepieces.com/docs/install/configuration/environment-variables',
         }))
     }

@@ -5,6 +5,7 @@ import { ControllerRenderProps, useFormContext } from 'react-hook-form';
 import { JsonEditor } from '@/components/custom/json-editor';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { SearchableSelect } from '@/components/custom/searchable-select';
+import { ColorPicker } from '@/components/ui/color-picker';
 import { FormControl, FormField } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -303,6 +304,19 @@ const selectFormComponentForProperty = ({
           onChange={field.onChange}
           disabled={disabled}
         ></CustomProperty>
+      );
+    case PropertyType.COLOR:
+      return (
+        <AutoFormFieldWrapper
+          property={property}
+          inputName={inputName}
+          propertyName={propertyName}
+          field={field}
+          disabled={disabled}
+          allowDynamicValues={allowDynamicValues}
+        >
+          <ColorPicker value={field.value} onChange={field.onChange} />
+        </AutoFormFieldWrapper>
       );
   }
 };
