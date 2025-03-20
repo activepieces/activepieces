@@ -1,9 +1,11 @@
 import {
     ActivepiecesError,
+    ApEdition,
     apId,
     ErrorCode,
     PlatformId,
     PlatformRole,
+    ProjectId,
     SeekPage,
     spreadIfDefined,
     User,
@@ -12,8 +14,10 @@ import {
     UserWithMetaInformation,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
+import { In } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
+// import { projectMemberRepo } from '../ee/project-role/project-role.service'
 import { system } from '../helper/system/system'
 import { UserEntity, UserSchema } from './user-entity'
 
@@ -90,7 +94,11 @@ export const userService = {
     async getByPlatformRole(id: PlatformId, role: PlatformRole): Promise<UserSchema[]> {
         return userRepo().find({ where: { platformId: id, platformRole: role }, relations: { identity: true } })
     },
-
+    async listProjectUsers({ platformId, projectId }: ListUsersForProjectParams): Promise<UserWithMetaInformation[]> {
+        const users = await getUsersForProject(platformId, projectId)
+        const usersWithMetaInformation = await userRepo().find({ where: { platformId, id: In(users) }, relations: { identity: true } }).then((users) => users.map(this.getMetaInformation))
+        return Promise.all(usersWithMetaInformation)
+    },
     async getByPlatformAndExternalId({
         platformId,
         externalId,
@@ -127,6 +135,23 @@ export const userService = {
             platformId,
         })
     },
+}
+
+
+async function getUsersForProject(platformId: PlatformId, projectId: string) {
+    const platformAdmins = await userRepo().find({ where: { platformId, platformRole: PlatformRole.ADMIN } }).then((users) => users.map((user) => user.id))
+    const edition = system.getEdition()
+    if (edition === ApEdition.COMMUNITY) {
+        return platformAdmins
+    }
+    // const projectMembers = await projectMemberRepo().find({ where: { projectId, platformId } }).then((members) => members.map((member) => member.userId))
+    // return [...platformAdmins, ...projectMembers]
+    return platformAdmins
+}
+
+type ListUsersForProjectParams = {
+    projectId: ProjectId
+    platformId: PlatformId
 }
 
 type DeleteParams = {

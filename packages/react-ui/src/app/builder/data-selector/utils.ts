@@ -366,8 +366,10 @@ function filterBy(
       const displayName =
         item.data.type === 'value' ? item.data.displayName.toLowerCase() : '';
       const matchDisplayNameOrValue =
-        displayName.toLowerCase().includes(query.toLowerCase()) ||
-        searchableValue.toLowerCase().includes(query.toLowerCase());
+        (!isNil(displayName) &&
+          displayName.toLowerCase().includes(query.toLowerCase())) ||
+        (!isNil(searchableValue) &&
+          searchableValue.toLowerCase().includes(query.toLowerCase()));
       if (matchDisplayNameOrValue) {
         return {
           ...item,
@@ -379,7 +381,6 @@ function filterBy(
     .filter(
       (f) => !isNil(f),
     ) as DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[];
-  console.log(res);
   return res;
 }
 

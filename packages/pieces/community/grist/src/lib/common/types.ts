@@ -91,3 +91,18 @@ export type GristCreateWebhookResponse = {
 };
 
 export type GristWebhookPayload = Record<string, any>;
+
+export type GristOrgResponse = {
+  id: number
+  name: string
+  domain: string
+  owner: {
+    id: number
+    name: string
+    picture: any
+  }
+  access: string
+  createdAt: string
+  updatedAt: string
+}
+

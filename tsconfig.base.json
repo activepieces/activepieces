@@ -121,6 +121,9 @@
       "@activepieces/piece-certopus": [
         "packages/pieces/community/certopus/src/index.ts"
       ],
+      "@activepieces/piece-chainalysis-api": [
+        "packages/pieces/community/chainalysis-api/src/index.ts"
+      ],
       "@activepieces/piece-chargekeep": [
         "packages/pieces/community/chargekeep/src/index.ts"
       ],
@@ -289,6 +292,9 @@
       ],
       "@activepieces/piece-google-sheets": [
         "packages/pieces/community/google-sheets/src/index.ts"
+      ],
+      "@activepieces/piece-google-slides": [
+        "packages/pieces/community/google-slides/src/index.ts"
       ],
       "@activepieces/piece-google-tasks": [
         "packages/pieces/community/google-tasks/src/index.ts"
@@ -672,6 +678,9 @@
       ],
       "@activepieces/piece-todoist": [
         "packages/pieces/community/todoist/src/index.ts"
+      ],
+      "@activepieces/piece-todos": [
+        "packages/pieces/community/todos/src/index.ts"
       ],
       "@activepieces/piece-totalcms": [
         "packages/pieces/community/totalcms/src/index.ts"

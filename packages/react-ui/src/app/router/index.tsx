@@ -71,6 +71,8 @@ import GeneralPage from '../routes/settings/general';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
 import { ShareTemplatePage } from '../routes/templates/share-template';
+import { TodosPage } from '../routes/todos';
+import { TodoTestingPage } from '../routes/todos/id';
 
 import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 import { DefaultRoute } from './default-route';
@@ -79,6 +81,7 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
+
 const SettingsRerouter = () => {
   const { hash } = useLocation();
   const fragmentWithoutHash = hash.slice(1).toLowerCase();
@@ -252,6 +255,24 @@ const routes = [
   //         <ProjectReleasesPage />
   //       </PageTitle>
   //     </DashboardContainer>
+  //   ),
+  // }),
+  // ...ProjectRouterWrapper({
+  //   path: '/todos',
+  //   element: (
+  //     <DashboardContainer>
+  //       <PageTitle title="Todos">
+  //         <TodosPage />
+  //       </PageTitle>
+  //     </DashboardContainer>
+  //   ),
+  // }),
+  // ...ProjectRouterWrapper({
+  //   path: '/todos/:todoId',
+  //   element: (
+  //     <PageTitle title="Todo Testing">
+  //       <TodoTestingPage />
+  //     </PageTitle>
   //   ),
   // }),
   ...ProjectRouterWrapper({

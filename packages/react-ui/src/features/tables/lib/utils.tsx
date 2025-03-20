@@ -1,9 +1,11 @@
 import JSZip from 'jszip';
 import { Type, Calendar, Hash } from 'lucide-react';
-import { ReactNode } from 'react';
+import { createContext, ReactNode } from 'react';
 
 import { downloadFile } from '@/lib/utils';
 import { ExportTableResponse, FieldType } from '@activepieces/shared';
+
+import { ClientField } from './store/ap-tables-client-state';
 
 function getColumnIcon(type: FieldType): ReactNode {
   switch (type) {
@@ -59,3 +61,10 @@ export const tablesUtils = {
   exportTables,
   getColumnIcon,
 };
+
+export const FieldHeaderContext = createContext<{
+  setIsPopoverOpen: (open: boolean) => void;
+  setPopoverContent: (content: React.ReactNode) => void;
+  field: ClientField & { index: number };
+  userHasTableWritePermission: boolean;
+} | null>(null);
