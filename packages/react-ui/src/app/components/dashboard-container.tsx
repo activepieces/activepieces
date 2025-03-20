@@ -218,7 +218,7 @@ export function DashboardContainer({
   const items: SidebarItem[] = [
     automationGroup,
     tablesLink,
-    todosLink,
+    // todosLink,
     settingsGroup,
   ]
     .filter(embedFilter)

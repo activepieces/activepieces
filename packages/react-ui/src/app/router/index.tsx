@@ -257,24 +257,24 @@ const routes = [
   //     </DashboardContainer>
   //   ),
   // }),
-  ...ProjectRouterWrapper({
-    path: '/todos',
-    element: (
-      <DashboardContainer>
-        <PageTitle title="Todos">
-          <TodosPage />
-        </PageTitle>
-      </DashboardContainer>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: '/todos/:todoId',
-    element: (
-      <PageTitle title="Todo Testing">
-        <TodoTestingPage />
-      </PageTitle>
-    ),
-  }),
+  // ...ProjectRouterWrapper({
+  //   path: '/todos',
+  //   element: (
+  //     <DashboardContainer>
+  //       <PageTitle title="Todos">
+  //         <TodosPage />
+  //       </PageTitle>
+  //     </DashboardContainer>
+  //   ),
+  // }),
+  // ...ProjectRouterWrapper({
+  //   path: '/todos/:todoId',
+  //   element: (
+  //     <PageTitle title="Todo Testing">
+  //       <TodoTestingPage />
+  //     </PageTitle>
+  //   ),
+  // }),
   ...ProjectRouterWrapper({
     path: '/settings',
     element: (
