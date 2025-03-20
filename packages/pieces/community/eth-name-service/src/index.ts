@@ -8,7 +8,7 @@ export const ethNameService = createPiece({
   description: 'Ethereum Name Service (ENS) is a decentralized naming system on the Ethereum blockchain.',
   auth: ensCommon.auth,
   minimumSupportedRelease: '0.20.0',
-  logoUrl: 'https://imagedelivery.net/bHREz764QO9n_1kIQUR2sw/1068cf28-f96b-4c73-6fd2-fbbd41863000/public',
+  logoUrl: 'https://cdn.activepieces.com/pieces/eth-name-service.png',
   authors: ['reemayoush'],
   actions: [listEnsDomains],
   triggers: [],
