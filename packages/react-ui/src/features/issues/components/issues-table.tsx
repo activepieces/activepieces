@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Check } from 'lucide-react';
+import { Check, CheckCircle } from 'lucide-react';
 import { useMemo } from 'react';
 import {
   createSearchParams,
@@ -191,6 +191,11 @@ export default function IssuesTable() {
         <div className="ml-auto"></div>
       </div>
       <DataTable
+        emptyStateTextTitle={t('No issues found')}
+        emptyStateTextDescription={t(
+          'All your workflows are running smoothly.',
+        )}
+        emptyStateIcon={<CheckCircle className="size-14" />}
         page={data}
         isLoading={isLoading}
         columns={columns}

@@ -7,6 +7,7 @@ import {
   GitBranch,
   RotateCcw,
   FolderOpenDot,
+  Package,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -149,24 +150,28 @@ const ProjectReleasesPage = () => {
   ];
 
   return (
-    <div className="flex-col w-full">
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex flex-col gap-2">
-          <TableTitle>{t('Project Releases')}</TableTitle>
-          <div className="text-sm text-muted-foreground">
-            {t(
-              'Track and manage your project version history and deployments. ',
-            )}
-            <a
-              href="https://www.activepieces.com/docs/operations/git-sync"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              {t('Environments & Releases')}
-            </a>
-          </div>
-        </div>
+    <div className="flex-col w-full gap-4">
+      <div className="mb-8 flex items-center justify-between">
+        <TableTitle
+          description={
+            <>
+              {t(
+                'Track and manage your project version history and deployments. ',
+              )}
+              <a
+                href="https://www.activepieces.com/docs/operations/git-sync"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                {t('Environments & Releases')}
+              </a>
+            </>
+          }
+        >
+          {t('Project Releases')}
+        </TableTitle>
+
         <div className="flex items-center gap-2">
           <PermissionNeededTooltip
             hasPermission={doesUserHavePermissionToWriteFlow}
@@ -214,6 +219,9 @@ const ProjectReleasesPage = () => {
         </div>
       </div>
       <DataTable
+        emptyStateTextTitle={t('No project releases found')}
+        emptyStateTextDescription={t('Create a project release to get started')}
+        emptyStateIcon={<Package className="size-14" />}
         columns={columns}
         page={data}
         isLoading={isLoading}

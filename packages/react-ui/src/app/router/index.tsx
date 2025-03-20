@@ -36,6 +36,7 @@ import { ApTableStateProvider } from '../../features/tables/components/ap-table-
 import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
 import { DashboardContainer } from '../components/dashboard-container';
 import { PlatformAdminContainer } from '../components/platform-admin-container';
+import ProjectSettingsLayout from '../components/project-settings-layout';
 import NotFoundPage from '../routes/404-page';
 import { ApTablesPage } from '../routes/ap-tables';
 import { ApTableEditorPage } from '../routes/ap-tables/id';
@@ -329,7 +330,9 @@ const routes = [
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_ALERT}>
           <PageTitle title="Alerts">
-            <AlertsPage />
+            <ProjectSettingsLayout>
+              <AlertsPage />
+            </ProjectSettingsLayout>
           </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>
@@ -340,7 +343,9 @@ const routes = [
     element: (
       <DashboardContainer>
         <PageTitle title="Appearance">
-          <AppearancePage />
+          <ProjectSettingsLayout>
+            <AppearancePage />
+          </ProjectSettingsLayout>
         </PageTitle>
       </DashboardContainer>
     ),
@@ -350,7 +355,9 @@ const routes = [
     element: (
       <DashboardContainer>
         <PageTitle title="General">
-          <GeneralPage />
+          <ProjectSettingsLayout>
+            <GeneralPage />
+          </ProjectSettingsLayout>
         </PageTitle>
       </DashboardContainer>
     ),
@@ -360,7 +367,9 @@ const routes = [
     element: (
       <DashboardContainer>
         <PageTitle title="Pieces">
-          <ProjectPiecesPage />
+          <ProjectSettingsLayout>
+            <ProjectPiecesPage />
+          </ProjectSettingsLayout>
         </PageTitle>
       </DashboardContainer>
     ),
@@ -371,7 +380,9 @@ const routes = [
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_PROJECT_MEMBER}>
           <PageTitle title="Team">
-            <TeamPage />
+            <ProjectSettingsLayout>
+              <TeamPage />
+            </ProjectSettingsLayout>
           </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>
@@ -388,7 +399,9 @@ const routes = [
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_PROJECT_RELEASE}>
           <PageTitle title="Environments">
-            <EnvironmentPage />
+            <ProjectSettingsLayout>
+              <EnvironmentPage />
+            </ProjectSettingsLayout>
           </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>

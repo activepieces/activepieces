@@ -44,43 +44,40 @@ export default function AIProvidersPage() {
         'Set your AI providers & copilot settings so your users enjoy a seamless building experience with our univeral AI pieces',
       )}
     >
-      <div className="flex flex-col w-full gap-8">
+      <div className="flex flex-col w-full gap-4">
         <div>
-          <div className="mb-4 flex">
-            <div className="flex justify-between flex-row w-full">
-              <div className="flex flex-col gap-2">
-                <TableTitle>{t('AI Providers')}</TableTitle>
-                <div className="text-md text-muted-foreground">
-                  {t(
-                    'Set provider credentials that will be used by universal AI pieces, i.e Text AI.',
-                  )}
-                </div>
-              </div>
-            </div>
+          <div className="flex justify-between flex-row w-full">
+            <TableTitle
+              description={t(
+                'Set provider credentials that will be used by universal AI pieces, i.e Text AI.',
+              )}
+            >
+              {t('AI Providers')}
+            </TableTitle>
           </div>
-          <div className="flex flex-col gap-4">
-            {AI_PROVIDERS.map((metadata) => {
-              const provider = providers?.data.find(
-                (c) => c.provider === metadata.value,
-              );
-              return isLoading ? (
-                <Skeleton className="h-24 w-full" />
-              ) : (
-                <AIProviderCard
-                  providerMetadata={metadata}
-                  defaultBaseUrl={provider?.baseUrl ?? metadata.defaultBaseUrl}
-                  provider={
-                    provider
-                      ? { ...provider, config: { defaultHeaders: {} } }
-                      : undefined
-                  }
-                  isDeleting={isDeleting}
-                  onDelete={() => deleteProvider(metadata.value)}
-                  onSave={() => refetch()}
-                />
-              );
-            })}
-          </div>
+        </div>
+        <div className="flex flex-col gap-4">
+          {AI_PROVIDERS.map((metadata) => {
+            const provider = providers?.data.find(
+              (c) => c.provider === metadata.value,
+            );
+            return isLoading ? (
+              <Skeleton className="h-24 w-full" />
+            ) : (
+              <AIProviderCard
+                providerMetadata={metadata}
+                defaultBaseUrl={provider?.baseUrl ?? metadata.defaultBaseUrl}
+                provider={
+                  provider
+                    ? { ...provider, config: { defaultHeaders: {} } }
+                    : undefined
+                }
+                isDeleting={isDeleting}
+                onDelete={() => deleteProvider(metadata.value)}
+                onSave={() => refetch()}
+              />
+            );
+          })}
         </div>
 
         <div>

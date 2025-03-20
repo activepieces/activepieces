@@ -36,15 +36,15 @@ const ProjectRolePage = () => {
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/roles.mp4"
     >
       <div className="flex-col w-full">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex flex-col gap-2">
-            <TableTitle>{t('Project Role Management')}</TableTitle>
-            <div className="text-sm text-muted-foreground">
-              {t(
-                'Define custom roles and permissions that can be assigned to your team members',
-              )}
-            </div>
-          </div>
+        <div className="flex items-center justify-between mb-4">
+          <TableTitle
+            description={t(
+              'Define custom roles and permissions that can be assigned to your team members',
+            )}
+          >
+            {t('Project Role Management')}
+          </TableTitle>
+
           {!platform.customRolesEnabled && (
             <Tooltip>
               <TooltipTrigger>

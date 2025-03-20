@@ -18,7 +18,7 @@ export function BetaBadge({ className, ...props }: BetaBadgeProps) {
       <TooltipTrigger asChild>
         <span
           className={cn(
-            'border border-primary text-primary border-2 font-semibold text-xs  me-2 px-2.5 py-1 rounded-sm select-none',
+            'bg-gray-100 text-gray-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm font-semibold select-none',
             className,
           )}
           {...props}

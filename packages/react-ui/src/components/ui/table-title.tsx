@@ -14,7 +14,11 @@ export const TableTitle = ({
       <div>
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-semibold">{children}</h1>
-          {beta && <BetaBadge />}
+          {beta && (
+            <div className="flex items-center">
+              <BetaBadge />
+            </div>
+          )}
         </div>
         {description && (
           <span className="text-md text-muted-foreground">{description}</span>
