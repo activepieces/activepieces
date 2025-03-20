@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import type { RenderEditCellProps } from 'react-data-grid';
 
 import { SearchableSelect } from '@/components/custom/searchable-select';
-import { FieldType } from '@activepieces/shared';
+import { FieldType, StaticDropdownEmptyOption } from '@activepieces/shared';
 
 import { ClientField } from '../lib/store/ap-tables-client-state';
 import { Row } from '../lib/types';
@@ -37,10 +37,7 @@ const DropdownEditor = ({
         triggerClassName="rounded-none border-primary  border-2 px-2"
         onClose={onClose}
         options={[
-          {
-            value: '',
-            label: 'Empty',
-          },
+          StaticDropdownEmptyOption,
           ...field.data.options.map((option) => ({
             value: option.value,
             label: option.value,

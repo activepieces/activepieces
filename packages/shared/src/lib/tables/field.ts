@@ -28,3 +28,8 @@ export const Field = Type.Union([Type.Object({
 })])
 
 export type Field = Static<typeof Field>
+
+export const StaticDropdownEmptyOption = {
+    label: '',
+    value: '',
+}

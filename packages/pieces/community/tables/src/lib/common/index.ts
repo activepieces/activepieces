@@ -1,6 +1,6 @@
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { DynamicPropsValue, Property, TriggerHookContext } from "@activepieces/pieces-framework";
-import { CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, PopulatedRecord, SeekPage, Table, TableWebhookEventType } from "@activepieces/shared";
+import { CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, PopulatedRecord, SeekPage, StaticDropdownEmptyOption, Table, TableWebhookEventType } from "@activepieces/shared";
 import { z } from 'zod';
 
 type FormattedRecord = {
@@ -166,10 +166,7 @@ export const tablesCommon = {
               defaultValue:'',
               required: false,
               options: {
-                options:[{
-                  label: 'Empty',
-                  value: '',
-                },...field.data.options.map(option => ({ label: option.value, value: option.value }))],
+                options:[StaticDropdownEmptyOption,...field.data.options.map(option => ({ label: option.value, value: option.value }))],
               },
             });
             break;

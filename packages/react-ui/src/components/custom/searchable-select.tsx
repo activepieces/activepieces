@@ -222,7 +222,11 @@ export const SearchableSelect = <T extends React.Key>({
                         className="flex gap-2 flex-col items-start"
                       >
                         <div className="flex gap-2 items-center justify-between w-full">
-                          {option.label}
+                          {option.label === '' ? (
+                            <span className="">&nbsp;</span>
+                          ) : (
+                            option.label
+                          )}
                           <Check
                             className={cn('flex-shrink-0 w-4 h-4', {
                               hidden: selectedIndex !== filterIndex,
