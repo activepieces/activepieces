@@ -47,7 +47,13 @@ export default function AIProvidersPage() {
       <div className="flex flex-col w-full gap-4">
         <div>
           <div className="flex justify-between flex-row w-full">
-            <TableTitle description={t('Set provider credentials that will be used by universal AI pieces, i.e Text AI.')}>{t('AI Providers')}</TableTitle>
+            <TableTitle
+              description={t(
+                'Set provider credentials that will be used by universal AI pieces, i.e Text AI.',
+              )}
+            >
+              {t('AI Providers')}
+            </TableTitle>
           </div>
         </div>
         <div className="flex flex-col gap-4">

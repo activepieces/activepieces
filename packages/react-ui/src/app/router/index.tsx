@@ -36,6 +36,7 @@ import { ApTableStateProvider } from '../../features/tables/components/ap-table-
 import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
 import { DashboardContainer } from '../components/dashboard-container';
 import { PlatformAdminContainer } from '../components/platform-admin-container';
+import ProjectSettingsLayout from '../components/project-settings-layout';
 import NotFoundPage from '../routes/404-page';
 import { ApTablesPage } from '../routes/ap-tables';
 import { ApTableEditorPage } from '../routes/ap-tables/id';
@@ -81,7 +82,6 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
-import ProjectSettingsLayout from '../components/project-settings-layout';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -676,8 +676,8 @@ const ApRouter = () => {
   const router = useMemo(() => {
     return embedState.isEmbedded
       ? createMemoryRouter(routes, {
-        initialEntries: [window.location.pathname],
-      })
+          initialEntries: [window.location.pathname],
+        })
       : createBrowserRouter(routes);
   }, [embedState.isEmbedded]);
 

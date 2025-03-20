@@ -293,7 +293,9 @@ function TodosPage() {
     <div className="flex-col w-full">
       <div className="flex items-center gap-2">
         <TableTitle
-          description={t('Manage todos for your project that are created by automations')}
+          description={t(
+            'Manage todos for your project that are created by automations',
+          )}
           beta={true}
         >
           {t('Todos')}
@@ -301,7 +303,9 @@ function TodosPage() {
       </div>
       <DataTable
         emptyStateTextTitle={t('No todos found')}
-        emptyStateTextDescription={t('You do not have any pending todos. Great job!')}
+        emptyStateTextDescription={t(
+          'You do not have any pending todos. Great job!',
+        )}
         emptyStateIcon={<CheckCircle className="size-14" />}
         columns={columns}
         page={filteredData}

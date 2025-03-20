@@ -71,19 +71,24 @@ const SigningKeysPage = () => {
       <div className="flex-col w-full">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex flex-col gap-2">
-            <TableTitle description={<Trans>
-              Use our embedding{' '}
-              <Link
-                rel="noopener noreferrer"
-                target="_blank"
-                className="font-medium text-primary underline underline-offset-4"
-                to="https://www.activepieces.com/docs/embedding/provision-users"
-              >
-                JavaScript SDK
-              </Link>{' '}
-              to authenticate users with signing keys.
-            </Trans>}>{t('Signing Keys')}</TableTitle>
-
+            <TableTitle
+              description={
+                <Trans>
+                  Use our embedding{' '}
+                  <Link
+                    rel="noopener noreferrer"
+                    target="_blank"
+                    className="font-medium text-primary underline underline-offset-4"
+                    to="https://www.activepieces.com/docs/embedding/provision-users"
+                  >
+                    JavaScript SDK
+                  </Link>{' '}
+                  to authenticate users with signing keys.
+                </Trans>
+              }
+            >
+              {t('Signing Keys')}
+            </TableTitle>
           </div>
           <NewSigningKeyDialog onCreate={() => refetch()}>
             <Button size="sm" className="flex items-center gap-2">
@@ -94,7 +99,9 @@ const SigningKeysPage = () => {
         </div>
         <DataTable
           emptyStateTextTitle={t('No signing keys found')}
-          emptyStateTextDescription={t('Create a signing key to authenticate users with embedding')}
+          emptyStateTextDescription={t(
+            'Create a signing key to authenticate users with embedding',
+          )}
           emptyStateIcon={<Key className="size-14" />}
           columns={columns}
           page={data}

@@ -37,7 +37,13 @@ const ProjectRolePage = () => {
     >
       <div className="flex-col w-full">
         <div className="flex items-center justify-between mb-4">
-          <TableTitle description={t('Define custom roles and permissions that can be assigned to your team members')}>{t('Project Role Management')}</TableTitle>
+          <TableTitle
+            description={t(
+              'Define custom roles and permissions that can be assigned to your team members',
+            )}
+          >
+            {t('Project Role Management')}
+          </TableTitle>
 
           {!platform.customRolesEnabled && (
             <Tooltip>

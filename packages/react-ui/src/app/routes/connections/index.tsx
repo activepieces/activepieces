@@ -460,7 +460,9 @@ function AppConnectionsPage() {
       </TableTitle>
       <DataTable
         emptyStateTextTitle={t('No connections found')}
-        emptyStateTextDescription={t('Come back later when you create a automation to manage your connections')}
+        emptyStateTextDescription={t(
+          'Come back later when you create a automation to manage your connections',
+        )}
         emptyStateIcon={<Globe className="size-14" />}
         columns={columns}
         page={filteredData}

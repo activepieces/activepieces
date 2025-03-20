@@ -92,7 +92,9 @@ export const ProjectRolesTable = ({
   return (
     <DataTable
       emptyStateTextTitle={t('No project roles found')}
-      emptyStateTextDescription={t('Create custom project roles to manage permissions for platform users')}
+      emptyStateTextDescription={t(
+        'Create custom project roles to manage permissions for platform users',
+      )}
       emptyStateIcon={<Users className="size-14" />}
       columns={columns}
       page={projectRoles}

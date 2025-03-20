@@ -207,11 +207,19 @@ export default function TemplatesPage() {
     >
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">
-          <TableTitle description={t('Convert the most common automations into reusable templates')}>{t('Templates')}</TableTitle>
+          <TableTitle
+            description={t(
+              'Convert the most common automations into reusable templates',
+            )}
+          >
+            {t('Templates')}
+          </TableTitle>
         </div>
         <DataTable
           emptyStateTextTitle={t('No templates found')}
-          emptyStateTextDescription={t('Create a template for your user to inspire them')}
+          emptyStateTextDescription={t(
+            'Create a template for your user to inspire them',
+          )}
           emptyStateIcon={<FileText className="size-14" />}
           columns={columnsWithCheckbox}
           page={data}

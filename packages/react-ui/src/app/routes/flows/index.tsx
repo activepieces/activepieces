@@ -328,7 +328,11 @@ const FlowsPage = () => {
       <TaskLimitAlert />
       <div className="flex flex-col gap-4 w-full grow">
         <div className="flex">
-          <TableTitle description={t('Create and manage your automation flows')}>{t('Flows')}</TableTitle>
+          <TableTitle
+            description={t('Create and manage your automation flows')}
+          >
+            {t('Flows')}
+          </TableTitle>
           <div className="ml-auto flex flex-row gap-2">
             <PermissionNeededTooltip
               hasPermission={doesUserHavePermissionToWriteFlow}
@@ -399,7 +403,9 @@ const FlowsPage = () => {
           <div className="w-full">
             <DataTable
               emptyStateTextTitle={t('No flows found')}
-              emptyStateTextDescription={t('Create a workflow to start automating')}
+              emptyStateTextDescription={t(
+                'Create a workflow to start automating',
+              )}
               emptyStateIcon={<Workflow className="size-14" />}
               columns={columns.filter(
                 (column) =>

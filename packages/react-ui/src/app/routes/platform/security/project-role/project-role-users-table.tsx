@@ -143,9 +143,9 @@ export const ProjectRoleUsersTable = () => {
             </Breadcrumb>
 
             {!isNil(projectRole?.name) ? (
-              <TableTitle description={t('View the users assigned to this role')}>{`${projectRole?.name} ${t('Role')} ${t(
-                'Users',
-              )}`}</TableTitle>
+              <TableTitle
+                description={t('View the users assigned to this role')}
+              >{`${projectRole?.name} ${t('Role')} ${t('Users')}`}</TableTitle>
             ) : (
               <Skeleton className="h-6 w-40" />
             )}
@@ -162,7 +162,9 @@ export const ProjectRoleUsersTable = () => {
 
         <DataTable
           emptyStateTextTitle={t('No users found')}
-          emptyStateTextDescription={t('Starting by assigning users to this role')}
+          emptyStateTextDescription={t(
+            'Starting by assigning users to this role',
+          )}
           emptyStateIcon={<User className="size-14" />}
           columns={columns}
           page={data}

@@ -91,7 +91,9 @@ const ApiKeysPage = () => {
         </div>
         <DataTable
           emptyStateTextTitle={t('No API keys found')}
-          emptyStateTextDescription={t('Start by creating an API key to communicate with Activepieces APIs')}
+          emptyStateTextDescription={t(
+            'Start by creating an API key to communicate with Activepieces APIs',
+          )}
           emptyStateIcon={<Key className="size-14" />}
           page={data}
           isLoading={isLoading}

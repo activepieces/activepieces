@@ -11,7 +11,6 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDeepCompareEffect } from 'react-use';
 import { v4 as uuid } from 'uuid';
-import { FileQuestion } from 'lucide-react';
 
 import {
   Table,
@@ -352,14 +351,14 @@ export function DataTable<
                   className="h-[350px] text-center"
                 >
                   <div className="flex flex-col items-center justify-center gap-2">
-                    {emptyStateIcon ? (
-                      emptyStateIcon
-                    ) : (
-                      <></>
-                    )}
-                    <p className="text-lg font-semibold">{emptyStateTextTitle}</p>
+                    {emptyStateIcon ? emptyStateIcon : <></>}
+                    <p className="text-lg font-semibold">
+                      {emptyStateTextTitle}
+                    </p>
                     {emptyStateTextDescription && (
-                      <p className="text-sm text-muted-foreground ">{emptyStateTextDescription}</p>
+                      <p className="text-sm text-muted-foreground ">
+                        {emptyStateTextDescription}
+                      </p>
                     )}
                   </div>
                 </TableCell>

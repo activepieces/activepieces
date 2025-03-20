@@ -366,11 +366,15 @@ export default function ProjectsPage() {
     >
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">
-          <TableTitle description={t('Manage your automation projects')}>{t('Projects')}</TableTitle>
+          <TableTitle description={t('Manage your automation projects')}>
+            {t('Projects')}
+          </TableTitle>
         </div>
         <DataTable
           emptyStateTextTitle={t('No projects found')}
-          emptyStateTextDescription={t('Start by creating projects to manage your automation teams')}
+          emptyStateTextDescription={t(
+            'Start by creating projects to manage your automation teams',
+          )}
           emptyStateIcon={<Package className="size-14" />}
           onRowClick={async (project) => {
             await setCurrentProject(queryClient, project);

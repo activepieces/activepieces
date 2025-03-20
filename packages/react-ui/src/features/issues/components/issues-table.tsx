@@ -192,7 +192,9 @@ export default function IssuesTable() {
       </div>
       <DataTable
         emptyStateTextTitle={t('No issues found')}
-        emptyStateTextDescription={t('All your workflows are running smoothly.')}
+        emptyStateTextDescription={t(
+          'All your workflows are running smoothly.',
+        )}
         emptyStateIcon={<CheckCircle className="size-14" />}
         page={data}
         isLoading={isLoading}

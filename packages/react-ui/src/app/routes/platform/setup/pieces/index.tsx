@@ -183,7 +183,13 @@ const PlatformPiecesPage = () => {
           />
         )}
         <div className="mb-4 flex">
-          <TableTitle description={t('Manage the pieces that are available to your users')}>{t('Pieces')}</TableTitle>
+          <TableTitle
+            description={t(
+              'Manage the pieces that are available to your users',
+            )}
+          >
+            {t('Pieces')}
+          </TableTitle>
           <div className="ml-auto">
             <div className="flex gap-3">
               <ApplyTags
@@ -202,7 +208,9 @@ const PlatformPiecesPage = () => {
         </div>
         <DataTable
           emptyStateTextTitle={t('No pieces found')}
-          emptyStateTextDescription={t('Start by installing pieces that you want to use in your automations')}
+          emptyStateTextDescription={t(
+            'Start by installing pieces that you want to use in your automations',
+          )}
           emptyStateIcon={<Package className="size-14" />}
           columns={columns}
           filters={[

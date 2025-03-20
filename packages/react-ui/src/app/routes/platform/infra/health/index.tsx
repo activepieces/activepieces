@@ -64,7 +64,11 @@ export default function WorkersPage() {
 
   return (
     <div className="flex flex-col w-full gap-4">
-      <TableTitle description={t('Check the status of your platform and its components')}>{t('System Health Status')}</TableTitle>
+      <TableTitle
+        description={t('Check the status of your platform and its components')}
+      >
+        {t('System Health Status')}
+      </TableTitle>
       <DataTable
         emptyStateTextTitle={t('No issues detected')}
         emptyStateTextDescription={t('All systems are running smoothly')}

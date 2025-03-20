@@ -145,7 +145,9 @@ const ProjectPiecesPage = () => {
         <TableTitle>{t('Pieces')}</TableTitle>
         <DataTable
           emptyStateTextTitle={t('No pieces found')}
-          emptyStateTextDescription={t('Add a piece to your project that you want to use in your automations')}
+          emptyStateTextDescription={t(
+            'Add a piece to your project that you want to use in your automations',
+          )}
           emptyStateIcon={<Package className="size-14" />}
           columns={columns}
           filters={[

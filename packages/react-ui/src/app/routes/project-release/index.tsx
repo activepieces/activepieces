@@ -152,19 +152,25 @@ const ProjectReleasesPage = () => {
   return (
     <div className="flex-col w-full gap-4">
       <div className="mb-8 flex items-center justify-between">
-        <TableTitle description={<>
-          {t(
-            'Track and manage your project version history and deployments. ',
-          )}
-          <a
-            href="https://www.activepieces.com/docs/operations/git-sync"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline"
-          >
-            {t('Environments & Releases')}
-          </a>
-        </>}>{t('Project Releases')}</TableTitle>
+        <TableTitle
+          description={
+            <>
+              {t(
+                'Track and manage your project version history and deployments. ',
+              )}
+              <a
+                href="https://www.activepieces.com/docs/operations/git-sync"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                {t('Environments & Releases')}
+              </a>
+            </>
+          }
+        >
+          {t('Project Releases')}
+        </TableTitle>
 
         <div className="flex items-center gap-2">
           <PermissionNeededTooltip

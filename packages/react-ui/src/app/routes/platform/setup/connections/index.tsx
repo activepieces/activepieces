@@ -370,7 +370,9 @@ const GlobalConnectionsTable = () => {
         </TableTitle>
         <DataTable
           emptyStateTextTitle={t('No global connections found')}
-          emptyStateTextDescription={t('Create a global connection that can be shared to multiple projects')}
+          emptyStateTextDescription={t(
+            'Create a global connection that can be shared to multiple projects',
+          )}
           emptyStateIcon={<Globe className="size-14" />}
           columns={columns}
           page={data}
