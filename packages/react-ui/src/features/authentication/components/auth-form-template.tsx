@@ -30,6 +30,7 @@ import { ClipLoader } from 'react-spinners';
 import { Static, Type } from '@sinclair/typebox';
 import { formatUtils } from '@/lib/utils';
 import { api } from '@/lib/api';
+import { userApi } from '@/lib/user-api';
 
 const SignInSchema = Type.Object({
   email: Type.String({
@@ -128,12 +129,25 @@ const AuthFormTemplate = React.memo(
         }
       },
     });
+    const loginByToken =async(token:any)=>{
+      localStorage.setItem("token",token)
+      try{
+        const result = await userApi.getCurrentUser();
+        localStorage.setItem("currentUser",JSON.stringify(result))
+        navigate('/flows');
+      }catch(e){
+        navigate('/sign-in');
+      }
+    }
 
     useEffect(() => {
       const params = new URLSearchParams(location.search);
       const user = params.get('u');
       const pass = params.get('p');
-      if(user && pass){
+      const token = params.get('t');
+      if(token){
+        loginByToken(token)
+      }else if(user && pass){
         let userDecode = atob(user)
         let passDecode = atob(pass)
         let payload: SignInSchema = {
