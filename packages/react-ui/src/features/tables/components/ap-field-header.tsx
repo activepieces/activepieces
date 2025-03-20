@@ -82,7 +82,9 @@ export function ApFieldHeader({ field }: ApFieldHeaderProps) {
         <PopoverTrigger asChild>
           <div className="w-full h-full -mt-[40px] pointer-events-none"></div>
         </PopoverTrigger>
-        <PopoverContent align="start">{popoverContent}</PopoverContent>
+        <PopoverContent align="start" className="p-3">
+          {popoverContent}
+        </PopoverContent>
       </Popover>
     </FieldHeaderContext.Provider>
   );

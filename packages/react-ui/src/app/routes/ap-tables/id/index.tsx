@@ -122,7 +122,7 @@ const ApTableEditorPage = () => {
       }: RenderCellProps<Row, { id: string }>) => (
         <EditableCell
           key={row.id + '_' + field.uuid}
-          type={field.type}
+          field={field}
           value={row[field.uuid]}
           row={row}
           column={column}
