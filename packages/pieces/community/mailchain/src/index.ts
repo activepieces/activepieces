@@ -11,7 +11,7 @@ export const mailchain = createPiece({
   minimumSupportedRelease: '0.20.0',
   categories: [],
   logoUrl:
-    'https://imagedelivery.net/bHREz764QO9n_1kIQUR2sw/b0515bde-84c5-4514-170c-cb23adca4800/public',
+    'https://cdn.activepieces.com/pieces/mailchain.png',
   authors: ['Swanblocks/Ahmad Shawar'],
   actions: [getAuthenticatedUser, sendEmail],
   triggers: [],
