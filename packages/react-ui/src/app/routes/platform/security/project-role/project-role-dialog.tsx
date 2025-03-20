@@ -93,10 +93,10 @@ const initialPermissions = [
     disableNone: true,
   },
   {
-    name: 'Manual Tasks',
-    description: 'Read and write manual tasks',
-    read: [Permission.READ_MANUAL_TASKS],
-    write: [Permission.READ_MANUAL_TASKS, Permission.WRITE_MANUAL_TASK],
+    name: 'Todos',
+    description: 'Read and write todos',
+    read: [Permission.READ_TODOS],
+    write: [Permission.READ_TODOS, Permission.WRITE_TODOS],
     disableNone: true,
   },
 ];

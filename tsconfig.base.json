@@ -404,9 +404,6 @@
       "@activepieces/piece-maileroo": [
         "packages/pieces/community/maileroo/src/index.ts"
       ],
-      "@activepieces/piece-manual-task": [
-        "packages/pieces/community/manual-task/src/index.ts"
-      ],
       "@activepieces/piece-mastodon": [
         "packages/pieces/community/mastodon/src/index.ts"
       ],
@@ -684,6 +681,9 @@
       ],
       "@activepieces/piece-todoist": [
         "packages/pieces/community/todoist/src/index.ts"
+      ],
+      "@activepieces/piece-todos": [
+        "packages/pieces/community/todos/src/index.ts"
       ],
       "@activepieces/piece-totalcms": [
         "packages/pieces/community/totalcms/src/index.ts"

@@ -66,7 +66,7 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
                 return !isNil(host) && !isNil(port) && !isNil(user) && !isNil(password)
             }
 
-            const isPlatformSmtpConfigured = !isNil(platform) && !isNil(platform.smtp) && isConfigured(platform.smtp.host, platform.smtp?.port.toString(), platform.smtp.user, platform.smtp.password)
+            const isPlatformSmtpConfigured = !isNil(platform) && !isNil(platform.smtp) && isConfigured(platform.smtp.host, platform?.smtp?.port?.toString(), platform.smtp.user, platform.smtp.password)
             const isSmtpSystemConfigured = isConfigured(system.get(AppSystemProp.SMTP_HOST), system.get(AppSystemProp.SMTP_PORT), system.get(AppSystemProp.SMTP_USERNAME), system.get(AppSystemProp.SMTP_PASSWORD))
 
             return isPlatformSmtpConfigured || isSmtpSystemConfigured

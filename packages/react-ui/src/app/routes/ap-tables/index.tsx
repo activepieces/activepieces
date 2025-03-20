@@ -5,7 +5,6 @@ import { Trash2, Plus, CheckIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { BetaBadge } from '@/app/components/beta-badge';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -225,10 +224,7 @@ const ApTablesPage = () => {
   return (
     <div className="flex-col w-full">
       <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2">
-          <TableTitle>{t('Tables')}</TableTitle>
-          <BetaBadge />
-        </div>
+        <TableTitle beta={true}>{t('Tables')}</TableTitle>
         <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
           <Button
             size="sm"

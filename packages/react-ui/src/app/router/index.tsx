@@ -48,8 +48,6 @@ import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
 import IssuesPage from '../routes/issues';
-import { ManualTasksPage } from '../routes/manual-task';
-import { ManualTaskTestingPage } from '../routes/manual-task/id';
 import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
@@ -73,6 +71,8 @@ import TeamPage from '../routes/settings/team';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
 import { ShareTemplatePage } from '../routes/templates/share-template';
+import { TodosPage } from '../routes/todos';
+import { TodoTestingPage } from '../routes/todos/id';
 
 import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 import { DefaultRoute } from './default-route';
@@ -258,20 +258,20 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/manual-tasks',
+    path: '/todos',
     element: (
       <DashboardContainer>
-        <PageTitle title="Manual Tasks">
-          <ManualTasksPage />
+        <PageTitle title="Todos">
+          <TodosPage />
         </PageTitle>
       </DashboardContainer>
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/manual-tasks/:manualTaskId',
+    path: '/todos/:todoId',
     element: (
-      <PageTitle title="Manual Task Testing">
-        <ManualTaskTestingPage />
+      <PageTitle title="Todo Testing">
+        <TodoTestingPage />
       </PageTitle>
     ),
   }),
