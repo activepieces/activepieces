@@ -35,7 +35,7 @@ export const RequestTrial = ({
   buttonVariant = 'default',
 }: RequestTrialProps) => {
   const { data: currentUser } = userHooks.useCurrentUser();
-  const { data: flags } = flagsHooks.useFlags();
+  // const { data: flags } = flagsHooks.useFlags();
 
   const createQueryParams = () => {
     const params = {
@@ -43,7 +43,7 @@ export const RequestTrial = ({
       lastName: currentUser?.lastName || '',
       email: currentUser?.email || '',
       featureKey,
-      flags: btoa(JSON.stringify(flags)),
+      // flags: btoa(JSON.stringify(flags)),
     };
 
     return Object.entries(params)
@@ -53,7 +53,7 @@ export const RequestTrial = ({
 
   const handleClick = () => {
     window.open(
-      `https://www.activepieces.com/sales?${createQueryParams()}`,
+      `https://promptxai.com/promptx/contact.html?${createQueryParams()}`,
       '_blank',
       'noopener noreferrer',
     );
