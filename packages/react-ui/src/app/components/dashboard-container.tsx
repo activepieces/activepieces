@@ -157,7 +157,7 @@ export function DashboardContainer({
     label: t('Tasks'),
     icon: ListTodo,
     showInEmbed: true,
-    hasPermission: checkAccess(Permission.READ_MANUAL_TASKS),
+    hasPermission: checkAccess(Permission.READ_TODOS),
     isSubItem: false,
   };
 

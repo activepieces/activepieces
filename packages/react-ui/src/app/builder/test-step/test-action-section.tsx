@@ -8,14 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
-import { manualTaskApi } from '@/features/manual-tasks/lib/manual-task-api';
 import {
   ActionType,
   FileType,
   FlowOperationType,
-  ManualTaskWithAssignee,
   Step,
   StepRunResponse,
+  TodoWithAssignee,
   TriggerType,
   flowStructureUtil,
   isNil,
@@ -24,10 +23,11 @@ import {
 import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
 import { useBuilderStateContext } from '../builder-hooks';
 
-import { ManualTaskTestingDialog } from './custom-test-step/test-manual-task-create-task';
+import { ManualTaskTestingDialog } from './custom-test-step/todos-create-task';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
 import { testStepUtils } from './test-step-utils';
+import { todosApi } from '@/features/todos/lib/todos-api';
 
 type TestActionComponentProps = {
   isSaving: boolean;
@@ -35,11 +35,11 @@ type TestActionComponentProps = {
   projectId: string;
 };
 
-function isManualTaskCreateTask(step: Step): boolean {
+function isTodoCreateTask(step: Step): boolean {
   return (
     step.type === ActionType.PIECE &&
-    step.settings.pieceName === '@activepieces/piece-manual-task' &&
-    step.settings.actionName === 'createTask'
+    step.settings.pieceName === '@activepieces/piece-todos' &&
+    step.settings.actionName === 'createTodo'
   );
 }
 
@@ -57,10 +57,10 @@ const TestStepSectionImplementation = React.memo(
     const [consoleLogs, setConsoleLogs] = useState<null | string>(null);
     const socket = useSocket();
     const [
-      isManualTaskCreateTaskDialogOpen,
-      setIsManualTaskCreateTaskDialogOpen,
+      isTodoCreateTaskDialogOpen,
+      setIsTodoCreateTaskDialogOpen,
     ] = useState(false);
-    const [manualTask, setManualTask] = useState<ManualTaskWithAssignee | null>(
+    const [todo, setTodo] = useState<TodoWithAssignee | null>(
       null,
     );
     const {
@@ -180,16 +180,16 @@ const TestStepSectionImplementation = React.memo(
 
     const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
 
-    const handleManualTaskCreateTask = async () => {
-      setIsManualTaskCreateTaskDialogOpen(true);
+    const handleTodoCreateTask = async () => {
+      setIsTodoCreateTaskDialogOpen(true);
       const testStepResponse = await flowRunsApi.testStep(socket, {
         flowVersionId,
         stepName: currentStep.name,
       });
-      const output = testStepResponse.output as ManualTaskWithAssignee;
+      const output = testStepResponse.output as TodoWithAssignee;
       if (testStepResponse.success && !isNil(output)) {
-        const task = await manualTaskApi.get(output.id as string);
-        setManualTask(task);
+        const task = await todosApi.get(output.id as string);
+        setTodo(task);
       }
     };
 
@@ -202,15 +202,15 @@ const TestStepSectionImplementation = React.memo(
                 variant="outline"
                 size="sm"
                 onClick={async () => {
-                  if (isManualTaskCreateTask(currentStep)) {
-                    handleManualTaskCreateTask();
+                  if (isTodoCreateTask(currentStep)) {
+                    handleTodoCreateTask();
                   } else {
                     mutate();
                   }
                 }}
                 keyboardShortcut="G"
                 onKeyboardShortcut={mutate}
-                loading={isTesting || isManualTaskCreateTaskDialogOpen}
+                loading={isTesting || isTodoCreateTaskDialogOpen}
                 disabled={!currentStep.valid}
               >
                 <Dot animation={true} variant={'primary'}></Dot>
@@ -222,15 +222,15 @@ const TestStepSectionImplementation = React.memo(
         {sampleDataExists && (
           <TestSampleDataViewer
             onRetest={() => {
-              if (isManualTaskCreateTask(currentStep)) {
-                handleManualTaskCreateTask();
+              if (isTodoCreateTask(currentStep)) {
+                handleTodoCreateTask();
               } else {
                 mutate();
               }
             }}
             isValid={currentStep.valid}
             isSaving={isSaving}
-            isTesting={isTesting || isManualTaskCreateTaskDialogOpen}
+            isTesting={isTesting || isTodoCreateTaskDialogOpen}
             sampleData={sampleData}
             sampleDataInput={sampleDataInput ?? null}
             errorMessage={errorMessage}
@@ -240,11 +240,11 @@ const TestStepSectionImplementation = React.memo(
             }
           ></TestSampleDataViewer>
         )}
-        {isManualTaskCreateTaskDialogOpen && manualTask && (
+        {isTodoCreateTaskDialogOpen && todo && (
           <ManualTaskTestingDialog
-            open={isManualTaskCreateTaskDialogOpen}
-            onOpenChange={setIsManualTaskCreateTaskDialogOpen}
-            task={manualTask}
+            open={isTodoCreateTaskDialogOpen}
+            onOpenChange={setIsTodoCreateTaskDialogOpen}
+            todo={todo}
             flowVersionId={flowVersionId}
             projectId={projectId}
             currentStep={currentStep}

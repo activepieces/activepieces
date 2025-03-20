@@ -48,8 +48,7 @@ import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
 import IssuesPage from '../routes/issues';
-import { ManualTasksPage } from '../routes/manual-task';
-import { ManualTaskTestingPage } from '../routes/manual-task/id';
+import { TodosPage } from '../routes/todos';
 import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
@@ -81,6 +80,7 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
+import { TodoTestingPage } from '../routes/todos/id';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -261,8 +261,8 @@ const routes = [
     path: '/manual-tasks',
     element: (
       <DashboardContainer>
-        <PageTitle title="Manual Tasks">
-          <ManualTasksPage />
+        <PageTitle title="Todos">
+          <TodosPage />
         </PageTitle>
       </DashboardContainer>
     ),
@@ -270,8 +270,8 @@ const routes = [
   ...ProjectRouterWrapper({
     path: '/manual-tasks/:manualTaskId',
     element: (
-      <PageTitle title="Manual Task Testing">
-        <ManualTaskTestingPage />
+      <PageTitle title="Todo Testing">
+        <TodoTestingPage />
       </PageTitle>
     ),
   }),
