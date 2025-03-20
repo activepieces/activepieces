@@ -5,7 +5,7 @@ export const getAddressTokenBalances = createAction({
   name: 'get_address_token_balances',
   displayName: 'Get Address Token Balances',
   description: 'Get list of token balances for an address',
-  category: 'Addresses',
+  // category: 'Addresses',
   props: {
     addressHash: Property.ShortText({
       displayName: 'Address Hash',

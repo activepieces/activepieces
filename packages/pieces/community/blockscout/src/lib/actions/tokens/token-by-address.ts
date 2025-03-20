@@ -5,7 +5,7 @@ export const getTokenByAddress = createAction({
   name: 'get_token_by_address',
   displayName: 'Get Token by Address',
   description: 'Get token info by its contract address',
-  category: 'Tokens',
+  // category: 'Tokens',
   props: {
     addressHash: Property.ShortText({
       displayName: 'Token Address',

@@ -5,7 +5,7 @@ export const getMainPageTransactions = createAction({
   name: 'get_main_page_transactions',
   displayName: 'Get Main Page Transactions',
   description: 'Get transactions for main page display',
-  category: 'Transactions',
+  // category: 'Transactions',
   props: {},
   async run(context) {
     const response = await httpClient.sendRequest({

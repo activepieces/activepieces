@@ -5,7 +5,7 @@ export const getTokenInstances = createAction({
   name: 'get_token_instances',
   displayName: 'Get Token Instances',
   description: 'Get list of token instances (NFTs)',
-  category: 'Tokens',
+  // category: 'Tokens',
   props: {
     addressHash: Property.ShortText({
       displayName: 'Token Address',

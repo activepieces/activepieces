@@ -5,7 +5,7 @@ export const search = createAction({
   name: 'search',
   displayName: 'Search',
   description: 'Search for addresses, transactions, blocks, or tokens',
-  category: 'Search',
+  // category: 'Search',
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

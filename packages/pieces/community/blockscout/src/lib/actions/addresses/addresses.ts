@@ -5,7 +5,7 @@ export const getAddresses = createAction({
   name: 'get_addresses',
   displayName: 'Get Addresses',
   description: 'Get list of native coin holders',
-  category: 'Addresses',
+  // category: 'Addresses',
   props: {},
   async run(context) {
     const response = await httpClient.sendRequest({

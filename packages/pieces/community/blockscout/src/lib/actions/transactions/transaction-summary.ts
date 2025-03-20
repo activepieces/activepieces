@@ -5,7 +5,7 @@ export const getTransactionSummary = createAction({
   name: 'get_transaction_summary',
   displayName: 'Get Transaction Summary',
   description: 'Get a human-readable summary of a transaction',
-  category: 'Transactions',
+  // category: 'Transactions',
   props: {
     transactionHash: Property.ShortText({
       displayName: 'Transaction Hash',

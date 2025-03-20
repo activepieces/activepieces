@@ -5,7 +5,7 @@ export const getAddressTransactions = createAction({
   name: 'get_address_transactions',
   displayName: 'Get Address Transactions',
   description: 'Get list of transactions for an address',
-  category: 'Addresses',
+  // category: 'Addresses',
   props: {
     addressHash: Property.ShortText({
       displayName: 'Address Hash',

@@ -5,7 +5,7 @@ export const getBlockWithdrawals = createAction({
   name: 'get_block_withdrawals',
   displayName: 'Get Block Withdrawals',
   description: 'Get list of withdrawals for a specific block',
-  category: 'Blocks',
+  // category: 'Blocks',
   props: {
     blockIdentifier: Property.ShortText({
       displayName: 'Block Hash or Number',

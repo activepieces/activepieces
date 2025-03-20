@@ -5,7 +5,7 @@ export const getMainPageBlocks = createAction({
   name: 'get_main_page_blocks',
   displayName: 'Get Main Page Blocks',
   description: 'Get blocks for main page display',
-  category: 'Blocks',
+  // category: 'Blocks',
   props: {},
   async run(context) {
     const response = await httpClient.sendRequest({

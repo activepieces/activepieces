@@ -5,7 +5,7 @@ export const getAddressInternalTransactions = createAction({
   name: 'get_address_internal_transactions',
   displayName: 'Get Address Internal Transactions',
   description: 'Get list of internal transactions for an address',
-  category: 'Addresses',
+  // category: 'Addresses',
   props: {
     addressHash: Property.ShortText({
       displayName: 'Address Hash',

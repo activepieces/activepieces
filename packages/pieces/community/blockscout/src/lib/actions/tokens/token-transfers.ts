@@ -5,7 +5,7 @@ export const getTokenTransfers = createAction({
   name: 'get_token_transfers',
   displayName: 'Get Token Transfers',
   description: 'Get list of token transfers',
-  category: 'Tokens',
+  // category: 'Tokens',
   props: {
     addressHash: Property.ShortText({
       displayName: 'Token Address',

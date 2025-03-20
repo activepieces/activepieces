@@ -5,7 +5,7 @@ export const getTransactionTokenTransfers = createAction({
   name: 'get_transaction_token_transfers',
   displayName: 'Get Transaction Token Transfers',
   description: 'Get list of token transfers in a transaction',
-  category: 'Transactions',
+  // category: 'Transactions',
   props: {
     transactionHash: Property.ShortText({
       displayName: 'Transaction Hash',

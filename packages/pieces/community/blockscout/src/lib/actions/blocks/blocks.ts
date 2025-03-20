@@ -5,7 +5,7 @@ export const getBlocks = createAction({
   name: 'get_blocks',
   displayName: 'Get Blocks',
   description: 'Get list of blocks',
-  category: 'Blocks',
+  // category: 'Blocks',
   props: {},
   async run(context) {
     const response = await httpClient.sendRequest({

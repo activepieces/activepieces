@@ -5,7 +5,7 @@ export const getBlockTransactions = createAction({
   name: 'get_block_transactions',
   displayName: 'Get Block Transactions',
   description: 'Get list of transactions for a specific block',
-  category: 'Blocks',
+  // category: 'Blocks',
   props: {
     blockIdentifier: Property.ShortText({
       displayName: 'Block Hash or Number',

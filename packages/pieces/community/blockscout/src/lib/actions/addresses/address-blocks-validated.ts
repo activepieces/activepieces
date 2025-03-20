@@ -5,7 +5,7 @@ export const getAddressBlocksValidated = createAction({
   name: 'get_address_blocks_validated',
   displayName: 'Get Address Blocks Validated',
   description: 'Get list of blocks validated by an address',
-  category: 'Addresses',
+  // category: 'Addresses',
   props: {
     addressHash: Property.ShortText({
       displayName: 'Address Hash',

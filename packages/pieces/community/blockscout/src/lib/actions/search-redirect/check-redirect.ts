@@ -5,7 +5,7 @@ export const checkRedirect = createAction({
   name: 'check_redirect',
   displayName: 'Check Search Redirect',
   description: 'Check if a search query should redirect to a specific resource',
-  category: 'Search',
+  // category: 'Search',
   props: {
     query: Property.ShortText({
       displayName: 'Search Query',

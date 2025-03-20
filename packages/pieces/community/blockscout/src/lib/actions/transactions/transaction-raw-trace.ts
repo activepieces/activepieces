@@ -5,7 +5,7 @@ export const getTransactionRawTrace = createAction({
   name: 'get_transaction_raw_trace',
   displayName: 'Get Transaction Raw Trace',
   description: 'Get raw trace data for a transaction',
-  category: 'Transactions',
+  // category: 'Transactions',
   props: {
     transactionHash: Property.ShortText({
       displayName: 'Transaction Hash',

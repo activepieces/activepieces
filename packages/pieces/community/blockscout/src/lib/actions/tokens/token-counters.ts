@@ -5,7 +5,7 @@ export const getTokenCounters = createAction({
   name: 'get_token_counters',
   displayName: 'Get Token Counters',
   description: 'Get token counters (holders count, transfers count, etc.)',
-  category: 'Tokens',
+  // category: 'Tokens',
   props: {
     addressHash: Property.ShortText({
       displayName: 'Token Address',

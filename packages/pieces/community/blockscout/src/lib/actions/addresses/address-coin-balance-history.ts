@@ -5,7 +5,7 @@ export const getAddressCoinBalanceHistory = createAction({
   name: 'get_address_coin_balance_history',
   displayName: 'Get Address Coin Balance History',
   description: 'Get list of coin balance changes for an address',
-  category: 'Addresses',
+  // category: 'Addresses',
   props: {
     addressHash: Property.ShortText({
       displayName: 'Address Hash',

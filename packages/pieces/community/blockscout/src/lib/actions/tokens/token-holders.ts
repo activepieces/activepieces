@@ -5,7 +5,7 @@ export const getTokenHolders = createAction({
   name: 'get_token_holders',
   displayName: 'Get Token Holders',
   description: 'Get list of token holders',
-  category: 'Tokens',
+  // category: 'Tokens',
   props: {
     addressHash: Property.ShortText({
       displayName: 'Token Address',

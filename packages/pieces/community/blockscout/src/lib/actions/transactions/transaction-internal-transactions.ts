@@ -5,7 +5,7 @@ export const getTransactionInternalTransactions = createAction({
   name: 'get_transaction_internal_transactions',
   displayName: 'Get Transaction Internal Transactions',
   description: 'Get list of internal transactions in a transaction',
-  category: 'Transactions',
+  // category: 'Transactions',
   props: {
     transactionHash: Property.ShortText({
       displayName: 'Transaction Hash',

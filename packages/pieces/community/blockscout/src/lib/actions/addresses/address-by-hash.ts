@@ -5,7 +5,7 @@ export const getAddressByHash = createAction({
   name: 'get_address_by_hash',
   displayName: 'Get Address by Hash',
   description: 'Get address info by its hash',
-  category: 'Addresses',
+  // category: 'Addresses',
   props: {
     addressHash: Property.ShortText({
       displayName: 'Address Hash',

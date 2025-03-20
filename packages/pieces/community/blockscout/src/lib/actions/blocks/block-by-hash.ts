@@ -5,7 +5,7 @@ export const getBlockByHash = createAction({
   name: 'get_block_by_hash',
   displayName: 'Get Block by Hash or Number',
   description: 'Get block info by its hash or block number',
-  category: 'Blocks',
+  // category: 'Blocks',
   props: {
     blockIdentifier: Property.ShortText({
       displayName: 'Block Hash or Number',

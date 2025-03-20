@@ -5,7 +5,7 @@ export const getTransactionByHash = createAction({
   name: 'get_transaction_by_hash',
   displayName: 'Get Transaction by Hash',
   description: 'Get transaction details by its hash',
-  category: 'Transactions',
+  // category: 'Transactions',
   props: {
     transactionHash: Property.ShortText({
       displayName: 'Transaction Hash',

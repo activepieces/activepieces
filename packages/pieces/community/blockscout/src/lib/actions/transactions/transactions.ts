@@ -5,7 +5,7 @@ export const getTransactions = createAction({
   name: 'get_transactions',
   displayName: 'Get Transactions',
   description: 'Get list of transactions',
-  category: 'Transactions',
+  // category: 'Transactions',
   props: {},
   async run(context) {
     const response = await httpClient.sendRequest({

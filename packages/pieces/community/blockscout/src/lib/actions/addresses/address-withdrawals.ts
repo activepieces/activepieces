@@ -5,7 +5,7 @@ export const getAddressWithdrawals = createAction({
   name: 'get_address_withdrawals',
   displayName: 'Get Address Withdrawals',
   description: 'Get list of withdrawals for an address',
-  category: 'Addresses',
+  // category: 'Addresses',
   props: {
     addressHash: Property.ShortText({
       displayName: 'Address Hash',

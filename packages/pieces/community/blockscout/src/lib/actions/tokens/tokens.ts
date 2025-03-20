@@ -6,7 +6,7 @@ export const getTokens = createAction({
   displayName: 'Get Tokens',
   description: 'Get list of tokens',
 
-  category: 'Tokens',
+  // category: 'Tokens',
   props: {},
   async run(context) {
     const response = await httpClient.sendRequest({

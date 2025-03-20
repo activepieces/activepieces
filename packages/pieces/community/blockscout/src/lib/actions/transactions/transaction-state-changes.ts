@@ -5,7 +5,7 @@ export const getTransactionStateChanges = createAction({
   displayName: 'Get Transaction State Changes',
   description: 'Get list of state changes in a transaction',
 
-  category: 'Transactions',
+  // category: 'Transactions',
   props: {
     transactionHash: Property.ShortText({
       displayName: 'Transaction Hash',
