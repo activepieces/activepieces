@@ -6,7 +6,7 @@ type FieldSchema = Field & {
     table: Table
     project: Project
     cells: Cell[]
-    data: Record<string, any> | null
+    data: Record<string, unknown> | null
 }
 
 export const FieldEntity = new EntitySchema<FieldSchema>({

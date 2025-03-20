@@ -36,13 +36,16 @@ const DropdownEditor = ({
       <SearchableSelect
         triggerClassName="rounded-none border-primary  border-2 px-2"
         onClose={onClose}
-        options={[{
-          value: '',
-          label: 'Empty',
-        },...field.data.options.map((option) => ({
-          value: option.value,
-          label: option.value,
-        }))]}
+        options={[
+          {
+            value: '',
+            label: 'Empty',
+          },
+          ...field.data.options.map((option) => ({
+            value: option.value,
+            label: option.value,
+          })),
+        ]}
         onChange={handleChange}
         value={value}
         disabled={false}
