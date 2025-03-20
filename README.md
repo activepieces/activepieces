@@ -382,6 +382,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Kevinyu-alan"><img src="https://avatars.githubusercontent.com/u/198612963?v=4?s=100" width="100px;" alt="Kévin Yu"/><br /><sub><b>Kévin Yu</b></sub></a><br /><a href="#plugin-Kevinyu-alan" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/flex-yeongeun"><img src="https://avatars.githubusercontent.com/u/186537288?v=4?s=100" width="100px;" alt="노영은"/><br /><sub><b>노영은</b></sub></a><br /><a href="#plugin-flex-yeongeun" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/reemayoush"><img src="https://avatars.githubusercontent.com/u/168414383?v=4?s=100" width="100px;" alt="reemayoush"/><br /><sub><b>reemayoush</b></sub></a><br /><a href="#plugin-reemayoush" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
