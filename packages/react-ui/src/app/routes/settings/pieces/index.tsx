@@ -132,7 +132,7 @@ const ProjectPiecesPage = () => {
           <LockedAlert
             title={t('Control Pieces')}
             description={t(
-              "Show the pieces that matter most to your users and hide the ones you don't like.",
+              "Got an idea for a piece that matters to your users?",
             )}
             button={
               <RequestTrial
