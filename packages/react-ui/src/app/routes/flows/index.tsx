@@ -328,7 +328,7 @@ const FlowsPage = () => {
       <TaskLimitAlert />
       <div className="flex flex-col gap-4 w-full grow">
         <div className="flex">
-          <TableTitle>{t('Flows')}</TableTitle>
+          <TableTitle description={t('Create and manage your automation flows')}>{t('Flows')}</TableTitle>
           <div className="ml-auto flex flex-row gap-2">
             <PermissionNeededTooltip
               hasPermission={doesUserHavePermissionToWriteFlow}
@@ -398,6 +398,9 @@ const FlowsPage = () => {
           {!embedState.hideFolders && <FolderFilterList refresh={refresh} />}
           <div className="w-full">
             <DataTable
+              emptyStateTextTitle={t('No flows found')}
+              emptyStateTextDescription={t('Create a workflow to start automating')}
+              emptyStateIcon={<Workflow className="size-14" />}
               columns={columns.filter(
                 (column) =>
                   !embedState.hideFolders || column.accessorKey !== 'folderId',

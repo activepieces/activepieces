@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { CircleMinus, Pencil, RotateCcw, Trash } from 'lucide-react';
+import { CircleMinus, Pencil, RotateCcw, Trash, User } from 'lucide-react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -85,6 +85,9 @@ export default function UsersPage() {
           <TableTitle>{t('Users')}</TableTitle>
         </div>
         <DataTable
+          emptyStateTextTitle={t('No users found')}
+          emptyStateTextDescription={t('Start inviting users to your project')}
+          emptyStateIcon={<User className="size-14" />}
           columns={[
             {
               accessorKey: 'email',

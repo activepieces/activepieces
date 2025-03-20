@@ -6,11 +6,13 @@ import {
   ExternalLink,
   FileTextIcon,
   LockKeyhole,
+  Settings,
 } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
+import { BetaBadge } from '@/components/custom/beta-badge';
 import { Button } from '@/components/ui/button';
 import {
   Collapsible,
@@ -49,6 +51,7 @@ import { platformHooks } from '../../hooks/platform-hooks';
 
 import { Header } from './header';
 import UsageLimitsButton from './usage-limits-button';
+import { authenticationSession } from '@/lib/authentication-session';
 
 type Link = {
   icon: React.ReactNode;
@@ -90,13 +93,11 @@ const CustomTooltipLink = ({
       rel={newWindow ? 'noopener noreferrer' : ''}
     >
       <div
-        className={`relative flex  items-center gap-1 justify-between hover:bg-accent hover:text-primary rounded-lg transition-colors ${
-          extraClasses || ''
-        }${
-          isLinkActive
-            ? '!bg-primary/10 !text-primary hover:text-[#3F3F46]'
-            : ''
-        } ${isSubItem ? 'text-[#3F3F46] ' : ''}`}
+        className={cn(
+          "relative flex items-center gap-1 justify-between hover:bg-accent hover:text-primary rounded-lg transition-colors",
+          extraClasses,
+          isLinkActive && "!bg-primary/10 !text-primary"
+        )}
       >
         <div
           className={`w-full flex items-center justify-between gap-2 p-2 ${
@@ -106,6 +107,7 @@ const CustomTooltipLink = ({
           <div className="flex items-center gap-2">
             {Icon && <Icon className={`size-4`} />}
             <span className={`text-sm`}>{label}</span>
+            {(label === 'Tables' || label === 'Todos') && <span className='ml-2'><BetaBadge /></span>}
           </div>
           {locked && <LockKeyhole className="size-3" color="grey" />}
         </div>
@@ -165,6 +167,9 @@ export function SidebarComponent({
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { embedState } = useEmbedding();
   const { platform } = platformHooks.useCurrentPlatform();
+  const { data: showCommunity } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_COMMUNITY,
+  );
   const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
   const location = useLocation();
   return (
@@ -295,7 +300,20 @@ export function SidebarComponent({
               </SidebarContent>
               <SidebarFooter className="pb-4 gap-4">
                 <SidebarMenu>
-                  {true && (
+                  <SidebarMenuItem className="hover:bg-accent hover:text-primary rounded-lg transition-colors">
+                    <SidebarMenuButton asChild isActive={location.pathname.includes('/settings/')}>
+                      <Link
+                        to={authenticationSession.appendProjectRoutePrefix(
+                          '/settings/general',
+                        )}
+                        className="flex items-center gap-2"
+                      >
+                        <Settings className="size-5" />
+                        <span>{t('Project Settings')}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  {showCommunity && (
                     <>
                       <SidebarMenuItem className="hover:bg-accent hover:text-primary rounded-lg transition-colors">
                         <SidebarMenuButton asChild>
