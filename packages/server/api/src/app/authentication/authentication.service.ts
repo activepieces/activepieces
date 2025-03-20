@@ -260,6 +260,23 @@ async function getPersonalPlatformIdForFederatedAuthn(email: string, log: Fastif
 
 async function getPersonalPlatformIdForIdentity(identityId: string): Promise<string | null> {
     const edition = system.getEdition()
+
+    if (edition === ApEdition.COMMUNITY) {
+        const users = await userService.getByIdentityId({ identityId })
+        const platformsWithProjects = await Promise.all(users.map(async (user) => {
+            if (isNil(user.platformId)) {
+                return null
+            }
+            const hasProjects = await projectService.userHasProjects({
+                platformId: user.platformId,
+                userId: user.id,
+            })
+            return hasProjects ? user.platformId : null
+        }))
+        const platformIds = platformsWithProjects.filter((platformId) => !isNil(platformId))
+        return platformIds[0] ?? null
+    }
+
     if (edition === ApEdition.CLOUD) {
         const platforms = await platformService.listPlatformsForIdentityWithAtleastProject({ identityId })
         const platform = platforms.find((platform) => !platformUtils.isEnterpriseCustomerOnCloud(platform))
