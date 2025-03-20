@@ -109,7 +109,7 @@ const CustomTooltipLink = ({
             <span className={`text-sm`}>{label}</span>
             {(label === 'Tables' || label === 'Todos') && (
               <span className="ml-2">
-                <BetaBadge />
+                <BetaBadge showTooltip={false} />
               </span>
             )}
           </div>
