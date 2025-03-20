@@ -164,7 +164,7 @@ export const tablesCommon = {
               displayName: field.name,
               description,
               defaultValue:'',
-              required: true,
+              required: false,
               options: {
                 options:[{
                   label: 'Empty',
