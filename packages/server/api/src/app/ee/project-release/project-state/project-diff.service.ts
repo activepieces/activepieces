@@ -92,7 +92,6 @@ function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow): bool
     const normalizedTargetFlow = normalize(targetFlow.version)
     return normalizedFromFlow.displayName !== normalizedTargetFlow.displayName
         || JSON.stringify(normalizedFromFlow.trigger) !== JSON.stringify(normalizedTargetFlow.trigger)
-        || fromFlow.status !== targetFlow.status
 }
 
 
