@@ -25,6 +25,7 @@ export const pipedriveCommon = {
 				event_object: object,
 				event_action: action,
 				subscription_url: webhookUrl,
+				version:'1.0'
 			},
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
