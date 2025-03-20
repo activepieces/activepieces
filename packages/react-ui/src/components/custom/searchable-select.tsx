@@ -38,6 +38,8 @@ type SearchableSelectProps<T> = {
   showDeselect?: boolean;
   onRefresh?: () => void;
   showRefresh?: boolean;
+  onClose?: () => void;
+  triggerClassName?: string;
 };
 
 export const SearchableSelect = <T extends React.Key>({
@@ -50,6 +52,8 @@ export const SearchableSelect = <T extends React.Key>({
   showDeselect,
   onRefresh,
   showRefresh,
+  onClose,
+  triggerClassName,
 }: SearchableSelectProps<T>) => {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -104,10 +108,19 @@ export const SearchableSelect = <T extends React.Key>({
     onChange(option.value);
   };
   return (
-    <Popover modal={true} open={open} onOpenChange={setOpen}>
+    <Popover
+      modal={true}
+      open={open}
+      onOpenChange={(open) => {
+        if (!open) {
+          onClose?.();
+        }
+        setOpen(open);
+      }}
+    >
       <PopoverTrigger
         asChild
-        className={cn('', {
+        className={cn({
           'cursor-not-allowed opacity-80 ': disabled,
         })}
         onClick={(e) => {
@@ -125,8 +138,9 @@ export const SearchableSelect = <T extends React.Key>({
             role="combobox"
             loading={loading}
             aria-expanded={open}
-            className="w-full justify-between w-full"
+            className={cn('w-full justify-between w-full', triggerClassName)}
             onClick={(e) => {
+              console.log('clicked');
               setOpen((prev) => !prev);
               e.preventDefault();
             }}

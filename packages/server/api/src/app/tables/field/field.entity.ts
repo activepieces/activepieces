@@ -31,7 +31,7 @@ export const FieldEntity = new EntitySchema<FieldSchema>({
         data: {
             type: JSONB_COLUMN_TYPE,
             nullable: true,
-        }
+        },
     },
     indices: [
         {

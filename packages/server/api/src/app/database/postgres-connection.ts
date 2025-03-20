@@ -182,9 +182,9 @@ import { RestrictPieces1739546878775 } from './migration/postgres/1739546878775-
 import { ProjectIdNullableInTemplate1741357285896 } from './migration/postgres/1741357285896-ProjectIdNullableInTemplate'
 import { CreateTableWebhooks1741669458075 } from './migration/postgres/1741669458075-CreateTableWebhooks'
 import { UpdateNotifyStatusOnEmbedding1741963410825 } from './migration/postgres/1741963410825-UpdateNotifyStatusOnEmbedding'
-import { AddDataColumnToFieldEntity1742395892304 } from './migration/postgres/1742395892304-AddDataColumnToFieldEntity'
 import { AddManualTaskTable1742304857701 } from './migration/postgres/1742304857701-AddManualTaskTable'
 import { AddManualTaskCommentTable1742305104390 } from './migration/postgres/1742305104390-AddManualTaskCommentTable'
+import { AddDataColumnToFieldEntity1742395892304 } from './migration/postgres/1742395892304-AddDataColumnToFieldEntity'
 import { ChangeManualTasksToTodo1742432827826 } from './migration/postgres/1742432827826-ChangeManualTasksToTodo'
 import { ChangeManualTasksCommentsToTodoComments1742433144687 } from './migration/postgres/1742433144687-ChangeManualTasksCommentsToTodoComments'
 

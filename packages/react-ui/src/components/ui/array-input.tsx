@@ -4,8 +4,9 @@ import { Plus, TrashIcon } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+
 import { Button } from '@/components/ui/button';
-import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { FormControl, FormField, FormItem } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import {
   Sortable,
@@ -13,8 +14,6 @@ import {
   SortableItem,
 } from '@/components/ui/sortable';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
-
-
 
 type ArrayInputProps = {
   inputName: string;
@@ -28,11 +27,7 @@ type ArrayField = {
 };
 
 const ArrayInput = React.memo(
-  ({
-    inputName,
-    disabled,
-    required,
-  }: ArrayInputProps) => {
+  ({ inputName, disabled, required }: ArrayInputProps) => {
     const form = useFormContext();
     const [fields, setFields] = useState<ArrayField[]>(() => {
       const formValues = form.getValues(inputName);
@@ -88,10 +83,7 @@ const ArrayInput = React.memo(
       updateFormValue(newFields);
     };
 
-    const updateFieldValue = (
-      index: number,
-      newValue: string,
-    ) => {
+    const updateFieldValue = (index: number, newValue: string) => {
       const newFields = fields.map((field, i) =>
         i === index ? { ...field, value: newValue } : field,
       );
@@ -102,72 +94,70 @@ const ArrayInput = React.memo(
     return (
       <div>
         <div className="flex w-full flex-col gap-4 ">
-        
-            <Sortable
-              value={fields}
-              onMove={({ activeIndex, overIndex }) => {
-                move(activeIndex, overIndex);
-              }}
-             
-            >
-              {fields.map((field, index) => (
-                <SortableItem key={field.id} value={field.id} asChild>
-                  <div className="flex items-center gap-3">
-                    <SortableDragHandle
-                      variant="outline"
-                      size="icon"
-                      disabled={disabled}
-                      className="size-7 shrink-0"
-                    >
-                      <DragHandleDots2Icon
-                        className="size-4"
-                        aria-hidden="true"
-                      />
-                    </SortableDragHandle>
-                    
-               
-                      <FormField
-                        control={form.control}
-                        name={`${inputName}.${index}`}
-                        render={() => (
-                          <FormItem className="grow">
-                            <FormControl>
-                                <Input
-                                thin={true}
-                                  value={field.value as string}
-                                  onChange={(e) =>
-                                    updateFieldValue(index, e.target.value)
-                                  }
-                                  disabled={disabled}
-                                  className="grow"
-                                />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
+          <Sortable
+            value={fields}
+            onMove={({ activeIndex, overIndex }) => {
+              move(activeIndex, overIndex);
+            }}
+          >
+            {fields.map((field, index) => (
+              <SortableItem key={field.id} value={field.id} asChild>
+                <div className="flex items-center gap-3">
+                  <SortableDragHandle
+                    variant="outline"
+                    size="icon"
+                    disabled={disabled}
+                    className="size-7 shrink-0"
+                  >
+                    <DragHandleDots2Icon
+                      className="size-4"
+                      aria-hidden="true"
+                    />
+                  </SortableDragHandle>
 
-                   {
-                    !required || fields.length > 1 && ( <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      disabled={disabled}
-                      className="size-7 shrink-0"
-                      onClick={() => {
-                        remove(index);
-                      }}
-                    >
-                      <TrashIcon
-                        className="size-4 text-destructive"
-                        aria-hidden="true"
-                      />
-                      <span className="sr-only">{t('Remove')}</span>
-                    </Button>)
-                   }
-                  </div>
-                </SortableItem>
-              ))}
-            </Sortable>
+                  <FormField
+                    control={form.control}
+                    name={`${inputName}.${index}`}
+                    render={() => (
+                      <FormItem className="grow">
+                        <FormControl>
+                          <Input
+                            thin={true}
+                            value={field.value as string}
+                            onChange={(e) =>
+                              updateFieldValue(index, e.target.value)
+                            }
+                            disabled={disabled}
+                            className="grow"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  {!required ||
+                    (fields.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        disabled={disabled}
+                        className="size-7 shrink-0"
+                        onClick={() => {
+                          remove(index);
+                        }}
+                      >
+                        <TrashIcon
+                          className="size-4 text-destructive"
+                          aria-hidden="true"
+                        />
+                        <span className="sr-only">{t('Remove')}</span>
+                      </Button>
+                    ))}
+                </div>
+              </SortableItem>
+            ))}
+          </Sortable>
         </div>
         {!disabled && (
           <Button

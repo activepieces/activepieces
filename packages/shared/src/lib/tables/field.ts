@@ -19,7 +19,7 @@ export const Field = Type.Union([Type.Object({
             value: Type.String(),
         })),
     }),
-}),Type.Object({
+}), Type.Object({
     ...BaseModelSchema,
     name: Type.String(),
     type: Type.Union([Type.Literal(FieldType.TEXT), Type.Literal(FieldType.NUMBER), Type.Literal(FieldType.DATE)]),
