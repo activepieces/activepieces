@@ -8,12 +8,14 @@ import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
+import { todosApi } from '@/features/todos/lib/todos-api';
 import {
   ActionType,
   FileType,
   FlowOperationType,
   Step,
   StepRunResponse,
+  TodoWithAssignee,
   TriggerType,
   flowStructureUtil,
   isNil,
@@ -22,6 +24,7 @@ import {
 import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
 import { useBuilderStateContext } from '../builder-hooks';
 
+import { ManualTaskTestingDialog } from './custom-test-step/todos-create-task';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
 import { testStepUtils } from './test-step-utils';
@@ -31,6 +34,14 @@ type TestActionComponentProps = {
   flowVersionId: string;
   projectId: string;
 };
+
+function isTodoCreateTask(step: Step): boolean {
+  return (
+    step.type === ActionType.PIECE &&
+    step.settings.pieceName === '@activepieces/piece-todos' &&
+    step.settings.actionName === 'createTodo'
+  );
+}
 
 const TestStepSectionImplementation = React.memo(
   ({
@@ -45,6 +56,9 @@ const TestStepSectionImplementation = React.memo(
     );
     const [consoleLogs, setConsoleLogs] = useState<null | string>(null);
     const socket = useSocket();
+    const [isTodoCreateTaskDialogOpen, setIsTodoCreateTaskDialogOpen] =
+      useState(false);
+    const [todo, setTodo] = useState<TodoWithAssignee | null>(null);
     const {
       sampleData,
       sampleDataInput,
@@ -162,6 +176,19 @@ const TestStepSectionImplementation = React.memo(
 
     const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
 
+    const handleTodoCreateTask = async () => {
+      setIsTodoCreateTaskDialogOpen(true);
+      const testStepResponse = await flowRunsApi.testStep(socket, {
+        flowVersionId,
+        stepName: currentStep.name,
+      });
+      const output = testStepResponse.output as TodoWithAssignee;
+      if (testStepResponse.success && !isNil(output)) {
+        const task = await todosApi.get(output.id as string);
+        setTodo(task);
+      }
+    };
+
     return (
       <>
         {!sampleDataExists && (
@@ -170,10 +197,16 @@ const TestStepSectionImplementation = React.memo(
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => mutate()}
+                onClick={async () => {
+                  if (isTodoCreateTask(currentStep)) {
+                    handleTodoCreateTask();
+                  } else {
+                    mutate();
+                  }
+                }}
                 keyboardShortcut="G"
                 onKeyboardShortcut={mutate}
-                loading={isTesting}
+                loading={isTesting || isTodoCreateTaskDialogOpen}
                 disabled={!currentStep.valid}
               >
                 <Dot animation={true} variant={'primary'}></Dot>
@@ -184,10 +217,16 @@ const TestStepSectionImplementation = React.memo(
         )}
         {sampleDataExists && (
           <TestSampleDataViewer
-            onRetest={mutate}
+            onRetest={() => {
+              if (isTodoCreateTask(currentStep)) {
+                handleTodoCreateTask();
+              } else {
+                mutate();
+              }
+            }}
             isValid={currentStep.valid}
             isSaving={isSaving}
-            isTesting={isTesting}
+            isTesting={isTesting || isTodoCreateTaskDialogOpen}
             sampleData={sampleData}
             sampleDataInput={sampleDataInput ?? null}
             errorMessage={errorMessage}
@@ -196,6 +235,18 @@ const TestStepSectionImplementation = React.memo(
               currentStep.type === ActionType.CODE ? consoleLogs : null
             }
           ></TestSampleDataViewer>
+        )}
+        {isTodoCreateTaskDialogOpen && todo && (
+          <ManualTaskTestingDialog
+            open={isTodoCreateTaskDialogOpen}
+            onOpenChange={setIsTodoCreateTaskDialogOpen}
+            todo={todo}
+            flowVersionId={flowVersionId}
+            projectId={projectId}
+            currentStep={currentStep}
+            setErrorMessage={setErrorMessage}
+            setLastTestDate={setLastTestDate}
+          />
         )}
       </>
     );

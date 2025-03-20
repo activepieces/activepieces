@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Pencil, Plus, Trash } from 'lucide-react';
+import { FileText, Pencil, Plus, Trash } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -207,9 +207,20 @@ export default function TemplatesPage() {
     >
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">
-          <TableTitle>{t('Templates')}</TableTitle>
+          <TableTitle
+            description={t(
+              'Convert the most common automations into reusable templates',
+            )}
+          >
+            {t('Templates')}
+          </TableTitle>
         </div>
         <DataTable
+          emptyStateTextTitle={t('No templates found')}
+          emptyStateTextDescription={t(
+            'Create a template for your user to inspire them',
+          )}
+          emptyStateIcon={<FileText className="size-14" />}
           columns={columnsWithCheckbox}
           page={data}
           hidePagination={true}

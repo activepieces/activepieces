@@ -22,8 +22,8 @@ export async function getProtocolBackwardCompatibility(protocol: string | undefi
   }
   return protocol;
 }
-export async function getClient<T extends Client | FTPClient>(auth: { protocol: string | undefined, host: string, port: number, username: string, password: string }) {
-  const { protocol, host, port, username, password } = auth;
+export async function getClient<T extends Client | FTPClient>(auth: { protocol: string | undefined, host: string, port: number, allow_unauthorized_certificates: boolean | undefined, username: string, password: string }) {
+  const { protocol, host, port, allow_unauthorized_certificates, username, password } = auth;
   const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(protocol);
   if (protocolBackwardCompatibility === 'sftp') {
     const sftp = new Client();
@@ -43,6 +43,9 @@ export async function getClient<T extends Client | FTPClient>(auth: { protocol: 
       user: username,
       password,
       secure: protocolBackwardCompatibility === 'ftps',
+      secureOptions: {
+        rejectUnauthorized: !(allow_unauthorized_certificates ?? false),
+      }
     });
     return ftpClient as T;
   }
@@ -70,6 +73,13 @@ export const sftpAuth = PieceAuth.CustomAuth({
           { value: 'ftps', label: 'FTPS' }
         ],
       },
+    }),
+    allow_unauthorized_certificates: Property.Checkbox({
+      displayName: 'Allow Unauthorized Certificates',
+      description:
+        'Allow connections to servers with self-signed certificates',
+      defaultValue: false,
+      required: false,
     }),
     host: Property.ShortText({
       displayName: 'Host',
@@ -113,7 +123,7 @@ export const sftpAuth = PieceAuth.CustomAuth({
     } catch (err) {
       return {
         valid: false,
-        error: 'Connection failed. Please check your credentials and try again.',
+        error: (err as Error)?.message,
       };
     } finally {
       if (client) {
