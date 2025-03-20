@@ -111,7 +111,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
 })
 
 
-async function getIdentityByEmail(email: string): Promise<UserIdentity | null> {
+export async function getIdentityByEmail(email: string): Promise<UserIdentity | null> {
     const cleanedEmail = email.toLowerCase().trim()
     return userIdentityRepository().findOneBy({ email: cleanedEmail })
 }
