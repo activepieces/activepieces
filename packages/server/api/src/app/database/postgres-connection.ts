@@ -391,7 +391,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 ProjectIdNullableInTemplate1741357285896,
                 UpdateNotifyStatusOnEmbedding1741963410825,
                 AddManualTaskCommentTable1742305104390,
-                ChangeManualTasksCommentsToTodoComments1742433144687
+                ChangeManualTasksCommentsToTodoComments1742433144687,
             )
             break
         case ApEdition.COMMUNITY:
