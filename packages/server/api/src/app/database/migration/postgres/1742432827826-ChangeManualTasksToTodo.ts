@@ -5,13 +5,6 @@ export class ChangeManualTasksToTodo1742432827826 implements MigrationInterface 
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX idx_table_project_id_name
-        `);
-        await queryRunner.query(`
-            DROP INDEX idx_field_project_id_table_id_name_unique
-        `);
-
-        await queryRunner.query(`
             DROP TABLE IF EXISTS manual_task_comment
         `);
         await queryRunner.query(`
@@ -43,12 +36,6 @@ export class ChangeManualTasksToTodo1742432827826 implements MigrationInterface 
         `);
         await queryRunner.query(`
             CREATE INDEX idx_todo_platform_id ON "todo" ("platformId")
-        `);
-        await queryRunner.query(`
-            CREATE INDEX idx_table_project_id_name ON "table" ("projectId", "name")
-        `);
-        await queryRunner.query(`
-            CREATE INDEX idx_field_project_id_table_id_name ON "field" ("projectId", "tableId", "name")
         `);
         await queryRunner.query(`
             ALTER TABLE "todo"
@@ -89,12 +76,6 @@ export class ChangeManualTasksToTodo1742432827826 implements MigrationInterface 
             ALTER TABLE "todo" DROP CONSTRAINT "fk_todo_platform_id"
         `);
         await queryRunner.query(`
-            DROP INDEX idx_field_project_id_table_id_name
-        `);
-        await queryRunner.query(`
-            DROP INDEX idx_table_project_id_name
-        `);
-        await queryRunner.query(`
             DROP INDEX idx_todo_platform_id
         `);
         await queryRunner.query(`
@@ -105,12 +86,6 @@ export class ChangeManualTasksToTodo1742432827826 implements MigrationInterface 
         `);
         await queryRunner.query(`
             DROP TABLE "todo"
-        `);
-        await queryRunner.query(`
-            CREATE UNIQUE INDEX idx_field_project_id_table_id_name_unique ON "field" ("name", "tableId", "projectId")
-        `);
-        await queryRunner.query(`
-            CREATE UNIQUE INDEX idx_table_project_id_name ON "table" ("name", "projectId")
         `);
     }
 }
