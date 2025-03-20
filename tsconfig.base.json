@@ -673,8 +673,8 @@
       "@activepieces/piece-text-helper": [
         "packages/pieces/community/text-helper/src/index.ts"
       ],
-      "@activepieces/piece-text-to-cad": [
-        "packages/pieces/community/text-to-cad/src/index.ts"
+      "@activepieces/piece-zoo": [
+        "packages/pieces/community/zoo/src/index.ts"
       ],
       "@activepieces/piece-thankster": [
         "packages/pieces/community/thankster/src/index.ts"
