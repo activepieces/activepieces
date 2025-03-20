@@ -29,6 +29,7 @@ import { GitRepoEntity } from '../ee/project-release/git-sync/git-sync.entity'
 import { ProjectReleaseEntity } from '../ee/project-release/project-release.entity'
 import { ProjectRoleEntity } from '../ee/project-role/project-role.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
+import { TodoCommentEntity } from '../ee/todos/comment/todos-comment.entity'
 import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
@@ -48,14 +49,13 @@ import { TableWebhookEntity } from '../tables/table/table-webhook.entity'
 import { TableEntity } from '../tables/table/table.entity'
 import { PieceTagEntity } from '../tags/pieces/piece-tag.entity'
 import { TagEntity } from '../tags/tag-entity'
+import { TodoEntity } from '../todos/todo.entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
-import { TodoEntity } from '../todos/todo.entity'
-import { TodoCommentEntity } from '../ee/todos/comment/todos-comment.entity'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
@@ -179,4 +179,4 @@ export function APArrayContains<T>(
 }
 
 // Uncomment the below line when running `nx db-migration server-api name=<MIGRATION_NAME>` and recomment it after the migration is generated
- export const exportedConnection = databaseConnection()
+export const exportedConnection = databaseConnection()

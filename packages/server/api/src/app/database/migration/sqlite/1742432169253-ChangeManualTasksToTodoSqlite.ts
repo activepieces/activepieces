@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class ChangeManualTasksToTodoSqlite1742432169253 implements MigrationInterface {
     name = 'ChangeManualTasksToTodoSqlite1742432169253'
@@ -20,25 +20,25 @@ export class ChangeManualTasksToTodoSqlite1742432169253 implements MigrationInte
                 "runId" varchar(21),
                 "approvalUrl" varchar
             )
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_project_id" ON "todo" ("projectId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_flow_id" ON "todo" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_platform_id" ON "todo" ("platformId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_project_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_platform_id"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_todo" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -60,7 +60,7 @@ export class ChangeManualTasksToTodoSqlite1742432169253 implements MigrationInte
                 CONSTRAINT "fk_todo_run_id" FOREIGN KEY ("runId") REFERENCES "flow_run" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_todo_assignee_id" FOREIGN KEY ("assigneeId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_todo"(
                     "id",
@@ -91,28 +91,28 @@ export class ChangeManualTasksToTodoSqlite1742432169253 implements MigrationInte
                 "runId",
                 "approvalUrl"
             FROM "todo"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "todo"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_todo"
                 RENAME TO "todo"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_project_id" ON "todo" ("projectId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_flow_id" ON "todo" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_platform_id" ON "todo" ("platformId")
-        `);
+        `)
         
         // Drop manual_tasks table
         await queryRunner.query(`
             DROP TABLE IF EXISTS "manual_task"
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -120,17 +120,17 @@ export class ChangeManualTasksToTodoSqlite1742432169253 implements MigrationInte
         
         await queryRunner.query(`
             DROP INDEX "idx_todo_platform_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_project_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "todo"
                 RENAME TO "temporary_todo"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "todo" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -147,7 +147,7 @@ export class ChangeManualTasksToTodoSqlite1742432169253 implements MigrationInte
                 "runId" varchar(21),
                 "approvalUrl" varchar
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "todo"(
                     "id",
@@ -178,31 +178,31 @@ export class ChangeManualTasksToTodoSqlite1742432169253 implements MigrationInte
                 "runId",
                 "approvalUrl"
             FROM "temporary_todo"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_todo"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_platform_id" ON "todo" ("platformId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_flow_id" ON "todo" ("flowId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_todo_project_id" ON "todo" ("projectId")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_platform_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_flow_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_todo_project_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "todo"
-        `);
+        `)
     }
 
 }
