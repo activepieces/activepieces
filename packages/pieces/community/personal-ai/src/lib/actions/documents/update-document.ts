@@ -1,12 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { BASE_URL } from '../../../index';
+import { BASE_URL, personalAiAuth } from '../../../index';
 
 export const updateDocument = createAction({
+  auth:personalAiAuth,
   name: 'update_document',
   displayName: 'Update Document',
-  description: 'Update an existing document in AI assistant',
-  category: 'Documents',
+  description: 'Update an existing document in AI assistant.',
+  // category: 'Documents',
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

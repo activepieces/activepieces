@@ -1,12 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { BASE_URL } from '../../../index';
+import { BASE_URL, personalAiAuth } from '../../../index';
 
 export const getConversation = createAction({
+  auth:personalAiAuth,
   name: 'get_conversation',
   displayName: 'Get Conversation History',
-  description: 'Retrieve conversation history from AI assistant',
-  category: 'Messaging',
+  description: 'Retrieve conversation history from AI assistant.',
+  // category: 'Messaging',
   props: {
     channelId: Property.ShortText({
       displayName: 'Channel ID',

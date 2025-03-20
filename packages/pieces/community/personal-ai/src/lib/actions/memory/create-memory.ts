@@ -1,12 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { BASE_URL } from '../../../index';
+import { BASE_URL, personalAiAuth } from '../../../index';
 
 export const createMemory = createAction({
+  auth:personalAiAuth,
   name: 'create_memory',
   displayName: 'Create Memory',
-  description: 'Upload memories to your AI assistant stack',
-  category: 'Memory',
+  description: 'Upload memories to your AI assistant stack.',
+  // category: 'Memory',
   props: {
     text: Property.LongText({
       displayName: 'Memory Text',

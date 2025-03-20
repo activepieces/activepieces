@@ -1,12 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { BASE_URL } from '../../../index';
+import { BASE_URL, personalAiAuth } from '../../../index';
 
 export const createChatGPTInstruction = createAction({
+  auth:personalAiAuth,
   name: 'create_chatgpt_instruction',
   displayName: 'Send ChatGPT Instruction',
-  description: 'Send an instruction to AI assistant using ChatGPT integration',
-  category: 'AI Interaction',
+  description: 'Send an instruction to AI assistant using ChatGPT integration.',
+  // category: 'AI Interaction',
   props: {
     text: Property.LongText({
       displayName: 'Instruction Text',

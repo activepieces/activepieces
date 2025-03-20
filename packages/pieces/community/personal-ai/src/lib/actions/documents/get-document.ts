@@ -1,12 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { BASE_URL } from '../../../index';
+import { BASE_URL, personalAiAuth } from '../../../index';
 
 export const getDocument = createAction({
+  auth:personalAiAuth,
   name: 'get_document',
   displayName: 'Get Document',
-  description: 'Retrieve a document from AI assistant',
-  category: 'Documents',
+  description: 'Retrieve a document from AI assistant.',
+  // category: 'Documents',
   props: {
     documentId: Property.ShortText({
       displayName: 'Document ID',

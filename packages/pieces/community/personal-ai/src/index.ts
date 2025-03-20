@@ -15,18 +15,20 @@ import { getDocument } from './lib/actions/documents/get-document';
 
 export const BASE_URL = 'https://api.personal.ai';
 
+export const personalAiAuth = PieceAuth.SecretText({
+  displayName: 'API Key',
+  description: 'API Key for authentication',
+  required: true,
+})
+
 export const aiAssistant = createPiece({
   displayName: 'Personal AI',
-  description: 'Manage memory storage, messaging, and documents through AI integration',
-  logoUrl: 'https://imagedelivery.net/bHREz764QO9n_1kIQUR2sw/d5a94216-33f4-4f38-7116-c9afaef95700/public',
-  auth: PieceAuth.SecretText({
-    displayName: 'API Key',
-    description: 'API Key for authentication',
-    required: true,
-  }),
+  description: 'Manage memory storage, messaging, and documents through AI integration.',
+  logoUrl: 'https://cdn.activepieces.com/pieces/personal-ai.png',
+  auth: personalAiAuth,
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   minimumSupportedRelease: '0.20.0',
-  authors: ['Swanblocks/Reem Ayoush'],
+  authors: ['reemayoush'],
   actions: [
     createMemory,
     createMessage,

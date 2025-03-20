@@ -1,12 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { BASE_URL } from '../../../index';
+import { BASE_URL, personalAiAuth } from '../../../index';
 
 export const createMessage = createAction({
+  auth:personalAiAuth,
   name: 'create_message',
   displayName: 'Send Message',
-  description: 'Send a message to the AI assistant for a response',
-  category: 'Messaging',
+  description: 'Send a message to the AI assistant for a response.',
+  // category: 'Messaging',
   props: {
     text: Property.LongText({
       displayName: 'Message Text',

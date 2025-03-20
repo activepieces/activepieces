@@ -1,12 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { BASE_URL } from '../../../index';
+import { BASE_URL, personalAiAuth } from '../../../index';
 
 export const uploadFile = createAction({
+  auth:personalAiAuth,
   name: 'upload_file',
   displayName: 'Upload File',
-  description: 'Upload a file to AI assistant',
-  category: 'Documents',
+  description: 'Upload a file to AI assistant.',
+  // category: 'Documents',
   props: {
     file: Property.File({
       displayName: 'File',

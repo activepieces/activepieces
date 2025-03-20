@@ -1,12 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { BASE_URL } from '../../../index';
+import { BASE_URL, personalAiAuth } from '../../../index';
 
 export const uploadDocument = createAction({
+  auth:personalAiAuth,
   name: 'upload_document',
   displayName: 'Upload Document',
-  description: 'Upload a text document to AI assistant',
-  category: 'Documents',
+  description: 'Upload a text document to AI assistant.',
+  // category: 'Documents',
   props: {
     text: Property.LongText({
       displayName: 'Document Text',
