@@ -54,6 +54,12 @@
       "@activepieces/piece-aminos": [
         "packages/pieces/community/aminos/src/index.ts"
       ],
+      "@activepieces/piece-anyhook-graphql": [
+        "packages/pieces/community/anyhook-graphql/src/index.ts"
+      ],
+      "@activepieces/piece-anyhook-websocket": [
+        "packages/pieces/community/anyhook-websocket/src/index.ts"
+      ],
       "@activepieces/piece-apify": [
         "packages/pieces/community/apify/src/index.ts"
       ],
