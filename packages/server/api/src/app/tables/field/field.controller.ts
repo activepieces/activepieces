@@ -1,4 +1,4 @@
-import { CreateFieldRequest, Field, PrincipalType } from '@activepieces/shared'
+import { CreateFieldRequest, Field, PrincipalType, UpdateFieldRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { fieldService } from './field.service'
@@ -34,8 +34,16 @@ export const fieldController: FastifyPluginAsyncTypebox = async (fastify) => {
         })
     },
     )
-}
 
+    fastify.post('/:id', UpdateRequest, async (request) => {
+        return fieldService.update({
+            id: request.params.id,
+            projectId: request.principal.projectId,
+            request: request.body,
+        })
+    },
+    )
+}
 const CreateRequest = {
     config: {
         allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
@@ -78,5 +86,17 @@ const GetFieldsRequest = {
         querystring: Type.Object({
             tableId: Type.String(),
         }),
+    },
+}
+
+const UpdateRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+    },
+    schema: {
+        params: Type.Object({
+            id: Type.String(),
+        }),
+        body: UpdateFieldRequest,
     },
 }

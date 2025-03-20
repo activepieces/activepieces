@@ -6,6 +6,7 @@ import {
   GristCreateWebhookRequest,
   GristCreateWebhookResponse,
   GristListRecordsResponse,
+  GristOrgResponse,
   GristTableColumnsResponse,
   GristTableResponse,
   GristUpdateRecordsRequest,
@@ -60,6 +61,13 @@ export class GristAPIClient {
     };
     const response = await httpClient.sendRequest<T>(request);
     return response.body;
+  }
+
+  async listOrgs() {
+    return await this.makeRequest<GristOrgResponse[]>(
+      HttpMethod.GET,
+      `/orgs`
+    );
   }
 
   async listWorkspaces(orgId: string) {

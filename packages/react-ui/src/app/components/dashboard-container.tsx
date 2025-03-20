@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Settings, Table2, Workflow } from 'lucide-react';
+import { ListTodo, Settings, Table2, Workflow } from 'lucide-react';
 import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
@@ -151,6 +151,16 @@ export function DashboardContainer({
     isSubItem: false,
   };
 
+  const todosLink: SidebarLink = {
+    type: 'link',
+    to: authenticationSession.appendProjectRoutePrefix('/todos'),
+    label: t('Todos'),
+    icon: ListTodo,
+    showInEmbed: true,
+    hasPermission: checkAccess(Permission.READ_TODOS),
+    isSubItem: false,
+  };
+
   const settingsGroup: SidebarGroup = {
     type: 'group',
     label: t('Settings'),
@@ -205,7 +215,12 @@ export function DashboardContainer({
       // },
     ],
   };
-  const items: SidebarItem[] = [automationGroup, tablesLink, settingsGroup]
+  const items: SidebarItem[] = [
+    automationGroup,
+    tablesLink,
+    todosLink,
+    settingsGroup,
+  ]
     .filter(embedFilter)
     .filter(permissionFilter)
     .filter(filterAlerts);
