@@ -84,10 +84,10 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
   });
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} modal={false} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="w-[400px] py-4 px-2 drop-shadow-xl" >
-        <div className="text-lg font-semibold mb-4 px-2">{t('New Field')}</div>
+      <PopoverContent className="w-[400px] py-4 px-2 drop-shadow-xl"  >
+        <div className="text-lg font-semibold mb-4 px-3">{t('New Field')}</div>
        
         <Form {...form}>
           <form 
@@ -115,14 +115,14 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
             })}
             className="mx-2"
           >
-             <div className="max-h-[80vh]  overflow-y-auto space-y-4 ">
+             <div className="max-h-[80vh]  overflow-y-auto space-y-4 px-1 ">
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
-                <FormItem className="grid space-y-2">
+                <FormItem className="grid space-y-3">
                   <Label htmlFor="name">{t('Name')}</Label>
-                  <Input className="p-2 h-8" {...field} id="name" />
+                  <Input  thin={true} {...field} id="name" />
                   <FormMessage />
                 </FormItem>
               )}
@@ -179,7 +179,8 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                 control={form.control}
                 name="data.options"
                 render={({ field }) => (
-                  <FormItem className="grid space-y-2">
+                  //needs to be wrapped in form field to show the error message
+                  <FormItem className="grid space-y-3">
                     <Label>{t('Options')}</Label>
                     <ArrayInput inputName="data.options" disabled={false} required={true} />
                     <FormMessage />
@@ -188,7 +189,7 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
               />
             )}
             </div>
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-2 mt-3">
               <Button
                 type="button"
                 size="sm"

@@ -108,13 +108,7 @@ const ArrayInput = React.memo(
               onMove={({ activeIndex, overIndex }) => {
                 move(activeIndex, overIndex);
               }}
-              overlay={
-                <div className="grid grid-cols-[auto,1fr,auto] items-center gap-2">
-                  <div className="size-8 shrink-0 rounded-sm bg-primary/10" />
-                  <div className="h-8 w-full rounded-sm bg-primary/10" />
-                  <div className="size-8 shrink-0 rounded-sm bg-primary/10" />
-                </div>
-              }
+             
             >
               {fields.map((field, index) => (
                 <SortableItem key={field.id} value={field.id} asChild>
@@ -123,7 +117,7 @@ const ArrayInput = React.memo(
                       variant="outline"
                       size="icon"
                       disabled={disabled}
-                      className="size-8 shrink-0"
+                      className="size-7 shrink-0"
                     >
                       <DragHandleDots2Icon
                         className="size-4"
@@ -139,6 +133,7 @@ const ArrayInput = React.memo(
                           <FormItem className="grow">
                             <FormControl>
                                 <Input
+                                thin={true}
                                   value={field.value as string}
                                   onChange={(e) =>
                                     updateFieldValue(index, e.target.value)
@@ -157,7 +152,7 @@ const ArrayInput = React.memo(
                       variant="outline"
                       size="icon"
                       disabled={disabled}
-                      className="size-8 shrink-0"
+                      className="size-7 shrink-0"
                       onClick={() => {
                         remove(index);
                       }}
@@ -178,7 +173,7 @@ const ArrayInput = React.memo(
           <Button
             variant="outline"
             size="sm"
-            className="mt-2"
+            className="mt-3"
             onClick={() => {
               append();
             }}
