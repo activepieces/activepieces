@@ -807,6 +807,9 @@
       "activepieces/piece-zuora": [
         "packages/pieces/community/zuora/src/index.ts"
       ],
+      "@activepieces/piece-personal-ai": [
+        "packages/pieces/community/personal-ai/src/index.ts"
+      ],
       "@activepieces/piece-eth-name-service": [
         "packages/pieces/community/eth-name-service/src/index.ts"
       ],
