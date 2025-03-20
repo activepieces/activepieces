@@ -12,7 +12,7 @@ export const mailchain = createPiece({
   categories: [],
   logoUrl:
     'https://cdn.activepieces.com/pieces/mailchain.png',
-  authors: ['Swanblocks/Ahmad Shawar'],
+  authors: ['ahmad-swanblocks'],
   actions: [getAuthenticatedUser, sendEmail],
   triggers: [],
 });

@@ -27,7 +27,7 @@ export const textToCad = createPiece({
   auth: zooAuth,
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   minimumSupportedRelease: '0.20.0',
-  authors: ['SwanBlocks/Ahmad Shawar'],
+  authors: ['ahmad-swanblocks'],
   actions: [...ML_ACTIONS, ...API_CALLS_ACTIONS, ...API_TOKENS_ACTIONS, ...FILE_ACTIONS, ...META_ACTIONS, ...MODELING_ACTIONS, ...ORGS_ACTIONS, ...PAYMENTS_ACTIONS, ...SERVICE_ACCOUNTS_ACTIONS, ...SHORTLINKS_ACTIONS, ...UNIT_ACTIONS, ...USER_ACTIONS],
   triggers: [],
 });    

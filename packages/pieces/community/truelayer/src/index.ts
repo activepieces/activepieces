@@ -55,7 +55,7 @@ export const paymentsApiV3Payments = createPiece({
   minimumSupportedRelease: '0.20.0',
   categories: [PieceCategory.PAYMENT_PROCESSING],
   logoUrl: 'https://cdn.activepieces.com/pieces/truelayer.png',
-  authors: ['Swanblocks/Ahmad Shawar'],
+  authors: ['ahmad-swanblocks'],
   actions: [
     createPayout,
     getPayout,

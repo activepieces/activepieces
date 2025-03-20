@@ -9,7 +9,7 @@ export const ethNameService = createPiece({
   auth: ensCommon.auth,
   minimumSupportedRelease: '0.20.0',
   logoUrl: 'https://imagedelivery.net/bHREz764QO9n_1kIQUR2sw/1068cf28-f96b-4c73-6fd2-fbbd41863000/public',
-  authors: ['Reem Ayoush - Swanblocks'],
+  authors: ['reemayoush'],
   actions: [listEnsDomains],
   triggers: [],
 });
