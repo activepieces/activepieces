@@ -151,10 +151,10 @@ export function DashboardContainer({
     isSubItem: false,
   };
 
-  const manualTasksLink: SidebarLink = {
+  const todosLink: SidebarLink = {
     type: 'link',
-    to: authenticationSession.appendProjectRoutePrefix('/manual-tasks'),
-    label: t('Tasks'),
+    to: authenticationSession.appendProjectRoutePrefix('/todos'),
+    label: t('Todos'),
     icon: ListTodo,
     showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_TODOS),
@@ -218,7 +218,7 @@ export function DashboardContainer({
   const items: SidebarItem[] = [
     automationGroup,
     tablesLink,
-    manualTasksLink,
+    todosLink,
     settingsGroup,
   ]
     .filter(embedFilter)

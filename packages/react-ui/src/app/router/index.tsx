@@ -258,7 +258,7 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/manual-tasks',
+    path: '/todos',
     element: (
       <DashboardContainer>
         <PageTitle title="Todos">
@@ -268,7 +268,7 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/manual-tasks/:manualTaskId',
+    path: '/todos/:todoId',
     element: (
       <PageTitle title="Todo Testing">
         <TodoTestingPage />
