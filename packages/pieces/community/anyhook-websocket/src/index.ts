@@ -9,7 +9,7 @@ export const anyHookWebsocket = createPiece({
   auth: websocketCommon.auth,
   minimumSupportedRelease: '0.20.0',
   logoUrl:
-    'https://imagedelivery.net/bHREz764QO9n_1kIQUR2sw/c49d06c2-2602-43d5-3dff-de83b0c31300/public',
+    'https://cdn.activepieces.com/pieces/anyhook-websocket.png',
   authors: ['Swanblocks/Ahmad Shawar'],
   actions: [],
   triggers: [

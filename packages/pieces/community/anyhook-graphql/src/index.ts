@@ -9,8 +9,8 @@ export const anyHookGraphql = createPiece({
   auth: graphqlCommon.auth,
   minimumSupportedRelease: '0.20.0',
   logoUrl:
-    'https://imagedelivery.net/bHREz764QO9n_1kIQUR2sw/dcf09712-b3bf-46b2-88b2-afa00d42b600/public',
-  authors: ['Swanblocks/Ahmad Shawar'],
+    'https://cdn.activepieces.com/pieces/anyhook-graphql.png',
+  authors: ['ahmad-swanblocks'],
   actions: [],
   triggers: [
     graphqlSubscriptionTrigger,
