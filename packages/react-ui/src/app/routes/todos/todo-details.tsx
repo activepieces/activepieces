@@ -40,6 +40,7 @@ import {
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { todosApi } from '@/features/todos/lib/todos-api';
+import { todoCommentApi } from '@/features/todos/lib/todos-comment-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { formatUtils } from '@/lib/utils';
@@ -59,7 +60,6 @@ import {
 } from '@activepieces/shared';
 
 import { Comments } from './comment/comments';
-import { todoCommentApi } from '@/features/todos/lib/todos-comment-api';
 
 type TodoDetailsProps = {
   open: boolean;

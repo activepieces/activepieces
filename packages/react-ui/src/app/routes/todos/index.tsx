@@ -16,8 +16,8 @@ import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-col
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { TableTitle } from '@/components/ui/table-title';
 import { UserFullName } from '@/components/ui/user-fullname';
-import { todosApi } from '@/features/todos/lib/todos-api';
 import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
+import { todosApi } from '@/features/todos/lib/todos-api';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
@@ -33,8 +33,9 @@ import { TodoDetails } from './todo-details';
 
 function TodosPage() {
   const [selectedRows, setSelectedRows] = useState<Array<Todo>>([]);
-  const [selectedTask, setSelectedTask] =
-    useState<TodoWithAssignee | null>(null);
+  const [selectedTask, setSelectedTask] = useState<TodoWithAssignee | null>(
+    null,
+  );
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [rowIndex, setRowIndex] = useState(0);
 
@@ -156,10 +157,7 @@ function TodosPage() {
     } as const,
   ];
 
-  const columns: ColumnDef<
-    RowDataWithActions<TodoWithAssignee>,
-    unknown
-  >[] = [
+  const columns: ColumnDef<RowDataWithActions<TodoWithAssignee>, unknown>[] = [
     {
       id: 'select',
       header: ({ table }) => (
@@ -293,9 +291,14 @@ function TodosPage() {
 
   return (
     <div className="flex-col w-full">
-      <TableTitle description={t('Manage todos for your project.')}>
-        {t('Todos')}
-      </TableTitle>
+      <div className="flex items-center gap-2">
+        <TableTitle
+          description={t('Manage todos for your project.')}
+          beta={true}
+        >
+          {t('Todos')}
+        </TableTitle>
+      </div>
       <DataTable
         columns={columns}
         page={filteredData}

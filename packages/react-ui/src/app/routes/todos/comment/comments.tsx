@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { Skeleton } from '@/components/ui/skeleton';
-
-import { CommentCard } from './comment-card';
+import { todoCommentApi } from '@/features/todos/lib/todos-comment-api';
 import { TodoCommentWithUser } from '@activepieces/ee-shared';
 import { TodoWithAssignee } from '@activepieces/shared';
-import { todoCommentApi } from '@/features/todos/lib/todos-comment-api';
+
+import { CommentCard } from './comment-card';
 
 type CommentsProps = {
   task: TodoWithAssignee;

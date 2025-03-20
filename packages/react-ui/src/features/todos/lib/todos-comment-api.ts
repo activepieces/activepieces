@@ -14,10 +14,7 @@ export const todoCommentApi = {
       request,
     );
   },
-  async create(
-    todoId: string,
-    requestBody: CreateTodoCommentRequestBody,
-  ) {
+  async create(todoId: string, requestBody: CreateTodoCommentRequestBody) {
     return await api.post<TodoComment>(
       `/v1/todos/${todoId}/comments`,
       requestBody,

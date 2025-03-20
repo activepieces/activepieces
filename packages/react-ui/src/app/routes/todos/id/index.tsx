@@ -26,6 +26,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { todosApi } from '@/features/todos/lib/todos-api';
 import { userHooks } from '@/hooks/user-hooks';
 import { formatUtils } from '@/lib/utils';
 import {
@@ -35,7 +36,6 @@ import {
   StatusOption,
   MarkdownVariant,
 } from '@activepieces/shared';
-import { todosApi } from '@/features/todos/lib/todos-api';
 
 function TodoTestingPage() {
   const { todoId } = useParams();
@@ -145,8 +145,16 @@ function TodoTestingPage() {
                 <StatusIconWithText
                   icon={CheckIcon}
                   text={task.status.name}
-                  color={STATUS_COLORS[task.status.variant as keyof typeof STATUS_COLORS].color}
-                  textColor={STATUS_COLORS[task.status.variant as keyof typeof STATUS_COLORS].textColor}
+                  color={
+                    STATUS_COLORS[
+                      task.status.variant as keyof typeof STATUS_COLORS
+                    ].color
+                  }
+                  textColor={
+                    STATUS_COLORS[
+                      task.status.variant as keyof typeof STATUS_COLORS
+                    ].textColor
+                  }
                 />
               )}
             </div>

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
 import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
+import { todosApi } from '@/features/todos/lib/todos-api';
 import {
   ActionType,
   FileType,
@@ -27,7 +28,6 @@ import { ManualTaskTestingDialog } from './custom-test-step/todos-create-task';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
 import { testStepUtils } from './test-step-utils';
-import { todosApi } from '@/features/todos/lib/todos-api';
 
 type TestActionComponentProps = {
   isSaving: boolean;
@@ -56,13 +56,9 @@ const TestStepSectionImplementation = React.memo(
     );
     const [consoleLogs, setConsoleLogs] = useState<null | string>(null);
     const socket = useSocket();
-    const [
-      isTodoCreateTaskDialogOpen,
-      setIsTodoCreateTaskDialogOpen,
-    ] = useState(false);
-    const [todo, setTodo] = useState<TodoWithAssignee | null>(
-      null,
-    );
+    const [isTodoCreateTaskDialogOpen, setIsTodoCreateTaskDialogOpen] =
+      useState(false);
+    const [todo, setTodo] = useState<TodoWithAssignee | null>(null);
     const {
       sampleData,
       sampleDataInput,
