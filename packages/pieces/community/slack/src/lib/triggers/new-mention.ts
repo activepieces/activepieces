@@ -10,38 +10,6 @@ import { WebClient } from '@slack/web-api';
 import { isNil } from '@activepieces/shared';
 import { getFirstFiveOrAll } from '../common/utils';
 
-const sampleData = {
-  client_msg_id: '2767cf34-0651-44e0-b9c8-1b167ce9b7a9',
-  type: 'message',
-  text: 'heeeelllo\n<@U07BN652T52>',
-  user: 'U037UG6FKPU',
-  ts: '1678231735.586539',
-  blocks: [
-    {
-      type: 'rich_text',
-      block_id: 'jCFSh',
-      elements: [
-        {
-          type: 'rich_text_section',
-          elements: [
-            {
-              type: 'text',
-              text: 'heeeelllo\n',
-            },
-            {
-              type: 'user',
-              user_id: 'U07BN652T52',
-            },
-          ],
-        },
-      ],
-    },
-  ],
-  team: 'T037MS4FGDC',
-  channel: 'C037RTX2ZDM',
-  event_ts: '1678231735.586539',
-  channel_type: 'channel',
-};
 
 export const newMention = createTrigger({
   auth: slackAuth,
@@ -82,7 +50,7 @@ export const newMention = createTrigger({
     }),
   },
   type: TriggerStrategy.APP_WEBHOOK,
-  sampleData: sampleData,
+  sampleData: undefined,
   onEnable: async (context) => {
     // Older OAuth2 has team_id, newer has team.id
     const teamId =
@@ -94,39 +62,6 @@ export const newMention = createTrigger({
   },
   onDisable: async (context) => {
     // Ignored
-  },
-
-  test: async (context) => {
-    const channels = context.propsValue.channels as string[];
-
-    if (!channels || (Array.isArray(channels) && channels.length === 0)) {
-      return [sampleData];
-    }
-    const client = new WebClient(context.auth.access_token);
-    const response = await client.conversations.history({
-      channel: channels[0],
-      limit: 100,
-    });
-    if (!response.messages) {
-      return [];
-    }
-    const messages =  response.messages
-    .filter((message) => !isNil(message.ts))
-      .filter(
-        (message) =>
-          message.text && message.text.includes(`<@${context.propsValue.user}>`)
-      )
-      .filter((message) => !(context.propsValue.ignoreBots && message.bot_id))
-      .map((message) => {
-        return {
-          ...message,
-          channel: channels[0],
-          event_ts: '1678231735.586539',
-          channel_type: 'channel',
-        };
-      }).sort((a, b) => parseFloat(b.ts!) - parseFloat(a.ts!));
-
-      return getFirstFiveOrAll(messages);
   },
 
   run: async (context) => {

@@ -7,34 +7,6 @@ import { slackAuth } from '../../';
 import { slackChannel } from '../common/props';
 import { WebClient } from '@slack/web-api';
 
-const sampleData = {
-  client_msg_id: '2767cf34-0651-44e0-b9c8-1b167ce9b7a9',
-  type: 'message',
-  text: 'f',
-  user: 'U037UG6FKPU',
-  ts: '1678231735.586539',
-  blocks: [
-    {
-      type: 'rich_text',
-      block_id: '4CM',
-      elements: [
-        {
-          type: 'rich_text_section',
-          elements: [
-            {
-              type: 'text',
-              text: 'f',
-            },
-          ],
-        },
-      ],
-    },
-  ],
-  team: 'T037MS4FGDC',
-  channel: 'C037RTX2ZDM',
-  event_ts: '1678231735.586539',
-  channel_type: 'channel',
-};
 
 export const newReactionAdded = createTrigger({
   auth: slackAuth,
@@ -50,7 +22,7 @@ export const newReactionAdded = createTrigger({
     channel: slackChannel(false),
   },
   type: TriggerStrategy.APP_WEBHOOK,
-  sampleData: sampleData,
+  sampleData: undefined,
   onEnable: async (context) => {
     // Older OAuth2 has team_id, newer has team.id
     const teamId =
@@ -64,31 +36,7 @@ export const newReactionAdded = createTrigger({
     // Ignored
   },
 
-  test: async (context) => {
-    const client = new WebClient(
-      context.auth.data['authed_user']?.access_token
-    );
-    const response = await client.reactions.list({ limit: 10, full: true });
-    if (!response.items) {
-      return [];
-    }
-    return response.items
-      .filter((item) => item.type === 'message')
-      .map((item) => {
-        return {
-          type: 'reaction_added',
-          user: item.message?.reactions?.[0].users?.[0],
-          reaction: item.message?.reactions?.[0].name,
-          item_user: item.message?.user,
-          item: {
-            type: 'message',
-            channel: item.channel,
-            ts: item.message?.ts,
-          },
-          event_ts: '1360782804.083113',
-        };
-      });
-  },
+
 
   run: async (context) => {
     const payloadBody = context.payload.body as PayloadBody;
