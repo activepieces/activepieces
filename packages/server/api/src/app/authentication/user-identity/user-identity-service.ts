@@ -76,9 +76,10 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
         const userIdentity = await userIdentityRepository().findOneByOrFail({ id: params.id })
         return userIdentity
     },
-    async getBasicInformation(id: string): Promise<Pick<UserIdentity, 'email' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter'>> {
+    async getBasicInformation(id: string): Promise<Pick<UserIdentity, 'id' | 'email' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter'>> {
         const user = await userIdentityRepository().findOneByOrFail({ id })
         return {
+            id: user.id,
             email: user.email,
             firstName: user.firstName,
             lastName: user.lastName,
@@ -111,7 +112,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
 })
 
 
-export async function getIdentityByEmail(email: string): Promise<UserIdentity | null> {
+async function getIdentityByEmail(email: string): Promise<UserIdentity | null> {
     const cleanedEmail = email.toLowerCase().trim()
     return userIdentityRepository().findOneBy({ email: cleanedEmail })
 }

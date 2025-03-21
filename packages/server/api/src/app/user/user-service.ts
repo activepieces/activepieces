@@ -113,6 +113,7 @@ export const userService = {
         const identity = await userIdentityService(system.globalLogger()).getBasicInformation(user.identityId)
         return {
             id: user.id,
+            identityId: identity.id,
             email: identity.email,
             firstName: identity.firstName,
             lastName: identity.lastName,

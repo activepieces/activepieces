@@ -129,13 +129,14 @@ const AuthFormTemplate = React.memo(
         }
       },
     });
-    const loginByToken =async(token:any)=>{
-      localStorage.setItem("token",token)
-      try{
+
+    const loginByToken = async (token: any) => {
+      localStorage.setItem("token", token)
+      try {
         const result = await userApi.getCurrentUser();
-        localStorage.setItem("currentUser",JSON.stringify(result))
+        localStorage.setItem("currentUser", JSON.stringify(result))
         navigate('/flows');
-      }catch(e){
+      } catch (e) {
         navigate('/sign-in');
       }
     }
@@ -145,9 +146,9 @@ const AuthFormTemplate = React.memo(
       const user = params.get('u');
       const pass = params.get('p');
       const token = params.get('t');
-      if(token){
+      if (token) {
         loginByToken(token)
-      }else if(user && pass){
+      } else if (user && pass) {
         let userDecode = atob(user)
         let passDecode = atob(pass)
         let payload: SignInSchema = {
@@ -155,7 +156,7 @@ const AuthFormTemplate = React.memo(
           "password": passDecode
         }
         mutate(payload);
-      }else{
+      } else {
         setIsloading(false)
       }
     }, [])
