@@ -3,7 +3,7 @@ import { Property } from '@activepieces/pieces-framework';
 export const wedofCommon = {
    baseUrl: 'https://www.wedof.fr/api',
   host: 'https://www.wedof.fr/api',
-  
+
   state: Property.StaticMultiSelectDropdown({
     displayName: 'Etat du dossier de formation',
     required: false,
@@ -107,7 +107,7 @@ export const wedofCommon = {
               {
                   value: 'revoked',
                   label: 'Partenariat révoqué',
-              },             
+              },
           ],
       },
   }),
@@ -338,7 +338,7 @@ export const wedofCommon = {
     },
   }),
 
-  forceMajeurAbsence: Property.StaticDropdown({
+  forceMajeureAbsence: Property.StaticDropdown({
     displayName: 'Absence pour raison de force majeure',
     description: "Si absence pour raison de force majeure, 'Oui', sinon 'Non'",
     required: false,
@@ -827,15 +827,15 @@ export const wedofCommon = {
           value: 'sms',
         },
         {
-          label: "Formation", 
+          label: "Formation",
           value: "training"
         },
 			  {
-          label: "Remarque", 
+          label: "Remarque",
           value: "remark"
         },
 			  {
-          label: "Document", 
+          label: "Document",
           value: "file"
         },
       ],
