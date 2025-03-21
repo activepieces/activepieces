@@ -10,7 +10,9 @@ import {
     ApEdition,
     apId,
     ErrorCode,
+    FlowVersionState,
     isNil,
+    PopulatedFlow,
     ProjectState,
     SeekPage,
 } from '@activepieces/shared'
@@ -100,14 +102,30 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
         const { git, flowFolderPath, connectionsFolderPath } = await gitHelper.createGitRepoAndReturnPaths(gitRepo, userId)
         switch (request.type) {
             case GitPushOperationType.PUSH_FLOW: {
-                for (const flowId of request.flowIds) {
+                const flows: PopulatedFlow[] = []
+                const notPublishedFlowsNames: string[] = []
+                await Promise.all(request.flowIds.map(async (flowId) => {
                     const flow = await flowService(log).getOnePopulatedOrThrow({
                         id: flowId,
                         projectId: gitRepo.projectId,
                         removeConnectionsName: false,
                         removeSampleData: true,
                     })
-                    const flowName = flow.externalId || flowId
+                    flows.push(flow)
+                    if (isNil(flow.publishedVersionId) || flow.version.state === FlowVersionState.DRAFT) {
+                        notPublishedFlowsNames.push(flow.version.displayName)
+                    }
+                }))
+                if (notPublishedFlowsNames.length > 0) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.FLOW_OPERATION_INVALID,
+                        params: {
+                            message: `These flows must be published before pushing to Git: ${notPublishedFlowsNames.join(', ')}`,
+                        },
+                    })
+                }
+                for (const flow of flows) {
+                    const flowName = flow.externalId || flow.id
                     const connections = await appConnectionService(log).getManyConnectionStates({
                         projectId: gitRepo.projectId,
                     })
