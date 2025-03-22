@@ -18,7 +18,7 @@ export const devin = createPiece({
   auth: devinAuth,
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   minimumSupportedRelease: '0.20.0',
-  authors: ['SwanBlocks/Ahmad Shawar'],
+  authors: ['ahmad-swanblocks'],
   actions: [
     createSession,
     getSessionDetails,
