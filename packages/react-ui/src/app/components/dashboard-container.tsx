@@ -105,16 +105,6 @@ export function DashboardContainer({
       },
       {
         type: 'link',
-        to: authenticationSession.appendProjectRoutePrefix('/issues'),
-        label: t('Issues'),
-        notification: showIssuesNotification,
-        showInEmbed: false,
-        hasPermission: checkAccess(Permission.READ_ISSUES),
-        isSubItem: true,
-      },
-
-      {
-        type: 'link',
         to: authenticationSession.appendProjectRoutePrefix('/runs'),
         label: t('Runs'),
         showInEmbed: true,

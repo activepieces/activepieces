@@ -48,7 +48,6 @@ import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
-import IssuesPage from '../routes/issues';
 import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
@@ -222,18 +221,6 @@ const routes = [
           </PageTitle>
         </DashboardContainer>
       </RoutePermissionGuard>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: '/issues',
-    element: (
-      <DashboardContainer>
-        <RoutePermissionGuard permission={Permission.READ_ISSUES}>
-          <PageTitle title="Issues">
-            <IssuesPage />
-          </PageTitle>
-        </RoutePermissionGuard>
-      </DashboardContainer>
     ),
   }),
   ...ProjectRouterWrapper({
