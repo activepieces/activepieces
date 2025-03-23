@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { t } from 'i18next';
 import {
   CheckIcon,
   UserRoundPen,
@@ -70,108 +71,110 @@ function TodoTestingPage() {
   }
 
   return (
-    <>
-      {!isLoading && !isNil(task) && (
-        <div className="container mx-auto flex flex-col p-10">
-          <div className="flex items-center mb-4">
-            <Badge variant="outline" className="text-xs">
-              Test Environment
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2 mb-2">
-            <Clock2 className="h-4 w-4 text-muted-foreground" />
+    !isLoading &&
+    !isNil(task) && (
+      <div className="container mx-auto flex flex-col p-10">
+        <div className="flex items-center mb-4">
+          <Badge variant="outline" className="text-xs">
+            {t('Test Environment')}
+          </Badge>
+        </div>
+        <div className="flex items-center gap-2 mb-2">
+          <Clock2 className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">
+            {formatUtils.formatDateToAgo(new Date(task.created))}
+          </span>
+        </div>
+        <div className="flex flex-col gap-2">
+          <span>{task.title}</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <UserRoundPen className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">
-              {formatUtils.formatDateToAgo(new Date(task.created))}
+              {t('Assigned to')}
+            </span>
+            <span className="text-sm">
+              {task.assignee && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <span className="text-sm font-medium">
+                      {task.assignee.firstName} {task.assignee.lastName}{' '}
+                      {task.assigneeId === currentUser?.id ? t('(Me)') : ''}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <span className="text-xs">{task.assignee.email}</span>
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </span>
           </div>
-          <div className="flex flex-col gap-2">
-            <span>{task.title}</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <UserRoundPen className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Assigned to</span>
-              <span className="text-sm">
-                {task.assignee && (
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <span className="text-sm font-medium">
-                        {task.assignee.firstName} {task.assignee.lastName}{' '}
-                        {task.assigneeId === currentUser?.id ? '(Me)' : ''}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <span className="text-xs">{task.assignee.email}</span>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-              </span>
-            </div>
-            <span className="text-sm"> / </span>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Status</span>
-              {task.status.name === UNRESOLVED_STATUS.name && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger>
-                    <Button
-                      variant="outline"
-                      className="h-8 flex gap-2 items-center justify-between"
+          <span className="text-sm"> / </span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">{t('Status')}</span>
+            {task.status.name === UNRESOLVED_STATUS.name && (
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <Button
+                    variant="outline"
+                    className="h-8 flex gap-2 items-center justify-between"
+                  >
+                    {isUpdatingStatus ? (
+                      <Loader className="h-4 w-4" />
+                    ) : (
+                      <>
+                        <span className="text-sm"> {task.status.name} </span>
+                        <ChevronDown className="h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {task.statusOptions.map((status: StatusOption) => (
+                    <DropdownMenuItem
+                      key={status.name}
+                      onClick={() => {
+                        updateStatus(status);
+                      }}
                     >
-                      {isUpdatingStatus ? (
-                        <Loader className="h-4 w-4" />
-                      ) : (
-                        <>
-                          <span className="text-sm"> {task.status.name} </span>
-                          <ChevronDown className="h-4 w-4" />
-                        </>
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    {task.statusOptions.map((status: StatusOption) => (
-                      <DropdownMenuItem
-                        key={status.name}
-                        onClick={() => {
-                          updateStatus(status);
-                        }}
-                      >
-                        <span className="text-sm"> {status.name} </span>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-              {task.status.name !== UNRESOLVED_STATUS.name && (
-                <StatusIconWithText
-                  icon={CheckIcon}
-                  text={task.status.name}
-                  color={
-                    STATUS_COLORS[
-                      task.status.variant as keyof typeof STATUS_COLORS
-                    ].color
-                  }
-                  textColor={
-                    STATUS_COLORS[
-                      task.status.variant as keyof typeof STATUS_COLORS
-                    ].textColor
-                  }
-                />
-              )}
-            </div>
-          </div>
-          <Separator className="mt-4 mb-6" />
-
-          <div className="text-sm leading-6">
-            <ScrollArea className="h-full">
-              <ApMarkdown
-                markdown={task.description ?? ''}
-                variant={MarkdownVariant.BORDERLESS}
+                      <span className="text-sm"> {status.name} </span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            {task.status.name !== UNRESOLVED_STATUS.name && (
+              <StatusIconWithText
+                icon={CheckIcon}
+                text={task.status.name}
+                color={
+                  STATUS_COLORS[
+                    task.status.variant as keyof typeof STATUS_COLORS
+                  ].color
+                }
+                textColor={
+                  STATUS_COLORS[
+                    task.status.variant as keyof typeof STATUS_COLORS
+                  ].textColor
+                }
               />
-            </ScrollArea>
+            )}
           </div>
         </div>
-      )}
-    </>
+        <Separator className="mt-4 mb-6" />
+
+        <div className="text-sm leading-6">
+          <ScrollArea className="h-full">
+            <ApMarkdown
+              className="break-words"
+              markdown={task.description ?? ''}
+              variant={MarkdownVariant.BORDERLESS}
+            />
+          </ScrollArea>
+        </div>
+      </div>
+    )
   );
 }
 
