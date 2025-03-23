@@ -82,6 +82,7 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
+import IssuesSummary from '@/features/issues/issues-summary';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -161,6 +162,18 @@ const routes = [
         <RoutePermissionGuard permission={Permission.READ_RUN}>
           <PageTitle title="Flow Run">
             <FlowRunPage />
+          </PageTitle>
+        </RoutePermissionGuard>
+      </AllowOnlyLoggedInUserOnlyGuard>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/xyz',
+    element: (
+      <AllowOnlyLoggedInUserOnlyGuard>
+        <RoutePermissionGuard permission={Permission.READ_RUN}>
+          <PageTitle title="Flow Run">
+            <IssuesSummary />
           </PageTitle>
         </RoutePermissionGuard>
       </AllowOnlyLoggedInUserOnlyGuard>
