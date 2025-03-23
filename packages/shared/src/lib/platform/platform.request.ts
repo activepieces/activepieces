@@ -35,3 +35,10 @@ export const AdminAddPlatformRequestBody = Type.Object({
 })
 
 export type AdminAddPlatformRequestBody = Static<typeof AdminAddPlatformRequestBody>
+
+export const AdminRetryRunsRequestBody = Type.Object({
+    createdAfter: Type.String(),
+    createdBefore: Type.String(),
+})
+
+export type AdminRetryRunsRequestBody = Static<typeof AdminRetryRunsRequestBody>
