@@ -37,7 +37,16 @@ export const userService = {
         return userRepo().save(user)
     },
     async update({ id, status, platformId, platformRole, externalId }: UpdateParams): Promise<UserWithMetaInformation> {
-
+        const user = await userRepo().findOneByOrFail({ id })
+        if (user.platformRole === PlatformRole.ADMIN && status === UserStatus.INACTIVE) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Admin cannot be deactivated',
+                },
+            })
+        }
+        
         const updateResult = await userRepo().update({
             id,
             platformId,

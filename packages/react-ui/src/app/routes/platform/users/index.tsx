@@ -202,7 +202,10 @@ export default function UsersPage() {
                   <Tooltip>
                     <TooltipTrigger>
                       <Button
-                        disabled={isUpdatingStatus}
+                        disabled={
+                          isUpdatingStatus ||
+                          row.platformRole === PlatformRole.ADMIN
+                        }
                         variant="ghost"
                         className="size-8 p-0"
                         loading={isUpdatingStatus}
@@ -224,7 +227,9 @@ export default function UsersPage() {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
-                      {row.status === UserStatus.ACTIVE
+                      {row.platformRole === PlatformRole.ADMIN
+                        ? t('Admin cannot be deactivated')
+                        : row.status === UserStatus.ACTIVE
                         ? t('Deactivate user')
                         : t('Activate user')}
                     </TooltipContent>
