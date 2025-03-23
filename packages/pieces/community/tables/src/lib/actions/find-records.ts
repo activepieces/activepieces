@@ -1,7 +1,7 @@
 import { createAction, DynamicPropsValue, PieceAuth, Property, PropertyContext } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
-import { FieldType, Filter, FilterOperator, ListRecordsRequest } from '@activepieces/shared';
+import { FieldType, Filter, FilterOperator, ListRecordsRequest, PopulatedRecord, SeekPage } from '@activepieces/shared';
 import { z } from 'zod';
 
 type FieldInfo = {
@@ -134,7 +134,7 @@ export const findRecords = createAction({
       filters: parsedFilters,
     };
 
-    const response = await httpClient.sendRequest({
+    const response = await httpClient.sendRequest<SeekPage<PopulatedRecord>>({
       method: HttpMethod.POST,
       url: `${context.server.apiUrl}v1/records/list`,
       body: request,
@@ -144,6 +144,6 @@ export const findRecords = createAction({
       },
     });
 
-    return response.body.map(tablesCommon.formatRecord);
+    return response.body.data.map(tablesCommon.formatRecord);
   },
 });

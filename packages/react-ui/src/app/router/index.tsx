@@ -36,6 +36,7 @@ import { ApTableStateProvider } from '../../features/tables/components/ap-table-
 import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
 import { DashboardContainer } from '../components/dashboard-container';
 import { PlatformAdminContainer } from '../components/platform-admin-container';
+import ProjectSettingsLayout from '../components/project-settings-layout';
 import NotFoundPage from '../routes/404-page';
 import { ApTablesPage } from '../routes/ap-tables';
 import { ApTableEditorPage } from '../routes/ap-tables/id';
@@ -71,6 +72,8 @@ import TeamPage from '../routes/settings/team';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
 import { ShareTemplatePage } from '../routes/templates/share-template';
+import { TodosPage } from '../routes/todos';
+import { TodoTestingPage } from '../routes/todos/id';
 
 import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 import { DefaultRoute } from './default-route';
@@ -79,6 +82,7 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
+
 const SettingsRerouter = () => {
   const { hash } = useLocation();
   const fragmentWithoutHash = hash.slice(1).toLowerCase();
@@ -255,6 +259,24 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
+    path: '/todos',
+    element: (
+      <DashboardContainer>
+        <PageTitle title="Todos">
+          <TodosPage />
+        </PageTitle>
+      </DashboardContainer>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/todos/:todoId',
+    element: (
+      <PageTitle title="Todo Testing">
+        <TodoTestingPage />
+      </PageTitle>
+    ),
+  }),
+  ...ProjectRouterWrapper({
     path: '/settings',
     element: (
       <DashboardContainer>
@@ -308,7 +330,9 @@ const routes = [
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_ALERT}>
           <PageTitle title="Alerts">
-            <AlertsPage />
+            <ProjectSettingsLayout>
+              <AlertsPage />
+            </ProjectSettingsLayout>
           </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>
@@ -319,7 +343,9 @@ const routes = [
     element: (
       <DashboardContainer>
         <PageTitle title="Appearance">
-          <AppearancePage />
+          <ProjectSettingsLayout>
+            <AppearancePage />
+          </ProjectSettingsLayout>
         </PageTitle>
       </DashboardContainer>
     ),
@@ -329,7 +355,9 @@ const routes = [
     element: (
       <DashboardContainer>
         <PageTitle title="General">
-          <GeneralPage />
+          <ProjectSettingsLayout>
+            <GeneralPage />
+          </ProjectSettingsLayout>
         </PageTitle>
       </DashboardContainer>
     ),
@@ -339,7 +367,9 @@ const routes = [
     element: (
       <DashboardContainer>
         <PageTitle title="Pieces">
-          <ProjectPiecesPage />
+          <ProjectSettingsLayout>
+            <ProjectPiecesPage />
+          </ProjectSettingsLayout>
         </PageTitle>
       </DashboardContainer>
     ),
@@ -350,7 +380,9 @@ const routes = [
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_PROJECT_MEMBER}>
           <PageTitle title="Team">
-            <TeamPage />
+            <ProjectSettingsLayout>
+              <TeamPage />
+            </ProjectSettingsLayout>
           </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>
@@ -367,7 +399,9 @@ const routes = [
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_PROJECT_RELEASE}>
           <PageTitle title="Environments">
-            <EnvironmentPage />
+            <ProjectSettingsLayout>
+              <EnvironmentPage />
+            </ProjectSettingsLayout>
           </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>
@@ -558,7 +592,7 @@ const routes = [
     path: '/platform/setup/license-key',
     element: (
       <PlatformAdminContainer>
-        <PageTitle title="LicenseKey">
+        <PageTitle title="License Key">
           <LicenseKeyPage />
         </PageTitle>
       </PlatformAdminContainer>

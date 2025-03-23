@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Settings, Table2, Workflow } from 'lucide-react';
+import { ListTodo, Table2, Workflow } from 'lucide-react';
 import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
@@ -47,7 +47,6 @@ export function DashboardContainer({
   hideHeader,
 }: DashboardContainerProps) {
   const [automationOpen, setAutomationOpen] = useState(true);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification(
     platform.flowIssuesEnabled,
@@ -151,61 +150,17 @@ export function DashboardContainer({
     isSubItem: false,
   };
 
-  const settingsGroup: SidebarGroup = {
-    type: 'group',
-    label: t('Settings'),
-    defaultOpen: false,
-    open: settingsOpen,
-    setOpen: setSettingsOpen,
-    icon: Settings,
-    isActive: (pathname: string) => pathname.includes('/settings'),
-    items: [
-      {
-        type: 'link',
-        to: authenticationSession.appendProjectRoutePrefix('/settings/general'),
-        label: t('General'),
-        isSubItem: true,
-      },
-      {
-        type: 'link',
-        to: authenticationSession.appendProjectRoutePrefix(
-          '/settings/appearance',
-        ),
-        label: t('Appearance'),
-        isSubItem: true,
-      },
-      {
-        type: 'link',
-        to: authenticationSession.appendProjectRoutePrefix('/settings/team'),
-        label: t('Team'),
-        hasPermission: checkAccess(Permission.READ_PROJECT_MEMBER),
-        isSubItem: true,
-      },
-      {
-        type: 'link',
-        to: authenticationSession.appendProjectRoutePrefix('/settings/pieces'),
-        label: t('Pieces'),
-        isSubItem: true,
-      },
-      {
-        type: 'link',
-        to: authenticationSession.appendProjectRoutePrefix('/settings/alerts'),
-        label: t('Alerts'),
-        hasPermission: checkAccess(Permission.READ_ALERT),
-        isSubItem: true,
-      },
-      {
-        type: 'link',
-        to: authenticationSession.appendProjectRoutePrefix(
-          '/settings/environments',
-        ),
-        label: t('Environments'),
-        hasPermission: checkAccess(Permission.READ_PROJECT_RELEASE),
-        isSubItem: true,
-      },
-    ],
+  const todosLink: SidebarLink = {
+    type: 'link',
+    to: authenticationSession.appendProjectRoutePrefix('/todos'),
+    label: t('Todos'),
+    icon: ListTodo,
+    showInEmbed: true,
+    hasPermission: checkAccess(Permission.READ_TODOS),
+    isSubItem: false,
   };
-  const items: SidebarItem[] = [automationGroup, tablesLink, settingsGroup]
+
+  const items: SidebarItem[] = [automationGroup, tablesLink, todosLink]
     .filter(embedFilter)
     .filter(permissionFilter)
     .filter(filterAlerts);

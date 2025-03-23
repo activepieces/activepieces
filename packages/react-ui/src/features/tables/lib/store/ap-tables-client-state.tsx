@@ -44,6 +44,7 @@ export type TableState = {
   createField: (field: ClientField) => void;
   deleteField: (fieldIndex: number) => void;
   renameTable: (newName: string) => void;
+  renameField: (fieldIndex: number, newName: string) => void;
 };
 
 export const createApTableStore = (
@@ -147,6 +148,16 @@ export const createApTableStore = (
               values: record.values.filter((_, index) => index !== fieldIndex),
             })),
             fields: state.fields.filter((_, index) => index !== fieldIndex),
+          };
+        });
+      },
+      renameField: (fieldIndex: number, newName: string) => {
+        serverState.renameField(fieldIndex, newName);
+        return set((state) => {
+          return {
+            fields: state.fields.map((field, index) =>
+              index === fieldIndex ? { ...field, name: newName } : field,
+            ),
           };
         });
       },

@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod, AuthenticationType, HttpRequest } from '@activepieces/pieces-common';
 import { googleSheetsAuth } from '../..';
 import { includeTeamDrivesProp } from '../common/props';
 
@@ -35,24 +35,48 @@ export const findSpreadsheets = createAction({
       queries.push(`name contains '${searchValue}'`);
     }
 
-    const response = await httpClient.sendRequest<{files: any[]}>({
-      method: HttpMethod.GET,
-      url: 'https://www.googleapis.com/drive/v3/files',
-      queryParams: {
-        q: queries.join(' and '),
-        includeItemsFromAllDrives: propsValue.includeTeamDrives ? 'true' : 'false',
-        supportsAllDrives: 'true',
-        fields: 'files(id,name,webViewLink,createdTime,modifiedTime)',
-      },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth.access_token,
-      },
-    });
+    const files = [];
+    let pageToken = null;
+
+    do
+    {
+      const request :HttpRequest = {
+        method:HttpMethod.GET,
+        url: 'https://www.googleapis.com/drive/v3/files',
+        queryParams:{
+          q: queries.join(' and '),
+          includeItemsFromAllDrives: propsValue.includeTeamDrives ? 'true' : 'false',
+          supportsAllDrives: 'true',
+          fields: 'files(id,name,webViewLink,createdTime,modifiedTime),nextPageToken',
+        },
+        authentication: {
+          type: AuthenticationType.BEARER_TOKEN,
+          token: auth.access_token,
+        },
+
+      }
+      if (pageToken) {
+        if (request.queryParams !== undefined) {
+          request.queryParams['pageToken'] = pageToken;
+        }
+      }
+      try {
+        const response = await httpClient.sendRequest<{
+          files: { id: string; name: string }[];
+          nextPageToken: string;
+        }>(request);
+
+        files.push(...response.body.files);
+        pageToken = response.body.nextPageToken;
+      } catch (e) {
+        throw new Error(`Failed to get folders\nError:${e}`);
+      }
+
+    }while(pageToken);
 
     return {
-      found: response.body.files.length > 0,
-      spreadsheets: response.body.files,
+      found: files.length > 0,
+      spreadsheets:files,
     };
   },
 });

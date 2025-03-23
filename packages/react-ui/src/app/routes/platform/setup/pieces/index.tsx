@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon } from 'lucide-react';
+import { CheckIcon, Package } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -183,7 +183,13 @@ const PlatformPiecesPage = () => {
           />
         )}
         <div className="mb-4 flex">
-          <TableTitle>{t('Pieces')}</TableTitle>
+          <TableTitle
+            description={t(
+              'Manage the pieces that are available to your users',
+            )}
+          >
+            {t('Pieces')}
+          </TableTitle>
           <div className="ml-auto">
             <div className="flex gap-3">
               <ApplyTags
@@ -201,6 +207,11 @@ const PlatformPiecesPage = () => {
           </div>
         </div>
         <DataTable
+          emptyStateTextTitle={t('No pieces found')}
+          emptyStateTextDescription={t(
+            'Start by installing pieces that you want to use in your automations',
+          )}
+          emptyStateIcon={<Package className="size-14" />}
           columns={columns}
           filters={[
             {

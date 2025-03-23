@@ -29,6 +29,7 @@ import { GitRepoEntity } from '../ee/project-release/git-sync/git-sync.entity'
 import { ProjectReleaseEntity } from '../ee/project-release/project-release.entity'
 import { ProjectRoleEntity } from '../ee/project-role/project-role.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
+import { TodoCommentEntity } from '../ee/todos/comment/todos-comment.entity'
 import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
@@ -48,6 +49,7 @@ import { TableWebhookEntity } from '../tables/table/table-webhook.entity'
 import { TableEntity } from '../tables/table/table.entity'
 import { PieceTagEntity } from '../tags/pieces/piece-tag.entity'
 import { TagEntity } from '../tags/tag-entity'
+import { TodoEntity } from '../todos/todo.entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
@@ -90,6 +92,7 @@ function getEntities(): EntitySchema<unknown>[] {
         CellEntity,
         TableWebhookEntity,
         UserIdentityEntity,
+        TodoEntity,
     ]
 
     switch (edition) {
@@ -107,6 +110,7 @@ function getEntities(): EntitySchema<unknown>[] {
                 GitRepoEntity,
                 AuditEventEntity,
                 ProjectReleaseEntity,
+                TodoCommentEntity,
 
                 // CLOUD
                 AppSumoEntity,

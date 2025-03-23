@@ -110,6 +110,7 @@ const WEBHOOK_PARAMS = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
         skipAuth: true,
+        rawBody: true,
     },
     schema: {
         params: WebhookUrlParams,
@@ -127,6 +128,7 @@ async function convertRequest(
         headers: request.headers as Record<string, string>,
         body: await convertBody(request, projectId, flowId),
         queryParams: request.query as Record<string, string>,
+        rawBody: request.rawBody,
     }
     return payload
 }

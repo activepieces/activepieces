@@ -42,8 +42,7 @@ type TDiscriminatedUnionObject<Discriminator extends string> = TObject<TDiscrimi
 export type TDiscriminatedUnion<Types extends TObject[] = TObject[]> = {
     [Kind]: 'DiscriminatedUnion'
     static: Static<TUnion<Types>>
-    oneOf: Types
-    type: 'object'
+    anyOf: Types
     discriminator: {
         propertyName: string
         mapping?: Record<string, string>
@@ -58,8 +57,7 @@ export function DiscriminatedUnion<Discriminator extends string, Types extends T
 ): TDiscriminatedUnion<Types> {
     return CreateType({
         [Kind]: 'DiscriminatedUnion',
-        oneOf: types,
-        type: 'object',
+        anyOf: types,
         discriminator: {
             propertyName: discriminator,
         },

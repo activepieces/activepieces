@@ -1,14 +1,12 @@
-import { AppSystemProp } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode, isNil, PrincipalType, VerifyLicenseKeyRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
-import { system } from '../../helper/system/system'
 import { platformService } from '../../platform/platform.service'
 import { licenseKeysService } from './license-keys-service'
 import { licenseKeysTrialService } from './license-keys-trial.service'
 
-const key = system.get<string>(AppSystemProp.LICENSE_KEY)
+
 
 export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -26,15 +24,7 @@ export const licenseKeysController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
-    app.get('/status', async (_req, res) => {
-        const licenseKey = await licenseKeysService(app.log).getKey(key)
-        if (isNil(licenseKey)) {
-            return res.status(StatusCodes.NOT_FOUND).send({
-                message: 'No license key found',
-            })
-        }
-        return licenseKey
-    })
+
 
     app.get('/:licenseKey', GetLicenseKeyRequest, async (req) => {
         const licenseKey = await licenseKeysService(app.log).getKey(req.params.licenseKey)
