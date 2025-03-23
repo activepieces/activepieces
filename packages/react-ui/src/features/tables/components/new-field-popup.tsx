@@ -195,6 +195,7 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                         inputName="data.options"
                         disabled={false}
                         required={true}
+                        thinInputs={true}
                       />
                       <FormMessage />
                     </FormItem>

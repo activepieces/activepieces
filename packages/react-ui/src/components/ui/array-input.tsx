@@ -14,11 +14,18 @@ import {
   SortableItem,
 } from '@/components/ui/sortable';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
+import { cn } from '@/lib/utils';
 
 type ArrayInputProps = {
   inputName: string;
   disabled: boolean;
   required?: boolean;
+  customInputNode?: (
+    onChange: (value: string) => void,
+    value: string,
+    disabled: boolean,
+  ) => React.ReactNode;
+  thinInputs?: boolean;
 };
 
 type ArrayField = {
@@ -27,7 +34,13 @@ type ArrayField = {
 };
 
 const ArrayInput = React.memo(
-  ({ inputName, disabled, required }: ArrayInputProps) => {
+  ({
+    inputName,
+    disabled,
+    required,
+    customInputNode,
+    thinInputs,
+  }: ArrayInputProps) => {
     const form = useFormContext();
     const [fields, setFields] = useState<ArrayField[]>(() => {
       const formValues = form.getValues(inputName);
@@ -92,7 +105,7 @@ const ArrayInput = React.memo(
     };
 
     return (
-      <div>
+      <>
         <div className="flex w-full flex-col gap-4 ">
           <Sortable
             value={fields}
@@ -107,7 +120,7 @@ const ArrayInput = React.memo(
                     variant="outline"
                     size="icon"
                     disabled={disabled}
-                    className="size-7 shrink-0"
+                    className={cn('shrink-0 size-8', thinInputs && 'size-7')}
                   >
                     <DragHandleDots2Icon
                       className="size-4"
@@ -121,15 +134,23 @@ const ArrayInput = React.memo(
                     render={() => (
                       <FormItem className="grow">
                         <FormControl>
-                          <Input
-                            thin={true}
-                            value={field.value as string}
-                            onChange={(e) =>
-                              updateFieldValue(index, e.target.value)
-                            }
-                            disabled={disabled}
-                            className="grow"
-                          />
+                          {customInputNode ? (
+                            customInputNode(
+                              (value) => updateFieldValue(index, value),
+                              field.value as string,
+                              disabled,
+                            )
+                          ) : (
+                            <Input
+                              thin={thinInputs}
+                              value={field.value as string}
+                              onChange={(e) =>
+                                updateFieldValue(index, e.target.value)
+                              }
+                              disabled={disabled}
+                              className="grow"
+                            />
+                          )}
                         </FormControl>
                       </FormItem>
                     )}
@@ -142,7 +163,10 @@ const ArrayInput = React.memo(
                         variant="outline"
                         size="icon"
                         disabled={disabled}
-                        className="size-7 shrink-0"
+                        className={cn(
+                          'shrink-0 size-8',
+                          thinInputs && 'size-7',
+                        )}
                         onClick={() => {
                           remove(index);
                         }}
@@ -172,7 +196,7 @@ const ArrayInput = React.memo(
             <TextWithIcon icon={<Plus size={18} />} text={t('Add Item')} />
           </Button>
         )}
-      </div>
+      </>
     );
   },
 );
