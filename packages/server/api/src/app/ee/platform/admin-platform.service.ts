@@ -13,12 +13,13 @@ import {
     UserId,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { In } from 'typeorm'
+import { In, IsNull } from 'typeorm'
 import { flowRunRepo, flowRunService } from '../../flows/flow-run/flow-run-service'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { customDomainService } from '../custom-domains/custom-domain.service'
 import { licenseKeysService } from '../license-keys/license-keys-service'
+import { projectRepo } from '../project-role/project-role.service'
 
 export const adminPlatformService = (log: FastifyBaseLogger) => ({
     async add({
@@ -68,9 +69,17 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
     }: AdminRetryRunsRequestBody): Promise<void> => {
         const strategy = FlowRetryStrategy.FROM_FAILED_STEP
         //Get all flow runs that failed, regardless of the project or platform
+        const projects = await projectRepo().find({
+            where: {
+                deleted: IsNull(),
+            },
+        })
+
+   
         let query = flowRunRepo().createQueryBuilder('flow_run').where({
             environment: RunEnvironment.PRODUCTION,
             status: In([FlowRunStatus.FAILED, FlowRunStatus.INTERNAL_ERROR, FlowRunStatus.TIMEOUT]),
+            projectId: In(projects.map((project) => project.id)),
         })
         if (!createdAfter || !createdBefore) {
             throw new ActivepiecesError({
@@ -86,7 +95,7 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
         query = query.andWhere('flow_run.created <= :createdBefore', {
             createdBefore,
         })
-
+    
         const flowRuns = await query.getMany()
         const flowRunsByProject = flowRuns.reduce((acc, flowRun) => {
             acc[flowRun.projectId] = acc[flowRun.projectId] || []
@@ -101,6 +110,8 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
                 strategy,
             })
         }
+
+      
 
     },
 })
