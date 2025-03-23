@@ -1,18 +1,12 @@
-import { DragHandleDots2Icon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
 import { Plus, TrashIcon } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { ArrayInput } from '@/components/ui/array-input';
 import { Button } from '@/components/ui/button';
-import { FormControl, FormField, FormItem } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Sortable,
-  SortableDragHandle,
-  SortableItem,
-} from '@/components/ui/sortable';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
 import {
   ArrayProperty,
@@ -125,30 +119,11 @@ const ArrayPieceProperty = React.memo(
       updateFormValue(newFields);
     };
 
-    const move = (from: number, to: number) => {
-      const newFields = [...fields];
-      const [removed] = newFields.splice(from, 1);
-      newFields.splice(to, 0, removed);
-      setFields(newFields);
-      updateFormValue(newFields);
-    };
-
-    const updateFieldValue = (
-      index: number,
-      newValue: string | Record<string, unknown>,
-    ) => {
-      const newFields = fields.map((field, i) =>
-        i === index ? { ...field, value: newValue } : field,
-      );
-      setFields(newFields);
-      updateFormValue(newFields);
-    };
-
     return (
       <>
-        <div className="flex w-full flex-col gap-4">
-          {arrayProperty.properties ? (
-            <>
+        {arrayProperty.properties && (
+          <>
+            <div className="flex w-full flex-col gap-4">
               {fields.map((field, index) => (
                 <div
                   className="p-4 border rounded-md flex flex-col gap-4"
@@ -181,111 +156,47 @@ const ArrayPieceProperty = React.memo(
                   ></AutoPropertiesFormComponent>
                 </div>
               ))}
-            </>
-          ) : (
-            <Sortable
-              value={fields}
-              onMove={({ activeIndex, overIndex }) => {
-                move(activeIndex, overIndex);
-              }}
-              overlay={
-                <div className="grid grid-cols-[auto,1fr,auto] items-center gap-2">
-                  <div className="size-8 shrink-0 rounded-sm bg-primary/10" />
-                  <div className="h-8 w-full rounded-sm bg-primary/10" />
-                  <div className="size-8 shrink-0 rounded-sm bg-primary/10" />
-                </div>
-              }
-            >
-              {fields.map((field, index) => (
-                <SortableItem key={field.id} value={field.id} asChild>
-                  <div className="flex items-center gap-3">
-                    <SortableDragHandle
-                      variant="outline"
-                      size="icon"
-                      disabled={disabled}
-                      className="size-8 shrink-0"
-                    >
-                      <DragHandleDots2Icon
-                        className="size-4"
-                        aria-hidden="true"
-                      />
-                    </SortableDragHandle>
-                    {arrayProperty.properties && (
-                      <div className="flex flex-grow">
-                        <AutoPropertiesFormComponent
-                          prefixValue={`${inputName}.${index}`}
-                          props={arrayProperty.properties}
-                          useMentionTextInput={useMentionTextInput}
-                          allowDynamicValues={false}
-                          disabled={disabled}
-                        ></AutoPropertiesFormComponent>
-                      </div>
-                    )}
-                    {!arrayProperty.properties && (
-                      <FormField
-                        control={form.control}
-                        name={`${inputName}.${index}`}
-                        render={() => (
-                          <FormItem className="grow">
-                            <FormControl>
-                              {useMentionTextInput ? (
-                                <TextInputWithMentions
-                                  initialValue={field.value as string}
-                                  onChange={(value) =>
-                                    updateFieldValue(index, value)
-                                  }
-                                  disabled={disabled}
-                                />
-                              ) : (
-                                <Input
-                                  value={field.value as string}
-                                  onChange={(e) =>
-                                    updateFieldValue(index, e.target.value)
-                                  }
-                                  disabled={disabled}
-                                  className="grow"
-                                />
-                              )}
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    )}
+            </div>
+            {!disabled && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => {
+                  append();
+                }}
+                type="button"
+              >
+                <TextWithIcon icon={<Plus size={18} />} text={t('Add Item')} />
+              </Button>
+            )}
+          </>
+        )}
 
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      disabled={disabled}
-                      className="size-8 shrink-0"
-                      onClick={() => {
-                        remove(index);
-                      }}
-                    >
-                      <TrashIcon
-                        className="size-4 text-destructive"
-                        aria-hidden="true"
-                      />
-                      <span className="sr-only">{t('Remove')}</span>
-                    </Button>
-                  </div>
-                </SortableItem>
-              ))}
-            </Sortable>
-          )}
-        </div>
-        {!disabled && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-2"
-            onClick={() => {
-              append();
+        {!arrayProperty.properties && (
+          <ArrayInput
+            inputName={inputName}
+            disabled={disabled}
+            required={arrayProperty.required}
+            customInputNode={(onChange, value, disabled) => {
+              if (!useMentionTextInput) {
+                return (
+                  <Input
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    disabled={disabled}
+                  />
+                );
+              }
+              return (
+                <TextInputWithMentions
+                  initialValue={value}
+                  onChange={(newValue) => onChange(newValue)}
+                  disabled={disabled}
+                />
+              );
             }}
-            type="button"
-          >
-            <TextWithIcon icon={<Plus size={18} />} text={t('Add Item')} />
-          </Button>
+          />
         )}
       </>
     );
