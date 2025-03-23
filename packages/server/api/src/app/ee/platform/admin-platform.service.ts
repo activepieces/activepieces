@@ -1,13 +1,20 @@
 import {
     ActivepiecesError,
+    AdminRetryRunsRequestBody,
     ErrorCode,
+    FlowRetryStrategy,
+    FlowRun,
+    FlowRunStatus,
     isNil,
     Platform,
     Project,
     ProjectId,
+    RunEnvironment,
     UserId,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { In } from 'typeorm'
+import { flowRunRepo, flowRunService } from '../../flows/flow-run/flow-run-service'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { customDomainService } from '../custom-domains/custom-domain.service'
@@ -53,6 +60,48 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
             platformId: customDomain.platformId,
         })
         return platform
+    },
+
+    retryRuns: async ({
+        createdAfter,
+        createdBefore,
+        strategy = FlowRetryStrategy.FROM_FAILED_STEP,
+    }: AdminRetryRunsRequestBody): Promise<void> => {
+        //Get all flow runs that failed, regardless of the project or platform
+        let query = flowRunRepo().createQueryBuilder('flow_run').where({
+            environment: RunEnvironment.PRODUCTION,
+            status: In([FlowRunStatus.FAILED, FlowRunStatus.INTERNAL_ERROR, FlowRunStatus.TIMEOUT]),
+        })
+        if (!createdAfter || !createdBefore) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'createdAfter and createdBefore are required',
+                },
+            })
+        }
+        query = query.andWhere('flow_run.created >= :createdAfter', {
+            createdAfter,
+        })
+        query = query.andWhere('flow_run.created <= :createdBefore', {
+            createdBefore,
+        })
+
+        const flowRuns = await query.getMany()
+        const flowRunsByProject = flowRuns.reduce((acc, flowRun) => {
+            acc[flowRun.projectId] = acc[flowRun.projectId] || []
+            acc[flowRun.projectId].push(flowRun)
+            return acc
+        }, {} as Record<ProjectId, FlowRun[]>)
+        for (const projectId in flowRunsByProject) {
+            const flowRuns = flowRunsByProject[projectId]
+            await flowRunService(log).bulkRetry({
+                projectId,
+                flowRunIds: flowRuns.map((flowRun) => flowRun.id),
+                strategy,
+            })
+        }
+
     },
 })
 
