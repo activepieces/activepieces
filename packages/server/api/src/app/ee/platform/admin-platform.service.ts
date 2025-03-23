@@ -65,8 +65,8 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
     retryRuns: async ({
         createdAfter,
         createdBefore,
-        strategy = FlowRetryStrategy.FROM_FAILED_STEP,
     }: AdminRetryRunsRequestBody): Promise<void> => {
+        const strategy = FlowRetryStrategy.FROM_FAILED_STEP
         //Get all flow runs that failed, regardless of the project or platform
         let query = flowRunRepo().createQueryBuilder('flow_run').where({
             environment: RunEnvironment.PRODUCTION,

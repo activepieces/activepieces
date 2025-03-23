@@ -2,7 +2,6 @@ import { Static, Type } from '@sinclair/typebox'
 import { LocalesEnum, SAFE_STRING_PATTERN } from '../common'
 import { ApId } from '../common/id-generator'
 import { FederatedAuthnProviderConfig } from '../federated-authn'
-import { FlowRetryStrategy } from '../flow-run/flow-run'
 import { CopilotSettings, FilteredPieceBehavior, SMTPInformation } from './platform.model'
 
 export const UpdatePlatformRequestBody = Type.Object({
@@ -38,7 +37,6 @@ export const AdminAddPlatformRequestBody = Type.Object({
 export type AdminAddPlatformRequestBody = Static<typeof AdminAddPlatformRequestBody>
 
 export const AdminRetryRunsRequestBody = Type.Object({
-    strategy: Type.Optional(Type.Enum(FlowRetryStrategy)),
     createdAfter: Type.String(),
     createdBefore: Type.String(),
 })
