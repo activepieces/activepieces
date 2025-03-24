@@ -1,17 +1,5 @@
 {
-    "cSpell.words": [
-        "Activepieces",
-        "Fastify",
-        "mpim",
-        "sendgrid"
-    ],
-    "editor.codeActionsOnSave": {
-        "source.fixAll.eslint": "explicit"
-    },
-    "editor.formatOnSave": false,
-    "typescript.tsdk": "node_modules/typescript/lib",
-    "javascript.preferences.importModuleSpecifier": "relative",
     "i18n-ally.localesPaths": [
         "packages/react-ui/public/locales"
-    ],
+    ]
 }
