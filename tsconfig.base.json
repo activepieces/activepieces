@@ -209,6 +209,9 @@
       "@activepieces/piece-elevenlabs": [
         "packages/pieces/community/elevenlabs/src/index.ts"
       ],
+      "@activepieces/piece-eth-name-service": [
+        "packages/pieces/community/eth-name-service/src/index.ts"
+      ],
       "@activepieces/piece-facebook-leads": [
         "packages/pieces/community/facebook-leads/src/index.ts"
       ],
@@ -394,6 +397,9 @@
       ],
       "@activepieces/piece-localai": [
         "packages/pieces/community/localai/src/index.ts"
+      ],
+      "@activepieces/piece-lusha": [
+        "packages/pieces/community/lusha/src/index.ts"
       ],
       "@activepieces/piece-mailchimp": [
         "packages/pieces/community/mailchimp/src/index.ts"
@@ -797,9 +803,6 @@
       ],
       "activepieces/piece-zuora": [
         "packages/pieces/community/zuora/src/index.ts"
-      ],
-      "@activepieces/piece-eth-name-service": [
-        "packages/pieces/community/eth-name-service/src/index.ts"
       ],
       "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
       "server-worker": ["packages/server/worker/src/index.ts"],
