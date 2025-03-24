@@ -562,6 +562,8 @@ export function formatIssueFields(
 			}
 
 			case 'user':
+				fieldsOutput[key] = { accountId: fieldInputValue };
+				break;
 			case 'version':
 			case 'option':
 			case 'priority':
