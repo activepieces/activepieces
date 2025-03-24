@@ -3,7 +3,7 @@ import { Property } from '@activepieces/pieces-framework';
 export const wedofCommon = {
    baseUrl: 'https://www.wedof.fr/api',
   host: 'https://www.wedof.fr/api',
-  
+
   state: Property.StaticMultiSelectDropdown({
     displayName: 'Etat du dossier de formation',
     required: false,
@@ -76,6 +76,74 @@ export const wedofCommon = {
       ],
       disabled: false,
     },
+  }),
+
+  partnershipState : Property.StaticDropdown({
+          displayName: 'État du partenariat de certification',
+          required: false,
+          options: {
+            disabled: false,
+            options: [
+              {
+                  value: 'processing',
+                  label: 'Demande en traitement',
+              },
+              {
+                  value: 'active',
+                  label: 'Partenariat actif',
+              },
+              {
+                  value: 'aborted',
+                  label: 'Demande abondonnée',
+              },
+              {
+                  value: 'refused',
+                  label: 'Demande refusée',
+              },
+              {
+                  value: 'suspended',
+                  label: 'Partenariat suspendu',
+              },
+              {
+                  value: 'revoked',
+                  label: 'Partenariat révoqué',
+              },
+          ],
+      },
+  }),
+
+  habilitation : Property.StaticDropdown({
+    displayName: 'Habilitation du partenaire',
+    required: false,
+    options: {
+      disabled: false,
+      options: [
+        {
+            value: 'evaluate',
+            label: 'Habilitation pour organiser l’évaluation',
+        },
+        {
+            value: 'train',
+            label: 'Habilitation pour former',
+        },
+        {
+            value: 'train_evaluate',
+            label: 'Habilitation pour former et organiser l’évaluation',
+        },
+    ],
+  },
+  }),
+
+  compliance: Property.StaticDropdown({
+  displayName: 'Conformité',
+  required: false,
+  options: {
+    options: [
+      { label: 'Conforme', value: 'compliant' },
+      { label: 'Partiellement Conforme', value: 'partiallyCompliant' },
+      { label: 'Non Conforme', value: 'nonCompliant' }
+    ]
+  }
   }),
 
   events: Property.StaticMultiSelectDropdown({
@@ -270,7 +338,7 @@ export const wedofCommon = {
     },
   }),
 
-  forceMajeurAbsence: Property.StaticDropdown({
+  forceMajeureAbsence: Property.StaticDropdown({
     displayName: 'Absence pour raison de force majeure',
     description: "Si absence pour raison de force majeure, 'Oui', sinon 'Non'",
     required: false,
@@ -759,15 +827,15 @@ export const wedofCommon = {
           value: 'sms',
         },
         {
-          label: "Formation", 
+          label: "Formation",
           value: "training"
         },
 			  {
-          label: "Remarque", 
+          label: "Remarque",
           value: "remark"
         },
 			  {
-          label: "Document", 
+          label: "Document",
           value: "file"
         },
       ],
