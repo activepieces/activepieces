@@ -52,13 +52,13 @@ export const useFlowsBulkActions = ({
   refetch: () => void;
 }) => {
   const userHasPermissionToUpdateFlow = useAuthorization().checkAccess(
-    Permission.WRITE_FLOW,
+    Permission.WRITE_FLOW
   );
   const userHasPermissionToWriteFolder = useAuthorization().checkAccess(
-    Permission.WRITE_FOLDER,
+    Permission.WRITE_FOLDER
   );
   const userHasPermissionToWroteProjectRelease = useAuthorization().checkAccess(
-    Permission.WRITE_PROJECT_RELEASE,
+    Permission.WRITE_PROJECT_RELEASE
   );
   const { embedState } = useEmbedding();
   // const { platform } = platformHooks.useCurrentPlatform();
@@ -178,7 +178,7 @@ export const useFlowsBulkActions = ({
                         <>
                           <div>
                             {t(
-                              'Are you sure you want to delete these flows? This will permanently delete the flows, all their data and any background runs.',
+                              'Are you sure you want to delete these flows? This will permanently delete the flows, all their data and any background runs.'
                             )}
                           </div>
                           {/* {isDevelopmentBranch && (
@@ -192,7 +192,7 @@ export const useFlowsBulkActions = ({
                       }
                       mutationFn={async () => {
                         await Promise.all(
-                          selectedRows.map((flow) => flowsApi.delete(flow.id)),
+                          selectedRows.map((flow) => flowsApi.delete(flow.id))
                         );
                         setRefresh(refresh + 1);
                         resetSelection();
@@ -204,7 +204,11 @@ export const useFlowsBulkActions = ({
                     >
                       <DropdownMenuItem
                         disabled={!userHasPermissionToUpdateFlow}
-                        onSelect={(e) => e.preventDefault()}
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          setIsDropdownOpen(false);
+                          setTimeout(() => setIsDropdownOpen(true), 0);
+                        }}
                       >
                         <div className="flex cursor-pointer  flex-row gap-2 items-center">
                           <Trash2 className="h-4 w-4 text-destructive" />
