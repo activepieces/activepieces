@@ -31,7 +31,7 @@ type BaseFile = {
     fileName: string | undefined
     compression: FileCompression
     size: number
-    metadata: Record<string, string> | undefined,
+    metadata: Record<string, string> | undefined
     created: string
     updated: string
 }
@@ -40,12 +40,12 @@ const saveFileToDb = async (baseFile: BaseFile, data: SaveParams['data']) => {
     return fileRepo().save({
         ...baseFile,
         location: FileLocation.DB,
-        data
+        data,
     })
 }
 export const fileService = (log: FastifyBaseLogger) => ({
     async save(params: SaveParams): Promise<File> {
-        const baseFile:BaseFile = {
+        const baseFile: BaseFile = {
             id: params.fileId ?? apId(),
             projectId: params.projectId,
             platformId: params.platformId,
@@ -63,16 +63,16 @@ export const fileService = (log: FastifyBaseLogger) => ({
                 return saveFileToDb(baseFile, params.data)
             }
             case FileLocation.S3: {
-                try{                    
+                try {                    
                     const s3Key = s3Helper(log).constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
                     if (!isNil(params.data)) {
                         await s3Helper(log).uploadFile(s3Key, params.data)
                     }
-                    return fileRepo().save({
+                    return (await fileRepo().save({
                         ...baseFile,
                         location: FileLocation.S3,
                         s3Key,
-                    })
+                    }))
                 }
                 catch (error) {
                     log.error({
