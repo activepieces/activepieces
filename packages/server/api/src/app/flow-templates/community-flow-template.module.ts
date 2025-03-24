@@ -35,7 +35,7 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
             const url = `${templateSource}?${queryString}`
             console.log("templateSource => ",templateSource);
             console.log("queryString =>", queryString);
-            console.log("community template URL => ", url)
+            console.log("community template URL => ", url);
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
