@@ -180,7 +180,9 @@ function ManualTaskTestingDialog({
       const publicUrl = response['approvalUrl']?.split('/flow-runs/')[0];
       const links = statusOptions.map((option) => ({
         status: option.name,
-        url: publicUrl + `/todos/${response.id}/approve?status=${option.name}&isTest=true`,
+        url:
+          publicUrl +
+          `/todos/${response.id}/approve?status=${option.name}&isTest=true`,
       }));
       setSampleData(currentStep.name, {
         id: response.id,

@@ -56,7 +56,6 @@ export const waitForApproval = createAction({
 
       return undefined;
     } else {
-      // update status in backend
       return {
         status: ctx.resumePayload.queryParams['status'],
       };

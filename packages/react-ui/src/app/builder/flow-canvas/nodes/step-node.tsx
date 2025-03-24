@@ -236,8 +236,8 @@ const ApStepCanvasNode = React.memo(
                     <div className={isSkipped ? 'opacity-80' : ''}>
                       <PieceIcon
                         logoUrl={
-                          step.settings?.inputUiInfo?.customizedInputs?.logoUrl ??
-                          stepMetadata?.logoUrl
+                          step.settings?.inputUiInfo?.customizedInputs
+                            ?.logoUrl ?? stepMetadata?.logoUrl
                         }
                         displayName={stepMetadata?.displayName}
                         showTooltip={false}

@@ -343,7 +343,7 @@ const PieceSelector = ({
         stepMetadata,
         actionOrTrigger: waitForApprovalAction,
       });
-      
+
       const waitForApprovalStepDataSettings = {
         ...waitForApprovalStepData.settings,
         input: {

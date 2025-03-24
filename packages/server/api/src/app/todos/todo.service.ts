@@ -88,7 +88,7 @@ export const todoService = (_log: FastifyBaseLogger) => ({
             id: params.id,
             platformId: todo.platformId,
             projectId: todo.projectId,
-            status: status,
+            status,
             isTest: params.isTest,
         })
         return {
