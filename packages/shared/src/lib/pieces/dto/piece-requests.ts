@@ -39,7 +39,7 @@ export type GetPieceRequestWithScopeParams = Static<typeof GetPieceRequestWithSc
 
 
 export const GetPieceRequestParams = Type.Object({
-    name: Type.String()
+    name: Type.String(),
 })
 
 export type GetPieceRequestParams = Static<typeof GetPieceRequestParams>
