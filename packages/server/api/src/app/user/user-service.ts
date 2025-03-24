@@ -3,6 +3,7 @@ import {
     ApEdition,
     apId,
     ErrorCode,
+    isNil,
     PlatformId,
     PlatformRole,
     ProjectId,
@@ -37,7 +38,7 @@ export const userService = {
         return userRepo().save(user)
     },
     async update({ id, status, platformId, platformRole, externalId }: UpdateParams): Promise<UserWithMetaInformation> {
-        const user = await userRepo().findOneByOrFail({ id })
+        const user = await this.getOrThrow({ id })
         if (user.platformRole === PlatformRole.ADMIN && status === UserStatus.INACTIVE) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -89,6 +90,16 @@ export const userService = {
     },
     async get({ id }: IdParams): Promise<User | null> {
         return userRepo().findOneBy({ id })
+    },
+    async getOrThrow({ id }: IdParams): Promise<User> {
+        const user = await userRepo().findOneBy({ id })
+        if (isNil(user)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'user', entityId: id },
+            })
+        }
+        return user
     },
     async getOneOrFail({ id }: IdParams): Promise<User> {
         return userRepo().findOneOrFail({ where: { id } })
