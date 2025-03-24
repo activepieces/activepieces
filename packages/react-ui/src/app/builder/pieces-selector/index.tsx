@@ -19,15 +19,22 @@ import {
   PieceSelectorOperation,
   HandleSelectCallback,
   StepMetadataWithSuggestions,
+  PieceSelectorItem,
 } from '@/features/pieces/lib/types';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Action,
   ActionType,
+  BranchExecutionType,
+  BranchOperator,
+  flowOperations,
   FlowOperationType,
   flowStructureUtil,
+  FlowVersion,
   isNil,
+  RouterExecutionType,
+  StepLocationRelativeToParent,
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
@@ -176,12 +183,56 @@ const PieceSelector = ({
     setSelectedTag(PieceTagEnum.ALL);
   };
 
-  const handleSelect: HandleSelectCallback = (
+  const handleAddAction = (
+    stepMetadata: StepMetadata,
+    parentStep: Action | Trigger,
+    flowVersion: FlowVersion,
+    actionOrTrigger: PieceSelectorItem,
+    settings: Record<string, unknown>,
+  ) => {
+    let currentFlowVersion = flowVersion;
+
+    const stepName = pieceSelectorUtils.getStepName(
+      stepMetadata,
+      currentFlowVersion,
+    );
+
+    const stepData = pieceSelectorUtils.getDefaultStep({
+      stepName: stepName,
+      stepMetadata,
+      actionOrTrigger,
+      settings: settings,
+    });
+
+    applyOperation({
+      type: FlowOperationType.ADD_ACTION,
+      request: {
+        parentStep: parentStep.name,
+        stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+        action: stepData as Action,
+      },
+    });
+
+    currentFlowVersion = flowOperations.apply(currentFlowVersion, {
+      type: FlowOperationType.ADD_ACTION,
+      request: {
+        parentStep: parentStep.name,
+        stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+        action: stepData as Action,
+      },
+    });
+
+    return currentFlowVersion;
+  };
+
+  const handleSelect: HandleSelectCallback = async (
     stepMetadata,
     actionOrTrigger,
   ) => {
     resetField();
     onOpenChange(false);
+
+    let currentFlowVersion = flowVersion;
     const newStepName = pieceSelectorUtils.getStepName(
       stepMetadata,
       flowVersion,
@@ -204,6 +255,13 @@ const PieceSelector = ({
       }
       case FlowOperationType.ADD_ACTION: {
         applyOperation({
+          type: FlowOperationType.ADD_ACTION,
+          request: {
+            ...operation.actionLocation,
+            action: stepData as Action,
+          },
+        });
+        currentFlowVersion = flowOperations.apply(flowVersion, {
           type: FlowOperationType.ADD_ACTION,
           request: {
             ...operation.actionLocation,
@@ -258,6 +316,63 @@ const PieceSelector = ({
           },
         });
       }
+    }
+
+    if (
+      stepData.settings.pieceName === '@activepieces/piece-todos' &&
+      stepData.settings.actionName === 'createTodo'
+    ) {
+      const routerAction = {
+        name: 'router',
+        displayName: 'Check Todo Status',
+        description: 'Split your flow into branches depending on todo status',
+        type: ActionType.ROUTER,
+      } as PieceSelectorItem;
+
+      const routerStepMetadata = {
+        displayName: 'Check Todo Status',
+        logoUrl: stepMetadata.logoUrl,
+        description: 'Split your flow into branches depending on todo status',
+        type: ActionType.ROUTER,
+      } as StepMetadata;
+
+      const routerSettings = {
+        branches: [
+          {
+            conditions: [
+              [
+                {
+                  operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                  firstValue: `{{ ${stepData.name}['status'] }}`,
+                  secondValue: '',
+                  caseSensitive: false,
+                },
+              ],
+            ],
+            branchType: BranchExecutionType.CONDITION,
+            branchName: 'Status 1',
+          },
+          {
+            branchType: BranchExecutionType.FALLBACK,
+            branchName: 'Otherwise',
+          },
+        ],
+        executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+        inputUiInfo: {
+          customizedInputs: {
+            logoUrl: stepMetadata.logoUrl,
+            description: routerStepMetadata.description,
+          },
+        },
+      };
+
+      handleAddAction(
+        routerStepMetadata,
+        stepData,
+        currentFlowVersion,
+        routerAction,
+        routerSettings,
+      );
     }
     setAskAiButtonProps(null);
   };
