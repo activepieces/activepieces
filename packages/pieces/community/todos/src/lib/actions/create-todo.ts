@@ -45,8 +45,6 @@ export const createTodo = createAction({
         const baseApiUrl = context.server.publicUrl;
         const apiKey = context.server.token;
         const users = await listAssignee(baseApiUrl, apiKey);
-        console.log('HELLLOOOO');
-        console.log(JSON.stringify(users, null, 2));
         return {
           options: users.data.map((user) => ({
             value: user.id,
@@ -103,20 +101,14 @@ export const createTodo = createAction({
     }
   },
   async run(context) {
-    if (context.executionType === ExecutionType.BEGIN) {
-      context.run.pause({
-        pauseMetadata: {
-          type: PauseType.WEBHOOK,
-          response: {},
-        },
-      });
-      const response = await sendTodoApproval(context, false);
-      return response.body;
-    } else {
-      return {
-        status: context.resumePayload.queryParams['status'],
-      };
-    }
+    const response = await sendTodoApproval(context, false);
+    const links = context.propsValue.statusOptions.map((option: any) => ({
+      name: option.name,
+      url: `${context.server.publicUrl}v1/todos/${response.body.id}?status=${option.name}`,
+    }));
+    return {
+      links,
+    };
   },
 });
 

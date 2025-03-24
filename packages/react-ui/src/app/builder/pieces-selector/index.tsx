@@ -20,6 +20,7 @@ import {
   HandleSelectCallback,
   StepMetadataWithSuggestions,
   PieceSelectorItem,
+  PieceStepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -188,7 +189,7 @@ const PieceSelector = ({
     parentStep: Action | Trigger,
     flowVersion: FlowVersion,
     actionOrTrigger: PieceSelectorItem,
-    settings: Record<string, unknown>,
+    settings?: Record<string, unknown>,
   ) => {
     let currentFlowVersion = flowVersion;
 
@@ -237,6 +238,9 @@ const PieceSelector = ({
       stepMetadata,
       flowVersion,
     );
+    console.log('stepMetadata', stepMetadata);
+    console.log('actionOrTrigger', actionOrTrigger);
+    console.log('newStepName', newStepName);
 
     const stepData = pieceSelectorUtils.getDefaultStep({
       stepName: newStepName,
@@ -322,6 +326,30 @@ const PieceSelector = ({
       stepData.settings.pieceName === '@activepieces/piece-todos' &&
       stepData.settings.actionName === 'createTodo'
     ) {
+      const waitForApprovalAction = (
+        stepMetadata as PieceStepMetadataWithSuggestions
+      )?.suggestedActions?.find(
+        (action: any) => action.name === 'wait_for_approval',
+      ) as PieceSelectorItem;
+
+      const waitForApprovalStepName = pieceSelectorUtils.getStepName(
+        stepMetadata,
+        currentFlowVersion,
+      );
+
+      const waitForApprovalStepData = pieceSelectorUtils.getDefaultStep({
+        stepName: waitForApprovalStepName,
+        stepMetadata,
+        actionOrTrigger: waitForApprovalAction,
+      });
+
+      currentFlowVersion = handleAddAction(
+        stepMetadata,
+        stepData,
+        currentFlowVersion,
+        waitForApprovalAction,
+      );
+
       const routerAction = {
         name: 'router',
         displayName: 'Check Todo Status',
@@ -343,7 +371,7 @@ const PieceSelector = ({
               [
                 {
                   operator: BranchOperator.TEXT_EXACTLY_MATCHES,
-                  firstValue: `{{ ${stepData.name}['status'] }}`,
+                  firstValue: `{{ ${waitForApprovalStepData.name}['status'] }}`,
                   secondValue: '',
                   caseSensitive: false,
                 },
@@ -368,7 +396,7 @@ const PieceSelector = ({
 
       handleAddAction(
         routerStepMetadata,
-        stepData,
+        waitForApprovalStepData,
         currentFlowVersion,
         routerAction,
         routerSettings,
