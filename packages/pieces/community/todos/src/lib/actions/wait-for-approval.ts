@@ -31,7 +31,6 @@ export const waitForApproval = createAction({
     },
   },
   async test(ctx) {
-    console.log("HAHAHAHAH ctx.propsValue.taskId", ctx.propsValue.taskId);
     const request: HttpRequest = {
       method: HttpMethod.GET,
       url: `${ctx.server.publicUrl}v1/todos/${ctx.propsValue.taskId}`,

@@ -238,9 +238,6 @@ const PieceSelector = ({
       stepMetadata,
       flowVersion,
     );
-    console.log('stepMetadata', stepMetadata);
-    console.log('actionOrTrigger', actionOrTrigger);
-    console.log('newStepName', newStepName);
 
     const stepData = pieceSelectorUtils.getDefaultStep({
       stepName: newStepName,
@@ -321,7 +318,6 @@ const PieceSelector = ({
         });
       }
     }
-    console.log('stepData', stepData);
 
     if (
       stepData.settings.pieceName === '@activepieces/piece-todos' &&
