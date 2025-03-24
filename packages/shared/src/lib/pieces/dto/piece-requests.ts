@@ -39,7 +39,7 @@ export type GetPieceRequestWithScopeParams = Static<typeof GetPieceRequestWithSc
 
 
 export const GetPieceRequestParams = Type.Object({
-    name: Type.String(),
+    name: Type.String()
 })
 
 export type GetPieceRequestParams = Static<typeof GetPieceRequestParams>
@@ -68,6 +68,7 @@ export type ListVersionRequestQuery = Static<typeof ListVersionRequestQuery>
 
 export const GetPieceRequestQuery = Type.Object({
     version: Type.Optional(VersionType),
+    projectId: Type.Optional(Type.String()),
 })
 
 export const ListVersionsResponse = Type.Record(ExactVersionType, Type.Object({}))
