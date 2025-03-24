@@ -6,15 +6,17 @@ import { Button } from '@/components/ui/button';
 import { cn, formatUtils } from '@/lib/utils';
 import { FieldType } from '@activepieces/shared';
 
+import { ClientField } from '../lib/store/ap-tables-client-state';
 import { Row } from '../lib/types';
 
 import { useTableState } from './ap-table-state-provider';
 import { DateEditor } from './date-editor';
+import { DropdownEditor } from './dropdown-editor';
 import { NumberEditor } from './number-editor';
 import { TextEditor } from './text-editor';
 
 type EditableCellProps = {
-  type: FieldType;
+  field: ClientField;
   value: string;
   row: Row;
   column: CalculatedColumn<Row, { id: string }>;
@@ -24,7 +26,7 @@ type EditableCellProps = {
 };
 
 const EditorSelector = ({
-  type,
+  field,
   row,
   rowIdx,
   column,
@@ -34,7 +36,7 @@ const EditorSelector = ({
   setIsEditing,
   setIsHovered,
 }: {
-  type: FieldType;
+  field: ClientField;
   row: Row;
   rowIdx: number;
   column: CalculatedColumn<Row, { id: string }>;
@@ -55,7 +57,15 @@ const EditorSelector = ({
     setIsEditing(false);
     setIsHovered(false);
   };
-  switch (type) {
+  const selectedCell = useTableState((state) => state.selectedCell);
+  if (
+    selectedCell?.rowIdx !== rowIdx ||
+    selectedCell?.columnIdx !== column.idx
+  ) {
+    onClose();
+    return null;
+  }
+  switch (field.type) {
     case FieldType.DATE:
       return (
         <DateEditor
@@ -78,6 +88,18 @@ const EditorSelector = ({
           onClose={onClose}
         ></NumberEditor>
       );
+    case FieldType.STATIC_DROPDOWN:
+      return (
+        <DropdownEditor
+          row={row}
+          rowIdx={rowIdx}
+          column={column}
+          value={value}
+          onRowChange={handleRowChange}
+          onClose={onClose}
+          field={field}
+        ></DropdownEditor>
+      );
     default:
       return (
         <TextEditor
@@ -92,7 +114,7 @@ const EditorSelector = ({
   }
 };
 export function EditableCell({
-  type,
+  field,
   value: initialValue,
   row,
   column,
@@ -112,7 +134,7 @@ export function EditableCell({
   if (isEditing) {
     return (
       <EditorSelector
-        type={type}
+        field={field}
         row={row}
         rowIdx={rowIdx}
         column={column}
@@ -142,6 +164,9 @@ export function EditableCell({
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => {
         setSelectedCell({ rowIdx, columnIdx: column.idx });
+        if (!disabled && field.type === FieldType.STATIC_DROPDOWN) {
+          setIsEditing(true);
+        }
       }}
       onFocus={() => {
         setSelectedCell({ rowIdx, columnIdx: column.idx });
@@ -158,7 +183,7 @@ export function EditableCell({
       }}
     >
       <span className="flex-1 truncate">
-        {type === FieldType.DATE && displayedValue
+        {field.type === FieldType.DATE && displayedValue
           ? formatUtils.formatDateOnly(new Date(displayedValue))
           : displayedValue}
       </span>

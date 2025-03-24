@@ -29,17 +29,21 @@ import {
   GitPushOperationType,
   PushGitRepoRequest,
 } from '@activepieces/ee-shared';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+import {
+  assertNotNullOrUndefined,
+  ErrorCode,
+  PopulatedFlow,
+} from '@activepieces/shared';
 
 import { gitSyncApi } from '../lib/git-sync-api';
 import { gitSyncHooks } from '../lib/git-sync-hooks';
 
 type PushToGitDialogProps = {
-  flowIds: string[];
+  flows: PopulatedFlow[];
   children?: React.ReactNode;
 };
 
-const PushToGitDialog = ({ children, flowIds }: PushToGitDialogProps) => {
+const PushToGitDialog = ({ children, flows }: PushToGitDialogProps) => {
   const [open, setOpen] = React.useState(false);
 
   const { platform } = platformHooks.useCurrentPlatform();
@@ -59,7 +63,10 @@ const PushToGitDialog = ({ children, flowIds }: PushToGitDialogProps) => {
   const { mutate, isPending } = useMutation({
     mutationFn: async (request: PushGitRepoRequest) => {
       assertNotNullOrUndefined(gitSync, 'gitSync');
-      await gitSyncApi.push(gitSync.id, { ...request, flowIds });
+      await gitSyncApi.push(gitSync.id, {
+        ...request,
+        flowIds: flows.map((flow) => flow.id),
+      });
     },
     onSuccess: () => {
       toast({
@@ -69,8 +76,16 @@ const PushToGitDialog = ({ children, flowIds }: PushToGitDialogProps) => {
       });
       setOpen(false);
     },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
+    onError: (error: any) => {
+      if (error.response.data.code === ErrorCode.FLOW_OPERATION_INVALID) {
+        toast({
+          title: t('Invalid Operation'),
+          description: error.response.data.params.message,
+          duration: 3000,
+        });
+      } else {
+        toast(INTERNAL_ERROR_TOAST);
+      }
     },
   });
 

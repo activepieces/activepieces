@@ -592,7 +592,7 @@ const routes = [
     path: '/platform/setup/license-key',
     element: (
       <PlatformAdminContainer>
-        <PageTitle title="LicenseKey">
+        <PageTitle title="License Key">
           <LicenseKeyPage />
         </PageTitle>
       </PlatformAdminContainer>

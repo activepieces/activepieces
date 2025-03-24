@@ -47,12 +47,13 @@ export const createRecords = createAction({
           fieldId,
           value,
         }))
-    );
-
+    )
     const tableFields = await tablesCommon.getTableFields({ tableId, context });
     const fieldValidations = tablesCommon.createFieldValidations(tableFields);
+
     for (const record of values['values']) {
-      await propsValidation.validateZod(record, fieldValidations);
+      const cleanedRecord = Object.fromEntries(Object.entries(record).filter(([_, value]) => value !== null && value !== undefined && value !== ''));
+      await propsValidation.validateZod(cleanedRecord, fieldValidations);
     }
 
     const response = await httpClient.sendRequest({

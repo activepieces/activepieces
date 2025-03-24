@@ -1,6 +1,6 @@
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { DynamicPropsValue, Property, TriggerHookContext } from "@activepieces/pieces-framework";
-import { CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, PopulatedRecord, SeekPage, Table, TableWebhookEventType } from "@activepieces/shared";
+import { CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, PopulatedRecord, SeekPage, StaticDropdownEmptyOption, Table, TableWebhookEventType } from "@activepieces/shared";
 import { z } from 'zod';
 
 type FormattedRecord = {
@@ -13,6 +13,18 @@ type FormattedRecord = {
     created: string;
     value: unknown;
   }>;
+}
+const getFieldTypeText = (fieldType: FieldType) => {
+  switch (fieldType) {
+    case FieldType.STATIC_DROPDOWN:
+      return 'Single Select';
+    case FieldType.DATE:
+      return 'Date';
+    case FieldType.NUMBER:
+      return 'Number';
+    case FieldType.TEXT:
+      return 'Text';
+  }
 }
 export const tablesCommon = {
   table_id: Property.Dropdown({
@@ -130,7 +142,7 @@ export const tablesCommon = {
       }
 
       for (const field of tableFields) {
-        const description = `${field.type[0] + field.type.slice(1).toLowerCase()}.`;
+        const description = getFieldTypeText(field.type);
 
         switch (field.type) {
           case FieldType.NUMBER:
@@ -147,11 +159,23 @@ export const tablesCommon = {
               required: false,
             });
             break;
+          case FieldType.STATIC_DROPDOWN:
+            fields[field.id] = Property.StaticDropdown({
+              displayName: field.name,
+              description,
+              defaultValue:'',
+              required: false,
+              options: {
+                options:[StaticDropdownEmptyOption,...field.data.options.map(option => ({ label: option.value, value: option.value }))],
+              },
+            });
+            break;
           default:
             fields[field.id] = Property.ShortText({
               displayName: field.name,
               description,
               required: false,
+              defaultValue: 'asdasd',
             });
             break;
         }
