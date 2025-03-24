@@ -96,6 +96,7 @@ function ManualTaskTestingDialog({
     mutationFn: async () => {
       const response = await todosApi.update(todo.id, {
         status: status,
+        isTest: true,
       });
       let sampleDataFileId: string | undefined = undefined;
       if (!isNil(response)) {
@@ -174,9 +175,16 @@ function ManualTaskTestingDialog({
           ),
         );
       }
-      const outputStatus = (output as TodoWithAssignee)['status'].name;
+      const response = output as TodoWithAssignee;
+      const statusOptions = response['statusOptions'];
+      const publicUrl = response['approvalUrl']?.split('/flow-runs/')[0];
+      const links = statusOptions.map((option) => ({
+        status: option.name,
+        url: publicUrl + `/todos/${response.id}/approve?status=${option.name}&isTest=true`,
+      }));
       setSampleData(currentStep.name, {
-        status: outputStatus,
+        id: response.id,
+        links,
       });
       setSampleDataInput(currentStep.name, input);
       setLastTestDate(dayjs().toISOString());

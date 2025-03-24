@@ -1,4 +1,4 @@
-import { CreateTodoRequestBody, ListTodoAssigneesRequestQuery, ListTodosQueryParams, PrincipalType, SeekPage, UpdateTodoRequestBody, UserWithMetaInformation } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, CreateTodoRequestBody, ListTodoAssigneesRequestQuery, ListTodosQueryParams, PrincipalType, SeekPage, UpdateTodoRequestBody, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -48,7 +48,7 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/:id', UpdateTodoRequest, async (request) => {
         const { id } = request.params
-        const { title, description, status, statusOptions, assigneeId } = request.body
+        const { title, description, status, statusOptions, assigneeId, isTest } = request.body
         return todoService(request.log).update({
             id,
             title,
@@ -58,6 +58,17 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
             assigneeId,
             platformId: request.principal.platform.id,
             projectId: request.principal.projectId,
+            isTest,
+        })
+    })
+    
+    app.all('/:id/approve', RequestApproveTodoRequest, async (request) => {
+        const { id } = request.params
+        const { status, isTest } = request.query
+        return todoService(request.log).approve({
+            id,
+            status,
+            isTest,
         })
     })
 
@@ -105,6 +116,21 @@ const CreateTodoRequest = {
     },
 }
 
+const RequestApproveTodoRequest = {
+    schema: {
+        params: Type.Object({
+            id: Type.String(),
+        }),
+        querystring: Type.Object({
+            status: Type.String(),
+            isTest: Type.Optional(Type.Boolean()),
+        }),
+    },
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+    },
+}
+
 const GetTodoRequest = {
     schema: {
         params: Type.Object({
@@ -112,7 +138,7 @@ const GetTodoRequest = {
         }),
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE, PrincipalType.ENGINE],
     },
 }
 

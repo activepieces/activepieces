@@ -321,6 +321,7 @@ const PieceSelector = ({
         });
       }
     }
+    console.log('stepData', stepData);
 
     if (
       stepData.settings.pieceName === '@activepieces/piece-todos' &&
@@ -342,12 +343,21 @@ const PieceSelector = ({
         stepMetadata,
         actionOrTrigger: waitForApprovalAction,
       });
+      
+      const waitForApprovalStepDataSettings = {
+        ...waitForApprovalStepData.settings,
+        input: {
+          ...waitForApprovalStepData.settings.input,
+          taskId: `{{ ${stepData.name}['id'] }}`,
+        },
+      };
 
       currentFlowVersion = handleAddAction(
         stepMetadata,
         stepData,
         currentFlowVersion,
         waitForApprovalAction,
+        waitForApprovalStepDataSettings,
       );
 
       const routerAction = {

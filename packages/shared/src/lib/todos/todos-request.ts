@@ -27,6 +27,7 @@ export const UpdateTodoRequestBody = Type.Object({
     status: Type.Optional(StatusOption),
     statusOptions: Type.Optional(StatusOptionsSchema),
     assigneeId: Type.Optional(ApId),
+    isTest: Type.Optional(Type.Boolean()),
 })
 export type UpdateTodoRequestBody = Static<typeof UpdateTodoRequestBody>
 

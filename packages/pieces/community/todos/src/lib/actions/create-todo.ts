@@ -86,27 +86,27 @@ export const createTodo = createAction({
   },
   async test(context) {
     if (context.executionType === ExecutionType.BEGIN) {
-      context.run.pause({
-        pauseMetadata: {
-          type: PauseType.WEBHOOK,
-          response: {},
-        },
-      });
       const response = await sendTodoApproval(context, true);
-      return response.body;
-    } else {
+      const links = context.propsValue.statusOptions.map((option: any) => ({
+        name: option.name,
+        url: `${context.server.publicUrl}v1/todos/${response.body.id}/approve?status=${option.name}`,
+      }));
       return {
-        status: context.resumePayload.queryParams['status'],
+        id: response.body.id,
+        links,
       };
+    } else {
+      return undefined;
     }
   },
   async run(context) {
     const response = await sendTodoApproval(context, false);
     const links = context.propsValue.statusOptions.map((option: any) => ({
       name: option.name,
-      url: `${context.server.publicUrl}v1/todos/${response.body.id}?status=${option.name}`,
+      url: `${context.server.publicUrl}v1/todos/${response.body.id}/approve?status=${option.name}`,
     }));
     return {
+      id: response.body.id,
       links,
     };
   },

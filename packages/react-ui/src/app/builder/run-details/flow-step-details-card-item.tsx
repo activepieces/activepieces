@@ -134,7 +134,7 @@ const FlowStepDetailsCardItem = ({
               alt={stepMetadata?.displayName}
               className="w-6 h-6 object-contain"
               src={
-                step.settings.inputUiInfo.customizedInputs.logoUrl ??
+                step.settings?.inputUiInfo?.customizedInputs?.logoUrl ??
                 stepMetadata?.logoUrl
               }
             />

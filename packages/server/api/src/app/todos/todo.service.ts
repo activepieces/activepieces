@@ -20,7 +20,7 @@ export const todoService = (_log: FastifyBaseLogger) => ({
         })
     },
     async getOne(params: GetParams): Promise<Todo | null> {
-        return repo().findOneBy({ id: params.id, platformId: params.platformId, projectId: params.projectId })
+        return repo().findOneBy({ id: params.id, ...spreadIfDefined('platformId', params.platformId), ...spreadIfDefined('projectId', params.projectId) })
     },
     async getOneOrThrow(params: GetParams): Promise<Todo> {
         const todo = await this.getOne(params)
@@ -58,9 +58,42 @@ export const todoService = (_log: FastifyBaseLogger) => ({
             ...spreadIfDefined('status', params.status),
             ...spreadIfDefined('statusOptions', params.statusOptions),
             ...spreadIfDefined('assigneeId', params.assigneeId),
-            ...(params.status ? { approvalUrl: null } : {}),
+            ...(params.status && !params.isTest ? { approvalUrl: null } : {}),
         })
         return this.getOneOrThrow(params)
+    },
+    async approve(params: ApproveParams) {
+        const todo = await repo().findOneBy({ id: params.id })
+        if (!todo) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'todo', entityId: params.id, message: 'Todo by id not found' },
+            })
+        }
+        if (!todo.approvalUrl) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'todo', entityId: params.id, message: 'Todo does not have an approval url' },
+            })
+        }
+        const status = todo.statusOptions.find((option) => option.name === params.status)
+        if (!status) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'todo', entityId: params.id, message: 'Status not found' },
+            })
+        }
+        await sendApprovalRequest(todo.approvalUrl, status)
+        await this.update({
+            id: params.id,
+            platformId: todo.platformId,
+            projectId: todo.projectId,
+            status: status,
+            isTest: params.isTest,
+        })
+        return {
+            status: params.status,
+        }
     },
     async list(params: ListParams): Promise<SeekPage<TodoWithAssignee>> {
         const decodedCursor = paginationHelper.decodeCursor(params.cursor)
@@ -153,10 +186,16 @@ async function enrichTodoWithAssignee(
     }
 }
 
+type ApproveParams = {
+    id: string
+    status: string
+    isTest?: boolean
+}
+
 type GetParams = {
     id: string
-    platformId: PlatformId
-    projectId: ProjectId
+    platformId?: PlatformId
+    projectId?: ProjectId
 }
 
 type ListParams = {
@@ -191,4 +230,5 @@ type UpdateParams = {
     status?: StatusOption
     statusOptions?: StatusOption[]
     assigneeId?: string
+    isTest?: boolean
 }
