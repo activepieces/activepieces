@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid';
 import { useState } from 'react';
 import { FieldErrors, useForm } from 'react-hook-form';
 
+import { ArrayInput } from '@/components/ui/array-input';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -23,10 +24,19 @@ type NewFieldDialogProps = {
   children: React.ReactNode;
 };
 
-type NewFieldFormData = {
-  name: string;
-  type: FieldType;
-};
+type NewFieldFormData =
+  | {
+      name: string;
+      type: FieldType.STATIC_DROPDOWN;
+      data: {
+        options: string[];
+      };
+    }
+  | {
+      name: string;
+      type: FieldType.DATE | FieldType.NUMBER | FieldType.TEXT;
+      data: null;
+    };
 
 export function NewFieldPopup({ children }: NewFieldDialogProps) {
   const [open, setOpen] = useState(false);
@@ -38,13 +48,13 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
       const errors: FieldErrors<NewFieldFormData> = {};
       if (data.name.length === 0) {
         errors['name'] = {
-          message: t('Please enter a field name'),
+          message: t('Name is required'),
           type: 'required',
         };
       } else {
         if (fields?.find((field) => field.name === data.name)) {
           errors['name'] = {
-            message: t('Please pick a unique field name'),
+            message: t('Name must be unique'),
             type: 'unique',
           };
         }
@@ -55,6 +65,19 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
           type: 'required',
         };
       }
+      if (
+        data.type === FieldType.STATIC_DROPDOWN &&
+        (isNil(data.data) ||
+          data.data?.options.length === 0 ||
+          !data.data?.options.some((option) => option.length > 0))
+      ) {
+        errors['data'] = {
+          options: {
+            message: t('Please add at least one option'),
+            type: 'required',
+          },
+        };
+      }
       return {
         values: Object.keys(errors).length === 0 ? data : {},
         errors,
@@ -62,77 +85,125 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
     },
     defaultValues: {
       type: FieldType.TEXT,
+      data: null,
+      name: '',
     },
   });
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} modal={false} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="w-[400px] p-4 drop-shadow-xl" align="start">
-        <div className="text-lg font-semibold mb-4">{t('New Field')}</div>
+      <PopoverContent className="w-[400px] py-4 px-2 drop-shadow-xl">
+        <div className="text-lg font-semibold mb-4 px-3">{t('New Field')}</div>
+
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(async (data) => {
               form.reset();
               setOpen(false);
-              createField({
-                uuid: nanoid(),
-                name: data.name,
-                type: data.type,
-              });
+              if (data.type === FieldType.STATIC_DROPDOWN) {
+                createField({
+                  uuid: nanoid(),
+                  name: data.name,
+                  type: data.type,
+                  data: {
+                    options: data.data.options
+                      .filter((option) => option.length > 0)
+                      .map((option) => ({
+                        value: option,
+                      })),
+                  },
+                });
+              } else {
+                createField({
+                  uuid: nanoid(),
+                  name: data.name,
+                  type: data.type,
+                });
+              }
             })}
-            className="space-y-4"
+            className="mx-2"
           >
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="name">{t('Name')}</Label>
-                  <Input className="p-2 h-8" {...field} id="name" />
-                  <FormMessage />
-                </FormItem>
+            <div className="max-h-[80vh]  overflow-y-auto space-y-4 px-1 ">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem className="grid space-y-3">
+                    <Label htmlFor="name">{t('Name')}</Label>
+                    <Input thin={true} {...field} id="name" />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem className="grid space-y-2">
+                    <Label>{t('Type')}</Label>
+                    <ScrollArea className="max-h-[200px] rounded-md border">
+                      <RadioGroup
+                        value={field.value}
+                        onValueChange={(value) => {
+                          if (value === FieldType.STATIC_DROPDOWN) {
+                            form.setValue('data', {
+                              options: [''],
+                            });
+                          } else {
+                            form.setValue('data', null);
+                          }
+                          field.onChange(value);
+                        }}
+                        className="p-1"
+                      >
+                        {Object.values(FieldType).map((type) => (
+                          <div key={type} className="flex items-center">
+                            <RadioGroupItem
+                              value={type}
+                              id={type}
+                              className="sr-only"
+                            />
+                            <Label
+                              htmlFor={type}
+                              className={cn(
+                                'flex items-center gap-2 w-full px-3 py-2 rounded-sm',
+                                'text-left text-accent-foreground cursor-pointer hover:bg-muted',
+                                field.value === type && 'bg-muted text-primary',
+                              )}
+                            >
+                              {tablesUtils.getColumnIcon(type)}
+                              {t(type)}
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </ScrollArea>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {form.watch('type') === FieldType.STATIC_DROPDOWN && (
+                <FormField
+                  control={form.control}
+                  name="data.options"
+                  render={({ field }) => (
+                    //needs to be wrapped in form field to show the error message
+                    <FormItem className="grid space-y-3">
+                      <Label>{t('Options')}</Label>
+                      <ArrayInput
+                        inputName="data.options"
+                        disabled={false}
+                        required={true}
+                        thinInputs={true}
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               )}
-            />
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label>{t('Type')}</Label>
-                  <ScrollArea className="max-h-[200px] rounded-md border">
-                    <RadioGroup
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      className="p-1"
-                    >
-                      {Object.values(FieldType).map((type) => (
-                        <div key={type} className="flex items-center">
-                          <RadioGroupItem
-                            value={type}
-                            id={type}
-                            className="sr-only"
-                          />
-                          <Label
-                            htmlFor={type}
-                            className={cn(
-                              'flex items-center gap-2 w-full px-3 py-2 rounded-sm',
-                              'text-left text-accent-foreground cursor-pointer hover:bg-muted',
-                              field.value === type && 'bg-muted text-primary',
-                            )}
-                          >
-                            {tablesUtils.getColumnIcon(type)}
-                            {type.charAt(0) + type.slice(1).toLowerCase()}
-                          </Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  </ScrollArea>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="flex justify-end gap-2 pt-2">
+            </div>
+            <div className="flex justify-end gap-2 pt-2 mt-3">
               <Button
                 type="button"
                 size="sm"

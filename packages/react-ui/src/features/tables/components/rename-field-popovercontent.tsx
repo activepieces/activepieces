@@ -36,7 +36,9 @@ const RenameFieldPopoverContent = ({ name }: { name: string }) => {
       }
       if (
         fields.find(
-          (field) => field.name === values.name && field.name !== name,
+          (field) =>
+            field.name.toLowerCase() === values.name.toLowerCase() &&
+            field.name.toLowerCase() !== name.toLowerCase(),
         )
       ) {
         errors.name = {
@@ -74,7 +76,7 @@ const RenameFieldPopoverContent = ({ name }: { name: string }) => {
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <Input {...field} />
+                <Input thin={true} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
