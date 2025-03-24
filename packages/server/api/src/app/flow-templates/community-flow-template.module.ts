@@ -27,7 +27,10 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
             },
         },
         async (request) => {
-            const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
+            //todo (htookyaw or rupal) fix temporary to use the correct activepieces community template
+            // const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
+            const templateSource = "https://cloud.activepieces.com/api/v1/flow-templates";
+            
             if (isNil(templateSource)) {
                 return paginationHelper.createPage([], null)
             }
@@ -35,7 +38,7 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
             const url = `${templateSource}?${queryString}`
             console.log("templateSource => ",templateSource);
             console.log("queryString =>", queryString);
-            console.log("community template URL => ", url)
+            console.log("community template URL => ", url);
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
