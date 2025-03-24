@@ -389,6 +389,9 @@
       "@activepieces/piece-localai": [
         "packages/pieces/community/localai/src/index.ts"
       ],
+      "@activepieces/piece-lusha": [
+        "packages/pieces/community/lusha/src/index.ts"
+      ],
       "@activepieces/piece-mailchimp": [
         "packages/pieces/community/mailchimp/src/index.ts"
       ],
