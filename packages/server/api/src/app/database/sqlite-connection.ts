@@ -11,6 +11,7 @@ import { AddTables1741862813806 } from './migration/sqlite/1741862813806-add-tab
 import { AddFlowTemplate1741588702453 } from './migration/sqlite/1741588702453-add-flow-template'
 import { AddOauthApp1741683781609 } from './migration/sqlite/1741683781609-add-oauth-app'
 import { AddGlobalOauthApp1741685103864 } from './migration/sqlite/1741685103864-add-global-oauth-app'
+import { InitialMsProjectConfig1742454177000 } from './migration/sqlite/1742454177000-initial-ms-project-config'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -38,7 +39,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
       AddOauthApp1741683781609,
       AddFlowTemplate1741588702453,
       SwitchToRouter1741578250432,
-      InitialSqlite1740031972943
+      InitialSqlite1740031972943,
+      InitialMsProjectConfig1742454177000,
     ]
 
     const edition = system.getEdition()
