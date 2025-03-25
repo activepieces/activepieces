@@ -1,4 +1,4 @@
-import { AppSystemProp, fileCompressor } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, fileCompressor } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -23,18 +23,8 @@ import { s3Helper } from './s3-helper'
 export const fileRepo = repoFactory<File>(FileEntity)
 const EXECUTION_DATA_RETENTION_DAYS = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 
-type BaseFile = {
-    id: string
-    projectId: ProjectId | undefined
-    platformId: string | undefined
-    type: FileType
-    fileName: string | undefined
-    compression: FileCompression
-    size: number
-    metadata: Record<string, string> | undefined
-    created: string
-    updated: string
-}
+type BaseFile = Pick<File, 'id' | 'projectId' | 'platformId' | 'type' | 'fileName' | 'compression' | 'size' | 'metadata' | 'created' | 'updated'>
+
 const saveFileToDb = async (baseFile: BaseFile, data: SaveParams['data']) => {
     assertNotNullOrUndefined(data, 'data is required')
     return fileRepo().save({
@@ -75,9 +65,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
                     }))
                 }
                 catch (error) {
-                    log.error({
-                        error,
-                    }, '[FileService#save] error')
+                    exceptionHandler.handle(error, log)
                     return saveFileToDb(baseFile, params.data)
                 }
             }
