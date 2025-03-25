@@ -16,10 +16,10 @@ const FlowRunsPage = () => {
       <TaskLimitAlert />
       <div className="flex-col w-full">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-4 bg-transparent border-b border-gray-200 dark:border-gray-800">
+          <TabsList variant="underline" className="mb-4">
             <TabsTrigger
+              variant="underline"
               value="runs"
-              className="relative px-4 py-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none bg-transparent"
             >
               <div className="flex items-center gap-2">
                 <Play className="h-4 w-4" />
@@ -27,8 +27,8 @@ const FlowRunsPage = () => {
               </div>
             </TabsTrigger>
             <TabsTrigger
+              variant="underline"
               value="issues"
-              className="relative px-4 py-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none bg-transparent"
             >
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4" />
