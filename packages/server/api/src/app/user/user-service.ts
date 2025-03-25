@@ -21,6 +21,7 @@ import { repoFactory } from '../core/db/repo-factory'
 import { projectMemberRepo } from '../ee/project-role/project-role.service'
 import { system } from '../helper/system/system'
 import { UserEntity, UserSchema } from './user-entity'
+import { platformService } from '../platform/platform.service'
 
 
 export const userRepo = repoFactory(UserEntity)
@@ -39,7 +40,8 @@ export const userService = {
     },
     async update({ id, status, platformId, platformRole, externalId }: UpdateParams): Promise<UserWithMetaInformation> {
         const user = await this.getOrThrow({ id })
-        if (user.platformRole === PlatformRole.ADMIN && status === UserStatus.INACTIVE) {
+        const platform = await platformService.getOneOrThrow(user.platformId!)
+        if (platform.ownerId === user.id && status === UserStatus.INACTIVE) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
@@ -47,7 +49,7 @@ export const userService = {
                 },
             })
         }
-        
+
         const updateResult = await userRepo().update({
             id,
             platformId,

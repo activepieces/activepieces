@@ -107,7 +107,6 @@ describe('User API', () => {
             const { mockUser } = await mockBasicUser({
                 user: {
                     platformId: mockPlatform.id,
-                    platformRole: PlatformRole.MEMBER,
                     status: UserStatus.ACTIVE,
                 },
             })
