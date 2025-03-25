@@ -152,8 +152,8 @@ const FlowsPage = () => {
 
               const uniqueRowIds = Array.from(
                 new Map(
-                  newSelectedRowIds.map((item) => [item.id, item]),
-                ).values(),
+                  newSelectedRowIds.map((item) => [item.id, item])
+                ).values()
               );
 
               setSelectedRows(uniqueRowIds);
@@ -172,7 +172,7 @@ const FlowsPage = () => {
         const isChecked = selectedRows.some(
           (selectedRow) =>
             selectedRow.id === row.original.id &&
-            selectedRow.status === row.original.status,
+            selectedRow.status === row.original.status
         );
         return (
           <Checkbox
@@ -182,14 +182,14 @@ const FlowsPage = () => {
               let newSelectedRows = [...selectedRows];
               if (isChecked) {
                 const exists = newSelectedRows.some(
-                  (selectedRow) => selectedRow.id === row.original.id,
+                  (selectedRow) => selectedRow.id === row.original.id
                 );
                 if (!exists) {
                   newSelectedRows.push(row.original);
                 }
               } else {
                 newSelectedRows = newSelectedRows.filter(
-                  (selectedRow) => selectedRow.id !== row.original.id,
+                  (selectedRow) => selectedRow.id !== row.original.id
                 );
               }
               setSelectedRows(newSelectedRows);
@@ -302,6 +302,9 @@ const FlowsPage = () => {
                 refetch();
               }}
               onDelete={() => {
+                setSelectedRows((prev) =>
+                  prev.filter((r) => r.id !== row.original.id)
+                );
                 setRefresh(refresh + 1);
                 refetch();
               }}
@@ -409,7 +412,7 @@ const FlowsPage = () => {
               emptyStateIcon={<Workflow className="size-14" />}
               columns={columns.filter(
                 (column) =>
-                  !embedState.hideFolders || column.accessorKey !== 'folderId',
+                  !embedState.hideFolders || column.accessorKey !== 'folderId'
               )}
               page={data}
               isLoading={isLoading}
@@ -419,14 +422,14 @@ const FlowsPage = () => {
                 if (newWindow) {
                   openNewWindow(
                     authenticationSession.appendProjectRoutePrefix(
-                      `/flows/${row.id}`,
-                    ),
+                      `/flows/${row.id}`
+                    )
                   );
                 } else {
                   navigate(
                     authenticationSession.appendProjectRoutePrefix(
-                      `/flows/${row.id}`,
-                    ),
+                      `/flows/${row.id}`
+                    )
                   );
                 }
               }}
