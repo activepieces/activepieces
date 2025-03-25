@@ -118,6 +118,7 @@ export const common = {
       parent?: string;
       createdTime?: string | number | Date;
       createdTimeOp?: string;
+      includeTeamDrive?: boolean;
     },
     order?: string
   ) {
@@ -138,6 +139,8 @@ export const common = {
       queryParams: {
         q: q.join(' and '),
         orderBy: order ?? 'createdTime desc',
+        supportsAllDrives: 'true',
+        includeItemsFromAllDrives: search?.includeTeamDrive? 'true':'false',
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
