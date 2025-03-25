@@ -1,4 +1,3 @@
-
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { searchCompanies } from "./lib/actions/companies/search";
