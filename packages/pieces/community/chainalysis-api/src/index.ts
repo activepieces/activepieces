@@ -14,8 +14,8 @@ export const chainalysisApi = createPiece({
   auth: chainalysisApiAuth,
   minimumSupportedRelease: '0.20.0',
   categories: [],
-  logoUrl: "https://imagedelivery.net/bHREz764QO9n_1kIQUR2sw/1be6c21c-7624-43be-3723-202cc088a100/public",
-  authors: ['Swanblocks/Ahmad Shawar'],
+  logoUrl: "https://cdn.activepieces.com/pieces/chainalysis-api.jpg",
+  authors: ['ahmad-swanblocks'],
   actions: [checkAddressSanction],
   triggers: [],
 });
