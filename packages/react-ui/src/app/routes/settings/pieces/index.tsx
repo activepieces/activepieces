@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Trash } from 'lucide-react';
+import { CheckIcon, Package, Trash } from 'lucide-react';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -144,6 +144,11 @@ const ProjectPiecesPage = () => {
         )}
         <TableTitle>{t('Pieces')}</TableTitle>
         <DataTable
+          emptyStateTextTitle={t('No pieces found')}
+          emptyStateTextDescription={t(
+            'Add a piece to your project that you want to use in your automations',
+          )}
+          emptyStateIcon={<Package className="size-14" />}
           columns={columns}
           filters={[
             {

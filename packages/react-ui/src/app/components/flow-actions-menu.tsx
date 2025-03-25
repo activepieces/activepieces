@@ -28,6 +28,8 @@ import {
   ImportFlowDialogProps,
 } from '@/features/flows/components/import-flow-dialog';
 import { RenameFlowDialog } from '@/features/flows/components/rename-flow-dialog';
+import { flowsHooks } from '@/features/flows/lib/flows-hooks';
+import { PublishedNeededTooltip } from '@/features/git-sync/components/published-tooltip';
 import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -35,19 +37,19 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { GitBranchType } from '@activepieces/ee-shared';
 import {
-  Flow,
   FlowOperationType,
   FlowVersion,
+  FlowVersionState,
   Permission,
+  PopulatedFlow,
 } from '@activepieces/shared';
 
 import { MoveFlowDialog } from '../../features/flows/components/move-flow-dialog';
 import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
 import { flowsApi } from '../../features/flows/lib/flows-api';
-import { flowsUtils } from '../../features/flows/lib/flows-utils';
 
 interface FlowActionMenuProps {
-  flow: Flow;
+  flow: PopulatedFlow;
   flowVersion: FlowVersion;
   children?: React.ReactNode;
   readonly: boolean;
@@ -89,6 +91,10 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
   const [open, setOpen] = useState(false);
+  const allowPush =
+    flow.publishedVersionId !== null &&
+    flow.version.state === FlowVersionState.LOCKED;
+
   const { mutate: duplicateFlow, isPending: isDuplicatePending } = useMutation({
     mutationFn: async () => {
       const modifiedFlowVersion = {
@@ -117,27 +123,20 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
     onError: () => toast(INTERNAL_ERROR_TOAST),
   });
 
-  const { mutate: exportFlow, isPending: isExportPending } = useMutation({
-    mutationFn: () => flowsUtils.downloadFlow(flow.id),
-    onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Flow has been exported.'),
-        duration: 3000,
-      });
-    },
-    onError: () => toast(INTERNAL_ERROR_TOAST),
-  });
-
+  const { mutate: exportFlow, isPending: isExportPending } =
+    flowsHooks.useExportFlows();
   return (
-    <DropdownMenu modal={true} open={open} onOpenChange={setOpen}>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger
         className="rounded-full p-2 hover:bg-muted cursor-pointer"
         asChild
       >
         {children}
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
+      <DropdownMenuContent
+        noAnimationOnOut={true}
+        onCloseAutoFocus={(e) => e.preventDefault()}
+      >
         {!readonly && (
           <>
             {insideBuilder && (
@@ -181,17 +180,19 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           </>
         )}
         <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
-          <PushToGitDialog flowIds={[flow.id]}>
-            <DropdownMenuItem
-              disabled={!userHasPermissionToPushToGit}
-              onSelect={(e) => e.preventDefault()}
-            >
-              <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                <UploadCloud className="h-4 w-4" />
-                <span>{t('Push to Git')}</span>
-              </div>
-            </DropdownMenuItem>
-          </PushToGitDialog>
+          <PublishedNeededTooltip allowPush={allowPush}>
+            <PushToGitDialog flows={[flow]}>
+              <DropdownMenuItem
+                disabled={!userHasPermissionToPushToGit || !allowPush}
+                onSelect={(e) => e.preventDefault()}
+              >
+                <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                  <UploadCloud className="h-4 w-4" />
+                  <span>{t('Push to Git')}</span>
+                </div>
+              </DropdownMenuItem>
+            </PushToGitDialog>
+          </PublishedNeededTooltip>
         </PermissionNeededTooltip>
 
         {!embedState.hideFolders && (
@@ -251,7 +252,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             </ImportFlowDialog>
           </PermissionNeededTooltip>
         )}
-        <DropdownMenuItem onClick={() => exportFlow()}>
+        <DropdownMenuItem onClick={() => exportFlow([flow])}>
           <div className="flex cursor-pointer  flex-row gap-2 items-center">
             {isExportPending ? (
               <LoadingSpinner />

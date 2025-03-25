@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import { jwtDecode } from 'jwt-decode';
 
 import { AuthenticationResponse, isNil, Principal } from '@activepieces/shared';
@@ -10,9 +11,24 @@ export const authenticationSession = {
     localStorage.setItem(tokenKey, response.token);
     window.dispatchEvent(new Event('storage'));
   },
+  isJwtExpired(token: string): boolean {
+    if (!token) {
+      return true;
+    }
+    try {
+      const decoded = jwtDecode(token);
+      if (decoded && decoded.exp && dayjs().isAfter(dayjs.unix(decoded.exp))) {
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return true;
+    }
+  },
   getToken(): string | null {
     return localStorage.getItem(tokenKey) ?? null;
   },
+
   getProjectId(): string | null {
     const token = this.getToken();
     if (isNil(token)) {

@@ -26,7 +26,7 @@ function buildTestStepNode(
     key: stepName,
     data: {
       type: 'value',
-      value: displayName,
+      value: '',
       displayName,
       propertyPath: stepName,
       insertable: false,
@@ -36,6 +36,7 @@ function buildTestStepNode(
         data: {
           type: 'test',
           stepName,
+          parentDisplayName: displayName,
         },
         key: `test_${stepName}`,
       },
@@ -290,6 +291,23 @@ function escapeMentionKey(key: string) {
   return key.replaceAll(/[\\"'\n\r\t’]/g, (char) => `\\${char}`);
 }
 
+function getSearchableValue(
+  item: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>,
+) {
+  if (item.data.type === 'test') {
+    return item.data.parentDisplayName;
+  }
+  if (item.data.type === 'chunk') {
+    return item.data.displayName;
+  }
+  if (!isNil(item.data.value)) {
+    return JSON.stringify(item.data.value).toLowerCase();
+  } else if (item.data.value === null) {
+    return 'null';
+  }
+  return '';
+}
+
 function traverseStep(
   step: (Action | Trigger) & { dfsIndex: number },
   sampleData: Record<string, unknown>,
@@ -331,44 +349,34 @@ function filterBy(
     return mentions;
   }
 
-  return mentions
+  const res = mentions
     .map((item) => {
-      const isTestNode = item.data.type === 'test';
-      if (isTestNode) {
-        return null;
-      }
       const filteredChildren = !isNil(item.children)
         ? filterBy(item.children, query)
         : undefined;
+
       if (filteredChildren && filteredChildren.length) {
         return {
           ...item,
           children: filteredChildren,
         };
       }
-      const searchableValue =
-        isNil(item) || item.data.type === 'test' || item.data.type === 'chunk'
-          ? ''
-          : JSON.stringify(item?.data?.value)?.toLowerCase();
+      const searchableValue = getSearchableValue(item);
 
       const displayName =
-        item?.data?.type === 'value'
-          ? item?.data?.displayName?.toLowerCase()
-          : '';
+        item.data.type === 'value' ? item.data.displayName.toLowerCase() : '';
       const matchDisplayNameOrValue =
-        displayName?.includes(query.toLowerCase()) ||
-        searchableValue.includes(query.toLowerCase());
+        displayName.toLowerCase().includes(query.toLowerCase()) ||
+        searchableValue.toLowerCase().includes(query.toLowerCase());
       if (matchDisplayNameOrValue) {
-        return {
-          ...item,
-          children: undefined,
-        };
+        return item;
       }
       return null;
     })
     .filter(
       (f) => !isNil(f),
     ) as DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[];
+  return res;
 }
 
 export const dataSelectorUtils = {

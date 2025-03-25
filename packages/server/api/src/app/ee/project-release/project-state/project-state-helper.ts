@@ -1,4 +1,4 @@
-import { FlowOperationType, FlowState, FlowStatus, flowStructureUtil, PopulatedFlow, ProjectSyncError } from '@activepieces/shared'
+import { FlowOperationType, FlowState, FlowStatus, flowStructureUtil, isNil, PopulatedFlow, ProjectSyncError } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRepo } from '../../../flows/flow/flow.repo'
 import { flowService } from '../../../flows/flow/flow.service'
@@ -43,8 +43,7 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
             }
             return step
         })
-
-        return flowService(log).update({
+        const updatedFlow = await flowService(log).update({
             id: originalFlow.id,
             projectId,
             platformId: project.platformId,
@@ -59,6 +58,16 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
                 },
             },
         })
+
+        if (!isNil(updatedFlow.publishedVersionId)) {
+            await flowService(log).updateStatus({
+                id: updatedFlow.id,
+                projectId,
+                newStatus: newFlow.status,
+            })
+        }
+
+        return updatedFlow
     },
 
     async republishFlow({ flowId, projectId, status }: RepublishFlowParams): Promise<ProjectSyncError | null> {

@@ -19,4 +19,5 @@ export enum PropertyType {
     DATE_TIME = 'DATE_TIME',
     FILE = 'FILE',
     CUSTOM = 'CUSTOM',
+    COLOR = 'COLOR',
 }

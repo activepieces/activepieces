@@ -22,24 +22,31 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
+import { flagsHooks } from '../../../hooks/flags-hooks';
 import { projectHooks } from '../../../hooks/project-hooks';
 
 function ProjectSwitcher() {
   const location = useLocation();
   const queryClient = useQueryClient();
-  const { data: projects } = projectHooks.useProjects();
+  const { data: allProjects } = projectHooks.useProjectsForPlatforms();
   const [open, setOpen] = React.useState(false);
   const { embedState } = useEmbedding();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { data: currentProject, setCurrentProject } =
     projectHooks.useCurrentProject();
   const filterProjects = React.useCallback(
     (projectId: string, search: string) => {
       //Radix UI lowercases the value string (projectId)
-      const project = projects?.find(
-        (project) => project.id.toLowerCase() === projectId,
-      );
+      const project = allProjects
+        ?.find((platform) =>
+          platform.projects.find(
+            (project) => project.id.toLowerCase() === projectId,
+          ),
+        )
+        ?.projects.find((project) => project.id.toLowerCase() === projectId);
       if (!project) {
         return 0;
       }
@@ -47,15 +54,12 @@ function ProjectSwitcher() {
         ? 1
         : 0;
     },
-    [projects],
+    [allProjects],
   );
-  const sortedProjects = (projects ?? []).sort((a, b) => {
-    return a.displayName.localeCompare(b.displayName);
-  });
-
-  if (embedState.isEmbedded) {
+  if (embedState.isEmbedded || edition === ApEdition.COMMUNITY) {
     return null;
   }
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -65,9 +69,11 @@ function ProjectSwitcher() {
           size={'sm'}
           aria-expanded={open}
           aria-label="Select a project"
-          className="gap-2 max-w-[200px] justify-between"
+          className="gap-2 max-w-[200px] justify-between gap-10"
         >
-          <span className="truncate">{currentProject?.displayName}</span>
+          <div className="flex flex-col justify-start items-start">
+            <span className="truncate">{currentProject?.displayName}</span>
+          </div>
           <CaretSortIcon className="ml-auto size-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -76,36 +82,42 @@ function ProjectSwitcher() {
           <CommandList>
             <CommandInput placeholder="Search project..." />
             <CommandEmpty>{t('No projects found')}</CommandEmpty>
-            <CommandGroup key="projects" heading="Projects">
-              <ScrollArea viewPortClassName="max-h-[200px]">
-                {sortedProjects &&
-                  sortedProjects.map((project) => (
-                    <CommandItem
-                      key={project.id}
-                      onSelect={() => {
-                        setCurrentProject(
-                          queryClient,
-                          project,
-                          location.pathname,
-                        );
-                        setOpen(false);
-                      }}
-                      value={project.id}
-                      className="text-sm break-all"
-                    >
-                      {project.displayName}
-                      <CheckIcon
-                        className={cn(
-                          'ml-auto h-4 w-4 shrink-0',
-                          currentProject?.id === project.id
-                            ? 'opacity-100'
-                            : 'opacity-0',
-                        )}
-                      />
-                    </CommandItem>
-                  ))}
-              </ScrollArea>
-            </CommandGroup>
+            {allProjects &&
+              allProjects.map((platform) => (
+                <CommandGroup
+                  key={platform.platformName}
+                  heading={platform.platformName}
+                >
+                  <ScrollArea viewPortClassName="max-h-[200px]">
+                    {platform.projects &&
+                      platform.projects.map((project) => (
+                        <CommandItem
+                          key={project.id}
+                          onSelect={() => {
+                            setCurrentProject(
+                              queryClient,
+                              project,
+                              location.pathname,
+                            );
+                            setOpen(false);
+                          }}
+                          value={project.id}
+                          className="text-sm break-all"
+                        >
+                          {project.displayName}
+                          <CheckIcon
+                            className={cn(
+                              'ml-auto h-4 w-4 shrink-0',
+                              currentProject?.id === project.id
+                                ? 'opacity-100'
+                                : 'opacity-0',
+                            )}
+                          />
+                        </CommandItem>
+                      ))}
+                  </ScrollArea>
+                </CommandGroup>
+              ))}
           </CommandList>
         </Command>
       </PopoverContent>

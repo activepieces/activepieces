@@ -36,6 +36,13 @@ export const RespondResponse = Type.Object({
 
 export type RespondResponse = Static<typeof RespondResponse>
 
+export const StopResponse = Type.Object({
+    status: Type.Optional(Type.Number()),
+    body: Type.Optional(Type.Unknown()),
+    headers: Type.Optional(Type.Record(Type.String(), Type.String())),
+})
+
+export type StopResponse = Static<typeof StopResponse>
 
 export const WebhookPauseMetadata = Type.Object({
     type: Type.Literal(PauseType.WEBHOOK),

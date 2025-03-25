@@ -68,6 +68,7 @@ export type ListVersionRequestQuery = Static<typeof ListVersionRequestQuery>
 
 export const GetPieceRequestQuery = Type.Object({
     version: Type.Optional(VersionType),
+    projectId: Type.Optional(Type.String()),
 })
 
 export const ListVersionsResponse = Type.Record(ExactVersionType, Type.Object({}))

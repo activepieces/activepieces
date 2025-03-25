@@ -29,6 +29,7 @@ import { GitRepoEntity } from '../ee/project-release/git-sync/git-sync.entity'
 import { ProjectReleaseEntity } from '../ee/project-release/project-release.entity'
 import { ProjectRoleEntity } from '../ee/project-role/project-role.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
+import { TodoCommentEntity } from '../ee/todos/comment/todos-comment.entity'
 import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
@@ -41,8 +42,14 @@ import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
 import { StoreEntryEntity } from '../store-entry/store-entry-entity'
+import { FieldEntity } from '../tables/field/field.entity'
+import { CellEntity } from '../tables/record/cell.entity'
+import { RecordEntity } from '../tables/record/record.entity'
+import { TableWebhookEntity } from '../tables/table/table-webhook.entity'
+import { TableEntity } from '../tables/table/table.entity'
 import { PieceTagEntity } from '../tags/pieces/piece-tag.entity'
 import { TagEntity } from '../tags/tag-entity'
+import { TodoEntity } from '../todos/todo.entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
@@ -79,7 +86,13 @@ function getEntities(): EntitySchema<unknown>[] {
         WorkerMachineEntity,
         AiProviderEntity,
         ProjectRoleEntity,
+        TableEntity,
+        FieldEntity,
+        RecordEntity,
+        CellEntity,
+        TableWebhookEntity,
         UserIdentityEntity,
+        TodoEntity,
     ]
 
     switch (edition) {
@@ -97,6 +110,7 @@ function getEntities(): EntitySchema<unknown>[] {
                 GitRepoEntity,
                 AuditEventEntity,
                 ProjectReleaseEntity,
+                TodoCommentEntity,
 
                 // CLOUD
                 AppSumoEntity,
@@ -144,11 +158,13 @@ export const databaseConnection = () => {
 export function APArrayContains<T>(
     columnName: string,
     values: string[],
-): FindOperator<T> {
+): Record<string, FindOperator<T>> {
     const databaseType = system.get(AppSystemProp.DB_TYPE)
     switch (databaseType) {
         case DatabaseType.POSTGRES:
-            return ArrayContains(values)
+            return {
+                [columnName]: ArrayContains(values),
+            }
         case DatabaseType.SQLITE3: {
             const likeConditions = values
                 .map((_, index) => `${columnName} LIKE :value${index}`)
@@ -157,7 +173,9 @@ export function APArrayContains<T>(
                 params[`value${index}`] = `%${value}%`
                 return params
             }, {} as Record<string, string>)
-            return Raw(_ => `(${likeConditions})`, likeParams)
+            return {
+                [columnName]: Raw(_ => `(${likeConditions})`, likeParams),
+            }
         }
         default:
             throw new Error(`Unsupported database type: ${databaseType}`)
