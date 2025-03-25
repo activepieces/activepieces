@@ -186,6 +186,7 @@ import { AddManualTaskTable1742304857701 } from './migration/postgres/1742304857
 import { AddManualTaskCommentTable1742305104390 } from './migration/postgres/1742305104390-AddManualTaskCommentTable'
 import { ChangeManualTasksToTodo1742432827826 } from './migration/postgres/1742432827826-ChangeManualTasksToTodo'
 import { ChangeManualTasksCommentsToTodoComments1742433144687 } from './migration/postgres/1742433144687-ChangeManualTasksCommentsToTodoComments'
+import { AddMCPWithConnectionsPostgres1742867572875 } from './migration/postgres/1742867572875-AddMCPWithConnectionsPostgres'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -310,6 +311,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         CreateTableWebhooks1741669458075,
         AddManualTaskTable1742304857701,
         ChangeManualTasksToTodo1742432827826,
+        AddMCPWithConnectionsPostgres1742867572875,
     ]
 
     const edition = system.getEdition()

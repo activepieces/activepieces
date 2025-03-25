@@ -21,6 +21,7 @@ import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
 import { IssueEntity } from '../ee/issues/issues-entity'
+import { MCPEntity } from '../ee/mcp/mcp-entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
 import { PlatformBillingEntity } from '../ee/platform-billing/platform-billing.entity'
 import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
@@ -93,6 +94,7 @@ function getEntities(): EntitySchema<unknown>[] {
         TableWebhookEntity,
         UserIdentityEntity,
         TodoEntity,
+        MCPEntity,
     ]
 
     switch (edition) {
@@ -177,6 +179,5 @@ export function APArrayContains<T>(
             throw new Error(`Unsupported database type: ${databaseType}`)
     }
 }
-
 // Uncomment the below line when running `nx db-migration server-api name=<MIGRATION_NAME>` and recomment it after the migration is generated
 // export const exportedConnection = databaseConnection()

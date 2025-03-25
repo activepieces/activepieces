@@ -88,6 +88,7 @@ import { RestrictPiecesSqlite1739544872722 } from './migration/sqlite/1739544872
 import { TableWebhooksIsArraySqlite1741668828922 } from './migration/sqlite/1741668828922-TableWebhooksIsArraySqlite'
 import { AddManualTaskTable1742304913465 } from './migration/sqlite/1742304913465-AddManualTaskTable'
 import { ChangeManualTasksToTodoSqlite1742432169253 } from './migration/sqlite/1742432169253-ChangeManualTasksToTodoSqlite'
+import { AddMCPWithConnectionsSqlite1742867572875 } from './migration/sqlite/1742867572875-AddMCPWithConnectionsSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -193,6 +194,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         TableWebhooksIsArraySqlite1741668828922,
         AddManualTaskTable1742304913465,
         ChangeManualTasksToTodoSqlite1742432169253,
+        AddMCPWithConnectionsSqlite1742867572875,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
@@ -231,3 +233,4 @@ type MigrationConfig = {
     migrationsTransactionMode?: 'all' | 'none' | 'each'
     migrations?: (new () => MigrationInterface)[]
 }
+
