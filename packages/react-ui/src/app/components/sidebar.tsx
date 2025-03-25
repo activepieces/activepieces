@@ -105,7 +105,7 @@ const CustomTooltipLink = ({
           }`}
         >
           <div className="flex items-center gap-2">
-            {Icon && <Icon className={`size-4`} />}
+            {Icon && <Icon className={`size-5`} />}
             <span className={`text-sm`}>{label}</span>
             {(label === 'Tables' || label === 'Todos') && (
               <span className="ml-2">
@@ -173,6 +173,9 @@ export function SidebarComponent({
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: showCommunity } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
+  );
+  const { data: showBilling } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_BILLING,
   );
   const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
   const location = useLocation();
@@ -315,7 +318,7 @@ export function SidebarComponent({
                         )}
                         className="flex items-center gap-2"
                       >
-                        <Settings className="size-5" />
+                        <Settings className="!size-5" />
                         <span>{t('Project Settings')}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -357,10 +360,12 @@ export function SidebarComponent({
                     </>
                   )}
                 </SidebarMenu>
-                <Separator />
-                <SidebarMenu>
-                  <UsageLimitsButton />
-                </SidebarMenu>
+                {showBilling && <Separator />}
+                {showBilling && (
+                  <SidebarMenu>
+                    <UsageLimitsButton />
+                  </SidebarMenu>
+                )}
               </SidebarFooter>
             </SidebarContent>
           </Sidebar>
@@ -379,8 +384,8 @@ export function SidebarComponent({
               <div
                 className={cn('flex', {
                   'py-4': embedState.isEmbedded,
-                  ' px-2': !removeGutters,
-                  'pt-10': !hideHeader,
+                  'px-2': !removeGutters,
+                  'pt-8': !hideHeader,
                 })}
               >
                 {children}
