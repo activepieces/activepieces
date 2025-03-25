@@ -19,3 +19,11 @@ export const UpdateProjectRoleRequestBody = Type.Object({
 })
 
 export type UpdateProjectRoleRequestBody = Static<typeof UpdateProjectRoleRequestBody>
+
+export const ListProjectMembersForProjectRoleRequestQuery = Type.Object({
+    cursor: Type.Optional(Type.String()),
+    limit: Type.Optional(Type.Number()),
+})
+
+export type ListProjectMembersForProjectRoleRequestQuery = Static<typeof ListProjectMembersForProjectRoleRequestQuery>
+

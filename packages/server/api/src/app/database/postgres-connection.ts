@@ -166,16 +166,27 @@ import { AddGlobalConnectionsAndRbacForPlatform1731532843905 } from './migration
 import { AddAuditLogIndicies1731711188507 } from './migration/postgres/1731711188507-AddAuditLogIndicies'
 import { AddIndiciesToRunAndTriggerData1732324567513 } from './migration/postgres/1732324567513-AddIndiciesToRunAndTriggerData'
 import { AddProjectRelationInUserInvitation1732790412900 } from './migration/postgres/1732790673766-AddProjectRelationInUserInvitation'
+import { TablesProduct1734355488179 } from './migration/postgres/1734355488179-TablesProduct'
 import { CreateProjectReleaseTable1734418823028 } from './migration/postgres/1734418823028-CreateProjectReleaseTable'
 import { RemoveWorkerType1734439097357 } from './migration/postgres/1734439097357-RemoveWorkerType'
 import { AddCopilotSettings1734479886363 } from './migration/postgres/1734479886363-AddCopilotSettings'
+import { FieldAndRecordAndCellProjectId1734969829406 } from './migration/postgres/1734969829406-FieldAndRecordAndCell_ProjectId'
 import { AddPlatformBilling1734971881345 } from './migration/postgres/1734971881345-AddPlatformBilling'
+import { AddCellUniqueIndex1735057498882 } from './migration/postgres/1735057498882-AddCellUniqueIndex'
 import { AddExternalIdForFlow1735262417593 } from './migration/postgres/1735262417593-AddExternalIdForFlow'
 import { AddEnvironmentsEnabled1735267452262 } from './migration/postgres/1735267452262-AddEnvironmentsEnabled'
 import { AddUserIdentity1735590074879 } from './migration/postgres/1735590074879-AddUserIdentity'
 import { RemoveUnusedProjectBillingFields1736607721367 } from './migration/postgres/1736607721367-RemoveUnusedProjectBillingFields'
 import { RenameGitRepoPermission1736813103505 } from './migration/postgres/1736813103505-RenameGitRepoPermission'
 import { RestrictPieces1739546878775 } from './migration/postgres/1739546878775-RestrictPieces'
+import { ProjectIdNullableInTemplate1741357285896 } from './migration/postgres/1741357285896-ProjectIdNullableInTemplate'
+import { CreateTableWebhooks1741669458075 } from './migration/postgres/1741669458075-CreateTableWebhooks'
+import { UpdateNotifyStatusOnEmbedding1741963410825 } from './migration/postgres/1741963410825-UpdateNotifyStatusOnEmbedding'
+import { AddManualTaskTable1742304857701 } from './migration/postgres/1742304857701-AddManualTaskTable'
+import { AddManualTaskCommentTable1742305104390 } from './migration/postgres/1742305104390-AddManualTaskCommentTable'
+import { AddDataColumnToFieldEntity1742395892304 } from './migration/postgres/1742395892304-AddDataColumnToFieldEntity'
+import { ChangeManualTasksToTodo1742432827826 } from './migration/postgres/1742432827826-ChangeManualTasksToTodo'
+import { ChangeManualTasksCommentsToTodoComments1742433144687 } from './migration/postgres/1742433144687-ChangeManualTasksCommentsToTodoComments'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -287,13 +298,20 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddGlobalConnectionsAndRbacForPlatform1731532843905,
         AddIndiciesToRunAndTriggerData1732324567513,
         AddProjectRelationInUserInvitation1732790412900,
+        TablesProduct1734355488179,
         RemoveWorkerType1734439097357,
+        FieldAndRecordAndCellProjectId1734969829406,
+        AddCellUniqueIndex1735057498882,
         AddCopilotSettings1734479886363,
         AddExternalIdForFlow1735262417593,
         AddEnvironmentsEnabled1735267452262,
         AddUserIdentity1735590074879,
         RenameGitRepoPermission1736813103505,
         RestrictPieces1739546878775,
+        CreateTableWebhooks1741669458075,
+        AddDataColumnToFieldEntity1742395892304,
+        AddManualTaskTable1742304857701,
+        ChangeManualTasksToTodo1742432827826,
     ]
 
     const edition = system.getEdition()
@@ -372,6 +390,10 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddPlatformBilling1734971881345,
                 CreateProjectReleaseTable1734418823028,
                 RemoveUnusedProjectBillingFields1736607721367,
+                ProjectIdNullableInTemplate1741357285896,
+                UpdateNotifyStatusOnEmbedding1741963410825,
+                AddManualTaskCommentTable1742305104390,
+                ChangeManualTasksCommentsToTodoComments1742433144687,
             )
             break
         case ApEdition.COMMUNITY:

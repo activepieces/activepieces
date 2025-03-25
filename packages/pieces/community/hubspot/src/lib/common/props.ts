@@ -178,9 +178,27 @@ async function createReferencedPropertyDefinition(
 function createPropertyDefinition(property: HubspotProperty, propertyDisplayName: string) {
 	switch (property.fieldType) {
 		case HubspotFieldType.BooleanCheckBox:
-			return Property.Checkbox({
+			return Property.StaticDropdown({
 				displayName: propertyDisplayName,
-				required: false,
+				required: true,
+				defaultValue:'',
+				options:{
+					disabled:false,
+					options:[
+						{
+							label:'Yes',
+							value:'true'
+						},
+						{
+							label:'No',
+							value:'false'
+						},
+						{
+							label:"Unanswered",
+							value:''
+						}
+					]
+				}
 			});
 		case HubspotFieldType.Date:
 			return Property.DateTime({
@@ -948,3 +966,22 @@ type DropdownParams = {
 	required: boolean;
 	description?: string;
 };
+
+export const 	pageType=Property.StaticDropdown({
+	displayName:'Page Type',
+	required:true,
+	defaultValue:'landing_page',
+	options:{
+		disabled:false,
+		options:[
+			{
+				label:'Landing Page',
+				value:'landing_page'
+			},
+			{
+				label:'Site Page',
+				value:'site_page'
+			}
+		]
+	}
+})

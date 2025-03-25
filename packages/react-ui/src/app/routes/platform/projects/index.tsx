@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Pencil, Plus, Trash } from 'lucide-react';
+import { CheckIcon, Package, Pencil, Plus, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -366,9 +366,16 @@ export default function ProjectsPage() {
     >
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between flex-row">
-          <TableTitle>{t('Projects')}</TableTitle>
+          <TableTitle description={t('Manage your automation projects')}>
+            {t('Projects')}
+          </TableTitle>
         </div>
         <DataTable
+          emptyStateTextTitle={t('No projects found')}
+          emptyStateTextDescription={t(
+            'Start by creating projects to manage your automation teams',
+          )}
+          emptyStateIcon={<Package className="size-14" />}
           onRowClick={async (project) => {
             await setCurrentProject(queryClient, project);
             navigate('/');

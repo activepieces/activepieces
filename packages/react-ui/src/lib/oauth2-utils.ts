@@ -19,7 +19,7 @@ async function openOAuth2Popup(
   params: OAuth2PopupParams,
 ): Promise<OAuth2PopupResponse> {
   closeOAuth2Popup();
-  const pckeChallenge = nanoid();
+  const pckeChallenge = nanoid(43);
   const url = constructUrl(params, pckeChallenge);
   currentPopup = openWindow(url);
   return {

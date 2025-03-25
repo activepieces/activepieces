@@ -15,10 +15,6 @@ export const platformApi = {
     return api.get<PlatformWithoutSensitiveData>(`/v1/platforms/${platformId}`);
   },
 
-  listPlatforms() {
-    return api.get<PlatformWithoutSensitiveData[]>(`/v1/platforms`);
-  },
-
   verifyLicenseKey(licenseKey: string) {
     const platformId = authenticationSession.getPlatformId();
     if (!platformId) {

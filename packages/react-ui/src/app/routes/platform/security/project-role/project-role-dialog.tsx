@@ -85,6 +85,20 @@ const initialPermissions = [
     read: [Permission.READ_PROJECT_RELEASE],
     write: [Permission.READ_PROJECT_RELEASE, Permission.WRITE_PROJECT_RELEASE],
   },
+  {
+    name: 'Tables',
+    description: 'Read and write tables',
+    read: [Permission.READ_TABLE],
+    write: [Permission.READ_TABLE, Permission.WRITE_TABLE],
+    disableNone: true,
+  },
+  {
+    name: 'Todos',
+    description: 'Read and write todos',
+    read: [Permission.READ_TODOS],
+    write: [Permission.READ_TODOS, Permission.WRITE_TODOS],
+    disableNone: true,
+  },
 ];
 interface ProjectRoleDialogProps {
   mode: 'create' | 'edit';
@@ -117,6 +131,7 @@ export const ProjectRoleDialog = ({
     }
     return projectRole.permissions;
   });
+  console.log();
 
   const { mutate } = useMutation({
     mutationFn: async () => {
@@ -204,7 +219,6 @@ export const ProjectRoleDialog = ({
     }
     return 'ghost';
   };
-
   const handleSubmit = () => {
     if (!disabled) {
       mutate();

@@ -88,7 +88,6 @@ function searchInFlowForFlowByIdOrExternalId(flows: PopulatedFlow[], id: string)
 }
 
 function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow): boolean {
-
     const normalizedFromFlow = normalize(fromFlow.version)
     const normalizedTargetFlow = normalize(targetFlow.version)
     return normalizedFromFlow.displayName !== normalizedTargetFlow.displayName

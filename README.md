@@ -377,6 +377,13 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/joshuaheslin"><img src="https://avatars.githubusercontent.com/u/48037470?v=4?s=100" width="100px;" alt="Joshua Heslin"/><br /><sub><b>Joshua Heslin</b></sub></a><br /><a href="#plugin-joshuaheslin" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ahmad-swanblocks"><img src="https://avatars.githubusercontent.com/u/165162455?v=4?s=100" width="100px;" alt="Ahmad"/><br /><sub><b>Ahmad</b></sub></a><br /><a href="#plugin-ahmad-swanblocks" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/you"><img src="https://avatars.githubusercontent.com/u/57100752?v=4?s=100" width="100px;" alt="you"/><br /><sub><b>you</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=you" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/danielpoonwj"><img src="https://avatars.githubusercontent.com/u/17039704?v=4?s=100" width="100px;" alt="Daniel Poon"/><br /><sub><b>Daniel Poon</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=danielpoonwj" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Kevinyu-alan"><img src="https://avatars.githubusercontent.com/u/198612963?v=4?s=100" width="100px;" alt="Kévin Yu"/><br /><sub><b>Kévin Yu</b></sub></a><br /><a href="#plugin-Kevinyu-alan" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/flex-yeongeun"><img src="https://avatars.githubusercontent.com/u/186537288?v=4?s=100" width="100px;" alt="노영은"/><br /><sub><b>노영은</b></sub></a><br /><a href="#plugin-flex-yeongeun" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/reemayoush"><img src="https://avatars.githubusercontent.com/u/168414383?v=4?s=100" width="100px;" alt="reemayoush"/><br /><sub><b>reemayoush</b></sub></a><br /><a href="#plugin-reemayoush" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/briceflaceliere"><img src="https://avatars.githubusercontent.com/u/5811531?v=4?s=100" width="100px;" alt="Brice"/><br /><sub><b>Brice</b></sub></a><br /><a href="#security-briceflaceliere" title="Security">🛡️</a></td>
     </tr>
   </tbody>
 </table>

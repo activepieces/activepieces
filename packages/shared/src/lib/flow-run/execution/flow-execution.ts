@@ -28,17 +28,13 @@ export const DelayPauseMetadata = Type.Object({
 
 export type DelayPauseMetadata = Static<typeof DelayPauseMetadata>
 
-export const WebhookPauseMetadata = Type.Object({
-    type: Type.Literal(PauseType.WEBHOOK),
-    requestId: Type.String(),
-    response: Type.Unknown(),
-    handlerId: Type.Optional(Type.String({})),
-    progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
+export const RespondResponse = Type.Object({
+    status: Type.Optional(Type.Number()),
+    body: Type.Optional(Type.Unknown()),
+    headers: Type.Optional(Type.Record(Type.String(), Type.String())),
 })
-export type WebhookPauseMetadata = Static<typeof WebhookPauseMetadata>
 
-export const PauseMetadata = Type.Union([DelayPauseMetadata, WebhookPauseMetadata])
-export type PauseMetadata = Static<typeof PauseMetadata>
+export type RespondResponse = Static<typeof RespondResponse>
 
 export const StopResponse = Type.Object({
     status: Type.Optional(Type.Number()),
@@ -48,13 +44,18 @@ export const StopResponse = Type.Object({
 
 export type StopResponse = Static<typeof StopResponse>
 
-export const RespondResponse = Type.Object({
-    status: Type.Optional(Type.Number()),
-    body: Type.Optional(Type.Unknown()),
-    headers: Type.Optional(Type.Record(Type.String(), Type.String())),
+export const WebhookPauseMetadata = Type.Object({
+    type: Type.Literal(PauseType.WEBHOOK),
+    requestId: Type.String(),
+    response: RespondResponse,
+    handlerId: Type.Optional(Type.String({})),
+    progressUpdateType: Type.Optional(Type.Enum(ProgressUpdateType)),
 })
+export type WebhookPauseMetadata = Static<typeof WebhookPauseMetadata>
 
-export type RespondResponse = Static<typeof RespondResponse>
+export const PauseMetadata = Type.Union([DelayPauseMetadata, WebhookPauseMetadata])
+export type PauseMetadata = Static<typeof PauseMetadata>
+
 
 export const FlowError = Type.Object({
     stepName: Type.String(),
@@ -69,7 +70,7 @@ const BaseExecutionResponse = {
     tasks: Type.Optional(Type.Number()),
     tags: Type.Optional(Type.Array(Type.String())),
     error: Type.Optional(FlowError),
-    stopResponse: Type.Optional(StopResponse),
+    response: Type.Optional(Type.Union([RespondResponse, PauseMetadata])),
 }
 
 export const FlowRunResponse = Type.Union([

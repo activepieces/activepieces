@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Ellipsis } from 'lucide-react';
+import { Ellipsis, User } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
@@ -18,7 +18,6 @@ import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-col
 import { Skeleton } from '@/components/ui/skeleton';
 import { TableTitle } from '@/components/ui/table-title';
 import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
-import { platformProjectMembersApi } from '@/features/team/lib/platform-project-members-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared';
@@ -45,8 +44,7 @@ export const ProjectRoleUsersTable = () => {
       const limit = searchParams.get('limit')
         ? parseInt(searchParams.get('limit')!)
         : 10;
-      return platformProjectMembersApi.list({
-        projectRoleId: projectRoleId,
+      return projectRoleApi.listProjectMembers(projectRoleId!, {
         cursor: cursor ?? undefined,
         limit: limit,
       });
@@ -145,9 +143,9 @@ export const ProjectRoleUsersTable = () => {
             </Breadcrumb>
 
             {!isNil(projectRole?.name) ? (
-              <TableTitle>{`${projectRole?.name} ${t('Role')} ${t(
-                'Users',
-              )}`}</TableTitle>
+              <TableTitle
+                description={t('View the users assigned to this role')}
+              >{`${projectRole?.name} ${t('Role')} ${t('Users')}`}</TableTitle>
             ) : (
               <Skeleton className="h-6 w-40" />
             )}
@@ -163,6 +161,11 @@ export const ProjectRoleUsersTable = () => {
         </div>
 
         <DataTable
+          emptyStateTextTitle={t('No users found')}
+          emptyStateTextDescription={t(
+            'Starting by assigning users to this role',
+          )}
+          emptyStateIcon={<User className="size-14" />}
           columns={columns}
           page={data}
           isLoading={isLoading || isProjectRoleLoading}

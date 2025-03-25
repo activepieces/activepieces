@@ -16,7 +16,7 @@ import {
   StaticPropsValue,
 } from './property';
 import { PieceAuthProperty } from './property/authentication';
-import { StopResponse, DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@activepieces/shared';
+import { DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@activepieces/shared';
 
 type BaseContext<
   PieceAuth extends PieceAuthProperty,
@@ -63,7 +63,6 @@ type WebhookTriggerHookContext<
   webhookUrl: string;
   payload: TriggerPayload;
 };
-
 export type TriggerHookContext<
   PieceAuth extends PieceAuthProperty,
   TriggerProps extends InputPropertyMap,
@@ -73,7 +72,9 @@ export type TriggerHookContext<
   : S extends TriggerStrategy.POLLING
   ? PollingTriggerHookContext<PieceAuth, TriggerProps>
   : S extends TriggerStrategy.WEBHOOK
-  ? WebhookTriggerHookContext<PieceAuth, TriggerProps>
+  ? WebhookTriggerHookContext<PieceAuth, TriggerProps> & {
+      server: ServerContext;
+    }
   : never;
 
 export type TestOrRunHookContext<
@@ -85,7 +86,7 @@ export type TestOrRunHookContext<
 };
 
 export type StopHookParams = {
-  response: StopResponse;
+  response: RespondResponse;
 };
 
 export type RespondHookParams = {

@@ -46,5 +46,5 @@ const BuilderFlowStatusSection = React.memo(() => {
   );
 });
 
-BuilderFlowStatusSection.displayName = 'BuilderPublishButton';
+BuilderFlowStatusSection.displayName = 'BuilderFlowStatusSection';
 export { BuilderFlowStatusSection };

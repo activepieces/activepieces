@@ -393,6 +393,7 @@ export const formUtils = {
         case PropertyType.DATE_TIME:
         case PropertyType.SHORT_TEXT:
         case PropertyType.LONG_TEXT:
+        case PropertyType.COLOR:
         case PropertyType.FILE:
           propsSchema[name] = Type.String({
             minLength: property.required ? 1 : undefined,
@@ -523,10 +524,14 @@ export function getDefaultValueForStep(
           !isNil(customizedInput) &&
           customizedInput[name] &&
           !isNil(property.properties);
-        defaultValues[name] =
-          existingInput[name] ?? isCustomizedArrayOfProperties
-            ? {}
-            : property.defaultValue ?? [];
+        const existingValue = existingInput[name];
+        if (!isNil(existingValue)) {
+          defaultValues[name] = existingValue;
+        } else if (isCustomizedArrayOfProperties) {
+          defaultValues[name] = {};
+        } else {
+          defaultValues[name] = property.defaultValue ?? [];
+        }
         break;
       }
       case PropertyType.MARKDOWN:
@@ -540,6 +545,7 @@ export function getDefaultValueForStep(
       case PropertyType.CUSTOM_AUTH:
       case PropertyType.SECRET_TEXT:
       case PropertyType.CUSTOM:
+      case PropertyType.COLOR:
       case PropertyType.OAUTH2: {
         defaultValues[name] = existingInput[name] ?? property.defaultValue;
         break;

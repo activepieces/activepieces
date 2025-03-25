@@ -25,7 +25,7 @@ async function scheduleSendingReminder(params: IssueRemindersParams, log: Fastif
     if (params.issueCount === 1) {
         const project = await projectService.getOneOrThrow(projectId)
         const platform = await platformService.getOneOrThrow(project.platformId)
-        if (!platform.flowIssuesEnabled || platform.embeddingEnabled) {
+        if (!platform.flowIssuesEnabled) {
             return
         }
         

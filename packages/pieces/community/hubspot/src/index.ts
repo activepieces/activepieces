@@ -66,6 +66,9 @@ import { newContactInListTrigger } from './lib/triggers/new-contact-in-list';
 import { newEngagementTrigger } from './lib/triggers/new-engagement';
 import { newEmailSubscriptionsTimelineTrigger } from './lib/triggers/email-subscriptions-timeline';
 import { createBlogPostAction } from './lib/actions/create-blog-post';
+import {  createPageAction } from './lib/actions/create-page';
+import { getPageAction } from './lib/actions/get-page';
+import { deletePageAction } from './lib/actions/delete-page';
 
 export const hubspotAuth = PieceAuth.OAuth2({
 	authUrl: 'https://app.hubspot.com/oauth/authorize',
@@ -120,6 +123,7 @@ export const hubspot = createPiece({
 		createCustomObjectAction,
 		createDealAction,
 		createLineItemAction,
+		createPageAction,
 		createOrUpdateContactAction,
 		createProductAction,
 		createTicketAction,
@@ -129,7 +133,9 @@ export const hubspot = createPiece({
 		getDealAction,
 		getLineItemAction,
 		getProductAction,
+		getPageAction,
 		getTicketAction,
+		deletePageAction,
 		removeAssociationsAction,
 		removeContactFromListAction,
 		removeEmailSubscriptionAction,

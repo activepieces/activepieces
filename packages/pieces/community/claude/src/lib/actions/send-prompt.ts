@@ -42,6 +42,8 @@ export const askClaude = createAction({
           { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus' },
           { value: 'claude-3-5-sonnet-latest', label: 'Claude 3.5 Sonnet' },
           { value: 'claude-3-5-haiku-latest', label: 'Claude 3.5 Haiku' },
+          { value: 'claude-3-7-sonnet-latest', label: 'Claude 3.7 Sonnet' },
+
         ],
       },
     }),
