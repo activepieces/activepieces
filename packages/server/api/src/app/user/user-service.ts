@@ -3,6 +3,7 @@ import {
     ApEdition,
     apId,
     ErrorCode,
+    isNil,
     PlatformId,
     PlatformRole,
     ProjectId,
@@ -20,6 +21,7 @@ import { repoFactory } from '../core/db/repo-factory'
 // import { projectMemberRepo } from '../ee/project-role/project-role.service'
 import { system } from '../helper/system/system'
 import { UserEntity, UserSchema } from './user-entity'
+import { platformService } from '../platform/platform.service'
 
 
 export const userRepo = repoFactory(UserEntity)
@@ -37,6 +39,16 @@ export const userService = {
         return userRepo().save(user)
     },
     async update({ id, status, platformId, platformRole, externalId }: UpdateParams): Promise<UserWithMetaInformation> {
+        const user = await this.getOrThrow({ id })
+        const platform = await platformService.getOneOrThrow(user.platformId!)
+        if (platform.ownerId === user.id && status === UserStatus.INACTIVE) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Admin cannot be deactivated',
+                },
+            })
+        }
 
         const updateResult = await userRepo().update({
             id,
@@ -80,6 +92,16 @@ export const userService = {
     },
     async get({ id }: IdParams): Promise<User | null> {
         return userRepo().findOneBy({ id })
+    },
+    async getOrThrow({ id }: IdParams): Promise<User> {
+        const user = await userRepo().findOneBy({ id })
+        if (isNil(user)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'user', entityId: id },
+            })
+        }
+        return user
     },
     async getOneOrFail({ id }: IdParams): Promise<User> {
         return userRepo().findOneOrFail({ where: { id } })

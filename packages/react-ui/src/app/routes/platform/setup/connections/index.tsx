@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Trash, Pencil } from 'lucide-react';
+import { CheckIcon, Trash, Pencil, Globe } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -369,6 +369,11 @@ const GlobalConnectionsTable = () => {
           {t('Global Connections')}
         </TableTitle>
         <DataTable
+          emptyStateTextTitle={t('No global connections found')}
+          emptyStateTextDescription={t(
+            'Create a global connection that can be shared to multiple projects',
+          )}
+          emptyStateIcon={<Globe className="size-14" />}
           columns={columns}
           page={data}
           isLoading={isLoading}

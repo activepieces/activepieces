@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import {
   CheckIcon,
   Folder,
+  History,
   Key,
   Link2,
   Logs,
@@ -126,8 +127,17 @@ export default function AuditLogsPage() {
       )}
     >
       <div className="flex flex-col  w-full">
-        <TableTitle>{t('Audit Logs')}</TableTitle>
+        <TableTitle
+          description={t('Track activities done within your platform')}
+        >
+          {t('Audit Logs')}
+        </TableTitle>
         <DataTable
+          emptyStateTextTitle={t('No audit logs found')}
+          emptyStateTextDescription={t(
+            'Come back later when you have some activity to audit',
+          )}
+          emptyStateIcon={<History className="size-14" />}
           filters={filters}
           columns={[
             {

@@ -51,6 +51,12 @@
       "@activepieces/piece-aminos": [
         "packages/pieces/community/aminos/src/index.ts"
       ],
+      "@activepieces/piece-anyhook-graphql": [
+        "packages/pieces/community/anyhook-graphql/src/index.ts"
+      ],
+      "@activepieces/piece-anyhook-websocket": [
+        "packages/pieces/community/anyhook-websocket/src/index.ts"
+      ],
       "@activepieces/piece-apify": [
         "packages/pieces/community/apify/src/index.ts"
       ],
@@ -392,6 +398,9 @@
       "@activepieces/piece-localai": [
         "packages/pieces/community/localai/src/index.ts"
       ],
+      "@activepieces/piece-mailchain": [
+        "packages/pieces/community/mailchain/src/index.ts"
+      ],
       "@activepieces/piece-mailchimp": [
         "packages/pieces/community/mailchimp/src/index.ts"
       ],
@@ -670,6 +679,9 @@
       "@activepieces/piece-text-helper": [
         "packages/pieces/community/text-helper/src/index.ts"
       ],
+      "@activepieces/piece-zoo": [
+        "packages/pieces/community/zoo/src/index.ts"
+      ],
       "@activepieces/piece-thankster": [
         "packages/pieces/community/thankster/src/index.ts"
       ],
@@ -687,6 +699,9 @@
       ],
       "@activepieces/piece-trello": [
         "packages/pieces/community/trello/src/index.ts"
+      ],
+      "@activepieces/piece-truelayer": [
+        "packages/pieces/community/truelayer/src/index.ts"
       ],
       "@activepieces/piece-twilio": [
         "packages/pieces/community/twilio/src/index.ts"
@@ -797,6 +812,19 @@
       "activepieces/piece-zuora": [
         "packages/pieces/community/zuora/src/index.ts"
       ],
+      "@activepieces/piece-personal-ai": [
+        "packages/pieces/community/personal-ai/src/index.ts"
+      ],
+      "@activepieces/piece-eth-name-service": [
+        "packages/pieces/community/eth-name-service/src/index.ts"
+      ],
+      "@activepieces/piece-mempool-space": [
+        "packages/pieces/community/mempool-space/src/index.ts"
+      ],
+      "@activepieces/piece-blockscout": [
+        "packages/pieces/community/blockscout/src/index.ts"
+      ],
+      // "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
       "server-worker": ["packages/server/worker/src/index.ts"],
       "ui-feature-forms": ["packages/ui/features-forms/src/index.ts"]
     },

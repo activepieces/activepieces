@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Tag, User } from 'lucide-react';
+import { CheckCircle, CheckIcon, Tag, User } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
@@ -293,13 +293,20 @@ function TodosPage() {
     <div className="flex-col w-full">
       <div className="flex items-center gap-2">
         <TableTitle
-          description={t('Manage todos for your project.')}
+          description={t(
+            'Manage todos for your project that are created by automations',
+          )}
           beta={true}
         >
           {t('Todos')}
         </TableTitle>
       </div>
       <DataTable
+        emptyStateTextTitle={t('No todos found')}
+        emptyStateTextDescription={t(
+          'You do not have any pending todos. Great job!',
+        )}
+        emptyStateIcon={<CheckCircle className="size-14" />}
         columns={columns}
         page={filteredData}
         isLoading={isLoading}
