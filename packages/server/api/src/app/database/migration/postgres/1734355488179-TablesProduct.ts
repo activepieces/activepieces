@@ -96,13 +96,13 @@ export class TablesProduct1734355488179 implements MigrationInterface {
             DROP TABLE "record"
         `)
         await queryRunner.query(`
-              DROP INDEX "public"."idx_field_table_id_name"
+              DROP INDEX "idx_field_table_id_name"
         `)
         await queryRunner.query(`
             DROP TABLE "field"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_table_project_id_name"
+            DROP INDEX "idx_table_project_id_name"
         `)
         await queryRunner.query(`
             DROP TABLE "table"

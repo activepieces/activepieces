@@ -39,10 +39,10 @@ export class ChangeManualTasksCommentsToTodoComments1742433144687 implements Mig
             ALTER TABLE "todo_comment" DROP CONSTRAINT "fk_todo_comment_todo_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_todo_comment_user_id"
+            DROP INDEX "idx_todo_comment_user_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_todo_comment_todo_id"
+            DROP INDEX "idx_todo_comment_todo_id"
         `)
         await queryRunner.query(`
             DROP TABLE "todo_comment"
