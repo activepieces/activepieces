@@ -239,6 +239,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(flowTemplateModule)
     await app.register(globalOAuthAppModule)
     await app.register(oauthAppModule)
+    await app.register(todoModule)
     setPlatformOAuthService(userOAuth2Service(app.log))
 
     app.get(

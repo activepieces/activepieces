@@ -353,7 +353,8 @@ function TodoDetails({
             )}
           </ScrollArea>
 
-          <div className="relative w-full py-5">
+          {/* Comment box is hidden as todo comments is an EE feature */}
+          <div className="relative w-full py-5" hidden>
             <Textarea
               className="w-full focus:outline-none pb-10 pt-3 border rounded-xl bg-gray-100 dark:bg-gray-700 dark:text-gray-100 pr-12 resize-none"
               minRows={1}

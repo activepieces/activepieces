@@ -13,6 +13,7 @@ import { AddOauthApp1741683781609 } from './migration/sqlite/1741683781609-add-o
 import { AddGlobalOauthApp1741685103864 } from './migration/sqlite/1741685103864-add-global-oauth-app'
 import { InitialMsProjectConfig1742454177000 } from './migration/sqlite/1742454177000-initial-ms-project-config'
 import { AddDataColumnToFieldEntity1742390870702 } from './migration/sqlite/1742390870702-AddDataColumnToFieldEntity'
+import { AddTodosSquashed1742874467240 } from './migration/sqlite/1742874467240-add-todos-squashed'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -35,14 +36,15 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
-      AddDataColumnToFieldEntity1742390870702,
-      InitialMsProjectConfig1742454177000,
-      AddTables1741862813806,
-      AddGlobalOauthApp1741685103864,
-      AddOauthApp1741683781609,
-      AddFlowTemplate1741588702453,
-      SwitchToRouter1741578250432,
-      InitialSqlite1740031972943,
+        AddTodosSquashed1742874467240,
+        AddDataColumnToFieldEntity1742390870702,
+        InitialMsProjectConfig1742454177000,
+        AddTables1741862813806,
+        AddGlobalOauthApp1741685103864,
+        AddOauthApp1741683781609,
+        AddFlowTemplate1741588702453,
+        SwitchToRouter1741578250432,
+        InitialSqlite1740031972943,
     ]
 
     const edition = system.getEdition()

@@ -97,6 +97,7 @@ function getEntities(): EntitySchema<unknown>[] {
         UserIdentityEntity,
         OAuthAppEntity,
         GlobalOAuthAppEntity,
+        TodoEntity,
     ]
 
     switch (edition) {

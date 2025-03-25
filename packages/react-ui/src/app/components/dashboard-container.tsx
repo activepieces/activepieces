@@ -160,8 +160,7 @@ export function DashboardContainer({
     isSubItem: false,
   };
 
-  // const items: SidebarItem[] = [automationGroup, tablesLink, todosLink]
-  const items: SidebarItem[] = [automationGroup, tablesLink]
+  const items: SidebarItem[] = [automationGroup, tablesLink, todosLink]
     .filter(embedFilter)
     .filter(permissionFilter)
     .filter(filterAlerts);
