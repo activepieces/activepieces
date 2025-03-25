@@ -190,30 +190,26 @@ export function SidebarComponent({
                   >
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="ghost" className="p-2 h-auto" >
-                           {
-                            edition !== ApEdition.COMMUNITY &&
-                           !embedState.isEmbedded ? (
-                              <img
-                                src={branding.logos.logoIconUrl}
-                                alt={t('home')}
-                                width={28}
-                                height={28}
-                                className=" max-h-[28px] max-w-[28px] object-contain"
-                              />
-                            ) : (
-                              <img
+                        <Button variant="ghost" className="p-2 h-auto">
+                          {edition !== ApEdition.COMMUNITY &&
+                          !embedState.isEmbedded ? (
+                            <img
+                              src={branding.logos.logoIconUrl}
+                              alt={t('home')}
+                              width={28}
+                              height={28}
+                              className=" max-h-[28px] max-w-[28px] object-contain"
+                            />
+                          ) : (
+                            <img
                               src={branding.logos.fullLogoUrl}
                               alt={t('home')}
                               width={160}
                               height={51}
                               className="max-h-[51px] max-w-[160px] object-contain"
                             />
-                            )
-                          }
-                          
-                          </Button>
-
+                          )}
+                        </Button>
                       </TooltipTrigger>
                       <TooltipContent side="bottom">{t('Home')}</TooltipContent>
                     </Tooltip>
