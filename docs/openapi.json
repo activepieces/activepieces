@@ -2037,10 +2037,17 @@
                               "sampleDataFileId": {
                                 "type": "string"
                               },
+                              "sampleDataInputFileId": {
+                                "type": "string"
+                              },
                               "lastTestDate": {
                                 "type": "string"
                               },
                               "customizedInputs": {
+                                "type": "object",
+                                "additionalProperties": {}
+                              },
+                              "schema": {
                                 "type": "object",
                                 "additionalProperties": {}
                               },
@@ -2128,7 +2135,6 @@
           "tags",
           "pieces",
           "template",
-          "projectId",
           "platformId"
         ]
       },
@@ -2744,7 +2750,21 @@
                   "requestId": {
                     "type": "string"
                   },
-                  "response": {},
+                  "response": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "number"
+                      },
+                      "body": {},
+                      "headers": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
                   "handlerId": {
                     "type": "string"
                   },
@@ -4408,6 +4428,32 @@
                               "type",
                               "required"
                             ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "displayName": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "COLOR"
+                                ]
+                              },
+                              "required": {
+                                "type": "boolean"
+                              },
+                              "defaultValue": {}
+                            },
+                            "required": [
+                              "displayName",
+                              "type",
+                              "required"
+                            ]
                           }
                         ]
                       },
@@ -5702,6 +5748,32 @@
                                 "type": "string",
                                 "enum": [
                                   "FILE"
+                                ]
+                              },
+                              "required": {
+                                "type": "boolean"
+                              },
+                              "defaultValue": {}
+                            },
+                            "required": [
+                              "displayName",
+                              "type",
+                              "required"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "displayName": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "COLOR"
                                 ]
                               },
                               "required": {
@@ -7149,10 +7221,17 @@
                                         "sampleDataFileId": {
                                           "type": "string"
                                         },
+                                        "sampleDataInputFileId": {
+                                          "type": "string"
+                                        },
                                         "lastTestDate": {
                                           "type": "string"
                                         },
                                         "customizedInputs": {
+                                          "type": "object",
+                                          "additionalProperties": {}
+                                        },
+                                        "schema": {
                                           "type": "object",
                                           "additionalProperties": {}
                                         },
@@ -7513,10 +7592,17 @@
                                               "sampleDataFileId": {
                                                 "type": "string"
                                               },
+                                              "sampleDataInputFileId": {
+                                                "type": "string"
+                                              },
                                               "lastTestDate": {
                                                 "type": "string"
                                               },
                                               "customizedInputs": {
+                                                "type": "object",
+                                                "additionalProperties": {}
+                                              },
+                                              "schema": {
                                                 "type": "object",
                                                 "additionalProperties": {}
                                               },
@@ -7911,10 +7997,17 @@
                                           "sampleDataFileId": {
                                             "type": "string"
                                           },
+                                          "sampleDataInputFileId": {
+                                            "type": "string"
+                                          },
                                           "lastTestDate": {
                                             "type": "string"
                                           },
                                           "customizedInputs": {
+                                            "type": "object",
+                                            "additionalProperties": {}
+                                          },
+                                          "schema": {
                                             "type": "object",
                                             "additionalProperties": {}
                                           },
@@ -8109,10 +8202,17 @@
                                       "sampleDataFileId": {
                                         "type": "string"
                                       },
+                                      "sampleDataInputFileId": {
+                                        "type": "string"
+                                      },
                                       "lastTestDate": {
                                         "type": "string"
                                       },
                                       "customizedInputs": {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      },
+                                      "schema": {
                                         "type": "object",
                                         "additionalProperties": {}
                                       },
@@ -8198,10 +8298,17 @@
                                       "sampleDataFileId": {
                                         "type": "string"
                                       },
+                                      "sampleDataInputFileId": {
+                                        "type": "string"
+                                      },
                                       "lastTestDate": {
                                         "type": "string"
                                       },
                                       "customizedInputs": {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      },
+                                      "schema": {
                                         "type": "object",
                                         "additionalProperties": {}
                                       },
@@ -8303,10 +8410,17 @@
                                       "sampleDataFileId": {
                                         "type": "string"
                                       },
+                                      "sampleDataInputFileId": {
+                                        "type": "string"
+                                      },
                                       "lastTestDate": {
                                         "type": "string"
                                       },
                                       "customizedInputs": {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      },
+                                      "schema": {
                                         "type": "object",
                                         "additionalProperties": {}
                                       },
@@ -8670,10 +8784,17 @@
                                       "sampleDataFileId": {
                                         "type": "string"
                                       },
+                                      "sampleDataInputFileId": {
+                                        "type": "string"
+                                      },
                                       "lastTestDate": {
                                         "type": "string"
                                       },
                                       "customizedInputs": {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      },
+                                      "schema": {
                                         "type": "object",
                                         "additionalProperties": {}
                                       },
@@ -8800,10 +8921,17 @@
                                           "sampleDataFileId": {
                                             "type": "string"
                                           },
+                                          "sampleDataInputFileId": {
+                                            "type": "string"
+                                          },
                                           "lastTestDate": {
                                             "type": "string"
                                           },
                                           "customizedInputs": {
+                                            "type": "object",
+                                            "additionalProperties": {}
+                                          },
+                                          "schema": {
                                             "type": "object",
                                             "additionalProperties": {}
                                           },
@@ -8889,10 +9017,17 @@
                                           "sampleDataFileId": {
                                             "type": "string"
                                           },
+                                          "sampleDataInputFileId": {
+                                            "type": "string"
+                                          },
                                           "lastTestDate": {
                                             "type": "string"
                                           },
                                           "customizedInputs": {
+                                            "type": "object",
+                                            "additionalProperties": {}
+                                          },
+                                          "schema": {
                                             "type": "object",
                                             "additionalProperties": {}
                                           },
@@ -8994,10 +9129,17 @@
                                           "sampleDataFileId": {
                                             "type": "string"
                                           },
+                                          "sampleDataInputFileId": {
+                                            "type": "string"
+                                          },
                                           "lastTestDate": {
                                             "type": "string"
                                           },
                                           "customizedInputs": {
+                                            "type": "object",
+                                            "additionalProperties": {}
+                                          },
+                                          "schema": {
                                             "type": "object",
                                             "additionalProperties": {}
                                           },
@@ -9361,10 +9503,17 @@
                                           "sampleDataFileId": {
                                             "type": "string"
                                           },
+                                          "sampleDataInputFileId": {
+                                            "type": "string"
+                                          },
                                           "lastTestDate": {
                                             "type": "string"
                                           },
                                           "customizedInputs": {
+                                            "type": "object",
+                                            "additionalProperties": {}
+                                          },
+                                          "schema": {
                                             "type": "object",
                                             "additionalProperties": {}
                                           },
@@ -9517,10 +9666,17 @@
                                       "sampleDataFileId": {
                                         "type": "string"
                                       },
+                                      "sampleDataInputFileId": {
+                                        "type": "string"
+                                      },
                                       "lastTestDate": {
                                         "type": "string"
                                       },
                                       "customizedInputs": {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      },
+                                      "schema": {
                                         "type": "object",
                                         "additionalProperties": {}
                                       },
@@ -10179,10 +10335,17 @@
                                         "sampleDataFileId": {
                                           "type": "string"
                                         },
+                                        "sampleDataInputFileId": {
+                                          "type": "string"
+                                        },
                                         "lastTestDate": {
                                           "type": "string"
                                         },
                                         "customizedInputs": {
+                                          "type": "object",
+                                          "additionalProperties": {}
+                                        },
+                                        "schema": {
                                           "type": "object",
                                           "additionalProperties": {}
                                         },
@@ -10483,10 +10646,17 @@
                                         "sampleDataFileId": {
                                           "type": "string"
                                         },
+                                        "sampleDataInputFileId": {
+                                          "type": "string"
+                                        },
                                         "lastTestDate": {
                                           "type": "string"
                                         },
                                         "customizedInputs": {
+                                          "type": "object",
+                                          "additionalProperties": {}
+                                        },
+                                        "schema": {
                                           "type": "object",
                                           "additionalProperties": {}
                                         },
@@ -10594,7 +10764,59 @@
                   "stepName": {
                     "type": "string"
                   },
-                  "payload": {}
+                  "payload": {},
+                  "fileType": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "UNKNOWN"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "FLOW_RUN_LOG"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "PACKAGE_ARCHIVE"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "FLOW_STEP_FILE"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "SAMPLE_DATA"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "SAMPLE_DATA_INPUT"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "TRIGGER_EVENT_FILE"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "PROJECT_RELEASE"
+                        ]
+                      }
+                    ]
+                  }
                 },
                 "required": [
                   "flowVersionId",
@@ -10661,6 +10883,12 @@
                         {
                           "type": "string",
                           "enum": [
+                            "SAMPLE_DATA_INPUT"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
                             "TRIGGER_EVENT_FILE"
                           ]
                         },
@@ -10719,6 +10947,63 @@
             "in": "query",
             "name": "projectId",
             "required": true
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "UNKNOWN"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "FLOW_RUN_LOG"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "PACKAGE_ARCHIVE"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "FLOW_STEP_FILE"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "SAMPLE_DATA"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "SAMPLE_DATA_INPUT"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "TRIGGER_EVENT_FILE"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "PROJECT_RELEASE"
+                  ]
+                }
+              ]
+            },
+            "in": "query",
+            "name": "fileType",
+            "required": false
           }
         ],
         "security": [
@@ -12226,7 +12511,8 @@
                           },
                           "required": [
                             "clientId"
-                          ]
+                          ],
+                          "nullable": true
                         },
                         "github": {
                           "type": "object",
@@ -12237,13 +12523,16 @@
                           },
                           "required": [
                             "clientId"
-                          ]
+                          ],
+                          "nullable": true
                         },
                         "saml": {
                           "type": "object",
-                          "properties": {}
+                          "properties": {},
+                          "nullable": true
                         }
-                      }
+                      },
+                      "nullable": true
                     },
                     "defaultLocale": {
                       "type": "string",
@@ -12274,6 +12563,12 @@
                       "type": "object",
                       "properties": {},
                       "nullable": true
+                    },
+                    "hasLicenseKey": {
+                      "type": "boolean"
+                    },
+                    "licenseExpiresAt": {
+                      "type": "string"
                     },
                     "id": {
                       "type": "string"
@@ -12399,7 +12694,6 @@
                     }
                   },
                   "required": [
-                    "federatedAuthProviders",
                     "id",
                     "created",
                     "updated",
@@ -12915,6 +13209,427 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v1/tables/{id}": {
+      "post": {
+        "tags": [
+          "tables"
+        ],
+        "description": "Update a table",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "tables"
+        ],
+        "description": "Delete a table",
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-zA-Z]{21}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "not": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "tables"
+        ],
+        "description": "Get a table by id",
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-zA-Z]{21}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "created": {
+                      "type": "string"
+                    },
+                    "updated": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "projectId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "created",
+                    "updated",
+                    "name",
+                    "projectId"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tables": {
+      "get": {
+        "tags": [
+          "tables"
+        ],
+        "description": "List tables",
+        "parameters": [
+          {
+            "schema": {
+              "type": "number"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "name",
+            "required": false
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "created": {
+                            "type": "string"
+                          },
+                          "updated": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "projectId": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "created",
+                          "updated",
+                          "name",
+                          "projectId"
+                        ]
+                      }
+                    },
+                    "next": {
+                      "description": "Cursor to the next page",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "description": "Cursor to the previous page",
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tables/{id}/export": {
+      "get": {
+        "tags": [
+          "tables"
+        ],
+        "description": "Export a table",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "fields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ]
+                      }
+                    },
+                    "rows": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "fields",
+                    "rows",
+                    "name"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tables/{id}/webhooks": {
+      "post": {
+        "tags": [
+          "tables"
+        ],
+        "description": "Create a table webhook",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "events": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "RECORD_CREATED"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "RECORD_UPDATED"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "RECORD_DELETED"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "webhookUrl": {
+                    "type": "string"
+                  },
+                  "flowId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "events",
+                  "webhookUrl",
+                  "flowId"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/tables/{id}/webhooks/{webhookId}": {
+      "delete": {
+        "tags": [
+          "tables"
+        ],
+        "description": "Delete a table webhook",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "webhookId",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
           }
         }
       }
@@ -13916,243 +14631,6 @@
         }
       }
     },
-    "/v1/project-members/platform-users": {
-      "get": {
-        "tags": [
-          "project-members"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "projectRoleId",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "cursor",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "number"
-            },
-            "in": "query",
-            "name": "limit",
-            "required": false
-          }
-        ],
-        "security": [
-          {
-            "apiKey": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "created": {
-                            "type": "string"
-                          },
-                          "updated": {
-                            "type": "string"
-                          },
-                          "platformId": {
-                            "pattern": "^[0-9a-zA-Z]{21}$",
-                            "type": "string"
-                          },
-                          "userId": {
-                            "pattern": "^[0-9a-zA-Z]{21}$",
-                            "type": "string"
-                          },
-                          "projectId": {
-                            "type": "string"
-                          },
-                          "projectRoleId": {
-                            "pattern": "^[0-9a-zA-Z]{21}$",
-                            "type": "string"
-                          },
-                          "user": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string"
-                              },
-                              "email": {
-                                "type": "string"
-                              },
-                              "firstName": {
-                                "type": "string"
-                              },
-                              "status": {
-                                "anyOf": [
-                                  {
-                                    "type": "string",
-                                    "enum": [
-                                      "ACTIVE"
-                                    ]
-                                  },
-                                  {
-                                    "type": "string",
-                                    "enum": [
-                                      "INACTIVE"
-                                    ]
-                                  }
-                                ]
-                              },
-                              "externalId": {
-                                "type": "string",
-                                "nullable": true
-                              },
-                              "platformId": {
-                                "type": "string",
-                                "nullable": true
-                              },
-                              "platformRole": {
-                                "anyOf": [
-                                  {
-                                    "type": "string",
-                                    "enum": [
-                                      "ADMIN"
-                                    ]
-                                  },
-                                  {
-                                    "type": "string",
-                                    "enum": [
-                                      "MEMBER"
-                                    ]
-                                  }
-                                ]
-                              },
-                              "lastName": {
-                                "type": "string"
-                              },
-                              "created": {
-                                "type": "string"
-                              },
-                              "updated": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "email",
-                              "firstName",
-                              "status",
-                              "platformRole",
-                              "lastName",
-                              "created",
-                              "updated"
-                            ]
-                          },
-                          "projectRole": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string"
-                              },
-                              "created": {
-                                "type": "string"
-                              },
-                              "updated": {
-                                "type": "string"
-                              },
-                              "name": {
-                                "type": "string"
-                              },
-                              "permissions": {
-                                "type": "array",
-                                "items": {
-                                  "type": "string"
-                                }
-                              },
-                              "platformId": {
-                                "type": "string"
-                              },
-                              "type": {
-                                "type": "string"
-                              },
-                              "userCount": {
-                                "type": "number"
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "created",
-                              "updated",
-                              "name",
-                              "permissions",
-                              "type"
-                            ]
-                          },
-                          "project": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string"
-                              },
-                              "displayName": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "displayName"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "created",
-                          "updated",
-                          "platformId",
-                          "userId",
-                          "projectId",
-                          "projectRoleId",
-                          "user",
-                          "projectRole",
-                          "project"
-                        ]
-                      }
-                    },
-                    "next": {
-                      "description": "Cursor to the next page",
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "previous": {
-                      "description": "Cursor to the previous page",
-                      "type": "string",
-                      "nullable": true
-                    }
-                  },
-                  "required": [
-                    "data"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v1/project-members/{id}": {
       "delete": {
         "tags": [
@@ -14183,243 +14661,6 @@
                   "properties": {
                     "not": {}
                   }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/platform-project-members/users": {
-      "get": {
-        "tags": [
-          "project-members"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "projectRoleId",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "cursor",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "number"
-            },
-            "in": "query",
-            "name": "limit",
-            "required": false
-          }
-        ],
-        "security": [
-          {
-            "apiKey": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "created": {
-                            "type": "string"
-                          },
-                          "updated": {
-                            "type": "string"
-                          },
-                          "platformId": {
-                            "pattern": "^[0-9a-zA-Z]{21}$",
-                            "type": "string"
-                          },
-                          "userId": {
-                            "pattern": "^[0-9a-zA-Z]{21}$",
-                            "type": "string"
-                          },
-                          "projectId": {
-                            "type": "string"
-                          },
-                          "projectRoleId": {
-                            "pattern": "^[0-9a-zA-Z]{21}$",
-                            "type": "string"
-                          },
-                          "user": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string"
-                              },
-                              "email": {
-                                "type": "string"
-                              },
-                              "firstName": {
-                                "type": "string"
-                              },
-                              "status": {
-                                "anyOf": [
-                                  {
-                                    "type": "string",
-                                    "enum": [
-                                      "ACTIVE"
-                                    ]
-                                  },
-                                  {
-                                    "type": "string",
-                                    "enum": [
-                                      "INACTIVE"
-                                    ]
-                                  }
-                                ]
-                              },
-                              "externalId": {
-                                "type": "string",
-                                "nullable": true
-                              },
-                              "platformId": {
-                                "type": "string",
-                                "nullable": true
-                              },
-                              "platformRole": {
-                                "anyOf": [
-                                  {
-                                    "type": "string",
-                                    "enum": [
-                                      "ADMIN"
-                                    ]
-                                  },
-                                  {
-                                    "type": "string",
-                                    "enum": [
-                                      "MEMBER"
-                                    ]
-                                  }
-                                ]
-                              },
-                              "lastName": {
-                                "type": "string"
-                              },
-                              "created": {
-                                "type": "string"
-                              },
-                              "updated": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "email",
-                              "firstName",
-                              "status",
-                              "platformRole",
-                              "lastName",
-                              "created",
-                              "updated"
-                            ]
-                          },
-                          "projectRole": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string"
-                              },
-                              "created": {
-                                "type": "string"
-                              },
-                              "updated": {
-                                "type": "string"
-                              },
-                              "name": {
-                                "type": "string"
-                              },
-                              "permissions": {
-                                "type": "array",
-                                "items": {
-                                  "type": "string"
-                                }
-                              },
-                              "platformId": {
-                                "type": "string"
-                              },
-                              "type": {
-                                "type": "string"
-                              },
-                              "userCount": {
-                                "type": "number"
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "created",
-                              "updated",
-                              "name",
-                              "permissions",
-                              "type"
-                            ]
-                          },
-                          "project": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string"
-                              },
-                              "displayName": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "displayName"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "created",
-                          "updated",
-                          "platformId",
-                          "userId",
-                          "projectId",
-                          "projectRoleId",
-                          "user",
-                          "projectRole",
-                          "project"
-                        ]
-                      }
-                    },
-                    "next": {
-                      "description": "Cursor to the next page",
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "previous": {
-                      "description": "Cursor to the previous page",
-                      "type": "string",
-                      "nullable": true
-                    }
-                  },
-                  "required": [
-                    "data"
-                  ]
                 }
               }
             }
@@ -14749,10 +14990,17 @@
                                       "sampleDataFileId": {
                                         "type": "string"
                                       },
+                                      "sampleDataInputFileId": {
+                                        "type": "string"
+                                      },
                                       "lastTestDate": {
                                         "type": "string"
                                       },
                                       "customizedInputs": {
+                                        "type": "object",
+                                        "additionalProperties": {}
+                                      },
+                                      "schema": {
                                         "type": "object",
                                         "additionalProperties": {}
                                       },
@@ -14998,6 +15246,244 @@
         }
       }
     },
+    "/v1/project-roles/{id}/project-members": {
+      "get": {
+        "tags": [
+          "project-members"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "number"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": {
+              "pattern": "^[0-9a-zA-Z]{21}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "created": {
+                            "type": "string"
+                          },
+                          "updated": {
+                            "type": "string"
+                          },
+                          "platformId": {
+                            "pattern": "^[0-9a-zA-Z]{21}$",
+                            "type": "string"
+                          },
+                          "userId": {
+                            "pattern": "^[0-9a-zA-Z]{21}$",
+                            "type": "string"
+                          },
+                          "projectId": {
+                            "type": "string"
+                          },
+                          "projectRoleId": {
+                            "pattern": "^[0-9a-zA-Z]{21}$",
+                            "type": "string"
+                          },
+                          "user": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "email": {
+                                "type": "string"
+                              },
+                              "firstName": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ACTIVE"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "INACTIVE"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "externalId": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "platformId": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "platformRole": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ADMIN"
+                                    ]
+                                  },
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "MEMBER"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "lastName": {
+                                "type": "string"
+                              },
+                              "created": {
+                                "type": "string"
+                              },
+                              "updated": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "email",
+                              "firstName",
+                              "status",
+                              "platformRole",
+                              "lastName",
+                              "created",
+                              "updated"
+                            ]
+                          },
+                          "projectRole": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "created": {
+                                "type": "string"
+                              },
+                              "updated": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "permissions": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "platformId": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string"
+                              },
+                              "userCount": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "created",
+                              "updated",
+                              "name",
+                              "permissions",
+                              "type"
+                            ]
+                          },
+                          "project": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "displayName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "displayName"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "created",
+                          "updated",
+                          "platformId",
+                          "userId",
+                          "projectId",
+                          "projectRoleId",
+                          "user",
+                          "projectRole",
+                          "project"
+                        ]
+                      }
+                    },
+                    "next": {
+                      "description": "Cursor to the next page",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "description": "Cursor to the previous page",
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/project-releases": {
       "post": {
         "tags": [
@@ -15007,7 +15493,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "oneOf": [
+                "anyOf": [
                   {
                     "type": "object",
                     "properties": {
@@ -15116,7 +15602,6 @@
                     ]
                   }
                 ],
-                "type": "object",
                 "discriminator": {
                   "propertyName": "type"
                 }

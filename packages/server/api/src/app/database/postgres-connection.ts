@@ -12,6 +12,7 @@ import { AddFlowTemplate1741587483735 } from './migration/postgres/1741587483735
 import { AddOauthApp1741683756436 } from './migration/postgres/1741683756436-add-oauth-app'
 import { AddGlobalOauthApp1741684926338 } from './migration/postgres/1741684926338-add-global-oauth-app'
 import { InitialMsProjectConfig1742454177000 } from './migration/postgres/1742454177000-initial-ms-project-config'
+import { AddDataColumnToFieldEntity1742395892304 } from './migration/postgres/1742395892304-AddDataColumnToFieldEntity'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -25,6 +26,8 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+      AddDataColumnToFieldEntity1742395892304,
+      InitialMsProjectConfig1742454177000,
       AddTables1741862762328,
       AddGlobalOauthApp1741684926338,
       AddOauthApp1741683756436,
@@ -32,7 +35,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
       SwitchToRouter1741578250432,
       AddPgLocaleCollation1740031341436,
       InitialPg1740031656104,
-      InitialMsProjectConfig1742454177000,
     ]
 
     const edition = system.getEdition()

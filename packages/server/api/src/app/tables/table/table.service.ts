@@ -155,7 +155,7 @@ export const tableService = {
         events,
     }: GetWebhooksParams): Promise<TableWebhook[]> {
         return tableWebhookRepo().find({
-            where: { projectId, tableId: id, events: APArrayContains('events', events) },
+            where: { projectId, tableId: id, ...APArrayContains('events', events) },
         })
     },
 

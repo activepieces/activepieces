@@ -88,6 +88,9 @@ interface DataTableProps<
   actions?: DataTableAction<TData>[];
   hidePagination?: boolean;
   bulkActions?: BulkAction<TData>[];
+  emptyStateTextTitle: string;
+  emptyStateTextDescription: string;
+  emptyStateIcon: React.ReactNode;
 }
 
 export type BulkAction<TData extends DataWithId> = {
@@ -112,6 +115,9 @@ export function DataTable<
   onSelectedRowsChange,
   hidePagination,
   bulkActions = [],
+  emptyStateTextTitle,
+  emptyStateTextDescription,
+  emptyStateIcon,
 }: DataTableProps<TData, TValue, Keys, F>) {
   const columns =
     actions.length > 0
@@ -342,9 +348,19 @@ export function DataTable<
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center"
+                  className="h-[350px] text-center"
                 >
-                  No results.
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    {emptyStateIcon ? emptyStateIcon : <></>}
+                    <p className="text-lg font-semibold">
+                      {emptyStateTextTitle}
+                    </p>
+                    {emptyStateTextDescription && (
+                      <p className="text-sm text-muted-foreground ">
+                        {emptyStateTextDescription}
+                      </p>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             )}

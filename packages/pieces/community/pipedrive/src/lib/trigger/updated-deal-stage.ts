@@ -75,6 +75,7 @@ export const updatedDealStageTrigger = createTrigger({
 				subscription_url: context.webhookUrl,
 				event_object: 'deal',
 				event_action: 'updated',
+				version:'1.0'
 			},
 		});
 

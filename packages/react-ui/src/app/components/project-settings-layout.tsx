@@ -55,20 +55,20 @@ export default function ProjectSettingsLayout({
       href: authenticationSession.appendProjectRoutePrefix('/settings/pieces'),
       icon: <Puzzle size={iconSize} />,
     },
-    {
-      title: t('Alerts'),
-      href: authenticationSession.appendProjectRoutePrefix('/settings/alerts'),
-      icon: <Bell size={iconSize} />,
-      hasPermission: checkAccess(Permission.READ_ALERT),
-    },
-    {
-      title: t('Environments'),
-      href: authenticationSession.appendProjectRoutePrefix(
-        '/settings/environments',
-      ),
-      icon: <GitBranch size={iconSize} />,
-      hasPermission: checkAccess(Permission.READ_PROJECT_RELEASE),
-    },
+    // {
+    //   title: t('Alerts'),
+    //   href: authenticationSession.appendProjectRoutePrefix('/settings/alerts'),
+    //   icon: <Bell size={iconSize} />,
+    //   hasPermission: checkAccess(Permission.READ_ALERT),
+    // },
+    // {
+    //   title: t('Environments'),
+    //   href: authenticationSession.appendProjectRoutePrefix(
+    //     '/settings/environments',
+    //   ),
+    //   icon: <GitBranch size={iconSize} />,
+    //   hasPermission: checkAccess(Permission.READ_PROJECT_RELEASE),
+    // },
   ];
 
   const filterAlerts = (item: SidebarItem) =>

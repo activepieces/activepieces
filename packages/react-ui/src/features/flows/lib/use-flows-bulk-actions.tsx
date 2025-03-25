@@ -20,13 +20,18 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { LoadingSpinner } from '@/components/ui/spinner';
+// import { PublishedNeededTooltip } from '@/features/git-sync/components/published-tooltip';
 // import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 // import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 // import { platformHooks } from '@/hooks/platform-hooks';
 // import { authenticationSession } from '@/lib/authentication-session';
 // import { GitBranchType } from '@activepieces/ee-shared';
-import { Permission, PopulatedFlow } from '@activepieces/shared';
+import {
+  FlowVersionState,
+  Permission,
+  PopulatedFlow,
+} from '@activepieces/shared';
 
 import { MoveFlowDialog } from '../components/move-flow-dialog';
 
@@ -59,6 +64,11 @@ export const useFlowsBulkActions = ({
   );
   const userHasPermissionToWroteProjectRelease = useAuthorization().checkAccess(
     Permission.WRITE_PROJECT_RELEASE
+  );
+  const allowPush = selectedRows.every(
+    (flow) =>
+      flow.publishedVersionId !== null &&
+      flow.version.state === FlowVersionState.LOCKED,
   );
   const { embedState } = useEmbedding();
   // const { platform } = platformHooks.useCurrentPlatform();
@@ -102,21 +112,24 @@ export const useFlowsBulkActions = ({
                   {/* <PermissionNeededTooltip
                     hasPermission={userHasPermissionToWroteProjectRelease}
                   >
-                    <PushToGitDialog
-                      flowIds={selectedRows.map((flow) => flow.id)}
-                    >
-                      <DropdownMenuItem
-                        disabled={!userHasPermissionToWroteProjectRelease}
-                        onSelect={(e) => {
-                          e.preventDefault();
-                        }}
-                      >
-                        <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                          <UploadCloud className="h-4 w-4" />
-                          <span>{t('Push to Git')}</span>
-                        </div>
-                      </DropdownMenuItem>
-                    </PushToGitDialog>
+                    <PublishedNeededTooltip allowPush={allowPush}>
+                      <PushToGitDialog flows={selectedRows}>
+                        <DropdownMenuItem
+                          disabled={
+                            !userHasPermissionToWroteProjectRelease ||
+                            !allowPush
+                          }
+                          onSelect={(e) => {
+                            e.preventDefault();
+                          }}
+                        >
+                          <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                            <UploadCloud className="h-4 w-4" />
+                            <span>{t('Push to Git')}</span>
+                          </div>
+                        </DropdownMenuItem>
+                      </PushToGitDialog>
+                    </PublishedNeededTooltip>
                   </PermissionNeededTooltip> */}
                   {!embedState.hideFolders && (
                     <PermissionNeededTooltip
@@ -178,7 +191,7 @@ export const useFlowsBulkActions = ({
                         <>
                           <div>
                             {t(
-                              'Are you sure you want to delete these flows? This will permanently delete the flows, all their data and any background runs.'
+                              'Are you sure you want to delete these flows? This will permanently delete the flows, all their data and any background runs.',
                             )}
                           </div>
                           {/* {isDevelopmentBranch && (

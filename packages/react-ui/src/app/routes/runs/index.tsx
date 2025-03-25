@@ -1,7 +1,14 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, PlayIcon, Redo, RotateCw, ChevronDown } from 'lucide-react';
+import {
+  CheckIcon,
+  PlayIcon,
+  Redo,
+  RotateCw,
+  ChevronDown,
+  History,
+} from 'lucide-react';
 import { useMemo, useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -458,8 +465,19 @@ const FlowRunsPage = () => {
     <div className="flex flex-col gap-4 grow">
       <TaskLimitAlert />
       <div className="flex-col w-full">
-        <TableTitle>{t('Flow Runs')}</TableTitle>
+        <TableTitle
+          description={t(
+            'Track the automation run history and status and troubleshoot issues.',
+          )}
+        >
+          {t('Flow Runs')}
+        </TableTitle>
         <DataTable
+          emptyStateTextTitle={t('No flow runs found')}
+          emptyStateTextDescription={t(
+            'Come back later when your automations start running',
+          )}
+          emptyStateIcon={<History className="size-14" />}
           columns={columns}
           page={data}
           isLoading={isLoading || isFetchingFlows}

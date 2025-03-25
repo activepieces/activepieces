@@ -6,10 +6,12 @@ import {
   ExternalLink,
   FileTextIcon,
   LockKeyhole,
+  Settings,
 } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
+import { BetaBadge } from '@/components/custom/beta-badge';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -41,6 +43,7 @@ import {
 import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn, determineDefaultRoute } from '@/lib/utils';
 import { ApFlagId, ApEdition, supportUrl } from '@activepieces/shared';
 
@@ -50,7 +53,7 @@ import { platformHooks } from '../../hooks/platform-hooks';
 import { Header } from './header';
 import { FloatingChatButton } from '@/components/custom/FloatingChatButton';
 
-// import UsageLimitsButton from './usage-limits-button';
+import UsageLimitsButton from './usage-limits-button';
 
 type Link = {
   icon: React.ReactNode;
@@ -92,13 +95,11 @@ const CustomTooltipLink = ({
       rel={newWindow ? 'noopener noreferrer' : ''}
     >
       <div
-        className={`relative flex  items-center gap-1 justify-between hover:bg-accent hover:text-primary rounded-lg transition-colors ${
-          extraClasses || ''
-        }${
-          isLinkActive
-            ? '!bg-primary/10 !text-primary hover:text-[#3F3F46]'
-            : ''
-        } ${isSubItem ? 'text-[#3F3F46] ' : ''}`}
+        className={cn(
+          'relative flex items-center gap-1 justify-between hover:bg-accent hover:text-primary rounded-lg transition-colors',
+          extraClasses,
+          isLinkActive && '!bg-primary/10 !text-primary',
+        )}
       >
         <div
           className={`w-full flex items-center justify-between gap-2 p-2 ${
@@ -106,8 +107,13 @@ const CustomTooltipLink = ({
           }`}
         >
           <div className="flex items-center gap-2">
-            {Icon && <Icon className={`size-4`} />}
+            {Icon && <Icon className={`size-5`} />}
             <span className={`text-sm`}>{label}</span>
+            {(label === 'Tables' || label === 'Todos') && (
+              <span className="ml-2">
+                <BetaBadge showTooltip={false} />
+              </span>
+            )}
           </div>
           {locked && <LockKeyhole className="size-3" color="grey" />}
         </div>
@@ -167,6 +173,14 @@ export function SidebarComponent({
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { embedState } = useEmbedding();
   const { platform } = platformHooks.useCurrentPlatform();
+  // const { data: showCommunity } = flagsHooks.useFlag<boolean>(
+  //   ApFlagId.SHOW_COMMUNITY,
+  // );
+  // const { data: showBilling } = flagsHooks.useFlag<boolean>(
+  //   ApFlagId.SHOW_BILLING,
+  // );
+  const showCommunity = false;
+  const showBilling = false;
   const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
   const location = useLocation();
   return (
@@ -296,8 +310,24 @@ export function SidebarComponent({
                 </ScrollArea>
               </SidebarContent>
               <SidebarFooter className="pb-4 gap-4">
-                {/* <SidebarMenu>
-                  {true && (
+                <SidebarMenu>
+                  <SidebarMenuItem className="hover:bg-accent hover:text-primary rounded-lg transition-colors">
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname.includes('/settings/')}
+                    >
+                      <Link
+                        to={authenticationSession.appendProjectRoutePrefix(
+                          '/settings/general',
+                        )}
+                        className="flex items-center gap-2"
+                      >
+                        <Settings className="!size-5" />
+                        <span>{t('Project Settings')}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  {showCommunity && (
                     <>
                       <SidebarMenuItem className="hover:bg-accent hover:text-primary rounded-lg transition-colors">
                         <SidebarMenuButton asChild>
@@ -334,10 +364,12 @@ export function SidebarComponent({
                     </>
                   )}
                 </SidebarMenu>
-                <Separator />
-                <SidebarMenu>
-                  <UsageLimitsButton />
-                </SidebarMenu> */}
+                {showBilling && <Separator />}
+                {showBilling && (
+                  <SidebarMenu>
+                    <UsageLimitsButton />
+                  </SidebarMenu>
+                )}
               </SidebarFooter>
             </SidebarContent>
           </Sidebar>
@@ -356,8 +388,8 @@ export function SidebarComponent({
               <div
                 className={cn('flex', {
                   'py-4': embedState.isEmbedded,
-                  ' px-2': !removeGutters,
-                  'pt-10': !hideHeader,
+                  'px-2': !removeGutters,
+                  'pt-8': !hideHeader,
                 })}
               >
                 {children}

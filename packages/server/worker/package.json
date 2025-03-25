@@ -7,9 +7,9 @@
   "dependencies": {
     "@activepieces/pieces-framework": "0.7.46",
     "@activepieces/server-shared": "0.0.1",
-    "@activepieces/shared": "0.10.158",
+    "@activepieces/shared": "0.10.162",
     "async-mutex": "0.4.0",
-    "axios": "1.8.2",
+    "axios": "1.8.3",
     "axios-retry": "4.4.1",
     "chalk": "4.1.2",
     "chokidar": "3.6.0",

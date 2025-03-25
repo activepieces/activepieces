@@ -1614,6 +1614,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "reemayoush",
+      "name": "reemayoush",
+      "avatar_url": "https://avatars.githubusercontent.com/u/168414383?v=4",
+      "profile": "https://github.com/reemayoush",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "briceflaceliere",
+      "name": "Brice",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5811531?v=4",
+      "profile": "https://github.com/briceflaceliere",
+      "contributions": [
+        "security"
+      ]
     }
   ],
   "commitType": "docs"

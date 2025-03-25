@@ -29,6 +29,7 @@ import {
 } from '@/features/flows/components/import-flow-dialog';
 import { RenameFlowDialog } from '@/features/flows/components/rename-flow-dialog';
 import { flowsHooks } from '@/features/flows/lib/flows-hooks';
+// import { PublishedNeededTooltip } from '@/features/git-sync/components/published-tooltip';
 // import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 // import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -38,6 +39,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import {
   FlowOperationType,
   FlowVersion,
+  FlowVersionState,
   Permission,
   PopulatedFlow,
 } from '@activepieces/shared';
@@ -90,6 +92,10 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   //   gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
   const isDevelopmentBranch = false;
   const [open, setOpen] = useState(false);
+  const allowPush =
+    flow.publishedVersionId !== null &&
+    flow.version.state === FlowVersionState.LOCKED;
+
   const { mutate: duplicateFlow, isPending: isDuplicatePending } = useMutation({
     mutationFn: async () => {
       const modifiedFlowVersion = {
@@ -120,7 +126,6 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
 
   const { mutate: exportFlow, isPending: isExportPending } =
     flowsHooks.useExportFlows();
-
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger
@@ -176,17 +181,19 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           </>
         )}
         {/* <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
-          <PushToGitDialog flowIds={[flow.id]}>
-            <DropdownMenuItem
-              disabled={!userHasPermissionToPushToGit}
-              onSelect={(e) => e.preventDefault()}
-            >
-              <div className="flex cursor-pointer  flex-row gap-2 items-center">
-                <UploadCloud className="h-4 w-4" />
-                <span>{t('Push to Git')}</span>
-              </div>
-            </DropdownMenuItem>
-          </PushToGitDialog>
+          <PublishedNeededTooltip allowPush={allowPush}>
+            <PushToGitDialog flows={[flow]}>
+              <DropdownMenuItem
+                disabled={!userHasPermissionToPushToGit || !allowPush}
+                onSelect={(e) => e.preventDefault()}
+              >
+                <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                  <UploadCloud className="h-4 w-4" />
+                  <span>{t('Push to Git')}</span>
+                </div>
+              </DropdownMenuItem>
+            </PushToGitDialog>
+          </PublishedNeededTooltip>
         </PermissionNeededTooltip> */}
 
         {!embedState.hideFolders && (
