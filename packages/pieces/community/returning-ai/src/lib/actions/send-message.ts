@@ -1,6 +1,6 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { getApiEndpoint } from '../../utilities';
+import { getApiEndpoint } from '../common';
 
 export const sendMessage = createAction({
   name: 'sendMessage',
@@ -68,7 +68,7 @@ export const sendMessage = createAction({
     const authToken = auth as string;
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${getApiEndpoint(authToken)}/apis/v1/messages/send`,
+      url: `${getApiEndpoint(authToken)}/apis/v1/messages`,
       headers: {
         Authorization: `Bearer ${authToken.split(':')[1]}`,
       },
