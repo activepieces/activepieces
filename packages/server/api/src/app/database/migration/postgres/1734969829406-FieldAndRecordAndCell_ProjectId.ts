@@ -5,7 +5,7 @@ export class FieldAndRecordAndCellProjectId1734969829406 implements MigrationInt
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_field_table_id_name"
+            DROP INDEX "idx_field_table_id_name"
         `)
         await queryRunner.query(`
             ALTER TABLE "field"
@@ -47,7 +47,7 @@ export class FieldAndRecordAndCellProjectId1734969829406 implements MigrationInt
             ALTER TABLE "field" DROP CONSTRAINT "fk_field_project_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_field_project_id_table_id_name"
+            DROP INDEX "idx_field_project_id_table_id_name"
         `)
         await queryRunner.query(`
             ALTER TABLE "cell" DROP COLUMN "projectId"

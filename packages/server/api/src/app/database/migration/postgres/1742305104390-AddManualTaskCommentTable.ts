@@ -39,10 +39,10 @@ export class AddManualTaskCommentTable1742305104390 implements MigrationInterfac
             ALTER TABLE "manual_task_comment" DROP CONSTRAINT "fk_manual_task_comment_task_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_manual_task_comment_user_id"
+            DROP INDEX "idx_manual_task_comment_user_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_manual_task_comment_task_id"
+            DROP INDEX "idx_manual_task_comment_task_id"
         `)
         await queryRunner.query(`
             DROP TABLE "manual_task_comment"

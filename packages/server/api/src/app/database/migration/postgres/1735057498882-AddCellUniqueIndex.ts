@@ -11,7 +11,7 @@ export class AddCellUniqueIndex1735057498882 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_cell_project_id_field_id_record_id_unique"
+            DROP INDEX "idx_cell_project_id_field_id_record_id_unique"
         `)
     }
 

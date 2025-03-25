@@ -5,7 +5,7 @@ export class CreateTableWebhooks1741669458075 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            DROP INDEX "public"."idx_table_project_id_name"
+            DROP INDEX "idx_table_project_id_name"
         `)
         await queryRunner.query(`
             CREATE TABLE "table_webhook" (
@@ -50,10 +50,10 @@ export class CreateTableWebhooks1741669458075 implements MigrationInterface {
             ALTER TABLE "table_webhook" DROP CONSTRAINT "fk_table_webhook_project_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_record_project_id_table_id"
+            DROP INDEX "idx_record_project_id_table_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_table_project_id_name"
+            DROP INDEX "idx_table_project_id_name"
         `)
         await queryRunner.query(`
             DROP TABLE "table_webhook"
