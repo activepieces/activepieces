@@ -1,34 +1,7 @@
 import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { slackAuth } from '../../';
 
-const sampleData = {
-	user: 'U06C9507WGH',
-	type: 'message',
-	ts: '1741787044.231539',
-	client_msg_id: '6f6e5257-6c39-40d8-bf22-f2bc2b7d8de9',
-	text: 'Test Message',
-	team: 'T06BTHUEFFF',
-	blocks: [
-		{
-			type: 'rich_text',
-			block_id: 'oUF4b',
-			elements: [
-				{
-					type: 'rich_text_section',
-					elements: [
-						{
-							type: 'text',
-							text: 'Test Message',
-						},
-					],
-				},
-			],
-		},
-	],
-	channel: 'D06BFVAL8CF',
-	event_ts: '1741787044.231539',
-	channel_type: 'im',
-};
+
 
 export const newDirectMessageTrigger = createTrigger({
 	auth: slackAuth,
@@ -48,7 +21,7 @@ export const newDirectMessageTrigger = createTrigger({
 		}),
 	},
 	type: TriggerStrategy.APP_WEBHOOK,
-	sampleData: sampleData,
+	sampleData: undefined,
 	onEnable: async (context) => {
 		// Older OAuth2 has team_id, newer has team.id
 		const teamId = context.auth.data['team_id'] ?? context.auth.data['team']['id'];
@@ -59,10 +32,6 @@ export const newDirectMessageTrigger = createTrigger({
 	},
 	onDisable: async (context) => {
 		// Ignored
-	},
-
-	async test(context) {
-		return [sampleData];
 	},
 
 	async run(context) {

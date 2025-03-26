@@ -1,6 +1,7 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { newLead } from './lib/triggers/new-lead';
+import crypto from 'node:crypto';
 
 export const facebookLeadsAuth = PieceAuth.OAuth2({
   description: '',
@@ -42,9 +43,18 @@ export const facebookLeads = createPiece({
         identifierValue: payloadBody.entry[0].changes[0].value.page_id,
       };
     },
-    verify: () => {
-      // TODO IMPLEMENT VALIDATION AFTER APP VERIFICATION
-      return true;
+    verify: ({ webhookSecret, payload }) => {
+      // https://developers.facebook.com/docs/messenger-platform/webhooks#validate-payloads
+
+      const signature = payload.headers['x-hub-signature-256'];
+      const elements = signature.split("=")
+      const signatureHash = elements[1];
+
+      const hmac = crypto.createHmac('sha256',webhookSecret as string);
+      hmac.update(payload.rawBody as any)
+      const computedSignature = hmac.digest('hex');
+      
+      return signatureHash === computedSignature;
     },
   },
 });
