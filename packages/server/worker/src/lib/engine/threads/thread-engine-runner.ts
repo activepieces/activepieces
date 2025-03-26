@@ -209,6 +209,11 @@ async function execute<Result extends EngineHelperResult>(log: FastifyBaseLogger
                 maxYoungGenerationSizeMb: memoryLimit,
                 stackSizeMb: memoryLimit,
             },
+            execArgv: [
+                `--max-old-space-size=${memoryLimit}`,
+                `--max-semi-space-size=${memoryLimit}`,
+                `--stack-size=${memoryLimit * 1024}`, // stack size is in KB
+            ],
         })
     }
     const { engine, stdError, stdOut } = await engineWorkers.executeTask(operationType, operation)

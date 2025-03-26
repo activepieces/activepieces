@@ -62,6 +62,7 @@
     "@mailerlite/mailerlite-nodejs": "1.1.0",
     "@microsoft/microsoft-graph-client": "3.0.7",
     "@microsoft/microsoft-graph-types": "2.40.0",
+    "@modelcontextprotocol/sdk": "1.7.0",
     "@notionhq/client": "2.2.11",
     "@nx/devkit": "20.0.1",
     "@octokit/rest": "21.1.1",
