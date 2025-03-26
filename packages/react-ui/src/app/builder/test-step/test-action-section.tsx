@@ -15,7 +15,7 @@ import {
   FlowOperationType,
   Step,
   StepRunResponse,
-  TODO_TYPE,
+  TodoType,
   TodoWithAssignee,
   TriggerType,
   flowStructureUtil,
@@ -249,8 +249,8 @@ const TestStepSectionImplementation = React.memo(
             setLastTestDate={setLastTestDate}
             type={
               currentStep.settings.actionName === 'createTodoAndWait'
-                ? TODO_TYPE.INTERNAL
-                : TODO_TYPE.EXTERNAL
+                ? TodoType.INTERNAL
+                : TodoType.EXTERNAL
             }
           />
         )}

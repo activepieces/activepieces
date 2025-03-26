@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, PlatformId, ProjectId, SeekPage, spreadIfDefined, StatusOption, Todo, TodoWithAssignee, UNRESOLVED_STATUS, UserId } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, FlowId, isNil, PlatformId, ProjectId, SeekPage, spreadIfDefined, StatusOption, Todo, TodoWithAssignee, UNRESOLVED_STATUS, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull, Like, Not } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
@@ -24,7 +24,7 @@ export const todoService = (_log: FastifyBaseLogger) => ({
     },
     async getOneOrThrow(params: GetParams): Promise<Todo> {
         const todo = await this.getOne(params)
-        if (!todo) {
+        if (isNil(todo)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: { entityType: 'todo', entityId: params.id, message: 'Todo by id not found' },
@@ -40,7 +40,7 @@ export const todoService = (_log: FastifyBaseLogger) => ({
                 params: { entityType: 'todo', entityId: params.id, message: 'Todo by id not found' },
             })
         }
-        const enrichedTask = await enrichTodoWithAssignee(todo, _log)
+        const enrichedTask = await enrichTodoWithAssignee(todo)
         return enrichedTask
     },
     async update(params: UpdateParams): Promise<Todo | null> {
@@ -62,25 +62,14 @@ export const todoService = (_log: FastifyBaseLogger) => ({
         })
         return this.getOneOrThrow(params)
     },
-    async approve(params: ApproveParams) {
-        const todo = await repo().findOneBy({ id: params.id })
-        if (!todo) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityType: 'todo', entityId: params.id, message: 'Todo by id not found' },
-            })
-        }
-        if (!todo.approvalUrl) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityType: 'todo', entityId: params.id, message: 'Todo does not have an approval url' },
-            })
-        }
+    async resolve(params: ApproveParams) {
+        const todo = await this.getOneOrThrow({ id: params.id })
+        assertNotNullOrUndefined(todo.approvalUrl, 'Todo does not have an approval url')
         const status = todo.statusOptions.find((option) => option.name === params.status)
-        if (!status) {
+        if (isNil(status)) {
             throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityType: 'todo', entityId: params.id, message: 'Status not found' },
+                code: ErrorCode.VALIDATION,
+                params: { message: 'Status not found' },
             })
         }
         await sendApprovalRequest(todo.approvalUrl, status)
@@ -142,7 +131,7 @@ export const todoService = (_log: FastifyBaseLogger) => ({
         })
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
-        const enrichedData = await Promise.all(data.map((task) => enrichTodoWithAssignee(task, _log)))
+        const enrichedData = await Promise.all(data.map((task) => enrichTodoWithAssignee(task)))
         return paginationHelper.createPage<TodoWithAssignee>(enrichedData, newCursor)
     },
 })
@@ -157,32 +146,19 @@ async function sendApprovalRequest(approvalUrl: string, status: StatusOption) {
 
 async function enrichTodoWithAssignee(
     todo: Todo,
-    log: FastifyBaseLogger,
 ): Promise<TodoWithAssignee> {
-    if (!todo.assigneeId) {
+    if (isNil(todo.assigneeId)) {
         return {
             ...todo,
             assignee: null,
         }
     }
-    const user = await userService.getOneOrFail({
+    const assignee = await userService.getMetaInformation({
         id: todo.assigneeId,
     })
-    const identity = await userIdentityService(log).getBasicInformation(user.identityId)
     return {
         ...todo,
-        assignee: {
-            platformId: user.platformId,
-            platformRole: user.platformRole,
-            status: user.status,
-            externalId: user.externalId,
-            email: identity.email,
-            id: user.id,
-            firstName: identity.firstName,
-            lastName: identity.lastName,
-            created: user.created,
-            updated: user.updated,
-        },
+        assignee,
     }
 }
 

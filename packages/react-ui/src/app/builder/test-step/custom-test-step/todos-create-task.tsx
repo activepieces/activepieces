@@ -45,7 +45,7 @@ import {
   FlowOperationType,
   TriggerType,
   TodoWithAssignee,
-  TODO_TYPE,
+  TodoType,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
@@ -58,7 +58,7 @@ type ManualTaskTestingDialogProps = {
   flowVersionId: string;
   projectId: string;
   currentStep: Step;
-  type: TODO_TYPE;
+  type: TodoType;
   setErrorMessage: (errorMessage: string | undefined) => void;
   setLastTestDate: (lastTestDate: string) => void;
 };
@@ -186,15 +186,15 @@ function ManualTaskTestingDialog({
         status: option.name,
         url:
           publicUrl +
-          `/todos/${response.id}/approve?status=${option.name}&isTest=true`,
+          `/todos/${response.id}/resolve?status=${option.name}&isTest=true`,
       }));
       switch (type) {
-        case TODO_TYPE.INTERNAL:
+        case TodoType.INTERNAL:
           setSampleData(currentStep.name, {
             status: statusName,
           });
           break;
-        case TODO_TYPE.EXTERNAL:
+        case TodoType.EXTERNAL:
           setSampleData(currentStep.name, {
             id: response.id,
             links,

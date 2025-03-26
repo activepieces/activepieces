@@ -9,7 +9,7 @@ export const todos = createPiece({
   description:
     'Create tasks for project members to take actions, useful for approvals, reviews, and manual actions performed by humans',
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.48.1',
+  minimumSupportedRelease: '0.49.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/manual-tasks.svg',
   authors: ['hazemadelkhalel'],
   categories: [PieceCategory.CORE, PieceCategory.FLOW_CONTROL],

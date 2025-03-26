@@ -23,7 +23,7 @@ import {
   PieceSelectorItem,
   StepMetadata,
 } from '@/features/pieces/lib/types';
-import { TODO_TYPE } from '@activepieces/shared';
+import { TodoType } from '@activepieces/shared';
 
 type CreateTodoGuideProps = {
   open: boolean;
@@ -40,10 +40,10 @@ const CreateTodoGuide = ({
   actionOrTriggers,
   selectedPieceMetadata,
 }: CreateTodoGuideProps) => {
-  const [integrationType, setIntegrationType] = useState<TODO_TYPE>(
-    TODO_TYPE.INTERNAL,
+  const [integrationType, setIntegrationType] = useState<TodoType>(
+    TodoType.INTERNAL,
   );
-  const [hoveredOption, setHoveredOption] = useState<TODO_TYPE | null>(null);
+  const [hoveredOption, setHoveredOption] = useState<TodoType | null>(null);
   const displayImageType = hoveredOption || integrationType;
 
   return (
@@ -69,12 +69,12 @@ const CreateTodoGuide = ({
                 {/* Activepieces Todos option */}
                 <div
                   className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                    integrationType === TODO_TYPE.INTERNAL
+                    integrationType === TodoType.INTERNAL
                       ? 'border-primary bg-primary/5'
                       : 'border-border hover:border-primary/50 hover:bg-muted/50'
                   }`}
-                  onClick={() => setIntegrationType(TODO_TYPE.INTERNAL)}
-                  onMouseEnter={() => setHoveredOption(TODO_TYPE.INTERNAL)}
+                  onClick={() => setIntegrationType(TodoType.INTERNAL)}
+                  onMouseEnter={() => setHoveredOption(TodoType.INTERNAL)}
                   onMouseLeave={() => setHoveredOption(null)}
                 >
                   <div className="flex justify-between items-center mb-2">
@@ -109,12 +109,12 @@ const CreateTodoGuide = ({
                     <div className="flex-shrink-0 w-5 h-5">
                       <div
                         className={`w-5 h-5 rounded-full grid place-items-center border ${
-                          integrationType === TODO_TYPE.INTERNAL
+                          integrationType === TodoType.INTERNAL
                             ? 'border-primary'
                             : 'border-muted-foreground'
                         }`}
                       >
-                        {integrationType === TODO_TYPE.INTERNAL && (
+                        {integrationType === TodoType.INTERNAL && (
                           <div className="w-3 h-3 rounded-full bg-primary"></div>
                         )}
                       </div>
@@ -130,12 +130,12 @@ const CreateTodoGuide = ({
                 {/* External Channel option */}
                 <div
                   className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                    integrationType === TODO_TYPE.EXTERNAL
+                    integrationType === TodoType.EXTERNAL
                       ? 'border-primary bg-primary/5'
                       : 'border-border hover:border-primary/50 hover:bg-muted/50'
                   }`}
-                  onClick={() => setIntegrationType(TODO_TYPE.EXTERNAL)}
-                  onMouseEnter={() => setHoveredOption(TODO_TYPE.EXTERNAL)}
+                  onClick={() => setIntegrationType(TodoType.EXTERNAL)}
+                  onMouseEnter={() => setHoveredOption(TodoType.EXTERNAL)}
                   onMouseLeave={() => setHoveredOption(null)}
                 >
                   <div className="flex justify-between items-center mb-2">
@@ -145,12 +145,12 @@ const CreateTodoGuide = ({
                     <div className="flex-shrink-0 w-5 h-5">
                       <div
                         className={`w-5 h-5 rounded-full grid place-items-center border ${
-                          integrationType === TODO_TYPE.EXTERNAL
+                          integrationType === TodoType.EXTERNAL
                             ? 'border-primary'
                             : 'border-muted-foreground'
                         }`}
                       >
-                        {integrationType === TODO_TYPE.EXTERNAL && (
+                        {integrationType === TodoType.EXTERNAL && (
                           <div className="w-3 h-3 rounded-full bg-primary"></div>
                         )}
                       </div>
@@ -177,12 +177,12 @@ const CreateTodoGuide = ({
                   <div className="w-full h-[350px] overflow-hidden rounded mb-2 flex items-center justify-center bg-muted/50 relative">
                     <img
                       src={
-                        displayImageType === TODO_TYPE.INTERNAL
+                        displayImageType === TodoType.INTERNAL
                           ? ActivepiecesCreateTodoGuide
                           : ExternalChannelTodo
                       }
                       alt={
-                        displayImageType === TODO_TYPE.INTERNAL
+                        displayImageType === TodoType.INTERNAL
                           ? 'Activepieces Todos flow'
                           : 'External channel flow'
                       }
@@ -194,7 +194,7 @@ const CreateTodoGuide = ({
 
                   {/* Image description with reduced bottom margin */}
                   <p className="text-sm text-muted-foreground italic text-center mb-2">
-                    {displayImageType === TODO_TYPE.INTERNAL
+                    {displayImageType === TodoType.INTERNAL
                       ? t(
                           'The Activepieces Todo allows users to review and approve tasks directly in the Activepieces interface',
                         )
@@ -219,7 +219,7 @@ const CreateTodoGuide = ({
           <Button
             onClick={() => {
               switch (integrationType) {
-                case TODO_TYPE.INTERNAL: {
+                case TodoType.INTERNAL: {
                   const selectedItem = actionOrTriggers.find(
                     (item) => item.name === 'createTodoAndWait',
                   );
@@ -232,7 +232,7 @@ const CreateTodoGuide = ({
                   }
                   break;
                 }
-                case TODO_TYPE.EXTERNAL: {
+                case TodoType.EXTERNAL: {
                   const selectedItem = actionOrTriggers.find(
                     (item) => item.name === 'createTodo',
                   );

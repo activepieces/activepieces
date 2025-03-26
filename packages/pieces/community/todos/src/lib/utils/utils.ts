@@ -14,7 +14,7 @@ export async function sendTodoApproval(context: any, isTest: boolean) {
       runId: isTest ? undefined : context.run.id,
       assigneeId: context.propsValue.assigneeId ?? undefined,
       approvalUrl: context.generateResumeUrl({
-        queryParams: { action: 'approve' },
+        queryParams: {  },
       }),
     };
   

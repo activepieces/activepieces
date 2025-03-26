@@ -36,7 +36,7 @@ import {
   isNil,
   RouterExecutionType,
   StepLocationRelativeToParent,
-  TODO_TYPE,
+  TodoType,
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
@@ -285,7 +285,7 @@ const PieceSelector = ({
     selectStepByName(stepData.name);
 
     switch (type) {
-      case TODO_TYPE.INTERNAL: {
+      case TodoType.INTERNAL: {
         const routerInternalSettings = {
           branches: [
             {
@@ -326,7 +326,7 @@ const PieceSelector = ({
         );
         break;
       }
-      case TODO_TYPE.EXTERNAL: {
+      case TodoType.EXTERNAL: {
         const waitForApprovalAction = (
           stepMetadata as PieceStepMetadataWithSuggestions
         )?.suggestedActions?.find(

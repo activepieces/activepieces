@@ -62,10 +62,10 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
     
-    app.all('/:id/approve', RequestApproveTodoRequest, async (request) => {
+    app.all('/:id/resolve', RequestApproveTodoRequest, async (request) => {
         const { id } = request.params
         const { status, isTest } = request.query
-        return todoService(request.log).approve({
+        return todoService(request.log).resolve({
             id,
             status,
             isTest,

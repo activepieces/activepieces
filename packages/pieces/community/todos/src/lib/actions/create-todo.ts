@@ -83,7 +83,7 @@ export const createTodo = createAction({
       const response = await sendTodoApproval(context, true);
       const links = context.propsValue.statusOptions.map((option: any) => ({
         name: option.name,
-        url: `${context.server.publicUrl}v1/todos/${response.body.id}/approve?status=${option.name}&isTest=true`,
+        url: `${context.server.publicUrl}v1/todos/${response.body.id}/resolve?status=${option.name}&isTest=true`,
       }));
       return {
         id: response.body.id,
@@ -97,7 +97,7 @@ export const createTodo = createAction({
     const response = await sendTodoApproval(context, false);
     const links = context.propsValue.statusOptions.map((option: any) => ({
       name: option.name,
-      url: `${context.server.publicUrl}v1/todos/${response.body.id}/approve?status=${option.name}`,
+      url: `${context.server.publicUrl}v1/todos/${response.body.id}/resolve?status=${option.name}`,
     }));
     return {
       id: response.body.id,
