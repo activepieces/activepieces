@@ -39,7 +39,7 @@ export function ApTableStateProvider({ children }: ApTableStateProviderProps) {
     gcTime: 0,
   });
 
-  const { data: records } = useSuspenseQuery({
+  const { data: records,refetch } = useSuspenseQuery({
     queryKey: ['records', tableId],
     queryFn: () =>
       recordsApi.list({
@@ -53,7 +53,7 @@ export function ApTableStateProvider({ children }: ApTableStateProviderProps) {
   });
 
   const tableStoreRef = useRef<ApTableStore>(
-    createApTableStore(table, fields, records.data),
+    createApTableStore(table, fields, records.data, refetch),
   );
   return (
     <TableContext.Provider value={tableStoreRef.current}>

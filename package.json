@@ -148,6 +148,7 @@
     "cross-spawn": "7.0.6",
     "crypto-js": "4.2.0",
     "csv-parse": "5.6.0",
+    "csv-reader": "1.0.12",
     "csv-stringify": "6.5.2",
     "date-fns": "3.6.0",
     "dayjs": "1.11.9",

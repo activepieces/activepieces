@@ -1,4 +1,4 @@
-import { ApId, CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, ListTablesRequest, Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, Table, UpdateTableRequest } from '@activepieces/shared'
+import { ApId, CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, ImportCsvRequestBody, ListTablesRequest, Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, Table, UpdateTableRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { tableService } from './table.service'
@@ -13,8 +13,15 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
             request: request.body,
         })
     },
-    )
+    ),
 
+    fastify.post('/:id/import', ImportCsvRequest, async (request) => {
+        return tableService.importCsv({
+            id: request.params.id,
+            projectId: request.principal.projectId,
+            request: request.body,
+        })
+    })
     fastify.post('/:id', UpdateRequest, async (request) => {
         return tableService.update({
             projectId: request.principal.projectId,
@@ -204,5 +211,21 @@ const UpdateRequest = {
             id: Type.String(),
         }),
         body: UpdateTableRequest,
+    },
+}
+
+const ImportCsvRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        permission: Permission.WRITE_TABLE,
+    },
+    schema: {
+        tags: ['tables'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Import a csv file to create new records',
+        params: Type.Object({
+            id: Type.String(),
+        }),
+        body: ImportCsvRequestBody,
     },
 }

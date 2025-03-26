@@ -6,6 +6,7 @@ import {
     CreateTableWebhookRequest,
     ErrorCode,
     ExportTableResponse,
+    ImportCsvRequestBody,
     isNil,
     SeekPage,
     Table,
@@ -23,12 +24,15 @@ import { fieldService } from '../field/field.service'
 import { RecordEntity } from '../record/record.entity'
 import { TableWebhookEntity } from './table-webhook.entity'
 import { TableEntity } from './table.entity'
-
+import { Readable } from 'stream'
+import CsvReadableStream from 'csv-reader'
 const tableRepo = repoFactory(TableEntity)
 const recordRepo = repoFactory(RecordEntity)
 const tableWebhookRepo = repoFactory(TableWebhookEntity)
 
 export const tableService = {
+
+
     async create({
         projectId,
         request,
@@ -189,6 +193,31 @@ export const tableService = {
             })
         }
     },
+    async importCsv({
+        projectId,
+        id,
+        request,
+    }: ImportCsvParams): Promise<void> {
+        const table = await this.getById({ projectId, id });
+        const fields = await fieldService.getAll({ projectId, tableId: id });
+        const inputStream = Readable.from(request.file.data as Buffer);
+        debugger;
+        const records = await new Promise((resolve,reject)=>{
+            const records: any[] = [];
+            inputStream
+            .pipe(new CsvReadableStream({ trim: true }))
+            .on('data', function (record) {
+                records.push(record);
+                console.log('A row arrived: ', record);
+            })
+            .on('end', function () {
+                console.log('No more rows!');
+                resolve(records);
+            });
+        })
+        console.log('Records: ', records);
+       
+    },
 }
 
 type CreateParams = {
@@ -244,4 +273,10 @@ type UpdateParams = {
 
 type CountParams = {
     projectId: string
+}
+
+type ImportCsvParams = {
+    projectId: string
+    id: string
+    request: ImportCsvRequestBody
 }

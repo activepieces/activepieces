@@ -13,12 +13,13 @@ import { Permission } from '@activepieces/shared';
 
 import ApTableName from './ap-table-name';
 import { useTableState } from './ap-table-state-provider';
+import { ImportCsvDialog } from './import-csv-dialog';
 
 type ApTableHeaderProps = {
   isFetchingNextPage: boolean;
 };
 const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
-  const [isSaving, selectedRows, setSelectedRows, deleteRecords, records] =
+  const [isSaving, selectedRecords, setSelectedRecords, deleteRecords, records] =
     useTableState((state) => [
       state.isSaving,
       state.selectedRecords,
@@ -66,6 +67,7 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
+            <ImportCsvDialog/>
             <div onClick={(e) => e.stopPropagation()}>
               <PermissionNeededTooltip
                 hasPermission={userHasTableWritePermission}
@@ -76,26 +78,26 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
                     'Are you sure you want to delete the selected records? This action cannot be undone.',
                   )}
                   entityName={
-                    selectedRows.size === 1 ? t('record') : t('records')
+                    selectedRecords.size === 1 ? t('record') : t('records')
                   }
                   mutationFn={async () => {
-                    const indices = Array.from(selectedRows).map((row) =>
+                    const indices = Array.from(selectedRecords).map((row) =>
                       records.findIndex((r) => r.uuid === row),
                     );
                     deleteRecords(indices.map((index) => index.toString()));
-                    setSelectedRows(new Set());
+                    setSelectedRecords(new Set());
                   }}
                 >
                   <Button
                     size="sm"
                     className={cn(
-                      selectedRows.size > 0 ? 'visible' : 'invisible',
+                      selectedRecords.size > 0 ? 'visible' : 'invisible',
                     )}
                     variant="destructive"
                     disabled={!userHasTableWritePermission}
                   >
                     <Trash2 className="mr-2 w-4" />
-                    {`${t('Delete')} (${selectedRows.size})`}
+                    {`${t('Delete')} (${selectedRecords.size})`}
                   </Button>
                 </ConfirmationDeleteDialog>
               </PermissionNeededTooltip>

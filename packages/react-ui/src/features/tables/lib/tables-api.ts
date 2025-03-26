@@ -31,4 +31,15 @@ export const tablesApi = {
   update(id: string, request: UpdateTableRequest): Promise<Table> {
     return api.post<Table>(`/v1/tables/${id}`, request);
   },
+  async importCsv(id: string, request: {file: File, skipFirstRow: boolean}): Promise<void> {
+   const formData = new FormData();
+   const buffer = await (
+    request.file as File
+  ).arrayBuffer();
+   formData.append('file', new Blob([buffer]));
+   formData.append('skipFirstRow', request.skipFirstRow.toString());
+   return api.post<void>(`/v1/tables/${id}/import`, formData, undefined, {
+    'Content-Type': 'multipart/form-data',
+  });
+  }
 };

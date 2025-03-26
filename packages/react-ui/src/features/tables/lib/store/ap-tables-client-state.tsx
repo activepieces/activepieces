@@ -54,12 +54,14 @@ export type TableState = {
   deleteField: (fieldIndex: number) => void;
   renameTable: (newName: string) => void;
   renameField: (fieldIndex: number, newName: string) => void;
+  refetchRecords: () => void;
 };
 
 export const createApTableStore = (
   table: Table,
   fields: Field[],
   records: PopulatedRecord[],
+  refetchRecords: () => void
 ) => {
   return create<TableState>((set) => {
     const serverState = createServerState(
@@ -182,6 +184,7 @@ export const createApTableStore = (
           };
         });
       },
+      refetchRecords
     };
   });
 };

@@ -1,5 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { TableWebhookEventType } from '../table-webhook'
+import { ApMultipartFile } from '../../common'
 
 export const CreateTableRequest = Type.Object({
     name: Type.String(),
@@ -37,3 +38,10 @@ export const ListTablesRequest = Type.Object({
 })
 
 export type ListTablesRequest = Static<typeof ListTablesRequest>
+
+export const ImportCsvRequestBody = Type.Object({
+    file: ApMultipartFile,
+    skipFirstRow: Type.Optional(Type.Boolean({})),
+})
+
+export type ImportCsvRequestBody = Static<typeof ImportCsvRequestBody>
