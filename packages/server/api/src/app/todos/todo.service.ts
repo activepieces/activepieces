@@ -1,7 +1,6 @@
 import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, FlowId, isNil, PlatformId, ProjectId, SeekPage, spreadIfDefined, StatusOption, Todo, TodoWithAssignee, UNRESOLVED_STATUS, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull, Like, Not } from 'typeorm'
-import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -45,8 +44,8 @@ export const todoService = (_log: FastifyBaseLogger) => ({
     },
     async update(params: UpdateParams): Promise<Todo | null> {
         const todo = await this.getOneOrThrow(params)
-        if (params.status && todo.approvalUrl) {
-            await sendApprovalRequest(todo.approvalUrl, params.status)
+        if (params.status && todo.resolveUrl) {
+            await sendResolveRequest(todo.resolveUrl, params.status)
         }
         await repo().update({
             id: params.id,
@@ -58,13 +57,13 @@ export const todoService = (_log: FastifyBaseLogger) => ({
             ...spreadIfDefined('status', params.status),
             ...spreadIfDefined('statusOptions', params.statusOptions),
             ...spreadIfDefined('assigneeId', params.assigneeId),
-            ...(params.status && !params.isTest ? { approvalUrl: null } : {}),
+            ...(params.status && !params.isTest ? { resolveUrl: null } : {}),
         })
         return this.getOneOrThrow(params)
     },
-    async resolve(params: ApproveParams) {
+    async resolve(params: ResolveParams) {
         const todo = await this.getOneOrThrow({ id: params.id })
-        assertNotNullOrUndefined(todo.approvalUrl, 'Todo does not have an approval url')
+        assertNotNullOrUndefined(todo.resolveUrl, 'Todo does not have an resolve url')
         const status = todo.statusOptions.find((option) => option.name === params.status)
         if (isNil(status)) {
             throw new ActivepiecesError({
@@ -72,7 +71,7 @@ export const todoService = (_log: FastifyBaseLogger) => ({
                 params: { message: 'Status not found' },
             })
         }
-        await sendApprovalRequest(todo.approvalUrl, status)
+        await sendResolveRequest(todo.resolveUrl, status)
         await this.update({
             id: params.id,
             platformId: todo.platformId,
@@ -136,8 +135,8 @@ export const todoService = (_log: FastifyBaseLogger) => ({
     },
 })
 
-async function sendApprovalRequest(approvalUrl: string, status: StatusOption) {
-    const url = new URL(approvalUrl)
+async function sendResolveRequest(resolveUrl: string, status: StatusOption) {
+    const url = new URL(resolveUrl)
     url.searchParams.append('status', status.name)
     await fetch(url.toString(), {
         method: 'POST',
@@ -162,7 +161,7 @@ async function enrichTodoWithAssignee(
     }
 }
 
-type ApproveParams = {
+type ResolveParams = {
     id: string
     status: string
     isTest?: boolean
@@ -194,7 +193,7 @@ type CreateParams = {
     flowId: string
     runId?: string
     assigneeId?: string
-    approvalUrl?: string
+    resolveUrl?: string
 }
 
 type UpdateParams = {

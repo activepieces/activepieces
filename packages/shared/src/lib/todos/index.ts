@@ -59,7 +59,7 @@ export const Todo = Type.Object({
     flowId: Type.String(),
     runId: Type.String(),
     assigneeId: Nullable(Type.String()),
-    approvalUrl: Nullable(Type.String()),
+    resolveUrl: Nullable(Type.String()),
 })
 
 export type Todo = Static<typeof Todo>

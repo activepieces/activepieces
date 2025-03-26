@@ -89,6 +89,7 @@ import { TableWebhooksIsArraySqlite1741668828922 } from './migration/sqlite/1741
 import { AddManualTaskTable1742304913465 } from './migration/sqlite/1742304913465-AddManualTaskTable'
 import { AddDataColumnToFieldEntity1742390870702 } from './migration/sqlite/1742390870702-AddDataColumnToFieldEntity'
 import { ChangeManualTasksToTodoSqlite1742432169253 } from './migration/sqlite/1742432169253-ChangeManualTasksToTodoSqlite'
+import { RenameApprovalUrlToResolveUrl1742991301509 } from './migration/sqlite/1742991301509-RenameApprovalUrlToResolveUrl'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -195,6 +196,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddDataColumnToFieldEntity1742390870702,
         AddManualTaskTable1742304913465,
         ChangeManualTasksToTodoSqlite1742432169253,
+        RenameApprovalUrlToResolveUrl1742991301509,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
