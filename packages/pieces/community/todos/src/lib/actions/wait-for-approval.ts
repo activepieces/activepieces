@@ -5,17 +5,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { PauseType } from '@activepieces/shared';
 import { ExecutionType } from '@activepieces/shared';
-import { MarkdownVariant } from '@activepieces/shared';
 
 export const waitForApproval = createAction({
   name: 'wait_for_approval',
   displayName: 'Wait for Approval',
   description: 'Pauses the flow and wait for the approval from the user',
   props: {
-    markdown: Property.MarkDown({
-      variant: MarkdownVariant.INFO,
-      value: 'Continue the flow once the todo task is resolved',
-    }),
     taskId: Property.ShortText({
       displayName: 'Task ID',
       description: 'The ID of the task to wait for approval',

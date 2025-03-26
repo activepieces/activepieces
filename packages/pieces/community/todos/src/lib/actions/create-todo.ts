@@ -6,20 +6,12 @@ import {
 } from '@activepieces/shared';
 import { listAssignee, sendTodoApproval } from '../utils/utils';
 
-const routerMarkdown = `
-Use the **Router piece** to create different paths based on the todo's status.
-`;
-
 export const createTodo = createAction({
   name: 'createTodo',
   displayName: 'Create Todo',
   description:
     'Creates a todo for a user, requiring them to respond or take action.',
   props: {
-    routerMarkdown: Property.MarkDown({
-      value: routerMarkdown,
-      variant: MarkdownVariant.INFO,
-    }),
     title: Property.ShortText({
       displayName: 'Title',
       required: true,

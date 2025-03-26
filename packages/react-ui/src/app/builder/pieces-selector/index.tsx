@@ -191,6 +191,7 @@ const PieceSelector = ({
     flowVersion: FlowVersion,
     actionOrTrigger: PieceSelectorItem,
     settings?: Record<string, unknown>,
+    valid?: boolean,
   ) => {
     let currentFlowVersion = flowVersion;
 
@@ -211,7 +212,10 @@ const PieceSelector = ({
       request: {
         parentStep: parentStep.name,
         stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
-        action: stepData as Action,
+        action: {
+          ...stepData,
+          valid: valid ?? stepData.valid,
+        } as Action,
       },
     });
 
@@ -220,7 +224,10 @@ const PieceSelector = ({
       request: {
         parentStep: parentStep.name,
         stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
-        action: stepData as Action,
+        action: {
+          ...stepData,
+          valid: valid ?? stepData.valid,
+        } as Action,
       },
     });
 
@@ -315,6 +322,7 @@ const PieceSelector = ({
           currentFlowVersion,
           routerAction,
           routerInternalSettings,
+          true,
         );
         break;
       }
@@ -350,6 +358,7 @@ const PieceSelector = ({
           currentFlowVersion,
           waitForApprovalAction,
           waitForApprovalStepDataSettings,
+          true,
         );
 
         const routerExternalSettings = {
@@ -388,6 +397,7 @@ const PieceSelector = ({
           currentFlowVersion,
           routerAction,
           routerExternalSettings,
+          true,
         );
         break;
       }

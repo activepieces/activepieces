@@ -1,15 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   ExecutionType,
-  MarkdownVariant,
   PauseType,
   STATUS_VARIANT,
 } from '@activepieces/shared';
 import { listAssignee, sendTodoApproval } from '../utils/utils';
-
-const routerMarkdown = `
-Use the **Router piece** to create different paths based on the todo's status.
-`;
 
 export const createTodoAndWait = createAction({
   name: 'createTodoAndWait',
@@ -17,10 +12,6 @@ export const createTodoAndWait = createAction({
   description:
     'Creates a todo for a user and wait for their response or take action.',
   props: {
-    routerMarkdown: Property.MarkDown({
-      value: routerMarkdown,
-      variant: MarkdownVariant.INFO,
-    }),
     title: Property.ShortText({
       displayName: 'Title',
       required: true,

@@ -249,7 +249,7 @@ const CreateTodoGuide = ({
               setOpen(false);
             }}
           >
-            {t('Continue with this option')}
+            {t('Add Steps')}
           </Button>
         </DialogFooter>
       </DialogContent>
