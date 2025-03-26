@@ -1,4 +1,3 @@
-import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     isNil,
@@ -6,7 +5,6 @@ import {
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
-import { system } from '../helper/system/system'
 
 export const communityFlowTemplateModule: FastifyPluginAsyncTypebox = async (
     app,
@@ -27,18 +25,15 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
             },
         },
         async (request) => {
-            //todo (htookyaw or rupal) fix temporary to use the correct activepieces community template
+            // todo (htookyaw or rupal) fix temporary to use the correct activepieces community template
             // const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
-            const templateSource = "https://cloud.activepieces.com/api/v1/flow-templates";
+            const templateSource = 'https://cloud.activepieces.com/api/v1/flow-templates'
             
             if (isNil(templateSource)) {
                 return paginationHelper.createPage([], null)
             }
             const queryString = convertToQueryString(request.query)
             const url = `${templateSource}?${queryString}`
-            console.log("templateSource => ",templateSource);
-            console.log("queryString =>", queryString);
-            console.log("community template URL => ", url);
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {

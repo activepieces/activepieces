@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddGlobalOauthApp1741685103864 implements MigrationInterface {
     name = 'AddGlobalOauthApp1741685103864'
@@ -13,16 +13,16 @@ export class AddGlobalOauthApp1741685103864 implements MigrationInterface {
                 "clientId" varchar NOT NULL,
                 "clientSecret" varchar NOT NULL
             )
-        `);
+        `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_global_oauth_app_piece_name" ON "global_oauth_app" ("pieceName")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_template_tags"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_template_pieces"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "temporary_flow_template" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -40,7 +40,7 @@ export class AddGlobalOauthApp1741685103864 implements MigrationInterface {
                 CONSTRAINT "fk_flow_template_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_flow_template_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_flow_template"(
                     "id",
@@ -69,33 +69,33 @@ export class AddGlobalOauthApp1741685103864 implements MigrationInterface {
                 "pieces",
                 "blogUrl"
             FROM "flow_template"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "flow_template"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_flow_template"
                 RENAME TO "flow_template"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_template_tags" ON "flow_template" ("tags")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_template_pieces" ON "flow_template" ("pieces")
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_flow_template_pieces"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_flow_template_tags"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "flow_template"
                 RENAME TO "temporary_flow_template"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "flow_template" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -113,7 +113,7 @@ export class AddGlobalOauthApp1741685103864 implements MigrationInterface {
                 CONSTRAINT "fk_flow_template_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_flow_template_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "flow_template"(
                     "id",
@@ -142,22 +142,22 @@ export class AddGlobalOauthApp1741685103864 implements MigrationInterface {
                 "pieces",
                 "blogUrl"
             FROM "temporary_flow_template"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_flow_template"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_template_pieces" ON "flow_template" ("pieces")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_flow_template_tags" ON "flow_template" ("tags")
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_global_oauth_app_piece_name"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "global_oauth_app"
-        `);
+        `)
     }
 
 }

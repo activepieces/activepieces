@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class InitialMsProjectConfig1742454177000 implements MigrationInterface {
     name = 'InitialMsProjectConfig1742454177000'
@@ -10,7 +10,7 @@ export class InitialMsProjectConfig1742454177000 implements MigrationInterface {
                 "ms_project_config_name" varchar(255) NULL,
                 "ms_project_config_val" varchar(255) NULL
             )
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -20,6 +20,6 @@ export class InitialMsProjectConfig1742454177000 implements MigrationInterface {
                 "ms_project_config_name" varchar(255) NULL,
                 "ms_project_config_val" varchar(255) NULL
             )
-        `);
+        `)
     }
 }

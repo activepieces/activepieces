@@ -17,37 +17,37 @@ export type OAuthAppWithEncryptedSecret = OAuthApp & {
 }
 
 export const OAuthAppEntity = new EntitySchema<OAuthAppSchema>({
-  name: 'oauth_app',
-  columns: {
-      ...BaseColumnSchemaPart,
-      pieceName: {
-          type: String,
-      },
-      platformId: ApIdSchema,
-      clientId: {
-          type: String,
-      },
-      clientSecret: {
-          type: JSONB_COLUMN_TYPE,
-      },
-  },
-  indices: [
-      {
-          name: 'idx_oauth_app_platform_id_piece_name',
-          columns: ['platformId', 'pieceName'],
-          unique: true,
-      },
-  ],
-  relations: {
-      platform: {
-          type: 'many-to-one',
-          target: 'platform',
-          cascade: true,
-          onDelete: 'CASCADE',
-          joinColumn: {
-              name: 'platformId',
-              foreignKeyConstraintName: 'fk_oauth_app_platform_id',
-          },
-      },
-  },
+    name: 'oauth_app',
+    columns: {
+        ...BaseColumnSchemaPart,
+        pieceName: {
+            type: String,
+        },
+        platformId: ApIdSchema,
+        clientId: {
+            type: String,
+        },
+        clientSecret: {
+            type: JSONB_COLUMN_TYPE,
+        },
+    },
+    indices: [
+        {
+            name: 'idx_oauth_app_platform_id_piece_name',
+            columns: ['platformId', 'pieceName'],
+            unique: true,
+        },
+    ],
+    relations: {
+        platform: {
+            type: 'many-to-one',
+            target: 'platform',
+            cascade: true,
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'platformId',
+                foreignKeyConstraintName: 'fk_oauth_app_platform_id',
+            },
+        },
+    },
 })

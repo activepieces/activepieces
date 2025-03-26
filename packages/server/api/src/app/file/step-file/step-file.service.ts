@@ -9,11 +9,11 @@ import {
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 // import { domainHelper } from '../../ee/custom-domains/domain-helper'
+import { domainHelper } from '../../helper/domain-helper'
 import { jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
 import { fileService } from '../file.service'
 import { s3Helper } from '../s3-helper'
-import { domainHelper } from '../../helper/domain-helper'
 
 const executionRetentionInDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 

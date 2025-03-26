@@ -4,10 +4,10 @@ import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 // import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
 // import { domainHelper } from '../ee/custom-domains/domain-helper'
+import { domainHelper } from '../helper/domain-helper'
 import { system } from '../helper/system/system'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
-import { domainHelper } from '../helper/domain-helper'
 
 const flagRepo = repoFactory(FlagEntity)
 

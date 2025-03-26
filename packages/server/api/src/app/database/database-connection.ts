@@ -31,12 +31,15 @@ import { UserIdentityEntity } from '../authentication/user-identity/user-identit
 // import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
 import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
+import { FlowTemplateEntity } from '../flow-templates/flow-template.entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
 import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
 import { DatabaseType, system } from '../helper/system/system'
+import { GlobalOAuthAppEntity } from '../oauth-apps/global-oauth-app.entity'
+import { OAuthAppEntity } from '../oauth-apps/oauth-app.entity'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
@@ -55,9 +58,6 @@ import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
-import { FlowTemplateEntity } from '../flow-templates/flow-template.entity'
-import { OAuthAppEntity } from '../oauth-apps/oauth-app.entity'
-import { GlobalOAuthAppEntity } from '../oauth-apps/global-oauth-app.entity'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
