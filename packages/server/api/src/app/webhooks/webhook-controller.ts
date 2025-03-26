@@ -123,14 +123,13 @@ async function convertRequest(
     projectId: string,
     flowId: string,
 ): Promise<EventPayload> {
-    const payload: EventPayload = {
+    return {
         method: request.method,
         headers: request.headers as Record<string, string>,
         body: await convertBody(request, projectId, flowId),
         queryParams: request.query as Record<string, string>,
         rawBody: request.rawBody,
     }
-    return payload
 }
 
 
