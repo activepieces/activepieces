@@ -5,13 +5,16 @@ import { mcpService } from './mcp-service'
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { z } from "zod";
+import { pieceMetadataService } from '../../pieces/piece-metadata-service';
+import { projectService } from '../../project/project-service';
+import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
 
 let transport: SSEServerTransport;
 
 export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', GetMCPRequest, async (req) => {
         return mcpService(req.log).getOrCreate({
-            projectId: req.query.projectId,
+            projectId: req.principal.projectId,
         })
     })
 
@@ -45,18 +48,91 @@ export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
             }),
         },
     }, async (req, reply) => {
+        const mcpId = req.params.id;
+
+        const projectId = await mcpService(req.log).getProjectId({
+            mcpId: mcpId,
+        });
+
+        const platformId = await projectService.getPlatformId(projectId)
+        const connections = await mcpService(req.log).getConnections({
+            mcpId: mcpId,
+        })
+
+        const pieceNames = connections.map((connection) => {
+            return connection.pieceName;
+        });
+        const pieces = await Promise.all(pieceNames.map(async (pieceName) => {
+            return await pieceMetadataService(req.log).getOrThrow({
+                name: pieceName,
+                version: undefined,
+                projectId: projectId,
+                platformId: platformId,
+            })
+        }))
+
         transport = new SSEServerTransport('/v1/mcp/messages', reply.raw);
         const server = new McpServer({
             name: "Activepieces",
             version: "1.0.0"
         });
-        server.tool(
-            "echo",
-            { message: z.string() },
-            async ({ message }) => ({
-                content: [{ type: "text", text: `Tool echo: ${message}` }]
-            })
-        );
+
+        // TODO: check if there is a better way to do this
+        function piecePropertyToZod(property: PieceProperty): z.ZodTypeAny {
+            let schema: z.ZodTypeAny;
+            
+            switch (property.type) {
+                case PropertyType.SHORT_TEXT:
+                case PropertyType.LONG_TEXT:
+                case PropertyType.DATE_TIME:
+                    schema = z.string();
+                    break;
+                case PropertyType.NUMBER:
+                    schema = z.number();
+                    break;
+                case PropertyType.CHECKBOX:
+                    schema = z.boolean();
+                    break;
+                case PropertyType.ARRAY:
+                    schema = z.array(z.any());
+                    break;
+                case PropertyType.OBJECT:
+                case PropertyType.JSON:
+                    schema = z.record(z.string(), z.any());
+                    break;
+                default:
+                    schema = z.any();
+            }
+            
+            return property.required ? schema : schema.optional();
+        }
+        
+
+        const uniqueActions = new Set();    
+        pieces.flatMap(piece => 
+            Object.values(piece.actions).map(action => {
+                if (uniqueActions.has(action.name)) {
+                    return;
+                }
+                uniqueActions.add(action.name);
+                server.tool(
+                    action.name,
+                    action.description,
+                    Object.fromEntries(
+                        Object.entries(action.props).map(([key, prop]) => 
+                            [key, piecePropertyToZod(prop)]
+                        )
+                    ),
+                    async (params) => ({
+                        content: [{ 
+                            type: "text", 
+                            text: `Executed ${action.displayName}: ${action.description}` 
+                        }]
+                    })
+                )
+            }
+        ));
+
         await server.connect(transport)
         
     })
@@ -75,12 +151,8 @@ const GetMCPRequest = {
     config: {
         permission: Permission.READ_MCP,
         allowedPrincipals: [PrincipalType.USER],
-    },
-    schema: {
-        querystring: Type.Object({
-            projectId: ApId,
-        }),
-    },
+    }
+    
 }
 
 const UpdateMCPStatusRequest = {

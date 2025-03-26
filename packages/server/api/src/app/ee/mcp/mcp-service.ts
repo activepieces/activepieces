@@ -1,5 +1,5 @@
 import { MCP, MCPStatus } from '@activepieces/ee-shared'
-import { ActivepiecesError, ApId, apId, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, ApId, apId, AppConnection, ErrorCode, ProjectId } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -36,6 +36,38 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
             where: { id: mcpId },
             relations: ['connections'],
         })
+    },
+
+    async getProjectId({ mcpId }: { mcpId: ApId }): Promise<ProjectId> {
+        const mcp = await repo().findOne({
+            where: { id: mcpId },
+        })
+
+        if (!mcp) {
+            throw new ActivepiecesError({
+                code: ErrorCode.MCP_NOT_FOUND,
+                params: { id: mcpId },
+            })
+        }
+
+        return mcp.projectId;
+    },
+
+
+    async getConnections({ mcpId }: { mcpId: ApId }): Promise<AppConnection[]> {
+        const mcp = await repo().findOne({
+            where: { id: mcpId },
+            relations: ['connections'],
+        })
+
+        if (!mcp) {
+            throw new ActivepiecesError({
+                code: ErrorCode.MCP_NOT_FOUND,
+                params: { id: mcpId },
+            })
+        }
+
+        return mcp.connections;
     },
 
     async updateStatus({ mcpId, status }: { mcpId: ApId, status: MCPStatus }): Promise<MCP> {

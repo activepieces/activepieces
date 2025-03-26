@@ -18,22 +18,28 @@ import { PieceIcon } from '../../../../features/pieces/components/piece-icon';
 import { piecesHooks } from '../../../../features/pieces/lib/pieces-hook';
 import { CopyButton } from '../../../../components/ui/copy-button';
 import { Badge } from '../../../../components/ui/badge';
+import { mcpApi } from '../../../../features/mcp/mcp-api';
+import { useQuery } from '@tanstack/react-query';
 
 export default function MCPPage() {
   const [isEnabled, setIsEnabled] = useState(false);
   const [addedPieces, setAddedPieces] = useState<Set<string>>(new Set());
   const serverUrl = 'https://your-mcp-server.activepieces.com';
+  
+  const { data:mcp} = useQuery({
+    queryKey: ['mcp'],
+    queryFn: () => {
+      return mcpApi.get();
+    },
+  });
 
-  // Get all pieces
   const { pieces } = piecesHooks.usePieces({});
 
-  // Get all connections
   const { data: connections } = appConnectionsHooks.useConnections({
     cursor: undefined,
     limit: 100,
   });
 
-  // Filter pieces to only show ones with connections
   const connectedPieces = pieces?.filter((piece) =>
     connections?.some((conn) => conn.pieceName === piece.name),
   );
@@ -51,14 +57,15 @@ export default function MCPPage() {
   };
 
   const handleSaveChanges = () => {
-    // Implement save functionality here
-    console.log('Saved changes:', {
-      isEnabled,
-      serverUrl,
-      addedPieces: Array.from(addedPieces),
+    const connectionIds = Array.from(addedPieces).map(piece => {
+      return connections?.find((conn) => conn.pieceName === piece)?.id ?? '';
     });
+    
+    mcpApi.updateConnections(mcp?.id ?? '', connectionIds);
   };
 
+  // Option: Center pieces button inside the card
+  // Option: Check hover options
   return (
     <div className="w-full flex flex-col items-center justify-center gap-6 pb-8">
       <Card className="w-full">
