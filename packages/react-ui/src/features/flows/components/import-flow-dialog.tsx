@@ -31,6 +31,7 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
+  apId,
   FlowOperationType,
   FlowTemplate,
   PopulatedFlow,
@@ -39,6 +40,7 @@ import {
 
 import { FormError } from '../../../components/ui/form';
 import { flowsApi } from '../lib/flows-api';
+import { api } from '@/lib/api';
 
 export type ImportFlowDialogProps =
   | {
@@ -155,7 +157,7 @@ const ImportFlowDialog = (
     },
     onError: (err) => {
       if (
-        isAxiosError(err) &&
+        api.isError(err) &&
         err.response?.status === HttpStatusCode.BadRequest
       ) {
         setErrorMessage(t('Template file is invalid'));

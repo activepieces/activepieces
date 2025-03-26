@@ -17,11 +17,12 @@ import { SelectColumn } from '@/features/tables/components/select-column';
 import { Row, ROW_HEIGHT_MAP, RowHeight } from '@/features/tables/lib/types';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { cn } from '@/lib/utils';
-import { Permission } from '@activepieces/shared';
+import { ApFlagId, Permission } from '@activepieces/shared';
 
 import './react-data-grid.css';
 import { useTableState } from '../../../../features/tables/components/ap-table-state-provider';
 import { ClientRecordData } from '../../../../features/tables/lib/store/ap-tables-client-state';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 const ApTableEditorPage = () => {
   const [
@@ -46,6 +47,14 @@ const ApTableEditorPage = () => {
 
   const gridRef = useRef<DataGridHandle>(null);
   const { theme } = useTheme();
+  const { data: maxRecords } = flagsHooks.useFlag<number>(ApFlagId.MAX_RECORDS_PER_TABLE)
+  const { data: maxFields } = flagsHooks.useFlag<number>(ApFlagId.MAX_FIELDS_PER_TABLE)
+
+  const userHasTableWritePermission = useAuthorization().checkAccess(
+    Permission.WRITE_TABLE,
+  );
+  const isAllowedToCreateRecord = userHasTableWritePermission && maxRecords &&  records.length <= maxRecords
+  const isAllowedToCreateField = userHasTableWritePermission && maxFields &&  fields.length <= maxFields
 
   const createEmptyRecord = () => {
     createRecord({
@@ -60,9 +69,6 @@ const ApTableEditorPage = () => {
     });
   };
 
-  const userHasTableWritePermission = useAuthorization().checkAccess(
-    Permission.WRITE_TABLE,
-  );
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -96,7 +102,7 @@ const ApTableEditorPage = () => {
   const columns: Column<Row, { id: string }>[] = [
     {
       ...SelectColumn,
-      renderSummaryCell: userHasTableWritePermission
+      renderSummaryCell: isAllowedToCreateRecord
         ? () => (
             <div
               className="w-full h-full flex items-center justify-start cursor-pointer pl-4"
@@ -138,7 +144,7 @@ const ApTableEditorPage = () => {
           }}
         />
       ),
-      renderSummaryCell: userHasTableWritePermission
+      renderSummaryCell: isAllowedToCreateRecord
         ? () => (
             <div
               className="w-full h-full flex items-center justify-start cursor-pointer pl-4"
@@ -148,7 +154,7 @@ const ApTableEditorPage = () => {
         : undefined,
     })) ?? []),
   ];
-  if (userHasTableWritePermission) {
+  if (isAllowedToCreateField) {
     columns.push(newFieldColumn);
   }
   function onSelectedRowsChange(newSelectedRows: ReadonlySet<string>) {

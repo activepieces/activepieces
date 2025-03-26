@@ -498,5 +498,6 @@
   "STATIC_DROPDOWN": "Single Select",
   "DATE": "Date",
   "NUMBER": "Number",
-  "TEXT": "Text"
+  "TEXT": "Text",
+  "Maximum number of tables reached": "Maximum number of tables reached ({maxTables})"
 }

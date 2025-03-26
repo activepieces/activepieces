@@ -34,7 +34,6 @@ export const recordService = {
         request,
         projectId,
     }: CreateParams): Promise<PopulatedRecord[]> {
-
         await this.validateCount({ projectId, tableId: request.tableId })
         return transaction(async (entityManager: EntityManager) => {
             const existingFields = await entityManager
