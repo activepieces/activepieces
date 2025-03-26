@@ -182,5 +182,5 @@ export function APArrayContains<T>(
     }
 }
 
-// Uncomment the below line when running `nx db-migration server-api name=<MIGRATION_NAME>` and recomment it after the migration is generated
+// Uncomment the below line when running `nx db-migration server-api --name=<MIGRATION_NAME>` and recomment it after the migration is generated
 // export const exportedConnection = databaseConnection()
