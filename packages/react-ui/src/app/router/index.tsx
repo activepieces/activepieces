@@ -74,7 +74,7 @@ import { SignUpPage } from '../routes/sign-up';
 import { ShareTemplatePage } from '../routes/templates/share-template';
 import { TodosPage } from '../routes/todos';
 import { TodoTestingPage } from '../routes/todos/id';
-
+import MCPPage from '../routes/settings/mcp';
 import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 import { DefaultRoute } from './default-route';
 import { RoutePermissionGuard } from './permission-guard';
@@ -401,6 +401,21 @@ const routes = [
           <PageTitle title="Environments">
             <ProjectSettingsLayout>
               <EnvironmentPage />
+            </ProjectSettingsLayout>
+          </PageTitle>
+        </RoutePermissionGuard>
+      </DashboardContainer>
+    ),
+  }),
+
+  ...ProjectRouterWrapper({
+    path: '/settings/mcp',
+    element: (
+      <DashboardContainer>
+        <RoutePermissionGuard permission={Permission.READ_MCP}>
+          <PageTitle title="MCP">
+            <ProjectSettingsLayout>
+              <MCPPage />
             </ProjectSettingsLayout>
           </PageTitle>
         </RoutePermissionGuard>
