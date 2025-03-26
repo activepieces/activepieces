@@ -35,7 +35,6 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             platformId,
         })
         modifiedFlags[ApFlagId.SHOW_COMMUNITY] = platform.showPoweredBy
-        modifiedFlags[ApFlagId.SHOW_DOCS] = platform.showPoweredBy
         modifiedFlags[ApFlagId.SHOW_BILLING] = false
         modifiedFlags[ApFlagId.PROJECT_LIMITS_ENABLED] = true
         modifiedFlags[ApFlagId.CLOUD_AUTH_ENABLED] = platform.cloudAuthEnabled

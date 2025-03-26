@@ -1587,6 +1587,60 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "danielpoonwj",
+      "name": "Daniel Poon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17039704?v=4",
+      "profile": "https://github.com/danielpoonwj",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Kevinyu-alan",
+      "name": "Kévin Yu",
+      "avatar_url": "https://avatars.githubusercontent.com/u/198612963?v=4",
+      "profile": "https://github.com/Kevinyu-alan",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "flex-yeongeun",
+      "name": "노영은",
+      "avatar_url": "https://avatars.githubusercontent.com/u/186537288?v=4",
+      "profile": "https://github.com/flex-yeongeun",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "reemayoush",
+      "name": "reemayoush",
+      "avatar_url": "https://avatars.githubusercontent.com/u/168414383?v=4",
+      "profile": "https://github.com/reemayoush",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "briceflaceliere",
+      "name": "Brice",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5811531?v=4",
+      "profile": "https://github.com/briceflaceliere",
+      "contributions": [
+        "security"
+      ]
+    },
+    {
+      "login": "mg-wunna",
+      "name": "Mg Wunna",
+      "avatar_url": "https://avatars.githubusercontent.com/u/63114419?v=4",
+      "profile": "https://mg-wunna.github.io/mg-wunna/",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

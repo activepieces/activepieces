@@ -1,4 +1,4 @@
-import { AppSystemProp, fileCompressor } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, fileCompressor } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -23,9 +23,19 @@ import { s3Helper } from './s3-helper'
 export const fileRepo = repoFactory<File>(FileEntity)
 const EXECUTION_DATA_RETENTION_DAYS = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
 
+type BaseFile = Pick<File, 'id' | 'projectId' | 'platformId' | 'type' | 'fileName' | 'compression' | 'size' | 'metadata' | 'created' | 'updated'>
+
+const saveFileToDb = async (baseFile: BaseFile, data: SaveParams['data']) => {
+    assertNotNullOrUndefined(data, 'data is required')
+    return fileRepo().save({
+        ...baseFile,
+        location: FileLocation.DB,
+        data,
+    })
+}
 export const fileService = (log: FastifyBaseLogger) => ({
     async save(params: SaveParams): Promise<File> {
-        const baseFile = {
+        const baseFile: BaseFile = {
             id: params.fileId ?? apId(),
             projectId: params.projectId,
             platformId: params.platformId,
@@ -40,23 +50,24 @@ export const fileService = (log: FastifyBaseLogger) => ({
         const location = getLocationForFile(params.type)
         switch (location) {
             case FileLocation.DB: {
-                assertNotNullOrUndefined(params.data, 'data is required')
-                return fileRepo().save({
-                    ...baseFile,
-                    location: FileLocation.DB,
-                    data: params.data,
-                })
+                return saveFileToDb(baseFile, params.data)
             }
             case FileLocation.S3: {
-                const s3Key = s3Helper(log).constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
-                if (!isNil(params.data)) {
-                    await s3Helper(log).uploadFile(s3Key, params.data)
+                try {                    
+                    const s3Key = s3Helper(log).constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
+                    if (!isNil(params.data)) {
+                        await s3Helper(log).uploadFile(s3Key, params.data)
+                    }
+                    return (await fileRepo().save({
+                        ...baseFile,
+                        location: FileLocation.S3,
+                        s3Key,
+                    }))
                 }
-                return fileRepo().save({
-                    ...baseFile,
-                    location: FileLocation.S3,
-                    s3Key,
-                })
+                catch (error) {
+                    exceptionHandler.handle(error, log)
+                    return saveFileToDb(baseFile, params.data)
+                }
             }
         }
     },

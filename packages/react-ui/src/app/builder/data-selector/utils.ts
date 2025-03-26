@@ -369,17 +369,13 @@ function filterBy(
         displayName.toLowerCase().includes(query.toLowerCase()) ||
         searchableValue.toLowerCase().includes(query.toLowerCase());
       if (matchDisplayNameOrValue) {
-        return {
-          ...item,
-          children: undefined,
-        };
+        return item;
       }
       return null;
     })
     .filter(
       (f) => !isNil(f),
     ) as DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[];
-  console.log(res);
   return res;
 }
 

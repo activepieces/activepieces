@@ -45,9 +45,8 @@ import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { adminPieceModule } from './ee/pieces/admin-piece-module'
 import { enterprisePieceMetadataServiceHooks } from './ee/pieces/filters/enterprise-piece-metadata-service-hooks'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
-import { adminPlatformPieceModule } from './ee/platform/admin-platform.controller'
+import { adminPlatformModule } from './ee/platform/admin-platform.controller'
 import { platformBillingModule } from './ee/platform-billing/platform-billing.module'
-import { platformProjectMemberModule } from './ee/project-members/platform-project-members/platform-project-member.module'
 import { projectMemberModule } from './ee/project-members/project-member.module'
 import { gitRepoModule } from './ee/project-release/git-sync/git-sync.module'
 import { projectReleaseModule } from './ee/project-release/project-release.module'
@@ -55,6 +54,7 @@ import { projectRoleModule } from './ee/project-role/project-role.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
+import { todoCommentModule } from './ee/todos/comment/todos-comment.module'
 import { usageTrackerModule } from './ee/usage-tracker/usage-tracker-module'
 import { userModule } from './ee/users/user.module'
 import { fileModule } from './file/file.module'
@@ -83,7 +83,9 @@ import { platformService } from './platform/platform.service'
 import { projectHooks } from './project/project-hooks'
 import { projectModule } from './project/project-module'
 import { storeEntryModule } from './store-entry/store-entry.module'
+import { tablesModule } from './tables/tables.module'
 import { tagsModule } from './tags/tags-module'
+import { todoModule } from './todos/todo.module'
 import { platformUserModule } from './user/platform/platform-user-module'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { webhookModule } from './webhooks/webhook-module'
@@ -225,8 +227,10 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(workerModule)
     await app.register(aiProviderModule)
     await app.register(licenseKeysModule)
+    await app.register(tablesModule)
     await app.register(userModule)
-
+    await app.register(todoModule)
+    await app.register(adminPlatformModule)
     app.get(
         '/redirect',
         async (
@@ -264,7 +268,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformProjectModule)
             await app.register(platformBillingModule)
             await app.register(projectMemberModule)
-            await app.register(platformProjectMemberModule)
             await app.register(appSumoModule)
             await app.register(adminPieceModule)
             await app.register(customDomainModule)
@@ -281,10 +284,10 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
             await app.register(usageTrackerModule)
-            await app.register(adminPlatformPieceModule)
             await app.register(analyticsModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
+            await app.register(todoCommentModule)
             await app.register(globalConnectionModule)
             setPlatformOAuthService(platformOAuth2Service(app.log))
             projectHooks.set(projectEnterpriseHooks)
@@ -299,7 +302,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(customDomainModule)
             await app.register(platformProjectModule)
             await app.register(projectMemberModule)
-            await app.register(platformProjectMemberModule)
             await app.register(signingKeyModule)
             await app.register(authnSsoSamlModule)
             await app.register(managedAuthnModule)
@@ -316,6 +318,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(analyticsModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
+            await app.register(todoCommentModule)
             await app.register(globalConnectionModule)
             systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_REMINDER, emailService(app.log).sendReminderJobHandler)
             setPlatformOAuthService(platformOAuth2Service(app.log))
