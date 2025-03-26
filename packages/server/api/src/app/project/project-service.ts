@@ -96,6 +96,12 @@ export const projectService = {
 
         return project
     },
+    async exists(projectId: ProjectId): Promise<boolean> {
+        return projectRepo().existsBy({
+            id: projectId,
+            deleted: IsNull(),
+        })
+    },
     async getUserProjectOrThrow(userId: UserId): Promise<Project> {
         const user = await userService.getOneOrFail({ id: userId })
         assertNotNullOrUndefined(user.platformId, 'platformId is undefined')

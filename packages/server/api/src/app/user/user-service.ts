@@ -20,8 +20,8 @@ import { userIdentityService } from '../authentication/user-identity/user-identi
 import { repoFactory } from '../core/db/repo-factory'
 // import { projectMemberRepo } from '../ee/project-role/project-role.service'
 import { system } from '../helper/system/system'
-import { UserEntity, UserSchema } from './user-entity'
 import { platformService } from '../platform/platform.service'
+import { UserEntity, UserSchema } from './user-entity'
 
 
 export const userRepo = repoFactory(UserEntity)

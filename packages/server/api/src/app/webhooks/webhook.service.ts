@@ -5,6 +5,7 @@ import { StatusCodes } from 'http-status-codes'
 // import { usageService } from '../ee/platform-billing/usage/usage-service'
 import { flowService } from '../flows/flow/flow.service'
 import { system } from '../helper/system/system'
+import { projectService } from '../project/project-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue } from '../workers/queue'
 import { getJobPriority } from '../workers/queue/queue-manager'
@@ -18,7 +19,7 @@ type HandleWebhookParams = {
     flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED | undefined
     data: (projectId: string) => Promise<EventPayload>
     logger: FastifyBaseLogger
-} 
+}
 
 
 export const webhookService = {
@@ -42,6 +43,16 @@ export const webhookService = {
                 headers: {},
             }
         }
+        const projectExists = await projectService.exists(flow.projectId)
+        if (!projectExists) {
+            pinoLoger.info('Project is soft deleted, returning GONE')
+            return {
+                status: StatusCodes.GONE,
+                body: {},
+                headers: {},
+            }
+        }
+
         await assertExceedsLimit(flow, pinoLoger)
         if (
             flow.status !== FlowStatus.ENABLED &&
@@ -56,9 +67,9 @@ export const webhookService = {
                 },
             }
         }
-    
+
         pinoLoger.info('Adding webhook job to queue')
-    
+
         const synchronousHandlerId = async ? null : engineResponseWatcher(pinoLoger).getServerId()
         await jobQueue(logger).add({
             id: webhookRequestId,
@@ -75,7 +86,7 @@ export const webhookService = {
             },
             priority: await getJobPriority(synchronousHandlerId),
         })
-    
+
         if (async) {
             pinoLoger.info('Async webhook request completed')
             return {

@@ -398,6 +398,9 @@
       "@activepieces/piece-localai": [
         "packages/pieces/community/localai/src/index.ts"
       ],
+      "@activepieces/piece-lusha": [
+        "packages/pieces/community/lusha/src/index.ts"
+      ],
       "@activepieces/piece-mailchain": [
         "packages/pieces/community/mailchain/src/index.ts"
       ],
@@ -551,6 +554,9 @@
       ],
       "@activepieces/piece-retune": [
         "packages/pieces/community/retune/src/index.ts"
+      ],
+      "@activepieces/piece-returning-ai": [
+        "packages/pieces/community/returning-ai/src/index.ts"
       ],
       "@activepieces/piece-robolly": [
         "packages/pieces/community/robolly/src/index.ts"
