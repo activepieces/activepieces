@@ -335,6 +335,9 @@
       "@activepieces/piece-http": [
         "packages/pieces/community/http/src/index.ts"
       ],
+      "@activepieces/piece-http-oauth2": [
+        "packages/pieces/community/http-oauth2/src/index.ts"
+      ],
       "@activepieces/piece-hubspot": [
         "packages/pieces/community/hubspot/src/index.ts"
       ],
