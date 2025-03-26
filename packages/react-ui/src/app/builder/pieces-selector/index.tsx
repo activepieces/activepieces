@@ -59,6 +59,8 @@ type PieceGroup = {
   pieces: StepMetadataWithSuggestions[];
 };
 
+const hiddenActionsOrTriggers = ['createTodoAndWait', 'wait_for_approval'];
+
 const PieceSelector = ({
   children,
   open,
@@ -562,6 +564,7 @@ const PieceSelector = ({
                 handleSelect={handleSelect}
                 pieceGroups={pieceGroups}
                 isLoadingPieces={isLoadingPieces}
+                hiddenActionsOrTriggers={hiddenActionsOrTriggers}
               />
 
               {debouncedQuery.length === 0 &&
@@ -570,6 +573,7 @@ const PieceSelector = ({
                   <>
                     <Separator orientation="vertical" className="h-full" />
                     <StepsCardList
+                      hiddenActionsOrTriggers={hiddenActionsOrTriggers}
                       selectedPieceMetadata={selectedPieceMetadata}
                       handleSelect={handleSelect}
                     />
@@ -591,6 +595,7 @@ const PieceSelector = ({
                 selectedTag={selectedTag}
                 piecesIsLoaded={piecesIsLoaded}
                 noResultsFound={noResultsFound}
+                hiddenActionsOrTriggers={hiddenActionsOrTriggers}
                 selectedPieceMetadata={selectedPieceMetadata}
                 setSelectedMetadata={setSelectedMetadata}
                 operation={operation}

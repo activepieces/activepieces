@@ -51,6 +51,7 @@ type PiecesCardListProps = {
   piecesIsLoaded: boolean;
   noResultsFound: boolean;
   closePieceSelector: () => void;
+  hiddenActionsOrTriggers: string[];
 };
 
 export const PiecesCardList: React.FC<PiecesCardListProps> = ({
@@ -64,6 +65,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
   noResultsFound,
   operation,
   closePieceSelector,
+  hiddenActionsOrTriggers,
 }) => {
   const { data: showRequestPieceButton } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
@@ -114,6 +116,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
             {group.pieces.map((pieceMetadata) => (
               <PieceCardListItem
                 key={pieceSelectorUtils.toKey(pieceMetadata)}
+                hiddenActionsOrTriggers={hiddenActionsOrTriggers}
                 pieceMetadata={pieceMetadata}
                 selectedPieceMetadata={selectedPieceMetadata}
                 debouncedQuery={debouncedQuery}
@@ -190,6 +193,7 @@ const PieceCardListItem = React.forwardRef<
     debouncedQuery: string;
     setSelectedMetadata: (metadata: StepMetadata) => void;
     handleSelect: HandleSelectCallback;
+    hiddenActionsOrTriggers: string[];
   }
 >(
   (
@@ -199,6 +203,7 @@ const PieceCardListItem = React.forwardRef<
       debouncedQuery,
       setSelectedMetadata,
       handleSelect,
+      hiddenActionsOrTriggers,
     },
     ref,
   ) => {
@@ -250,6 +255,7 @@ const PieceCardListItem = React.forwardRef<
           pieceMetadata.type !== TriggerType.EMPTY && (
             <div onMouseEnter={(e) => handleMouseEnter(e.currentTarget)}>
               <PieceSearchSuggestions
+                hiddenActionsOrTriggers={hiddenActionsOrTriggers}
                 pieceMetadata={pieceMetadata}
                 handleSelectOperationSuggestion={handleSelect}
               />
