@@ -5,17 +5,7 @@ import { mcpService } from './mcp-service'
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { z } from "zod";
-const server = new McpServer({
-    name: "My App",
-    version: "1.0.0"
-});
-server.tool(
-    "echo",
-    { message: z.string() },
-    async ({ message }) => ({
-        content: [{ type: "text", text: `Tool echo: ${message}` }]
-    })
-);
+
 let transport: SSEServerTransport;
 
 export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
@@ -45,22 +35,34 @@ export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
-    app.get('/sse', {
+    app.get('/:id/sse', {
         config: {
-            permission: Permission.READ_MCP,
             allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        },
+        schema: {
+            params: Type.Object({
+                id: ApId,
+            }),
         },
     }, async (req, reply) => {
         transport = new SSEServerTransport('/v1/mcp/messages', reply.raw);
-
-        await transport.start()
-  
+        const server = new McpServer({
+            name: "Activepieces",
+            version: "1.0.0"
+        });
+        server.tool(
+            "echo",
+            { message: z.string() },
+            async ({ message }) => ({
+                content: [{ type: "text", text: `Tool echo: ${message}` }]
+            })
+        );
+        await server.connect(transport)
         
     })
 
     app.post('/messages', {
         config: {
-            permission: Permission.READ_MCP,
             allowedPrincipals: ALL_PRINCIPAL_TYPES,
         },
     }, async (req, reply) => {
