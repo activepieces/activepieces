@@ -27,8 +27,8 @@ import { ClientRecordData } from '../../../../features/tables/lib/store/ap-table
 
 const ApTableEditorPage = () => {
   const [
-    selectedRows,
-    setSelectedRows,
+    selectedRecords,
+    setSelectedRecords,
     selectedCell,
     setSelectedCell,
     createRecord,
@@ -36,8 +36,8 @@ const ApTableEditorPage = () => {
     fields,
     records,
   ] = useTableState((state) => [
-    state.selectedRows,
-    state.setSelectedRows,
+    state.selectedRecords,
+    state.setSelectedRecords,
     state.selectedCell,
     state.setSelectedCell,
     state.createRecord,
@@ -164,9 +164,7 @@ const ApTableEditorPage = () => {
   if (isAllowedToCreateField) {
     columns.push(newFieldColumn);
   }
-  function onSelectedRowsChange(newSelectedRows: ReadonlySet<string>) {
-    setSelectedRows(newSelectedRows);
-  }
+
 
   function mapRecordsToRows(records: ClientRecordData[]): Row[] {
     if (!records || records.length === 0) return [];
@@ -191,8 +189,8 @@ const ApTableEditorPage = () => {
           columns={columns}
           rows={mapRecordsToRows(records)}
           rowKeyGetter={(row: Row) => row.id}
-          selectedRows={selectedRows}
-          onSelectedRowsChange={onSelectedRowsChange}
+          selectedRows={selectedRecords}
+          onSelectedRowsChange={setSelectedRecords}
           className={cn(
             'scroll-smooth  w-[calc(100vw-256px)] h-[calc(100vh-7rem-92px-20px)] bg-muted/30',
             theme === 'dark' ? 'rdg-dark' : 'rdg-light',
