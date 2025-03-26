@@ -397,6 +397,7 @@ const validateConnectionValue = async (
                     clientSecret: value.client_secret,
                     authorizationMethod: value.authorization_method,
                     codeVerifier: value.code_challenge,
+                    scope: value.scope,
                 },
             })
             await engineValidateAuth({
