@@ -21,6 +21,8 @@ import { fieldService } from '../field/field.service'
 import { RecordEntity } from '../record/record.entity'
 import { TableWebhookEntity } from './table-webhook.entity'
 import { TableEntity } from './table.entity'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '@activepieces/server-shared'
 
 const tableRepo = repoFactory(TableEntity)
 const recordRepo = repoFactory(RecordEntity)
@@ -31,12 +33,12 @@ export const tableService = {
         projectId,
         request,
     }: CreateParams): Promise<Table> {
+        await this.validateCount({ projectId })
         const table = await tableRepo().save({
             id: apId(),
             name: request.name,
             projectId,
         })
-
         return table
     },
     async list({ projectId, cursor, limit, name }: ListParams): Promise<SeekPage<Table>> {
@@ -172,8 +174,21 @@ export const tableService = {
         })
         return this.getById({ projectId, id })
     },
-
-    
+    async count({ projectId }: CountParams): Promise<number> {
+        return tableRepo().count({
+            where: { projectId },
+        })
+    },
+    async validateCount(params: CountParams): Promise<void> {
+        const countRes = await this.count(params)
+        if (countRes > system.getNumberOrThrow(AppSystemProp.MAX_TABLES_PER_PROJECT)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: `Max tables per project reached: ${system.getNumberOrThrow(AppSystemProp.MAX_TABLES_PER_PROJECT)}`,
+                },
+            })
+        }
+    },
 }
 
 type CreateParams = {
@@ -225,4 +240,8 @@ type UpdateParams = {
     projectId: string
     id: string
     request: UpdateTableRequest
+}
+
+type CountParams = {
+    projectId: string
 }
