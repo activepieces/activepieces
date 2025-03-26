@@ -11,6 +11,7 @@ import { getCoreActions } from '../../../features/pieces/lib/pieces-hook';
 type PieceSearchSuggestionsProps = {
   pieceMetadata: StepMetadataWithSuggestions;
   handleSelectOperationSuggestion: HandleSelectCallback;
+  hiddenActionsOrTriggers: string[];
 };
 
 const stepMetadataSuggestions = (stepMetadata: StepMetadataWithSuggestions) => {
@@ -30,31 +31,36 @@ const stepMetadataSuggestions = (stepMetadata: StepMetadataWithSuggestions) => {
 const PieceSearchSuggestions = ({
   pieceMetadata,
   handleSelectOperationSuggestion,
+  hiddenActionsOrTriggers,
 }: PieceSearchSuggestionsProps) => {
   const suggestions = stepMetadataSuggestions(pieceMetadata);
   return (
     <div className="flex flex-col gap-0">
-      {suggestions?.map((suggestion) => (
-        <CardListItem
-          className="p-3 text-sm gap-2 items-center "
-          key={suggestion.displayName}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleSelectOperationSuggestion(pieceMetadata, suggestion);
-          }}
-        >
-          <div className="opacity-0">
-            <PieceIcon
-              logoUrl={pieceMetadata.logoUrl}
-              displayName={pieceMetadata.displayName}
-              showTooltip={false}
-              size={'sm'}
-            ></PieceIcon>
-          </div>
+      {suggestions
+        ?.filter(
+          (suggestion) => !hiddenActionsOrTriggers.includes(suggestion.name),
+        )
+        .map((suggestion) => (
+          <CardListItem
+            className="p-3 text-sm gap-2 items-center "
+            key={suggestion.displayName}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleSelectOperationSuggestion(pieceMetadata, suggestion);
+            }}
+          >
+            <div className="opacity-0">
+              <PieceIcon
+                logoUrl={pieceMetadata.logoUrl}
+                displayName={pieceMetadata.displayName}
+                showTooltip={false}
+                size={'sm'}
+              ></PieceIcon>
+            </div>
 
-          <span title={suggestion.displayName}>{suggestion.displayName}</span>
-        </CardListItem>
-      ))}
+            <span title={suggestion.displayName}>{suggestion.displayName}</span>
+          </CardListItem>
+        ))}
     </div>
   );
 };
