@@ -55,6 +55,17 @@ const isCorePiece = (piece: StepMetadata) =>
     ? true
     : (piece as PieceStepMetadata).categories.includes(PieceCategory.CORE);
 
+const getStepNames = (
+  piece: StepMetadata,
+  flowVersion: FlowVersion,
+  count: number,
+) => {
+  if (piece.type === TriggerType.PIECE) {
+    return ['trigger'];
+  }
+  return flowStructureUtil.findUnusedNames(flowVersion.trigger, count);
+};
+
 const getStepName = (piece: StepMetadata, flowVersion: FlowVersion) => {
   if (piece.type === TriggerType.PIECE) {
     return 'trigger';
@@ -374,6 +385,7 @@ export const pieceSelectorUtils = {
   getDefaultStep,
   isCorePiece,
   getStepName,
+  getStepNames,
   isAiPiece,
   isAppPiece,
   toKey,

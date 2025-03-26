@@ -32,7 +32,6 @@ import {
   flowOperations,
   FlowOperationType,
   flowStructureUtil,
-  FlowVersion,
   isNil,
   RouterExecutionType,
   StepLocationRelativeToParent,
@@ -186,20 +185,13 @@ const PieceSelector = ({
   };
 
   const handleAddAction = (
+    stepName: string,
     stepMetadata: StepMetadata,
     parentStep: Action | Trigger,
-    flowVersion: FlowVersion,
     actionOrTrigger: PieceSelectorItem,
     settings?: Record<string, unknown>,
     valid?: boolean,
   ) => {
-    let currentFlowVersion = flowVersion;
-
-    const stepName = pieceSelectorUtils.getStepName(
-      stepMetadata,
-      currentFlowVersion,
-    );
-
     const stepData = pieceSelectorUtils.getDefaultStep({
       stepName: stepName,
       stepMetadata,
@@ -218,20 +210,6 @@ const PieceSelector = ({
         } as Action,
       },
     });
-
-    currentFlowVersion = flowOperations.apply(currentFlowVersion, {
-      type: FlowOperationType.ADD_ACTION,
-      request: {
-        parentStep: parentStep.name,
-        stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
-        action: {
-          ...stepData,
-          valid: valid ?? stepData.valid,
-        } as Action,
-      },
-    });
-
-    return currentFlowVersion;
   };
 
   const handleAddCreateTodoAction = (
@@ -256,14 +234,14 @@ const PieceSelector = ({
       type: ActionType.ROUTER,
     } as StepMetadata;
 
-    let currentFlowVersion = flowVersion;
-    const newStepName = pieceSelectorUtils.getStepName(
+    const newStepNames = pieceSelectorUtils.getStepNames(
       stepMetadata,
       flowVersion,
+      3,
     );
 
     const stepData = pieceSelectorUtils.getDefaultStep({
-      stepName: newStepName,
+      stepName: newStepNames[0],
       stepMetadata,
       actionOrTrigger,
     });
@@ -275,7 +253,7 @@ const PieceSelector = ({
         action: stepData as Action,
       },
     });
-    currentFlowVersion = flowOperations.apply(flowVersion, {
+    flowOperations.apply(flowVersion, {
       type: FlowOperationType.ADD_ACTION,
       request: {
         ...operation.actionLocation,
@@ -317,9 +295,9 @@ const PieceSelector = ({
         };
 
         handleAddAction(
+          newStepNames[1],
           routerStepMetadata,
           stepData,
-          currentFlowVersion,
           routerAction,
           routerInternalSettings,
           true,
@@ -333,10 +311,7 @@ const PieceSelector = ({
           (action: any) => action.name === 'wait_for_approval',
         ) as PieceSelectorItem;
 
-        const waitForApprovalStepName = pieceSelectorUtils.getStepName(
-          stepMetadata,
-          currentFlowVersion,
-        );
+        const waitForApprovalStepName = newStepNames[1];
 
         const waitForApprovalStepData = pieceSelectorUtils.getDefaultStep({
           stepName: waitForApprovalStepName,
@@ -352,10 +327,10 @@ const PieceSelector = ({
           },
         };
 
-        currentFlowVersion = handleAddAction(
+        handleAddAction(
+          waitForApprovalStepName,
           stepMetadata,
           stepData,
-          currentFlowVersion,
           waitForApprovalAction,
           waitForApprovalStepDataSettings,
           true,
@@ -392,9 +367,9 @@ const PieceSelector = ({
         };
 
         handleAddAction(
+          newStepNames[2],
           routerStepMetadata,
           waitForApprovalStepData,
-          currentFlowVersion,
           routerAction,
           routerExternalSettings,
           true,

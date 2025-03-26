@@ -24,7 +24,7 @@ type StepsCardListProps = {
   handleSelect: HandleSelectCallback;
 };
 
-const hiddenActions = ['createTodoAndWait'];
+const hiddenActions = ['createTodoAndWait', 'wait_for_approval'];
 
 export const StepsCardList: React.FC<StepsCardListProps> = ({
   selectedPieceMetadata,
