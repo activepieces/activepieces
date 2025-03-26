@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   ExecutionType,
   MarkdownVariant,
+  PauseType,
   STATUS_VARIANT,
 } from '@activepieces/shared';
 import { listAssignee, sendTodoApproval } from '../utils/utils';
@@ -10,11 +11,11 @@ const routerMarkdown = `
 Use the **Router piece** to create different paths based on the todo's status.
 `;
 
-export const createTodo = createAction({
-  name: 'createTodo',
-  displayName: 'Create Todo',
+export const createTodoAndWait = createAction({
+  name: 'createTodoAndWait',
+  displayName: 'Create Todo and Wait',
   description:
-    'Creates a todo for a user, requiring them to respond or take action.',
+    'Creates a todo for a user and wait for their response or take action.',
   props: {
     routerMarkdown: Property.MarkDown({
       value: routerMarkdown,
@@ -88,29 +89,34 @@ export const createTodo = createAction({
   },
   async test(context) {
     if (context.executionType === ExecutionType.BEGIN) {
+      context.run.pause({
+        pauseMetadata: {
+          type: PauseType.WEBHOOK,
+          response: {},
+        },
+      });
       const response = await sendTodoApproval(context, true);
-      const links = context.propsValue.statusOptions.map((option: any) => ({
-        name: option.name,
-        url: `${context.server.publicUrl}v1/todos/${response.body.id}/approve?status=${option.name}&isTest=true`,
-      }));
-      return {
-        id: response.body.id,
-        links,
-      };
+      return response.body;
     } else {
-      return undefined;
+      return {
+        status: context.resumePayload.queryParams['status'],
+      };
     }
   },
   async run(context) {
-    const response = await sendTodoApproval(context, false);
-    const links = context.propsValue.statusOptions.map((option: any) => ({
-      name: option.name,
-      url: `${context.server.publicUrl}v1/todos/${response.body.id}/approve?status=${option.name}`,
-    }));
-    return {
-      id: response.body.id,
-      links,
-    };
+    if (context.executionType === ExecutionType.BEGIN) {
+      context.run.pause({
+        pauseMetadata: {
+          type: PauseType.WEBHOOK,
+          response: {},
+        },
+      });
+      const response = await sendTodoApproval(context, false);
+      return response.body;
+    } else {
+      return {
+        status: context.resumePayload.queryParams['status'],
+      };
+    }
   },
 });
-

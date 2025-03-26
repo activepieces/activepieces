@@ -69,3 +69,8 @@ export const TodoWithAssignee = Type.Composite([Todo, Type.Object({
 })])
 
 export type TodoWithAssignee = Static<typeof TodoWithAssignee>
+
+export enum TODO_TYPE {
+    INTERNAL = 'internal',
+    EXTERNAL = 'external',
+}

@@ -2,6 +2,7 @@ import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { createTodo } from './lib/actions/create-todo';
 import { PieceCategory } from '@activepieces/shared';
 import { waitForApproval } from './lib/actions/wait-for-approval';
+import { createTodoAndWait } from './lib/actions/create-todo-and-wait';
 
 export const todos = createPiece({
   displayName: 'Todos',
@@ -12,6 +13,6 @@ export const todos = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/manual-tasks.svg',
   authors: ['hazemadelkhalel'],
   categories: [PieceCategory.CORE, PieceCategory.FLOW_CONTROL],
-  actions: [createTodo, waitForApproval],
+  actions: [createTodo, waitForApproval, createTodoAndWait],
   triggers: [],
 });

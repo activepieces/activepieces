@@ -45,6 +45,7 @@ import {
   FlowOperationType,
   TriggerType,
   TodoWithAssignee,
+  TODO_TYPE,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
@@ -57,6 +58,7 @@ type ManualTaskTestingDialogProps = {
   flowVersionId: string;
   projectId: string;
   currentStep: Step;
+  type: TODO_TYPE;
   setErrorMessage: (errorMessage: string | undefined) => void;
   setLastTestDate: (lastTestDate: string) => void;
 };
@@ -68,6 +70,7 @@ function ManualTaskTestingDialog({
   flowVersionId,
   projectId,
   currentStep,
+  type,
   setErrorMessage,
   setLastTestDate,
 }: ManualTaskTestingDialogProps) {
@@ -176,6 +179,7 @@ function ManualTaskTestingDialog({
         );
       }
       const response = output as TodoWithAssignee;
+      const statusName = response['status'].name;
       const statusOptions = response['statusOptions'];
       const publicUrl = response['approvalUrl']?.split('/flow-runs/')[0];
       const links = statusOptions.map((option) => ({
@@ -184,10 +188,19 @@ function ManualTaskTestingDialog({
           publicUrl +
           `/todos/${response.id}/approve?status=${option.name}&isTest=true`,
       }));
-      setSampleData(currentStep.name, {
-        id: response.id,
-        links,
-      });
+      switch (type) {
+        case TODO_TYPE.INTERNAL:
+          setSampleData(currentStep.name, {
+            status: statusName,
+          });
+          break;
+        case TODO_TYPE.EXTERNAL:
+          setSampleData(currentStep.name, {
+            id: response.id,
+            links,
+          });
+          break;
+      }
       setSampleDataInput(currentStep.name, input);
       setLastTestDate(dayjs().toISOString());
       onOpenChange(false);

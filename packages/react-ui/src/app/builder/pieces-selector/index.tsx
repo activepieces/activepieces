@@ -36,6 +36,7 @@ import {
   isNil,
   RouterExecutionType,
   StepLocationRelativeToParent,
+  TODO_TYPE,
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
@@ -226,14 +227,181 @@ const PieceSelector = ({
     return currentFlowVersion;
   };
 
+  const handleAddCreateTodoAction = (
+    stepMetadata: StepMetadata,
+    actionOrTrigger: PieceSelectorItem,
+    type?: string,
+  ) => {
+    if (operation.type !== FlowOperationType.ADD_ACTION) {
+      return;
+    }
+    const routerAction = {
+      name: 'router',
+      displayName: 'Check Todo Status',
+      description: 'Split your flow into branches depending on todo status',
+      type: ActionType.ROUTER,
+    } as PieceSelectorItem;
+
+    const routerStepMetadata = {
+      displayName: 'Check Todo Status',
+      logoUrl: stepMetadata.logoUrl,
+      description: 'Split your flow into branches depending on todo status',
+      type: ActionType.ROUTER,
+    } as StepMetadata;
+
+    let currentFlowVersion = flowVersion;
+    const newStepName = pieceSelectorUtils.getStepName(
+      stepMetadata,
+      flowVersion,
+    );
+
+    const stepData = pieceSelectorUtils.getDefaultStep({
+      stepName: newStepName,
+      stepMetadata,
+      actionOrTrigger,
+    });
+
+    applyOperation({
+      type: FlowOperationType.ADD_ACTION,
+      request: {
+        ...operation.actionLocation,
+        action: stepData as Action,
+      },
+    });
+    currentFlowVersion = flowOperations.apply(flowVersion, {
+      type: FlowOperationType.ADD_ACTION,
+      request: {
+        ...operation.actionLocation,
+        action: stepData as Action,
+      },
+    });
+    selectStepByName(stepData.name);
+
+    switch (type) {
+      case TODO_TYPE.INTERNAL: {
+        const routerInternalSettings = {
+          branches: [
+            {
+              conditions: [
+                [
+                  {
+                    operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                    firstValue: `{{ ${stepData.name}['status'] }}`,
+                    secondValue: 'Accepted',
+                    caseSensitive: false,
+                  },
+                ],
+              ],
+              branchType: BranchExecutionType.CONDITION,
+              branchName: 'Accepted',
+            },
+            {
+              branchType: BranchExecutionType.FALLBACK,
+              branchName: 'Rejected',
+            },
+          ],
+          executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+          inputUiInfo: {
+            customizedInputs: {
+              logoUrl: stepMetadata.logoUrl,
+              description: routerStepMetadata.description,
+            },
+          },
+        };
+
+        handleAddAction(
+          routerStepMetadata,
+          stepData,
+          currentFlowVersion,
+          routerAction,
+          routerInternalSettings,
+        );
+        break;
+      }
+      case TODO_TYPE.EXTERNAL: {
+        const waitForApprovalAction = (
+          stepMetadata as PieceStepMetadataWithSuggestions
+        )?.suggestedActions?.find(
+          (action: any) => action.name === 'wait_for_approval',
+        ) as PieceSelectorItem;
+
+        const waitForApprovalStepName = pieceSelectorUtils.getStepName(
+          stepMetadata,
+          currentFlowVersion,
+        );
+
+        const waitForApprovalStepData = pieceSelectorUtils.getDefaultStep({
+          stepName: waitForApprovalStepName,
+          stepMetadata,
+          actionOrTrigger: waitForApprovalAction,
+        });
+
+        const waitForApprovalStepDataSettings = {
+          ...waitForApprovalStepData.settings,
+          input: {
+            ...waitForApprovalStepData.settings.input,
+            taskId: `{{ ${stepData.name}['id'] }}`,
+          },
+        };
+
+        currentFlowVersion = handleAddAction(
+          stepMetadata,
+          stepData,
+          currentFlowVersion,
+          waitForApprovalAction,
+          waitForApprovalStepDataSettings,
+        );
+
+        const routerExternalSettings = {
+          branches: [
+            {
+              conditions: [
+                [
+                  {
+                    operator: BranchOperator.TEXT_EXACTLY_MATCHES,
+                    firstValue: `{{ ${waitForApprovalStepData.name}['status'] }}`,
+                    secondValue: 'Accepted',
+                    caseSensitive: false,
+                  },
+                ],
+              ],
+              branchType: BranchExecutionType.CONDITION,
+              branchName: 'Accepted',
+            },
+            {
+              branchType: BranchExecutionType.FALLBACK,
+              branchName: 'Rejected',
+            },
+          ],
+          executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
+          inputUiInfo: {
+            customizedInputs: {
+              logoUrl: stepMetadata.logoUrl,
+              description: routerStepMetadata.description,
+            },
+          },
+        };
+
+        handleAddAction(
+          routerStepMetadata,
+          waitForApprovalStepData,
+          currentFlowVersion,
+          routerAction,
+          routerExternalSettings,
+        );
+        break;
+      }
+    }
+  };
+
   const handleSelect: HandleSelectCallback = async (
     stepMetadata,
     actionOrTrigger,
+    type?: string,
   ) => {
     resetField();
     onOpenChange(false);
 
-    let currentFlowVersion = flowVersion;
     const newStepName = pieceSelectorUtils.getStepName(
       stepMetadata,
       flowVersion,
@@ -255,14 +423,14 @@ const PieceSelector = ({
         break;
       }
       case FlowOperationType.ADD_ACTION: {
+        if (
+          stepData.settings.pieceName === '@activepieces/piece-todos' &&
+          type
+        ) {
+          handleAddCreateTodoAction(stepMetadata, actionOrTrigger, type);
+          break;
+        }
         applyOperation({
-          type: FlowOperationType.ADD_ACTION,
-          request: {
-            ...operation.actionLocation,
-            action: stepData as Action,
-          },
-        });
-        currentFlowVersion = flowOperations.apply(flowVersion, {
           type: FlowOperationType.ADD_ACTION,
           request: {
             ...operation.actionLocation,
@@ -316,98 +484,10 @@ const PieceSelector = ({
             valid: stepData.valid,
           },
         });
+        break;
       }
     }
 
-    if (
-      stepData.settings.pieceName === '@activepieces/piece-todos' &&
-      stepData.settings.actionName === 'createTodo'
-    ) {
-      const waitForApprovalAction = (
-        stepMetadata as PieceStepMetadataWithSuggestions
-      )?.suggestedActions?.find(
-        (action: any) => action.name === 'wait_for_approval',
-      ) as PieceSelectorItem;
-
-      const waitForApprovalStepName = pieceSelectorUtils.getStepName(
-        stepMetadata,
-        currentFlowVersion,
-      );
-
-      const waitForApprovalStepData = pieceSelectorUtils.getDefaultStep({
-        stepName: waitForApprovalStepName,
-        stepMetadata,
-        actionOrTrigger: waitForApprovalAction,
-      });
-
-      const waitForApprovalStepDataSettings = {
-        ...waitForApprovalStepData.settings,
-        input: {
-          ...waitForApprovalStepData.settings.input,
-          taskId: `{{ ${stepData.name}['id'] }}`,
-        },
-      };
-
-      currentFlowVersion = handleAddAction(
-        stepMetadata,
-        stepData,
-        currentFlowVersion,
-        waitForApprovalAction,
-        waitForApprovalStepDataSettings,
-      );
-
-      const routerAction = {
-        name: 'router',
-        displayName: 'Check Todo Status',
-        description: 'Split your flow into branches depending on todo status',
-        type: ActionType.ROUTER,
-      } as PieceSelectorItem;
-
-      const routerStepMetadata = {
-        displayName: 'Check Todo Status',
-        logoUrl: stepMetadata.logoUrl,
-        description: 'Split your flow into branches depending on todo status',
-        type: ActionType.ROUTER,
-      } as StepMetadata;
-
-      const routerSettings = {
-        branches: [
-          {
-            conditions: [
-              [
-                {
-                  operator: BranchOperator.TEXT_EXACTLY_MATCHES,
-                  firstValue: `{{ ${waitForApprovalStepData.name}['status'] }}`,
-                  secondValue: '',
-                  caseSensitive: false,
-                },
-              ],
-            ],
-            branchType: BranchExecutionType.CONDITION,
-            branchName: 'Status 1',
-          },
-          {
-            branchType: BranchExecutionType.FALLBACK,
-            branchName: 'Otherwise',
-          },
-        ],
-        executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
-        inputUiInfo: {
-          customizedInputs: {
-            logoUrl: stepMetadata.logoUrl,
-            description: routerStepMetadata.description,
-          },
-        },
-      };
-
-      handleAddAction(
-        routerStepMetadata,
-        waitForApprovalStepData,
-        currentFlowVersion,
-        routerAction,
-        routerSettings,
-      );
-    }
     setAskAiButtonProps(null);
   };
   const isMobile = useIsMobile();
@@ -478,7 +558,6 @@ const PieceSelector = ({
             />
             <Separator orientation="horizontal" />
           </div>
-
           {!isMobile && (
             <div
               className=" flex   flex-row overflow-y-auto max-h-[300px] h-[300px] "
