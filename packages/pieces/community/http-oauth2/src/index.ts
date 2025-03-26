@@ -1,9 +1,8 @@
 import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
-import { OAuth2GrantType } from "@activepieces/shared";
-import { httpRequestWithOauth2 } from "./lib/actions/http-request-with-oauth2";
+import { httpOauth2RequestAction } from "./lib/actions/send-oauth2-http-request";
 
-export const auth = PieceAuth.OAuth2({
-  description: 'OAuth2 - Client Credentials',
+export const httpOauth2Auth = PieceAuth.OAuth2({
+  description: 'OAuth2',
   authUrl: '{authUrl}',
   tokenUrl: '{tokenUrl}',
   required: true,
@@ -25,19 +24,18 @@ export const auth = PieceAuth.OAuth2({
       description: 'OAuth2 Scopes',
     }),
   },
-  grantType: OAuth2GrantType.CLIENT_CREDENTIALS,
 });
 
 export const httpOauth2ClientCredentials = createPiece({
-  displayName: "HTTP Request - OAuth2 Client Credentials",
-  auth: auth,
+  displayName: "HTTP (OAuth2)",
+  auth: httpOauth2Auth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/http.png",
   authors: [
     'mhshiba'
   ],
   actions: [
-    httpRequestWithOauth2,
+    httpOauth2RequestAction,
   ],
   triggers: [],
 });

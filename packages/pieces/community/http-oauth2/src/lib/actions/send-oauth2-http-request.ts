@@ -9,18 +9,23 @@ import {
   HttpResponse,
   QueryParams,
 } from '@activepieces/pieces-common';
-import { auth } from '../..';
-import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { httpOauth2Auth } from '../..';
+import {
+  createAction,
+  DynamicPropsValue,
+  Property,
+} from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
 import FormData from 'form-data';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import axios from 'axios';
 
-export const httpRequestWithOauth2 = createAction({
-  auth: auth,
-  name: 'http_request_with_oauth2_client_credentials',
-  displayName: 'HTTP request with OAuth2 client credentials authentication',
-  description: 'Send HTTP request using OAuth2 client credentials authentication',
+export const httpOauth2RequestAction = createAction({
+  auth: httpOauth2Auth,
+  name: 'send-oauth2-request',
+  displayName: 'Send an OAuth2 Request',
+  description:
+    'Sends HTTP request to a specified URL that requires OAuth 2.0 authorization and returns the response.',
   props: {
     url: Property.ShortText({
       displayName: 'URL',
@@ -31,12 +36,12 @@ export const httpRequestWithOauth2 = createAction({
       required: true,
       options: {
         options: [
-          {value: HttpMethod.GET, label: 'GET'},
-          {value: HttpMethod.POST, label: 'POST'},
-          {value: HttpMethod.PUT, label: 'PUT'},
-          {value: HttpMethod.PATCH, label: 'PATCH'},
-          {value: HttpMethod.DELETE, label: 'DELETE'},
-        ]
+          { value: HttpMethod.GET, label: 'GET' },
+          { value: HttpMethod.POST, label: 'POST' },
+          { value: HttpMethod.PUT, label: 'PUT' },
+          { value: HttpMethod.PATCH, label: 'PATCH' },
+          { value: HttpMethod.DELETE, label: 'DELETE' },
+        ],
       },
     }),
     headers: Property.Object({
@@ -211,13 +216,16 @@ export const httpRequestWithOauth2 = createAction({
         assertNotNullOrUndefined(proxySettings['proxy_port'], 'Proxy Port');
         let proxyUrl;
 
-        if (proxySettings['proxy_username'] && proxySettings['proxy_password']) {
+        if (
+          proxySettings['proxy_username'] &&
+          proxySettings['proxy_password']
+        ) {
           proxyUrl = `http://${proxySettings['proxy_username']}:${proxySettings['proxy_password']}@${proxySettings['proxy_host']}:${proxySettings['proxy_port']}`;
         } else {
           proxyUrl = `http://${proxySettings['proxy_host']}:${proxySettings['proxy_port']}`;
         }
 
-        const httpsAgent = new HttpsProxyAgent(proxyUrl)
+        const httpsAgent = new HttpsProxyAgent(proxyUrl);
         const axiosClient = axios.create({
           httpsAgent,
         });
@@ -238,11 +246,14 @@ export const httpRequestWithOauth2 = createAction({
 });
 
 const handleResponse = (response: HttpResponse<HttpMessageBody>) => {
-  if (response.headers && response.headers['content-type'] === 'application/octet-stream') {
+  if (
+    response.headers &&
+    response.headers['content-type'] === 'application/octet-stream'
+  ) {
     return {
       ...response,
-      bodyBase64: Buffer.from(response.body, 'binary').toString('base64')
-    }
+      bodyBase64: Buffer.from(response.body, 'binary').toString('base64'),
+    };
   }
   return response;
-}
+};

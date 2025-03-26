@@ -1,7 +1,7 @@
 {
-  "name": "pieces-http-oauth2-authorization-code",
+  "name": "pieces-http-oauth2",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/http-oauth2-authorization-code/src",
+  "sourceRoot": "packages/pieces/community/http-oauth2/src",
   "projectType": "library",
   "release": {
     "version": {
@@ -19,12 +19,12 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/community/http-oauth2-authorization-code",
-        "tsConfig": "packages/pieces/community/http-oauth2-authorization-code/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/http-oauth2-authorization-code/package.json",
-        "main": "packages/pieces/community/http-oauth2-authorization-code/src/index.ts",
+        "outputPath": "dist/packages/pieces/community/http-oauth2",
+        "tsConfig": "packages/pieces/community/http-oauth2/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/http-oauth2/package.json",
+        "main": "packages/pieces/community/http-oauth2/src/index.ts",
         "assets": [
-          "packages/pieces/community/http-oauth2-authorization-code/*.md"
+          "packages/pieces/community/http-oauth2/*.md"
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
