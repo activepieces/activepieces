@@ -170,6 +170,36 @@ export const askGroq = createAction({
 			await store.put(memoryKey, messageHistory, StoreScope.PROJECT);
 		}
 
-		return completion.body.choices[0].message.content;
+		// Get the raw content from the response
+		const rawContent = completion.body.choices[0].message.content;
+		
+		// Check if the response contains thinking (content inside <think> tags)
+		const thinkRegex = /<think>([\s\S]*?)<\/think>/;
+		const thinkMatch = rawContent.match(thinkRegex);
+		
+		// Create the response structure
+		const responseStructure = [];
+		
+		if (thinkMatch) {
+			// Extract the thinking content
+			const thinkContent = thinkMatch[1].trim();
+			
+			// Extract the final answer (content after the last </think> tag)
+			const finalContent = rawContent.split('</think>').pop()?.trim() || '';
+			
+			// Add to response structure
+			responseStructure.push({
+				Think: thinkContent,
+				Content: finalContent
+			});
+		} else {
+			// If no thinking tags, just return the content as is
+			responseStructure.push({
+				Think: null,
+				Content: rawContent
+			});
+		}
+		
+		return responseStructure;
 	},
 });
