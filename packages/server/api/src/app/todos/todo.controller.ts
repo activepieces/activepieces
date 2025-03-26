@@ -1,4 +1,4 @@
-import { ALL_PRINCIPAL_TYPES, ApproveTodoRequestQuery, CreateTodoRequestBody, ListTodoAssigneesRequestQuery, ListTodosQueryParams, PrincipalType, SeekPage, UpdateTodoRequestBody, UserWithMetaInformation } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, CreateTodoRequestBody, ListTodoAssigneesRequestQuery, ListTodosQueryParams, PrincipalType, ResolveTodoRequestQuery, SeekPage, UpdateTodoRequestBody, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -32,7 +32,7 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/', CreateTodoRequest, async (request) => {
-        const { title, description, statusOptions, flowId, runId, assigneeId, approvalUrl } = request.body
+        const { title, description, statusOptions, flowId, runId, assigneeId, resolveUrl } = request.body
         return todoService(request.log).create({
             title,
             description,
@@ -40,7 +40,7 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
             flowId,
             runId,
             assigneeId,
-            approvalUrl,
+            resolveUrl,
             platformId: request.principal.platform.id,
             projectId: request.principal.projectId,
         })
@@ -62,7 +62,7 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
     
-    app.all('/:id/resolve', RequestApproveTodoRequest, async (request) => {
+    app.all('/:id/resolve', RequestResolveTodoRequest, async (request) => {
         const { id } = request.params
         const { status, isTest } = request.query
         return todoService(request.log).resolve({
@@ -116,12 +116,12 @@ const CreateTodoRequest = {
     },
 }
 
-const RequestApproveTodoRequest = {
+const RequestResolveTodoRequest = {
     schema: {
         params: Type.Object({
             id: Type.String(),
         }),
-        querystring: ApproveTodoRequestQuery,
+        querystring: ResolveTodoRequestQuery,
     },
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,

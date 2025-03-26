@@ -196,7 +196,7 @@ const CreateTodoGuide = ({
                   <p className="text-sm text-muted-foreground italic text-center mb-2">
                     {displayImageType === TodoType.INTERNAL
                       ? t(
-                          'The Activepieces Todo allows users to review and approve tasks directly in the Activepieces interface',
+                          'The Activepieces Todo allows users to review and resolve tasks directly in the Activepieces interface',
                         )
                       : t(
                           'You can add the channel before the Wait Step, and configure the logic in the Router step',

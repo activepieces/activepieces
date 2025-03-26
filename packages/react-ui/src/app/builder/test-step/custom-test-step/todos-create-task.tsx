@@ -181,7 +181,7 @@ function ManualTaskTestingDialog({
       const response = output as TodoWithAssignee;
       const statusName = response['status'].name;
       const statusOptions = response['statusOptions'];
-      const publicUrl = response['approvalUrl']?.split('/flow-runs/')[0];
+      const publicUrl = response['resolveUrl']?.split('/flow-runs/')[0];
       const links = statusOptions.map((option) => ({
         status: option.name,
         url:
