@@ -1,3 +1,4 @@
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -17,12 +18,11 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { system } from '../../helper/system/system'
 import { fieldService } from '../field/field.service'
 import { RecordEntity } from '../record/record.entity'
 import { TableWebhookEntity } from './table-webhook.entity'
 import { TableEntity } from './table.entity'
-import { system } from '../../helper/system/system'
-import { AppSystemProp } from '@activepieces/server-shared'
 
 const tableRepo = repoFactory(TableEntity)
 const recordRepo = repoFactory(RecordEntity)

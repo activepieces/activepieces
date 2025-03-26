@@ -16,13 +16,13 @@ import { NewFieldPopup } from '@/features/tables/components/new-field-popup';
 import { SelectColumn } from '@/features/tables/components/select-column';
 import { Row, ROW_HEIGHT_MAP, RowHeight } from '@/features/tables/lib/types';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 import { ApFlagId, Permission } from '@activepieces/shared';
 
 import './react-data-grid.css';
 import { useTableState } from '../../../../features/tables/components/ap-table-state-provider';
 import { ClientRecordData } from '../../../../features/tables/lib/store/ap-tables-client-state';
-import { flagsHooks } from '@/hooks/flags-hooks';
 
 const ApTableEditorPage = () => {
   const [
@@ -47,14 +47,20 @@ const ApTableEditorPage = () => {
 
   const gridRef = useRef<DataGridHandle>(null);
   const { theme } = useTheme();
-  const { data: maxRecords } = flagsHooks.useFlag<number>(ApFlagId.MAX_RECORDS_PER_TABLE)
-  const { data: maxFields } = flagsHooks.useFlag<number>(ApFlagId.MAX_FIELDS_PER_TABLE)
+  const { data: maxRecords } = flagsHooks.useFlag<number>(
+    ApFlagId.MAX_RECORDS_PER_TABLE,
+  );
+  const { data: maxFields } = flagsHooks.useFlag<number>(
+    ApFlagId.MAX_FIELDS_PER_TABLE,
+  );
 
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
-  const isAllowedToCreateRecord = userHasTableWritePermission && maxRecords &&  records.length <= maxRecords
-  const isAllowedToCreateField = userHasTableWritePermission && maxFields &&  fields.length <= maxFields
+  const isAllowedToCreateRecord =
+    userHasTableWritePermission && maxRecords && records.length <= maxRecords;
+  const isAllowedToCreateField =
+    userHasTableWritePermission && maxFields && fields.length <= maxFields;
 
   const createEmptyRecord = () => {
     createRecord({

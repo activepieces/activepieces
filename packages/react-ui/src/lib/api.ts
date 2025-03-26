@@ -2,6 +2,7 @@ import axios, {
   AxiosError,
   AxiosRequestConfig,
   AxiosResponse,
+  HttpStatusCode,
   isAxiosError,
 } from 'axios';
 import qs from 'qs';
@@ -141,5 +142,5 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       params: params,
     }),
+    httpStatus: HttpStatusCode
 };
-

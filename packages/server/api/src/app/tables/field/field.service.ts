@@ -1,8 +1,8 @@
+import { AppSystemProp } from '@activepieces/server-shared'
 import { ActivepiecesError, apId, CreateFieldRequest, ErrorCode, Field, isNil, UpdateFieldRequest } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
-import { FieldEntity } from './field.entity'
 import { system } from '../../helper/system/system'
-import { AppSystemProp } from '@activepieces/server-shared'
+import { FieldEntity } from './field.entity'
 
 const fieldRepo = repoFactory<Field>(FieldEntity)
 
