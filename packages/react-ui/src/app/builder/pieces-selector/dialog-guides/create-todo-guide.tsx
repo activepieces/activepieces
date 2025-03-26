@@ -170,7 +170,9 @@ const CreateTodoGuide = ({
               <div className="border rounded-lg overflow-hidden p-3 w-full h-full">
                 <div className="flex flex-col items-center h-[480px]">
                   <h3 className="text-md font-medium mb-3 text-center">
-                    {t('Preview')}
+                    {displayImageType === TodoType.INTERNAL
+                      ? t('Preview (Activepieces Todos)')
+                      : t('Preview (External channel)')}
                   </h3>
 
                   {/* Fixed height image container with gradient overlay */}
