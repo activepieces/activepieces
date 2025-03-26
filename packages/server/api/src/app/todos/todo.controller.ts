@@ -1,4 +1,4 @@
-import { ALL_PRINCIPAL_TYPES, CreateTodoRequestBody, ListTodoAssigneesRequestQuery, ListTodosQueryParams, PrincipalType, SeekPage, UpdateTodoRequestBody, UserWithMetaInformation } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, ApproveTodoRequestQuery, CreateTodoRequestBody, ListTodoAssigneesRequestQuery, ListTodosQueryParams, PrincipalType, SeekPage, UpdateTodoRequestBody, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -121,10 +121,7 @@ const RequestApproveTodoRequest = {
         params: Type.Object({
             id: Type.String(),
         }),
-        querystring: Type.Object({
-            status: Type.String(),
-            isTest: Type.Optional(Type.Boolean()),
-        }),
+        querystring: ApproveTodoRequestQuery,
     },
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,

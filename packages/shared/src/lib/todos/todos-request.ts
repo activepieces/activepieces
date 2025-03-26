@@ -42,3 +42,9 @@ export const CreateTodoRequestBody = Type.Object({
     approvalUrl: Type.Optional(Type.String()),
 })
 export type CreateTodoRequestBody = Static<typeof CreateTodoRequestBody>
+
+export const ApproveTodoRequestQuery = Type.Object({
+    status: Type.String(),
+    isTest: Type.Optional(Type.Boolean()),
+})
+export type ApproveTodoRequestQuery = Static<typeof ApproveTodoRequestQuery>
