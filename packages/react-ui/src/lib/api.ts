@@ -142,5 +142,5 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       params: params,
     }),
-    httpStatus: HttpStatusCode
+  httpStatus: HttpStatusCode,
 };

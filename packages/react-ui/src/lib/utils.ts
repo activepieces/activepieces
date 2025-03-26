@@ -29,6 +29,7 @@ export const formatUtils = {
   formatNumber(number: number) {
     return new Intl.NumberFormat('en-US').format(number);
   },
+
   formatDateOnlyOrFail(date: Date, fallback: string) {
     try {
       return this.formatDateOnly(date);

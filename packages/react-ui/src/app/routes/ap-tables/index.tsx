@@ -80,7 +80,10 @@ const ApTablesPage = () => {
       );
     },
     onError: (err: Error) => {
-      if (api.isError(err) && err.response?.status === api.httpStatus.Conflict) {
+      if (
+        api.isError(err) &&
+        err.response?.status === api.httpStatus.Conflict
+      ) {
         toast({
           title: t('Max tables reached'),
           description: t(`You can't create more than {maxTables} tables`, {
