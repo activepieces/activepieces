@@ -7,31 +7,20 @@ import { mcpService } from './mcp-service';
 import { FastifyReply } from "fastify";
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
 import { FastifyBaseLogger } from 'fastify';
+import { EngineHelperResponse } from "packages/server/worker/src/lib/engine/engine-runner";
+import { EngineResponseStatus, ExecuteActionResponse, TriggerHookType } from "@activepieces/shared";
+import { UserInteractionJobType } from "@activepieces/server-shared";
+import { EngineHelperActionResult, EngineHelperTriggerResult } from "packages/server/worker/src/lib/engine/engine-runner";
+import { userInteractionWatcher } from "../../workers/user-interaction-watcher";
 
-/**
- * Creates an MCP server instance for a given MCP ID
- */
 export async function createMcpServer({
     mcpId,
     reply,
     logger,
-}: {
-    mcpId: string,
-    reply: FastifyReply,
-    logger: FastifyBaseLogger,
-}): Promise<{
-    server: McpServer;
-    transport: SSEServerTransport;
-}> {
-
-    const mcp = await mcpService(logger).get({
-        mcpId,
-    });
-
+}: CreateMcpServerRequest): Promise<CreateMcpServerResponse> {
+    const mcp = await mcpService(logger).get({ mcpId });
     const projectId = mcp.projectId;
-
     const platformId = await projectService.getPlatformId(projectId);
-
     const connections = mcp.connections;
 
     const pieceNames = connections.map((connection) => connection.pieceName);
@@ -56,21 +45,51 @@ export async function createMcpServer({
             if (uniqueActions.has(action.name)) {
                 return;
             }
+            const pieceConnectionExternalId = connections.find(connection => connection.pieceName === piece.name)?.externalId;
             uniqueActions.add(action.name);
             server.tool(
                 action.name,
                 action.description,
                 Object.fromEntries(
-                    Object.entries(action.props).map(([key, prop]) =>
+                    Object.entries(action.props).filter(([key, prop]) => prop.type !== PropertyType.MARKDOWN).map(([key, prop]) =>
                         [key, piecePropertyToZod(prop)]
                     )
                 ),
-                async (params) => ({
-                    content: [{
-                        type: "text",
-                        text: `Executed ${action.displayName}: ${action.description}`
-                    }]
-                })
+                async (params) => {
+                    const result = await userInteractionWatcher(logger).submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
+                        jobType: UserInteractionJobType.EXECUTE_TOOL,
+                        actionName: action.name,
+                        pieceName: piece.name,
+                        pieceVersion: piece.version,
+                        packageType: piece.packageType,
+                        pieceType: piece.pieceType,
+                        input: {
+                            'auth': `{{connections['${pieceConnectionExternalId}']}}`,
+                            ...params,
+                        },
+                        projectId,
+                    })
+
+                    if (result.status === EngineResponseStatus.OK) {
+                        return {
+                            content: [{
+                                type: "text",
+                                text: `✅ Successfully executed ${action.displayName}\n\n` +
+                                      `${action.description}\n\n` +
+                                      `\`\`\`json\n${JSON.stringify(result.result, null, 2)}\n\`\`\``
+                            }]
+                        }
+                    } else {
+                        return {
+                            content: [{
+                                type: "text",
+                                text: `❌ Error executing ${action.displayName}\n\n` +
+                                      `${action.description}\n\n` +
+                                      `\`\`\`\n${result.standardError || "Unknown error occurred"}\n\`\`\``
+                            }]
+                        }
+                    }
+                }
             );
         })
     );
@@ -94,14 +113,20 @@ function piecePropertyToZod(property: PieceProperty): z.ZodTypeAny {
             schema = z.boolean();
             break;
         case PropertyType.ARRAY:
-            schema = z.array(z.any());
+            schema = z.array(z.unknown());
             break;
         case PropertyType.OBJECT:
         case PropertyType.JSON:
-            schema = z.record(z.string(), z.any());
+            schema = z.record(z.string(), z.unknown());
+            break;
+        case PropertyType.MULTI_SELECT_DROPDOWN:
+            schema = z.array(z.string());
+            break;
+        case PropertyType.DROPDOWN:
+            schema = z.string();
             break;
         default:
-            schema = z.any();
+            schema = z.unknown();
     }
 
     if (property.description) {
@@ -109,4 +134,15 @@ function piecePropertyToZod(property: PieceProperty): z.ZodTypeAny {
     }
 
     return property.required ? schema : schema.optional();
+}
+
+export type CreateMcpServerRequest = {
+    mcpId: string,
+    reply: FastifyReply,
+    logger: FastifyBaseLogger,
+}
+
+export type CreateMcpServerResponse = {
+    server: McpServer;
+    transport: SSEServerTransport;
 }

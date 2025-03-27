@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { FastifyBaseLogger } from 'fastify';
+import { isNil } from "packages/shared/src/lib/common/utils";
 
 interface SessionData {
     server: McpServer;
@@ -16,31 +17,22 @@ export const mcpSessionManager = (logger: FastifyBaseLogger) => {
             if (sessions.has(sessionId)) {
                 throw new Error("Session already exists");
             }
-            
             sessions.set(sessionId, { server, transport });
             logger.info({ sessionId }, 'MCP session added');
         },
 
 
-        remove: (sessionId: string): void => {
+        remove: async (sessionId: string): Promise<void> => {
+            logger.info({ sessionId }, 'Removing MCP session');
             const session = sessions.get(sessionId);
-            if (session) {
-                
-                try {
-                    sessions.delete(sessionId);
-                    logger.info({ sessionId }, 'MCP session removed');
-                } catch (error) {
-                    logger.error({ error, sessionId }, 'Error while removing MCP session');
-                }
+            if (isNil(session)) {
+                return;
             }
+            await session.server.close();
+            await session.transport.close();
+            sessions.delete(sessionId);
         },
 
-        removeAll: (): void => {
-            for (const [sessionId, session] of sessions.entries()) {
-                sessions.delete(sessionId);
-            }
-        },
-        
         get: (sessionId: string): SessionData | undefined => {
             return sessions.get(sessionId);
         },

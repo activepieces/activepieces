@@ -1,4 +1,4 @@
-import { ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, TriggerHookType } from '@activepieces/shared'
+import { ExecuteToolOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -84,6 +84,28 @@ export class EngineConstants {
         )
     }
 
+    public static fromExecuteActionInput(input: ExecuteToolOperation): EngineConstants {
+        return new EngineConstants(
+            'mcp-flow-id',
+            'mcp-flow-version-id',
+            FlowVersionState.LOCKED,
+            'mcp-flow-run-id',
+            input.publicApiUrl,
+            addTrailingSlashIfMissing(input.internalApiUrl),
+            DEFAULT_RETRY_CONSTANTS,
+            input.engineToken,
+            input.projectId,
+            createPropsResolver({
+                projectId: input.projectId,
+                engineToken: input.engineToken,
+                apiUrl: addTrailingSlashIfMissing(input.internalApiUrl),
+            }),
+            true,
+            ProgressUpdateType.NONE,
+            null,
+            null,
+        )
+    }
     public static fromExecuteStepInput(input: ExecuteStepOperation): EngineConstants {
         return new EngineConstants(
             input.flowVersion.flowId,

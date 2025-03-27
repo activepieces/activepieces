@@ -1,28 +1,16 @@
 import { t } from 'i18next';
-import { useEffect, useState } from 'react';
-
 import { Button } from '../../../../components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '../../../../components/ui/card';
 import { Label } from '../../../../components/ui/label';
 import { Separator } from '../../../../components/ui/separator';
 import { appConnectionsHooks } from '../../../../features/connections/lib/app-connections-hooks';
-import { PieceIcon } from '../../../../features/pieces/components/piece-icon';
 import { piecesHooks } from '../../../../features/pieces/lib/pieces-hook';
 import { CopyButton } from '../../../../components/ui/copy-button';
-import { Badge } from '../../../../components/ui/badge';
 import { mcpApi } from '../../../../features/mcp/mcp-api';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { NewConnectionDialog } from '../../../connections/new-connection-dialog';
 import { InfoCircledIcon, ReloadIcon } from '@radix-ui/react-icons';
 import { Globe, KeyRound } from 'lucide-react';
-import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
+import { ApFlagId, AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import {
   Tooltip,
   TooltipContent,
@@ -30,18 +18,15 @@ import {
   TooltipTrigger,
 } from '../../../../components/ui/tooltip';
 import { useToast } from '../../../../components/ui/use-toast';
+import { McpConnection } from './mcp-connection';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 
 export default function MCPPage() {
-  const [usedConnectionIds, setUsedConnectionIds] = useState<Set<string>>(new Set());
-  const [usedPieceNames, setUsedPieceNames] = useState<Set<string>>(new Set());
-  const [isRotating, setIsRotating] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
+  const { data: publicUrl} = flagsHooks.useFlag(ApFlagId.PUBLIC_URL)
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
-  
+
   const { data: mcp, isLoading: isMcpLoading, refetch: refetchMcp } = useQuery({
     queryKey: ['mcp'],
     queryFn: () => {
@@ -49,12 +34,7 @@ export default function MCPPage() {
     },
   });
 
-  // console.log('mcp', mcp);
-
-  // Generate the server URL based on the current hostname
-  // TODO: change to the production URL
-  const serverBaseUrl = "http://localhost:3000" + '/v1/mcp/';
-  const serverUrl = serverBaseUrl + (mcp?.token || '') + '/sse';
+  const serverUrl = publicUrl + 'api/v1/mcp/' + (mcp?.token || '') + '/sse';
 
   const { pieces } = piecesHooks.usePieces({});
 
@@ -63,165 +43,102 @@ export default function MCPPage() {
     limit: 100,
   });
 
-  useEffect(() => {
-    if (mcp?.connections) {
-      const connectionIds = new Set(mcp.connections.map((connection) => connection.id));
-      setUsedConnectionIds(connectionIds);
-      
-      const pieceNames = new Set(
-        mcp.connections.map((connection) => connection.pieceName)
-      );
+  // Derive state from mcp data directly instead of using useEffect
+  const usedConnectionIds = new Set(mcp?.connections?.map(connection => connection.id) || []);
+  const usedPieceNames = new Set(mcp?.connections?.map(connection => connection.pieceName) || []);
 
-      setUsedPieceNames(pieceNames);
-      setHasChanges(false);
-    } else {
-      setUsedConnectionIds(new Set());
-      setUsedPieceNames(new Set());
-    }
-  }, [mcp]);
-
-  const toggleConnection = (connection: AppConnectionWithoutSensitiveData) => {
-    setUsedConnectionIds((prev) => {
-      const newSet = new Set(prev);
-      const pieceName = connection.pieceName;
-      
-      if (newSet.has(connection.id)) {
-        newSet.delete(connection.id);
-        
-        setUsedPieceNames(prevPieces => {
-          const newPieceNames = new Set(prevPieces);
-          newPieceNames.delete(pieceName);
-          return newPieceNames;
-        });
-      } else {
-        if (usedPieceNames.has(pieceName)) {
-          // Find and remove the existing connection with this piece
-          const existingConnectionId = Array.from(prev).find(id => {
-            const conn = connections?.find(c => c.id === id);
-            return conn && conn.pieceName === pieceName;
-          });
-          
-          if (existingConnectionId) {
-            newSet.delete(existingConnectionId);
-            
-            // Find the name of the replaced connection for better user feedback
-            const replacedConnection = connections?.find(c => c.id === existingConnectionId);
-            const replacedName = replacedConnection?.displayName || '';
-            
-            toast({
-              description: t(`Replaced '${replacedName}' with '${connection.displayName}'`),
-              duration: 3000,
-            });
-          }
-        }
-        
-        newSet.add(connection.id);
-        
-        setUsedPieceNames(prevPieces => {
-          const newPieceNames = new Set(prevPieces);
-          newPieceNames.add(pieceName);
-          return newPieceNames;
-        });
-      }
-      
-      
-      setHasChanges(true);
-      return newSet;
-    });
-  };
-
-  const handleSaveChanges = async () => {
-    if (!mcp?.id) return;
-    
-    setIsSaving(true);
-    const connectionIds = Array.from(usedConnectionIds);
-    
-    try {
-      await mcpApi.update({
-        id: mcp.id,
+  const updateMutation = useMutation({
+    mutationFn: async ({
+      mcpId,
+      connectionIds,
+    }: {
+      mcpId: string;
+      connectionIds: string[];
+    }) => {
+      return mcpApi.update({
+        id: mcpId,
         connectionsIds: connectionIds,
       });
+    },
+    onSuccess: () => {
       toast({
-        description: t('Changes saved successfully'),
+        description: t('Connection updated successfully'),
         duration: 3000,
       });
-      
-      // Refresh data from server
-      await queryClient.invalidateQueries({ queryKey: ['mcp'] });
-      await refetchMcp();
-      setHasChanges(false);
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: t('Error'),
-        description: t('Failed to save changes'),
-        duration: 5000,
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleCancel = async () => {
-    try {
-      // Use the cached data immediately for a responsive UI
-      if (mcp?.connections) {
-        const connectionIds = new Set(mcp.connections.map((connection) => connection.id));
-        setUsedConnectionIds(connectionIds);
-        
-        const pieceNames = new Set(
-          mcp.connections.map((connection) => connection.pieceName)
-        );
-        setUsedPieceNames(pieceNames);
-      } else {
-        setUsedConnectionIds(new Set());
-        setUsedPieceNames(new Set());
-      }
-      
-      // Clear the changes flag immediately
-      setHasChanges(false);
-      
-      // Show toast
-      toast({
-        description: t('Changes discarded'),
-        duration: 3000,
-      });
-      
-      // Refresh in the background without waiting
       queryClient.invalidateQueries({ queryKey: ['mcp'] });
-      refetchMcp();
-    } catch (error) {
+    },
+    onError: () => {
       toast({
         variant: 'destructive',
         title: t('Error'),
-        description: t('Failed to discard changes'),
+        description: t('Failed to update connection'),
         duration: 5000,
       });
-    }
-  };
+    },
+  });
 
-  const handleRotateToken = async () => {
-    if (!mcp?.id) return;
-    
-    setIsRotating(true);
-    try {
-      await mcpApi.rotateToken(mcp.id);
+  const rotateMutation = useMutation({
+    mutationFn: async (mcpId: string) => {
+      return mcpApi.rotateToken(mcpId);
+    },
+    onSuccess: () => {
       toast({
         description: t('Token rotated successfully'),
         duration: 3000,
       });
-      await queryClient.invalidateQueries({ queryKey: ['mcp'] });
-      await refetchMcp();
-    } catch (error) {
+      queryClient.invalidateQueries({ queryKey: ['mcp'] });
+      refetchMcp();
+    },
+    onError: () => {
       toast({
         variant: 'destructive',
         title: t('Error'),
         description: t('Failed to rotate token'),
         duration: 5000,
       });
-    } finally {
-      setIsRotating(false);
     }
+  });
+
+  const toggleConnection = async (connection: AppConnectionWithoutSensitiveData) => {
+    if (!mcp?.id || updateMutation.isPending) return;
+
+    const newConnectionIds = new Set(usedConnectionIds);
+    const pieceName = connection.pieceName;
+
+    if (newConnectionIds.has(connection.id)) {
+      newConnectionIds.delete(connection.id);
+    } else {
+      if (usedPieceNames.has(pieceName)) {
+        const existingConnectionId = Array.from(usedConnectionIds).find(id => {
+          const conn = connections?.find(c => c.id === id);
+          return conn && conn.pieceName === pieceName;
+        });
+
+        if (existingConnectionId) {
+          newConnectionIds.delete(existingConnectionId);
+          const replacedConnection = connections?.find(c => c.id === existingConnectionId);
+          const replacedName = replacedConnection?.displayName || '';
+
+          toast({
+            description: t(`Replaced '${replacedName}' with '${connection.displayName}'`),
+            duration: 3000,
+          });
+        }
+      }
+
+      newConnectionIds.add(connection.id);
+    }
+
+    // Save changes to the server
+    updateMutation.mutate({
+      mcpId: mcp.id,
+      connectionIds: Array.from(newConnectionIds),
+    });
+  };
+
+  const handleRotateToken = () => {
+    if (!mcp?.id) return;
+    rotateMutation.mutate(mcp.id);
   };
 
   const getPieceInfo = (connection: AppConnectionWithoutSensitiveData) => {
@@ -234,25 +151,26 @@ export default function MCPPage() {
 
   return (
     <div className="w-full flex flex-col items-center justify-center gap-6 pb-8">
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Model Context Protocol</CardTitle>
-          <CardDescription>
+      <div className="w-full space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold mb-2">Model Context Protocol</h1>
+          <p className="text-muted-foreground">
             Configure your MCP server and expose your connections as AI tools.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+          </p>
+        </div>
+
+        <div className="space-y-6">
           {/* Educational section - designed like other Activepieces components */}
           <div className="flex items-start space-x-2 p-4 bg-muted rounded-md text-sm">
             <InfoCircledIcon className="h-4 w-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
             <div className="space-y-1">
               <p className="font-medium text-foreground">About Model Context Protocol (MCP)</p>
               <p className="text-muted-foreground">
-                MCP is an open protocol that lets AI agents securely connect to external tools and data sources. 
+                MCP is an open protocol that lets AI agents securely connect to external tools and data sources.
                 Activepieces implements MCP to expose your connections as AI tools.
               </p>
               <p className="text-muted-foreground mt-1">
-                <span className="font-medium">To use with Cursor:</span> Go to Settings → MCP and click "Add new global MCP server". 
+                <span className="font-medium">To use with Cursor:</span> Go to Settings → MCP and click "Add new global MCP server".
                 Add this URL to your <span className="font-mono text-xs">mcp.json</span> configuration file.
               </p>
             </div>
@@ -265,14 +183,14 @@ export default function MCPPage() {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       className="flex items-center gap-1 text-primary border-primary hover:bg-primary/10"
                       onClick={handleRotateToken}
-                      disabled={isRotating || !mcp?.id}
+                      disabled={rotateMutation.isPending || !mcp?.id}
                     >
-                      {isRotating ? (
+                      {rotateMutation.isPending ? (
                         <ReloadIcon className="h-3.5 w-3.5 mr-1 animate-spin" />
                       ) : (
                         <KeyRound className="h-3.5 w-3.5 mr-1" />
@@ -304,14 +222,11 @@ export default function MCPPage() {
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium">{t('Your Connections')}</h3>
               <div className="flex items-center gap-2">
-                <Badge variant="outline">
-                  {usedConnectionIds.size} {t('Used')}
-                </Badge>
-                <NewConnectionDialog 
+                <NewConnectionDialog
                   onConnectionCreated={refetchConnections}
                   isGlobalConnection={false}
                 >
-                  <Button 
+                  <Button
                     variant="default"
                     size="sm"
                     className="flex items-center gap-1"
@@ -333,63 +248,21 @@ export default function MCPPage() {
                   const pieceInfo = getPieceInfo(connection);
                   const isUsed = usedConnectionIds.has(connection.id);
                   return (
-                    <Card
+                    <McpConnection
                       key={connection.id}
-                      className={`overflow-hidden transition-all duration-200 ${
-                        isUsed ? 'border-primary/30' : ''
-                      }`}
-                    >
-                      <CardContent className="flex flex-row items-start justify-between p-4 gap-3">
-                        <div className="flex items-center space-x-3 min-w-0 py-2">
-                          <PieceIcon
-                            displayName={pieceInfo.displayName}
-                            logoUrl={pieceInfo.logoUrl}
-                            size="md"
-                            showTooltip={true}
-                            circle={true}
-                            border={true}
-                          />
-                          <div className="min-w-0">
-                            <h4 className="font-medium truncate">{connection.displayName}</h4>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {connection.pieceName}
-                            </p>
-                          </div>
-                        </div>
-                        <Button 
-                          variant="outline"
-                          size="sm"
-                          onClick={() => toggleConnection(connection)}
-                          className={`shrink-0 min-w-[80px] ${
-                            isUsed ? 'text-destructive hover:text-destructive' : 'text-primary hover:text-primary'
-                          }`}
-                        >
-                          {isUsed ? t('Remove') : t('Use')}
-                        </Button>
-                      </CardContent>
-                    </Card>
+                      connection={connection}
+                      isUsed={isUsed}
+                      isUpdating={updateMutation.isPending}
+                      pieceInfo={pieceInfo}
+                      onToggle={toggleConnection}
+                    />
                   );
                 })
               )}
             </div>
           </div>
-        </CardContent>
-        <CardFooter className="flex justify-end space-x-2 pt-4">
-          <Button 
-            variant="outline" 
-            onClick={handleCancel}
-            disabled={!hasChanges || isSaving}
-          >
-            {t('Cancel')}
-          </Button>
-          <Button 
-            onClick={handleSaveChanges}
-            disabled={isSaving || !hasChanges}
-          >
-            {isSaving ? t('Saving...') : t('Save Changes')}
-          </Button>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

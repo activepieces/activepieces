@@ -1,8 +1,11 @@
 import {
+    Action,
+    ActionType,
     EngineOperation,
     EngineOperationType,
     EngineResponse,
     EngineResponseStatus,
+    ExecuteToolOperation,
     ExecuteActionResponse,
     ExecuteExtractPieceMetadata,
     ExecuteFlowOperation,
@@ -50,6 +53,42 @@ const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorCon
     }
 }
 
+
+async function executeActionForTool(input: ExecuteToolOperation): Promise<ExecuteActionResponse> {
+    const step: Action = {
+        name: input.actionName,
+        displayName: input.actionName,
+        type: ActionType.PIECE,
+        settings: { 
+            input: input.input,
+            actionName: input.actionName,
+            pieceName: input.pieceName,
+            pieceVersion: input.pieceVersion,
+            pieceType: input.pieceType,
+            packageType: input.packageType,
+            inputUiInfo: {},
+            errorHandlingOptions: {
+                continueOnFailure: {
+                    value: false,
+                },
+                retryOnFailure: {
+                    value: false,
+                },
+            },
+        },
+        valid: true,
+    }
+    const output = await flowExecutor.getExecutorForAction(step.type).handle({
+        action: step,
+        executionState: FlowExecutorContext.empty(),
+        constants: EngineConstants.fromExecuteActionInput(input),
+    })
+    return {
+        success: output.verdict !== ExecutionVerdict.FAILED,
+        input: output.steps[step.name].input,
+        output: cleanSampleData(output.steps[step.name]),
+    }
+}
 
 async function executeStep(input: ExecuteStepOperation): Promise<ExecuteActionResponse> {
     const step = flowStructureUtil.getActionOrThrow(input.stepName, input.flowVersion.trigger)
@@ -147,6 +186,14 @@ export async function execute(operationType: EngineOperationType, operation: Eng
                     params: input,
                     constants: EngineConstants.fromExecuteTriggerInput(input),
                 })
+                return {
+                    status: EngineResponseStatus.OK,
+                    response: output,
+                }
+            }
+            case EngineOperationType.EXECUTE_TOOL: {
+                const input = operation as ExecuteToolOperation
+                const output = await executeActionForTool(input)
                 return {
                     status: EngineResponseStatus.OK,
                     response: output,

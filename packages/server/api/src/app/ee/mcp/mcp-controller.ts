@@ -6,11 +6,9 @@ import { mcpSessionManager } from './mcp-session-manager'
 import { MCP } from '@activepieces/ee-shared'
 import { StatusCodes } from 'http-status-codes'
 
-let sessionManager: ReturnType<typeof mcpSessionManager>;
 
 export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
-    sessionManager = mcpSessionManager(app.log);
-    
+
     app.get('/', GetMCPRequest, async (req) => {
         return mcpService(req.log).getOrCreate({
             projectId: req.principal.projectId,
@@ -20,14 +18,14 @@ export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', UpdateMCPRequest, async (req) => {
         const mcpId = req.params.id;
         const { token, connectionsIds } = req.body;
-        
+
         return mcpService(req.log).update({
             mcpId,
             token,
             connectionsIds,
         });
     })
-    
+
     app.post('/:id/rotate', RotateTokenRequest, async (req) => {
         const mcpId = req.params.id;
         return mcpService(req.log).rotateToken({
@@ -37,70 +35,71 @@ export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.delete('/:id', DeleteMCPRequest, async (req) => {
         const mcpId = req.params.id;
-        
-        sessionManager.removeAll();
-        
         return mcpService(req.log).delete({
             mcpId,
         })
     })
 
-    app.get('/:id/sse', {
-        config: {
-            allowedPrincipals: ALL_PRINCIPAL_TYPES,
-        },
-        schema: {
-            params: Type.Object({
-                id: ApId,
-            }),
-        },
-    }, async (req, reply) => {
+    app.get('/:id/sse', SSERequest, async (req, reply) => {
         const token = req.params.id;
         const mcp = await mcpService(req.log).getByToken({
             token
         });
-        
+
         const { server, transport } = await createMcpServer({
             mcpId: mcp.id,
             reply,
             logger: req.log,
         });
-        
+
         await server.connect(transport);
-        
-        sessionManager.add(transport.sessionId, server, transport, mcp.id);
-        
-        reply.raw.on("close", () => {
-            sessionManager.remove(transport.sessionId);
+
+        mcpSessionManager(req.log).add(transport.sessionId, server, transport, mcp.id);
+
+        reply.raw.on("close", async () => {
+            await mcpSessionManager(req.log).remove(transport.sessionId);
         });
     })
 
-    app.post('/messages', {
-        config: {
-            allowedPrincipals: ALL_PRINCIPAL_TYPES,
-        },
-        schema: {
-            querystring: Type.Object({
-                sessionId: Type.Optional(Type.String()),
-            }),
-        },
-    }, async (req, reply) => {
+    app.post('/messages', MessagesRequest, async (req, reply) => {
         const sessionId = req.query?.sessionId as string;
-        
+
         if (!sessionId) {
             reply.code(400).send({ message: 'Missing session ID' });
             return;
         }
-        
-        const sessionData = sessionManager.get(sessionId);
-        
+
+        const sessionData = mcpSessionManager(req.log).get(sessionId);
+
         if (!sessionData) {
             reply.code(404).send({ message: 'Session not found' });
             return;
         }
-        
+
         await sessionData.transport.handlePostMessage(req.raw, reply.raw, req.body);
     })
+}
+
+const MessagesRequest = {
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+    },
+    schema: {
+        querystring: Type.Object({
+            sessionId: Type.Optional(Type.String()),
+        }),
+    },
+}
+
+const SSERequest = {
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+    },
+    schema: {
+        params: Type.Object({
+            id: ApId,
+        }),
+    },
 }
 
 const GetMCPRequest = {

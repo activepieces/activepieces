@@ -3,13 +3,14 @@ import { AppConnectionValue } from '../app-connection/app-connection'
 import { ExecutionState, ExecutionType, ResumePayload } from '../flow-run/execution/execution-output'
 import { FlowRunId, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
-import { PiecePackage } from '../pieces'
+import { PackageType, PieceType, PiecePackage } from '../pieces'
 import { PlatformId } from '../platform'
 import { ProjectId } from '../project/project'
 
 export enum EngineOperationType {
     EXTRACT_PIECE_METADATA = 'EXTRACT_PIECE_METADATA',
     EXECUTE_STEP = 'EXECUTE_STEP',
+    EXECUTE_TOOL = 'EXECUTE_TOOL',
     EXECUTE_FLOW = 'EXECUTE_FLOW',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
@@ -27,6 +28,7 @@ export enum TriggerHookType {
 
 export type EngineOperation =
     | ExecuteStepOperation
+    | ExecuteToolOperation
     | ExecuteFlowOperation
     | ExecutePropsOptions
     | ExecuteTriggerOperation<TriggerHookType>
@@ -52,6 +54,15 @@ export type ExecuteStepOperation = BaseEngineOperation &  {
     stepName: string
     flowVersion: FlowVersion
     sampleData: Record<string, unknown>
+}
+
+export type ExecuteToolOperation = BaseEngineOperation & {
+    actionName: string
+    pieceName: string
+    pieceVersion: string
+    pieceType: PieceType
+    packageType: PackageType
+    input: Record<string, unknown>
 }
 
 export type ExecutePropsOptions = BaseEngineOperation & {

@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises'
 import { webhookSecretsUtils } from '@activepieces/server-shared'
-import { Action, ActionType, apId, EngineOperation, EngineOperationType, ExecuteExtractPieceMetadata, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, FlowVersionState, RunEnvironment, TriggerHookType } from '@activepieces/shared'
+import { Action, ActionType, apId, EngineOperation, EngineOperationType, ExecuteToolOperation, ExecuteExtractPieceMetadata, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, FlowVersionState, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { workerMachine } from '../../utils/machine'
 import { webhookUtils } from '../../utils/webhook-utils'
@@ -130,6 +130,20 @@ export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         }
 
         return execute(EngineOperationType.EXECUTE_STEP, sandbox, input, log)
+    },
+    async excuteTool(engineToken, operation) {
+        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, operation)
+        const sandbox = await sandboxProvisioner(log).provision({
+            pieces: [lockedPiece],
+            customPiecesPathKey: `${operation.projectId}-${operation.pieceName}-${operation.pieceVersion}`,
+        })
+        const input: ExecuteToolOperation = {
+            ...operation,
+            publicApiUrl: workerMachine.getPublicApiUrl(),
+            internalApiUrl: workerMachine.getInternalApiUrl(),
+            engineToken,
+        }
+        return execute(EngineOperationType.EXECUTE_TOOL, sandbox, input, log)
     },
 })
 
