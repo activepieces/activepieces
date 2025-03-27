@@ -9,6 +9,7 @@ import {
     Filter,
     FilterOperator,
     GetFlowVersionForWorkerRequestType,
+    ImportCsvRequestBody,
     isNil,
     PopulatedRecord,
     SeekPage,
@@ -26,6 +27,8 @@ import { fieldService } from '../field/field.service'
 import { tableService } from '../table/table.service'
 import { CellEntity } from './cell.entity'
 import { RecordEntity, RecordSchema } from './record.entity'
+import CsvReadableStream from 'csv-reader'
+import { Readable } from 'stream'
 
 const recordRepo = repoFactory(RecordEntity)
 
@@ -335,6 +338,48 @@ export const recordService = {
             })
         }
     },
+    async importCsv({
+        projectId,
+        tableId,
+        request,
+    }: ImportCsvParams): Promise<number> {
+        // validate table existence 
+        await tableService.getById({ projectId, id: tableId });
+        const fields = await fieldService.getAll({ projectId, tableId });
+        const inputStream = Readable.from(request.file.data as Buffer).setEncoding('utf-8');
+        const records = await new Promise<{value: string, fieldId: string}[][]>((resolve,reject)=>{
+            const result: {value: string, fieldId: string}[][] = [];
+            inputStream
+            .pipe(new CsvReadableStream({ trim: true, skipEmptyLines:true, skipLines: request.skipFirstRow? 1 : 0 }))
+            .on('data', (row: string[]) => {
+               const rowHasValues = row.some((value) => value !== '')
+               if(!rowHasValues){
+                return
+               }
+               const record: {value: string, fieldId: string}[] = fields.reduce((acc, field,idx) => {
+                acc.push({value: row[idx], fieldId: field.id})                
+                return acc
+               },[] as {value: string, fieldId: string}[])
+               result.push(record)
+            })
+            .on('error', (error) => {
+                reject(error)
+            })
+            .on('end', function () {
+                resolve(result);
+            });
+        })
+        await this.create({
+            projectId,
+            request: {
+                records,
+                tableId,
+            }
+        })
+        return records.length
+
+       
+    },
 }
 
 type CreateParams = {
@@ -402,4 +447,10 @@ function formatRecord(record: RecordSchema, fields: Field[]): PopulatedRecord {
 type CountParams = {
     projectId: string
     tableId: string
+}
+
+type ImportCsvParams = {
+    projectId: string
+    tableId: string
+    request: ImportCsvRequestBody
 }

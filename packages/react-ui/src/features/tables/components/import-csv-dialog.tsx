@@ -8,12 +8,12 @@ import { t } from "i18next";
 import { DownloadIcon } from "lucide-react";
 import { useState } from "react";
 import { FieldErrors, useForm } from "react-hook-form";
-import { tablesApi } from "../lib/tables-api";
 import { useTableState } from "./ap-table-state-provider";
+import { recordsApi } from "../lib/records-api";
 
 const ImportCsvDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [tableId, refetchRecords] = useTableState((state) => [state.table.id, state.refetchRecords]);
+  const [tableId,setRecords] = useTableState((state) => [state.table.id,state.setRecords]);
   const form = useForm<{
     file: File,
     skipFirstRow: boolean
@@ -39,16 +39,22 @@ const ImportCsvDialog = () => {
   )
    
   const {mutate: importCsv, isPending: isLoading} = useMutation({
-    mutationFn: (data: {file: File, skipFirstRow: boolean}) => tablesApi.importCsv(tableId, data),
-    onSuccess: () => {
+    mutationFn: async (data: {file: File, skipFirstRow: boolean}) =>{
+        await  recordsApi.importCsv({
+            tableId,
+            ...data
+        })
+        const records = await recordsApi.list({
+            tableId,
+            cursor: undefined
+        })
+        setRecords(records.data)
+    },
+    onSuccess:async() => {
       setIsOpen(false);
-      refetchRecords();
     }
   })
 
-  const onSubmit = (data: {file: File, skipFirstRow: boolean}) => {
-    importCsv(data);
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -64,7 +70,7 @@ const ImportCsvDialog = () => {
             </DialogHeader>
    
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <form onSubmit={form.handleSubmit((data)=> importCsv(data))} className="space-y-4">
                     
                     <FormField
                         control={form.control}

@@ -29,6 +29,15 @@ export type ClientField = {
       };
     }
 );
+const mapRecordToClientRecordData = (records: PopulatedRecord[], fields: Field[]): ClientRecordData[] => {
+ return records.map((record) => ({
+    uuid: nanoid(),
+    values: Object.entries(record.cells).map(([fieldId, cell]) => ({
+      fieldIndex: fields.findIndex((field) => field.id === fieldId),
+      value: cell.value,
+    })),
+  }))
+}
 
 export type TableState = {
   isSaving: boolean;
@@ -54,14 +63,13 @@ export type TableState = {
   deleteField: (fieldIndex: number) => void;
   renameTable: (newName: string) => void;
   renameField: (fieldIndex: number, newName: string) => void;
-  refetchRecords: () => void;
+  setRecords: (records: PopulatedRecord[]) => void;
 };
 
 export const createApTableStore = (
   table: Table,
   fields: Field[],
   records: PopulatedRecord[],
-  refetchRecords: () => void
 ) => {
   return create<TableState>((set) => {
     const serverState = createServerState(
@@ -105,13 +113,7 @@ export const createApTableStore = (
           type: field.type,
         };
       }),
-      records: records.map((record) => ({
-        uuid: nanoid(),
-        values: Object.entries(record.cells).map(([fieldId, cell]) => ({
-          fieldIndex: fields.findIndex((field) => field.id === fieldId),
-          value: cell.value,
-        })),
-      })),
+      records: mapRecordToClientRecordData(records, fields),
       createRecord: (recordData: ClientRecordData) => {
         serverState.createRecord(recordData);
         return set((state) => {
@@ -184,7 +186,12 @@ export const createApTableStore = (
           };
         });
       },
-      refetchRecords
+      setRecords: (records: PopulatedRecord[]) => {
+        serverState.setRecords(records);
+        return set((state) => {
+          return { records: mapRecordToClientRecordData(records, serverState.fields) };
+        });
+      },
     };
   });
 };

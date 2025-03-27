@@ -1,11 +1,13 @@
 import {
     CreateRecordsRequest,
     DeleteRecordsRequest,
+    ImportCsvRequestBody,
     ListRecordsRequest,
     Permission,
     PopulatedRecord,
     PrincipalType,
     SeekPage,
+    SERVICE_KEY_SECURITY_OPENAPI,
     TableWebhookEventType,
     UpdateRecordRequest,
 } from '@activepieces/shared'
@@ -92,6 +94,13 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
             filters: request.body.filters ?? null,
         })
     })
+    fastify.post('/import', ImportCsvRequest, async (request) => {
+        return recordService.importCsv({
+            tableId: request.body.tableId,
+            projectId: request.principal.projectId,
+            request: request.body,
+        })
+    })
 }
 
 const CreateRequest = {
@@ -127,6 +136,9 @@ const UpdateRequest = {
         permission: Permission.WRITE_TABLE,
     },
     schema: {
+        tags: ['records'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Update a record',
         params: Type.Object({
             id: Type.String(),
         }),
@@ -134,6 +146,7 @@ const UpdateRequest = {
         response: {
             [StatusCodes.OK]: PopulatedRecord,
         },
+
     },
 }
 
@@ -143,6 +156,9 @@ const DeleteRecordRequest = {
         permission: Permission.WRITE_TABLE,
     },
     schema: {
+        tags: ['records'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Delete records',
         body: DeleteRecordsRequest,
         response: {
             [StatusCodes.OK]: Type.Array(PopulatedRecord),
@@ -157,8 +173,27 @@ const ListRequest = {
     },
     schema: {
         body: ListRecordsRequest,
+        tags: ['records'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'List records',
         response: {
             [StatusCodes.OK]: SeekPage(PopulatedRecord),
+        },
+    },
+}
+
+const ImportCsvRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        permission: Permission.WRITE_TABLE,
+    },
+    schema: {
+        tags: ['records'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Import a csv file to create new records',
+        body: ImportCsvRequestBody,
+        response: {
+            [StatusCodes.OK]: Type.Number(),
         },
     },
 }

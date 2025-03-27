@@ -91,7 +91,9 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
                   <Button
                     size="sm"
                     className={cn(
-                      selectedRecords.size > 0 ? 'visible' : 'invisible',
+                      {
+                        'hidden': selectedRecords.size === 0
+                      }
                     )}
                     variant="destructive"
                     disabled={!userHasTableWritePermission}
