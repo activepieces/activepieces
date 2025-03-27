@@ -9,10 +9,12 @@ type PieceCardInfoProps = {
   piece: StepMetadata;
   onClick?: () => void;
   actionOrTriggerDisplayName?: string | null;
+  customizedInputs?: Record<string, unknown>;
 };
 
 const PieceCardInfo: React.FC<PieceCardInfoProps> = ({
   piece,
+  customizedInputs,
   onClick,
   actionOrTriggerDisplayName,
 }) => {
@@ -23,7 +25,7 @@ const PieceCardInfo: React.FC<PieceCardInfoProps> = ({
     >
       <div className="flex h-full min-w-[48px] items-center justify-center">
         <PieceIcon
-          logoUrl={piece.logoUrl}
+          logoUrl={(customizedInputs?.logoUrl as string) ?? piece.logoUrl}
           displayName={piece.displayName}
           showTooltip={false}
           border={false}
@@ -46,7 +48,7 @@ const PieceCardInfo: React.FC<PieceCardInfoProps> = ({
           )}
         </div>
         <div className="overflow-hidden text-ellipsis text-xs text-muted-foreground">
-          {piece.description}
+          {(customizedInputs?.description as string) ?? piece.description}
         </div>
       </div>
     </div>

@@ -39,7 +39,10 @@ const StepDragOverlay = ({
       <img
         id={t('logo')}
         className={'object-contain left-0 right-0 static'}
-        src={stepMetadata?.logoUrl}
+        src={
+          step.settings?.inputUiInfo?.customizedInputs?.logoUrl ??
+          stepMetadata?.logoUrl
+        }
         alt={t('Step Icon')}
       />
     </div>
