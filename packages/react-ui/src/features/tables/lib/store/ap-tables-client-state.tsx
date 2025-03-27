@@ -29,15 +29,18 @@ export type ClientField = {
       };
     }
 );
-const mapRecordToClientRecordData = (records: PopulatedRecord[], fields: Field[]): ClientRecordData[] => {
- return records.map((record) => ({
+const mapRecordToClientRecordData = (
+  records: PopulatedRecord[],
+  fields: Field[],
+): ClientRecordData[] => {
+  return records.map((record) => ({
     uuid: nanoid(),
     values: Object.entries(record.cells).map(([fieldId, cell]) => ({
       fieldIndex: fields.findIndex((field) => field.id === fieldId),
       value: cell.value,
     })),
-  }))
-}
+  }));
+};
 
 export type TableState = {
   isSaving: boolean;
@@ -189,7 +192,9 @@ export const createApTableStore = (
       setRecords: (records: PopulatedRecord[]) => {
         serverState.setRecords(records);
         return set((state) => {
-          return { records: mapRecordToClientRecordData(records, serverState.fields) };
+          return {
+            records: mapRecordToClientRecordData(records, serverState.fields),
+          };
         });
       },
     };

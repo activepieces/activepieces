@@ -19,14 +19,19 @@ type ApTableHeaderProps = {
   isFetchingNextPage: boolean;
 };
 const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
-  const [isSaving, selectedRecords, setSelectedRecords, deleteRecords, records] =
-    useTableState((state) => [
-      state.isSaving,
-      state.selectedRecords,
-      state.setSelectedRecords,
-      state.deleteRecords,
-      state.records,
-    ]);
+  const [
+    isSaving,
+    selectedRecords,
+    setSelectedRecords,
+    deleteRecords,
+    records,
+  ] = useTableState((state) => [
+    state.isSaving,
+    state.selectedRecords,
+    state.setSelectedRecords,
+    state.deleteRecords,
+    state.records,
+  ]);
   const [searchParams] = useSearchParams();
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
@@ -67,7 +72,7 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <ImportCsvDialog/>
+            <ImportCsvDialog />
             <div onClick={(e) => e.stopPropagation()}>
               <PermissionNeededTooltip
                 hasPermission={userHasTableWritePermission}
@@ -90,11 +95,9 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
                 >
                   <Button
                     size="sm"
-                    className={cn(
-                      {
-                        'hidden': selectedRecords.size === 0
-                      }
-                    )}
+                    className={cn({
+                      hidden: selectedRecords.size === 0,
+                    })}
                     variant="destructive"
                     disabled={!userHasTableWritePermission}
                   >

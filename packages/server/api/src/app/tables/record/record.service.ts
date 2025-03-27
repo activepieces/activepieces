@@ -1,7 +1,9 @@
+import { Readable } from 'stream'
 import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
+    chunk,
     CreateRecordsRequest,
     Cursor,
     ErrorCode,
@@ -16,6 +18,7 @@ import {
     TableWebhookEventType,
     UpdateRecordRequest,
 } from '@activepieces/shared'
+import { parse } from 'csv-parse'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -27,8 +30,6 @@ import { fieldService } from '../field/field.service'
 import { tableService } from '../table/table.service'
 import { CellEntity } from './cell.entity'
 import { RecordEntity, RecordSchema } from './record.entity'
-import CsvReadableStream from 'csv-reader'
-import { Readable } from 'stream'
 
 const recordRepo = repoFactory(RecordEntity)
 
@@ -37,7 +38,7 @@ export const recordService = {
         request,
         projectId,
     }: CreateParams): Promise<PopulatedRecord[]> {
-        await this.validateCount({ projectId, tableId: request.tableId })
+        await this.validateCount({ projectId, tableId: request.tableId }, request.records.length)
         return transaction(async (entityManager: EntityManager) => {
             const existingFields = await entityManager
                 .getRepository(FieldEntity)
@@ -328,9 +329,9 @@ export const recordService = {
             where: { projectId, tableId },
         })
     },
-    async validateCount(params: CountParams): Promise<void> {
+    async validateCount(params: CountParams, insertCount: number): Promise<void> {
         const countRes = await this.count(params)
-        if (countRes > system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)) {
+        if (countRes + insertCount > system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: `Max records per table reached: ${system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)}`,
@@ -342,43 +343,41 @@ export const recordService = {
         projectId,
         tableId,
         request,
-    }: ImportCsvParams): Promise<number> {
+    }: ImportCsvParams): Promise<PopulatedRecord[]> {
         // validate table existence 
-        await tableService.getById({ projectId, id: tableId });
-        const fields = await fieldService.getAll({ projectId, tableId });
-        const inputStream = Readable.from(request.file.data as Buffer).setEncoding('utf-8');
-        const records = await new Promise<{value: string, fieldId: string}[][]>((resolve,reject)=>{
-            const result: {value: string, fieldId: string}[][] = [];
-            inputStream
-            .pipe(new CsvReadableStream({ trim: true, skipEmptyLines:true, skipLines: request.skipFirstRow? 1 : 0 }))
-            .on('data', (row: string[]) => {
-               const rowHasValues = row.some((value) => value !== '')
-               if(!rowHasValues){
-                return
-               }
-               const record: {value: string, fieldId: string}[] = fields.reduce((acc, field,idx) => {
-                acc.push({value: row[idx], fieldId: field.id})                
+        const count = await this.count({ projectId, tableId })
+        await tableService.getById({ projectId, id: tableId })
+        const fields = await fieldService.getAll({ projectId, tableId })
+        const inputStream = Readable.from(request.file.data as Buffer).setEncoding('utf-8')
+        const parser = inputStream.pipe(parse({
+            skip_empty_lines: true,
+            from_line: request.skipFirstRow ? 2 : 1,
+        }))
+        const records: { value: string, fieldId: string }[][] = []
+        for await (const row of parser) {
+            const record: { value: string, fieldId: string }[] = fields.reduce((acc, field, idx) => {
+                acc.push({ value: row[idx], fieldId: field.id })                
                 return acc
-               },[] as {value: string, fieldId: string}[])
-               result.push(record)
-            })
-            .on('error', (error) => {
-                reject(error)
-            })
-            .on('end', function () {
-                resolve(result);
-            });
-        })
-        await this.create({
-            projectId,
-            request: {
-                records,
-                tableId,
+            }, [] as { value: string, fieldId: string }[])
+            records.push(record)
+        }
+        const batches = chunk(records, 100)
+        const results: PopulatedRecord[] = []
+        let processedCount = 0
+        for (const batch of batches) {
+            if (processedCount + batch.length + count <= system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)) {
+                const res = await this.create({
+                    projectId,
+                    request: {
+                        records: batch,
+                        tableId,
+                    },
+                })
+                results.push(...res)
             }
-        })
-        return records.length
-
-       
+            processedCount += batch.length
+        }
+        return results
     },
 }
 
@@ -454,3 +453,4 @@ type ImportCsvParams = {
     tableId: string
     request: ImportCsvRequestBody
 }
+

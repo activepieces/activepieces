@@ -94,12 +94,23 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
             filters: request.body.filters ?? null,
         })
     })
-    fastify.post('/import', ImportCsvRequest, async (request) => {
-        return recordService.importCsv({
+    fastify.post('/import', ImportCsvRequest, async (request, reply) => {
+        const records = await recordService.importCsv({
             tableId: request.body.tableId,
             projectId: request.principal.projectId,
             request: request.body,
         })
+        await reply.status(StatusCodes.CREATED).send(records)
+        if (records.length > 0) {
+            await recordService.triggerWebhooks({
+                projectId: request.principal.projectId,
+                tableId: request.body.tableId,
+                eventType: TableWebhookEventType.RECORD_CREATED,
+                data: { records },
+                logger: request.log,
+                authorization: request.headers.authorization as string,
+            })
+        }
     })
 }
 
@@ -193,7 +204,7 @@ const ImportCsvRequest = {
         description: 'Import a csv file to create new records',
         body: ImportCsvRequestBody,
         response: {
-            [StatusCodes.OK]: Type.Number(),
+            [StatusCodes.OK]: Type.Array(PopulatedRecord),
         },
     },
 }

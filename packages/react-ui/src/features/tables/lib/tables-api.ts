@@ -30,5 +30,5 @@ export const tablesApi = {
   },
   update(id: string, request: UpdateTableRequest): Promise<Table> {
     return api.post<Table>(`/v1/tables/${id}`, request);
-  }
+  },
 };

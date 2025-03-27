@@ -6,7 +6,6 @@ import {
     CreateTableWebhookRequest,
     ErrorCode,
     ExportTableResponse,
-    ImportCsvRequestBody,
     isNil,
     SeekPage,
     Table,
@@ -24,9 +23,6 @@ import { fieldService } from '../field/field.service'
 import { RecordEntity } from '../record/record.entity'
 import { TableWebhookEntity } from './table-webhook.entity'
 import { TableEntity } from './table.entity'
-import { Readable } from 'stream'
-import CsvReadableStream from 'csv-reader'
-import { recordService } from '../record/record.service'
 const tableRepo = repoFactory(TableEntity)
 const recordRepo = repoFactory(RecordEntity)
 const tableWebhookRepo = repoFactory(TableWebhookEntity)
