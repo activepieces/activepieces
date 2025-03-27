@@ -10,14 +10,16 @@ import 'react-data-grid/lib/styles.css';
 
 import { useTheme } from '@/components/theme-provider';
 import { ApFieldHeader } from '@/features/tables/components/ap-field-header';
+import { ApTableFooter } from '@/features/tables/components/ap-table-footer';
 import ApTableHeader from '@/features/tables/components/ap-table-header';
 import { EditableCell } from '@/features/tables/components/editable-cell';
 import { NewFieldPopup } from '@/features/tables/components/new-field-popup';
 import { SelectColumn } from '@/features/tables/components/select-column';
 import { Row, ROW_HEIGHT_MAP, RowHeight } from '@/features/tables/lib/types';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
-import { Permission } from '@activepieces/shared';
+import { ApFlagId, Permission } from '@activepieces/shared';
 
 import './react-data-grid.css';
 import { useTableState } from '../../../../features/tables/components/ap-table-state-provider';
@@ -25,8 +27,8 @@ import { ClientRecordData } from '../../../../features/tables/lib/store/ap-table
 
 const ApTableEditorPage = () => {
   const [
-    selectedRows,
-    setSelectedRows,
+    selectedRecords,
+    setSelectedRecords,
     selectedCell,
     setSelectedCell,
     createRecord,
@@ -34,8 +36,8 @@ const ApTableEditorPage = () => {
     fields,
     records,
   ] = useTableState((state) => [
-    state.selectedRows,
-    state.setSelectedRows,
+    state.selectedRecords,
+    state.setSelectedRecords,
     state.selectedCell,
     state.setSelectedCell,
     state.createRecord,
@@ -46,6 +48,20 @@ const ApTableEditorPage = () => {
 
   const gridRef = useRef<DataGridHandle>(null);
   const { theme } = useTheme();
+  const { data: maxRecords } = flagsHooks.useFlag<number>(
+    ApFlagId.MAX_RECORDS_PER_TABLE,
+  );
+  const { data: maxFields } = flagsHooks.useFlag<number>(
+    ApFlagId.MAX_FIELDS_PER_TABLE,
+  );
+
+  const userHasTableWritePermission = useAuthorization().checkAccess(
+    Permission.WRITE_TABLE,
+  );
+  const isAllowedToCreateRecord =
+    userHasTableWritePermission && maxRecords && records.length <= maxRecords;
+  const isAllowedToCreateField =
+    userHasTableWritePermission && maxFields && fields.length <= maxFields;
 
   const createEmptyRecord = () => {
     createRecord({
@@ -60,9 +76,6 @@ const ApTableEditorPage = () => {
     });
   };
 
-  const userHasTableWritePermission = useAuthorization().checkAccess(
-    Permission.WRITE_TABLE,
-  );
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -96,10 +109,10 @@ const ApTableEditorPage = () => {
   const columns: Column<Row, { id: string }>[] = [
     {
       ...SelectColumn,
-      renderSummaryCell: userHasTableWritePermission
+      renderSummaryCell: isAllowedToCreateRecord
         ? () => (
             <div
-              className="w-full h-full flex items-center justify-start cursor-pointer pl-4"
+              className="w-full h-full border-t border-border  flex items-center justify-start cursor-pointer pl-4"
               onClick={createEmptyRecord}
             >
               <Plus className="h-4 w-4" />
@@ -138,22 +151,20 @@ const ApTableEditorPage = () => {
           }}
         />
       ),
-      renderSummaryCell: userHasTableWritePermission
+      renderSummaryCell: isAllowedToCreateRecord
         ? () => (
             <div
-              className="w-full h-full flex items-center justify-start cursor-pointer pl-4"
+              className="w-full h-full flex border-t border-border  items-center justify-start cursor-pointer pl-4"
               onClick={createEmptyRecord}
             ></div>
           )
         : undefined,
     })) ?? []),
   ];
-  if (userHasTableWritePermission) {
+  if (isAllowedToCreateField) {
     columns.push(newFieldColumn);
   }
-  function onSelectedRowsChange(newSelectedRows: ReadonlySet<string>) {
-    setSelectedRows(newSelectedRows);
-  }
+
 
   function mapRecordsToRows(records: ClientRecordData[]): Row[] {
     if (!records || records.length === 0) return [];
@@ -178,10 +189,10 @@ const ApTableEditorPage = () => {
           columns={columns}
           rows={mapRecordsToRows(records)}
           rowKeyGetter={(row: Row) => row.id}
-          selectedRows={selectedRows}
-          onSelectedRowsChange={onSelectedRowsChange}
+          selectedRows={selectedRecords}
+          onSelectedRowsChange={setSelectedRecords}
           className={cn(
-            'scroll-smooth  w-full h-[calc(100vh-7rem-92px)] bg-muted/30',
+            'scroll-smooth  w-[calc(100vw-256px)] h-[calc(100vh-7rem-92px-20px)] bg-muted/30',
             theme === 'dark' ? 'rdg-dark' : 'rdg-light',
           )}
           bottomSummaryRows={
@@ -192,6 +203,10 @@ const ApTableEditorPage = () => {
           summaryRowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
         />
       </div>
+      <ApTableFooter
+        fieldsCount={fields.length}
+        recordsCount={records.length}
+      />
     </div>
   );
 };

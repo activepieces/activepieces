@@ -158,6 +158,7 @@ type SidebarProps = {
   hideSideNav?: boolean;
   hideHeader?: boolean;
   removeGutters?: boolean;
+  removeBottomPadding?: boolean;
 };
 export function SidebarComponent({
   children,
@@ -166,6 +167,7 @@ export function SidebarComponent({
   hideSideNav = false,
   hideHeader = false,
   removeGutters = false,
+  removeBottomPadding = false,
 }: SidebarProps) {
   const branding = flagsHooks.useWebsiteBranding();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -374,6 +376,7 @@ export function SidebarComponent({
           className={cn('flex-1 p-4', {
             'py-0': hideHeader,
             'px-0': removeGutters,
+            'pb-0': removeBottomPadding,
           })}
         >
           {!hideHeader ? (

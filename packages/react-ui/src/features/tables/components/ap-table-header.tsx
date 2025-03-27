@@ -21,8 +21,8 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
   const [isSaving, selectedRows, setSelectedRows, deleteRecords, records] =
     useTableState((state) => [
       state.isSaving,
-      state.selectedRows,
-      state.setSelectedRows,
+      state.selectedRecords,
+      state.setSelectedRecords,
       state.deleteRecords,
       state.records,
     ]);
