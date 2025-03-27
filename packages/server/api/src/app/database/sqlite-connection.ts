@@ -89,6 +89,7 @@ import { TableWebhooksIsArraySqlite1741668828922 } from './migration/sqlite/1741
 import { AddManualTaskTable1742304913465 } from './migration/sqlite/1742304913465-AddManualTaskTable'
 import { ChangeManualTasksToTodoSqlite1742432169253 } from './migration/sqlite/1742432169253-ChangeManualTasksToTodoSqlite'
 import { AddMCPWithConnectionsSqlite1742867572875 } from './migration/sqlite/1742867572875-AddMCPWithConnectionsSqlite'
+import { RemoveMcpStatusAddMcpTokenSqlite1743041373691 } from './migration/sqlite/1743041373691-RemoveMcpStatusAddMcpTokenSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -195,6 +196,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddManualTaskTable1742304913465,
         ChangeManualTasksToTodoSqlite1742432169253,
         AddMCPWithConnectionsSqlite1742867572875,
+        RemoveMcpStatusAddMcpTokenSqlite1743041373691,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

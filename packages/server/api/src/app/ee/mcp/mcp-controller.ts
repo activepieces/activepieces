@@ -1,14 +1,15 @@
-import { MCPStatus } from '@activepieces/ee-shared'
 import { ALL_PRINCIPAL_TYPES, ApId, Permission, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { mcpService } from './mcp-service'
 import { createMcpServer } from './mcp-server'
-import { McpSessionManager } from './mcp-session-manager'
+import { mcpSessionManager } from './mcp-session-manager'
+import { MCP } from '@activepieces/ee-shared'
+import { StatusCodes } from 'http-status-codes'
 
-let sessionManager: McpSessionManager;
+let sessionManager: ReturnType<typeof mcpSessionManager>;
 
 export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
-    sessionManager = new McpSessionManager(app.log);
+    sessionManager = mcpSessionManager(app.log);
     
     app.get('/', GetMCPRequest, async (req) => {
         return mcpService(req.log).getOrCreate({
@@ -16,46 +17,28 @@ export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
-    app.patch('/:id/status', UpdateMCPStatusRequest, async (req) => {
+    app.post('/:id', UpdateMCPRequest, async (req) => {
         const mcpId = req.params.id;
-        const { status } = req.body;
+        const { token, connectionsIds } = req.body;
         
-        // If status is being set to DISABLED, disconnect any active sessions
-        if (status === MCPStatus.DISABLED) {
-            const sessionData = sessionManager.getByMcpId(mcpId);
-            if (sessionData) {
-                sessionManager.remove(sessionData.transport.sessionId);
-            }
-        }
-        
-        return mcpService(req.log).updateStatus({
+        return mcpService(req.log).update({
             mcpId,
-            status,
-        })
-    })
-
-    app.patch('/:id/connections', UpdateMCPConnectionsRequest, async (req) => {
-        const mcpId = req.params.id;
-        const { connectionsIds } = req.body;
-        
-        const sessionData = sessionManager.getByMcpId(mcpId);
-        if (sessionData) {
-            sessionManager.remove(sessionData.transport.sessionId);
-        }
-        
-        return mcpService(req.log).updateConnections({
-            mcpId,
+            token,
             connectionsIds,
-        })
+        });
+    })
+    
+    app.post('/:id/rotate', RotateTokenRequest, async (req) => {
+        const mcpId = req.params.id;
+        return mcpService(req.log).rotateToken({
+            mcpId,
+        });
     })
 
     app.delete('/:id', DeleteMCPRequest, async (req) => {
         const mcpId = req.params.id;
         
-        const sessionData = sessionManager.getByMcpId(mcpId);
-        if (sessionData) {
-            sessionManager.remove(sessionData.transport.sessionId);
-        }
+        sessionManager.removeAll();
         
         return mcpService(req.log).delete({
             mcpId,
@@ -72,17 +55,20 @@ export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
             }),
         },
     }, async (req, reply) => {
-        const mcpId = req.params.id;
+        const token = req.params.id;
+        const mcp = await mcpService(req.log).getByToken({
+            token
+        });
         
         const { server, transport } = await createMcpServer({
-            mcpId,
+            mcpId: mcp.id,
             reply,
             logger: req.log,
         });
         
         await server.connect(transport);
         
-        sessionManager.add(transport.sessionId, server, transport, mcpId);
+        sessionManager.add(transport.sessionId, server, transport, mcp.id);
         
         reply.raw.on("close", () => {
             sessionManager.remove(transport.sessionId);
@@ -119,39 +105,39 @@ export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetMCPRequest = {
     config: {
-        permission: Permission.READ_MCP,
-        allowedPrincipals: [PrincipalType.USER],
-    }
-    
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+    },
 }
 
-const UpdateMCPStatusRequest = {
+export const UpdateMCPRequest = {
     config: {
-        permission: Permission.WRITE_MCP,
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
         params: Type.Object({
             id: ApId,
         }),
         body: Type.Object({
-            status: Type.Enum(MCPStatus),
+            token: Type.Optional(Type.String()),
+            connectionsIds: Type.Optional(Type.Array(ApId)),
         }),
+        response: {
+            [StatusCodes.OK]: MCP,
+        },
     },
 }
 
-const UpdateMCPConnectionsRequest = {
+const RotateTokenRequest = {
     config: {
-        permission: Permission.WRITE_MCP,
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
         params: Type.Object({
             id: ApId,
         }),
-        body: Type.Object({
-            connectionsIds: Type.Array(Type.String()),
-        }),
+        response: {
+            [StatusCodes.OK]: MCP,
+        },
     },
 }
 

@@ -1,16 +1,14 @@
 import { Static, Type } from "@sinclair/typebox";
-import { ApId, BaseModelSchema } from "@activepieces/shared";
-
-export enum MCPStatus {
-    ENABLED = 'ENABLED',
-    DISABLED = 'DISABLED',
-}
+import { ApId, AppConnection, BaseModelSchema } from "@activepieces/shared";
 
 export const MCP = Type.Object({
     ...BaseModelSchema,
     projectId: ApId,
-    connectionsIds: Type.Array(ApId),
-    status: Type.Enum(MCPStatus)
+    token: ApId
 })
 
 export type MCP = Static<typeof MCP> 
+
+export type MCPSchema = MCP & {
+    connections: AppConnection[]
+}

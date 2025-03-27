@@ -18,26 +18,43 @@ import { piecesHooks } from '../../../../features/pieces/lib/pieces-hook';
 import { CopyButton } from '../../../../components/ui/copy-button';
 import { Badge } from '../../../../components/ui/badge';
 import { mcpApi } from '../../../../features/mcp/mcp-api';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { NewConnectionDialog } from '../../../connections/new-connection-dialog';
-import { InfoCircledIcon } from '@radix-ui/react-icons';
-import { Globe, ExternalLink } from 'lucide-react';
+import { InfoCircledIcon, ReloadIcon } from '@radix-ui/react-icons';
+import { Globe, KeyRound } from 'lucide-react';
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../../../../components/ui/tooltip';
+import { useToast } from '../../../../components/ui/use-toast';
+
 
 export default function MCPPage() {
-  const [selectedConnectionIds, setSelectedConnectionIds] = useState<Set<string>>(new Set());
+  const [usedConnectionIds, setUsedConnectionIds] = useState<Set<string>>(new Set());
+  const [usedPieceNames, setUsedPieceNames] = useState<Set<string>>(new Set());
+  const [isRotating, setIsRotating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   
-  const { data: mcp, isLoading: isMcpLoading } = useQuery({
+  
+  const { data: mcp, isLoading: isMcpLoading, refetch: refetchMcp } = useQuery({
     queryKey: ['mcp'],
     queryFn: () => {
       return mcpApi.get();
     },
   });
 
-  // Generate the server URL based on the current hostname but mask the sensitive MCP ID
-  const serverBaseUrl = window.location.origin + '/v1/mcp/';
-  const displayUrl = serverBaseUrl + (mcp?.id ? '********' : '') + '/sse';
-  const actualServerUrl = serverBaseUrl + (mcp?.id || '') + '/sse';
+  // console.log('mcp', mcp);
+
+  // Generate the server URL based on the current hostname
+  // TODO: change to the production URL
+  const serverBaseUrl = "http://localhost:3000" + '/v1/mcp/';
+  const serverUrl = serverBaseUrl + (mcp?.token || '') + '/sse';
 
   const { pieces } = piecesHooks.usePieces({});
 
@@ -47,19 +64,68 @@ export default function MCPPage() {
   });
 
   useEffect(() => {
-    if (mcp?.connectionsIds && mcp.connectionsIds.length > 0) {
-      setSelectedConnectionIds(new Set(mcp.connectionsIds));
+    if (mcp?.connections) {
+      const connectionIds = new Set(mcp.connections.map((connection) => connection.id));
+      setUsedConnectionIds(connectionIds);
+      
+      const pieceNames = new Set(
+        mcp.connections.map((connection) => connection.pieceName)
+      );
+
+      setUsedPieceNames(pieceNames);
+      setHasChanges(false);
+    } else {
+      setUsedConnectionIds(new Set());
+      setUsedPieceNames(new Set());
     }
   }, [mcp]);
 
-  const toggleConnection = (connectionId: string) => {
-    setSelectedConnectionIds((prev) => {
+  const toggleConnection = (connection: AppConnectionWithoutSensitiveData) => {
+    setUsedConnectionIds((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(connectionId)) {
-        newSet.delete(connectionId);
+      const pieceName = connection.pieceName;
+      
+      if (newSet.has(connection.id)) {
+        newSet.delete(connection.id);
+        
+        setUsedPieceNames(prevPieces => {
+          const newPieceNames = new Set(prevPieces);
+          newPieceNames.delete(pieceName);
+          return newPieceNames;
+        });
       } else {
-        newSet.add(connectionId);
+        if (usedPieceNames.has(pieceName)) {
+          // Find and remove the existing connection with this piece
+          const existingConnectionId = Array.from(prev).find(id => {
+            const conn = connections?.find(c => c.id === id);
+            return conn && conn.pieceName === pieceName;
+          });
+          
+          if (existingConnectionId) {
+            newSet.delete(existingConnectionId);
+            
+            // Find the name of the replaced connection for better user feedback
+            const replacedConnection = connections?.find(c => c.id === existingConnectionId);
+            const replacedName = replacedConnection?.displayName || '';
+            
+            toast({
+              description: t(`Replaced '${replacedName}' with '${connection.displayName}'`),
+              duration: 3000,
+            });
+          }
+        }
+        
+        newSet.add(connection.id);
+        
+        setUsedPieceNames(prevPieces => {
+          const newPieceNames = new Set(prevPieces);
+          newPieceNames.add(pieceName);
+          return newPieceNames;
+        });
       }
+      
+      
+      setHasChanges(true);
       return newSet;
     });
   };
@@ -67,8 +133,95 @@ export default function MCPPage() {
   const handleSaveChanges = async () => {
     if (!mcp?.id) return;
     
-    const connectionIds = Array.from(selectedConnectionIds);
-    await mcpApi.updateConnections(mcp.id, connectionIds);
+    setIsSaving(true);
+    const connectionIds = Array.from(usedConnectionIds);
+    
+    try {
+      await mcpApi.update({
+        id: mcp.id,
+        connectionsIds: connectionIds,
+      });
+      toast({
+        description: t('Changes saved successfully'),
+        duration: 3000,
+      });
+      
+      // Refresh data from server
+      await queryClient.invalidateQueries({ queryKey: ['mcp'] });
+      await refetchMcp();
+      setHasChanges(false);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: t('Error'),
+        description: t('Failed to save changes'),
+        duration: 5000,
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    try {
+      // Use the cached data immediately for a responsive UI
+      if (mcp?.connections) {
+        const connectionIds = new Set(mcp.connections.map((connection) => connection.id));
+        setUsedConnectionIds(connectionIds);
+        
+        const pieceNames = new Set(
+          mcp.connections.map((connection) => connection.pieceName)
+        );
+        setUsedPieceNames(pieceNames);
+      } else {
+        setUsedConnectionIds(new Set());
+        setUsedPieceNames(new Set());
+      }
+      
+      // Clear the changes flag immediately
+      setHasChanges(false);
+      
+      // Show toast
+      toast({
+        description: t('Changes discarded'),
+        duration: 3000,
+      });
+      
+      // Refresh in the background without waiting
+      queryClient.invalidateQueries({ queryKey: ['mcp'] });
+      refetchMcp();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: t('Error'),
+        description: t('Failed to discard changes'),
+        duration: 5000,
+      });
+    }
+  };
+
+  const handleRotateToken = async () => {
+    if (!mcp?.id) return;
+    
+    setIsRotating(true);
+    try {
+      await mcpApi.rotateToken(mcp.id);
+      toast({
+        description: t('Token rotated successfully'),
+        duration: 3000,
+      });
+      await queryClient.invalidateQueries({ queryKey: ['mcp'] });
+      await refetchMcp();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: t('Error'),
+        description: t('Failed to rotate token'),
+        duration: 5000,
+      });
+    } finally {
+      setIsRotating(false);
+    }
   };
 
   const getPieceInfo = (connection: AppConnectionWithoutSensitiveData) => {
@@ -105,13 +258,43 @@ export default function MCPPage() {
             </div>
           </div>
 
-          {/* Server URL Display - Full width */}
+          {/* Server URL Display - Full width with token rotation */}
           <div className="space-y-2 w-full">
-            <Label>{t('Server URL')}</Label>
-            <div className="flex items-center space-x-2 p-3 bg-secondary/20 border border-border rounded-md h-[56px]">
-              <span className="flex-grow font-mono text-base text-foreground/90">{displayUrl}</span>
-              <CopyButton textToCopy={actualServerUrl} />
+            <div className="flex items-center justify-between">
+              <Label>{t('Server URL')}</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="flex items-center gap-1 text-primary border-primary hover:bg-primary/10"
+                      onClick={handleRotateToken}
+                      disabled={isRotating || !mcp?.id}
+                    >
+                      {isRotating ? (
+                        <ReloadIcon className="h-3.5 w-3.5 mr-1 animate-spin" />
+                      ) : (
+                        <KeyRound className="h-3.5 w-3.5 mr-1" />
+                      )}
+                      {t('Rotate Token')}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('Generate a new token for security. This will invalidate the current URL.')}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
+            <div className="flex items-center space-x-2 p-3 bg-secondary/20 border border-border rounded-md min-h-[56px]">
+              <span className="flex-grow font-mono text-base text-foreground/90 break-all select-all cursor-text">
+                {serverUrl}
+              </span>
+              <CopyButton textToCopy={serverUrl} />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {t('This URL contains a secret token. Only share it with trusted parties.')}
+            </p>
           </div>
 
           <Separator />
@@ -119,10 +302,10 @@ export default function MCPPage() {
           {/* Connections List with New Connection Button */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">{t('Available Connections')}</h3>
+              <h3 className="text-lg font-medium">{t('Your Connections')}</h3>
               <div className="flex items-center gap-2">
                 <Badge variant="outline">
-                  {selectedConnectionIds.size} {t('Selected')}
+                  {usedConnectionIds.size} {t('Used')}
                 </Badge>
                 <NewConnectionDialog 
                   onConnectionCreated={refetchConnections}
@@ -148,11 +331,13 @@ export default function MCPPage() {
               ) : (
                 connections.map((connection) => {
                   const pieceInfo = getPieceInfo(connection);
-                  const isSelected = selectedConnectionIds.has(connection.id);
+                  const isUsed = usedConnectionIds.has(connection.id);
                   return (
                     <Card
                       key={connection.id}
-                      className={`overflow-hidden transition-all duration-200 ${isSelected ? 'border-primary/30' : ''}`}
+                      className={`overflow-hidden transition-all duration-200 ${
+                        isUsed ? 'border-primary/30' : ''
+                      }`}
                     >
                       <CardContent className="flex flex-row items-start justify-between p-4 gap-3">
                         <div className="flex items-center space-x-3 min-w-0 py-2">
@@ -174,10 +359,12 @@ export default function MCPPage() {
                         <Button 
                           variant="outline"
                           size="sm"
-                          onClick={() => toggleConnection(connection.id)}
-                          className={`shrink-0 min-w-[80px] ${isSelected ? 'text-destructive hover:text-destructive' : 'text-primary hover:text-primary'}`}
+                          onClick={() => toggleConnection(connection)}
+                          className={`shrink-0 min-w-[80px] ${
+                            isUsed ? 'text-destructive hover:text-destructive' : 'text-primary hover:text-primary'
+                          }`}
                         >
-                          {isSelected ? t('Remove') : t('Use')}
+                          {isUsed ? t('Remove') : t('Use')}
                         </Button>
                       </CardContent>
                     </Card>
@@ -188,8 +375,19 @@ export default function MCPPage() {
           </div>
         </CardContent>
         <CardFooter className="flex justify-end space-x-2 pt-4">
-          <Button variant="outline">{t('Cancel')}</Button>
-          <Button onClick={handleSaveChanges}>{t('Save Changes')}</Button>
+          <Button 
+            variant="outline" 
+            onClick={handleCancel}
+            disabled={!hasChanges || isSaving}
+          >
+            {t('Cancel')}
+          </Button>
+          <Button 
+            onClick={handleSaveChanges}
+            disabled={isSaving || !hasChanges}
+          >
+            {isSaving ? t('Saving...') : t('Save Changes')}
+          </Button>
         </CardFooter>
       </Card>
     </div>

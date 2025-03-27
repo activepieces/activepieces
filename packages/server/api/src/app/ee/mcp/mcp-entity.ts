@@ -1,25 +1,16 @@
-import { MCP, MCPStatus } from '@activepieces/ee-shared'
-import { AppConnection } from '@activepieces/shared'
+import { MCPSchema } from '@activepieces/ee-shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
 
 
-type MCPSchema = MCP & {
-    connections: AppConnection[]
-}
 
 export const MCPEntity = new EntitySchema<MCPSchema>({
     name: 'mcp',
     columns: {
         ...BaseColumnSchemaPart,
         projectId: ApIdSchema,
-        status: {
-            type: String,
-            nullable: false,
-            enum: MCPStatus,
-            default: MCPStatus.DISABLED,
-        },
+        token: ApIdSchema
     },
     indices: [
         {

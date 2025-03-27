@@ -1,11 +1,20 @@
 import { api } from '@/lib/api';
-import { MCP } from '@activepieces/ee-shared';
+import { MCPSchema } from '@activepieces/ee-shared';
+
+interface UpdateMCPParams {
+  id: string;
+  token?: string;
+  connectionsIds?: string[];
+}
 
 export const mcpApi = {
   async get() {
-    return await api.get<MCP>(`/v1/mcp`);
+    return await api.get<MCPSchema>(`/v1/mcp`);
   },
-  async updateConnections(mcpId: string, connectionsIds: string[]) {
-    return await api.patch<MCP>(`/v1/mcp/${mcpId}/connections`, { connectionsIds });
+  async update({ id, token, connectionsIds }: UpdateMCPParams) {
+    return await api.post<MCPSchema>(`/v1/mcp/${id}`, { token, connectionsIds });
+  },
+  async rotateToken(id: string) {
+    return await api.post<MCPSchema>(`/v1/mcp/${id}/rotate`);
   },
 };

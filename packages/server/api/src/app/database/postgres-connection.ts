@@ -187,6 +187,7 @@ import { AddManualTaskCommentTable1742305104390 } from './migration/postgres/174
 import { ChangeManualTasksToTodo1742432827826 } from './migration/postgres/1742432827826-ChangeManualTasksToTodo'
 import { ChangeManualTasksCommentsToTodoComments1742433144687 } from './migration/postgres/1742433144687-ChangeManualTasksCommentsToTodoComments'
 import { AddMCPWithConnectionsPostgres1742867572875 } from './migration/postgres/1742867572875-AddMCPWithConnectionsPostgres'
+import { RemoveMcpStatusAddMcpTokenPostgres1743041373691 } from './migration/postgres/1743041373691-RemoveMcpStatusAddMcpTokenPostgres'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -312,6 +313,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddManualTaskTable1742304857701,
         ChangeManualTasksToTodo1742432827826,
         AddMCPWithConnectionsPostgres1742867572875,
+        RemoveMcpStatusAddMcpTokenPostgres1743041373691,
     ]
 
     const edition = system.getEdition()
