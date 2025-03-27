@@ -1,77 +1,30 @@
 import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import axios, { AxiosError } from 'axios';
 import { knowledgeBaseAuth } from '../..';
-import { Client } from "pg";
-import sqlite3 from 'sqlite3';
-import dotenv from "dotenv";
-dotenv.config({ path: 'packages/server/api/.env' });
-
-const dbType = process.env["AP_DB_TYPE"];
-const db = new sqlite3.Database('dev/config/database.sqlite');
-
-interface MsProjectConfig {
-  ms_project_config_id: number;
-  ms_project_config_name: string;
-  ms_project_config_val: string;
-}
-
-const queryDatabase = async (query: string, params: any[] = []): Promise<any[]> => {
-  if (dbType === "POSTGRES") {
-    const client = new Client({
-      host: process.env["AP_POSTGRES_HOST"],
-      user: process.env["AP_POSTGRES_USERNAME"],
-      password: process.env["AP_POSTGRES_PASSWORD"],
-      database: process.env["AP_POSTGRES_DATABASE"],
-      port: Number(process.env["AP_POSTGRES_PORT"])
-    });
-
-    await client.connect();
-
-    try {
-      const result = await client.query(query, params);
-      return result.rows;
-    } catch (error) {
-      throw error;
-    } finally {
-      await client.end();
-    }
-  } else {
-    return new Promise((resolve, reject) => {
-      db.all(query, params, (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows);
-      });
-    });
-  }
-};
 
 export const getMasterData = async () => {
   try {
-    const rows = await queryDatabase('SELECT * FROM ms_project_config') as MsProjectConfig[];
+    const isProduction = process.env["IS_PRODUCTION"] === "true";
     const masterData: any = {};
-    rows.forEach(row => {
-      if (row.ms_project_config_name === "CENTER_AUTH_LOGIN_URL") {
-        masterData.CENTER_AUTH_LOGIN_URL = row.ms_project_config_val;
-      }
-      if (row.ms_project_config_name === "CENTER_AUTH_LOGIN_USERNAME") {
-        masterData.CENTER_AUTH_LOGIN_USERNAME = row.ms_project_config_val;
-      }
-      if (row.ms_project_config_name === "CENTER_AUTH_LOGIN_PASSWORD") {
-        masterData.CENTER_AUTH_LOGIN_PASSWORD = row.ms_project_config_val;
-      }
-      if (row.ms_project_config_name === "CENTER_API_USERS_ME_URL") {
-        masterData.CENTER_API_USERS_ME_URL = row.ms_project_config_val;
-      }
-      if (row.ms_project_config_name === "KNOWLEDGE_BASE_RUN_URL") {
-        masterData.KNOWLEDGE_BASE_RUN_URL = row.ms_project_config_val;
-      }
-      if (row.ms_project_config_name === "KNOWLEDGE_BASE_COLLECTIONS_URL") {
-        masterData.KNOWLEDGE_BASE_COLLECTIONS_URL = row.ms_project_config_val;
-      }
-    });
+    if (isProduction) {
+      masterData.CENTER_AUTH_LOGIN_URL = process.env["CENTER_AUTH_LOGIN_URL"];
+      masterData.CENTER_API_USERS_ME_URL = process.env["CENTER_API_USERS_ME_URL"];
+      masterData.KNOWLEDGE_BASE_RUN_URL = process.env["KNOWLEDGE_BASE_RUN_URL"];
+      masterData.KNOWLEDGE_BASE_COLLECTIONS_URL = process.env["KNOWLEDGE_BASE_COLLECTIONS_URL"];
+    } else {
+      masterData.CENTER_AUTH_LOGIN_URL = "https://mocha.centerapp.io/center/auth/login";
+      masterData.CENTER_API_USERS_ME_URL = "https://mocha.centerapp.io/center/api/v1/users/me";
+      masterData.KNOWLEDGE_BASE_RUN_URL = "https://mlsandbox.oneweb.tech/px/retrieval";
+      masterData.KNOWLEDGE_BASE_COLLECTIONS_URL = "https://mlsandbox.oneweb.tech/px/collections";
+    }
     return masterData;
   } catch (error) {
-    throw error;
+    const masterData: any = {};
+    masterData.CENTER_AUTH_LOGIN_URL = "https://mocha.centerapp.io/center/auth/login";
+    masterData.CENTER_API_USERS_ME_URL = "https://mocha.centerapp.io/center/api/v1/users/me";
+    masterData.KNOWLEDGE_BASE_RUN_URL = "https://mlsandbox.oneweb.tech/px/retrieval";
+    masterData.KNOWLEDGE_BASE_COLLECTIONS_URL = "https://mlsandbox.oneweb.tech/px/collections";
+    return masterData;
   }
 };
 
@@ -100,21 +53,6 @@ const getUserMe = async (CENTER_API_USERS_ME_URL: string, accessToken: string) =
   });
   const data = await response.json();
   return data.iam2ID;
-}
-
-const getTokenAdmin = async (CENTER_AUTH_LOGIN_URL: string, CENTER_AUTH_LOGIN_USERNAME: string, CENTER_AUTH_LOGIN_PASSWORD: string) => {
-  const response = await fetch(CENTER_AUTH_LOGIN_URL, {
-    method: 'POST',
-    body: JSON.stringify({
-      username: CENTER_AUTH_LOGIN_USERNAME,
-      password: CENTER_AUTH_LOGIN_PASSWORD,
-    }),
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
-  const data = await response.json();
-  return data.token;
 }
 
 export const searchKnowledgeBase = createAction({
@@ -196,7 +134,6 @@ export const searchKnowledgeBase = createAction({
       const masterData = await getMasterData();
       const accessToken = await getAccessToken(masterData.CENTER_AUTH_LOGIN_URL, auth) || '';
       const userId = await getUserMe(masterData.CENTER_API_USERS_ME_URL, accessToken);
-      const tokenAdmin = await getTokenAdmin(masterData.CENTER_AUTH_LOGIN_URL, masterData.CENTER_AUTH_LOGIN_USERNAME, masterData.CENTER_AUTH_LOGIN_PASSWORD);
 
       const response = await axios.post(
         masterData.KNOWLEDGE_BASE_RUN_URL,
@@ -210,7 +147,7 @@ export const searchKnowledgeBase = createAction({
         },
         {
           headers: {
-            'Authorization': `Bearer ` + tokenAdmin,
+            'Authorization': `Bearer ` + accessToken,
             'userId': userId,
             'Content-Type': 'application/json',
           },
