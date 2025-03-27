@@ -197,7 +197,7 @@ export function SidebarComponent({
           >
             <SidebarContent>
               <SidebarHeader className="pt-4 pb-0">
-                <div className="flex items-center justify-center">
+                <div className="flex items-center">
                   <Link
                     to={isHomeDashboard ? defaultRoute : '/platform'}
                     className="h-[48px] flex items-center justify-center"

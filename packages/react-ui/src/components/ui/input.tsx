@@ -51,6 +51,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             <SelectUtilButton
               tooltipText={t('Select a file')}
               Icon={Paperclip}
+              onClick={(e) => e.preventDefault()}
             ></SelectUtilButton>
           </div>
         </div>
@@ -65,7 +66,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {...props}
       />
     );
-  },
+  }
 );
 Input.displayName = 'Input';
 
