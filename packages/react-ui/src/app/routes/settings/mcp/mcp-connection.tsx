@@ -1,32 +1,39 @@
-import { t } from 'i18next';
-import { Button } from '../../../../components/ui/button';
 import { Card, CardContent } from '../../../../components/ui/card';
 import { PieceIcon } from '../../../../features/pieces/components/piece-icon';
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
+import { Link, Trash2 } from 'lucide-react';
+import { Button } from '../../../../components/ui/button';
 
 type McpConnectionProps = {
   connection: AppConnectionWithoutSensitiveData;
-  isUsed: boolean;
   isUpdating: boolean;
   pieceInfo: {
     displayName: string;
     logoUrl?: string;
   };
-  onToggle: (connection: AppConnectionWithoutSensitiveData) => void;
+  onDelete: (connection: AppConnectionWithoutSensitiveData) => void;
 };
 
 export const McpConnection = ({
   connection,
-  isUsed,
   isUpdating,
   pieceInfo,
-  onToggle,
+  onDelete,
 }: McpConnectionProps) => {
   return (
     <Card
-      className={`overflow-hidden transition-all duration-200`}
+      className={`overflow-hidden transition-all duration-200 relative`}
     >
-      <CardContent className="flex flex-row items-start justify-between p-4 gap-3">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => onDelete(connection)}
+        loading={isUpdating}
+        className="absolute top-2 right-2 text-destructive hover:text-destructive/90 h-8 w-8"
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+      <CardContent className="flex flex-row items-start p-4 gap-3">
         <div className="flex items-center space-x-3 min-w-0 py-2">
           <PieceIcon
             displayName={pieceInfo.displayName}
@@ -37,23 +44,12 @@ export const McpConnection = ({
             border={true}
           />
           <div className="min-w-0">
-            <h4 className="font-medium truncate">{connection.displayName}</h4>
-            <p className="text-xs text-muted-foreground truncate">
-              {connection.pieceName}
-            </p>
+            <h4 className="font-medium truncate flex items-center gap-1">
+            {connection.displayName}
+            </h4>
+ 
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="default"
-          onClick={() => onToggle(connection)}
-          loading={isUpdating}
-          className={`shrink-0 min-w-[80px] ${
-            isUsed ? 'text-destructive hover:text-destructive' : 'text-primary hover:text-primary'
-          }`}
-        >
-          {isUsed ? t('Remove') : t('Use')}
-        </Button>
       </CardContent>
     </Card>
   );

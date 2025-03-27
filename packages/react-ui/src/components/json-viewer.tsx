@@ -20,6 +20,7 @@ import { toast } from './ui/use-toast';
 type JsonViewerProps = {
   json: any;
   title: string;
+  hideDownload?: boolean;
 };
 
 type FileButtonProps = {
@@ -65,7 +66,7 @@ const removeUndefined = (obj: any): any => {
 };
 
 const JsonViewer = React.memo(
-  ({ json: unclearJson, title }: JsonViewerProps) => {
+  ({ json: unclearJson, title, hideDownload = false }: JsonViewerProps) => {
     const { theme } = useTheme();
     const json = useMemo(() => {
       return removeUndefined(unclearJson);
@@ -160,9 +161,11 @@ const JsonViewer = React.memo(
             <span className="text-md">{title}</span>
           </div>
           <div className="flex items-center gap-0">
-            <Button variant={'ghost'} size={'sm'} onClick={handleDownload}>
-              <Download className="w-4 h-4" />
-            </Button>
+            {!hideDownload && (
+              <Button variant={'ghost'} size={'sm'} onClick={handleDownload}>
+                <Download className="w-4 h-4" />
+              </Button>
+            )}
             <Button variant={'ghost'} size={'sm'} onClick={handleCopy}>
               <Copy className="w-4 h-4" />
             </Button>

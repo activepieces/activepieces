@@ -70,12 +70,6 @@ export default function ProjectSettingsLayout({
       icon: <GitBranch size={iconSize} />,
       hasPermission: checkAccess(Permission.READ_PROJECT_RELEASE),
     },
-    {
-      title: t('MCP'),
-      href: authenticationSession.appendProjectRoutePrefix('/settings/mcp'),
-      icon: <ServerCog size={iconSize} />,
-      hasPermission: checkAccess(Permission.READ_MCP),
-    },
   ];
 
   const filterAlerts = (item: SidebarItem) =>

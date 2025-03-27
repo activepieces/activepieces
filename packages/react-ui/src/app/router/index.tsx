@@ -409,14 +409,12 @@ const routes = [
   }),
 
   ...ProjectRouterWrapper({
-    path: '/settings/mcp',
+    path: '/mcp',
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_MCP}>
           <PageTitle title="MCP">
-            <ProjectSettingsLayout>
               <MCPPage />
-            </ProjectSettingsLayout>
           </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>

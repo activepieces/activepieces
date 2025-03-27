@@ -107,7 +107,7 @@ const CustomTooltipLink = ({
           <div className="flex items-center gap-2">
             {Icon && <Icon className={`size-4`} />}
             <span className={`text-sm`}>{label}</span>
-            {(label === 'Tables' || label === 'Todos') && (
+            {(label === 'Tables' || label === 'Todos' || label === 'MCP') && (
               <span className="ml-2">
                 <BetaBadge showTooltip={false} />
               </span>
