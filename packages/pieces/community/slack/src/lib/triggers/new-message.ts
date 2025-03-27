@@ -1,9 +1,5 @@
 import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { slackAuth } from '../../';
-import { WebClient } from '@slack/web-api';
-import { isNil } from '@activepieces/shared';
-import { getFirstFiveOrAll } from '../common/utils';
-
 
 export const newMessageTrigger = createTrigger({
 	auth: slackAuth,
@@ -34,6 +30,11 @@ export const newMessageTrigger = createTrigger({
 	run: async (context) => {
 		const payloadBody = context.payload.body as PayloadBody;
 
+		// check if it's channel message
+		if (payloadBody.event.channel_type !== 'channel') {
+			return [];
+		}
+
 		// check for bot messages
 		if (context.propsValue.ignoreBots && payloadBody.event.bot_id) {
 			return [];
@@ -46,5 +47,6 @@ type PayloadBody = {
 	event: {
 		channel: string;
 		bot_id?: string;
+		channel_type:string
 	};
 };
