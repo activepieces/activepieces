@@ -2,16 +2,14 @@ import { MCPStatus } from '@activepieces/ee-shared'
 import { ALL_PRINCIPAL_TYPES, ApId, Permission, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { mcpService } from './mcp-service'
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
-import { z } from "zod";
-import { pieceMetadataService } from '../../pieces/piece-metadata-service';
-import { projectService } from '../../project/project-service';
-import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
+import { createMcpServer } from './mcp-server'
+import { McpSessionManager } from './mcp-session-manager'
 
-let transport: SSEServerTransport;
+let sessionManager: McpSessionManager;
 
 export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
+    sessionManager = new McpSessionManager(app.log);
+    
     app.get('/', GetMCPRequest, async (req) => {
         return mcpService(req.log).getOrCreate({
             projectId: req.principal.projectId,
@@ -19,22 +17,48 @@ export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.patch('/:id/status', UpdateMCPStatusRequest, async (req) => {
+        const mcpId = req.params.id;
+        const { status } = req.body;
+        
+        // If status is being set to DISABLED, disconnect any active sessions
+        if (status === MCPStatus.DISABLED) {
+            const sessionData = sessionManager.getByMcpId(mcpId);
+            if (sessionData) {
+                sessionManager.remove(sessionData.transport.sessionId);
+            }
+        }
+        
         return mcpService(req.log).updateStatus({
-            mcpId: req.params.id,
-            status: req.body.status,
+            mcpId,
+            status,
         })
     })
 
     app.patch('/:id/connections', UpdateMCPConnectionsRequest, async (req) => {
+        const mcpId = req.params.id;
+        const { connectionsIds } = req.body;
+        
+        const sessionData = sessionManager.getByMcpId(mcpId);
+        if (sessionData) {
+            sessionManager.remove(sessionData.transport.sessionId);
+        }
+        
         return mcpService(req.log).updateConnections({
-            mcpId: req.params.id,
-            connectionsIds: req.body.connectionsIds,
+            mcpId,
+            connectionsIds,
         })
     })
 
     app.delete('/:id', DeleteMCPRequest, async (req) => {
+        const mcpId = req.params.id;
+        
+        const sessionData = sessionManager.getByMcpId(mcpId);
+        if (sessionData) {
+            sessionManager.remove(sessionData.transport.sessionId);
+        }
+        
         return mcpService(req.log).delete({
-            mcpId: req.params.id,
+            mcpId,
         })
     })
 
@@ -49,102 +73,48 @@ export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
         },
     }, async (req, reply) => {
         const mcpId = req.params.id;
-
-        const projectId = await mcpService(req.log).getProjectId({
-            mcpId: mcpId,
-        });
-
-        const platformId = await projectService.getPlatformId(projectId)
-        const connections = await mcpService(req.log).getConnections({
-            mcpId: mcpId,
-        })
-
-        const pieceNames = connections.map((connection) => {
-            return connection.pieceName;
-        });
-        const pieces = await Promise.all(pieceNames.map(async (pieceName) => {
-            return await pieceMetadataService(req.log).getOrThrow({
-                name: pieceName,
-                version: undefined,
-                projectId: projectId,
-                platformId: platformId,
-            })
-        }))
-
-        transport = new SSEServerTransport('/v1/mcp/messages', reply.raw);
-        const server = new McpServer({
-            name: "Activepieces",
-            version: "1.0.0"
-        });
-
-        // TODO: check if there is a better way to do this
-        function piecePropertyToZod(property: PieceProperty): z.ZodTypeAny {
-            let schema: z.ZodTypeAny;
-            
-            switch (property.type) {
-                case PropertyType.SHORT_TEXT:
-                case PropertyType.LONG_TEXT:
-                case PropertyType.DATE_TIME:
-                    schema = z.string();
-                    break;
-                case PropertyType.NUMBER:
-                    schema = z.number();
-                    break;
-                case PropertyType.CHECKBOX:
-                    schema = z.boolean();
-                    break;
-                case PropertyType.ARRAY:
-                    schema = z.array(z.any());
-                    break;
-                case PropertyType.OBJECT:
-                case PropertyType.JSON:
-                    schema = z.record(z.string(), z.any());
-                    break;
-                default:
-                    schema = z.any();
-            }
-            
-            return property.required ? schema : schema.optional();
-        }
         
-
-        const uniqueActions = new Set();    
-        pieces.flatMap(piece => 
-            Object.values(piece.actions).map(action => {
-                if (uniqueActions.has(action.name)) {
-                    return;
-                }
-                uniqueActions.add(action.name);
-                server.tool(
-                    action.name,
-                    action.description,
-                    Object.fromEntries(
-                        Object.entries(action.props).map(([key, prop]) => 
-                            [key, piecePropertyToZod(prop)]
-                        )
-                    ),
-                    async (params) => ({
-                        content: [{ 
-                            type: "text", 
-                            text: `Executed ${action.displayName}: ${action.description}` 
-                        }]
-                    })
-                )
-            }
-        ));
-
-        await server.connect(transport)
+        const { server, transport } = await createMcpServer({
+            mcpId,
+            reply,
+            logger: req.log,
+        });
         
+        await server.connect(transport);
+        
+        sessionManager.add(transport.sessionId, server, transport, mcpId);
+        
+        reply.raw.on("close", () => {
+            sessionManager.remove(transport.sessionId);
+        });
     })
 
     app.post('/messages', {
         config: {
             allowedPrincipals: ALL_PRINCIPAL_TYPES,
         },
+        schema: {
+            querystring: Type.Object({
+                sessionId: Type.Optional(Type.String()),
+            }),
+        },
     }, async (req, reply) => {
-        await transport.handlePostMessage(req.raw, reply.raw, req.body)
+        const sessionId = req.query?.sessionId as string;
+        
+        if (!sessionId) {
+            reply.code(400).send({ message: 'Missing session ID' });
+            return;
+        }
+        
+        const sessionData = sessionManager.get(sessionId);
+        
+        if (!sessionData) {
+            reply.code(404).send({ message: 'Session not found' });
+            return;
+        }
+        
+        await sessionData.transport.handlePostMessage(req.raw, reply.raw, req.body);
     })
-
 }
 
 const GetMCPRequest = {
