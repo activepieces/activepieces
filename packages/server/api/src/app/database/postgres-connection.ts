@@ -12,7 +12,6 @@ import { AddOauthApp1741683756436 } from './migration/postgres/1741683756436-add
 import { AddGlobalOauthApp1741684926338 } from './migration/postgres/1741684926338-add-global-oauth-app'
 import { AddTables1741862762328 } from './migration/postgres/1741862762328-add-tables'
 import { AddDataColumnToFieldEntity1742395892304 } from './migration/postgres/1742395892304-AddDataColumnToFieldEntity'
-import { InitialMsProjectConfig1742454177000 } from './migration/postgres/1742454177000-initial-ms-project-config'
 import { AddTodosSquashed1742874382959 } from './migration/postgres/1742874382959-add-todos-squashed'
 import { RenameApprovalUrlToResolveUrl1742991137557 } from './migration/postgres/1742991137557-RenameApprovalUrlToResolveUrl'
 
@@ -31,7 +30,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RenameApprovalUrlToResolveUrl1742991137557,
         AddTodosSquashed1742874382959,
         AddDataColumnToFieldEntity1742395892304,
-        InitialMsProjectConfig1742454177000,
         AddTables1741862762328,
         AddGlobalOauthApp1741684926338,
         AddOauthApp1741683756436,

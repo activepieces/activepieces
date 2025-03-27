@@ -12,7 +12,6 @@ import { AddOauthApp1741683781609 } from './migration/sqlite/1741683781609-add-o
 import { AddGlobalOauthApp1741685103864 } from './migration/sqlite/1741685103864-add-global-oauth-app'
 import { AddTables1741862813806 } from './migration/sqlite/1741862813806-add-tables'
 import { AddDataColumnToFieldEntity1742390870702 } from './migration/sqlite/1742390870702-AddDataColumnToFieldEntity'
-import { InitialMsProjectConfig1742454177000 } from './migration/sqlite/1742454177000-initial-ms-project-config'
 import { AddTodosSquashed1742874467240 } from './migration/sqlite/1742874467240-add-todos-squashed'
 import { RenameApprovalUrlToResolveUrl1742991301509 } from './migration/sqlite/1742991301509-RenameApprovalUrlToResolveUrl'
 
@@ -40,7 +39,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RenameApprovalUrlToResolveUrl1742991301509,
         AddTodosSquashed1742874467240,
         AddDataColumnToFieldEntity1742390870702,
-        InitialMsProjectConfig1742454177000,
         AddTables1741862813806,
         AddGlobalOauthApp1741685103864,
         AddOauthApp1741683781609,
