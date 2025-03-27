@@ -170,7 +170,7 @@ const AuthFormTemplate = React.memo(
       }
     }, []);
     // will redirect to promptX login page
-    if (environment !== 'dev') {
+    if (environment !== 'dev' && !isNil(loginUrl)) {
       return (
         <div className="flex justify-center items-center h-500">
           <p className="text-lg font-semibold text-gray-700 mb-4">
