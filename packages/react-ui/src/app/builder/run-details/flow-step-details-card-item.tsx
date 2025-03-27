@@ -133,7 +133,10 @@ const FlowStepDetailsCardItem = ({
             <img
               alt={stepMetadata?.displayName}
               className="w-6 h-6 object-contain"
-              src={stepMetadata?.logoUrl}
+              src={
+                step.settings?.inputUiInfo?.customizedInputs?.logoUrl ??
+                stepMetadata?.logoUrl
+              }
             />
             <div className="break-all truncate min-w-0 grow-1 shrink-1">{`${
               stepIndex + 1

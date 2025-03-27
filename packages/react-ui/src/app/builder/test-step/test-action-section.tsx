@@ -15,6 +15,7 @@ import {
   FlowOperationType,
   Step,
   StepRunResponse,
+  TodoType,
   TodoWithAssignee,
   TriggerType,
   flowStructureUtil,
@@ -39,7 +40,7 @@ function isTodoCreateTask(step: Step): boolean {
   return (
     step.type === ActionType.PIECE &&
     step.settings.pieceName === '@activepieces/piece-todos' &&
-    step.settings.actionName === 'createTodo'
+    step.settings.actionName === 'createTodoAndWait'
   );
 }
 
@@ -246,6 +247,11 @@ const TestStepSectionImplementation = React.memo(
             currentStep={currentStep}
             setErrorMessage={setErrorMessage}
             setLastTestDate={setLastTestDate}
+            type={
+              currentStep.settings.actionName === 'createTodoAndWait'
+                ? TodoType.INTERNAL
+                : TodoType.EXTERNAL
+            }
           />
         )}
       </>

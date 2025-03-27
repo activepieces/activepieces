@@ -14,6 +14,7 @@ import { AddTables1741862762328 } from './migration/postgres/1741862762328-add-t
 import { AddDataColumnToFieldEntity1742395892304 } from './migration/postgres/1742395892304-AddDataColumnToFieldEntity'
 import { InitialMsProjectConfig1742454177000 } from './migration/postgres/1742454177000-initial-ms-project-config'
 import { AddTodosSquashed1742874382959 } from './migration/postgres/1742874382959-add-todos-squashed'
+import { RenameApprovalUrlToResolveUrl1742991137557 } from './migration/postgres/1742991137557-RenameApprovalUrlToResolveUrl'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -27,6 +28,7 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+        RenameApprovalUrlToResolveUrl1742991137557,
         AddTodosSquashed1742874382959,
         AddDataColumnToFieldEntity1742395892304,
         InitialMsProjectConfig1742454177000,

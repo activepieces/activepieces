@@ -55,6 +55,17 @@ const isCorePiece = (piece: StepMetadata) =>
     ? true
     : (piece as PieceStepMetadata).categories.includes(PieceCategory.CORE);
 
+const getStepNames = (
+  piece: StepMetadata,
+  flowVersion: FlowVersion,
+  count: number,
+) => {
+  if (piece.type === TriggerType.PIECE) {
+    return ['trigger'];
+  }
+  return flowStructureUtil.findUnusedNames(flowVersion.trigger, count);
+};
+
 const getStepName = (piece: StepMetadata, flowVersion: FlowVersion) => {
   if (piece.type === TriggerType.PIECE) {
     return 'trigger';
@@ -144,10 +155,12 @@ const getDefaultStep = ({
   stepName,
   stepMetadata,
   actionOrTrigger,
+  settings,
 }: {
   stepName: string;
   stepMetadata: StepMetadata;
   actionOrTrigger: PieceSelectorItem;
+  settings?: Record<string, unknown>;
 }): Action | Trigger => {
   const errorHandlingOptions = {
     continueOnFailure: {
@@ -198,7 +211,7 @@ const getDefaultStep = ({
       return deepMergeAndCast<CodeAction>(
         {
           type: ActionType.CODE,
-          settings: {
+          settings: settings ?? {
             sourceCode: {
               code: defaultCode,
               packageJson: '{}',
@@ -216,7 +229,7 @@ const getDefaultStep = ({
       return deepMergeAndCast<Action>(
         {
           type: ActionType.LOOP_ON_ITEMS,
-          settings: {
+          settings: settings ?? {
             items: '',
             inputUiInfo: {
               customizedInputs: {},
@@ -229,7 +242,7 @@ const getDefaultStep = ({
       return deepMergeAndCast<Action>(
         {
           type: ActionType.ROUTER,
-          settings: {
+          settings: settings ?? {
             executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
             branches: [
               {
@@ -263,7 +276,7 @@ const getDefaultStep = ({
       return deepMergeAndCast<PieceAction>(
         {
           type: ActionType.PIECE,
-          settings: {
+          settings: settings ?? {
             pieceName: stepMetadata.pieceName,
             pieceType: stepMetadata.pieceType,
             packageType: stepMetadata.packageType,
@@ -280,7 +293,7 @@ const getDefaultStep = ({
       return deepMergeAndCast<PieceTrigger>(
         {
           type: TriggerType.PIECE,
-          settings: {
+          settings: settings ?? {
             pieceName: stepMetadata.pieceName,
             pieceType: stepMetadata.pieceType,
             packageType: stepMetadata.packageType,
@@ -372,6 +385,7 @@ export const pieceSelectorUtils = {
   getDefaultStep,
   isCorePiece,
   getStepName,
+  getStepNames,
   isAiPiece,
   isAppPiece,
   toKey,

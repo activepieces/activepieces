@@ -45,6 +45,7 @@ import {
   FlowOperationType,
   TriggerType,
   TodoWithAssignee,
+  TodoType,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
@@ -57,6 +58,7 @@ type ManualTaskTestingDialogProps = {
   flowVersionId: string;
   projectId: string;
   currentStep: Step;
+  type: TodoType;
   setErrorMessage: (errorMessage: string | undefined) => void;
   setLastTestDate: (lastTestDate: string) => void;
 };
@@ -68,6 +70,7 @@ function ManualTaskTestingDialog({
   flowVersionId,
   projectId,
   currentStep,
+  type,
   setErrorMessage,
   setLastTestDate,
 }: ManualTaskTestingDialogProps) {
@@ -96,6 +99,7 @@ function ManualTaskTestingDialog({
     mutationFn: async () => {
       const response = await todosApi.update(todo.id, {
         status: status,
+        isTest: true,
       });
       let sampleDataFileId: string | undefined = undefined;
       if (!isNil(response)) {
@@ -174,10 +178,29 @@ function ManualTaskTestingDialog({
           ),
         );
       }
-      const outputStatus = (output as TodoWithAssignee)['status'].name;
-      setSampleData(currentStep.name, {
-        status: outputStatus,
-      });
+      const response = output as TodoWithAssignee;
+      const statusName = response['status'].name;
+      const statusOptions = response['statusOptions'];
+      const publicUrl = response['resolveUrl']?.split('/flow-runs/')[0];
+      const links = statusOptions.map((option) => ({
+        status: option.name,
+        url:
+          publicUrl +
+          `/todos/${response.id}/resolve?status=${option.name}&isTest=true`,
+      }));
+      switch (type) {
+        case TodoType.INTERNAL:
+          setSampleData(currentStep.name, {
+            status: statusName,
+          });
+          break;
+        case TodoType.EXTERNAL:
+          setSampleData(currentStep.name, {
+            id: response.id,
+            links,
+          });
+          break;
+      }
       setSampleDataInput(currentStep.name, input);
       setLastTestDate(dayjs().toISOString());
       onOpenChange(false);

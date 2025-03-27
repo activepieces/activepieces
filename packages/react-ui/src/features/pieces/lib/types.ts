@@ -88,4 +88,5 @@ export type PieceSelectorItem =
 export type HandleSelectCallback = (
   piece: StepMetadata,
   item: PieceSelectorItem,
+  type?: string,
 ) => void;
