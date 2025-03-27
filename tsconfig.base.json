@@ -36,6 +36,7 @@
       "@activepieces/piece-afforai": [
         "packages/pieces/community/afforai/src/index.ts"
       ],
+      "@activepieces/piece-ai": ["packages/pieces/community/ai/src/index.ts"],
       "@activepieces/piece-aianswer": [
         "packages/pieces/community/aianswer/src/index.ts"
       ],
@@ -208,6 +209,9 @@
       ],
       "@activepieces/piece-elevenlabs": [
         "packages/pieces/community/elevenlabs/src/index.ts"
+      ],
+      "@activepieces/piece-eth-name-service": [
+        "packages/pieces/community/eth-name-service/src/index.ts"
       ],
       "@activepieces/piece-facebook-leads": [
         "packages/pieces/community/facebook-leads/src/index.ts"
@@ -797,9 +801,6 @@
       ],
       "activepieces/piece-zuora": [
         "packages/pieces/community/zuora/src/index.ts"
-      ],
-      "@activepieces/piece-eth-name-service": [
-        "packages/pieces/community/eth-name-service/src/index.ts"
       ],
       "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
       "server-worker": ["packages/server/worker/src/index.ts"],
