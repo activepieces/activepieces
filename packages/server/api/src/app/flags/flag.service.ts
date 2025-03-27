@@ -214,6 +214,12 @@ export const flagService = {
                 created,
                 updated,
             },
+            {
+                id: ApFlagId.LOGIN_URL,
+                value: system.get(AppSystemProp.LOGIN_URL),
+                created,
+                updated,
+            },
         )
 
         if (system.isApp()) {

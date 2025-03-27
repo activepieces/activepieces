@@ -12,6 +12,7 @@ import {
 import {
   ApFlagId,
   AuthenticationResponse,
+  isNil,
   SignInRequest,
   ThirdPartyAuthnProvidersToShowMap,
 } from '@activepieces/shared';
@@ -27,23 +28,8 @@ import { HttpError } from '@activepieces/pieces-common';
 import { authenticationSession } from '@/lib/authentication-session';
 import { authenticationApi } from '@/lib/authentication-api';
 import { ClipLoader } from 'react-spinners';
-import { Static, Type } from '@sinclair/typebox';
-import { formatUtils } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { userApi } from '@/lib/user-api';
-
-const SignInSchema = Type.Object({
-  email: Type.String({
-    pattern: formatUtils.emailRegex.source,
-    errorMessage: t('Email is invalid'),
-  }),
-  password: Type.String({
-    minLength: 1,
-    errorMessage: t('Password is required'),
-  }),
-});
-type SignInSchema = Static<typeof SignInSchema>;
-
 
 const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
   return isSignup ? (
@@ -76,7 +62,7 @@ const AuthSeparator = ({
 }) => {
   const { data: thirdPartyAuthProviders } =
     flagsHooks.useFlag<ThirdPartyAuthnProvidersToShowMap>(
-      ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
+      ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP
     );
 
   return (thirdPartyAuthProviders?.google || thirdPartyAuthProviders?.saml) &&
@@ -92,9 +78,13 @@ const AuthFormTemplate = React.memo(
     const isSignUp = form === 'signup';
 
     const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
-    let [isloading, setIsloading] = useState<boolean>(true);
+    let [isLoading, setIsLoading] = useState<boolean>(true);
     const { data: isEmailAuthEnabled } = flagsHooks.useFlag<boolean>(
-      ApFlagId.EMAIL_AUTH_ENABLED,
+      ApFlagId.EMAIL_AUTH_ENABLED
+    );
+    const { data: loginUrl } = flagsHooks.useFlag<string>(ApFlagId.LOGIN_URL);
+    const { data: environment } = flagsHooks.useFlag<string>(
+      ApFlagId.ENVIRONMENT
     );
     const data = {
       signin: {
@@ -109,8 +99,9 @@ const AuthFormTemplate = React.memo(
       },
     }[form];
 
-
     const navigate = useNavigate();
+
+    const [countdown, setCountdown] = useState(3);
 
     const { mutate, isPending } = useMutation<
       AuthenticationResponse,
@@ -131,15 +122,15 @@ const AuthFormTemplate = React.memo(
     });
 
     const loginByToken = async (token: any) => {
-      localStorage.setItem("token", token)
+      localStorage.setItem('token', token);
       try {
         const result = await userApi.getCurrentUser();
-        localStorage.setItem("currentUser", JSON.stringify(result))
+        localStorage.setItem('currentUser', JSON.stringify(result));
         navigate('/flows');
       } catch (e) {
         navigate('/sign-in');
       }
-    }
+    };
 
     useEffect(() => {
       const params = new URLSearchParams(location.search);
@@ -147,21 +138,49 @@ const AuthFormTemplate = React.memo(
       const pass = params.get('p');
       const token = params.get('t');
       if (token) {
-        loginByToken(token)
+        loginByToken(token);
       } else if (user && pass) {
-        let userDecode = atob(user)
-        let passDecode = atob(pass)
-        let payload: SignInSchema = {
-          "email": userDecode,
-          "password": passDecode
-        }
+        let userDecode = atob(user);
+        let passDecode = atob(pass);
+        let payload: SignInRequest = {
+          email: userDecode,
+          password: passDecode,
+        };
         mutate(payload);
       } else {
-        setIsloading(false)
+        setIsLoading(false);
       }
-    }, [])
+    }, []);
 
-    if (isloading) {
+    useEffect(() => {
+      // For non-dev environments, we'd like to login via external screen
+      if (environment !== 'dev' && !isNil(loginUrl)) {
+        const timer = setInterval(() => {
+          setCountdown((prev) => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              // Redirect when countdown finishes
+              window.location.href = loginUrl;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+        // Cleanup interval on component unmount
+        return () => clearInterval(timer);
+      }
+    }, []);
+    // will redirect to promptX login page
+    if (environment !== 'dev') {
+      return (
+        <div className="flex justify-center items-center h-500">
+          <p className="text-lg font-semibold text-gray-700 mb-4">
+            {t(`Logins are allowed only through CenterApp, Redirecting you in ${countdown}
+            seconds...`)}
+          </p>
+        </div>
+      );
+    }
+    if (isLoading) {
       return (
         <div className="flex justify-center items-center h-full">
           <ClipLoader color="#a9a9a9" />
@@ -201,7 +220,7 @@ const AuthFormTemplate = React.memo(
         <BottomNote isSignup={isSignUp}></BottomNote>
       </Card>
     );
-  },
+  }
 );
 
 AuthFormTemplate.displayName = 'AuthFormTemplate';

@@ -151,6 +151,9 @@ const systemPropValidators: {
 
     // Secret Manager
     [AppSystemProp.SECRET_MANAGER_API_KEY]: stringValidator,
+
+    // Custom
+    [AppSystemProp.LOGIN_URL]: urlValidator,
 }
 
 
