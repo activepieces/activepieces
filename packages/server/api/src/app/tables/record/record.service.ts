@@ -281,6 +281,10 @@ export const recordService = {
             id: In(ids),
             projectId,
         })
+     
+        if (records.length === 0) {
+            return []
+        }
         const fields = await fieldService.getAll({
             tableId: records[0].tableId,
             projectId,

@@ -34,6 +34,10 @@ export const CellEntity = new EntitySchema<CellSchema>({
             columns: ['projectId', 'fieldId', 'recordId'],
             unique: true,
         },
+        {
+            name: 'idx_cell_value',
+            columns: ['value'],
+        },
     ],
     relations: {
         record: {
