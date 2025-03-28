@@ -1,4 +1,4 @@
-import { ALL_PRINCIPAL_TYPES, ApId, Permission, PrincipalType } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, apId, ApId, Permission, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { mcpService } from './mcp-service'
 import { createMcpServer } from './mcp-server'
@@ -28,8 +28,9 @@ export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/:id/rotate', RotateTokenRequest, async (req) => {
         const mcpId = req.params.id;
-        return mcpService(req.log).rotateToken({
+        return mcpService(req.log).update({
             mcpId,
+            token: apId(),
         });
     })
 

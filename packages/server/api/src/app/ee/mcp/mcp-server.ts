@@ -8,9 +8,8 @@ import { FastifyReply } from "fastify";
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
 import { FastifyBaseLogger } from 'fastify';
 import { EngineHelperResponse } from "packages/server/worker/src/lib/engine/engine-runner";
-import { EngineResponseStatus, ExecuteActionResponse, TriggerHookType } from "@activepieces/shared";
+import { EngineResponseStatus, ExecuteActionResponse } from "@activepieces/shared";
 import { UserInteractionJobType } from "@activepieces/server-shared";
-import { EngineHelperActionResult, EngineHelperTriggerResult } from "packages/server/worker/src/lib/engine/engine-runner";
 import { userInteractionWatcher } from "../../workers/user-interaction-watcher";
 
 export async function createMcpServer({
@@ -18,7 +17,7 @@ export async function createMcpServer({
     reply,
     logger,
 }: CreateMcpServerRequest): Promise<CreateMcpServerResponse> {
-    const mcp = await mcpService(logger).get({ mcpId });
+    const mcp = await mcpService(logger).getOrThrow({ mcpId, log: logger });
     const projectId = mcp.projectId;
     const platformId = await projectService.getPlatformId(projectId);
     const connections = mcp.connections;
@@ -75,8 +74,8 @@ export async function createMcpServer({
                             content: [{
                                 type: "text",
                                 text: `✅ Successfully executed ${action.displayName}\n\n` +
-                                      `${action.description}\n\n` +
-                                      `\`\`\`json\n${JSON.stringify(result.result, null, 2)}\n\`\`\``
+                                    `${action.description}\n\n` +
+                                    `\`\`\`json\n${JSON.stringify(result.result, null, 2)}\n\`\`\``
                             }]
                         }
                     } else {
@@ -84,8 +83,8 @@ export async function createMcpServer({
                             content: [{
                                 type: "text",
                                 text: `❌ Error executing ${action.displayName}\n\n` +
-                                      `${action.description}\n\n` +
-                                      `\`\`\`\n${result.standardError || "Unknown error occurred"}\n\`\`\``
+                                    `${action.description}\n\n` +
+                                    `\`\`\`\n${result.standardError || "Unknown error occurred"}\n\`\`\``
                             }]
                         }
                     }
