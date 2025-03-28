@@ -51,9 +51,7 @@ export function DashboardContainer({
   const [automationOpen, setAutomationOpen] = useState(true);
   const [aiOpen, setAiOpen] = useState(true);
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: showIssuesNotification } = issueHooks.useIssuesNotification(
-    platform.flowIssuesEnabled,
-  );
+  const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
   const { project } = projectHooks.useCurrentProject();
   const { embedState } = useEmbedding();
   const currentProjectId = authenticationSession.getProjectId();
@@ -108,19 +106,10 @@ export function DashboardContainer({
       },
       {
         type: 'link',
-        to: authenticationSession.appendProjectRoutePrefix('/issues'),
-        label: t('Issues'),
-        notification: showIssuesNotification,
-        showInEmbed: false,
-        hasPermission: checkAccess(Permission.READ_ISSUES),
-        isSubItem: true,
-      },
-
-      {
-        type: 'link',
         to: authenticationSession.appendProjectRoutePrefix('/runs'),
         label: t('Runs'),
         showInEmbed: true,
+        notification: showIssuesNotification,
         hasPermission: checkAccess(Permission.READ_RUN),
         isSubItem: true,
       },
