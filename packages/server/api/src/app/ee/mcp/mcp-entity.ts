@@ -21,21 +21,10 @@ export const MCPEntity = new EntitySchema<MCPSchema>({
     ],
     relations: {
         connections: {
-            type: 'many-to-many',
+            type: 'one-to-many',
             target: 'app_connection',
             cascade: true,
             onDelete: 'CASCADE',
-            joinTable: {
-                name: 'mcp_connection',
-                joinColumn: {
-                    name: 'mcpId',
-                    referencedColumnName: 'id',
-                },
-                inverseJoinColumn: {
-                    name: 'connectionId',
-                    referencedColumnName: 'id',
-                },
-            },
         },
     },
     

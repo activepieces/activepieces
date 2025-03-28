@@ -90,7 +90,7 @@ import { AddManualTaskTable1742304913465 } from './migration/sqlite/174230491346
 import { ChangeManualTasksToTodoSqlite1742432169253 } from './migration/sqlite/1742432169253-ChangeManualTasksToTodoSqlite'
 import { AddMCPWithConnectionsSqlite1742867572875 } from './migration/sqlite/1742867572875-AddMCPWithConnectionsSqlite'
 import { RemoveMcpStatusAddMcpTokenSqlite1743041373691 } from './migration/sqlite/1743041373691-RemoveMcpStatusAddMcpTokenSqlite'
-
+import { AddDirectMcpAppConnectionRelationSqlite1743121281016 } from './migration/sqlite/1743121281016-AddDirectMcpAppConnectionRelationSqlite'
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
     mkdirSync(apConfigDirectoryPath, { recursive: true })
@@ -197,6 +197,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeManualTasksToTodoSqlite1742432169253,
         AddMCPWithConnectionsSqlite1742867572875,
         RemoveMcpStatusAddMcpTokenSqlite1743041373691,
+        AddDirectMcpAppConnectionRelationSqlite1743121281016,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

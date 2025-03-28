@@ -9,12 +9,14 @@ import {
     BaseColumnSchemaPart,
     isPostgres,
     JSONB_COLUMN_TYPE,
+    ApIdSchema,
 } from '../database/database-common'
 import { EncryptedObject } from '../helper/encryption'
 
 export type AppConnectionSchema = Omit<AppConnection, 'value'> & {
     value: EncryptedObject
     owner: User
+    mcpId?: string
 }
 
 export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
@@ -45,6 +47,10 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
             type: String,
             nullable: true,
         },
+        mcpId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
         projectIds: {
             type: ARRAY_COLUMN_TYPE,
             array: isPostgres(),
@@ -70,6 +76,10 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
             name: 'idx_app_connection_owner_id',
             columns: ['ownerId'],
         },
+        {
+            name: 'idx_app_connection_mcp_id',
+            columns: ['mcpId'],
+        },
     ],
     relations: {
         owner: {
@@ -81,6 +91,6 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
                 name: 'ownerId',
                 foreignKeyConstraintName: 'fk_app_connection_owner_id',
             },
-        },
+        }
     },
 })
