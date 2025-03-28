@@ -187,8 +187,8 @@ import { AddManualTaskCommentTable1742305104390 } from './migration/postgres/174
 import { AddDataColumnToFieldEntity1742395892304 } from './migration/postgres/1742395892304-AddDataColumnToFieldEntity'
 import { ChangeManualTasksToTodo1742432827826 } from './migration/postgres/1742432827826-ChangeManualTasksToTodo'
 import { ChangeManualTasksCommentsToTodoComments1742433144687 } from './migration/postgres/1742433144687-ChangeManualTasksCommentsToTodoComments'
-import { AddMCP1743128816786 } from './migration/postgres/1743128816786-AddMCP'
 import { RenameApprovalUrlToResolveUrl1742991137557 } from './migration/postgres/1742991137557-RenameApprovalUrlToResolveUrl'
+import { AddMCP1743128816786 } from './migration/postgres/1743128816786-AddMCP'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)

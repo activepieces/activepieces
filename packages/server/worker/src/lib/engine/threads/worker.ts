@@ -24,7 +24,7 @@ export class EngineWorker {
             stackSizeMb: number
         }
     }
-    constructor(log: FastifyBaseLogger, maxWorkers: number, enginePath: string, options: { env: Record<string, string | undefined>,
+    constructor(log: FastifyBaseLogger, maxWorkers: number, enginePath: string, options: { env: Record<string, string | undefined>
         execArgv: string[]
         resourceLimits: { maxOldGenerationSizeMb: number, maxYoungGenerationSizeMb: number, stackSizeMb: number } }) {
         this.log = log

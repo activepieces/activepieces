@@ -89,8 +89,8 @@ import { TableWebhooksIsArraySqlite1741668828922 } from './migration/sqlite/1741
 import { AddManualTaskTable1742304913465 } from './migration/sqlite/1742304913465-AddManualTaskTable'
 import { AddDataColumnToFieldEntity1742390870702 } from './migration/sqlite/1742390870702-AddDataColumnToFieldEntity'
 import { ChangeManualTasksToTodoSqlite1742432169253 } from './migration/sqlite/1742432169253-ChangeManualTasksToTodoSqlite'
-import { AddMCPSqlite1743127177235 } from './migration/sqlite/1743127177235-AddMCPSqlite'
 import { RenameApprovalUrlToResolveUrl1742991301509 } from './migration/sqlite/1742991301509-RenameApprovalUrlToResolveUrl'
+import { AddMCPSqlite1743127177235 } from './migration/sqlite/1743127177235-AddMCPSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)

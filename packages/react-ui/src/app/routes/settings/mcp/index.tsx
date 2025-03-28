@@ -24,10 +24,7 @@ export default function MCPPage() {
   const { data: publicUrl } = flagsHooks.useFlag(ApFlagId.PUBLIC_URL);
   const { toast } = useToast();
 
-  const {
-    data: mcp,
-    refetch: refetchMcp,
-  } = useQuery({
+  const { data: mcp, refetch: refetchMcp } = useQuery({
     queryKey: ['mcp'],
     queryFn: () => {
       return mcpApi.get();

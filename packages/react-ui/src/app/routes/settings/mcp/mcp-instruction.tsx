@@ -57,17 +57,17 @@ export const McpInstruction = ({ mcpServerUrl }: McpInstructionProps) => {
             <Alert variant="warning" className="mt-4 mb-2">
               <AlertDescription className="text-xs">
                 <p>
-                  Please note that the Claude Desktop App is different from the one available on the website. 
+                  Please note that the Claude Desktop App is different from the
+                  one available on the website.
                 </p>
-                <p>
-                  Download from https://claude.ai/download 
-                </p>
+                <p>Download from https://claude.ai/download</p>
               </AlertDescription>
             </Alert>
             <ol className="list-decimal list-inside space-y-2 text-sm text-foreground">
               <li>
                 <span className="font-semibold">Open</span>{' '}
-                <strong>Settings</strong> from the menu in the Claude Desktop App
+                <strong>Settings</strong> from the menu in the Claude Desktop
+                App
               </li>
               <li>
                 <span className="font-semibold">Select</span>{' '}
@@ -82,14 +82,15 @@ export const McpInstruction = ({ mcpServerUrl }: McpInstructionProps) => {
                 config to your claude_desktop_config, then save
               </li>
               <li>
-                <span className="font-semibold">Restart</span> Claude Desktop App
+                <span className="font-semibold">Restart</span> Claude Desktop
+                App
               </li>
             </ol>
             <Alert variant="default" className="mt-4 mb-2">
               <AlertDescription className="text-xs">
                 <p>
-                  <code>mcp-remote</code> connects the Claude Desktop App to our remote
-                  server since Claude only supports local connections.
+                  <code>mcp-remote</code> connects the Claude Desktop App to our
+                  remote server since Claude only supports local connections.
                 </p>
                 <p className="mt-1">
                   Note: This requires <code>npx</code> to be installed on your

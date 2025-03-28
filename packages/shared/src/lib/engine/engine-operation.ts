@@ -3,7 +3,7 @@ import { AppConnectionValue } from '../app-connection/app-connection'
 import { ExecutionState, ExecutionType, ResumePayload } from '../flow-run/execution/execution-output'
 import { FlowRunId, RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
-import { PackageType, PieceType, PiecePackage } from '../pieces'
+import { PackageType, PiecePackage, PieceType } from '../pieces'
 import { PlatformId } from '../platform'
 import { ProjectId } from '../project/project'
 
