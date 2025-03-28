@@ -7,6 +7,7 @@ import {
   FileTextIcon,
   LockKeyhole,
   Settings,
+  UserPlus,
 } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -50,8 +51,10 @@ import { ApFlagId, ApEdition, supportUrl } from '@activepieces/shared';
 import { ShowPoweredBy } from '../../components/show-powered-by';
 import { platformHooks } from '../../hooks/platform-hooks';
 
-import { Header } from './header';
 import UsageLimitsButton from './usage-limits-button';
+import { SidebarUser } from './sidebar-user';
+import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
+import { SidebarInviteUserButton } from './sidebar-invite-user';
 
 type Link = {
   icon: React.ReactNode;
@@ -100,9 +103,8 @@ const CustomTooltipLink = ({
         )}
       >
         <div
-          className={`w-full flex items-center justify-between gap-2 p-2 ${
-            !Icon ? 'p-2' : ''
-          }`}
+          className={`w-full flex items-center justify-between gap-2 p-2 ${!Icon ? 'p-2' : ''
+            }`}
         >
           <div className="flex items-center gap-2">
             {Icon && <Icon className={`size-5`} />}
@@ -197,7 +199,7 @@ export function SidebarComponent({
                       <TooltipTrigger asChild>
                         <Button variant="ghost" className="p-2 h-auto">
                           {edition !== ApEdition.COMMUNITY &&
-                          !embedState.isEmbedded ? (
+                            !embedState.isEmbedded ? (
                             <img
                               src={branding.logos.logoIconUrl}
                               alt={t('home')}
@@ -223,13 +225,14 @@ export function SidebarComponent({
                 </div>
               </SidebarHeader>
               <SidebarContent className="gap-0">
+
                 <ScrollArea className="h-[calc(100vh-100px)]">
+
                   {items.map((item, index) =>
                     item.type === 'group' ? (
                       <SidebarGroup key={item.name} className="py-2">
-                        {item.putEmptySpaceTop && (
-                          <Separator className="mb-8" />
-                        )}
+          
+
                         {item.name && (
                           <SidebarGroupLabel>{item.name}</SidebarGroupLabel>
                         )}
@@ -325,6 +328,9 @@ export function SidebarComponent({
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
+                  <SidebarPlatformAdminButton />
+                  <SidebarInviteUserButton />
+                  <Separator />
                   {showCommunity && (
                     <>
                       <SidebarMenuItem className="hover:bg-accent hover:text-primary rounded-lg transition-colors">
@@ -368,35 +374,20 @@ export function SidebarComponent({
                     <UsageLimitsButton />
                   </SidebarMenu>
                 )}
+
+                <SidebarUser />
               </SidebarFooter>
             </SidebarContent>
           </Sidebar>
         )}
         <div
-          className={cn('flex-1 p-4', {
-            'py-0': hideHeader,
+          className={cn('flex-1 p-4 py-6', {
+            'py-3': hideHeader,
             'px-0': removeGutters,
             'pb-0': removeBottomPadding,
           })}
         >
-          {!hideHeader ? (
-            <div className="flex flex-col">
-              <div className={removeGutters ? 'px-4' : ''}>
-                <Header />
-              </div>
-              <div
-                className={cn('flex', {
-                  'py-4': embedState.isEmbedded,
-                  'px-2': !removeGutters,
-                  'pt-8': !hideHeader,
-                })}
-              >
-                {children}
-              </div>
-            </div>
-          ) : (
-            children
-          )}
+          {children}
         </div>
       </div>
       <ShowPoweredBy show={platform?.showPoweredBy && isHomeDashboard} />
