@@ -187,7 +187,7 @@ export function DashboardContainer({
     isSubItem: false,
   };
 
-  const items: SidebarItem[] = [automationGroup, tablesLink, todosLink, aiGroup]
+  const items: SidebarItem[] = [automationGroup, tablesLink, todosLink]
     .filter(embedFilter)
     .filter(permissionFilter)
     .filter(filterAlerts);
