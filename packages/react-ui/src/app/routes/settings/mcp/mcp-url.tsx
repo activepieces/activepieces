@@ -26,7 +26,7 @@ export const McpUrl = ({
   isRotating,
   hasValidMcp,
 }: McpUrlProps) => {
-  const [showToken, setShowToken] = useState(true);
+  const [showToken, setShowToken] = useState(false);
   const { toast } = useToast();
 
   const toggleTokenVisibility = () => {
