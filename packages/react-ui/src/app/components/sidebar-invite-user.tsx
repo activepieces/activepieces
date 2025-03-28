@@ -1,7 +1,11 @@
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
-import { SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar-shadcn';
+
 import { useEmbedding } from '@/components/embed-provider';
+import {
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from '@/components/ui/sidebar-shadcn';
 import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
 
 export function SidebarInviteUserButton() {
