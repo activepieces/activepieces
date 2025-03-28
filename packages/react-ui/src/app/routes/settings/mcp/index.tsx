@@ -11,11 +11,11 @@ import {
 
 import { Button } from '../../../../components/ui/button';
 import { Separator } from '../../../../components/ui/separator';
+import { TableTitle } from '../../../../components/ui/table-title';
 import { useToast } from '../../../../components/ui/use-toast';
 import { mcpApi } from '../../../../features/mcp/mcp-api';
 import { piecesHooks } from '../../../../features/pieces/lib/pieces-hook';
 import { NewConnectionDialog } from '../../../connections/new-connection-dialog';
-import { TableTitle } from '../../../../components/ui/table-title';
 
 import { McpConnection } from './mcp-connection';
 import { McpInstruction } from './mcp-instruction';
