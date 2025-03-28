@@ -184,9 +184,11 @@ import { CreateTableWebhooks1741669458075 } from './migration/postgres/174166945
 import { UpdateNotifyStatusOnEmbedding1741963410825 } from './migration/postgres/1741963410825-UpdateNotifyStatusOnEmbedding'
 import { AddManualTaskTable1742304857701 } from './migration/postgres/1742304857701-AddManualTaskTable'
 import { AddManualTaskCommentTable1742305104390 } from './migration/postgres/1742305104390-AddManualTaskCommentTable'
+import { AddDataColumnToFieldEntity1742395892304 } from './migration/postgres/1742395892304-AddDataColumnToFieldEntity'
 import { ChangeManualTasksToTodo1742432827826 } from './migration/postgres/1742432827826-ChangeManualTasksToTodo'
 import { ChangeManualTasksCommentsToTodoComments1742433144687 } from './migration/postgres/1742433144687-ChangeManualTasksCommentsToTodoComments'
 import { AddMCP1743128816786 } from './migration/postgres/1743128816786-AddMCP'
+import { RenameApprovalUrlToResolveUrl1742991137557 } from './migration/postgres/1742991137557-RenameApprovalUrlToResolveUrl'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -309,9 +311,11 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RenameGitRepoPermission1736813103505,
         RestrictPieces1739546878775,
         CreateTableWebhooks1741669458075,
+        AddDataColumnToFieldEntity1742395892304,
         AddManualTaskTable1742304857701,
         ChangeManualTasksToTodo1742432827826,
         AddMCP1743128816786,
+        RenameApprovalUrlToResolveUrl1742991137557,
     ]
 
     const edition = system.getEdition()

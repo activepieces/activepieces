@@ -1623,6 +1623,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "briceflaceliere",
+      "name": "Brice",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5811531?v=4",
+      "profile": "https://github.com/briceflaceliere",
+      "contributions": [
+        "security"
+      ]
+    },
+    {
+      "login": "mg-wunna",
+      "name": "Mg Wunna",
+      "avatar_url": "https://avatars.githubusercontent.com/u/63114419?v=4",
+      "profile": "https://mg-wunna.github.io/mg-wunna/",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

@@ -23,15 +23,19 @@ import { fieldsApi } from '@/features/tables/lib/fields-api';
 import { recordsApi } from '@/features/tables/lib/records-api';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
+import { api } from '@/lib/api';
 import { formatUtils, NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
-import { FieldType, Permission, Table } from '@activepieces/shared';
+import { ApFlagId, FieldType, Permission, Table } from '@activepieces/shared';
 
 const ApTablesPage = () => {
   const openNewWindow = useNewWindow();
   const navigate = useNavigate();
   const [selectedRows, setSelectedRows] = useState<Array<{ id: string }>>([]);
-
+  const { data: maxTables } = flagsHooks.useFlag(
+    ApFlagId.MAX_TABLES_PER_PROJECT,
+  );
   const { data: project } = projectHooks.useCurrentProject();
   const [searchParams] = useSearchParams();
   const { data, isLoading, refetch } = useQuery({
@@ -74,6 +78,22 @@ const ApTablesPage = () => {
       navigate(
         `/projects/${project.id}/tables/${table.id}?${NEW_TABLE_QUERY_PARAM}=true`,
       );
+    },
+    onError: (err: Error) => {
+      if (
+        api.isError(err) &&
+        err.response?.status === api.httpStatus.Conflict
+      ) {
+        toast({
+          title: t('Max tables reached'),
+          description: t(`You can't create more than {maxTables} tables`, {
+            maxTables,
+          }),
+          variant: 'destructive',
+        });
+      } else {
+        toast(INTERNAL_ERROR_TOAST);
+      }
     },
   });
 

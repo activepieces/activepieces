@@ -160,11 +160,13 @@ export const databaseConnection = () => {
 export function APArrayContains<T>(
     columnName: string,
     values: string[],
-): FindOperator<T> {
+): Record<string, FindOperator<T>> {
     const databaseType = system.get(AppSystemProp.DB_TYPE)
     switch (databaseType) {
         case DatabaseType.POSTGRES:
-            return ArrayContains(values)
+            return {
+                [columnName]: ArrayContains(values),
+            }
         case DatabaseType.SQLITE3: {
             const likeConditions = values
                 .map((_, index) => `${columnName} LIKE :value${index}`)
@@ -173,11 +175,14 @@ export function APArrayContains<T>(
                 params[`value${index}`] = `%${value}%`
                 return params
             }, {} as Record<string, string>)
-            return Raw(_ => `(${likeConditions})`, likeParams)
+            return {
+                [columnName]: Raw(_ => `(${likeConditions})`, likeParams),
+            }
         }
         default:
             throw new Error(`Unsupported database type: ${databaseType}`)
     }
 }
-// Uncomment the below line when running `nx db-migration server-api name=<MIGRATION_NAME>` and recomment it after the migration is generated
-export const exportedConnection = databaseConnection()
+
+// Uncomment the below line when running `nx db-migration server-api --name=<MIGRATION_NAME>` and recomment it after the migration is generated
+// export const exportedConnection = databaseConnection()

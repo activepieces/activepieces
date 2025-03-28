@@ -54,7 +54,7 @@ export const TodoEntity = new EntitySchema<TodoSchema>({
             ...ApIdSchema,
             nullable: true,
         },
-        approvalUrl: {
+        resolveUrl: {
             type: String,
             nullable: true,
         },

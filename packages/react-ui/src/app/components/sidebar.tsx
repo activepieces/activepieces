@@ -105,7 +105,7 @@ const CustomTooltipLink = ({
           }`}
         >
           <div className="flex items-center gap-2">
-            {Icon && <Icon className={`size-4`} />}
+            {Icon && <Icon className={`size-5`} />}
             <span className={`text-sm`}>{label}</span>
             {(label === 'Tables' || label === 'Todos' || label === 'MCP') && (
               <span className="ml-2">
@@ -158,6 +158,7 @@ type SidebarProps = {
   hideSideNav?: boolean;
   hideHeader?: boolean;
   removeGutters?: boolean;
+  removeBottomPadding?: boolean;
 };
 export function SidebarComponent({
   children,
@@ -166,6 +167,7 @@ export function SidebarComponent({
   hideSideNav = false,
   hideHeader = false,
   removeGutters = false,
+  removeBottomPadding = false,
 }: SidebarProps) {
   const branding = flagsHooks.useWebsiteBranding();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -173,6 +175,9 @@ export function SidebarComponent({
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: showCommunity } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
+  );
+  const { data: showBilling } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_BILLING,
   );
   const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
   const location = useLocation();
@@ -190,26 +195,26 @@ export function SidebarComponent({
                   >
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        {edition === ApEdition.COMMUNITY ||
-                        embedState.isEmbedded ? (
-                          <Button variant="ghost">
+                        <Button variant="ghost" className="p-2 h-auto">
+                          {edition !== ApEdition.COMMUNITY &&
+                          !embedState.isEmbedded ? (
+                            <img
+                              src={branding.logos.logoIconUrl}
+                              alt={t('home')}
+                              width={28}
+                              height={28}
+                              className=" max-h-[28px] max-w-[28px] object-contain"
+                            />
+                          ) : (
                             <img
                               src={branding.logos.fullLogoUrl}
                               alt={t('home')}
                               width={160}
-                              height={36}
-                              className="p-2 rounded-lg"
+                              height={51}
+                              className="max-h-[51px] max-w-[160px] object-contain"
                             />
-                          </Button>
-                        ) : (
-                          <img
-                            src={branding.logos.logoIconUrl}
-                            alt={t('home')}
-                            width={40}
-                            height={40}
-                            className="border-2 border-primary p-2 rounded-lg"
-                          />
-                        )}
+                          )}
+                        </Button>
                       </TooltipTrigger>
                       <TooltipContent side="bottom">{t('Home')}</TooltipContent>
                     </Tooltip>
@@ -315,7 +320,7 @@ export function SidebarComponent({
                         )}
                         className="flex items-center gap-2"
                       >
-                        <Settings className="size-5" />
+                        <Settings className="!size-5" />
                         <span>{t('Project Settings')}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -357,10 +362,12 @@ export function SidebarComponent({
                     </>
                   )}
                 </SidebarMenu>
-                <Separator />
-                <SidebarMenu>
-                  <UsageLimitsButton />
-                </SidebarMenu>
+                {showBilling && <Separator />}
+                {showBilling && (
+                  <SidebarMenu>
+                    <UsageLimitsButton />
+                  </SidebarMenu>
+                )}
               </SidebarFooter>
             </SidebarContent>
           </Sidebar>
@@ -369,6 +376,7 @@ export function SidebarComponent({
           className={cn('flex-1 p-4', {
             'py-0': hideHeader,
             'px-0': removeGutters,
+            'pb-0': removeBottomPadding,
           })}
         >
           {!hideHeader ? (
@@ -379,8 +387,8 @@ export function SidebarComponent({
               <div
                 className={cn('flex', {
                   'py-4': embedState.isEmbedded,
-                  ' px-2': !removeGutters,
-                  'pt-10': !hideHeader,
+                  'px-2': !removeGutters,
+                  'pt-8': !hideHeader,
                 })}
               >
                 {children}

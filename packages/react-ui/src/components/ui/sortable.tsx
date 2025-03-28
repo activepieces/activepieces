@@ -325,6 +325,7 @@ const SortableDragHandle = React.forwardRef<
         'cursor-grab data-[state=dragging]:cursor-grabbing',
         className,
       )}
+      type="button"
       {...attributes}
       {...listeners}
       {...props}

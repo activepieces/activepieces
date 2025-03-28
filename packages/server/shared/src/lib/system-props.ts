@@ -120,6 +120,10 @@ export enum AppSystemProp {
     CLOUDFLARE_ZONE_ID = 'CLOUDFLARE_ZONE_ID',
     // Secret Manager
     SECRET_MANAGER_API_KEY = 'SECRET_MANAGER_API_KEY',
+    // Tables
+    MAX_RECORDS_PER_TABLE = 'MAX_RECORDS_PER_TABLE',
+    MAX_FIELDS_PER_TABLE = 'MAX_FIELDS_PER_TABLE',
+    MAX_TABLES_PER_PROJECT = 'MAX_TABLES_PER_RPOJECT'
 }
 export enum PiecesSource {
     /**

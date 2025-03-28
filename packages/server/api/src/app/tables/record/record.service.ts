@@ -1,3 +1,4 @@
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -18,6 +19,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
+import { system } from '../../helper/system/system'
 import { webhookService } from '../../webhooks/webhook.service'
 import { FieldEntity } from '../field/field.entity'
 import { fieldService } from '../field/field.service'
@@ -32,6 +34,7 @@ export const recordService = {
         request,
         projectId,
     }: CreateParams): Promise<PopulatedRecord[]> {
+        await this.validateCount({ projectId, tableId: request.tableId })
         return transaction(async (entityManager: EntityManager) => {
             const existingFields = await entityManager
                 .getRepository(FieldEntity)
@@ -316,6 +319,22 @@ export const recordService = {
             })
         }))
     },
+
+    async count({ projectId, tableId }: CountParams): Promise<number> {
+        return recordRepo().count({
+            where: { projectId, tableId },
+        })
+    },
+    async validateCount(params: CountParams): Promise<void> {
+        const countRes = await this.count(params)
+        if (countRes > system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: `Max records per table reached: ${system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)}`,
+                },
+            })
+        }
+    },
 }
 
 type CreateParams = {
@@ -378,4 +397,9 @@ function formatRecord(record: RecordSchema, fields: Field[]): PopulatedRecord {
             }]
         })),
     }
+}
+
+type CountParams = {
+    projectId: string
+    tableId: string
 }

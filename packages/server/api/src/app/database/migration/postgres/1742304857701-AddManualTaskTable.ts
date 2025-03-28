@@ -70,13 +70,13 @@ export class AddManualTaskTable1742304857701 implements MigrationInterface {
             ALTER TABLE "manual_task" DROP CONSTRAINT "fk_manual_task_platform_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_manual_task_platform_id"
+            DROP INDEX "idx_manual_task_platform_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_manual_task_flow_id"
+            DROP INDEX "idx_manual_task_flow_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_manual_task_project_id"
+            DROP INDEX "idx_manual_task_project_id"
         `)
         await queryRunner.query(`
             DROP TABLE "manual_task"

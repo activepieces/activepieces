@@ -46,7 +46,7 @@ import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { adminPieceModule } from './ee/pieces/admin-piece-module'
 import { enterprisePieceMetadataServiceHooks } from './ee/pieces/filters/enterprise-piece-metadata-service-hooks'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
-import { adminPlatformPieceModule } from './ee/platform/admin-platform.controller'
+import { adminPlatformModule } from './ee/platform/admin-platform.controller'
 import { platformBillingModule } from './ee/platform-billing/platform-billing.module'
 import { projectMemberModule } from './ee/project-members/project-member.module'
 import { gitRepoModule } from './ee/project-release/git-sync/git-sync.module'
@@ -232,7 +232,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(tablesModule)
     await app.register(userModule)
     await app.register(todoModule)
-
+    await app.register(adminPlatformModule)
     app.get(
         '/redirect',
         async (
@@ -286,7 +286,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
             await app.register(usageTrackerModule)
-            await app.register(adminPlatformPieceModule)
             await app.register(analyticsModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
