@@ -2,6 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { FlowVersion } from './flow-version'
+import { Metadata } from '../common/metadata'
 
 export type FlowId = ApId
 
@@ -31,6 +32,7 @@ export const Flow = Type.Object({
     status: Type.Enum(FlowStatus),
     schedule: Nullable(FlowScheduleOptions),
     publishedVersionId: Nullable(Type.String()),
+    metadata: Type.Optional(Metadata),
 })
 
 export type Flow = Static<typeof Flow>
