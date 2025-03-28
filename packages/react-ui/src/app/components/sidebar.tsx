@@ -194,7 +194,7 @@ export function SidebarComponent({
           <Sidebar>
             <SidebarContent>
               <SidebarHeader className="pb-0">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between pr-1">
                   <div className="flex items-center justify-center gap-1">
                     <Link
                       to={isHomeDashboard ? defaultRoute : '/platform'}
@@ -230,11 +230,7 @@ export function SidebarComponent({
                     </Link>
                     <ProjectSwitcher />
                   </div>
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="flex items-center justify-center cursor-pointer">
-                      <SidebarInviteUserButton />
-                    </div>
-                  </div>
+                  <SidebarInviteUserButton />
                 </div>
               </SidebarHeader>
               <SidebarSeparator />
