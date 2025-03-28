@@ -3,12 +3,9 @@ import { LogOut, Shield } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
-import {
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from '@/components/ui/sidebar-shadcn';
 import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { cn } from '@/lib/utils';
 import { PlatformRole } from '@activepieces/shared';
 
 import { notificationHooks } from '../routes/platform/notifications/hooks/notifictions-hooks';
@@ -26,30 +23,35 @@ export function SidebarPlatformAdminButton() {
   }
 
   return (
-    <SidebarMenuItem className="hover:bg-accent hover:text-primary rounded-lg transition-colors">
-      <SidebarMenuButton asChild isActive={isInPlatformAdmin}>
-        <Link
-          to={isInPlatformAdmin ? '/' : '/platform'}
-          className="flex items-center gap-2 relative"
-        >
+    <Link
+      to={isInPlatformAdmin ? '/' : '/platform'}
+      className="w-full flex items-center gap-2 relative"
+    >
+      <div
+        className={cn(
+          'w-full relative flex items-center gap-1 justify-between hover:bg-accent rounded-lg transition-colors',
+          isInPlatformAdmin && '!bg-primary/10 !text-primary',
+        )}
+      >
+        <div className={`w-full flex items-center gap-2 p-2`}>
           {isInPlatformAdmin ? (
             <>
-              <LogOut className="!size-5" />
-              <span>{t('Exit Platform Admin')}</span>
+              <LogOut className="size-4" />
+              <span className={`text-sm`}>{t('Exit Platform Admin')}</span>
             </>
           ) : (
             <>
-              <Shield className="!size-5" />
-              <span>{t('Enter Platform Admin')}</span>
+              <Shield className="size-4" />
+              <span className={`text-sm`}>{t('Enter Platform Admin')}</span>
             </>
           )}
-          {messages.length > 0 &&
-            !isInPlatformAdmin &&
-            platformRole === PlatformRole.ADMIN && (
-              <span className="bg-destructive absolute right-0 top-1/2 transform -translate-y-1/2 size-2 rounded-full"></span>
-            )}
-        </Link>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
+        </div>
+        {messages.length > 0 &&
+          !isInPlatformAdmin &&
+          platformRole === PlatformRole.ADMIN && (
+            <span className="bg-destructive absolute right-2 top-1/2 transform -translate-y-1/2 size-2 rounded-full"></span>
+          )}
+      </div>
+    </Link>
   );
 }
