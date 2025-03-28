@@ -55,7 +55,7 @@ export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
 
         await server.connect(transport)
 
-        mcpSessionManager(req.log).add(transport.sessionId, server, transport, mcp.id)
+        mcpSessionManager(req.log).add(transport.sessionId, server, transport)
 
         reply.raw.on('close', async () => {
             await mcpSessionManager(req.log).remove(transport.sessionId)

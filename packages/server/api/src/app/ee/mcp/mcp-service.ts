@@ -60,7 +60,6 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         if (!isNil(connectionsIds)) {
             await appConnectionsRepo().update({
                 id: In(connectionsIds),
-                mcpId: mcp.id,
             }, {
                 mcpId: mcp.id,
             })
