@@ -165,7 +165,6 @@ const ApTableEditorPage = () => {
     columns.push(newFieldColumn);
   }
 
-
   function mapRecordsToRows(records: ClientRecordData[]): Row[] {
     if (!records || records.length === 0) return [];
     return records.map((record: ClientRecordData) => {

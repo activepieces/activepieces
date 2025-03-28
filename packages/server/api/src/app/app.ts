@@ -41,6 +41,7 @@ import { emailService } from './ee/helper/email/email-service'
 import { issuesModule } from './ee/issues/issues-module'
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
+import { mcpModule } from './ee/mcp/mcp-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { adminPieceModule } from './ee/pieces/admin-piece-module'
 import { enterprisePieceMetadataServiceHooks } from './ee/pieces/filters/enterprise-piece-metadata-service-hooks'
@@ -219,6 +220,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(platformModule)
     await app.register(humanInputModule)
     await app.register(tagsModule)
+    await app.register(mcpModule)
     await pieceSyncService(app.log).setup()
     await app.register(platformUserModule)
     await app.register(issuesModule)

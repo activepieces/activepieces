@@ -188,6 +188,7 @@ import { AddDataColumnToFieldEntity1742395892304 } from './migration/postgres/17
 import { ChangeManualTasksToTodo1742432827826 } from './migration/postgres/1742432827826-ChangeManualTasksToTodo'
 import { ChangeManualTasksCommentsToTodoComments1742433144687 } from './migration/postgres/1742433144687-ChangeManualTasksCommentsToTodoComments'
 import { RenameApprovalUrlToResolveUrl1742991137557 } from './migration/postgres/1742991137557-RenameApprovalUrlToResolveUrl'
+import { AddMCP1743128816786 } from './migration/postgres/1743128816786-AddMCP'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -313,6 +314,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddDataColumnToFieldEntity1742395892304,
         AddManualTaskTable1742304857701,
         ChangeManualTasksToTodo1742432827826,
+        AddMCP1743128816786,
         RenameApprovalUrlToResolveUrl1742991137557,
     ]
 

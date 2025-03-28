@@ -27,6 +27,8 @@ export const rolePermissions: Record<DefaultProjectRole, Permission[]> = {
         Permission.WRITE_TODOS,
         Permission.READ_TABLE,
         Permission.WRITE_TABLE,
+        Permission.READ_MCP,
+        Permission.WRITE_MCP,
     ],
     [DefaultProjectRole.EDITOR]: [
         Permission.READ_APP_CONNECTION,
@@ -49,6 +51,7 @@ export const rolePermissions: Record<DefaultProjectRole, Permission[]> = {
         Permission.WRITE_TODOS,
         Permission.READ_TABLE,
         Permission.WRITE_TABLE,
+        Permission.READ_MCP,
     ],
     [DefaultProjectRole.OPERATOR]: [
         Permission.READ_APP_CONNECTION,
