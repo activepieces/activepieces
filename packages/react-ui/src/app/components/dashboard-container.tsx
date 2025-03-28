@@ -92,6 +92,7 @@ export function DashboardContainer({
       ];
       return paths.some((path) => pathname.includes(path));
     },
+    name: t('Products'),
     defaultOpen: true,
     open: automationOpen,
     setOpen: setAutomationOpen,
@@ -176,7 +177,7 @@ export function DashboardContainer({
     isSubItem: false,
   };
 
-  const items: SidebarItem[] = [automationGroup, tablesLink, todosLink]
+  const items: SidebarItem[] = [automationGroup, tablesLink, todosLink, aiGroup]
     .filter(embedFilter)
     .filter(permissionFilter)
     .filter(filterAlerts);
@@ -191,6 +192,13 @@ export function DashboardContainer({
     }
   }
 
+  const filteredItems = items.filter((item) => {
+    if (item.type === 'group') {
+      return item.items.length > 0;
+    }
+    return true;
+  });
+
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
       <ProjectChangedRedirector currentProjectId={currentProjectId}>
@@ -204,7 +212,7 @@ export function DashboardContainer({
             removeGutters={removeGutters}
             isHomeDashboard={true}
             hideHeader={hideHeader}
-            items={items}
+            items={filteredItems}
             hideSideNav={embedState.hideSideNav}
             removeBottomPadding={removeBottomPadding}
           >

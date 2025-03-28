@@ -1,11 +1,11 @@
-import { t } from 'i18next';
-import { Plus } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 
 import { useEmbedding } from '@/components/embed-provider';
 import {
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from '@/components/ui/sidebar-shadcn';
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
 
 export function SidebarInviteUserButton() {
@@ -17,15 +17,14 @@ export function SidebarInviteUserButton() {
 
   return (
     <InviteUserDialog
+      showTooltip={true}
       triggerButton={
-        <SidebarMenuItem className="hover:bg-accent hover:text-primary rounded-lg transition-colors cursor-pointer">
-          <SidebarMenuButton asChild>
-            <div className="flex items-center gap-2">
-              <Plus className="!size-5" />
-              <span>{t('Invite User')}</span>
-            </div>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <UserPlus className="size-4 text-muted-foreground hover:text-primary" />
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Invite User</TooltipContent>
+        </Tooltip>
       }
     />
   );

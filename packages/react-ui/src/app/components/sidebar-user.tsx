@@ -28,7 +28,7 @@ export function SidebarUser() {
       <SidebarMenuItem className="flex items-center justify-between w-full">
         <div className="flex items-center">
           <Avatar className="h-8 w-8 rounded-lg">
-            <AvatarFallback className="rounded-lg">
+            <AvatarFallback className="rounded-lg bg-gray-200">
               {user.firstName.charAt(0)}
             </AvatarFallback>
           </Avatar>
