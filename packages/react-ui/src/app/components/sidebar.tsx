@@ -185,6 +185,8 @@ export function SidebarComponent({
   );
   const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
   const location = useLocation();
+  console.log('isHomeDashboard ', isHomeDashboard);
+  console.log('platform ', platform);
   return (
     <div className="flex min-h-screen w-full">
       <div className="flex min-h-screen w-full">
@@ -381,7 +383,10 @@ export function SidebarComponent({
           {children}
         </div>
       </div>
-      <ShowPoweredBy show={platform?.showPoweredBy && isHomeDashboard} />
+      <ShowPoweredBy
+        show={platform?.showPoweredBy && isHomeDashboard}
+        position="absolute"
+      />
     </div>
   );
 }
