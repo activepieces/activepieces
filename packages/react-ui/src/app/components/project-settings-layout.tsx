@@ -4,7 +4,6 @@ import {
   GitBranch,
   Puzzle,
   Settings,
-  ServerCog,
   SunMoon,
   Users,
 } from 'lucide-react';

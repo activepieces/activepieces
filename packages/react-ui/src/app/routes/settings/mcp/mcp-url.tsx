@@ -1,16 +1,17 @@
+import { ReloadIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { useState } from 'react';
 import { Copy, Eye, EyeOff, KeyRound } from 'lucide-react';
+import { useState } from 'react';
+
 import { Button } from '../../../../components/ui/button';
 import { Label } from '../../../../components/ui/label';
-import { ReloadIcon } from '@radix-ui/react-icons';
-import { useToast } from '../../../../components/ui/use-toast';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '../../../../components/ui/tooltip';
+import { useToast } from '../../../../components/ui/use-toast';
 
 interface McpUrlProps {
   serverUrl: string;
@@ -19,7 +20,12 @@ interface McpUrlProps {
   hasValidMcp: boolean;
 }
 
-export const McpUrl = ({ serverUrl, onRotateToken, isRotating, hasValidMcp }: McpUrlProps) => {
+export const McpUrl = ({
+  serverUrl,
+  onRotateToken,
+  isRotating,
+  hasValidMcp,
+}: McpUrlProps) => {
   const [showToken, setShowToken] = useState(true);
   const { toast } = useToast();
 
@@ -57,7 +63,11 @@ export const McpUrl = ({ serverUrl, onRotateToken, isRotating, hasValidMcp }: Mc
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{showToken ? t('Hide the token for security') : t('Show the token')}</p>
+                <p>
+                  {showToken
+                    ? t('Hide the token for security')
+                    : t('Show the token')}
+                </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -79,7 +89,11 @@ export const McpUrl = ({ serverUrl, onRotateToken, isRotating, hasValidMcp }: Mc
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{t('Generate a new token for security. This will invalidate the current URL.')}</p>
+                <p>
+                  {t(
+                    'Generate a new token for security. This will invalidate the current URL.',
+                  )}
+                </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -109,8 +123,10 @@ export const McpUrl = ({ serverUrl, onRotateToken, isRotating, hasValidMcp }: Mc
         </div>
       </div>
       <p className="text-xs text-muted-foreground mt-1">
-        {t('This URL contains a sensitive security token. Only share it with trusted applications and services. Rotate the token if you suspect it has been compromised.')}
+        {t(
+          'This URL contains a sensitive security token. Only share it with trusted applications and services. Rotate the token if you suspect it has been compromised.',
+        )}
       </p>
     </div>
   );
-}; 
+};

@@ -12,7 +12,10 @@ export const mcpApi = {
     return await api.get<MCPSchema>(`/v1/mcp`);
   },
   async update({ id, token, connectionsIds }: UpdateMCPParams) {
-    return await api.post<MCPSchema>(`/v1/mcp/${id}`, { token, connectionsIds });
+    return await api.post<MCPSchema>(`/v1/mcp/${id}`, {
+      token,
+      connectionsIds,
+    });
   },
   async rotateToken(id: string) {
     return await api.post<MCPSchema>(`/v1/mcp/${id}/rotate`);

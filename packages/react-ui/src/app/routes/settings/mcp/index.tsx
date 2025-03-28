@@ -1,25 +1,33 @@
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { Globe } from 'lucide-react';
+
+import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import {
+  ApFlagId,
+  AppConnectionWithoutSensitiveData,
+} from '@activepieces/shared';
+
 import { Button } from '../../../../components/ui/button';
 import { Separator } from '../../../../components/ui/separator';
-import { piecesHooks } from '../../../../features/pieces/lib/pieces-hook';
-import { mcpApi } from '../../../../features/mcp/mcp-api';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { NewConnectionDialog } from '../../../connections/new-connection-dialog';
-import { Globe } from 'lucide-react';
-import { ApFlagId, AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import { useToast } from '../../../../components/ui/use-toast';
-import { McpConnection } from './mcp-connection';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { McpUrl } from './mcp-url';
-import { McpInstruction } from './mcp-instruction';
-import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
+import { mcpApi } from '../../../../features/mcp/mcp-api';
+import { piecesHooks } from '../../../../features/pieces/lib/pieces-hook';
+import { NewConnectionDialog } from '../../../connections/new-connection-dialog';
 
+import { McpConnection } from './mcp-connection';
+import { McpInstruction } from './mcp-instruction';
+import { McpUrl } from './mcp-url';
 
 export default function MCPPage() {
-  const { data: publicUrl } = flagsHooks.useFlag(ApFlagId.PUBLIC_URL)
+  const { data: publicUrl } = flagsHooks.useFlag(ApFlagId.PUBLIC_URL);
   const { toast } = useToast();
 
-  const { data: mcp, isLoading: isMcpLoading, refetch: refetchMcp } = useQuery({
+  const {
+    data: mcp,
+    refetch: refetchMcp,
+  } = useQuery({
     queryKey: ['mcp'],
     queryFn: () => {
       return mcpApi.get();
@@ -30,10 +38,10 @@ export default function MCPPage() {
 
   const { pieces } = piecesHooks.usePieces({});
 
-
-
   // Derive state from mcp data directly instead of using useEffect
-  const usedConnectionIds = new Set(mcp?.connections?.map(connection => connection.id) || []);
+  const usedConnectionIds = new Set(
+    mcp?.connections?.map((connection) => connection.id) || [],
+  );
 
   const updateMcp = useMutation({
     mutationFn: async ({
@@ -83,7 +91,7 @@ export default function MCPPage() {
         description: t('Failed to rotate token'),
         duration: 5000,
       });
-    }
+    },
   });
 
   const removeConnectionMutation = useMutation({
@@ -104,10 +112,12 @@ export default function MCPPage() {
         description: t('Failed to remove connection'),
         duration: 5000,
       });
-    }
+    },
   });
 
-  const removeConnection = async (connection: AppConnectionWithoutSensitiveData) => {
+  const removeConnection = async (
+    connection: AppConnectionWithoutSensitiveData,
+  ) => {
     if (!mcp?.id || removeConnectionMutation.isPending) return;
 
     removeConnectionMutation.mutate(connection.id);
@@ -119,10 +129,10 @@ export default function MCPPage() {
   };
 
   const getPieceInfo = (connection: AppConnectionWithoutSensitiveData) => {
-    const piece = pieces?.find(p => p.name === connection.pieceName);
+    const piece = pieces?.find((p) => p.name === connection.pieceName);
     return {
       displayName: piece?.displayName || connection.pieceName,
-      logoUrl: piece?.logoUrl
+      logoUrl: piece?.logoUrl,
     };
   };
 
@@ -137,12 +147,13 @@ export default function MCPPage() {
     }
   };
 
-
   return (
     <div className="w-full flex flex-col items-center justify-center gap-6 pb-8">
       <div className="w-full space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold mb-2">Model Context Protocol</h1>
+          <h1 className="text-2xl font-semibold mb-2">
+            Model Context Protocol
+          </h1>
           <p className="text-muted-foreground">
             Configure your MCP server and expose your connections as AI tools.
           </p>
@@ -150,7 +161,7 @@ export default function MCPPage() {
 
         <div className="space-y-6">
           {/* Server URL Display */}
-          <McpUrl 
+          <McpUrl
             serverUrl={serverUrl}
             onRotateToken={handleRotateToken}
             isRotating={rotateMutation.isPending}
@@ -170,7 +181,6 @@ export default function MCPPage() {
                 <NewConnectionDialog
                   onConnectionCreated={(connection) => {
                     addConnection(connection);
-
                   }}
                   isGlobalConnection={false}
                 >
@@ -189,7 +199,9 @@ export default function MCPPage() {
                 <div className="col-span-full flex flex-col items-center justify-center py-8 text-muted-foreground">
                   <Globe className="h-12 w-12 mb-2 opacity-20" />
                   <p>{t('No tools available')}</p>
-                  <p className="text-sm">{t('Create a connection to add it as an AI tool')}</p>
+                  <p className="text-sm">
+                    {t('Create a connection to add it as an AI tool')}
+                  </p>
                 </div>
               ) : (
                 mcp?.connections.map((connection) => {

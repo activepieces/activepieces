@@ -36,7 +36,6 @@
       "@activepieces/piece-afforai": [
         "packages/pieces/community/afforai/src/index.ts"
       ],
-      "@activepieces/piece-ai": ["packages/pieces/community/ai/src/index.ts"],
       "@activepieces/piece-aianswer": [
         "packages/pieces/community/aianswer/src/index.ts"
       ],

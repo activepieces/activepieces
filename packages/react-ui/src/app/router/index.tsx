@@ -68,13 +68,14 @@ import AlertsPage from '../routes/settings/alerts';
 import AppearancePage from '../routes/settings/appearance';
 import { EnvironmentPage } from '../routes/settings/environment';
 import GeneralPage from '../routes/settings/general';
+import MCPPage from '../routes/settings/mcp';
 import TeamPage from '../routes/settings/team';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
 import { ShareTemplatePage } from '../routes/templates/share-template';
 import { TodosPage } from '../routes/todos';
 import { TodoTestingPage } from '../routes/todos/id';
-import MCPPage from '../routes/settings/mcp';
+
 import { AfterImportFlowRedirect } from './after-import-flow-redirect';
 import { DefaultRoute } from './default-route';
 import { RoutePermissionGuard } from './permission-guard';
@@ -414,7 +415,7 @@ const routes = [
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_MCP}>
           <PageTitle title="MCP">
-              <MCPPage />
+            <MCPPage />
           </PageTitle>
         </RoutePermissionGuard>
       </DashboardContainer>

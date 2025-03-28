@@ -1,8 +1,10 @@
+import { Trash2 } from 'lucide-react';
+
+import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
+
+import { Button } from '../../../../components/ui/button';
 import { Card, CardContent } from '../../../../components/ui/card';
 import { PieceIcon } from '../../../../features/pieces/components/piece-icon';
-import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
-import { Link, Trash2 } from 'lucide-react';
-import { Button } from '../../../../components/ui/button';
 
 type McpConnectionProps = {
   connection: AppConnectionWithoutSensitiveData;
@@ -21,9 +23,7 @@ export const McpConnection = ({
   onDelete,
 }: McpConnectionProps) => {
   return (
-    <Card
-      className={`overflow-hidden transition-all duration-200 relative`}
-    >
+    <Card className={`overflow-hidden transition-all duration-200 relative`}>
       <Button
         variant="ghost"
         size="icon"
@@ -45,12 +45,11 @@ export const McpConnection = ({
           />
           <div className="min-w-0">
             <h4 className="font-medium truncate flex items-center gap-1">
-            {connection.displayName}
+              {connection.displayName}
             </h4>
- 
           </div>
         </div>
       </CardContent>
     </Card>
   );
-}; 
+};
