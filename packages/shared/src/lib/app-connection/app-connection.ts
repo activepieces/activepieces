@@ -93,6 +93,7 @@ export type AppConnection<Type extends AppConnectionType = AppConnectionType> = 
     ownerId: string
     owner: UserWithMetaInformation | null
     value: AppConnectionValue<Type>
+    metadata: Metadata | null
 }
 
 export type OAuth2AppConnection = AppConnection<AppConnectionType.OAUTH2>
