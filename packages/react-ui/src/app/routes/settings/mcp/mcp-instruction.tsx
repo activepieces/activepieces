@@ -20,6 +20,8 @@ export const McpInstruction = ({ mcpServerUrl }: McpInstructionProps) => {
                 </div>
 
                 <Tabs defaultValue="cursor">
+                    
+                    
                     <TabsList className="gap-3" variant="outline">
                         <TabsTrigger value="claude" variant="outline">
                           <div className="flex items-center gap-2">
@@ -42,13 +44,50 @@ export const McpInstruction = ({ mcpServerUrl }: McpInstructionProps) => {
                     </TabsList>
 
                     <TabsContent value="claude" className="text-muted-foreground mt-3 pl-1">
-                        <p>
-                            <span className="font-medium text-foreground">To use with Claude:</span> Configure Claude to use this MCP server URL
-                            in your Claude settings or API configuration.
-                        </p>
+                        <ol className="list-decimal list-inside space-y-2 text-sm text-foreground">
+                            <li>
+                                <span className="font-semibold">Open</span> <strong>Settings</strong> from the menu
+                            </li>
+                            <li>
+                                <span className="font-semibold">Select</span> <strong>Developer</strong>
+                            </li>
+                            <li>
+                                <span className="font-semibold">Click</span> <strong>Edit Config</strong>
+                            </li>
+                            <li>
+                                <span className="font-semibold">Copy and paste</span> the server config to your claude_desktop_config, then save
+                            </li>
+                            <li>
+                                <span className="font-semibold">Restart</span> Claude Desktop
+                            </li>
+                        </ol>
+                        <div className="mt-4 mb-2 p-3 bg-muted rounded-md text-xs">
+                            <p><code>mcp-remote</code> connects Claude Desktop to our remote server since Claude only supports local connections.</p>
+                            <p className="mt-1">Note: This requires <code>npx</code> to be installed on your system.</p>
+                        </div>
+                        <div className="rounded-md shadow-sm">
+                            <JsonViewer
+                                hideDownload={true}
+                                json={{
+                                    mcpServers: {
+                                        "Activepieces": {
+                                            command: "npx",
+                                            args: [
+                                                "-y",
+                                                "mcp-remote",
+                                                mcpServerUrl
+                                              ]
+                                        }
+                                    }
+                                }}
+                                title="MCP Server Configuration"
+                            />
+                        </div>
                     </TabsContent>
 
+
                     <TabsContent value="cursor" className="mt-4 pl-2">
+
                         <ol className="list-decimal list-inside space-y-2 text-sm text-foreground">
                             <li>
                                 <span className="font-semibold">Navigate to</span> <strong>Settings</strong>, then <strong>Cursor Settings</strong>
@@ -79,10 +118,49 @@ export const McpInstruction = ({ mcpServerUrl }: McpInstructionProps) => {
                     </TabsContent>
 
                     <TabsContent value="windsurf" className="text-muted-foreground mt-3 pl-1">
-                        <p>
-                            <span className="font-medium text-foreground">To use with Windsurf:</span> In Windsurf settings, navigate to the MCP
-                            configuration section and add this server URL to connect your tools.
-                        </p>
+                        <ol className="list-decimal list-inside space-y-2 text-sm text-foreground">
+                            <li>
+                                <span className="font-semibold">Open settings by either:</span>
+                                <ul className="list-disc list-inside ml-6 mt-1">
+                                    <li>Navigating to <strong>Windsurf - Settings</strong>, then <strong>Advanced Settings</strong></li>
+                                    <li>Opening the <strong>Command Palette</strong> and selecting <strong>Windsurf Settings Page</strong></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <span className="font-semibold">Select</span> <strong>Cascade</strong> on the left
+                            </li>
+                            <li>
+                                <span className="font-semibold">Click</span> <strong>Add Server</strong> at the top right
+                            </li>
+                            <li>
+                                <span className="font-semibold">Click</span> <strong>Add custom server +</strong> at the top right
+                            </li>
+                            <li>
+                                <span className="font-semibold">Copy and paste</span> the server config to your existing file, then save
+                            </li>
+                        </ol>
+                        <div className="mt-4 mb-2 p-3 bg-muted rounded-md text-xs">
+                            <p><code>mcp-remote</code> connects Windsurf to our remote server since Windsurf only supports local connections.</p>
+                            <p className="mt-1">Note: This requires <code>npx</code> to be installed on your system.</p>
+                        </div>
+                        <div className="rounded-md shadow-sm">
+                            <JsonViewer
+                                hideDownload={true}
+                                json={{
+                                    mcpServers: {
+                                        "Activepieces": {
+                                            command: "npx",
+                                            args: [
+                                                "-y",
+                                                "mcp-remote",
+                                                mcpServerUrl
+                                              ]
+                                        }
+                                    }
+                                }}
+                                title="MCP Server Configuration"
+                            />
+                        </div>
                     </TabsContent>
                 </Tabs>
             </div>
