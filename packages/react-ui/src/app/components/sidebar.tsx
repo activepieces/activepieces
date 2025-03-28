@@ -185,8 +185,6 @@ export function SidebarComponent({
   );
   const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
   const location = useLocation();
-  console.log('isHomeDashboard ', isHomeDashboard);
-  console.log('platform ', platform);
   return (
     <div className="flex min-h-screen w-full">
       <div className="flex min-h-screen w-full">
