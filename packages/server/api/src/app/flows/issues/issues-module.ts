@@ -1,6 +1,5 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { platformMustHaveFeatureEnabled } from '../../ee/authentication/ee-authorization'
 import { issuesController } from './issues-controller'
 
 export const issuesModule: FastifyPluginAsyncTypebox = async (app) => {

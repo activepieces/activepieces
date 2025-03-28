@@ -12,6 +12,7 @@ import {
 import { useMemo, useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -45,8 +46,6 @@ import {
   isFailedState,
   Permission,
 } from '@activepieces/shared';
-
-import { useNewWindow } from '@/components/embed-provider';
 
 type SelectedRow = {
   id: string;
@@ -186,12 +185,13 @@ export const RunsTable = () => {
                     <Button disabled={isDisabled} className="h-9 w-full">
                       <PlayIcon className="mr-2 h-3 w-4" />
                       {selectedRows.length > 0
-                        ? `${t('Retry')} ${selectedAll
-                          ? excludedRows.size > 0
-                            ? `${t('all except')} ${excludedRows.size}`
-                            : t('all')
-                          : `(${selectedRows.length})`
-                        }`
+                        ? `${t('Retry')} ${
+                            selectedAll
+                              ? excludedRows.size > 0
+                                ? `${t('all except')} ${excludedRows.size}`
+                                : t('all')
+                              : `(${selectedRows.length})`
+                          }`
                         : t('Retry')}
                       <ChevronDown className="h-3 w-4 ml-2" />
                     </Button>
@@ -361,8 +361,8 @@ export const RunsTable = () => {
         const isSelected = selectedAll
           ? !isExcluded
           : selectedRows.some(
-            (selectedRow) => selectedRow.id === row.original.id,
-          );
+              (selectedRow) => selectedRow.id === row.original.id,
+            );
 
         return (
           <Checkbox
@@ -473,4 +473,4 @@ export const RunsTable = () => {
       onRowClick={(row, newWindow) => handleRowClick(row, newWindow)}
     />
   );
-}; 
+};

@@ -3,14 +3,13 @@ import { History, AlertCircle } from 'lucide-react';
 
 import { TableTitle } from '@/components/ui/table-title';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import TaskLimitAlert from '../flows/task-limit-alert';
-import IssuesTable from '@/features/issues/components/issues-table';
 import { RunsTable } from '@/features/flow-runs/components/runs-table';
+import IssuesTable from '@/features/issues/components/issues-table';
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
+
+import TaskLimitAlert from '../flows/task-limit-alert';
 
 const FlowRunsPage = () => {
-  const { platform } = platformHooks.useCurrentPlatform();
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
 
   return (
