@@ -35,9 +35,7 @@ import { issueHooks } from '../hooks/issue-hooks';
 export default function IssuesTable() {
   const navigate = useNavigate();
   const { platform } = platformHooks.useCurrentPlatform();
-  const { refetch } = issueHooks.useIssuesNotification(
-    platform.flowIssuesEnabled,
-  );
+  const { refetch } = issueHooks.useIssuesNotification();
 
   const [searchParams] = useSearchParams();
   const projectId = authenticationSession.getProjectId()!;
@@ -180,16 +178,6 @@ export default function IssuesTable() {
   };
   return (
     <div className="flex-col w-full">
-      <div className=" flex">
-        <TableTitle
-          description={t(
-            'Track failed runs grouped by flow name, and mark them as resolved when fixed.',
-          )}
-        >
-          {t('Issues')}
-        </TableTitle>
-        <div className="ml-auto"></div>
-      </div>
       <DataTable
         emptyStateTextTitle={t('No issues found')}
         emptyStateTextDescription={t(

@@ -5,7 +5,7 @@ import { FlowRunHooks } from '../../flows/flow-run/flow-run-hooks'
 import { system } from '../../helper/system/system'
 import { alertsService } from '../alerts/alerts-service'
 import { emailService } from '../helper/email/email-service'
-import { issuesService } from '../issues/issues-service'
+import { issuesService } from '../../flows/issues/issues-service'
 import { BillingUsageType, usageService } from '../platform-billing/usage/usage-service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 
