@@ -1,21 +1,19 @@
 import {
-  OAuth2PropertyValue,
   Property,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { getChannels, multiSelectChannelInfo, userId } from '../common/props';
+import { userId } from '../common/props';
 import { slackAuth } from '../../';
 import { parseCommand } from '../common/utils';
 
-export const newCommand = createTrigger({
+export const newCommandInDirectMessageTrigger = createTrigger({
   auth: slackAuth,
-  name: 'new_command',
-  displayName: 'New Command in Channel',
+  name: 'new-command-in-direct-message',
+  displayName: 'New Command in Direct Message',
   description:
-    'Triggers when a specific command is sent to the bot (e.g., @bot command arg1 arg2)',
+    'Triggers when a specific command is sent to the bot (e.g., @bot command arg1 arg2) via Direct Message.',
   props: {
-    info: multiSelectChannelInfo,
     user: userId,
     commands: Property.Array({
       displayName: 'Commands',
@@ -24,34 +22,15 @@ export const newCommand = createTrigger({
       required: true,
       defaultValue: ['help'],
     }),
-    channels: Property.MultiSelectDropdown({
-      displayName: 'Channels',
-      description:
-        'If no channel is selected, the flow will be triggered for commands in all channels',
-      required: false,
-      refreshers: [],
-      async options({ auth }) {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'connect slack account',
-            options: [],
-          };
-        }
-        const authentication = auth as OAuth2PropertyValue;
-        const accessToken = authentication['access_token'];
-        const channels = await getChannels(accessToken);
-        return {
-          disabled: false,
-          placeholder: 'Select channel',
-          options: channels,
-        };
-      },
-    }),
     ignoreBots: Property.Checkbox({
       displayName: 'Ignore Bot Messages ?',
       required: true,
       defaultValue: true,
+    }),
+    ignoreSelfMessages: Property.Checkbox({
+        displayName: 'Ignore Message from Yourself ?',
+        required: true,
+        defaultValue: false,
     }),
   },
   type: TriggerStrategy.APP_WEBHOOK,
@@ -71,27 +50,22 @@ export const newCommand = createTrigger({
 
   run: async (context) => {
     const payloadBody = context.payload.body as PayloadBody;
-    const channels = (context.propsValue.channels as string[]) ?? [];
     const commands = (context.propsValue.commands as string[]) ?? [];
     const user = context.propsValue.user as string;
+    const authUserId = context.auth.data['authed_user']?.id;
 
-    
-    // check if it's channel message
-		if (payloadBody.event.channel_type !== 'channel') {
-			return [];
-		}
 
-    // Check if we should process this channel
-    if (
-      !(channels.length === 0 || channels.includes(payloadBody.event.channel))
-    ) {
-      return [];
+    if (payloadBody.event.channel_type !== 'im') {
+        return [];
     }
 
     // Check for bot messages if configured to ignore them
-    if (context.propsValue.ignoreBots && payloadBody.event.bot_id) {
-      return [];
-    }
+		if (
+			(context.propsValue.ignoreBots && payloadBody.event.bot_id) ||
+			(context.propsValue.ignoreSelfMessages && payloadBody.event.user === authUserId)
+		) {
+			return [];
+		}
 
     // Check for mention and parse command
     if (user && payloadBody.event.text) {
@@ -121,6 +95,7 @@ type PayloadBody = {
     channel: string;
     bot_id?: string;
     text?: string;
-    channel_type:string
+    channel_type: string;
+    user: string;
   };
 };

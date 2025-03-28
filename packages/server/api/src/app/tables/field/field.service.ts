@@ -1,11 +1,14 @@
+import { AppSystemProp } from '@activepieces/server-shared'
 import { ActivepiecesError, apId, CreateFieldRequest, ErrorCode, Field, isNil, UpdateFieldRequest } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
+import { system } from '../../helper/system/system'
 import { FieldEntity } from './field.entity'
 
 const fieldRepo = repoFactory<Field>(FieldEntity)
 
 export const fieldService = {
     async create({ request, projectId }: CreateParams): Promise<Field> {
+        await this.validateCount({ projectId, tableId: request.tableId })
         const field = await fieldRepo().save({
             ...request,
             projectId,
@@ -57,6 +60,22 @@ export const fieldService = {
         })
         return this.getById({ id, projectId })
     },
+
+    async count({ projectId, tableId }: CountParams): Promise<number> {
+        return fieldRepo().count({
+            where: { projectId, tableId },
+        })
+    },
+    async validateCount(params: CountParams): Promise<void> {
+        const countRes = await this.count(params)
+        if (countRes > system.getNumberOrThrow(AppSystemProp.MAX_FIELDS_PER_TABLE)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: `Max fields per table reached: ${system.getNumberOrThrow(AppSystemProp.MAX_FIELDS_PER_TABLE)}`,
+                },
+            })
+        }
+    },
 }
 
 type CreateParams = {
@@ -83,4 +102,9 @@ type UpdateParams = {
     id: string
     projectId: string
     request: UpdateFieldRequest
+}
+
+type CountParams = {
+    projectId: string
+    tableId: string
 }

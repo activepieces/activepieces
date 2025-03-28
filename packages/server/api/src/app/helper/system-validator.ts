@@ -154,6 +154,11 @@ const systemPropValidators: {
 
     // Custom
     [AppSystemProp.LOGIN_URL]: urlValidator,
+
+    // Tables
+    [AppSystemProp.MAX_RECORDS_PER_TABLE]: numberValidator,
+    [AppSystemProp.MAX_TABLES_PER_PROJECT]: numberValidator,
+    [AppSystemProp.MAX_FIELDS_PER_TABLE]: numberValidator,
 }
 
 

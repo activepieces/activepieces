@@ -24,6 +24,7 @@ type DashboardContainerProps = {
   children: React.ReactNode;
   hideHeader?: boolean;
   removeGutters?: boolean;
+  removeBottomPadding?: boolean;
 };
 
 const ProjectChangedRedirector = ({
@@ -45,6 +46,7 @@ export function DashboardContainer({
   children,
   removeGutters,
   hideHeader,
+  removeBottomPadding,
 }: DashboardContainerProps) {
   const [automationOpen, setAutomationOpen] = useState(true);
   const { platform } = platformHooks.useCurrentPlatform();
@@ -190,6 +192,7 @@ export function DashboardContainer({
             hideHeader={hideHeader}
             items={items}
             hideSideNav={embedState.hideSideNav}
+            removeBottomPadding={removeBottomPadding}
           >
             {children}
           </SidebarComponent>
