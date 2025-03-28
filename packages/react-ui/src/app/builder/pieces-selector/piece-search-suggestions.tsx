@@ -1,12 +1,17 @@
+import { useState } from 'react';
+
 import { CardListItem } from '@/components/ui/card-list';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import {
   HandleSelectCallback,
+  PieceStepMetadata,
   StepMetadataWithSuggestions,
 } from '@/features/pieces/lib/types';
 import { ActionType, TriggerType } from '@activepieces/shared';
 
 import { getCoreActions } from '../../../features/pieces/lib/pieces-hook';
+
+import { CreateTodoGuide } from './dialog-guides/create-todo-guide';
 
 type PieceSearchSuggestionsProps = {
   pieceMetadata: StepMetadataWithSuggestions;
@@ -33,9 +38,20 @@ const PieceSearchSuggestions = ({
   handleSelectOperationSuggestion,
   hiddenActionsOrTriggers,
 }: PieceSearchSuggestionsProps) => {
+  const [openCreateTodoGuideDialog, setOpenCreateTodoGuideDialog] =
+    useState(false);
   const suggestions = stepMetadataSuggestions(pieceMetadata);
   return (
     <div className="flex flex-col gap-0">
+      {openCreateTodoGuideDialog && pieceMetadata && suggestions && (
+        <CreateTodoGuide
+          open={openCreateTodoGuideDialog}
+          setOpen={setOpenCreateTodoGuideDialog}
+          handleSelect={handleSelectOperationSuggestion}
+          actionOrTriggers={suggestions}
+          selectedPieceMetadata={pieceMetadata}
+        />
+      )}
       {suggestions
         ?.filter(
           (suggestion) => !hiddenActionsOrTriggers.includes(suggestion.name),
@@ -46,7 +62,15 @@ const PieceSearchSuggestions = ({
             key={suggestion.displayName}
             onClick={(e) => {
               e.stopPropagation();
-              handleSelectOperationSuggestion(pieceMetadata, suggestion);
+              if (
+                (pieceMetadata as PieceStepMetadata).pieceName ===
+                  '@activepieces/piece-todos' &&
+                suggestion.name === 'createTodo'
+              ) {
+                setOpenCreateTodoGuideDialog(true);
+              } else {
+                handleSelectOperationSuggestion(pieceMetadata, suggestion);
+              }
             }}
           >
             <div className="opacity-0">
