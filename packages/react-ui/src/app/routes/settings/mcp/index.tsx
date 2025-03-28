@@ -11,6 +11,7 @@ import {
 
 import { Button } from '../../../../components/ui/button';
 import { Separator } from '../../../../components/ui/separator';
+import { TableTitle } from '../../../../components/ui/table-title';
 import { useToast } from '../../../../components/ui/use-toast';
 import { mcpApi } from '../../../../features/mcp/mcp-api';
 import { piecesHooks } from '../../../../features/pieces/lib/pieces-hook';
@@ -147,14 +148,14 @@ export default function MCPPage() {
   return (
     <div className="w-full flex flex-col items-center justify-center gap-6 pb-8">
       <div className="w-full space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold mb-2">
-            Model Context Protocol
-          </h1>
-          <p className="text-muted-foreground">
-            Configure your MCP server and expose your connections as AI tools.
-          </p>
-        </div>
+        <TableTitle
+          beta={true}
+          description={t(
+            'Configure your MCP server and expose your connections as AI tools.',
+          )}
+        >
+          {t('Model Context Protocol')}
+        </TableTitle>
 
         <div className="space-y-6">
           {/* Server URL Display */}

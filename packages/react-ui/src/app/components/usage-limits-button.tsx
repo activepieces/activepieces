@@ -4,7 +4,6 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 import { Progress } from '@/components/ui/progress-circle';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { formatUtils } from '@/lib/utils';
 import { ApFlagId, isNil } from '@activepieces/shared';
@@ -32,9 +31,6 @@ const getTimeUntilNextReset = (nextResetDate: string) => {
 
 const UsageLimitsButton = React.memo(() => {
   const { project, refetch } = projectHooks.useCurrentProject();
-  const { data: flagValue } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_BILLING,
-  );
   useEffect(() => {
     return () => {
       refetch();
@@ -47,7 +43,7 @@ const UsageLimitsButton = React.memo(() => {
 
   const usageCardComponent = () => {
     return (
-      <div className="flex flex-col gap-2 w-full py-1 px-2">
+      <div className="flex flex-col gap-2 w-full px-2">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <div className="flex flex-col gap-3">
@@ -66,34 +62,27 @@ const UsageLimitsButton = React.memo(() => {
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               {project.usage.nextLimitResetDate && (
-                <div className="text-xs text-muted-foreground ">
-                  {t('Usage resets in')}{' '}
-                  {getTimeUntilNextReset(project.usage.nextLimitResetDate)}{' '}
+                <div className="text-xs text-muted-foreground flex justify-between w-full">
+                  <span>
+                    {t('Usage resets in')}{' '}
+                    {getTimeUntilNextReset(project.usage.nextLimitResetDate)}{' '}
+                  </span>
+                  <FlagGuard flag={ApFlagId.SHOW_BILLING}>
+                    <Link to={'/platform/setup/billing'} className="w-fit">
+                      <span className="text-xs text-primary underline">
+                        {t('Manage')}
+                      </span>
+                    </Link>
+                  </FlagGuard>
                 </div>
               )}
             </div>
-            <FlagGuard flag={ApFlagId.SHOW_BILLING}>
-              <Link to={'/platform/setup/billing'} className="w-fit">
-                <span className="text-xs text-primary underline">
-                  {t('Manage plan')}
-                </span>
-              </Link>
-            </FlagGuard>
           </div>
         </div>
       </div>
     );
   };
-  return (
-    <>
-      {flagValue && (
-        <Link to={'/platform/setup/billing'} className="w-full cursor-pointer">
-          {usageCardComponent()}
-        </Link>
-      )}
-      {!flagValue && usageCardComponent()}
-    </>
-  );
+  return <>{usageCardComponent()}</>;
 });
 
 type UsageProgressProps = {
@@ -118,7 +107,7 @@ const UsageProgress = ({ value, max, name }: UsageProgressProps) => {
         </div>
       </div>
       {!isNil(max) && (
-        <Progress value={(value / max) * 100} className="h-[6px]" />
+        <Progress value={(value / max) * 100} className="h-[6px] bg-gray-200" />
       )}
     </div>
   );
