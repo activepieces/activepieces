@@ -19,7 +19,7 @@ export const McpInstruction = ({ mcpServerUrl }: McpInstructionProps) => {
                     </p>
                 </div>
 
-                <Tabs defaultValue="cursor">
+                <Tabs >
                     
                     
                     <TabsList className="gap-3" variant="outline">
