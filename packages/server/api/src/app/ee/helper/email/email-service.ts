@@ -7,7 +7,7 @@ import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { alertsService } from '../../alerts/alerts-service'
 import { domainHelper } from '../../custom-domains/domain-helper'
-import { issuesService } from '../../issues/issues-service'
+import { issuesService } from '../../../flows/issues/issues-service'
 import { projectRoleService } from '../../project-role/project-role.service'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 
