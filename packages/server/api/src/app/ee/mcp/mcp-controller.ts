@@ -1,10 +1,10 @@
+import { MCP } from '@activepieces/ee-shared'
 import { ALL_PRINCIPAL_TYPES, apId, ApId, Permission, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { mcpService } from './mcp-service'
-import { createMcpServer } from './mcp-server'
-import { mcpSessionManager } from './mcp-session-manager'
-import { MCP } from '@activepieces/ee-shared'
 import { StatusCodes } from 'http-status-codes'
+import { createMcpServer } from './mcp-server'
+import { mcpService } from './mcp-service'
+import { mcpSessionManager } from './mcp-session-manager'
 
 
 export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
@@ -16,68 +16,68 @@ export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/:id', UpdateMCPRequest, async (req) => {
-        const mcpId = req.params.id;
-        const { token, connectionsIds } = req.body;
+        const mcpId = req.params.id
+        const { token, connectionsIds } = req.body
 
         return mcpService(req.log).update({
             mcpId,
             token,
             connectionsIds,
-        });
+        })
     })
 
     app.post('/:id/rotate', RotateTokenRequest, async (req) => {
-        const mcpId = req.params.id;
+        const mcpId = req.params.id
         return mcpService(req.log).update({
             mcpId,
             token: apId(),
-        });
+        })
     })
 
     app.delete('/:id', DeleteMCPRequest, async (req) => {
-        const mcpId = req.params.id;
+        const mcpId = req.params.id
         return mcpService(req.log).delete({
             mcpId,
         })
     })
 
     app.get('/:id/sse', SSERequest, async (req, reply) => {
-        const token = req.params.id;
+        const token = req.params.id
         const mcp = await mcpService(req.log).getByToken({
-            token
-        });
+            token,
+        })
 
         const { server, transport } = await createMcpServer({
             mcpId: mcp.id,
             reply,
             logger: req.log,
-        });
+        })
 
-        await server.connect(transport);
+        await server.connect(transport)
 
-        mcpSessionManager(req.log).add(transport.sessionId, server, transport, mcp.id);
+        mcpSessionManager(req.log).add(transport.sessionId, server, transport, mcp.id)
 
-        reply.raw.on("close", async () => {
-            await mcpSessionManager(req.log).remove(transport.sessionId);
-        });
+        reply.raw.on('close', async () => {
+            await mcpSessionManager(req.log).remove(transport.sessionId)
+        })
     })
 
     app.post('/messages', MessagesRequest, async (req, reply) => {
-        const sessionId = req.query?.sessionId as string;
+        const sessionId = req.query?.sessionId as string
 
         if (!sessionId) {
-            reply.code(400).send({ message: 'Missing session ID' });
-            return;
+            await reply.code(400).send({ message: 'Missing session ID' })
+            return
         }
 
-        const sessionData = mcpSessionManager(req.log).get(sessionId);
+        const sessionData = mcpSessionManager(req.log).get(sessionId)
 
         if (!sessionData) {
-            reply.code(404).send({ message: 'Session not found' });
-            return;
+            await reply.code(404).send({ message: 'Session not found' })
+            return
         }
 
-        await sessionData.transport.handlePostMessage(req.raw, reply.raw, req.body);
+        await sessionData.transport.handlePostMessage(req.raw, reply.raw, req.body)
     })
 }
 

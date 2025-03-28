@@ -5,11 +5,11 @@ import {
 } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
+    ApIdSchema,
     ARRAY_COLUMN_TYPE,
     BaseColumnSchemaPart,
     isPostgres,
     JSONB_COLUMN_TYPE,
-    ApIdSchema,
 } from '../database/database-common'
 import { EncryptedObject } from '../helper/encryption'
 
@@ -91,6 +91,6 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
                 name: 'ownerId',
                 foreignKeyConstraintName: 'fk_app_connection_owner_id',
             },
-        }
+        },
     },
 })

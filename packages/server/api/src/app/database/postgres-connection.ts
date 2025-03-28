@@ -186,9 +186,7 @@ import { AddManualTaskTable1742304857701 } from './migration/postgres/1742304857
 import { AddManualTaskCommentTable1742305104390 } from './migration/postgres/1742305104390-AddManualTaskCommentTable'
 import { ChangeManualTasksToTodo1742432827826 } from './migration/postgres/1742432827826-ChangeManualTasksToTodo'
 import { ChangeManualTasksCommentsToTodoComments1742433144687 } from './migration/postgres/1742433144687-ChangeManualTasksCommentsToTodoComments'
-import { AddMCPWithConnectionsPostgres1742867572875 } from './migration/postgres/1742867572875-AddMCPWithConnectionsPostgres'
-import { RemoveMcpStatusAddMcpTokenPostgres1743041373691 } from './migration/postgres/1743041373691-RemoveMcpStatusAddMcpTokenPostgres'
-import { AddDirectMcpAppConnectionRelationPostgres1743121193114 } from './migration/postgres/1743121193114-AddDirectMcpAppConnectionRelationPostgres'
+import { AddMCP1743128816786 } from './migration/postgres/1743128816786-AddMCP'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -313,9 +311,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         CreateTableWebhooks1741669458075,
         AddManualTaskTable1742304857701,
         ChangeManualTasksToTodo1742432827826,
-        AddMCPWithConnectionsPostgres1742867572875,
-        RemoveMcpStatusAddMcpTokenPostgres1743041373691,
-        AddDirectMcpAppConnectionRelationPostgres1743121193114,
+        AddMCP1743128816786,
     ]
 
     const edition = system.getEdition()

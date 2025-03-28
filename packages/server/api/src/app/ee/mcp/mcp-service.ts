@@ -1,11 +1,11 @@
-import { MCP, MCPSchema } from '@activepieces/ee-shared'
-import { ActivepiecesError, ApId, apId, AppConnection, AppConnectionWithoutSensitiveData, ErrorCode, isNil, ProjectId, spreadIfDefined } from '@activepieces/shared'
+import { MCPSchema } from '@activepieces/ee-shared'
+import { ActivepiecesError, ApId, apId, AppConnectionWithoutSensitiveData, ErrorCode, isNil, spreadIfDefined } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { In } from 'typeorm'
+import { appConnectionService, appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { MCPEntity } from './mcp-entity'
-import { appConnectionService, appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
-import { In } from 'typeorm'
 
 const repo = repoFactory(MCPEntity)
 
@@ -60,9 +60,9 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         if (!isNil(connectionsIds)) {
             await appConnectionsRepo().update({
                 id: In(connectionsIds),
-                mcpId: mcpId,
+                mcpId: mcp.id,
             }, {
-                mcpId: mcpId,
+                mcpId: mcp.id,
             })
         }
 
@@ -86,7 +86,7 @@ async function listConnections({ mcpId, log }: GetOrThrowParams): Promise<AppCon
     const connections = await appConnectionsRepo().find({
         where: {
             mcpId,
-        }
+        },
     })
 
     return Promise.all(connections.map(connection => appConnectionService(log).getOneOrThrowWithoutValue({
@@ -103,6 +103,6 @@ type UpdateParams = {
 }
 
 type GetOrThrowParams = {
-    mcpId: ApId;
+    mcpId: ApId
     log: FastifyBaseLogger
 }

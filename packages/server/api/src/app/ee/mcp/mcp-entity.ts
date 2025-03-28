@@ -10,7 +10,7 @@ export const MCPEntity = new EntitySchema<MCPSchema>({
     columns: {
         ...BaseColumnSchemaPart,
         projectId: ApIdSchema,
-        token: ApIdSchema
+        token: ApIdSchema,
     },
     indices: [
         {
