@@ -48,7 +48,8 @@ src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4
 
 # 🤯 Welcome to Activepieces
 
-Your friendliest open source all-in-one automation tool, designed to be **extensible** through a **type-safe** pieces framework written in **Typescript**.
+All-in-one AI automation designed to be **extensible** through a **type-safe** pieces framework written in **TypeScript**.
+When you contribute pieces to Activepieces they become automatically available as MCP servers that you can use with LLMs through Claude Desktop, Cursor or Windsurf!
 
 <br>
 <br>
@@ -61,12 +62,13 @@ Your friendliest open source all-in-one automation tool, designed to be **extens
 
 - **🌐 Open Ecosystem:** All pieces are open source and available on npmjs.com, **60% of the pieces are contributed by the community**.
 
+- **🛠️ Largest open source MCP toolkit**: All our pieces (280+) are available as MCP that you can use with LLMs on Claude Desktop, Cursor or Windsurf.
+
 - **🛠️  Pieces are written in Typescript**: Pieces are npm packages in TypeScript, offering full customization with the best developer experience, including **hot reloading** for **local** piece development on your machine. 😎
 
 ![](/resources/create-action.png)
 
-
-- **🤖 AI-Ready**: Native AI pieces let you experiment with various providers, or create your own agents using our AI SDK, and there is Copilot to help you build flows inside the builder.
+- **🤖 AI-First**: Native AI pieces let you experiment with various providers, or create your own agents using our AI SDK, and there is Copilot to help you build flows inside the builder.
 
 - **🏢 Enterprise-Ready**: Developers set up the tools, and anyone in the organization can use the no-code builder. Full customization from branding to control.
 
