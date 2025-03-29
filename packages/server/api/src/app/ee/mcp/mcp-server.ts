@@ -31,7 +31,7 @@ export async function createMcpServer({
         })
     }))
 
-    const transport = new SSEServerTransport('/v1/mcp/messages', reply.raw)
+    const transport = new SSEServerTransport('/api/v1/mcp/messages', reply.raw)
     const server = new McpServer({
         name: 'Activepieces',
         version: '1.0.0',
