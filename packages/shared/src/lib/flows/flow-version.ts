@@ -3,6 +3,7 @@ import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
 import { UserWithMetaInformation } from '../user'
 import { Trigger } from './triggers/trigger'
+import { Metadata } from '../common/metadata'
 
 export type FlowVersionId = ApId
 
@@ -22,6 +23,7 @@ export const FlowVersion = Type.Object({
     valid: Type.Boolean(),
     schemaVersion: Nullable(Type.String()),
     state: Type.Enum(FlowVersionState),
+    metadata: Type.Optional(Metadata),
 })
 
 export type FlowVersion = Static<typeof FlowVersion>
