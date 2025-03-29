@@ -1,6 +1,6 @@
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework'
 import { UserInteractionJobType } from '@activepieces/server-shared'
-import { EngineResponseStatus, ExecuteActionResponse } from '@activepieces/shared'
+import { EngineResponseStatus, ExecuteActionResponse, isNil } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { FastifyBaseLogger, FastifyReply } from 'fastify'
@@ -54,6 +54,15 @@ export async function createMcpServer({
                     ),
                 ),
                 async (params) => {
+                    const parsedInputs = {
+                        ...params,
+                        ...Object.fromEntries(
+                            Object.entries(action.props)
+                                .filter(([key, prop]) => !isNil(prop.defaultValue) && isNil(params[key]))
+                                .map(([key, prop]) => [key, prop.defaultValue])
+                        ),
+                        'auth': `{{connections['${pieceConnectionExternalId}']}}`
+                    };
                     const result = await userInteractionWatcher(logger).submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
                         jobType: UserInteractionJobType.EXECUTE_TOOL,
                         actionName: action.name,
@@ -61,10 +70,7 @@ export async function createMcpServer({
                         pieceVersion: piece.version,
                         packageType: piece.packageType,
                         pieceType: piece.pieceType,
-                        input: {
-                            'auth': `{{connections['${pieceConnectionExternalId}']}}`,
-                            ...params,
-                        },
+                        input: parsedInputs,
                         projectId,
                     })
 
@@ -126,6 +132,10 @@ function piecePropertyToZod(property: PieceProperty): z.ZodTypeAny {
             break
         default:
             schema = z.unknown()
+    }
+
+    if (property.defaultValue) {
+        schema = schema.default(property.defaultValue)
     }
 
     if (property.description) {
