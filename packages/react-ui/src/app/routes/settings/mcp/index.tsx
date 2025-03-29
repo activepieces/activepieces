@@ -7,6 +7,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import {
   ApFlagId,
   AppConnectionWithoutSensitiveData,
+  MarkdownVariant,
 } from '@activepieces/shared';
 
 import { Button } from '../../../../components/ui/button';
@@ -20,6 +21,7 @@ import { NewConnectionDialog } from '../../../connections/new-connection-dialog'
 import { McpConnection } from './mcp-connection';
 import { McpInstruction } from './mcp-instruction';
 import { McpUrl } from './mcp-url';
+import { ApMarkdown } from '@/components/custom/markdown';
 
 export default function MCPPage() {
   const { data: publicUrl } = flagsHooks.useFlag(ApFlagId.PUBLIC_URL);
@@ -151,13 +153,16 @@ export default function MCPPage() {
         <TableTitle
           beta={true}
           description={t(
-            'Configure your MCP server and expose your connections as AI tools.',
+            'Connect to your hosted MCP Server below using any MCP client to communicate with pieces',
           )}
         >
           {t('Model Context Protocol')}
         </TableTitle>
 
         <div className="space-y-6">
+          {/* Explanation of MCP Server */}
+         
+
           {/* Server URL Display */}
           <McpUrl
             serverUrl={serverUrl}
