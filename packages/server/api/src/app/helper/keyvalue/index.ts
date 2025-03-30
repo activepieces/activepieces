@@ -6,7 +6,7 @@ import { createRedisStore } from './redis-store'
 
 let _distributedStore: typeof memoryStore | null = null
 
-export const getDistributedStore = () => {
+export const distributedStore = () => {
     if (_distributedStore !== null) {
         return _distributedStore
     }
@@ -18,4 +18,3 @@ export const getDistributedStore = () => {
     return _distributedStore
 }
 
-export const distributedStore = getDistributedStore()

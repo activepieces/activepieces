@@ -12,7 +12,6 @@ type SessionData = {
 
 const sessions: Map<string, SessionData> = new Map()
 const serverId = apId()
-const pubSub = pubsub()
 
 
 export const mcpSessionManager = (logger: FastifyBaseLogger) => {
@@ -20,10 +19,11 @@ export const mcpSessionManager = (logger: FastifyBaseLogger) => {
     return {
         init: async (): Promise<void> => {
 
-            pubSub.subscribe(`server:${serverId}`, async (channel, message) => {
+
+            pubsub().subscribe(`server:${serverId}`, async (channel, message) => {
                 const { sessionId, body, operation } = JSON.parse(message)
                 logger.info({ sessionId, operation }, 'Received message')
-            
+
                 if (operation === 'remove') {
                     try {
                         await remove(sessionId)
@@ -34,14 +34,14 @@ export const mcpSessionManager = (logger: FastifyBaseLogger) => {
                     }
                     return
                 }
-            
+
                 const sessionData = get(sessionId)
-            
+
                 if (!sessionData) {
                     logger.info({ sessionId }, 'Session not found')
                     return
                 }
-            
+
                 try {
                     await sessionData.transport.handleMessage(body)
                     logger.info({ sessionId, body }, 'Handle operation')
@@ -61,14 +61,14 @@ export const mcpSessionManager = (logger: FastifyBaseLogger) => {
             logger.info({ sessionId }, 'MCP session added')
 
             // Store session information in distributed store
-            await distributedStore.put(constructSessionKey(sessionId), serverId)
+            await distributedStore().put(constructSessionKey(sessionId), serverId)
         },
 
         publish: async (sessionId: string, body: unknown, operation: 'remove' | 'message' = 'message'): Promise<void> => {
-            const serverId = await distributedStore.get<string>(constructSessionKey(sessionId))
+            const serverId = await distributedStore().get<string>(constructSessionKey(sessionId))
             if (serverId) {
                 logger.info({ sessionId, body, operation }, 'Publishing message')
-                await pubSub.publish(`server:${serverId}`, JSON.stringify({ sessionId, body, operation }))
+                await pubsub().publish(`server:${serverId}`, JSON.stringify({ sessionId, body, operation }))
             }
 
         },
@@ -94,7 +94,7 @@ export async function remove(sessionId: string): Promise<void> {
         sessions.delete(sessionId)
 
         // Remove session information from distributed store
-        await distributedStore.delete(constructSessionKey(sessionId))
+        await distributedStore().delete(constructSessionKey(sessionId))
     }
     catch (error) {
         throw new Error(`Failed to remove session: ${error instanceof Error ? error.message : 'Unknown error'}`)
