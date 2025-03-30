@@ -154,7 +154,7 @@ export default function MCPPage() {
             'Connect to your hosted MCP Server below using any MCP client to communicate with pieces',
           )}
         >
-          {t('Model Context Protocol')}
+          {t('MCP Server')}
         </TableTitle>
 
         <div className="space-y-6">
