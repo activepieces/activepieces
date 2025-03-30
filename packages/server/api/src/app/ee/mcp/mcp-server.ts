@@ -59,10 +59,10 @@ export async function createMcpServer({
                         ...Object.fromEntries(
                             Object.entries(action.props)
                                 .filter(([key, prop]) => !isNil(prop.defaultValue) && isNil(params[key]))
-                                .map(([key, prop]) => [key, prop.defaultValue])
+                                .map(([key, prop]) => [key, prop.defaultValue]),
                         ),
-                        'auth': `{{connections['${pieceConnectionExternalId}']}}`
-                    };
+                        'auth': `{{connections['${pieceConnectionExternalId}']}}`,
+                    }
                     const result = await userInteractionWatcher(logger).submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
                         jobType: UserInteractionJobType.EXECUTE_TOOL,
                         actionName: action.name,
