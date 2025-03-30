@@ -57,7 +57,8 @@ export const McpInstruction = ({ mcpServerUrl }: McpInstructionProps) => {
             <Alert variant="warning" className="mt-4 mb-2">
               <AlertDescription className="text-xs">
                 <p>
-                  Note: MCPs currently only work with Claude Desktop, not the web version.
+                  Note: MCPs currently only work with Claude Desktop, not the
+                  web version.
                 </p>
                 <p>You can download it from: https://claude.ai/download</p>
               </AlertDescription>
