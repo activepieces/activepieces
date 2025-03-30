@@ -1,4 +1,4 @@
-import { ALL_PRINCIPAL_TYPES, ApId, apId } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, ApId } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { createMcpServer } from './mcp-server'
 import { mcpService } from './mcp-service'

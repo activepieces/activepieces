@@ -2,8 +2,8 @@ import { MCP } from '@activepieces/ee-shared'
 import { ALL_PRINCIPAL_TYPES, apId, ApId, Permission, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { mcpService } from './mcp-service'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
+import { mcpService } from './mcp-service'
 
 export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
 
