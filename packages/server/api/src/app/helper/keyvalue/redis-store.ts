@@ -6,7 +6,8 @@ export const createRedisStore = (redisClient: Redis): KeyValueStore => ({
         const serializedValue = JSON.stringify(value)
         if (ttlInSeconds) {
             await redisClient.setex(key, ttlInSeconds, serializedValue)
-        } else {
+        }
+        else {
             await redisClient.set(key, serializedValue)
         }
     },
@@ -19,5 +20,5 @@ export const createRedisStore = (redisClient: Redis): KeyValueStore => ({
 
     async delete(key: string): Promise<void> {
         await redisClient.del(key)
-    }
+    },
 })

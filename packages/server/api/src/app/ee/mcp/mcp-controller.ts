@@ -2,11 +2,12 @@ import { MCP } from '@activepieces/ee-shared'
 import { ALL_PRINCIPAL_TYPES, apId, ApId, Permission, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { createMcpServer } from './mcp-server'
 import { mcpService } from './mcp-service'
-import { mcpSessionManager } from './mcp-session-manager'
+import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 
 export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
+
+    app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
     app.get('/', GetMCPRequest, async (req) => {
         return mcpService(req.log).getOrCreate({
@@ -39,63 +40,6 @@ export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
             mcpId,
         })
     })
-
-    app.get('/:id/sse', SSERequest, async (req, reply) => {
-        const token = req.params.id
-        const mcp = await mcpService(req.log).getByToken({
-            token,
-        })
-
-        const { server, transport } = await createMcpServer({
-            mcpId: mcp.id,
-            reply,
-            logger: req.log,
-        })
-
-        await mcpSessionManager(req.log).add(transport.sessionId, server, transport)
-
-        await server.connect(transport)
-
-
-        reply.raw.on('close', async () => {
-            await mcpSessionManager(req.log).publish(transport.sessionId, {}, 'remove')
-        })
-    })
-
-    app.post('/messages', MessagesRequest, async (req, reply) => {
-        const sessionId = req.query?.sessionId as string
-
-        if (!sessionId) {
-            await reply.code(400).send({ message: 'Missing session ID' })
-            return
-        }
-
-        await mcpSessionManager(req.log).publish(sessionId, req.body, 'message')
-        await reply.code(202).send()
-
-    })
-}
-
-const MessagesRequest = {
-    config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-    },
-    schema: {
-        querystring: Type.Object({
-            sessionId: Type.Optional(Type.String()),
-        }),
-    },
-}
-
-const SSERequest = {
-    config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-    },
-    schema: {
-        params: Type.Object({
-            id: ApId,
-        }),
-    },
 }
 
 const GetMCPRequest = {
