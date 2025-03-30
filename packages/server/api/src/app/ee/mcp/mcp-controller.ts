@@ -6,7 +6,6 @@ import { createMcpServer } from './mcp-server'
 import { mcpService } from './mcp-service'
 import { mcpSessionManager } from './mcp-session-manager'
 
-
 export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/', GetMCPRequest, async (req) => {
@@ -53,12 +52,13 @@ export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
             logger: req.log,
         })
 
+        await mcpSessionManager(req.log).add(transport.sessionId, server, transport)
+
         await server.connect(transport)
 
-        mcpSessionManager(req.log).add(transport.sessionId, server, transport)
 
         reply.raw.on('close', async () => {
-            await mcpSessionManager(req.log).remove(transport.sessionId)
+            await mcpSessionManager(req.log).publish(transport.sessionId, {}, 'remove')
         })
     })
 
@@ -70,14 +70,9 @@ export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
             return
         }
 
-        const sessionData = mcpSessionManager(req.log).get(sessionId)
+        await mcpSessionManager(req.log).publish(sessionId, req.body, 'message')
+        await reply.code(202).send()
 
-        if (!sessionData) {
-            await reply.code(404).send({ message: 'Session not found' })
-            return
-        }
-
-        await sessionData.transport.handlePostMessage(req.raw, reply.raw, req.body)
     })
 }
 
