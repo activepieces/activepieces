@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 
 import {
   Card,
@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { authenticationSession } from '@/lib/authentication-session';
 import {
   ApFlagId,
   ThirdPartyAuthnProvidersToShowMap,
@@ -22,11 +23,14 @@ import { SignUpForm } from './sign-up-form';
 import { ThirdPartyLogin } from './third-party-logins';
 
 const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.toString();
+
   return isSignup ? (
     <div className="my-4 text-center text-sm">
       {t('Already have an account?')}
       <Link
-        to="/sign-in"
+        to={`/sign-in?${searchQuery}`}
         className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
       >
         {t('Sign in')}
@@ -36,7 +40,7 @@ const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
     <div className="my-4 text-center text-sm">
       {t("Don't have an account?")}
       <Link
-        to="/sign-up"
+        to={`/sign-up?${searchQuery}`}
         className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
       >
         {t('Sign up')}
@@ -66,6 +70,9 @@ const AuthSeparator = ({
 const AuthFormTemplate = React.memo(
   ({ form }: { form: 'signin' | 'signup' }) => {
     const isSignUp = form === 'signup';
+    const [searchParams] = useSearchParams();
+    const from = searchParams.get('from');
+    const token = authenticationSession.getToken();
 
     const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
     const { data: isEmailAuthEnabled } = flagsHooks.useFlag<boolean>(
@@ -83,6 +90,10 @@ const AuthFormTemplate = React.memo(
         showNameFields: true,
       },
     }[form];
+
+    if (token && from) {
+      return <Navigate to={from} />;
+    }
 
     return (
       <Card className="w-[28rem] rounded-sm drop-shadow-xl">
