@@ -74,6 +74,8 @@ export type ApErrorParams =
     | ProjectExternalIdAlreadyExistsParams
     | MemoryIssueParams
     | InvalidCustomDomainErrorParams
+    | MCPNotFoundErrorParams
+
 export type BaseErrorParams<T, V> = {
     code: T
     params: V
@@ -430,6 +432,10 @@ export type ProjectExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.PRO
     externalId: string
 }>
 
+export type MCPNotFoundErrorParams = BaseErrorParams<ErrorCode.MCP_NOT_FOUND, {
+    id: string
+}>
+
 export enum ErrorCode {
     INVALID_CUSTOM_DOMAIN = 'INVALID_CUSTOM_DOMAIN',
     NO_CHAT_RESPONSE = 'NO_CHAT_RESPONSE',
@@ -490,4 +496,5 @@ export enum ErrorCode {
     INVALID_GIT_CREDENTIALS = 'INVALID_GIT_CREDENTIALS',
     INVALID_RELEASE_TYPE = 'INVALID_RELEASE_TYPE',
     COPILOT_FAILED = 'COPILOT_FAILED',
+    MCP_NOT_FOUND = 'MCP_NOT_FOUND',
 }

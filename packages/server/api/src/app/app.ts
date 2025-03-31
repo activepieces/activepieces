@@ -69,6 +69,7 @@ import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
+// import { issuesModule } from './flows/issues/issues-module'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 // import { eventsHooks } from './helper/application-events'
 import { openapiModule } from './helper/openapi/openapi.module'
@@ -226,6 +227,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(platformModule)
     await app.register(humanInputModule)
     await app.register(tagsModule)
+    // await app.register(mcpModule)
     await pieceSyncService(app.log).setup()
     await app.register(platformUserModule)
     // await app.register(issuesModule)

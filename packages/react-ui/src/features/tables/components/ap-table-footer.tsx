@@ -29,7 +29,8 @@ const ApTableFooter = ({
           {!areAllRecordsSelected && (
             <>
               {selectedRecords.size > 0
-                ? t('recordsCount', { recordsCount:selectedRecords.size }) + ` ${t('selected')}`
+                ? t('recordsCount', { recordsCount: selectedRecords.size }) +
+                  ` ${t('selected')}`
                 : t('recordsCount', { recordsCount }) +
                   ' (' +
                   recordsPercentage.toFixed(2) +

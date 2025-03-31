@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -23,6 +23,8 @@ const ThirdPartyIcon = ({ icon }: { icon: string }) => {
 
 const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('from') || '/flows';
 
   const { data: thirdPartyAuthProviders } =
     flagsHooks.useFlag<ThirdPartyAuthnProvidersToShowMap>(
@@ -59,7 +61,7 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
       });
 
       authenticationSession.saveResponse(data);
-      navigate('/flows');
+      navigate(redirectTo);
     } catch (e) {
       toast(INTERNAL_ERROR_TOAST);
     }
