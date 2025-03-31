@@ -1,4 +1,4 @@
-import { messageBirdAuth } from '../..';
+import { birdAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   httpClient,
@@ -7,73 +7,54 @@ import {
 } from '@activepieces/pieces-common';
 
 export const sendSMSAction = createAction({
-  auth: messageBirdAuth,
+  auth: birdAuth,
   name: 'send-sms',
   displayName: 'Send SMS',
-  description: 'Sends an SMS message via MessageBird.',
+  description: 'Sends an SMS message via Bird Channels API.',
   props: {
-    originator: Property.ShortText({
-      displayName: 'Originator',
-      description:
-        "Enter the sender details. You can either enter the sender's phone number with country code or name or text that is alphanumeric.",
+    recipient: Property.ShortText({
+      displayName: 'Recipient',
+      description: 'The phone number to send the message to (with country code)',
       required: true,
     }),
-    body: Property.LongText({
-      displayName: 'Body',
-      description: 'The body of the SMS message.',
+    message: Property.LongText({
+      displayName: 'Message',
+      description: 'The body of the SMS message',
       required: true,
     }),
-    recipients: Property.Array({
-      displayName: 'Recipients',
-      description:
-        'Enter the recipient number to whom you want to send the message.',
-      required: true,
-    }),
-    datacoding: Property.StaticDropdown({
-      displayName: 'Data Coding',
-      description:
-        'Using unicode will limit the maximum number of characters to 70 instead of 160.',
-      required: false,
-      options: {
-        disabled: false,
-        options: [
-          { label: 'Auto', value: 'auto' },
-          { label: 'Plain', value: 'plain' },
-          { label: 'Unicode', value: 'unicode' },
-        ],
-      },
-    }),
-    gateway: Property.Number({
-      displayName: 'Gateway',
-      description: 'The SMS route that is used to send the message.',
-      required: false,
-    }),
-    validity: Property.Number({
-      displayName: 'Validity',
-      description:
-        'The amount of seconds that the message is valid. If a message is not delivered within this time, the message will be discarded.',
+    reference: Property.ShortText({
+      displayName: 'Reference',
+      description: 'Your own identifier for the message (optional)',
       required: false,
     }),
   },
   async run(context) {
-    const { originator, body, datacoding, gateway, validity } =
-      context.propsValue;
-    const recipients = context.propsValue.recipients as string[];
-
+    const { recipient, message, reference } = context.propsValue;
+    const auth = context.auth as { apiKey: string; workspaceId: string; channelId: string };
+    
+    // Format request for Bird Channels API
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: 'https://rest.messagebird.com/messages',
+      url: `https://api.bird.com/workspaces/${auth.workspaceId}/channels/${auth.channelId}/messages`,
       headers: {
-        Accept: 'application/json',
-        Authorization: `AccessKey ${context.auth}`,
+        'Authorization': `Bearer ${auth.apiKey}`,
+        'Content-Type': 'application/json'
       },
       body: {
-        originator,
-        body,
-        recipients,
-        datacoding,
-        gateway,
-        validity,
+        receiver: {
+          contacts: [
+            {
+              identifierValue: recipient
+            }
+          ]
+        },
+        body: {
+          type: 'text',
+          text: {
+            text: message
+          }
+        },
+        ...(reference && { reference }),
       },
     };
 

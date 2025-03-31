@@ -8,7 +8,7 @@ icon: "wrench"
 If you're experiencing issues with websocket connections, it's likely due to incorrect proxy configuration. Common symptoms include:
 
 - Test Flow button not working
-- Test step in flows not working 
+- Test step in flows not working
 - Copilot features not working
 - Real-time updates not showing
 
@@ -40,7 +40,7 @@ If you forgot your password on self hosted instance, you can reset it using the 
 2. **Access the Container**:
    - Use SSH to access the PostgreSQL Docker container.
    ```bash
-   docker exec -it CONTAINER_ID /bin/bash
+   docker exec -it POSTGRES_CONTAINER_ID /bin/bash
    ```
 
 3. **Open the PostgreSQL Console**:
@@ -49,13 +49,19 @@ If you forgot your password on self hosted instance, you can reset it using the 
    psql -U postgres
    ```
 
-4. **Create a Secure Password**:
-   - Use a tool like [bcrypt.online](https://bcrypt.online/) to generate a new secure password, number of rounds is 10.
+4. **Connect to the ActivePieces Database**:
+   - Connect to the ActivePieces database.
+   ```sql
+   \c activepieces
+   ```
 
-5. **Update Your Password**:
+5. **Create a Secure Password**:
+   - Use a tool like [bcrypt-generator.com](https://bcrypt-generator.com/) to generate a new secure password, number of rounds is 10.
+
+6. **Update Your Password**:
    - Run the following SQL query within the PostgreSQL console, replacing `HASH_PASSWORD` with your new password and `YOUR_EMAIL_ADDRESS` with your email.
    ```sql
-   UPDATE public.user SET password='HASH_PASSWORD' WHERE email='YOUR_EMAIL_ADDRESS';
+   UPDATE public.user_identity SET password='HASH_PASSWORD' WHERE email='YOUR_EMAIL_ADDRESS';
    ```
 
 **SQLite3**
@@ -67,13 +73,12 @@ If you forgot your password on self hosted instance, you can reset it using the 
    ```
 
 2. **Create a Secure Password**:
-   - Use a tool like [bcrypt.online](https://bcrypt.online/) to generate a new secure password, number of rounds is 10.
-
+   - Use a tool like [bcrypt-generator.com](https://bcrypt-generator.com/) to generate a new secure password, number of rounds is 10.
 
 3. **Reset Your Password**:
-   - Once inside the SQLite3 shell, you can update your password with an SQL query. Replace `HASH_PASSWORD` with your new password and `YOUR_USERNAME` with your username or email.
+   - Once inside the SQLite3 shell, you can update your password with an SQL query. Replace `HASH_PASSWORD` with your new password and `YOUR_EMAIL_ADDRESS` with your email.
    ```sql
-   UPDATE user SET password = 'HASH_PASSWORD' WHERE email = 'YOUR_EMAIL_ADDRESS';
+   UPDATE user_identity SET password = 'HASH_PASSWORD' WHERE email = 'YOUR_EMAIL_ADDRESS';
    ```
 
 4. **Exit the SQLite3 Shell**:

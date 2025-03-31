@@ -50,6 +50,9 @@ export const flagService = {
                 ApFlagId.USER_CREATED,
                 ApFlagId.WEBHOOK_URL_PREFIX,
                 ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP,
+                ApFlagId.MAX_FIELDS_PER_TABLE,
+                ApFlagId.MAX_TABLES_PER_PROJECT,
+                ApFlagId.MAX_RECORDS_PER_TABLE,
             ]),
         })
         const now = new Date().toISOString()
@@ -207,6 +210,24 @@ export const flagService = {
             {
                 id: ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP,
                 value: system.get(AppSystemProp.EXECUTION_MODE) !== ExecutionMode.SANDBOX_CODE_ONLY,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.MAX_RECORDS_PER_TABLE,
+                value: system.getNumber(AppSystemProp.MAX_RECORDS_PER_TABLE),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.MAX_TABLES_PER_PROJECT,
+                value: system.getNumber(AppSystemProp.MAX_TABLES_PER_PROJECT),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.MAX_FIELDS_PER_TABLE,
+                value: system.getNumber(AppSystemProp.MAX_FIELDS_PER_TABLE),
                 created,
                 updated,
             },

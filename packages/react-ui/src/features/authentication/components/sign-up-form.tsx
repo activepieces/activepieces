@@ -95,6 +95,7 @@ const SignUpForm = ({
     }
   }, [edition, websiteName]);
   const navigate = useNavigate();
+  const from = searchParams.get('from');
 
   const { mutate, isPending } = useMutation<
     AuthenticationResponse,
@@ -105,7 +106,7 @@ const SignUpForm = ({
     onSuccess: (data) => {
       if (data.verified) {
         authenticationSession.saveResponse(data);
-        navigate('/flows');
+        navigate(from || '/flows');
       } else {
         setShowCheckYourEmailNote(true);
       }

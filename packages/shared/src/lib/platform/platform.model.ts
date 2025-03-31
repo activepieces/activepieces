@@ -98,6 +98,9 @@ export const Platform = Type.Object({
     globalConnectionsEnabled: Type.Boolean(),
     customRolesEnabled: Type.Boolean(),
     apiKeysEnabled: Type.Boolean(),
+    /**
+     * @deprecated flow issues is open source
+     */
     flowIssuesEnabled: Type.Boolean(),
     alertsEnabled: Type.Boolean(),
     defaultLocale: Type.Optional(Type.Enum(LocalesEnum)),

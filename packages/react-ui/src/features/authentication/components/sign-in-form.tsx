@@ -3,7 +3,7 @@ import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -50,6 +50,7 @@ const SignInForm: React.FC = () => {
 
   const { data: userCreated } = flagsHooks.useFlag(ApFlagId.USER_CREATED);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const { mutate, isPending } = useMutation<
     AuthenticationResponse,
@@ -59,7 +60,8 @@ const SignInForm: React.FC = () => {
     mutationFn: authenticationApi.signIn,
     onSuccess: (data) => {
       authenticationSession.saveResponse(data);
-      navigate('/flows');
+      const from = searchParams.get('from');
+      navigate(from || '/');
     },
     onError: (error) => {
       if (api.isError(error)) {

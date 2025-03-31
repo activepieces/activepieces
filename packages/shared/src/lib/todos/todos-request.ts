@@ -27,6 +27,7 @@ export const UpdateTodoRequestBody = Type.Object({
     status: Type.Optional(StatusOption),
     statusOptions: Type.Optional(StatusOptionsSchema),
     assigneeId: Type.Optional(ApId),
+    isTest: Type.Optional(Type.Boolean()),
 })
 export type UpdateTodoRequestBody = Static<typeof UpdateTodoRequestBody>
 
@@ -38,6 +39,12 @@ export const CreateTodoRequestBody = Type.Object({
     flowId: ApId,
     runId: Type.Optional(ApId),
     assigneeId: Type.Optional(ApId),
-    approvalUrl: Type.Optional(Type.String()),
+    resolveUrl: Type.Optional(Type.String()),
 })
 export type CreateTodoRequestBody = Static<typeof CreateTodoRequestBody>
+
+export const ResolveTodoRequestQuery = Type.Object({
+    status: Type.String(),
+    isTest: Type.Optional(Type.Boolean()),
+})
+export type ResolveTodoRequestQuery = Static<typeof ResolveTodoRequestQuery>

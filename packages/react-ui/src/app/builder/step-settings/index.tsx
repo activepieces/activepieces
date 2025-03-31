@@ -250,6 +250,9 @@ const StepSettingsContainer = () => {
                 {stepMetadata && (
                   <PieceCardInfo
                     piece={stepMetadata}
+                    customizedInputs={
+                      selectedStep.settings?.inputUiInfo?.customizedInputs
+                    }
                     actionOrTriggerDisplayName={actionOrTriggerDisplayName}
                   ></PieceCardInfo>
                 )}
