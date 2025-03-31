@@ -127,7 +127,7 @@ export enum AppSystemProp {
     // Tables
     MAX_RECORDS_PER_TABLE = 'MAX_RECORDS_PER_TABLE',
     MAX_FIELDS_PER_TABLE = 'MAX_FIELDS_PER_TABLE',
-    MAX_TABLES_PER_PROJECT = 'MAX_TABLES_PER_RPOJECT'
+    MAX_TABLES_PER_PROJECT = 'MAX_TABLES_PER_RPOJECT',
 }
 export enum PiecesSource {
     /**

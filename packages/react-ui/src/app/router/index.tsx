@@ -68,6 +68,7 @@ import { FlowRunPage } from '../routes/runs/id';
 import AppearancePage from '../routes/settings/appearance';
 // import { EnvironmentPage } from '../routes/settings/environment';
 import GeneralPage from '../routes/settings/general';
+// import MCPPage from '../routes/settings/mcp';
 // import TeamPage from '../routes/settings/team';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
@@ -402,6 +403,19 @@ const routes = [
   //           <ProjectSettingsLayout>
   //             <EnvironmentPage />
   //           </ProjectSettingsLayout>
+  //         </PageTitle>
+  //       </RoutePermissionGuard>
+  //     </DashboardContainer>
+  //   ),
+  // }),
+
+  // ...ProjectRouterWrapper({
+  //   path: '/mcp',
+  //   element: (
+  //     <DashboardContainer>
+  //       <RoutePermissionGuard permission={Permission.READ_MCP}>
+  //         <PageTitle title="MCP">
+  //           <MCPPage />
   //         </PageTitle>
   //       </RoutePermissionGuard>
   //     </DashboardContainer>

@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
   Card,
@@ -32,11 +32,14 @@ import { api } from '@/lib/api';
 import { userApi } from '@/lib/user-api';
 
 const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.toString();
+
   return isSignup ? (
     <div className="my-4 text-center text-sm">
       {t('Already have an account?')}
       <Link
-        to="/sign-in"
+        to={`/sign-in?${searchQuery}`}
         className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
       >
         {t('Sign in')}
@@ -46,7 +49,7 @@ const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
     <div className="my-4 text-center text-sm">
       {t("Don't have an account?")}
       <Link
-        to="/sign-up"
+        to={`/sign-up?${searchQuery}`}
         className="pl-1 text-muted-foreground hover:text-primary text-sm transition-all duration-200"
       >
         {t('Sign up')}
@@ -76,6 +79,9 @@ const AuthSeparator = ({
 const AuthFormTemplate = React.memo(
   ({ form }: { form: 'signin' | 'signup' }) => {
     const isSignUp = form === 'signup';
+    const [searchParams] = useSearchParams();
+    const from = searchParams.get('from');
+    const token = authenticationSession.getToken();
 
     const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
     let [isLoading, setIsLoading] = useState<boolean>(true);
