@@ -37,6 +37,12 @@ export const newMessageInChannelTrigger = createTrigger({
 
 	async run(context) {
 		const payloadBody = context.payload.body as PayloadBody;
+
+		// check if it's channel message
+		if (payloadBody.event.channel_type !== 'channel') {
+			return [];
+		}
+		
 		if (payloadBody.event.channel === context.propsValue.channel) {
 			// check for bot messages
 			if (context.propsValue.ignoreBots && payloadBody.event.bot_id) {
@@ -53,5 +59,6 @@ type PayloadBody = {
 	event: {
 		channel: string;
 		bot_id?: string;
+		channel_type:string
 	};
 };

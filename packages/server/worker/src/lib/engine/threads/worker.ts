@@ -24,7 +24,9 @@ export class EngineWorker {
             stackSizeMb: number
         }
     }
-    constructor(log: FastifyBaseLogger, maxWorkers: number, enginePath: string, options: { env: Record<string, string | undefined>, resourceLimits: { maxOldGenerationSizeMb: number, maxYoungGenerationSizeMb: number, stackSizeMb: number } }) {
+    constructor(log: FastifyBaseLogger, maxWorkers: number, enginePath: string, options: { env: Record<string, string | undefined>
+        execArgv: string[]
+        resourceLimits: { maxOldGenerationSizeMb: number, maxYoungGenerationSizeMb: number, stackSizeMb: number } }) {
         this.log = log
         this.enginePath = enginePath
         this.options = options
@@ -34,14 +36,7 @@ export class EngineWorker {
 
         // Create the initial workers
         for (let i = 0; i < maxWorkers; i++) {
-            this.workers.push(fork(enginePath, [], {
-                env: options.env,
-                execArgv: [
-                    `--max-old-space-size=${options.resourceLimits.maxOldGenerationSizeMb}`,
-                    `--max-semi-space-size=${options.resourceLimits.maxYoungGenerationSizeMb}`,
-                    `--stack-size=${options.resourceLimits.stackSizeMb * 1024}`, // stack size is in KB
-                ],
-            }))
+            this.workers.push(fork(enginePath, [], options))
             this.availableWorkerIndexes.push(i)
         }
     }

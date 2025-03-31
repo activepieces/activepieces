@@ -2,7 +2,9 @@ import {
     ExecutionType,
     FlowVersion,
     GetFlowVersionForWorkerRequestType,
+    PackageType,
     PiecePackage,
+    PieceType,
     ProgressUpdateType,
     RunEnvironment,
     TriggerHookType,
@@ -97,6 +99,7 @@ export enum UserInteractionJobType {
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_EXTRACT_PIECE_INFORMATION = 'EXECUTE_EXTRACT_PIECE_INFORMATION',
+    EXECUTE_TOOL = 'EXECUTE_TOOL',
 }
 
 export const ExecuteValidateAuthJobData = Type.Object({
@@ -120,6 +123,20 @@ export const ExecuteActionJobData = Type.Object({
     sampleData: Type.Record(Type.String(), Type.Unknown()),
 })
 export type ExecuteActionJobData = Static<typeof ExecuteActionJobData>
+
+export const ExecuteToolJobData = Type.Object({
+    requestId: Type.String(),
+    webserverId: Type.String(),
+    jobType: Type.Literal(UserInteractionJobType.EXECUTE_TOOL),
+    projectId: Type.String(),
+    actionName: Type.String(),
+    pieceName: Type.String(),
+    pieceVersion: Type.String(),
+    packageType: Type.Enum(PackageType),
+    pieceType: Type.Enum(PieceType),
+    input: Type.Record(Type.String(), Type.Unknown()),
+})
+export type ExecuteToolJobData = Static<typeof ExecuteToolJobData>
 
 export const ExecuteTriggerHookJobData = Type.Object({
     requestId: Type.String(),
@@ -161,6 +178,7 @@ export const UserInteractionJobData = Type.Union([
     ExecuteValidateAuthJobData,
     ExecuteActionJobData,
     ExecuteTriggerHookJobData,
+    ExecuteToolJobData,
     ExecutePropertyJobData,
     ExecuteExtractPieceMetadataJobData,
 ])
@@ -169,6 +187,7 @@ export type UserInteractionJobData = Static<typeof UserInteractionJobData>
 export const UserInteractionJobDataWithoutWatchingInformation = Type.Union([
     Type.Omit(ExecuteValidateAuthJobData, ['webserverId', 'requestId']),
     Type.Omit(ExecuteActionJobData, ['webserverId', 'requestId']),
+    Type.Omit(ExecuteToolJobData, ['webserverId', 'requestId']),
     Type.Omit(ExecuteTriggerHookJobData, ['webserverId', 'requestId']),
     Type.Omit(ExecutePropertyJobData, ['webserverId', 'requestId']),
     Type.Omit(ExecuteExtractPieceMetadataJobData, ['webserverId', 'requestId']),

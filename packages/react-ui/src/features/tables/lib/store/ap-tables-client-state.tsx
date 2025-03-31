@@ -32,11 +32,11 @@ export type ClientField = {
 
 export type TableState = {
   isSaving: boolean;
-  selectedRows: ReadonlySet<string>;
+  selectedRecords: ReadonlySet<string>;
   fields: ClientField[];
   records: ClientRecordData[];
   table: Table;
-  setSelectedRows: (selectedRows: ReadonlySet<string>) => void;
+  setSelectedRecords: (selectedRecords: ReadonlySet<string>) => void;
   selectedCell: {
     rowIdx: number;
     columnIdx: number;
@@ -71,10 +71,10 @@ export const createApTableStore = (
 
     return {
       isSaving: false,
-      selectedRows: new Set(),
+      selectedRecords: new Set(),
       table,
-      setSelectedRows: (selectedRows: ReadonlySet<string>) =>
-        set({ selectedRows }),
+      setSelectedRecords: (selectedRecords: ReadonlySet<string>) =>
+        set({ selectedRecords }),
       selectedCell: null,
       renameTable: (newName: string) =>
         set((state) => {

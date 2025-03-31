@@ -11,6 +11,7 @@ import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { triggerHooks } from '../flows/trigger'
 import { system } from '../helper/system/system'
+import { projectService } from '../project/project-service'
 import { flowConsumer } from './consumer'
 import { engineResponseWatcher } from './engine-response-watcher'
 import { jobQueue } from './queue'
@@ -270,6 +271,13 @@ async function markJobAsCompleted(status: FlowRunStatus, jobId: string, enginePr
 
 async function getFlow(projectId: string, request: GetFlowVersionForWorkerRequest, log: FastifyBaseLogger): Promise<PopulatedFlow> {
     const { type } = request
+    const projectExists = await projectService.exists(projectId)
+    if (!projectExists) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: projectId, entityType: 'project' },
+        })
+    }
     switch (type) {
         case GetFlowVersionForWorkerRequestType.LATEST: {
             return flowService(log).getOnePopulatedOrThrow({

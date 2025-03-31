@@ -3,7 +3,7 @@ import { Static, Type } from '@sinclair/typebox';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CopyIcon, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useState, ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -75,7 +75,15 @@ const FormSchema = Type.Object({
 
 type FormSchema = Static<typeof FormSchema>;
 
-export function InviteUserDialog() {
+interface InviteUserDialogProps {
+  triggerButton?: ReactNode;
+  showTooltip?: boolean;
+}
+
+export function InviteUserDialog({
+  triggerButton,
+  showTooltip,
+}: InviteUserDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [invitationLink, setInvitationLink] = useState('');
   const { platform } = platformHooks.useCurrentPlatform();
@@ -177,15 +185,19 @@ export function InviteUserDialog() {
           }
         }}
       >
-        <DialogTrigger asChild>
-          <Button
-            variant={'outline'}
-            size="sm"
-            className="flex items-center justify-center gap-2 w-full"
-          >
-            <Plus className="size-4" />
-            <span>{t('Invite User')}</span>
-          </Button>
+        <DialogTrigger>
+          {triggerButton ? (
+            triggerButton
+          ) : (
+            <Button
+              variant={'outline'}
+              size="sm"
+              className="flex items-center justify-center gap-2 w-full"
+            >
+              <Plus className="size-4" />
+              <span>{t('Invite User')}</span>
+            </Button>
+          )}
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
