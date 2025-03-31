@@ -62,6 +62,7 @@ import { getRedisConnection } from './database/redis-connection'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
 // import { flagHooks } from './flags/flags.hooks'
+import { cloudFlowTemplateModule } from './flow-templates/cloud-flow-template.module'
 import { communityFlowTemplateModule } from './flow-templates/community-flow-template.module'
 import { flowTemplateModule } from './flow-templates/flow-template.module'
 import { humanInputModule } from './flows/flow/human-input/human-input.module'
@@ -239,6 +240,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(tablesModule)
     await app.register(userModule)
     await app.register(flowTemplateModule)
+    await app.register(cloudFlowTemplateModule)
     await app.register(globalOAuthAppModule)
     await app.register(oauthAppModule)
     await app.register(todoModule)
