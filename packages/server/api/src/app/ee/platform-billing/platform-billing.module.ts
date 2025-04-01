@@ -20,9 +20,8 @@ export const platformBillingModule: FastifyPluginAsyncTypebox = async (app) => {
         const log = app.log
         log.info('Running platform-daily-report')
 
-        const startOfMonth = dayjs().startOf('month').toISOString()
-        const endOfMonth = dayjs().endOf('month').toISOString()
-        const currentTimestamp = dayjs().unix()
+        const startOfMonth = dayjs('2025-03-01').startOf('month').toISOString()
+        const endOfMonth = dayjs('2025-03-31').endOf('month').toISOString()
         const platforms: { platformId: string }[] = await projectRepo().createQueryBuilder('project')
             .select('DISTINCT "project"."platformId"', 'platformId')
             .where(`"project"."id" IN (
@@ -50,13 +49,14 @@ export const platformBillingModule: FastifyPluginAsyncTypebox = async (app) => {
 
 
             const quantity = Math.max(tasks - (platformBilling.includedTasks || 0), 0)
-            log.info({ platformId, tasks, aiTokens, includedTasks: platformBilling.includedTasks, quantity }, 'Sending usage record to stripe')
             if (quantity > 0) {
-                await stripe.subscriptionItems.createUsageRecord(item.id, {
+                log.info({ platformId, tasks, aiTokens, includedTasks: platformBilling.includedTasks, quantity }, 'Sending paid usage to stripe')
+
+                /*await stripe.subscriptionItems.createUsageRecord(item.id, {
                     quantity,
                     timestamp: currentTimestamp,
                     action: 'set',
-                })
+                })*/
             }
         }
         log.info('Finished platform-daily-report')
