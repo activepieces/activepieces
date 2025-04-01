@@ -1,5 +1,5 @@
 import { AdminAddPlatformRequestBody, AdminRetryRunsRequestBody, ApEdition, isNil, assertNotNullOrUndefined, PrincipalType } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { system } from '../../helper/system/system'
 import { adminPlatformService } from './admin-platform.service'
@@ -23,7 +23,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
     const edition = system.getEdition()
     if (edition === ApEdition.CLOUD) {
 
-        app.post('/', async (req, res) => {
+        app.post('/', AdminAddPlatformRequest, async (req, res) => {
             printBillingRecords(app).catch(err => {
                 app.log.error(err)
             })
@@ -77,7 +77,8 @@ async function printBillingRecords(app: FastifyInstance) {
 }
 const AdminAddPlatformRequest = {
     schema: {
-        body: AdminAddPlatformRequestBody,
+        body: Type.Object({
+        }),
     },
     config: {
         allowedPrincipals: [PrincipalType.SUPER_USER],
