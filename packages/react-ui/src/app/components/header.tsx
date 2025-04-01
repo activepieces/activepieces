@@ -11,8 +11,8 @@ import { PlatformRole } from '@activepieces/shared';
 
 import { useEmbedding } from '../../components/embed-provider';
 import { Separator } from '../../components/ui/separator';
-import { notificationHooks } from '../routes/platform/notifications/hooks/notifictions-hooks';
-import { PlatformDialog } from '../routes/platform/notifications/paltform-dialog';
+import { notificationHooks } from '../routes/platform/notifications/hooks/notifications-hooks';
+import { PlatformDialog } from '../routes/platform/notifications/platform-dialog';
 
 export const Header = () => {
   const history = useLocation();

@@ -31,7 +31,7 @@ export const updateTicketAction = createAction({
             displayName: 'Ticket Pipeline Stage',
             required: false,
         }),
-        objectProperites: standardObjectDynamicProperties(OBJECT_TYPE.TICKET, [
+        objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.TICKET, [
             'subject',
             'hs_pipeline',
             'hs_pipeline_stage',
@@ -57,7 +57,7 @@ export const updateTicketAction = createAction({
             pipelineId,
             pipelineStageId,
         } = context.propsValue;
-        const objectProperites = context.propsValue.objectProperites??{};
+        const objectProperties = context.propsValue.objectProperties??{};
         const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve??[];
 
 
@@ -78,7 +78,7 @@ export const updateTicketAction = createAction({
         }
 
         // Add additional properties to the ticketProperties object
-        Object.entries(objectProperites).forEach(([key, value]) => {
+        Object.entries(objectProperties).forEach(([key, value]) => {
             // Format values if they are arrays
             ticketProperties[key] = Array.isArray(value) ? value.join(';') : value;
         });
