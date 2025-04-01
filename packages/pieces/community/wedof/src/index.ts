@@ -44,6 +44,8 @@ import { listActivitiesAndTasks } from './lib/actions/list-activities-and-tasks'
 import { createTask } from './lib/actions/create-task';
 import { createActivitie } from './lib/actions/create-activitie';
 import { sendFile } from './lib/actions/send-file';
+import {me} from "./lib/actions/me";
+import {myOrganism} from "./lib/actions/my-organism";
 import { getRegistrationFolderDocuments } from './lib/actions/registration-folders/list-registration-folder-documents';
 import {updateCertificationFolder} from "./lib/actions/certification-folders/update-certification-folder";
 import { updateCompletionRate } from './lib/actions/registration-folders/update-completion-rate';
@@ -136,10 +138,13 @@ export const wedof = createPiece({
     abortCertificationFolder,
     getCertificationFolderDocuments,
     updateCertificationFolder,
+    ////////////// general ////////////
     listActivitiesAndTasks,
     createTask,
     createActivitie,
     sendFile,
+    me,
+    myOrganism,
     ///////////// certificationFoldersSurvey ///////
     getCertificationFolderSurvey,
     listCertificationFolderSurveys,
