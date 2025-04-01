@@ -20,8 +20,8 @@ export const platformBillingModule: FastifyPluginAsyncTypebox = async (app) => {
         const log = app.log
         log.info('Running platform-daily-report')
 
-        const startOfDay = dayjs().startOf('day').toISOString()
-        const endOfDay = dayjs().endOf('day').toISOString()
+        const startOfMonth = dayjs().startOf('month').toISOString()
+        const endOfMonth = dayjs().endOf('month').toISOString()
         const currentTimestamp = dayjs().unix()
         const platforms: { platformId: string }[] = await projectRepo().createQueryBuilder('project')
             .select('DISTINCT "project"."platformId"', 'platformId')
@@ -30,7 +30,7 @@ export const platformBillingModule: FastifyPluginAsyncTypebox = async (app) => {
             FROM "flow_run" "flowRun"
             WHERE "flowRun"."created" >= :startDate
             AND "flowRun"."created" <= :endDate
-        )`, { startDate: startOfDay, endDate: endOfDay })
+        )`, { startDate: startOfMonth, endDate: endOfMonth })
             .getRawMany()
         log.info({ platformCount: platforms.length }, 'Found platforms with usage in the current day')
         const stripe = stripeHelper(log).getStripe()
@@ -48,13 +48,16 @@ export const platformBillingModule: FastifyPluginAsyncTypebox = async (app) => {
 
             const { tasks, aiTokens } = await usageService(log).getUsageForBillingPeriod(platformId, BillingEntityType.PLATFORM)
 
-            log.info({ platformId, tasks, aiTokens, includedTasks: platformBilling.tasksLimit }, 'Sending usage record to stripe')
 
-            await stripe.subscriptionItems.createUsageRecord(item.id, {
-                quantity: Math.max(tasks - (platformBilling.tasksLimit || 0), 0),
-                timestamp: currentTimestamp,
-                action: 'set',
-            })
+            const quantity = Math.max(tasks - (platformBilling.includedTasks || 0), 0)
+            log.info({ platformId, tasks, aiTokens, includedTasks: platformBilling.includedTasks, quantity }, 'Sending usage record to stripe')
+            if (quantity > 0) {
+                await stripe.subscriptionItems.createUsageRecord(item.id, {
+                    quantity,
+                    timestamp: currentTimestamp,
+                    action: 'set',
+                })
+            }
         }
         log.info('Finished platform-daily-report')
     })
