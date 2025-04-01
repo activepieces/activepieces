@@ -374,7 +374,7 @@ export async function appPostBoot(app: FastifyInstance): Promise<void> {
  / ____ \\  | |____     | |     _| |_     \\  /    | |____  | |       _| |_  | |____  | |____  | |____   ____) |
 /_/    \\_\\  \\_____|    |_|    |_____|     \\/     |______| |_|      |_____| |______|  \\_____| |______| |_____/
 
-The application started on ${domainHelper.getPublicApiUrl({ path: '' })}, as specified by the AP_FRONTEND_URL variables.`)
+The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, as specified by the AP_FRONTEND_URL variables.`)
 
     const environment = system.get(AppSystemProp.ENVIRONMENT)
     const piecesSource = system.getOrThrow(AppSystemProp.PIECES_SOURCE)
