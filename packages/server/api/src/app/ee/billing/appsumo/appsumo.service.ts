@@ -9,7 +9,7 @@ import { platformBillingService } from '../../platform-billing/platform-billing.
 import { projectLimitsService } from '../../project-plan/project-plan.service'
 import { AppSumoEntity, AppSumoPlan } from './appsumo.entity'
 
-const appsumoRepo = repoFactory(AppSumoEntity)
+export const appsumoRepo = repoFactory(AppSumoEntity)
 
 type FlowPlanLimits = {
     nickname: string

@@ -19,7 +19,7 @@ import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
 
-const repo = repoFactory<Platform>(PlatformEntity)
+export const repo = repoFactory<Platform>(PlatformEntity)
 
 export const platformService = {
     async hasAnyPlatforms(): Promise<boolean> {
