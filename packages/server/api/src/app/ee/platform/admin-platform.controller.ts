@@ -1,4 +1,4 @@
-import { AdminAddPlatformRequestBody, AdminRetryRunsRequestBody, ApEdition, PrincipalType } from '@activepieces/shared'
+import { AdminAddPlatformRequestBody, AdminRetryRunsRequestBody, ApEdition, isNil, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { system } from '../../helper/system/system'
@@ -34,7 +34,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
                     const platform = platformsToOwn.find((platform) => platform !== null)
                     if (platform) {
                         const platformBilling = await platformBillingService(req.log).getOrCreateForPlatform(platform.id)
-                        if (platformBilling.includedTasks === 1000) {
+                        if (!isNil(platformBilling.tasksLimit) && platformBilling.includedTasks > platformBilling.tasksLimit) {
                             await appsumoService(req.log).handleRequest({
                                 plan_id: appsumo.plan_id,
                                 action: 'activate',
