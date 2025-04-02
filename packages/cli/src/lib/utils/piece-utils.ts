@@ -50,10 +50,10 @@ export async function findPiece(pieceName: string): Promise<string | null> {
 export async function buildPiece(pieceFolder: string): Promise<{ outputFolder: string, outputFile: string }> {
     const projectJson = await readProjectJson(pieceFolder);
 
-    await exec(`npx nx build ${projectJson.name} --skip-cache && cd ${path.resolve('dist/packages' + pieceFolder.split('/packages')[1])}`);
-    const compiledPath = path.resolve('dist/packages' + pieceFolder.split('/packages')[1]);
+    await exec(`npx nx build ${projectJson.name} --skip-cache`);
+    const compiledPath = path.resolve('dist/packages', pieceFolder.split(path.sep + 'packages')[1]);
 
-    const { stdout } = await exec('cd ' + compiledPath + ' && npm pack --json');
+    const { stdout } = await exec('npm pack --json', { cwd: compiledPath });
     const tarFileName = JSON.parse(stdout)[0].filename;
     return {
         outputFolder: compiledPath,
