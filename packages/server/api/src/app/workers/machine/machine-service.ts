@@ -23,7 +23,7 @@ export const machineService = {
                 ip: request.ip,
             },
             updated: dayjs().toISOString(),
-            id: request.workerPrincipal.id,
+            id: request.workerId,
         }, ['id'])
     },
     async list(): Promise<WorkerMachineWithStatus[]> {
@@ -36,6 +36,7 @@ export const machineService = {
 }
 
 type UpsertParams = {
+    workerId: string
     cpuUsagePercentage: number
     diskInfo: MachineInformation['diskInfo']
     ramUsagePercentage: number

@@ -17,7 +17,7 @@ export const workerMachineController: FastifyPluginAsyncTypebox = async (app) =>
 
 
     app.post('/heartbeat', HeartbeatParams, async (request) => {
-        const { cpuUsagePercentage, ramUsagePercentage, totalAvailableRamInBytes, diskInfo, ip, workerProps } = request.body
+        const { cpuUsagePercentage, ramUsagePercentage, totalAvailableRamInBytes, diskInfo, ip, workerProps, workerId } = request.body
         const workerPrincipal = request.principal as unknown as WorkerPrincipal
         await machineService.upsert({
             cpuUsagePercentage,
@@ -26,6 +26,7 @@ export const workerMachineController: FastifyPluginAsyncTypebox = async (app) =>
             totalAvailableRamInBytes,
             ip,
             workerProps,
+            workerId: workerId ?? workerPrincipal.id,
             workerPrincipal,
         })
         const response: WorkerMachineHealthcheckResponse = {
