@@ -4,6 +4,7 @@ import {
     ALL_PRINCIPAL_TYPES,
     assertNotNullOrUndefined,
     SignInRequest,
+    SignOutRequest,
     SignUpRequest,
     SwitchPlatformRequest,
     SwitchProjectRequest,
@@ -11,7 +12,9 @@ import {
 } from '@activepieces/shared'
 import { RateLimitOptions } from '@fastify/rate-limit'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { eventsHooks } from '../helper/application-events'
+// import { eventsHooks } from '../helper/application-events'
+import dayjs from 'dayjs'
+import { distributedStore } from '../helper/keyvalue'
 import { system } from '../helper/system/system'
 import { platformUtils } from '../platform/platform.utils'
 import { userService } from '../user/user-service'
@@ -66,6 +69,13 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
         // })
 
         return response
+    })
+
+    app.post('/sign-out', SignOutRequestOptions, async (request) => {
+        const jwt = request.body.token
+        const expiresIn = dayjs.duration(7, 'day').asSeconds()
+        // Note that the key expiry is set as same as JWT expiry (7 days)
+        await distributedStore().put(`revoked:${jwt}`, 1, expiresIn)
     })
 
     app.post('/switch-platform', SwitchPlatformRequestOptions, async (request) => {
@@ -131,5 +141,15 @@ const SignInRequestOptions = {
     },
     schema: {
         body: SignInRequest,
+    },
+}
+
+const SignOutRequestOptions = {
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        rateLimit: rateLimitOptions,
+    },
+    schema: {
+        body: SignOutRequest,
     },
 }
