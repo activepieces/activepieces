@@ -6,7 +6,7 @@ import { adminPlatformService } from './admin-platform.service'
 import { appsumoRepo, appsumoService } from '../billing/appsumo/appsumo.service'
 import { userService } from '../../user/user-service'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
-import { platformService } from '../../platform/platform.service'
+import { platformRepo, platformService } from '../../platform/platform.service'
 import { platformBillingService } from '../platform-billing/platform-billing.service'
 
 export const adminPlatformModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -24,9 +24,16 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
             for (const appsumo of appsumos) {
                 const userIdentity = await userIdentityService(req.log).getIdentityByEmail(appsumo.activation_email)
                 if (userIdentity) {
-                    const platforms = await platformService.listPlatformsForIdentityWithAtleastProject({ identityId: userIdentity.id })
-                    if (platforms.length > 0) {
-                        const platformBilling = await platformBillingService(req.log).getOrCreateForPlatform(platforms[0].id)
+                    const users = await userService.getByIdentityId({ identityId: userIdentity.id })
+                    const platformsToOwn = await Promise.all(users.map(async (user) => {
+                        const platform = await platformRepo().findOneBy({
+                            ownerId: user.id
+                        })
+                        return platform
+                    }))
+                    const platform = platformsToOwn.find((platform) => platform !== null)
+                    if (platform) {
+                        const platformBilling = await platformBillingService(req.log).getOrCreateForPlatform(platform.id)
                         if (platformBilling.includedTasks === 1000) {
                             await appsumoService(req.log).handleRequest({
                                 plan_id: appsumo.plan_id,
@@ -53,7 +60,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
 const AdminAddPlatformRequest = {
     schema: {
         body: {
-            
+
         },
     },
     config: {

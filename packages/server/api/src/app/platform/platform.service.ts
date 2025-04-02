@@ -19,11 +19,11 @@ import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
 
-export const repo = repoFactory<Platform>(PlatformEntity)
+export const platformRepo = repoFactory<Platform>(PlatformEntity)
 
 export const platformService = {
     async hasAnyPlatforms(): Promise<boolean> {
-        const count = await repo().count()
+        const count = await platformRepo().count()
         return count > 0
     },
     async listPlatformsForIdentityWithAtleastProject(params: ListPlatformsForIdentityParams): Promise<PlatformWithoutSensitiveData[]> {
@@ -42,7 +42,7 @@ export const platformService = {
 
         const platformIds = platformsWithProjects.filter((platformId) => !isNil(platformId))
 
-        return repo().find({
+        return platformRepo().find({
             where: {
                 id: In(platformIds),
             },
@@ -94,7 +94,7 @@ export const platformService = {
             pinnedPieces: [],
         }
 
-        const savedPlatform = await repo().save(newPlatform)
+        const savedPlatform = await platformRepo().save(newPlatform)
 
         await userService.addOwnerToPlatform({
             id: ownerId,
@@ -105,10 +105,10 @@ export const platformService = {
     },
 
     async getAll(): Promise<Platform[]> {
-        return repo().find()
+        return platformRepo().find()
     },
     async getOldestPlatform(): Promise<Platform | null> {
-        return repo().findOne({
+        return platformRepo().findOne({
             where: {},
             order: {
                 created: 'ASC',
@@ -165,11 +165,11 @@ export const platformService = {
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
             smtp: params.smtp,
         }
-        return repo().save(updatedPlatform)
+        return platformRepo().save(updatedPlatform)
     },
 
     async getOneOrThrow(id: PlatformId): Promise<Platform> {
-        const platform = await repo().findOneBy({
+        const platform = await platformRepo().findOneBy({
             id,
         })
 
@@ -187,7 +187,7 @@ export const platformService = {
         return platform
     },
     async getOne(id: PlatformId): Promise<Platform | null> {
-        return repo().findOneBy({
+        return platformRepo().findOneBy({
             id,
         })
     },
