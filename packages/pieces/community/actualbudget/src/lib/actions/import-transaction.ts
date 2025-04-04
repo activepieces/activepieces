@@ -22,7 +22,6 @@ export const importTransaction = createAction({
       displayName: 'Date',
       description: 'Date the transaction took place',
       required: true,
-      validators: [Validators.datetimeIso]
     }),
     payee_name: Property.ShortText({
       displayName: 'Payee Name',
