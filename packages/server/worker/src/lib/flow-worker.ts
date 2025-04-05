@@ -8,6 +8,7 @@ import { userInteractionJobExecutor } from './executors/user-interaction-job-exe
 import { webhookExecutor } from './executors/webhook-job-executor'
 import { jobPoller } from './job-polling'
 import { workerMachine } from './utils/machine'
+import { engineRunner } from './engine'
 
 let closed = true
 let workerToken: string
@@ -42,6 +43,8 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
     async close(): Promise<void> {
         closed = true
         clearTimeout(heartbeatInterval)
+        await engineRunner(log).shutdownAllWorkers()
+
     },
 })
 

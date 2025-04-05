@@ -94,6 +94,7 @@ export type EngineRunner = {
         engineToken: string,
         operation: Omit<ExecutePropsOptions, EngineConstants>,
     ): Promise<EngineHelperResponse<EngineHelperPropResult>>
+    shutdownAllWorkers(): void
 }
 
 export const engineRunnerUtils = (log: FastifyBaseLogger) => ({
