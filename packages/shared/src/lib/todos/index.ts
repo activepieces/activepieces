@@ -3,7 +3,7 @@ import { BaseModelSchema, Nullable } from '../common'
 import { UserWithMetaInformation } from '../user'
 
 export enum STATUS_VARIANT {
-    POSITIVE = 'Postive (Green)',
+    POSITIVE = 'Positive (Green)',
     NEGATIVE = 'Negative (Red)',
     NEUTRAL = 'Neutral (Gray)',
 }

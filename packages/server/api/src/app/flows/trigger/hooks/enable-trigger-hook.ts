@@ -28,7 +28,7 @@ import { userInteractionWatcher } from '../../../workers/user-interaction-watche
 import { triggerUtils } from './trigger-utils'
 
 
-const POLLING_FREQUENCY_CRON_EXPRESSON = `*/${system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5} * * * *`
+const POLLING_FREQUENCY_CRON_EXPRESSION = `*/${system.getNumber(AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL) ?? 5} * * * *`
 
 
 export const enablePieceTrigger = async (
@@ -103,7 +103,7 @@ EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
         case TriggerStrategy.POLLING: {
             if (isNil(engineHelperResponse.result.scheduleOptions)) {
                 engineHelperResponse.result.scheduleOptions = {
-                    cronExpression: POLLING_FREQUENCY_CRON_EXPRESSON,
+                    cronExpression: POLLING_FREQUENCY_CRON_EXPRESSION,
                     timezone: 'UTC',
                     failureCount: 0,
                 }

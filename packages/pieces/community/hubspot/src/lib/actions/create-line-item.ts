@@ -40,7 +40,7 @@ export const createLineItemAction = createAction({
 	async run(context) {
 		const productId = context.propsValue.productId;
 
-		const objectProperites = context.propsValue.objectProperties ?? {};
+		const objectProperties = context.propsValue.objectProperties ?? {};
 		const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve ?? [];
 
 		const lineItemProperties: Record<string, string> = {
@@ -48,7 +48,7 @@ export const createLineItemAction = createAction({
 		};
 
 		// Add additional properties to the lineItemProperties object
-		Object.entries(objectProperites).forEach(([key, value]) => {
+		Object.entries(objectProperties).forEach(([key, value]) => {
 			// Format values if they are arrays
 			lineItemProperties[key] = Array.isArray(value) ? value.join(';') : value;
 		});
@@ -62,11 +62,11 @@ export const createLineItemAction = createAction({
 		// Retrieve default properties for the line item and merge with additional properties to retrieve
 		const defaultlineItemProperties = getDefaultPropertiesForObject(OBJECT_TYPE.LINE_ITEM);
 
-		const lineItemDeatils = await client.crm.lineItems.basicApi.getById(createdLineItem.id, [
+		const lineItemDetails = await client.crm.lineItems.basicApi.getById(createdLineItem.id, [
 			...defaultlineItemProperties,
 			...additionalPropertiesToRetrieve,
 		]);
 
-		return lineItemDeatils;
+		return lineItemDetails;
 	},
 });

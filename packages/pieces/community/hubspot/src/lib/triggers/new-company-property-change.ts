@@ -40,7 +40,7 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 			}));
 		}
 		//fetch updated companies
-		const updatedComapnies = [];
+		const updatedCompanies = [];
 		let after;
 		do {
 			const response = await client.crm.companies.searchApi.doSearch({
@@ -64,25 +64,25 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 				],
 			});
 			after = response.paging?.next?.after;
-			updatedComapnies.push(...response.results);
+			updatedCompanies.push(...response.results);
 		} while (after);
 
-		if (updatedComapnies.length === 0) {
+		if (updatedCompanies.length === 0) {
 			return [];
 		}
 
 		// Fetch companies with property history
-		const updatedComapniesWithPropertyHistory = await client.crm.companies.batchApi.read({
+		const updatedCompaniesWithPropertyHistory = await client.crm.companies.batchApi.read({
 			propertiesWithHistory: [propertyToCheck],
 			properties: propertiesToRetrieve,
-			inputs: updatedComapnies.map((company) => {
+			inputs: updatedCompanies.map((company) => {
 				return {
 					id: company.id,
 				};
 			}),
 		});
 
-		for (const company of updatedComapniesWithPropertyHistory.results) {
+		for (const company of updatedCompaniesWithPropertyHistory.results) {
 			const history = company.propertiesWithHistory?.[propertyToCheck];
 			if (!history || history.length === 0) {
 				continue;
