@@ -1,4 +1,4 @@
-import { exec } from 'node:child_process'
+import { exec, ChildProcess } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import process, { arch, cwd } from 'node:process'
@@ -45,9 +45,18 @@ export class IsolateSandbox {
     private _globalCodesPath?: string
     private _flowVersionId?: string
     private _customPiecesPath?: string
+    private _currentProcess?: ChildProcess
 
     public constructor(params: SandboxCtorParams) {
         this.boxId = params.boxId
+    }
+
+    public async shutdown(): Promise<void> {
+        this._log?.debug({ boxId: this.boxId }, '[IsolateSandbox#shutdown]')
+        if (this._currentProcess) {
+            this._currentProcess.kill()
+            this._currentProcess = undefined
+        }
     }
     public async cleanUp(): Promise<void> {
         this._log?.debug({ boxId: this.boxId }, '[IsolateSandbox#recreate]')
@@ -86,7 +95,7 @@ export class IsolateSandbox {
                 operationType,
             ].join(' ')
 
-            await IsolateSandbox.runIsolate(fullCommand)
+            await this.runIsolateAndStore(fullCommand)
 
             const engineResponse = await this.parseFunctionOutput()
             output = engineResponse.response
@@ -171,6 +180,25 @@ export class IsolateSandbox {
         const fullCmd = `${currentDir}/packages/server/api/src/assets/${this.isolateExecutableName} ${cmd}`
         return new Promise((resolve, reject) => {
             exec(fullCmd, (error, stdout: string | PromiseLike<string>, stderr) => {
+                if (error) {
+                    reject(error)
+                    return
+                }
+                if (stderr) {
+                    resolve(stderr)
+                    return
+                }
+                resolve(stdout)
+            })
+        })
+    }
+
+    private runIsolateAndStore(cmd: string): Promise<string> {
+        const currentDir = cwd()
+        const fullCmd = `${currentDir}/packages/server/api/src/assets/${IsolateSandbox.isolateExecutableName} ${cmd}`
+        return new Promise((resolve, reject) => {
+            this._currentProcess = exec(fullCmd, (error, stdout: string | PromiseLike<string>, stderr) => {
+                this._currentProcess = undefined
                 if (error) {
                     reject(error)
                     return

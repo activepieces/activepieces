@@ -10,6 +10,9 @@ import { IsolateSandbox } from './sandbox/isolate-sandbox'
 import { sandboxProvisioner } from './sandbox/provisioner/sandbox-provisioner'
 
 export const isolateEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
+    async shutdownAllWorkers(): Promise<void> {
+        await sandboxProvisioner(log).shutdown()
+    },
     async executeFlow(engineToken, operation) {
         const input: ExecuteFlowOperation = {
             ...operation,

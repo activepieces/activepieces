@@ -90,6 +90,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
                 payload,
                 synchronousHandlerId,
                 projectId,
+                flowRunId: apId(),
                 httpRequestId,
                 executionType: ExecutionType.BEGIN,
                 progressUpdateType,

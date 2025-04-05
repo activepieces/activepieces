@@ -82,7 +82,6 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
                 environment: flowRun.environment,
                 runId: flowRun.id,
                 flowVersionId: flowRun.flowVersionId,
-                payload,
                 httpRequestId,
                 executionType,
                 progressUpdateType,
