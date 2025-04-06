@@ -103,6 +103,7 @@ const ArrayInput = React.memo(
       setFields(newFields);
       updateFormValue(newFields);
     };
+    const showRemoveButton = !required || fields.length > 1;
 
     return (
       <>
@@ -156,28 +157,24 @@ const ArrayInput = React.memo(
                     )}
                   />
 
-                  {!required ||
-                    (fields.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        disabled={disabled}
-                        className={cn(
-                          'shrink-0 size-8',
-                          thinInputs && 'size-7',
-                        )}
-                        onClick={() => {
-                          remove(index);
-                        }}
-                      >
-                        <TrashIcon
-                          className="size-4 text-destructive"
-                          aria-hidden="true"
-                        />
-                        <span className="sr-only">{t('Remove')}</span>
-                      </Button>
-                    ))}
+                  {showRemoveButton && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      disabled={disabled}
+                      className={cn('shrink-0 size-8', thinInputs && 'size-7')}
+                      onClick={() => {
+                        remove(index);
+                      }}
+                    >
+                      <TrashIcon
+                        className="size-4 text-destructive"
+                        aria-hidden="true"
+                      />
+                      <span className="sr-only">{t('Remove')}</span>
+                    </Button>
+                  )}
                 </div>
               </SortableItem>
             ))}
