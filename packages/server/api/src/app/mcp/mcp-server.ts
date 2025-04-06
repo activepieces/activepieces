@@ -6,9 +6,9 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { FastifyBaseLogger, FastifyReply } from 'fastify'
 import { EngineHelperResponse } from 'server-worker'
 import { z } from 'zod'
-import { pieceMetadataService } from '../../pieces/piece-metadata-service'
-import { projectService } from '../../project/project-service'
-import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
+import { pieceMetadataService } from '../pieces/piece-metadata-service'
+import { projectService } from '../project/project-service'
+import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 import { mcpService } from './mcp-service'
 
 export async function createMcpServer({
