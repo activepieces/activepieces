@@ -7,9 +7,7 @@ export const ApRecord = Type.Object({
     tableId: Type.String(),
     projectId: Type.String(),
     //record<fieldId, cell>
-    cells: Type.Record(Type.String(), Type.Composite([
-        Type.Pick(Cell, ['updated', 'created', 'value'])
-    ])),
+    cells: Type.Record(Type.String(), Cell),
 })
 
 export type ApRecord = Static<typeof ApRecord>

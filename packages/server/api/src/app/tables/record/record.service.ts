@@ -108,8 +108,6 @@ export const recordService = {
     }: ListParams): Promise<SeekPage<ApRecord>> {
         const queryBuilder = recordRepo()
             .createQueryBuilder('record')
-            .leftJoinAndSelect('record.cells', 'cell')
-            .leftJoinAndSelect('cell.field', 'field')
             .where('record.tableId = :tableId', { tableId })
             .andWhere('record.projectId = :projectId', { projectId })
             .orderBy('record.created', 'ASC')
@@ -146,7 +144,6 @@ export const recordService = {
                 const subQuery = recordRepo()
                     .createQueryBuilder('r')
                     .select('1')
-                    .innerJoin('r.cells', 'c')
                     .where('c.projectId = :projectId') // To use the index
                     .andWhere('c.fieldId = :fieldId')
                     .andWhere('r.id = record.id')
@@ -247,8 +244,7 @@ export const recordService = {
             const updatedRecord = await entityManager
                 .getRepository(RecordEntity)
                 .findOne({
-                    where: { id, projectId, tableId },
-                    relations: ['cells'],
+                    where: { id, projectId, tableId }
                 })
 
             if (isNil(updatedRecord)) {
