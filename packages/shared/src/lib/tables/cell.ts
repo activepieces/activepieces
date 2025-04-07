@@ -1,12 +1,12 @@
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema } from '../common'
 
 export const Cell = Type.Object({
-    ...BaseModelSchema,
+    created: Type.String(),
+    updated: Type.String(),
     recordId: Type.String(),
     fieldId: Type.String(),
     projectId: Type.String(),
-    value: Type.Unknown(),
+    value: Type.String(),
 })
 
 export type Cell = Static<typeof Cell>

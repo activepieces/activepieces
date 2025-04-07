@@ -7,8 +7,10 @@ import {
     ErrorCode,
     ExportTableResponse,
     isNil,
+    PopulatedTable,
     SeekPage,
     Table,
+    tableUtils,
     TableWebhook,
     TableWebhookEventType,
     UpdateTableRequest,
@@ -20,16 +22,12 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
 import { fieldService } from '../field/field.service'
-import { RecordEntity } from '../record/record.entity'
 import { TableWebhookEntity } from './table-webhook.entity'
 import { TableEntity } from './table.entity'
 const tableRepo = repoFactory(TableEntity)
-const recordRepo = repoFactory(RecordEntity)
 const tableWebhookRepo = repoFactory(TableWebhookEntity)
 
 export const tableService = {
-
-
     async create({
         projectId,
         request,
@@ -68,11 +66,10 @@ export const tableService = {
     async getById({
         projectId,
         id,
-    }: GetByIdParams): Promise<Table> {
+    }: GetByIdParams): Promise<PopulatedTable> {
         const table = await tableRepo().findOne({
             where: { projectId, id },
         })
-
         if (isNil(table)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -82,7 +79,6 @@ export const tableService = {
                 },
             })
         }
-
         return table
     },
 
@@ -101,24 +97,20 @@ export const tableService = {
         id,
     }: ExportTableParams): Promise<ExportTableResponse> {
         const table = await this.getById({ projectId, id })
-
-        // TODO: Change field sorting to use position when it's added
         const fields = await fieldService.getAll({ projectId, tableId: id })
-
-        const records = await recordRepo().find({
-            where: { tableId: id, projectId },
-            relations: ['cells'],
+        const records = tableUtils.getRecordsFromFields({
+            fields,
+            recordsIds: 'ALL',
+            projectId,
+            tableId: id,
         })
-
-        const rows = records.map((record) => {
-            const row: Record<string, string> = {}
-            for (const field of fields) {
-                const cell = record.cells.find((c) => c.fieldId === field.id)
-                row[field.name] = cell?.value?.toString() ?? ''
-            }
-            return row
-        })
-
+       const rows = records.map(rec=> {
+         return Object.values(rec.cells).reduce((acc,cell)=>{
+            //TODO: this was field name before need to check if it breaks when switching to field name
+            acc[cell.fieldId] = cell.value
+            return acc
+         },{} as Record<string,string>)
+       });
         return {
             fields: fields.map((f) => ({ id: f.id, name: f.name })),
             rows,

@@ -1,5 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema } from '../common'
+import { Field } from './field'
 
 export const Table = Type.Object({
     ...BaseModelSchema,
@@ -8,3 +9,9 @@ export const Table = Type.Object({
 })
 
 export type Table = Static<typeof Table>
+
+export const PopulatedTable = Type.Composite([Table, Type.Object({
+    fields: Type.Array(Field),
+})])
+
+export type PopulatedTable = Static<typeof PopulatedTable>
