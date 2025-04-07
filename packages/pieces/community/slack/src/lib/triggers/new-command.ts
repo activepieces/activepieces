@@ -6,15 +6,12 @@ import {
 } from '@activepieces/pieces-framework';
 import { getChannels, multiSelectChannelInfo, userId } from '../common/props';
 import { slackAuth } from '../../';
-import { WebClient } from '@slack/web-api';
-import { isNil } from '@activepieces/shared';
-import { getFirstFiveOrAll } from '../common/utils';
-
+import { parseCommand } from '../common/utils';
 
 export const newCommand = createTrigger({
   auth: slackAuth,
   name: 'new_command',
-  displayName: 'New Command',
+  displayName: 'New Command in Channel',
   description:
     'Triggers when a specific command is sent to the bot (e.g., @bot command arg1 arg2)',
   props: {
@@ -78,6 +75,12 @@ export const newCommand = createTrigger({
     const commands = (context.propsValue.commands as string[]) ?? [];
     const user = context.propsValue.user as string;
 
+    
+    // check if it's channel message
+		if (payloadBody.event.channel_type !== 'channel') {
+			return [];
+		}
+
     // Check if we should process this channel
     if (
       !(channels.length === 0 || channels.includes(payloadBody.event.channel))
@@ -113,49 +116,11 @@ export const newCommand = createTrigger({
   },
 });
 
-/**
- * Parse a message text to extract command and arguments
- */
-function parseCommand(
-  text: string,
-  botUserId: string,
-  validCommands: string[]
-): { command: string; args: string[] } | null {
-  if (!botUserId) {
-    return null;
-  }
-
-  // Check if the message mentions the bot
-  const mentionRegex = new RegExp(`<@${botUserId}>\\s+(.+)`, 's');
-  const mentionMatch = text.match(mentionRegex);
-
-  if (!mentionMatch) {
-    return null;
-  }
-
-  // Extract the text after the mention
-  const commandText = mentionMatch[1].trim();
-
-  // Split into command and arguments (first word is command, rest are args)
-  const parts = commandText.split(/\s+/);
-  const command = parts[0].toLowerCase();
-  const args = parts.slice(1);
-
-  // Check if it's a valid command
-  if (!validCommands.includes(command)) {
-    return null;
-  }
-
-  return {
-    command,
-    args,
-  };
-}
-
 type PayloadBody = {
   event: {
     channel: string;
     bot_id?: string;
     text?: string;
+    channel_type:string
   };
 };

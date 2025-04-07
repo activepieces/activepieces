@@ -22,11 +22,11 @@ import { CreateTodoGuide } from './dialog-guides/create-todo-guide';
 type StepsCardListProps = {
   selectedPieceMetadata: StepMetadata | undefined;
   handleSelect: HandleSelectCallback;
+  hiddenActionsOrTriggers: string[];
 };
 
-const hiddenActions = ['createTodoAndWait', 'wait_for_approval'];
-
 export const StepsCardList: React.FC<StepsCardListProps> = ({
+  hiddenActionsOrTriggers,
   selectedPieceMetadata,
   handleSelect,
 }) => {
@@ -73,7 +73,7 @@ export const StepsCardList: React.FC<StepsCardListProps> = ({
           actionsOrTriggers && (
             <>
               {actionsOrTriggers
-                .filter((item) => !hiddenActions.includes(item.name))
+                .filter((item) => !hiddenActionsOrTriggers.includes(item.name))
                 .map((item) => (
                   <CardListItem
                     className="p-2 w-full"

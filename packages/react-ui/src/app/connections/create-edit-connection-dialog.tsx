@@ -69,7 +69,7 @@ type ConnectionDialogProps = {
   open: boolean;
   setOpen: (
     open: boolean,
-    connection?: Pick<AppConnectionWithoutSensitiveData, 'id' | 'externalId'>,
+    connection?: AppConnectionWithoutSensitiveData,
   ) => void;
   reconnectConnection: AppConnectionWithoutSensitiveData | null;
   isGlobalConnection: boolean;
@@ -90,7 +90,7 @@ const CreateOrEditConnectionDialogContent = React.memo(
     externalIdComingFromSdk?: string | null;
     setOpen: (
       open: boolean,
-      connection?: Pick<AppConnectionWithoutSensitiveData, 'id' | 'externalId'>,
+      connection?: AppConnectionWithoutSensitiveData,
     ) => void;
   }) => {
     const { auth } = piece;
@@ -153,10 +153,7 @@ const CreateOrEditConnectionDialogContent = React.memo(
         return appConnectionsApi.upsert(formValues);
       },
       onSuccess: (connection) => {
-        setOpen(false, {
-          id: connection.id,
-          externalId: connection.externalId,
-        });
+        setOpen(false, connection);
         setErrorMessage('');
       },
       onError: (err) => {

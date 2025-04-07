@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { ListTodo, Table2, Workflow } from 'lucide-react';
+import { Brain, ListTodo, Table2, Workflow } from 'lucide-react';
 import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
@@ -49,10 +49,9 @@ export function DashboardContainer({
   removeBottomPadding,
 }: DashboardContainerProps) {
   const [automationOpen, setAutomationOpen] = useState(true);
+  const [aiOpen, setAiOpen] = useState(true);
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: showIssuesNotification } = issueHooks.useIssuesNotification(
-    platform.flowIssuesEnabled,
-  );
+  const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
   const { project } = projectHooks.useCurrentProject();
   const { embedState } = useEmbedding();
   const currentProjectId = authenticationSession.getProjectId();
@@ -93,6 +92,7 @@ export function DashboardContainer({
       ];
       return paths.some((path) => pathname.includes(path));
     },
+    name: t('Products'),
     defaultOpen: true,
     open: automationOpen,
     setOpen: setAutomationOpen,
@@ -107,19 +107,10 @@ export function DashboardContainer({
       },
       {
         type: 'link',
-        to: authenticationSession.appendProjectRoutePrefix('/issues'),
-        label: t('Issues'),
-        notification: showIssuesNotification,
-        showInEmbed: false,
-        hasPermission: checkAccess(Permission.READ_ISSUES),
-        isSubItem: true,
-      },
-
-      {
-        type: 'link',
         to: authenticationSession.appendProjectRoutePrefix('/runs'),
         label: t('Runs'),
         showInEmbed: true,
+        notification: showIssuesNotification,
         hasPermission: checkAccess(Permission.READ_RUN),
         isSubItem: true,
       },
@@ -142,6 +133,30 @@ export function DashboardContainer({
       },
     ],
   };
+
+  const aiGroup: SidebarGroup = {
+    type: 'group',
+    label: t('AI'),
+    icon: Brain,
+    isActive: (pathname: string) => {
+      const paths = ['/mcp'];
+      return paths.some((path) => pathname.includes(path));
+    },
+    defaultOpen: true,
+    open: aiOpen,
+    setOpen: setAiOpen,
+    items: [
+      {
+        type: 'link',
+        to: authenticationSession.appendProjectRoutePrefix('/mcp'),
+        label: t('MCP'),
+        showInEmbed: true,
+        hasPermission: checkAccess(Permission.READ_MCP),
+        isSubItem: true,
+      },
+    ],
+  };
+
   const tablesLink: SidebarLink = {
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/tables'),
@@ -162,7 +177,7 @@ export function DashboardContainer({
     isSubItem: false,
   };
 
-  const items: SidebarItem[] = [automationGroup, tablesLink, todosLink]
+  const items: SidebarItem[] = [automationGroup, aiGroup, tablesLink, todosLink]
     .filter(embedFilter)
     .filter(permissionFilter)
     .filter(filterAlerts);
@@ -177,6 +192,13 @@ export function DashboardContainer({
     }
   }
 
+  const filteredItems = items.filter((item) => {
+    if (item.type === 'group') {
+      return item.items.length > 0;
+    }
+    return true;
+  });
+
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
       <ProjectChangedRedirector currentProjectId={currentProjectId}>
@@ -190,7 +212,7 @@ export function DashboardContainer({
             removeGutters={removeGutters}
             isHomeDashboard={true}
             hideHeader={hideHeader}
-            items={items}
+            items={filteredItems}
             hideSideNav={embedState.hideSideNav}
             removeBottomPadding={removeBottomPadding}
           >

@@ -15,7 +15,6 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
@@ -61,7 +60,7 @@ const CreateTodoGuide = ({
             {/* Left side - Options */}
             <div className="md:w-1/2 space-y-6">
               <h3 className="text-lg font-medium">
-                {t('Choose your flow type:')}
+                {t('Where would you like the todo to be reviewed?')}
               </h3>
 
               {/* Option cards */}
@@ -80,31 +79,29 @@ const CreateTodoGuide = ({
                   <div className="flex justify-between items-center mb-2">
                     <h4 className="text-md font-medium flex items-center gap-2">
                       {t('Activepieces Todos')}
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border text-xs cursor-help">
-                              i
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className="w-[550px]">
-                            <div className="space-y-2">
-                              <p className="text-sm">
-                                {t(
-                                  'Users will manage tasks directly in Activepieces',
-                                )}
-                              </p>
-                              <div className="bg-muted rounded p-1">
-                                <img
-                                  src={ActivepiecesTodo}
-                                  alt="Activepieces Todo UI"
-                                  className="w-full h-auto rounded"
-                                />
-                              </div>
+                      <Tooltip delayDuration={100}>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border text-xs cursor-help">
+                            i
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="w-[550px]">
+                          <div className="space-y-2">
+                            <p className="text-sm">
+                              {t(
+                                'Users will manage tasks directly in Activepieces',
+                              )}
+                            </p>
+                            <div className="bg-muted rounded p-1">
+                              <img
+                                src={ActivepiecesTodo}
+                                alt="Activepieces Todo UI"
+                                className="w-full h-auto rounded"
+                              />
                             </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
                     </h4>
                     <div className="flex-shrink-0 w-5 h-5">
                       <div

@@ -1,6 +1,6 @@
 import path from 'path'
 import { webhookSecretsUtils } from '@activepieces/server-shared'
-import { ActionType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, isNil, TriggerHookType } from '@activepieces/shared'
+import { ActionType, EngineOperation, EngineOperationType, ExecuteFlowOperation, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteValidateAuthOperation, flowStructureUtil, FlowVersion, isNil, TriggerHookType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { workerMachine } from '../../utils/machine'
 import { webhookUtils } from '../../utils/webhook-utils'
@@ -180,6 +180,25 @@ export const threadEngineRunner = (log: FastifyBaseLogger): EngineRunner => ({
         }
         return execute(log, input, EngineOperationType.EXECUTE_PROPERTY)
     },
+    async excuteTool(engineToken, operation) {
+        log.debug({ operation }, '[threadEngineRunner#excuteTool]')
+
+        const lockedPiece = await pieceEngineUtil(log).getExactPieceVersion(engineToken, operation)
+        await executionFiles(log).provision({
+            pieces: [lockedPiece],
+            codeSteps: [],
+            globalCachePath: sandboxPath,
+            globalCodesPath: codesPath,
+            customPiecesPath: sandboxPath,
+        })
+        const input: ExecuteToolOperation = {
+            ...operation,
+            publicApiUrl: workerMachine.getPublicApiUrl(),
+            internalApiUrl: workerMachine.getInternalApiUrl(),
+            engineToken,
+        }
+        return execute(log, input, EngineOperationType.EXECUTE_TOOL)
+    },
 })
 
 async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, flowVersion: FlowVersion): Promise<void> {
@@ -209,6 +228,11 @@ async function execute<Result extends EngineHelperResult>(log: FastifyBaseLogger
                 maxYoungGenerationSizeMb: memoryLimit,
                 stackSizeMb: memoryLimit,
             },
+            execArgv: [
+                `--max-old-space-size=${memoryLimit}`,
+                `--max-semi-space-size=${memoryLimit}`,
+                `--stack-size=${memoryLimit * 1024}`, // stack size is in KB
+            ],
         })
     }
     const { engine, stdError, stdOut } = await engineWorkers.executeTask(operationType, operation)

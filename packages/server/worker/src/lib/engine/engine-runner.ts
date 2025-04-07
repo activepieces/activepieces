@@ -3,7 +3,7 @@ import {
     DynamicPropsValue,
     PieceMetadata,
 } from '@activepieces/pieces-framework'
-import { ActivepiecesError, BeginExecuteFlowOperation, EngineResponseStatus, ErrorCode, ExecuteActionResponse, ExecuteExtractPieceMetadata, ExecutePropsOptions, ExecuteStepOperation, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse, FlowRunResponse, FlowVersionState, ResumeExecuteFlowOperation, SourceCode, TriggerHookType } from '@activepieces/shared'
+import { ActivepiecesError, BeginExecuteFlowOperation, EngineResponseStatus, ErrorCode, ExecuteActionResponse, ExecuteExtractPieceMetadata, ExecutePropsOptions, ExecuteStepOperation, ExecuteToolOperation, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse, FlowRunResponse, FlowVersionState, ResumeExecuteFlowOperation, SourceCode, TriggerHookType } from '@activepieces/shared'
 import chalk from 'chalk'
 import { FastifyBaseLogger } from 'fastify'
 
@@ -85,6 +85,10 @@ export type EngineRunner = {
     executeAction(
         engineToken: string,
         operation: Omit<ExecuteStepOperation, EngineConstants>,
+    ): Promise<EngineHelperResponse<EngineHelperActionResult>>
+    excuteTool(
+        engineToken: string,
+        operation: Omit<ExecuteToolOperation, EngineConstants>,
     ): Promise<EngineHelperResponse<EngineHelperActionResult>>
     executeProp(
         engineToken: string,

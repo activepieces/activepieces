@@ -21,23 +21,18 @@ import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-col
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { toast } from '@/components/ui/use-toast';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { PopulatedIssue } from '@activepieces/ee-shared';
 import { FlowRunStatus, Permission } from '@activepieces/shared';
 
 import { useNewWindow } from '../../../components/embed-provider';
-import { TableTitle } from '../../../components/ui/table-title';
 import { issuesApi } from '../api/issues-api';
 import { issueHooks } from '../hooks/issue-hooks';
 
 export default function IssuesTable() {
   const navigate = useNavigate();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { refetch } = issueHooks.useIssuesNotification(
-    platform.flowIssuesEnabled,
-  );
+  const { refetch } = issueHooks.useIssuesNotification();
 
   const [searchParams] = useSearchParams();
   const projectId = authenticationSession.getProjectId()!;
@@ -180,16 +175,6 @@ export default function IssuesTable() {
   };
   return (
     <div className="flex-col w-full">
-      <div className=" flex">
-        <TableTitle
-          description={t(
-            'Track failed runs grouped by flow name, and mark them as resolved when fixed.',
-          )}
-        >
-          {t('Issues')}
-        </TableTitle>
-        <div className="ml-auto"></div>
-      </div>
       <DataTable
         emptyStateTextTitle={t('No issues found')}
         emptyStateTextDescription={t(
