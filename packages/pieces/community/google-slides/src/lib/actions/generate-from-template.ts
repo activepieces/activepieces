@@ -40,14 +40,16 @@ export const generateFromTemplate = createAction({
                     slide.pageElements?.forEach((element: PageElement) => {
                         if (element.shape?.text?.textElements) {
                             element.shape.text.textElements.forEach(textElement => {
-                                if (textElement.textRun?.content) {
-                                    const matches = textElement.textRun.content.match(/\{\{([^}]+)\}\}/g);
+                                const content = textElement?.textRun?.content
+                                if (content) {
+                                    const matches = content.match(/\{\{([^}]+)\}\}/g);
                                     if (matches) {
                                         matches.forEach((match: string) => {
-                                            const varName = match.replace(/[{}]/g, '').trim();
-                                            fields[varName] = Property.ShortText({
+                                            const matchValue = match.replace(/[{}]/g, '');
+                                            const varName = matchValue.trim();
+                                            fields[matchValue] = Property.ShortText({
                                                 displayName: varName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-                                                description: `Value for ${varName}`,
+                                                description: `Value for "${matchValue}"`,
                                                 required: false,
                                             });
                                         });
@@ -76,7 +78,8 @@ export const generateFromTemplate = createAction({
                 fileId: template_presentation_id as string,
                 requestBody: {
                     name: table_data["title"] || "New Presentation"
-                }
+                },
+                supportsAllDrives: true
             });
             
             const newPresentationId = copyResponse.data.id;
