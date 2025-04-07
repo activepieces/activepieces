@@ -113,7 +113,7 @@ export const tableService = {
         const rows = records.map((record) => {
             const row: Record<string, string> = {}
             for (const field of fields) {
-                const cell = record.cells[field.id]
+                const cell = record.cells.find((c) => c.fieldId === field.id)
                 row[field.name] = cell?.value?.toString() ?? ''
             }
             return row

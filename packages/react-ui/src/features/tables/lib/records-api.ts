@@ -3,26 +3,26 @@ import {
   CreateRecordsRequest,
   DeleteRecordsRequest,
   ListRecordsRequest,
-  ApRecord,
+  PopulatedRecord,
   SeekPage,
   UpdateRecordRequest,
 } from '@activepieces/shared';
 
 export const recordsApi = {
-  list(request: ListRecordsRequest): Promise<SeekPage<ApRecord>> {
-    return api.post<SeekPage<ApRecord>>('/v1/records/list', request);
+  list(request: ListRecordsRequest): Promise<SeekPage<PopulatedRecord>> {
+    return api.post<SeekPage<PopulatedRecord>>('/v1/records/list', request);
   },
 
-  create(request: CreateRecordsRequest): Promise<ApRecord[]> {
-    return api.post<ApRecord[]>('/v1/records', request);
+  create(request: CreateRecordsRequest): Promise<PopulatedRecord[]> {
+    return api.post<PopulatedRecord[]>('/v1/records', request);
   },
 
-  getById(id: string): Promise<ApRecord> {
-    return api.get<ApRecord>(`/v1/records/${id}`);
+  getById(id: string): Promise<PopulatedRecord> {
+    return api.get<PopulatedRecord>(`/v1/records/${id}`);
   },
 
-  update(id: string, request: UpdateRecordRequest): Promise<ApRecord> {
-    return api.post<ApRecord>(`/v1/records/${id}`, request);
+  update(id: string, request: UpdateRecordRequest): Promise<PopulatedRecord> {
+    return api.post<PopulatedRecord>(`/v1/records/${id}`, request);
   },
 
   delete(request: DeleteRecordsRequest): Promise<void> {

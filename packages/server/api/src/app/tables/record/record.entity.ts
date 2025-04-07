@@ -1,10 +1,11 @@
-import { Project, ApRecord, Table } from '@activepieces/shared'
+import { Cell, Project, Record, Table } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
-export type RecordSchema = ApRecord & {
+export type RecordSchema = Record & {
     table: Table
-    project: Project,
+    project: Project
+    cells: Cell[]
 }
 
 export const RecordEntity = new EntitySchema<RecordSchema>({
@@ -19,15 +20,15 @@ export const RecordEntity = new EntitySchema<RecordSchema>({
             ...ApIdSchema,
             nullable: false,
         },
-        cells: {
-            type: JSONB_COLUMN_TYPE,
-            nullable: true,
-        }
     },
     indices: [
         {
             name: 'idx_record_project_id_table_id',
             columns: ['projectId', 'tableId'],
+        },
+        {
+            name: 'idx_record_created',
+            columns: ['created'],
         },
     ],
     relations: {
@@ -50,6 +51,11 @@ export const RecordEntity = new EntitySchema<RecordSchema>({
                 name: 'projectId',
                 foreignKeyConstraintName: 'fk_record_project_id',
             },
-        }
+        },
+        cells: {
+            type: 'one-to-many',
+            target: 'cell',
+            inverseSide: 'record',
+        },
     },
 })

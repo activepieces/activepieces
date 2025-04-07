@@ -1,7 +1,7 @@
 import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ApRecord } from '@activepieces/shared';
+import { PopulatedRecord } from '@activepieces/shared';
 
 export const getRecord = createAction({
   name: 'tables-get-record',
@@ -24,6 +24,6 @@ export const getRecord = createAction({
       },
     });
 
-    return tablesCommon.formatRecord(response.body as ApRecord);
+    return tablesCommon.formatRecord(response.body as PopulatedRecord);
   },
 });

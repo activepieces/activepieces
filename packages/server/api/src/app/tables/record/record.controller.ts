@@ -4,7 +4,7 @@ import {
     ImportCsvRequestBody,
     ListRecordsRequest,
     Permission,
-    ApRecord,
+    PopulatedRecord,
     PrincipalType,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
@@ -121,7 +121,7 @@ const CreateRequest = {
     schema: {
         body: CreateRecordsRequest,
         response: {
-            [StatusCodes.CREATED]: Type.Array(ApRecord),
+            [StatusCodes.CREATED]: Type.Array(PopulatedRecord),
         },
     },
 }
@@ -135,7 +135,7 @@ const GetRecordByIdRequest = {
             id: Type.String(),
         }),
         response: {
-            [StatusCodes.OK]: ApRecord,
+            [StatusCodes.OK]: PopulatedRecord,
             [StatusCodes.NOT_FOUND]: Type.String(),
         },
     },
@@ -155,7 +155,7 @@ const UpdateRequest = {
         }),
         body: UpdateRecordRequest,
         response: {
-            [StatusCodes.OK]: ApRecord,
+            [StatusCodes.OK]: PopulatedRecord,
         },
 
     },
@@ -172,7 +172,7 @@ const DeleteRecordRequest = {
         description: 'Delete records',
         body: DeleteRecordsRequest,
         response: {
-            [StatusCodes.OK]: Type.Array(ApRecord),
+            [StatusCodes.OK]: Type.Array(PopulatedRecord),
         },
     },
 }
@@ -188,7 +188,7 @@ const ListRequest = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'List records',
         response: {
-            [StatusCodes.OK]: SeekPage(ApRecord),
+            [StatusCodes.OK]: SeekPage(PopulatedRecord),
         },
     },
 }
@@ -204,7 +204,7 @@ const ImportCsvRequest = {
         description: 'Import a csv file to create new records',
         body: ImportCsvRequestBody,
         response: {
-            [StatusCodes.OK]: Type.Array(ApRecord),
+            [StatusCodes.OK]: Type.Array(PopulatedRecord),
         },
     },
 }

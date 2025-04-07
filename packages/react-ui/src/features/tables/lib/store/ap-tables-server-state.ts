@@ -2,7 +2,7 @@ import { PromiseQueue } from '@/lib/promise-queue';
 import {
   CreateFieldRequest,
   Field,
-  ApRecord,
+  PopulatedRecord,
   Table,
 } from '@activepieces/shared';
 
@@ -14,14 +14,14 @@ import { ClientRecordData } from './ap-tables-client-state';
 export const createServerState = (
   _table: Table,
   _fields: Field[],
-  _records: ApRecord[],
+  _records: PopulatedRecord[],
   updateSavingStatus: (isSaving: boolean) => void,
 ) => {
   const queue = new PromiseQueue();
 
   const clonedTable: Table = JSON.parse(JSON.stringify(_table));
   const clonedFields: Field[] = JSON.parse(JSON.stringify(_fields));
-  let clonedRecords: ApRecord[] = JSON.parse(JSON.stringify(_records));
+  let clonedRecords: PopulatedRecord[] = JSON.parse(JSON.stringify(_records));
 
   function addPromiseToQueue(promise: () => Promise<void>) {
     queue.add(async () => {
@@ -114,7 +114,7 @@ export const createServerState = (
         });
       });
     },
-    setRecords: (records: ApRecord[]) => {
+    setRecords: (records: PopulatedRecord[]) => {
       clonedRecords = JSON.parse(JSON.stringify(records));
     },
     fields: clonedFields,

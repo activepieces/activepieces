@@ -1,6 +1,6 @@
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { DynamicPropsValue, Property, TriggerHookContext } from "@activepieces/pieces-framework";
-import { CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, ApRecord, SeekPage, StaticDropdownEmptyOption, Table, TableWebhookEventType } from "@activepieces/shared";
+import { CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, PopulatedRecord, SeekPage, StaticDropdownEmptyOption, Table, TableWebhookEventType } from "@activepieces/shared";
 import { z } from 'zod';
 
 type FormattedRecord = {
@@ -276,7 +276,7 @@ export const tablesCommon = {
     return response.body.data.map(this.formatRecord);
 
   },
-  formatRecord(record: ApRecord | { record: ApRecord }): FormattedRecord {
+  formatRecord(record: PopulatedRecord | { record: PopulatedRecord }): FormattedRecord {
     const actualRecord = 'record' in record ? record.record : record;
     
     return {

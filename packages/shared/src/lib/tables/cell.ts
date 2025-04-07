@@ -10,12 +10,3 @@ export const Cell = Type.Object({
 })
 
 export type Cell = Static<typeof Cell>
-type x = {
-    recordId: string,
-    fieldId: string,
-    projectId: string,
-    value: unknown,
-    id: string,
-    created: string,
-    updated: string,
-}

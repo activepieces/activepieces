@@ -1,9 +1,9 @@
-import { Cell, Field, Project, ApRecord } from '@activepieces/shared'
+import { Cell, Field, Project, Record } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
 type CellSchema = Cell & {
-    record: ApRecord
+    record: Record
     field: Field
     project: Project
 }
@@ -33,6 +33,10 @@ export const CellEntity = new EntitySchema<CellSchema>({
             name: 'idx_cell_project_id_field_id_record_id_unique',
             columns: ['projectId', 'fieldId', 'recordId'],
             unique: true,
+        },
+        {
+            name: 'idx_cell_value',
+            columns: ['value'],
         },
     ],
     relations: {
