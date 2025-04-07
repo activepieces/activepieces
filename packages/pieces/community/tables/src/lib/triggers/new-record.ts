@@ -1,6 +1,6 @@
 import { createTrigger, PieceAuth, PropertyType, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
-import { PopulatedRecord, TableWebhookEventType } from '@activepieces/shared';
+import { ApRecord, TableWebhookEventType } from '@activepieces/shared';
 
 export const newRecordTrigger = createTrigger({
     name: 'newRecord',
@@ -52,7 +52,7 @@ export const newRecordTrigger = createTrigger({
         });
     },
     async run(context){
-        return [tablesCommon.formatRecord(context.payload.body as PopulatedRecord)]
+        return [tablesCommon.formatRecord(context.payload.body as ApRecord)]
     },
     async test(context) {
         return tablesCommon.getRecentRecords({

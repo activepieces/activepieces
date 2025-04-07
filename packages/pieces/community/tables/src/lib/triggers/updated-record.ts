@@ -1,6 +1,6 @@
 import { createTrigger, PieceAuth, TriggerStrategy } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
-import { PopulatedRecord, TableWebhookEventType } from '@activepieces/shared';
+import { ApRecord, TableWebhookEventType } from '@activepieces/shared';
 
 export const updatedRecordTrigger = createTrigger({
     // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -53,7 +53,7 @@ export const updatedRecordTrigger = createTrigger({
         });
     },
     async run(context) {
-        return [tablesCommon.formatRecord(context.payload.body as PopulatedRecord)]
+        return [tablesCommon.formatRecord(context.payload.body as ApRecord)]
     },
     async test(context) {
         return tablesCommon.getRecentRecords({

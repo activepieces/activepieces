@@ -1,7 +1,7 @@
 import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
-import { PopulatedRecord, UpdateRecordRequest } from '@activepieces/shared';
+import { ApRecord, UpdateRecordRequest } from '@activepieces/shared';
 
 export const updateRecord = createAction({
   name: 'tables-update-record',
@@ -56,6 +56,6 @@ export const updateRecord = createAction({
       },
     });
 
-    return tablesCommon.formatRecord(response.body as PopulatedRecord);
+    return tablesCommon.formatRecord(response.body as ApRecord);
   },
 });

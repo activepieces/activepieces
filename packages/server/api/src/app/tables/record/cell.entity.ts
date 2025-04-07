@@ -1,9 +1,9 @@
-import { Cell, Field, Project, Record } from '@activepieces/shared'
+import { Cell, Field, Project, ApRecord } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
 type CellSchema = Cell & {
-    record: Record
+    record: ApRecord
     field: Field
     project: Project
 }

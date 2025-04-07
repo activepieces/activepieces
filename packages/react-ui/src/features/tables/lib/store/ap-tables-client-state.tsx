@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid';
 import { create } from 'zustand';
 
-import { Field, FieldType, PopulatedRecord, Table } from '@activepieces/shared';
+import { Field, FieldType, ApRecord, Table } from '@activepieces/shared';
 
 import { createServerState } from './ap-tables-server-state';
 
@@ -30,7 +30,7 @@ export type ClientField = {
     }
 );
 const mapRecordToClientRecordData = (
-  records: PopulatedRecord[],
+  records: ApRecord[],
   fields: Field[],
 ): ClientRecordData[] => {
   return records.map((record) => ({
@@ -66,13 +66,13 @@ export type TableState = {
   deleteField: (fieldIndex: number) => void;
   renameTable: (newName: string) => void;
   renameField: (fieldIndex: number, newName: string) => void;
-  setRecords: (records: PopulatedRecord[]) => void;
+  setRecords: (records: ApRecord[]) => void;
 };
 
 export const createApTableStore = (
   table: Table,
   fields: Field[],
-  records: PopulatedRecord[],
+  records: ApRecord[],
 ) => {
   return create<TableState>((set) => {
     const serverState = createServerState(
@@ -189,7 +189,7 @@ export const createApTableStore = (
           };
         });
       },
-      setRecords: (records: PopulatedRecord[]) => {
+      setRecords: (records: ApRecord[]) => {
         serverState.setRecords(records);
         return set((state) => {
           return {

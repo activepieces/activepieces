@@ -7,16 +7,16 @@ import {
     CreateRecordsRequest,
     Cursor,
     ErrorCode,
-    Field,
     Filter,
     FilterOperator,
     GetFlowVersionForWorkerRequestType,
     ImportCsvRequestBody,
     isNil,
-    PopulatedRecord,
+    ApRecord,
     SeekPage,
     TableWebhookEventType,
     UpdateRecordRequest,
+    Cell,
 } from '@activepieces/shared'
 import { parse } from 'csv-parse'
 import { FastifyBaseLogger } from 'fastify'
@@ -31,13 +31,14 @@ import { tableService } from '../table/table.service'
 import { CellEntity } from './cell.entity'
 import { RecordEntity, RecordSchema } from './record.entity'
 
+
 const recordRepo = repoFactory(RecordEntity)
 
 export const recordService = {
     async create({
         request,
         projectId,
-    }: CreateParams): Promise<PopulatedRecord[]> {
+    }: CreateParams): Promise<ApRecord[]> {
         await this.validateCount({ projectId, tableId: request.tableId }, request.records.length)
         return transaction(async (entityManager: EntityManager) => {
             const existingFields = await entityManager
@@ -52,36 +53,37 @@ export const recordService = {
                 ),
             )
             const now = new Date()
-            const recordInsertions = validRecords.map((_, index) => {
+           
+            //Todo: remove any
+            const records = validRecords.map((_, index) => {
                 const created = new Date(now.getTime() + index).toISOString()
+              
                 return {
                     tableId: request.tableId,
                     projectId,
                     created,
                     id: apId(),
+                    updated: created,
+                    cells: request.records[index].reduce<Record<string, any>>((acc, cellData) => {
+                        acc[cellData.fieldId] = {
+                            value: cellData.value,
+                            created,
+                            updated: created,
+                            fieldId: cellData.fieldId,
+                            id: apId(),
+                            projectId,
+                            recordId: apId(),
+                        }
+                        return acc
+                    }, {})
                 }
             })
 
-            await entityManager.getRepository(RecordEntity).insert(recordInsertions)
-
-            // Prepare cells for insertion
-            const cellInsertions = validRecords.flatMap((recordData, index) =>
-                recordData.map((cellData) => {
-                    return {
-                        recordId: recordInsertions[index].id,
-                        fieldId: cellData.fieldId,
-                        projectId,
-                        value: cellData.value,
-                        id: apId(),
-                    }
-                }),
-            )
-
-            await entityManager.getRepository(CellEntity).insert(cellInsertions)
+           await entityManager.getRepository(RecordEntity).insert(records)
 
             // Fetch and return fully populated records
-            const insertedRecordIds = recordInsertions.map((r) => r.id)
-            const fullyPopulatedRecords = await entityManager
+            const insertedRecordIds = records.map((r) => r.id)
+            return await entityManager
                 .getRepository(RecordEntity)
                 .find({
                     where: {
@@ -89,17 +91,12 @@ export const recordService = {
                         tableId: request.tableId,
                         projectId,
                     },
-                    relations: ['cells'],
                     order: {
                         created: 'ASC',
                     },
                 })
 
-            const fields = await fieldService.getAll({
-                tableId: request.tableId,
-                projectId,
-            })
-            return fullyPopulatedRecords.map((record) => formatRecord(record, fields))
+           
         })
     },
 
@@ -108,7 +105,7 @@ export const recordService = {
         projectId,
         filters,
 
-    }: ListParams): Promise<SeekPage<PopulatedRecord>> {
+    }: ListParams): Promise<SeekPage<ApRecord>> {
         const queryBuilder = recordRepo()
             .createQueryBuilder('record')
             .leftJoinAndSelect('record.cells', 'cell')
@@ -167,7 +164,7 @@ export const recordService = {
 
         const data = await queryBuilder.getMany()
         return {
-            data: await Promise.all(data.map((record) => formatRecordAndFetchField(record))),
+            data,
             next: null,
             previous: null,
         }
@@ -176,10 +173,9 @@ export const recordService = {
     async getById({
         id,
         projectId,
-    }: GetByIdParams): Promise<PopulatedRecord> {
+    }: GetByIdParams): Promise<ApRecord> {
         const record = await recordRepo().findOne({
             where: { id, projectId },
-            relations: ['cells'],
         })
 
         if (isNil(record)) {
@@ -192,14 +188,14 @@ export const recordService = {
             })
         }
 
-        return formatRecordAndFetchField(record)
+        return record
     },
 
     async update({
         id,
         projectId,
         request,
-    }: UpdateParams): Promise<PopulatedRecord> {
+    }: UpdateParams): Promise<ApRecord> {
         const { tableId } = request
         return transaction(async (entityManager: EntityManager) => {
             const record = await entityManager.getRepository(RecordEntity).findOne({
@@ -265,17 +261,16 @@ export const recordService = {
                 })
             }
 
-            return formatRecordAndFetchField(updatedRecord)
+            return updatedRecord
         })
     },
 
     async delete({
         ids,
         projectId,
-    }: DeleteParams): Promise<PopulatedRecord[]> {
+    }: DeleteParams): Promise<ApRecord[]> {
         const records = await recordRepo().find({
-            where: { id: In(ids), projectId },
-            relations: ['cells'],
+            where: { id: In(ids), projectId }
         })
         await recordRepo().delete({
             id: In(ids),
@@ -285,11 +280,7 @@ export const recordService = {
         if (records.length === 0) {
             return []
         }
-        const fields = await fieldService.getAll({
-            tableId: records[0].tableId,
-            projectId,
-        })
-        return records.map((record) => formatRecord(record, fields))
+        return records
     },
 
     async triggerWebhooks({
@@ -347,7 +338,7 @@ export const recordService = {
         projectId,
         tableId,
         request,
-    }: ImportCsvParams): Promise<PopulatedRecord[]> {
+    }: ImportCsvParams): Promise<ApRecord[]> {
         // validate table existence 
         const count = await this.count({ projectId, tableId })
         await tableService.getById({ projectId, id: tableId })
@@ -366,7 +357,7 @@ export const recordService = {
             records.push(record)
         }
         const batches = chunk(records, 100)
-        const results: PopulatedRecord[] = []
+        const results: ApRecord[] = []
         let processedCount = 0
         for (const batch of batches) {
             if (processedCount + batch.length + count <= system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)) {
@@ -424,28 +415,6 @@ type TriggerWebhooksParams = {
 }
 
 
-async function formatRecordAndFetchField(record: RecordSchema): Promise<PopulatedRecord> {
-    const fields = await fieldService.getAll({
-        tableId: record.tableId,
-        projectId: record.projectId,
-    })
-    return formatRecord(record, fields)
-}
-
-function formatRecord(record: RecordSchema, fields: Field[]): PopulatedRecord {
-    return {
-        ...record,
-        cells: Object.fromEntries(record.cells.map((cell) => {
-            const field = fields.find((field) => field.id === cell.fieldId)
-            return [cell.fieldId, {
-                fieldName: field!.name,
-                value: cell.value,
-                updated: cell.updated,
-                created: cell.created,
-            }]
-        })),
-    }
-}
 
 type CountParams = {
     projectId: string

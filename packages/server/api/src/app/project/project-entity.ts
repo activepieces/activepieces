@@ -6,7 +6,7 @@ import {
     Folder,
     Platform,
     Project,
-    Record,
+    ApRecord,
     Table,
     TableWebhook,
     TriggerEvent,
@@ -25,7 +25,7 @@ type ProjectSchema = Project & {
     platform: Platform
     tables: Table[]
     fields: Field[]
-    records: Record[]
+    records: ApRecord[]
     cells: Cell[]
     tableWebhooks: TableWebhook[]
 }

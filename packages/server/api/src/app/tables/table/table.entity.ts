@@ -1,11 +1,11 @@
-import { Field, Project, Record, Table, TableWebhook } from '@activepieces/shared'
+import { Field, Project, ApRecord, Table, TableWebhook } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
 type TableSchema = Table & {
     project: Project
     fields: Field[]
-    records: Record[]
+    records: ApRecord[]
     tableWebhooks: TableWebhook[]
 }
 
