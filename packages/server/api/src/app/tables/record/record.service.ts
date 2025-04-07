@@ -9,7 +9,6 @@ import {
     ErrorCode,
     Field,
     Filter,
-    FilterOperator,
     GetFlowVersionForWorkerRequestType,
     ImportCsvRequestBody,
     isNil,
@@ -32,7 +31,7 @@ import { CellEntity } from './cell.entity'
 import { RecordEntity, RecordSchema } from './record.entity'
 
 const recordRepo = repoFactory(RecordEntity)
-
+const cellsRepo = repoFactory(CellEntity)
 export const recordService = {
     async create({
         request,
@@ -106,68 +105,44 @@ export const recordService = {
     async list({
         tableId,
         projectId,
-        filters,
-
     }: ListParams): Promise<SeekPage<PopulatedRecord>> {
-        const queryBuilder = recordRepo()
-            .createQueryBuilder('record')
-            .leftJoinAndSelect('record.cells', 'cell')
-            .leftJoinAndSelect('cell.field', 'field')
-            .where('record.tableId = :tableId', { tableId })
-            .andWhere('record.projectId = :projectId', { projectId })
-            .orderBy('record.created', 'ASC')
-        if (filters?.length) {
-            filters.forEach((filter, _index) => {
-                const operator = filter.operator || FilterOperator.EQ
-                let condition = ''
+       
+        const fields = await fieldService.getAll({
+            tableId,
+            projectId,
+        })
+        const records = await recordRepo().find({
+            where: {
+                projectId,
+                tableId,
+            },
+        })
 
-                switch (operator) {
-                    case FilterOperator.EQ:
-                        condition = 'c.value = :fieldValue'
-                        break
-                    case FilterOperator.NEQ:
-                        condition = 'c.value != :fieldValue'
-                        break
-                    case FilterOperator.GT:
-                        condition = 'c.value > :fieldValue'
-                        break
-                    case FilterOperator.GTE:
-                        condition = 'c.value >= :fieldValue'
-                        break
-                    case FilterOperator.LT:
-                        condition = 'c.value < :fieldValue'
-                        break
-                    case FilterOperator.LTE:
-                        condition = 'c.value <= :fieldValue'
-                        break
-                    case FilterOperator.CO:
-                        condition = 'LOWER(c.value) LIKE LOWER(:fieldValue)'
-                        break
-                }
-
-                // Create a subquery for each filter condition using field ID directly
-                const subQuery = recordRepo()
-                    .createQueryBuilder('r')
-                    .select('1')
-                    .innerJoin('r.cells', 'c')
-                    .where('c.projectId = :projectId') // To use the index
-                    .andWhere('c.fieldId = :fieldId')
-                    .andWhere('r.id = record.id')
-                    .andWhere(condition)
-                    .setParameters({
-                        projectId,
-                        fieldId: filter.fieldId,
-                        fieldValue: filter.operator === FilterOperator.CO ? `%${filter.value}%` : filter.value,
-                    })
-
-                queryBuilder.andWhere(`EXISTS (${subQuery.getQuery()})`)
-                queryBuilder.setParameters(subQuery.getParameters())
-            })
-        }
-
-        const data = await queryBuilder.getMany()
+        const cells = await cellsRepo().find({
+            where: {
+                projectId,
+                fieldId: In(fields.map((field) => field.id)),
+            },
+        })
+       
+        const recordCells: Record<string, PopulatedRecord['cells']> = cells.reduce<Record<string, PopulatedRecord['cells']>>((acc, cell) => {
+            acc[cell.recordId] = { ...acc[cell.recordId], [cell.fieldId]: {
+                fieldName: fields.find((field) => field.id === cell.fieldId)?.name ?? '',
+                value: cell.value,
+                updated: cell.updated,
+                created: cell.created,
+            } }
+            return acc  
+        }, {})
+        const populatedRecords: PopulatedRecord[] = records.map((record) => {
+            return {
+                ...record,
+                cells: recordCells[record.id],
+            }
+        })
+    
         return {
-            data: await Promise.all(data.map((record) => formatRecordAndFetchField(record))),
+            data: populatedRecords,
             next: null,
             previous: null,
         }
@@ -365,7 +340,7 @@ export const recordService = {
             }, [] as { value: string, fieldId: string }[])
             records.push(record)
         }
-        const batches = chunk(records, 100)
+        const batches = chunk(records, 50)
         const results: PopulatedRecord[] = []
         let processedCount = 0
         for (const batch of batches) {
