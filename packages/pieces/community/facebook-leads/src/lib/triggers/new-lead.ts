@@ -50,7 +50,7 @@ export const newLead = createTrigger({
       leads.push(leadData);
     }
 
-    return [leads];
+    return leads;
   },
   async test(context) {
     let form = context.propsValue.form as string;
@@ -64,11 +64,11 @@ export const newLead = createTrigger({
       form = forms[0].id;
     }
 
-    const data = await facebookLeadsCommon.loadSampleData(
+    const response = await facebookLeadsCommon.loadSampleData(
       form,
       context.auth.access_token
     );
-    return [data.data];
+    return response.data;
   },
 });
 
