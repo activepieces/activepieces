@@ -6,15 +6,15 @@ export class Migration1743780156664 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "flow"
-            ADD "metadata" jsonb DEFAULT '{}'
+            ADD "metadata" text DEFAULT '{}'
         `);
         await queryRunner.query(`
             ALTER TABLE "project"
-            ADD "metadata" jsonb DEFAULT '{}'
+            ADD "metadata" text DEFAULT '{}'
         `);
         await queryRunner.query(`
             ALTER TABLE "app_connection"
-            ADD "metadata" jsonb DEFAULT '{}'
+            ADD "metadata" text DEFAULT '{}'
         `);
     }
 
@@ -29,5 +29,4 @@ export class Migration1743780156664 implements MigrationInterface {
             ALTER TABLE "flow" DROP COLUMN "metadata"
         `);
     }
-
-}
+} 
