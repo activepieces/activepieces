@@ -1,6 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema } from '../common'
-import { Cell } from './cell'
 
 export enum FieldType {
     TEXT = 'TEXT',
@@ -9,27 +8,23 @@ export enum FieldType {
     STATIC_DROPDOWN = 'STATIC_DROPDOWN',
 }
 
-const FieldCommonSchema ={
+export const Field = Type.Union([Type.Object({
     ...BaseModelSchema,
-    cells: Type.Array(Cell),
     name: Type.String(),
+    type: Type.Literal(FieldType.STATIC_DROPDOWN),
     tableId: Type.String(),
     projectId: Type.String(),
-}
-
-
-export const Field = Type.Union([
-    Type.Object({
-        ...FieldCommonSchema,
-        type: Type.Literal(FieldType.STATIC_DROPDOWN),
-         data: Type.Object({
-           options: Type.Array(Type.Object({
+    data: Type.Object({
+        options: Type.Array(Type.Object({
             value: Type.String(),
         })),
     }),
 }), Type.Object({
-    ...FieldCommonSchema,
+    ...BaseModelSchema,
+    name: Type.String(),
     type: Type.Union([Type.Literal(FieldType.TEXT), Type.Literal(FieldType.NUMBER), Type.Literal(FieldType.DATE)]),
+    tableId: Type.String(),
+    projectId: Type.String(),
 })])
 
 export type Field = Static<typeof Field>

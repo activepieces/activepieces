@@ -13,10 +13,10 @@ export const CreateRecordsRequest = Type.Object({
 export type CreateRecordsRequest = Static<typeof CreateRecordsRequest>
 
 export const UpdateRecordRequest = Type.Object({
-    cells: Type.Array(Type.Object({
+    cells: Type.Optional(Type.Array(Type.Object({
         fieldId: Type.String(),
         value: Type.String(),
-    })),
+    }))),
     tableId: Type.String(),
 })
 
@@ -52,7 +52,6 @@ export type ListRecordsRequest = Omit<Static<typeof ListRecordsRequest>, 'cursor
 
 export const DeleteRecordsRequest = Type.Object({
     ids: Type.Array(Type.String()),
-    tableId: Type.String(),
 })
 
 export type DeleteRecordsRequest = Static<typeof DeleteRecordsRequest>

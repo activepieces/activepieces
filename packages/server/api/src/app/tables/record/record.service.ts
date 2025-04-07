@@ -8,25 +8,30 @@ import {
     Cursor,
     ErrorCode,
     Field,
+    Filter,
+    FilterOperator,
     GetFlowVersionForWorkerRequestType,
     ImportCsvRequestBody,
     isNil,
     PopulatedRecord,
     SeekPage,
-    tableUtils,
     TableWebhookEventType,
     UpdateRecordRequest,
 } from '@activepieces/shared'
 import { parse } from 'csv-parse'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager } from 'typeorm'
+import { EntityManager, In } from 'typeorm'
+import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { system } from '../../helper/system/system'
 import { webhookService } from '../../webhooks/webhook.service'
 import { FieldEntity } from '../field/field.entity'
 import { fieldService } from '../field/field.service'
 import { tableService } from '../table/table.service'
+import { CellEntity } from './cell.entity'
+import { RecordEntity, RecordSchema } from './record.entity'
 
+const recordRepo = repoFactory(RecordEntity)
 
 export const recordService = {
     async create({
@@ -34,108 +39,257 @@ export const recordService = {
         projectId,
     }: CreateParams): Promise<PopulatedRecord[]> {
         await this.validateCount({ projectId, tableId: request.tableId }, request.records.length)
-        const fields = await fieldService.getAll({projectId,tableId: request.tableId})
-        const updatedFields = tableUtils.addValuesToFields({fields,records: request.records})
-        await fieldService.bulkUpdate({projectId,tableId: request.tableId,fields: updatedFields})
-        return tableUtils.getRecordsFromFields({
-            fields: updatedFields,
-            recordsIds: 'ALL',
-            projectId,
-            tableId: request.tableId,
+        return transaction(async (entityManager: EntityManager) => {
+            const existingFields = await entityManager
+                .getRepository(FieldEntity)
+                .find({
+                    where: { tableId: request.tableId, projectId },
+                })
+
+            const validRecords = request.records.map((recordData) =>
+                recordData.filter((cellData) =>
+                    existingFields.some((field) => field.id === cellData.fieldId),
+                ),
+            )
+            const now = new Date()
+            const recordInsertions = validRecords.map((_, index) => {
+                const created = new Date(now.getTime() + index).toISOString()
+                return {
+                    tableId: request.tableId,
+                    projectId,
+                    created,
+                    id: apId(),
+                }
+            })
+
+            await entityManager.getRepository(RecordEntity).insert(recordInsertions)
+
+            // Prepare cells for insertion
+            const cellInsertions = validRecords.flatMap((recordData, index) =>
+                recordData.map((cellData) => {
+                    return {
+                        recordId: recordInsertions[index].id,
+                        fieldId: cellData.fieldId,
+                        projectId,
+                        value: cellData.value,
+                        id: apId(),
+                    }
+                }),
+            )
+
+            await entityManager.getRepository(CellEntity).insert(cellInsertions)
+
+            // Fetch and return fully populated records
+            const insertedRecordIds = recordInsertions.map((r) => r.id)
+            const fullyPopulatedRecords = await entityManager
+                .getRepository(RecordEntity)
+                .find({
+                    where: {
+                        id: In(insertedRecordIds),
+                        tableId: request.tableId,
+                        projectId,
+                    },
+                    relations: ['cells'],
+                    order: {
+                        created: 'ASC',
+                    },
+                })
+
+            const fields = await fieldService.getAll({
+                tableId: request.tableId,
+                projectId,
+            })
+            return fullyPopulatedRecords.map((record) => formatRecord(record, fields))
         })
     },
 
     async list({
         tableId,
         projectId,
-        //TODO: Implement or remove filters 
+        filters,
+
     }: ListParams): Promise<SeekPage<PopulatedRecord>> {
-        const fields = await fieldService.getAll({
-            tableId,
-            projectId,
-        })
-        const data = tableUtils.getRecordsFromFields({
-            fields,
-            recordsIds: 'ALL',
-            projectId,
-            tableId,
-        })
+        const queryBuilder = recordRepo()
+            .createQueryBuilder('record')
+            .leftJoinAndSelect('record.cells', 'cell')
+            .leftJoinAndSelect('cell.field', 'field')
+            .where('record.tableId = :tableId', { tableId })
+            .andWhere('record.projectId = :projectId', { projectId })
+            .orderBy('record.created', 'ASC')
+        if (filters?.length) {
+            filters.forEach((filter, _index) => {
+                const operator = filter.operator || FilterOperator.EQ
+                let condition = ''
+
+                switch (operator) {
+                    case FilterOperator.EQ:
+                        condition = 'c.value = :fieldValue'
+                        break
+                    case FilterOperator.NEQ:
+                        condition = 'c.value != :fieldValue'
+                        break
+                    case FilterOperator.GT:
+                        condition = 'c.value > :fieldValue'
+                        break
+                    case FilterOperator.GTE:
+                        condition = 'c.value >= :fieldValue'
+                        break
+                    case FilterOperator.LT:
+                        condition = 'c.value < :fieldValue'
+                        break
+                    case FilterOperator.LTE:
+                        condition = 'c.value <= :fieldValue'
+                        break
+                    case FilterOperator.CO:
+                        condition = 'LOWER(c.value) LIKE LOWER(:fieldValue)'
+                        break
+                }
+
+                // Create a subquery for each filter condition using field ID directly
+                const subQuery = recordRepo()
+                    .createQueryBuilder('r')
+                    .select('1')
+                    .innerJoin('r.cells', 'c')
+                    .where('c.projectId = :projectId') // To use the index
+                    .andWhere('c.fieldId = :fieldId')
+                    .andWhere('r.id = record.id')
+                    .andWhere(condition)
+                    .setParameters({
+                        projectId,
+                        fieldId: filter.fieldId,
+                        fieldValue: filter.operator === FilterOperator.CO ? `%${filter.value}%` : filter.value,
+                    })
+
+                queryBuilder.andWhere(`EXISTS (${subQuery.getQuery()})`)
+                queryBuilder.setParameters(subQuery.getParameters())
+            })
+        }
+
+        const data = await queryBuilder.getMany()
         return {
-            data,
+            data: await Promise.all(data.map((record) => formatRecordAndFetchField(record))),
             next: null,
             previous: null,
         }
     },
+
+    async getById({
+        id,
+        projectId,
+    }: GetByIdParams): Promise<PopulatedRecord> {
+        const record = await recordRepo().findOne({
+            where: { id, projectId },
+            relations: ['cells'],
+        })
+
+        if (isNil(record)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'Record',
+                    entityId: id,
+                },
+            })
+        }
+
+        return formatRecordAndFetchField(record)
+    },
+
     async update({
         id,
         projectId,
         request,
     }: UpdateParams): Promise<PopulatedRecord> {
         const { tableId } = request
-        const fields = await fieldService.getAll({projectId,tableId})
-        const updatedFields = tableUtils.updateRecord({
-         fields,
-         cells: request.cells,
-         id
+        return transaction(async (entityManager: EntityManager) => {
+            const record = await entityManager.getRepository(RecordEntity).findOne({
+                where: { projectId, tableId, id },
+            })
+
+            if (isNil(record)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENTITY_NOT_FOUND,
+                    params: {
+                        entityType: 'Record',
+                        entityId: id,
+                    },
+                })
+            }
+
+            if (request.cells && request.cells.length > 0) {
+                const existingFields = await entityManager
+                    .getRepository(FieldEntity)
+                    .find({
+                        where: { projectId, tableId },
+                    })
+
+                // Filter out cells with non-existing fields
+                const validCells = request.cells.filter((cellData) =>
+                    existingFields.some((field) => field.id === cellData.fieldId),
+                )
+
+                // Prepare cells for upsert
+                const cellsToUpsert = validCells.map((cellData) => {
+                    return {
+                        recordId: id,
+                        fieldId: cellData.fieldId,
+                        projectId,
+                        value: cellData.value,
+                        id: apId(),
+                    }
+                })
+
+                // Perform bulk upsert only for valid cells
+                if (cellsToUpsert.length > 0) {
+                    await entityManager
+                        .getRepository(CellEntity)
+                        .upsert(cellsToUpsert, ['projectId', 'fieldId', 'recordId'])
+                }
+            }
+
+            // Fetch and return the updated record with full details
+            const updatedRecord = await entityManager
+                .getRepository(RecordEntity)
+                .findOne({
+                    where: { id, projectId, tableId },
+                    relations: ['cells'],
+                })
+
+            if (isNil(updatedRecord)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENTITY_NOT_FOUND,
+                    params: {
+                        entityType: 'Record',
+                        entityId: id,
+                    },
+                })
+            }
+
+            return formatRecordAndFetchField(updatedRecord)
         })
-        await fieldService.bulkUpdate({projectId,tableId,fields: updatedFields})
-        return tableUtils.getRecordsFromFields({
-         fields: updatedFields,
-         recordsIds: [id],
-         projectId,
-         tableId,
-        })[0]
     },
 
     async delete({
         ids,
         projectId,
-        tableId
     }: DeleteParams): Promise<PopulatedRecord[]> {
-        if (ids.length === 0) {
-            return []
-        }
-
-        const fields = await fieldService.getAll({
-            tableId,
+        const records = await recordRepo().find({
+            where: { id: In(ids), projectId },
+            relations: ['cells'],
+        })
+        await recordRepo().delete({
+            id: In(ids),
             projectId,
         })
-        if(fields.length === 0){
+     
+        if (records.length === 0) {
             return []
         }
-
-      const updatedFields = fields.map((field)=>{
-        return {
-            ...field,
-            cells: field.cells.filter((cell)=> !ids.includes(cell.recordId)),
-        }
-      })
-      transaction(async (entityManager: EntityManager)=>{
-         // Process updates in chunks to avoid query size limitations
-         const chunkSize = 100
-         for (let i = 0; i < updatedFields.length; i += chunkSize) {
-             const chunk = updatedFields.slice(i, i + chunkSize)
-             const chunkIds = chunk.map(f => f.id)
- 
-             await entityManager
-                 .createQueryBuilder()
-                 .update(FieldEntity)
-                 .set(
-                     updatedFields
-                 )
-                 .where('id IN (:...ids)', { ids: chunkIds })
-                 .andWhere('projectId = :projectId', { projectId })
-                 .andWhere('tableId = :tableId', { tableId })
-                 .execute()
-         }
-      })
-    return tableUtils.getRecordsFromFields({
-        fields,
-        recordsIds: ids,
-        projectId,
-        tableId,
-    })
-    
+        const fields = await fieldService.getAll({
+            tableId: records[0].tableId,
+            projectId,
+        })
+        return records.map((record) => formatRecord(record, fields))
     },
 
     async triggerWebhooks({
@@ -175,8 +329,9 @@ export const recordService = {
     },
 
     async count({ projectId, tableId }: CountParams): Promise<number> {
-        const fields = await fieldService.getAll({projectId,tableId})
-        return fields[0].cells.length
+        return recordRepo().count({
+            where: { projectId, tableId },
+        })
     },
     async validateCount(params: CountParams, insertCount: number): Promise<void> {
         const countRes = await this.count(params)
@@ -213,20 +368,18 @@ export const recordService = {
         const batches = chunk(records, 100)
         const results: PopulatedRecord[] = []
         let processedCount = 0
-        const maxRecordsPerTable = system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE);
         for (const batch of batches) {
-            const batchToProcess = processedCount + batch.length + count <= maxRecordsPerTable ? batch: batch.slice(0, maxRecordsPerTable - processedCount - count)
-            if(batchToProcess.length > 0){
+            if (processedCount + batch.length + count <= system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)) {
                 const res = await this.create({
                     projectId,
-                        request: {
-                            records: batchToProcess,
-                            tableId,
-                        },
-                    })
+                    request: {
+                        records: batch,
+                        tableId,
+                    },
+                })
                 results.push(...res)
-                processedCount += batchToProcess.length
             }
+            processedCount += batch.length
         }
         return results
     },
@@ -242,9 +395,13 @@ type ListParams = {
     projectId: string
     cursorRequest: Cursor | null
     limit: number
+    filters: Filter[] | null
 }
 
-
+type GetByIdParams = {
+    id: string
+    projectId: string
+}
 
 type UpdateParams = {
     id: string
@@ -255,7 +412,6 @@ type UpdateParams = {
 type DeleteParams = {
     ids: string[]
     projectId: string
-    tableId: string
 }
 
 type TriggerWebhooksParams = {
@@ -268,6 +424,28 @@ type TriggerWebhooksParams = {
 }
 
 
+async function formatRecordAndFetchField(record: RecordSchema): Promise<PopulatedRecord> {
+    const fields = await fieldService.getAll({
+        tableId: record.tableId,
+        projectId: record.projectId,
+    })
+    return formatRecord(record, fields)
+}
+
+function formatRecord(record: RecordSchema, fields: Field[]): PopulatedRecord {
+    return {
+        ...record,
+        cells: Object.fromEntries(record.cells.map((cell) => {
+            const field = fields.find((field) => field.id === cell.fieldId)
+            return [cell.fieldId, {
+                fieldName: field!.name,
+                value: cell.value,
+                updated: cell.updated,
+                created: cell.created,
+            }]
+        })),
+    }
+}
 
 type CountParams = {
     projectId: string

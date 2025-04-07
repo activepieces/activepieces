@@ -1,4 +1,4 @@
-import { ApId, CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, ListTablesRequest, Permission, PopulatedTable, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, Table, UpdateTableRequest } from '@activepieces/shared'
+import { ApId, CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, ListTablesRequest, Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, Table, UpdateTableRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { tableService } from './table.service'
@@ -22,6 +22,7 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
             id: request.params.id,
             request: request.body,
         })
+         
     })
 
     fastify.get('/', GetTablesRequest, async (request) => {
@@ -136,7 +137,7 @@ const GetTableByIdRequest = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.OK]: PopulatedTable,
+            [StatusCodes.OK]: Table,
         },
     },
 }

@@ -13,9 +13,13 @@ export type Record = Static<typeof Record>
 export const PopulatedRecord = Type.Composite([
     Record,
     Type.Object({
-        cells: Type.Array(Cell),
+        cells: Type.Record(Type.String(), Type.Composite([
+            Type.Pick(Cell, ['updated', 'created', 'value']),
+            Type.Object({
+                fieldName: Type.String(),
+            }),
+        ])),
     }),
 ])
 
 export type PopulatedRecord = Static<typeof PopulatedRecord>
-

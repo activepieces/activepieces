@@ -3,10 +3,8 @@ import { ActivepiecesError, apId, CreateFieldRequest, ErrorCode, Field, isNil, U
 import { repoFactory } from '../../core/db/repo-factory'
 import { system } from '../../helper/system/system'
 import { FieldEntity } from './field.entity'
-import { transaction } from '../../core/db/transaction'
-import { EntityManager } from 'typeorm'
 
-export const fieldRepo = repoFactory<Field>(FieldEntity)
+const fieldRepo = repoFactory<Field>(FieldEntity)
 
 export const fieldService = {
     async create({ request, projectId }: CreateParams): Promise<Field> {
@@ -62,26 +60,6 @@ export const fieldService = {
         })
         return this.getById({ id, projectId })
     },
-    async bulkUpdate({projectId,tableId,fields}: BulkUpdateParams): Promise<void> {
-       return transaction(async (entityManager: EntityManager)=>{
-            // Process updates in chunks to avoid query size limitations
-            const chunkSize = 100
-            for (let i = 0; i < fields.length; i += chunkSize) {
-                const chunk = fields.slice(i, i + chunkSize)
-                const chunkIds = chunk.map(f => f.id)
-                await entityManager
-                    .createQueryBuilder()
-                    .update(FieldEntity)
-                    .set(
-                        fields
-                    )
-                    .where('id IN (:...ids)', { ids: chunkIds })
-                    .andWhere('projectId = :projectId', { projectId })
-                    .andWhere('tableId = :tableId', { tableId: tableId })
-                    .execute()
-            }
-         })
-    },
 
     async count({ projectId, tableId }: CountParams): Promise<number> {
         return fieldRepo().count({
@@ -129,10 +107,4 @@ type UpdateParams = {
 type CountParams = {
     projectId: string
     tableId: string
-}
-
-type BulkUpdateParams = {
-    projectId: string
-    tableId: string
-    fields: Field[]
 }
