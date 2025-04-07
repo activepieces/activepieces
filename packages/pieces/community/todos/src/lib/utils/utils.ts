@@ -37,10 +37,12 @@ export const createTodoProps = {
       {
         name: 'Accepted',
         variant: STATUS_VARIANT.POSITIVE,
+        continueFlow: true,
       },
       {
         name: 'Rejected',
         variant: STATUS_VARIANT.NEGATIVE,
+        continueFlow: true,
       },
     ],
     properties: {
@@ -58,6 +60,11 @@ export const createTodoProps = {
             label: variant,
           })),
         },
+      }),
+      continueFlow: Property.Checkbox({
+        displayName: 'Continue Flow',
+        required: true,
+        defaultValue: true,
       }),
     },
   }),
@@ -96,6 +103,7 @@ export async function sendTodoApproval(context: ApprovalParms, isTest: boolean) 
       name: option.name,
       description: option.description,
       variant: option.variant,
+      continueFlow: option.continueFlow,
     })),
     flowId: context.flows.current.id,
     runId: isTest ? undefined : context.run.id,
