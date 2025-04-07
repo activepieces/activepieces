@@ -2,19 +2,24 @@ import { Property } from '@activepieces/pieces-framework';
 
 export const akahuCommon = {
   baseUrl: 'https://api.akahu.io/v1/',
+  account_id: Property.ShortText({
+    displayName: 'Account ID',
+    description: 'An Akahu Account ID',
+    required: true,
+  }),
   start: Property.DateTime({
-    displayName: 'start',
-    description: 'start date',
+    displayName: 'Start',
+    description: 'Start date',
     required: false,
   }),
   end: Property.DateTime({
-    displayName: 'end',
-    description: 'end date',
+    displayName: 'End',
+    description: 'End date',
     required: false,
   }),
   cursor: Property.ShortText({
-    displayName: 'cursor',
-    description: 'cursor from an earlier query',
+    displayName: 'Cursor',
+    description: 'Cursor from an earlier query',
     required: false,
   }),
 };
