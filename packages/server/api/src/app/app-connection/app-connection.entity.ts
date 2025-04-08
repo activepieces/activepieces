@@ -65,7 +65,6 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
         metadata: {
             type: JSONB_COLUMN_TYPE,
             nullable: true,
-            default: {}
         },
     },
     indices: [
