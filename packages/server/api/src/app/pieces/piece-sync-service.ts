@@ -79,7 +79,7 @@ async function syncPiece(name: string, log: FastifyBaseLogger): Promise<void> {
         }
     }
     catch (error) {
-        log.error({ error }, 'Error syncing piece, please upgrade the activepieces to latest version')
+        log.error(error, 'Error syncing piece, please upgrade the activepieces to latest version')
     }
 
 }

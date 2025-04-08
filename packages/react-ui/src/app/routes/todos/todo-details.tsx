@@ -231,7 +231,9 @@ function TodoDetails({
                     <Tooltip>
                       <TooltipTrigger>
                         {data?.run.status &&
-                          data?.run.status === FlowRunStatus.RUNNING && (
+                          (data?.run.status === FlowRunStatus.RUNNING ||
+                            data?.run.status === FlowRunStatus.PAUSED ||
+                            data?.run.status === FlowRunStatus.STOPPED) && (
                             <Loader className="h-4 w-4 mr-2" />
                           )}
                         {data?.run.status &&
@@ -248,6 +250,17 @@ function TodoDetails({
                           data?.run.status === FlowRunStatus.RUNNING && (
                             <span className="text-xs">Flow is running</span>
                           )}
+
+                        {data?.run.status &&
+                          data?.run.status === FlowRunStatus.PAUSED && (
+                            <span className="text-xs">Flow is paused</span>
+                          )}
+
+                        {data?.run.status &&
+                          data?.run.status === FlowRunStatus.STOPPED && (
+                            <span className="text-xs">Flow is stopped</span>
+                          )}
+
                         {data?.run.status &&
                           isFailedState(data?.run.status) && (
                             <span className="text-xs">Flow failed</span>
@@ -262,7 +275,8 @@ function TodoDetails({
                   <span className="text-sm text-muted-foreground mr-2">
                     Status
                   </span>
-                  {todo.status.name === UNRESOLVED_STATUS.name && (
+                  {(todo.status.name === UNRESOLVED_STATUS.name ||
+                    todo.status.continueFlow === false) && (
                     <DropdownMenu>
                       <DropdownMenuTrigger>
                         <Button
@@ -319,14 +333,15 @@ function TodoDetails({
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}
-                  {todo.status.name !== UNRESOLVED_STATUS.name && (
-                    <StatusIconWithText
-                      icon={CheckIcon}
-                      text={todo.status.name}
-                      color={STATUS_COLORS[todo.status.variant].color}
-                      textColor={STATUS_COLORS[todo.status.variant].textColor}
-                    />
-                  )}
+                  {todo.status.name !== UNRESOLVED_STATUS.name &&
+                    todo.status.continueFlow !== false && (
+                      <StatusIconWithText
+                        icon={CheckIcon}
+                        text={todo.status.name}
+                        color={STATUS_COLORS[todo.status.variant].color}
+                        textColor={STATUS_COLORS[todo.status.variant].textColor}
+                      />
+                    )}
                 </div>
               </div>
               <div className="flex items-center gap-2">
