@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { SeekPage } from '@activepieces/shared';
+import { isNil, SeekPage } from '@activepieces/shared';
 
 import { Button } from '../button';
 import {
@@ -36,6 +36,7 @@ import { DataTableColumnHeader } from './data-table-column-header';
 import { DataTableFacetedFilter } from './data-table-options-filter';
 import { DataTableSkeleton } from './data-table-skeleton';
 import { DataTableToolbar } from './data-table-toolbar';
+import { cn } from '@/lib/utils';
 
 export type DataWithId = {
   id?: string;
@@ -274,7 +275,7 @@ export function DataTable<
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-background">
+              <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => {
                   return (
                     <TableHead key={header.id}>
@@ -292,7 +293,7 @@ export function DataTable<
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
+              <TableRow className='hover:bg-background'>
                 <TableCell
                   colSpan={columns.length}
                   className="h-24 text-center"
@@ -303,6 +304,11 @@ export function DataTable<
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
+                  className={
+                    cn("cursor-pointer",{
+                      "hover:bg-background cursor-default": isNil(onRowClick)
+                    })
+                  }
                   onClick={(e) => {
                     // Check if the clicked cell is not clickable
                     const clickedCellIndex = (e.target as HTMLElement).closest(
@@ -310,8 +316,7 @@ export function DataTable<
                     )?.cellIndex;
                     if (
                       clickedCellIndex !== undefined &&
-                      (columnsInitial[clickedCellIndex]?.notClickable ||
-                        columnsInitial[clickedCellIndex]?.id === 'select')
+                      columnsInitial[clickedCellIndex]?.notClickable
                     ) {
                       return; // Don't trigger onRowClick for not clickable columns
                     }
@@ -331,21 +336,33 @@ export function DataTable<
                     onRowClick?.(row.original, true, e);
                   }}
                   key={row.id}
-                  className={onRowClick ? 'cursor-pointer' : ''}
                   data-state={row.getIsSelected() && 'selected'}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
+                      <div className='flex items-center justify-start'>
+                        <div onClick={(e) => {
+                        if(cell.column.id === 'select') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          return;
+                        }
+                      }}>
+
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                        </div>
+                     
+                      </div>
+                   
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
-              <TableRow>
+              <TableRow className='hover:bg-background'>
                 <TableCell
                   colSpan={columns.length}
                   className="h-[350px] text-center"
