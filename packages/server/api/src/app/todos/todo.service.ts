@@ -44,7 +44,7 @@ export const todoService = (_log: FastifyBaseLogger) => ({
     },
     async update(params: UpdateParams): Promise<Todo | null> {
         const todo = await this.getOneOrThrow(params)
-        if (params.status && todo.resolveUrl) {
+        if (params.status && todo.resolveUrl && params.status.continueFlow !== false) {
             await sendResolveRequest(todo.resolveUrl, params.status)
         }
         await repo().update({
@@ -57,7 +57,7 @@ export const todoService = (_log: FastifyBaseLogger) => ({
             ...spreadIfDefined('status', params.status),
             ...spreadIfDefined('statusOptions', params.statusOptions),
             ...spreadIfDefined('assigneeId', params.assigneeId),
-            ...(params.status && !params.isTest ? { resolveUrl: null } : {}),
+            ...(params.status && params.status.continueFlow !== false && !params.isTest ? { resolveUrl: null } : {}),
         })
         return this.getOneOrThrow(params)
     },
@@ -69,6 +69,12 @@ export const todoService = (_log: FastifyBaseLogger) => ({
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: 'Status not found' },
+            })
+        }
+        if (status.continueFlow === false) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: `Todo cannot be resolved because the continueFlow is set to false for the status: ${status.name}` },
             })
         }
         await sendResolveRequest(todo.resolveUrl, status)
@@ -108,13 +114,15 @@ export const todoService = (_log: FastifyBaseLogger) => ({
         }
         if (params.statusOptions) {
             if (params.statusOptions[0] === UNRESOLVED_STATUS.name) {
-                query = query.andWhere('status->>\'name\' = :statusName', {
+                query = query.andWhere('(status->>\'name\' = :statusName OR status->>\'continueFlow\' = :continueFlow)', {
                     statusName: UNRESOLVED_STATUS.name,
+                    continueFlow: 'false',
                 })
             }
             else {
-                query = query.andWhere('status->>\'name\' != :statusName', {
+                query = query.andWhere('status->>\'name\' != :statusName AND (status->>\'continueFlow\' IS NULL OR status->>\'continueFlow\' != :continueFlow)', {
                     statusName: UNRESOLVED_STATUS.name,
+                    continueFlow: 'false',
                 })
             }
         }
