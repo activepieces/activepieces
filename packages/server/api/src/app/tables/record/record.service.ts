@@ -340,11 +340,13 @@ export const recordService = {
         const records: { value: string, fieldId: string }[][] = []
         for await (const row of parser) {
             const record: { value: string, fieldId: string }[] = fields.reduce((acc, field, idx) => {
-                acc.push({ value: row[idx], fieldId: field.id })                
+                //in case of empty cells (more fields in table than csv), we will use an empty string
+                acc.push({ value: row[idx]??'', fieldId: field.id })                
                 return acc
             }, [] as { value: string, fieldId: string }[])
             records.push(record)
         }
+        //need to keep it small size to avoid query limit issues
         const batches = chunk(records, 50)
         const results: PopulatedRecord[] = []
         let importedCount = 0

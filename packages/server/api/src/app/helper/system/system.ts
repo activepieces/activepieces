@@ -76,8 +76,8 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: '100',
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: 'false',
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: '1500',
-    [AppSystemProp.MAX_TABLES_PER_PROJECT]: '50',
-    [AppSystemProp.MAX_FIELDS_PER_TABLE]: '100',
+    [AppSystemProp.MAX_TABLES_PER_PROJECT]: '20',
+    [AppSystemProp.MAX_FIELDS_PER_TABLE]: '15',
 }
 
 let globalLogger: FastifyBaseLogger
