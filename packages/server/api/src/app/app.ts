@@ -81,6 +81,7 @@ import { systemJobsSchedule } from './helper/system-jobs'
 import { validateEnvPropsOnStartup } from './helper/system-validator'
 import { globalOAuthAppModule } from './oauth-apps/global-oauth-app.module'
 import { oauthAppModule } from './oauth-apps/oauth-app.module'
+import { mcpModule } from './mcp/mcp-module'
 import { pieceModule } from './pieces/base-piece-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
 // import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks'
@@ -228,7 +229,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(platformModule)
     await app.register(humanInputModule)
     await app.register(tagsModule)
-    // await app.register(mcpModule)
+    await app.register(mcpModule)
     await pieceSyncService(app.log).setup()
     await app.register(platformUserModule)
     // await app.register(issuesModule)

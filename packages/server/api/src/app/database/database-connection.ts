@@ -41,6 +41,7 @@ import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity
 import { DatabaseType, system } from '../helper/system/system'
 import { GlobalOAuthAppEntity } from '../oauth-apps/global-oauth-app.entity'
 import { OAuthAppEntity } from '../oauth-apps/oauth-app.entity'
+import { MCPEntity } from '../mcp/mcp-entity'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PlatformEntity } from '../platform/platform.entity'
 import { ProjectEntity } from '../project/project-entity'
@@ -99,6 +100,7 @@ function getEntities(): EntitySchema<unknown>[] {
         OAuthAppEntity,
         GlobalOAuthAppEntity,
         TodoEntity,
+        MCPEntity,
     ]
 
     switch (edition) {

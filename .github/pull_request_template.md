@@ -1,5 +1,5 @@
 ### What does this PR do?
 
-<!-- Please include a summary of the change and which issue is fixed. Please also include relevant motivation and context. List any dependencies that are required for this change. -->
+<!-- We need a clear description of what the PR does, as this will be used for the marketing team to generate the release notes. -->
 
 Fixes # (issue)

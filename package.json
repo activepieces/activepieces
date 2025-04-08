@@ -27,7 +27,7 @@
   "private": true,
   "dependencies": {
     "@activepieces/import-fresh-webpack": "3.3.0",
-    "@actual-app/api": "6.8.1",
+    "@actual-app/api": "25.3.1",
     "@ai-sdk/anthropic": "1.0.5",
     "@ai-sdk/azure": "1.0.10",
     "@ai-sdk/openai": "0.0.70",
@@ -418,7 +418,7 @@
     "ts-node": "10.9.1",
     "typescript": "5.5.4",
     "verdaccio": "6.0.5",
-    "vite": "6.2.3",
+    "vite": "6.2.5",
     "vite-plugin-checker": "0.7.2",
     "vitest": "3.0.8",
     "wait-on": "7.2.0",

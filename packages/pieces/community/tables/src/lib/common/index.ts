@@ -175,7 +175,7 @@ export const tablesCommon = {
               displayName: field.name,
               description,
               required: false,
-              defaultValue: 'asdasd',
+              defaultValue: '',
             });
             break;
         }
