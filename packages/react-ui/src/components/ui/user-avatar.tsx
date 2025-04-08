@@ -1,10 +1,11 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { LogOut, SunMoon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { useTelemetry } from '@/components/telemetry-provider';
-import { authenticationSession } from '@/lib/authentication-session';
+import { userHooks } from '@/hooks/user-hooks';
 
 import { Avatar, AvatarFallback } from './avatar';
 import { AvatarLetter } from './avatar-letter';
@@ -20,7 +21,8 @@ import { TextWithIcon } from './text-with-icon';
 export function UserAvatar() {
   const { reset } = useTelemetry();
   const { embedState } = useEmbedding();
-  const user = authenticationSession.getCurrentUser();
+  const { data: user } = userHooks.useCurrentUser();
+  const queryClient = useQueryClient();
   if (!user || embedState.isEmbedded) {
     return null;
   }

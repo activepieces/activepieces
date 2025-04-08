@@ -5,8 +5,8 @@ import 'react-quill/dist/quill.snow.css';
 import './FloatingChatButton.css';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { AvatarLetter } from '../ui/avatar-letter';
-import { authenticationSession } from '@/lib/authentication-session';
 import { useEmbedding } from '../embed-provider';
+import { userHooks } from '@/hooks/user-hooks';
 
 export const modulesChat = {
   toolbar: [
@@ -21,7 +21,7 @@ export const modulesChat = {
 export const FloatingChatButton: React.FC = () => {
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const { embedState } = useEmbedding();
-  const user = authenticationSession.getCurrentUser();
+  const { data: user } = userHooks.useCurrentUser();
   if (!user || embedState.isEmbedded) {
     return null;
   }
