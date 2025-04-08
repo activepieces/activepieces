@@ -91,6 +91,7 @@ export const UpdateProjectRequestInCommunity = Type.Object({
     displayName: Type.Optional(Type.String({
         pattern: SAFE_STRING_PATTERN,
     })),
+    metadata: Type.Optional(Metadata),
 })
 
 export type UpdateProjectRequestInCommunity = Static<typeof UpdateProjectRequestInCommunity>

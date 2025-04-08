@@ -173,6 +173,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         platformId: project?.platformId ?? apId(),
         externalId: project?.externalId ?? apId(),
         releasesEnabled: project?.releasesEnabled ?? false,
+        metadata: project?.metadata ?? null,
     }
 }
 
