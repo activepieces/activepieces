@@ -3,12 +3,14 @@ import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
+    Cell,
     chunk,
     CreateRecordsRequest,
     Cursor,
     ErrorCode,
     Field,
     Filter,
+    FilterOperator,
     GetFlowVersionForWorkerRequestType,
     ImportCsvRequestBody,
     isNil,
@@ -102,6 +104,7 @@ export const recordService = {
     async list({
         tableId,
         projectId,
+        filters
     }: ListParams): Promise<SeekPage<PopulatedRecord>> {
        
         const fields = await fieldService.getAll({
@@ -122,12 +125,14 @@ export const recordService = {
                 recordId: In(records.map((record) => record.id)),
             },
         })
-
         records.map((record) => {
             record.cells = cells.filter((cell) => cell.recordId === record.id)
         })
+        const filteredOutRecords = records.filter((record) => {
+            return record.cells.every((cell) => doesCellValueMatchFilters(cell, filters ?? []))
+        })
        
-        const populatedRecords = await formatRecordsAndFetchField({records, tableId, projectId})
+        const populatedRecords = await formatRecordsAndFetchField({records: filteredOutRecords, tableId, projectId})
     
         return {
             data: populatedRecords,
@@ -342,19 +347,22 @@ export const recordService = {
         }
         const batches = chunk(records, 50)
         const results: PopulatedRecord[] = []
-        let processedCount = 0
+        let importedCount = 0
+        const maxRecordsPerTable = system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)
         for (const batch of batches) {
-            if (processedCount + batch.length + count <= system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)) {
+            const batchToImport = batch.slice(0, maxRecordsPerTable - importedCount - count)
+            if (batchToImport.length > 0) {
                 const res = await this.create({
                     projectId,
                     request: {
-                        records: batch,
+                        records: batchToImport,
                         tableId,
                     },
                 })
                 results.push(...res)
+                importedCount += batchToImport.length
             }
-            processedCount += batch.length
+           
         }
         return results
     },
@@ -397,6 +405,17 @@ type TriggerWebhooksParams = {
     logger: FastifyBaseLogger
     authorization: string
 }
+type CountParams = {
+    projectId: string
+    tableId: string
+}
+
+type ImportCsvParams = {
+    projectId: string
+    tableId: string
+    request: ImportCsvRequestBody
+}
+
 
 
 async function formatRecordsAndFetchField({records, tableId, projectId}:{records: RecordSchema[], tableId: string, projectId: string}): Promise<PopulatedRecord[]> {
@@ -429,15 +448,56 @@ function formatRecords(records: RecordSchema[], fields: Field[]): PopulatedRecor
 }
 
 
-
-type CountParams = {
-    projectId: string
-    tableId: string
+function doesCellValueMatchFilters(cell: Cell, filters: Filter[]): boolean {
+    if(filters.length === 0) {
+        return true
+    }
+   const filtersForCellFields = filters.filter((filter) => filter.fieldId === cell.fieldId)
+   if(filtersForCellFields.length === 0) {
+    return true
+   }
+   return filtersForCellFields.every((filter) => {
+    switch(filter.operator) {
+        case FilterOperator.EQ:{
+            return cell.value === filter.value
+        }
+        case FilterOperator.NEQ:{
+            return cell.value !== filter.value
+        }
+        case FilterOperator.GT:{
+           return numberFilterValidator({cellValue: cell.value, filterValue: filter.value, cb: ({cellValue, filterValue})=> cellValue > filterValue})
+        }
+        case FilterOperator.GTE:{
+            return numberFilterValidator({cellValue: cell.value, filterValue: filter.value, cb: ({cellValue, filterValue})=> cellValue >= filterValue})
+        }
+        case FilterOperator.LT:{
+            return numberFilterValidator({cellValue: cell.value, filterValue: filter.value, cb: ({cellValue, filterValue})=> cellValue < filterValue})          
+        }
+        case FilterOperator.LTE:{
+            return numberFilterValidator({cellValue: cell.value, filterValue: filter.value, cb: ({cellValue, filterValue})=> cellValue <= filterValue})
+        }
+        case FilterOperator.CO:{
+            if(typeof cell.value === 'string') {
+                return cell.value.toLowerCase().includes(filter.value.toLowerCase())
+            }
+            return false
+        }
+        
+    }
+    return false;
+   })
+   
 }
 
-type ImportCsvParams = {
-    projectId: string
-    tableId: string
-    request: ImportCsvRequestBody
-}
 
+const numberFilterValidator = ({cellValue, filterValue,cb}:{cellValue: unknown, filterValue: string,cb:({cellValue, filterValue}:{cellValue: number, filterValue: number}) => boolean}) => {
+    if(typeof cellValue === 'string' || typeof cellValue === 'number') {
+        const cv = parseFloat(cellValue as string)
+        const fv = parseFloat(filterValue)
+        if(isNaN(cv) || isNaN(fv)) {
+            return false
+        }
+        return cb({cellValue: cv, filterValue: fv})
+    }
+    return false
+}
