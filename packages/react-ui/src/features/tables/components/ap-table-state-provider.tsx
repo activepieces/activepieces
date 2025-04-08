@@ -1,6 +1,6 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { createContext, useContext, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { Navigate,  useParams } from 'react-router-dom';
 import { useStore } from 'zustand';
 
 import {
@@ -12,25 +12,40 @@ import {
 import { fieldsApi } from '../lib/fields-api';
 import { recordsApi } from '../lib/records-api';
 import { tablesApi } from '../lib/tables-api';
+import { Field, Table, PopulatedRecord } from '@activepieces/shared';
+import { LoadingScreen } from '@/app/components/loading-screen';
 
 const TableContext = createContext<ApTableStore | null>(null);
 
-type ApTableStateProviderProps = {
-  children: React.ReactNode;
-};
-export function ApTableStateProvider({ children }: ApTableStateProviderProps) {
-  const tableId = useParams().tableId;
 
-  const { data: table } = useSuspenseQuery({
+export const TableStateProviderWithTable = ({ children, table,fields,records }: { children: React.ReactNode, table: Table,fields:Field[],records:PopulatedRecord[] }) => {
+  
+  const tableStoreRef = useRef<ApTableStore>(
+    createApTableStore(table, fields, records),
+  );
+  return (
+    <TableContext.Provider value={tableStoreRef.current}>
+      {children}
+    </TableContext.Provider>
+  );
+
+
+}
+
+export function ApTableStateProvider({ children }: { children: React.ReactNode;}) {
+  const tableId = useParams().tableId;
+  const { data: table, isLoading: isTableLoading, error: tableError } = useQuery({
     queryKey: ['table', tableId],
-    queryFn: () => tablesApi.getById(tableId!),
+    queryFn: () => {
+         return tablesApi.getById(tableId!)
+    },
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     staleTime: 0,
     gcTime: 0,
   });
 
-  const { data: fields } = useSuspenseQuery({
+  const { data: fields, isLoading: isFieldsLoading, error: fieldsError } = useQuery({
     queryKey: ['fields', tableId],
     queryFn: () => fieldsApi.list(tableId!),
     refetchOnWindowFocus: true,
@@ -39,7 +54,7 @@ export function ApTableStateProvider({ children }: ApTableStateProviderProps) {
     gcTime: 0,
   });
 
-  const { data: records } = useSuspenseQuery({
+  const { data: records, isLoading: isRecordsLoading, error: recordsError } = useQuery({
     queryKey: ['records', tableId],
     queryFn: () =>
       recordsApi.list({
@@ -51,15 +66,25 @@ export function ApTableStateProvider({ children }: ApTableStateProviderProps) {
     staleTime: 0,
     gcTime: 0,
   });
-
-  const tableStoreRef = useRef<ApTableStore>(
-    createApTableStore(table, fields, records.data),
-  );
+  if(tableError || fieldsError || recordsError){
+    return <Navigate to="/tables" />;
+  }
+  if(isTableLoading || isFieldsLoading || isRecordsLoading ){
+    return <div className='flex justify-center items-center h-full w-full pb-6'>
+      <LoadingScreen mode='container' />
+    </div>
+  }
+  if(!table || !fields || !records){
+    return <Navigate to="/tables" />;
+  }
   return (
-    <TableContext.Provider value={tableStoreRef.current}>
+    <TableStateProviderWithTable table={table} fields={fields} records={records.data}>
       {children}
-    </TableContext.Provider>
+    </TableStateProviderWithTable>
   );
+
+
+  
 }
 
 export function useTableState<T>(selector: (state: TableState) => T) {

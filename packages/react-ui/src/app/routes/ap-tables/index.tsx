@@ -28,6 +28,7 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { api } from '@/lib/api';
 import { formatUtils, NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
 import { ApFlagId, FieldType, Permission, Table } from '@activepieces/shared';
+import { LoadingScreen } from '@/app/components/loading-screen';
 
 const ApTablesPage = () => {
   const openNewWindow = useNewWindow();
@@ -240,6 +241,9 @@ const ApTablesPage = () => {
     ],
     [bulkDeleteMutation, selectedRows],
   );
+  if(isCreatingTable){
+    return <LoadingScreen mode='container' />
+  }
 
   return (
     <div className="flex-col w-full gap-4">
@@ -257,7 +261,6 @@ const ApTablesPage = () => {
             size="sm"
             onClick={() => createTable({ name: t('New Table') })}
             className="flex items-center gap-2"
-            loading={isCreatingTable}
             disabled={!userHasTableWritePermission}
           >
             <Plus className="h-4 w-4" />
