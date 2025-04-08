@@ -6,6 +6,7 @@ export const CreateFlowRequest = Type.Object({
     folderId: Type.Optional(Type.String({})),
     folderName: Type.Optional(Type.String({})),
     projectId: Type.String({}),
+    metadata: Type.Optional(Type.Record(Type.String(), Type.Any())),
 })
 
 export type CreateFlowRequest = Static<typeof CreateFlowRequest>

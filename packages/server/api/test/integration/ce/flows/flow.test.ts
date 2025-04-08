@@ -41,6 +41,9 @@ describe('Flow API', () => {
             const mockCreateFlowRequest = {
                 displayName: 'test flow',
                 projectId: mockProject.id,
+                metadata: {
+                    foo: 'bar'
+                }
             }
 
             // act
@@ -69,7 +72,7 @@ describe('Flow API', () => {
             expect(responseBody?.status).toBe('DISABLED')
             expect(responseBody?.publishedVersionId).toBeNull()
             expect(responseBody?.schedule).toBeNull()
-            expect(responseBody?.metadata).toBeNull()
+            expect(responseBody?.metadata).toMatchObject({ foo: 'bar' })
 
             expect(Object.keys(responseBody?.version)).toHaveLength(10)
             expect(responseBody?.version?.id).toHaveLength(21)

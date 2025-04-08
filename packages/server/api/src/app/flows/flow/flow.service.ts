@@ -67,6 +67,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             publishedVersionId: null,
             schedule: null,
             externalId,
+            metadata: request.metadata || null,
         }
         const savedFlow = await flowRepo().save(newFlow)
 
