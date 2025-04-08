@@ -80,7 +80,7 @@ export const recordService = {
 
             // Fetch and return fully populated records
             const insertedRecordIds = recordInsertions.map((r) => r.id)
-            const fullyPopulatedRecords = await entityManager
+            const records = await entityManager
                 .getRepository(RecordEntity)
                 .find({
                     where: {
@@ -93,12 +93,9 @@ export const recordService = {
                         created: 'ASC',
                     },
                 })
-
-            const fields = await fieldService.getAll({
-                tableId: request.tableId,
-                projectId,
-            })
-            return fullyPopulatedRecords.map((record) => formatRecord(record, fields))
+            return formatRecordsAndFetchField({records, tableId: request.tableId, projectId})
+          
+        
         })
     },
 
@@ -122,24 +119,15 @@ export const recordService = {
             where: {
                 projectId,
                 fieldId: In(fields.map((field) => field.id)),
+                recordId: In(records.map((record) => record.id)),
             },
         })
-       
-        const recordCells: Record<string, PopulatedRecord['cells']> = cells.reduce<Record<string, PopulatedRecord['cells']>>((acc, cell) => {
-            acc[cell.recordId] = { ...acc[cell.recordId], [cell.fieldId]: {
-                fieldName: fields.find((field) => field.id === cell.fieldId)?.name ?? '',
-                value: cell.value,
-                updated: cell.updated,
-                created: cell.created,
-            } }
-            return acc  
-        }, {})
-        const populatedRecords: PopulatedRecord[] = records.map((record) => {
-            return {
-                ...record,
-                cells: recordCells[record.id],
-            }
+
+        records.map((record) => {
+            record.cells = cells.filter((cell) => cell.recordId === record.id)
         })
+       
+        const populatedRecords = await formatRecordsAndFetchField({records, tableId, projectId})
     
         return {
             data: populatedRecords,
@@ -167,7 +155,8 @@ export const recordService = {
             })
         }
 
-        return formatRecordAndFetchField(record)
+        const result = await formatRecordsAndFetchField({records: [record], tableId: record.tableId, projectId: record.projectId})
+        return result[0]
     },
 
     async update({
@@ -240,7 +229,8 @@ export const recordService = {
                 })
             }
 
-            return formatRecordAndFetchField(updatedRecord)
+            const result = await formatRecordsAndFetchField({records: [updatedRecord], tableId: updatedRecord.tableId, projectId: updatedRecord.projectId})
+            return result[0]
         })
     },
 
@@ -248,23 +238,33 @@ export const recordService = {
         ids,
         projectId,
     }: DeleteParams): Promise<PopulatedRecord[]> {
+        const firstRecord = await recordRepo().findOne({
+            where: { id: ids[0], projectId },
+            select: ['tableId'],
+        })
+        if (isNil(firstRecord)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'Record', entityId: ids[0] },
+            })
+        }
+
         const records = await recordRepo().find({
-            where: { id: In(ids), projectId },
+            where: { id: In(ids), projectId, tableId: firstRecord.tableId },
             relations: ['cells'],
         })
+        
         await recordRepo().delete({
             id: In(ids),
             projectId,
+            tableId: firstRecord.tableId,
         })
      
         if (records.length === 0) {
             return []
         }
-        const fields = await fieldService.getAll({
-            tableId: records[0].tableId,
-            projectId,
-        })
-        return records.map((record) => formatRecord(record, fields))
+       
+        return formatRecordsAndFetchField({records, tableId: firstRecord.tableId, projectId})
     },
 
     async triggerWebhooks({
@@ -399,28 +399,36 @@ type TriggerWebhooksParams = {
 }
 
 
-async function formatRecordAndFetchField(record: RecordSchema): Promise<PopulatedRecord> {
+async function formatRecordsAndFetchField({records, tableId, projectId}:{records: RecordSchema[], tableId: string, projectId: string}): Promise<PopulatedRecord[]> {
     const fields = await fieldService.getAll({
-        tableId: record.tableId,
-        projectId: record.projectId,
+        tableId,
+        projectId,
     })
-    return formatRecord(record, fields)
+    return formatRecords(records, fields)
 }
 
-function formatRecord(record: RecordSchema, fields: Field[]): PopulatedRecord {
-    return {
-        ...record,
-        cells: Object.fromEntries(record.cells.map((cell) => {
-            const field = fields.find((field) => field.id === cell.fieldId)
-            return [cell.fieldId, {
-                fieldName: field!.name,
-                value: cell.value,
-                updated: cell.updated,
-                created: cell.created,
-            }]
-        })),
-    }
+function formatRecords(records: RecordSchema[], fields: Field[]): PopulatedRecord[] {
+    const fieldsNamesMap: Record<string, string> = fields.reduce((acc, field) => {
+        acc[field.id] = field.name
+        return acc
+    }, {} as Record<string, string>)
+    return records.map((record) => {
+        return {
+            ...record,
+            cells: record.cells.reduce<PopulatedRecord['cells']>((acc, cell) => {
+                acc[cell.fieldId] = {
+                    fieldName: fieldsNamesMap[cell.fieldId],
+                    value: cell.value,
+                    updated: cell.updated,
+                    created: cell.created,
+                }
+                return acc  
+            }, {})
+        }
+    })
 }
+
+
 
 type CountParams = {
     projectId: string
