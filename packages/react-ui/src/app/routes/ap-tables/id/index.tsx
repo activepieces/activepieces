@@ -59,9 +59,9 @@ const ApTableEditorPage = () => {
     Permission.WRITE_TABLE,
   );
   const isAllowedToCreateRecord =
-    userHasTableWritePermission && maxRecords && records.length <= maxRecords;
+    userHasTableWritePermission && maxRecords && records.length < maxRecords;
   const isAllowedToCreateField =
-    userHasTableWritePermission && maxFields && fields.length <= maxFields;
+    userHasTableWritePermission && maxFields && fields.length < maxFields;
 
   const createEmptyRecord = () => {
     createRecord({
