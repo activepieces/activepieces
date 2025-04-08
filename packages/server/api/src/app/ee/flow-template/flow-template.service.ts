@@ -30,6 +30,7 @@ export const flowTemplateService = {
             blogUrl,
             tags,
             id,
+            metadata,
         }: CreateFlowTemplateRequest,
     ): Promise<FlowTemplate> => {
         const flowTemplate: FlowVersionTemplate = sanitizeObjectForPostgresql(template)
@@ -50,6 +51,7 @@ export const flowTemplateService = {
                 updated: new Date().toISOString(),
                 platformId,
                 projectId: type === TemplateType.PLATFORM ? undefined : projectId,
+                metadata: metadata as any || null,
             },
             ['id'],
         )

@@ -44,11 +44,12 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
         if (type === TemplateType.PLATFORM) {
             await platformMustBeOwnedByCurrentUser.call(fastify, request, reply)
         }
-        return flowTemplateService.upsert(
+        const result = await flowTemplateService.upsert(
             request.principal.platform.id,
             request.principal.projectId,
             request.body,
         )
+        return reply.status(StatusCodes.CREATED).send(result)
     })
 
     fastify.delete('/:id', DeleteParams, async (request, reply) => {

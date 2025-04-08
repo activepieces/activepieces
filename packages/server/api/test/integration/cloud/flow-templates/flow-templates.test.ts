@@ -79,6 +79,55 @@ describe('Flow Templates', () => {
         })
     })
 
+    describe('Create Flow Template', () => {
+        it('should create a flow template', async () => {
+            // arrange
+            const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup({
+                platform: {
+                    manageTemplatesEnabled: true,
+                },
+            })
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const mockTemplate = createMockTemplate({
+                platformId: mockPlatform.id,
+                projectId: mockProject.id,
+                type: TemplateType.PLATFORM,
+            })
+
+            const createTemplateRequest = {
+                description: mockTemplate.description,
+                template: mockTemplate.template,
+                blogUrl: mockTemplate.blogUrl,
+                type: TemplateType.PLATFORM,
+                tags: mockTemplate.tags,
+                metadata: {
+                    foo: 'bar'
+                }
+            }
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/flow-templates',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: createTemplateRequest,
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
+            const responseBody = response?.json()
+            expect(responseBody.metadata).toEqual({ foo: 'bar' })
+        })
+    })
+
     describe('Delete Flow Template', () => {
         it('should not be able delete platform template as member', async () => {
             // arrange

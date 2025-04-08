@@ -127,6 +127,7 @@ export const createMockTemplate = (
         id: template?.id ?? apId(),
         created: template?.created ?? faker.date.recent().toISOString(),
         updated: template?.updated ?? faker.date.recent().toISOString(),
+        metadata: template?.metadata ?? null,
     }
 }
 
