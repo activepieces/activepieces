@@ -134,27 +134,15 @@ export function DashboardContainer({
     ],
   };
 
-  const aiGroup: SidebarGroup = {
-    type: 'group',
-    label: t('AI'),
+
+  const mcpLink: SidebarLink = {
+    type: 'link',
+    to: authenticationSession.appendProjectRoutePrefix('/mcp'),
+    label: t('MCP'),
     icon: Brain,
-    isActive: (pathname: string) => {
-      const paths = ['/mcp'];
-      return paths.some((path) => pathname.includes(path));
-    },
-    defaultOpen: true,
-    open: aiOpen,
-    setOpen: setAiOpen,
-    items: [
-      {
-        type: 'link',
-        to: authenticationSession.appendProjectRoutePrefix('/mcp'),
-        label: t('MCP'),
-        showInEmbed: true,
-        hasPermission: checkAccess(Permission.READ_MCP),
-        isSubItem: true,
-      },
-    ],
+    showInEmbed: true,
+    hasPermission: checkAccess(Permission.READ_MCP),
+    isSubItem: false,
   };
 
   const tablesLink: SidebarLink = {
@@ -177,7 +165,7 @@ export function DashboardContainer({
     isSubItem: false,
   };
 
-  const items: SidebarItem[] = [automationGroup, aiGroup, tablesLink, todosLink]
+  const items: SidebarItem[] = [automationGroup, mcpLink, tablesLink, todosLink]
     .filter(embedFilter)
     .filter(permissionFilter)
     .filter(filterAlerts);
