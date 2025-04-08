@@ -4,6 +4,7 @@ import { ApId } from '../common/id-generator'
 import { UserWithMetaInformation } from '../user'
 import { OAuth2GrantType } from './dto/upsert-app-connection-request'
 import { OAuth2AuthorizationMethod } from './oauth2-authorization-method'
+import { Metadata } from '../common/metadata'
 
 export type AppConnectionId = string
 

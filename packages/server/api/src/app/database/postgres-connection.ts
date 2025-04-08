@@ -189,6 +189,7 @@ import { ChangeManualTasksToTodo1742432827826 } from './migration/postgres/17424
 import { ChangeManualTasksCommentsToTodoComments1742433144687 } from './migration/postgres/1742433144687-ChangeManualTasksCommentsToTodoComments'
 import { RenameApprovalUrlToResolveUrl1742991137557 } from './migration/postgres/1742991137557-RenameApprovalUrlToResolveUrl'
 import { AddMCP1743128816786 } from './migration/postgres/1743128816786-AddMCP'
+import { AddMetadataFields1743780156664 } from './migration/postgres/1743780156664-AddMetadataFields'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -316,6 +317,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeManualTasksToTodo1742432827826,
         AddMCP1743128816786,
         RenameApprovalUrlToResolveUrl1742991137557,
+        AddMetadataFields1743780156664,
     ]
 
     const edition = system.getEdition()

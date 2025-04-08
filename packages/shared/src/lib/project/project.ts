@@ -2,6 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { SAFE_STRING_PATTERN } from '../common'
 import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
+import { Metadata } from '../common/metadata'
 
 export const ListProjectRequestForUserQueryParams = Type.Object({
     cursor: Type.Optional(Type.String()),
@@ -62,6 +63,7 @@ export const Project = Type.Object({
     platformId: ApId,
     externalId: Type.Optional(Type.String()),
     releasesEnabled: Type.Boolean(),
+    metadata: Nullable(Metadata),
 })
 
 const projectAnalytics = Type.Object(

@@ -66,7 +66,6 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         metadata: {
             type: JSONB_COLUMN_TYPE,
             nullable: true,
-            default: {}
         },
     },
     indices: [
