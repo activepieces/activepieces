@@ -27,10 +27,6 @@ export const RecordEntity = new EntitySchema<RecordSchema>({
             columns: ['projectId', 'tableId'],
         },
         {
-            name: 'idx_record_created',
-            columns: ['created'],
-        },
-        {
             name: 'idx_record_table_id_project_id_record_id',
             columns: ['tableId', 'projectId', 'id'],
         }
