@@ -87,4 +87,5 @@ import { TypeSystemPolicy } from '@sinclair/typebox/system'
 export * from './lib/license-keys'
 export * from './lib/flow-run/execution/flow-execution'
 export * from './lib/oauth-apps'
+export * from './lib/mcp'
 TypeSystemPolicy.ExactOptionalPropertyTypes = false
