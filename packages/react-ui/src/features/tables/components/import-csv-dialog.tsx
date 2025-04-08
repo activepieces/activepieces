@@ -31,6 +31,8 @@ import { ApFlagId } from '@activepieces/shared';
 import { recordsApi } from '../lib/records-api';
 
 import { useTableState } from './ap-table-state-provider';
+import { CopyButton } from '@/components/ui/copy-button';
+import { api } from '@/lib/api';
 
 const ImportCsvDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -44,6 +46,7 @@ const ImportCsvDialog = () => {
   const { data: maxRecords } = flagsHooks.useFlag<number>(
     ApFlagId.MAX_RECORDS_PER_TABLE,
   );
+  const [serverError, setServerError] = useState<string | null>(null)
   const form = useForm<{
     file: File;
     skipFirstRow: boolean;
@@ -79,6 +82,7 @@ const ImportCsvDialog = () => {
 
   const { mutate: importCsv, isPending: isLoading } = useMutation({
     mutationFn: async (data: { file: File; skipFirstRow: boolean }) => {
+      setServerError(null)
       await recordsApi.importCsv({
         tableId,
         ...data,
@@ -92,6 +96,15 @@ const ImportCsvDialog = () => {
     onSuccess: async () => {
       setIsOpen(false);
     },
+    onError: (error) => {
+      if(api.isError(error) && error.response?.data)
+      {
+        setServerError(JSON.stringify(error.response.data))
+      }
+      else {
+        setServerError(error.message)
+      }
+    }
   });
 
   return (
@@ -113,9 +126,9 @@ const ImportCsvDialog = () => {
             className="space-y-4"
           >
             <ApMarkdown
-              markdown={`${t('Any extra fields will be ignored')} \n
+              markdown={`${t('Any extra fields in the csv will be ignored')} \n
                        ${t(
-                         'Any records exceeding the limit ({maxRecords}) will be ignored',
+                         'Any records after the limit ({maxRecords} records) will be ignored',
                          { maxRecords: maxRecords ?? 0 },
                        )}
                     `}
@@ -153,9 +166,16 @@ const ImportCsvDialog = () => {
                 </FormItem>
               )}
             />
+
+            {serverError && <div className=" flex items-center justify-between"> <div className="text-red-500">
+              {t("An unexpected error occurred while importing the csv file, please hit the copy error and send it to support")} 
+              </div>
+              <div className="min-w-4">
+            <CopyButton variant="ghost" withoutTooltip={true} textToCopy={serverError} />
+              </div></div>}
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" disabled={isLoading}>
                   {t('Cancel')}
                 </Button>
               </DialogClose>
@@ -172,3 +192,4 @@ const ImportCsvDialog = () => {
 
 ImportCsvDialog.displayName = 'ImportCsvDialog';
 export { ImportCsvDialog };
+
