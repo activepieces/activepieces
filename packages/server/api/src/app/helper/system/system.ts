@@ -75,7 +75,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
     [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: '100',
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: 'false',
-    [AppSystemProp.MAX_RECORDS_PER_TABLE]: '10000',
+    [AppSystemProp.MAX_RECORDS_PER_TABLE]: '1500',
     [AppSystemProp.MAX_TABLES_PER_PROJECT]: '50',
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: '100',
 }
