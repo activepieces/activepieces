@@ -1,4 +1,4 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { X } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
@@ -87,7 +87,7 @@ function showChangelogToast(props: Omit<ChangelogToastProps, 'id'>) {
 
 export const ChangelogProvider = () => {
   const { data: user } = userHooks.useCurrentUser();
-  const { data: changelogs } = useSuspenseQuery({
+  const { data: changelogs } = useQuery({
     queryKey: ['changelogs'],
     queryFn: () => changelogApi.getChangelogs(),
   });
