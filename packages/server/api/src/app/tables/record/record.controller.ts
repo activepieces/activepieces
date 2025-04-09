@@ -15,6 +15,7 @@ import {
     FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
+import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { recordService } from './record.service'
@@ -30,16 +31,14 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
             projectId: request.principal.projectId,
         })
         await reply.status(StatusCodes.CREATED).send(records)
-        if (records.length > 0) {
-            await recordService.triggerWebhooks({
-                projectId: request.principal.projectId,
-                tableId: request.body.tableId,
-                eventType: TableWebhookEventType.RECORD_CREATED,
-                data: { records },
-                logger: request.log,
-                authorization: request.headers.authorization as string,
-            })
-        }
+        await sendRecordsWebhooks({
+            tableId: request.body.tableId,
+            projectId: request.principal.projectId,
+            records,
+            logger: request.log,
+            authorization: request.headers.authorization as string,
+            eventType: TableWebhookEventType.RECORD_CREATED,
+        })
     })
 
     fastify.get('/:id', GetRecordByIdRequest, async (request) => {
@@ -72,17 +71,14 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
             projectId: request.principal.projectId,
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
-        //TODO: Move this to a background job that can be re-run in case of failure
-        for (const deletedRecord of deletedRecords) {
-            await recordService.triggerWebhooks({
-                projectId: request.principal.projectId,
-                tableId: deletedRecord.tableId,
-                eventType: TableWebhookEventType.RECORD_DELETED,
-                data: { record: deletedRecord },
-                logger: request.log,
-                authorization: request.headers.authorization as string,
-            })
-        }
+        await sendRecordsWebhooks({
+            tableId: deletedRecords[0].tableId,
+            projectId: request.principal.projectId,
+            records: deletedRecords,
+            logger: request.log,
+            authorization: request.headers.authorization as string,
+            eventType: TableWebhookEventType.RECORD_DELETED,
+        })
     })
 
     fastify.post('/list', ListRequest, async (request) => {
@@ -101,16 +97,14 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
             request: request.body,
         })
         await reply.status(StatusCodes.CREATED).send(records)
-        if (records.length > 0) {
-            await recordService.triggerWebhooks({
-                projectId: request.principal.projectId,
-                tableId: request.body.tableId,
-                eventType: TableWebhookEventType.RECORD_CREATED,
-                data: { records },
-                logger: request.log,
-                authorization: request.headers.authorization as string,
-            })
-        }
+        await sendRecordsWebhooks({
+            tableId: request.body.tableId,
+            projectId: request.principal.projectId,
+            records,
+            logger: request.log,
+            authorization: request.headers.authorization as string,
+            eventType: TableWebhookEventType.RECORD_CREATED,
+        })
     })
 }
 
@@ -207,4 +201,18 @@ const ImportCsvRequest = {
             [StatusCodes.OK]: Type.Array(PopulatedRecord),
         },
     },
+}
+
+const sendRecordsWebhooks = async ({ tableId, projectId, records, logger, authorization, eventType }: { tableId: string, projectId: string, records: PopulatedRecord[], logger: FastifyBaseLogger, authorization: string, eventType: TableWebhookEventType })=>{
+    const promises =  records.map((record)=>{
+        return recordService.triggerWebhooks({
+            projectId,
+            tableId,
+            eventType,
+            data: { record },
+            logger,
+            authorization,
+        })
+    })
+    await Promise.all(promises)
 }

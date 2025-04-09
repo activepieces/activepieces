@@ -29,7 +29,7 @@ export type ClientField = {
       };
     }
 );
-const mapRecordToClientRecordData = (
+const mapRecorddToClientRecordsData = (
   records: PopulatedRecord[],
   fields: Field[],
 ): ClientRecordData[] => {
@@ -116,7 +116,7 @@ export const createApTableStore = (
           type: field.type,
         };
       }),
-      records: mapRecordToClientRecordData(records, fields),
+      records: mapRecorddToClientRecordsData(records, fields),
       createRecord: (recordData: ClientRecordData) => {
         serverState.createRecord(recordData);
         return set((state) => {
@@ -193,7 +193,7 @@ export const createApTableStore = (
         serverState.setRecords(records);
         return set((state) => {
           return {
-            records: mapRecordToClientRecordData(records, serverState.fields),
+            records: mapRecorddToClientRecordsData(records, serverState.fields),
           };
         });
       },
