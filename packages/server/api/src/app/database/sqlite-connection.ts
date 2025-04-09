@@ -200,7 +200,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeManualTasksToTodoSqlite1742432169253,
         AddMCPSqlite1743127177235,
         RenameApprovalUrlToResolveUrl1742991301509,
-        AddRecordIndexForTableIdAndProjectIdAndRecordId1744104496262
+        AddRecordIndexForTableIdAndProjectIdAndRecordId1744104496262,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

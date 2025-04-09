@@ -49,7 +49,6 @@ export function DashboardContainer({
   removeBottomPadding,
 }: DashboardContainerProps) {
   const [automationOpen, setAutomationOpen] = useState(true);
-  const [aiOpen, setAiOpen] = useState(true);
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
   const { project } = projectHooks.useCurrentProject();
@@ -133,7 +132,6 @@ export function DashboardContainer({
       },
     ],
   };
-
 
   const mcpLink: SidebarLink = {
     type: 'link',

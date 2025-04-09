@@ -15,6 +15,7 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { TableTitle } from '@/components/ui/table-title';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -28,7 +29,6 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { api } from '@/lib/api';
 import { formatUtils, NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
 import { ApFlagId, FieldType, Permission, Table } from '@activepieces/shared';
-import { LoadingScreen } from '@/app/components/loading-screen';
 
 const ApTablesPage = () => {
   const openNewWindow = useNewWindow();
@@ -241,8 +241,8 @@ const ApTablesPage = () => {
     ],
     [bulkDeleteMutation, selectedRows],
   );
-  if(isCreatingTable){
-    return <LoadingScreen mode='container' />
+  if (isCreatingTable) {
+    return <LoadingScreen mode="container" />;
   }
 
   return (

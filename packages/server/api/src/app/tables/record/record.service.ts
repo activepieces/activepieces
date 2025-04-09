@@ -95,7 +95,7 @@ export const recordService = {
                         created: 'ASC',
                     },
                 })
-            return formatRecordsAndFetchField({records, tableId: request.tableId, projectId})
+            return formatRecordsAndFetchField({ records, tableId: request.tableId, projectId })
           
         
         })
@@ -104,7 +104,7 @@ export const recordService = {
     async list({
         tableId,
         projectId,
-        filters
+        filters,
     }: ListParams): Promise<SeekPage<PopulatedRecord>> {
        
         const fields = await fieldService.getAll({
@@ -132,7 +132,7 @@ export const recordService = {
             return record.cells.every((cell) => doesCellValueMatchFilters(cell, filters ?? []))
         })
        
-        const populatedRecords = await formatRecordsAndFetchField({records: filteredOutRecords, tableId, projectId})
+        const populatedRecords = await formatRecordsAndFetchField({ records: filteredOutRecords, tableId, projectId })
     
         return {
             data: populatedRecords,
@@ -160,7 +160,7 @@ export const recordService = {
             })
         }
 
-        const result = await formatRecordsAndFetchField({records: [record], tableId: record.tableId, projectId: record.projectId})
+        const result = await formatRecordsAndFetchField({ records: [record], tableId: record.tableId, projectId: record.projectId })
         return result[0]
     },
 
@@ -234,7 +234,7 @@ export const recordService = {
                 })
             }
 
-            const result = await formatRecordsAndFetchField({records: [updatedRecord], tableId: updatedRecord.tableId, projectId: updatedRecord.projectId})
+            const result = await formatRecordsAndFetchField({ records: [updatedRecord], tableId: updatedRecord.tableId, projectId: updatedRecord.projectId })
             return result[0]
         })
     },
@@ -269,7 +269,7 @@ export const recordService = {
             return []
         }
        
-        return formatRecordsAndFetchField({records, tableId: firstRecord.tableId, projectId})
+        return formatRecordsAndFetchField({ records, tableId: firstRecord.tableId, projectId })
     },
 
     async triggerWebhooks({
@@ -341,7 +341,7 @@ export const recordService = {
         for await (const row of parser) {
             const record: { value: string, fieldId: string }[] = fields.reduce((acc, field, idx) => {
                 //in case of empty cells (more fields in table than csv), we will use an empty string
-                acc.push({ value: row[idx]??'', fieldId: field.id })                
+                acc.push({ value: row[idx] ?? '', fieldId: field.id })                
                 return acc
             }, [] as { value: string, fieldId: string }[])
             records.push(record)
@@ -420,7 +420,7 @@ type ImportCsvParams = {
 
 
 
-async function formatRecordsAndFetchField({records, tableId, projectId}:{records: RecordSchema[], tableId: string, projectId: string}): Promise<PopulatedRecord[]> {
+async function formatRecordsAndFetchField({ records, tableId, projectId }: { records: RecordSchema[], tableId: string, projectId: string }): Promise<PopulatedRecord[]> {
     const fields = await fieldService.getAll({
         tableId,
         projectId,
@@ -444,62 +444,64 @@ function formatRecords(records: RecordSchema[], fields: Field[]): PopulatedRecor
                     created: cell.created,
                 }
                 return acc  
-            }, {})
+            }, {}),
         }
     })
 }
 
 
 function doesCellValueMatchFilters(cell: Cell, filters: Filter[]): boolean {
-    if(filters.length === 0) {
+    if (filters.length === 0) {
         return true
     }
-   const filtersForCellFields = filters.filter((filter) => filter.fieldId === cell.fieldId)
-   if(filtersForCellFields.length === 0) {
-    return true
-   }
-   return filtersForCellFields.every((filter) => {
-    switch(filter.operator) {
-        case FilterOperator.EQ:{
-            return cell.value === filter.value
-        }
-        case FilterOperator.NEQ:{
-            return cell.value !== filter.value
-        }
-        case FilterOperator.GT:{
-           return numberFilterValidator({cellValue: cell.value, filterValue: filter.value, cb: ({cellValue, filterValue})=> cellValue > filterValue})
-        }
-        case FilterOperator.GTE:{
-            return numberFilterValidator({cellValue: cell.value, filterValue: filter.value, cb: ({cellValue, filterValue})=> cellValue >= filterValue})
-        }
-        case FilterOperator.LT:{
-            return numberFilterValidator({cellValue: cell.value, filterValue: filter.value, cb: ({cellValue, filterValue})=> cellValue < filterValue})          
-        }
-        case FilterOperator.LTE:{
-            return numberFilterValidator({cellValue: cell.value, filterValue: filter.value, cb: ({cellValue, filterValue})=> cellValue <= filterValue})
-        }
-        case FilterOperator.CO:{
-            if(typeof cell.value === 'string') {
-                return cell.value.toLowerCase().includes(filter.value.toLowerCase())
-            }
-            return false
-        }
-        
+    const filtersForCellFields = filters.filter((filter) => filter.fieldId === cell.fieldId)
+    if (filtersForCellFields.length === 0) {
+        return true
     }
-    return false;
-   })
+    return filtersForCellFields.every((filter) => {
+        if (filter.operator === undefined) {
+            return true
+        }
+        switch (filter.operator) {
+            case FilterOperator.EQ:{
+                return cell.value === filter.value
+            }
+            case FilterOperator.NEQ:{
+                return cell.value !== filter.value
+            }
+            case FilterOperator.GT:{
+                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue })=> cellValue > filterValue })
+            }
+            case FilterOperator.GTE:{
+                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue })=> cellValue >= filterValue })
+            }
+            case FilterOperator.LT:{
+                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue })=> cellValue < filterValue })          
+            }
+            case FilterOperator.LTE:{
+                return numberFilterValidator({ cellValue: cell.value, filterValue: filter.value, cb: ({ cellValue, filterValue })=> cellValue <= filterValue })
+            }
+            case FilterOperator.CO:{
+                if (typeof cell.value === 'string') {
+                    return cell.value.toLowerCase().includes(filter.value.toLowerCase())
+                }
+                return false
+            }
+        
+        }
+    })
    
 }
 
 
-const numberFilterValidator = ({cellValue, filterValue,cb}:{cellValue: unknown, filterValue: string,cb:({cellValue, filterValue}:{cellValue: number, filterValue: number}) => boolean}) => {
-    if(typeof cellValue === 'string' || typeof cellValue === 'number') {
+const numberFilterValidator = ({ cellValue, filterValue, cb }: { cellValue: unknown, filterValue: string, cb: ({ cellValue, filterValue }: { cellValue: number, filterValue: number }) => boolean }) => {
+    if (typeof cellValue === 'string' || typeof cellValue === 'number') {
         const cv = parseFloat(cellValue as string)
         const fv = parseFloat(filterValue)
-        if(isNaN(cv) || isNaN(fv)) {
+        if (isNaN(cv) || isNaN(fv)) {
             return false
         }
-        return cb({cellValue: cv, filterValue: fv})
+        return cb({ cellValue: cv, filterValue: fv })
     }
     return false
 }

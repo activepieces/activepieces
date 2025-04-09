@@ -7,6 +7,7 @@ import { FieldErrors, useForm } from 'react-hook-form';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { CopyButton } from '@/components/ui/copy-button';
 import {
   Dialog,
   DialogClose,
@@ -26,13 +27,12 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { api } from '@/lib/api';
 import { ApFlagId } from '@activepieces/shared';
 
 import { recordsApi } from '../lib/records-api';
 
 import { useTableState } from './ap-table-state-provider';
-import { CopyButton } from '@/components/ui/copy-button';
-import { api } from '@/lib/api';
 
 const ImportCsvDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -46,7 +46,7 @@ const ImportCsvDialog = () => {
   const { data: maxRecords } = flagsHooks.useFlag<number>(
     ApFlagId.MAX_RECORDS_PER_TABLE,
   );
-  const [serverError, setServerError] = useState<string | null>(null)
+  const [serverError, setServerError] = useState<string | null>(null);
   const form = useForm<{
     file: File;
     skipFirstRow: boolean;
@@ -82,7 +82,7 @@ const ImportCsvDialog = () => {
 
   const { mutate: importCsv, isPending: isLoading } = useMutation({
     mutationFn: async (data: { file: File; skipFirstRow: boolean }) => {
-      setServerError(null)
+      setServerError(null);
       await recordsApi.importCsv({
         tableId,
         ...data,
@@ -97,14 +97,12 @@ const ImportCsvDialog = () => {
       setIsOpen(false);
     },
     onError: (error) => {
-      if(api.isError(error) && error.response?.data)
-      {
-        setServerError(JSON.stringify(error.response.data))
+      if (api.isError(error) && error.response?.data) {
+        setServerError(JSON.stringify(error.response.data));
+      } else {
+        setServerError(error.message);
       }
-      else {
-        setServerError(error.message)
-      }
-    }
+    },
   });
 
   return (
@@ -167,12 +165,23 @@ const ImportCsvDialog = () => {
               )}
             />
 
-            {serverError && <div className=" flex items-center justify-between"> <div className="text-red-500">
-              {t("An unexpected error occurred while importing the csv file, please hit the copy error and send it to support")} 
+            {serverError && (
+              <div className=" flex items-center justify-between">
+                {' '}
+                <div className="text-red-500">
+                  {t(
+                    'An unexpected error occurred while importing the csv file, please hit the copy error and send it to support',
+                  )}
+                </div>
+                <div className="min-w-4">
+                  <CopyButton
+                    variant="ghost"
+                    withoutTooltip={true}
+                    textToCopy={serverError}
+                  />
+                </div>
               </div>
-              <div className="min-w-4">
-            <CopyButton variant="ghost" withoutTooltip={true} textToCopy={serverError} />
-              </div></div>}
+            )}
             <DialogFooter>
               <DialogClose asChild>
                 <Button variant="outline" size="sm" disabled={isLoading}>
@@ -192,4 +201,3 @@ const ImportCsvDialog = () => {
 
 ImportCsvDialog.displayName = 'ImportCsvDialog';
 export { ImportCsvDialog };
-

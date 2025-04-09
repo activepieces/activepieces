@@ -317,7 +317,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeManualTasksToTodo1742432827826,
         AddMCP1743128816786,
         RenameApprovalUrlToResolveUrl1742991137557,
-        AddRecordIndexForTableIdAndProjectIdAndRecordId1744136707296
+        AddRecordIndexForTableIdAndProjectIdAndRecordId1744136707296,
     ]
 
     const edition = system.getEdition()

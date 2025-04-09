@@ -30,7 +30,6 @@ import {
   SidebarMenuAction,
   SidebarSeparator,
 } from '@/components/ui/sidebar-shadcn';
-
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
@@ -39,11 +38,11 @@ import { ApFlagId } from '@activepieces/shared';
 import { ShowPoweredBy } from '../../components/show-powered-by';
 import { platformHooks } from '../../hooks/platform-hooks';
 
+import { ApDashboardSidebarHeader } from './ap-dashboard-sidebar-header';
 import { HelpAndFeedback } from './help-and-feedback';
 import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
 import { SidebarUser } from './sidebar-user';
 import UsageLimitsButton from './usage-limits-button';
-import { ApDashboardSidebarHeader } from './ap-dashboard-sidebar-header';
 
 type Link = {
   icon: React.ReactNode;
@@ -101,10 +100,12 @@ export const CustomTooltipLink = ({
               <span className={`text-sm`}>{label}</span>
             </div>
             {(label === 'Tables' || label === 'Todos' || label === 'MCP') && (
-                <BetaBadge showTooltip={false} />
+              <BetaBadge showTooltip={false} />
             )}
           </div>
-          {locked && <LockKeyhole className="size-4 stroke-[2px]" color="grey" />}
+          {locked && (
+            <LockKeyhole className="size-4 stroke-[2px]" color="grey" />
+          )}
         </div>
         {notification && !locked && (
           <span className="bg-destructive absolute right-2 top-1/2 transform -translate-y-1/2 size-2 rounded-full "></span>
@@ -165,7 +166,6 @@ export function SidebarComponent({
   removeGutters = false,
   removeBottomPadding = false,
 }: SidebarProps) {
- 
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: showBilling } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_BILLING,

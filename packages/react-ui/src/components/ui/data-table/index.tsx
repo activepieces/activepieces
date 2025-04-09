@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 import { isNil, SeekPage } from '@activepieces/shared';
 
 import { Button } from '../button';
@@ -36,7 +37,6 @@ import { DataTableColumnHeader } from './data-table-column-header';
 import { DataTableFacetedFilter } from './data-table-options-filter';
 import { DataTableSkeleton } from './data-table-skeleton';
 import { DataTableToolbar } from './data-table-toolbar';
-import { cn } from '@/lib/utils';
 
 export type DataWithId = {
   id?: string;
@@ -293,7 +293,7 @@ export function DataTable<
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow className='hover:bg-background'>
+              <TableRow className="hover:bg-background">
                 <TableCell
                   colSpan={columns.length}
                   className="h-24 text-center"
@@ -304,11 +304,9 @@ export function DataTable<
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
-                  className={
-                    cn("cursor-pointer",{
-                      "hover:bg-background cursor-default": isNil(onRowClick)
-                    })
-                  }
+                  className={cn('cursor-pointer', {
+                    'hover:bg-background cursor-default': isNil(onRowClick),
+                  })}
                   onClick={(e) => {
                     // Check if the clicked cell is not clickable
                     const clickedCellIndex = (e.target as HTMLElement).closest(
@@ -340,29 +338,28 @@ export function DataTable<
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      <div className='flex items-center justify-start'>
-                        <div onClick={(e) => {
-                        if(cell.column.id === 'select') {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          return;
-                        }
-                      }}>
-
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
+                      <div className="flex items-center justify-start">
+                        <div
+                          onClick={(e) => {
+                            if (cell.column.id === 'select') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              return;
+                            }
+                          }}
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
                         </div>
-                     
                       </div>
-                   
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
-              <TableRow className='hover:bg-background'>
+              <TableRow className="hover:bg-background">
                 <TableCell
                   colSpan={columns.length}
                   className="h-[350px] text-center"
