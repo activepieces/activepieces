@@ -21,9 +21,9 @@ type PollingProps = {
 };
 
 export const rssNewItemListTrigger = createTrigger({
-  name: 'new-item',
-  displayName: 'New Item In Feed',
-  description: 'Runs when a new item is added in the RSS feed',
+  name: 'new-item-list',
+  displayName: 'New Item In Feed List',
+  description: 'Runs when a new item is added in one of the RSS feed',
   type: TriggerStrategy.POLLING,
   sampleData: {
     title: 'AWS Cloud Quest: Container Services',
@@ -226,17 +226,21 @@ export const rssNewItemListTrigger = createTrigger({
 });
 
 const polling: Polling<PiecePropValueSchema<PieceAuthProperty>, PollingProps> = {
-  strategy: DedupeStrategy.LAST_ITEM,
+  strategy: DedupeStrategy.TIMEBASED,
   items: async ({ propsValue }) => {
     const urls = propsValue.rss_feed_urls.map(item => item.url);
     const items = await getRssItems(urls);
-    return items.map((item) => ({
-      id: getId(item),
-      data: {
-        ...item,
-        sourceFeedUrl: item.sourceFeedUrl
-      },
-    }));
+    console.log(items)
+    return items.map((item) => {
+      const pubDate = item.pubdate || item.pubDate;
+      return {
+        epochMilliSeconds: pubDate ? dayjs(pubDate).valueOf() : Date.now(),
+        data: {
+          ...item,
+          sourceFeedUrl: item.sourceFeedUrl
+        }
+      };
+    });
   },
 };
 
@@ -257,7 +261,10 @@ function getRssItems(urls: string[]): Promise<any[]> {
           feedparser.on('readable', () => {
             let item = feedparser.read();
             while (item) {
-              items.push(item);
+              items.push({
+                ...item,
+                sourceFeedUrl: url
+              });
               item = feedparser.read();
             }
           });
