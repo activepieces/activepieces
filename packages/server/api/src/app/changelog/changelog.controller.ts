@@ -1,4 +1,4 @@
-import { PrincipalType } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { changelogService } from './changelog.service'
 
@@ -11,6 +11,6 @@ export const changelogController: FastifyPluginAsyncTypebox = async (app) => {
 
 const ListChangelogsRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
 }
