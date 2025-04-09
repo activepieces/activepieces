@@ -1,6 +1,7 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, Changelog } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { FastifyBaseLogger } from 'fastify'
 import { getRedisConnection } from '../database/redis-connection'
 import { system } from '../helper/system/system'
 import { systemJobsSchedule } from '../helper/system-jobs'
@@ -13,7 +14,7 @@ export const changelogModule: FastifyPluginAsyncTypebox = async (fastify) => {
         const log = fastify.log
         const redis = getRedisConnection()
         log.info('Running changelog retrieval')
-        const changelogs = await getChangelog()
+        const changelogs = await getChangelog(log)
         log.info({ changelogs }, 'Changelogs fetched')
         await redis.set(SystemJobName.CHANGELOG, JSON.stringify(changelogs))
         log.info('Changelog retrieval completed')
@@ -33,17 +34,18 @@ export const changelogModule: FastifyPluginAsyncTypebox = async (fastify) => {
     await fastify.register(changelogController, { prefix: '/v1/changelogs' })
 }
 
-async function getChangelog(): Promise<Changelog> {
+async function getChangelog(logger: FastifyBaseLogger): Promise<Changelog> {
     const isCloudEdition = system.getOrThrow(AppSystemProp.EDITION) === ApEdition.CLOUD
     try {
         if (isCloudEdition) {
-            return getChangelogFeaturebaseRequest()
+            return await getChangelogFeaturebaseRequest()
         }
         else {
-            return getChangelogActivepiecesRequest()
+            return await getChangelogActivepiecesRequest()
         }
-    } catch (error) {
-        console.error('Error fetching changelog', error)
+    }
+    catch (error) {
+        logger.error('Error fetching changelog', error)
         return {
             results: [],
             page: 1,
