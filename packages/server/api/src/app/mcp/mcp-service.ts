@@ -3,8 +3,8 @@ import { ActivepiecesError, ApId, apId, AppConnectionWithoutSensitiveData, Error
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
-import { appConnectionService, appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
-import { repoFactory } from '../../core/db/repo-factory'
+import { appConnectionService, appConnectionsRepo } from '../app-connection/app-connection-service/app-connection-service'
+import { repoFactory } from '../core/db/repo-factory'
 import { MCPEntity } from './mcp-entity'
 
 const repo = repoFactory(MCPEntity)

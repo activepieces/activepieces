@@ -72,7 +72,7 @@ export const importTransaction = createAction({
     const transaction: Transaction = {
       payee_name,
       date: formattedDate,
-      amount: amount !== undefined ? Math.round(amount * 100) : undefined,
+      amount: amount !== undefined ? api.utils.amountToInteger(amount): undefined,
       category,
       account: account_id,
       notes,
