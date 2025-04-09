@@ -1,4 +1,4 @@
-import { ActionType, assertEqual, FlowError, FlowRunResponse, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, RespondResponse, spreadIfDefined, StepOutput, StepOutputStatus } from '@activepieces/shared'
+import { ActionType, assertEqual, FlowError, FlowRunResponse, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, RespondResponse, RouterStepOutput, RouterStepResult, spreadIfDefined, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { loggingUtils } from '../../helper/logging-utils'
 import { StepExecutionPath } from './step-execution-path'
@@ -58,6 +58,16 @@ export class FlowExecutorContext {
         })
     }
 
+    public getRouterStepOutput({ stepName }: { stepName: string }): RouterStepOutput | undefined {
+        const stateAtPath = getStateAtPath({ currentPath: this.currentPath, steps: this.steps })
+        const stepOutput = stateAtPath[stepName]
+        if (isNil(stepOutput)) {
+            return undefined
+        }
+        assertEqual(stepOutput.type, ActionType.ROUTER, 'stepOutput.type', 'ROUTER')
+        return new RouterStepOutput(stepOutput as GenericStepOutput<ActionType.ROUTER, RouterStepResult>)
+    }
+    
     public getLoopStepOutput({ stepName }: { stepName: string }): LoopStepOutput | undefined {
         const stateAtPath = getStateAtPath({ currentPath: this.currentPath, steps: this.steps })
         const stepOutput = stateAtPath[stepName]
