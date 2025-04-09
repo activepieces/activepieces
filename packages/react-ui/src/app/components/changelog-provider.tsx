@@ -87,9 +87,10 @@ function showChangelogToast(props: Omit<ChangelogToastProps, 'id'>) {
 
 export const ChangelogProvider = () => {
   const { data: user } = userHooks.useCurrentUser();
-  const { data: changelogs } = useQuery({
+  const { data: changelogs, isError } = useQuery({
     queryKey: ['changelogs'],
     queryFn: () => changelogApi.getChangelogs(),
+    enabled: !!user,
   });
   const hasShownToasts = useRef(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -103,7 +104,7 @@ export const ChangelogProvider = () => {
   }, []);
 
   useEffect(() => {
-    if (isMounted && changelogs && user && !hasShownToasts.current) {
+    if (isMounted && !isNil(changelogs) && user && !hasShownToasts.current) {
       const filteredChangelogs = [...changelogs.results].filter(
         (changelog: any) =>
           isNil(user.lastChangelogDismissed) ||
@@ -142,6 +143,10 @@ export const ChangelogProvider = () => {
       });
     }
   };
+
+  if (isNil(user) || isError) {
+    return null;
+  }
 
   return (
     <SonnerToaster
