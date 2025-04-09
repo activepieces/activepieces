@@ -157,7 +157,7 @@ export const facebookLeadsCommon = {
   },
 
   loadSampleData: async (formId: string, accessToken: string) => {
-    const response = await httpClient.sendRequest({
+    const response = await httpClient.sendRequest<{data:Array<Record<string,any>>}>({
       method: HttpMethod.GET,
       url: `${facebookLeadsCommon.baseUrl}/${formId}/leads`,
       queryParams: {

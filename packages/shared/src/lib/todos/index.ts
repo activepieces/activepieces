@@ -44,6 +44,7 @@ export const StatusOption = Type.Object({
     name: Type.String(),
     description: Nullable(Type.String()),
     variant: Type.Union([Type.Literal(STATUS_VARIANT.POSITIVE), Type.Literal(STATUS_VARIANT.NEGATIVE), Type.Literal(STATUS_VARIANT.NEUTRAL)]),
+    continueFlow: Type.Boolean(),
 })
 
 export type StatusOption = Static<typeof StatusOption>
