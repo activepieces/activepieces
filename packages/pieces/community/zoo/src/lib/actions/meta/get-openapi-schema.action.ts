@@ -1,6 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
 import { zooAuth } from '../../../index'
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getOpenApiSchemaAction = createAction({
   name: 'get_openapi_schema',
@@ -16,7 +16,7 @@ export const getOpenApiSchemaAction = createAction({
       headers: {
         Authorization: `Bearer ${auth}`,
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

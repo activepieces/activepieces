@@ -1,11 +1,8 @@
-import { actualBudgetAuth } from '../..';
-import {
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { Transaction } from '../common/models';
-import * as api from '@actual-app/api';
-import { initializeAndDownloadBudget } from '../common/common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import * as api from '@actual-app/api'
+import { actualBudgetAuth } from '../..'
+import { initializeAndDownloadBudget } from '../common/common'
+import { Transaction } from '../common/models'
 
 export const importTransaction = createAction({
   auth: actualBudgetAuth,
@@ -65,14 +62,27 @@ export const importTransaction = createAction({
     }),
   },
 
-  async run({ auth, propsValue: { account_id, payee_name, date, amount, category, notes, imported_id, transfer_id, cleared, imported_payee } }) {
-    
-    const formattedDate = new Date(date).toISOString().split('T')[0];
+  async run({
+    auth,
+    propsValue: {
+      account_id,
+      payee_name,
+      date,
+      amount,
+      category,
+      notes,
+      imported_id,
+      transfer_id,
+      cleared,
+      imported_payee,
+    },
+  }) {
+    const formattedDate = new Date(date).toISOString().split('T')[0]
 
     const transaction: Transaction = {
       payee_name,
       date: formattedDate,
-      amount: amount !== undefined ? api.utils.amountToInteger(amount): undefined,
+      amount: amount !== undefined ? api.utils.amountToInteger(amount) : undefined,
       category,
       account: account_id,
       notes,
@@ -80,11 +90,11 @@ export const importTransaction = createAction({
       transfer_id,
       cleared,
       imported_payee,
-    };
+    }
 
     await initializeAndDownloadBudget(api, auth)
-    const res = await api.importTransactions(account_id,[transaction]);
-    await api.shutdown();
-    return res;
+    const res = await api.importTransactions(account_id, [transaction])
+    await api.shutdown()
+    return res
   },
-});
+})

@@ -1,8 +1,4 @@
-import {
-  PieceAuth,
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
+import { PieceAuth, Property, createAction } from '@activepieces/pieces-framework'
 
 export const multiplication = createAction({
   name: 'multiplication_math',
@@ -30,8 +26,6 @@ export const multiplication = createAction({
     }),
   },
   async run(context) {
-    return (
-      context.propsValue['first_number'] * context.propsValue['second_number']
-    );
+    return context.propsValue['first_number'] * context.propsValue['second_number']
   },
-});
+})

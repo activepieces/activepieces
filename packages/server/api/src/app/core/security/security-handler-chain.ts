@@ -9,23 +9,18 @@ import { PrincipalTypeAuthzHandler } from './authz/principal-type-authz-handler'
 import { ProjectAuthzHandler } from './authz/project-authz-handler'
 
 const AUTHN_HANDLERS = [
-    new AppSumoAuthnHandler(),
-    new GlobalApiKeyAuthnHandler(),
-    new PlatformApiKeyAuthnHandler(),
-    new AccessTokenAuthnHandler(),
-    new AnonymousAuthnHandler(),
+  new AppSumoAuthnHandler(),
+  new GlobalApiKeyAuthnHandler(),
+  new PlatformApiKeyAuthnHandler(),
+  new AccessTokenAuthnHandler(),
+  new AnonymousAuthnHandler(),
 ]
 
-const AUTHZ_HANDLERS = [
-    new PrincipalTypeAuthzHandler(),
-    new ProjectAuthzHandler(),
-]
+const AUTHZ_HANDLERS = [new PrincipalTypeAuthzHandler(), new ProjectAuthzHandler()]
 
-export const securityHandlerChain = async (
-    request: FastifyRequest,
-): Promise<void> => {
-    await executeAuthnHandlers(request)
-    await executeAuthzHandlers(request)
+export const securityHandlerChain = async (request: FastifyRequest): Promise<void> => {
+  await executeAuthnHandlers(request)
+  await executeAuthzHandlers(request)
 }
 
 /**
@@ -33,22 +28,22 @@ export const securityHandlerChain = async (
  * the remaining handlers are skipped.
  */
 const executeAuthnHandlers = async (request: FastifyRequest): Promise<void> => {
-    for (const handler of AUTHN_HANDLERS) {
-        await handler.handle(request)
-        const principalPopulated = checkWhetherPrincipalIsPopulated(request)
-        if (principalPopulated) {
-            return
-        }
+  for (const handler of AUTHN_HANDLERS) {
+    await handler.handle(request)
+    const principalPopulated = checkWhetherPrincipalIsPopulated(request)
+    if (principalPopulated) {
+      return
     }
+  }
 }
 
 const executeAuthzHandlers = async (request: FastifyRequest): Promise<void> => {
-    for (const handler of AUTHZ_HANDLERS) {
-        await handler.handle(request)
-    }
+  for (const handler of AUTHZ_HANDLERS) {
+    await handler.handle(request)
+  }
 }
 
 const checkWhetherPrincipalIsPopulated = (request: FastifyRequest): boolean => {
-    const principal = request.principal as Principal | undefined
-    return principal !== undefined
+  const principal = request.principal as Principal | undefined
+  return principal !== undefined
 }

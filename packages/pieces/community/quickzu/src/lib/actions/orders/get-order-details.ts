@@ -1,6 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { quickzuAuth } from '../../..';
-import { makeClient, quickzuCommon } from '../../common';
+import { createAction } from '@activepieces/pieces-framework'
+import { quickzuAuth } from '../../..'
+import { makeClient, quickzuCommon } from '../../common'
 
 export const getOrderDetailsAction = createAction({
   auth: quickzuAuth,
@@ -11,9 +11,9 @@ export const getOrderDetailsAction = createAction({
     orderId: quickzuCommon.orderId(true),
   },
   async run(context) {
-    const { orderId } = context.propsValue;
+    const { orderId } = context.propsValue
 
-    const client = makeClient(context.auth);
-    return await client.getOrderDetails(orderId!);
+    const client = makeClient(context.auth)
+    return await client.getOrderDetails(orderId!)
   },
-});
+})

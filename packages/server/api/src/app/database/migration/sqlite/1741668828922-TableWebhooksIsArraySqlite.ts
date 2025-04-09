@@ -1,13 +1,13 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class TableWebhooksIsArraySqlite1741668828922 implements MigrationInterface {
-    name = 'TableWebhooksIsArraySqlite1741668828922'
+  name = 'TableWebhooksIsArraySqlite1741668828922'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_table_project_id_name"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_table_webhook" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -27,7 +27,7 @@ export class TableWebhooksIsArraySqlite1741668828922 implements MigrationInterfa
                 CONSTRAINT "fk_table_webhook_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_table_webhook"(
                     "id",
                     "created",
@@ -46,14 +46,14 @@ export class TableWebhooksIsArraySqlite1741668828922 implements MigrationInterfa
                 "flowId"
             FROM "table_webhook"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "table_webhook"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_table_webhook"
                 RENAME TO "table_webhook"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_table_webhook" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -67,7 +67,7 @@ export class TableWebhooksIsArraySqlite1741668828922 implements MigrationInterfa
                 CONSTRAINT "fk_table_webhook_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_table_webhook"(
                     "id",
                     "created",
@@ -86,27 +86,27 @@ export class TableWebhooksIsArraySqlite1741668828922 implements MigrationInterfa
                 "flowId"
             FROM "table_webhook"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "table_webhook"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_table_webhook"
                 RENAME TO "table_webhook"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_table_project_id_name" ON "table" ("projectId", "name")
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_table_project_id_name"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "table_webhook"
                 RENAME TO "temporary_table_webhook"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "table_webhook" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -126,7 +126,7 @@ export class TableWebhooksIsArraySqlite1741668828922 implements MigrationInterfa
                 CONSTRAINT "fk_table_webhook_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "table_webhook"(
                     "id",
                     "created",
@@ -145,14 +145,14 @@ export class TableWebhooksIsArraySqlite1741668828922 implements MigrationInterfa
                 "flowId"
             FROM "temporary_table_webhook"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_table_webhook"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "table_webhook"
                 RENAME TO "temporary_table_webhook"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "table_webhook" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -172,7 +172,7 @@ export class TableWebhooksIsArraySqlite1741668828922 implements MigrationInterfa
                 CONSTRAINT "fk_table_webhook_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "table_webhook"(
                     "id",
                     "created",
@@ -191,12 +191,11 @@ export class TableWebhooksIsArraySqlite1741668828922 implements MigrationInterfa
                 "flowId"
             FROM "temporary_table_webhook"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_table_webhook"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_table_project_id_name" ON "table" ("projectId", "name")
         `)
-    }
-
+  }
 }

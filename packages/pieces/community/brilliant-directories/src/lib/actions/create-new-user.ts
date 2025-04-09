@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { brilliantDirectoriesAuth } from '../..';
-import { parseDirectoryURL } from '../common/brilliant-directories-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { brilliantDirectoriesAuth } from '../..'
+import { parseDirectoryURL } from '../common/brilliant-directories-common'
 
 export const createNewUser = createAction({
   name: 'create_new_user',
@@ -32,21 +32,21 @@ export const createNewUser = createAction({
   },
 
   async run(context) {
-    const siteUrl = parseDirectoryURL(context.auth.site_url);
+    const siteUrl = parseDirectoryURL(context.auth.site_url)
 
     // Compile the request
-    const CREATE_NEW_USER_URL = siteUrl + '/v2/user/create';
+    const CREATE_NEW_USER_URL = siteUrl + '/v2/user/create'
     const headers = {
       accept: 'application/json',
       'X-Api-Key': context.auth.api_key,
       'Content-Type': 'application/x-www-form-urlencoded',
-    };
+    }
     const body = {
       email: context.propsValue.email,
       password: context.propsValue.password,
       subscription_id: context.propsValue.subscription,
       ...context.propsValue.meta,
-    };
+    }
 
     // send the request
     const request = await httpClient.sendRequest<string[]>({
@@ -54,9 +54,9 @@ export const createNewUser = createAction({
       url: CREATE_NEW_USER_URL,
       headers: headers,
       body: body,
-    });
+    })
 
     // return the request
-    return request;
+    return request
   },
-});
+})

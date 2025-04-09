@@ -1,11 +1,7 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { sendMessage } from './lib/actions/send-message';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { sendMessage } from './lib/actions/send-message'
 
 export const matrixAuth = PieceAuth.CustomAuth({
   description: `
@@ -28,17 +24,16 @@ export const matrixAuth = PieceAuth.CustomAuth({
     }),
   },
   required: true,
-});
+})
 
 export const matrix = createPiece({
   displayName: 'Matrix',
-  description:
-    'Open standard for interoperable, decentralized, real-time communication',
+  description: 'Open standard for interoperable, decentralized, real-time communication',
 
   logoUrl: 'https://cdn.activepieces.com/pieces/matrix.png',
   categories: [PieceCategory.COMMUNICATION],
   minimumSupportedRelease: '0.30.0',
-  authors: ["MyWay","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ['MyWay', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
   auth: matrixAuth,
   actions: [
     sendMessage,
@@ -46,11 +41,9 @@ export const matrix = createPiece({
       baseUrl: (auth) => (auth as { base_url: string }).base_url,
       auth: matrixAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${
-          (auth as { access_token: string }).access_token
-        }`,
+        Authorization: `Bearer ${(auth as { access_token: string }).access_token}`,
       }),
     }),
   ],
   triggers: [],
-});
+})

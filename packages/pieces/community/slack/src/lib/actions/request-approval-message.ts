@@ -1,25 +1,14 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { slackSendMessage } from '../common/utils';
-import { slackAuth } from '../..';
-import {
-  assertNotNullOrUndefined,
-  ExecutionType,
-  PauseType,
-} from '@activepieces/shared';
-import {
-  profilePicture,
-  singleSelectChannelInfo,
-  slackChannel,
-  text,
-  username,
-} from '../common/props';
+import { createAction } from '@activepieces/pieces-framework'
+import { ExecutionType, PauseType, assertNotNullOrUndefined } from '@activepieces/shared'
+import { slackAuth } from '../..'
+import { profilePicture, singleSelectChannelInfo, slackChannel, text, username } from '../common/props'
+import { slackSendMessage } from '../common/utils'
 
 export const requestSendApprovalMessageAction = createAction({
   auth: slackAuth,
   name: 'request_approval_message',
   displayName: 'Request Approval in a Channel',
-  description:
-    'Send approval message to a channel and then wait until the message is approved or disapproved',
+  description: 'Send approval message to a channel and then wait until the message is approved or disapproved',
   props: {
     info: singleSelectChannelInfo,
     channel: slackChannel(true),
@@ -34,19 +23,19 @@ export const requestSendApprovalMessageAction = createAction({
           type: PauseType.WEBHOOK,
           response: {},
         },
-      });
-      const token = context.auth.access_token;
-      const { channel, username, profilePicture } = context.propsValue;
+      })
+      const token = context.auth.access_token
+      const { channel, username, profilePicture } = context.propsValue
 
-      assertNotNullOrUndefined(token, 'token');
-      assertNotNullOrUndefined(text, 'text');
-      assertNotNullOrUndefined(channel, 'channel');
+      assertNotNullOrUndefined(token, 'token')
+      assertNotNullOrUndefined(text, 'text')
+      assertNotNullOrUndefined(channel, 'channel')
       const approvalLink = context.generateResumeUrl({
         queryParams: { action: 'approve' },
-      });
+      })
       const disapprovalLink = context.generateResumeUrl({
         queryParams: { action: 'disapprove' },
-      });
+      })
 
       await slackSendMessage({
         token,
@@ -87,15 +76,15 @@ export const requestSendApprovalMessageAction = createAction({
           },
         ],
         conversationId: channel,
-      });
+      })
 
       return {
         approved: false, // default approval is false
-      };
+      }
     } else {
       return {
         approved: context.resumePayload.queryParams['action'] === 'approve',
-      };
+      }
     }
   },
-});
+})

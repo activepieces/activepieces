@@ -1,15 +1,15 @@
-import fs from 'fs/promises'
 import fsPath from 'path'
 import { isEmpty } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import fs from 'fs/promises'
 import { enrichErrorContext } from './exception-handler'
 import { exec } from './exec'
 import { fileExists } from './file-system'
 import { memoryLock } from './memory-lock'
 
 type PackageManagerOutput = {
-    stdout: string
-    stderr: string
+  stdout: string
+  stderr: string
 }
 
 type CoreCommand = 'add' | 'init' | 'link'
@@ -17,138 +17,128 @@ type ExecCommand = 'tsc'
 type Command = CoreCommand | ExecCommand
 
 export type PackageInfo = {
-    /**
+  /**
    * name or alias
    */
-    alias: string
+  alias: string
 
-    /**
+  /**
    * where to get the package from, could be an npm tag, a local path, or a tarball.
    */
-    spec: string
+  spec: string
 }
 
 const runCommand = async (
-    path: string,
-    command: Command,
-    log: FastifyBaseLogger,
-    ...args: string[]
+  path: string,
+  command: Command,
+  log: FastifyBaseLogger,
+  ...args: string[]
 ): Promise<PackageManagerOutput> => {
-    try {
-        log.debug({ path, command, args }, '[PackageManager#execute]')
+  try {
+    log.debug({ path, command, args }, '[PackageManager#execute]')
 
-        const commandLine = `pnpm ${command} ${args.join(' ')}`
-        return await exec(commandLine, { cwd: path })
-    }
-    catch (error) {
-        const contextKey = '[PackageManager#runCommand]'
-        const contextValue = { path, command, args }
+    const commandLine = `pnpm ${command} ${args.join(' ')}`
+    return await exec(commandLine, { cwd: path })
+  } catch (error) {
+    const contextKey = '[PackageManager#runCommand]'
+    const contextValue = { path, command, args }
 
-        const enrichedError = enrichErrorContext({
-            error,
-            key: contextKey,
-            value: contextValue,
-        })
+    const enrichedError = enrichErrorContext({
+      error,
+      key: contextKey,
+      value: contextValue,
+    })
 
-        throw enrichedError
-    }
+    throw enrichedError
+  }
 }
 
 export const packageManager = (log: FastifyBaseLogger) => ({
-    async add({ path, dependencies }: AddParams): Promise<PackageManagerOutput> {
-        if (isEmpty(dependencies)) {
-            return {
-                stdout: '',
-                stderr: '',
-            }
+  async add({ path, dependencies }: AddParams): Promise<PackageManagerOutput> {
+    if (isEmpty(dependencies)) {
+      return {
+        stdout: '',
+        stderr: '',
+      }
+    }
+
+    const config = [
+      '--prefer-offline',
+      '--ignore-scripts',
+      '--config.lockfile=false',
+      '--config.auto-install-peers=true',
+    ]
+
+    const dependencyArgs = dependencies.map((d) => `${d.alias}@${d.spec}`)
+    return runCommand(path, 'add', log, ...dependencyArgs, ...config)
+  },
+
+  async init({ path }: InitParams): Promise<PackageManagerOutput> {
+    const lock = await memoryLock.acquire(`pnpm-init-${path}`)
+    try {
+      const fExists = await fileExists(fsPath.join(path, 'package.json'))
+      if (fExists) {
+        return {
+          stdout: 'N/A',
+          stderr: 'N/A',
         }
+      }
+      // It must be awaited so it only releases the lock after the command is done
+      const result = await runCommand(path, 'init', log)
+      return result
+    } finally {
+      await lock.release()
+    }
+  },
 
-        const config = [
-            '--prefer-offline',
-            '--ignore-scripts',
-            '--config.lockfile=false',
-            '--config.auto-install-peers=true',
-        ]
+  async exec({ path, command }: ExecParams): Promise<PackageManagerOutput> {
+    return runCommand(path, command, log)
+  },
 
-        const dependencyArgs = dependencies.map((d) => `${d.alias}@${d.spec}`)
-        return runCommand(path, 'add', log, ...dependencyArgs, ...config)
-    },
+  async link({ path, linkPath, packageName }: LinkParams): Promise<PackageManagerOutput> {
+    const config = ['--config.lockfile=false', '--config.auto-install-peers=true']
 
-    async init({ path }: InitParams): Promise<PackageManagerOutput> {
-        const lock = await memoryLock.acquire(`pnpm-init-${path}`)
-        try {
-            const fExists = await fileExists(fsPath.join(path, 'package.json'))
-            if (fExists) {
-                return {
-                    stdout: 'N/A',
-                    stderr: 'N/A',
-                }
-            }
-            // It must be awaited so it only releases the lock after the command is done
-            const result = await runCommand(path, 'init', log)
-            return result
-        }
-        finally {
-            await lock.release()
-        }
-    },
+    const result = await runCommand(path, 'link', log, linkPath, ...config)
 
-    async exec({ path, command }: ExecParams): Promise<PackageManagerOutput> {
-        return runCommand(path, command, log)
-    },
-
-    async link({
-        path,
-        linkPath,
-        packageName,
-    }: LinkParams): Promise<PackageManagerOutput> {
-        const config = [
-            '--config.lockfile=false',
-            '--config.auto-install-peers=true',
-        ]
-
-        const result = await runCommand(path, 'link', log, linkPath, ...config)
-
-        const nodeModules = fsPath.join(path, 'node_modules', packageName)
-        await replaceRelativeSystemLinkWithAbsolute(nodeModules, log)
-        return result
-    },
+    const nodeModules = fsPath.join(path, 'node_modules', packageName)
+    await replaceRelativeSystemLinkWithAbsolute(nodeModules, log)
+    return result
+  },
 })
 
 const replaceRelativeSystemLinkWithAbsolute = async (filePath: string, log: FastifyBaseLogger) => {
-    try {
-        // Inside the isolate sandbox, the relative path is not valid
+  try {
+    // Inside the isolate sandbox, the relative path is not valid
 
-        const stats = await fs.stat(filePath)
+    const stats = await fs.stat(filePath)
 
-        if (stats.isDirectory()) {
-            const realPath = await fs.realpath(filePath)
-            log.info({ realPath, filePath }, '[link]')
-            await fs.unlink(filePath)
-            await fs.symlink(realPath, filePath, 'junction')
-        }
+    if (stats.isDirectory()) {
+      const realPath = await fs.realpath(filePath)
+      log.info({ realPath, filePath }, '[link]')
+      await fs.unlink(filePath)
+      await fs.symlink(realPath, filePath, 'junction')
     }
-    catch (error) {
-        log.error([error], '[link]')
-    }
+  } catch (error) {
+    log.error([error], '[link]')
+  }
 }
 
 type AddParams = {
-    path: string
-    dependencies: PackageInfo[]
+  path: string
+  dependencies: PackageInfo[]
 }
 
 type InitParams = {
-    path: string
+  path: string
 }
 
 type ExecParams = {
-    path: string
-    command: ExecCommand
+  path: string
+  command: ExecCommand
 }
 
 type LinkParams = {
-    path: string
-    linkPath: string
-    packageName: string
+  path: string
+  linkPath: string
+  packageName: string
 }

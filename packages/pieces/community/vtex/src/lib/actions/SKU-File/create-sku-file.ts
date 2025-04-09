@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { vtexAuth } from '../../..';
-import { SkuFile } from '../../common/SKU-File';
-import { Replace } from '../../common/types';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { vtexAuth } from '../../..'
+import { SkuFile } from '../../common/SKU-File'
+import { Replace } from '../../common/types'
 
 export const createSkuFile = createAction({
   auth: vtexAuth,
@@ -37,8 +37,8 @@ export const createSkuFile = createAction({
     }),
   },
   async run(context) {
-    const { hostUrl, appKey, appToken } = context.auth;
-    const skuFile = new SkuFile(hostUrl, appKey, appToken);
+    const { hostUrl, appKey, appToken } = context.auth
+    const skuFile = new SkuFile(hostUrl, appKey, appToken)
 
     return await skuFile.createSkuFile(context.propsValue.SkuId, {
       Url: context.propsValue.Url,
@@ -46,6 +46,6 @@ export const createSkuFile = createAction({
       IsMain: context.propsValue.IsMain,
       Label: context.propsValue.Label,
       Text: context.propsValue.Text,
-    });
+    })
   },
-});
+})

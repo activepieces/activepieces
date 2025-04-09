@@ -1,12 +1,7 @@
-import {
-  DynamicPropsValue,
-  PiecePropValueSchema,
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { baserowAuth } from '../..';
-import { baserowCommon, makeClient } from '../common';
-import { BaserowFieldType } from '../common/constants';
+import { DynamicPropsValue, PiecePropValueSchema, Property, createAction } from '@activepieces/pieces-framework'
+import { baserowAuth } from '../..'
+import { baserowCommon, makeClient } from '../common'
+import { BaserowFieldType } from '../common/constants'
 
 export const createRowAction = createAction({
   name: 'baserow_create_row',
@@ -23,36 +18,32 @@ export const createRowAction = createAction({
     table_fields: baserowCommon.tableFields(true),
   },
   async run(context) {
-    const table_id = context.propsValue.table_id!;
-    const tableFieldsInput = context.propsValue.table_fields!;
-    const formattedTableFields: DynamicPropsValue = {};
+    const table_id = context.propsValue.table_id!
+    const tableFieldsInput = context.propsValue.table_fields!
+    const formattedTableFields: DynamicPropsValue = {}
 
-    const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof baserowAuth>
-    );
-    const tableSchema = await client.listTableFields(table_id);
+    const client = makeClient(context.auth as PiecePropValueSchema<typeof baserowAuth>)
+    const tableSchema = await client.listTableFields(table_id)
 
     // transform props value to related baserow value
-    const fieldIDTypeMap: { [key: string]: string } = {};
+    const fieldIDTypeMap: { [key: string]: string } = {}
     for (const column of tableSchema) {
-      fieldIDTypeMap[column.name] = column.type;
+      fieldIDTypeMap[column.name] = column.type
     }
 
     Object.keys(tableFieldsInput).forEach((key) => {
-      const fieldType: string = fieldIDTypeMap[key];
+      const fieldType: string = fieldIDTypeMap[key]
       if (fieldType === BaserowFieldType.LINK_TO_TABLE) {
-        formattedTableFields[key] = tableFieldsInput[key].map((id: string) =>
-          parseInt(id, 10)
-        );
+        formattedTableFields[key] = tableFieldsInput[key].map((id: string) => parseInt(id, 10))
       } else if (fieldType === BaserowFieldType.MULTIPLE_COLLABORATORS) {
         formattedTableFields[key] = tableFieldsInput[key].map((id: string) => ({
           id: parseInt(id, 10),
-        }));
+        }))
       } else {
-        formattedTableFields[key] = tableFieldsInput[key];
+        formattedTableFields[key] = tableFieldsInput[key]
       }
-    });
+    })
 
-    return await client.createRow(table_id, formattedTableFields);
+    return await client.createRow(table_id, formattedTableFields)
   },
-});
+})

@@ -1,36 +1,22 @@
-import { t } from 'i18next';
-import { useState } from 'react';
+import { t } from 'i18next'
+import { useState } from 'react'
 
-import ActivepiecesCreateTodoGuide from '@/assets/img/custom/ActivepiecesCreateTodoGuide.png';
-import ActivepiecesTodo from '@/assets/img/custom/ActivepiecesTodo.png';
-import ExternalChannelTodo from '@/assets/img/custom/External_Channel_Todo.png';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import {
-  HandleSelectCallback,
-  PieceSelectorItem,
-  StepMetadata,
-} from '@/features/pieces/lib/types';
-import { TodoType } from '@activepieces/shared';
+import ActivepiecesCreateTodoGuide from '@/assets/img/custom/ActivepiecesCreateTodoGuide.png'
+import ActivepiecesTodo from '@/assets/img/custom/ActivepiecesTodo.png'
+import ExternalChannelTodo from '@/assets/img/custom/External_Channel_Todo.png'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { HandleSelectCallback, PieceSelectorItem, StepMetadata } from '@/features/pieces/lib/types'
+import { TodoType } from '@activepieces/shared'
 
 type CreateTodoGuideProps = {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  handleSelect: HandleSelectCallback;
-  actionOrTriggers: PieceSelectorItem[];
-  selectedPieceMetadata: StepMetadata;
-};
+  open: boolean
+  setOpen: (open: boolean) => void
+  handleSelect: HandleSelectCallback
+  actionOrTriggers: PieceSelectorItem[]
+  selectedPieceMetadata: StepMetadata
+}
 
 const CreateTodoGuide = ({
   open,
@@ -39,19 +25,15 @@ const CreateTodoGuide = ({
   actionOrTriggers,
   selectedPieceMetadata,
 }: CreateTodoGuideProps) => {
-  const [integrationType, setIntegrationType] = useState<TodoType>(
-    TodoType.INTERNAL,
-  );
-  const [hoveredOption, setHoveredOption] = useState<TodoType | null>(null);
-  const displayImageType = hoveredOption || integrationType;
+  const [integrationType, setIntegrationType] = useState<TodoType>(TodoType.INTERNAL)
+  const [hoveredOption, setHoveredOption] = useState<TodoType | null>(null)
+  const displayImageType = hoveredOption || integrationType
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-6xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader className="shrink-0">
-          <DialogTitle className="text-xl">
-            {t('Create Todo Guide')}
-          </DialogTitle>
+          <DialogTitle className="text-xl">{t('Create Todo Guide')}</DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto pr-1">
@@ -59,9 +41,7 @@ const CreateTodoGuide = ({
           <div className="flex flex-col md:flex-row gap-6">
             {/* Left side - Options */}
             <div className="md:w-1/2 space-y-6">
-              <h3 className="text-lg font-medium">
-                {t('Where would you like the todo to be reviewed?')}
-              </h3>
+              <h3 className="text-lg font-medium">{t('Where would you like the todo to be reviewed?')}</h3>
 
               {/* Option cards */}
               <div className="space-y-4">
@@ -87,11 +67,7 @@ const CreateTodoGuide = ({
                         </TooltipTrigger>
                         <TooltipContent side="right" className="w-[550px]">
                           <div className="space-y-2">
-                            <p className="text-sm">
-                              {t(
-                                'Users will manage tasks directly in Activepieces',
-                              )}
-                            </p>
+                            <p className="text-sm">{t('Users will manage tasks directly in Activepieces')}</p>
                             <div className="bg-muted rounded p-1">
                               <img
                                 src={ActivepiecesTodo}
@@ -106,9 +82,7 @@ const CreateTodoGuide = ({
                     <div className="flex-shrink-0 w-5 h-5">
                       <div
                         className={`w-5 h-5 rounded-full grid place-items-center border ${
-                          integrationType === TodoType.INTERNAL
-                            ? 'border-primary'
-                            : 'border-muted-foreground'
+                          integrationType === TodoType.INTERNAL ? 'border-primary' : 'border-muted-foreground'
                         }`}
                       >
                         {integrationType === TodoType.INTERNAL && (
@@ -136,15 +110,11 @@ const CreateTodoGuide = ({
                   onMouseLeave={() => setHoveredOption(null)}
                 >
                   <div className="flex justify-between items-center mb-2">
-                    <h4 className="text-md font-medium">
-                      {t('External Channel (Slack, Teams, Email, ...)')}
-                    </h4>
+                    <h4 className="text-md font-medium">{t('External Channel (Slack, Teams, Email, ...)')}</h4>
                     <div className="flex-shrink-0 w-5 h-5">
                       <div
                         className={`w-5 h-5 rounded-full grid place-items-center border ${
-                          integrationType === TodoType.EXTERNAL
-                            ? 'border-primary'
-                            : 'border-muted-foreground'
+                          integrationType === TodoType.EXTERNAL ? 'border-primary' : 'border-muted-foreground'
                         }`}
                       >
                         {integrationType === TodoType.EXTERNAL && (
@@ -175,16 +145,8 @@ const CreateTodoGuide = ({
                   {/* Fixed height image container with gradient overlay */}
                   <div className="w-full h-[350px] overflow-hidden rounded mb-2 flex items-center justify-center bg-muted/50 relative">
                     <img
-                      src={
-                        displayImageType === TodoType.INTERNAL
-                          ? ActivepiecesCreateTodoGuide
-                          : ExternalChannelTodo
-                      }
-                      alt={
-                        displayImageType === TodoType.INTERNAL
-                          ? 'Activepieces Todos flow'
-                          : 'External channel flow'
-                      }
+                      src={displayImageType === TodoType.INTERNAL ? ActivepiecesCreateTodoGuide : ExternalChannelTodo}
+                      alt={displayImageType === TodoType.INTERNAL ? 'Activepieces Todos flow' : 'External channel flow'}
                       className="w-full h-full object-contain"
                     />
                     {/* Gradient overlay at the bottom - increased height */}
@@ -197,9 +159,7 @@ const CreateTodoGuide = ({
                       ? t(
                           'The Activepieces Todo allows users to review and resolve tasks directly in the Activepieces interface',
                         )
-                      : t(
-                          'You can add the channel before the Wait Step, and configure the logic in the Router step',
-                        )}
+                      : t('You can add the channel before the Wait Step, and configure the logic in the Router step')}
                   </p>
                 </div>
               </div>
@@ -208,44 +168,28 @@ const CreateTodoGuide = ({
         </div>
 
         <DialogFooter className="shrink-0 mt-3 pt-3 border-t">
-          <Button
-            variant="secondary"
-            onClick={() => setOpen(false)}
-            className="mr-2"
-          >
+          <Button variant="secondary" onClick={() => setOpen(false)} className="mr-2">
             {t('Cancel')}
           </Button>
           <Button
             onClick={() => {
               switch (integrationType) {
                 case TodoType.INTERNAL: {
-                  const selectedItem = actionOrTriggers.find(
-                    (item) => item.name === 'createTodoAndWait',
-                  );
+                  const selectedItem = actionOrTriggers.find((item) => item.name === 'createTodoAndWait')
                   if (selectedItem) {
-                    handleSelect(
-                      selectedPieceMetadata,
-                      selectedItem,
-                      integrationType,
-                    );
+                    handleSelect(selectedPieceMetadata, selectedItem, integrationType)
                   }
-                  break;
+                  break
                 }
                 case TodoType.EXTERNAL: {
-                  const selectedItem = actionOrTriggers.find(
-                    (item) => item.name === 'createTodo',
-                  );
+                  const selectedItem = actionOrTriggers.find((item) => item.name === 'createTodo')
                   if (selectedItem) {
-                    handleSelect(
-                      selectedPieceMetadata,
-                      selectedItem,
-                      integrationType,
-                    );
+                    handleSelect(selectedPieceMetadata, selectedItem, integrationType)
                   }
-                  break;
+                  break
                 }
               }
-              setOpen(false);
+              setOpen(false)
             }}
           >
             {t('Add Steps')}
@@ -253,8 +197,8 @@ const CreateTodoGuide = ({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}
 
-CreateTodoGuide.displayName = 'CreateTodoGuide';
-export { CreateTodoGuide };
+CreateTodoGuide.displayName = 'CreateTodoGuide'
+export { CreateTodoGuide }

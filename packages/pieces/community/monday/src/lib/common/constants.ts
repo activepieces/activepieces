@@ -85,7 +85,7 @@ export const MondayNotWritableColumnType = [
   MondayColumnType.TAGS,
   MondayColumnType.TIME_TRACKING,
   MondayColumnType.VOTE,
-];
+]
 
 export const COLUMN_TYPE_OPTIONS = [
   {
@@ -196,4 +196,4 @@ export const COLUMN_TYPE_OPTIONS = [
     label: 'World Clock',
     value: MondayColumnType.WORLD_CLOCK,
   },
-];
+]

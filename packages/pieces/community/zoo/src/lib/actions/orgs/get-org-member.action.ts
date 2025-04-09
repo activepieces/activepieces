@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 import { zooAuth } from '../../../index'
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getOrgMemberAction = createAction({
   name: 'get_org_member',
@@ -22,7 +22,7 @@ export const getOrgMemberAction = createAction({
       headers: {
         Authorization: `Bearer ${auth}`,
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

@@ -1,13 +1,9 @@
-import {
-  TriggerStrategy,
-  WebhookHandshakeStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
-import { mondayAuth } from '../..';
-import { makeClient, mondayCommon } from '../common';
-import { MondayWebhookEventType } from '../common/constants';
-import { parseMondayColumnValue } from '../common/helper';
-import { WebhookInformation } from '../common/models';
+import { TriggerStrategy, WebhookHandshakeStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { mondayAuth } from '../..'
+import { makeClient, mondayCommon } from '../common'
+import { MondayWebhookEventType } from '../common/constants'
+import { parseMondayColumnValue } from '../common/helper'
+import { WebhookInformation } from '../common/models'
 
 export const newItemInBoardTrigger = createTrigger({
   auth: mondayAuth,
@@ -39,43 +35,38 @@ export const newItemInBoardTrigger = createTrigger({
     },
   },
   async onEnable(context) {
-    const { board_id } = context.propsValue;
+    const { board_id } = context.propsValue
 
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth as string)
     const res = await client.createWebhook({
       boardId: board_id,
       url: context.webhookUrl,
       event: MondayWebhookEventType.CREATE_ITEM,
-    });
-    await context.store.put<WebhookInformation>(
-      'monday_new_item_trigger',
-      res.data
-    );
+    })
+    await context.store.put<WebhookInformation>('monday_new_item_trigger', res.data)
   },
   async onDisable(context) {
-    const webhook = await context.store.get<WebhookInformation>(
-      'monday_new_item_trigger'
-    );
+    const webhook = await context.store.get<WebhookInformation>('monday_new_item_trigger')
     if (webhook != null) {
-      const client = makeClient(context.auth as string);
-      await client.deleteWebhook({ webhookId: webhook.id });
+      const client = makeClient(context.auth as string)
+      await client.deleteWebhook({ webhookId: webhook.id })
     }
   },
   async run(context) {
-    const payload = context.payload.body as MondayWebhookPayload;
-    const transformedValues: Record<string, any> = {};
+    const payload = context.payload.body as MondayWebhookPayload
+    const transformedValues: Record<string, any> = {}
     try {
-      const client = makeClient(context.auth as string);
+      const client = makeClient(context.auth as string)
       const res = await client.getItemColumnValues({
         boardId: payload.event.boardId,
         itemId: payload.event.pulseId,
-      });
-      const item = res.data.boards[0].items_page.items[0];
+      })
+      const item = res.data.boards[0].items_page.items[0]
       for (const column of item.column_values) {
-        transformedValues[column.id] = parseMondayColumnValue(column);
+        transformedValues[column.id] = parseMondayColumnValue(column)
       }
     } catch (e) {
-      console.error(e);
+      console.error(e)
     }
 
     const enriched = [
@@ -83,8 +74,8 @@ export const newItemInBoardTrigger = createTrigger({
         ...payload,
         columnValues: transformedValues,
       },
-    ];
-    return enriched;
+    ]
+    return enriched
   },
   handshakeConfiguration: {
     strategy: WebhookHandshakeStrategy.BODY_PARAM_PRESENT,
@@ -94,26 +85,26 @@ export const newItemInBoardTrigger = createTrigger({
     return {
       status: 200,
       body: { challenge: (context.payload.body as any)['challenge'] },
-    };
+    }
   },
-});
+})
 
 interface MondayWebhookPayload {
   event: {
-    userId: number;
-    originalTriggerUuid: null;
-    boardId: number;
-    pulseId: number;
-    pulseName: string;
-    groupId: string;
-    groupName: string;
-    groupColor: string;
-    isTopGroup: boolean;
-    columnValues: Record<string, unknown>;
-    app: string;
-    type: 'create_pulse';
-    triggerTime: string;
-    subscriptionId: number;
-    triggerUuid: string;
-  };
+    userId: number
+    originalTriggerUuid: null
+    boardId: number
+    pulseId: number
+    pulseName: string
+    groupId: string
+    groupName: string
+    groupColor: string
+    isTopGroup: boolean
+    columnValues: Record<string, unknown>
+    app: string
+    type: 'create_pulse'
+    triggerTime: string
+    subscriptionId: number
+    triggerUuid: string
+  }
 }

@@ -1,15 +1,8 @@
-import {
-  TriggerStrategy, createTrigger
-} from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpRequest,
-  HttpMethod,
-  AuthenticationType,
-} from "@activepieces/pieces-common";
-import { callClickupGetTask, clickupCommon } from '../common';
-import { ClickupEventType, ClickupWebhookPayload } from '../common/models';
-import { clickupAuth } from "../../";
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { clickupAuth } from '../../'
+import { callClickupGetTask, clickupCommon } from '../common'
+import { ClickupEventType, ClickupWebhookPayload } from '../common/models'
 
 export const triggerTaskTagUpdated = createTrigger({
   auth: clickupAuth,
@@ -17,37 +10,37 @@ export const triggerTaskTagUpdated = createTrigger({
   displayName: 'Task Tag Updated',
   description: 'Triggered when a tag is added or removed or renamed on a task.',
   sampleData: {
-    "event": "taskTagUpdated",
-    "history_items": [
+    event: 'taskTagUpdated',
+    history_items: [
       {
-        "id": "2800797048554170804",
-        "type": 1,
-        "date": "1642736652800",
-        "field": "tag",
-        "parent_id": "162641062",
-        "data": {},
-        "source": null,
-        "user": {
-          "id": 183,
-          "username": "John",
-          "email": "john@company.com",
-          "color": "#7b68ee",
-          "initials": "J",
-          "profilePicture": null
+        id: '2800797048554170804',
+        type: 1,
+        date: '1642736652800',
+        field: 'tag',
+        parent_id: '162641062',
+        data: {},
+        source: null,
+        user: {
+          id: 183,
+          username: 'John',
+          email: 'john@company.com',
+          color: '#7b68ee',
+          initials: 'J',
+          profilePicture: null,
         },
-        "before": null,
-        "after": [
+        before: null,
+        after: [
           {
-            "name": "def",
-            "tag_fg": "#FF4081",
-            "tag_bg": "#FF4081",
-            "creator": 2770032
-          }
-        ]
-      }
+            name: 'def',
+            tag_fg: '#FF4081',
+            tag_bg: '#FF4081',
+            creator: 2770032,
+          },
+        ],
+      },
     ],
-    "task_id": "1vj38vv",
-    "webhook_id": "7fa3ec74-69a8-4530-a251-8a13730bd204"
+    task_id: '1vj38vv',
+    webhook_id: '7fa3ec74-69a8-4530-a251-8a13730bd204',
   },
   props: {
     workspace_id: clickupCommon.workspace_id(true),
@@ -64,22 +57,22 @@ export const triggerTaskTagUpdated = createTrigger({
       url: `https://api.clickup.com/api/v2/team/${workspace_id}/webhook`,
       body: {
         endpoint: context.webhookUrl,
-        events: [ClickupEventType.TASK_TAG_UPDATED]
+        events: [ClickupEventType.TASK_TAG_UPDATED],
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.access_token
+        token: context.auth.access_token,
       },
       queryParams: {},
     }
 
-    const response = await httpClient.sendRequest<WebhookInformation>(request);
+    const response = await httpClient.sendRequest<WebhookInformation>(request)
     console.debug(`clickup.${ClickupEventType.TASK_TAG_UPDATED}.onEnable`, response)
 
-    await context.store.put<WebhookInformation>(`clickup_task_tag_updated_trigger`, response.body);
+    await context.store.put<WebhookInformation>(`clickup_task_tag_updated_trigger`, response.body)
   },
   async onDisable(context) {
-    const webhook = await context.store.get<WebhookInformation>(`clickup_task_tag_updated_trigger`);
+    const webhook = await context.store.get<WebhookInformation>(`clickup_task_tag_updated_trigger`)
     if (webhook != null) {
       const request: HttpRequest = {
         method: HttpMethod.DELETE,
@@ -88,23 +81,22 @@ export const triggerTaskTagUpdated = createTrigger({
           type: AuthenticationType.BEARER_TOKEN,
           token: context.auth['access_token'],
         },
-      };
-      const response = await httpClient.sendRequest(request);
+      }
+      const response = await httpClient.sendRequest(request)
       console.debug(`clickup.${ClickupEventType.TASK_TAG_UPDATED}.onDisable`, response)
     }
   },
   async run(context) {
     const payload = context.payload.body as ClickupWebhookPayload
 
-    return [{
-      ...payload,
-      task: await callClickupGetTask(
-        context.auth['access_token'],
-        payload.task_id
-      )
-    }];
-  }
-});
+    return [
+      {
+        ...payload,
+        task: await callClickupGetTask(context.auth['access_token'], payload.task_id),
+      },
+    ]
+  },
+})
 
 interface WebhookInformation {
   id: string
@@ -122,7 +114,7 @@ interface WebhookInformation {
     health: {
       status: string
       fail_count: number
-    },
+    }
     secret: string
   }
 }

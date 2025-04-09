@@ -1,11 +1,7 @@
-import {
-  createTrigger,
-  TriggerStrategy,
-  Property,
-} from '@activepieces/pieces-framework';
+import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
 
-import { boxAuth } from '../..';
-import { WebhookInformation, common } from '../common';
+import { boxAuth } from '../..'
+import { WebhookInformation, common } from '../common'
 
 export const newFolder = createTrigger({
   auth: boxAuth,
@@ -16,8 +12,7 @@ export const newFolder = createTrigger({
   props: {
     folder: Property.ShortText({
       displayName: 'Folder ID',
-      description:
-        'The ID of the folder in which file uploads will trigger this webhook',
+      description: 'The ID of the folder in which file uploads will trigger this webhook',
       required: true,
     }),
   },
@@ -26,28 +21,26 @@ export const newFolder = createTrigger({
     const target: any = {
       id: context.propsValue.folder,
       type: 'folder',
-    };
+    }
 
     const webhook = await common.subscribeWebhook(context.auth, {
       event: 'FOLDER.CREATED',
       target: target,
       webhookUrl: context.webhookUrl,
-    });
-    await context.store.put(`_new_folder_trigger`, webhook);
+    })
+    await context.store.put(`_new_folder_trigger`, webhook)
   },
 
   async onDisable(context) {
-    const webhook = await context.store.get<WebhookInformation>(
-      `_new_folder_trigger`
-    );
+    const webhook = await context.store.get<WebhookInformation>(`_new_folder_trigger`)
 
     if (webhook) {
-      await common.unsubscribeWebhook(context.auth, webhook.id);
+      await common.unsubscribeWebhook(context.auth, webhook.id)
     }
   },
 
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
 
   sampleData: {
@@ -105,4 +98,4 @@ export const newFolder = createTrigger({
     created_at: '2023-07-25T05:55:09-07:00',
     additional_info: [],
   },
-});
+})

@@ -1,6 +1,6 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { trueLayerCommon } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { trueLayerCommon } from '../../common'
 
 export const getPaymentRefund = createAction({
   auth: trueLayerCommon.auth,
@@ -20,7 +20,7 @@ export const getPaymentRefund = createAction({
     }),
   },
   run: async (ctx) => {
-    const response = await  httpClient.sendRequest({
+    const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${trueLayerCommon.baseUrl}/v3/payments/${ctx.propsValue.payment_id}/refunds/${ctx.propsValue.refund_id}`,
       headers: {
@@ -28,6 +28,6 @@ export const getPaymentRefund = createAction({
       },
     })
 
-    return response.body;
+    return response.body
   },
-});
+})

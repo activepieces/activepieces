@@ -1,19 +1,15 @@
-import { UserPlus } from 'lucide-react';
+import { UserPlus } from 'lucide-react'
 
-import { useEmbedding } from '@/components/embed-provider';
-import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
+import { useEmbedding } from '@/components/embed-provider'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { InviteUserDialog } from '@/features/team/component/invite-user-dialog'
 
 export function SidebarInviteUserButton() {
-  const { embedState } = useEmbedding();
+  const { embedState } = useEmbedding()
 
   if (embedState.isEmbedded) {
-    return null;
+    return null
   }
 
   return (
@@ -30,5 +26,5 @@ export function SidebarInviteUserButton() {
         </Tooltip>
       }
     />
-  );
+  )
 }

@@ -1,32 +1,21 @@
-'use client';
+'use client'
 
-import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { Check, ChevronsUpDown } from 'lucide-react';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useMutation } from '@tanstack/react-query'
+import { t } from 'i18next'
+import { Check, ChevronsUpDown } from 'lucide-react'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
-import { Button } from '@/components/ui/button';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { cn } from '@/lib/utils';
-import { ApFlagId } from '@activepieces/shared';
+import { Button } from '@/components/ui/button'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast'
+import { cn } from '@/lib/utils'
+import { ApFlagId } from '@activepieces/shared'
 
-import { useNewWindow } from '../../../../components/embed-provider';
-import { flagsHooks } from '../../../../hooks/flags-hooks';
+import { useNewWindow } from '../../../../components/embed-provider'
+import { flagsHooks } from '../../../../hooks/flags-hooks'
 
 export enum LocalesEnum {
   DUTCH = 'nl',
@@ -60,36 +49,30 @@ export const localesMap = {
   [LocalesEnum.PORTUGUESE]: 'Português (Brasil)',
   [LocalesEnum.UKRAINIAN]: 'Українська',
   [LocalesEnum.VIETNAMESE]: 'Tiếng Việt',
-};
+}
 
 export function LanguageSwitcher() {
-  const { i18n } = useTranslation();
-  const [isOpen, setIsOpen] = useState(false);
-  const openNewIndow = useNewWindow();
-  const { data: showCommunity } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_COMMUNITY,
-  );
-  const languageWithoutLocale = i18n.language?.includes('-')
-    ? i18n.language.split('-')[0]
-    : i18n.language;
-  const [selectedLanguage, setSelectedLanguage] = useState<string | undefined>(
-    languageWithoutLocale ?? 'en',
-  );
+  const { i18n } = useTranslation()
+  const [isOpen, setIsOpen] = useState(false)
+  const openNewIndow = useNewWindow()
+  const { data: showCommunity } = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_COMMUNITY)
+  const languageWithoutLocale = i18n.language?.includes('-') ? i18n.language.split('-')[0] : i18n.language
+  const [selectedLanguage, setSelectedLanguage] = useState<string | undefined>(languageWithoutLocale ?? 'en')
 
   const { mutate, isPending } = useMutation({
     mutationFn: (value: string) => {
-      setSelectedLanguage(value);
-      return i18n.changeLanguage(value);
+      setSelectedLanguage(value)
+      return i18n.changeLanguage(value)
     },
     onSuccess: () => {
-      setIsOpen(false);
-      window.location.reload();
+      setIsOpen(false)
+      window.location.reload()
     },
     onError: (error) => {
-      console.error(error);
-      toast(INTERNAL_ERROR_TOAST);
+      console.error(error)
+      toast(INTERNAL_ERROR_TOAST)
     },
-  });
+  })
 
   return (
     <div className="space-y-6">
@@ -103,14 +86,9 @@ export function LanguageSwitcher() {
               variant="outline"
               role="combobox"
               loading={isPending}
-              className={cn(
-                'w-[200px] justify-between',
-                !selectedLanguage && 'text-muted-foreground',
-              )}
+              className={cn('w-[200px] justify-between', !selectedLanguage && 'text-muted-foreground')}
             >
-              {selectedLanguage
-                ? localesMap[selectedLanguage as LocalesEnum]
-                : i18n.t('Select language')}
+              {selectedLanguage ? localesMap[selectedLanguage as LocalesEnum] : i18n.t('Select language')}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
@@ -122,18 +100,9 @@ export function LanguageSwitcher() {
                   <CommandEmpty>{i18n.t('No language found.')}</CommandEmpty>
                   <CommandGroup>
                     {Object.entries(localesMap).map(([value, label]) => (
-                      <CommandItem
-                        value={value}
-                        key={value}
-                        onSelect={(value) => mutate(value)}
-                      >
+                      <CommandItem value={value} key={value} onSelect={(value) => mutate(value)}>
                         <Check
-                          className={cn(
-                            'mr-2 h-4 w-4',
-                            value === selectedLanguage
-                              ? 'opacity-100'
-                              : 'opacity-0',
-                          )}
+                          className={cn('mr-2 h-4 w-4', value === selectedLanguage ? 'opacity-100' : 'opacity-0')}
                         />
                         {label}
                       </CommandItem>
@@ -149,9 +118,7 @@ export function LanguageSwitcher() {
             {t('Help us translate Activepieces to your language.')}
             <span
               className="text-primary ml-2 cursor-pointer"
-              onClick={() =>
-                openNewIndow('https://www.activepieces.com/docs/about/i18n')
-              }
+              onClick={() => openNewIndow('https://www.activepieces.com/docs/about/i18n')}
             >
               {t('Learn more')}
             </span>
@@ -159,5 +126,5 @@ export function LanguageSwitcher() {
         ) : null}
       </div>
     </div>
-  );
+  )
 }

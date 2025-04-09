@@ -5,10 +5,10 @@ export enum Product {
 }
 
 export interface User {
-  id: string;
-  email?: string;
-  display_name: string;
-  product: Product;
-  type: 'user';
-  uri: string;
+  id: string
+  email?: string
+  display_name: string
+  product: Product
+  type: 'user'
+  uri: string
 }

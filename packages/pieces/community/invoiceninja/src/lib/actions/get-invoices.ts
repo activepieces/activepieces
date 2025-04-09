@@ -1,7 +1,7 @@
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
 // action to return invoices from InvoiceNinja with filtering by invoice status and client id
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { invoiceninjaAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { invoiceninjaAuth } from '../..'
 export const getInvoices = createAction({
   auth: invoiceninjaAuth,
   name: 'getinvoices_task',
@@ -47,49 +47,40 @@ export const getInvoices = createAction({
   },
 
   async run(context) {
-    const INapiToken = context.auth.access_token;
+    const INapiToken = context.auth.access_token
 
     const headers = {
       'X-Api-Token': INapiToken,
-    };
-
-    const queryParams = new URLSearchParams();
-    queryParams.append(
-      'client_status',
-      context.propsValue.invoiceStatus || 'unpaid'
-    );
-    // only include client_id in the query parameters if it has been specified
-    if (
-      context.propsValue.clientID?.valueOf != null ||
-      context.propsValue.clientID != undefined
-    ) {
-      queryParams.append('client_id', context.propsValue.clientID || '');
     }
-    queryParams.append('is_deleted', 'false'); // only return invoices that are not deleted
-    queryParams.append(
-      'per_page',
-      context.propsValue.numberOfResults?.toString() || '9999'
-    ); // otherwise it only returns 20 per page hopefully
+
+    const queryParams = new URLSearchParams()
+    queryParams.append('client_status', context.propsValue.invoiceStatus || 'unpaid')
+    // only include client_id in the query parameters if it has been specified
+    if (context.propsValue.clientID?.valueOf != null || context.propsValue.clientID != undefined) {
+      queryParams.append('client_id', context.propsValue.clientID || '')
+    }
+    queryParams.append('is_deleted', 'false') // only return invoices that are not deleted
+    queryParams.append('per_page', context.propsValue.numberOfResults?.toString() || '9999') // otherwise it only returns 20 per page hopefully
 
     // Remove trailing slash from base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
-    const url = `${baseUrl}/api/v1/invoices/?${queryParams.toString()}`;
+    const baseUrl = context.auth.base_url.replace(/\/$/, '')
+    const url = `${baseUrl}/api/v1/invoices/?${queryParams.toString()}`
     // console.log("INVOICENINJA: " + url);
     const httprequestdata = {
       method: HttpMethod.GET,
       url,
       headers,
-    };
+    }
 
     try {
-      const response = await httpClient.sendRequest(httprequestdata);
-      const my = [];
+      const response = await httpClient.sendRequest(httprequestdata)
+      const my = []
       // Process the response here (status 2xx).
       if (response.body.meta.pagination.total > 0) {
         // Each invoice that is found will have lots of information, lets remove the guff
         // changed from .total to .count because we're only interested in those in the first page of results which
         // is what we set the per_page to to correspond to the number of records we wanted
-        const NumberOfInvoices = response.body.meta.pagination.count;
+        const NumberOfInvoices = response.body.meta.pagination.count
 
         for (let i = 0; i < NumberOfInvoices; i++) {
           my.push({
@@ -111,18 +102,18 @@ export const getInvoices = createAction({
               balance: response.body.data[i].balance,
               paid: response.body.data[i].paid_to_date,
             },
-          });
+          })
           // console.log("INVOICENINJA: (" + i.toString() + ") " + response.body.data[i].amount);
         }
-        return my;
+        return my
       } else {
-        return false;
+        return false
       } // this is still returned so if it is false we'll return notfound or similar
     } catch (error) {
       // Handle the error when the request fails (status other than 2xx).
       // console.log((error as Error).message);
-      return (error as Error).message;
+      return (error as Error).message
       //       return "There was a problem getting information from your Invoice Ninja";
     }
   },
-});
+})

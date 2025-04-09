@@ -1,15 +1,14 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { metabaseAuth } from '../..';
-import { queryMetabaseApi } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { metabaseAuth } from '../..'
+import { queryMetabaseApi } from '../common'
 
 export const getQuestionPngPreview = createAction({
   name: 'getQuestionPngPreview',
   auth: metabaseAuth,
   requireAuth: true,
   displayName: 'Get Question PNG Preview',
-  description:
-    'Get PNG preview rendering (low resolution) of a Metabase card/question.',
+  description: 'Get PNG preview rendering (low resolution) of a Metabase card/question.',
   props: {
     questionId: Property.ShortText({
       displayName: 'Metabase question ID',
@@ -17,7 +16,7 @@ export const getQuestionPngPreview = createAction({
     }),
   },
   async run({ auth, propsValue, files }) {
-    const questionId = propsValue.questionId.split('-')[0];
+    const questionId = propsValue.questionId.split('-')[0]
 
     const response = await queryMetabaseApi(
       {
@@ -28,21 +27,21 @@ export const getQuestionPngPreview = createAction({
         },
         responseType: 'arraybuffer',
       },
-      auth
-    );
+      auth,
+    )
 
     if (response.error) {
-      throw new Error(response.error);
+      throw new Error(response.error)
     }
 
     const fileUrl = await files.write({
       fileName: `metabase_question_${questionId}.png`,
       data: Buffer.from(response, 'base64'),
-    });
+    })
 
     return {
       fileName: `metabase_question_${questionId}.png`,
       file: fileUrl,
-    };
+    }
   },
-});
+})

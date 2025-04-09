@@ -1,6 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { getOrder } from '../api';
-import { cartloomAuth } from '../auth';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { getOrder } from '../api'
+import { cartloomAuth } from '../auth'
 
 export const getOrderAction = createAction({
   name: 'get_order',
@@ -15,6 +15,6 @@ export const getOrderAction = createAction({
     }),
   },
   async run(context) {
-    return await getOrder(context.auth, context.propsValue.invoice);
+    return await getOrder(context.auth, context.propsValue.invoice)
   },
-});
+})

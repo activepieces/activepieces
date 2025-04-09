@@ -1,12 +1,9 @@
-import { Property, createAction } from "@activepieces/pieces-framework";
-import { harvestAuth } from '../..';
-import {
-  getAccessTokenOrThrow,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { callHarvestApi, filterDynamicFields } from '../common';
-import { propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common'
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { harvestAuth } from '../..'
+import { callHarvestApi, filterDynamicFields } from '../common'
 
 export const getExpenses = createAction({
   name: 'get_expenses', // Must be a unique across the piece, this shouldn't be changed.
@@ -40,7 +37,8 @@ export const getExpenses = createAction({
       required: false,
     }),
     is_billed: Property.ShortText({
-      description: 'Pass `true` to only return expenses that have been invoiced and `false` to return expenses that have not been invoiced.',
+      description:
+        'Pass `true` to only return expenses that have been invoiced and `false` to return expenses that have not been invoiced.',
       displayName: 'Is Billed',
       required: false,
     }),
@@ -48,7 +46,7 @@ export const getExpenses = createAction({
       description: 'Only return expenses that have been updated since the given date and time.',
       displayName: 'Updated since',
       required: false,
-    }),    
+    }),
     page: Property.ShortText({
       description: 'The page number to use in pagination.',
       displayName: 'Page',
@@ -59,30 +57,24 @@ export const getExpenses = createAction({
       displayName: 'Records per page',
       required: false,
     }),
-
   },
   async run(context) {
     // Validate the input properties using Zod
     await propsValidation.validateZod(context.propsValue, {
       per_page: z
-      .string()
-      .optional()
-      .transform((val) => (val === undefined || val === '' ? undefined : parseInt(val, 10)))
-      .refine(
-        (val) => val === undefined || (Number.isInteger(val) && val >= 1 && val <= 2000),
-        'Per Page must be a number between 1 and 2000.'
-      ),
-    });
+        .string()
+        .optional()
+        .transform((val) => (val === undefined || val === '' ? undefined : parseInt(val, 10)))
+        .refine(
+          (val) => val === undefined || (Number.isInteger(val) && val >= 1 && val <= 2000),
+          'Per Page must be a number between 1 and 2000.',
+        ),
+    })
 
-    const params = filterDynamicFields(context.propsValue);
+    const params = filterDynamicFields(context.propsValue)
 
-    const response = await callHarvestApi(
-        HttpMethod.GET,
-        `expenses`,
-        getAccessTokenOrThrow(context.auth),
-        params
-      );
-  
-      return response.body;  },
-});
+    const response = await callHarvestApi(HttpMethod.GET, `expenses`, getAccessTokenOrThrow(context.auth), params)
 
+    return response.body
+  },
+})

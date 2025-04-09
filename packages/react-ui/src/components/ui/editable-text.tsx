@@ -1,19 +1,19 @@
-import { useState, useRef, useCallback } from 'react';
+import { useCallback, useRef, useState } from 'react'
 
-import { isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/shared'
 
-import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip'
 
 type EditableTextProps = {
-  value: string | undefined;
-  className?: string;
-  readonly: boolean;
-  onValueChange: (value: string) => void;
-  tooltipContent?: string;
-  disallowEditingOnClick?: boolean;
-  isEditing: boolean;
-  setIsEditing: (isEditing: boolean) => void;
-};
+  value: string | undefined
+  className?: string
+  readonly: boolean
+  onValueChange: (value: string) => void
+  tooltipContent?: string
+  disallowEditingOnClick?: boolean
+  isEditing: boolean
+  setIsEditing: (isEditing: boolean) => void
+}
 
 const EditableText = ({
   value: initialValue,
@@ -25,62 +25,49 @@ const EditableText = ({
   isEditing,
   setIsEditing,
 }: EditableTextProps) => {
-  const [value, setValue] = useState(initialValue);
-  const isEditingPreviousRef = useRef(isEditing);
-  const valueOnEditingStartedRef = useRef(initialValue);
+  const [value, setValue] = useState(initialValue)
+  const isEditingPreviousRef = useRef(isEditing)
+  const valueOnEditingStartedRef = useRef(initialValue)
   //detect change coming from outside
   if (value !== initialValue) {
-    setValue(initialValue);
+    setValue(initialValue)
   }
-  const editableTextRef = useRef<HTMLDivElement>(null);
+  const editableTextRef = useRef<HTMLDivElement>(null)
 
   const emitChangedValue = useCallback(() => {
-    const nodeValue = (editableTextRef.current?.textContent ?? '').trim();
-    const shouldUpdateValue =
-      nodeValue.length > 0 && nodeValue !== valueOnEditingStartedRef.current;
+    const nodeValue = (editableTextRef.current?.textContent ?? '').trim()
+    const shouldUpdateValue = nodeValue.length > 0 && nodeValue !== valueOnEditingStartedRef.current
 
-    setValue(shouldUpdateValue ? nodeValue : valueOnEditingStartedRef.current);
+    setValue(shouldUpdateValue ? nodeValue : valueOnEditingStartedRef.current)
     if (shouldUpdateValue) {
-      onValueChange(nodeValue);
+      onValueChange(nodeValue)
     }
-  }, [onValueChange, valueOnEditingStartedRef.current]);
+  }, [onValueChange, valueOnEditingStartedRef.current])
 
   const setSelectionToValue = () => {
     setTimeout(() => {
-      if (
-        editableTextRef.current &&
-        window.getSelection &&
-        document.createRange
-      ) {
-        const range = document.createRange();
-        const sel = window.getSelection();
-        range.selectNodeContents(editableTextRef.current);
-        sel?.removeAllRanges();
-        sel?.addRange(range);
+      if (editableTextRef.current && window.getSelection && document.createRange) {
+        const range = document.createRange()
+        const sel = window.getSelection()
+        range.selectNodeContents(editableTextRef.current)
+        sel?.removeAllRanges()
+        sel?.addRange(range)
       }
-    }, 1);
-  };
-  if (isEditing && !isEditingPreviousRef.current) {
-    valueOnEditingStartedRef.current = value ? value.trim() : '';
-    setSelectionToValue();
+    }, 1)
   }
-  isEditingPreviousRef.current = isEditing;
+  if (isEditing && !isEditingPreviousRef.current) {
+    valueOnEditingStartedRef.current = value ? value.trim() : ''
+    setSelectionToValue()
+  }
+  isEditingPreviousRef.current = isEditing
 
   return !isEditing ? (
     <Tooltip>
-      <TooltipTrigger
-        disabled={
-          readonly ||
-          isEditing ||
-          disallowEditingOnClick ||
-          isNil(tooltipContent)
-        }
-        asChild
-      >
+      <TooltipTrigger disabled={readonly || isEditing || disallowEditingOnClick || isNil(tooltipContent)} asChild>
         <div
           onClick={() => {
             if (!isEditing && !readonly && !disallowEditingOnClick) {
-              setIsEditing(true);
+              setIsEditing(true)
             }
           }}
           ref={editableTextRef}
@@ -88,8 +75,7 @@ const EditableText = ({
           className={`${className} truncate `}
           title={
             editableTextRef.current &&
-            editableTextRef.current.scrollWidth >
-              editableTextRef.current.clientWidth &&
+            editableTextRef.current.scrollWidth > editableTextRef.current.clientWidth &&
             value
               ? value
               : ''
@@ -110,23 +96,23 @@ const EditableText = ({
       suppressContentEditableWarning={true}
       className={`${className}  focus:outline-none break-all`}
       onBlur={() => {
-        emitChangedValue();
-        setIsEditing(false);
+        emitChangedValue()
+        setIsEditing(false)
       }}
       onKeyDown={(event) => {
         if (event.key === 'Escape') {
-          setValue(valueOnEditingStartedRef.current);
-          setIsEditing(false);
+          setValue(valueOnEditingStartedRef.current)
+          setIsEditing(false)
         } else if (event.key === 'Enter') {
-          emitChangedValue();
-          setIsEditing(false);
+          emitChangedValue()
+          setIsEditing(false)
         }
       }}
     >
       {value}
     </div>
-  );
-};
+  )
+}
 
-EditableText.displayName = 'EditableText';
-export default EditableText;
+EditableText.displayName = 'EditableText'
+export default EditableText

@@ -1,13 +1,9 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { getQuestion } from './lib/actions/get-question';
-import { getQuestionPngPreview } from './lib/actions/get-png-rendering';
-import { getDashboardQuestions } from './lib/actions/get-dashboard';
-import { queryMetabaseApi } from './lib/common';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { getDashboardQuestions } from './lib/actions/get-dashboard'
+import { getQuestionPngPreview } from './lib/actions/get-png-rendering'
+import { getQuestion } from './lib/actions/get-question'
+import { queryMetabaseApi } from './lib/common'
 
 export const metabaseAuth = PieceAuth.CustomAuth({
   description: 'Metabase authentication requires a username and password.',
@@ -19,8 +15,7 @@ export const metabaseAuth = PieceAuth.CustomAuth({
     }),
     apiKey: PieceAuth.SecretText({
       displayName: 'API key',
-      description:
-        'Generate one on your Metabase instance (settings -> authentication -> API keys)',
+      description: 'Generate one on your Metabase instance (settings -> authentication -> API keys)',
       required: true,
     }),
   },
@@ -32,19 +27,19 @@ export const metabaseAuth = PieceAuth.CustomAuth({
           endpoint: 'login-history/current',
           method: HttpMethod.GET,
         },
-        auth
-      );
+        auth,
+      )
       return {
         valid: true,
-      };
+      }
     } catch (e) {
       return {
         valid: false,
         error: 'Invalid API Key or base URL',
-      };
+      }
     }
   },
-});
+})
 export const metabase = createPiece({
   displayName: 'Metabase',
   description: 'The simplest way to ask questions and learn from data',
@@ -55,4 +50,4 @@ export const metabase = createPiece({
   authors: ['AdamSelene', 'abuaboud', 'valentin-mourtialon'],
   actions: [getQuestion, getQuestionPngPreview, getDashboardQuestions],
   triggers: [],
-});
+})

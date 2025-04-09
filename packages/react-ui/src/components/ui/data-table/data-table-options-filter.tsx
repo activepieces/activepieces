@@ -1,24 +1,24 @@
-import { Column } from '@tanstack/react-table';
-import * as React from 'react';
-import { DateRange } from 'react-day-picker';
-import { useSearchParams } from 'react-router-dom';
+import { Column } from '@tanstack/react-table'
+import * as React from 'react'
+import { DateRange } from 'react-day-picker'
+import { useSearchParams } from 'react-router-dom'
 
-import { DateTimePickerWithRange } from '../date-time-picker-range';
+import { DateTimePickerWithRange } from '../date-time-picker-range'
 
-import { DataTableInputPopover } from './data-table-input-popover';
-import { DataTableSelectPopover } from './data-table-select-popover';
+import { DataTableInputPopover } from './data-table-input-popover'
+import { DataTableSelectPopover } from './data-table-select-popover'
 
-import { CURSOR_QUERY_PARAM } from '.';
+import { CURSOR_QUERY_PARAM } from '.'
 
 interface DataTableFacetedFilterProps<TData, TValue> {
-  type: 'select' | 'input' | 'date';
-  column?: Column<TData, TValue>;
-  title?: string;
+  type: 'select' | 'input' | 'date'
+  column?: Column<TData, TValue>
+  title?: string
   options: readonly {
-    label: string;
-    value: string;
-    icon?: React.ComponentType<{ className?: string }>;
-  }[];
+    label: string
+    value: string
+    icon?: React.ComponentType<{ className?: string }>
+  }[]
 }
 
 export function DataTableFacetedFilter<TData, TValue>({
@@ -27,75 +27,59 @@ export function DataTableFacetedFilter<TData, TValue>({
   title,
   options,
 }: DataTableFacetedFilterProps<TData, TValue>) {
-  const facets = column?.getFacetedUniqueValues();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const facets = column?.getFacetedUniqueValues()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const handleFilterChange = React.useCallback(
     (filterValue: string | string[] | DateRange | undefined) => {
       setSearchParams(
         (prev) => {
-          const newParams = new URLSearchParams(prev);
-          newParams.delete(column?.id as string);
-          newParams.delete(`${column?.id}After`);
-          newParams.delete(`${column?.id}Before`);
-          newParams.delete(CURSOR_QUERY_PARAM);
+          const newParams = new URLSearchParams(prev)
+          newParams.delete(column?.id as string)
+          newParams.delete(`${column?.id}After`)
+          newParams.delete(`${column?.id}Before`)
+          newParams.delete(CURSOR_QUERY_PARAM)
           if (!filterValue) {
-            return newParams;
+            return newParams
           }
 
           if (Array.isArray(filterValue)) {
-            filterValue.forEach((value) =>
-              newParams.append(column?.id as string, value),
-            );
+            filterValue.forEach((value) => newParams.append(column?.id as string, value))
           } else if (typeof filterValue === 'object' && filterValue !== null) {
             if (filterValue.from) {
-              newParams.append(
-                `${column?.id}After`,
-                filterValue.from.toISOString(),
-              );
+              newParams.append(`${column?.id}After`, filterValue.from.toISOString())
             }
             if (filterValue.to) {
-              newParams.append(
-                `${column?.id}Before`,
-                filterValue.to.toISOString(),
-              );
+              newParams.append(`${column?.id}Before`, filterValue.to.toISOString())
             }
           } else {
-            newParams.append(column?.id as string, filterValue);
+            newParams.append(column?.id as string, filterValue)
           }
 
-          return newParams;
+          return newParams
         },
         { replace: true },
-      );
+      )
 
       if (Array.isArray(filterValue)) {
-        column?.setFilterValue(filterValue.length ? filterValue : undefined);
+        column?.setFilterValue(filterValue.length ? filterValue : undefined)
       } else if (typeof filterValue === 'object' && filterValue !== null) {
-        column?.setFilterValue(
-          filterValue.from || filterValue.to ? filterValue : undefined,
-        );
+        column?.setFilterValue(filterValue.from || filterValue.to ? filterValue : undefined)
       } else {
-        column?.setFilterValue(filterValue ? filterValue : undefined);
+        column?.setFilterValue(filterValue ? filterValue : undefined)
       }
     },
     [column, setSearchParams],
-  );
+  )
 
   switch (type) {
     case 'input': {
-      const filterValue = searchParams.get(column?.id as string) || '';
-      return (
-        <DataTableInputPopover
-          title={title}
-          filterValue={filterValue}
-          handleFilterChange={handleFilterChange}
-        />
-      );
+      const filterValue = searchParams.get(column?.id as string) || ''
+      return <DataTableInputPopover title={title} filterValue={filterValue} handleFilterChange={handleFilterChange} />
     }
     case 'select': {
-      const filterValue = searchParams.getAll(column?.id as string) as string[];
-      const selectedValues = new Set(filterValue);
+      const filterValue = searchParams.getAll(column?.id as string) as string[]
+      const selectedValues = new Set(filterValue)
       return (
         <DataTableSelectPopover
           title={title}
@@ -104,11 +88,11 @@ export function DataTableFacetedFilter<TData, TValue>({
           handleFilterChange={handleFilterChange}
           facets={facets}
         />
-      );
+      )
     }
     case 'date': {
-      const from = searchParams.get(`${column?.id}After`);
-      const to = searchParams.get(`${column?.id}Before`);
+      const from = searchParams.get(`${column?.id}After`)
+      const to = searchParams.get(`${column?.id}Before`)
 
       return (
         <DateTimePickerWithRange
@@ -117,7 +101,7 @@ export function DataTableFacetedFilter<TData, TValue>({
           from={from ?? undefined}
           to={to ?? undefined}
         />
-      );
+      )
     }
   }
 }

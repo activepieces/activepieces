@@ -1,11 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { excelAuth } from '../../index';
-import { excelCommon } from '../common/common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { excelAuth } from '../../index'
+import { excelCommon } from '../common/common'
 
 export const getWorkbooksAction = createAction({
   auth: excelAuth,
@@ -15,21 +11,19 @@ export const getWorkbooksAction = createAction({
   props: {
     limit: Property.Number({
       displayName: 'Limit',
-      description:
-        'Limits the number of workbooks returned, returns all workbooks if empty',
+      description: 'Limits the number of workbooks returned, returns all workbooks if empty',
       required: false,
     }),
   },
   async run({ propsValue, auth }) {
-    const limit = propsValue['limit'];
+    const limit = propsValue['limit']
 
     const queryParams: any = {
-      $filter:
-        "file ne null and file/mimeType eq 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'",
-    };
+      $filter: "file ne null and file/mimeType eq 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'",
+    }
 
     if (limit !== null && limit !== undefined) {
-      queryParams.$top = limit.toString();
+      queryParams.$top = limit.toString()
     }
 
     const request = {
@@ -40,17 +34,15 @@ export const getWorkbooksAction = createAction({
         token: auth['access_token'],
       },
       queryParams: queryParams,
-    };
+    }
 
-    const response = await httpClient.sendRequest(request);
-    const workbooks = response.body['value'].map(
-      (item: { id: any; name: any; webUrl: any }) => ({
-        id: item.id,
-        name: item.name,
-        webUrl: item.webUrl,
-      })
-    );
+    const response = await httpClient.sendRequest(request)
+    const workbooks = response.body['value'].map((item: { id: any; name: any; webUrl: any }) => ({
+      id: item.id,
+      name: item.name,
+      webUrl: item.webUrl,
+    }))
 
-    return workbooks;
+    return workbooks
   },
-});
+})

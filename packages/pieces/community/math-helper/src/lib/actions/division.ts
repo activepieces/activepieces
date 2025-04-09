@@ -1,10 +1,6 @@
-import {
-  createAction,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
 
 export const division = createAction({
   name: 'division_math',
@@ -33,12 +29,10 @@ export const division = createAction({
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      second_number: z.number().refine(val => val !== 0, {
-        message: "Second number cannot be zero"
+      second_number: z.number().refine((val) => val !== 0, {
+        message: 'Second number cannot be zero',
       }),
-    });
-    return (
-      context.propsValue['first_number'] / context.propsValue['second_number']
-    );
+    })
+    return context.propsValue['first_number'] / context.propsValue['second_number']
   },
-});
+})

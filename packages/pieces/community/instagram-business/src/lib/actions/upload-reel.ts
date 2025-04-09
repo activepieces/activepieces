@@ -1,6 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework'
 
-import { instagramCommon, FacebookPageDropdown } from '../common';
+import { FacebookPageDropdown, instagramCommon } from '../common'
 
 export const uploadReel = createAction({
   auth: instagramCommon.authentication,
@@ -13,12 +13,8 @@ export const uploadReel = createAction({
     caption: instagramCommon.caption,
   },
   async run(context) {
-    const page: FacebookPageDropdown = context.propsValue.page!;
-    const result = await instagramCommon.createVideoPost(
-      page,
-      context.propsValue.caption,
-      context.propsValue.video
-    );
-    return result;
+    const page: FacebookPageDropdown = context.propsValue.page!
+    const result = await instagramCommon.createVideoPost(page, context.propsValue.caption, context.propsValue.video)
+    return result
   },
-});
+})

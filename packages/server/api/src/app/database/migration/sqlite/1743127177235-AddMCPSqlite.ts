@@ -1,10 +1,10 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddMCPSqlite1743127177235 implements MigrationInterface {
-    name = 'AddMCPSqlite1743127177235'
+  name = 'AddMCPSqlite1743127177235'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             CREATE TABLE "mcp" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -13,19 +13,19 @@ export class AddMCPSqlite1743127177235 implements MigrationInterface {
                 "token" varchar(21) NOT NULL
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "mcp_project_id" ON "mcp" ("projectId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_app_connection_platform_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_app_connection_project_ids_and_external_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_app_connection_owner_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_app_connection" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -45,7 +45,7 @@ export class AddMCPSqlite1743127177235 implements MigrationInterface {
                 SET NULL ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_app_connection"(
                     "id",
                     "created",
@@ -76,45 +76,45 @@ export class AddMCPSqlite1743127177235 implements MigrationInterface {
                 "scope"
             FROM "app_connection"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "app_connection"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_app_connection"
                 RENAME TO "app_connection"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_app_connection_platform_id" ON "app_connection" ("platformId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_app_connection_project_ids_and_external_id" ON "app_connection" ("projectIds", "externalId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_app_connection_owner_id" ON "app_connection" ("ownerId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_app_connection_mcp_id" ON "app_connection" ("mcpId")
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_app_connection_mcp_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_app_connection_owner_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_app_connection_project_ids_and_external_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_app_connection_platform_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "app_connection"
                 RENAME TO "temporary_app_connection"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "app_connection" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -133,7 +133,7 @@ export class AddMCPSqlite1743127177235 implements MigrationInterface {
                 SET NULL ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "app_connection"(
                     "id",
                     "created",
@@ -164,24 +164,23 @@ export class AddMCPSqlite1743127177235 implements MigrationInterface {
                 "scope"
             FROM "temporary_app_connection"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_app_connection"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_app_connection_owner_id" ON "app_connection" ("ownerId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_app_connection_project_ids_and_external_id" ON "app_connection" ("projectIds", "externalId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_app_connection_platform_id" ON "app_connection" ("platformId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "mcp_project_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "mcp"
         `)
-    }
-
+  }
 }

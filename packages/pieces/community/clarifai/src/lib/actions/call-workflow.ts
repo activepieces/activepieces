@@ -1,12 +1,7 @@
-import { clarifaiAuth } from '../../';
-import { Property, createAction } from '@activepieces/pieces-framework';
-import {
-  CommonClarifaiProps,
-  callClarifaiWorkflow,
-  cleanPostWorkflowResultsResponse,
-  fileToInput,
-} from '../common';
-import { Data } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { Data } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb'
+import { clarifaiAuth } from '../../'
+import { CommonClarifaiProps, callClarifaiWorkflow, cleanPostWorkflowResultsResponse, fileToInput } from '../common'
 
 export const workflowPredictAction = createAction({
   auth: clarifaiAuth,
@@ -23,16 +18,16 @@ export const workflowPredictAction = createAction({
     }),
   },
   async run(ctx) {
-    const { auth } = ctx;
-    const { workflowUrl, file } = ctx.propsValue;
+    const { auth } = ctx
+    const { workflowUrl, file } = ctx.propsValue
 
-    const input = fileToInput(file);
+    const input = fileToInput(file)
 
     const outputs = await callClarifaiWorkflow({
       auth,
       workflowUrl,
       input,
-    });
-    return cleanPostWorkflowResultsResponse(outputs);
+    })
+    return cleanPostWorkflowResultsResponse(outputs)
   },
-});
+})

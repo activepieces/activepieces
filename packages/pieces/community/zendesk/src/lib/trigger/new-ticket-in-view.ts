@@ -1,17 +1,13 @@
 import {
-  TriggerStrategy,
-  createTrigger,
-  Property,
-} from '@activepieces/pieces-framework';
-import {
   AuthenticationType,
   DedupeStrategy,
-  httpClient,
   HttpMethod,
   Polling,
+  httpClient,
   pollingHelper,
-} from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+} from '@activepieces/pieces-common'
+import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { zendeskAuth } from '../..'
 
 export const newTicketInView = createTrigger({
   auth: zendeskAuth,
@@ -26,17 +22,13 @@ export const newTicketInView = createTrigger({
       refreshers: [],
       required: true,
       options: async ({ auth }) => {
-        const authentication = auth as AuthProps;
-        if (
-          !authentication?.['email'] ||
-          !authentication?.['subdomain'] ||
-          !authentication?.['token']
-        ) {
+        const authentication = auth as AuthProps
+        if (!authentication?.['email'] || !authentication?.['subdomain'] || !authentication?.['token']) {
           return {
             placeholder: 'Fill your authentication first',
             disabled: true,
             options: [],
-          };
+          }
         }
         const response = await httpClient.sendRequest<{ views: any[] }>({
           url: `https://${authentication.subdomain}.zendesk.com/api/v2/views.json`,
@@ -46,14 +38,14 @@ export const newTicketInView = createTrigger({
             username: authentication.email + '/token',
             password: authentication.token,
           },
-        });
+        })
         return {
           placeholder: 'Select a view',
           options: response.body.views.map((view: any) => ({
             label: view.title,
             value: view.id,
           })),
-        };
+        }
       },
     }),
   },
@@ -109,14 +101,14 @@ export const newTicketInView = createTrigger({
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
-    });
+    })
   },
   onDisable: async (context) => {
     await pollingHelper.onDisable(polling, {
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
-    });
+    })
   },
   run: async (context) => {
     return await pollingHelper.poll(polling, {
@@ -124,7 +116,7 @@ export const newTicketInView = createTrigger({
       store: context.store,
       propsValue: context.propsValue,
       files: context.files,
-    });
+    })
   },
   test: async (context) => {
     return await pollingHelper.test(polling, {
@@ -132,29 +124,29 @@ export const newTicketInView = createTrigger({
       store: context.store,
       propsValue: context.propsValue,
       files: context.files,
-    });
+    })
   },
-});
+})
 
 type AuthProps = {
-  email: string;
-  token: string;
-  subdomain: string;
-};
+  email: string
+  token: string
+  subdomain: string
+}
 
 const polling: Polling<AuthProps, { view_id: string }> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue }) => {
-    const items = await getTickets(auth, propsValue.view_id);
+    const items = await getTickets(auth, propsValue.view_id)
     return items.map((item) => ({
       id: item.id,
       data: item,
-    }));
+    }))
   },
-};
+}
 
 async function getTickets(authentication: AuthProps, view_id: string) {
-  const { email, token, subdomain } = authentication;
+  const { email, token, subdomain } = authentication
   const response = await httpClient.sendRequest<{ tickets: any[] }>({
     url: `https://${subdomain}.zendesk.com/api/v2/views/${view_id}/tickets.json?sort_order=desc&sort_by=created_at&per_page=200`,
     method: HttpMethod.GET,
@@ -163,6 +155,6 @@ async function getTickets(authentication: AuthProps, view_id: string) {
       username: email + '/token',
       password: token,
     },
-  });
-  return response.body.tickets;
+  })
+  return response.body.tickets
 }

@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { encodings } from '../common/encodings';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { encodings } from '../common/encodings'
 
 export const createFile = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -17,14 +17,13 @@ export const createFile = createAction({
         options: encodings,
       },
     }),
-
   },
   async run({ propsValue, files }) {
-    const encoding = propsValue.encoding as BufferEncoding ?? 'utf8';
+    const encoding = (propsValue.encoding as BufferEncoding) ?? 'utf8'
     const fileUrl = await files.write({
       fileName: propsValue.fileName,
       data: Buffer.from(propsValue.content, encoding),
-    });
-    return { fileName: propsValue.fileName, url: fileUrl };
+    })
+    return { fileName: propsValue.fileName, url: fileUrl }
   },
-});
+})

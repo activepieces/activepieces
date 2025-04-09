@@ -1,7 +1,4 @@
-import {
-  createSessionsUsWebhookTrigger,
-  SessionsUsWebhookTrigger,
-} from '../common';
+import { SessionsUsWebhookTrigger, createSessionsUsWebhookTrigger } from '../common'
 
 export const takeawayReady = createSessionsUsWebhookTrigger({
   name: 'takeaway_ready',
@@ -33,4 +30,4 @@ export const takeawayReady = createSessionsUsWebhookTrigger({
       },
     },
   },
-});
+})

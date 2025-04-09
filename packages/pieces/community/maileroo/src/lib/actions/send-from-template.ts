@@ -1,11 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework'
 
-import { mailerooAuth } from '../../';
-import {
-  createCommonProps,
-  createFormData,
-  sendFormData,
-} from '../common/send-utils';
+import { mailerooAuth } from '../../'
+import { createCommonProps, createFormData, sendFormData } from '../common/send-utils'
 
 export const sendFromTemplate = createAction({
   auth: mailerooAuth,
@@ -27,19 +23,15 @@ export const sendFromTemplate = createAction({
     }),
   },
   async run(context) {
-    const formData = createFormData(context.propsValue);
+    const formData = createFormData(context.propsValue)
 
-    const { template_id, template_data } = context.propsValue;
+    const { template_id, template_data } = context.propsValue
 
-    formData.append('template_id', template_id);
-    formData.append('template_data', JSON.stringify(template_data));
+    formData.append('template_id', template_id)
+    formData.append('template_data', JSON.stringify(template_data))
 
-    const res = await sendFormData(
-      'send-template',
-      formData,
-      context.auth.apiKey
-    );
+    const res = await sendFormData('send-template', formData, context.auth.apiKey)
 
-    return res.body;
+    return res.body
   },
-});
+})

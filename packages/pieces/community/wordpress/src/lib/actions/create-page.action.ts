@@ -1,12 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { wordpressCommon } from '../common';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { wordpressAuth } from '../..';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { wordpressAuth } from '../..'
+import { wordpressCommon } from '../common'
 
 export const createWordPressPage = createAction({
   auth: wordpressAuth,
@@ -64,28 +59,26 @@ export const createWordPressPage = createAction({
   },
   async run(context) {
     if (!(await wordpressCommon.urlExists(context.auth.website_url.trim()))) {
-      throw new Error('Website url is invalid: ' + context.auth.website_url);
+      throw new Error('Website url is invalid: ' + context.auth.website_url)
     }
-    const requestBody: Record<string, unknown> = {};
+    const requestBody: Record<string, unknown> = {}
     if (context.propsValue.date) {
-      requestBody['date'] = context.propsValue.date;
+      requestBody['date'] = context.propsValue.date
     }
     if (context.propsValue.comment_status) {
-      requestBody['comment_status'] = context.propsValue.comment_status
-        ? 'open'
-        : 'closed';
+      requestBody['comment_status'] = context.propsValue.comment_status ? 'open' : 'closed'
     }
     if (context.propsValue.slug) {
-      requestBody['slug'] = context.propsValue.slug;
+      requestBody['slug'] = context.propsValue.slug
     }
     if (context.propsValue.excerpt) {
-      requestBody['excerpt'] = context.propsValue.excerpt;
+      requestBody['excerpt'] = context.propsValue.excerpt
     }
     if (context.propsValue.status) {
-      requestBody['status'] = context.propsValue.status;
+      requestBody['status'] = context.propsValue.status
     }
-    requestBody['content'] = context.propsValue.content;
-    requestBody['title'] = context.propsValue.title;
+    requestBody['content'] = context.propsValue.content
+    requestBody['title'] = context.propsValue.title
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${context.auth.website_url.trim()}/wp-json/wp/v2/pages`,
@@ -95,10 +88,8 @@ export const createWordPressPage = createAction({
         password: context.auth.password,
       },
       body: requestBody,
-    };
-    const response = await httpClient.sendRequest<
-      { id: string; name: string }[]
-    >(request);
-    return response;
+    }
+    const response = await httpClient.sendRequest<{ id: string; name: string }[]>(request)
+    return response
   },
-});
+})

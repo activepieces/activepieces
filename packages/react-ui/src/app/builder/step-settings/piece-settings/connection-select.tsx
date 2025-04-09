@@ -1,12 +1,12 @@
-import { t } from 'i18next';
-import { Plus, Globe } from 'lucide-react';
-import { memo, useState } from 'react';
-import { ControllerRenderProps, useFormContext } from 'react-hook-form';
+import { t } from 'i18next'
+import { Globe, Plus } from 'lucide-react'
+import { memo, useState } from 'react'
+import { ControllerRenderProps, useFormContext } from 'react-hook-form'
 
-import { AutoFormFieldWrapper } from '@/app/builder/piece-properties/auto-form-field-wrapper';
-import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
-import { Button } from '@/components/ui/button';
-import { FormField } from '@/components/ui/form';
+import { AutoFormFieldWrapper } from '@/app/builder/piece-properties/auto-form-field-wrapper'
+import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog'
+import { Button } from '@/components/ui/button'
+import { FormField } from '@/components/ui/form'
 import {
   Select,
   SelectAction,
@@ -15,42 +15,35 @@ import {
   SelectLoader,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import {
-  PieceMetadataModel,
-  PieceMetadataModelSummary,
-} from '@activepieces/pieces-framework';
+} from '@/components/ui/select'
+import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import {
   AppConnectionScope,
   AppConnectionWithoutSensitiveData,
   PieceAction,
   PieceTrigger,
   isNil,
-} from '@activepieces/shared';
+} from '@activepieces/shared'
 
-import { appConnectionsHooks } from '../../../../features/connections/lib/app-connections-hooks';
+import { appConnectionsHooks } from '../../../../features/connections/lib/app-connections-hooks'
 
 type ConnectionSelectProps = {
-  disabled: boolean;
-  piece: PieceMetadataModelSummary | PieceMetadataModel;
-  isTrigger: boolean;
-};
-const addBrackets = (str: string) => `{{connections['${str}']}}`;
+  disabled: boolean
+  piece: PieceMetadataModelSummary | PieceMetadataModel
+  isTrigger: boolean
+}
+const addBrackets = (str: string) => `{{connections['${str}']}}`
 const removeBrackets = (str: string | undefined) => {
   if (isNil(str)) {
-    return undefined;
+    return undefined
   }
-  return str.replace(
-    /\{\{connections\['(.*?)'\]\}\}/g,
-    (_, connectionName) => connectionName,
-  );
-};
+  return str.replace(/\{\{connections\['(.*?)'\]\}\}/g, (_, connectionName) => connectionName)
+}
 const ConnectionSelect = memo((params: ConnectionSelectProps) => {
-  const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
-  const [selectConnectionOpen, setSelectConnectionOpen] = useState(false);
-  const [reconnectConnection, setReconnectConnection] =
-    useState<AppConnectionWithoutSensitiveData | null>(null);
-  const form = useFormContext<PieceAction | PieceTrigger>();
+  const [connectionDialogOpen, setConnectionDialogOpen] = useState(false)
+  const [selectConnectionOpen, setSelectConnectionOpen] = useState(false)
+  const [reconnectConnection, setReconnectConnection] = useState<AppConnectionWithoutSensitiveData | null>(null)
+  const form = useFormContext<PieceAction | PieceTrigger>()
   const {
     data: connectionsPage,
     isLoading,
@@ -59,16 +52,13 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
     pieceName: params.piece.name,
     cursor: undefined,
     limit: 1000,
-  });
+  })
 
   const selectedConnection = connectionsPage?.find(
-    (connection) =>
-      connection.externalId ===
-      removeBrackets(form.getValues().settings.input.auth ?? ''),
-  );
+    (connection) => connection.externalId === removeBrackets(form.getValues().settings.input.auth ?? ''),
+  )
 
-  const isGlobalConnection =
-    selectedConnection?.scope === AppConnectionScope.PLATFORM;
+  const isGlobalConnection = selectedConnection?.scope === AppConnectionScope.PLATFORM
   return (
     <FormField
       control={form.control}
@@ -100,10 +90,10 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                 key={`CreateOrEditConnectionDialog-open-${connectionDialogOpen}`}
                 open={connectionDialogOpen}
                 setOpen={(open, connection) => {
-                  setConnectionDialogOpen(open);
+                  setConnectionDialogOpen(open)
                   if (connection) {
-                    refetch();
-                    field.onChange(addBrackets(connection.externalId));
+                    refetch()
+                    field.onChange(addBrackets(connection.externalId))
                   }
                 }}
               ></CreateOrEditConnectionDialog>
@@ -119,8 +109,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                     <>
                       {connectionsPage?.find(
                         (connection) =>
-                          connection.externalId ===
-                            removeBrackets(field.value) &&
+                          connection.externalId === removeBrackets(field.value) &&
                           connection.scope !== AppConnectionScope.PLATFORM,
                       ) && (
                         <Button
@@ -128,10 +117,10 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                           size="xs"
                           className="z-50 absolute right-8 top-2 "
                           onClick={(e) => {
-                            e.stopPropagation();
-                            setReconnectConnection(selectedConnection ?? null);
-                            setSelectConnectionOpen(false);
-                            setConnectionDialogOpen(true);
+                            e.stopPropagation()
+                            setReconnectConnection(selectedConnection ?? null)
+                            setSelectConnectionOpen(false)
+                            setConnectionDialogOpen(true)
                           }}
                         >
                           {t('Reconnect')}
@@ -141,32 +130,17 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                   )}
 
                   <SelectTrigger className="flex gap-2 items-center">
-                    <SelectValue
-                      className="truncate flex-grow flex-shrink"
-                      placeholder={t('Select a connection')}
-                    >
+                    <SelectValue className="truncate flex-grow flex-shrink" placeholder={t('Select a connection')}>
                       {!isNil(field.value) &&
                       !isNil(
-                        connectionsPage?.find(
-                          (connection) =>
-                            connection.externalId ===
-                            removeBrackets(field.value),
-                        ),
+                        connectionsPage?.find((connection) => connection.externalId === removeBrackets(field.value)),
                       ) ? (
                         <div className="truncate flex-grow flex-shrink flex items-center gap-2">
-                          {connectionsPage?.find(
-                            (connection) =>
-                              connection.externalId ===
-                              removeBrackets(field.value),
-                          )?.scope === AppConnectionScope.PLATFORM && (
-                            <Globe size={16} className="shrink-0" />
-                          )}
+                          {connectionsPage?.find((connection) => connection.externalId === removeBrackets(field.value))
+                            ?.scope === AppConnectionScope.PLATFORM && <Globe size={16} className="shrink-0" />}
                           {
-                            connectionsPage?.find(
-                              (connection) =>
-                                connection.externalId ===
-                                removeBrackets(field.value),
-                            )?.displayName
+                            connectionsPage?.find((connection) => connection.externalId === removeBrackets(field.value))
+                              ?.displayName
                           }
                         </div>
                       ) : null}
@@ -175,14 +149,10 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                     {field.value &&
                       connectionsPage?.find(
                         (connection) =>
-                          connection.externalId ===
-                            removeBrackets(field.value) &&
+                          connection.externalId === removeBrackets(field.value) &&
                           connection.scope !== AppConnectionScope.PLATFORM,
                       ) && (
-                        <span
-                          role="button"
-                          className="z-50 opacity-0 pointer-events-none"
-                        >
+                        <span role="button" className="z-50 opacity-0 pointer-events-none">
                           {t('Reconnect')}
                         </span>
                       )}
@@ -192,9 +162,9 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                 <SelectContent>
                   <SelectAction
                     onClick={() => {
-                      setSelectConnectionOpen(false);
-                      setReconnectConnection(null);
-                      setConnectionDialogOpen(true);
+                      setSelectConnectionOpen(false)
+                      setReconnectConnection(null)
+                      setConnectionDialogOpen(true)
                     }}
                   >
                     <span className="flex items-center gap-1 text-primary w-full">
@@ -206,19 +176,15 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                   {connectionsPage &&
                     connectionsPage.map((connection) => {
                       return (
-                        <SelectItem
-                          value={addBrackets(connection.externalId)}
-                          key={connection.externalId}
-                        >
+                        <SelectItem value={addBrackets(connection.externalId)} key={connection.externalId}>
                           <div className="flex items-center gap-2">
-                            {connection.scope ===
-                              AppConnectionScope.PLATFORM && (
+                            {connection.scope === AppConnectionScope.PLATFORM && (
                               <Globe size={16} className="shrink-0" />
                             )}
                             {connection.displayName}
                           </div>
                         </SelectItem>
-                      );
+                      )
                     })}
                 </SelectContent>
               </Select>
@@ -227,8 +193,8 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
         </>
       )}
     ></FormField>
-  );
-});
+  )
+})
 
-ConnectionSelect.displayName = 'ConnectionSelect';
-export { ConnectionSelect };
+ConnectionSelect.displayName = 'ConnectionSelect'
+export { ConnectionSelect }

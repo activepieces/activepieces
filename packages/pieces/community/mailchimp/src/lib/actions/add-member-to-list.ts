@@ -1,8 +1,8 @@
-import { mailchimpCommon } from '../common';
-import { MailChimpWebhookType } from '../common/types';
-import mailchimp, { Status } from '@mailchimp/mailchimp_marketing';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { mailchimpAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import mailchimp, { Status } from '@mailchimp/mailchimp_marketing'
+import { mailchimpAuth } from '../..'
+import { mailchimpCommon } from '../common'
+import { MailChimpWebhookType } from '../common/types'
 
 export const addMemberToList = createAction({
   auth: mailchimpAuth,
@@ -42,13 +42,12 @@ export const addMemberToList = createAction({
     }),
   },
   async run(context) {
-    const access_token = context.auth.access_token;
-    const mailChimpServerPrefix =
-      await mailchimpCommon.getMailChimpServerPrefix(access_token);
+    const access_token = context.auth.access_token
+    const mailChimpServerPrefix = await mailchimpCommon.getMailChimpServerPrefix(access_token)
     mailchimp.setConfig({
       accessToken: access_token,
       server: mailChimpServerPrefix,
-    });
+    })
     try {
       return await mailchimp.lists.addListMember(context.propsValue.list_id!, {
         email_address: context.propsValue.email!,
@@ -57,9 +56,9 @@ export const addMemberToList = createAction({
           FNAME: context.propsValue.first_name || '',
           LNAME: context.propsValue.last_name || '',
         },
-      });
+      })
     } catch (e) {
-      throw new Error(JSON.stringify(e));
+      throw new Error(JSON.stringify(e))
     }
   },
-});
+})

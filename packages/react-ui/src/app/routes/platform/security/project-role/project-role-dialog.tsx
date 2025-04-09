@@ -1,19 +1,14 @@
-import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { useState, ReactNode } from 'react';
+import { useMutation } from '@tanstack/react-query'
+import { t } from 'i18next'
+import { ReactNode, useState } from 'react'
 
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { toast } from '@/components/ui/use-toast';
-import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
-import { Permission, ProjectRole, RoleType } from '@activepieces/shared';
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { toast } from '@/components/ui/use-toast'
+import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api'
+import { Permission, ProjectRole, RoleType } from '@activepieces/shared'
 
 const initialPermissions = [
   {
@@ -99,14 +94,14 @@ const initialPermissions = [
     write: [Permission.READ_TODOS, Permission.WRITE_TODOS],
     disableNone: true,
   },
-];
+]
 interface ProjectRoleDialogProps {
-  mode: 'create' | 'edit';
-  projectRole?: ProjectRole;
-  platformId: string;
-  onSave: () => void;
-  children: ReactNode;
-  disabled?: boolean;
+  mode: 'create' | 'edit'
+  projectRole?: ProjectRole
+  platformId: string
+  onSave: () => void
+  children: ReactNode
+  disabled?: boolean
 }
 
 export const ProjectRoleDialog = ({
@@ -116,22 +111,22 @@ export const ProjectRoleDialog = ({
   children,
   disabled = false,
 }: ProjectRoleDialogProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [roleName, setRoleName] = useState(projectRole?.name || '');
+  const [isOpen, setIsOpen] = useState(false)
+  const [roleName, setRoleName] = useState(projectRole?.name || '')
   const [permissions, setPermissions] = useState<string[]>(() => {
     if (!projectRole?.permissions) {
       // Set default Read permissions for any permission with disableNone
-      const defaultPermissions = new Set<string>();
+      const defaultPermissions = new Set<string>()
       initialPermissions.forEach((permission) => {
         if (permission.disableNone) {
-          permission.read.forEach((p) => defaultPermissions.add(p));
+          permission.read.forEach((p) => defaultPermissions.add(p))
         }
-      });
-      return Array.from(defaultPermissions);
+      })
+      return Array.from(defaultPermissions)
     }
-    return projectRole.permissions;
-  });
-  console.log();
+    return projectRole.permissions
+  })
+  console.log()
 
   const { mutate } = useMutation({
     mutationFn: async () => {
@@ -140,90 +135,81 @@ export const ProjectRoleDialog = ({
           name: roleName,
           permissions,
           type: RoleType.CUSTOM,
-        });
+        })
       } else if (mode === 'edit' && projectRole) {
         await projectRoleApi.update(projectRole.id, {
           name: roleName,
           permissions,
-        });
+        })
       }
     },
     onSuccess: () => {
-      setIsOpen(false);
-      onSave();
+      setIsOpen(false)
+      onSave()
     },
     onError: (error) => {
       toast({
         title: 'Error',
         description: 'Role name already exists',
-      });
+      })
     },
-  });
+  })
 
   const handlePermissionChange = (permission: string, level: string) => {
-    const currentPermission = initialPermissions.find(
-      (p) => p.name === permission,
-    );
-    const updatedPermissions = new Set(permissions);
+    const currentPermission = initialPermissions.find((p) => p.name === permission)
+    const updatedPermissions = new Set(permissions)
 
     if (currentPermission?.disableNone) {
-      currentPermission.read.forEach((p) => updatedPermissions.delete(p));
-      currentPermission.write.forEach((p) => updatedPermissions.delete(p));
+      currentPermission.read.forEach((p) => updatedPermissions.delete(p))
+      currentPermission.write.forEach((p) => updatedPermissions.delete(p))
 
       if (level === 'Read') {
-        currentPermission.read.forEach((p) => updatedPermissions.add(p));
+        currentPermission.read.forEach((p) => updatedPermissions.add(p))
       } else if (level === 'Write') {
-        currentPermission.write.forEach((p) => updatedPermissions.add(p));
+        currentPermission.write.forEach((p) => updatedPermissions.add(p))
       }
     } else {
       if (level === 'None') {
-        currentPermission?.read.forEach((p) => updatedPermissions.delete(p));
-        currentPermission?.write.forEach((p) => updatedPermissions.delete(p));
+        currentPermission?.read.forEach((p) => updatedPermissions.delete(p))
+        currentPermission?.write.forEach((p) => updatedPermissions.delete(p))
       } else if (level === 'Read') {
-        currentPermission?.write.forEach((p) => updatedPermissions.delete(p));
-        currentPermission?.read.forEach((p) => updatedPermissions.add(p));
+        currentPermission?.write.forEach((p) => updatedPermissions.delete(p))
+        currentPermission?.read.forEach((p) => updatedPermissions.add(p))
       } else if (level === 'Write') {
-        currentPermission?.write.forEach((p) => updatedPermissions.add(p));
+        currentPermission?.write.forEach((p) => updatedPermissions.add(p))
       }
     }
-    setPermissions(Array.from(updatedPermissions));
-  };
+    setPermissions(Array.from(updatedPermissions))
+  }
 
   const getButtonVariant = (permission: string, level: string) => {
-    const currentPermission = initialPermissions.find(
-      (p) => p.name === permission,
-    );
-    const writePermissions = new Set(currentPermission?.write || []);
-    const readPermissions = new Set(currentPermission?.read || []);
-    const currentPermissionsSet = new Set(permissions);
+    const currentPermission = initialPermissions.find((p) => p.name === permission)
+    const writePermissions = new Set(currentPermission?.write || [])
+    const readPermissions = new Set(currentPermission?.read || [])
+    const currentPermissionsSet = new Set(permissions)
 
     const hasWritePermissions =
-      writePermissions.size > 0 &&
-      [...writePermissions].every((p) => currentPermissionsSet.has(p));
+      writePermissions.size > 0 && [...writePermissions].every((p) => currentPermissionsSet.has(p))
 
     const hasReadPermissions =
       readPermissions.size > 0 &&
       [...readPermissions].every((p) => currentPermissionsSet.has(p)) &&
-      !hasWritePermissions;
+      !hasWritePermissions
 
     if (level === 'Write' && hasWritePermissions) {
-      return 'default';
+      return 'default'
     } else if (level === 'Read' && hasReadPermissions) {
-      return 'default';
-    } else if (
-      level === 'None' &&
-      !hasReadPermissions &&
-      !hasWritePermissions
-    ) {
-      return 'default';
+      return 'default'
+    } else if (level === 'None' && !hasReadPermissions && !hasWritePermissions) {
+      return 'default'
     }
-    return 'ghost';
-  };
+    return 'ghost'
+  }
   const handleSubmit = () => {
     if (!disabled) {
-      mutate();
+      mutate()
     }
-  };
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -232,15 +218,11 @@ export const ProjectRoleDialog = ({
         <DialogTitle>
           {mode === 'create'
             ? t('Create New Role')
-            : (projectRole?.type === RoleType.DEFAULT
-                ? t('View ')
-                : t('Edit ')) + projectRole?.name}
+            : (projectRole?.type === RoleType.DEFAULT ? t('View ') : t('Edit ')) + projectRole?.name}
         </DialogTitle>
         <div className="grid space-y-4 mt-4">
           <div>
-            <span className="text-sm font-medium text-gray-700">
-              {t('Name')}
-            </span>
+            <span className="text-sm font-medium text-gray-700">{t('Name')}</span>
             <Input
               value={roleName}
               onChange={(e) => setRoleName(e.target.value)}
@@ -253,9 +235,7 @@ export const ProjectRoleDialog = ({
             />
           </div>
           <div>
-            <span className="text-sm font-medium text-gray-700">
-              {t('Permissions')}
-            </span>
+            <span className="text-sm font-medium text-gray-700">{t('Permissions')}</span>
             <div className="overflow-y-auto p-2 rounded-md">
               <ScrollArea className="h-[70vh] pr-4">
                 {initialPermissions.map((permission, index) => (
@@ -266,17 +246,13 @@ export const ProjectRoleDialog = ({
                     }`}
                   >
                     <div className="w-full flex flex-row justify-between">
-                      <span className="font-bold text-gray-700">
-                        {permission.name}
-                      </span>
+                      <span className="font-bold text-gray-700">{permission.name}</span>
                       <div className="flex bg-gray-100 rounded-sm space-x-2">
                         {!permission.disableNone && (
                           <Button
                             className="h-9 px-4"
                             variant={getButtonVariant(permission.name, 'None')}
-                            onClick={() =>
-                              handlePermissionChange(permission.name, 'None')
-                            }
+                            onClick={() => handlePermissionChange(permission.name, 'None')}
                             disabled={disabled}
                           >
                             {t('None')}
@@ -286,9 +262,7 @@ export const ProjectRoleDialog = ({
                           <Button
                             className="h-9 px-4"
                             variant={getButtonVariant(permission.name, 'Read')}
-                            onClick={() =>
-                              handlePermissionChange(permission.name, 'Read')
-                            }
+                            onClick={() => handlePermissionChange(permission.name, 'Read')}
                             disabled={disabled}
                           >
                             {t('Read')}
@@ -297,30 +271,22 @@ export const ProjectRoleDialog = ({
                         <Button
                           className="h-9 px-4"
                           variant={getButtonVariant(permission.name, 'Write')}
-                          onClick={() =>
-                            handlePermissionChange(permission.name, 'Write')
-                          }
+                          onClick={() => handlePermissionChange(permission.name, 'Write')}
                           disabled={disabled}
                         >
                           {t('Write')}
                         </Button>
                       </div>
                     </div>
-                    <span className="text-sm text-gray-500">
-                      {permission.description}
-                    </span>
+                    <span className="text-sm text-gray-500">{permission.description}</span>
                   </div>
                 ))}
               </ScrollArea>
             </div>
           </div>
-          {!disabled && (
-            <Button onClick={handleSubmit}>
-              {mode === 'create' ? t('Create') : t('Save')}
-            </Button>
-          )}
+          {!disabled && <Button onClick={handleSubmit}>{mode === 'create' ? t('Create') : t('Save')}</Button>}
         </div>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}

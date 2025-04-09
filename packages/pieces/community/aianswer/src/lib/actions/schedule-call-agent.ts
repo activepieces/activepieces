@@ -1,7 +1,7 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { aiAnswerAuth } from '../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { aiAnswerConfig } from '../common/models';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { aiAnswerAuth } from '../..'
+import { aiAnswerConfig } from '../common/models'
 
 export const scheduleCallAgent = createAction({
   name: 'scheduleCallAgent',
@@ -34,11 +34,11 @@ export const scheduleCallAgent = createAction({
     }),
   },
   async run(context) {
-    const agentID = context.propsValue.agentID;
-    const phoneNumber = context.propsValue.phoneNumber;
-    const executionTime = context.propsValue.executionTime;
-    const timezone = context.propsValue.timezone;
-    const prospectDetails = context.propsValue.prospectDetails || {}; // Optional prospect details
+    const agentID = context.propsValue.agentID
+    const phoneNumber = context.propsValue.phoneNumber
+    const executionTime = context.propsValue.executionTime
+    const timezone = context.propsValue.timezone
+    const prospectDetails = context.propsValue.prospectDetails || {} // Optional prospect details
 
     const requestBody = {
       phone_number: phoneNumber,
@@ -47,7 +47,7 @@ export const scheduleCallAgent = createAction({
       prospect_details: {
         details: prospectDetails, // Nested details object with custom key-value pairs
       },
-    };
+    }
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -56,13 +56,11 @@ export const scheduleCallAgent = createAction({
         [aiAnswerConfig.accessTokenHeaderKey]: context.auth,
       },
       queryParams: {
-        agent_id: agentID
+        agent_id: agentID,
       },
       body: requestBody,
-    });
+    })
 
-    return res.body;
+    return res.body
   },
-});
-
-
+})

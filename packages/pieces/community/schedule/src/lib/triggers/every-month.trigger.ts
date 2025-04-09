@@ -1,12 +1,6 @@
-import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { createTrigger, Property } from '@activepieces/pieces-framework';
-import {
-  DAY_HOURS,
-  MONTH_DAYS,
-  timezoneOptions,
-  validateHours,
-  validateMonthDays,
-} from '../common';
+import { TriggerStrategy } from '@activepieces/pieces-framework'
+import { Property, createTrigger } from '@activepieces/pieces-framework'
+import { DAY_HOURS, MONTH_DAYS, timezoneOptions, validateHours, validateMonthDays } from '../common'
 
 export const everyMonthTrigger = createTrigger({
   name: 'every_month',
@@ -22,7 +16,7 @@ export const everyMonthTrigger = createTrigger({
           return {
             label: (1 + d).toString(),
             value: idx + 1,
-          };
+          }
         }),
       },
       required: true,
@@ -34,7 +28,7 @@ export const everyMonthTrigger = createTrigger({
           return {
             label: d,
             value: idx,
-          };
+          }
         }),
       },
       required: true,
@@ -49,18 +43,18 @@ export const everyMonthTrigger = createTrigger({
     }),
   },
   onEnable: async (ctx) => {
-    const hourOfTheDay = validateHours(ctx.propsValue.hour_of_the_day);
-    const dayOfTheMonth = validateMonthDays(ctx.propsValue.day_of_the_month);
-    const cronExpression = `0 ${hourOfTheDay} ${dayOfTheMonth} * *`;
+    const hourOfTheDay = validateHours(ctx.propsValue.hour_of_the_day)
+    const dayOfTheMonth = validateMonthDays(ctx.propsValue.day_of_the_month)
+    const cronExpression = `0 ${hourOfTheDay} ${dayOfTheMonth} * *`
     ctx.setSchedule({
       cronExpression: cronExpression,
       timezone: ctx.propsValue.timezone,
-    });
+    })
   },
   run(ctx) {
-    const hourOfTheDay = validateHours(ctx.propsValue.hour_of_the_day);
-    const dayOfTheMonth = validateMonthDays(ctx.propsValue.day_of_the_month);
-    const cronExpression = `0 ${hourOfTheDay} ${dayOfTheMonth} * *`;
+    const hourOfTheDay = validateHours(ctx.propsValue.hour_of_the_day)
+    const dayOfTheMonth = validateMonthDays(ctx.propsValue.day_of_the_month)
+    const cronExpression = `0 ${hourOfTheDay} ${dayOfTheMonth} * *`
     return Promise.resolve([
       {
         hour_of_the_day: hourOfTheDay,
@@ -68,9 +62,9 @@ export const everyMonthTrigger = createTrigger({
         cron_expression: cronExpression,
         timezone: ctx.propsValue.timezone,
       },
-    ]);
+    ])
   },
   onDisable: async () => {
-    console.log('onDisable');
+    console.log('onDisable')
   },
-});
+})

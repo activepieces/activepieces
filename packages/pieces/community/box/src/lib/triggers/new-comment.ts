@@ -1,11 +1,7 @@
-import {
-  createTrigger,
-  TriggerStrategy,
-  Property,
-} from '@activepieces/pieces-framework';
+import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
 
-import { boxAuth } from '../..';
-import { WebhookInformation, common } from '../common';
+import { boxAuth } from '../..'
+import { WebhookInformation, common } from '../common'
 
 export const newComment = createTrigger({
   auth: boxAuth,
@@ -36,28 +32,26 @@ export const newComment = createTrigger({
     const target: any = {
       id: context.propsValue.id,
       type: context.propsValue.type,
-    };
+    }
 
     const webhook = await common.subscribeWebhook(context.auth, {
       event: 'COMMENT.CREATED',
       target: target,
       webhookUrl: context.webhookUrl,
-    });
-    await context.store.put(`_new_comment_trigger`, webhook);
+    })
+    await context.store.put(`_new_comment_trigger`, webhook)
   },
 
   async onDisable(context) {
-    const webhook = await context.store.get<WebhookInformation>(
-      `_new_comment_trigger`
-    );
+    const webhook = await context.store.get<WebhookInformation>(`_new_comment_trigger`)
 
     if (webhook) {
-      await common.unsubscribeWebhook(context.auth, webhook.id);
+      await common.unsubscribeWebhook(context.auth, webhook.id)
     }
   },
 
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
 
   sampleData: {
@@ -89,4 +83,4 @@ export const newComment = createTrigger({
     },
     additional_info: [],
   },
-});
+})

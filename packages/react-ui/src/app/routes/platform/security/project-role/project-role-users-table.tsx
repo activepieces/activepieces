@@ -1,79 +1,71 @@
-import { useQuery } from '@tanstack/react-query';
-import { ColumnDef } from '@tanstack/react-table';
-import { t } from 'i18next';
-import { Ellipsis, User } from 'lucide-react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query'
+import { ColumnDef } from '@tanstack/react-table'
+import { t } from 'i18next'
+import { Ellipsis, User } from 'lucide-react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
-import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
+import { LockedFeatureGuard } from '@/app/components/locked-feature-guard'
 import {
   Breadcrumb,
-  BreadcrumbList,
   BreadcrumbItem,
   BreadcrumbLink,
+  BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { Skeleton } from '@/components/ui/skeleton';
-import { TableTitle } from '@/components/ui/table-title';
-import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api';
-import { platformHooks } from '@/hooks/platform-hooks';
-import { ProjectMemberWithUser } from '@activepieces/ee-shared';
-import { assertNotNullOrUndefined, isNil } from '@activepieces/shared';
+} from '@/components/ui/breadcrumb'
+import { DataTable, RowDataWithActions } from '@/components/ui/data-table'
+import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header'
+import { Skeleton } from '@/components/ui/skeleton'
+import { TableTitle } from '@/components/ui/table-title'
+import { projectRoleApi } from '@/features/platform-admin-panel/lib/project-role-api'
+import { platformHooks } from '@/hooks/platform-hooks'
+import { ProjectMemberWithUser } from '@activepieces/ee-shared'
+import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 
 export const ProjectRoleUsersTable = () => {
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { projectRoleId } = useParams();
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const { platform } = platformHooks.useCurrentPlatform()
+  const { projectRoleId } = useParams()
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
 
   const { data: projectRole, isLoading: isProjectRoleLoading } = useQuery({
     queryKey: ['project-role', projectRoleId],
     queryFn: () => {
-      assertNotNullOrUndefined(projectRoleId, 'projectRoleId is required');
-      return projectRoleApi.get(projectRoleId);
+      assertNotNullOrUndefined(projectRoleId, 'projectRoleId is required')
+      return projectRoleApi.get(projectRoleId)
     },
     enabled: platform.projectRolesEnabled && !isNil(projectRoleId),
-  });
+  })
 
   const { data, isLoading } = useQuery({
     queryKey: ['users-with-project-roles', projectRoleId],
     queryFn: () => {
-      const cursor = searchParams.get('cursor');
-      const limit = searchParams.get('limit')
-        ? parseInt(searchParams.get('limit')!)
-        : 10;
+      const cursor = searchParams.get('cursor')
+      const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 10
       return projectRoleApi.listProjectMembers(projectRoleId!, {
         cursor: cursor ?? undefined,
         limit: limit,
-      });
+      })
     },
     enabled: platform.projectRolesEnabled,
-  });
+  })
 
   const columns: ColumnDef<RowDataWithActions<ProjectMemberWithUser>>[] = [
     {
       accessorKey: 'email',
       accessorFn: (row) => row.user.email,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Email')} />
-      ),
-      cell: ({ row }) => (
-        <div className="text-left">{row.original.user.email}</div>
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t('Email')} />,
+      cell: ({ row }) => <div className="text-left">{row.original.user.email}</div>,
     },
     {
       accessorKey: 'project',
       accessorFn: (row) => row.project.displayName,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Project')} />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t('Project')} />,
       cell: ({ row }) => (
         <div
           className="text-left cursor-pointer hover:underline hover:text-primary"
           onClick={() => {
-            navigate(`/projects/${row.original.project.id}/settings/team`);
+            navigate(`/projects/${row.original.project.id}/settings/team`)
           }}
         >
           {row.original.project.displayName}
@@ -83,37 +75,23 @@ export const ProjectRoleUsersTable = () => {
     {
       accessorKey: 'projectRole',
       accessorFn: (row) => row.projectRole.name,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={t('First Name')}
-          className="text-center"
-        />
-      ),
-      cell: ({ row }) => (
-        <div className="text-left">{row.original.projectRole.name}</div>
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t('First Name')} className="text-center" />,
+      cell: ({ row }) => <div className="text-left">{row.original.projectRole.name}</div>,
     },
     {
       accessorKey: 'lastName',
       accessorFn: (row) => row.user.lastName,
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Last Name')} />
-      ),
-      cell: ({ row }) => (
-        <div className="text-left">{row.original.user.lastName}</div>
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t('Last Name')} />,
+      cell: ({ row }) => <div className="text-left">{row.original.user.lastName}</div>,
     },
-  ];
+  ]
 
   return (
     <LockedFeatureGuard
       featureKey="TEAM"
       locked={!platform.projectRolesEnabled}
       lockTitle={t('Project Role Management')}
-      lockDescription={t(
-        'Define custom roles and permissions to control what your team members can access and modify',
-      )}
+      lockDescription={t('Define custom roles and permissions to control what your team members can access and modify')}
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/roles.mp4"
     >
       <div className="flex-col w-full">
@@ -151,9 +129,7 @@ export const ProjectRoleUsersTable = () => {
             )}
 
             {!isNil(projectRole?.name) ? (
-              <div className="text-sm text-muted-foreground">
-                {t('View the users assigned to this role')}
-              </div>
+              <div className="text-sm text-muted-foreground">{t('View the users assigned to this role')}</div>
             ) : (
               <Skeleton className="h-6 w-40" />
             )}
@@ -162,9 +138,7 @@ export const ProjectRoleUsersTable = () => {
 
         <DataTable
           emptyStateTextTitle={t('No users found')}
-          emptyStateTextDescription={t(
-            'Starting by assigning users to this role',
-          )}
+          emptyStateTextDescription={t('Starting by assigning users to this role')}
           emptyStateIcon={<User className="size-14" />}
           columns={columns}
           page={data}
@@ -172,5 +146,5 @@ export const ProjectRoleUsersTable = () => {
         />
       </div>
     </LockedFeatureGuard>
-  );
-};
+  )
+}

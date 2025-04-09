@@ -5,7 +5,7 @@
  * @returns {string} formatted url
  */
 export function parseDirectoryURL(url: string) {
-  let formattedUrl = url;
+  let formattedUrl = url
 
   // Ensure the URL starts with "https://"
   if (!formattedUrl.startsWith('https://')) {
@@ -13,15 +13,15 @@ export function parseDirectoryURL(url: string) {
     // Otherwise, prepend "https://" to the URL
     formattedUrl = formattedUrl.startsWith('http://')
       ? formattedUrl.replace('http://', 'https://')
-      : 'https://' + formattedUrl;
+      : 'https://' + formattedUrl
   }
 
   // Ensure the URL ends with "/api"
   if (!formattedUrl.endsWith('/api')) {
     // If the URL ends with a slash, append "api" to the URL
     // Otherwise, append "/api" to the URL
-    formattedUrl += formattedUrl.endsWith('/') ? 'api' : '/api';
+    formattedUrl += formattedUrl.endsWith('/') ? 'api' : '/api'
   }
 
-  return formattedUrl;
+  return formattedUrl
 }

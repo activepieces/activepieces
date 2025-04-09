@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 import { zooAuth } from '../../../index'
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const createServiceAccountAction = createAction({
   name: 'create_service_account',
@@ -25,7 +25,7 @@ export const createServiceAccountAction = createAction({
       body: {
         name: propsValue.name,
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

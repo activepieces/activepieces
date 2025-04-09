@@ -1,16 +1,8 @@
-import {
-  createTrigger,
-  PiecePropValueSchema,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import { wordpressCommon } from '../common';
-import dayjs from 'dayjs';
-import { wordpressAuth } from '../..';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common'
+import { PiecePropValueSchema, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { wordpressAuth } from '../..'
+import { wordpressCommon } from '../common'
 
 export const wordpressNewPost = createTrigger({
   auth: wordpressAuth,
@@ -127,21 +119,21 @@ export const wordpressNewPost = createTrigger({
       store: ctx.store,
       propsValue: ctx.propsValue,
       files: ctx.files,
-    });
+    })
   },
   async onEnable(ctx) {
     await pollingHelper.onEnable(polling, {
       auth: ctx.auth,
       store: ctx.store,
       propsValue: ctx.propsValue,
-    });
+    })
   },
   async onDisable(ctx) {
     await pollingHelper.onDisable(polling, {
       auth: ctx.auth,
       store: ctx.store,
       propsValue: ctx.propsValue,
-    });
+    })
   },
   async run(ctx) {
     return await pollingHelper.poll(polling, {
@@ -149,33 +141,26 @@ export const wordpressNewPost = createTrigger({
       store: ctx.store,
       propsValue: ctx.propsValue,
       files: ctx.files,
-    });
+    })
   },
-});
+})
 
-const polling: Polling<
-  PiecePropValueSchema<typeof wordpressAuth>,
-  { authors: string | undefined }
-> = {
+const polling: Polling<PiecePropValueSchema<typeof wordpressAuth>, { authors: string | undefined }> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const items = await getPosts(auth, propsValue.authors!, lastFetchEpochMS);
+    const items = await getPosts(auth, propsValue.authors!, lastFetchEpochMS)
     return items.map((item) => ({
       epochMilliSeconds: dayjs(item.date).valueOf(),
       data: item,
-    }));
+    }))
   },
-};
+}
 
-const getPosts = async (
-  auth: PiecePropValueSchema<typeof wordpressAuth>,
-  authors: string,
-  startDate: number
-) => {
+const getPosts = async (auth: PiecePropValueSchema<typeof wordpressAuth>, authors: string, startDate: number) => {
   //WordPress accepts date only if they come after the start of the unix time stamp in 1970
-  let afterDate = dayjs(startDate).toISOString();
+  let afterDate = dayjs(startDate).toISOString()
   if (startDate === 0) {
-    afterDate = dayjs(startDate).add(1, 'day').toISOString();
+    afterDate = dayjs(startDate).add(1, 'day').toISOString()
   }
   const getPostsParams = {
     websiteUrl: auth.website_url.trim(),
@@ -184,6 +169,6 @@ const getPosts = async (
     authors: authors,
     afterDate: afterDate,
     page: 1,
-  };
-  return (await wordpressCommon.getPosts(getPostsParams)).posts;
-};
+  }
+  return (await wordpressCommon.getPosts(getPostsParams)).posts
+}

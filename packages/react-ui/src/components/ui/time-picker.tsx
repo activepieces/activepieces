@@ -1,59 +1,54 @@
-'use client';
+'use client'
 
-import * as React from 'react';
+import * as React from 'react'
 
-import { cn } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
+import { cn } from '@/lib/utils'
+import { isNil } from '@activepieces/shared'
 
-import { TimePeriodSelect } from './time-period-select';
-import { Period } from './time-picker-utils';
-import { TimeUnitPickerInput } from './time-unit-input';
+import { TimePeriodSelect } from './time-period-select'
+import { Period } from './time-picker-utils'
+import { TimeUnitPickerInput } from './time-unit-input'
 
 interface TimePickerProps {
-  date: Date | undefined;
-  setDate: (date: Date) => void;
-  showSeconds?: boolean;
-  name?: string;
+  date: Date | undefined
+  setDate: (date: Date) => void
+  showSeconds?: boolean
+  name?: string
 }
 
 const minutesItems = new Array(60).fill(0).map((_, index) => ({
   value: index.toString(),
   label: index < 10 ? `0${index}` : index.toString(),
-}));
+}))
 
 const hoursItems = new Array(12).fill(0).map((_, index) => ({
   value: (index + 1).toString(),
   label: index + 1 < 10 ? `0${index + 1}` : (index + 1).toString(),
-}));
+}))
 
-export function TimePicker({
-  date,
-  setDate,
-  showSeconds,
-  name = 'from',
-}: TimePickerProps) {
+export function TimePicker({ date, setDate, showSeconds, name = 'from' }: TimePickerProps) {
   const [period, setPeriod] = React.useState<Period>(() => {
     if (date) {
-      return date.getHours() >= 12 ? 'PM' : 'AM';
+      return date.getHours() >= 12 ? 'PM' : 'AM'
     }
-    return name === 'from' ? 'AM' : 'PM';
-  });
+    return name === 'from' ? 'AM' : 'PM'
+  })
   React.useEffect(() => {
     if (date && date.getHours() >= 12) {
-      setPeriod('PM');
+      setPeriod('PM')
     } else if (!date) {
-      setPeriod(name === 'from' ? 'AM' : 'PM');
+      setPeriod(name === 'from' ? 'AM' : 'PM')
     }
-  }, [date]);
+  }, [date])
   const hasValueChanged =
     name === 'from'
       ? date?.getHours() !== 0 || date?.getMinutes() !== 0 || period !== 'AM'
-      : date?.getHours() !== 23 || date?.getMinutes() !== 59 || period !== 'PM';
-  const isActive = !isNil(date) && hasValueChanged;
-  const minuteRef = React.useRef<HTMLInputElement>(null);
-  const hourRef = React.useRef<HTMLInputElement>(null);
-  const secondRef = React.useRef<HTMLInputElement>(null);
-  const periodRef = React.useRef<HTMLButtonElement>(null);
+      : date?.getHours() !== 23 || date?.getMinutes() !== 59 || period !== 'PM'
+  const isActive = !isNil(date) && hasValueChanged
+  const minuteRef = React.useRef<HTMLInputElement>(null)
+  const hourRef = React.useRef<HTMLInputElement>(null)
+  const secondRef = React.useRef<HTMLInputElement>(null)
+  const periodRef = React.useRef<HTMLButtonElement>(null)
 
   return (
     <div
@@ -123,5 +118,5 @@ export function TimePicker({
         />
       </div>
     </div>
-  );
+  )
 }

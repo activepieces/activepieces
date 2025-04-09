@@ -1,11 +1,7 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { sendNotification } from './lib/actions/send-notification';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { sendNotification } from './lib/actions/send-notification'
 
 export const ntfyAuth = PieceAuth.CustomAuth({
   description: `
@@ -30,7 +26,7 @@ export const ntfyAuth = PieceAuth.CustomAuth({
     }),
   },
   required: true,
-});
+})
 
 export const ntfy = createPiece({
   displayName: 'ntfy',
@@ -40,18 +36,16 @@ export const ntfy = createPiece({
   minimumSupportedRelease: '0.30.0',
   categories: [PieceCategory.COMMUNICATION],
   auth: ntfyAuth,
-  authors: ["MyWay","facferreira","la3rence","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ['MyWay', 'facferreira', 'la3rence', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
   actions: [
     sendNotification,
     createCustomApiCallAction({
       baseUrl: (auth) => (auth as { base_url: string }).base_url,
       auth: ntfyAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${
-          (auth as { access_token: string }).access_token
-        }`,
+        Authorization: `Bearer ${(auth as { access_token: string }).access_token}`,
       }),
     }),
   ],
   triggers: [],
-});
+})

@@ -1,13 +1,9 @@
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { dripCommon } from '../common';
-import { dripAuth } from '../../';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { dripAuth } from '../../'
+import { dripCommon } from '../common'
 
-const triggerNameInStore = 'drip_tag_applied_to_subscriber_trigger';
+const triggerNameInStore = 'drip_tag_applied_to_subscriber_trigger'
 export const dripTagAppliedEvent = createTrigger({
   auth: dripAuth,
   name: 'tag_applied_to_subscribers',
@@ -33,46 +29,40 @@ export const dripTagAppliedEvent = createTrigger({
       method: HttpMethod.POST,
       url: `${dripCommon.baseUrl(context.propsValue.account_id)}/webhooks`,
       body: {
-        webhooks: [
-          { post_url: context.webhookUrl, events: ['subscriber.applied_tag'] },
-        ],
+        webhooks: [{ post_url: context.webhookUrl, events: ['subscriber.applied_tag'] }],
       },
       headers: {
         Authorization: dripCommon.authorizationHeader(context.auth),
       },
       queryParams: {},
-    };
+    }
     const { body } = await httpClient.sendRequest<{
-      webhooks: { id: string }[];
-    }>(request);
+      webhooks: { id: string }[]
+    }>(request)
     await context.store?.put<DripWebhookInformation>(triggerNameInStore, {
       webhookId: body.webhooks[0].id,
       userId: context.propsValue['account_id']!,
-    });
+    })
   },
   async onDisable(context) {
-    const response = await context.store?.get<DripWebhookInformation>(
-      triggerNameInStore
-    );
+    const response = await context.store?.get<DripWebhookInformation>(triggerNameInStore)
     if (response !== null && response !== undefined) {
       const request: HttpRequest<never> = {
         method: HttpMethod.DELETE,
-        url: `${dripCommon.baseUrl(response.userId)}/webhooks/${
-          response.webhookId
-        }`,
+        url: `${dripCommon.baseUrl(response.userId)}/webhooks/${response.webhookId}`,
         headers: {
           Authorization: dripCommon.authorizationHeader(context.auth),
         },
-      };
-      await httpClient.sendRequest(request);
+      }
+      await httpClient.sendRequest(request)
     }
   },
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
-});
+})
 
 interface DripWebhookInformation {
-  webhookId: string;
-  userId: string;
+  webhookId: string
+  userId: string
 }

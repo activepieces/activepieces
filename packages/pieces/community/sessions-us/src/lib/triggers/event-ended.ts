@@ -1,7 +1,4 @@
-import {
-  createSessionsUsWebhookTrigger,
-  SessionsUsWebhookTrigger,
-} from '../common';
+import { SessionsUsWebhookTrigger, createSessionsUsWebhookTrigger } from '../common'
 
 export const eventEnded = createSessionsUsWebhookTrigger({
   name: 'event_ended',
@@ -40,4 +37,4 @@ export const eventEnded = createSessionsUsWebhookTrigger({
       ],
     },
   },
-});
+})

@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
-import type { RenderEditCellProps } from 'react-data-grid';
+import { useEffect, useRef, useState } from 'react'
+import type { RenderEditCellProps } from 'react-data-grid'
 
-import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
+import { Textarea } from '@/components/ui/textarea'
+import { cn } from '@/lib/utils'
 
-import { Row } from '../lib/types';
+import { Row } from '../lib/types'
 
 const TextEditor = ({
   row,
@@ -13,26 +13,26 @@ const TextEditor = ({
   onClose,
   value: initialValue,
 }: RenderEditCellProps<Row, { id: string }> & {
-  value: string;
+  value: string
 }) => {
-  const [value, setValue] = useState(initialValue);
-  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const [value, setValue] = useState(initialValue)
+  const textAreaRef = useRef<HTMLTextAreaElement>(null)
   useEffect(() => {
-    textAreaRef.current?.focus();
-  }, []);
+    textAreaRef.current?.focus()
+  }, [])
 
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = event.target.value;
-    setValue(newValue);
-    onRowChange({ ...row, [column.key]: newValue }, false);
-  };
+    const newValue = event.target.value
+    setValue(newValue)
+    onRowChange({ ...row, [column.key]: newValue }, false)
+  }
 
   const commitChanges = () => {
     if (value !== row[column.key]) {
-      onRowChange({ ...row, [column.key]: value }, true);
+      onRowChange({ ...row, [column.key]: value }, true)
     }
-    onClose();
-  };
+    onClose()
+  }
 
   return (
     <div className="h-full relative w-full relative">
@@ -49,15 +49,15 @@ const TextEditor = ({
           onChange={handleChange}
           onBlur={commitChanges}
           onKeyDown={(e) => {
-            e.stopPropagation();
-            e.stopPropagation();
+            e.stopPropagation()
+            e.stopPropagation()
             if (e.key === 'Enter' && !e.shiftKey) {
-              commitChanges();
-              e.preventDefault();
+              commitChanges()
+              e.preventDefault()
             }
             if (e.key === 'Escape') {
-              onClose();
-              e.preventDefault();
+              onClose()
+              e.preventDefault()
             }
           }}
           minRows={4}
@@ -72,7 +72,7 @@ const TextEditor = ({
         />
       </div>
     </div>
-  );
-};
-TextEditor.displayName = 'TextEditor';
-export { TextEditor };
+  )
+}
+TextEditor.displayName = 'TextEditor'
+export { TextEditor }

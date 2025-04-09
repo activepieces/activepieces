@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 import { zooAuth } from '../../../index'
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const sendModelingCommandAction = createAction({
   name: 'send_modeling_command',
@@ -23,12 +23,12 @@ export const sendModelingCommandAction = createAction({
       headers: {
         Authorization: `Bearer ${auth}`,
       },
-    });
+    })
 
     // Return the WebSocket URL and command for the client to handle the connection
     return {
       websocketUrl: response.body.url,
       command: propsValue.command,
-    };
+    }
   },
-});
+})

@@ -1,10 +1,6 @@
-import {
-  Property,
-  createAction,
-  PiecePropValueSchema,
-} from '@activepieces/pieces-framework';
-import { makeClient, reformatDate } from '../common';
-import { moxieCRMAuth } from '../..';
+import { PiecePropValueSchema, Property, createAction } from '@activepieces/pieces-framework'
+import { moxieCRMAuth } from '../..'
+import { makeClient, reformatDate } from '../common'
 
 export const moxieCreateProjectAction = createAction({
   auth: moxieCRMAuth,
@@ -26,22 +22,20 @@ export const moxieCreateProjectAction = createAction({
             disabled: true,
             placeholder: 'Connect your account first',
             options: [],
-          };
+          }
         }
 
-        const client = await makeClient(
-          auth as PiecePropValueSchema<typeof moxieCRMAuth>
-        );
-        const clients = await client.listClients();
+        const client = await makeClient(auth as PiecePropValueSchema<typeof moxieCRMAuth>)
+        const clients = await client.listClients()
         return {
           disabled: false,
           options: clients.map((client) => {
             return {
               label: client.name,
               value: client.name,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     startDate: Property.DateTime({
@@ -142,10 +136,10 @@ export const moxieCreateProjectAction = createAction({
       estimateMax,
       estimateMin,
       taxable,
-    } = propsValue;
-    const dueDate = reformatDate(propsValue.dueDate) as string;
-    const startDate = reformatDate(propsValue.startDate) as string;
-    const client = await makeClient(auth);
+    } = propsValue
+    const dueDate = reformatDate(propsValue.dueDate) as string
+    const startDate = reformatDate(propsValue.startDate) as string
+    const client = await makeClient(auth)
     return await client.createProject({
       name,
       clientName,
@@ -160,6 +154,6 @@ export const moxieCreateProjectAction = createAction({
         estimateMin,
         taxable,
       },
-    });
+    })
   },
-});
+})

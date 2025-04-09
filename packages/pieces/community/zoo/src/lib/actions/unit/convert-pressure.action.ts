@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 import { zooAuth } from '../../../index'
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertPressureAction = createAction({
   name: 'convert_pressure',
@@ -51,7 +51,7 @@ export const convertPressureAction = createAction({
       queryParams: {
         value: propsValue.value.toString(),
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

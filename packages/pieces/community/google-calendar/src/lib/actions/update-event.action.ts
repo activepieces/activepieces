@@ -1,9 +1,9 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { google, calendar_v3 } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
-import { googleCalendarAuth } from '../../index';
-import { googleCalendarCommon } from '../common';
-import dayjs from 'dayjs';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { calendar_v3, google } from 'googleapis'
+import { OAuth2Client } from 'googleapis-common'
+import { googleCalendarAuth } from '../../index'
+import { googleCalendarCommon } from '../common'
 
 export const updateEventAction = createAction({
   displayName: 'Update Event',
@@ -72,29 +72,26 @@ export const updateEventAction = createAction({
       guests_can_invite_others,
       guests_can_modify,
       guests_can_see_other_guests,
-    } = context.propsValue;
+    } = context.propsValue
 
-    const attendees = context.propsValue.attendees as string[];
+    const attendees = context.propsValue.attendees as string[]
 
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
-    const calendar = google.calendar({ version: 'v3', auth: authClient });
+    const authClient = new OAuth2Client()
+    authClient.setCredentials(context.auth)
+    const calendar = google.calendar({ version: 'v3', auth: authClient })
 
     // Note that each patch request consumes three quota units;
     // prefer using a get followed by an update
     const currentEvent = await calendar.events.get({
       calendarId: calendar_id,
       eventId: eventId,
-    });
+    })
 
-    let attendeeFormattedList: calendar_v3.Schema$EventAttendee[] = [];
+    let attendeeFormattedList: calendar_v3.Schema$EventAttendee[] = []
     if (Array.isArray(attendees) && attendees.length > 0) {
-      attendeeFormattedList = attendees.map((email) => ({ email }));
-    } else if (
-      currentEvent.data.attendees &&
-      Array.isArray(currentEvent.data.attendees)
-    ) {
-      attendeeFormattedList = currentEvent.data.attendees;
+      attendeeFormattedList = attendees.map((email) => ({ email }))
+    } else if (currentEvent.data.attendees && Array.isArray(currentEvent.data.attendees)) {
+      attendeeFormattedList = currentEvent.data.attendees
     }
 
     const response = await calendar.events.update({
@@ -108,9 +105,7 @@ export const updateEventAction = createAction({
         location: location ?? currentEvent.data.location,
         start: start_date_time
           ? {
-              dateTime: dayjs(start_date_time).format(
-                'YYYY-MM-DDTHH:mm:ss.sssZ'
-              ),
+              dateTime: dayjs(start_date_time).format('YYYY-MM-DDTHH:mm:ss.sssZ'),
             }
           : currentEvent.data.start,
         end: end_date_time
@@ -122,8 +117,8 @@ export const updateEventAction = createAction({
         guestsCanModify: guests_can_modify,
         guestsCanSeeOtherGuests: guests_can_see_other_guests,
       },
-    });
+    })
 
-    return response.data;
+    return response.data
   },
-});
+})

@@ -1,12 +1,12 @@
-import { Handle, Position } from '@xyflow/react';
-import { t } from 'i18next';
-import { useRef } from 'react';
+import { Handle, Position } from '@xyflow/react'
+import { t } from 'i18next'
+import { useRef } from 'react'
 
-import { flowUtilConsts } from '../utils/consts';
-import { ApGraphEndNode } from '../utils/types';
+import { flowUtilConsts } from '../utils/consts'
+import { ApGraphEndNode } from '../utils/types'
 
 const ApGraphEndWidgetNode = ({ data }: Omit<ApGraphEndNode, 'position'>) => {
-  const elementRef = useRef<HTMLDivElement>(null);
+  const elementRef = useRef<HTMLDivElement>(null)
   return (
     <>
       <div className="h-[1px] w-[1px] relative">
@@ -22,19 +22,11 @@ const ApGraphEndWidgetNode = ({ data }: Omit<ApGraphEndNode, 'position'>) => {
         )}
       </div>
 
-      <Handle
-        type="target"
-        position={Position.Top}
-        style={flowUtilConsts.HANDLE_STYLING}
-      />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        style={flowUtilConsts.HANDLE_STYLING}
-      />
+      <Handle type="target" position={Position.Top} style={flowUtilConsts.HANDLE_STYLING} />
+      <Handle type="source" position={Position.Bottom} style={flowUtilConsts.HANDLE_STYLING} />
     </>
-  );
-};
+  )
+}
 
-ApGraphEndWidgetNode.displayName = 'ApGraphEndWidgetNode';
-export default ApGraphEndWidgetNode;
+ApGraphEndWidgetNode.displayName = 'ApGraphEndWidgetNode'
+export default ApGraphEndWidgetNode

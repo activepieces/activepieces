@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { discourseAuth } from '../../index';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { discourseAuth } from '../../index'
 
 export const sendPrivateMessage = createAction({
   auth: discourseAuth,
@@ -26,7 +26,7 @@ export const sendPrivateMessage = createAction({
     }),
   },
   async run(context) {
-    const { title, raw, target_recipients } = context.propsValue;
+    const { title, raw, target_recipients } = context.propsValue
 
     return await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -41,6 +41,6 @@ export const sendPrivateMessage = createAction({
         target_recipients: target_recipients.join(','),
         archetype: 'private_message',
       },
-    });
+    })
   },
-});
+})

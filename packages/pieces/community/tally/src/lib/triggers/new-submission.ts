@@ -1,9 +1,4 @@
-import {
-  createTrigger,
-  PieceAuth,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
+import { PieceAuth, Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
 
 const markdown = `
 To set up the trigger for new form submissions, follow these steps:
@@ -19,7 +14,7 @@ To set up the trigger for new form submissions, follow these steps:
 
   
 6. Click on "Submit".
-`;
+`
 
 export const tallyFormsNewSubmission = createTrigger({
   name: 'new-submission',
@@ -40,6 +35,6 @@ export const tallyFormsNewSubmission = createTrigger({
     // Empty
   },
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
-});
+})

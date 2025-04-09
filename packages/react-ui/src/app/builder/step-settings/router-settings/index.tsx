@@ -1,35 +1,29 @@
-import { useReactFlow } from '@xyflow/react';
-import { t } from 'i18next';
-import { Split } from 'lucide-react';
-import { memo, useEffect } from 'react';
-import { useFieldArray, useFormContext } from 'react-hook-form';
+import { useReactFlow } from '@xyflow/react'
+import { t } from 'i18next'
+import { Split } from 'lucide-react'
+import { memo, useEffect } from 'react'
+import { useFieldArray, useFormContext } from 'react-hook-form'
 
 import {
   ActionType,
   FlowOperationRequest,
   FlowOperationType,
-  flowStructureUtil,
   FlowVersion,
-  isNil,
   RouterAction,
   RouterExecutionType,
-} from '@activepieces/shared';
+  flowStructureUtil,
+  isNil,
+} from '@activepieces/shared'
 
-import { FormField, FormItem } from '../../../../components/ui/form';
-import { Label } from '../../../../components/ui/label';
-import {
-  Select,
-  SelectValue,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-} from '../../../../components/ui/select';
-import { useBuilderStateContext } from '../../builder-hooks';
-import { flowCanvasUtils } from '../../flow-canvas/utils/flow-canvas-utils';
-import { BranchSettings } from '../branch-settings';
+import { FormField, FormItem } from '../../../../components/ui/form'
+import { Label } from '../../../../components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select'
+import { useBuilderStateContext } from '../../builder-hooks'
+import { flowCanvasUtils } from '../../flow-canvas/utils/flow-canvas-utils'
+import { BranchSettings } from '../branch-settings'
 
-import { BranchesList } from './branches-list';
-import BranchesToolbar from './branches-toolbar';
+import { BranchesList } from './branches-list'
+import BranchesToolbar from './branches-toolbar'
 
 export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
   const [
@@ -40,25 +34,21 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
     addOperationListener,
     removeOperationListener,
   ] = useBuilderStateContext((state) => [
-    flowStructureUtil.getActionOrThrow(
-      state.selectedStep!,
-      state.flowVersion.trigger,
-    ) as RouterAction,
+    flowStructureUtil.getActionOrThrow(state.selectedStep!, state.flowVersion.trigger) as RouterAction,
     state.applyOperation,
     state.setSelectedBranchIndex,
     state.selectedBranchIndex,
     state.addOperationListener,
     state.removeOperationListener,
-  ]);
-  const { fitView } = useReactFlow();
+  ])
+  const { fitView } = useReactFlow()
 
-  const { control, setValue, formState } =
-    useFormContext<Omit<RouterAction, 'children' | 'nextAction'>>();
+  const { control, setValue, formState } = useFormContext<Omit<RouterAction, 'children' | 'nextAction'>>()
 
   const { insert, remove } = useFieldArray({
     control,
     name: 'settings.branches',
-  });
+  })
 
   const deleteBranch = (index: number) => {
     applyOperation({
@@ -67,62 +57,50 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
         stepName: step.name,
         branchIndex: index,
       },
-    });
+    })
 
-    setSelectedBranchIndex(null);
-    fitView(flowCanvasUtils.createFocusStepInGraphParams(step.name));
-  };
+    setSelectedBranchIndex(null)
+    fitView(flowCanvasUtils.createFocusStepInGraphParams(step.name))
+  }
 
   useEffect(() => {
-    const operationListener = (
-      flowVersion: FlowVersion,
-      operation: FlowOperationRequest,
-    ) => {
+    const operationListener = (flowVersion: FlowVersion, operation: FlowOperationRequest) => {
       switch (operation.type) {
         case FlowOperationType.DELETE_BRANCH: {
           if (operation.request.stepName !== step.name) {
-            return;
+            return
           }
-          remove(operation.request.branchIndex);
-          break;
+          remove(operation.request.branchIndex)
+          break
         }
         case FlowOperationType.DUPLICATE_BRANCH:
         case FlowOperationType.ADD_BRANCH: {
-          if (operation.request.stepName !== step.name) return;
-          const updatedStep = flowStructureUtil.getActionOrThrow(
-            operation.request.stepName,
-            flowVersion.trigger,
-          );
+          if (operation.request.stepName !== step.name) return
+          const updatedStep = flowStructureUtil.getActionOrThrow(operation.request.stepName, flowVersion.trigger)
           if (updatedStep.type !== ActionType.ROUTER) {
-            console.error(
-              `Trying to duplicate a branch on a none router step! ${operation.request.stepName}`,
-            );
-            return;
+            console.error(`Trying to duplicate a branch on a none router step! ${operation.request.stepName}`)
+            return
           }
-          const branch =
-            updatedStep.settings.branches[operation.request.branchIndex];
+          const branch = updatedStep.settings.branches[operation.request.branchIndex]
           if (operation.type === FlowOperationType.DUPLICATE_BRANCH) {
             insert(operation.request.branchIndex + 1, {
               ...branch,
               branchName: `${branch.branchName} Copy`,
-            });
+            })
           } else {
             insert(
               updatedStep.settings.branches.length - 1,
-              flowStructureUtil.createBranch(
-                `Branch ${updatedStep.settings.branches.length}`,
-                undefined,
-              ),
-            );
+              flowStructureUtil.createBranch(`Branch ${updatedStep.settings.branches.length}`, undefined),
+            )
           }
-          break;
+          break
         }
       }
-    };
+    }
 
-    addOperationListener(operationListener);
-    return () => removeOperationListener(operationListener);
-  }, []);
+    addOperationListener(operationListener)
+    return () => removeOperationListener(operationListener)
+  }, [])
   return (
     <>
       {isNil(selectedBranchIndex) && (
@@ -132,24 +110,16 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
           render={({ field }) => (
             <FormItem>
               <Label>{t('Execute')}</Label>
-              <Select
-                disabled={field.disabled}
-                onValueChange={field.onChange}
-                value={field.value}
-              >
+              <Select disabled={field.disabled} onValueChange={field.onChange} value={field.value}>
                 <SelectTrigger>
                   <SelectValue placeholder={t('Execute')} />
                 </SelectTrigger>
 
                 <SelectContent>
-                  <SelectItem
-                    value={`${RouterExecutionType.EXECUTE_FIRST_MATCH}`}
-                  >
+                  <SelectItem value={`${RouterExecutionType.EXECUTE_FIRST_MATCH}`}>
                     {t('Only the first (left) matching branch')}
                   </SelectItem>
-                  <SelectItem
-                    value={`${RouterExecutionType.EXECUTE_ALL_MATCH}`}
-                  >
+                  <SelectItem value={`${RouterExecutionType.EXECUTE_ALL_MATCH}`}>
                     {t('All matching paths from left to right')}
                   </SelectItem>
                 </SelectContent>
@@ -171,7 +141,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
             readonly={readonly}
             step={step}
             branchNameChanged={(index, name) => {
-              setValue(`settings.branches.${index}.branchName` as const, name);
+              setValue(`settings.branches.${index}.branchName` as const, name)
             }}
             deleteBranch={deleteBranch}
             duplicateBranch={(index) => {
@@ -181,23 +151,19 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                   stepName: step.name,
                   branchIndex: index,
                 },
-              });
-              setSelectedBranchIndex(index + 1);
+              })
+              setSelectedBranchIndex(index + 1)
             }}
             setSelectedBranchIndex={(index) => {
-              setSelectedBranchIndex(index);
+              setSelectedBranchIndex(index)
               if (step.children[index]) {
-                fitView(
-                  flowCanvasUtils.createFocusStepInGraphParams(
-                    step.children[index].name,
-                  ),
-                );
+                fitView(flowCanvasUtils.createFocusStepInGraphParams(step.children[index].name))
               } else {
                 fitView(
                   flowCanvasUtils.createFocusStepInGraphParams(
                     `${step.name}-big-add-button-${step.name}-branch-${index}-start-edge`,
                   ),
-                );
+                )
               }
             }}
           ></BranchesList>
@@ -212,9 +178,9 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
                       branchIndex: step.settings.branches.length - 1,
                       branchName: `Branch ${step.settings.branches.length}`,
                     },
-                  });
+                  })
 
-                  setSelectedBranchIndex(step.settings.branches.length - 1);
+                  setSelectedBranchIndex(step.settings.branches.length - 1)
                 }}
               ></BranchesToolbar>
             </div>
@@ -230,7 +196,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
         ></BranchSettings>
       )}
     </>
-  );
-});
+  )
+})
 
-RouterSettings.displayName = 'RouterSettings';
+RouterSettings.displayName = 'RouterSettings'

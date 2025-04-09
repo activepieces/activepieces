@@ -1,4 +1,4 @@
-import { createLucideIcon } from 'lucide-react';
+import { createLucideIcon } from 'lucide-react'
 
 export const InvalidStepIcon = createLucideIcon('InvalidStepIcon', [
   [
@@ -22,4 +22,4 @@ export const InvalidStepIcon = createLucideIcon('InvalidStepIcon', [
       key: 'path',
     },
   ],
-]);
+])

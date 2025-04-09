@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { AI, AIChatRole, aiProps } from '@activepieces/pieces-common';
+import { AI, AIChatRole, aiProps } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
 export const classifyText = createAction({
   name: 'classifyText',
@@ -19,12 +19,12 @@ export const classifyText = createAction({
     }),
   },
   async run(context) {
-    const categories = (context.propsValue.categories as string[]) ?? [];
+    const categories = (context.propsValue.categories as string[]) ?? []
 
     const ai = AI({
       provider: context.propsValue.provider,
       server: context.server,
-    });
+    })
 
     const response = await ai.chat.text({
       model: context.propsValue.model,
@@ -33,21 +33,19 @@ export const classifyText = createAction({
         {
           role: AIChatRole.USER,
           content: `As a text classifier, your task is to assign one of the following categories to the provided text: ${categories.join(
-            ', '
+            ', ',
           )}. Please respond with only the selected category as a single word, and nothing else.
           Text to classify: "${context.propsValue.text}"`,
         },
       ],
-    });
+    })
 
-    const result = response.choices[0].content.trim();
+    const result = response.choices[0].content.trim()
 
     if (!categories.includes(result)) {
-      throw new Error(
-        'Unable to classify the text into the provided categories.'
-      );
+      throw new Error('Unable to classify the text into the provided categories.')
     }
 
-    return result;
+    return result
   },
-});
+})

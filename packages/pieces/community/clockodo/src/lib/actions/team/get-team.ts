@@ -1,6 +1,6 @@
-import { clockodoCommon, makeClient } from '../../common';
-import { clockodoAuth } from '../../../';
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework'
+import { clockodoAuth } from '../../../'
+import { clockodoCommon, makeClient } from '../../common'
 
 export default createAction({
   auth: clockodoAuth,
@@ -11,8 +11,8 @@ export default createAction({
     team_id: clockodoCommon.team_id(),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
-    const res = await client.getTeam(propsValue.team_id as number);
-    return res.team;
+    const client = makeClient(auth)
+    const res = await client.getTeam(propsValue.team_id as number)
+    return res.team
   },
-});
+})

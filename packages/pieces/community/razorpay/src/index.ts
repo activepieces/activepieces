@@ -1,10 +1,10 @@
-    import { createCustomApiCallAction } from "@activepieces/pieces-common";
-    import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
-    import { generateRazorpayAuthHeader, RazorpayCredentials, razorpayURL } from "./lib/common/utils";
-    import { createPaymentlink } from "./lib/actions/create-payment-link";
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { createPaymentlink } from './lib/actions/create-payment-link'
+import { RazorpayCredentials, generateRazorpayAuthHeader, razorpayURL } from './lib/common/utils'
 
-    export const razorpayAuth = PieceAuth.CustomAuth({
-      description: `
+export const razorpayAuth = PieceAuth.CustomAuth({
+  description: `
           Enter your Key ID and Key Secret
 
           Login to your Dashboard with appropriate credentials.
@@ -13,33 +13,32 @@
 
           The Key ID and Key Secret appear in a pop-out window.
         `,
+  required: true,
+  props: {
+    keyID: Property.ShortText({
+      displayName: 'Key ID',
       required: true,
-      props: {
-          keyID: Property.ShortText({
-            displayName: 'Key ID',
-            required: true,
-          }),
-          keySecret: PieceAuth.SecretText({
-            displayName: 'Key Secret',
-            required: true,
-          }),
-      }
-  })
-    
-    export const razorpay = createPiece({
-      displayName: "Razorpay",
+    }),
+    keySecret: PieceAuth.SecretText({
+      displayName: 'Key Secret',
+      required: true,
+    }),
+  },
+})
+
+export const razorpay = createPiece({
+  displayName: 'Razorpay',
+  auth: razorpayAuth,
+  minimumSupportedRelease: '0.30.0',
+  logoUrl: 'https://cdn.activepieces.com/pieces/razorpay.png',
+  authors: ['drona2938'],
+  actions: [
+    createCustomApiCallAction({
+      baseUrl: () => razorpayURL.apiURL,
       auth: razorpayAuth,
-      minimumSupportedRelease: '0.30.0',
-      logoUrl: "https://cdn.activepieces.com/pieces/razorpay.png",
-      authors: ['drona2938'],
-      actions: [
-        createCustomApiCallAction({
-          baseUrl: () => razorpayURL.apiURL,
-          auth: razorpayAuth,
-          authMapping: (auth) => generateRazorpayAuthHeader(auth as RazorpayCredentials),
-        }),
-        createPaymentlink
-      ],
-      triggers: [],
-    });
-    
+      authMapping: (auth) => generateRazorpayAuthHeader(auth as RazorpayCredentials),
+    }),
+    createPaymentlink,
+  ],
+  triggers: [],
+})

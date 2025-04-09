@@ -1,13 +1,8 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpRequest,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { callClickupGetTask, clickupCommon } from '../common';
-import { ClickupEventType, ClickupWebhookPayload } from '../common/models';
-import { clickupAuth } from '../../';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { clickupAuth } from '../../'
+import { callClickupGetTask, clickupCommon } from '../common'
+import { ClickupEventType, ClickupWebhookPayload } from '../common/models'
 
 export const clickupRegisterTrigger = ({
   name,
@@ -16,11 +11,11 @@ export const clickupRegisterTrigger = ({
   description,
   sampleData,
 }: {
-  name: string;
-  displayName: string;
-  eventType: ClickupEventType;
-  description: string;
-  sampleData: unknown;
+  name: string
+  displayName: string
+  eventType: ClickupEventType
+  description: string
+  sampleData: unknown
 }) =>
   createTrigger({
     auth: clickupAuth,
@@ -33,7 +28,7 @@ export const clickupRegisterTrigger = ({
     sampleData,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
-      const { workspace_id } = context.propsValue;
+      const { workspace_id } = context.propsValue
 
       const request: HttpRequest = {
         method: HttpMethod.POST,
@@ -47,22 +42,15 @@ export const clickupRegisterTrigger = ({
           token: context.auth.access_token,
         },
         queryParams: {},
-      };
+      }
 
-      const response = await httpClient.sendRequest<WebhookInformation>(
-        request
-      );
-      console.debug(`clickup.${eventType}.onEnable`, response);
+      const response = await httpClient.sendRequest<WebhookInformation>(request)
+      console.debug(`clickup.${eventType}.onEnable`, response)
 
-      await context.store.put<WebhookInformation>(
-        `clickup_${name}_trigger`,
-        response.body
-      );
+      await context.store.put<WebhookInformation>(`clickup_${name}_trigger`, response.body)
     },
     async onDisable(context) {
-      const webhook = await context.store.get<WebhookInformation>(
-        `clickup_${name}_trigger`
-      );
+      const webhook = await context.store.get<WebhookInformation>(`clickup_${name}_trigger`)
       if (webhook != null) {
         const request: HttpRequest = {
           method: HttpMethod.DELETE,
@@ -71,13 +59,13 @@ export const clickupRegisterTrigger = ({
             type: AuthenticationType.BEARER_TOKEN,
             token: context.auth['access_token'],
           },
-        };
-        const response = await httpClient.sendRequest(request);
-        console.debug(`clickup.${eventType}.onDisable`, response);
+        }
+        const response = await httpClient.sendRequest(request)
+        console.debug(`clickup.${eventType}.onDisable`, response)
       }
     },
     async run(context) {
-      const payload = context.payload.body as ClickupWebhookPayload;
+      const payload = context.payload.body as ClickupWebhookPayload
 
       if (
         [
@@ -90,38 +78,35 @@ export const clickupRegisterTrigger = ({
         const enriched = [
           {
             ...payload,
-            task: await callClickupGetTask(
-              context.auth['access_token'],
-              payload.task_id
-            ),
+            task: await callClickupGetTask(context.auth['access_token'], payload.task_id),
           },
-        ];
+        ]
 
-        console.debug('payload enriched', enriched);
-        return enriched;
+        console.debug('payload enriched', enriched)
+        return enriched
       }
 
-      return [context.payload.body];
+      return [context.payload.body]
     },
-  });
+  })
 
 interface WebhookInformation {
-  id: string;
+  id: string
   webhook: {
-    id: string;
-    userid: number;
-    team_id: number;
-    endpoint: string;
-    client_id: string;
-    events: ClickupEventType[];
-    task_id: string;
-    list_id: string;
-    folder_id: string;
-    space_id: string;
+    id: string
+    userid: number
+    team_id: number
+    endpoint: string
+    client_id: string
+    events: ClickupEventType[]
+    task_id: string
+    list_id: string
+    folder_id: string
+    space_id: string
     health: {
-      status: string;
-      fail_count: number;
-    };
-    secret: string;
-  };
+      status: string
+      fail_count: number
+    }
+    secret: string
+  }
 }

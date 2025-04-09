@@ -1,14 +1,14 @@
-import { createAction, DynamicPropsValue, PieceAuth, Property, PropertyContext } from '@activepieces/pieces-framework';
-import { tablesCommon } from '../common';
-import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
-import { FieldType, Filter, FilterOperator, ListRecordsRequest, PopulatedRecord, SeekPage } from '@activepieces/shared';
-import { z } from 'zod';
+import { AuthenticationType, HttpMethod, httpClient, propsValidation } from '@activepieces/pieces-common'
+import { DynamicPropsValue, PieceAuth, Property, PropertyContext, createAction } from '@activepieces/pieces-framework'
+import { FieldType, Filter, FilterOperator, ListRecordsRequest, PopulatedRecord, SeekPage } from '@activepieces/shared'
+import { z } from 'zod'
+import { tablesCommon } from '../common'
 
 type FieldInfo = {
-  id: string;
-  type: FieldType;
-  name: string;
-};
+  id: string
+  type: FieldType
+  name: string
+}
 
 export const findRecords = createAction({
   name: 'tables-find-records',
@@ -28,7 +28,7 @@ export const findRecords = createAction({
       required: false,
       refreshers: ['table_id'],
       props: async (propsValue, context) => {
-        const table_id = propsValue['table_id'];
+        const table_id = propsValue['table_id']
         if (!table_id || typeof table_id !== 'string') {
           return {
             filters: Property.Array({
@@ -36,13 +36,13 @@ export const findRecords = createAction({
               required: false,
               properties: {},
             }),
-          };
+          }
         }
 
         const fields = await tablesCommon.getTableFields({
           tableId: table_id,
           context,
-        });
+        })
 
         return {
           filters: Property.Array({
@@ -80,59 +80,65 @@ export const findRecords = createAction({
               }),
             },
           }),
-        };
+        }
       },
     }),
   },
   async run(context) {
-    const { table_id: tableId, limit, filters } = context.propsValue;
-    const filtersArray: { field: FieldInfo; operator: FilterOperator; value: unknown }[] = filters?.['filters'] ?? [];
+    const { table_id: tableId, limit, filters } = context.propsValue
+    const filtersArray: { field: FieldInfo; operator: FilterOperator; value: unknown }[] = filters?.['filters'] ?? []
 
     for (const filter of filtersArray) {
-      const value = filter.value;
-      const fieldType = filter.field.type;
+      const value = filter.value
+      const fieldType = filter.field.type
 
-      let schema: Record<string, z.ZodType>;
+      let schema: Record<string, z.ZodType>
       switch (fieldType) {
         case FieldType.NUMBER:
           schema = {
-            value: z.union([z.number(), z.string().transform(val => {
-              const num = Number(val);
-              if (isNaN(num)) throw new Error(`Invalid number for field "${filter.field.name}"`);
-              return num;
-            })]),
-          };
-          break;
+            value: z.union([
+              z.number(),
+              z.string().transform((val) => {
+                const num = Number(val)
+                if (isNaN(num)) throw new Error(`Invalid number for field "${filter.field.name}"`)
+                return num
+              }),
+            ]),
+          }
+          break
         case FieldType.DATE:
           schema = {
-            value: z.union([z.date(), z.string().transform(val => {
-              const date = new Date(val);
-              if (isNaN(date.getTime())) throw new Error(`Invalid date for field "${filter.field.name}"`);
-              return date;
-            })]),
-          };
-          break;
+            value: z.union([
+              z.date(),
+              z.string().transform((val) => {
+                const date = new Date(val)
+                if (isNaN(date.getTime())) throw new Error(`Invalid date for field "${filter.field.name}"`)
+                return date
+              }),
+            ]),
+          }
+          break
         default:
           schema = {
             value: z.string(),
-          };
+          }
       }
 
-      await propsValidation.validateZod({ value }, schema);
+      await propsValidation.validateZod({ value }, schema)
     }
 
     const parsedFilters: Filter[] = filtersArray.map((filter) => ({
       fieldId: filter.field.id,
       operator: filter.operator,
       value: filter.value as string,
-    }));
+    }))
 
     const request: ListRecordsRequest = {
       tableId,
       limit: limit ?? 999999999,
       cursor: undefined,
       filters: parsedFilters,
-    };
+    }
 
     const response = await httpClient.sendRequest<SeekPage<PopulatedRecord>>({
       method: HttpMethod.POST,
@@ -142,8 +148,8 @@ export const findRecords = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,
       },
-    });
+    })
 
-    return response.body.data.map(tablesCommon.formatRecord);
+    return response.body.data.map(tablesCommon.formatRecord)
   },
-});
+})

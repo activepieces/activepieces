@@ -1,7 +1,7 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
 
-import { ghostAuth } from '../..';
-import { common } from '../common';
+import { ghostAuth } from '../..'
+import { common } from '../common'
 
 export const memberAdded = createTrigger({
   auth: ghostAuth,
@@ -11,27 +11,23 @@ export const memberAdded = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {
-    const webhookData: any = await common.subscribeWebhook(
-      context.auth,
-      'member.added',
-      context.webhookUrl
-    );
+    const webhookData: any = await common.subscribeWebhook(context.auth, 'member.added', context.webhookUrl)
 
     await context.store?.put('_member_added_trigger', {
       webhookId: webhookData.webhooks[0].id,
-    });
+    })
   },
   async onDisable(context) {
     const response: {
-      webhookId: string;
-    } | null = await context.store?.get('_member_added_trigger');
+      webhookId: string
+    } | null = await context.store?.get('_member_added_trigger')
 
     if (response !== null && response !== undefined) {
-      await common.unsubscribeWebhook(context.auth, response.webhookId);
+      await common.unsubscribeWebhook(context.auth, response.webhookId)
     }
   },
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
 
   sampleData: {
@@ -87,8 +83,7 @@ export const memberAdded = createTrigger({
             show_subscription_details: false,
           },
         ],
-        avatar_image:
-          'https://www.gravatar.com/avatar/123123123?s=250&r=g&d=blank',
+        avatar_image: 'https://www.gravatar.com/avatar/123123123?s=250&r=g&d=blank',
         last_seen_at: null,
         subscriptions: [],
         email_open_rate: null,
@@ -97,4 +92,4 @@ export const memberAdded = createTrigger({
       previous: {},
     },
   },
-});
+})

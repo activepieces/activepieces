@@ -1,17 +1,13 @@
-import { cva } from 'class-variance-authority';
-import { t } from 'i18next';
+import { cva } from 'class-variance-authority'
+import { t } from 'i18next'
 
-import { Trigger, flowStructureUtil } from '@activepieces/shared';
+import { Trigger, flowStructureUtil } from '@activepieces/shared'
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '../../../components/ui/tooltip';
-import { piecesHooks } from '../lib/pieces-hook';
-import { StepMetadata } from '../lib/types';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../../components/ui/tooltip'
+import { piecesHooks } from '../lib/pieces-hook'
+import { StepMetadata } from '../lib/types'
 
-import { PieceIcon } from './piece-icon';
+import { PieceIcon } from './piece-icon'
 
 const extraIconVariants = cva(
   'flex items-center justify-center bg-accent/35 text-accent-foreground  p-2 rounded-full border border-solid dark:bg-accent-foreground/25 dark:text-foreground select-none',
@@ -27,31 +23,28 @@ const extraIconVariants = cva(
     },
     defaultVariants: {},
   },
-);
+)
 
 export function PieceIconList({
   maxNumberOfIconsToShow,
   trigger,
   size,
 }: {
-  trigger: Trigger;
-  maxNumberOfIconsToShow: number;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+  trigger: Trigger
+  maxNumberOfIconsToShow: number
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl'
 }) {
-  const steps = flowStructureUtil.getAllSteps(trigger);
+  const steps = flowStructureUtil.getAllSteps(trigger)
   const stepsMetadata: StepMetadata[] = piecesHooks
     .useStepsMetadata(steps)
     .map((data) => data.data)
-    .filter((data) => !!data) as StepMetadata[];
+    .filter((data) => !!data) as StepMetadata[]
 
   const uniqueMetadata: StepMetadata[] = stepsMetadata.filter(
-    (item, index, self) =>
-      self.findIndex(
-        (secondItem) => item.displayName === secondItem.displayName,
-      ) === index,
-  );
-  const visibleMetadata = uniqueMetadata.slice(0, maxNumberOfIconsToShow);
-  const extraPieces = uniqueMetadata.length - visibleMetadata.length;
+    (item, index, self) => self.findIndex((secondItem) => item.displayName === secondItem.displayName) === index,
+  )
+  const visibleMetadata = uniqueMetadata.slice(0, maxNumberOfIconsToShow)
+  const extraPieces = uniqueMetadata.length - visibleMetadata.length
 
   return (
     <Tooltip>
@@ -68,11 +61,7 @@ export function PieceIconList({
               key={metadata.logoUrl}
             />
           ))}
-          {extraPieces > 0 && (
-            <div className={extraIconVariants({ size: size ?? 'md' })}>
-              +{extraPieces}
-            </div>
-          )}
+          {extraPieces > 0 && <div className={extraIconVariants({ size: size ?? 'md' })}>+{extraPieces}</div>}
         </div>
       </TooltipTrigger>
       <TooltipContent side="bottom">
@@ -80,12 +69,9 @@ export function PieceIconList({
           uniqueMetadata
             .map((m) => m?.displayName || '')
             .slice(0, -1)
-            .join(', ') +
-            ` ${t('and')} ${
-              uniqueMetadata[uniqueMetadata.length - 1].displayName
-            }`}
+            .join(', ') + ` ${t('and')} ${uniqueMetadata[uniqueMetadata.length - 1].displayName}`}
         {uniqueMetadata.length === 1 && uniqueMetadata[0].displayName}
       </TooltipContent>
     </Tooltip>
-  );
+  )
 }

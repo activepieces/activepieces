@@ -1,25 +1,12 @@
-import {
-  AuthenticationType,
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
-import {
-  DynamicPropsValue,
-  PiecePropValueSchema,
-  Property,
-} from '@activepieces/pieces-framework';
-import { dynamicsCRMAuth, getBaseUrl } from '../../';
-import { DynamicsCRMClient } from './client';
-import { EntityAttributeType } from './constants';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { DynamicPropsValue, PiecePropValueSchema, Property } from '@activepieces/pieces-framework'
+import { dynamicsCRMAuth, getBaseUrl } from '../../'
+import { DynamicsCRMClient } from './client'
+import { EntityAttributeType } from './constants'
 
 export function makeClient(auth: PiecePropValueSchema<typeof dynamicsCRMAuth>) {
-  const client = new DynamicsCRMClient(
-    auth.props?.['hostUrl'],
-    auth.access_token,
-    auth.props?.['proxyUrl']
-  );
-  return client;
+  const client = new DynamicsCRMClient(auth.props?.['hostUrl'], auth.access_token, auth.props?.['proxyUrl'])
+  return client
 }
 
 export const DynamicsCRMCommon = {
@@ -35,14 +22,12 @@ export const DynamicsCRMCommon = {
             disabled: true,
             options: [],
             placeholder: '',
-          };
+          }
         }
 
-        const client = makeClient(
-          auth as PiecePropValueSchema<typeof dynamicsCRMAuth>
-        );
+        const client = makeClient(auth as PiecePropValueSchema<typeof dynamicsCRMAuth>)
 
-        const res = await client.fetchEntityTypes();
+        const res = await client.fetchEntityTypes()
 
         return {
           disabled: false,
@@ -50,9 +35,9 @@ export const DynamicsCRMCommon = {
             return {
               label: val.EntitySetName,
               value: val.EntitySetName,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   recordId: Property.Dropdown({
@@ -65,43 +50,39 @@ export const DynamicsCRMCommon = {
           disabled: true,
           options: [],
           placeholder: 'Please select entity type first.',
-        };
+        }
       }
 
-      const client = makeClient(
-        auth as PiecePropValueSchema<typeof dynamicsCRMAuth>
-      );
+      const client = makeClient(auth as PiecePropValueSchema<typeof dynamicsCRMAuth>)
 
-      const res = await client.fetchEntityTypeAttributes(entityType as string);
+      const res = await client.fetchEntityTypeAttributes(entityType as string)
 
       if (!res.value[0]) {
         return {
           disabled: true,
           options: [],
           placeholder: 'Please select entity type first.',
-        };
+        }
       }
 
-      const entityUrlPath = entityType as string;
-      const entityPrimaryKey = res.value[0].PrimaryIdAttribute;
-      const entityprimaryNameAttribute = res.value[0].PrimaryNameAttribute;
+      const entityUrlPath = entityType as string
+      const entityPrimaryKey = res.value[0].PrimaryIdAttribute
+      const entityprimaryNameAttribute = res.value[0].PrimaryNameAttribute
 
-      const authValue = auth as PiecePropValueSchema<typeof dynamicsCRMAuth>;
+      const authValue = auth as PiecePropValueSchema<typeof dynamicsCRMAuth>
 
       type Response = {
-        '@odata.context': string;
+        '@odata.context': string
         value: Array<{
-          [K in
-            | typeof entityprimaryNameAttribute
-            | typeof entityPrimaryKey]: string;
-        }>;
-      };
+          [K in typeof entityprimaryNameAttribute | typeof entityPrimaryKey]: string
+        }>
+      }
 
       const request: HttpRequest = {
         method: HttpMethod.GET,
         url: `${getBaseUrl(
           authValue.props?.['hostUrl'],
-          authValue.props?.['proxyUrl']
+          authValue.props?.['proxyUrl'],
         )}/api/data/v9.2/${entityUrlPath}`,
         queryParams: {
           $select: entityprimaryNameAttribute,
@@ -116,9 +97,9 @@ export const DynamicsCRMCommon = {
           'OData-Version': '4.0',
           'Content-Type': 'application/json',
         },
-      };
+      }
 
-      const { body } = await httpClient.sendRequest<Response>(request);
+      const { body } = await httpClient.sendRequest<Response>(request)
 
       return {
         disabled: false,
@@ -126,9 +107,9 @@ export const DynamicsCRMCommon = {
           return {
             label: val[entityprimaryNameAttribute] ?? val[entityPrimaryKey],
             value: val[entityPrimaryKey],
-          };
+          }
         }),
-      };
+      }
     },
   }),
   entityFields: (isCreate = true) =>
@@ -137,30 +118,24 @@ export const DynamicsCRMCommon = {
       refreshers: ['auth', 'entityType'],
       required: true,
       props: async ({ auth, entityType }) => {
-        if (!auth) return {};
-        if (!entityType) return {};
+        if (!auth) return {}
+        if (!entityType) return {}
 
-        const fields: DynamicPropsValue = {};
+        const fields: DynamicPropsValue = {}
 
-        const client = makeClient(
-          auth as PiecePropValueSchema<typeof dynamicsCRMAuth>
-        );
+        const client = makeClient(auth as PiecePropValueSchema<typeof dynamicsCRMAuth>)
 
-        const typeRes = await client.fetchEntityTypeAttributes(
-          entityType as unknown as string
-        );
+        const typeRes = await client.fetchEntityTypeAttributes(entityType as unknown as string)
 
         if (!typeRes.value[0]) {
           return {
             disabled: true,
             options: [],
             placeholder: 'Please select entity type first.',
-          };
+          }
         }
 
-        const res = await client.fetchEntityAttributes(
-          typeRes.value[0].LogicalName
-        );
+        const res = await client.fetchEntityAttributes(typeRes.value[0].LogicalName)
 
         for (const field of res.value) {
           if (
@@ -176,51 +151,49 @@ export const DynamicsCRMCommon = {
             ].includes(field.AttributeType)
           ) {
             const params = {
-              displayName:
-                field.DisplayName?.UserLocalizedLabel?.Label ??
-                field.LogicalName,
+              displayName: field.DisplayName?.UserLocalizedLabel?.Label ?? field.LogicalName,
               description: field.Description?.UserLocalizedLabel?.Label ?? '',
               required: field.IsPrimaryName && isCreate,
-            };
+            }
             switch (field.AttributeType) {
               case EntityAttributeType.BIGINT:
               case EntityAttributeType.DECIMAL:
               case EntityAttributeType.DOUBLE:
               case EntityAttributeType.INTEGER:
-                fields[field.LogicalName] = Property.Number(params);
-                break;
+                fields[field.LogicalName] = Property.Number(params)
+                break
               case EntityAttributeType.DATETIME:
-                fields[field.LogicalName] = Property.DateTime(params);
-                break;
+                fields[field.LogicalName] = Property.DateTime(params)
+                break
               case EntityAttributeType.BOOLEAN:
-                fields[field.LogicalName] = Property.Checkbox(params);
-                break;
+                fields[field.LogicalName] = Property.Checkbox(params)
+                break
               case EntityAttributeType.STRING:
-                fields[field.LogicalName] = Property.ShortText(params);
-                break;
+                fields[field.LogicalName] = Property.ShortText(params)
+                break
               case EntityAttributeType.PICKLIST:
               case EntityAttributeType.STATE:
               case EntityAttributeType.STATUS: {
                 const options = await client.fetchOptionFieldValues(
                   typeRes.value[0].LogicalName,
                   field.LogicalName,
-                  field.AttributeType
-                );
+                  field.AttributeType,
+                )
                 fields[field.LogicalName] = Property.StaticDropdown({
                   ...params,
                   options: {
                     disabled: false,
                     options: options,
                   },
-                });
-                break;
+                })
+                break
               }
               default:
-                break;
+                break
             }
           }
         }
-        return fields;
+        return fields
       },
     }),
-};
+}

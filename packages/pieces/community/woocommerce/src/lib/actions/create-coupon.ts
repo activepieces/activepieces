@@ -1,17 +1,8 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-  AuthenticationType,
-  propsValidation,
-} from '@activepieces/pieces-common';
-import { z } from 'zod';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient, propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
 
-import { wooAuth } from '../..';
+import { wooAuth } from '../..'
 
 export const wooCreateCoupon = createAction({
   name: 'Create Coupon',
@@ -63,13 +54,13 @@ export const wooCreateCoupon = createAction({
   async run(configValue) {
     await propsValidation.validateZod(configValue.propsValue, {
       minimum_amount: z.number().min(0),
-    });
+    })
 
-    const trimmedBaseUrl = configValue.auth.baseUrl.replace(/\/$/, '');
-    const amount = configValue.propsValue['amount'] || 0;
-    const code = configValue.propsValue['code'];
-    const discount_type = configValue.propsValue['discount_type'];
-    const minimum_amount = configValue.propsValue['minimum_amount'] || 0;
+    const trimmedBaseUrl = configValue.auth.baseUrl.replace(/\/$/, '')
+    const amount = configValue.propsValue['amount'] || 0
+    const code = configValue.propsValue['code']
+    const discount_type = configValue.propsValue['discount_type']
+    const minimum_amount = configValue.propsValue['minimum_amount'] || 0
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -87,10 +78,10 @@ export const wooCreateCoupon = createAction({
         exclude_sale_items: true,
         minimum_amount,
       },
-    };
+    }
 
-    const res = await httpClient.sendRequest<never>(request);
+    const res = await httpClient.sendRequest<never>(request)
 
-    return res.body;
+    return res.body
   },
-});
+})

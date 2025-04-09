@@ -46,22 +46,22 @@ export enum MailChimpEmailType {
 }
 
 export type MailChimpWebhookRequest<Type extends MailChimpWebhookType, Data> = {
-  type: Type;
-  fired_at: string;
-  data: Data;
-};
+  type: Type
+  fired_at: string
+  data: Data
+}
 
 export type MailChimpSubscribeWebhookData = {
-  id: string;
-  list_id: string;
-  email: string;
-  email_type: MailChimpEmailType;
-  ip_opt: string;
-  ip_signup: string;
-  merges: Record<string, string>;
-};
+  id: string
+  list_id: string
+  email: string
+  email_type: MailChimpEmailType
+  ip_opt: string
+  ip_signup: string
+  merges: Record<string, string>
+}
 
 export type MailChimpSubscribeWebhookRequest = MailChimpWebhookRequest<
   MailChimpWebhookType.SUBSCRIBE,
   MailChimpSubscribeWebhookData
->;
+>

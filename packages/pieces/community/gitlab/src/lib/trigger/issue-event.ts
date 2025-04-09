@@ -1,11 +1,7 @@
-import {
-  createTrigger,
-  TriggerStrategy,
-  Property,
-} from '@activepieces/pieces-framework';
+import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
 
-import { gitlabCommon, makeClient } from '../common';
-import { gitlabAuth } from '../..';
+import { gitlabAuth } from '../..'
+import { gitlabCommon, makeClient } from '../common'
 const sampleData = {
   object_kind: 'issue',
   event_type: 'issue',
@@ -13,8 +9,7 @@ const sampleData = {
     id: 15269532,
     name: 'Kishan Parmar',
     username: 'kishanprmr',
-    avatar_url:
-      'https://secure.gravatar.com/avatar/4eabe7154116891e3ebc205e9754a832?s=80&d=identicon',
+    avatar_url: 'https://secure.gravatar.com/avatar/4eabe7154116891e3ebc205e9754a832?s=80&d=identicon',
     email: '[REDACTED]',
   },
   project: {
@@ -91,7 +86,7 @@ const sampleData = {
     description: null,
     homepage: 'https://gitlab.com/basic-group-demo/basic-project-demo',
   },
-};
+}
 
 export const issuesEventTrigger = createTrigger({
   auth: gitlabAuth,
@@ -121,51 +116,44 @@ export const issuesEventTrigger = createTrigger({
   sampleData: sampleData,
 
   async onEnable({ store, auth, propsValue, webhookUrl }) {
-    const projectId = propsValue.projectId!;
-    const client = makeClient({ auth });
+    const projectId = propsValue.projectId!
+    const client = makeClient({ auth })
     const res = await client.subscribeProjectWebhook(projectId, {
       url: webhookUrl,
       issues_events: true,
       push_events: false,
-    });
+    })
     await store.put<WebhookInformation>('gitlab_issue_trigger', {
       webhookId: res.id,
       projectId: projectId as string,
-    });
+    })
   },
 
   async onDisable({ auth, store }) {
-    const response = await store.get<WebhookInformation>(
-      'gitlab_issue_trigger'
-    );
+    const response = await store.get<WebhookInformation>('gitlab_issue_trigger')
     if (response !== null && response !== undefined) {
-      const client = makeClient({ auth });
-      client.unsubscribeProjectWebhook(response.projectId, response.webhookId);
+      const client = makeClient({ auth })
+      client.unsubscribeProjectWebhook(response.projectId, response.webhookId)
     }
   },
 
   async run(context) {
-    const { actiontype } = context.propsValue;
-    if (
-      isVerificationCall(
-        context.payload.body as Record<string, unknown>,
-        actiontype as string
-      )
-    ) {
-      return [context.payload.body];
+    const { actiontype } = context.propsValue
+    if (isVerificationCall(context.payload.body as Record<string, unknown>, actiontype as string)) {
+      return [context.payload.body]
     }
-    return [];
+    return []
   },
-});
+})
 
 function isVerificationCall(payload: Record<string, any>, actiontype: string) {
   if (actiontype == 'all') {
-    return true;
+    return true
   }
-  return payload['object_attributes']['action'] == actiontype;
+  return payload['object_attributes']['action'] == actiontype
 }
 
 interface WebhookInformation {
-  webhookId: string;
-  projectId: string;
+  webhookId: string
+  projectId: string
 }

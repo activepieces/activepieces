@@ -1,5 +1,5 @@
-import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
-import { AI, aiProps } from '@activepieces/pieces-common';
+import { AI, aiProps } from '@activepieces/pieces-common'
+import { ApFile, Property, createAction } from '@activepieces/pieces-framework'
 
 export const checkModeration = createAction({
   name: 'checkModeration',
@@ -25,30 +25,28 @@ export const checkModeration = createAction({
     }),
   },
   async run(context) {
-    const text = context.propsValue.text;
-    const images = (context.propsValue.images as Array<{ file: ApFile }>) ?? [];
+    const text = context.propsValue.text
+    const images = (context.propsValue.images as Array<{ file: ApFile }>) ?? []
     const ai = AI({
       provider: context.propsValue.provider,
       server: context.server,
-    });
+    })
 
-    const moderation = ai.moderation?.create;
+    const moderation = ai.moderation?.create
     if (!moderation) {
-      throw new Error(
-        `Checking moderation is not supported by provider ${context.propsValue.provider}`
-      );
+      throw new Error(`Checking moderation is not supported by provider ${context.propsValue.provider}`)
     }
 
     if (!text && !images.length) {
-      throw new Error('Please provide text or images to check moderation');
+      throw new Error('Please provide text or images to check moderation')
     }
 
     const response = await moderation({
       model: context.propsValue.model,
       text,
       images: images.map((image) => image.file),
-    });
+    })
 
-    return response;
+    return response
   },
-});
+})

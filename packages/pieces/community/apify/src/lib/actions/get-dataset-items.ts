@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { apifyAuth } from '../..';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { apifyAuth } from '../..'
 
 export const getDatasetItems = createAction({
   name: 'getDatasetItems',
@@ -10,30 +10,26 @@ export const getDatasetItems = createAction({
   props: {
     runid: Property.ShortText({
       displayName: 'The runid of the Actor (alphanumeric)',
-      description:
-        'The runid of the completed Actors run [defaultDatasetId] (compulsory)',
+      description: 'The runid of the completed Actors run [defaultDatasetId] (compulsory)',
       required: true,
     }),
   },
   async run(context) {
-    const apifyToken = context.auth.apikey;
+    const apifyToken = context.auth.apikey
     const headers = {
       Authorization: 'Bearer ' + apifyToken,
       'Content-Type': 'application/json',
-    };
+    }
 
-    const url =
-      'https://api.apify.com/v2/datasets/' +
-      context.propsValue.runid +
-      '/items/';
+    const url = 'https://api.apify.com/v2/datasets/' + context.propsValue.runid + '/items/'
 
     const httprequestdata = {
       method: HttpMethod.GET,
       url,
       headers,
-    };
+    }
 
-    const response = await httpClient.sendRequest(httprequestdata);
-    return response.body;
+    const response = await httpClient.sendRequest(httprequestdata)
+    return response.body
   },
-});
+})

@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { instantVerify } from '../api';
-import { clearoutAuth } from '../auth';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { instantVerify } from '../api'
+import { clearoutAuth } from '../auth'
 
 export const instantVerifyAction = createAction({
   name: 'instant_verify',
@@ -17,6 +17,6 @@ export const instantVerifyAction = createAction({
   async run(context) {
     return await instantVerify(context.auth, {
       email: context.propsValue.email,
-    });
+    })
   },
-});
+})

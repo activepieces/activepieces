@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { Brand } from '../../common/Brand';
-import { vtexAuth } from '../../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { vtexAuth } from '../../..'
+import { Brand } from '../../common/Brand'
 
 export const deleteBrand = createAction({
   auth: vtexAuth,
@@ -15,11 +15,11 @@ export const deleteBrand = createAction({
     }),
   },
   async run(context) {
-    const { hostUrl, appKey, appToken } = context.auth;
-    const { brandId } = context.propsValue;
+    const { hostUrl, appKey, appToken } = context.auth
+    const { brandId } = context.propsValue
 
-    const brand = new Brand(hostUrl, appKey, appToken);
+    const brand = new Brand(hostUrl, appKey, appToken)
 
-    return await brand.deleteBrand(brandId);
+    return await brand.deleteBrand(brandId)
   },
-});
+})

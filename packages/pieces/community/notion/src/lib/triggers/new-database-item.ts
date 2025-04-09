@@ -1,18 +1,10 @@
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import {
-  createTrigger,
-  TriggerStrategy,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
-import { notionCommon } from '../common';
-import { Client } from '@notionhq/client';
-import { notionAuth } from '../..';
-import { isNil } from '@activepieces/shared';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { isNil } from '@activepieces/shared'
+import { Client } from '@notionhq/client'
+import dayjs from 'dayjs'
+import { notionAuth } from '../..'
+import { notionCommon } from '../common'
 
 export const newDatabaseItem = createTrigger({
   auth: notionAuth,
@@ -93,21 +85,21 @@ export const newDatabaseItem = createTrigger({
       store: ctx.store,
       propsValue: ctx.propsValue,
       files: ctx.files,
-    });
+    })
   },
   async onEnable(ctx) {
     await pollingHelper.onEnable(polling, {
       auth: ctx.auth,
       store: ctx.store,
       propsValue: ctx.propsValue,
-    });
+    })
   },
   async onDisable(ctx) {
     await pollingHelper.onDisable(polling, {
       auth: ctx.auth,
       store: ctx.store,
       propsValue: ctx.propsValue,
-    });
+    })
   },
   async run(ctx) {
     return await pollingHelper.poll(polling, {
@@ -115,53 +107,42 @@ export const newDatabaseItem = createTrigger({
       store: ctx.store,
       propsValue: ctx.propsValue,
       files: ctx.files,
-    });
+    })
   },
-});
+})
 
-const polling: Polling<
-  OAuth2PropertyValue,
-  { database_id: string | undefined }
-> = {
+const polling: Polling<OAuth2PropertyValue, { database_id: string | undefined }> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue, lastItemId }) => {
-    const lastItem = lastItemId as string;
-    let lastCreatedDate: string | null;
+    const lastItem = lastItemId as string
+    let lastCreatedDate: string | null
 
     if (lastItem) {
-      const lastUpdatedEpochMS = Number(lastItem.split('|')[1]);
-      lastCreatedDate = dayjs(lastUpdatedEpochMS).toISOString();
+      const lastUpdatedEpochMS = Number(lastItem.split('|')[1])
+      lastCreatedDate = dayjs(lastUpdatedEpochMS).toISOString()
     } else {
-      lastCreatedDate = lastItem;
+      lastCreatedDate = lastItem
     }
 
-    const items = await getResponse(
-      auth,
-      propsValue.database_id!,
-      lastCreatedDate
-    );
+    const items = await getResponse(auth, propsValue.database_id!, lastCreatedDate)
     return items.map((item: any) => {
-      const object = item as { created_time: string; id: string };
+      const object = item as { created_time: string; id: string }
       return {
         id: object.id + '|' + dayjs(object.created_time).valueOf(),
         data: item,
-      };
-    });
+      }
+    })
   },
-};
+}
 
-const getResponse = async (
-  authentication: OAuth2PropertyValue,
-  database_id: string,
-  startDate: string | null
-) => {
+const getResponse = async (authentication: OAuth2PropertyValue, database_id: string, startDate: string | null) => {
   const notion = new Client({
     auth: authentication.access_token,
     notionVersion: '2022-02-22',
-  });
-  let cursor;
-  let hasMore = true;
-  const results = [];
+  })
+  let cursor
+  let hasMore = true
+  const results = []
 
   do {
     const response = await notion.databases.query({
@@ -182,13 +163,13 @@ const getResponse = async (
           direction: 'descending',
         },
       ],
-    });
+    })
 
-    hasMore = response.has_more;
-    cursor = response.next_cursor ?? undefined;
+    hasMore = response.has_more
+    cursor = response.next_cursor ?? undefined
 
-    results.push(...response.results);
-  } while (hasMore && !isNil(startDate));
+    results.push(...response.results)
+  } while (hasMore && !isNil(startDate))
 
-  return results;
-};
+  return results
+}

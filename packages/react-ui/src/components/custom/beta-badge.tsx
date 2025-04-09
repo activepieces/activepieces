@@ -1,23 +1,15 @@
-import { t } from 'i18next';
-import * as React from 'react';
+import { t } from 'i18next'
+import * as React from 'react'
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 
 interface BetaBadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  className?: string;
-  showTooltip?: boolean;
+  className?: string
+  showTooltip?: boolean
 }
 
-export function BetaBadge({
-  className,
-  showTooltip = true,
-  ...props
-}: BetaBadgeProps) {
+export function BetaBadge({ className, showTooltip = true, ...props }: BetaBadgeProps) {
   const badge = (
     <span
       className={cn(
@@ -28,18 +20,16 @@ export function BetaBadge({
     >
       {t('Beta')}
     </span>
-  );
+  )
 
   if (!showTooltip) {
-    return badge;
+    return badge
   }
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>{badge}</TooltipTrigger>
-      <TooltipContent>
-        {t('This feature is still under testing and might be changed often')}
-      </TooltipContent>
+      <TooltipContent>{t('This feature is still under testing and might be changed often')}</TooltipContent>
     </Tooltip>
-  );
+  )
 }

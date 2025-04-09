@@ -1,8 +1,8 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { onfleetAuth } from '../..';
-import { common } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
+import { common } from '../common'
 
-import Onfleet from '@onfleet/node-onfleet';
+import Onfleet from '@onfleet/node-onfleet'
 
 export const createAdmin = createAction({
   auth: onfleetAuth,
@@ -30,13 +30,13 @@ export const createAdmin = createAction({
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth)
 
     return await onfleetApi.administrators.create({
       name: context.propsValue.name,
       email: context.propsValue.email,
       phone: context.propsValue.phone,
       isReadOnly: context.propsValue.isReadOnly,
-    });
+    })
   },
-});
+})

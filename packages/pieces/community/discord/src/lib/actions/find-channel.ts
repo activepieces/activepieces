@@ -1,12 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { discordAuth } from '../../index';
-import { discordCommon } from '../common';
-import { Channel } from '../common/models';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { discordAuth } from '../../index'
+import { discordCommon } from '../common'
+import { Channel } from '../common/models'
 
 export const discordFindChannel = createAction({
   auth: discordAuth,
@@ -30,17 +26,15 @@ export const discordFindChannel = createAction({
         authorization: `Bot ${configValue.auth}`,
         'Content-Type': 'application/json',
       },
-    };
+    }
 
-    const res = await httpClient.sendRequest<Channel[]>(request);
+    const res = await httpClient.sendRequest<Channel[]>(request)
 
-    const channel = res.body.find(
-      (channel) => channel.name === configValue.propsValue.name
-    );
+    const channel = res.body.find((channel) => channel.name === configValue.propsValue.name)
 
     return {
       success: res.status === 200 && !!channel,
       channel_id: channel?.id,
-    };
+    }
   },
-});
+})

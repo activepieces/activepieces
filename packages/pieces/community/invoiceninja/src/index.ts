@@ -1,19 +1,15 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { createTask } from './lib/actions/create-task';
-import { getClient } from './lib/actions/get-client';
-import { getInvoices } from './lib/actions/get-invoices';
-import { getReport } from './lib/actions/get-report';
-import { existsTask } from './lib/actions/task-exists';
-import { createInvoice } from './lib/actions/create-invoice';
-import { createClient } from './lib/actions/create-client';
-import { createRecurringInvoice } from './lib/actions/create-recurring';
-import { actionRecurringInvoice } from './lib/actions/action-recurring';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { actionRecurringInvoice } from './lib/actions/action-recurring'
+import { createClient } from './lib/actions/create-client'
+import { createInvoice } from './lib/actions/create-invoice'
+import { createRecurringInvoice } from './lib/actions/create-recurring'
+import { createTask } from './lib/actions/create-task'
+import { getClient } from './lib/actions/get-client'
+import { getInvoices } from './lib/actions/get-invoices'
+import { getReport } from './lib/actions/get-report'
+import { existsTask } from './lib/actions/task-exists'
 
 export const invoiceninjaAuth = PieceAuth.CustomAuth({
   props: {
@@ -31,7 +27,7 @@ export const invoiceninjaAuth = PieceAuth.CustomAuth({
   description: `Please check https://invoice-ninja.readthedocs.io/en/latest/api_tokens.html#create-token
    to see how to get the API token`,
   required: true,
-});
+})
 
 export const invoiceninja = createPiece({
   displayName: 'Invoice Ninja',
@@ -40,7 +36,7 @@ export const invoiceninja = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/invoiceninja.png',
   categories: [PieceCategory.ACCOUNTING],
-  authors: ["buttonsbond","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: ['buttonsbond', 'kishanprmr', 'MoShizzle', 'AbdulTheActivePiecer', 'khaledmashaly', 'abuaboud'],
   auth: invoiceninjaAuth,
   actions: [
     createTask,
@@ -53,8 +49,7 @@ export const invoiceninja = createPiece({
     createRecurringInvoice,
     actionRecurringInvoice,
     createCustomApiCallAction({
-      baseUrl: (auth) =>
-        `${(auth as { base_url: string }).base_url.replace(/\/$/, '')}/api/v1`,
+      baseUrl: (auth) => `${(auth as { base_url: string }).base_url.replace(/\/$/, '')}/api/v1`,
       auth: invoiceninjaAuth,
       authMapping: async (auth) => ({
         'X-Api-Token': (auth as { access_token: string }).access_token,
@@ -62,4 +57,4 @@ export const invoiceninja = createPiece({
     }),
   ],
   triggers: [],
-});
+})

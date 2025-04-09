@@ -1,21 +1,16 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import {
-  createField,
-  deleteField,
-  listFields,
-  updateField,
-} from './lib/actions/custom-fields';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { createField, deleteField, listFields, updateField } from './lib/actions/custom-fields'
 import {
   getSubscriberByEmail,
   getSubscriberById,
-  listSubscribers,
   listSubscriberTagsByEmail,
+  listSubscribers,
   listTagsBySubscriberId,
   unsubscribeSubscriber,
   updateSubscriber,
-} from './lib/actions/subscribers';
+} from './lib/actions/subscribers'
 
-import { createWebhook, deleteWebhook } from './lib/actions/webhooks';
+import { createWebhook, deleteWebhook } from './lib/actions/webhooks'
 
 import {
   broadcastStats,
@@ -24,19 +19,11 @@ import {
   getBroadcastById,
   listBroadcasts,
   updateBroadcast,
-} from './lib/actions/broadcasts';
+} from './lib/actions/broadcasts'
 
-import {
-  addSubscriberToForm,
-  listForms,
-  listFormSubscriptions,
-} from './lib/actions/forms';
+import { addSubscriberToForm, listFormSubscriptions, listForms } from './lib/actions/forms'
 
-import {
-  addSubscriberToSequence,
-  listSequences,
-  listSubscriptionsToSequence,
-} from './lib/actions/sequences';
+import { addSubscriberToSequence, listSequences, listSubscriptionsToSequence } from './lib/actions/sequences'
 
 import {
   createTag,
@@ -45,16 +32,11 @@ import {
   removeTagFromSubscriberByEmail,
   removeTagFromSubscriberById,
   tagSubscriber,
-} from './lib/actions/tags';
+} from './lib/actions/tags'
 
-import {
-  createPurchases,
-  createSinglePurchase,
-  getPurchaseById,
-  listPurchases,
-} from './lib/actions/purchases';
+import { createPurchases, createSinglePurchase, getPurchaseById, listPurchases } from './lib/actions/purchases'
 
-import { PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/shared'
 import {
   addTag,
   formSubscribed,
@@ -68,13 +50,13 @@ import {
   subscriberBounced,
   subscriberComplained,
   subscriberUnsubscribed,
-} from './lib/triggers';
+} from './lib/triggers'
 
 export const convertkitAuth = PieceAuth.SecretText({
   displayName: 'API Secret',
   description: 'Enter your API Secret key',
   required: true,
-});
+})
 
 export const convertkit = createPiece({
   displayName: 'ConvertKit',
@@ -84,7 +66,7 @@ export const convertkit = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/convertkit.png',
   categories: [PieceCategory.MARKETING],
-  authors: ["Gunther-Schulz","kishanprmr","abuaboud"],
+  authors: ['Gunther-Schulz', 'kishanprmr', 'abuaboud'],
   actions: [
     getSubscriberById,
     getSubscriberByEmail,
@@ -136,4 +118,4 @@ export const convertkit = createPiece({
     productPurchased,
     purchaseCreated,
   ],
-});
+})

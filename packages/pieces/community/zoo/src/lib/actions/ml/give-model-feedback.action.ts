@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 import { zooAuth } from '../../../index'
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const giveModelFeedbackAction = createAction({
   name: 'give_model_feedback',
@@ -37,7 +37,7 @@ export const giveModelFeedbackAction = createAction({
       body: {
         feedback: propsValue.feedback,
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

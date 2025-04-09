@@ -1,12 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { discordAuth } from '../../index';
-import { discordCommon } from '../common';
-import { Member } from '../common/models';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { discordAuth } from '../../index'
+import { discordCommon } from '../common'
+import { Member } from '../common/models'
 
 export const discordFindGuildMemberByUsername = createAction({
   auth: discordAuth,
@@ -30,30 +26,30 @@ export const discordFindGuildMemberByUsername = createAction({
         authorization: `Bot ${configValue.auth}`,
         'Content-Type': 'application/json',
       },
-    };
+    }
 
-    const res = await httpClient.sendRequest<Member[]>(request);
+    const res = await httpClient.sendRequest<Member[]>(request)
 
     const options: { options: { value: string; label: string }[] } = {
       options: [],
-    };
+    }
 
     if (res.body.length === 0)
       return {
         disabled: true,
         options: [],
         placeholder: 'No members found, please add the bot to a guild first',
-      };
+      }
 
     await Promise.all(
       res.body.map(async (member) => {
         options.options.push({
           value: member.user.id,
           label: member.user.username,
-        });
-      })
-    );
+        })
+      }),
+    )
 
-    return options;
+    return options
   },
-});
+})

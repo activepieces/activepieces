@@ -1,6 +1,6 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { httpSendRequestAction } from './lib/actions/send-http-request-action';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { httpSendRequestAction } from './lib/actions/send-http-request-action'
 
 export const http = createPiece({
   displayName: 'HTTP',
@@ -22,4 +22,4 @@ export const http = createPiece({
     'pfernandez98',
   ],
   triggers: [],
-});
+})

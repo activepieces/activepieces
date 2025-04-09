@@ -1,9 +1,6 @@
-import {
-  DynamicPropsValue,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { airtableCommon } from '../common';
-import { airtableAuth } from '../../index';
+import { DynamicPropsValue, createAction } from '@activepieces/pieces-framework'
+import { airtableAuth } from '../../index'
+import { airtableCommon } from '../common'
 
 export const airtableCreateRecordAction = createAction({
   auth: airtableAuth,
@@ -16,28 +13,27 @@ export const airtableCreateRecordAction = createAction({
     fields: airtableCommon.fields,
   },
   async run(context) {
-    const personalToken = context.auth;
-    const { base: baseId, tableId, fields } = context.propsValue;
-    const fieldsWithoutEmptyStrings: DynamicPropsValue = {};
+    const personalToken = context.auth
+    const { base: baseId, tableId, fields } = context.propsValue
+    const fieldsWithoutEmptyStrings: DynamicPropsValue = {}
 
     Object.keys(fields).forEach((k) => {
       if (fields[k] !== '') {
-        fieldsWithoutEmptyStrings[k] = fields[k];
+        fieldsWithoutEmptyStrings[k] = fields[k]
       }
-    });
-    const newFields: Record<string, unknown> =
-      await airtableCommon.createNewFields(
-        personalToken,
-        baseId,
-        tableId as string,
-        fieldsWithoutEmptyStrings
-      );
+    })
+    const newFields: Record<string, unknown> = await airtableCommon.createNewFields(
+      personalToken,
+      baseId,
+      tableId as string,
+      fieldsWithoutEmptyStrings,
+    )
 
     return airtableCommon.createRecord({
       personalToken,
       baseId,
       tableId: tableId as string,
       fields: newFields,
-    });
+    })
   },
-});
+})

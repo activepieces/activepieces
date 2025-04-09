@@ -1,12 +1,8 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  OAuth2PropertyValue,
-  PieceAuth,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { xeroCreateContact } from './lib/actions/create-contact';
-import { xeroCreateInvoice } from './lib/actions/create-invoice';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { xeroCreateContact } from './lib/actions/create-contact'
+import { xeroCreateInvoice } from './lib/actions/create-invoice'
 
 export const xeroAuth = PieceAuth.OAuth2({
   description: `
@@ -20,15 +16,8 @@ export const xeroAuth = PieceAuth.OAuth2({
   authUrl: 'https://login.xero.com/identity/connect/authorize',
   tokenUrl: 'https://identity.xero.com/connect/token',
   required: true,
-  scope: [
-    'openid',
-    'profile',
-    'email',
-    'offline_access',
-    'accounting.contacts',
-    'accounting.transactions',
-  ],
-});
+  scope: ['openid', 'profile', 'email', 'offline_access', 'accounting.contacts', 'accounting.transactions'],
+})
 
 export const xero = createPiece({
   displayName: 'Xero',
@@ -51,4 +40,4 @@ export const xero = createPiece({
     }),
   ],
   triggers: [],
-});
+})

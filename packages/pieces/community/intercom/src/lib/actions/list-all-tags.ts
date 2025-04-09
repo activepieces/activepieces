@@ -1,19 +1,18 @@
-import { intercomAuth } from "../../index";
-import { createAction } from "@activepieces/pieces-framework";
-import { intercomClient } from "../common";
+import { createAction } from '@activepieces/pieces-framework'
+import { intercomAuth } from '../../index'
+import { intercomClient } from '../common'
 
 export const listAllTagsAction = createAction({
-    auth:intercomAuth,
-    name:'list-all-tags',
-    displayName:'List Tags',
-    description:'List all tags.',
-    props:{},
-    async run(context){
-        const client = intercomClient(context.auth);
+  auth: intercomAuth,
+  name: 'list-all-tags',
+  displayName: 'List Tags',
+  description: 'List all tags.',
+  props: {},
+  async run(context) {
+    const client = intercomClient(context.auth)
 
-        const response = await client.tags.list();
+    const response = await client.tags.list()
 
-        return response;
-    }
-
+    return response
+  },
 })

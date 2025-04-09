@@ -1,7 +1,7 @@
-import { createAction } from "@activepieces/pieces-framework";
-import { getAccessTokenOrThrow } from "@activepieces/pieces-common";
-import { clickupCommon, listAccessibleCustomFields } from "../../common"
-import { clickupAuth } from "../../../";
+import { getAccessTokenOrThrow } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { clickupAuth } from '../../../'
+import { clickupCommon, listAccessibleCustomFields } from '../../common'
 
 export const getClickupAccessibleCustomFields = createAction({
   auth: clickupAuth,
@@ -11,12 +11,12 @@ export const getClickupAccessibleCustomFields = createAction({
   props: {
     workspace_id: clickupCommon.workspace_id(true),
     space_id: clickupCommon.space_id(true),
-    list_id: clickupCommon.list_id(true)
+    list_id: clickupCommon.list_id(true),
   },
   async run(configValue) {
-    const { list_id } = configValue.propsValue;
+    const { list_id } = configValue.propsValue
     const auth = getAccessTokenOrThrow(configValue.auth)
 
     return (await listAccessibleCustomFields(auth, list_id as unknown as string)).fields
-  }
+  },
 })

@@ -1,21 +1,16 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  HttpMethod,
-  createCustomApiCallAction,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { baseUrl } from './lib/common/common';
-import { promptCompletion } from './lib/actions/prompt-completion';
-import { imageGeneration } from './lib/actions/image-generation';
-import { PieceCategory } from '@activepieces/shared';
+import { AuthenticationType, HttpMethod, createCustomApiCallAction, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { imageGeneration } from './lib/actions/image-generation'
+import { promptCompletion } from './lib/actions/prompt-completion'
+import { baseUrl } from './lib/common/common'
 
 const markdownDescription = `
 Follow these instructions to get your Straico API Key:
 
 1. Visit the following website: https://platform.straico.com/user-settings.
 2. Once on the website, locate "Connect with Straico API" and click on the copy API Key.
-`;
+`
 
 export const straicoAuth = PieceAuth.SecretText({
   description: markdownDescription,
@@ -24,7 +19,7 @@ export const straicoAuth = PieceAuth.SecretText({
   validate: async (auth) => {
     try {
       await httpClient.sendRequest<{
-        data: { model: string }[];
+        data: { model: string }[]
       }>({
         url: `${baseUrl}/models`,
         method: HttpMethod.GET,
@@ -32,18 +27,18 @@ export const straicoAuth = PieceAuth.SecretText({
           type: AuthenticationType.BEARER_TOKEN,
           token: auth.auth as string,
         },
-      });
+      })
       return {
         valid: true,
-      };
+      }
     } catch (e) {
       return {
         valid: false,
         error: 'Invalid API key',
-      };
+      }
     }
   },
-});
+})
 
 export const straico = createPiece({
   displayName: 'Straico',
@@ -62,9 +57,9 @@ export const straico = createPiece({
       authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${auth}`,
-        };
+        }
       },
     }),
   ],
   triggers: [],
-});
+})

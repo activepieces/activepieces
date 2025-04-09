@@ -1,10 +1,4 @@
-import {
-  HttpMessageBody,
-  HttpMethod,
-  HttpResponse,
-  QueryParams,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { HttpMessageBody, HttpMethod, HttpResponse, QueryParams, httpClient } from '@activepieces/pieces-common'
 import {
   ShopifyAuth,
   ShopifyCheckout,
@@ -18,18 +12,18 @@ import {
   ShopifyProduct,
   ShopifyProductVariant,
   ShopifyTransaction,
-} from './types';
+} from './types'
 
 export function getBaseUrl(shopName: string) {
-  return `https://${shopName}.myshopify.com/admin/api/2023-10`;
+  return `https://${shopName}.myshopify.com/admin/api/2023-10`
 }
 
 export function sendShopifyRequest(data: {
-  url: string;
-  method: HttpMethod;
-  body?: HttpMessageBody;
-  queryParams?: QueryParams;
-  auth: ShopifyAuth;
+  url: string
+  method: HttpMethod
+  body?: HttpMessageBody
+  queryParams?: QueryParams
+  auth: ShopifyAuth
 }): Promise<HttpResponse<HttpMessageBody>> {
   return httpClient.sendRequest({
     url: `${getBaseUrl(data.auth.shopName)}${data.url}`,
@@ -39,13 +33,10 @@ export function sendShopifyRequest(data: {
     headers: {
       'X-Shopify-Access-Token': data.auth.adminToken,
     },
-  });
+  })
 }
 
-export async function createCustomer(
-  customer: Partial<ShopifyCustomer>,
-  auth: ShopifyAuth
-): Promise<ShopifyCustomer> {
+export async function createCustomer(customer: Partial<ShopifyCustomer>, auth: ShopifyAuth): Promise<ShopifyCustomer> {
   const response = await sendShopifyRequest({
     auth: auth,
     url: '/customers.json',
@@ -53,69 +44,62 @@ export async function createCustomer(
     body: {
       customer,
     },
-  });
+  })
 
-  return (response.body as { customer: ShopifyCustomer }).customer;
+  return (response.body as { customer: ShopifyCustomer }).customer
 }
 
-export async function getCustomer(
-  id: string,
-  auth: ShopifyAuth
-): Promise<ShopifyCustomer> {
+export async function getCustomer(id: string, auth: ShopifyAuth): Promise<ShopifyCustomer> {
   const response = await sendShopifyRequest({
     auth: auth,
     url: `/customers/${id}.json`,
     method: HttpMethod.GET,
-  });
+  })
 
-  return (response.body as { customer: ShopifyCustomer }).customer;
+  return (response.body as { customer: ShopifyCustomer }).customer
 }
 
-export async function getCustomers(
-  auth: ShopifyAuth,
-): Promise<ShopifyCustomer[]> {
-  const queryParams: QueryParams = {};
+export async function getCustomers(auth: ShopifyAuth): Promise<ShopifyCustomer[]> {
+  const queryParams: QueryParams = {}
 
-  let customers:ShopifyCustomer[] = [];
-  let hasNextPage = true;
+  let customers: ShopifyCustomer[] = []
+  let hasNextPage = true
 
   while (hasNextPage) {
-
     const response = await sendShopifyRequest({
       auth: auth,
       url: `/customers.json`,
       method: HttpMethod.GET,
       queryParams,
-    });
+    })
 
-    customers = customers.concat((response.body as { customers: ShopifyCustomer[] }).customers);
+    customers = customers.concat((response.body as { customers: ShopifyCustomer[] }).customers)
 
-    const linkHeader = response.headers?.['link'];
+    const linkHeader = response.headers?.['link']
     if (linkHeader && typeof linkHeader === 'string' && linkHeader.includes('rel="next"')) {
       // Extract the URL for the next page from the Link header
       const nextLink = linkHeader
         .split(',')
         .find((s) => s.includes('rel="next"'))
-        ?.match(/<(.*?)>/)?.[1];
-      
+        ?.match(/<(.*?)>/)?.[1]
+
       if (nextLink) {
-        queryParams.page_info = new URL(nextLink).searchParams.get('page_info') || '';
+        queryParams.page_info = new URL(nextLink).searchParams.get('page_info') || ''
       } else {
-        hasNextPage = false;
+        hasNextPage = false
       }
     } else {
-      hasNextPage = false;
+      hasNextPage = false
     }
   }
 
-  return customers;
-
+  return customers
 }
 
 export async function updateCustomer(
   id: string,
   customer: Partial<ShopifyCustomer>,
-  auth: ShopifyAuth
+  auth: ShopifyAuth,
 ): Promise<ShopifyCustomer> {
   const response = await sendShopifyRequest({
     auth: auth,
@@ -124,83 +108,76 @@ export async function updateCustomer(
     body: {
       customer,
     },
-  });
+  })
 
-  return (response.body as { customer: ShopifyCustomer }).customer;
+  return (response.body as { customer: ShopifyCustomer }).customer
 }
 
-export async function getCustomerOrders(
-  id: string,
-  auth: ShopifyAuth
-): Promise<ShopifyOrder[]> {
+export async function getCustomerOrders(id: string, auth: ShopifyAuth): Promise<ShopifyOrder[]> {
   const response = await sendShopifyRequest({
     auth: auth,
     url: `/customers/${id}/orders.json`,
     method: HttpMethod.GET,
-  });
+  })
 
-  return (response.body as { orders: ShopifyOrder[] }).orders;
+  return (response.body as { orders: ShopifyOrder[] }).orders
 }
 
 export async function getProducts(
   auth: ShopifyAuth,
   search: {
-    title?: string;
-    createdAtMin?: string;
-    updatedAtMin?: string;
-  }
+    title?: string
+    createdAtMin?: string
+    updatedAtMin?: string
+  },
 ): Promise<ShopifyProduct[]> {
-  const queryParams: QueryParams = {};
-  const { title, createdAtMin, updatedAtMin } = search;
+  const queryParams: QueryParams = {}
+  const { title, createdAtMin, updatedAtMin } = search
   if (title) {
-    queryParams.title = title;
+    queryParams.title = title
   }
   if (createdAtMin) {
-    queryParams.created_at_min = createdAtMin;
+    queryParams.created_at_min = createdAtMin
   }
   if (updatedAtMin) {
-    queryParams.updated_at_min = updatedAtMin;
+    queryParams.updated_at_min = updatedAtMin
   }
 
-  let products:ShopifyProduct[] = [];
-  let hasNextPage = true;
+  let products: ShopifyProduct[] = []
+  let hasNextPage = true
 
   while (hasNextPage) {
-
     const response = await sendShopifyRequest({
       auth: auth,
       url: `/products.json`,
       method: HttpMethod.GET,
       queryParams,
-    });
+    })
 
-    products = products.concat((response.body as { products: ShopifyProduct[] }).products);
+    products = products.concat((response.body as { products: ShopifyProduct[] }).products)
 
-    const linkHeader = response.headers?.['link'];
+    const linkHeader = response.headers?.['link']
     if (linkHeader && typeof linkHeader === 'string' && linkHeader.includes('rel="next"')) {
       // Extract the URL for the next page from the Link header
       const nextLink = linkHeader
         .split(',')
         .find((s) => s.includes('rel="next"'))
-        ?.match(/<(.*?)>/)?.[1];
-      
+        ?.match(/<(.*?)>/)?.[1]
+
       if (nextLink) {
-        queryParams.page_info = new URL(nextLink).searchParams.get('page_info') || '';
+        queryParams.page_info = new URL(nextLink).searchParams.get('page_info') || ''
       } else {
-        hasNextPage = false;
+        hasNextPage = false
       }
     } else {
-      hasNextPage = false;
+      hasNextPage = false
     }
   }
 
-  return products;
+  return products
 }
 
-export async function createProduct(
-  product: Partial<ShopifyProduct>,
-  auth: ShopifyAuth
-): Promise<ShopifyProduct> {
+export async function createProduct(product: Partial<ShopifyProduct>, auth: ShopifyAuth): Promise<ShopifyProduct> {
   const response = await sendShopifyRequest({
     auth: auth,
     url: `/products.json`,
@@ -208,15 +185,15 @@ export async function createProduct(
     body: {
       product,
     },
-  });
+  })
 
-  return (response.body as { product: ShopifyProduct }).product;
+  return (response.body as { product: ShopifyProduct }).product
 }
 
 export async function updateProduct(
   id: number,
   product: Partial<ShopifyProduct>,
-  auth: ShopifyAuth
+  auth: ShopifyAuth,
 ): Promise<ShopifyProduct> {
   const response = await sendShopifyRequest({
     auth: auth,
@@ -225,14 +202,14 @@ export async function updateProduct(
     body: {
       product,
     },
-  });
+  })
 
-  return (response.body as { product: ShopifyProduct }).product;
+  return (response.body as { product: ShopifyProduct }).product
 }
 
 export async function createDraftOrder(
   draftOrder: Partial<ShopifyDraftOrder>,
-  auth: ShopifyAuth
+  auth: ShopifyAuth,
 ): Promise<ShopifyDraftOrder> {
   const response = await sendShopifyRequest({
     auth: auth,
@@ -241,15 +218,12 @@ export async function createDraftOrder(
     body: {
       draft_order: draftOrder,
     },
-  });
+  })
 
-  return (response.body as { draft_order: ShopifyDraftOrder }).draft_order;
+  return (response.body as { draft_order: ShopifyDraftOrder }).draft_order
 }
 
-export async function createOrder(
-  order: Partial<ShopifyOrder>,
-  auth: ShopifyAuth
-): Promise<ShopifyOrder> {
+export async function createOrder(order: Partial<ShopifyOrder>, auth: ShopifyAuth): Promise<ShopifyOrder> {
   const response = await sendShopifyRequest({
     auth: auth,
     url: `/orders.json`,
@@ -257,16 +231,12 @@ export async function createOrder(
     body: {
       order,
     },
-  });
+  })
 
-  return (response.body as { order: ShopifyOrder }).order;
+  return (response.body as { order: ShopifyOrder }).order
 }
 
-export async function updateOrder(
-  id: number,
-  order: Partial<ShopifyOrder>,
-  auth: ShopifyAuth
-): Promise<ShopifyOrder> {
+export async function updateOrder(id: number, order: Partial<ShopifyOrder>, auth: ShopifyAuth): Promise<ShopifyOrder> {
   const response = await sendShopifyRequest({
     auth: auth,
     url: `/orders/${id}.json`,
@@ -274,15 +244,15 @@ export async function updateOrder(
     body: {
       order,
     },
-  });
+  })
 
-  return (response.body as { order: ShopifyOrder }).order;
+  return (response.body as { order: ShopifyOrder }).order
 }
 
 export async function createTransaction(
   orderId: number,
   transaction: Partial<ShopifyTransaction>,
-  auth: ShopifyAuth
+  auth: ShopifyAuth,
 ): Promise<ShopifyTransaction> {
   const response = await sendShopifyRequest({
     auth: auth,
@@ -291,63 +261,49 @@ export async function createTransaction(
     body: {
       transaction,
     },
-  });
+  })
 
-  return (response.body as { transaction: ShopifyTransaction }).transaction;
+  return (response.body as { transaction: ShopifyTransaction }).transaction
 }
 
-export async function getTransaction(
-  id: number,
-  orderId: number,
-  auth: ShopifyAuth
-): Promise<ShopifyTransaction> {
+export async function getTransaction(id: number, orderId: number, auth: ShopifyAuth): Promise<ShopifyTransaction> {
   const response = await sendShopifyRequest({
     auth: auth,
     url: `/orders/${orderId}/transactions/${id}.json`,
     method: HttpMethod.GET,
-  });
+  })
 
-  return (response.body as { transaction: ShopifyTransaction }).transaction;
+  return (response.body as { transaction: ShopifyTransaction }).transaction
 }
 
-export async function getTransactions(
-  orderId: number,
-  auth: ShopifyAuth
-): Promise<ShopifyTransaction[]> {
+export async function getTransactions(orderId: number, auth: ShopifyAuth): Promise<ShopifyTransaction[]> {
   const response = await sendShopifyRequest({
     auth: auth,
     url: `/orders/${orderId}/transactions.json`,
     method: HttpMethod.GET,
-  });
+  })
 
-  return (response.body as { transactions: ShopifyTransaction[] }).transactions;
+  return (response.body as { transactions: ShopifyTransaction[] }).transactions
 }
 
-export async function getFulfillments(
-  orderId: number,
-  auth: ShopifyAuth
-): Promise<ShopifyFulfillment[]> {
+export async function getFulfillments(orderId: number, auth: ShopifyAuth): Promise<ShopifyFulfillment[]> {
   const response = await sendShopifyRequest({
     auth: auth,
     url: `/orders/${orderId}/fulfillments.json`,
     method: HttpMethod.GET,
-  });
+  })
 
-  return (response.body as { fulfillments: ShopifyFulfillment[] }).fulfillments;
+  return (response.body as { fulfillments: ShopifyFulfillment[] }).fulfillments
 }
 
-export async function getFulfillment(
-  id: number,
-  orderId: number,
-  auth: ShopifyAuth
-): Promise<ShopifyFulfillment> {
+export async function getFulfillment(id: number, orderId: number, auth: ShopifyAuth): Promise<ShopifyFulfillment> {
   const response = await sendShopifyRequest({
     auth: auth,
     url: `/orders/${orderId}/fulfillments/${id}.json`,
     method: HttpMethod.GET,
-  });
+  })
 
-  return (response.body as { fulfillment: ShopifyFulfillment }).fulfillment;
+  return (response.body as { fulfillment: ShopifyFulfillment }).fulfillment
 }
 
 export async function getLocations(auth: ShopifyAuth): Promise<unknown[]> {
@@ -355,16 +311,16 @@ export async function getLocations(auth: ShopifyAuth): Promise<unknown[]> {
     auth: auth,
     url: `/locations.json`,
     method: HttpMethod.GET,
-  });
+  })
 
-  return (response.body as { locations: unknown[] }).locations;
+  return (response.body as { locations: unknown[] }).locations
 }
 
 export async function createFulfillmentEvent(
   id: number,
   orderId: number,
   event: Partial<ShopifyFulfillmentEvent>,
-  auth: ShopifyAuth
+  auth: ShopifyAuth,
 ): Promise<ShopifyFulfillmentEvent> {
   const response = await sendShopifyRequest({
     auth: auth,
@@ -373,45 +329,38 @@ export async function createFulfillmentEvent(
     body: {
       event,
     },
-  });
+  })
 
-  return (response.body as { fulfillment_event: ShopifyFulfillmentEvent })
-    .fulfillment_event;
+  return (response.body as { fulfillment_event: ShopifyFulfillmentEvent }).fulfillment_event
 }
 
-export async function closeOrder(
-  id: number,
-  auth: ShopifyAuth
-): Promise<ShopifyOrder> {
+export async function closeOrder(id: number, auth: ShopifyAuth): Promise<ShopifyOrder> {
   const response = await sendShopifyRequest({
     auth: auth,
     url: `/orders/${id}/close.json`,
     method: HttpMethod.POST,
     body: {},
-  });
+  })
 
-  return (response.body as { order: ShopifyOrder }).order;
+  return (response.body as { order: ShopifyOrder }).order
 }
 
-export async function cancelOrder(
-  id: number,
-  auth: ShopifyAuth
-): Promise<ShopifyOrder> {
+export async function cancelOrder(id: number, auth: ShopifyAuth): Promise<ShopifyOrder> {
   const response = await sendShopifyRequest({
     auth: auth,
     url: `/orders/${id}/cancel.json`,
     method: HttpMethod.POST,
     body: {},
-  });
+  })
 
-  return (response.body as { order: ShopifyOrder }).order;
+  return (response.body as { order: ShopifyOrder }).order
 }
 
 export async function adjustInventoryLevel(
   id: number,
   locationId: number,
   adjustment: number,
-  auth: ShopifyAuth
+  auth: ShopifyAuth,
 ): Promise<unknown> {
   const response = await sendShopifyRequest({
     auth: auth,
@@ -422,15 +371,12 @@ export async function adjustInventoryLevel(
       location_id: locationId,
       available_adjustment: adjustment,
     },
-  });
+  })
 
-  return (response.body as { order: unknown }).order;
+  return (response.body as { order: unknown }).order
 }
 
-export async function createCollect(
-  collect: Partial<ShopifyCollect>,
-  auth: ShopifyAuth
-): Promise<ShopifyCollect> {
+export async function createCollect(collect: Partial<ShopifyCollect>, auth: ShopifyAuth): Promise<ShopifyCollect> {
   const response = await sendShopifyRequest({
     auth: auth,
     url: `/collects.json`,
@@ -438,16 +384,12 @@ export async function createCollect(
     body: {
       collect,
     },
-  });
+  })
 
-  return (response.body as { collect: ShopifyCollect }).collect;
+  return (response.body as { collect: ShopifyCollect }).collect
 }
 
-export async function getAsset(
-  key: string,
-  themeId: number,
-  auth: ShopifyAuth
-): Promise<unknown> {
+export async function getAsset(key: string, themeId: number, auth: ShopifyAuth): Promise<unknown> {
   const response = await sendShopifyRequest({
     auth: auth,
     url: `/themes/${themeId}/assets.json`,
@@ -455,41 +397,35 @@ export async function getAsset(
       key,
     },
     method: HttpMethod.GET,
-  });
+  })
 
-  return (response.body as { asset: unknown }).asset;
+  return (response.body as { asset: unknown }).asset
 }
 
-export async function getProductVariant(
-  id: number,
-  auth: ShopifyAuth
-): Promise<ShopifyProductVariant> {
+export async function getProductVariant(id: number, auth: ShopifyAuth): Promise<ShopifyProductVariant> {
   const response = await sendShopifyRequest({
     auth: auth,
     url: `/variants/${id}.json`,
     method: HttpMethod.GET,
-  });
+  })
 
-  return (response.body as { variant: ShopifyProductVariant }).variant;
+  return (response.body as { variant: ShopifyProductVariant }).variant
 }
 
-export async function getProduct(
-  id: number,
-  auth: ShopifyAuth
-): Promise<ShopifyProduct> {
+export async function getProduct(id: number, auth: ShopifyAuth): Promise<ShopifyProduct> {
   const response = await sendShopifyRequest({
     auth: auth,
     url: `/products/${id}.json`,
     method: HttpMethod.GET,
-  });
+  })
 
-  return (response.body as { product: ShopifyProduct }).product;
+  return (response.body as { product: ShopifyProduct }).product
 }
 
 export async function createProductImage(
   id: number,
   image: Partial<ShopifyImage>,
-  auth: ShopifyAuth
+  auth: ShopifyAuth,
 ): Promise<ShopifyImage> {
   const response = await sendShopifyRequest({
     auth: auth,
@@ -498,21 +434,21 @@ export async function createProductImage(
     body: {
       image,
     },
-  });
+  })
 
-  return (response.body as { image: ShopifyImage }).image;
+  return (response.body as { image: ShopifyImage }).image
 }
 
 export async function getAbandonedCheckouts(
   auth: ShopifyAuth,
   search: {
-    sinceId: string;
-  }
+    sinceId: string
+  },
 ): Promise<ShopifyCheckout[]> {
-  const queryParams: QueryParams = {};
-  const { sinceId } = search;
+  const queryParams: QueryParams = {}
+  const { sinceId } = search
   if (sinceId) {
-    queryParams.since_id = sinceId;
+    queryParams.since_id = sinceId
   }
 
   const response = await sendShopifyRequest({
@@ -520,7 +456,7 @@ export async function getAbandonedCheckouts(
     url: `/checkouts.json`,
     method: HttpMethod.GET,
     queryParams,
-  });
+  })
 
-  return (response.body as { checkouts: ShopifyCheckout[] }).checkouts;
+  return (response.body as { checkouts: ShopifyCheckout[] }).checkouts
 }

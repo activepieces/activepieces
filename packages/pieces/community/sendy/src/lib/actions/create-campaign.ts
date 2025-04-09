@@ -1,12 +1,9 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { createCampaign } from '../api';
-import { buildListDropdown } from '../props';
-import { sendyAuth, SendyAuthType } from '../auth';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { createCampaign } from '../api'
+import { SendyAuthType, sendyAuth } from '../auth'
+import { buildListDropdown } from '../props'
 
 export const createCampaignAction = createAction({
   name: 'create_campaign',
@@ -54,27 +51,23 @@ export const createCampaignAction = createAction({
       description: 'Select lists to send the campaign to',
       required: false,
       refreshers: ['auth'],
-      options: async ({ auth }) =>
-        await buildListDropdown(auth as SendyAuthType),
+      options: async ({ auth }) => await buildListDropdown(auth as SendyAuthType),
     }),
     excludeLists: Property.MultiSelectDropdown({
       displayName: 'Exclude Lists',
       description: 'Select lists to exclude from the campaign send',
       required: false,
       refreshers: ['auth'],
-      options: async ({ auth }) =>
-        await buildListDropdown(auth as SendyAuthType),
+      options: async ({ auth }) => await buildListDropdown(auth as SendyAuthType),
     }),
     segments: Property.ShortText({
       displayName: 'Segment IDs',
-      description:
-        'Comma separated list of segment IDs to send the campaign to',
+      description: 'Comma separated list of segment IDs to send the campaign to',
       required: false,
     }),
     excludeSegments: Property.ShortText({
       displayName: 'Exclude Segment IDs',
-      description:
-        'Comma separated list of segment IDs to exclude from the campaign send',
+      description: 'Comma separated list of segment IDs to exclude from the campaign send',
       required: false,
     }),
     queryString: Property.ShortText({
@@ -639,6 +632,6 @@ export const createCampaignAction = createAction({
       send_campaign: context.propsValue.autoSend ? '1' : '0',
       schedule_date_time: context.propsValue.schedule,
       schedule_timezone: context.propsValue.timezone,
-    });
+    })
   },
-});
+})

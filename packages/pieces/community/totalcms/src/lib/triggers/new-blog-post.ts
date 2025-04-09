@@ -1,32 +1,20 @@
-import {
-  TriggerStrategy,
-  createTrigger,
-  Property,
-  PiecePropValueSchema,
-} from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import { TotalCMSAuthType, cmsAuth } from '../auth';
-import { getContent } from '../api';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common'
+import { PiecePropValueSchema, Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { getContent } from '../api'
+import { TotalCMSAuthType, cmsAuth } from '../auth'
 
-const polling: Polling<
-  PiecePropValueSchema<typeof cmsAuth>,
-  { slug: string }
-> = {
+const polling: Polling<PiecePropValueSchema<typeof cmsAuth>, { slug: string }> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue }) => {
-    const slug = propsValue.slug;
-    const posts = await getContent(auth, 'blog', slug);
+    const slug = propsValue.slug
+    const posts = await getContent(auth, 'blog', slug)
 
     return posts.data.map((post: { permalink: string }) => ({
       id: post.permalink,
       data: post,
-    }));
+    }))
   },
-};
+}
 
 export const newBlogPost = createTrigger({
   name: 'new_blog_post',
@@ -46,14 +34,14 @@ export const newBlogPost = createTrigger({
       auth: context.auth as TotalCMSAuthType,
       store: context.store,
       propsValue: context.propsValue,
-    });
+    })
   },
   onDisable: async (context) => {
     await pollingHelper.onDisable(polling, {
       auth: context.auth as TotalCMSAuthType,
       store: context.store,
       propsValue: context.propsValue,
-    });
+    })
   },
   run: async (context) => {
     return await pollingHelper.poll(polling, {
@@ -61,7 +49,7 @@ export const newBlogPost = createTrigger({
       store: context.store,
       propsValue: context.propsValue,
       files: context.files,
-    });
+    })
   },
   test: async (context) => {
     return await pollingHelper.test(polling, {
@@ -69,6 +57,6 @@ export const newBlogPost = createTrigger({
       store: context.store,
       propsValue: context.propsValue,
       files: context.files,
-    });
+    })
   },
-});
+})

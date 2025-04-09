@@ -1,12 +1,13 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { trueLayerCommon } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { trueLayerCommon } from '../../common'
 
 export const getPaymentLinkPayments = createAction({
   auth: trueLayerCommon.auth,
   name: 'get-payment-link-payments',
   displayName: 'Get Payments',
-  description: 'List all the payments associated with the payment link. This API must be called using a backend bearer token.',
+  description:
+    'List all the payments associated with the payment link. This API must be called using a backend bearer token.',
   props: {
     id: Property.ShortText({
       displayName: 'Payment Link ID',
@@ -15,7 +16,8 @@ export const getPaymentLinkPayments = createAction({
     }),
     cursor: Property.ShortText({
       displayName: 'Cursor',
-      description: 'Cursor used for pagination purposes, returned as `next_cursor` in the response payload of the initial request. Not required for the first page of items.',
+      description:
+        'Cursor used for pagination purposes, returned as `next_cursor` in the response payload of the initial request. Not required for the first page of items.',
       required: false,
     }),
     limit: Property.ShortText({
@@ -37,6 +39,6 @@ export const getPaymentLinkPayments = createAction({
       },
     })
 
-    return response.body;
+    return response.body
   },
-});
+})

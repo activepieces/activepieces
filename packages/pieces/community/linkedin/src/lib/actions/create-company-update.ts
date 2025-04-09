@@ -1,12 +1,7 @@
-import { createAction } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { Image, linkedinCommon, santizeText } from '../common';
-import { linkedinAuth } from '../..';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { linkedinAuth } from '../..'
+import { Image, linkedinCommon, santizeText } from '../common'
 
 export const createCompanyUpdate = createAction({
   auth: linkedinAuth,
@@ -23,15 +18,15 @@ export const createCompanyUpdate = createAction({
   },
 
   run: async (context) => {
-    const imageUrl = context.propsValue.imageUrl;
+    const imageUrl = context.propsValue.imageUrl
     const bodyConfig: {
-      urn: string;
-      text: string;
-      link?: string | undefined;
-      linkDescription?: string | undefined;
-      linkTitle?: string | undefined;
-      visibility: string;
-      image?: Image | undefined;
+      urn: string
+      text: string
+      link?: string | undefined
+      linkDescription?: string | undefined
+      linkTitle?: string | undefined
+      visibility: string
+      image?: Image | undefined
     } = {
       urn: `organization:${context.propsValue.company}`,
       text: santizeText(context.propsValue.text),
@@ -39,18 +34,18 @@ export const createCompanyUpdate = createAction({
       linkDescription: context.propsValue.linkDescription,
       linkTitle: context.propsValue.linkTitle,
       visibility: 'PUBLIC',
-    };
+    }
 
     if (imageUrl) {
       bodyConfig.image = await linkedinCommon.uploadImage(
         context.auth.access_token,
         `organization:${context.propsValue.company}`,
-        imageUrl
-      );
+        imageUrl,
+      )
     }
 
-    const requestBody = linkedinCommon.generatePostRequestBody(bodyConfig);
-    const createPostHeaders: any = linkedinCommon.linkedinHeaders;
+    const requestBody = linkedinCommon.generatePostRequestBody(bodyConfig)
+    const createPostHeaders: any = linkedinCommon.linkedinHeaders
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -61,11 +56,11 @@ export const createCompanyUpdate = createAction({
       },
       headers: createPostHeaders,
       body: requestBody,
-    };
+    }
 
-    const response = await httpClient.sendRequest(request);
+    const response = await httpClient.sendRequest(request)
     return {
       success: true,
-    };
+    }
   },
-});
+})

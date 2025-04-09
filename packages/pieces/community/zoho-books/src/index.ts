@@ -1,11 +1,6 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  OAuth2PropertyValue,
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
 
 export const zohoBooksAuth = PieceAuth.OAuth2({
   props: {
@@ -48,23 +43,22 @@ export const zohoBooksAuth = PieceAuth.OAuth2({
   authUrl: 'https://accounts.{location}/oauth/v2/auth',
   tokenUrl: 'https://accounts.{location}/oauth/v2/token',
   required: true,
-});
+})
 
 export const zohoBooks = createPiece({
-  displayName: "Zoho Books",
+  displayName: 'Zoho Books',
   description: 'Comprehensive online accounting software for small businesses.',
-  logoUrl: "https://cdn.activepieces.com/pieces/zoho-books.png",
+  logoUrl: 'https://cdn.activepieces.com/pieces/zoho-books.png',
   minimumSupportedRelease: '0.30.0',
   categories: [PieceCategory.ACCOUNTING],
-  authors: ["ikus060"],
+  authors: ['ikus060'],
   auth: zohoBooksAuth,
   actions: [
     createCustomApiCallAction({
-      baseUrl: (auth) =>
-      {
-        const data = (auth as OAuth2PropertyValue).data;
-        return data && data['api_domain']? `${data['api_domain']}/books/v3` : ''
-      },        
+      baseUrl: (auth) => {
+        const data = (auth as OAuth2PropertyValue).data
+        return data && data['api_domain'] ? `${data['api_domain']}/books/v3` : ''
+      },
       auth: zohoBooksAuth,
       authMapping: async (auth) => ({
         Authorization: `Zoho-oauthtoken ${(auth as OAuth2PropertyValue).access_token}`,
@@ -72,5 +66,4 @@ export const zohoBooks = createPiece({
     }),
   ],
   triggers: [],
-});
-    
+})

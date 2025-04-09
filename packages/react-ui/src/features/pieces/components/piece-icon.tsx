@@ -1,14 +1,10 @@
-import { VariantProps, cva } from 'class-variance-authority';
-import React from 'react';
+import { VariantProps, cva } from 'class-variance-authority'
+import React from 'react'
 
-import ImageWithFallback from '@/components/ui/image-with-fallback';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import ImageWithFallback from '@/components/ui/image-with-fallback'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 
 const pieceIconVariants = cva('flex items-center justify-center   ', {
   variants: {
@@ -28,32 +24,20 @@ const pieceIconVariants = cva('flex items-center justify-center   ', {
     },
   },
   defaultVariants: {},
-});
+})
 
 interface PieceIconCircleProps extends VariantProps<typeof pieceIconVariants> {
-  displayName?: string;
-  logoUrl?: string;
-  showTooltip: boolean;
+  displayName?: string
+  logoUrl?: string
+  showTooltip: boolean
 }
 
 const PieceIcon = React.memo(
-  ({
-    displayName,
-    logoUrl,
-    border,
-    size,
-    circle = false,
-    showTooltip,
-  }: PieceIconCircleProps) => {
+  ({ displayName, logoUrl, border, size, circle = false, showTooltip }: PieceIconCircleProps) => {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <div
-            className={cn(
-              pieceIconVariants({ border, size, circle }),
-              'dark:bg-accent-foreground/25',
-            )}
-          >
+          <div className={cn(pieceIconVariants({ border, size, circle }), 'dark:bg-accent-foreground/25')}>
             {logoUrl ? (
               <ImageWithFallback
                 src={logoUrl}
@@ -67,13 +51,11 @@ const PieceIcon = React.memo(
             )}
           </div>
         </TooltipTrigger>
-        {showTooltip ? (
-          <TooltipContent side="bottom">{displayName}</TooltipContent>
-        ) : null}
+        {showTooltip ? <TooltipContent side="bottom">{displayName}</TooltipContent> : null}
       </Tooltip>
-    );
+    )
   },
-);
+)
 
-PieceIcon.displayName = 'PieceIcon';
-export { PieceIcon };
+PieceIcon.displayName = 'PieceIcon'
+export { PieceIcon }

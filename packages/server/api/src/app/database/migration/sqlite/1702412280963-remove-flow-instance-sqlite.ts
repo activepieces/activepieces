@@ -3,21 +3,23 @@ import { system } from '../../../helper/system/system'
 
 const log = system.globalLogger()
 
-export class RemoveFlowInstanceSqlite1702412280963
-implements MigrationInterface {
-    name = 'RemoveFlowInstanceSqlite1702412280963'
+export class RemoveFlowInstanceSqlite1702412280963 implements MigrationInterface {
+  name = 'RemoveFlowInstanceSqlite1702412280963'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        log.info({
-            name: this.name,
-        }, 'up')
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    log.info(
+      {
+        name: this.name,
+      },
+      'up',
+    )
+    await queryRunner.query(`
             DROP INDEX "idx_flow_folder_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_flow_project_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_flow" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -34,7 +36,7 @@ implements MigrationInterface {
                 CONSTRAINT "fk_flow_published_version" FOREIGN KEY ("publishedVersionId") REFERENCES "flow_version" ("id") ON DELETE RESTRICT ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_flow"(
                     "id",
                     "created",
@@ -49,21 +51,21 @@ implements MigrationInterface {
                 "folderId"
             FROM "flow"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "flow"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_flow"
                 RENAME TO "flow"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_flow_folder_id" ON "flow" ("folderId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_flow_project_id" ON "flow" ("projectId")
         `)
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             UPDATE "flow"
             SET "status" = "flow_instance"."status",
                 "schedule" = "flow_instance"."schedule",
@@ -72,20 +74,20 @@ implements MigrationInterface {
             WHERE "flow"."id" = "flow_instance"."flowId"
         `)
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "flow_instance"
             RENAME TO "DELETED_flow_instance"
         `)
 
-        log.info('RemoveFlowInstanceSqlite1702412280963 up')
-    }
+    log.info('RemoveFlowInstanceSqlite1702412280963 up')
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             ALTER TABLE "DELETED_flow_instance"
             RENAME TO "flow_instance"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             UPDATE "flow_instance"
             SET "status" = "flow"."status",
                 "schedule" = "flow"."schedule",
@@ -94,17 +96,17 @@ implements MigrationInterface {
             WHERE "flow_instance"."flowId" = "flow"."id"
         `)
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_flow_project_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_flow_folder_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "flow"
                 RENAME TO "temporary_flow"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "flow" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -116,7 +118,7 @@ implements MigrationInterface {
                 SET NULL ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "flow"(
                     "id",
                     "created",
@@ -131,18 +133,21 @@ implements MigrationInterface {
                 "folderId"
             FROM "temporary_flow"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_flow"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_flow_project_id" ON "flow" ("projectId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_flow_folder_id" ON "flow" ("folderId")
         `)
 
-        log.info({
-            name: this.name,
-        }, 'down')
-    }
+    log.info(
+      {
+        name: this.name,
+      },
+      'down',
+    )
+  }
 }

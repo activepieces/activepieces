@@ -9,32 +9,32 @@ export type FlowVersionId = ApId
 export const LATEST_SCHEMA_VERSION = '1'
 
 export enum FlowVersionState {
-    LOCKED = 'LOCKED',
-    DRAFT = 'DRAFT',
+  LOCKED = 'LOCKED',
+  DRAFT = 'DRAFT',
 }
 
 export const FlowVersion = Type.Object({
-    ...BaseModelSchema,
-    flowId: Type.String(),
-    displayName: Type.String(),
-    trigger: Trigger,
-    updatedBy: Nullable(Type.String()),
-    valid: Type.Boolean(),
-    schemaVersion: Nullable(Type.String()),
-    state: Type.Enum(FlowVersionState),
+  ...BaseModelSchema,
+  flowId: Type.String(),
+  displayName: Type.String(),
+  trigger: Trigger,
+  updatedBy: Nullable(Type.String()),
+  valid: Type.Boolean(),
+  schemaVersion: Nullable(Type.String()),
+  state: Type.Enum(FlowVersionState),
 })
 
 export type FlowVersion = Static<typeof FlowVersion>
 
 export const FlowVersionMetadata = Type.Object({
-    ...BaseModelSchema,
-    flowId: Type.String(),
-    displayName: Type.String(),
-    valid: Type.Boolean(),
-    state: Type.Enum(FlowVersionState),
-    updatedBy: Nullable(Type.String()),
-    schemaVersion: Nullable(Type.String()),
-    updatedByUser: Nullable(UserWithMetaInformation),
+  ...BaseModelSchema,
+  flowId: Type.String(),
+  displayName: Type.String(),
+  valid: Type.Boolean(),
+  state: Type.Enum(FlowVersionState),
+  updatedBy: Nullable(Type.String()),
+  schemaVersion: Nullable(Type.String()),
+  updatedByUser: Nullable(UserWithMetaInformation),
 })
 
 export type FlowVersionMetadata = Static<typeof FlowVersionMetadata>

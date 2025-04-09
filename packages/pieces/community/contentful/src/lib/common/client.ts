@@ -1,5 +1,5 @@
-import { ContentfulAuth } from './auth';
-import * as Contentful from 'contentful-management';
+import * as Contentful from 'contentful-management'
+import { ContentfulAuth } from './auth'
 
 export const makeClient = (auth: ContentfulAuth) => {
   return {
@@ -8,7 +8,7 @@ export const makeClient = (auth: ContentfulAuth) => {
       {
         type: 'plain',
         defaults: { spaceId: auth.space, environmentId: auth.environment },
-      }
+      },
     ),
-  };
-};
+  }
+}

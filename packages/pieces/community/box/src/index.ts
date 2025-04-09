@@ -1,22 +1,18 @@
-import {
-  createPiece,
-  OAuth2PropertyValue,
-  PieceAuth,
-} from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework'
 
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
-import { common } from './lib/common';
-import { newComment } from './lib/triggers/new-comment';
-import { newFile } from './lib/triggers/new-file';
-import { newFolder } from './lib/triggers/new-folder';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceCategory } from '@activepieces/shared'
+import { common } from './lib/common'
+import { newComment } from './lib/triggers/new-comment'
+import { newFile } from './lib/triggers/new-file'
+import { newFolder } from './lib/triggers/new-folder'
 
 export const boxAuth = PieceAuth.OAuth2({
   required: true,
   authUrl: 'https://account.box.com/api/oauth2/authorize',
   tokenUrl: 'https://api.box.com/oauth2/token',
   scope: ['manage_webhook', 'root_readonly', 'root_readwrite'],
-});
+})
 
 export const box = createPiece({
   displayName: 'Box',
@@ -26,7 +22,7 @@ export const box = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/box.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
-  authors: ["kishanprmr","MoShizzle","abuaboud"],
+  authors: ['kishanprmr', 'MoShizzle', 'abuaboud'],
   actions: [
     createCustomApiCallAction({
       baseUrl: () => common.baseUrl,
@@ -37,4 +33,4 @@ export const box = createPiece({
     }),
   ],
   triggers: [newFile, newFolder, newComment],
-});
+})

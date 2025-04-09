@@ -1,5 +1,5 @@
-import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { getCalendars, getColors } from './helper';
+import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework'
+import { getCalendars, getColors } from './helper'
 
 export const googleCalendarCommon = {
   baseUrl: 'https://www.googleapis.com/calendar/v3',
@@ -14,21 +14,21 @@ export const googleCalendarCommon = {
             disabled: true,
             placeholder: 'Please connect your account first',
             options: [],
-          };
+          }
         }
-        const authProp = auth as OAuth2PropertyValue;
-        const calendars = await getCalendars(authProp, minAccessRole);
+        const authProp = auth as OAuth2PropertyValue
+        const calendars = await getCalendars(authProp, minAccessRole)
         return {
           disabled: false,
           options: calendars.map((calendar) => {
             return {
               label: calendar.summary,
               value: calendar.id,
-            };
+            }
           }),
-        };
+        }
       },
-    });
+    })
   },
   colorId: Property.Dropdown({
     displayName: 'Color',
@@ -40,19 +40,19 @@ export const googleCalendarCommon = {
           disabled: true,
           placeholder: 'Please connect your account first',
           options: [],
-        };
+        }
       }
-      const authProp = auth as OAuth2PropertyValue;
-      const response = await getColors(authProp);
+      const authProp = auth as OAuth2PropertyValue
+      const response = await getColors(authProp)
       return {
         disabled: false,
         options: Object.entries(response.event).map(([key, value]) => {
           return {
             label: value.background,
             value: key,
-          };
+          }
         }),
-      };
+      }
     },
   }),
-};
+}

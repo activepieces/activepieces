@@ -1,20 +1,16 @@
-import { Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property } from '@activepieces/pieces-framework'
 
 interface CalendlyUser {
   /**User uri */
-  uri: string;
-  email: string;
-  name: string;
+  uri: string
+  email: string
+  name: string
   /**Organization uri */
-  current_organization: string;
+  current_organization: string
 }
 export interface CalendlyWebhookInformation {
-  webhookId: string;
+  webhookId: string
 }
 
 export const calendlyCommon = {
@@ -37,12 +33,10 @@ export const calendlyCommon = {
       headers: {
         Authorization: calendlyCommon.authorizationHeader(personalToken),
       },
-    };
-    const response = await httpClient.sendRequest<{ resource: CalendlyUser }>(
-      request
-    );
-    return response.body.resource;
+    }
+    const response = await httpClient.sendRequest<{ resource: CalendlyUser }>(request)
+    return response.body.resource
   },
   authorizationHeader: (personalToken: string) => `Bearer ${personalToken}`,
   UuidFromUri: (uri: string) => uri.split('/').pop(),
-};
+}

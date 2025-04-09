@@ -1,6 +1,6 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { trueLayerCommon } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { trueLayerCommon } from '../../common'
 
 export const getOperatingAccount = createAction({
   auth: trueLayerCommon.auth,
@@ -15,7 +15,7 @@ export const getOperatingAccount = createAction({
     }),
   },
   run: async (ctx) => {
-    const response =await httpClient.sendRequest({
+    const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${trueLayerCommon.baseUrl}/v3/merchant-accounts/${ctx.propsValue.id}`,
       headers: {
@@ -23,6 +23,6 @@ export const getOperatingAccount = createAction({
       },
     })
 
-    return response.body;
+    return response.body
   },
-});
+})

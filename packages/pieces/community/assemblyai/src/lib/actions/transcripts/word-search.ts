@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { assemblyaiAuth } from '../../auth';
-import { getAssemblyAIClient } from '../../client';
-import { transcriptIdProp } from './shared-props';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { assemblyaiAuth } from '../../auth'
+import { getAssemblyAIClient } from '../../client'
+import { transcriptIdProp } from './shared-props'
 
 export const wordSearch = createAction({
   name: 'wordSearch',
@@ -20,11 +20,11 @@ export const wordSearch = createAction({
     }),
   },
   async run(context) {
-    const client = getAssemblyAIClient(context);
+    const client = getAssemblyAIClient(context)
     const wordSearchResponse = await client.transcripts.wordSearch(
       context.propsValue.id,
-      context.propsValue.words as string[]
-    );
-    return wordSearchResponse;
+      context.propsValue.words as string[],
+    )
+    return wordSearchResponse
   },
-});
+})

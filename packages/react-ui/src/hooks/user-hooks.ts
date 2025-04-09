@@ -1,14 +1,14 @@
-import { QueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { QueryClient, useSuspenseQuery } from '@tanstack/react-query'
 
-import { authenticationSession } from '@/lib/authentication-session';
-import { userApi } from '@/lib/user-api';
-import { UserWithMetaInformationAndProject } from '@activepieces/shared';
+import { authenticationSession } from '@/lib/authentication-session'
+import { userApi } from '@/lib/user-api'
+import { UserWithMetaInformationAndProject } from '@activepieces/shared'
 
 export const userHooks = {
   useCurrentUser: () => {
-    const userId = authenticationSession.getCurrentUserId();
-    const token = authenticationSession.getToken();
-    const expired = authenticationSession.isJwtExpired(token!);
+    const userId = authenticationSession.getCurrentUserId()
+    const token = authenticationSession.getToken()
+    const expired = authenticationSession.isJwtExpired(token!)
     return useSuspenseQuery<UserWithMetaInformationAndProject | null, Error>({
       queryKey: ['currentUser', userId],
       queryFn: async () => {
@@ -17,25 +17,25 @@ export const userHooks = {
         // a new JWT token rather than triggering the global error handler
 
         if (!userId || expired) {
-          return null;
+          return null
         }
         try {
-          const result = await userApi.getCurrentUser();
-          return result;
+          const result = await userApi.getCurrentUser()
+          return result
         } catch (error) {
-          console.error(error);
-          return null;
+          console.error(error)
+          return null
         }
       },
       staleTime: Infinity,
-    });
+    })
   },
   invalidateCurrentUser: (queryClient: QueryClient) => {
-    const userId = authenticationSession.getCurrentUserId();
-    queryClient.invalidateQueries({ queryKey: ['currentUser', userId] });
+    const userId = authenticationSession.getCurrentUserId()
+    queryClient.invalidateQueries({ queryKey: ['currentUser', userId] })
   },
   getCurrentUserPlatformRole: () => {
-    const { data: user } = userHooks.useCurrentUser();
-    return user?.platformRole;
+    const { data: user } = userHooks.useCurrentUser()
+    return user?.platformRole
   },
-};
+}

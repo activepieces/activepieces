@@ -1,7 +1,7 @@
-import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { tablesCommon } from '../common';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { PopulatedRecord } from '@activepieces/shared';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createAction } from '@activepieces/pieces-framework'
+import { PopulatedRecord } from '@activepieces/shared'
+import { tablesCommon } from '../common'
 
 export const getRecord = createAction({
   name: 'tables-get-record',
@@ -13,7 +13,7 @@ export const getRecord = createAction({
     record_id: tablesCommon.record_id,
   },
   async run(context) {
-    const { record_id } = context.propsValue;
+    const { record_id } = context.propsValue
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
@@ -22,8 +22,8 @@ export const getRecord = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,
       },
-    });
+    })
 
-    return tablesCommon.formatRecord(response.body as PopulatedRecord);
+    return tablesCommon.formatRecord(response.body as PopulatedRecord)
   },
-});
+})

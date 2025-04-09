@@ -1,6 +1,6 @@
-import { DropdownOption, Property } from '@activepieces/pieces-framework';
-import { ContentfulAuth, makeClient } from '../common';
-import { isEmpty } from '@activepieces/shared';
+import { DropdownOption, Property } from '@activepieces/pieces-framework'
+import { isEmpty } from '@activepieces/shared'
+import { ContentfulAuth, makeClient } from '../common'
 
 const Locale = Property.Dropdown({
   displayName: 'Content Locale',
@@ -12,27 +12,28 @@ const Locale = Property.Dropdown({
         disabled: true,
         options: [],
         placeholder: 'Please connect your account',
-      };
+      }
     }
-    const { client } = makeClient(auth as ContentfulAuth);
+    const { client } = makeClient(auth as ContentfulAuth)
     try {
-      const response = await client.locale.getMany({});
-      const options: DropdownOption<string>[] = response.items.map(
-        (locale) => ({ label: locale.name, value: locale.code })
-      );
+      const response = await client.locale.getMany({})
+      const options: DropdownOption<string>[] = response.items.map((locale) => ({
+        label: locale.name,
+        value: locale.code,
+      }))
       return {
         disabled: false,
         options,
-      };
+      }
     } catch (e) {
-      console.debug(e);
+      console.debug(e)
       return {
         disabled: true,
         options: [],
         placeholder: 'Please check your Contentful connection settings',
-      };
+      }
     }
   },
-});
+})
 
-export default Locale;
+export default Locale

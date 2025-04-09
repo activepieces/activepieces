@@ -1,8 +1,8 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
 
-import { retableAuth } from '../..';
-import { retableCommon } from '../common';
+import { retableAuth } from '../..'
+import { retableCommon } from '../common'
 
 export const retableGetAllProjectsAction = createAction({
   auth: retableAuth,
@@ -13,7 +13,7 @@ export const retableGetAllProjectsAction = createAction({
     workspace_id: retableCommon.workspace_id(),
   },
   async run(context) {
-    const { workspace_id } = context.propsValue;
+    const { workspace_id } = context.propsValue
     return (
       await httpClient.sendRequest({
         method: HttpMethod.GET,
@@ -22,6 +22,6 @@ export const retableGetAllProjectsAction = createAction({
           ApiKey: context.auth as string,
         },
       })
-    ).body;
+    ).body
   },
-});
+})

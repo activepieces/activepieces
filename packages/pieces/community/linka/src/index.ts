@@ -1,25 +1,21 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { addOrUpdateContactExtended } from './lib/actions/add-or-update-contact-extended';
-import { addOrUpdateContact } from './lib/actions/add-or-update-contact';
-import { addOrUpdateSubscription } from './lib/actions/add-or-update-subscription';
-import { createInvoice } from './lib/actions/create-invoice';
-import { createProduct } from './lib/actions/create-product';
-import { getContactDetails } from './lib/actions/get-contact-details';
-import { newLead } from './lib/triggers/new-lead';
-import { newPayment } from './lib/triggers/new-payment';
-import { newSubscription } from './lib/triggers/new-subscription';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { addOrUpdateContact } from './lib/actions/add-or-update-contact'
+import { addOrUpdateContactExtended } from './lib/actions/add-or-update-contact-extended'
+import { addOrUpdateSubscription } from './lib/actions/add-or-update-subscription'
+import { createInvoice } from './lib/actions/create-invoice'
+import { createProduct } from './lib/actions/create-product'
+import { getContactDetails } from './lib/actions/get-contact-details'
+import { newLead } from './lib/triggers/new-lead'
+import { newPayment } from './lib/triggers/new-payment'
+import { newSubscription } from './lib/triggers/new-subscription'
 
 const markdownDescription = `
   Follow these instructions to get your Linka API Key:
 
   1. Visit the following website: https://crm.linka.ai/ or the beta website: https://beta.linka.ai/
   2. Once on the website, locate and click on the admin to obtain your Linka API Key.
-`;
+`
 
 export const linkaAuth = PieceAuth.CustomAuth({
   description: markdownDescription,
@@ -49,12 +45,11 @@ export const linkaAuth = PieceAuth.CustomAuth({
       required: true,
     }),
   },
-});
+})
 
 export const linka = createPiece({
   displayName: 'Linka',
-  description:
-    'Linka white-label B2B marketplace platform powers communities and digital storefronts',
+  description: 'Linka white-label B2B marketplace platform powers communities and digital storefronts',
   auth: linkaAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/linka.png',
@@ -69,4 +64,4 @@ export const linka = createPiece({
     getContactDetails,
   ],
   triggers: [newLead, newPayment, newSubscription],
-});
+})

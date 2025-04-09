@@ -1,6 +1,6 @@
-import { TriggerStrategy, createTrigger, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { createWebsocketSubscription, deleteWebsocketSubscription } from './helpers';
-import { websocketCommon } from '../common/common';
+import { PieceAuth, Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { websocketCommon } from '../common/common'
+import { createWebsocketSubscription, deleteWebsocketSubscription } from './helpers'
 
 export const websocketSubscriptionTrigger = createTrigger({
   auth: websocketCommon.auth,
@@ -18,18 +18,18 @@ export const websocketSubscriptionTrigger = createTrigger({
     headers: Property.Object({
       displayName: 'Headers',
       description: 'Custom headers for the Websocket connection, such as authentication tokens.',
-      required: false
+      required: false,
     }),
     message: Property.Json({
       displayName: 'Subscription Message',
       description: 'The message to send to the Websocket server to subscribe to events.',
       required: true,
       defaultValue: {
-        "topic": "collection:boredapeyachtclub",
-        "event": "phx_join",
-        "payload": {},
-        "ref": 0
-      }
+        topic: 'collection:boredapeyachtclub',
+        event: 'phx_join',
+        payload: {},
+        ref: 0,
+      },
     }),
   },
   async onEnable(context) {
@@ -38,21 +38,21 @@ export const websocketSubscriptionTrigger = createTrigger({
       context.propsValue.headers,
       context.propsValue.message,
       context.webhookUrl,
-      context.auth.proxyBaseUrl
-    );
+      context.auth.proxyBaseUrl,
+    )
 
     // Store subscription info
-    await context.store.put('websocket_subscription_trigger', subscriptionInfo.subscriptionId);
+    await context.store.put('websocket_subscription_trigger', subscriptionInfo.subscriptionId)
   },
   async onDisable(context) {
-    const subscriptionId: string = (await context.store.get('websocket_subscription_trigger')) as string;
+    const subscriptionId: string = (await context.store.get('websocket_subscription_trigger')) as string
     if (subscriptionId) {
-      await deleteWebsocketSubscription(subscriptionId, context.auth.proxyBaseUrl);
-      await context.store.delete('websocket_subscription_trigger');
+      await deleteWebsocketSubscription(subscriptionId, context.auth.proxyBaseUrl)
+      await context.store.delete('websocket_subscription_trigger')
     }
   },
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
   async test(context) {
     return [
@@ -60,7 +60,7 @@ export const websocketSubscriptionTrigger = createTrigger({
         event: 'Websocket event data',
         details: 'Details of the event',
       },
-    ];
+    ]
   },
   sampleData: {},
-});
+})

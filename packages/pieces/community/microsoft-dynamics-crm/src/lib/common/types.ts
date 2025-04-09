@@ -1,85 +1,85 @@
-import { EntityAttributeType } from './constants';
+import { EntityAttributeType } from './constants'
 
 export type EntityTypeResponse = {
-  '@odata.context': string;
+  '@odata.context': string
   value: {
-    '@odata.type': string;
-    LogicalName: string;
-    EntitySetName: string;
-  }[];
-};
+    '@odata.type': string
+    LogicalName: string
+    EntitySetName: string
+  }[]
+}
 
 export type EntityTypeAttributesResponse = {
-  '@odata.context': string;
+  '@odata.context': string
   value: {
-    '@odata.type': string;
-    PrimaryIdAttribute: string;
-    PrimaryNameAttribute: string;
-    LogicalName: string;
-  }[];
-};
+    '@odata.type': string
+    PrimaryIdAttribute: string
+    PrimaryNameAttribute: string
+    LogicalName: string
+  }[]
+}
 export type EntityAttributeResponse = {
-  '@odata.context': string;
+  '@odata.context': string
   value: {
-    '@odata.type': string;
-    AttributeType: EntityAttributeType;
-    LogicalName: string;
-    MetadataId: string;
-    IsValidForCreate: boolean;
-    IsPrimaryName: boolean;
+    '@odata.type': string
+    AttributeType: EntityAttributeType
+    LogicalName: string
+    MetadataId: string
+    IsValidForCreate: boolean
+    IsPrimaryName: boolean
     Description: {
       UserLocalizedLabel: {
-        Label: string;
-        LanguageCode: number;
-        IsManaged: boolean;
-        MetadataId: string;
-        HasChanged: boolean;
-      } | null;
-    } | null;
+        Label: string
+        LanguageCode: number
+        IsManaged: boolean
+        MetadataId: string
+        HasChanged: boolean
+      } | null
+    } | null
     DisplayName: {
       UserLocalizedLabel: {
-        Label: string;
-        LanguageCode: number;
-        IsManaged: boolean;
-        MetadataId: string;
-        HasChanged: boolean;
-      } | null;
-    } | null;
-  }[];
-};
+        Label: string
+        LanguageCode: number
+        IsManaged: boolean
+        MetadataId: string
+        HasChanged: boolean
+      } | null
+    } | null
+  }[]
+}
 
 export type EntityAttributeOptionsResponse = {
-  '@odata.context': string;
-  LogicalName: string;
-  MetadataId: string;
+  '@odata.context': string
+  LogicalName: string
+  MetadataId: string
   OptionSet: {
-    MetadataId: string;
+    MetadataId: string
     Options: {
-      Value: number;
+      Value: number
       Label: {
         UserLocalizedLabel: {
-          Label: string;
-          LanguageCode: number;
-          IsManaged: boolean;
-          MetadataId: string;
-          HasChanged: boolean;
-        };
-      };
-    }[];
-  } | null;
+          Label: string
+          LanguageCode: number
+          IsManaged: boolean
+          MetadataId: string
+          HasChanged: boolean
+        }
+      }
+    }[]
+  } | null
   GlobalOptionSet: {
-    MetadataId: string;
+    MetadataId: string
     Options: {
-      Value: number;
+      Value: number
       Label: {
         UserLocalizedLabel: {
-          Label: string;
-          LanguageCode: number;
-          IsManaged: boolean;
-          MetadataId: string;
-          HasChanged: boolean;
-        };
-      };
-    }[];
-  } | null;
-};
+          Label: string
+          LanguageCode: number
+          IsManaged: boolean
+          MetadataId: string
+          HasChanged: boolean
+        }
+      }
+    }[]
+  } | null
+}

@@ -1,5 +1,5 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import jimp from 'jimp';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import jimp from 'jimp'
 
 export const compressImage = createAction({
   name: 'compress_image',
@@ -12,8 +12,7 @@ export const compressImage = createAction({
     }),
     quality: Property.StaticDropdown({
       displayName: 'Quality',
-      description:
-        'Specifies the quality of the image after compression (0-100).',
+      description: 'Specifies the quality of the image after compression (0-100).',
       required: true,
       options: {
         options: [
@@ -35,26 +34,22 @@ export const compressImage = createAction({
     }),
     resultFileName: Property.ShortText({
       displayName: 'Result File Name',
-      description:
-        'Specifies the output file name for the result image (without extension).',
+      description: 'Specifies the output file name for the result image (without extension).',
       required: false,
     }),
   },
   async run(context) {
-    const image = await jimp.read(context.propsValue.image.data);
+    const image = await jimp.read(context.propsValue.image.data)
 
-    image.quality(context.propsValue.quality);
+    image.quality(context.propsValue.quality)
 
-    const imageBuffer = await image.getBufferAsync(image.getMIME());
+    const imageBuffer = await image.getBufferAsync(image.getMIME())
 
     const imageReference = await context.files.write({
-      fileName:
-        (context.propsValue.resultFileName ?? 'image') +
-        '.' +
-        context.propsValue.format,
+      fileName: (context.propsValue.resultFileName ?? 'image') + '.' + context.propsValue.format,
       data: imageBuffer,
-    });
+    })
 
-    return imageReference;
+    return imageReference
   },
-});
+})

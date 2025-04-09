@@ -1,13 +1,13 @@
-import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
-import { createSNS } from './lib/common';
-import { ListTopicsCommand } from '@aws-sdk/client-sns';
-import { sendMessageAction } from './lib/actions/send-message';
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { ListTopicsCommand } from '@aws-sdk/client-sns'
+import { sendMessageAction } from './lib/actions/send-message'
+import { createSNS } from './lib/common'
 
 const description = `
 This piece allows you to send messages to Amazon SNS topics.
 
 Refer to [this](https://docs.aws.amazon.com/general/latest/gr/sns.html) for **Region**. Leave the **Endpoint** blank. 
-`;
+`
 
 export const amazonSnsAuth = PieceAuth.CustomAuth({
   description: description,
@@ -154,29 +154,29 @@ export const amazonSnsAuth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
-    const sns = createSNS(auth);
+    const sns = createSNS(auth)
     try {
-      const command = new ListTopicsCommand({});
-      await sns.send(command);
+      const command = new ListTopicsCommand({})
+      await sns.send(command)
       return {
         valid: true,
-      };
+      }
     } catch (e) {
       return {
         valid: false,
         error: (e as Error)?.message,
-      };
+      }
     }
   },
   required: true,
-});
+})
 
 export const amazonSns = createPiece({
-  displayName: "Amazon SNS",
+  displayName: 'Amazon SNS',
   auth: amazonSnsAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: "https://cdn.activepieces.com/pieces/amazon-sns.png",
-  authors: ["coat"],
+  logoUrl: 'https://cdn.activepieces.com/pieces/amazon-sns.png',
+  authors: ['coat'],
   actions: [sendMessageAction],
   triggers: [],
-});
+})

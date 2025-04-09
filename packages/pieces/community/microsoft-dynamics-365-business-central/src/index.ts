@@ -1,17 +1,12 @@
-import {
-  createPiece,
-  OAuth2PropertyValue,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { createRecordAction } from './lib/actions/create-record.action';
-import { getRecordAction } from './lib/actions/get-record.action';
-import { updateRecordAction } from './lib/actions/update-record.action';
-import { deleteRecordAction } from './lib/actions/delete-record.action';
-import { newOrUpdatedRecordTrigger } from './lib/triggers/new-or-updated-record.trigger';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { searchRecordsAction } from './lib/actions/search-records.action';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { createRecordAction } from './lib/actions/create-record.action'
+import { deleteRecordAction } from './lib/actions/delete-record.action'
+import { getRecordAction } from './lib/actions/get-record.action'
+import { searchRecordsAction } from './lib/actions/search-records.action'
+import { updateRecordAction } from './lib/actions/update-record.action'
+import { newOrUpdatedRecordTrigger } from './lib/triggers/new-or-updated-record.trigger'
 
 export const businessCentralAuth = PieceAuth.OAuth2({
   props: {
@@ -29,7 +24,7 @@ export const businessCentralAuth = PieceAuth.OAuth2({
   ],
   authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
   tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-});
+})
 
 export const microsoftDynamics365BusinessCentral = createPiece({
   displayName: 'Microsoft Dynamics 365 Business Central',
@@ -37,8 +32,7 @@ export const microsoftDynamics365BusinessCentral = createPiece({
   description: 'All-in-one business management solution by Microsoft.',
   categories: [PieceCategory.SALES_AND_CRM],
   minimumSupportedRelease: '0.27.1',
-  logoUrl:
-    'https://cdn.activepieces.com/pieces/microsoft-dynamics-365-business-central.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-dynamics-365-business-central.png',
   authors: ['kishanprmr'],
   actions: [
     createRecordAction,
@@ -51,7 +45,7 @@ export const microsoftDynamics365BusinessCentral = createPiece({
       baseUrl: (auth) => {
         return `https://api.businesscentral.dynamics.com/v2.0/${
           (auth as OAuth2PropertyValue).props?.['environment']
-        }/api/v2.0`;
+        }/api/v2.0`
       },
       authMapping: async (auth) => ({
         Authorization: `Bearer  ${(auth as OAuth2PropertyValue).access_token}`,
@@ -59,4 +53,4 @@ export const microsoftDynamics365BusinessCentral = createPiece({
     }),
   ],
   triggers: [newOrUpdatedRecordTrigger],
-});
+})

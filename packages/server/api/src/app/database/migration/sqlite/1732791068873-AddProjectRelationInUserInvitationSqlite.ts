@@ -2,23 +2,26 @@ import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 
 export class AddProjectRelationInUserInvitationSqlite1732791068873 implements MigrationInterface {
-    name = 'AddProjectRelationInUserInvitationSqlite1732791068873'
+  name = 'AddProjectRelationInUserInvitationSqlite1732791068873'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'up')
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    const log = system.globalLogger()
+    log.info(
+      {
+        name: this.name,
+      },
+      'up',
+    )
+    await queryRunner.query(`
             DELETE FROM "user_invitation" 
             WHERE "projectId" IS NOT NULL 
             AND "projectId" NOT IN (SELECT "id" FROM "project")
         `)
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_invitation_email_platform_project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_user_invitation" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -32,7 +35,7 @@ export class AddProjectRelationInUserInvitationSqlite1732791068873 implements Mi
                 "email" varchar NOT NULL
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_user_invitation"(
                     "id",
                     "created",
@@ -57,20 +60,20 @@ export class AddProjectRelationInUserInvitationSqlite1732791068873 implements Mi
                 "email"
             FROM "user_invitation"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "user_invitation"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_user_invitation"
                 RENAME TO "user_invitation"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_invitation_email_platform_project" ON "user_invitation" ("email", "platformId", "projectId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_invitation_email_platform_project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_user_invitation" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -86,7 +89,7 @@ export class AddProjectRelationInUserInvitationSqlite1732791068873 implements Mi
                 CONSTRAINT "fk_user_invitation_project_role_id" FOREIGN KEY ("projectRoleId") REFERENCES "project_role" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_user_invitation"(
                     "id",
                     "created",
@@ -111,31 +114,34 @@ export class AddProjectRelationInUserInvitationSqlite1732791068873 implements Mi
                 "email"
             FROM "user_invitation"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "user_invitation"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_user_invitation"
                 RENAME TO "user_invitation"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_invitation_email_platform_project" ON "user_invitation" ("email", "platformId", "projectId")
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'down')
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    const log = system.globalLogger()
+    log.info(
+      {
+        name: this.name,
+      },
+      'down',
+    )
+    await queryRunner.query(`
             DROP INDEX "idx_user_invitation_email_platform_project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "user_invitation"
                 RENAME TO "temporary_user_invitation"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "user_invitation" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -149,7 +155,7 @@ export class AddProjectRelationInUserInvitationSqlite1732791068873 implements Mi
                 "email" varchar NOT NULL
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "user_invitation"(
                     "id",
                     "created",
@@ -174,20 +180,20 @@ export class AddProjectRelationInUserInvitationSqlite1732791068873 implements Mi
                 "email"
             FROM "temporary_user_invitation"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_user_invitation"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_invitation_email_platform_project" ON "user_invitation" ("email", "platformId", "projectId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_invitation_email_platform_project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "user_invitation"
                 RENAME TO "temporary_user_invitation"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "user_invitation" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -202,7 +208,7 @@ export class AddProjectRelationInUserInvitationSqlite1732791068873 implements Mi
                 CONSTRAINT "FK_aa50e85a5d89f9289163d0e0f91" FOREIGN KEY ("projectRoleId") REFERENCES "project_role" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "user_invitation"(
                     "id",
                     "created",
@@ -227,12 +233,11 @@ export class AddProjectRelationInUserInvitationSqlite1732791068873 implements Mi
                 "email"
             FROM "temporary_user_invitation"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_user_invitation"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_invitation_email_platform_project" ON "user_invitation" ("email", "platformId", "projectId")
         `)
-    }
-
+  }
 }

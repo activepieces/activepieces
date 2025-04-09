@@ -1,16 +1,16 @@
-import { cloutlyAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { cloutlyAuth } from '../../index'
 
 export const sendReviewInvite = createAction({
-  auth:cloutlyAuth,
+  auth: cloutlyAuth,
   name: 'sendReviewInvite',
   displayName: 'Send Review Invite',
   description: 'Sends a review invite to your customer.',
   props: {
     firstName: Property.ShortText({
       displayName: 'First Name',
-      required: true
+      required: true,
     }),
     lastName: Property.ShortText({
       displayName: 'Last Name',
@@ -19,34 +19,34 @@ export const sendReviewInvite = createAction({
     email: Property.ShortText({
       displayName: 'Email',
       description: 'The email of the customer to send the invite to (required if Phone Number is empty)',
-      required: false
+      required: false,
     }),
     phoneNumber: Property.ShortText({
       displayName: 'Phone Number',
       description: 'The phone number of the customer to send the invite to (required if Email is empty)',
-      required: false
+      required: false,
     }),
     sourceCustomerId: Property.ShortText({
       displayName: 'Source Customer ID',
-      required: false
+      required: false,
     }),
     businessId: Property.ShortText({
       displayName: 'Business ID',
-      required: true
+      required: true,
     }),
     campaignId: Property.ShortText({
       displayName: 'Campaign ID',
-      required: true
+      required: true,
     }),
     inviteDelayDays: Property.Number({
       displayName: 'Invite Delay Days',
       description: 'The number of days to delay the invite (i.e send after X days)',
-      required: false
+      required: false,
     }),
     salesRepEmail: Property.ShortText({
       displayName: 'Sales Rep Email',
       description: 'The email of the sales rep to associate the review and customer',
-      required: false
+      required: false,
     }),
   },
   async run(context) {
@@ -63,9 +63,9 @@ export const sendReviewInvite = createAction({
       campaignId: context.propsValue.campaignId,
       inviteDelayDays: context.propsValue.inviteDelayDays,
       salesRepEmail: context.propsValue.salesRepEmail,
-    };
+    }
 
-    const apiKey = context.auth as string;
+    const apiKey = context.auth as string
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -74,10 +74,10 @@ export const sendReviewInvite = createAction({
       headers: {
         'Content-Type': 'application/json',
         'x-app': 'activepieces',
-        'x-api-key': apiKey
-      }
+        'x-api-key': apiKey,
+      },
     })
 
-    return response.body;
+    return response.body
   },
-});
+})

@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { MEMPOOL_API_BASE_URL } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { MEMPOOL_API_BASE_URL } from '../../common'
 
 export const postTransaction = createAction({
   name: 'post_transaction',
@@ -19,7 +19,7 @@ export const postTransaction = createAction({
       method: HttpMethod.POST,
       url: `${MEMPOOL_API_BASE_URL}/api/tx`,
       body: propsValue.rawTx,
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

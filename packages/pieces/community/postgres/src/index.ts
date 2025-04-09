@@ -1,44 +1,35 @@
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { runQuery } from './lib/actions/run-query';
-import { newRow } from './lib/triggers/new-row';
-import { pgClient } from './lib/common';
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { runQuery } from './lib/actions/run-query'
+import { pgClient } from './lib/common'
+import { newRow } from './lib/triggers/new-row'
 
 export const postgresAuth = PieceAuth.CustomAuth({
   props: {
     host: Property.ShortText({
       displayName: 'Host',
       required: true,
-      description:
-        ' A string indicating the hostname of the PostgreSQL server to connect to.',
+      description: ' A string indicating the hostname of the PostgreSQL server to connect to.',
     }),
     port: Property.Number({
       displayName: 'Port',
       defaultValue: 5432,
-      description:
-        'An integer indicating the port of the PostgreSQL server to connect to.',
+      description: 'An integer indicating the port of the PostgreSQL server to connect to.',
       required: true,
     }),
     user: Property.ShortText({
       displayName: 'User',
       required: true,
-      description:
-        'A string indicating the user to authenticate as when connecting to the PostgreSQL server.',
+      description: 'A string indicating the user to authenticate as when connecting to the PostgreSQL server.',
     }),
     password: PieceAuth.SecretText({
       displayName: 'Password',
-      description:
-        'A string indicating the password to use for authentication.',
+      description: 'A string indicating the password to use for authentication.',
       required: true,
     }),
     database: Property.ShortText({
       displayName: 'Database',
-      description:
-        'A string indicating the name of the database to connect to.',
+      description: 'A string indicating the name of the database to connect to.',
       required: true,
     }),
     enable_ssl: Property.Checkbox({
@@ -56,8 +47,7 @@ export const postgresAuth = PieceAuth.CustomAuth({
     }),
     certificate: Property.LongText({
       displayName: 'Certificate',
-      description:
-        'The CA certificate to use for verification of server certificate.',
+      description: 'The CA certificate to use for verification of server certificate.',
       defaultValue: '',
       required: false,
     }),
@@ -65,20 +55,19 @@ export const postgresAuth = PieceAuth.CustomAuth({
   required: true,
   validate: async ({ auth }) => {
     try {
-      const client = await pgClient(auth);
-      await client.end();
-    }
-    catch (e) {
+      const client = await pgClient(auth)
+      await client.end()
+    } catch (e) {
       return {
         valid: false,
-        error: JSON.stringify(e)
-      };
+        error: JSON.stringify(e),
+      }
     }
     return {
       valid: true,
-    };
-  }
-});
+    }
+  },
+})
 
 export const postgres = createPiece({
   displayName: 'Postgres',
@@ -86,8 +75,8 @@ export const postgres = createPiece({
   minimumSupportedRelease: '0.30.0',
   categories: [PieceCategory.DEVELOPER_TOOLS],
   logoUrl: 'https://cdn.activepieces.com/pieces/postgres.png',
-  authors: ["AbdullahBitar", "Willianwg", "dentych", "kishanprmr", "AbdulTheActivePiecer", "khaledmashaly", "abuaboud"],
+  authors: ['AbdullahBitar', 'Willianwg', 'dentych', 'kishanprmr', 'AbdulTheActivePiecer', 'khaledmashaly', 'abuaboud'],
   auth: postgresAuth,
   actions: [runQuery],
   triggers: [newRow],
-});
+})

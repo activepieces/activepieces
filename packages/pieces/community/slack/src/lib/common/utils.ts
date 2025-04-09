@@ -1,5 +1,5 @@
-import { ApFile } from '@activepieces/pieces-framework';
-import { Block, WebClient } from '@slack/web-api';
+import { ApFile } from '@activepieces/pieces-framework'
+import { Block, WebClient } from '@slack/web-api'
 
 export const slackSendMessage = async ({
   text,
@@ -11,7 +11,7 @@ export const slackSendMessage = async ({
   token,
   file,
 }: SlackSendMessageParams) => {
-  const client = new WebClient(token);
+  const client = new WebClient(token)
 
   if (file) {
     return await client.files.uploadV2({
@@ -24,7 +24,7 @@ export const slackSendMessage = async ({
           filename: file.filename,
         },
       ],
-    });
+    })
   } else {
     return await client.chat.postMessage({
       text,
@@ -33,84 +33,84 @@ export const slackSendMessage = async ({
       icon_url: profilePicture,
       blocks: blocks as Block[],
       thread_ts: threadTs,
-    });
+    })
   }
-};
+}
 
 type SlackSendMessageParams = {
-  token: string;
-  conversationId: string;
-  username?: string;
-  profilePicture?: string;
-  blocks?: unknown[] | Record<string, any>;
-  text: string;
-  file?: ApFile;
-  threadTs?: string;
-};
+  token: string
+  conversationId: string
+  username?: string
+  profilePicture?: string
+  blocks?: unknown[] | Record<string, any>
+  text: string
+  file?: ApFile
+  threadTs?: string
+}
 
 export function processMessageTimestamp(input: string) {
   // Regular expression to match a URL containing the timestamp
-  const urlRegex = /\/p(\d+)(\d{6})$/;
+  const urlRegex = /\/p(\d+)(\d{6})$/
   // Check if the input is a URL
-  const urlMatch = input.match(urlRegex);
+  const urlMatch = input.match(urlRegex)
   if (urlMatch) {
-    const timestamp = `${urlMatch[1]}.${urlMatch[2]}`;
-    return timestamp;
+    const timestamp = `${urlMatch[1]}.${urlMatch[2]}`
+    return timestamp
   }
 
   // Check if the input is already in the desired format
-  const timestampRegex = /^(\d+)\.(\d{6})$/;
-  const timestampMatch = input.match(timestampRegex);
+  const timestampRegex = /^(\d+)\.(\d{6})$/
+  const timestampMatch = input.match(timestampRegex)
   if (timestampMatch) {
-    return input;
+    return input
   }
 
-  return undefined;
+  return undefined
 }
 
 export function getFirstFiveOrAll(array: unknown[]) {
   if (array.length <= 5) {
-    return array;
+    return array
   } else {
-    return array.slice(0, 5);
+    return array.slice(0, 5)
   }
 }
 
 /**
-* Parse a message text to extract command and arguments
-*/
+ * Parse a message text to extract command and arguments
+ */
 export function parseCommand(
- text: string,
- botUserId: string,
- validCommands: string[]
+  text: string,
+  botUserId: string,
+  validCommands: string[],
 ): { command: string; args: string[] } | null {
- if (!botUserId) {
-   return null;
- }
+  if (!botUserId) {
+    return null
+  }
 
- // Check if the message mentions the bot
- const mentionRegex = new RegExp(`<@${botUserId}>\\s+(.+)`, 's');
- const mentionMatch = text.match(mentionRegex);
+  // Check if the message mentions the bot
+  const mentionRegex = new RegExp(`<@${botUserId}>\\s+(.+)`, 's')
+  const mentionMatch = text.match(mentionRegex)
 
- if (!mentionMatch) {
-   return null;
- }
+  if (!mentionMatch) {
+    return null
+  }
 
- // Extract the text after the mention
- const commandText = mentionMatch[1].trim();
+  // Extract the text after the mention
+  const commandText = mentionMatch[1].trim()
 
- // Split into command and arguments (first word is command, rest are args)
- const parts = commandText.split(/\s+/);
- const command = parts[0].toLowerCase();
- const args = parts.slice(1);
+  // Split into command and arguments (first word is command, rest are args)
+  const parts = commandText.split(/\s+/)
+  const command = parts[0].toLowerCase()
+  const args = parts.slice(1)
 
- // Check if it's a valid command
- if (!validCommands.includes(command)) {
-   return null;
- }
+  // Check if it's a valid command
+  if (!validCommands.includes(command)) {
+    return null
+  }
 
- return {
-   command,
-   args,
- };
+  return {
+    command,
+    args,
+  }
 }

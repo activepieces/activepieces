@@ -1,5 +1,3 @@
-
-
 export type DataSeed = {
-    run(): Promise<void>
+  run(): Promise<void>
 }

@@ -1,12 +1,6 @@
-import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { createTrigger, Property } from '@activepieces/pieces-framework';
-import {
-  DAY_HOURS,
-  validateWeekDays,
-  validateHours,
-  WEEK_DAYS,
-  timezoneOptions,
-} from '../common';
+import { TriggerStrategy } from '@activepieces/pieces-framework'
+import { Property, createTrigger } from '@activepieces/pieces-framework'
+import { DAY_HOURS, WEEK_DAYS, timezoneOptions, validateHours, validateWeekDays } from '../common'
 
 export const everyWeekTrigger = createTrigger({
   name: 'every_week',
@@ -22,7 +16,7 @@ export const everyWeekTrigger = createTrigger({
           return {
             label: d,
             value: idx,
-          };
+          }
         }),
       },
       required: true,
@@ -34,7 +28,7 @@ export const everyWeekTrigger = createTrigger({
           return {
             label: h,
             value: idx,
-          };
+          }
         }),
       },
       required: true,
@@ -49,18 +43,18 @@ export const everyWeekTrigger = createTrigger({
     }),
   },
   onEnable: async (ctx) => {
-    const hourOfTheDay = validateHours(ctx.propsValue.hour_of_the_day);
-    const dayOfTheWeek = validateWeekDays(ctx.propsValue.day_of_the_week);
-    const cronExpression = `0 ${hourOfTheDay} * * ${dayOfTheWeek}`;
+    const hourOfTheDay = validateHours(ctx.propsValue.hour_of_the_day)
+    const dayOfTheWeek = validateWeekDays(ctx.propsValue.day_of_the_week)
+    const cronExpression = `0 ${hourOfTheDay} * * ${dayOfTheWeek}`
     ctx.setSchedule({
       cronExpression: cronExpression,
       timezone: ctx.propsValue.timezone,
-    });
+    })
   },
   run(ctx) {
-    const hourOfTheDay = validateHours(ctx.propsValue.hour_of_the_day);
-    const dayOfTheWeek = validateWeekDays(ctx.propsValue.day_of_the_week);
-    const cronExpression = `0 ${hourOfTheDay} * * ${dayOfTheWeek}`;
+    const hourOfTheDay = validateHours(ctx.propsValue.hour_of_the_day)
+    const dayOfTheWeek = validateWeekDays(ctx.propsValue.day_of_the_week)
+    const cronExpression = `0 ${hourOfTheDay} * * ${dayOfTheWeek}`
     return Promise.resolve([
       {
         hour_of_the_day: hourOfTheDay,
@@ -68,9 +62,9 @@ export const everyWeekTrigger = createTrigger({
         cron_expression: cronExpression,
         timezone: ctx.propsValue.timezone,
       },
-    ]);
+    ])
   },
   onDisable: async () => {
-    console.log('onDisable');
+    console.log('onDisable')
   },
-});
+})

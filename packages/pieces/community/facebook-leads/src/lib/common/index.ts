@@ -1,9 +1,5 @@
-import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework'
 
 export const facebookLeadsCommon = {
   baseUrl: 'https://graph.facebook.com',
@@ -17,43 +13,39 @@ export const facebookLeadsCommon = {
           disabled: true,
           options: [],
           placeholder: 'Connect your account',
-        };
+        }
       }
 
       try {
-        const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
-        const pages: any[] = (
-          await facebookLeadsCommon.getPages(authProp.access_token)
-        ).map((page: FacebookPage) => {
+        const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue
+        const pages: any[] = (await facebookLeadsCommon.getPages(authProp.access_token)).map((page: FacebookPage) => {
           return {
             label: page.name,
             value: {
               id: page.id,
               accessToken: page.access_token,
             },
-          };
-        });
-        if(pages.length === 0)
-        {
+          }
+        })
+        if (pages.length === 0) {
           return {
             disabled: true,
             options: [],
             placeholder: 'No pages found',
-          };
+          }
         }
-
 
         return {
           options: pages,
           placeholder: 'Choose a page',
-        };
+        }
       } catch (e) {
-        console.debug(e);
+        console.debug(e)
         return {
           disabled: true,
           options: [],
           placeholder: 'Connect your account',
-        };
+        }
       }
     },
   }),
@@ -68,39 +60,36 @@ export const facebookLeadsCommon = {
           disabled: true,
           options: [],
           placeholder: 'Choose a page',
-        };
+        }
       }
 
       try {
-        const modifiedPage = page as FacebookPageDropdown;
-        const forms: any[] = (
-          await facebookLeadsCommon.getPageForms(
-            modifiedPage.id,
-            modifiedPage.accessToken
-          )
-        ).map((form: FacebookForm) => {
-          return {
-            label: form.name,
-            value: form.id,
-          };
-        });
+        const modifiedPage = page as FacebookPageDropdown
+        const forms: any[] = (await facebookLeadsCommon.getPageForms(modifiedPage.id, modifiedPage.accessToken)).map(
+          (form: FacebookForm) => {
+            return {
+              label: form.name,
+              value: form.id,
+            }
+          },
+        )
 
         forms.unshift({
           label: 'All Forms (Default)',
           value: undefined,
-        });
+        })
 
         return {
           options: forms,
           placeholder: 'Choose a form',
-        };
+        }
       } catch (e) {
-        console.debug(e);
+        console.debug(e)
         return {
           disabled: true,
           options: [],
           placeholder: 'Choose a page',
-        };
+        }
       }
     },
   }),
@@ -113,9 +102,9 @@ export const facebookLeadsCommon = {
         access_token: accessToken,
         subscribed_fields: ['leadgen'],
       },
-    };
+    }
 
-    await httpClient.sendRequest(request);
+    await httpClient.sendRequest(request)
   },
 
   getPages: async (accessToken: string) => {
@@ -125,10 +114,10 @@ export const facebookLeadsCommon = {
       queryParams: {
         access_token: accessToken,
       },
-    };
+    }
 
-    const response = await httpClient.sendRequest(request);
-    return response.body.data;
+    const response = await httpClient.sendRequest(request)
+    return response.body.data
   },
 
   getPageForms: async (pageId: string, accessToken: string) => {
@@ -138,10 +127,10 @@ export const facebookLeadsCommon = {
       queryParams: {
         access_token: accessToken,
       },
-    };
+    }
 
-    const response = await httpClient.sendRequest(request);
-    return response.body.data;
+    const response = await httpClient.sendRequest(request)
+    return response.body.data
   },
 
   getLeadDetails: async (leadId: string, accessToken: string) => {
@@ -151,56 +140,56 @@ export const facebookLeadsCommon = {
       queryParams: {
         access_token: accessToken,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
 
   loadSampleData: async (formId: string, accessToken: string) => {
-    const response = await httpClient.sendRequest<{data:Array<Record<string,any>>}>({
+    const response = await httpClient.sendRequest<{ data: Array<Record<string, any>> }>({
       method: HttpMethod.GET,
       url: `${facebookLeadsCommon.baseUrl}/${formId}/leads`,
       queryParams: {
         access_token: accessToken,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-};
+}
 
 export interface FacebookOAuth2 {
-  access_token: string;
-  expires_in: number;
-  claimed_at: number;
-  scope: string;
-  client_id: string;
-  token_type: string;
-  data: object;
-  authorization_method: string;
-  code: string;
-  type: string;
-  redirect_url: string;
-  token_url: string;
+  access_token: string
+  expires_in: number
+  claimed_at: number
+  scope: string
+  client_id: string
+  token_type: string
+  data: object
+  authorization_method: string
+  code: string
+  type: string
+  redirect_url: string
+  token_url: string
 }
 
 export interface FacebookPage {
-  id: string;
-  name: string;
-  category: string;
-  category_list: string[];
-  access_token: string;
-  tasks: string[];
+  id: string
+  name: string
+  category: string
+  category_list: string[]
+  access_token: string
+  tasks: string[]
 }
 
 export interface FacebookPageDropdown {
-  id: string;
-  accessToken: string;
+  id: string
+  accessToken: string
 }
 
 export interface FacebookForm {
-  id: string;
-  locale: string;
-  name: string;
-  status: string;
+  id: string
+  locale: string
+  name: string
+  status: string
 }

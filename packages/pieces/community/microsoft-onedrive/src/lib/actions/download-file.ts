@@ -1,11 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { oneDriveAuth } from '../../';
-import { oneDriveCommon } from '../common/common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { oneDriveAuth } from '../../'
+import { oneDriveCommon } from '../common/common'
 
 export const downloadFile = createAction({
   auth: oneDriveAuth,
@@ -20,11 +16,11 @@ export const downloadFile = createAction({
     }),
   },
   async run(context) {
-    const fileId = context.propsValue.fileId;
+    const fileId = context.propsValue.fileId
 
-    const fileDetails = await httpClient.sendRequest<{name:string}>({
-      method:HttpMethod.GET,
-      url:`${oneDriveCommon.baseUrl}/items/${fileId}?$select=name`,
+    const fileDetails = await httpClient.sendRequest<{ name: string }>({
+      method: HttpMethod.GET,
+      url: `${oneDriveCommon.baseUrl}/items/${fileId}?$select=name`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
@@ -38,30 +34,24 @@ export const downloadFile = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
-      responseType:'arraybuffer'
-    });
+      responseType: 'arraybuffer',
+    })
 
-    const desiredHeaders = [
-      'content-length',
-      'content-type',
-      'content-location',
-      'expires',
-    ];
-    const filteredHeaders: any = {};
+    const desiredHeaders = ['content-length', 'content-type', 'content-location', 'expires']
+    const filteredHeaders: any = {}
 
     if (result.headers) {
       for (const key of desiredHeaders) {
-        filteredHeaders[key] = result.headers[key];
+        filteredHeaders[key] = result.headers[key]
       }
     }
 
     return {
       ...filteredHeaders,
-      data:await context.files.write({
+      data: await context.files.write({
         fileName: fileDetails.body.name,
         data: Buffer.from(result.body),
-      })
-
+      }),
     }
   },
-});
+})

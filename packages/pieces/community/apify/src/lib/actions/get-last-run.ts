@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { apifyAuth } from '../..';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { apifyAuth } from '../..'
 
 export const getLastRun = createAction({
   name: 'getLastRun',
@@ -17,26 +17,23 @@ export const getLastRun = createAction({
     }),
   },
   async run(context) {
-    const apifyToken = context.auth.apikey;
+    const apifyToken = context.auth.apikey
     const headers = {
       Authorization: 'Bearer ' + apifyToken,
       'Content-Type': 'application/json',
-    };
+    }
 
     // removed ?status=SUCCEEDED as we might need to know if a particular actor failed
-    const url =
-      'https://api.apify.com/v2/acts/' +
-      context.propsValue.actorid +
-      '/runs/last';
+    const url = 'https://api.apify.com/v2/acts/' + context.propsValue.actorid + '/runs/last'
     //?status=SUCCEEDED'
 
     const httprequestdata = {
       method: HttpMethod.GET,
       url,
       headers,
-    };
+    }
 
-    const response = await httpClient.sendRequest(httprequestdata);
-    return response.body.data;
+    const response = await httpClient.sendRequest(httprequestdata)
+    return response.body.data
   },
-});
+})

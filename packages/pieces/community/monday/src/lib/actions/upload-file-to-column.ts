@@ -1,9 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { makeClient, mondayCommon } from '../common';
-import { MondayColumnType } from '../common/constants';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import FormData from 'form-data';
-import { mondayAuth } from '../../';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import FormData from 'form-data'
+import { mondayAuth } from '../../'
+import { makeClient, mondayCommon } from '../common'
+import { MondayColumnType } from '../common/constants'
 
 export const uploadFileToColumnAction = createAction({
   auth: mondayAuth,
@@ -22,15 +22,14 @@ export const uploadFileToColumnAction = createAction({
         if (!auth || !board_id) {
           return {
             disabled: true,
-            placeholder:
-              'connect your account first and select workspace board.',
+            placeholder: 'connect your account first and select workspace board.',
             options: [],
-          };
+          }
         }
-        const client = makeClient(auth as string);
+        const client = makeClient(auth as string)
         const res = await client.listBoardColumns({
           boardId: board_id as string,
-        });
+        })
         return {
           disabled: false,
           options: res.data.boards[0].columns
@@ -39,9 +38,9 @@ export const uploadFileToColumnAction = createAction({
               return {
                 label: column.title,
                 value: column.id,
-              };
+              }
             }),
-        };
+        }
       },
     }),
     file: Property.File({
@@ -55,12 +54,12 @@ export const uploadFileToColumnAction = createAction({
     }),
   },
   async run(context) {
-    const itemId = context.propsValue.item_id;
-    const fileColumnId = context.propsValue.file_column_id;
-    const fileName = context.propsValue.file_name;
-    const file = context.propsValue.file;
+    const itemId = context.propsValue.item_id
+    const fileColumnId = context.propsValue.file_column_id
+    const fileName = context.propsValue.file_name
+    const file = context.propsValue.file
 
-    const formData = new FormData();
+    const formData = new FormData()
 
     formData.append(
       'query',
@@ -75,18 +74,11 @@ export const uploadFileToColumnAction = createAction({
             file_extension
             created_at 
         } 
-    }`
-    );
-    formData.append(
-      'variables',
-      JSON.stringify({ item_id: itemId, column_id: fileColumnId })
-    );
-    formData.append('map', JSON.stringify({ file: 'variables.file' }));
-    formData.append(
-      'file',
-      Buffer.from(file.base64, 'base64'),
-      fileName || file.filename
-    );
+    }`,
+    )
+    formData.append('variables', JSON.stringify({ item_id: itemId, column_id: fileColumnId }))
+    formData.append('map', JSON.stringify({ file: 'variables.file' }))
+    formData.append('file', Buffer.from(file.base64, 'base64'), fileName || file.filename)
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -97,8 +89,8 @@ export const uploadFileToColumnAction = createAction({
         ...formData.getHeaders(),
       },
       body: formData,
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

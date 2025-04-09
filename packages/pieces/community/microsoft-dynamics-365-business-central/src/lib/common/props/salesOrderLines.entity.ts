@@ -1,4 +1,4 @@
-import { EntityProp } from '../types';
+import { EntityProp } from '../types'
 
 // https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/api-reference/v2.0/resources/dynamics_salesorderline
 
@@ -68,8 +68,7 @@ export const salesOrdersLinesEntityProps: EntityProp[] = [
   {
     name: 'lineObjectNumber',
     displayName: 'Line Object Number',
-    description:
-      'The number of the object (account or item) of the sales order line.',
+    description: 'The number of the object (account or item) of the sales order line.',
     type: 'text',
     isRequired: false,
   },
@@ -136,8 +135,7 @@ export const salesOrdersLinesEntityProps: EntityProp[] = [
     displayName: 'Invoice Quantity',
     type: 'number',
     isRequired: false,
-    description:
-      'The quantity of items from the sales order line to be invoiced.',
+    description: 'The quantity of items from the sales order line to be invoiced.',
   },
   {
     name: 'shipQuantity',
@@ -146,7 +144,7 @@ export const salesOrdersLinesEntityProps: EntityProp[] = [
     isRequired: false,
     description: 'The quantity of items from the order to be shipped.',
   },
-];
+]
 
 export const salesOrderLinesEntityNumberProps = [
   'quantity',
@@ -155,4 +153,4 @@ export const salesOrderLinesEntityNumberProps = [
   'discountAmount',
   'invoicedQuantity',
   'shipQuantity',
-];
+]

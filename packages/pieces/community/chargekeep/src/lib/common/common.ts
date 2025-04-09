@@ -1,12 +1,7 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
 
 export const chargekeepCommon = {
-  subscribeWebhook: async (
-    eventName: string,
-    baseUrl: string,
-    apiKey: string,
-    webhookUrl: string
-  ) => {
+  subscribeWebhook: async (eventName: string, baseUrl: string, apiKey: string, webhookUrl: string) => {
     const request = {
       method: HttpMethod.POST,
       url: `${baseUrl}/api/services/Platform/Event/Subscribe`,
@@ -18,20 +13,16 @@ export const chargekeepCommon = {
         eventName: eventName,
         targetUrl: webhookUrl,
       },
-    };
+    }
 
-    const res = await httpClient.sendRequest(request);
+    const res = await httpClient.sendRequest(request)
 
-    const { id: webhookId } = res.body.result;
+    const { id: webhookId } = res.body.result
 
-    return webhookId;
+    return webhookId
   },
 
-  unsubscribeWebhook: async (
-    baseUrl: string,
-    apiKey: string,
-    webhookId: number
-  ) => {
+  unsubscribeWebhook: async (baseUrl: string, apiKey: string, webhookId: number) => {
     const request = {
       method: HttpMethod.POST,
       url: `${baseUrl}/api/services/Platform/Event/Unsubscribe?id=${webhookId}`,
@@ -39,8 +30,8 @@ export const chargekeepCommon = {
         'api-key': apiKey,
         'Content-Type': 'application/json',
       },
-    };
+    }
 
-    return await httpClient.sendRequest(request);
+    return await httpClient.sendRequest(request)
   },
-};
+}

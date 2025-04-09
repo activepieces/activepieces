@@ -1,13 +1,8 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  OAuth2PropertyValue,
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { newContact } from './lib/triggers/new-contact';
-import { readFile } from './lib/actions/read-file';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { readFile } from './lib/actions/read-file'
+import { newContact } from './lib/triggers/new-contact'
 
 export const zohoCrmAuth = PieceAuth.OAuth2({
   props: {
@@ -46,11 +41,19 @@ export const zohoCrmAuth = PieceAuth.OAuth2({
     }),
   },
   description: 'Authentication for Zoho CRM',
-  scope: ['ZohoCRM.users.ALL','ZohoCRM.org.ALL', 'ZohoCRM.settings.ALL', 'ZohoCRM.modules.ALL', 'ZohoCRM.bulk.ALL', 'ZohoCRM.bulk.backup.ALL', 'ZohoFiles.files.ALL'],
+  scope: [
+    'ZohoCRM.users.ALL',
+    'ZohoCRM.org.ALL',
+    'ZohoCRM.settings.ALL',
+    'ZohoCRM.modules.ALL',
+    'ZohoCRM.bulk.ALL',
+    'ZohoCRM.bulk.backup.ALL',
+    'ZohoFiles.files.ALL',
+  ],
   authUrl: 'https://accounts.{location}/oauth/v2/auth',
   tokenUrl: 'https://accounts.{location}/oauth/v2/token',
   required: true,
-});
+})
 
 export const zohoCrm = createPiece({
   displayName: 'Zoho CRM',
@@ -59,17 +62,16 @@ export const zohoCrm = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/zoho-crm.png',
   minimumSupportedRelease: '0.30.0',
   categories: [PieceCategory.SALES_AND_CRM],
-  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud","ikus060"],
+  authors: ['kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud', 'ikus060'],
   auth: zohoCrmAuth,
   actions: [
     readFile,
     createCustomApiCallAction({
-      baseUrl: (auth) =>
-        {
-          const data = (auth as OAuth2PropertyValue).data;
-          return data && data['api_domain']? `${data['api_domain']}/crm/v3` : ''
-        },    
-      
+      baseUrl: (auth) => {
+        const data = (auth as OAuth2PropertyValue).data
+        return data && data['api_domain'] ? `${data['api_domain']}/crm/v3` : ''
+      },
+
       auth: zohoCrmAuth,
       authMapping: async (auth) => ({
         Authorization: `Zoho-oauthtoken ${(auth as OAuth2PropertyValue).access_token}`,
@@ -77,4 +79,4 @@ export const zohoCrm = createPiece({
     }),
   ],
   triggers: [newContact],
-});
+})

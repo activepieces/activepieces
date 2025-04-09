@@ -1,29 +1,25 @@
-import { Plus } from 'lucide-react';
-import { nanoid } from 'nanoid';
-import { useRef, useEffect } from 'react';
-import DataGrid, {
-  Column,
-  RenderCellProps,
-  DataGridHandle,
-} from 'react-data-grid';
-import 'react-data-grid/lib/styles.css';
+import { Plus } from 'lucide-react'
+import { nanoid } from 'nanoid'
+import { useEffect, useRef } from 'react'
+import DataGrid, { Column, RenderCellProps, DataGridHandle } from 'react-data-grid'
+import 'react-data-grid/lib/styles.css'
 
-import { useTheme } from '@/components/theme-provider';
-import { ApFieldHeader } from '@/features/tables/components/ap-field-header';
-import { ApTableFooter } from '@/features/tables/components/ap-table-footer';
-import ApTableHeader from '@/features/tables/components/ap-table-header';
-import { EditableCell } from '@/features/tables/components/editable-cell';
-import { NewFieldPopup } from '@/features/tables/components/new-field-popup';
-import { SelectColumn } from '@/features/tables/components/select-column';
-import { Row, ROW_HEIGHT_MAP, RowHeight } from '@/features/tables/lib/types';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { cn } from '@/lib/utils';
-import { ApFlagId, Permission } from '@activepieces/shared';
+import { useTheme } from '@/components/theme-provider'
+import { ApFieldHeader } from '@/features/tables/components/ap-field-header'
+import { ApTableFooter } from '@/features/tables/components/ap-table-footer'
+import ApTableHeader from '@/features/tables/components/ap-table-header'
+import { EditableCell } from '@/features/tables/components/editable-cell'
+import { NewFieldPopup } from '@/features/tables/components/new-field-popup'
+import { SelectColumn } from '@/features/tables/components/select-column'
+import { ROW_HEIGHT_MAP, Row, RowHeight } from '@/features/tables/lib/types'
+import { useAuthorization } from '@/hooks/authorization-hooks'
+import { flagsHooks } from '@/hooks/flags-hooks'
+import { cn } from '@/lib/utils'
+import { ApFlagId, Permission } from '@activepieces/shared'
 
-import './react-data-grid.css';
-import { useTableState } from '../../../../features/tables/components/ap-table-state-provider';
-import { ClientRecordData } from '../../../../features/tables/lib/store/ap-tables-client-state';
+import './react-data-grid.css'
+import { useTableState } from '../../../../features/tables/components/ap-table-state-provider'
+import { ClientRecordData } from '../../../../features/tables/lib/store/ap-tables-client-state'
 
 const ApTableEditorPage = () => {
   const [
@@ -44,53 +40,43 @@ const ApTableEditorPage = () => {
     state.updateRecord,
     state.fields,
     state.records,
-  ]);
+  ])
 
-  const gridRef = useRef<DataGridHandle>(null);
-  const { theme } = useTheme();
-  const { data: maxRecords } = flagsHooks.useFlag<number>(
-    ApFlagId.MAX_RECORDS_PER_TABLE,
-  );
-  const { data: maxFields } = flagsHooks.useFlag<number>(
-    ApFlagId.MAX_FIELDS_PER_TABLE,
-  );
+  const gridRef = useRef<DataGridHandle>(null)
+  const { theme } = useTheme()
+  const { data: maxRecords } = flagsHooks.useFlag<number>(ApFlagId.MAX_RECORDS_PER_TABLE)
+  const { data: maxFields } = flagsHooks.useFlag<number>(ApFlagId.MAX_FIELDS_PER_TABLE)
 
-  const userHasTableWritePermission = useAuthorization().checkAccess(
-    Permission.WRITE_TABLE,
-  );
-  const isAllowedToCreateRecord =
-    userHasTableWritePermission && maxRecords && records.length < maxRecords;
-  const isAllowedToCreateField =
-    userHasTableWritePermission && maxFields && fields.length < maxFields;
+  const userHasTableWritePermission = useAuthorization().checkAccess(Permission.WRITE_TABLE)
+  const isAllowedToCreateRecord = userHasTableWritePermission && maxRecords && records.length < maxRecords
+  const isAllowedToCreateField = userHasTableWritePermission && maxFields && fields.length < maxFields
 
   const createEmptyRecord = () => {
     createRecord({
       uuid: nanoid(),
       values: [],
-    });
+    })
     requestAnimationFrame(() => {
       gridRef.current?.scrollToCell({
         rowIdx: records.length,
         idx: 0,
-      });
-    });
-  };
+      })
+    })
+  }
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         selectedCell &&
-        !(event.target as HTMLElement).closest(
-          `#editable-cell-${selectedCell.rowIdx}-${selectedCell.columnIdx}`,
-        )
+        !(event.target as HTMLElement).closest(`#editable-cell-${selectedCell.rowIdx}-${selectedCell.columnIdx}`)
       ) {
-        setSelectedCell(null);
+        setSelectedCell(null)
       }
-    };
+    }
 
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [selectedCell]);
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [selectedCell])
   const newFieldColumn = {
     key: 'new-field',
     minWidth: 67,
@@ -105,7 +91,7 @@ const ApTableEditorPage = () => {
       </NewFieldPopup>
     ),
     renderCell: () => <div className="empty-cell"></div>,
-  };
+  }
   const columns: Column<Row, { id: string }>[] = [
     {
       ...SelectColumn,
@@ -128,11 +114,7 @@ const ApTableEditorPage = () => {
       resizable: true,
       name: '',
       renderHeaderCell: () => <ApFieldHeader field={{ ...field, index }} />,
-      renderCell: ({
-        row,
-        column,
-        rowIdx,
-      }: RenderCellProps<Row, { id: string }>) => (
+      renderCell: ({ row, column, rowIdx }: RenderCellProps<Row, { id: string }>) => (
         <EditableCell
           key={row.id + '_' + field.uuid}
           field={field}
@@ -147,7 +129,7 @@ const ApTableEditorPage = () => {
                 fieldIndex: fIndex,
                 value: newRow[field.uuid] ?? '',
               })),
-            });
+            })
           }}
         />
       ),
@@ -160,23 +142,23 @@ const ApTableEditorPage = () => {
           )
         : undefined,
     })) ?? []),
-  ];
+  ]
   if (isAllowedToCreateField) {
-    columns.push(newFieldColumn);
+    columns.push(newFieldColumn)
   }
 
   function mapRecordsToRows(records: ClientRecordData[]): Row[] {
-    if (!records || records.length === 0) return [];
+    if (!records || records.length === 0) return []
     return records.map((record: ClientRecordData) => {
-      const row: Row = { id: record.uuid };
+      const row: Row = { id: record.uuid }
       record.values.forEach((cell) => {
-        const field = fields[cell.fieldIndex];
+        const field = fields[cell.fieldIndex]
         if (field) {
-          row[field.uuid] = cell.value;
+          row[field.uuid] = cell.value
         }
-      });
-      return row;
-    });
+      })
+      return row
+    })
   }
 
   return (
@@ -194,22 +176,17 @@ const ApTableEditorPage = () => {
             'scroll-smooth  w-[calc(100vw-256px)] h-[calc(100vh-92px-20px-20px)] bg-muted/30',
             theme === 'dark' ? 'rdg-dark' : 'rdg-light',
           )}
-          bottomSummaryRows={
-            userHasTableWritePermission ? [{ id: 'new-record' }] : []
-          }
+          bottomSummaryRows={userHasTableWritePermission ? [{ id: 'new-record' }] : []}
           rowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
           headerRowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
           summaryRowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
         />
       </div>
-      <ApTableFooter
-        fieldsCount={fields.length}
-        recordsCount={records.length}
-      />
+      <ApTableFooter fieldsCount={fields.length} recordsCount={records.length} />
     </div>
-  );
-};
+  )
+}
 
-ApTableEditorPage.displayName = 'ApTableEditorPage';
+ApTableEditorPage.displayName = 'ApTableEditorPage'
 
-export { ApTableEditorPage };
+export { ApTableEditorPage }

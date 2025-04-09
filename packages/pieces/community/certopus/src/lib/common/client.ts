@@ -1,14 +1,9 @@
-import {
-  HttpMessageBody,
-  HttpMethod,
-  QueryParams,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { Organisation } from './models/oranisation';
-import { Event } from './models/event';
-import { Category } from './models/category';
-import { RecipientField } from './models/recipient-field';
-import { certopusCommon } from '.';
+import { HttpMessageBody, HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common'
+import { certopusCommon } from '.'
+import { Category } from './models/category'
+import { Event } from './models/event'
+import { Organisation } from './models/oranisation'
+import { RecipientField } from './models/recipient-field'
 
 export class CertopusClient {
   constructor(private token: string) {}
@@ -17,7 +12,7 @@ export class CertopusClient {
     method: HttpMethod,
     url: string,
     query?: QueryParams,
-    body?: object
+    body?: object,
   ): Promise<T> {
     const res = await httpClient.sendRequest({
       method,
@@ -27,41 +22,30 @@ export class CertopusClient {
       headers: {
         'x-api-key': this.token,
       },
-    });
-    return res.body.data;
+    })
+    return res.body.data
   }
 
   listOrganisations(): Promise<Organisation[]> {
-    return this.makeRequest<Organisation[]>(HttpMethod.GET, '/organisations');
+    return this.makeRequest<Organisation[]>(HttpMethod.GET, '/organisations')
   }
 
   listEvents(organisationId: string): Promise<Event[]> {
-    return this.makeRequest<Event[]>(
-      HttpMethod.GET,
-      `/events/${organisationId}`
-    );
+    return this.makeRequest<Event[]>(HttpMethod.GET, `/events/${organisationId}`)
   }
 
   listCategories(organisationId: string, eventId: string): Promise<Category[]> {
     return this.makeRequest<Category[]>(HttpMethod.GET, '/categories', {
       organisationId,
       eventId,
-    });
+    })
   }
 
-  listRecipientFields(
-    organisationId: string,
-    eventId: string,
-    categoryId: string
-  ): Promise<RecipientField[]> {
-    return this.makeRequest<RecipientField[]>(
-      HttpMethod.GET,
-      '/recipient_fields',
-      {
-        organisationId,
-        eventId,
-        categoryId,
-      }
-    );
+  listRecipientFields(organisationId: string, eventId: string, categoryId: string): Promise<RecipientField[]> {
+    return this.makeRequest<RecipientField[]>(HttpMethod.GET, '/recipient_fields', {
+      organisationId,
+      eventId,
+      categoryId,
+    })
   }
 }

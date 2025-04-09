@@ -1,12 +1,6 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, isNil } from '@activepieces/shared'
-import {
-    ArrayContains,
-    DataSource,
-    EntitySchema,
-    FindOperator,
-    Raw,
-} from 'typeorm'
+import { ArrayContains, DataSource, EntitySchema, FindOperator, Raw } from 'typeorm'
 import { AiProviderEntity } from '../ai/ai-provider-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
@@ -31,9 +25,9 @@ import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
 import { TodoCommentEntity } from '../ee/todos/comment/todos-comment.entity'
 import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
-import { FlowEntity } from '../flows/flow/flow.entity'
 import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
+import { FlowEntity } from '../flows/flow/flow.entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { IssueEntity } from '../flows/issues/issues-entity'
 import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
@@ -51,8 +45,8 @@ import { TableEntity } from '../tables/table/table.entity'
 import { PieceTagEntity } from '../tags/pieces/piece-tag.entity'
 import { TagEntity } from '../tags/tag-entity'
 import { TodoEntity } from '../todos/todo.entity'
-import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
+import { UserEntity } from '../user/user-entity'
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
@@ -61,127 +55,123 @@ import { createSqlLiteDataSource } from './sqlite-connection'
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
 function getEntities(): EntitySchema<unknown>[] {
-    const edition = system.getEdition()
+  const edition = system.getEdition()
 
-    const entities: EntitySchema[] = [
-        TriggerEventEntity,
-        AppEventRoutingEntity,
-        FileEntity,
-        FlagEntity,
-        FlowEntity,
-        FlowVersionEntity,
-        FlowRunEntity,
-        ProjectEntity,
-        StoreEntryEntity,
-        UserEntity,
-        AppConnectionEntity,
-        WebhookSimulationEntity,
-        FolderEntity,
-        PieceMetadataEntity,
-        PlatformEntity,
-        TagEntity,
-        PieceTagEntity,
-        IssueEntity,
-        AlertEntity,
-        UserInvitationEntity,
-        WorkerMachineEntity,
-        AiProviderEntity,
-        ProjectRoleEntity,
-        TableEntity,
-        FieldEntity,
-        RecordEntity,
-        CellEntity,
-        TableWebhookEntity,
-        UserIdentityEntity,
-        TodoEntity,
-        MCPEntity,
-    ]
+  const entities: EntitySchema[] = [
+    TriggerEventEntity,
+    AppEventRoutingEntity,
+    FileEntity,
+    FlagEntity,
+    FlowEntity,
+    FlowVersionEntity,
+    FlowRunEntity,
+    ProjectEntity,
+    StoreEntryEntity,
+    UserEntity,
+    AppConnectionEntity,
+    WebhookSimulationEntity,
+    FolderEntity,
+    PieceMetadataEntity,
+    PlatformEntity,
+    TagEntity,
+    PieceTagEntity,
+    IssueEntity,
+    AlertEntity,
+    UserInvitationEntity,
+    WorkerMachineEntity,
+    AiProviderEntity,
+    ProjectRoleEntity,
+    TableEntity,
+    FieldEntity,
+    RecordEntity,
+    CellEntity,
+    TableWebhookEntity,
+    UserIdentityEntity,
+    TodoEntity,
+    MCPEntity,
+  ]
 
-    switch (edition) {
-        case ApEdition.CLOUD:
-        case ApEdition.ENTERPRISE:
-            entities.push(
-                ProjectMemberEntity,
-                ProjectPlanEntity,
-                CustomDomainEntity,
-                SigningKeyEntity,
-                OAuthAppEntity,
-                OtpEntity,
-                ApiKeyEntity,
-                FlowTemplateEntity,
-                GitRepoEntity,
-                AuditEventEntity,
-                ProjectReleaseEntity,
-                TodoCommentEntity,
+  switch (edition) {
+    case ApEdition.CLOUD:
+    case ApEdition.ENTERPRISE:
+      entities.push(
+        ProjectMemberEntity,
+        ProjectPlanEntity,
+        CustomDomainEntity,
+        SigningKeyEntity,
+        OAuthAppEntity,
+        OtpEntity,
+        ApiKeyEntity,
+        FlowTemplateEntity,
+        GitRepoEntity,
+        AuditEventEntity,
+        ProjectReleaseEntity,
+        TodoCommentEntity,
 
-                // CLOUD
-                AppSumoEntity,
-                ConnectionKeyEntity,
-                AppCredentialEntity,
-                PlatformBillingEntity,
-            )
-            break
-        case ApEdition.COMMUNITY:
-            break
-        default:
-            throw new Error(`Unsupported edition: ${edition}`)
-    }
+        // CLOUD
+        AppSumoEntity,
+        ConnectionKeyEntity,
+        AppCredentialEntity,
+        PlatformBillingEntity,
+      )
+      break
+    case ApEdition.COMMUNITY:
+      break
+    default:
+      throw new Error(`Unsupported edition: ${edition}`)
+  }
 
-    return entities
+  return entities
 }
 
 const getSynchronize = (): boolean => {
-    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
+  const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 
-    const value: Partial<Record<ApEnvironment, boolean>> = {
-        [ApEnvironment.TESTING]: true,
-    }
+  const value: Partial<Record<ApEnvironment, boolean>> = {
+    [ApEnvironment.TESTING]: true,
+  }
 
-    return value[env] ?? false
+  return value[env] ?? false
 }
 
 export const commonProperties = {
-    subscribers: [],
-    entities: getEntities(),
-    synchronize: getSynchronize(),
+  subscribers: [],
+  entities: getEntities(),
+  synchronize: getSynchronize(),
 }
 
 let _databaseConnection: DataSource | null = null
 
 export const databaseConnection = () => {
-    if (isNil(_databaseConnection)) {
-        _databaseConnection = databaseType === DatabaseType.SQLITE3
-            ? createSqlLiteDataSource()
-            : createPostgresDataSource()
-    }
-    return _databaseConnection
+  if (isNil(_databaseConnection)) {
+    _databaseConnection = databaseType === DatabaseType.SQLITE3 ? createSqlLiteDataSource() : createPostgresDataSource()
+  }
+  return _databaseConnection
 }
 
-export function APArrayContains<T>(
-    columnName: string,
-    values: string[],
-): Record<string, FindOperator<T>> {
-    const databaseType = system.get(AppSystemProp.DB_TYPE)
-    switch (databaseType) {
-        case DatabaseType.POSTGRES:
-            return {
-                [columnName]: ArrayContains(values),
-            }
-        case DatabaseType.SQLITE3: {
-            const likeConditions = values
-                .map((_, index) => `${columnName} LIKE :value${index}`)
-                .join(' AND ')
-            const likeParams = values.reduce((params, value, index) => {
-                params[`value${index}`] = `%${value}%`
-                return params
-            }, {} as Record<string, string>)
-            return {
-                [columnName]: Raw(_ => `(${likeConditions})`, likeParams),
-            }
-        }
-        default:
-            throw new Error(`Unsupported database type: ${databaseType}`)
+export function APArrayContains<T>(columnName: string, values: string[]): Record<string, FindOperator<T>> {
+  const databaseType = system.get(AppSystemProp.DB_TYPE)
+  switch (databaseType) {
+    case DatabaseType.POSTGRES:
+      return {
+        [columnName]: ArrayContains(values),
+      }
+    case DatabaseType.SQLITE3: {
+      const likeConditions = values.map((_, index) => `${columnName} LIKE :value${index}`).join(' AND ')
+      const likeParams = values.reduce(
+        (params, value, index) => {
+          params[`value${index}`] = `%${value}%`
+          return params
+        },
+        {} as Record<string, string>,
+      )
+      return {
+        [columnName]: Raw((_) => `(${likeConditions})`, likeParams),
+      }
     }
+    default:
+      throw new Error(`Unsupported database type: ${databaseType}`)
+  }
 }
 
 // Uncomment the below line when running `nx db-migration server-api --name=<MIGRATION_NAME>` and recomment it after the migration is generated

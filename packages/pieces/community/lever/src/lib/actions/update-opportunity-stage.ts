@@ -1,10 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { LEVER_BASE_URL, LeverAuth, leverAuth } from '../..';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { LEVER_BASE_URL, LeverAuth, leverAuth } from '../..'
 
 export const updateOpportunityStage = createAction({
   name: 'updateOpportunityStage',
@@ -26,7 +22,7 @@ export const updateOpportunityStage = createAction({
             disabled: true,
             placeholder: 'Please connect first.',
             options: [],
-          };
+          }
         }
         const response = await httpClient.sendRequest({
           method: HttpMethod.GET,
@@ -36,14 +32,12 @@ export const updateOpportunityStage = createAction({
             username: (auth as LeverAuth).apiKey,
             password: '',
           },
-        });
+        })
         return {
-          options: response.body.data.map(
-            (stage: { text: string; id: string }) => {
-              return { label: stage.text, value: stage.id };
-            }
-          ),
-        };
+          options: response.body.data.map((stage: { text: string; id: string }) => {
+            return { label: stage.text, value: stage.id }
+          }),
+        }
       },
     }),
   },
@@ -57,8 +51,8 @@ export const updateOpportunityStage = createAction({
         password: '',
       },
       body: { stage: propsValue.stage },
-    });
+    })
 
-    return response.body.data;
+    return response.body.data
   },
-});
+})

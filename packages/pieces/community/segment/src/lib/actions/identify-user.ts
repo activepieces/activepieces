@@ -1,6 +1,6 @@
-import { segmentAuth } from '../../.';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework'
 import { Analytics } from '@segment/analytics-node'
+import { segmentAuth } from '../../.'
 
 export const identifyUser = createAction({
   name: 'identifyUser',
@@ -26,7 +26,6 @@ export const identifyUser = createAction({
     })
     return {
       success: true,
-
     }
   },
-});
+})

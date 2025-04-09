@@ -1,14 +1,14 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { endClient, getClient, getProtocolBackwardCompatibility, sftpAuth } from '../..';
-import { Client as FTPClient } from 'basic-ftp';
-import Client from 'ssh2-sftp-client';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { Client as FTPClient } from 'basic-ftp'
+import Client from 'ssh2-sftp-client'
+import { endClient, getClient, getProtocolBackwardCompatibility, sftpAuth } from '../..'
 
 async function deleteFileFromFTP(client: FTPClient, filePath: string) {
-  await client.remove(filePath);
+  await client.remove(filePath)
 }
 
 async function deleteFileFromSFTP(client: Client, filePath: string) {
-  await client.delete(filePath);
+  await client.delete(filePath)
 }
 
 export const deleteFileAction = createAction({
@@ -24,32 +24,32 @@ export const deleteFileAction = createAction({
     }),
   },
   async run(context) {
-    const client = await getClient(context.auth);
-    const filePath = context.propsValue.filePath;
-    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol);
+    const client = await getClient(context.auth)
+    const filePath = context.propsValue.filePath
+    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol)
     try {
       switch (protocolBackwardCompatibility) {
         case 'ftps':
         case 'ftp':
-          await deleteFileFromFTP(client as FTPClient, filePath);
-          break;
+          await deleteFileFromFTP(client as FTPClient, filePath)
+          break
         default:
         case 'sftp':
-          await deleteFileFromSFTP(client as Client, filePath);
-          break;
+          await deleteFileFromSFTP(client as Client, filePath)
+          break
       }
-      
+
       return {
         status: 'success',
-      };
+      }
     } catch (err) {
-      console.error(err);
+      console.error(err)
       return {
         status: 'error',
         error: err,
-      };
+      }
     } finally {
-      await endClient(client, context.auth.protocol);
+      await endClient(client, context.auth.protocol)
     }
   },
-});
+})

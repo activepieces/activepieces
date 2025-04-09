@@ -1,6 +1,6 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { newLead } from './lib/triggers/new-lead';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { newLead } from './lib/triggers/new-lead'
 
 export const poper = createPiece({
   displayName: 'Poper',
@@ -13,4 +13,4 @@ export const poper = createPiece({
   authors: ['thirstycode'],
   actions: [],
   triggers: [newLead],
-});
+})

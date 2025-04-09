@@ -1,23 +1,14 @@
-import {
-  httpClient,
-  HttpMethod,
-  QueryParams,
-} from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
-import {
-  createAction,
-  DynamicPropsValue,
-  Property,
-} from '@activepieces/pieces-framework';
-import { wedofCommon } from '../../common/wedof';
-import dayjs from 'dayjs';
+import { HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common'
+import { DynamicPropsValue, Property, createAction } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { wedofAuth } from '../../..'
+import { wedofCommon } from '../../common/wedof'
 
 export const searchRegistrationFolder = createAction({
   auth: wedofAuth,
   name: 'listRegistrationFolders',
   displayName: 'Rechercher un ou plusieurs dossiers de formation',
-  description:
-    'Liste les dossiers de formation en fonction des critères sélectionnés',
+  description: 'Liste les dossiers de formation en fonction des critères sélectionnés',
   props: {
     query: Property.ShortText({
       displayName: 'Recherche',
@@ -31,29 +22,25 @@ export const searchRegistrationFolder = createAction({
       required: true,
       refreshers: ['period'],
       props: async ({ period }) => {
-        const _period = period as unknown as string;
-        const props: DynamicPropsValue = {};
+        const _period = period as unknown as string
+        const props: DynamicPropsValue = {}
         if (_period === 'custom') {
           props['since'] = Property.DateTime({
             displayName: '(Période) Entre le',
             description: 'Date au format YYYY-MM-DD',
             required: true,
-          });
+          })
           props['until'] = Property.DateTime({
             displayName: "(Période) et jusqu'au",
             description: 'Date au format YYYY-MM-DD',
             required: true,
-          });
-        } else if (
-          ['next', 'future', 'tomorrow'].some((v) =>
-            _period.toLowerCase().includes(v)
-          )
-        ) {
-          props['filterOnStateDate'] = wedofCommon.filterOnStateDateFuture;
+          })
+        } else if (['next', 'future', 'tomorrow'].some((v) => _period.toLowerCase().includes(v))) {
+          props['filterOnStateDate'] = wedofCommon.filterOnStateDateFuture
         } else if (_period) {
-          props['filterOnStateDate'] = wedofCommon.filterOnStateDate;
+          props['filterOnStateDate'] = wedofCommon.filterOnStateDate
         }
-        return props;
+        return props
       },
     }),
     type: wedofCommon.type,
@@ -68,8 +55,7 @@ export const searchRegistrationFolder = createAction({
     }),
     limit: Property.Number({
       displayName: 'Nombre de dossiers de formation',
-      description:
-        'Nombre de dossiers de formation maximum qui seront retournés par requête',
+      description: 'Nombre de dossiers de formation maximum qui seront retournés par requête',
       defaultValue: 100,
       required: false,
     }),
@@ -88,32 +74,26 @@ export const searchRegistrationFolder = createAction({
       page: context.propsValue.page ?? null,
       controlState: context.propsValue.controlState ?? null,
       state: context.propsValue.state ?? null,
-      certificationFolderState:
-        context.propsValue.certificationFolderState ?? null,
+      certificationFolderState: context.propsValue.certificationFolderState ?? null,
       billingState: context.propsValue.billingState ?? null,
       type: context.propsValue.type ?? null,
       period: context.propsValue.period ?? null,
       since: context.propsValue.periodForm['since']
-        ? dayjs(context.propsValue.periodForm['since'])
-            .startOf('day')
-            .format('YYYY-MM-DDTHH:mm:ssZ')
+        ? dayjs(context.propsValue.periodForm['since']).startOf('day').format('YYYY-MM-DDTHH:mm:ssZ')
         : null,
       until: context.propsValue.periodForm['until']
-        ? dayjs(context.propsValue.periodForm['until'])
-            .endOf('day')
-            .format('YYYY-MM-DDTHH:mm:ssZ')
+        ? dayjs(context.propsValue.periodForm['until']).endOf('day').format('YYYY-MM-DDTHH:mm:ssZ')
         : null,
-      filterOnStateDate:
-        context.propsValue.periodForm['filterOnStateDate'] ?? null,
+      filterOnStateDate: context.propsValue.periodForm['filterOnStateDate'] ?? null,
       proposalCode: context.propsValue.proposalCode ?? null,
-    };
-    const queryParams: QueryParams = {};
+    }
+    const queryParams: QueryParams = {}
     Object.keys(params).forEach((value) => {
-      const key = value as keyof typeof params;
+      const key = value as keyof typeof params
       if (params[key] != null && params[key] != undefined) {
-        queryParams[value] = params[key] as string;
+        queryParams[value] = params[key] as string
       }
-    });
+    })
     return (
       await httpClient.sendRequest({
         method: HttpMethod.GET,
@@ -124,6 +104,6 @@ export const searchRegistrationFolder = createAction({
           'X-Api-Key': context.auth as string,
         },
       })
-    ).body;
+    ).body
   },
-});
+})

@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { makeClient } from '../common';
-import { pastefyAuth } from '../..';
-import CryptoJS from 'crypto-js';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import CryptoJS from 'crypto-js'
+import { pastefyAuth } from '../..'
+import { makeClient } from '../common'
 
 export default createAction({
   auth: pastefyAuth,
@@ -20,19 +20,15 @@ export default createAction({
     }),
   },
   async run(context) {
-    const client = makeClient(context.auth, context.propsValue);
-    const password = context.propsValue.password;
-    const paste = await client.getPaste(context.propsValue.paste_id);
+    const client = makeClient(context.auth, context.propsValue)
+    const password = context.propsValue.password
+    const paste = await client.getPaste(context.propsValue.paste_id)
     if (paste.encrypted && password) {
-      paste.content = CryptoJS.AES.decrypt(paste.content, password).toString(
-        CryptoJS.enc.Utf8
-      );
+      paste.content = CryptoJS.AES.decrypt(paste.content, password).toString(CryptoJS.enc.Utf8)
       if (paste.title) {
-        paste.title = CryptoJS.AES.decrypt(paste.title, password).toString(
-          CryptoJS.enc.Utf8
-        );
+        paste.title = CryptoJS.AES.decrypt(paste.title, password).toString(CryptoJS.enc.Utf8)
       }
     }
-    return paste;
+    return paste
   },
-});
+})

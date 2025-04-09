@@ -1,6 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { vboutAuth } from '../..';
-import { makeClient } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { vboutAuth } from '../..'
+import { makeClient } from '../common'
 
 export const removeTagFromContactAction = createAction({
   auth: vboutAuth,
@@ -19,8 +19,8 @@ export const removeTagFromContactAction = createAction({
     }),
   },
   async run(context) {
-    const { email, tagname } = context.propsValue;
-    const client = makeClient(context.auth as string);
-    return await client.removeTagFromContact(email, tagname);
+    const { email, tagname } = context.propsValue
+    const client = makeClient(context.auth as string)
+    return await client.removeTagFromContact(email, tagname)
   },
-});
+})

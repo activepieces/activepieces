@@ -1,19 +1,15 @@
-import {
-  createTrigger,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
-import { nanoid } from 'nanoid';
-import { figmaCommon } from '../common';
-import { figmaWebhookPostRequest, figmaDeleteRequest } from '../common/utils';
-import { figmaAuth } from '../../';
+import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { assertNotNullOrUndefined } from '@activepieces/shared'
+import { nanoid } from 'nanoid'
+import { figmaAuth } from '../../'
+import { figmaCommon } from '../common'
+import { figmaDeleteRequest, figmaWebhookPostRequest } from '../common/utils'
 
 type TriggerData = {
-  webhookId: string;
-};
+  webhookId: string
+}
 
-const TRIGGER_DATA_STORE_KEY = 'figma_new_comment_trigger_data';
+const TRIGGER_DATA_STORE_KEY = 'figma_new_comment_trigger_data'
 
 export const newCommentTrigger = createTrigger({
   auth: figmaAuth,
@@ -37,23 +33,22 @@ export const newCommentTrigger = createTrigger({
   props: {
     team_id: Property.ShortText({
       displayName: 'Team ID',
-      description:
-        'Naviate to team page, copy the Id from the URL after the word team/',
+      description: 'Naviate to team page, copy the Id from the URL after the word team/',
       required: true,
     }),
   },
 
   async onEnable(context): Promise<void> {
-    const token = context.auth.access_token;
-    const teamId = context.propsValue['team_id'];
+    const token = context.auth.access_token
+    const teamId = context.propsValue['team_id']
 
-    assertNotNullOrUndefined(token, 'token');
-    assertNotNullOrUndefined(teamId, 'teamId');
+    assertNotNullOrUndefined(token, 'token')
+    assertNotNullOrUndefined(teamId, 'teamId')
 
-    const url = `${figmaCommon.baseUrl}/${figmaCommon.webhooks}`;
-    const eventType = 'FILE_COMMENT';
-    const passcode = `figma_passcode_${nanoid()}`;
-    const endpoint = context.webhookUrl;
+    const url = `${figmaCommon.baseUrl}/${figmaCommon.webhooks}`
+    const eventType = 'FILE_COMMENT'
+    const passcode = `figma_passcode_${nanoid()}`
+    const endpoint = context.webhookUrl
 
     const { response_body } = await figmaWebhookPostRequest({
       token,
@@ -62,35 +57,30 @@ export const newCommentTrigger = createTrigger({
       teamId,
       endpoint,
       passcode,
-    });
+    })
 
     await context.store?.put<TriggerData>(TRIGGER_DATA_STORE_KEY, {
       webhookId: response_body['id'],
-    });
+    })
   },
 
   async onDisable(context): Promise<void> {
-    const token = context.auth.access_token;
+    const token = context.auth.access_token
 
-    assertNotNullOrUndefined(token, 'token');
+    assertNotNullOrUndefined(token, 'token')
 
-    const triggerData = await context.store?.get<TriggerData>(
-      TRIGGER_DATA_STORE_KEY
-    );
+    const triggerData = await context.store?.get<TriggerData>(TRIGGER_DATA_STORE_KEY)
     if (triggerData !== null && triggerData !== undefined) {
-      const url = `${figmaCommon.baseUrl}/${figmaCommon.webhook}`.replace(
-        ':webhook_id',
-        triggerData.webhookId
-      );
-      await figmaDeleteRequest({ token, url });
+      const url = `${figmaCommon.baseUrl}/${figmaCommon.webhook}`.replace(':webhook_id', triggerData.webhookId)
+      await figmaDeleteRequest({ token, url })
     }
   },
 
   async run(context) {
-    const payloadBody = context.payload.body as Record<string, unknown>;
+    const payloadBody = context.payload.body as Record<string, unknown>
     if ('event_type' in payloadBody && payloadBody['event_type'] === 'PING') {
-      return [];
+      return []
     }
-    return [payloadBody];
+    return [payloadBody]
   },
-});
+})

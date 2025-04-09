@@ -1,6 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { vboutAuth } from '../..';
-import { makeClient } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { vboutAuth } from '../..'
+import { makeClient } from '../common'
 
 export const createEmailMarketingCampaignAction = createAction({
   auth: vboutAuth,
@@ -18,19 +18,19 @@ export const createEmailMarketingCampaignAction = createAction({
             disabled: true,
             placeholder: 'Connect your account first',
             options: [],
-          };
+          }
         }
-        const client = makeClient(auth as string);
-        const res = await client.listEmailLists();
+        const client = makeClient(auth as string)
+        const res = await client.listEmailLists()
         return {
           disabled: false,
           options: res.lists.items.map((list) => {
             return {
               label: list.name,
               value: list.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     name: Property.ShortText({
@@ -77,9 +77,8 @@ export const createEmailMarketingCampaignAction = createAction({
     }),
   },
   async run(context) {
-    const { lists, name, from_name, fromemail, reply_to, subject, body, type } =
-      context.propsValue;
-    const client = makeClient(context.auth as string);
+    const { lists, name, from_name, fromemail, reply_to, subject, body, type } = context.propsValue
+    const client = makeClient(context.auth as string)
     return await client.addCampaign({
       lists: lists.join(','),
       name,
@@ -89,6 +88,6 @@ export const createEmailMarketingCampaignAction = createAction({
       subject,
       body,
       type,
-    });
+    })
   },
-});
+})

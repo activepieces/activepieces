@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 import { zooAuth } from '../../../index'
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const addOrgMemberAction = createAction({
   name: 'add_org_member',
@@ -36,7 +36,7 @@ export const addOrgMemberAction = createAction({
         email: propsValue.email,
         role: propsValue.role,
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

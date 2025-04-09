@@ -1,47 +1,38 @@
-import { Separator } from '@radix-ui/react-dropdown-menu';
-import { Link, useLocation } from 'react-router-dom';
+import { Separator } from '@radix-ui/react-dropdown-menu'
+import { Link, useLocation } from 'react-router-dom'
 
-import { buttonVariants } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 interface SidebarLayoutProps {
-  title: string;
-  items: SidebarItem[];
-  children: React.ReactNode;
+  title: string
+  items: SidebarItem[]
+  children: React.ReactNode
 }
 
 export type SidebarItem = {
-  title: string;
-  href: string;
-  icon: JSX.Element;
-  hasPermission?: boolean;
-};
+  title: string
+  href: string
+  icon: JSX.Element
+  hasPermission?: boolean
+}
 
 interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
-  items: SidebarItem[];
+  items: SidebarItem[]
 }
 
 function SidebarItem({ className, items, ...props }: SidebarNavProps) {
-  const location = useLocation();
-  const linkActive = (item: SidebarItem) =>
-    location.pathname.startsWith(item.href);
+  const location = useLocation()
+  const linkActive = (item: SidebarItem) => location.pathname.startsWith(item.href)
   return (
-    <nav
-      className={cn(
-        'flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1',
-        className,
-      )}
-      {...props}
-    >
+    <nav className={cn('flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1', className)} {...props}>
       {items.map((item) => (
         <Link
           key={item.href}
           to={item.href}
           className={cn(
             buttonVariants({ variant: 'ghost' }),
-            linkActive(item)
-              ? 'bg-muted hover:bg-muted'
-              : 'hover:bg-transparent hover:underline',
+            linkActive(item) ? 'bg-muted hover:bg-muted' : 'hover:bg-transparent hover:underline',
             'justify-start',
           )}
         >
@@ -57,14 +48,10 @@ function SidebarItem({ className, items, ...props }: SidebarNavProps) {
         </Link>
       ))}
     </nav>
-  );
+  )
 }
 
-export default function SidebarLayout({
-  title,
-  items,
-  children,
-}: SidebarLayoutProps) {
+export default function SidebarLayout({ title, items, children }: SidebarLayoutProps) {
   return (
     <div className="w-full md:block">
       <div className="space-y-0.5">
@@ -78,5 +65,5 @@ export default function SidebarLayout({
         <div className="w-full flex-1">{children}</div>
       </div>
     </div>
-  );
+  )
 }

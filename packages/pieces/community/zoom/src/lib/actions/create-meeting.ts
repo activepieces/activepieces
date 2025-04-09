@@ -1,12 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { MeetingMessageBody, MeetingResponseBody } from '../common/models';
-import { zoomAuth } from '../..';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { zoomAuth } from '../..'
+import { MeetingMessageBody, MeetingResponseBody } from '../common/models'
 
 const defaults = {
   agenda: 'My Meeting',
@@ -38,7 +33,7 @@ const defaults = {
 
   timezone: 'UTC',
   type: 2,
-};
+}
 
 const action = () => {
   return createAction({
@@ -100,14 +95,12 @@ const action = () => {
       }),
       pre_schedule: Property.Checkbox({
         displayName: 'Pre Schedule',
-        description:
-          'Whether the prescheduled meeting was created via the GSuite app.',
+        description: 'Whether the prescheduled meeting was created via the GSuite app.',
         required: false,
       }),
       schedule_for: Property.ShortText({
         displayName: 'Schedule for',
-        description:
-          'The email address or user ID of the user to schedule a meeting for.',
+        description: 'The email address or user ID of the user to schedule a meeting for.',
         required: false,
       }),
       join_url: Property.LongText({
@@ -120,16 +113,16 @@ const action = () => {
       const body: MeetingMessageBody = {
         ...defaults,
         ...context.propsValue,
-      };
+      }
 
       if (context.propsValue.auto_recording) {
-        body.settings.auto_recording = context.propsValue.auto_recording;
+        body.settings.auto_recording = context.propsValue.auto_recording
       }
 
       if (context.propsValue.audio) {
-        body.settings.audio = context.propsValue.audio;
+        body.settings.audio = context.propsValue.audio
       }
-      delete body['auth'];
+      delete body['auth']
       const request: HttpRequest<MeetingMessageBody> = {
         method: HttpMethod.POST,
         url: `https://api.zoom.us/v2/users/me/meetings`,
@@ -139,17 +132,17 @@ const action = () => {
           token: context.auth.access_token,
         },
         queryParams: {},
-      };
+      }
 
-      const result = await httpClient.sendRequest<MeetingResponseBody>(request);
+      const result = await httpClient.sendRequest<MeetingResponseBody>(request)
 
       if (result.status === 201) {
-        return result.body;
+        return result.body
       } else {
-        return result;
+        return result
       }
     },
-  });
-};
+  })
+}
 
-export const zoomCreateMeeting = action();
+export const zoomCreateMeeting = action()

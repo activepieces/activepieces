@@ -1,11 +1,5 @@
-import {
-  createTrigger,
-  DynamicPropsValue,
-  Property,
-  StoreScope,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import { callableFlowKey, CallableFlowRequest, MOCK_CALLBACK_IN_TEST_FLOW_URL } from '../common';
+import { DynamicPropsValue, Property, StoreScope, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { CallableFlowRequest, MOCK_CALLBACK_IN_TEST_FLOW_URL, callableFlowKey } from '../common'
 
 export const callableFlow = createTrigger({
   name: 'callableFlow',
@@ -37,20 +31,20 @@ export const callableFlow = createTrigger({
       required: true,
       refreshers: ['mode'],
       props: async (propsValue) => {
-        const mode = propsValue['mode'] as unknown as string;
-        const fields: DynamicPropsValue = {};
+        const mode = propsValue['mode'] as unknown as string
+        const fields: DynamicPropsValue = {}
         if (mode === 'simple') {
           fields['sampleData'] = Property.Object({
             displayName: 'Sample Data',
             required: true,
-          });
+          })
         } else {
           fields['sampleData'] = Property.Json({
             displayName: 'Sample Data',
             required: true,
-          });
+          })
         }
-        return fields;
+        return fields
       },
     }),
   },
@@ -65,17 +59,17 @@ export const callableFlow = createTrigger({
   async test(context) {
     const request: CallableFlowRequest = {
       data: context.propsValue.exampleData['sampleData'],
-      callbackUrl: MOCK_CALLBACK_IN_TEST_FLOW_URL
+      callbackUrl: MOCK_CALLBACK_IN_TEST_FLOW_URL,
     }
-    return [request];
+    return [request]
   },
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
   async onStart(context) {
-    const request = context.payload as CallableFlowRequest;
+    const request = context.payload as CallableFlowRequest
     if (request.callbackUrl) {
-      await context.store.put(callableFlowKey(context.run.id), request.callbackUrl, StoreScope.FLOW);
+      await context.store.put(callableFlowKey(context.run.id), request.callbackUrl, StoreScope.FLOW)
     }
-  }
-});
+  },
+})

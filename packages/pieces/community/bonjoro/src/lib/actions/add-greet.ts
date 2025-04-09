@@ -1,11 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { addGreet, addProfile } from '../api';
-import { bonjoroAuth, BonjoroAuthType } from '../auth';
-import {
-  buildCampaignDropdown,
-  buildTemplateDropdown,
-  buildUserDropdown,
-} from '../props';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { addGreet, addProfile } from '../api'
+import { BonjoroAuthType, bonjoroAuth } from '../auth'
+import { buildCampaignDropdown, buildTemplateDropdown, buildUserDropdown } from '../props'
 
 export const addGreetAction = createAction({
   name: 'add_greet',
@@ -38,24 +34,21 @@ export const addGreetAction = createAction({
       description: 'Who to assign the greet to',
       required: false,
       refreshers: [],
-      options: async ({ auth }) =>
-        await buildUserDropdown(auth as BonjoroAuthType),
+      options: async ({ auth }) => await buildUserDropdown(auth as BonjoroAuthType),
     }),
     campaign: Property.Dropdown({
       displayName: 'Campaign',
       description: 'The campaign to add the greet to',
       required: false,
       refreshers: [],
-      options: async ({ auth }) =>
-        await buildCampaignDropdown(auth as BonjoroAuthType),
+      options: async ({ auth }) => await buildCampaignDropdown(auth as BonjoroAuthType),
     }),
     template: Property.Dropdown({
       displayName: 'Template',
       description: 'The template to use for the greet',
       required: false,
       refreshers: [],
-      options: async ({ auth }) =>
-        await buildTemplateDropdown(auth as BonjoroAuthType),
+      options: async ({ auth }) => await buildTemplateDropdown(auth as BonjoroAuthType),
     }),
     custom: Property.Json({
       displayName: 'Custom Attributes',
@@ -69,8 +62,8 @@ export const addGreetAction = createAction({
       email: context.propsValue.email,
       first_name: context.propsValue.first,
       last_name: context.propsValue.last,
-    };
-    addProfile(context.auth, user);
+    }
+    addProfile(context.auth, user)
 
     const greet = {
       profiles: [context.propsValue.email],
@@ -79,13 +72,13 @@ export const addGreetAction = createAction({
       campaign_id: context.propsValue.campaign,
       template_id: context.propsValue.template,
       custom_attributes: context.propsValue.custom,
-    };
+    }
 
-    if (!greet.assignee_id) delete greet.assignee_id;
-    if (!greet.campaign_id) delete greet.campaign_id;
-    if (!greet.template_id) delete greet.template_id;
-    if (!greet.custom_attributes) delete greet.custom_attributes;
+    if (!greet.assignee_id) delete greet.assignee_id
+    if (!greet.campaign_id) delete greet.campaign_id
+    if (!greet.template_id) delete greet.template_id
+    if (!greet.custom_attributes) delete greet.custom_attributes
 
-    return await addGreet(context.auth, greet);
+    return await addGreet(context.auth, greet)
   },
-});
+})

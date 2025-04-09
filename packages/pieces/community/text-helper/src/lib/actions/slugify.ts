@@ -1,5 +1,5 @@
-import slugify from 'slugify';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import slugify from 'slugify'
 
 export const slugifyAction = createAction({
   description: 'Slugifies strings.',
@@ -12,6 +12,6 @@ export const slugifyAction = createAction({
     }),
   },
   run: async ({ propsValue }) => {
-    return slugify(propsValue.text);
+    return slugify(propsValue.text)
   },
-});
+})

@@ -1,15 +1,11 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
 
-import { PieceCategory } from '@activepieces/shared';
-import { bubbleCreateThingAction } from './lib/actions/create-thing';
-import { bubbleDeleteThingAction } from './lib/actions/delete-thing';
-import { bubbleGetThingAction } from './lib/actions/get-thing';
-import { bubbleListThingsAction } from './lib/actions/list-things';
-import { bubbleUpdateThingAction } from './lib/actions/update-thing';
+import { PieceCategory } from '@activepieces/shared'
+import { bubbleCreateThingAction } from './lib/actions/create-thing'
+import { bubbleDeleteThingAction } from './lib/actions/delete-thing'
+import { bubbleGetThingAction } from './lib/actions/get-thing'
+import { bubbleListThingsAction } from './lib/actions/list-things'
+import { bubbleUpdateThingAction } from './lib/actions/update-thing'
 
 export const bubbleAuth = PieceAuth.CustomAuth({
   description: `Enter Bubble Connection Details
@@ -34,15 +30,15 @@ export const bubbleAuth = PieceAuth.CustomAuth({
     if (auth) {
       return {
         valid: true,
-      };
+      }
     }
     return {
       valid: false,
       error: 'Please enter a valid app name and token',
-    };
+    }
   },
   required: true,
-});
+})
 
 export const bubble = createPiece({
   displayName: 'Bubble',
@@ -52,7 +48,7 @@ export const bubble = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bubble.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  authors: ["TaskMagicKyle","kishanprmr","abuaboud"],
+  authors: ['TaskMagicKyle', 'kishanprmr', 'abuaboud'],
   actions: [
     bubbleCreateThingAction,
     bubbleDeleteThingAction,
@@ -61,4 +57,4 @@ export const bubble = createPiece({
     bubbleListThingsAction,
   ],
   triggers: [],
-});
+})

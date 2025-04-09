@@ -1,15 +1,12 @@
-const { createGlobPatternsForDependencies } = require('@nx/react/tailwind');
-const { join } = require('path');
-const { fontFamily } = require('tailwindcss/defaultTheme');
+const { createGlobPatternsForDependencies } = require('@nx/react/tailwind')
+const { join } = require('path')
+const { fontFamily } = require('tailwindcss/defaultTheme')
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ['class'],
   content: [
-    join(
-      __dirname,
-      '{src,pages,components,app}/**/*!(*.stories|*.spec).{ts,tsx,html}',
-    ),
+    join(__dirname, '{src,pages,components,app}/**/*!(*.stories|*.spec).{ts,tsx,html}'),
     ...createGlobPatternsForDependencies(__dirname),
   ],
   theme: {
@@ -25,10 +22,10 @@ module.exports = {
     },
     extend: {
       width: {
-        '4.5': '1.125rem'
+        4.5: '1.125rem',
       },
       height: {
-        '4.5': '1.125rem',
+        4.5: '1.125rem',
       },
       transitionDuration: {
         1500: '1500ms',
@@ -105,7 +102,7 @@ module.exports = {
         sans: ['var(--font-sans)', ...fontFamily.sans],
       },
       fontSize: {
-        'xss': '0.65rem',
+        xss: '0.65rem',
         '3xl': '1.75rem',
         '4xl': '2rem',
       },
@@ -127,25 +124,25 @@ module.exports = {
           },
         },
         typing: {
-          "0%": {
-            width: "0%",
-            visibility: "hidden",
-          },
-          "100%": {
-            width: "100%",
-          }
-        },
-        'ask-ai-background':{
-         '0%': {
-          backgroundPosition: '0%'
-          },
-          '50%': {
-            backgroundPosition: '100%'
+          '0%': {
+            width: '0%',
+            visibility: 'hidden',
           },
           '100%': {
-            backgroundPosition: '0%'
-          }
-        }
+            width: '100%',
+          },
+        },
+        'ask-ai-background': {
+          '0%': {
+            backgroundPosition: '0%',
+          },
+          '50%': {
+            backgroundPosition: '100%',
+          },
+          '100%': {
+            backgroundPosition: '0%',
+          },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -153,7 +150,7 @@ module.exports = {
         fade: 'fade 0.2s ease-out',
         typing: 'typing 0.7s steps(7) alternate',
         'typing-sm': 'typing 0.5s steps(5) alternate',
-        'ask-ai-background' : 'ask-ai-background 4s ease-in-out infinite'
+        'ask-ai-background': 'ask-ai-background 4s ease-in-out infinite',
       },
       boxShadow: {
         'step-container': '0px 0px 22px hsl(var(--border) / 0.4)',
@@ -162,4 +159,4 @@ module.exports = {
     },
   },
   plugins: [require('tailwindcss-animate')],
-};
+}

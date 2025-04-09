@@ -1,6 +1,5 @@
 import {
   AuthenticationType,
-  httpClient,
   HttpError,
   HttpHeaders,
   HttpMessageBody,
@@ -8,24 +7,20 @@ import {
   HttpRequest,
   HttpResponse,
   QueryParams,
-} from '@activepieces/pieces-common';
-import { httpOauth2Auth } from '../..';
-import {
-  createAction,
-  DynamicPropsValue,
-  Property,
-} from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
-import FormData from 'form-data';
-import { HttpsProxyAgent } from 'https-proxy-agent';
-import axios from 'axios';
+  httpClient,
+} from '@activepieces/pieces-common'
+import { DynamicPropsValue, Property, createAction } from '@activepieces/pieces-framework'
+import { assertNotNullOrUndefined } from '@activepieces/shared'
+import axios from 'axios'
+import FormData from 'form-data'
+import { HttpsProxyAgent } from 'https-proxy-agent'
+import { httpOauth2Auth } from '../..'
 
 export const httpOauth2RequestAction = createAction({
   auth: httpOauth2Auth,
   name: 'send-oauth2-request',
   displayName: 'Send an OAuth2 Request',
-  description:
-    'Sends HTTP request to a specified URL that requires OAuth 2.0 authorization and returns the response.',
+  description: 'Sends HTTP request to a specified URL that requires OAuth 2.0 authorization and returns the response.',
   props: {
     url: Property.ShortText({
       displayName: 'URL',
@@ -83,35 +78,35 @@ export const httpOauth2RequestAction = createAction({
       refreshers: ['body_type'],
       required: false,
       props: async ({ body_type }) => {
-        if (!body_type) return {};
+        if (!body_type) return {}
 
-        const bodyTypeInput = body_type as unknown as string;
+        const bodyTypeInput = body_type as unknown as string
 
-        const fields: DynamicPropsValue = {};
+        const fields: DynamicPropsValue = {}
 
         switch (bodyTypeInput) {
           case 'none':
-            break;
+            break
           case 'json':
             fields['data'] = Property.Json({
               displayName: 'JSON Body',
               required: true,
-            });
-            break;
+            })
+            break
           case 'raw':
             fields['data'] = Property.LongText({
               displayName: 'Raw Body',
               required: true,
-            });
-            break;
+            })
+            break
           case 'form_data':
             fields['data'] = Property.Object({
               displayName: 'Form Data',
               required: true,
-            });
-            break;
+            })
+            break
         }
-        return fields;
+        return fields
       },
     }),
     use_proxy: Property.Checkbox({
@@ -125,31 +120,31 @@ export const httpOauth2RequestAction = createAction({
       refreshers: ['use_proxy'],
       required: false,
       props: async ({ use_proxy }) => {
-        if (!use_proxy) return {};
+        if (!use_proxy) return {}
 
-        const fields: DynamicPropsValue = {};
+        const fields: DynamicPropsValue = {}
 
         fields['proxy_host'] = Property.ShortText({
           displayName: 'Proxy Host',
           required: true,
-        });
+        })
 
         fields['proxy_port'] = Property.Number({
           displayName: 'Proxy Port',
           required: true,
-        });
+        })
 
         fields['proxy_username'] = Property.ShortText({
           displayName: 'Proxy Username',
           required: false,
-        });
+        })
 
         fields['proxy_password'] = Property.ShortText({
           displayName: 'Proxy Password',
           required: false,
-        });
+        })
 
-        return fields;
+        return fields
       },
     }),
     failsafe: Property.Checkbox({
@@ -166,21 +161,11 @@ export const httpOauth2RequestAction = createAction({
     retryOnFailure: { defaultValue: true },
   },
   async run(context) {
-    const {
-      method,
-      url,
-      headers,
-      queryParams,
-      body,
-      body_type,
-      timeout,
-      failsafe,
-      use_proxy,
-    } = context.propsValue;
-    const { auth } = context;
+    const { method, url, headers, queryParams, body, body_type, timeout, failsafe, use_proxy } = context.propsValue
+    const { auth } = context
 
-    assertNotNullOrUndefined(method, 'Method');
-    assertNotNullOrUndefined(url, 'URL');
+    assertNotNullOrUndefined(method, 'Method')
+    assertNotNullOrUndefined(url, 'URL')
 
     const request: HttpRequest = {
       method,
@@ -192,68 +177,62 @@ export const httpOauth2RequestAction = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: auth.access_token,
       },
-    };
+    }
 
     if (body) {
-      const bodyInput = body['data'];
+      const bodyInput = body['data']
       if (body_type === 'form_data') {
-        const formData = new FormData();
+        const formData = new FormData()
         for (const key in bodyInput) {
-          formData.append(key, bodyInput[key]);
+          formData.append(key, bodyInput[key])
         }
-        request.body = formData;
-        request.headers = { ...request.headers, ...formData.getHeaders() };
+        request.body = formData
+        request.headers = { ...request.headers, ...formData.getHeaders() }
       } else {
-        request.body = bodyInput;
+        request.body = bodyInput
       }
     }
 
     try {
       if (use_proxy) {
-        const proxySettings = context.propsValue.proxy_settings;
-        assertNotNullOrUndefined(proxySettings, 'Proxy Settings');
-        assertNotNullOrUndefined(proxySettings['proxy_host'], 'Proxy Host');
-        assertNotNullOrUndefined(proxySettings['proxy_port'], 'Proxy Port');
-        let proxyUrl;
+        const proxySettings = context.propsValue.proxy_settings
+        assertNotNullOrUndefined(proxySettings, 'Proxy Settings')
+        assertNotNullOrUndefined(proxySettings['proxy_host'], 'Proxy Host')
+        assertNotNullOrUndefined(proxySettings['proxy_port'], 'Proxy Port')
+        let proxyUrl
 
-        if (
-          proxySettings['proxy_username'] &&
-          proxySettings['proxy_password']
-        ) {
-          proxyUrl = `http://${proxySettings['proxy_username']}:${proxySettings['proxy_password']}@${proxySettings['proxy_host']}:${proxySettings['proxy_port']}`;
+        if (proxySettings['proxy_username'] && proxySettings['proxy_password']) {
+          proxyUrl = `http://${proxySettings['proxy_username']}:${proxySettings['proxy_password']}@${proxySettings['proxy_host']}:${proxySettings['proxy_port']}`
         } else {
-          proxyUrl = `http://${proxySettings['proxy_host']}:${proxySettings['proxy_port']}`;
+          proxyUrl = `http://${proxySettings['proxy_host']}:${proxySettings['proxy_port']}`
         }
 
-        const httpsAgent = new HttpsProxyAgent(proxyUrl);
+        const httpsAgent = new HttpsProxyAgent(proxyUrl)
         const axiosClient = axios.create({
           httpsAgent,
-        });
+        })
 
-        const proxied_response = await axiosClient.request(request);
-        return handleResponse(proxied_response.data);
+        const proxied_response = await axiosClient.request(request)
+        return handleResponse(proxied_response.data)
       }
-      const response = await httpClient.sendRequest(request);
-      return handleResponse(response);
+      const response = await httpClient.sendRequest(request)
+      return handleResponse(response)
     } catch (error) {
       if (failsafe) {
-        return (error as HttpError).errorMessage();
+        return (error as HttpError).errorMessage()
       }
 
-      throw error;
+      throw error
     }
   },
-});
+})
 
 const handleResponse = (response: HttpResponse<HttpMessageBody>) => {
-  if (
-    response.headers &&
-    response.headers['content-type'] === 'application/octet-stream'
-  ) {
+  if (response.headers && response.headers['content-type'] === 'application/octet-stream') {
     return {
       ...response,
       bodyBase64: Buffer.from(response.body, 'binary').toString('base64'),
-    };
+    }
   }
-  return response;
-};
+  return response
+}

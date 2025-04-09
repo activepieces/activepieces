@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { getLists } from '../api';
-import { sendyAuth } from '../auth';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { getLists } from '../api'
+import { sendyAuth } from '../auth'
 
 export const getListsAction = createAction({
   name: 'get_brand_lists',
@@ -18,6 +18,6 @@ export const getListsAction = createAction({
   async run(context) {
     return await getLists(context.auth, {
       include_hidden: context.propsValue.includeHidden ? 'yes' : 'no',
-    });
+    })
   },
-});
+})

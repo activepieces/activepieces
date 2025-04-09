@@ -1,7 +1,7 @@
-import { createTrigger } from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { stripeCommon } from '../common';
-import { stripeAuth } from '../..';
+import { createTrigger } from '@activepieces/pieces-framework'
+import { TriggerStrategy } from '@activepieces/pieces-framework'
+import { stripeAuth } from '../..'
+import { stripeCommon } from '../common'
 
 export const stripePaymentFailed = createTrigger({
   auth: stripeAuth,
@@ -55,8 +55,7 @@ export const stripePaymentFailed = createTrigger({
       reason: 'generic_decline',
       risk_level: 'normal',
       risk_score: 60,
-      seller_message:
-        'The bank did not return any further details with this decline.',
+      seller_message: 'The bank did not return any further details with this decline.',
       type: 'issuer_declined',
     },
     paid: false,
@@ -154,35 +153,29 @@ export const stripePaymentFailed = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const webhook = await stripeCommon.subscribeWebhook(
-      'charge.failed',
-      context.webhookUrl,
-      context.auth
-    );
+    const webhook = await stripeCommon.subscribeWebhook('charge.failed', context.webhookUrl, context.auth)
     await context.store?.put<WebhookInformation>('_payment_failed_trigger', {
       webhookId: webhook.id,
-    });
+    })
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_payment_failed_trigger'
-    );
+    const response = await context.store?.get<WebhookInformation>('_payment_failed_trigger')
     if (response !== null && response !== undefined) {
-      await stripeCommon.unsubscribeWebhook(response.webhookId, context.auth);
+      await stripeCommon.unsubscribeWebhook(response.webhookId, context.auth)
     }
   },
   async run(context) {
-    const payloadBody = context.payload.body as PayloadBody;
-    return [payloadBody.data.object];
+    const payloadBody = context.payload.body as PayloadBody
+    return [payloadBody.data.object]
   },
-});
+})
 
 type PayloadBody = {
   data: {
-    object: unknown;
-  };
-};
+    object: unknown
+  }
+}
 
 interface WebhookInformation {
-  webhookId: string;
+  webhookId: string
 }

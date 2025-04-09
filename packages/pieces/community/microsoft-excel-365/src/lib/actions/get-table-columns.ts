@@ -1,11 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { excelCommon } from '../common/common';
-import { excelAuth } from '../..';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { excelAuth } from '../..'
+import { excelCommon } from '../common/common'
 
 export const getTableColumnsAction = createAction({
   auth: excelAuth,
@@ -23,15 +19,15 @@ export const getTableColumnsAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const workbookId = propsValue['workbook_id'];
-    const worksheetId = propsValue['worksheet_id'];
-    const tableId = propsValue['table'];
-    const limit = propsValue['limit'];
+    const workbookId = propsValue['workbook_id']
+    const worksheetId = propsValue['worksheet_id']
+    const tableId = propsValue['table']
+    const limit = propsValue['limit']
 
-    let url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`;
+    let url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`
 
     if (limit) {
-      url += `?$top=${limit}`;
+      url += `?$top=${limit}`
     }
 
     const response = await httpClient.sendRequest({
@@ -41,12 +37,10 @@ export const getTableColumnsAction = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: auth['access_token'],
       },
-    });
+    })
 
-    const columnNames = response.body['value'].map(
-      (column: { name: any }) => column.name
-    );
+    const columnNames = response.body['value'].map((column: { name: any }) => column.name)
 
-    return columnNames;
+    return columnNames
   },
-});
+})

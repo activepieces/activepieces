@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework'
 
 export const advancedMapping = createAction({
   name: 'advanced_mapping',
@@ -23,6 +23,6 @@ export const advancedMapping = createAction({
     }),
   },
   async run(ctx) {
-    return ctx.propsValue.mapping;
+    return ctx.propsValue.mapping
   },
-});
+})

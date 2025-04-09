@@ -1,6 +1,6 @@
-import { intercomAuth } from '../../index';
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { intercomClient, TriggerPayload } from '../common';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { intercomAuth } from '../../index'
+import { TriggerPayload, intercomClient } from '../common'
 
 export const leadConvertedToUserTrigger = createTrigger({
   auth: intercomAuth,
@@ -10,39 +10,38 @@ export const leadConvertedToUserTrigger = createTrigger({
   props: {},
   type: TriggerStrategy.APP_WEBHOOK,
   async onEnable(context) {
-    const client = intercomClient(context.auth);
-    const response = await client.admins.identify();
+    const client = intercomClient(context.auth)
+    const response = await client.admins.identify()
 
     if (!response.app?.id_code) {
-      throw new Error('Could not find admin id code');
+      throw new Error('Could not find admin id code')
     }
 
     context.app.createListeners({
       events: ['contact.merged'],
       identifierValue: response['app']['id_code'],
-    });
+    })
   },
   async onDisable(context) {
     // implement webhook deletion logic
   },
   async test(context) {
-      const client = intercomClient(context.auth);
+    const client = intercomClient(context.auth)
 
-      const response = await client.contacts.search({
-        query:{
-            field:'role',
-            operator:'=',
-            value:'user'
-        },
-        pagination:{per_page:5}
-        
-      });
+    const response = await client.contacts.search({
+      query: {
+        field: 'role',
+        operator: '=',
+        value: 'user',
+      },
+      pagination: { per_page: 5 },
+    })
 
-      return response.data;
-  },        
+    return response.data
+  },
   async run(context) {
-    const payload = context.payload.body as TriggerPayload;
-    return [payload.data.item];
+    const payload = context.payload.body as TriggerPayload
+    return [payload.data.item]
   },
   sampleData: {
     type: 'contact',
@@ -141,4 +140,4 @@ export const leadConvertedToUserTrigger = createTrigger({
     unsubscribed_from_sms: false,
     enabled_push_messaging: null,
   },
-});
+})

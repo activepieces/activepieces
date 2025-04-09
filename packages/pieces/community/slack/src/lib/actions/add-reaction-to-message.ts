@@ -1,9 +1,9 @@
-import { slackAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { singleSelectChannelInfo, slackChannel } from '../common/props';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { slackAuth } from '../../'
+import { singleSelectChannelInfo, slackChannel } from '../common/props'
 
-import { WebClient } from '@slack/web-api';
-import { processMessageTimestamp } from '../common/utils';
+import { WebClient } from '@slack/web-api'
+import { processMessageTimestamp } from '../common/utils'
 
 export const addRectionToMessageAction = createAction({
   auth: slackAuth,
@@ -28,22 +28,22 @@ export const addRectionToMessageAction = createAction({
   },
 
   async run(context) {
-    const { channel, ts, reaction } = context.propsValue;
+    const { channel, ts, reaction } = context.propsValue
 
-    const slack = new WebClient(context.auth.access_token);
+    const slack = new WebClient(context.auth.access_token)
 
-    const messageTimestamp = processMessageTimestamp(ts);
+    const messageTimestamp = processMessageTimestamp(ts)
 
     if (messageTimestamp) {
       const response = await slack.reactions.add({
         channel,
         timestamp: messageTimestamp,
         name: reaction,
-      });
+      })
 
-      return response;
+      return response
     } else {
-      throw new Error('Invalid Timestamp Value.');
+      throw new Error('Invalid Timestamp Value.')
     }
   },
-});
+})

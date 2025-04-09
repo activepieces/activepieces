@@ -1,10 +1,6 @@
-import {
-  TriggerStrategy,
-  WebhookHandshakeStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
-import { common, OnfleetWebhookTriggers } from '../common';
-import { onfleetAuth } from '../..';
+import { TriggerStrategy, WebhookHandshakeStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
+import { OnfleetWebhookTriggers, common } from '../common'
 
 export const taskCloned = createTrigger({
   auth: onfleetAuth,
@@ -18,24 +14,24 @@ export const taskCloned = createTrigger({
     const webhookId = await common.subscribeWebhook(
       context.auth,
       context.webhookUrl,
-      OnfleetWebhookTriggers.TASK_CLONED
-    );
+      OnfleetWebhookTriggers.TASK_CLONED,
+    )
 
     await context.store?.put('_task_cloned_trigger', {
       webhookId: webhookId,
-    });
+    })
   },
   //Delete the webhook
   async onDisable(context) {
-    const response: any = await context.store?.get('_task_cloned_trigger');
+    const response: any = await context.store?.get('_task_cloned_trigger')
 
     if (response !== null && response !== undefined) {
-      await common.unsubscribeWebhook(context.auth, response.webhookId);
+      await common.unsubscribeWebhook(context.auth, response.webhookId)
     }
   },
   //Return task
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
 
   handshakeConfiguration: {
@@ -47,7 +43,7 @@ export const taskCloned = createTrigger({
     return {
       status: 200,
       body: context.payload.queryParams['check'],
-    };
+    }
   },
 
   sampleData: {
@@ -144,4 +140,4 @@ export const taskCloned = createTrigger({
     triggerName: 'taskCloned',
     workerId: null,
   },
-});
+})

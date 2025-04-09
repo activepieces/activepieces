@@ -1,4 +1,4 @@
-import { EntityProp } from '../types';
+import { EntityProp } from '../types'
 
 // https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/api-reference/v2.0/api/dynamics_salesquote_create
 
@@ -200,4 +200,4 @@ export const salesQuotesEntityProps: EntityProp[] = [
     isRequired: false,
     type: 'date',
   },
-];
+]

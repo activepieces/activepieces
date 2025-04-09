@@ -1,9 +1,5 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
 
 export const bambooHrAuth = PieceAuth.CustomAuth({
   required: true,
@@ -21,7 +17,7 @@ export const bambooHrAuth = PieceAuth.CustomAuth({
       required: true,
     }),
   },
-});
+})
 
 export const bambooHr = createPiece({
   displayName: 'BambooHR',
@@ -32,19 +28,15 @@ export const bambooHr = createPiece({
   actions: [
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        `https://api.bamboohr.com/api/gateway.php/${
-          (auth as { companyDomain: string }).companyDomain
-        }/v1/`,
+        `https://api.bamboohr.com/api/gateway.php/${(auth as { companyDomain: string }).companyDomain}/v1/`,
       auth: bambooHrAuth,
       authMapping: async (auth) => {
-        const { apiKey } = auth as { apiKey: string };
+        const { apiKey } = auth as { apiKey: string }
         return {
-          Authorization: `Basic ${Buffer.from(`${apiKey}:`).toString(
-            'base64'
-          )}`,
-        };
+          Authorization: `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`,
+        }
       },
     }),
   ],
   triggers: [],
-});
+})

@@ -9,6 +9,24 @@
         "config": ".verdaccio/config.yml",
         "storage": "tmp/local-registry/storage"
       }
+    },
+    "biome-check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx biome check ."
+      }
+    },
+    "biome-format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx biome format . --write"
+      }
+    },
+    "biome-lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx biome lint ."
+      }
     }
   }
 }

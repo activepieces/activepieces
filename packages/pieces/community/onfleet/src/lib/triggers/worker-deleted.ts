@@ -1,10 +1,6 @@
-import {
-  TriggerStrategy,
-  WebhookHandshakeStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
-import { common, OnfleetWebhookTriggers } from '../common';
-import { onfleetAuth } from '../..';
+import { TriggerStrategy, WebhookHandshakeStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
+import { OnfleetWebhookTriggers, common } from '../common'
 
 export const workerDeleted = createTrigger({
   auth: onfleetAuth,
@@ -18,24 +14,24 @@ export const workerDeleted = createTrigger({
     const webhookId = await common.subscribeWebhook(
       context.auth,
       context.webhookUrl,
-      OnfleetWebhookTriggers.WORKER_DELETED
-    );
+      OnfleetWebhookTriggers.WORKER_DELETED,
+    )
 
     await context.store?.put('_worker_deleted_trigger', {
       webhookId: webhookId,
-    });
+    })
   },
   //Delete the webhook
   async onDisable(context) {
-    const response: any = await context.store?.get('_worker_deleted_trigger');
+    const response: any = await context.store?.get('_worker_deleted_trigger')
 
     if (response !== null && response !== undefined) {
-      await common.unsubscribeWebhook(context.auth, response.webhookId);
+      await common.unsubscribeWebhook(context.auth, response.webhookId)
     }
   },
   //Return task
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
 
   handshakeConfiguration: {
@@ -47,7 +43,7 @@ export const workerDeleted = createTrigger({
     return {
       status: 200,
       body: context.payload.queryParams['check'],
-    };
+    }
   },
 
   sampleData: {
@@ -92,4 +88,4 @@ export const workerDeleted = createTrigger({
     },
     time: 1623274403564,
   },
-});
+})

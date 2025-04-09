@@ -1,95 +1,95 @@
-import dayjs from 'dayjs';
-import { jwtDecode } from 'jwt-decode';
+import dayjs from 'dayjs'
+import { jwtDecode } from 'jwt-decode'
 
-import { AuthenticationResponse, isNil, Principal } from '@activepieces/shared';
+import { AuthenticationResponse, Principal, isNil } from '@activepieces/shared'
 
-import { authenticationApi } from './authentication-api';
+import { authenticationApi } from './authentication-api'
 
-const tokenKey = 'token';
+const tokenKey = 'token'
 export const authenticationSession = {
   saveResponse(response: AuthenticationResponse) {
-    localStorage.setItem(tokenKey, response.token);
-    window.dispatchEvent(new Event('storage'));
+    localStorage.setItem(tokenKey, response.token)
+    window.dispatchEvent(new Event('storage'))
   },
   isJwtExpired(token: string): boolean {
     if (!token) {
-      return true;
+      return true
     }
     try {
-      const decoded = jwtDecode(token);
+      const decoded = jwtDecode(token)
       if (decoded && decoded.exp && dayjs().isAfter(dayjs.unix(decoded.exp))) {
-        return true;
+        return true
       }
-      return false;
+      return false
     } catch (e) {
-      return true;
+      return true
     }
   },
   getToken(): string | null {
-    return localStorage.getItem(tokenKey) ?? null;
+    return localStorage.getItem(tokenKey) ?? null
   },
 
   getProjectId(): string | null {
-    const token = this.getToken();
+    const token = this.getToken()
     if (isNil(token)) {
-      return null;
+      return null
     }
-    const decodedJwt = getDecodedJwt(token);
-    return decodedJwt.projectId;
+    const decodedJwt = getDecodedJwt(token)
+    return decodedJwt.projectId
   },
   getCurrentUserId(): string | null {
-    const token = this.getToken();
+    const token = this.getToken()
     if (isNil(token)) {
-      return null;
+      return null
     }
-    const decodedJwt = getDecodedJwt(token);
-    return decodedJwt.id;
+    const decodedJwt = getDecodedJwt(token)
+    return decodedJwt.id
   },
   appendProjectRoutePrefix(path: string): string {
-    const projectId = this.getProjectId();
+    const projectId = this.getProjectId()
     if (isNil(projectId)) {
-      return path;
+      return path
     }
-    return `/projects/${projectId}${path.startsWith('/') ? path : `/${path}`}`;
+    return `/projects/${projectId}${path.startsWith('/') ? path : `/${path}`}`
   },
   getPlatformId(): string | null {
-    const token = this.getToken();
+    const token = this.getToken()
     if (isNil(token)) {
-      return null;
+      return null
     }
-    const decodedJwt = getDecodedJwt(token);
-    return decodedJwt.platform.id;
+    const decodedJwt = getDecodedJwt(token)
+    return decodedJwt.platform.id
   },
   async switchToPlatform(platformId: string) {
     if (authenticationSession.getPlatformId() === platformId) {
-      return;
+      return
     }
     const result = await authenticationApi.switchPlatform({
       platformId,
-    });
-    localStorage.setItem(tokenKey, result.token);
-    window.location.href = '/';
+    })
+    localStorage.setItem(tokenKey, result.token)
+    window.location.href = '/'
   },
   async switchToSession(projectId: string) {
     if (authenticationSession.getProjectId() === projectId) {
-      return;
+      return
     }
-    const result = await authenticationApi.switchProject({ projectId });
-    localStorage.setItem(tokenKey, result.token);
-    window.dispatchEvent(new Event('storage'));
+    const result = await authenticationApi.switchProject({ projectId })
+    localStorage.setItem(tokenKey, result.token)
+    window.dispatchEvent(new Event('storage'))
   },
   isLoggedIn(): boolean {
-    return !!this.getToken();
+    return !!this.getToken()
   },
   clearSession() {
-    localStorage.removeItem(tokenKey);
+    localStorage.removeItem(tokenKey)
   },
   logOut() {
-    this.clearSession();
-    window.location.href = '/sign-in';
+    this.clearSession()
+    window.location.href = '/sign-in'
   },
-};
+}
 
 function getDecodedJwt(token: string): Principal {
-  return jwtDecode<Principal>(token);
+  return jwtDecode<Principal>(token)
 }

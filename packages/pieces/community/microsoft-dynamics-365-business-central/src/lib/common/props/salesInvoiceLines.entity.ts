@@ -1,4 +1,4 @@
-import { EntityProp } from '../types';
+import { EntityProp } from '../types'
 
 //https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/api-reference/v2.0/resources/dynamics_salesinvoiceline
 
@@ -68,8 +68,7 @@ export const salesInvoiceLinesEntityProps: EntityProp[] = [
   {
     name: 'lineObjectNumber',
     displayName: 'Line Object Number',
-    description:
-      'The number of the object (account or item) of the sales invoice line.',
+    description: 'The number of the object (account or item) of the sales invoice line.',
     type: 'text',
     isRequired: false,
   },
@@ -131,11 +130,6 @@ export const salesInvoiceLinesEntityProps: EntityProp[] = [
     isRequired: false,
     type: 'date',
   },
-];
+]
 
-export const salesInvoiceLinesEntityNumberProps = [
-  'quantity',
-  'unitPrice',
-  'discountPercent',
-  'discountAmount',
-];
+export const salesInvoiceLinesEntityNumberProps = ['quantity', 'unitPrice', 'discountPercent', 'discountAmount']

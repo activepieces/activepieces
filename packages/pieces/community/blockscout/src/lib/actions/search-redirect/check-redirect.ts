@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
 export const checkRedirect = createAction({
   name: 'check_redirect',
@@ -18,12 +18,12 @@ export const checkRedirect = createAction({
       method: HttpMethod.GET,
       url: `https://eth.blockscout.com/api/v2/search/check-redirect`,
       queryParams: {
-        q: context.propsValue.query
+        q: context.propsValue.query,
       },
-    });
+    })
     if (response.status !== 200) {
-      throw new Error(`Blockscout API request failed with status ${response.status}`);
+      throw new Error(`Blockscout API request failed with status ${response.status}`)
     }
-    return response.body;
+    return response.body
   },
-});
+})

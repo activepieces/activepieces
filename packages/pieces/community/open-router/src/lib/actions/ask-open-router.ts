@@ -1,17 +1,9 @@
-import { openRouterAuth } from '../../index';
-import {
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { openRouterModels, promptResponse } from '../common';
-import {
-  AuthenticationType,
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { openRouterAuth } from '../../index'
+import { openRouterModels, promptResponse } from '../common'
 
 export const askOpenRouterAction = createAction({
   name: 'ask-lmm',
@@ -34,28 +26,26 @@ export const askOpenRouterAction = createAction({
             type: AuthenticationType.BEARER_TOKEN,
             token: auth as string,
           },
-        };
+        }
         try {
-          const response = await httpClient.sendRequest<openRouterModels>(
-            request
-          );
+          const response = await httpClient.sendRequest<openRouterModels>(request)
 
           const options = response.body.data.map((model) => {
             return {
               label: model.id,
               value: model.id,
-            };
-          });
+            }
+          })
           return {
             options: options,
             disabled: false,
-          };
+          }
         } catch (error) {
           return {
             options: [],
             disabled: true,
             placeholder: `Couldn't Load Models:\n${error}`,
-          };
+          }
         }
       },
     }),
@@ -87,10 +77,10 @@ export const askOpenRouterAction = createAction({
     await propsValidation.validateZod(context.propsValue, {
       temperature: z.number().min(0).max(1.0).optional(),
       topP: z.number().min(0).max(1.0).optional(),
-    });
+    })
 
-    const openRouterModel = context.propsValue.model;
-    const prompt = context.propsValue.prompt;
+    const openRouterModel = context.propsValue.model
+    const prompt = context.propsValue.prompt
     const request: HttpRequest = {
       url: 'https://openrouter.ai/api/v1/chat/completions',
       method: HttpMethod.POST,
@@ -108,10 +98,10 @@ export const askOpenRouterAction = createAction({
       headers: {
         'HTTP-Referer': 'https://openrouter.ai/playground',
       },
-    };
-    const response = await httpClient.sendRequest<promptResponse>(request);
-    const responseText = response.body.choices[0].text;
-    const trimmedResponse = responseText.trim();
-    return trimmedResponse;
+    }
+    const response = await httpClient.sendRequest<promptResponse>(request)
+    const responseText = response.body.choices[0].text
+    const trimmedResponse = responseText.trim()
+    return trimmedResponse
   },
-});
+})

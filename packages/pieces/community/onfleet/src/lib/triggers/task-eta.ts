@@ -1,42 +1,33 @@
-import {
-  TriggerStrategy,
-  WebhookHandshakeStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
-import { common, OnfleetWebhookTriggers } from '../common';
-import { onfleetAuth } from '../..';
+import { TriggerStrategy, WebhookHandshakeStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
+import { OnfleetWebhookTriggers, common } from '../common'
 
 export const taskEta = createTrigger({
   auth: onfleetAuth,
   name: 'task_eta',
   displayName: 'Task ETA',
-  description:
-    'Triggers when a task worker ETA less than or equal to threshold value provided, in seconds',
+  description: 'Triggers when a task worker ETA less than or equal to threshold value provided, in seconds',
   type: TriggerStrategy.WEBHOOK,
   props: {},
   //Create the webhook and save the webhook ID in store for disable behavior
   async onEnable(context) {
-    const webhookId = await common.subscribeWebhook(
-      context.auth,
-      context.webhookUrl,
-      OnfleetWebhookTriggers.TASK_ETA
-    );
+    const webhookId = await common.subscribeWebhook(context.auth, context.webhookUrl, OnfleetWebhookTriggers.TASK_ETA)
 
     await context.store?.put('_task_eta_trigger', {
       webhookId: webhookId,
-    });
+    })
   },
   //Delete the webhook
   async onDisable(context) {
-    const response: any = await context.store?.get('_task_eta_trigger');
+    const response: any = await context.store?.get('_task_eta_trigger')
 
     if (response !== null && response !== undefined) {
-      await common.unsubscribeWebhook(context.auth, response.webhookId);
+      await common.unsubscribeWebhook(context.auth, response.webhookId)
     }
   },
   //Return task
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
 
   handshakeConfiguration: {
@@ -48,7 +39,7 @@ export const taskEta = createTrigger({
     return {
       status: 200,
       body: context.payload.queryParams['check'],
-    };
+    }
   },
 
   sampleData: {
@@ -140,4 +131,4 @@ export const taskEta = createTrigger({
     actionContext: null,
     time: 1615505708224,
   },
-});
+})

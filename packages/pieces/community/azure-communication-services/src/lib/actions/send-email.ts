@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { azureCommunicationServiceAuth } from '../..';
-import { EmailClient, EmailMessage } from '@azure/communication-email';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { EmailClient, EmailMessage } from '@azure/communication-email'
+import { azureCommunicationServiceAuth } from '../..'
 
 export const sendEmail = createAction({
   auth: azureCommunicationServiceAuth,
@@ -50,7 +50,7 @@ export const sendEmail = createAction({
             { label: 'Plain Text', value: 'text' },
             { label: 'HTML', value: 'html' },
           ],
-        };
+        }
       },
     }),
     content: Property.ShortText({
@@ -60,8 +60,7 @@ export const sendEmail = createAction({
     }),
   },
   async run(context) {
-    const { to, from, reply_to, subject, content_type, content, cc, bcc } =
-      context.propsValue;
+    const { to, from, reply_to, subject, content_type, content, cc, bcc } = context.propsValue
     const message = {
       senderAddress: from,
       content: {
@@ -79,9 +78,9 @@ export const sendEmail = createAction({
         cc: (cc || []).map((address) => ({ address })),
         bcc: (bcc || []).map((address) => ({ address })),
       },
-    } as EmailMessage;
-    const client = new EmailClient(context.auth);
-    const poller = await client.beginSend(message);
-    return await poller.pollUntilDone();
+    } as EmailMessage
+    const client = new EmailClient(context.auth)
+    const poller = await client.beginSend(message)
+    return await poller.pollUntilDone()
   },
-});
+})

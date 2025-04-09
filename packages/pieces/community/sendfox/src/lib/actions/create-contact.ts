@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { sendfoxAuth } from '../../index';
-import { callsendfoxApi, sendfoxCommon } from '../../common';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { callsendfoxApi, sendfoxCommon } from '../../common'
+import { sendfoxAuth } from '../../index'
 
 export const createContact = createAction({
   name: 'create-contact',
@@ -24,26 +24,19 @@ export const createContact = createAction({
     list: sendfoxCommon.lists,
   },
   async run(context) {
-    const authentication = context.auth;
-    const accessToken = authentication;
-    const email = context.propsValue.email;
-    const firstname = context.propsValue.firstname;
-    const lastname = context.propsValue.lastname;
-    const list = context.propsValue.list;
+    const authentication = context.auth
+    const accessToken = authentication
+    const email = context.propsValue.email
+    const firstname = context.propsValue.firstname
+    const lastname = context.propsValue.lastname
+    const list = context.propsValue.list
 
-    const request_body: { [key: string]: any } = { email: email };
-    if (firstname) request_body['first_name'] = firstname;
-    if (lastname) request_body['last_name'] = lastname;
-    if (list) request_body['lists'] = [list];
+    const request_body: { [key: string]: any } = { email: email }
+    if (firstname) request_body['first_name'] = firstname
+    if (lastname) request_body['last_name'] = lastname
+    if (list) request_body['lists'] = [list]
 
-    const response = (
-      await callsendfoxApi(
-        HttpMethod.POST,
-        'contacts',
-        accessToken,
-        request_body
-      )
-    ).body;
-    return response;
+    const response = (await callsendfoxApi(HttpMethod.POST, 'contacts', accessToken, request_body)).body
+    return response
   },
-});
+})

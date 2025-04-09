@@ -1,8 +1,4 @@
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common'
 import {
   PieceAuthProperty,
   PiecePropValueSchema,
@@ -10,12 +6,12 @@ import {
   StoreScope,
   TriggerStrategy,
   createTrigger,
-} from '@activepieces/pieces-framework';
-import { rssFeedUrl } from '../common/props';
-import FeedParser from 'feedparser';
-import axios from 'axios';
-import { isNil } from '@activepieces/shared';
-import dayjs from 'dayjs';
+} from '@activepieces/pieces-framework'
+import { isNil } from '@activepieces/shared'
+import axios from 'axios'
+import dayjs from 'dayjs'
+import FeedParser from 'feedparser'
+import { rssFeedUrl } from '../common/props'
 
 export const rssNewItemTrigger = createTrigger({
   name: 'new-item',
@@ -24,10 +20,8 @@ export const rssNewItemTrigger = createTrigger({
   type: TriggerStrategy.POLLING,
   sampleData: {
     title: 'AWS Cloud Quest: Container Services',
-    description:
-      '<p>This is the DIY challenge of the Container Services in AWS Cloud Quest.</p>\n\n<p></ol>',
-    summary:
-      '<p>This is the DIY challenge of the Container Services in AWS Cloud Quest.</ol>',
+    description: '<p>This is the DIY challenge of the Container Services in AWS Cloud Quest.</p>\n\n<p></ol>',
+    summary: '<p>This is the DIY challenge of the Container Services in AWS Cloud Quest.</ol>',
     date: '2023-03-08T21:57:48.000Z',
     pubdate: '2023-03-08T21:57:48.000Z',
     pubDate: '2023-03-08T21:57:48.000Z',
@@ -144,115 +138,110 @@ export const rssNewItemTrigger = createTrigger({
       store: store,
       propsValue: propsValue,
       files: files,
-    });
+    })
   },
   async onEnable({ auth, propsValue, store }): Promise<void> {
     await pollingHelper.onEnable(polling, {
       auth,
       store: store,
       propsValue: propsValue,
-    });
+    })
   },
 
   async onDisable({ auth, propsValue, store }): Promise<void> {
-    const lastFetchDate = await store.get<number>('_lastRssPublishDate');
+    const lastFetchDate = await store.get<number>('_lastRssPublishDate')
     if (!isNil(lastFetchDate)) {
-      await store.delete('_lastRssPublishDate');
+      await store.delete('_lastRssPublishDate')
     }
     await pollingHelper.onDisable(polling, {
       auth,
       store: store,
       propsValue: propsValue,
-    });
+    })
   },
 
   async run({ auth, propsValue, store, files }): Promise<unknown[]> {
-    const lastFetchDate = await store.get<number>('_lastRssPublishDate');
+    const lastFetchDate = await store.get<number>('_lastRssPublishDate')
     const newItems = (
       await pollingHelper.poll(polling, {
         auth,
         store: store,
-        propsValue: propsValue, 
+        propsValue: propsValue,
         files: files,
       })
     ).filter((f) => {
       if (isNil(lastFetchDate)) {
-        return true;
+        return true
       }
-      const newItem = f as { pubdate: string; pubDate: string };
-      const newDate = newItem.pubdate ?? newItem.pubDate;
+      const newItem = f as { pubdate: string; pubDate: string }
+      const newDate = newItem.pubdate ?? newItem.pubDate
       if (isNil(newDate)) {
-        return true;
+        return true
       }
-      return dayjs(newDate).unix() > lastFetchDate;
-    });
-    let newFetchDateUnix = lastFetchDate;
+      return dayjs(newDate).unix() > lastFetchDate
+    })
+    let newFetchDateUnix = lastFetchDate
     for (const item of newItems) {
-      const newItem = item as { pubdate: string; pubDate: string };
-      const newDate = newItem.pubdate ?? newItem.pubDate;
+      const newItem = item as { pubdate: string; pubDate: string }
+      const newDate = newItem.pubdate ?? newItem.pubDate
       if (!isNil(newDate)) {
-        const newDateUnix = dayjs(newDate).unix();
+        const newDateUnix = dayjs(newDate).unix()
         if (isNil(newFetchDateUnix) || newDateUnix > newFetchDateUnix) {
-          newFetchDateUnix = newDateUnix;
+          newFetchDateUnix = newDateUnix
         }
       }
     }
     if (!isNil(newFetchDateUnix)) {
-      await store.put('_lastRssPublishDate', newFetchDateUnix);
+      await store.put('_lastRssPublishDate', newFetchDateUnix)
     }
     return newItems.sort((a, b) => {
       const aDate =
-        (a as { pubdate: string; pubDate: string }).pubdate ??
-        (a as { pubdate: string; pubDate: string }).pubDate;
+        (a as { pubdate: string; pubDate: string }).pubdate ?? (a as { pubdate: string; pubDate: string }).pubDate
       const bDate =
-        (b as { pubdate: string; pubDate: string }).pubdate ??
-        (b as { pubdate: string; pubDate: string }).pubDate;
+        (b as { pubdate: string; pubDate: string }).pubdate ?? (b as { pubdate: string; pubDate: string }).pubDate
       if (aDate && bDate) {
-        const aUnix = dayjs(aDate).unix();
-        const bUnix = dayjs(bDate).unix();
+        const aUnix = dayjs(aDate).unix()
+        const bUnix = dayjs(bDate).unix()
         if (aUnix === bUnix) {
-          return newItems.indexOf(a) - newItems.indexOf(b);
+          return newItems.indexOf(a) - newItems.indexOf(b)
         } else {
-          return bUnix - aUnix;
+          return bUnix - aUnix
         }
       } else {
-        return newItems.indexOf(a) - newItems.indexOf(b);
+        return newItems.indexOf(a) - newItems.indexOf(b)
       }
-    });
+    })
   },
-});
+})
 
-const polling: Polling<
-  PiecePropValueSchema<PieceAuthProperty>,
-  { rss_feed_url: string }
-> = {
+const polling: Polling<PiecePropValueSchema<PieceAuthProperty>, { rss_feed_url: string }> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({
     propsValue,
   }: {
-    store: Store;
-    propsValue: { rss_feed_url: string };
+    store: Store
+    propsValue: { rss_feed_url: string }
   }) => {
-    const items = await getRssItems(propsValue.rss_feed_url);
+    const items = await getRssItems(propsValue.rss_feed_url)
     return items.map((item) => ({
       id: getId(item),
       data: item,
-    }));
+    }))
   },
-};
+}
 
 // Some RSS feeds use the id field, some use the guid field, and some use neither.
 function getId(item: { id: string; guid: string }) {
   if (item === undefined) {
-    return undefined;
+    return undefined
   }
   if (item.guid) {
-    return item.guid;
+    return item.guid
   }
   if (item.id) {
-    return item.id;
+    return item.id
   }
-  return JSON.stringify(item);
+  return JSON.stringify(item)
 }
 
 function getRssItems(url: string): Promise<any[]> {
@@ -264,28 +253,28 @@ function getRssItems(url: string): Promise<any[]> {
       .then((response) => {
         const feedparser = new FeedParser({
           addmeta: true,
-        });
-        response.data.pipe(feedparser);
-        const items: any[] = [];
+        })
+        response.data.pipe(feedparser)
+        const items: any[] = []
 
         feedparser.on('readable', () => {
-          let item = feedparser.read();
+          let item = feedparser.read()
           while (item) {
-            items.push(item);
-            item = feedparser.read();
+            items.push(item)
+            item = feedparser.read()
           }
-        });
+        })
 
         feedparser.on('end', () => {
-          resolve(items);
-        });
+          resolve(items)
+        })
 
         feedparser.on('error', (error: any) => {
-          reject(error);
-        });
+          reject(error)
+        })
       })
       .catch((error) => {
-        reject(error);
-      });
-  });
+        reject(error)
+      })
+  })
 }

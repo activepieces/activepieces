@@ -1,12 +1,8 @@
-import { straicoAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { straicoAuth } from '../../index'
 
-import { baseUrl } from '../common/common';
+import { baseUrl } from '../common/common'
 
 export const imageGeneration = createAction({
   auth: straicoAuth,
@@ -17,8 +13,7 @@ export const imageGeneration = createAction({
     variations: Property.StaticDropdown({
       displayName: 'Number of Images',
       required: true,
-      description:
-        'Number of images to generate.',
+      description: 'Number of images to generate.',
       defaultValue: 1,
       options: {
         disabled: false,
@@ -33,31 +28,29 @@ export const imageGeneration = createAction({
     size: Property.StaticDropdown({
       displayName: 'Image Dimensions',
       required: true,
-      description:
-        'The desired image dimensions.',
+      description: 'The desired image dimensions.',
       defaultValue: 1,
       options: {
         disabled: false,
         options: [
           { value: 'square', label: 'square' },
           { value: 'landscape', label: 'landscape' },
-          { value: 'portrait', label: 'portrait' }
+          { value: 'portrait', label: 'portrait' },
         ],
       },
     }),
     description: Property.LongText({
       displayName: 'Description',
       required: true,
-      description:
-      'A detailed textual description of the image to be generated.',
+      description: 'A detailed textual description of the image to be generated.',
     }),
   },
   async run({ auth, propsValue }) {
     const response = await httpClient.sendRequest<{
-      data: { 
-        images: Array<string>[],
+      data: {
+        images: Array<string>[]
         zip: string
-    };
+      }
     }>({
       url: `${baseUrl}/image/generation`,
       method: HttpMethod.POST,
@@ -71,8 +64,8 @@ export const imageGeneration = createAction({
         size: propsValue.size,
         variations: propsValue.variations,
       },
-    });
+    })
 
-    return response.body.data;
+    return response.body.data
   },
-});
+})

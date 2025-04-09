@@ -1,4 +1,4 @@
-import { woocommerceRegisterTrigger } from './register-trigger';
+import { woocommerceRegisterTrigger } from './register-trigger'
 
 const sampleData = {
   product: {
@@ -187,8 +187,7 @@ const sampleData = {
     created_via: 'checkout',
     customer_id: 1,
     is_editable: false,
-    payment_url:
-      'https://myshop.com/?page_id=8&order-pay=17&pay_for_order=true&key=wc_order_C66uDC3RekAax',
+    payment_url: 'https://myshop.com/?page_id=8&order-pay=17&pay_for_order=true&key=wc_order_C66uDC3RekAax',
     coupon_lines: [],
     date_created: '2023-07-06T14:17:03',
     discount_tax: '0.000',
@@ -319,7 +318,7 @@ const sampleData = {
       first_name: 'First',
     },
   },
-};
+}
 export const triggers = [
   {
     name: 'product_created',
@@ -405,4 +404,4 @@ export const triggers = [
     description: 'Triggers when an existing customer is deleted.',
     sampleData: sampleData.customer,
   },
-].map((trigger) => woocommerceRegisterTrigger(trigger));
+].map((trigger) => woocommerceRegisterTrigger(trigger))

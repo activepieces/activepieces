@@ -1,8 +1,8 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { onfleetAuth } from '../..';
-import { common } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
+import { common } from '../common'
 
-import Onfleet from '@onfleet/node-onfleet';
+import Onfleet from '@onfleet/node-onfleet'
 
 export const updateWorker = createAction({
   auth: onfleetAuth,
@@ -28,20 +28,15 @@ export const updateWorker = createAction({
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth)
 
-    const options: any = {};
+    const options: any = {}
 
-    if (context.propsValue.name) options.name = context.propsValue.name;
-    if (context.propsValue.teams) options.teams = context.propsValue.teams;
-    if (context.propsValue.capacity)
-      options.capacity = context.propsValue.capacity;
-    if (context.propsValue.displayName)
-      options.displayName = context.propsValue.displayName;
+    if (context.propsValue.name) options.name = context.propsValue.name
+    if (context.propsValue.teams) options.teams = context.propsValue.teams
+    if (context.propsValue.capacity) options.capacity = context.propsValue.capacity
+    if (context.propsValue.displayName) options.displayName = context.propsValue.displayName
 
-    return await onfleetApi.workers.update(
-      context.propsValue.worker as string,
-      options
-    );
+    return await onfleetApi.workers.update(context.propsValue.worker as string, options)
   },
-});
+})

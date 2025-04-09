@@ -1,28 +1,26 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { wedofCommon } from '../../common/wedof';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { wedofAuth } from '../../..'
+import { wedofCommon } from '../../common/wedof'
 
 export const updatePartnership = createAction({
   auth: wedofAuth,
   name: 'updatePartnership',
-  displayName: "Mettre à jour le partenariat",
-  description: "Permet de mettre à jour le partenariat",
+  displayName: 'Mettre à jour le partenariat',
+  description: 'Permet de mettre à jour le partenariat',
   props: {
     certifInfo: Property.ShortText({
       displayName: 'N° certifInfo',
-      description:
-        'Sélectionner le {certifInfo} de la certification considérée',
+      description: 'Sélectionner le {certifInfo} de la certification considérée',
       required: true,
     }),
     siret: Property.ShortText({
-        displayName: 'N° Siret',
-        description:
-          'Sélectionner le {siret} du partenaire',
-        required: true,
+      displayName: 'N° Siret',
+      description: 'Sélectionner le {siret} du partenaire',
+      required: true,
     }),
     state: wedofCommon.partnershipState,
-    habilitation : wedofCommon.habilitation,
+    habilitation: wedofCommon.habilitation,
     comment: Property.LongText({
       displayName: 'Commentaire',
       description: 'Informations complémentaires sur le partenariat',
@@ -67,27 +65,27 @@ export const updatePartnership = createAction({
   },
   async run(context) {
     const message = {
-        state: context.propsValue.state,
-        habilitation: context.propsValue.habilitation,
-        comment: context.propsValue.comment,
-        pendingActivation: context.propsValue.pendingActivation,
-        pendingRevocation: context.propsValue.pendingRevocation,
-        pendingSuspension: context.propsValue.pendingSuspension,
-        amountHt: context.propsValue.amountHt,
-        compliance: context.propsValue.compliance,
-        tags: context.propsValue.tags,
-        metadata: context.propsValue.metadata,
-        trainingsZone: context.propsValue.trainingsZone,
-        skillSets: context.propsValue.skillSets,
-    };
+      state: context.propsValue.state,
+      habilitation: context.propsValue.habilitation,
+      comment: context.propsValue.comment,
+      pendingActivation: context.propsValue.pendingActivation,
+      pendingRevocation: context.propsValue.pendingRevocation,
+      pendingSuspension: context.propsValue.pendingSuspension,
+      amountHt: context.propsValue.amountHt,
+      compliance: context.propsValue.compliance,
+      tags: context.propsValue.tags,
+      metadata: context.propsValue.metadata,
+      trainingsZone: context.propsValue.trainingsZone,
+      skillSets: context.propsValue.skillSets,
+    }
     return (
       await httpClient.sendRequest({
         method: HttpMethod.PUT,
         url:
           wedofCommon.baseUrl +
           '/certifications/' +
-          context.propsValue.certifInfo + 
-          '/partners/' + 
+          context.propsValue.certifInfo +
+          '/partners/' +
           context.propsValue.siret,
         body: message,
         headers: {
@@ -95,6 +93,6 @@ export const updatePartnership = createAction({
           'X-Api-Key': context.auth as string,
         },
       })
-    ).body;
+    ).body
   },
-});
+})

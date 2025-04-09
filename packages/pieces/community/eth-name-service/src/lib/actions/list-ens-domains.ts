@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { ensCommon } from '../common/common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { ensCommon } from '../common/common'
 
 export const listEnsDomains = createAction({
   name: 'listEnsDomains',
@@ -13,10 +13,10 @@ export const listEnsDomains = createAction({
     }),
   },
   async run(context) {
-    const { address } = context.propsValue;
+    const { address } = context.propsValue
 
     if (!address) {
-      throw new Error('Address is required');
+      throw new Error('Address is required')
     }
 
     const query = `
@@ -46,17 +46,17 @@ export const listEnsDomains = createAction({
           createdAt
         }
     }
-    `;
+    `
 
     const res = await ensCommon.apiCall(
       `https://gateway.thegraph.com/api/${context.auth}/subgraphs/id/5XqPmWe6gjyrJtFn9cLy237i4cWw2j9HcUJEXsP5qGtH`,
       'POST',
-      { query }
-    );
+      { query },
+    )
     if (res.errors) {
-      throw new Error(res.errors[0].message);
+      throw new Error(res.errors[0].message)
     }
 
-    return res.data.domains;
+    return res.data.domains
   },
-});
+})

@@ -1,5 +1,5 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
 
 export const getTransactions = createAction({
   name: 'get_transactions',
@@ -11,10 +11,10 @@ export const getTransactions = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `https://eth.blockscout.com/api/v2/transactions`,
-    });
+    })
     if (response.status !== 200) {
-      throw new Error(`Blockscout API request failed with status ${response.status}`);
+      throw new Error(`Blockscout API request failed with status ${response.status}`)
     }
-    return response.body;
+    return response.body
   },
-});
+})

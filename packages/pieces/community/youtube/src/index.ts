@@ -1,11 +1,8 @@
-import {
-  createPiece,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { youtubeNewVideoTrigger } from './lib/triggers/new-video.trigger';
-import { youtubeAuth } from './lib/common/auth';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { youtubeAuth } from './lib/common/auth'
+import { youtubeNewVideoTrigger } from './lib/triggers/new-video.trigger'
 
 export const youtube = createPiece({
   displayName: 'YouTube',
@@ -27,4 +24,4 @@ export const youtube = createPiece({
     }),
   ],
   triggers: [youtubeNewVideoTrigger],
-});
+})

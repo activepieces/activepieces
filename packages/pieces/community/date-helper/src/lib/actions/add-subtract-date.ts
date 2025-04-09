@@ -1,6 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
-import advancedFormat from 'dayjs/plugin/advancedFormat';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import advancedFormat from 'dayjs/plugin/advancedFormat'
 import {
   getCorrectedFormat,
   optionalTimeFormats,
@@ -8,9 +8,9 @@ import {
   timeFormat,
   timeFormatDescription,
   timeParts,
-} from '../common';
+} from '../common'
 
-dayjs.extend(advancedFormat);
+dayjs.extend(advancedFormat)
 
 export const addSubtractDateAction = createAction({
   name: 'add_subtract_date',
@@ -56,81 +56,81 @@ export const addSubtractDateAction = createAction({
     }),
   },
   async run(context) {
-    const inputDate = context.propsValue.inputDate;
-    const inputDateFormat = getCorrectedFormat(context.propsValue.inputDateFormat);
-    const outputFormat = context.propsValue.outputFormat;
-    const expression = context.propsValue.expression;
-    const BeforeDate = parseDate(inputDate, inputDateFormat);
-    const AfterDate = addSubtractTime(BeforeDate.toDate(), expression);
-    return { result: dayjs(AfterDate).format(outputFormat) };
+    const inputDate = context.propsValue.inputDate
+    const inputDateFormat = getCorrectedFormat(context.propsValue.inputDateFormat)
+    const outputFormat = context.propsValue.outputFormat
+    const expression = context.propsValue.expression
+    const BeforeDate = parseDate(inputDate, inputDateFormat)
+    const AfterDate = addSubtractTime(BeforeDate.toDate(), expression)
+    return { result: dayjs(AfterDate).format(outputFormat) }
   },
-});
+})
 
 function addSubtractTime(date: Date, expression: string) {
   // remove all the spaces and line breaks from the expression
-  expression = expression.replace(/(\r\n|\n|\r)/gm, '').replace(/ /g, '');
-  const parts = expression.split(/(\+|-)/);
-  let sign = 1;
-  const numbers = [];
-  const units = [];
+  expression = expression.replace(/(\r\n|\n|\r)/gm, '').replace(/ /g, '')
+  const parts = expression.split(/(\+|-)/)
+  let sign = 1
+  const numbers = []
+  const units = []
 
   for (let i = 0; i < parts.length; i++) {
-    if (parts[i] === '+') sign = 1;
-    else if (parts[i] === '-') sign = -1;
-    else if (parts[i] === '') continue;
-    let number = '';
-    let unit = '';
+    if (parts[i] === '+') sign = 1
+    else if (parts[i] === '-') sign = -1
+    else if (parts[i] === '') continue
+    let number = ''
+    let unit = ''
     for (let j = 0; j < parts[i].length; j++) {
-      if (parts[i][j] === ' ') continue;
+      if (parts[i][j] === ' ') continue
       if (parts[i][j] >= '0' && parts[i][j] <= '9') {
         if (unit !== '') {
-          numbers.push(sign * parseInt(number));
-          units.push(unit);
-          number = '';
-          unit = '';
+          numbers.push(sign * parseInt(number))
+          units.push(unit)
+          number = ''
+          unit = ''
         }
-        number += parts[i][j];
+        number += parts[i][j]
       } else {
-        if (number === '') continue;
-        unit += parts[i][j];
+        if (number === '') continue
+        unit += parts[i][j]
       }
     }
     if (unit !== '') {
-      numbers.push(sign * parseInt(number));
-      units.push(unit);
+      numbers.push(sign * parseInt(number))
+      units.push(unit)
     }
   }
-  let dayjsDate = dayjs(date);
+  let dayjsDate = dayjs(date)
   for (let i = 0; i < numbers.length; i++) {
-    const val = units[i].toLowerCase() as timeParts;
+    const val = units[i].toLowerCase() as timeParts
     switch (val) {
       case timeParts.year:
-        dayjsDate = dayjsDate.add(numbers[i], 'year');
-        break;
+        dayjsDate = dayjsDate.add(numbers[i], 'year')
+        break
       case timeParts.month:
-        dayjsDate = dayjsDate.add(numbers[i], 'month');
-        break;
+        dayjsDate = dayjsDate.add(numbers[i], 'month')
+        break
       case timeParts.day:
-        dayjsDate = dayjsDate.add(numbers[i], 'day');
-        break;
+        dayjsDate = dayjsDate.add(numbers[i], 'day')
+        break
       case timeParts.hour:
-        dayjsDate = dayjsDate.add(numbers[i], 'hour');
-        break;
+        dayjsDate = dayjsDate.add(numbers[i], 'hour')
+        break
       case timeParts.minute:
-        dayjsDate = dayjsDate.add(numbers[i], 'minute');
-        break;
+        dayjsDate = dayjsDate.add(numbers[i], 'minute')
+        break
       case timeParts.second:
-        dayjsDate = dayjsDate.add(numbers[i], 'second');
-        break;
+        dayjsDate = dayjsDate.add(numbers[i], 'second')
+        break
       case timeParts.dayOfWeek:
       case timeParts.monthName:
       case timeParts.unix_time:
-        break;
+        break
       default: {
-        const nvr: never = val;
-        console.error(nvr, 'unhandled case was reached');
+        const nvr: never = val
+        console.error(nvr, 'unhandled case was reached')
       }
     }
   }
-  return dayjsDate.toDate();
+  return dayjsDate.toDate()
 }

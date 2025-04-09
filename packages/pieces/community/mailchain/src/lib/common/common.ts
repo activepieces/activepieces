@@ -1,4 +1,4 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { PieceAuth, Property } from '@activepieces/pieces-framework'
 
 const message = `**Getting Started with Mailchain:**
 
@@ -13,7 +13,7 @@ When sending an email, you can use either a Mailchain address or a blockchain ad
 - **Blockchain Address:** 'yourname.eth' (ENS), 'yourname.crypto' (Unstoppable Domains), etc.
 
 To manage your inbox and send emails, visit [Mailchain's Web App](https://app.mailchain.com/).
-`;
+`
 
 export const mailchainCommon = {
   auth: PieceAuth.SecretText({
@@ -40,4 +40,4 @@ export const mailchainCommon = {
     description: 'The content of the email',
     required: true,
   }),
-};
+}

@@ -1,18 +1,13 @@
-import {
-  FilesService,
-  Property,
-  TriggerStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
-import { imapAuth } from '../..';
-import { convertAttachment, imapCommon } from '../common';
-import { ParsedMail } from 'mailparser';
+import { FilesService, Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { ParsedMail } from 'mailparser'
+import { imapAuth } from '../..'
+import { convertAttachment, imapCommon } from '../common'
 
 const filterInstructions = `
 **Filter Emails:**
 
 You can add Branch Piece to filter emails based on the subject, to, from, cc or other fields.
-`;
+`
 
 export const newEmail = createTrigger({
   auth: imapAuth,
@@ -27,43 +22,42 @@ export const newEmail = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   onEnable: async (context) => {
-    await context.store.put('lastPoll', Date.now());
+    await context.store.put('lastPoll', Date.now())
   },
   onDisable: async (context) => {
-    await context.store.delete('lastPoll');
-    return;
+    await context.store.delete('lastPoll')
+    return
   },
   run: async (context) => {
-    const { auth, store, propsValue, files } = context;
-    const mailbox = propsValue.mailbox;
-    const lastEpochMilliSeconds = (await store.get<number>('lastPoll')) ?? 0;
+    const { auth, store, propsValue, files } = context
+    const mailbox = propsValue.mailbox
+    const lastEpochMilliSeconds = (await store.get<number>('lastPoll')) ?? 0
     const items = await imapCommon.fetchEmails({
       auth,
       lastEpochMilliSeconds,
       mailbox,
       files,
-    });
+    })
     const newLastEpochMilliSeconds = items.reduce(
       (acc, item) => Math.max(acc, item.epochMilliSeconds),
-      lastEpochMilliSeconds
-    );
-    await store.put('lastPoll', newLastEpochMilliSeconds);
-    const filteredEmail = items
-      .filter((f) => f.epochMilliSeconds > lastEpochMilliSeconds);
-    return enrichAttachments(filteredEmail, files);
+      lastEpochMilliSeconds,
+    )
+    await store.put('lastPoll', newLastEpochMilliSeconds)
+    const filteredEmail = items.filter((f) => f.epochMilliSeconds > lastEpochMilliSeconds)
+    return enrichAttachments(filteredEmail, files)
   },
   test: async (context) => {
-    const { auth, propsValue, files } = context;
-    const mailbox = propsValue.mailbox;
-    const lastEpochMilliSeconds = 0;
+    const { auth, propsValue, files } = context
+    const mailbox = propsValue.mailbox
+    const lastEpochMilliSeconds = 0
     const items = await imapCommon.fetchEmails({
       auth,
       lastEpochMilliSeconds,
       mailbox,
       files,
-    });
-    const filteredEmails = getFirstFiveOrAll(items);
-    return enrichAttachments(filteredEmails, files);
+    })
+    const filteredEmails = getFirstFiveOrAll(items)
+    return enrichAttachments(filteredEmails, files)
   },
   sampleData: {
     html: 'My email body',
@@ -95,30 +89,32 @@ export const newEmail = createTrigger({
         },
       ],
     },
-    messageId:
-      '<CxE49ifJT5YZN9OE2O6j6Ef+BYgkKWq7X-deg483GkM1ui1xj3g@mail.gmail.com>',
+    messageId: '<CxE49ifJT5YZN9OE2O6j6Ef+BYgkKWq7X-deg483GkM1ui1xj3g@mail.gmail.com>',
   },
-});
+})
 
-async function enrichAttachments(item: {
-  data: ParsedMail;
-  epochMilliSeconds: number;
-}[], files: FilesService) {
-  return Promise.all(item.map(async (item) => {
-
-    const { attachments, ...rest } = item.data
-    return {
-      data:{...rest},
-      epochMilliSeconds: item.epochMilliSeconds,
-      attachments: await convertAttachment(item.data.attachments, files),
-    }
-
-  }));
+async function enrichAttachments(
+  item: {
+    data: ParsedMail
+    epochMilliSeconds: number
+  }[],
+  files: FilesService,
+) {
+  return Promise.all(
+    item.map(async (item) => {
+      const { attachments, ...rest } = item.data
+      return {
+        data: { ...rest },
+        epochMilliSeconds: item.epochMilliSeconds,
+        attachments: await convertAttachment(item.data.attachments, files),
+      }
+    }),
+  )
 }
 function getFirstFiveOrAll<T>(array: T[]) {
   if (array.length <= 5) {
-    return array;
+    return array
   } else {
-    return array.slice(0, 5);
+    return array.slice(0, 5)
   }
 }

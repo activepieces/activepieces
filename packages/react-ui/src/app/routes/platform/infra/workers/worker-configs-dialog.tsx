@@ -1,23 +1,17 @@
-import { t } from 'i18next';
-import { Info } from 'lucide-react';
-import React, { useState } from 'react';
+import { t } from 'i18next'
+import { Info } from 'lucide-react'
+import React, { useState } from 'react'
 
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 
 interface Props {
-  workerProps: Record<string, string>;
+  workerProps: Record<string, string>
 }
 
 export const WorkerConfigsModal: React.FC<Props> = ({ workerProps }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false)
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -37,9 +31,7 @@ export const WorkerConfigsModal: React.FC<Props> = ({ workerProps }) => {
               key={key}
               className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 p-2 rounded-md bg-gray-50 dark:bg-gray-800 border dark:border-gray-700"
             >
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-200 w-full sm:w-1/3">
-                {key}
-              </label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-200 w-full sm:w-1/3">{key}</label>
               <Input
                 type="text"
                 disabled={true}
@@ -56,5 +48,5 @@ export const WorkerConfigsModal: React.FC<Props> = ({ workerProps }) => {
         </div>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}

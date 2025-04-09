@@ -155,4 +155,4 @@ export const mondayGraphQLQueries = {
       }
     }
   }`,
-};
+}

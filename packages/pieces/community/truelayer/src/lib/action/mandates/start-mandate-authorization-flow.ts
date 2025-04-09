@@ -1,12 +1,13 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { trueLayerCommon } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { trueLayerCommon } from '../../common'
 
 export const startMandateAuthorizationFlow = createAction({
   auth: trueLayerCommon.auth,
   name: 'start-mandate-authorization-flow',
   displayName: 'Start Authorization Flow',
-  description: 'Start the authorization flow for a mandate. This API can be called using either the mandate_token associated with the mandate or a backend bearer token.',
+  description:
+    'Start the authorization flow for a mandate. This API can be called using either the mandate_token associated with the mandate or a backend bearer token.',
   props: {
     id: Property.ShortText({
       displayName: 'Mandate ID',
@@ -24,6 +25,6 @@ export const startMandateAuthorizationFlow = createAction({
       body: ctx.propsValue,
     })
 
-    return response.body;
+    return response.body
   },
-});
+})

@@ -1,19 +1,19 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class RenameApprovalUrlToResolveUrl1742991301509 implements MigrationInterface {
-    name = 'RenameApprovalUrlToResolveUrl1742991301509'
+  name = 'RenameApprovalUrlToResolveUrl1742991301509'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_todo_platform_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_todo_flow_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_todo_project_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_todo" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -35,7 +35,7 @@ export class RenameApprovalUrlToResolveUrl1742991301509 implements MigrationInte
                 CONSTRAINT "fk_todo_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_todo"(
                     "id",
                     "created",
@@ -66,39 +66,39 @@ export class RenameApprovalUrlToResolveUrl1742991301509 implements MigrationInte
                 "approvalUrl"
             FROM "todo"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "todo"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_todo"
                 RENAME TO "todo"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_todo_platform_id" ON "todo" ("platformId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_todo_flow_id" ON "todo" ("flowId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_todo_project_id" ON "todo" ("projectId")
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_todo_project_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_todo_flow_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_todo_platform_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "todo"
                 RENAME TO "temporary_todo"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "todo" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -120,7 +120,7 @@ export class RenameApprovalUrlToResolveUrl1742991301509 implements MigrationInte
                 CONSTRAINT "fk_todo_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "todo"(
                     "id",
                     "created",
@@ -151,18 +151,17 @@ export class RenameApprovalUrlToResolveUrl1742991301509 implements MigrationInte
                 "resolveUrl"
             FROM "temporary_todo"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_todo"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_todo_project_id" ON "todo" ("projectId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_todo_flow_id" ON "todo" ("flowId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_todo_platform_id" ON "todo" ("platformId")
         `)
-    }
-
+  }
 }

@@ -1,34 +1,30 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { convertkitAuth } from '../..'
+import { PURCHASES_API_ENDPOINT } from '../common/constants'
+import { formId } from '../common/forms'
 import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { convertkitAuth } from '../..';
-import {
-  purchaseId,
-  purchasesPageNumber,
-  transactionId,
-  productId,
-  transactionTime,
-  purchaserEmailAddress,
-  status,
   currency,
-  subtotal,
-  shipping,
   discount,
+  multipleProducts,
+  productId,
+  products,
+  purchaseId,
+  purchaserEmailAddress,
+  purchasesPageNumber,
+  shipping,
+  status,
+  subtotal,
   tax,
   total,
-  products,
-  multipleProducts,
-} from '../common/purchases';
-import { subscriberFirstName } from '../common/subscribers';
-import { Purchase } from '../common/types';
-import { subscriberId } from '../common/subscribers';
-import { formId } from '../common/forms';
-import { sequenceId } from '../common/sequences';
-import { PURCHASES_API_ENDPOINT } from '../common/constants';
-import { fetchPurchases } from '../common/service';
+  transactionId,
+  transactionTime,
+} from '../common/purchases'
+import { sequenceId } from '../common/sequences'
+import { fetchPurchases } from '../common/service'
+import { subscriberFirstName } from '../common/subscribers'
+import { subscriberId } from '../common/subscribers'
+import { Purchase } from '../common/types'
 
 export const listPurchases = createAction({
   auth: convertkitAuth,
@@ -39,10 +35,10 @@ export const listPurchases = createAction({
     page: purchasesPageNumber,
   },
   run(context) {
-    const page = context.propsValue.page || 1;
-    return fetchPurchases(context.auth, page);
+    const page = context.propsValue.page || 1
+    return fetchPurchases(context.auth, page)
   },
-});
+})
 
 export const getPurchaseById = createAction({
   auth: convertkitAuth,
@@ -53,30 +49,30 @@ export const getPurchaseById = createAction({
     purchaseId,
   },
   async run(context) {
-    const { purchaseId } = context.propsValue;
-    const url = `${PURCHASES_API_ENDPOINT}/${purchaseId}`;
+    const { purchaseId } = context.propsValue
+    const url = `${PURCHASES_API_ENDPOINT}/${purchaseId}`
 
     const body = {
       api_secret: context.auth,
-    };
+    }
 
     const request: HttpRequest = {
       url,
       method: HttpMethod.GET,
       body,
-    };
-
-    const response = await httpClient.sendRequest<{
-      purchase: Purchase;
-    }>(request);
-
-    if (response.status !== 200) {
-      throw new Error(`Error fetching purchase: ${response.status}`);
     }
 
-    return response.body;
+    const response = await httpClient.sendRequest<{
+      purchase: Purchase
+    }>(request)
+
+    if (response.status !== 200) {
+      throw new Error(`Error fetching purchase: ${response.status}`)
+    }
+
+    return response.body
   },
-});
+})
 
 //TODO:
 // Required for third party integrations
@@ -118,8 +114,8 @@ export const createSinglePurchase = createAction({
       tax,
       total,
       ...products
-    } = context.propsValue;
-    const url = PURCHASES_API_ENDPOINT;
+    } = context.propsValue
+    const url = PURCHASES_API_ENDPOINT
 
     const body = {
       api_secret: context.auth,
@@ -137,25 +133,25 @@ export const createSinglePurchase = createAction({
         total,
         products: [products],
       },
-    };
+    }
 
     const request: HttpRequest = {
       url,
       method: HttpMethod.POST,
       body,
-    };
-
-    const response = await httpClient.sendRequest<{
-      purchase: Purchase;
-    }>(request);
-
-    if (response.status !== 201) {
-      throw new Error(`Error creating purchase: ${response.status}`);
     }
 
-    return response.body;
+    const response = await httpClient.sendRequest<{
+      purchase: Purchase
+    }>(request)
+
+    if (response.status !== 201) {
+      throw new Error(`Error creating purchase: ${response.status}`)
+    }
+
+    return response.body
   },
-});
+})
 
 export const createPurchases = createAction({
   auth: convertkitAuth,
@@ -190,8 +186,8 @@ export const createPurchases = createAction({
       tax,
       total,
       multipleProducts,
-    } = context.propsValue;
-    const url = PURCHASES_API_ENDPOINT;
+    } = context.propsValue
+    const url = PURCHASES_API_ENDPOINT
 
     const body = {
       api_secret: context.auth,
@@ -209,25 +205,25 @@ export const createPurchases = createAction({
         total,
         products: multipleProducts,
       },
-    };
+    }
 
     const request: HttpRequest = {
       url,
       method: HttpMethod.POST,
       body,
-    };
-
-    const response = await httpClient.sendRequest<{
-      purchase: Purchase;
-    }>(request);
-
-    if (response.status !== 201) {
-      throw new Error(`Error creating purchase: ${response.status}`);
     }
 
-    return response.body;
+    const response = await httpClient.sendRequest<{
+      purchase: Purchase
+    }>(request)
+
+    if (response.status !== 201) {
+      throw new Error(`Error creating purchase: ${response.status}`)
+    }
+
+    return response.body
   },
-});
+})
 
 // ---------> Below are "unofficial". Need to be tested. <---------
 // Show all purchases for a subscriber
@@ -241,31 +237,31 @@ export const listPurchasesForSubscriber = createAction({
     subscriberId,
   },
   async run(context) {
-    const { subscriberId } = context.propsValue;
-    const url = PURCHASES_API_ENDPOINT;
+    const { subscriberId } = context.propsValue
+    const url = PURCHASES_API_ENDPOINT
 
     const body = {
       api_secret: context.auth,
       subscriber_id: subscriberId,
-    };
+    }
 
     const request: HttpRequest = {
       url,
       method: HttpMethod.GET,
       body,
-    };
-
-    const response = await httpClient.sendRequest<{
-      purchases: Purchase[];
-    }>(request);
-
-    if (response.status !== 200) {
-      throw new Error(`Error fetching purchases: ${response.status}`);
     }
 
-    return response.body.purchases;
+    const response = await httpClient.sendRequest<{
+      purchases: Purchase[]
+    }>(request)
+
+    if (response.status !== 200) {
+      throw new Error(`Error fetching purchases: ${response.status}`)
+    }
+
+    return response.body.purchases
   },
-});
+})
 
 // Show all purchases for a product
 
@@ -278,20 +274,20 @@ export const listPurchasesForProduct = createAction({
     productId,
   },
   async run(context) {
-    const { productId } = context.propsValue;
-    const url = `${PURCHASES_API_ENDPOINT}?api_secret=${context.auth}&product_id=${productId}`;
+    const { productId } = context.propsValue
+    const url = `${PURCHASES_API_ENDPOINT}?api_secret=${context.auth}&product_id=${productId}`
 
-    const response = await fetch(url);
+    const response = await fetch(url)
 
     if (!response.ok) {
-      return { success: false, message: 'Error fetching purchases' };
+      return { success: false, message: 'Error fetching purchases' }
     }
 
-    const data = await response.json();
+    const data = await response.json()
 
-    return data;
+    return data
   },
-});
+})
 
 // Show all purchases for a form
 
@@ -304,20 +300,20 @@ export const listPurchasesForForm = createAction({
     formId,
   },
   async run(context) {
-    const { formId } = context.propsValue;
-    const url = `${PURCHASES_API_ENDPOINT}?api_secret=${context.auth}&form_id=${formId}`;
+    const { formId } = context.propsValue
+    const url = `${PURCHASES_API_ENDPOINT}?api_secret=${context.auth}&form_id=${formId}`
 
-    const response = await fetch(url);
+    const response = await fetch(url)
 
     if (!response.ok) {
-      return { success: false, message: 'Error fetching purchases' };
+      return { success: false, message: 'Error fetching purchases' }
     }
 
-    const data = await response.json();
+    const data = await response.json()
 
-    return data;
+    return data
   },
-});
+})
 
 // Show all purchases for a sequence
 
@@ -330,17 +326,17 @@ export const listPurchasesForSequence = createAction({
     sequenceId,
   },
   async run(context) {
-    const { sequenceId } = context.propsValue;
-    const url = `${PURCHASES_API_ENDPOINT}?api_secret=${context.auth}&sequence_id=${sequenceId}`;
+    const { sequenceId } = context.propsValue
+    const url = `${PURCHASES_API_ENDPOINT}?api_secret=${context.auth}&sequence_id=${sequenceId}`
 
-    const response = await fetch(url);
+    const response = await fetch(url)
 
     if (!response.ok) {
-      return { success: false, message: 'Error fetching purchases' };
+      return { success: false, message: 'Error fetching purchases' }
     }
 
-    const data = await response.json();
+    const data = await response.json()
 
-    return data;
+    return data
   },
-});
+})

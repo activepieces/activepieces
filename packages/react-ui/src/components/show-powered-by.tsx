@@ -1,12 +1,12 @@
-import { cn } from '../lib/utils';
+import { cn } from '../lib/utils'
 
 type ShowPoweredByProps = {
-  show: boolean;
-  position?: 'sticky' | 'absolute' | 'static';
-};
+  show: boolean
+  position?: 'sticky' | 'absolute' | 'static'
+}
 const ShowPoweredBy = ({ show, position = 'sticky' }: ShowPoweredByProps) => {
   if (!show) {
-    return null;
+    return null
   }
   return (
     <div
@@ -16,12 +16,9 @@ const ShowPoweredBy = ({ show, position = 'sticky' }: ShowPoweredByProps) => {
       })}
     >
       <div
-        className={cn(
-          'justify-end p-1 text-muted-foreground/70 text-sm items-center flex gap-1 transition group ',
-          {
-            'justify-center': position === 'static',
-          },
-        )}
+        className={cn('justify-end p-1 text-muted-foreground/70 text-sm items-center flex gap-1 transition group ', {
+          'justify-center': position === 'static',
+        })}
       >
         <div className=" text-sm transition">Built with</div>
         <div className="justify-center flex items-center gap-1">
@@ -38,8 +35,8 @@ const ShowPoweredBy = ({ show, position = 'sticky' }: ShowPoweredByProps) => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-ShowPoweredBy.displayName = 'ShowPoweredBy';
-export { ShowPoweredBy };
+ShowPoweredBy.displayName = 'ShowPoweredBy'
+export { ShowPoweredBy }

@@ -8,206 +8,193 @@ import {
   ResumePayload,
   SeekPage,
   TriggerPayload,
-} from '@activepieces/shared';
-import { TriggerStrategy } from './trigger/trigger';
-import {
-  InputPropertyMap,
-  PiecePropValueSchema,
-  StaticPropsValue,
-} from './property';
-import { PieceAuthProperty } from './property/authentication';
-import { DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@activepieces/shared';
+} from '@activepieces/shared'
+import { DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@activepieces/shared'
+import { InputPropertyMap, PiecePropValueSchema, StaticPropsValue } from './property'
+import { PieceAuthProperty } from './property/authentication'
+import { TriggerStrategy } from './trigger/trigger'
 
-type BaseContext<
-  PieceAuth extends PieceAuthProperty,
-  Props extends InputPropertyMap
-> = {
-  flows: FlowsContext;
-  auth: PiecePropValueSchema<PieceAuth>;
-  propsValue: StaticPropsValue<Props>;
-  store: Store;
+type BaseContext<PieceAuth extends PieceAuthProperty, Props extends InputPropertyMap> = {
+  flows: FlowsContext
+  auth: PiecePropValueSchema<PieceAuth>
+  propsValue: StaticPropsValue<Props>
+  store: Store
   project: {
-    id: ProjectId;
-    externalId: () => Promise<string | undefined>;
-  };
-};
+    id: ProjectId
+    externalId: () => Promise<string | undefined>
+  }
+}
 
 type AppWebhookTriggerHookContext<
   PieceAuth extends PieceAuthProperty,
-  TriggerProps extends InputPropertyMap
+  TriggerProps extends InputPropertyMap,
 > = BaseContext<PieceAuth, TriggerProps> & {
-  webhookUrl: string;
-  payload: TriggerPayload;
+  webhookUrl: string
+  payload: TriggerPayload
   app: {
     createListeners({
       events,
       identifierValue,
     }: {
-      events: string[];
-      identifierValue: string;
-    }): void;
-  };
-};
+      events: string[]
+      identifierValue: string
+    }): void
+  }
+}
 
 type PollingTriggerHookContext<
   PieceAuth extends PieceAuthProperty,
-  TriggerProps extends InputPropertyMap
+  TriggerProps extends InputPropertyMap,
 > = BaseContext<PieceAuth, TriggerProps> & {
-  setSchedule(schedule: { cronExpression: string; timezone?: string }): void;
-};
+  setSchedule(schedule: { cronExpression: string; timezone?: string }): void
+}
 
 type WebhookTriggerHookContext<
   PieceAuth extends PieceAuthProperty,
-  TriggerProps extends InputPropertyMap
+  TriggerProps extends InputPropertyMap,
 > = BaseContext<PieceAuth, TriggerProps> & {
-  webhookUrl: string;
-  payload: TriggerPayload;
-};
+  webhookUrl: string
+  payload: TriggerPayload
+}
 export type TriggerHookContext<
   PieceAuth extends PieceAuthProperty,
   TriggerProps extends InputPropertyMap,
-  S extends TriggerStrategy
+  S extends TriggerStrategy,
 > = S extends TriggerStrategy.APP_WEBHOOK
   ? AppWebhookTriggerHookContext<PieceAuth, TriggerProps>
   : S extends TriggerStrategy.POLLING
-  ? PollingTriggerHookContext<PieceAuth, TriggerProps>
-  : S extends TriggerStrategy.WEBHOOK
-  ? WebhookTriggerHookContext<PieceAuth, TriggerProps> & {
-      server: ServerContext;
-    }
-  : never;
+    ? PollingTriggerHookContext<PieceAuth, TriggerProps>
+    : S extends TriggerStrategy.WEBHOOK
+      ? WebhookTriggerHookContext<PieceAuth, TriggerProps> & {
+          server: ServerContext
+        }
+      : never
 
 export type TestOrRunHookContext<
   PieceAuth extends PieceAuthProperty,
   TriggerProps extends InputPropertyMap,
-  S extends TriggerStrategy
+  S extends TriggerStrategy,
 > = TriggerHookContext<PieceAuth, TriggerProps, S> & {
-  files: FilesService;
-};
+  files: FilesService
+}
 
 export type StopHookParams = {
-  response: RespondResponse;
-};
+  response: RespondResponse
+}
 
 export type RespondHookParams = {
-  response: RespondResponse;
-};
+  response: RespondResponse
+}
 
-export type StopHook = (params?: StopHookParams) => void;
+export type StopHook = (params?: StopHookParams) => void
 
-export type RespondHook = (params?: RespondHookParams) => void;
+export type RespondHook = (params?: RespondHookParams) => void
 
 export type PauseHookParams = {
-  pauseMetadata: PauseMetadata;
-};
+  pauseMetadata: PauseMetadata
+}
 
 export type PauseHook = (params: {
   pauseMetadata: DelayPauseMetadata | Omit<WebhookPauseMetadata, 'requestId'>
-}) => void;
+}) => void
 
 export type FlowsContext = {
   list(): Promise<SeekPage<PopulatedFlow>>
   current: {
-    id: string;
+    id: string
     version: {
-      id: string;
-    };
-  };
+      id: string
+    }
+  }
 }
-
-
 
 export type PropertyContext = {
-  server: ServerContext;
+  server: ServerContext
   project: {
-    id: ProjectId;
-    externalId: () => Promise<string | undefined>;
-  };
-  searchValue?: string;
-  flows: FlowsContext;
-};
-
-export type ServerContext = {
-  apiUrl: string;
-  publicUrl: string;
-  token: string;
-};
-
-export type RunContext = {
-  id: FlowRunId;
-  stop: StopHook;
-  pause: PauseHook;
-  respond: RespondHook;
+    id: ProjectId
+    externalId: () => Promise<string | undefined>
+  }
+  searchValue?: string
+  flows: FlowsContext
 }
 
-export type OnStartContext<
-  PieceAuth extends PieceAuthProperty,
-  TriggerProps extends InputPropertyMap
-> = Omit<BaseContext<PieceAuth, TriggerProps>, 'flows'> & {
-   run: Pick<RunContext, 'id'>;
-   payload: unknown;
+export type ServerContext = {
+  apiUrl: string
+  publicUrl: string
+  token: string
+}
+
+export type RunContext = {
+  id: FlowRunId
+  stop: StopHook
+  pause: PauseHook
+  respond: RespondHook
+}
+
+export type OnStartContext<PieceAuth extends PieceAuthProperty, TriggerProps extends InputPropertyMap> = Omit<
+  BaseContext<PieceAuth, TriggerProps>,
+  'flows'
+> & {
+  run: Pick<RunContext, 'id'>
+  payload: unknown
 }
 
 export type BaseActionContext<
   ET extends ExecutionType,
   PieceAuth extends PieceAuthProperty,
-  ActionProps extends InputPropertyMap
+  ActionProps extends InputPropertyMap,
 > = BaseContext<PieceAuth, ActionProps> & {
-  executionType: ET;
-  connections: ConnectionsManager;
-  tags: TagsManager;
-  server: ServerContext;
-  files: FilesService;
-  serverUrl: string;
-  run: RunContext;
+  executionType: ET
+  connections: ConnectionsManager
+  tags: TagsManager
+  server: ServerContext
+  files: FilesService
+  serverUrl: string
+  run: RunContext
   generateResumeUrl: (params: {
     queryParams: Record<string, string>
-  }) => string;
-};
+  }) => string
+}
 
 type BeginExecutionActionContext<
   PieceAuth extends PieceAuthProperty = PieceAuthProperty,
-  ActionProps extends InputPropertyMap = InputPropertyMap
-> = BaseActionContext<ExecutionType.BEGIN, PieceAuth, ActionProps>;
+  ActionProps extends InputPropertyMap = InputPropertyMap,
+> = BaseActionContext<ExecutionType.BEGIN, PieceAuth, ActionProps>
 
 type ResumeExecutionActionContext<
   PieceAuth extends PieceAuthProperty = PieceAuthProperty,
-  ActionProps extends InputPropertyMap = InputPropertyMap
+  ActionProps extends InputPropertyMap = InputPropertyMap,
 > = BaseActionContext<ExecutionType.RESUME, PieceAuth, ActionProps> & {
-  resumePayload: ResumePayload;
-};
+  resumePayload: ResumePayload
+}
 
 export type ActionContext<
   PieceAuth extends PieceAuthProperty = PieceAuthProperty,
-  ActionProps extends InputPropertyMap = InputPropertyMap
-> =
-  | BeginExecutionActionContext<PieceAuth, ActionProps>
-  | ResumeExecutionActionContext<PieceAuth, ActionProps>;
+  ActionProps extends InputPropertyMap = InputPropertyMap,
+> = BeginExecutionActionContext<PieceAuth, ActionProps> | ResumeExecutionActionContext<PieceAuth, ActionProps>
 
 export interface FilesService {
   write({
     fileName,
     data,
   }: {
-    fileName: string;
-    data: Buffer;
-  }): Promise<string>;
+    fileName: string
+    data: Buffer
+  }): Promise<string>
 }
 
 export interface ConnectionsManager {
-  get(
-    key: string
-  ): Promise<AppConnectionValue | Record<string, unknown> | string | null>;
+  get(key: string): Promise<AppConnectionValue | Record<string, unknown> | string | null>
 }
 
 export interface TagsManager {
-  add(params: { name: string }): Promise<void>;
+  add(params: { name: string }): Promise<void>
 }
 
 export interface Store {
-  put<T>(key: string, value: T, scope?: StoreScope): Promise<T>;
-  get<T>(key: string, scope?: StoreScope): Promise<T | null>;
-  delete(key: string, scope?: StoreScope): Promise<void>;
+  put<T>(key: string, value: T, scope?: StoreScope): Promise<T>
+  get<T>(key: string, scope?: StoreScope): Promise<T | null>
+  delete(key: string, scope?: StoreScope): Promise<void>
 }
 
 export enum StoreScope {

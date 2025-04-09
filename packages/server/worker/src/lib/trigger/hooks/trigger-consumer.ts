@@ -3,7 +3,7 @@ import { tryHandshake } from './handshake-trigger.hook'
 import { renewWebhook } from './renew-trigger-hook'
 
 export const triggerConsumer = {
-    renewWebhook,
-    extractPayloads,
-    tryHandshake,
+  renewWebhook,
+  extractPayloads,
+  tryHandshake,
 }

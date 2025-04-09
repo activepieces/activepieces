@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { shopifyAuth } from '../..';
-import { createProduct } from '../common';
-import { ShopifyImage, ShopifyProductStatuses } from '../common/types';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { shopifyAuth } from '../..'
+import { createProduct } from '../common'
+import { ShopifyImage, ShopifyProductStatuses } from '../common/types'
 
 export const createProductAction = createAction({
   auth: shopifyAuth,
@@ -20,8 +20,7 @@ export const createProductAction = createAction({
     }),
     productType: Property.ShortText({
       displayName: 'Product Type',
-      description:
-        'A categorization for the product used for filtering and searching products',
+      description: 'A categorization for the product used for filtering and searching products',
       required: false,
     }),
     productImage: Property.File({
@@ -61,14 +60,13 @@ export const createProductAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { title, bodyHtml, vendor, productType, tags, productImage } =
-      propsValue;
+    const { title, bodyHtml, vendor, productType, tags, productImage } = propsValue
 
-    const images: Partial<ShopifyImage>[] = [];
+    const images: Partial<ShopifyImage>[] = []
     if (productImage) {
       images.push({
         attachment: productImage.base64,
-      });
+      })
     }
 
     return await createProduct(
@@ -80,7 +78,7 @@ export const createProductAction = createAction({
         tags,
         images,
       },
-      auth
-    );
+      auth,
+    )
   },
-});
+})

@@ -1,13 +1,13 @@
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import {
-  getAccessTokenOrThrow,
-  HttpMethod,
-  HttpMessageBody,
-  HttpResponse,
-  httpClient,
   AuthenticationType,
-} from '@activepieces/pieces-common';
-import { ClickupTask, ClickupWorkspace } from './models';
+  HttpMessageBody,
+  HttpMethod,
+  HttpResponse,
+  getAccessTokenOrThrow,
+  httpClient,
+} from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework'
+import { ClickupTask, ClickupWorkspace } from './models'
 
 export const clickupCommon = {
   workspace_id: (required = true) =>
@@ -22,30 +22,30 @@ export const clickupCommon = {
             disabled: true,
             placeholder: 'connect your account first',
             options: [],
-          };
+          }
         }
-        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
+        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue)
         const response = (
           await callClickUpApi<{
             teams: {
-              id: string;
-              name: string;
-            }[];
+              id: string
+              name: string
+            }[]
           }>(HttpMethod.GET, 'team', accessToken, undefined)
-        ).body;
+        ).body
         return {
           disabled: false,
           options: response.teams.map((workspace) => {
             return {
               label: workspace.name,
               value: workspace.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   space_id: (required = true, multi = false) => {
-    const Dropdown = multi ? Property.MultiSelectDropdown : Property.Dropdown;
+    const Dropdown = multi ? Property.MultiSelectDropdown : Property.Dropdown
     return Dropdown({
       description: 'The ID of the ClickUp space to create the task in',
       displayName: 'Space',
@@ -57,24 +57,24 @@ export const clickupCommon = {
             disabled: true,
             placeholder: 'connect your account first and select workspace',
             options: [],
-          };
+          }
         }
-        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-        const response = await listSpaces(accessToken, workspace_id as string);
+        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue)
+        const response = await listSpaces(accessToken, workspace_id as string)
         return {
           disabled: false,
           options: response.spaces.map((space) => {
             return {
               label: space.name,
               value: space.id,
-            };
+            }
           }),
-        };
+        }
       },
-    });
+    })
   },
   list_id: (required = true, multi = false) => {
-    const Dropdown = multi ? Property.MultiSelectDropdown : Property.Dropdown;
+    const Dropdown = multi ? Property.MultiSelectDropdown : Property.Dropdown
     return Dropdown({
       description: 'The ID of the ClickUp space to create the task in',
       displayName: 'List',
@@ -86,14 +86,11 @@ export const clickupCommon = {
             disabled: true,
             placeholder: 'connect your account first and select a space',
             options: [],
-          };
+          }
         }
 
-        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-        const lists: { name: string; id: string }[] = await listAllLists(
-          accessToken,
-          space_id as string
-        );
+        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue)
+        const lists: { name: string; id: string }[] = await listAllLists(accessToken, space_id as string)
 
         return {
           disabled: false,
@@ -101,11 +98,11 @@ export const clickupCommon = {
             return {
               label: list.name,
               value: list.id,
-            };
+            }
           }),
-        };
+        }
       },
-    });
+    })
   },
   task_id: (required = true, label: string | undefined = undefined) =>
     Property.Dropdown({
@@ -118,26 +115,25 @@ export const clickupCommon = {
         if (!auth || !list_id || !space_id) {
           return {
             disabled: true,
-            placeholder:
-              'connect your account first and select workspace, space and list',
+            placeholder: 'connect your account first and select workspace, space and list',
             options: [],
-          };
+          }
         }
-        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-        const response = await listTasks(accessToken, list_id as string);
+        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue)
+        const response = await listTasks(accessToken, list_id as string)
         return {
           disabled: false,
           options: response.tasks.map((task) => {
             return {
               label: task.name,
               value: task.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   folder_id: (required = false, multi = false) => {
-    const Dropdown = multi ? Property.MultiSelectDropdown : Property.Dropdown;
+    const Dropdown = multi ? Property.MultiSelectDropdown : Property.Dropdown
     return Dropdown({
       description: 'The ID of the ClickUp folder',
       displayName: 'Folder Id',
@@ -147,24 +143,23 @@ export const clickupCommon = {
         if (!auth || !workspace_id || !space_id) {
           return {
             disabled: true,
-            placeholder:
-              'connect your account first and select workspace and space',
+            placeholder: 'connect your account first and select workspace and space',
             options: [],
-          };
+          }
         }
-        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-        const response = await listFolders(accessToken, space_id as string);
+        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue)
+        const response = await listFolders(accessToken, space_id as string)
         return {
           disabled: false,
           options: response.folders.map((task) => {
             return {
               label: task.name,
               value: task.id,
-            };
+            }
           }),
-        };
+        }
       },
-    });
+    })
   },
   field_id: (required = false) =>
     Property.Dropdown({
@@ -179,26 +174,23 @@ export const clickupCommon = {
             disabled: true,
             placeholder: 'connect your account first and select a task',
             options: [],
-          };
+          }
         }
-        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-        const response = await listAccessibleCustomFields(
-          accessToken,
-          list_id as string
-        );
+        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue)
+        const response = await listAccessibleCustomFields(accessToken, list_id as string)
         return {
           disabled: false,
           options: response.fields.map((field) => {
             return {
               label: field.name,
               value: field.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   status_id: (required = false, multi = false) => {
-    const Dropdown = multi ? Property.MultiSelectDropdown : Property.Dropdown;
+    const Dropdown = multi ? Property.MultiSelectDropdown : Property.Dropdown
     return Dropdown({
       description: 'The ID of Clickup Issue Status',
       displayName: 'Status Id',
@@ -210,28 +202,28 @@ export const clickupCommon = {
             disabled: true,
             placeholder: 'Connect your account first',
             options: [],
-          };
+          }
         }
         if (!list_id) {
           return {
             disabled: true,
             placeholder: 'select list',
             options: [],
-          };
+          }
         }
-        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-        const response = await getStatuses(accessToken, list_id as string);
+        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue)
+        const response = await getStatuses(accessToken, list_id as string)
         return {
           disabled: false,
           options: response.statuses.map((status) => {
             return {
               label: status.status,
               value: status.status,
-            };
+            }
           }),
-        };
+        }
       },
-    });
+    })
   },
   priority_id: (required = false) =>
     Property.StaticDropdown({
@@ -260,11 +252,7 @@ export const clickupCommon = {
         ],
       },
     }),
-  assignee_id: (
-    required = false,
-    displayName = 'Assignee Id',
-    description: string
-  ) =>
+  assignee_id: (required = false, displayName = 'Assignee Id', description: string) =>
     Property.MultiSelectDropdown({
       displayName: displayName,
       description: description,
@@ -276,36 +264,29 @@ export const clickupCommon = {
             disabled: true,
             placeholder: 'conncet your account first',
             options: [],
-          };
+          }
         }
         if (!workspace_id) {
           return {
             disabled: true,
             placeholder: 'select workspace',
             options: [],
-          };
+          }
         }
-        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-        const response = await listWorkspaceMembers(
-          accessToken,
-          workspace_id as string
-        );
+        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue)
+        const response = await listWorkspaceMembers(accessToken, workspace_id as string)
         return {
           disabled: false,
           options: response.map((member) => {
             return {
               label: member.user.username,
               value: member.user.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
-  single_assignee_id: (
-    required = false,
-    displayName = 'Assignee Id',
-    description: string
-  ) =>
+  single_assignee_id: (required = false, displayName = 'Assignee Id', description: string) =>
     Property.Dropdown({
       displayName: displayName,
       description: description,
@@ -317,29 +298,26 @@ export const clickupCommon = {
             disabled: true,
             placeholder: 'conncet your account first',
             options: [],
-          };
+          }
         }
         if (!workspace_id) {
           return {
             disabled: true,
             placeholder: 'select workspace',
             options: [],
-          };
+          }
         }
-        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-        const response = await listWorkspaceMembers(
-          accessToken,
-          workspace_id as string
-        );
+        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue)
+        const response = await listWorkspaceMembers(accessToken, workspace_id as string)
         return {
           disabled: false,
           options: response.map((member) => {
             return {
               label: member.user.username,
               value: member.user.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   template_id: (required = false) =>
@@ -354,195 +332,167 @@ export const clickupCommon = {
             disabled: true,
             placeholder: 'conncet your account first',
             options: [],
-          };
+          }
         }
         if (!workspace_id) {
           return {
             disabled: true,
             placeholder: 'select workspace',
             options: [],
-          };
+          }
         }
-        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-        const response = await listWorkspaceTemplates(
-          accessToken,
-          workspace_id as string
-        );
+        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue)
+        const response = await listWorkspaceTemplates(accessToken, workspace_id as string)
         return {
           disabled: false,
           options: response.templates.map((template) => {
             return {
               label: template.name,
               value: template.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
-};
+}
 
 async function listWorkspaces(accessToken: string) {
-  return (
-    await callClickUpApi<{ teams: ClickupWorkspace[] }>(
-      HttpMethod.GET,
-      'team',
-      accessToken,
-      undefined
-    )
-  ).body;
+  return (await callClickUpApi<{ teams: ClickupWorkspace[] }>(HttpMethod.GET, 'team', accessToken, undefined)).body
 }
 
 async function getWorkspace(accessToken: string, workspaceId: string) {
-  const { teams } = await listWorkspaces(accessToken as string);
-  const workspace = teams.filter((workspace) => workspace.id === workspaceId);
-  return workspace[0];
+  const { teams } = await listWorkspaces(accessToken as string)
+  const workspace = teams.filter((workspace) => workspace.id === workspaceId)
+  return workspace[0]
 }
 
 async function listWorkspaceMembers(accessToken: string, workspaceId: string) {
-  const workspace = await getWorkspace(accessToken, workspaceId);
-  return workspace.members;
+  const workspace = await getWorkspace(accessToken, workspaceId)
+  return workspace.members
 }
 
-async function listWorkspaceTemplates(
-  accessToken: string,
-  workspaceId: string
-) {
+async function listWorkspaceTemplates(accessToken: string, workspaceId: string) {
   return (
     await callClickUpApi<{
       templates: {
-        id: string;
-        name: string;
-      }[];
-    }>(
-      HttpMethod.GET,
-      `team/${workspaceId}/taskTemplate`,
-      accessToken,
-      undefined
-    )
-  ).body;
+        id: string
+        name: string
+      }[]
+    }>(HttpMethod.GET, `team/${workspaceId}/taskTemplate`, accessToken, undefined)
+  ).body
 }
 
 export async function listSpaces(accessToken: string, workspaceId: string) {
   return (
     await callClickUpApi<{
       spaces: {
-        id: string;
-        name: string;
-      }[];
+        id: string
+        name: string
+      }[]
     }>(HttpMethod.GET, `team/${workspaceId}/space`, accessToken, undefined)
-  ).body;
+  ).body
 }
 
 export async function listAllLists(accessToken: string, spaceId: string) {
-  const responseFolders = await listFolders(accessToken, spaceId as string);
+  const responseFolders = await listFolders(accessToken, spaceId as string)
   const promises: Promise<{ lists: { id: string; name: string }[] }>[] = [
     listFolderlessList(accessToken, spaceId as string),
-  ];
+  ]
   for (let i = 0; i < responseFolders.folders.length; ++i) {
-    promises.push(listLists(accessToken, responseFolders.folders[i].id));
+    promises.push(listLists(accessToken, responseFolders.folders[i].id))
   }
-  const listsResponses = await Promise.all(promises);
+  const listsResponses = await Promise.all(promises)
 
-  let lists: { name: string; id: string }[] = [];
+  let lists: { name: string; id: string }[] = []
   for (let i = 0; i < listsResponses.length; ++i) {
-    lists = [...lists, ...listsResponses[i].lists];
+    lists = [...lists, ...listsResponses[i].lists]
   }
 
-  return lists;
+  return lists
 }
 
 export async function listLists(accessToken: string, folderId: string) {
   return (
     await callClickUpApi<{
       lists: {
-        id: string;
-        name: string;
-      }[];
+        id: string
+        name: string
+      }[]
     }>(HttpMethod.GET, `folder/${folderId}/list`, accessToken, undefined)
-  ).body;
+  ).body
 }
 async function getStatuses(accessToken: string, listId: string) {
   return (
     await callClickUpApi<{
       statuses: {
-        id: string;
-        status: string;
-      }[];
+        id: string
+        status: string
+      }[]
     }>(HttpMethod.GET, `list/${listId}`, accessToken, undefined)
-  ).body;
+  ).body
 }
 
 export async function listFolders(accessToken: string, spaceId: string) {
   return (
     await callClickUpApi<{
       folders: {
-        id: string;
-        name: string;
-      }[];
+        id: string
+        name: string
+      }[]
     }>(HttpMethod.GET, `space/${spaceId}/folder`, accessToken, undefined)
-  ).body;
+  ).body
 }
 
-export async function listAccessibleCustomFields(
-  accessToken: string,
-  listId: string
-) {
+export async function listAccessibleCustomFields(accessToken: string, listId: string) {
   return (
     await callClickUpApi<{
       fields: {
-        id: string;
-        name: string;
-        type: string;
-        type_config: Record<string, unknown>;
-        date_created: string;
-        hide_from_guests: false;
-      }[];
+        id: string
+        name: string
+        type: string
+        type_config: Record<string, unknown>
+        date_created: string
+        hide_from_guests: false
+      }[]
     }>(HttpMethod.GET, `list/${listId}/field`, accessToken, undefined)
-  ).body;
+  ).body
 }
 
 async function listFolderlessList(accessToken: string, spaceId: string) {
   return (
     await callClickUpApi<{
       lists: {
-        id: string;
-        name: string;
-      }[];
+        id: string
+        name: string
+      }[]
     }>(HttpMethod.GET, `space/${spaceId}/list`, accessToken, undefined)
-  ).body;
+  ).body
 }
 
 export async function listTags(accessToken: string, spaceId: string) {
   return (
     await callClickUpApi<{
       tags: {
-        id: string;
-        name: string;
-      }[];
+        id: string
+        name: string
+      }[]
     }>(HttpMethod.GET, `space/${spaceId}/tag`, accessToken, undefined)
-  ).body;
+  ).body
 }
 
 export async function listTasks(accessToken: string, listId: string) {
   return (
     await callClickUpApi<{
       tasks: {
-        id: string;
-        name: string;
-      }[];
+        id: string
+        name: string
+      }[]
     }>(HttpMethod.GET, `list/${listId}/task`, accessToken, undefined)
-  ).body;
+  ).body
 }
 
 export async function callClickupGetTask(accessToken: string, taskId: string) {
-  return (
-    await callClickUpApi<ClickupTask>(
-      HttpMethod.GET,
-      `task/${taskId}`,
-      accessToken,
-      undefined
-    )
-  ).body;
+  return (await callClickUpApi<ClickupTask>(HttpMethod.GET, `task/${taskId}`, accessToken, undefined)).body
 }
 
 export async function callClickUpApi<T extends HttpMessageBody = any>(
@@ -551,7 +501,7 @@ export async function callClickUpApi<T extends HttpMessageBody = any>(
   accessToken: string,
   body: any | undefined,
   queryParams: any | undefined = undefined,
-  headers: any | undefined = undefined
+  headers: any | undefined = undefined,
 ): Promise<HttpResponse<T>> {
   return await httpClient.sendRequest<T>({
     method: method,
@@ -563,5 +513,5 @@ export async function callClickUpApi<T extends HttpMessageBody = any>(
     headers,
     body,
     queryParams,
-  });
+  })
 }

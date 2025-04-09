@@ -1,11 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { beamerAuth } from '../../index';
-import { beamerCommon } from '../common';
-import {
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { beamerAuth } from '../../index'
+import { beamerCommon } from '../common'
 
 export const createComment = createAction({
   auth: beamerAuth,
@@ -35,7 +31,7 @@ export const createComment = createAction({
     }),
   },
   async run(context) {
-    const apiKey = context.auth;
+    const apiKey = context.auth
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -50,8 +46,8 @@ export const createComment = createAction({
         userEmail: context.propsValue.userEmail,
         visible: 'true',
       },
-    };
-    const res = await httpClient.sendRequest<any>(request);
-    return res.body;
+    }
+    const res = await httpClient.sendRequest<any>(request)
+    return res.body
   },
-});
+})

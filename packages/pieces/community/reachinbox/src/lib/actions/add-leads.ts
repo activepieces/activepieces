@@ -1,16 +1,12 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  fetchCampaigns,
-  addLeadsToCampaign,
-  reachinboxCommon,
-} from '../common/index';
-import { reachinbox, ReachinboxAuth } from '../..';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { ReachinboxAuth, reachinbox } from '../..'
+import { addLeadsToCampaign, fetchCampaigns, reachinboxCommon } from '../common/index'
 
 // Define the structure for custom variables
 interface CustomVariable {
-  key: string;
-  value: string;
+  key: string
+  value: string
 }
 
 export const addLeads = createAction({
@@ -26,7 +22,7 @@ export const addLeads = createAction({
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        const campaigns = await fetchCampaigns(auth as string);
+        const campaigns = await fetchCampaigns(auth as string)
 
         return {
           options: campaigns.map((campaign) => ({
@@ -34,7 +30,7 @@ export const addLeads = createAction({
             value: campaign.id.toString(),
           })),
           disabled: campaigns.length === 0,
-        };
+        }
       },
     }),
     email: Property.ShortText({
@@ -72,28 +68,24 @@ export const addLeads = createAction({
     }),
   },
   async run(context) {
-    const { campaignId, email, firstName, lastName } = context.propsValue;
+    const { campaignId, email, firstName, lastName } = context.propsValue
 
     // Safely cast customVariables to CustomVariable[], default to an empty array if undefined
-    const customVariables: CustomVariable[] = (context.propsValue
-      .customVariables || []) as CustomVariable[];
+    const customVariables: CustomVariable[] = (context.propsValue.customVariables || []) as CustomVariable[]
 
     // Process the custom variables into a key-value object for each lead
-    const customVariablesObject: Record<string, string> = {};
+    const customVariablesObject: Record<string, string> = {}
     customVariables.forEach((variable: CustomVariable) => {
-      customVariablesObject[variable.key] = variable.value;
-    });
+      customVariablesObject[variable.key] = variable.value
+    })
 
     // Include the custom variables in the lead data
     const body = {
       campaignId,
       leads: [{ email, firstName, lastName, ...customVariablesObject }],
-      newCoreVariables: [
-        'firstName',
-        ...customVariables.map((varObj: CustomVariable) => varObj.key),
-      ],
+      newCoreVariables: ['firstName', ...customVariables.map((varObj: CustomVariable) => varObj.key)],
       duplicates: [],
-    };
+    }
 
     try {
       const response = await httpClient.sendRequest({
@@ -104,20 +96,20 @@ export const addLeads = createAction({
           'Content-Type': 'application/json',
         },
         body,
-      });
+      })
 
       if (response.status === 200) {
         return {
           success: true,
           message: response.body.message || 'Leads added successfully.',
           leadCount: response.body.leadCount,
-        };
+        }
       } else {
-        throw new Error(`Failed to add leads: ${response.body.message}`);
+        throw new Error(`Failed to add leads: ${response.body.message}`)
       }
     } catch (error) {
-      console.error('Error adding leads:', error);
-      throw new Error('Failed to add leads to the campaign.');
+      console.error('Error adding leads:', error)
+      throw new Error('Failed to add leads to the campaign.')
     }
   },
-});
+})

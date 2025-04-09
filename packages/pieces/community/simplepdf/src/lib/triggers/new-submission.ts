@@ -1,9 +1,4 @@
-import {
-  createTrigger,
-  PieceAuth,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
+import { PieceAuth, Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
 
 const markdown = `
 - Paste this URL in the webhook integration endpoint:
@@ -15,7 +10,7 @@ const markdown = `
 <br>
 
 _[Read more about configuring webhooks](https://simplepdf.eu/help/how-to/configure-webhooks-pdf-form-submissions)_
-`;
+`
 
 export const simplePDFNewSubmission = createTrigger({
   name: 'new-submission',
@@ -50,9 +45,7 @@ export const simplePDFNewSubmission = createTrigger({
     // Empty
   },
   async run(context) {
-    const payloadBody = context.payload.body as
-      | Record<string, unknown>
-      | undefined;
-    return [payloadBody?.['data'] ?? {}];
+    const payloadBody = context.payload.body as Record<string, unknown> | undefined
+    return [payloadBody?.['data'] ?? {}]
   },
-});
+})

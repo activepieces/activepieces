@@ -1,9 +1,9 @@
-import { deepseekAuth } from '../../index';
-import { createAction, Property, StoreScope } from "@activepieces/pieces-framework";
-import OpenAI from 'openai';
-import { baseUrl } from '../common/common';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, StoreScope, createAction } from '@activepieces/pieces-framework'
+import OpenAI from 'openai'
+import { z } from 'zod'
+import { deepseekAuth } from '../../index'
+import { baseUrl } from '../common/common'
 
 export const askDeepseek = createAction({
   auth: deepseekAuth,
@@ -23,31 +23,31 @@ export const askDeepseek = createAction({
             disabled: true,
             placeholder: 'Enter your API key first',
             options: [],
-          };
+          }
         }
         try {
           const openai = new OpenAI({
             baseURL: baseUrl,
             apiKey: auth as string,
-          });
-          const response = await openai.models.list();
+          })
+          const response = await openai.models.list()
           // We need to get only LLM models
-          const models = response.data;
+          const models = response.data
           return {
             disabled: false,
             options: models.map((model) => {
               return {
                 label: model.id,
                 value: model.id,
-              };
+              }
             }),
-          };
+          }
         } catch (error) {
           return {
             disabled: true,
             options: [],
             placeholder: "Couldn't load models, API key is invalid",
-          };
+          }
         }
       },
     }),
@@ -65,8 +65,7 @@ export const askDeepseek = createAction({
     maxTokens: Property.Number({
       displayName: 'Maximum Tokens',
       required: true,
-      description:
-        'The maximum number of tokens to generate. Possible values are between 1 and 8192.',
+      description: 'The maximum number of tokens to generate. Possible values are between 1 and 8192.',
       defaultValue: 4096,
     }),
     presencePenalty: Property.Number({
@@ -119,20 +118,18 @@ export const askDeepseek = createAction({
       displayName: 'Roles',
       required: false,
       description: 'Array of roles to specify more accurate response',
-      defaultValue: [
-        { role: 'system', content: 'You are a helpful assistant.' },
-      ],
+      defaultValue: [{ role: 'system', content: 'You are a helpful assistant.' }],
     }),
   },
   async run({ auth, propsValue, store }) {
     await propsValidation.validateZod(propsValue, {
       temperature: z.number().min(0).max(2).optional(),
       memoryKey: z.string().max(128).optional(),
-    });
+    })
     const openai = new OpenAI({
       baseURL: baseUrl,
       apiKey: auth,
-    });
+    })
     const {
       model,
       temperature,
@@ -143,35 +140,33 @@ export const askDeepseek = createAction({
       responseFormat,
       prompt,
       memoryKey,
-    } = propsValue;
+    } = propsValue
 
-    let messageHistory: any[] | null = [];
+    let messageHistory: any[] | null = []
     // If memory key is set, retrieve messages stored in history
     if (memoryKey) {
-      messageHistory = (await store.get(memoryKey, StoreScope.PROJECT)) ?? [];
+      messageHistory = (await store.get(memoryKey, StoreScope.PROJECT)) ?? []
     }
 
     // Add user prompt to message history
     messageHistory.push({
       role: 'user',
       content: prompt,
-    });
+    })
 
     // Add system instructions if set by user
-    const rolesArray = propsValue.roles ? (propsValue.roles as any) : [];
+    const rolesArray = propsValue.roles ? (propsValue.roles as any) : []
     const roles = rolesArray.map((item: any) => {
-      const rolesEnum = ['system', 'user', 'assistant'];
+      const rolesEnum = ['system', 'user', 'assistant']
       if (!rolesEnum.includes(item.role)) {
-        throw new Error(
-          'The only available roles are: [system, user, assistant]'
-        );
+        throw new Error('The only available roles are: [system, user, assistant]')
       }
 
       return {
         role: item.role,
         content: item.content,
-      };
-    });
+      }
+    })
 
     // Send prompt
     const completion = await openai.chat.completions.create({
@@ -182,16 +177,15 @@ export const askDeepseek = createAction({
       top_p: topP,
       frequency_penalty: frequencyPenalty,
       presence_penalty: presencePenalty,
-      response_format: responseFormat === "json_object" ? { "type": "json_object" } : { "type": "text" },
-    });
+      response_format: responseFormat === 'json_object' ? { type: 'json_object' } : { type: 'text' },
+    })
 
-    messageHistory = [...messageHistory, completion.choices[0].message];
+    messageHistory = [...messageHistory, completion.choices[0].message]
 
     if (memoryKey) {
-      await store.put(memoryKey, messageHistory, StoreScope.PROJECT);
+      await store.put(memoryKey, messageHistory, StoreScope.PROJECT)
     }
 
-    return completion.choices[0].message.content;
+    return completion.choices[0].message.content
   },
-});
-
+})

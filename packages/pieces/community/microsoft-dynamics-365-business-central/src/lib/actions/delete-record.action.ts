@@ -1,8 +1,8 @@
-import { businessCentralAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { commonProps } from '../common';
-import { makeClient } from '../common/client';
-import { ACTION_ENTITY_DROPDOWN_OPTIONS } from '../common/constants';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { businessCentralAuth } from '../../'
+import { commonProps } from '../common'
+import { makeClient } from '../common/client'
+import { ACTION_ENTITY_DROPDOWN_OPTIONS } from '../common/constants'
 
 export const deleteRecordAction = createAction({
   auth: businessCentralAuth,
@@ -22,13 +22,13 @@ export const deleteRecordAction = createAction({
     record_id: commonProps.record_id,
   },
   async run(context) {
-    const companyId = context.propsValue.company_id;
-    const recordType = context.propsValue.record_type;
-    const recordId = context.propsValue.record_id;
+    const companyId = context.propsValue.company_id
+    const recordType = context.propsValue.record_type
+    const recordId = context.propsValue.record_id
 
-    const client = makeClient(context.auth);
-    const endpoint = `/companies(${companyId})/${recordType}(${recordId})`;
+    const client = makeClient(context.auth)
+    const endpoint = `/companies(${companyId})/${recordType}(${recordId})`
 
-    return await client.deleteRecord(endpoint);
+    return await client.deleteRecord(endpoint)
   },
-});
+})

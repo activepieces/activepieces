@@ -1,18 +1,8 @@
-import {
-  createPiece,
-  PieceAuth,
-  PiecePropValueSchema,
-  Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod, createCustomApiCallAction 
-
-} from '@activepieces/pieces-common';
-import { createOrUpdateSubscriberAction } from './lib/actions/create-or-update-subscriber.action';
-import { getSubscriberAction } from './lib/actions/get-subscriber.action';
+import { AuthenticationType, HttpMethod, createCustomApiCallAction, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth, PiecePropValueSchema, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { createOrUpdateSubscriberAction } from './lib/actions/create-or-update-subscriber.action'
+import { getSubscriberAction } from './lib/actions/get-subscriber.action'
 
 export const smailyAuth = PieceAuth.CustomAuth({
   description: `
@@ -44,18 +34,18 @@ export const smailyAuth = PieceAuth.CustomAuth({
           username: auth.username,
           password: auth.password,
         },
-      });
+      })
       return {
         valid: true,
-      };
+      }
     } catch {
       return {
         valid: false,
         error: 'Please provide correct credetials.',
-      };
+      }
     }
   },
-});
+})
 
 export const smaily = createPiece({
   displayName: 'Smaily',
@@ -64,20 +54,20 @@ export const smaily = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/smaily.png',
   categories: [PieceCategory.MARKETING],
   authors: ['kishanprmr'],
-  actions: [createOrUpdateSubscriberAction, getSubscriberAction,
+  actions: [
+    createOrUpdateSubscriberAction,
+    getSubscriberAction,
     createCustomApiCallAction({
-      auth:smailyAuth,
-      baseUrl: (auth)=>{
+      auth: smailyAuth,
+      baseUrl: (auth) => {
         return `https://${(auth as PiecePropValueSchema<typeof smailyAuth>).domain}.sendsmaily.net/api`
       },
       authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(
-          `${(auth as { username: string }).username}:${
-            (auth as { password: string }).password
-          }`
+          `${(auth as { username: string }).username}:${(auth as { password: string }).password}`,
         ).toString('base64')}`,
       }),
-    })
+    }),
   ],
   triggers: [],
-});
+})

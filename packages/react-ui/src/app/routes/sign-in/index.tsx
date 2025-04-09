@@ -1,5 +1,5 @@
-import { FullLogo } from '@/components/ui/full-logo';
-import { AuthFormTemplate } from '@/features/authentication/components/auth-form-template';
+import { FullLogo } from '@/components/ui/full-logo'
+import { AuthFormTemplate } from '@/features/authentication/components/auth-form-template'
 
 const SignInPage: React.FC = () => {
   return (
@@ -7,9 +7,9 @@ const SignInPage: React.FC = () => {
       <FullLogo />
       <AuthFormTemplate form={'signin'} />
     </div>
-  );
-};
+  )
+}
 
-SignInPage.displayName = 'SignInPage';
+SignInPage.displayName = 'SignInPage'
 
-export { SignInPage };
+export { SignInPage }

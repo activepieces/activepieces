@@ -1,19 +1,15 @@
-import { promises as fs } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { GoogleAIFileManager } from '@google/generative-ai/server';
-import { nanoid } from 'nanoid';
-import {
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { googleGeminiAuth } from '../../index';
-import { defaultLLM, getGeminiModelOptions } from '../common/common';
+import { promises as fs } from 'fs'
+import { tmpdir } from 'os'
+import { join } from 'path'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleAIFileManager } from '@google/generative-ai/server'
+import { nanoid } from 'nanoid'
+import { googleGeminiAuth } from '../../index'
+import { defaultLLM, getGeminiModelOptions } from '../common/common'
 
 export const generateContentFromImageAction = createAction({
-  description:
-    'Generate content using Google Gemini using the "gemini-pro-vision" model',
+  description: 'Generate content using Google Gemini using the "gemini-pro-vision" model',
   displayName: 'Generate Content from Image',
   name: 'generate_content_from_image',
   auth: googleGeminiAuth,
@@ -26,7 +22,7 @@ export const generateContentFromImageAction = createAction({
     image: Property.File({
       displayName: 'Image',
       required: true,
-      description: 'The image to generate content from.'
+      description: 'The image to generate content from.',
     }),
     model: Property.Dropdown({
       displayName: 'Model',
@@ -34,26 +30,25 @@ export const generateContentFromImageAction = createAction({
       description: 'The model which will generate the completion',
       refreshers: [],
       defaultValue: defaultLLM,
-      options: async ({ auth }) =>
-        getGeminiModelOptions({ auth }),
+      options: async ({ auth }) => getGeminiModelOptions({ auth }),
     }),
   },
 
   async run({ auth, propsValue }) {
-    const tempFilePath = join(tmpdir(), `gemini-image-${nanoid()}.${propsValue.image.extension}`);
+    const tempFilePath = join(tmpdir(), `gemini-image-${nanoid()}.${propsValue.image.extension}`)
 
     try {
-      const imageBuffer = Buffer.from(propsValue.image.base64, 'base64');
-      await fs.writeFile(tempFilePath, imageBuffer);
+      const imageBuffer = Buffer.from(propsValue.image.base64, 'base64')
+      await fs.writeFile(tempFilePath, imageBuffer)
 
-      const fileManager = new GoogleAIFileManager(auth);
+      const fileManager = new GoogleAIFileManager(auth)
       const uploadResult = await fileManager.uploadFile(tempFilePath, {
         mimeType: `image/${propsValue.image.extension}`,
         displayName: propsValue.image.filename,
-      });
+      })
 
-      const genAI = new GoogleGenerativeAI(auth);
-      const model = genAI.getGenerativeModel({ model: propsValue.model });
+      const genAI = new GoogleGenerativeAI(auth)
+      const model = genAI.getGenerativeModel({ model: propsValue.model })
       const result = await model.generateContent([
         propsValue.prompt,
         {
@@ -62,18 +57,18 @@ export const generateContentFromImageAction = createAction({
             mimeType: uploadResult.file.mimeType,
           },
         },
-      ]);
+      ])
 
-      const response = await result.response;
+      const response = await result.response
       return {
         text: response.text(),
         raw: response,
-      };
+      }
     } catch (error) {
-      console.error('Error in generate content from image:', error);
-      throw error;
+      console.error('Error in generate content from image:', error)
+      throw error
     } finally {
-      await fs.unlink(tempFilePath).catch(() => void 0);
+      await fs.unlink(tempFilePath).catch(() => void 0)
     }
   },
-});
+})

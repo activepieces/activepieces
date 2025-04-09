@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { vboutAuth } from '../..';
-import { makeClient, vboutCommon } from '../common';
-import { ContactStatusValues } from '../common/models';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { vboutAuth } from '../..'
+import { makeClient, vboutCommon } from '../common'
+import { ContactStatusValues } from '../common/models'
 
 export const unsubscribeContactAction = createAction({
   auth: vboutAuth,
@@ -17,22 +17,19 @@ export const unsubscribeContactAction = createAction({
     listid: vboutCommon.listid(true),
   },
   async run(context) {
-    const client = makeClient(context.auth as string);
-    const { email, listid } = context.propsValue;
-    const res = await client.getContactByEmail(
-      email as string,
-      listid as string
-    );
-    const contact = res.response.data.contact;
+    const client = makeClient(context.auth as string)
+    const { email, listid } = context.propsValue
+    const res = await client.getContactByEmail(email as string, listid as string)
+    const contact = res.response.data.contact
 
     if ('errorCode' in contact) {
-      return res;
+      return res
     } else {
-      const contactId = contact[0].id;
+      const contactId = contact[0].id
       return await client.updateContact({
         id: contactId,
         status: ContactStatusValues.UNSUBSCRIBE,
-      });
+      })
     }
   },
-});
+})

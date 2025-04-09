@@ -1,23 +1,23 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class LogFileRelationWithFlowRunSqlite1725637505836 implements MigrationInterface {
-    name = 'LogFileRelationWithFlowRunSqlite1725637505836'
+  name = 'LogFileRelationWithFlowRunSqlite1725637505836'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query('DELETE FROM "file" WHERE "type" = \'UNKNOWN\' OR "type" = \'CODE_SOURCE\'')
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query('DELETE FROM "file" WHERE "type" = \'UNKNOWN\' OR "type" = \'CODE_SOURCE\'')
+    await queryRunner.query(`
             DROP INDEX "idx_run_project_id_flow_id_environment_status_created_desc"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_run_project_id_flow_id_environment_created_desc"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_run_project_id_environment_status_created_desc"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_run_project_id_environment_created_desc"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_flow_run" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -42,7 +42,7 @@ export class LogFileRelationWithFlowRunSqlite1725637505836 implements MigrationI
                 SET NULL ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_flow_run"(
                     "id",
                     "created",
@@ -81,14 +81,14 @@ export class LogFileRelationWithFlowRunSqlite1725637505836 implements MigrationI
                 "duration"
             FROM "flow_run"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "flow_run"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_flow_run"
                 RENAME TO "flow_run"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_flow_id_environment_status_created_desc" ON "flow_run" (
                 "projectId",
                 "flowId",
@@ -97,35 +97,35 @@ export class LogFileRelationWithFlowRunSqlite1725637505836 implements MigrationI
                 "created"
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_flow_id_environment_created_desc" ON "flow_run" ("projectId", "flowId", "environment", "created")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_environment_status_created_desc" ON "flow_run" ("projectId", "environment", "status", "created")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_environment_created_desc" ON "flow_run" ("projectId", "environment", "created")
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_run_project_id_environment_created_desc"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_run_project_id_environment_status_created_desc"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_run_project_id_flow_id_environment_created_desc"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_run_project_id_flow_id_environment_status_created_desc"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "flow_run"
                 RENAME TO "temporary_flow_run"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "flow_run" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -148,7 +148,7 @@ export class LogFileRelationWithFlowRunSqlite1725637505836 implements MigrationI
                 CONSTRAINT "fk_flow_run_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "flow_run"(
                     "id",
                     "created",
@@ -187,19 +187,19 @@ export class LogFileRelationWithFlowRunSqlite1725637505836 implements MigrationI
                 "duration"
             FROM "temporary_flow_run"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_flow_run"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_environment_created_desc" ON "flow_run" ("projectId", "environment", "created")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_environment_status_created_desc" ON "flow_run" ("projectId", "environment", "status", "created")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_flow_id_environment_created_desc" ON "flow_run" ("projectId", "flowId", "environment", "created")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_run_project_id_flow_id_environment_status_created_desc" ON "flow_run" (
                 "projectId",
                 "flowId",
@@ -208,6 +208,5 @@ export class LogFileRelationWithFlowRunSqlite1725637505836 implements MigrationI
                 "created"
             )
         `)
-    }
-
+  }
 }

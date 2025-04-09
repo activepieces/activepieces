@@ -1,4 +1,4 @@
-import { EntityProp } from '../types';
+import { EntityProp } from '../types'
 
 export const journalsEntityProps: EntityProp[] = [
   {
@@ -11,8 +11,7 @@ export const journalsEntityProps: EntityProp[] = [
   {
     name: 'displayName',
     displayName: 'Display Name',
-    description:
-      "Specifies the journal's name. This name will appear on all sales documents for the journal.",
+    description: "Specifies the journal's name. This name will appear on all sales documents for the journal.",
     type: 'text',
     isRequired: false,
   },
@@ -22,4 +21,4 @@ export const journalsEntityProps: EntityProp[] = [
     type: 'text',
     isRequired: false,
   },
-];
+]

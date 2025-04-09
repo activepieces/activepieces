@@ -1,12 +1,8 @@
-import {
-  Polling,
-  DedupeStrategy,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { getAbandonedCheckouts } from '../common';
-import { shopifyAuth } from '../..';
-import { ShopifyAuth } from '../common/types';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common'
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { shopifyAuth } from '../..'
+import { getAbandonedCheckouts } from '../common'
+import { ShopifyAuth } from '../common/types'
 
 export const newAbandonedCheckout = createTrigger({
   name: 'new_abandoned_checkout',
@@ -17,28 +13,28 @@ export const newAbandonedCheckout = createTrigger({
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async onEnable({ auth, propsValue, store }) {
-    await pollingHelper.onEnable(polling, { auth, propsValue, store });
+    await pollingHelper.onEnable(polling, { auth, propsValue, store })
   },
   async onDisable({ auth, propsValue, store }) {
-    await pollingHelper.onEnable(polling, { auth, propsValue, store });
+    await pollingHelper.onEnable(polling, { auth, propsValue, store })
   },
   async run({ auth, propsValue, store, files }) {
-    return await pollingHelper.poll(polling, { auth, propsValue, store, files });
+    return await pollingHelper.poll(polling, { auth, propsValue, store, files })
   },
   async test({ auth, propsValue, store, files }) {
-    return await pollingHelper.test(polling, { auth, propsValue, store, files });
+    return await pollingHelper.test(polling, { auth, propsValue, store, files })
   },
-});
+})
 
 const polling: Polling<ShopifyAuth, unknown> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, lastItemId }) => {
     const checkouts = await getAbandonedCheckouts(auth, {
       sinceId: lastItemId as string,
-    });
+    })
     return checkouts.map((checkout) => ({
       id: checkout.id,
       data: checkout,
-    }));
+    }))
   },
-};
+}

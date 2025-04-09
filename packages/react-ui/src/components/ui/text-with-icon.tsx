@@ -4,10 +4,10 @@ export function TextWithIcon({
   className = '',
   children,
 }: {
-  icon: React.ReactNode;
-  text: React.ReactNode;
-  children?: React.ReactNode;
-  className?: string;
+  icon: React.ReactNode
+  text: React.ReactNode
+  children?: React.ReactNode
+  className?: string
 }) {
   return (
     <div className={`flex items-center gap-2 ${className}`}>
@@ -15,5 +15,5 @@ export function TextWithIcon({
       {text}
       {children}
     </div>
-  );
+  )
 }

@@ -1,7 +1,7 @@
-import { gristAuth } from '../..';
-import { createAction } from '@activepieces/pieces-framework';
-import { commonProps } from '../common/props';
-import { GristAPIClient, transformTableColumnValues } from '../common/helpers';
+import { createAction } from '@activepieces/pieces-framework'
+import { gristAuth } from '../..'
+import { GristAPIClient, transformTableColumnValues } from '../common/helpers'
+import { commonProps } from '../common/props'
 
 export const gristCreateRecordAction = createAction({
   auth: gristAuth,
@@ -15,36 +15,29 @@ export const gristCreateRecordAction = createAction({
     table_columns: commonProps.table_columns,
   },
   async run(context) {
-    const documentId = context.propsValue.document_id;
-    const tableId = context.propsValue.table_id;
-    const tableColumnValues = context.propsValue.table_columns;
+    const documentId = context.propsValue.document_id
+    const tableId = context.propsValue.table_id
+    const tableColumnValues = context.propsValue.table_columns
 
     const client = new GristAPIClient({
       domainUrl: context.auth.domain,
       apiKey: context.auth.apiKey,
-    });
+    })
 
-    const tableColumnSchema = await client.listTableColumns(
-      documentId as string,
-      tableId as string
-    );
+    const tableColumnSchema = await client.listTableColumns(documentId as string, tableId as string)
 
     const transformedColumnValues = transformTableColumnValues({
       tableColumnSchema,
       tableColumnValues,
-    });
+    })
 
-    const createRecordResponse = await client.addRecordsToTable(
-      documentId,
-      tableId,
-      {
-        records: [{ fields: transformedColumnValues }],
-      }
-    );
+    const createRecordResponse = await client.addRecordsToTable(documentId, tableId, {
+      records: [{ fields: transformedColumnValues }],
+    })
 
     return {
       id: createRecordResponse.records[0].id,
       fields: transformedColumnValues,
-    };
+    }
   },
-});
+})

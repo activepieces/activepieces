@@ -1,15 +1,7 @@
-import {
-  createAction,
-  DynamicPropsValue,
-  Property,
-} from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import {
-  CAPTAIN_DATA_BASE_URL,
-  captainDataAuth,
-  CaptainDataAuthType,
-} from '../..';
-import { workflowProp } from '../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { DynamicPropsValue, Property, createAction } from '@activepieces/pieces-framework'
+import { CAPTAIN_DATA_BASE_URL, CaptainDataAuthType, captainDataAuth } from '../..'
+import { workflowProp } from '../common'
 
 export const launchWorkflow = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -52,7 +44,7 @@ export const launchWorkflow = createAction({
       inputs: propsValue.inputs,
       steps: propsValue.steps,
       delay: propsValue.delay,
-    };
+    }
     const response = await httpClient.sendRequest({
       url: `${CAPTAIN_DATA_BASE_URL}/workflows/${propsValue.workflow}/schedule`,
       method: HttpMethod.POST,
@@ -62,7 +54,7 @@ export const launchWorkflow = createAction({
         'x-project-id': (auth as CaptainDataAuthType).projectId,
       },
       body: JSON.stringify(payload),
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

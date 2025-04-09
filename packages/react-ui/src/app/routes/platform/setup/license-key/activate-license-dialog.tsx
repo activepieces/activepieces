@@ -1,75 +1,64 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import Lottie from 'react-lottie';
+import { typeboxResolver } from '@hookform/resolvers/typebox'
+import { Static, Type } from '@sinclair/typebox'
+import { useMutation } from '@tanstack/react-query'
+import { t } from 'i18next'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import Lottie from 'react-lottie'
 
-import celebrationAnimation from '@/assets/img/custom/celeberation.json';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { platformApi } from '@/lib/platforms-api';
+import celebrationAnimation from '@/assets/img/custom/celeberation.json'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { LoadingSpinner } from '@/components/ui/spinner'
+import { platformApi } from '@/lib/platforms-api'
 
 const LicenseKeySchema = Type.Object({
   tempLicenseKey: Type.String({
     errorMessage: t('License key is invalid'),
   }),
-});
+})
 
-type LicenseKeySchema = Static<typeof LicenseKeySchema>;
+type LicenseKeySchema = Static<typeof LicenseKeySchema>
 
 interface ActivateLicenseDialogProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  onActivate: () => void;
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
+  onActivate: () => void
 }
 
-export const ActivateLicenseDialog = ({
-  isOpen,
-  onOpenChange,
-  onActivate,
-}: ActivateLicenseDialogProps) => {
-  const [showCelebration, setShowCelebration] = useState(false);
+export const ActivateLicenseDialog = ({ isOpen, onOpenChange, onActivate }: ActivateLicenseDialogProps) => {
+  const [showCelebration, setShowCelebration] = useState(false)
   const form = useForm<LicenseKeySchema>({
     resolver: typeboxResolver(LicenseKeySchema),
     defaultValues: {
       tempLicenseKey: '',
     },
     mode: 'onChange',
-  });
+  })
 
   const { mutate: activateLicenseKey, isPending } = useMutation({
     mutationFn: async (tempLicenseKey: string) => {
-      if (tempLicenseKey.trim() === '') return;
-      await platformApi.verifyLicenseKey(tempLicenseKey.trim());
+      if (tempLicenseKey.trim() === '') return
+      await platformApi.verifyLicenseKey(tempLicenseKey.trim())
     },
     onSuccess: () => {
-      setShowCelebration(true);
-      onActivate();
-      form.reset();
+      setShowCelebration(true)
+      onActivate()
+      form.reset()
     },
     onError: () => {
       form.setError('tempLicenseKey', {
         message: t('Invalid license key'),
-      });
+      })
     },
-  });
+  })
 
   const handleSubmit = (data: LicenseKeySchema) => {
-    form.clearErrors();
-    activateLicenseKey(data.tempLicenseKey);
-  };
+    form.clearErrors()
+    activateLicenseKey(data.tempLicenseKey)
+  }
 
   const defaultOptions = {
     loop: true,
@@ -79,24 +68,22 @@ export const ActivateLicenseDialog = ({
     rendererSettings: {
       preserveAspectRatio: 'xMidYMid slice',
     },
-  };
+  }
 
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
         if (!open) {
-          setShowCelebration(false);
+          setShowCelebration(false)
         }
-        onOpenChange(open);
+        onOpenChange(open)
       }}
     >
       <DialogContent onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="text-center">
-            {showCelebration
-              ? t('License activated!')
-              : t('Activate License Key')}
+            {showCelebration ? t('License activated!') : t('Activate License Key')}
           </DialogTitle>
         </DialogHeader>
         {!showCelebration && (
@@ -121,9 +108,7 @@ export const ActivateLicenseDialog = ({
                 )}
               />
               {form?.formState?.errors?.root?.serverError && (
-                <FormMessage>
-                  {form.formState.errors.root.serverError.message}
-                </FormMessage>
+                <FormMessage>{form.formState.errors.root.serverError.message}</FormMessage>
               )}
             </form>
           </Form>
@@ -132,9 +117,7 @@ export const ActivateLicenseDialog = ({
           <div className="celebration-lottie text-center">
             <Lottie options={defaultOptions} height={200} width={200} />
             <div className="text-center mt-4">
-              <p className="text-md text-gray-500">
-                {t('Let the magic begin!')}
-              </p>
+              <p className="text-md text-gray-500">{t('Let the magic begin!')}</p>
             </div>
           </div>
         )}
@@ -154,15 +137,11 @@ export const ActivateLicenseDialog = ({
               tabIndex={3}
               className="w-full"
             >
-              {isPending ? (
-                <LoadingSpinner className="w-4 h-4" />
-              ) : (
-                t('Activate')
-              )}
+              {isPending ? <LoadingSpinner className="w-4 h-4" /> : t('Activate')}
             </Button>
           )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}

@@ -1,7 +1,7 @@
-import { microsoftSharePointAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { microsoftSharePointCommon } from '../common';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { Client } from '@microsoft/microsoft-graph-client'
+import { microsoftSharePointAuth } from '../../'
+import { microsoftSharePointCommon } from '../common'
 
 export const findListItemAction = createAction({
   auth: microsoftSharePointAuth,
@@ -18,21 +18,19 @@ export const findListItemAction = createAction({
     }),
   },
   async run(context) {
-    const { siteId, listId, searchValue } = context.propsValue;
+    const { siteId, listId, searchValue } = context.propsValue
 
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
-    });
+    })
 
     // Escaping single quotes
-    const title = searchValue.replaceAll("'", "''");
+    const title = searchValue.replaceAll("'", "''")
     return await client
-      .api(
-        `/sites/${siteId}/lists/${listId}/items?$expand=fields&filter=fields/Title eq '${title}'`
-      )
+      .api(`/sites/${siteId}/lists/${listId}/items?$expand=fields&filter=fields/Title eq '${title}'`)
       .headers({ Prefer: 'HonorNonIndexedQueriesWarningMayFailRandomly' })
-      .get();
+      .get()
   },
-});
+})

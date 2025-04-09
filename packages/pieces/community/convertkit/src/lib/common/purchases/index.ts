@@ -1,36 +1,35 @@
-import { Property } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework'
 
 export const purchaseId = Property.ShortText({
   displayName: 'Purchase ID',
   description: 'The purchase ID',
   required: true,
-});
+})
 
 export const purchaserEmailAddress = Property.ShortText({
   displayName: 'Email Address',
   description: 'The email address of the subscriber',
   required: true,
-});
+})
 
 export const purchasesPageNumber = Property.Number({
   displayName: 'Page',
-  description:
-    'Page number. Each page of results will contain up to 50 purchases.',
+  description: 'Page number. Each page of results will contain up to 50 purchases.',
   required: true,
   defaultValue: 1,
-});
+})
 
 export const transactionId = Property.Number({
   displayName: 'Transaction ID',
   description: 'The transaction ID',
   required: true,
-});
+})
 
 export const productId = Property.Number({
   displayName: 'Product ID',
   description: 'The product ID',
   required: true,
-});
+})
 
 // Create purchase
 
@@ -45,7 +44,7 @@ export const status = Property.StaticDropdown({
       { label: 'failed', value: 'failed' },
     ],
   },
-});
+})
 
 export const currency = Property.StaticDropdown({
   displayName: 'Currency',
@@ -85,43 +84,43 @@ export const currency = Property.StaticDropdown({
       { label: 'ZAR', value: 'ZAR' },
     ],
   },
-});
+})
 
 export const transactionTime = Property.DateTime({
   displayName: 'Transaction Time',
   description: 'The transaction time',
   required: false,
-});
+})
 
 export const subtotal = Property.Number({
   displayName: 'Subtotal',
   description: 'The subtotal',
   required: false,
-});
+})
 
 export const shipping = Property.Number({
   displayName: 'Shipping',
   description: 'The shipping',
   required: false,
-});
+})
 
 export const discount = Property.Number({
   displayName: 'Discount',
   description: 'The discount',
   required: false,
-});
+})
 
 export const tax = Property.Number({
   displayName: 'Tax',
   description: 'The tax',
   required: false,
-});
+})
 
 export const total = Property.Number({
   displayName: 'Total',
   description: 'The total',
   required: false,
-});
+})
 
 export const products = {
   pid: Property.Number({
@@ -154,7 +153,7 @@ export const products = {
     description: 'The quantity of the product',
     required: true,
   }),
-};
+}
 
 export const multipleProducts = Property.Json({
   displayName: 'Products',
@@ -178,4 +177,4 @@ export const multipleProducts = Property.Json({
       quantity: 1,
     },
   ],
-});
+})

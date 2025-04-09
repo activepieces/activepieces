@@ -1,15 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  profilePicture,
-  slackChannel,
-  username,
-  blocks,
-  singleSelectChannelInfo,
-} from '../common/props';
-import { processMessageTimestamp, slackSendMessage } from '../common/utils';
-import { slackAuth } from '../../';
-import { Block,KnownBlock } from '@slack/web-api';
-
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { Block, KnownBlock } from '@slack/web-api'
+import { slackAuth } from '../../'
+import { blocks, profilePicture, singleSelectChannelInfo, slackChannel, username } from '../common/props'
+import { processMessageTimestamp, slackSendMessage } from '../common/utils'
 
 export const slackSendMessageAction = createAction({
   auth: slackAuth,
@@ -39,11 +32,12 @@ export const slackSendMessageAction = createAction({
     blocks,
   },
   async run(context) {
-    const token = context.auth.access_token;
-    const { text, channel, username, profilePicture, threadTs, file,blocks } =
-      context.propsValue;
-    
-    const blockList = blocks ?[{ type: 'section', text: { type: 'mrkdwn', text } }, ...(blocks as unknown as (KnownBlock | Block)[])] :undefined
+    const token = context.auth.access_token
+    const { text, channel, username, profilePicture, threadTs, file, blocks } = context.propsValue
+
+    const blockList = blocks
+      ? [{ type: 'section', text: { type: 'mrkdwn', text } }, ...(blocks as unknown as (KnownBlock | Block)[])]
+      : undefined
 
     return slackSendMessage({
       token,
@@ -54,6 +48,6 @@ export const slackSendMessageAction = createAction({
       threadTs: threadTs ? processMessageTimestamp(threadTs) : undefined,
       file,
       blocks: blockList,
-    });
+    })
   },
-});
+})

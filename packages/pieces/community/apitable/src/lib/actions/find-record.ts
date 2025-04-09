@@ -1,11 +1,7 @@
-import {
-  PiecePropValueSchema,
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { APITableCommon, makeClient } from '../common';
-import { APITableAuth } from '../../index';
-import { prepareQuery } from '../common/client';
+import { PiecePropValueSchema, Property, createAction } from '@activepieces/pieces-framework'
+import { APITableAuth } from '../../index'
+import { APITableCommon, makeClient } from '../common'
+import { prepareQuery } from '../common/client'
 
 export const findRecordAction = createAction({
   auth: APITableAuth,
@@ -22,8 +18,7 @@ export const findRecordAction = createAction({
     }),
     fieldNames: Property.Array({
       displayName: 'Field Names',
-      description:
-        'The returned record results are limited to the specified fields',
+      description: 'The returned record results are limited to the specified fields',
       required: false,
     }),
     maxRecords: Property.Number({
@@ -49,17 +44,15 @@ export const findRecordAction = createAction({
     }),
   },
   async run(context) {
-    const datasheetId = context.propsValue.datasheet_id;
+    const datasheetId = context.propsValue.datasheet_id
     const recordIds = context.propsValue.recordIds ?? []
     const fieldNames = context.propsValue.fieldNames ?? []
-    const maxRecords = context.propsValue.maxRecords;
-    const pageSize = context.propsValue.pageSize ?? 100;
-    const pageNum = context.propsValue.pageNum ?? 1;
-    const filter = context.propsValue.filter;
+    const maxRecords = context.propsValue.maxRecords
+    const pageSize = context.propsValue.pageSize ?? 100
+    const pageNum = context.propsValue.pageNum ?? 1
+    const filter = context.propsValue.filter
 
-    const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof APITableAuth>
-    );
+    const client = makeClient(context.auth as PiecePropValueSchema<typeof APITableAuth>)
     const response: any = await client.listRecords(
       datasheetId as string,
       prepareQuery({
@@ -69,12 +62,12 @@ export const findRecordAction = createAction({
         fieldNames: fieldNames.join(','),
         maxRecords: maxRecords,
         filterByFormula: filter,
-      })
-    );
+      }),
+    )
 
     if (!response.success) {
-      throw new Error(JSON.stringify(response, undefined, 2));
+      throw new Error(JSON.stringify(response, undefined, 2))
     }
-    return response;
+    return response
   },
-});
+})

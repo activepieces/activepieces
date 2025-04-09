@@ -1,8 +1,8 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { onChatSubmission } from './lib/triggers/chat-trigger';
-import { onFormSubmission } from './lib/triggers/form-trigger';
-import { returnResponse } from './lib/actions/return-response';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { returnResponse } from './lib/actions/return-response'
+import { onChatSubmission } from './lib/triggers/chat-trigger'
+import { onFormSubmission } from './lib/triggers/form-trigger'
 
 export const forms = createPiece({
   displayName: 'Human Input',
@@ -14,4 +14,4 @@ export const forms = createPiece({
   authors: ['anasbarg', 'MoShizzle', 'abuaboud'],
   actions: [returnResponse],
   triggers: [onFormSubmission, onChatSubmission],
-});
+})

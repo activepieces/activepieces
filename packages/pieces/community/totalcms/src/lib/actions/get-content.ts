@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { getContent } from '../api';
-import { cmsAuth } from '../auth';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { getContent } from '../api'
+import { cmsAuth } from '../auth'
 
 export const getContentAction = createAction({
   name: 'get_content',
@@ -36,8 +36,8 @@ export const getContentAction = createAction({
     }),
   },
   async run(context) {
-    const type = context.propsValue.type;
-    const slug = context.propsValue.slug;
-    return await getContent(context.auth, type, slug);
+    const type = context.propsValue.type
+    const slug = context.propsValue.slug
+    return await getContent(context.auth, type, slug)
   },
-});
+})

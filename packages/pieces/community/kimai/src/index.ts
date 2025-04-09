@@ -1,17 +1,10 @@
-import {
-  createCustomApiCallAction,
-  HttpError,
-} from '@activepieces/pieces-common';
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { kimaiCreateTimesheetAction } from './lib/actions/create-timesheet';
-import { makeClient } from './lib/common';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { HttpError, createCustomApiCallAction } from '@activepieces/pieces-common'
+import { propsValidation } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { z } from 'zod'
+import { kimaiCreateTimesheetAction } from './lib/actions/create-timesheet'
+import { makeClient } from './lib/common'
 
 export const kimaiAuth = PieceAuth.CustomAuth({
   description: `
@@ -42,48 +35,48 @@ export const kimaiAuth = PieceAuth.CustomAuth({
     if (auth) {
       await propsValidation.validateZod(auth, {
         base_url: z.string().url(),
-      });
+      })
     }
 
     if (!auth) {
       return {
         valid: false,
         error: 'Configuration missing!',
-      };
+      }
     }
 
-    const client = await makeClient(auth);
+    const client = await makeClient(auth)
 
     try {
-      const pingResponse = await client.ping();
+      const pingResponse = await client.ping()
       if (pingResponse.message !== 'pong') {
         return {
           valid: false,
           error: pingResponse.message,
-        };
+        }
       }
 
       return {
         valid: true,
-      };
+      }
     } catch (e) {
       if (e instanceof HttpError) {
         if (e.response.body instanceof Object && 'message' in e.response.body) {
           return {
             valid: false,
             error: e.response.body.message as string,
-          };
+          }
         }
       }
 
       return {
         valid: false,
         error: 'Please check your server URL/credentials and try again.',
-      };
+      }
     }
   },
   required: true,
-});
+})
 
 export const kimai = createPiece({
   displayName: 'Kimai',
@@ -93,7 +86,7 @@ export const kimai = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/kimai.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ["facferreira","kishanprmr","MoShizzle","abuaboud"],
+  authors: ['facferreira', 'kishanprmr', 'MoShizzle', 'abuaboud'],
   actions: [
     kimaiCreateTimesheetAction,
     createCustomApiCallAction({
@@ -106,4 +99,4 @@ export const kimai = createPiece({
     }),
   ],
   triggers: [],
-});
+})

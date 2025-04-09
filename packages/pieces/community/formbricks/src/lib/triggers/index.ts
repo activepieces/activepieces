@@ -1,4 +1,4 @@
-import { formBricksRegisterTrigger } from './register';
+import { formBricksRegisterTrigger } from './register'
 
 export const triggers = [
   {
@@ -124,4 +124,4 @@ export const triggers = [
       },
     },
   },
-].map((props) => formBricksRegisterTrigger(props));
+].map((props) => formBricksRegisterTrigger(props))

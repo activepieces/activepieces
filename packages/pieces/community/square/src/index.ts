@@ -1,7 +1,7 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import crypto from 'crypto';
-import { triggers } from './lib/triggers';
+import crypto from 'crypto'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { triggers } from './lib/triggers'
 
 export const squareAuth = PieceAuth.OAuth2({
   description: 'Authentication',
@@ -21,7 +21,7 @@ export const squareAuth = PieceAuth.OAuth2({
     'APPOINTMENTS_READ',
     'APPOINTMENTS_WRITE',
   ],
-});
+})
 
 export const square = createPiece({
   displayName: 'Square',
@@ -30,29 +30,29 @@ export const square = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/square.png',
   categories: [PieceCategory.COMMERCE],
-  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ['kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
   auth: squareAuth,
   events: {
     verify: ({ webhookSecret, payload, appWebhookUrl }) => {
-      const signature = payload.headers['x-square-hmacsha256-signature'];
-      const hmac = crypto.createHmac('sha256', webhookSecret as string);
-      hmac.update(appWebhookUrl + payload.rawBody);
-      const hash = hmac.digest('base64');
-      return hash === signature;
+      const signature = payload.headers['x-square-hmacsha256-signature']
+      const hmac = crypto.createHmac('sha256', webhookSecret as string)
+      hmac.update(appWebhookUrl + payload.rawBody)
+      const hash = hmac.digest('base64')
+      return hash === signature
     },
     parseAndReply: ({ payload }) => {
-      const payloadBody = payload.body as Payload | undefined;
+      const payloadBody = payload.body as Payload | undefined
       return {
         event: payloadBody?.type,
         identifierValue: payloadBody?.merchant_id,
-      };
+      }
     },
   },
   actions: [],
   triggers,
-});
+})
 
 type Payload = {
-  type: string;
-  merchant_id: string;
-};
+  type: string
+  merchant_id: string
+}

@@ -1,33 +1,22 @@
-import { t } from 'i18next';
-import { Building, User, Workflow, Puzzle, Bot, Info } from 'lucide-react';
-import React from 'react';
+import { t } from 'i18next'
+import { Bot, Building, Info, Puzzle, User, Workflow } from 'lucide-react'
+import React from 'react'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { AnalyticsReportResponse } from '@activepieces/shared';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { AnalyticsReportResponse } from '@activepieces/shared'
 
 type MetricProps = {
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-  title: string;
-  value: React.ReactNode;
-  description: string;
-  footer?: string;
-  iconColor: string;
-};
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
+  title: string
+  value: React.ReactNode
+  description: string
+  footer?: string
+  iconColor: string
+}
 
-const Metric = ({
-  icon: Icon,
-  title,
-  value,
-  description,
-  footer,
-  iconColor,
-}: MetricProps) => {
+const Metric = ({ icon: Icon, title, value, description, footer, iconColor }: MetricProps) => {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -44,13 +33,11 @@ const Metric = ({
       </CardHeader>
       <CardContent>
         <div className="text-xl font-bold">{value}</div>
-        {footer && (
-          <div className="text-sm text-muted-foreground mt-2">{footer}</div>
-        )}
+        {footer && <div className="text-sm text-muted-foreground mt-2">{footer}</div>}
       </CardContent>
     </Card>
-  );
-};
+  )
+}
 
 const SkeletonMetric = () => {
   return (
@@ -67,12 +54,12 @@ const SkeletonMetric = () => {
         <Skeleton className="h-4 w-32" />
       </CardContent>
     </Card>
-  );
-};
+  )
+}
 
 type MetricsProps = {
-  report?: AnalyticsReportResponse;
-};
+  report?: AnalyticsReportResponse
+}
 
 export function Metrics({ report }: MetricsProps) {
   const metricsData = [
@@ -118,7 +105,7 @@ export function Metrics({ report }: MetricsProps) {
       description: t('The number of enabled flows that use AI pieces'),
       iconColor: 'text-purple-700',
     },
-  ];
+  ]
 
   return (
     <div>
@@ -136,10 +123,8 @@ export function Metrics({ report }: MetricsProps) {
                 iconColor={metric.iconColor}
               />
             ))
-          : Array.from({ length: metricsData.length }).map((_, index) => (
-              <SkeletonMetric key={index} />
-            ))}
+          : Array.from({ length: metricsData.length }).map((_, index) => <SkeletonMetric key={index} />)}
       </div>
     </div>
-  );
+  )
 }

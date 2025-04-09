@@ -1,5 +1,5 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import mime from 'mime-types';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import mime from 'mime-types'
 
 export const imageToBase64 = createAction({
   name: 'image_to_base64',
@@ -19,14 +19,10 @@ export const imageToBase64 = createAction({
     }),
   },
   async run(context) {
-    const image = context.propsValue.image;
-    const mimeType = mime.lookup(
-      image.extension ? image.extension : 'image/png'
-    );
+    const image = context.propsValue.image
+    const mimeType = mime.lookup(image.extension ? image.extension : 'image/png')
 
-    const actualMimeType = context.propsValue.override_mime_type
-      ? context.propsValue.override_mime_type
-      : mimeType;
-    return `data:${actualMimeType};base64,${image.base64}`;
+    const actualMimeType = context.propsValue.override_mime_type ? context.propsValue.override_mime_type : mimeType
+    return `data:${actualMimeType};base64,${image.base64}`
   },
-});
+})

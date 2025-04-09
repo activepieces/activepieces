@@ -1,53 +1,53 @@
-'use client';
+'use client'
 
-import { t } from 'i18next';
-import { XIcon } from 'lucide-react';
-import { forwardRef, useEffect, useState } from 'react';
+import { t } from 'i18next'
+import { XIcon } from 'lucide-react'
+import { forwardRef, useEffect, useState } from 'react'
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils'
 
-import { Badge } from './badge';
-import { Button } from './button';
-import type { InputProps } from './input';
-import { ReadMoreDescription } from './read-more-description';
+import { Badge } from './badge'
+import { Button } from './button'
+import type { InputProps } from './input'
+import { ReadMoreDescription } from './read-more-description'
 
 type TagInputProps = Omit<InputProps, 'value' | 'onChange'> & {
-  value?: ReadonlyArray<string>;
-  onChange: (value: ReadonlyArray<string>) => void;
-};
+  value?: ReadonlyArray<string>
+  onChange: (value: ReadonlyArray<string>) => void
+}
 
-const SEPARATOR = ' ';
+const SEPARATOR = ' '
 
 const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
-  const { className, value = [], onChange, ...domProps } = props;
+  const { className, value = [], onChange, ...domProps } = props
 
-  const [pendingDataPoint, setPendingDataPoint] = useState('');
+  const [pendingDataPoint, setPendingDataPoint] = useState('')
 
   useEffect(() => {
     if (pendingDataPoint.includes(SEPARATOR)) {
       const newDataPoints = new Set(
         [...value, ...pendingDataPoint.split(SEPARATOR)].flatMap((x) => {
-          const trimmedX = x.trim();
-          return trimmedX.length > 0 ? [trimmedX] : [];
+          const trimmedX = x.trim()
+          return trimmedX.length > 0 ? [trimmedX] : []
         }),
-      );
-      onChange(Array.from(newDataPoints));
-      setPendingDataPoint('');
+      )
+      onChange(Array.from(newDataPoints))
+      setPendingDataPoint('')
     }
-  }, [pendingDataPoint, onChange, value]);
+  }, [pendingDataPoint, onChange, value])
 
   const addPendingDataPoint = () => {
     if (pendingDataPoint) {
       const newDataPoints = new Set(
         [...value, ...pendingDataPoint.split(SEPARATOR)].flatMap((x) => {
-          const trimmedX = x.trim();
-          return trimmedX.length > 0 ? [trimmedX] : [];
+          const trimmedX = x.trim()
+          return trimmedX.length > 0 ? [trimmedX] : []
         }),
-      );
-      onChange(Array.from(newDataPoints));
-      setPendingDataPoint('');
+      )
+      onChange(Array.from(newDataPoints))
+      setPendingDataPoint('')
     }
-  };
+  }
 
   return (
     <>
@@ -66,7 +66,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
               size={'icon'}
               className={'ml-2 h-3 w-3'}
               onClick={() => {
-                onChange(value.filter((i) => i !== item));
+                onChange(value.filter((i) => i !== item))
               }}
             >
               <XIcon className={'w-3'} />
@@ -74,22 +74,16 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
           </Badge>
         ))}
         <input
-          className={
-            'placeholder:text-neutral-500 dark:placeholder:text-neutral-400 flex-1 outline-none'
-          }
+          className={'placeholder:text-neutral-500 dark:placeholder:text-neutral-400 flex-1 outline-none'}
           value={pendingDataPoint}
           onChange={(e) => setPendingDataPoint(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === SEPARATOR) {
-              e.preventDefault();
-              addPendingDataPoint();
-            } else if (
-              e.key === 'Backspace' &&
-              pendingDataPoint.length === 0 &&
-              value.length > 0
-            ) {
-              e.preventDefault();
-              onChange(value.slice(0, -1));
+              e.preventDefault()
+              addPendingDataPoint()
+            } else if (e.key === 'Backspace' && pendingDataPoint.length === 0 && value.length > 0) {
+              e.preventDefault()
+              onChange(value.slice(0, -1))
             }
           }}
           {...domProps}
@@ -97,14 +91,12 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
         />
       </div>
       <div className="mt-3">
-        <ReadMoreDescription
-          text={t('Press space to separate values')}
-        ></ReadMoreDescription>
+        <ReadMoreDescription text={t('Press space to separate values')}></ReadMoreDescription>
       </div>
     </>
-  );
-});
+  )
+})
 
-TagInput.displayName = 'TagInput';
+TagInput.displayName = 'TagInput'
 
-export { TagInput };
+export { TagInput }

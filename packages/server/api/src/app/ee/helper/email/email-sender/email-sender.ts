@@ -6,62 +6,83 @@ import { logEmailSender } from './log-email-sender'
 import { smtpEmailSender } from './smtp-email-sender'
 
 export type EmailSender = {
-    send: (args: SendArgs) => Promise<void>
+  send: (args: SendArgs) => Promise<void>
 }
 
 const getEmailSenderInstance = (log: FastifyBaseLogger): EmailSender => {
-    const env = system.get(AppSystemProp.ENVIRONMENT)
+  const env = system.get(AppSystemProp.ENVIRONMENT)
 
-    if (env === ApEnvironment.PRODUCTION) {
-        return smtpEmailSender(log)
-    }
+  if (env === ApEnvironment.PRODUCTION) {
+    return smtpEmailSender(log)
+  }
 
-    return logEmailSender(log)
+  return logEmailSender(log)
 }
 
 export const emailSender = (log: FastifyBaseLogger) => getEmailSenderInstance(log)
 
 type BaseEmailTemplateData<Name extends string, Vars extends Record<string, string>> = {
-    name: Name
-    vars: Vars
+  name: Name
+  vars: Vars
 }
 
-type InvitationEmailTemplateData = BaseEmailTemplateData<'invitation-email', {
+type InvitationEmailTemplateData = BaseEmailTemplateData<
+  'invitation-email',
+  {
     projectOrPlatformName: string
     role: string
     setupLink: string
-}>
+  }
+>
 
-type QuotaEmailTemplateData = BaseEmailTemplateData<'quota-50' | 'quota-90' | 'quota-100', {
+type QuotaEmailTemplateData = BaseEmailTemplateData<
+  'quota-50' | 'quota-90' | 'quota-100',
+  {
     resetDate: string
-}>
+  }
+>
 
-type ResetPasswordEmailTemplateData = BaseEmailTemplateData<'reset-password', {
+type ResetPasswordEmailTemplateData = BaseEmailTemplateData<
+  'reset-password',
+  {
     setupLink: string
-}>
+  }
+>
 
-type VerifyEmailTemplateData = BaseEmailTemplateData<'verify-email', {
+type VerifyEmailTemplateData = BaseEmailTemplateData<
+  'verify-email',
+  {
     setupLink: string
-}>
+  }
+>
 
-type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
+type IssueCreatedTemplateData = BaseEmailTemplateData<
+  'issue-created',
+  {
     issueUrl: string
     flowName: string
     isIssue: string
     createdAt: string
-}>
+  }
+>
 
-type IssuesReminderTemplateData = BaseEmailTemplateData<'issues-reminder', {
+type IssuesReminderTemplateData = BaseEmailTemplateData<
+  'issues-reminder',
+  {
     issuesUrl: string
     issues: string
     issuesCount: string
     projectName: string
-}>
+  }
+>
 
-type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<'trigger-failure', {
+type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<
+  'trigger-failure',
+  {
     flowName: string
     projectName: string
-}>
+  }
+>
 
 export type EmailTemplateData =
   | InvitationEmailTemplateData
@@ -73,7 +94,7 @@ export type EmailTemplateData =
   | TriggerFailureThresholdTemplateData
 
 type SendArgs = {
-    emails: string[]
-    platformId: string | undefined
-    templateData: EmailTemplateData
+  emails: string[]
+  platformId: string | undefined
+  templateData: EmailTemplateData
 }

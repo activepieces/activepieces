@@ -1,18 +1,8 @@
-import {
-  ApFile,
-  createAction,
-  DynamicPropsValue,
-  Property,
-} from '@activepieces/pieces-framework';
-import {
-  HttpMessageBody,
-  HttpMethod,
-  QueryParams,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { telegramCommons } from '../common';
-import { telegramBotAuth } from '../..';
-import FormData from 'form-data';
+import { HttpMessageBody, HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common'
+import { ApFile, DynamicPropsValue, Property, createAction } from '@activepieces/pieces-framework'
+import FormData from 'form-data'
+import { telegramBotAuth } from '../..'
+import { telegramCommons } from '../common'
 
 const chatId = `
 
@@ -23,10 +13,10 @@ const chatId = `
 4. The bot will reply with your chat ID.
 
 **Note: Remember to initiate the chat with the bot, or you'll get an error for "chat not found.**
-`;
+`
 const format = `
 [Link example](https://core.telegram.org/bots/api#formatting-options)
-`;
+`
 export const telegramSendMediaAction = createAction({
   auth: telegramBotAuth,
   name: 'send_media',
@@ -42,8 +32,7 @@ export const telegramSendMediaAction = createAction({
     }),
     message_thread_id: Property.ShortText({
       displayName: 'Message Thread Id',
-      description:
-        'Unique identifier for the target message thread of the forums; for forums supergroups only',
+      description: 'Unique identifier for the target message thread of the forums; for forums supergroups only',
       required: false,
     }),
     media_type: Property.StaticDropdown({
@@ -79,8 +68,7 @@ export const telegramSendMediaAction = createAction({
             }),
             photoId: Property.ShortText({
               displayName: 'Image Id',
-              description:
-                "The image id previously uploaded to Telegram's servers",
+              description: "The image id previously uploaded to Telegram's servers",
               required: false,
             }),
           }),
@@ -97,8 +85,7 @@ export const telegramSendMediaAction = createAction({
             }),
             videoId: Property.ShortText({
               displayName: 'Video Id',
-              description:
-                "The video id previously uploaded to Telegram's servers",
+              description: "The video id previously uploaded to Telegram's servers",
               required: false,
             }),
           }),
@@ -111,40 +98,34 @@ export const telegramSendMediaAction = createAction({
             }),
             emoji: Property.ShortText({
               displayName: 'Emoji',
-              description:
-                'Emoji associated with the sticker. Only for just uploaded stickers',
+              description: 'Emoji associated with the sticker. Only for just uploaded stickers',
               required: false,
             }),
             stickerUrl: Property.ShortText({
               displayName: 'Sticker Url',
-              description:
-                'The static sticker url to be downloaded by Telegram (supports only .WEBP files)',
+              description: 'The static sticker url to be downloaded by Telegram (supports only .WEBP files)',
               required: false,
             }),
             stickerId: Property.ShortText({
               displayName: 'Sticker Id',
-              description:
-                "The sticker id previously uploaded to Telegram's servers",
+              description: "The sticker id previously uploaded to Telegram's servers",
               required: false,
             }),
           }),
           animation: () => ({
             animation: Property.File({
               displayName: 'GIF',
-              description:
-                'The GIF or MPEG-4 without sound file to be uploaded as a auto-playing animation',
+              description: 'The GIF or MPEG-4 without sound file to be uploaded as a auto-playing animation',
               required: false,
             }),
             animationUrl: Property.ShortText({
               displayName: 'GIF Url',
-              description:
-                'The GIF or MPEG-4 without sound url to be downloaded by Telegram',
+              description: 'The GIF or MPEG-4 without sound url to be downloaded by Telegram',
               required: false,
             }),
             animationId: Property.ShortText({
               displayName: 'GIF Id',
-              description:
-                "The GIF or MPEG-4 without sound id previously uploaded to Telegram's servers",
+              description: "The GIF or MPEG-4 without sound id previously uploaded to Telegram's servers",
               required: false,
             }),
             duration: Property.Number({
@@ -153,8 +134,8 @@ export const telegramSendMediaAction = createAction({
               required: false,
             }),
           }),
-        };
-        return propsBuilders[media_type as unknown as string]();
+        }
+        return propsBuilders[media_type as unknown as string]()
       },
     }),
     format: Property.StaticDropdown({
@@ -191,67 +172,63 @@ export const telegramSendMediaAction = createAction({
     }),
   },
   async run(ctx) {
-    const mediaType = ctx.propsValue['media_type'];
-    const headers: Record<string, string> = {};
-    const queryParams: QueryParams = {};
-    let body: HttpMessageBody | undefined = undefined;
-    let method = 'sendMessage';
+    const mediaType = ctx.propsValue['media_type']
+    const headers: Record<string, string> = {}
+    const queryParams: QueryParams = {}
+    let body: HttpMessageBody | undefined = undefined
+    let method = 'sendMessage'
     if (typeof mediaType !== 'undefined') {
       // send media message
       const [file, url, id] = [
         ctx.propsValue.media?.[mediaType] as ApFile,
         ctx.propsValue.media?.[mediaType + 'Url'] as string,
         ctx.propsValue.media?.[mediaType + 'Id'] as string,
-      ];
+      ]
 
       const methods: Partial<Record<string, string>> = {
         photo: 'sendPhoto',
         video: 'sendVideo',
         sticker: 'sendSticker',
         animation: 'sendAnimation',
-      };
+      }
 
-      const mediaMethod = methods[mediaType];
+      const mediaMethod = methods[mediaType]
 
       if (!mediaMethod) {
-        throw new Error('Unknown media type method (' + mediaType + ')');
+        throw new Error('Unknown media type method (' + mediaType + ')')
       }
-      method = mediaMethod;
+      method = mediaMethod
 
       if (typeof file !== 'undefined') {
         // upload
-        headers['Content-Type'] = 'multipart/form-data';
-        const form = new FormData();
-        form.append('file', file.data, file.extension);
-        body = form;
-        queryParams.chat_id = ctx.propsValue['chat_id'];
-        queryParams.caption = ctx.propsValue['message'];
-        if (ctx.propsValue['message_thread_id'])
-          queryParams.message_thread_id = ctx.propsValue['message_thread_id'];
-        queryParams.parse_mode = ctx.propsValue['format'] ?? 'MarkdownV2';
+        headers['Content-Type'] = 'multipart/form-data'
+        const form = new FormData()
+        form.append('file', file.data, file.extension)
+        body = form
+        queryParams.chat_id = ctx.propsValue['chat_id']
+        queryParams.caption = ctx.propsValue['message']
+        if (ctx.propsValue['message_thread_id']) queryParams.message_thread_id = ctx.propsValue['message_thread_id']
+        queryParams.parse_mode = ctx.propsValue['format'] ?? 'MarkdownV2'
 
         // TODO: research how to
         // if (ctx.propsValue['reply_markup'])
         //   queryParams.reply_markup = ctx.propsValue['reply_markup'];
       } else if (typeof url !== 'undefined' || typeof id !== 'undefined') {
         // download
-        body = body || {};
-        body[mediaType] = url ?? id;
-        body.chat_id = ctx.propsValue['chat_id'];
-        body.caption = ctx.propsValue['message'];
-        body.message_thread_id =
-          ctx.propsValue['message_thread_id'] ?? undefined;
-        body.parse_mode = ctx.propsValue['format'] ?? 'MarkdownV2';
-        body.reply_markup = ctx.propsValue['reply_markup'] ?? undefined;
+        body = body || {}
+        body[mediaType] = url ?? id
+        body.chat_id = ctx.propsValue['chat_id']
+        body.caption = ctx.propsValue['message']
+        body.message_thread_id = ctx.propsValue['message_thread_id'] ?? undefined
+        body.parse_mode = ctx.propsValue['format'] ?? 'MarkdownV2'
+        body.reply_markup = ctx.propsValue['reply_markup'] ?? undefined
       } else {
-        throw new Error(
-          'No media defined. Ensure you have setup file, url or id'
-        );
+        throw new Error('No media defined. Ensure you have setup file, url or id')
       }
     }
 
     if (typeof body === 'undefined') {
-      throw new Error('No body defined');
+      throw new Error('No body defined')
     }
 
     return await httpClient.sendRequest<never>({
@@ -260,6 +237,6 @@ export const telegramSendMediaAction = createAction({
       headers,
       body,
       queryParams,
-    });
+    })
   },
-});
+})

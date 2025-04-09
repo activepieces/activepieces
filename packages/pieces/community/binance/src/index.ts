@@ -1,5 +1,5 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { fetchCryptoPairPrice } from './lib/actions/fetch-pair-price';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { fetchCryptoPairPrice } from './lib/actions/fetch-pair-price'
 
 export const binance = createPiece({
   displayName: 'Binance',
@@ -9,6 +9,6 @@ export const binance = createPiece({
   categories: [],
   auth: PieceAuth.None(),
   actions: [fetchCryptoPairPrice],
-  authors: ["kishanprmr","khaledmashaly","abuaboud"],
+  authors: ['kishanprmr', 'khaledmashaly', 'abuaboud'],
   triggers: [],
-});
+})

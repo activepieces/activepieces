@@ -1,12 +1,12 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { sendEmail } from './lib/actions/send-email';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { sendEmail } from './lib/actions/send-email'
 
 export const resendAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   required: true,
-});
+})
 
 export const resend = createPiece({
   displayName: 'Resend',
@@ -15,7 +15,7 @@ export const resend = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/resend.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE, PieceCategory.MARKETING],
-  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ['kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
   auth: resendAuth,
   actions: [
     sendEmail,
@@ -28,4 +28,4 @@ export const resend = createPiece({
     }),
   ],
   triggers: [],
-});
+})

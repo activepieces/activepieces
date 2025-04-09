@@ -1,10 +1,5 @@
-import {
-  Property,
-  Store,
-  StoreScope,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { constructQueueName, formatStorageError } from '../common';
+import { Property, Store, StoreScope, createAction } from '@activepieces/pieces-framework'
+import { constructQueueName, formatStorageError } from '../common'
 
 const notes = `**Note:**
 - You can push items from other flows. The queue name should be unique across all flows.
@@ -28,21 +23,36 @@ export const pushToQueue = createAction({
     }),
   },
   async run(context) {
-    return push({ store: context.store, queueName: context.propsValue.queueName, items: context.propsValue.items, testing: false })
+    return push({
+      store: context.store,
+      queueName: context.propsValue.queueName,
+      items: context.propsValue.items,
+      testing: false,
+    })
   },
   async test(context) {
-    return push({ store: context.store, queueName: context.propsValue.queueName, items: context.propsValue.items, testing: true })
-  }
-});
+    return push({
+      store: context.store,
+      queueName: context.propsValue.queueName,
+      items: context.propsValue.items,
+      testing: true,
+    })
+  },
+})
 
-async function push({ store, queueName, items, testing }: { store: Store, queueName: string, items: unknown[], testing: boolean }) {
+async function push({
+  store,
+  queueName,
+  items,
+  testing,
+}: { store: Store; queueName: string; items: unknown[]; testing: boolean }) {
   const key = constructQueueName(queueName, testing)
-  const existingQueueItems = await store.get<unknown[]>(key, StoreScope.PROJECT) || []
+  const existingQueueItems = (await store.get<unknown[]>(key, StoreScope.PROJECT)) || []
   const updatedQueueItems = [...existingQueueItems, ...items]
   try {
     return await store.put(key, updatedQueueItems, StoreScope.PROJECT)
   } catch (e: unknown) {
-    const name = (e as Error)?.name;
+    const name = (e as Error)?.name
     if (name === 'StorageLimitError') {
       throw formatStorageError(e)
     } else {

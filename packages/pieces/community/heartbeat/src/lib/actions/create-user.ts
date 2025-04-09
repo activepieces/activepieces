@@ -1,15 +1,7 @@
-import {
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  HttpMethod,
-  httpClient,
-  propsValidation,
-} from '@activepieces/pieces-common';
-import { heartbeatAuth } from '../..';
-import { z } from 'zod';
+import { AuthenticationType, HttpMethod, httpClient, propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { heartbeatAuth } from '../..'
 
 export const heartBeatCreateUser = createAction({
   auth: heartbeatAuth,
@@ -38,12 +30,12 @@ export const heartBeatCreateUser = createAction({
             disabled: true,
             options: [],
             placeholder: 'Please select a connection',
-          };
+          }
 
         const response = await httpClient.sendRequest<
           {
-            id: string;
-            name: string;
+            id: string
+            name: string
           }[]
         >({
           method: HttpMethod.GET,
@@ -56,7 +48,7 @@ export const heartBeatCreateUser = createAction({
             token: auth as string,
           },
           body: {},
-        });
+        })
 
         if (response.status === 200) {
           return {
@@ -65,20 +57,19 @@ export const heartBeatCreateUser = createAction({
               value: role.id,
             })),
             disabled: false,
-          };
+          }
         }
 
         return {
           options: [],
           disabled: true,
           placeholder: 'Error loading roles.',
-        };
+        }
       },
     }),
     group_ids: Property.MultiSelectDropdown({
       displayName: 'Groups',
-      description:
-        'A list of the ids of the groups that the user should belong to.',
+      description: 'A list of the ids of the groups that the user should belong to.',
       required: false,
       refreshers: [],
       options: async ({ auth }) => {
@@ -87,12 +78,12 @@ export const heartBeatCreateUser = createAction({
             disabled: true,
             options: [],
             placeholder: 'Error loading groups',
-          };
+          }
 
         const response = await httpClient.sendRequest<
           {
-            id: string;
-            name: string;
+            id: string
+            name: string
           }[]
         >({
           method: HttpMethod.GET,
@@ -105,7 +96,7 @@ export const heartBeatCreateUser = createAction({
             token: auth as string,
           },
           body: {},
-        });
+        })
 
         if (response.status === 200) {
           return {
@@ -114,14 +105,14 @@ export const heartBeatCreateUser = createAction({
               value: group.id,
             })),
             disabled: false,
-          };
+          }
         }
 
         return {
           disabled: true,
           options: [],
           placeholder: 'Error loading groups',
-        };
+        }
       },
     }),
     profile_picture: Property.ShortText({
@@ -166,9 +157,9 @@ export const heartBeatCreateUser = createAction({
     await propsValidation.validateZod(propsValue, {
       email: z.string().email(),
       linkedin: z.string().url().optional(),
-      twitter: z.string().url().optional(), 
-      instagram: z.string().url().optional()
-    });
+      twitter: z.string().url().optional(),
+      instagram: z.string().url().optional(),
+    })
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.PUT,
@@ -193,8 +184,8 @@ export const heartBeatCreateUser = createAction({
         instagram: propsValue.instagram,
         createIntroductionThread: propsValue.create_introduction_thread,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

@@ -1,25 +1,16 @@
-import {
-  httpClient,
-  HttpHeaders,
-  HttpMethod,
-  HttpRequest,
-  QueryParams,
-} from '@activepieces/pieces-common';
-import {
-  CustomAuthProps,
-  StaticPropsValue,
-} from '@activepieces/pieces-framework';
+import { HttpHeaders, HttpMethod, HttpRequest, QueryParams, httpClient } from '@activepieces/pieces-common'
+import { CustomAuthProps, StaticPropsValue } from '@activepieces/pieces-framework'
 
 export async function queryMetabaseApi(
   params: {
-    endpoint: string;
-    method: HttpMethod;
-    queryParams?: QueryParams;
-    headers?: HttpHeaders;
-    body?: object;
-    responseType?: 'arraybuffer' | 'json' | 'blob' | 'text';
+    endpoint: string
+    method: HttpMethod
+    queryParams?: QueryParams
+    headers?: HttpHeaders
+    body?: object
+    responseType?: 'arraybuffer' | 'json' | 'blob' | 'text'
   },
-  auth: StaticPropsValue<CustomAuthProps>
+  auth: StaticPropsValue<CustomAuthProps>,
 ) {
   const request: HttpRequest = {
     method: params.method,
@@ -32,7 +23,7 @@ export async function queryMetabaseApi(
     },
     body: JSON.stringify(params.body),
     responseType: params.responseType,
-  };
-  const response = await httpClient.sendRequest(request);
-  return response.body;
+  }
+  const response = await httpClient.sendRequest(request)
+  return response.body
 }

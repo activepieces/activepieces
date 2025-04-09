@@ -1,40 +1,35 @@
-import { AxiosError } from 'axios';
-import { clsx, type ClassValue } from 'clsx';
-import dayjs from 'dayjs';
-import JSZip from 'jszip';
-import { useEffect, useRef, useState, RefObject } from 'react';
-import { twMerge } from 'tailwind-merge';
+import { AxiosError } from 'axios'
+import { type ClassValue, clsx } from 'clsx'
+import dayjs from 'dayjs'
+import JSZip from 'jszip'
+import { RefObject, useEffect, useRef, useState } from 'react'
+import { twMerge } from 'tailwind-merge'
 
-import { LocalesEnum, Permission } from '@activepieces/shared';
+import { LocalesEnum, Permission } from '@activepieces/shared'
 
-import { authenticationSession } from './authentication-session';
+import { authenticationSession } from './authentication-session'
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  return twMerge(clsx(inputs))
 }
 const emailRegex =
-  /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 
 export const formatUtils = {
   emailRegex,
   convertEnumToHumanReadable(str: string) {
-    const words = str.split(/[_.]/);
-    return words
-      .map(
-        (word) =>
-          word.charAt(0).toUpperCase() + word.slice(1).toLocaleLowerCase(),
-      )
-      .join(' ');
+    const words = str.split(/[_.]/)
+    return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLocaleLowerCase()).join(' ')
   },
   formatNumber(number: number) {
-    return new Intl.NumberFormat('en-US').format(number);
+    return new Intl.NumberFormat('en-US').format(number)
   },
 
   formatDateOnlyOrFail(date: Date, fallback: string) {
     try {
-      return this.formatDateOnly(date);
+      return this.formatDateOnly(date)
     } catch (error) {
-      return fallback;
+      return fallback
     }
   },
   formatDateOnly(date: Date) {
@@ -42,25 +37,25 @@ export const formatUtils = {
       month: 'numeric',
       day: 'numeric',
       year: 'numeric',
-    }).format(date);
+    }).format(date)
   },
   formatDate(date: Date) {
-    const now = dayjs();
-    const inputDate = dayjs(date);
+    const now = dayjs()
+    const inputDate = dayjs(date)
 
-    const isToday = inputDate.isSame(now, 'day');
-    const isYesterday = inputDate.isSame(now.subtract(1, 'day'), 'day');
+    const isToday = inputDate.isSame(now, 'day')
+    const isYesterday = inputDate.isSame(now.subtract(1, 'day'), 'day')
 
     const timeFormat = new Intl.DateTimeFormat('en-US', {
       hour: 'numeric',
       minute: 'numeric',
       hour12: true,
-    });
+    })
 
     if (isToday) {
-      return `Today at ${timeFormat.format(date)}`;
+      return `Today at ${timeFormat.format(date)}`
     } else if (isYesterday) {
-      return `Yesterday at ${timeFormat.format(date)}`;
+      return `Yesterday at ${timeFormat.format(date)}`
     } else {
       return Intl.DateTimeFormat('en-US', {
         month: 'short',
@@ -68,88 +63,76 @@ export const formatUtils = {
         hour: 'numeric',
         minute: 'numeric',
         hour12: true,
-      }).format(date);
+      }).format(date)
     }
   },
   formatDateToAgo(date: Date) {
-    const now = dayjs();
-    const inputDate = dayjs(date);
-    const diffInSeconds = now.diff(inputDate, 'second');
-    const diffInMinutes = now.diff(inputDate, 'minute');
-    const diffInHours = now.diff(inputDate, 'hour');
-    const diffInDays = now.diff(inputDate, 'day');
+    const now = dayjs()
+    const inputDate = dayjs(date)
+    const diffInSeconds = now.diff(inputDate, 'second')
+    const diffInMinutes = now.diff(inputDate, 'minute')
+    const diffInHours = now.diff(inputDate, 'hour')
+    const diffInDays = now.diff(inputDate, 'day')
 
     if (diffInSeconds < 60) {
-      return `${diffInSeconds}s ago`;
+      return `${diffInSeconds}s ago`
     }
     if (diffInMinutes < 60) {
-      return `${diffInMinutes}m ago`;
+      return `${diffInMinutes}m ago`
     }
     if (diffInHours < 24) {
-      return `${diffInHours}h ago`;
+      return `${diffInHours}h ago`
     }
     if (diffInDays < 30) {
-      return `${diffInDays}d ago`;
+      return `${diffInDays}d ago`
     }
-    return inputDate.format('MMM D, YYYY');
+    return inputDate.format('MMM D, YYYY')
   },
   formatDuration(durationMs: number | undefined, short?: boolean): string {
     if (durationMs === undefined) {
-      return '-';
+      return '-'
     }
     if (durationMs < 1000) {
-      const durationMsFormatted = Math.floor(durationMs);
-      return short
-        ? `${durationMsFormatted} ms`
-        : `${durationMsFormatted} milliseconds`;
+      const durationMsFormatted = Math.floor(durationMs)
+      return short ? `${durationMsFormatted} ms` : `${durationMsFormatted} milliseconds`
     }
-    const seconds = Math.floor(durationMs / 1000);
-    const minutes = Math.floor(seconds / 60);
+    const seconds = Math.floor(durationMs / 1000)
+    const minutes = Math.floor(seconds / 60)
 
     if (seconds < 60) {
-      return short ? `${seconds} s` : `${seconds} seconds`;
+      return short ? `${seconds} s` : `${seconds} seconds`
     }
 
     if (minutes > 0) {
-      const remainingSeconds = seconds % 60;
+      const remainingSeconds = seconds % 60
       return short
-        ? `${minutes} min ${
-            remainingSeconds > 0 ? `${remainingSeconds} s` : ''
-          }`
-        : `${minutes} minutes${
-            remainingSeconds > 0 ? ` ${remainingSeconds} seconds` : ''
-          }`;
+        ? `${minutes} min ${remainingSeconds > 0 ? `${remainingSeconds} s` : ''}`
+        : `${minutes} minutes${remainingSeconds > 0 ? ` ${remainingSeconds} seconds` : ''}`
     }
-    return short ? `${seconds} s` : `${seconds} seconds`;
+    return short ? `${seconds} s` : `${seconds} seconds`
   },
-};
+}
 
 export const validationUtils = {
-  isValidationError: (
-    error: unknown,
-  ): error is AxiosError<{ code?: string; params?: { message?: string } }> => {
-    console.error('isValidationError', error);
-    return (
-      error instanceof AxiosError &&
-      error.response?.status === 409 &&
-      error.response?.data?.code === 'VALIDATION'
-    );
+  isValidationError: (error: unknown): error is AxiosError<{ code?: string; params?: { message?: string } }> => {
+    console.error('isValidationError', error)
+    return error instanceof AxiosError && error.response?.status === 409 && error.response?.data?.code === 'VALIDATION'
   },
-};
+}
 
 export function useForwardedRef<T>(ref: React.ForwardedRef<T>) {
-  const innerRef = useRef<T>(null);
+  const innerRef = useRef<T>(null)
 
   useEffect(() => {
-    if (!ref) return;
+    if (!ref) return
     if (typeof ref === 'function') {
-      ref(innerRef.current);
+      ref(innerRef.current)
     } else {
-      ref.current = innerRef.current;
+      ref.current = innerRef.current
     }
-  });
+  })
 
-  return innerRef;
+  return innerRef
 }
 
 export const localesMap = {
@@ -167,149 +150,137 @@ export const localesMap = {
   [LocalesEnum.PORTUGUESE]: 'Português (Brasil)',
   [LocalesEnum.UKRAINIAN]: 'Українська',
   [LocalesEnum.VIETNAMESE]: 'Tiếng Việt',
-};
+}
 
 export const useElementSize = (ref: RefObject<HTMLElement>) => {
-  const [size, setSize] = useState({ width: 0, height: 0 });
+  const [size, setSize] = useState({ width: 0, height: 0 })
   useEffect(() => {
     const handleResize = (entries: ResizeObserverEntry[]) => {
       if (entries[0]) {
-        const { width, height } = entries[0].contentRect;
-        setSize({ width, height });
+        const { width, height } = entries[0].contentRect
+        setSize({ width, height })
       }
-    };
+    }
 
-    const resizeObserver = new ResizeObserver(handleResize);
+    const resizeObserver = new ResizeObserver(handleResize)
 
     if (ref.current) {
-      resizeObserver.observe(ref.current);
+      resizeObserver.observe(ref.current)
     }
 
     return () => {
-      resizeObserver.disconnect();
-    };
-  }, [ref.current]);
+      resizeObserver.disconnect()
+    }
+  }, [ref.current])
 
-  return size;
-};
+  return size
+}
 
 export const isStepFileUrl = (json: unknown): json is string => {
-  return (
-    Boolean(json) &&
-    typeof json === 'string' &&
-    (json.includes('/api/v1/step-files/') || json.includes('file://'))
-  );
-};
+  return Boolean(json) && typeof json === 'string' && (json.includes('/api/v1/step-files/') || json.includes('file://'))
+}
 
 export const useTimeAgo = (date: Date) => {
-  const [timeAgo, setTimeAgo] = useState(() =>
-    formatUtils.formatDateToAgo(date),
-  );
+  const [timeAgo, setTimeAgo] = useState(() => formatUtils.formatDateToAgo(date))
 
   useEffect(() => {
     const updateInterval = () => {
-      const now = dayjs();
-      const inputDate = dayjs(date);
-      const diffInSeconds = now.diff(inputDate, 'second');
+      const now = dayjs()
+      const inputDate = dayjs(date)
+      const diffInSeconds = now.diff(inputDate, 'second')
 
       // Update every second if less than a minute
       // Update every minute if less than an hour
       // Update every hour if less than a day
       // Update every day if more than a day
-      if (diffInSeconds < 60) return 1000;
-      if (diffInSeconds < 3600) return 60000;
-      if (diffInSeconds < 86400) return 3600000;
-      return 86400000;
-    };
+      if (diffInSeconds < 60) return 1000
+      if (diffInSeconds < 3600) return 60000
+      if (diffInSeconds < 86400) return 3600000
+      return 86400000
+    }
 
     const intervalId = setInterval(() => {
-      setTimeAgo(formatUtils.formatDateToAgo(date));
-    }, updateInterval());
+      setTimeAgo(formatUtils.formatDateToAgo(date))
+    }, updateInterval())
 
-    return () => clearInterval(intervalId);
-  }, [date]);
+    return () => clearInterval(intervalId)
+  }, [date])
 
-  return timeAgo;
-};
+  return timeAgo
+}
 
-export const determineDefaultRoute = (
-  checkAccess: (permission: Permission) => boolean,
-) => {
+export const determineDefaultRoute = (checkAccess: (permission: Permission) => boolean) => {
   if (checkAccess(Permission.READ_FLOW)) {
-    return authenticationSession.appendProjectRoutePrefix('/flows');
+    return authenticationSession.appendProjectRoutePrefix('/flows')
   }
   if (checkAccess(Permission.READ_RUN)) {
-    return authenticationSession.appendProjectRoutePrefix('/runs');
+    return authenticationSession.appendProjectRoutePrefix('/runs')
   }
   if (checkAccess(Permission.READ_ISSUES)) {
-    return authenticationSession.appendProjectRoutePrefix('/issues');
+    return authenticationSession.appendProjectRoutePrefix('/issues')
   }
-  return authenticationSession.appendProjectRoutePrefix('/settings');
-};
+  return authenticationSession.appendProjectRoutePrefix('/settings')
+}
 
-export const NEW_FLOW_QUERY_PARAM = 'newFlow';
-export const NEW_TABLE_QUERY_PARAM = 'newTable';
-export const parentWindow = window.opener ?? window.parent;
+export const NEW_FLOW_QUERY_PARAM = 'newFlow'
+export const NEW_TABLE_QUERY_PARAM = 'newTable'
+export const parentWindow = window.opener ?? window.parent
 export const cleanLeadingSlash = (url: string) => {
-  return url.startsWith('/') ? url.slice(1) : url;
-};
+  return url.startsWith('/') ? url.slice(1) : url
+}
 
 export const cleanTrailingSlash = (url: string) => {
-  return url.endsWith('/') ? url.slice(0, -1) : url;
-};
+  return url.endsWith('/') ? url.slice(0, -1) : url
+}
 export const combinePaths = ({
   firstPath,
   secondPath,
 }: {
-  firstPath: string;
-  secondPath: string;
+  firstPath: string
+  secondPath: string
 }) => {
-  const cleanedFirstPath = cleanTrailingSlash(firstPath);
-  const cleanedSecondPath = cleanLeadingSlash(secondPath);
-  return `${cleanedFirstPath}/${cleanedSecondPath}`;
-};
+  const cleanedFirstPath = cleanTrailingSlash(firstPath)
+  const cleanedSecondPath = cleanLeadingSlash(secondPath)
+  return `${cleanedFirstPath}/${cleanedSecondPath}`
+}
 
 const getBlobType = (extension: 'json' | 'txt' | 'csv') => {
   switch (extension) {
     case 'csv':
-      return 'text/csv';
+      return 'text/csv'
     case 'json':
-      return 'application/json';
+      return 'application/json'
     case 'txt':
-      return 'text/plain';
+      return 'text/plain'
     default:
-      return `text/plain`;
+      return `text/plain`
   }
-};
+}
 
 type downloadFileProps =
   | {
-      obj: string;
-      fileName: string;
-      extension: 'json' | 'txt' | 'csv';
+      obj: string
+      fileName: string
+      extension: 'json' | 'txt' | 'csv'
     }
   | {
-      obj: JSZip;
-      fileName: string;
-      extension: 'zip';
-    };
-export const downloadFile = async ({
-  obj,
-  fileName,
-  extension,
-}: downloadFileProps) => {
+      obj: JSZip
+      fileName: string
+      extension: 'zip'
+    }
+export const downloadFile = async ({ obj, fileName, extension }: downloadFileProps) => {
   const blob =
     extension === 'zip'
       ? await obj.generateAsync({ type: 'blob' })
       : new Blob([obj], {
           type: getBlobType(extension),
-        });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `${fileName}.${extension}`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-};
+        })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `${fileName}.${extension}`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}

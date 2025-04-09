@@ -1,9 +1,9 @@
-import { createTrigger } from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { pipedriveCommon } from '../common';
-import { pipedriveAuth } from '../..';
-import { httpClient, HttpMethod,AuthenticationType } from '@activepieces/pieces-common';
-import { ListActivitiesResponse } from '../common/types';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createTrigger } from '@activepieces/pieces-framework'
+import { TriggerStrategy } from '@activepieces/pieces-framework'
+import { pipedriveAuth } from '../..'
+import { pipedriveCommon } from '../common'
+import { ListActivitiesResponse } from '../common/types'
 
 export const newActivity = createTrigger({
   auth: pipedriveAuth,
@@ -18,42 +18,40 @@ export const newActivity = createTrigger({
       'added',
       context.webhookUrl!,
       context.auth.data['api_domain'],
-      context.auth.access_token
-    );
+      context.auth.access_token,
+    )
     await context.store?.put<WebhookInformation>('_new_activity_trigger', {
       webhookId: webhook.data.id,
-    });
+    })
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_new_activity_trigger'
-    );
+    const response = await context.store?.get<WebhookInformation>('_new_activity_trigger')
     if (response !== null && response !== undefined) {
       await pipedriveCommon.unsubscribeWebhook(
         response.webhookId,
         context.auth.data['api_domain'],
-        context.auth.access_token
-      );
+        context.auth.access_token,
+      )
     }
   },
   async test(context) {
     const response = await httpClient.sendRequest<ListActivitiesResponse>({
-			method: HttpMethod.GET,
-			url: `${context.auth.data['api_domain']}/api/v1/activities`,
-			authentication: {
-				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth.access_token,
-			},
-			queryParams:{
-				limit:'5'
-			}
-		});
+      method: HttpMethod.GET,
+      url: `${context.auth.data['api_domain']}/api/v1/activities`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: context.auth.access_token,
+      },
+      queryParams: {
+        limit: '5',
+      },
+    })
 
-		return response.body.data;
+    return response.body.data
   },
   async run(context) {
-    const payloadBody = context.payload.body as PayloadBody;
-    return [payloadBody.current];
+    const payloadBody = context.payload.body as PayloadBody
+    return [payloadBody.current]
   },
   sampleData: {
     id: 8,
@@ -139,12 +137,12 @@ export const newActivity = createTrigger({
       url: 'https://pipedrive-files.s3-eu-west-1.amazonaws.com/Audio-recording.m4a',
     },
   },
-});
+})
 
 interface WebhookInformation {
-  webhookId: string;
+  webhookId: string
 }
 
 type PayloadBody = {
-  current: unknown;
-};
+  current: unknown
+}

@@ -1,13 +1,9 @@
-import { Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property } from '@activepieces/pieces-framework'
 
 export const dripCommon = {
   baseUrl: (accountId: string) => {
-    return `https://api.getdrip.com/v2/${accountId}`;
+    return `https://api.getdrip.com/v2/${accountId}`
   },
   account_id: Property.Dropdown({
     displayName: 'Account',
@@ -19,28 +15,26 @@ export const dripCommon = {
           disabled: true,
           options: [],
           placeholder: 'Please fill in API key first',
-        };
+        }
       }
 
       const request: HttpRequest = {
         method: HttpMethod.GET,
         url: 'https://api.getdrip.com/v2/accounts',
         headers: {
-          Authorization: `Basic ${Buffer.from(auth as string).toString(
-            'base64'
-          )}`,
+          Authorization: `Basic ${Buffer.from(auth as string).toString('base64')}`,
         },
-      };
+      }
       const response = await httpClient.sendRequest<{
-        accounts: { id: string; name: string }[];
-      }>(request);
+        accounts: { id: string; name: string }[]
+      }>(request)
       const opts = response.body.accounts.map((acc) => {
-        return { value: acc.id, label: acc.name };
-      });
+        return { value: acc.id, label: acc.name }
+      })
       return {
         disabled: false,
         options: opts,
-      };
+      }
     },
   }),
   subscriber: Property.ShortText({
@@ -58,6 +52,5 @@ export const dripCommon = {
     required: false,
     description: 'Custom field data about the subscriber',
   }),
-  authorizationHeader: (apiKey: string) =>
-    `Basic ${Buffer.from(apiKey).toString('base64')}`,
-};
+  authorizationHeader: (apiKey: string) => `Basic ${Buffer.from(apiKey).toString('base64')}`,
+}

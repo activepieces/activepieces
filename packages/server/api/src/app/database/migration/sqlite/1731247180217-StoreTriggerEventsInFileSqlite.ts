@@ -2,17 +2,20 @@ import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 
 export class StoreTriggerEventsInFileSqlite1731247180217 implements MigrationInterface {
-    name = 'StoreTriggerEventsInFileSqlite1731247180217'
+  name = 'StoreTriggerEventsInFileSqlite1731247180217'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'up')
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    const log = system.globalLogger()
+    log.info(
+      {
+        name: this.name,
+      },
+      'up',
+    )
+    await queryRunner.query(`
             DROP INDEX "idx_trigger_event_flow_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_trigger_event" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -26,31 +29,34 @@ export class StoreTriggerEventsInFileSqlite1731247180217 implements MigrationInt
                 CONSTRAINT "fk_trigger_event_file_id" FOREIGN KEY ("fileId") REFERENCES "file" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "trigger_event"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_trigger_event"
                 RENAME TO "trigger_event"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_trigger_event_flow_id" ON "trigger_event" ("flowId")
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'down')
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    const log = system.globalLogger()
+    log.info(
+      {
+        name: this.name,
+      },
+      'down',
+    )
+    await queryRunner.query(`
             DROP INDEX "idx_trigger_event_flow_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "trigger_event"
                 RENAME TO "temporary_trigger_event"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "trigger_event" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -63,12 +69,11 @@ export class StoreTriggerEventsInFileSqlite1731247180217 implements MigrationInt
                 CONSTRAINT "fk_trigger_event_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_trigger_event"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_trigger_event_flow_id" ON "trigger_event" ("flowId")
         `)
-    }
-
+  }
 }

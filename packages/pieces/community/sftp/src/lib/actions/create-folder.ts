@@ -1,7 +1,7 @@
-  import { endClient, getClient, getProtocolBackwardCompatibility, sftpAuth } from '../../index';
-import { Property, createAction } from '@activepieces/pieces-framework';
-import Client from 'ssh2-sftp-client';
-import { Client as FTPClient } from 'basic-ftp';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { Client as FTPClient } from 'basic-ftp'
+import Client from 'ssh2-sftp-client'
+import { endClient, getClient, getProtocolBackwardCompatibility, sftpAuth } from '../../index'
 
 export const createFolderAction = createAction({
   auth: sftpAuth,
@@ -22,32 +22,32 @@ export const createFolderAction = createAction({
     }),
   },
   async run(context) {
-    const client = await getClient(context.auth);
-    const directoryPath = context.propsValue.folderPath;
-    const recursive = context.propsValue.recursive ?? false;
-    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol);
+    const client = await getClient(context.auth)
+    const directoryPath = context.propsValue.folderPath
+    const recursive = context.propsValue.recursive ?? false
+    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol)
     try {
       switch (protocolBackwardCompatibility) {
         case 'ftps':
         case 'ftp':
-          await (client as FTPClient).ensureDir(directoryPath);
-          break;
+          await (client as FTPClient).ensureDir(directoryPath)
+          break
         default:
         case 'sftp':
-          await (client as Client).mkdir(directoryPath, recursive);
-          break;
+          await (client as Client).mkdir(directoryPath, recursive)
+          break
       }
 
       return {
         status: 'success',
-      };
+      }
     } catch (err) {
       return {
         status: 'error',
         error: err,
-      };
+      }
     } finally {
-      await endClient(client, context.auth.protocol);
+      await endClient(client, context.auth.protocol)
     }
   },
-});
+})

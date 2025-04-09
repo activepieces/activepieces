@@ -7,48 +7,46 @@ import { setupServer } from '../../../../src/app/server'
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+  await initializeDatabase({ runMigrations: false })
+  app = await setupServer()
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+  await databaseConnection().destroy()
+  await app?.close()
 })
 
 describe('AppSumo API', () => {
-    describe('Action endpoint', () => {
-        it('Activates new accounts', async () => {
-            // arrange
-            const mockEmail = 'mock-email'
+  describe('Action endpoint', () => {
+    it('Activates new accounts', async () => {
+      // arrange
+      const mockEmail = 'mock-email'
 
-            const requestBody = {
-                action: 'activate',
-                plan_id: 'plan_id',
-                uuid: 'uuid',
-                activation_email: mockEmail,
-            }
+      const requestBody = {
+        action: 'activate',
+        plan_id: 'plan_id',
+        uuid: 'uuid',
+        activation_email: mockEmail,
+      }
 
-            const appSumoToken = 'app-sumo-token'
+      const appSumoToken = 'app-sumo-token'
 
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/appsumo/action',
-                headers: {
-                    authorization: `Bearer ${appSumoToken}`,
-                },
-                body: requestBody,
-            })
+      // act
+      const response = await app?.inject({
+        method: 'POST',
+        url: '/v1/appsumo/action',
+        headers: {
+          authorization: `Bearer ${appSumoToken}`,
+        },
+        body: requestBody,
+      })
 
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.CREATED)
-            const responseBody = response?.json()
+      // assert
+      expect(response?.statusCode).toBe(StatusCodes.CREATED)
+      const responseBody = response?.json()
 
-            expect(responseBody?.message).toBe('success')
-            expect(responseBody?.redirect_url).toBe(
-                `https://cloud.activepieces.com/sign-up?email=${mockEmail}`,
-            )
-        })
+      expect(responseBody?.message).toBe('success')
+      expect(responseBody?.redirect_url).toBe(`https://cloud.activepieces.com/sign-up?email=${mockEmail}`)
     })
+  })
 })

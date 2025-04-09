@@ -1,67 +1,43 @@
-import { DialogDescription } from '@radix-ui/react-dialog';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { ArrowLeft, Info, Search, SearchX } from 'lucide-react';
-import React, { useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { DialogDescription } from '@radix-ui/react-dialog'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { t } from 'i18next'
+import { ArrowLeft, Info, Search, SearchX } from 'lucide-react'
+import React, { useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-import { ApMarkdown } from '@/components/custom/markdown';
-import { Button } from '@/components/ui/button';
-import {
-  Carousel,
-  CarouselApi,
-  CarouselContent,
-  CarouselItem,
-} from '@/components/ui/carousel';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { InputWithIcon } from '@/components/ui/Input-with-icon';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { LoadingSpinner } from '@/components/ui/spinner';
-import {
-  TooltipContent,
-  TooltipTrigger,
-  Tooltip,
-} from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
-import { templatesApi } from '@/features/templates/lib/templates-api';
-import { authenticationSession } from '@/lib/authentication-session';
-import {
-  MarkdownVariant,
-  FlowOperationType,
-  FlowTemplate,
-  PopulatedFlow,
-} from '@activepieces/shared';
+import { ApMarkdown } from '@/components/custom/markdown'
+import { InputWithIcon } from '@/components/ui/Input-with-icon'
+import { Button } from '@/components/ui/button'
+import { Carousel, CarouselApi, CarouselContent, CarouselItem } from '@/components/ui/carousel'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { LoadingSpinner } from '@/components/ui/spinner'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast'
+import { PieceIconList } from '@/features/pieces/components/piece-icon-list'
+import { templatesApi } from '@/features/templates/lib/templates-api'
+import { authenticationSession } from '@/lib/authentication-session'
+import { FlowOperationType, FlowTemplate, MarkdownVariant, PopulatedFlow } from '@activepieces/shared'
 
-import { flowsApi } from '../lib/flows-api';
+import { flowsApi } from '../lib/flows-api'
 
 type TemplateCardProps = {
-  template: FlowTemplate;
-  onSelectTemplate: (template: FlowTemplate) => void;
-};
+  template: FlowTemplate
+  onSelectTemplate: (template: FlowTemplate) => void
+}
 const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
   const selectTemplate = (template: FlowTemplate) => {
-    onSelectTemplate(template);
-  };
+    onSelectTemplate(template)
+  }
 
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
-  const { mutate: createFlow, isPending } = useMutation<
-    PopulatedFlow,
-    Error,
-    FlowTemplate
-  >({
+  const { mutate: createFlow, isPending } = useMutation<PopulatedFlow, Error, FlowTemplate>({
     mutationFn: async (template: FlowTemplate) => {
       const newFlow = await flowsApi.create({
         displayName: template.name,
         projectId: authenticationSession.getProjectId()!,
-      });
+      })
       return await flowsApi.update(newFlow.id, {
         type: FlowOperationType.IMPORT_FLOW,
         request: {
@@ -69,34 +45,23 @@ const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
           trigger: template.template.trigger,
           schemaVersion: template.template.schemaVersion,
         },
-      });
+      })
     },
     onSuccess: (flow) => {
-      navigate(`/flows/${flow.id}`);
+      navigate(`/flows/${flow.id}`)
     },
     onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
+      toast(INTERNAL_ERROR_TOAST)
     },
-  });
+  })
   return (
-    <div
-      key={template.id}
-      className="rounded-lg border border-solid border-dividers overflow-hidden"
-    >
+    <div key={template.id} className="rounded-lg border border-solid border-dividers overflow-hidden">
       <div className="flex items-center gap-2 p-4 ">
-        <PieceIconList
-          trigger={template.template.trigger}
-          maxNumberOfIconsToShow={2}
-        />
+        <PieceIconList trigger={template.template.trigger} maxNumberOfIconsToShow={2} />
       </div>
       <div className="text-sm font-medium px-4 min-h-16">{template.name}</div>
       <div className="py-2 px-4 gap-1 flex items-center">
-        <Button
-          variant="default"
-          loading={isPending}
-          className="px-2 h-8"
-          onClick={() => createFlow(template)}
-        >
+        <Button variant="default" loading={isPending} className="px-2 h-8" onClick={() => createFlow(template)}>
           {t('Use Template')}
         </Button>
         <Tooltip>
@@ -117,48 +82,43 @@ const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
         </Tooltip>
       </div>
     </div>
-  );
-};
+  )
+}
 
 const SelectFlowTemplateDialog = ({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) => {
-  const [search, setSearch] = useState<string>('');
+  const [search, setSearch] = useState<string>('')
 
-  const carousel = useRef<CarouselApi>();
+  const carousel = useRef<CarouselApi>()
 
-  const [selectedTemplate, setSelectedTemplate] = useState<FlowTemplate | null>(
-    null,
-  );
+  const [selectedTemplate, setSelectedTemplate] = useState<FlowTemplate | null>(null)
 
   const { data: templates, isLoading } = useQuery<FlowTemplate[], Error>({
     queryKey: ['templates'],
     queryFn: async () => {
-      const templates = await templatesApi.list();
-      return templates.data;
+      const templates = await templatesApi.list()
+      return templates.data
     },
     staleTime: 0,
-  });
+  })
 
   const filteredTemplates = templates?.filter((template) => {
-    const templateName = template.name.toLowerCase();
-    const templateDescription = template.description.toLowerCase();
-    return (
-      templateName.includes(search.toLowerCase()) ||
-      templateDescription.includes(search.toLowerCase())
-    );
-  });
+    const templateName = template.name.toLowerCase()
+    const templateDescription = template.description.toLowerCase()
+    return templateName.includes(search.toLowerCase()) || templateDescription.includes(search.toLowerCase())
+  })
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(event.target.value);
-  };
+    setSearch(event.target.value)
+  }
 
   const unselectTemplate = () => {
-    setSelectedTemplate(null);
-    carousel.current?.scrollPrev();
-  };
+    setSelectedTemplate(null)
+    carousel.current?.scrollPrev()
+  }
 
   return (
     <Dialog onOpenChange={unselectTemplate}>
@@ -210,8 +170,8 @@ const SelectFlowTemplateDialog = ({
                               key={template.id}
                               template={template}
                               onSelectTemplate={(template) => {
-                                setSelectedTemplate(template);
-                                carousel.current?.scrollNext();
+                                setSelectedTemplate(template)
+                                carousel.current?.scrollNext()
                               }}
                             />
                           ))}
@@ -226,20 +186,11 @@ const SelectFlowTemplateDialog = ({
               {selectedTemplate && (
                 <div className="px-2 ">
                   <div className="mb-4 p-8 flex items-center justify-center gap-2 width-full bg-green-300 rounded-lg">
-                    <PieceIconList
-                      size="xxl"
-                      trigger={selectedTemplate.template.trigger}
-                      maxNumberOfIconsToShow={3}
-                    />
+                    <PieceIconList size="xxl" trigger={selectedTemplate.template.trigger} maxNumberOfIconsToShow={3} />
                   </div>
                   <ScrollArea className="px-2 min-h-[156px] h-[calc(70vh-144px)] max-h-[536px]">
-                    <div className="mb-4 text-lg font-medium font-black">
-                      {selectedTemplate?.name}
-                    </div>
-                    <ApMarkdown
-                      markdown={selectedTemplate?.description}
-                      variant={MarkdownVariant.BORDERLESS}
-                    />
+                    <div className="mb-4 text-lg font-medium font-black">{selectedTemplate?.name}</div>
+                    <ApMarkdown markdown={selectedTemplate?.description} variant={MarkdownVariant.BORDERLESS} />
 
                     {selectedTemplate.blogUrl && (
                       <div className="mt-4">
@@ -262,7 +213,7 @@ const SelectFlowTemplateDialog = ({
         </Carousel>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}
 
-export { SelectFlowTemplateDialog };
+export { SelectFlowTemplateDialog }

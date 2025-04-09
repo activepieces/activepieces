@@ -1,7 +1,7 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { wedofCommon } from '../../common/wedof';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { wedofAuth } from '../../..'
+import { wedofCommon } from '../../common/wedof'
 
 export const billRegistrationFolder = createAction({
   auth: wedofAuth,
@@ -12,8 +12,7 @@ export const billRegistrationFolder = createAction({
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de formation',
-      description:
-        'Sélectionner la propriété {externalId} du dossier de formation',
+      description: 'Sélectionner la propriété {externalId} du dossier de formation',
       required: true,
     }),
     billNumber: Property.ShortText({
@@ -32,22 +31,18 @@ export const billRegistrationFolder = createAction({
     const message = {
       billNumber: context.propsValue.billNumber,
       vatRate: context.propsValue.vatRate,
-    };
+    }
 
     return (
       await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url:
-          wedofCommon.baseUrl +
-          '/registrationFolders/' +
-          context.propsValue.externalId +
-          '/billing',
+        url: wedofCommon.baseUrl + '/registrationFolders/' + context.propsValue.externalId + '/billing',
         body: message,
         headers: {
           'Content-Type': 'application/json',
           'X-Api-Key': context.auth as string,
         },
       })
-    ).body;
+    ).body
   },
-});
+})

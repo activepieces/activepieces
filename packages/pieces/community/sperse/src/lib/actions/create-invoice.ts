@@ -1,11 +1,11 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { sperseAuth } from '../..';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { sperseAuth } from '../..'
 
 // Helper function to get current date in the required format
 const getCurrentDateInISOFormat = () => {
-  return new Date().toISOString(); // Returns current date in format: YYYY-MM-DDTHH:MM:SSZ
-};
+  return new Date().toISOString() // Returns current date in format: YYYY-MM-DDTHH:MM:SSZ
+}
 
 export const createInvoice = createAction({
   name: 'createInvoice',
@@ -21,8 +21,7 @@ export const createInvoice = createAction({
     }),
     contactXref: Property.ShortText({
       displayName: 'External Contact ID',
-      description:
-        'External Contact Reference (ID) . Will be used for looking a client',
+      description: 'External Contact Reference (ID) . Will be used for looking a client',
       required: false,
     }),
     status: Property.StaticDropdown({
@@ -367,8 +366,7 @@ export const createInvoice = createAction({
     }),
     historicalData: Property.StaticDropdown({
       displayName: 'Historical Data',
-      description:
-        'Pass true if this is not actual transaction. Should be False by default',
+      description: 'Pass true if this is not actual transaction. Should be False by default',
       required: true,
       defaultValue: false,
       options: {
@@ -452,7 +450,7 @@ export const createInvoice = createAction({
         },
       ],
       historicalData: context.propsValue.historicalData,
-    };
+    }
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -464,11 +462,11 @@ export const createInvoice = createAction({
       body: {
         ...invoice,
       },
-    });
+    })
 
     return {
       status: res.status,
       body: res.body,
-    };
+    }
   },
-});
+})

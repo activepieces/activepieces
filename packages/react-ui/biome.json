@@ -1,0 +1,75 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.5.3/schema.json",
+  "organizeImports": {
+    "enabled": true
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "correctness": {
+        "noUnusedVariables": "error",
+        "useExhaustiveDependencies": "warn",
+        "useHookAtTopLevel": "error"
+      },
+      "suspicious": {
+        "noExplicitAny": "off",
+        "noEmptyInterface": "off",
+        "noArrayIndexKey": "error"
+      },
+      "style": {
+        "noNonNullAssertion": "off",
+        "useShorthandAssign": "error",
+        "useTemplate": "error",
+        "useConsistentArrayType": "error",
+        "noUselessElse": "error"
+      },
+      "complexity": {
+        "useSimplifiedLogicExpression": "error"
+      },
+      "a11y": {
+        "useAltText": "error",
+        "useKeyWithClickEvents": "error",
+        "useValidAnchor": "off"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "error"
+      }
+    }
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "trailingCommas": "all",
+      "semicolons": "asNeeded",
+      "bracketSameLine": false
+    }
+  },
+  "files": {
+    "ignore": ["node_modules/**/*"],
+    "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.json"]
+  },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "overrides": [
+    {
+      "include": ["**/*.ts", "**/*.tsx"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noSvgWithoutTitle": "off"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,7 +1,7 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction } from '@activepieces/pieces-framework';
-import { aiAnswerConfig } from '../common/models';
-import { aiAnswerAuth } from '../../index';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { aiAnswerAuth } from '../../index'
+import { aiAnswerConfig } from '../common/models'
 
 export const gmailGetListOfAgents = createAction({
   name: 'gmailGetListOfAgents',
@@ -15,8 +15,8 @@ export const gmailGetListOfAgents = createAction({
       url: `${aiAnswerConfig.baseUrl}/gmail/list_agents`,
       headers: {
         [aiAnswerConfig.accessTokenHeaderKey]: context.auth,
-        },
-    });
-    return res.body;
+      },
+    })
+    return res.body
   },
-});
+})

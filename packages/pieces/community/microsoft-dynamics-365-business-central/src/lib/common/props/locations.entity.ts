@@ -1,4 +1,4 @@
-import { EntityProp } from '../types';
+import { EntityProp } from '../types'
 
 export const locationsEntityProps: EntityProp[] = [
   {
@@ -10,8 +10,7 @@ export const locationsEntityProps: EntityProp[] = [
   {
     name: 'displayName',
     displayName: 'Display Name',
-    description:
-      "Specifies the location's name. This name will appear on all sales documents for the location.",
+    description: "Specifies the location's name. This name will appear on all sales documents for the location.",
     type: 'text',
     isRequired: false,
   },
@@ -69,4 +68,4 @@ export const locationsEntityProps: EntityProp[] = [
     type: 'text',
     isRequired: false,
   },
-];
+]

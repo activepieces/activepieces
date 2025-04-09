@@ -1,64 +1,53 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { PencilIcon, Plus } from 'lucide-react';
-import { useState } from 'react';
-import { useForm, UseFormReturn } from 'react-hook-form';
-import * as z from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation } from '@tanstack/react-query'
+import { t } from 'i18next'
+import { PencilIcon, Plus } from 'lucide-react'
+import { useState } from 'react'
+import { UseFormReturn, useForm } from 'react-hook-form'
+import * as z from 'zod'
 
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { Textarea } from '@/components/ui/textarea';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
-import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
-import { platformHooks } from '@/hooks/platform-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
-import {
-  ConnectionOperationType,
-  DiffReleaseRequest,
-  ProjectReleaseType,
-  ProjectSyncPlan,
-} from '@activepieces/shared';
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { LoadingSpinner } from '@/components/ui/spinner'
+import { Textarea } from '@/components/ui/textarea'
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast'
+import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks'
+import { projectReleaseApi } from '@/features/project-version/lib/project-release-api'
+import { platformHooks } from '@/hooks/platform-hooks'
+import { authenticationSession } from '@/lib/authentication-session'
+import { ConnectionOperationType, DiffReleaseRequest, ProjectReleaseType, ProjectSyncPlan } from '@activepieces/shared'
 
-import { OperationChange } from './operation-change';
+import { OperationChange } from './operation-change'
 
 type CreateReleaseDialogProps = {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  refetch: () => void;
-  loading: boolean;
-  diffRequest: DiffReleaseRequest;
-  plan: ProjectSyncPlan;
-  defaultName?: string;
-};
+  open: boolean
+  setOpen: (open: boolean) => void
+  refetch: () => void
+  loading: boolean
+  diffRequest: DiffReleaseRequest
+  plan: ProjectSyncPlan
+  defaultName?: string
+}
 
 const formSchema = z.object({
   name: z.string().min(1, t('Name is required')),
   description: z.string().optional(),
-});
+})
 
-type FormData = z.infer<typeof formSchema>;
+type FormData = z.infer<typeof formSchema>
 
 type CreateReleaseDialogContentProps = {
-  form: UseFormReturn<FormData>;
-  loading: boolean;
-  diffRequest: DiffReleaseRequest;
-  plan: ProjectSyncPlan;
-  setOpen: (open: boolean) => void;
-  refetch: () => void;
-};
+  form: UseFormReturn<FormData>
+  loading: boolean
+  diffRequest: DiffReleaseRequest
+  plan: ProjectSyncPlan
+  setOpen: (open: boolean) => void
+  refetch: () => void
+}
 
 const CreateReleaseDialogContent = ({
   loading,
@@ -68,19 +57,16 @@ const CreateReleaseDialogContent = ({
   setOpen,
   refetch,
 }: CreateReleaseDialogContentProps) => {
-  const isThereAnyChanges = plan?.operations && plan?.operations.length > 0;
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { gitSync } = gitSyncHooks.useGitSync(
-    authenticationSession.getProjectId()!,
-    platform.environmentsEnabled,
-  );
+  const isThereAnyChanges = plan?.operations && plan?.operations.length > 0
+  const { platform } = platformHooks.useCurrentPlatform()
+  const { gitSync } = gitSyncHooks.useGitSync(authenticationSession.getProjectId()!, platform.environmentsEnabled)
 
   const { mutate: applyChanges, isPending } = useMutation({
     mutationFn: async () => {
       switch (diffRequest.type) {
         case ProjectReleaseType.GIT:
           if (!gitSync) {
-            throw new Error('Git sync is not connected');
+            throw new Error('Git sync is not connected')
           }
           await projectReleaseApi.create({
             name: form.getValues('name'),
@@ -88,11 +74,11 @@ const CreateReleaseDialogContent = ({
             selectedFlowsIds: Array.from(selectedChanges),
             type: diffRequest.type,
             projectId: authenticationSession.getProjectId()!,
-          });
-          break;
+          })
+          break
         case ProjectReleaseType.PROJECT:
           if (!diffRequest.targetProjectId) {
-            throw new Error('Project ID is required');
+            throw new Error('Project ID is required')
           }
           await projectReleaseApi.create({
             name: form.getValues('name'),
@@ -101,8 +87,8 @@ const CreateReleaseDialogContent = ({
             targetProjectId: diffRequest.targetProjectId,
             type: diffRequest.type,
             projectId: authenticationSession.getProjectId()!,
-          });
-          break;
+          })
+          break
         case ProjectReleaseType.ROLLBACK:
           await projectReleaseApi.create({
             name: form.getValues('name'),
@@ -111,30 +97,28 @@ const CreateReleaseDialogContent = ({
             projectReleaseId: diffRequest.projectReleaseId,
             type: diffRequest.type,
             projectId: authenticationSession.getProjectId()!,
-          });
-          break;
+          })
+          break
       }
     },
     onSuccess: () => {
-      refetch();
-      setOpen(false);
+      refetch()
+      setOpen(false)
     },
     onError: (error) => {
-      console.error(error);
-      toast(INTERNAL_ERROR_TOAST);
+      console.error(error)
+      toast(INTERNAL_ERROR_TOAST)
     },
-  });
+  })
   const [selectedChanges, setSelectedChanges] = useState<Set<string>>(
     new Set(plan?.operations.map((op) => op.flow.id) || []),
-  );
-  const [errorMessage, setErrorMessage] = useState('');
+  )
+  const [errorMessage, setErrorMessage] = useState('')
 
   const handleSelectAll = (checked: boolean) => {
-    if (!plan) return;
-    setSelectedChanges(
-      new Set(checked ? plan.operations.map((op) => op.flow.id) : []),
-    );
-  };
+    if (!plan) return
+    setSelectedChanges(new Set(checked ? plan.operations.map((op) => op.flow.id) : []))
+  }
 
   return (
     <>
@@ -155,15 +139,13 @@ const CreateReleaseDialogContent = ({
               {...form.register('name')}
               onChange={(e) => {
                 if (e.target.value) {
-                  form.setError('name', { message: '' });
+                  form.setError('name', { message: '' })
                 }
               }}
               placeholder={t('Meeting Summary Flow')}
             />
             {form.formState.errors.name && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.name.message}
-              </p>
+              <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
             )}
           </div>
           <div className="flex flex-col gap-2">
@@ -176,9 +158,7 @@ const CreateReleaseDialogContent = ({
               placeholder={t('Added new features and fixed bugs')}
             />
             {form.formState.errors.description && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.description.message}
-              </p>
+              <p className="text-sm text-destructive">{form.formState.errors.description.message}</p>
             )}
           </div>
 
@@ -190,8 +170,7 @@ const CreateReleaseDialogContent = ({
                   onCheckedChange={handleSelectAll}
                 />
                 <Label className="text-sm font-medium">
-                  {t('Flows Changes')} ({selectedChanges.size}/
-                  {plan?.operations.length || 0})
+                  {t('Flows Changes')} ({selectedChanges.size}/{plan?.operations.length || 0})
                 </Label>
               </div>
             </div>
@@ -202,14 +181,14 @@ const CreateReleaseDialogContent = ({
                   change={operation}
                   selected={selectedChanges.has(operation.flow.id)}
                   onSelect={(checked) => {
-                    const newSelectedChanges = new Set(selectedChanges);
+                    const newSelectedChanges = new Set(selectedChanges)
                     if (checked) {
-                      newSelectedChanges.add(operation.flow.id);
+                      newSelectedChanges.add(operation.flow.id)
                     } else {
-                      newSelectedChanges.delete(operation.flow.id);
+                      newSelectedChanges.delete(operation.flow.id)
                     }
-                    setErrorMessage('');
-                    setSelectedChanges(newSelectedChanges);
+                    setErrorMessage('')
+                    setSelectedChanges(newSelectedChanges)
                   }}
                 />
               ))}
@@ -220,45 +199,31 @@ const CreateReleaseDialogContent = ({
               <div className="flex flex-col gap-2">
                 <div className="flex flex-col justify -center gap-1 py-2 border-b">
                   <Label className="text-sm font-medium">
-                    {t('Connections Changes')} ({plan?.connections?.length || 0}
-                    )
+                    {t('Connections Changes')} ({plan?.connections?.length || 0})
                   </Label>
                   <div className="flex items-center text-sm text-muted-foreground">
                     <span className="flex items-center gap-2">
-                      {t(
-                        'New connections are placeholders and need to be reconnected again',
-                      )}
+                      {t('New connections are placeholders and need to be reconnected again')}
                     </span>
                   </div>
                 </div>
                 <ScrollArea viewPortClassName="max-h-[16vh]">
                   {plan?.connections.map((connection, index) => (
-                    <div
-                      key={connection.connectionState.externalId}
-                      className="flex items-center gap-2 text-sm py-1"
-                    >
-                      {connection.type ===
-                        ConnectionOperationType.UPDATE_CONNECTION && (
+                    <div key={connection.connectionState.externalId} className="flex items-center gap-2 text-sm py-1">
+                      {connection.type === ConnectionOperationType.UPDATE_CONNECTION && (
                         <div className="flex items-center gap-2">
                           <PencilIcon className="w-4 h-4 shrink-0" />
                           <div className="flex items-center gap-1">
-                            <span>
-                              {connection.connectionState.displayName}
-                            </span>
+                            <span>{connection.connectionState.displayName}</span>
                             <span> {t('renamed to')} </span>
-                            <span>
-                              {connection.newConnectionState.displayName}
-                            </span>
+                            <span>{connection.newConnectionState.displayName}</span>
                           </div>
                         </div>
                       )}
-                      {connection.type ===
-                        ConnectionOperationType.CREATE_CONNECTION && (
+                      {connection.type === ConnectionOperationType.CREATE_CONNECTION && (
                         <div className="flex items-center gap-2">
                           <Plus className="w-4 h-4 shrink-0 text-success" />
-                          <span className="text-success">
-                            {connection.connectionState.displayName}
-                          </span>
+                          <span className="text-success">{connection.connectionState.displayName}</span>
                         </div>
                       )}
                     </div>
@@ -267,24 +232,15 @@ const CreateReleaseDialogContent = ({
               </div>
             </div>
           )}
-          {errorMessage && (
-            <p className="text-sm text-destructive">{errorMessage}</p>
-          )}
+          {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
         </div>
       )}
 
-      {loading ||
-        (!loading && !isThereAnyChanges && (
-          <div className="text-sm py-2">{t('No changes to apply')}</div>
-        ))}
+      {loading || (!loading && !isThereAnyChanges && <div className="text-sm py-2">{t('No changes to apply')}</div>)}
 
       {!loading && isThereAnyChanges && (
         <DialogFooter className=" items-end gap-1 ">
-          <Button
-            size={'sm'}
-            variant={'outline'}
-            onClick={() => setOpen(false)}
-          >
+          <Button size={'sm'} variant={'outline'} onClick={() => setOpen(false)}>
             {t('Cancel')}
           </Button>
           <Button
@@ -292,21 +248,19 @@ const CreateReleaseDialogContent = ({
             loading={isPending}
             disabled={isPending}
             onClick={() => {
-              let error = false;
+              let error = false
               if (form.getValues('name').trim() === '') {
-                form.setError('name', { message: 'Release name is required' });
-                error = true;
+                form.setError('name', { message: 'Release name is required' })
+                error = true
               }
               if (selectedChanges.size === 0) {
-                setErrorMessage(
-                  'Please select at least one change to include in the release',
-                );
-                error = true;
+                setErrorMessage('Please select at least one change to include in the release')
+                error = true
               }
               if (error) {
-                return;
+                return
               }
-              applyChanges();
+              applyChanges()
             }}
           >
             {t('Apply Changes')}
@@ -314,8 +268,8 @@ const CreateReleaseDialogContent = ({
         </DialogFooter>
       )}
     </>
-  );
-};
+  )
+}
 
 const CreateReleaseDialog = ({
   open,
@@ -332,7 +286,7 @@ const CreateReleaseDialog = ({
       name: defaultName,
       description: '',
     },
-  });
+  })
 
   return (
     <Dialog
@@ -343,9 +297,9 @@ const CreateReleaseDialog = ({
           form.reset({
             name: defaultName,
             description: '',
-          });
+          })
         }
-        setOpen(newOpenState);
+        setOpen(newOpenState)
       }}
     >
       <DialogContent className="min-h-[100px] max-h-[720px] flex flex-col">
@@ -354,8 +308,8 @@ const CreateReleaseDialog = ({
             {diffRequest.type === ProjectReleaseType.GIT
               ? t('Create Git Release')
               : diffRequest.type === ProjectReleaseType.PROJECT
-              ? t('Create Project Release')
-              : `${t('Create Rollback to')} ${form.getValues('name')}`}
+                ? t('Create Project Release')
+                : `${t('Create Rollback to')} ${form.getValues('name')}`}
           </DialogTitle>
         </DialogHeader>
 
@@ -370,7 +324,7 @@ const CreateReleaseDialog = ({
         />
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}
 
-export { CreateReleaseDialog };
+export { CreateReleaseDialog }

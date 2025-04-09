@@ -1,6 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { getOrdersByDate } from '../api';
-import { cartloomAuth } from '../auth';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { getOrdersByDate } from '../api'
+import { cartloomAuth } from '../auth'
 
 export const getOrderDateAction = createAction({
   name: 'get_orders_by_date',
@@ -22,8 +22,7 @@ export const getOrderDateAction = createAction({
   async run(context) {
     return await getOrdersByDate(context.auth, {
       start_date: context.propsValue.start.split('T')[0],
-      end_date:
-        context.propsValue.end || new Date().toISOString().split('T')[0],
-    });
+      end_date: context.propsValue.end || new Date().toISOString().split('T')[0],
+    })
   },
-});
+})

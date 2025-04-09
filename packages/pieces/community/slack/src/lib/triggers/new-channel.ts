@@ -1,6 +1,6 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { slackAuth } from '../../';
-import { WebClient } from '@slack/web-api';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { WebClient } from '@slack/web-api'
+import { slackAuth } from '../../'
 
 const sampleData = {
   type: 'channel_created',
@@ -10,7 +10,7 @@ const sampleData = {
     created: 1360782804,
     creator: 'U024BE7LH',
   },
-};
+}
 
 export const channelCreated = createTrigger({
   auth: slackAuth,
@@ -22,25 +22,24 @@ export const channelCreated = createTrigger({
   sampleData: sampleData,
   onEnable: async (context) => {
     // Older OAuth2 has team_id, newer has team.id
-    const teamId =
-      context.auth.data['team_id'] ?? context.auth.data['team']['id'];
+    const teamId = context.auth.data['team_id'] ?? context.auth.data['team']['id']
     context.app.createListeners({
       events: ['channel_created'],
       identifierValue: teamId,
-    });
+    })
   },
   onDisable: async (context) => {
     // Ignored
   },
   test: async (context) => {
-    const client = new WebClient(context.auth.access_token);
+    const client = new WebClient(context.auth.access_token)
     const response = await client.conversations.list({
       exclude_archived: true,
       limit: 10,
       types: 'public_channel,private_channel',
-    });
+    })
     if (!response.channels) {
-      return [];
+      return []
     }
     return response.channels.map((channel) => {
       return {
@@ -51,16 +50,16 @@ export const channelCreated = createTrigger({
           created: channel.created,
           creator: channel.creator,
         },
-      };
-    });
+      }
+    })
   },
 
   run: async (context) => {
-    const payloadBody = context.payload.body as PayloadBody;
-    return [payloadBody.event];
+    const payloadBody = context.payload.body as PayloadBody
+    return [payloadBody.event]
   },
-});
+})
 
 type PayloadBody = {
-  event: object;
-};
+  event: object
+}

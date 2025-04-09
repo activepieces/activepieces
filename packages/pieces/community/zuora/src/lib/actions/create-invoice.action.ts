@@ -1,12 +1,7 @@
-import { zuoraAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { getAccessToken } from '../common';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { zuoraAuth } from '../../'
+import { getAccessToken } from '../common'
 
 export const createInvoiceAction = createAction({
   auth: zuoraAuth,
@@ -16,14 +11,12 @@ export const createInvoiceAction = createAction({
   props: {
     accountNumber: Property.ShortText({
       displayName: 'Customer Account Number',
-      description:
-        'The number of the customer account associated with the invoice.',
+      description: 'The number of the customer account associated with the invoice.',
       required: true,
     }),
     autoPay: Property.Checkbox({
       displayName: 'Auto Pay?',
-      description:
-        'Whether invoices are automatically picked up for processing in the corresponding payment run.',
+      description: 'Whether invoices are automatically picked up for processing in the corresponding payment run.',
       required: false,
     }),
     comments: Property.LongText({
@@ -92,12 +85,11 @@ export const createInvoiceAction = createAction({
     }),
   },
   async run(context) {
-    const { accountNumber, autoPay, comments, dueDate, invoiceDate, status } =
-      context.propsValue;
+    const { accountNumber, autoPay, comments, dueDate, invoiceDate, status } = context.propsValue
 
-    const invoiceItems = context.propsValue.invoiceItems as InvoiceItemInput[];
+    const invoiceItems = context.propsValue.invoiceItems as InvoiceItemInput[]
 
-    const token = await getAccessToken(context.auth);
+    const token = await getAccessToken(context.auth)
 
     const body = {
       accountNumber,
@@ -107,26 +99,26 @@ export const createInvoiceAction = createAction({
       invoiceDate,
       status,
       invoiceItems,
-    };
+    }
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${context.auth.environment}/v1/invoices`,
       authentication: { type: AuthenticationType.BEARER_TOKEN, token },
       body,
-    };
+    }
 
-    const response = await httpClient.sendRequest(request);
-    return response.body;
+    const response = await httpClient.sendRequest(request)
+    return response.body
   },
-});
+})
 
 type InvoiceItemInput = {
-  productRatePlanChargeId: string;
-  amount: string;
-  description: string;
-  purchaseOrderNumber: string;
-  quantity: string;
-  serviceStartDate: string;
-  serviceEndDate: string;
-};
+  productRatePlanChargeId: string
+  amount: string
+  description: string
+  purchaseOrderNumber: string
+  quantity: string
+  serviceStartDate: string
+  serviceEndDate: string
+}

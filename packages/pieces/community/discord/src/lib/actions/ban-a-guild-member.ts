@@ -1,11 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { discordAuth } from '../../index';
-import { discordCommon } from '../common';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { discordAuth } from '../../index'
+import { discordCommon } from '../common'
 
 export const discordBanGuildMember = createAction({
   auth: discordAuth,
@@ -38,12 +34,12 @@ export const discordBanGuildMember = createAction({
       body: {
         reason: `${configValue.propsValue.ban_reason}`,
       },
-    };
+    }
 
-    const res = await httpClient.sendRequest<never>(request);
+    const res = await httpClient.sendRequest<never>(request)
 
     return {
       success: res.status === 204,
-    };
+    }
   },
-});
+})

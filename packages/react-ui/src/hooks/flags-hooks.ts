@@ -1,24 +1,24 @@
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { useSuspenseQuery } from '@tanstack/react-query'
 
-import { ApFlagId } from '@activepieces/shared';
+import { ApFlagId } from '@activepieces/shared'
 
-import { flagsApi, FlagsMap } from '../lib/flags-api';
+import { FlagsMap, flagsApi } from '../lib/flags-api'
 
 type WebsiteBrand = {
-  websiteName: string;
+  websiteName: string
   logos: {
-    fullLogoUrl: string;
-    favIconUrl: string;
-    logoIconUrl: string;
-  };
+    fullLogoUrl: string
+    favIconUrl: string
+    logoIconUrl: string
+  }
   colors: {
     primary: {
-      default: string;
-      dark: string;
-      light: string;
-    };
-  };
-};
+      default: string
+      dark: string
+      light: string
+    }
+  }
+}
 
 export const flagsHooks = {
   useFlags: () => {
@@ -26,20 +26,20 @@ export const flagsHooks = {
       queryKey: ['flags'],
       queryFn: flagsApi.getAll,
       staleTime: Infinity,
-    });
+    })
   },
   useWebsiteBranding: () => {
-    const { data: theme } = flagsHooks.useFlag<WebsiteBrand>(ApFlagId.THEME);
-    return theme!;
+    const { data: theme } = flagsHooks.useFlag<WebsiteBrand>(ApFlagId.THEME)
+    return theme!
   },
   useFlag: <T>(flagId: ApFlagId) => {
     const data = useSuspenseQuery<FlagsMap, Error>({
       queryKey: ['flags'],
       queryFn: flagsApi.getAll,
       staleTime: Infinity,
-    }).data?.[flagId] as T | null;
+    }).data?.[flagId] as T | null
     return {
       data,
-    };
+    }
   },
-};
+}

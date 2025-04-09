@@ -1,13 +1,9 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { launchWorkflow } from './lib/actions/launch-workflow';
-import { getJobResults } from './lib/actions/get-job-results';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { getJobResults } from './lib/actions/get-job-results'
+import { launchWorkflow } from './lib/actions/launch-workflow'
 
-export const CAPTAIN_DATA_BASE_URL = 'https://api.captaindata.co/v3';
+export const CAPTAIN_DATA_BASE_URL = 'https://api.captaindata.co/v3'
 
 export const captainDataAuth = PieceAuth.CustomAuth({
   required: true,
@@ -21,12 +17,12 @@ export const captainDataAuth = PieceAuth.CustomAuth({
       required: true,
     }),
   },
-});
+})
 
 export type CaptainDataAuthType = {
-  apiKey: string;
-  projectId: string;
-};
+  apiKey: string
+  projectId: string
+}
 
 export const captainData = createPiece({
   displayName: 'Captain-data',
@@ -47,4 +43,4 @@ export const captainData = createPiece({
     }),
   ],
   triggers: [],
-});
+})

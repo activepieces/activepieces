@@ -1,5 +1,5 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { removeBackground } from './lib/actions/remove-background';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { removeBackground } from './lib/actions/remove-background'
 
 export const photoroomAuth = PieceAuth.CustomAuth({
   required: true,
@@ -9,7 +9,7 @@ export const photoroomAuth = PieceAuth.CustomAuth({
       required: true,
     }),
   },
-});
+})
 
 export const photoroom = createPiece({
   displayName: 'Photoroom',
@@ -19,4 +19,4 @@ export const photoroom = createPiece({
   authors: ['AdamSelene', 'Charles-Go'],
   actions: [removeBackground],
   triggers: [],
-});
+})

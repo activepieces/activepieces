@@ -1,18 +1,14 @@
-import { Trigger } from './trigger/trigger';
-import { Action } from './action/action';
-import {
-  EventPayload,
-  ParseEventResponse,
-  PieceCategory,
-} from '@activepieces/shared';
-import { PieceBase, PieceMetadata } from './piece-metadata';
-import { PieceAuthProperty } from './property/authentication';
+import { EventPayload, ParseEventResponse, PieceCategory } from '@activepieces/shared'
+import { Action } from './action/action'
+import { PieceBase, PieceMetadata } from './piece-metadata'
+import { PieceAuthProperty } from './property/authentication'
+import { Trigger } from './trigger/trigger'
 
 export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
   implements Omit<PieceBase, 'version' | 'name'>
 {
-  private readonly _actions: Record<string, Action> = {};
-  private readonly _triggers: Record<string, Trigger> = {};
+  private readonly _actions: Record<string, Action> = {}
+  private readonly _triggers: Record<string, Trigger> = {}
 
   constructor(
     public readonly displayName: string,
@@ -27,8 +23,8 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
     public readonly maximumSupportedRelease?: string,
     public readonly description = '',
   ) {
-    actions.forEach((action) => (this._actions[action.name] = action));
-    triggers.forEach((trigger) => (this._triggers[trigger.name] = trigger));
+    actions.forEach((action) => (this._actions[action.name] = action))
+    triggers.forEach((trigger) => (this._triggers[trigger.name] = trigger))
   }
 
   metadata(): BackwardCompatiblePieceMetadata {
@@ -43,29 +39,27 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
       auth: this.auth,
       minimumSupportedRelease: this.minimumSupportedRelease,
       maximumSupportedRelease: this.maximumSupportedRelease,
-    };
+    }
   }
 
   getAction(actionName: string): Action | undefined {
-    return this._actions[actionName];
+    return this._actions[actionName]
   }
 
   getTrigger(triggerName: string): Trigger | undefined {
-    return this._triggers[triggerName];
+    return this._triggers[triggerName]
   }
 
   actions() {
-    return this._actions;
+    return this._actions
   }
 
   triggers() {
-    return this._triggers;
+    return this._triggers
   }
 }
 
-export const createPiece = <PieceAuth extends PieceAuthProperty>(
-  params: CreatePieceParams<PieceAuth>
-) => {
+export const createPiece = <PieceAuth extends PieceAuthProperty>(params: CreatePieceParams<PieceAuth>) => {
   return new Piece(
     params.displayName,
     params.logoUrl,
@@ -78,33 +72,31 @@ export const createPiece = <PieceAuth extends PieceAuthProperty>(
     params.minimumSupportedRelease,
     params.maximumSupportedRelease,
     params.description,
-  );
-};
+  )
+}
 
-type CreatePieceParams<
-  PieceAuth extends PieceAuthProperty = PieceAuthProperty
-> = {
-  displayName: string;
-  logoUrl: string;
-  authors: string[];
-  description?: string;
-  auth: PieceAuth | undefined;
-  events?: PieceEventProcessors;
-  minimumSupportedRelease?: string;
-  maximumSupportedRelease?: string;
-  actions: Action<PieceAuth>[];
-  triggers: Trigger<PieceAuth>[];
-  categories?: PieceCategory[];
-};
+type CreatePieceParams<PieceAuth extends PieceAuthProperty = PieceAuthProperty> = {
+  displayName: string
+  logoUrl: string
+  authors: string[]
+  description?: string
+  auth: PieceAuth | undefined
+  events?: PieceEventProcessors
+  minimumSupportedRelease?: string
+  maximumSupportedRelease?: string
+  actions: Action<PieceAuth>[]
+  triggers: Trigger<PieceAuth>[]
+  categories?: PieceCategory[]
+}
 
 type PieceEventProcessors = {
-  parseAndReply: (ctx: { payload: EventPayload }) => ParseEventResponse;
+  parseAndReply: (ctx: { payload: EventPayload }) => ParseEventResponse
   verify: (ctx: {
-    webhookSecret: string | Record<string, string>;
-    payload: EventPayload;
-    appWebhookUrl: string;
-  }) => boolean;
-};
+    webhookSecret: string | Record<string, string>
+    payload: EventPayload
+    appWebhookUrl: string
+  }) => boolean
+}
 
 type BackwardCompatiblePieceMetadata = Omit<PieceMetadata, 'name' | 'version' | 'authors'> & {
   authors?: PieceMetadata['authors']

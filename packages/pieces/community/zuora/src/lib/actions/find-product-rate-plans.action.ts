@@ -1,12 +1,7 @@
-import { zuoraAuth } from '../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { getAccessToken } from '../common';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { zuoraAuth } from '../..'
+import { getAccessToken } from '../common'
 
 export const findProductRatePlanAction = createAction({
   auth: zuoraAuth,
@@ -25,9 +20,9 @@ export const findProductRatePlanAction = createAction({
     }),
   },
   async run(context) {
-    const name = context.propsValue.name;
-    const productid = context.propsValue.productid;
-    const token = await getAccessToken(context.auth);
+    const name = context.propsValue.name
+    const productid = context.propsValue.productid
+    const token = await getAccessToken(context.auth)
 
     const request: HttpRequest = {
       method: HttpMethod.GET,
@@ -36,9 +31,9 @@ export const findProductRatePlanAction = createAction({
       queryParams: {
         'expand[]': 'productrateplancharges',
       },
-    };
+    }
 
-    const response = await httpClient.sendRequest(request);
-    return response.body;
+    const response = await httpClient.sendRequest(request)
+    return response.body
   },
-});
+})

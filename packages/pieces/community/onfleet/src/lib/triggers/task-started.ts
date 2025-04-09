@@ -3,9 +3,9 @@ import {
   WebhookHandshakeStrategy,
   WebhookResponse,
   createTrigger,
-} from '@activepieces/pieces-framework';
-import { common, OnfleetWebhookTriggers } from '../common';
-import { onfleetAuth } from '../..';
+} from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
+import { OnfleetWebhookTriggers, common } from '../common'
 
 export const taskStarted = createTrigger({
   auth: onfleetAuth,
@@ -19,24 +19,24 @@ export const taskStarted = createTrigger({
     const webhookId = await common.subscribeWebhook(
       context.auth,
       context.webhookUrl,
-      OnfleetWebhookTriggers.TASK_STARTED
-    );
+      OnfleetWebhookTriggers.TASK_STARTED,
+    )
 
     await context.store?.put('_task_started_trigger', {
       webhookId: webhookId,
-    });
+    })
   },
   //Delete the webhook
   async onDisable(context) {
-    const response: any = await context.store?.get('_task_started_trigger');
+    const response: any = await context.store?.get('_task_started_trigger')
 
     if (response !== null && response !== undefined) {
-      await common.unsubscribeWebhook(context.auth, response.webhookId);
+      await common.unsubscribeWebhook(context.auth, response.webhookId)
     }
   },
   //Return task
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
 
   handshakeConfiguration: {
@@ -48,7 +48,7 @@ export const taskStarted = createTrigger({
     return {
       status: 200,
       body: context.payload.queryParams['check'],
-    };
+    }
   },
 
   sampleData: {
@@ -143,4 +143,4 @@ export const taskStarted = createTrigger({
     triggerName: 'taskStarted',
     workerId: 'COwfwH~Zogm1LXIZYbPlLAyw',
   },
-});
+})

@@ -1,26 +1,16 @@
-import { useQuery } from '@tanstack/react-query';
-import { formatDistance } from 'date-fns';
-import { t } from 'i18next';
-import {
-  ChevronRight,
-  GitBranch,
-  FolderOpenDot,
-  RotateCcw,
-} from 'lucide-react';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query'
+import { formatDistance } from 'date-fns'
+import { t } from 'i18next'
+import { ChevronRight, FolderOpenDot, GitBranch, RotateCcw } from 'lucide-react'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
 
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
-import { isNil, ProjectReleaseType } from '@activepieces/shared';
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { projectReleaseApi } from '@/features/project-version/lib/project-release-api'
+import { ProjectReleaseType, isNil } from '@activepieces/shared'
 
-import { ApplyButton } from './apply-plan';
+import { ApplyButton } from './apply-plan'
 
 const getReleaseSummaryType = (type: ProjectReleaseType) => {
   switch (type) {
@@ -29,41 +19,41 @@ const getReleaseSummaryType = (type: ProjectReleaseType) => {
         <span className="flex items-center gap-1">
           <GitBranch className="size-4" /> {t('Git')}
         </span>
-      );
+      )
     case ProjectReleaseType.PROJECT:
       return (
         <span className="flex items-center gap-1">
           <FolderOpenDot className="size-4" /> {t('Project')}
         </span>
-      );
+      )
     case ProjectReleaseType.ROLLBACK:
       return (
         <span className="flex items-center gap-1">
           <RotateCcw className="size-4" /> {t('Rollback')}
         </span>
-      );
+      )
   }
-};
+}
 
 const ViewRelease = () => {
-  const { releaseId } = useParams();
-  const navigate = useNavigate();
+  const { releaseId } = useParams()
+  const navigate = useNavigate()
   const { data: release, isLoading } = useQuery({
     queryKey: ['release', releaseId],
     queryFn: () => projectReleaseApi.get(releaseId || ''),
     enabled: !!releaseId,
-  });
+  })
 
   if (!releaseId) {
-    return <Navigate to="/releases" replace />;
+    return <Navigate to="/releases" replace />
   }
 
   if (!isLoading && isNil(release)) {
-    return <Navigate to="/404" replace />;
+    return <Navigate to="/404" replace />
   }
 
-  const createdDate = new Date(release?.created ?? 0);
-  const timeAgo = formatDistance(createdDate, new Date(), { addSuffix: true });
+  const createdDate = new Date(release?.created ?? 0)
+  const timeAgo = formatDistance(createdDate, new Date(), { addSuffix: true })
 
   return (
     <div className="space-y-6 w-full">
@@ -88,7 +78,7 @@ const ViewRelease = () => {
                   <TooltipTrigger asChild>
                     <ApplyButton
                       onSuccess={() => {
-                        navigate('/releases');
+                        navigate('/releases')
                       }}
                       variant="ghost"
                       className="size-8 p-0"
@@ -125,13 +115,9 @@ const ViewRelease = () => {
                     <span className="flex items-center flex-row gap-1">
                       {t('Imported by')}
                       <span className="font-semibold text-md">
-                        {release?.importedByUser?.firstName}{' '}
-                        {release?.importedByUser?.lastName}
+                        {release?.importedByUser?.firstName} {release?.importedByUser?.lastName}
                       </span>
-                      {t('from')}{' '}
-                      {getReleaseSummaryType(
-                        release?.type ?? ProjectReleaseType.GIT,
-                      )}
+                      {t('from')} {getReleaseSummaryType(release?.type ?? ProjectReleaseType.GIT)}
                     </span>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -149,14 +135,12 @@ const ViewRelease = () => {
           <Skeleton className="h-24 w-full" />
         ) : (
           <div className="flex flex-col items-start gap-2">
-            <pre className="font-sans whitespace-pre-wrap">
-              {release?.description || t('No description provided')}
-            </pre>
+            <pre className="font-sans whitespace-pre-wrap">{release?.description || t('No description provided')}</pre>
           </div>
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ViewRelease;
+export default ViewRelease

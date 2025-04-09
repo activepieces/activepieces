@@ -1,23 +1,23 @@
-import axios, { Axios } from 'axios';
+import axios, { Axios } from 'axios'
 
 type CreateSkuFileParams = {
-  IsMain?: boolean;
-  Label?: string;
-  Name: string;
-  Text?: string;
-  Url: string;
-};
+  IsMain?: boolean
+  Label?: string
+  Name: string
+  Text?: string
+  Url: string
+}
 
 type UpdateSkuFileParams = {
-  Id: number;
-  SkuId: number;
-  FieldId: number;
-  FieldValueId: number;
-  Text: string;
-};
+  Id: number
+  SkuId: number
+  FieldId: number
+  FieldValueId: number
+  Text: string
+}
 
 export class SkuFile {
-  api: Axios;
+  api: Axios
 
   constructor(host: string, appKey: string, appToken: string) {
     this.api = axios.create({
@@ -26,28 +26,24 @@ export class SkuFile {
         'X-VTEX-API-AppKey': appKey,
         'X-VTEX-API-AppToken': appToken,
       },
-    });
+    })
   }
 
   async getSkuFilesBySkuId(skuID: number) {
-    const route = `/api/catalog/pvt/stockkeepingunit/${skuID}/file/`;
-    const response = await this.api.get(route);
-    return response.data;
+    const route = `/api/catalog/pvt/stockkeepingunit/${skuID}/file/`
+    const response = await this.api.get(route)
+    return response.data
   }
 
   async createSkuFile(skuID: number, newSkuFileData: CreateSkuFileParams) {
-    const route = `/api/catalog/pvt/stockkeepingunit/${skuID}/file`;
-    const response = await this.api.post(route, newSkuFileData);
-    return response.data;
+    const route = `/api/catalog/pvt/stockkeepingunit/${skuID}/file`
+    const response = await this.api.post(route, newSkuFileData)
+    return response.data
   }
 
-  async updateSkuFile(
-    skuID: number,
-    skuFileID: number,
-    updatedSkuFileData: UpdateSkuFileParams
-  ) {
-    const route = `/api/catalog/pvt/stockkeepingunit/${skuID}/file/${skuFileID}`;
-    const response = await this.api.put(route, updatedSkuFileData);
-    return response.data;
+  async updateSkuFile(skuID: number, skuFileID: number, updatedSkuFileData: UpdateSkuFileParams) {
+    const route = `/api/catalog/pvt/stockkeepingunit/${skuID}/file/${skuFileID}`
+    const response = await this.api.put(route, updatedSkuFileData)
+    return response.data
   }
 }

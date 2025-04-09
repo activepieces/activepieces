@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { Order } from '../../common/Order';
-import { vtexAuth } from '../../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { vtexAuth } from '../../..'
+import { Order } from '../../common/Order'
 
 export const getOrderById = createAction({
   auth: vtexAuth,
@@ -15,11 +15,11 @@ export const getOrderById = createAction({
     }),
   },
   async run(context) {
-    const { hostUrl, appKey, appToken } = context.auth;
-    const { OrderId } = context.propsValue;
+    const { hostUrl, appKey, appToken } = context.auth
+    const { OrderId } = context.propsValue
 
-    const order = new Order(hostUrl, appKey, appToken);
+    const order = new Order(hostUrl, appKey, appToken)
 
-    return await order.getOrderById(OrderId);
+    return await order.getOrderById(OrderId)
   },
-});
+})

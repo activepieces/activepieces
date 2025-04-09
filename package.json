@@ -22,7 +22,11 @@
     "workers": "npx ts-node packages/cli/src/index.ts workers",
     "pull-i18n": "crowdin pull --config crowdin.yml",
     "push-i18n": "crowdin upload sources",
-    "i18n:extract": "i18next --config packages/react-ui/i18next-parser.config.js && jq 'to_entries | map({(.key): .key}) | add' packages/react-ui/public/locales/en/translation.json > packages/react-ui/public/locales/en/translation.tmp.json && mv packages/react-ui/public/locales/en/translation.tmp.json packages/react-ui/public/locales/en/translation.json"
+    "i18n:extract": "i18next --config packages/react-ui/i18next-parser.config.js && jq 'to_entries | map({(.key): .key}) | add' packages/react-ui/public/locales/en/translation.json > packages/react-ui/public/locales/en/translation.tmp.json && mv packages/react-ui/public/locales/en/translation.tmp.json packages/react-ui/public/locales/en/translation.json",
+    "biome:check": "biome check .",
+    "biome:format": "biome format . --write",
+    "biome:lint": "biome lint .",
+    "biome:check-apply": "biome check --apply ."
   },
   "private": true,
   "dependencies": {
@@ -304,6 +308,7 @@
     "zustand": "4.5.4"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.9.4",
     "@commitlint/cli": "17.7.1",
     "@commitlint/config-conventional": "17.7.0",
     "@faker-js/faker": "8.2.0",

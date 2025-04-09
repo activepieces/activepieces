@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { onfleetAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
 
-import Onfleet from '@onfleet/node-onfleet';
+import Onfleet from '@onfleet/node-onfleet'
 
 export const getContainer = createAction({
   auth: onfleetAuth,
@@ -9,10 +9,7 @@ export const getContainer = createAction({
   displayName: 'Get Container',
   description: 'Get a specific container',
   props: {
-    containerType: Property.Dropdown<
-      'organizations' | 'workers' | 'teams',
-      true
-    >({
+    containerType: Property.Dropdown<'organizations' | 'workers' | 'teams', true>({
       displayName: 'Container Type',
       required: true,
       refreshers: [],
@@ -32,7 +29,7 @@ export const getContainer = createAction({
               value: 'workers',
             },
           ],
-        };
+        }
       },
     }),
     containerId: Property.ShortText({
@@ -41,11 +38,8 @@ export const getContainer = createAction({
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth)
 
-    return await onfleetApi.containers.get(
-      context.propsValue.containerId,
-      context.propsValue.containerType
-    );
+    return await onfleetApi.containers.get(context.propsValue.containerId, context.propsValue.containerType)
   },
-});
+})

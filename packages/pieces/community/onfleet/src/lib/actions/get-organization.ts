@@ -1,7 +1,7 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { onfleetAuth } from '../..';
+import { createAction } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
 
-import Onfleet from '@onfleet/node-onfleet';
+import Onfleet from '@onfleet/node-onfleet'
 
 export const getOrganization = createAction({
   auth: onfleetAuth,
@@ -10,8 +10,8 @@ export const getOrganization = createAction({
   description: 'Get your organization details',
   props: {},
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth)
 
-    return await onfleetApi.organization.get();
+    return await onfleetApi.organization.get()
   },
-});
+})

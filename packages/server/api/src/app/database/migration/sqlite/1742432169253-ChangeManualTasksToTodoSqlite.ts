@@ -1,10 +1,10 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class ChangeManualTasksToTodoSqlite1742432169253 implements MigrationInterface {
-    name = 'ChangeManualTasksToTodoSqlite1742432169253'
+  name = 'ChangeManualTasksToTodoSqlite1742432169253'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             CREATE TABLE "todo" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -21,25 +21,25 @@ export class ChangeManualTasksToTodoSqlite1742432169253 implements MigrationInte
                 "approvalUrl" varchar
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_todo_project_id" ON "todo" ("projectId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_todo_flow_id" ON "todo" ("flowId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_todo_platform_id" ON "todo" ("platformId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_todo_project_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_todo_flow_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_todo_platform_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_todo" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -61,7 +61,7 @@ export class ChangeManualTasksToTodoSqlite1742432169253 implements MigrationInte
                 CONSTRAINT "fk_todo_assignee_id" FOREIGN KEY ("assigneeId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_todo"(
                     "id",
                     "created",
@@ -92,46 +92,44 @@ export class ChangeManualTasksToTodoSqlite1742432169253 implements MigrationInte
                 "approvalUrl"
             FROM "todo"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "todo"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_todo"
                 RENAME TO "todo"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_todo_project_id" ON "todo" ("projectId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_todo_flow_id" ON "todo" ("flowId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_todo_platform_id" ON "todo" ("platformId")
         `)
-        
-        // Drop manual_tasks table
-        await queryRunner.query(`
+
+    // Drop manual_tasks table
+    await queryRunner.query(`
             DROP TABLE IF EXISTS "manual_task"
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-
-        
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_todo_platform_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_todo_flow_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_todo_project_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "todo"
                 RENAME TO "temporary_todo"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "todo" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -148,7 +146,7 @@ export class ChangeManualTasksToTodoSqlite1742432169253 implements MigrationInte
                 "approvalUrl" varchar
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "todo"(
                     "id",
                     "created",
@@ -179,30 +177,29 @@ export class ChangeManualTasksToTodoSqlite1742432169253 implements MigrationInte
                 "approvalUrl"
             FROM "temporary_todo"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_todo"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_todo_platform_id" ON "todo" ("platformId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_todo_flow_id" ON "todo" ("flowId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_todo_project_id" ON "todo" ("projectId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_todo_platform_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_todo_flow_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_todo_project_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "todo"
         `)
-    }
-
+  }
 }

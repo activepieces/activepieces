@@ -1,12 +1,13 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { trueLayerCommon } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { trueLayerCommon } from '../../common'
 
 export const merchantAccountSetupSweeping = createAction({
   auth: trueLayerCommon.auth,
   name: 'merchant-account-setup-sweeping',
   displayName: 'Set Up or Update Sweeping',
-  description: 'Set the automatic sweeping settings for a merchant account. At regular intervals, any available balance in excess of the configured `max_amount_in_minor` is withdrawn to a pre-configured IBAN.',
+  description:
+    'Set the automatic sweeping settings for a merchant account. At regular intervals, any available balance in excess of the configured `max_amount_in_minor` is withdrawn to a pre-configured IBAN.',
   props: {
     id: Property.ShortText({
       displayName: 'Merchant Account ID',
@@ -30,7 +31,7 @@ export const merchantAccountSetupSweeping = createAction({
     }),
   },
   run: async (ctx) => {
-    const response =  await httpClient.sendRequest({
+    const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${trueLayerCommon.baseUrl}/v3/merchant-accounts/${ctx.propsValue.id}/sweeping`,
       headers: {
@@ -43,6 +44,6 @@ export const merchantAccountSetupSweeping = createAction({
       },
     })
 
-    return response.body;
+    return response.body
   },
-});
+})

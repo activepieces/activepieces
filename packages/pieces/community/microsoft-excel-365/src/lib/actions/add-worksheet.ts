@@ -1,12 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { excelAuth } from '../../index';
-import { excelCommon } from '../common/common';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { excelAuth } from '../../index'
+import { excelCommon } from '../common/common'
 
 export const addWorksheetAction = createAction({
   auth: excelAuth,
@@ -23,8 +18,8 @@ export const addWorksheetAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const workbook_id = propsValue['workbook_id'];
-    const worksheet_name = propsValue['worksheet_name'];
+    const workbook_id = propsValue['workbook_id']
+    const worksheet_name = propsValue['worksheet_name']
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -36,10 +31,10 @@ export const addWorksheetAction = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: auth['access_token'],
       },
-    };
+    }
 
-    const response = await httpClient.sendRequest(request);
+    const response = await httpClient.sendRequest(request)
 
-    return response.body;
+    return response.body
   },
-});
+})

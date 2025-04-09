@@ -1,11 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { discordCommon } from '../common';
-import { discordAuth } from '../../index';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { discordAuth } from '../../index'
+import { discordCommon } from '../common'
 
 export const discordRemoveBanFromUser = createAction({
   auth: discordAuth,
@@ -37,12 +33,12 @@ export const discordRemoveBanFromUser = createAction({
       body: {
         reason: `${configValue.propsValue.unban_reason}`,
       },
-    };
+    }
 
-    const res = await httpClient.sendRequest<never>(request);
+    const res = await httpClient.sendRequest<never>(request)
 
     return {
       success: res.status === 204,
-    };
+    }
   },
-});
+})

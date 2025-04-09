@@ -1,10 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query'
 
-import { InvitationType, UserInvitation } from '@activepieces/shared';
+import { InvitationType, UserInvitation } from '@activepieces/shared'
 
-import { userInvitationApi } from './user-invitation';
+import { userInvitationApi } from './user-invitation'
 
-const userInvitationsQueryKey = 'user-invitations';
+const userInvitationsQueryKey = 'user-invitations'
 
 export const userInvitationsHooks = {
   useInvitations: () => {
@@ -16,15 +16,15 @@ export const userInvitationsHooks = {
             cursor: undefined,
             limit: 100,
           })
-          .then((res) => res.data);
+          .then((res) => res.data)
       },
       queryKey: [userInvitationsQueryKey],
       staleTime: 0,
-    });
+    })
     return {
       invitations: query.data,
       isLoading: query.isLoading,
       refetch: query.refetch,
-    };
+    }
   },
-};
+}

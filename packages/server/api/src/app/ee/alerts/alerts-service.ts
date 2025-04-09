@@ -1,5 +1,5 @@
 import { Alert, AlertChannel, Issue, ListAlertsParams } from '@activepieces/ee-shared'
-import { ActivepiecesError, ApId, apId, ErrorCode, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, ApId, ErrorCode, SeekPage, apId } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -14,82 +14,83 @@ import { alertsHandler } from './alerts-handler'
 const repo = repoFactory(AlertEntity)
 
 export const alertsService = (log: FastifyBaseLogger) => ({
-    async sendAlertOnRunFinish({ issue, flowRunId }: { issue: Issue, flowRunId: string }): Promise<void> {
-        const project = await projectService.getOneOrThrow(issue.projectId)
-        const platform = await platformService.getOneOrThrow(project.platformId)
-        if (platform.embeddingEnabled) {
-            return
-        }
+  async sendAlertOnRunFinish({ issue, flowRunId }: { issue: Issue; flowRunId: string }): Promise<void> {
+    const project = await projectService.getOneOrThrow(issue.projectId)
+    const platform = await platformService.getOneOrThrow(project.platformId)
+    if (platform.embeddingEnabled) {
+      return
+    }
 
-        const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(issue.flowId)
+    const flowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(issue.flowId)
 
-        await alertsHandler(log)[project.notifyStatus]({
-            flowRunId,
-            projectId: issue.projectId,
-            platformId: platform.id,
-            flowId: issue.flowId,
-            flowName: flowVersion.displayName,
-            issueCount: issue.count,
-            createdAt: dayjs(issue.created).tz('America/Los_Angeles').format('DD MMM YYYY, HH:mm [PT]'),
-        })
-    },
-    async add({ projectId, channel, receiver }: AddPrams): Promise<void> {
-        const alertId = apId()
-        const existingAlert = await repo().findOneBy({
-            projectId,
-            receiver,
-        })
+    await alertsHandler(log)[project.notifyStatus]({
+      flowRunId,
+      projectId: issue.projectId,
+      platformId: platform.id,
+      flowId: issue.flowId,
+      flowName: flowVersion.displayName,
+      issueCount: issue.count,
+      createdAt: dayjs(issue.created).tz('America/Los_Angeles').format('DD MMM YYYY, HH:mm [PT]'),
+    })
+  },
+  async add({ projectId, channel, receiver }: AddPrams): Promise<void> {
+    const alertId = apId()
+    const existingAlert = await repo().findOneBy({
+      projectId,
+      receiver,
+    })
 
-        if (existingAlert) {
-            throw new ActivepiecesError({
-                code: ErrorCode.EXISTING_ALERT_CHANNEL,
-                params: {
-                    email: receiver,
-                },
-            })
-        }
+    if (existingAlert) {
+      throw new ActivepiecesError({
+        code: ErrorCode.EXISTING_ALERT_CHANNEL,
+        params: {
+          email: receiver,
+        },
+      })
+    }
 
-        await repo().createQueryBuilder()
-            .insert()
-            .into(AlertEntity)
-            .values({
-                id: alertId,
-                channel,
-                projectId,
-                receiver,
-                created: dayjs().toISOString(),
-            })
-            .execute()
-    },
-    async list({ projectId, cursor, limit }: ListAlertsParams): Promise<SeekPage<Alert>> {
-        const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
-        const paginator = buildPaginator({
-            entity: AlertEntity,
-            query: {
-                limit,
-                order: 'ASC',
-                afterCursor: decodedCursor.nextCursor,
-                beforeCursor: decodedCursor.previousCursor,
-            },
-        })
+    await repo()
+      .createQueryBuilder()
+      .insert()
+      .into(AlertEntity)
+      .values({
+        id: alertId,
+        channel,
+        projectId,
+        receiver,
+        created: dayjs().toISOString(),
+      })
+      .execute()
+  },
+  async list({ projectId, cursor, limit }: ListAlertsParams): Promise<SeekPage<Alert>> {
+    const decodedCursor = paginationHelper.decodeCursor(cursor ?? null)
+    const paginator = buildPaginator({
+      entity: AlertEntity,
+      query: {
+        limit,
+        order: 'ASC',
+        afterCursor: decodedCursor.nextCursor,
+        beforeCursor: decodedCursor.previousCursor,
+      },
+    })
 
-        const query = repo().createQueryBuilder(AlertEntity.options.name).where({
-            projectId,
-        })
+    const query = repo().createQueryBuilder(AlertEntity.options.name).where({
+      projectId,
+    })
 
-        const { data, cursor: newCursor } = await paginator.paginate(query)
+    const { data, cursor: newCursor } = await paginator.paginate(query)
 
-        return paginationHelper.createPage<Alert>(data, newCursor)
-    },
-    async delete({ alertId }: { alertId: ApId }): Promise<void> {
-        await repo().delete({
-            id: alertId,
-        })
-    },
+    return paginationHelper.createPage<Alert>(data, newCursor)
+  },
+  async delete({ alertId }: { alertId: ApId }): Promise<void> {
+    await repo().delete({
+      id: alertId,
+    })
+  },
 })
 
-type AddPrams = { 
-    projectId: string
-    channel: AlertChannel
-    receiver: string 
+type AddPrams = {
+  projectId: string
+  channel: AlertChannel
+  receiver: string
 }

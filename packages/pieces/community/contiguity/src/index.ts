@@ -1,13 +1,13 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { sendSMS } from './lib/actions/send-sms';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { sendSMS } from './lib/actions/send-sms'
 
 export const contigAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   required: true,
   description: 'API key acquired from your Contiguity settings',
-});
+})
 
 export const contiguity = createPiece({
   displayName: 'Contiguity',
@@ -15,7 +15,7 @@ export const contiguity = createPiece({
   auth: contigAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/contiguity.png',
-  authors: ["Owlcept","Ozak93","kishanprmr","MoShizzle","abuaboud"],
+  authors: ['Owlcept', 'Ozak93', 'kishanprmr', 'MoShizzle', 'abuaboud'],
   categories: [PieceCategory.MARKETING],
   actions: [
     sendSMS,
@@ -28,4 +28,4 @@ export const contiguity = createPiece({
     }),
   ],
   triggers: [],
-});
+})

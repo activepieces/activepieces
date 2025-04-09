@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework'
 
-import { airtableCommon } from '../common';
-import { airtableAuth } from '../../index';
+import { airtableAuth } from '../../index'
+import { airtableCommon } from '../common'
 
 export const airtableFindRecordAction = createAction({
   auth: airtableAuth,
@@ -19,14 +19,8 @@ export const airtableFindRecordAction = createAction({
     limitToView: airtableCommon.views,
   },
   async run(context) {
-    const personalToken = context.auth;
-    const {
-      base: baseId,
-      tableId,
-      searchField,
-      searchValue,
-      limitToView,
-    } = context.propsValue;
+    const personalToken = context.auth
+    const { base: baseId, tableId, searchField, searchValue, limitToView } = context.propsValue
 
     return await airtableCommon.findRecord({
       personalToken,
@@ -35,6 +29,6 @@ export const airtableFindRecordAction = createAction({
       searchField: searchField as string,
       searchValue: searchValue as string,
       limitToView: limitToView as string,
-    });
+    })
   },
-});
+})

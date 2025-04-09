@@ -1,9 +1,9 @@
-import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { TriangleAlert } from 'lucide-react';
-import React, { useState } from 'react';
+import { useMutation } from '@tanstack/react-query'
+import { t } from 'i18next'
+import { TriangleAlert } from 'lucide-react'
+import React, { useState } from 'react'
 
-import { Button } from './ui/button';
+import { Button } from './ui/button'
 import {
   Dialog,
   DialogContent,
@@ -12,20 +12,20 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from './ui/dialog';
-import { toast } from './ui/use-toast';
+} from './ui/dialog'
+import { toast } from './ui/use-toast'
 
 type ConfirmationDeleteDialogProps = {
-  title: string;
-  message: React.ReactNode;
-  children: React.ReactNode;
-  entityName: string;
-  mutationFn: () => Promise<void>;
-  onError?: (error: Error) => void;
-  isDanger?: boolean;
-  buttonText?: string;
-  showToast?: boolean;
-};
+  title: string
+  message: React.ReactNode
+  children: React.ReactNode
+  entityName: string
+  mutationFn: () => Promise<void>
+  onError?: (error: Error) => void
+  isDanger?: boolean
+  buttonText?: string
+  showToast?: boolean
+}
 
 export function ConfirmationDeleteDialog({
   children,
@@ -38,19 +38,19 @@ export function ConfirmationDeleteDialog({
   isDanger = false,
   showToast = true,
 }: ConfirmationDeleteDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false)
   const { isPending, mutate } = useMutation({
     mutationFn,
     onSuccess: () => {
       if (showToast) {
         toast({
           title: t('Removed {entityName}', { entityName }),
-        });
+        })
       }
-      setIsOpen(false);
+      setIsOpen(false)
     },
     onError,
-  });
+  })
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
@@ -64,9 +64,9 @@ export function ConfirmationDeleteDialog({
           <Button
             variant={'outline'}
             onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              setIsOpen(false);
+              e.stopPropagation()
+              e.preventDefault()
+              setIsOpen(false)
             }}
           >
             {t('Cancel')}
@@ -75,9 +75,9 @@ export function ConfirmationDeleteDialog({
             loading={isPending}
             variant={'destructive'}
             onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              mutate();
+              e.stopPropagation()
+              e.preventDefault()
+              mutate()
             }}
           >
             {isDanger && <TriangleAlert className="size-4 mr-2" />}
@@ -86,5 +86,5 @@ export function ConfirmationDeleteDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

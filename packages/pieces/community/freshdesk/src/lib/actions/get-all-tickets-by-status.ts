@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { freshdeskAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { freshdeskAuth } from '../..'
 
 export const getAllTicketsByStatus = createAction({
   auth: freshdeskAuth,
@@ -17,95 +17,95 @@ export const getAllTicketsByStatus = createAction({
         options: [
           {
             label: 'Open',
-            value: 'status:2'
+            value: 'status:2',
           },
           {
             label: 'Pending',
-            value: 'status:3'
+            value: 'status:3',
           },
           {
             label: 'Resolved',
-            value: 'status:4'
+            value: 'status:4',
           },
           {
             label: 'Closed',
-            value: 'status:5'
-          }
-        ]
-      }
+            value: 'status:5',
+          },
+        ],
+      },
     }),
   },
 
   async run(context) {
-    const FDapiToken = context.auth.access_token;
+    const FDapiToken = context.auth.access_token
 
     const headers = {
       Authorization: FDapiToken,
       'Content-Type': 'application/json',
-    };
+    }
 
     // Remove trailing slash from base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
-    const queryParams = new URLSearchParams();
+    const baseUrl = context.auth.base_url.replace(/\/$/, '')
+    const queryParams = new URLSearchParams()
 
     // Adjusted to accept number or string
-    const replacedArray = context.propsValue.status_filter.map(str => str.replace(/,/g, ' OR '));
-    const replacedString = '"' + replacedArray.join(' OR ') + '"';
-    queryParams.append('query', replacedString || '');
+    const replacedArray = context.propsValue.status_filter.map((str) => str.replace(/,/g, ' OR '))
+    const replacedString = '"' + replacedArray.join(' OR ') + '"'
+    queryParams.append('query', replacedString || '')
 
-    const url = `${baseUrl}/api/v2/search/tickets/?${queryParams.toString()}`;
+    const url = `${baseUrl}/api/v2/search/tickets/?${queryParams.toString()}`
 
     const httprequestdata = {
       method: HttpMethod.GET,
       url,
       headers,
-    };
-    const response = await httpClient.sendRequest(httprequestdata);
+    }
+    const response = await httpClient.sendRequest(httprequestdata)
 
     if (response.status == 200) {
       // Define an interface for the ticket structure
       interface Ticket {
-        id: number;
-        requester_id: number;
-        responder_id: number | null;
-        company_id: number;
-        status: number | string; // Adjusted to accept number or string
-        subject: string;
-        created_at: string;
-        updated_at: string;
-        description_text: string;
-        description: string;
+        id: number
+        requester_id: number
+        responder_id: number | null
+        company_id: number
+        status: number | string // Adjusted to accept number or string
+        subject: string
+        created_at: string
+        updated_at: string
+        description_text: string
+        description: string
         // Add more properties if necessary
       }
 
       // response.body.results is an array of ticket objects
-      const ticketResults: Ticket[] = response.body.results;
+      const ticketResults: Ticket[] = response.body.results
 
       // Sort the ticketResults array by requester_id
-      ticketResults.sort((a, b) => a.requester_id - b.requester_id);
+      ticketResults.sort((a, b) => a.requester_id - b.requester_id)
 
       // Initialize an empty array to store tickets
-      const tickets: Ticket[] = [];
+      const tickets: Ticket[] = []
 
       // Iterate through each ticket result and push it to the tickets array
       ticketResults.forEach((ticketResult: Ticket) => {
         // Map status number to corresponding string
-        let statusString: string;
+        let statusString: string
         switch (ticketResult.status) {
           case 2:
-            statusString = 'Open';
-            break;
+            statusString = 'Open'
+            break
           case 3:
-            statusString = 'Pending';
-            break;
+            statusString = 'Pending'
+            break
           case 4:
-            statusString = 'Resolved';
-            break;
+            statusString = 'Resolved'
+            break
           case 5:
-            statusString = 'Closed';
-            break;
+            statusString = 'Closed'
+            break
           default:
-            statusString = 'Unknown';
+            statusString = 'Unknown'
         }
 
         // Push the ticket object with modified status string to the tickets array
@@ -121,13 +121,13 @@ export const getAllTicketsByStatus = createAction({
           description_text: ticketResult.description_text,
           description: ticketResult.description,
           // Add more properties if necessary
-        });
-      });
+        })
+      })
 
       // Return the tickets array
-      return tickets;
+      return tickets
     } else {
-      return response.status;
+      return response.status
     }
   },
-});
+})

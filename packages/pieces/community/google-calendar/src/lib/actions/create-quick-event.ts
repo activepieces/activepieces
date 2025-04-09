@@ -1,12 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { googleCalendarCommon } from '../common';
-import { googleCalendarAuth } from '../../';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { googleCalendarAuth } from '../../'
+import { googleCalendarCommon } from '../common'
 
 export const createQuickCalendarEvent = createAction({
   auth: googleCalendarAuth,
@@ -22,8 +17,7 @@ export const createQuickCalendarEvent = createAction({
     }),
     send_updates: Property.StaticDropdown<string>({
       displayName: 'Send Updates',
-      description:
-        'Guests who should receive notifications about the creation of the new event.',
+      description: 'Guests who should receive notifications about the creation of the new event.',
       required: false,
       options: {
         disabled: false,
@@ -46,12 +40,12 @@ export const createQuickCalendarEvent = createAction({
   },
   async run(configValue) {
     // docs: https://developers.google.com/calendar/api/v3/reference/events/quickAdd
-    const calendarId = configValue.propsValue['calendar_id'];
-    const url = `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events/quickAdd`;
+    const calendarId = configValue.propsValue['calendar_id']
+    const url = `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events/quickAdd`
     const qParams: Record<string, string> = {
       text: configValue.propsValue['text'],
       sendUpdates: configValue.propsValue['send_updates'] || 'none',
-    };
+    }
     const request: HttpRequest<Record<string, unknown>> = {
       method: HttpMethod.POST,
       url,
@@ -61,7 +55,7 @@ export const createQuickCalendarEvent = createAction({
         token: configValue.auth.access_token,
       },
       queryParams: qParams,
-    };
-    return await httpClient.sendRequest(request);
+    }
+    return await httpClient.sendRequest(request)
   },
-});
+})

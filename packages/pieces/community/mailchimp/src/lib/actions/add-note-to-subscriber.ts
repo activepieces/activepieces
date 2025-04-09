@@ -1,18 +1,10 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
 
-import { mailchimpAuth } from '../..';
-import { mailchimpCommon } from '../common';
+import { mailchimpAuth } from '../..'
+import { mailchimpCommon } from '../common'
 
 export const addNoteToSubscriber = createAction({
   auth: mailchimpAuth,
@@ -35,16 +27,14 @@ export const addNoteToSubscriber = createAction({
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
       note: z.string().max(1000),
-    });
+    })
 
-    const { list_id, email, note } = context.propsValue;
-    const { access_token } = context.auth;
+    const { list_id, email, note } = context.propsValue
+    const { access_token } = context.auth
 
-    const subscriberHash = mailchimpCommon.getMD5EmailHash(email);
-    const serverPrefix = await mailchimpCommon.getMailChimpServerPrefix(
-      access_token
-    );
-    const url = `https://${serverPrefix}.api.mailchimp.com/3.0/lists/${list_id}/members/${subscriberHash}/notes`;
+    const subscriberHash = mailchimpCommon.getMD5EmailHash(email)
+    const serverPrefix = await mailchimpCommon.getMailChimpServerPrefix(access_token)
+    const url = `https://${serverPrefix}.api.mailchimp.com/3.0/lists/${list_id}/members/${subscriberHash}/notes`
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -54,9 +44,9 @@ export const addNoteToSubscriber = createAction({
         token: access_token,
       },
       body: { note },
-    };
-    const response = await httpClient.sendRequest(request);
+    }
+    const response = await httpClient.sendRequest(request)
 
-    return response.body;
+    return response.body
   },
-});
+})

@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 import { zooAuth } from '../../../index'
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const createUserPaymentAction = createAction({
   name: 'create_user_payment',
@@ -25,7 +25,7 @@ export const createUserPaymentAction = createAction({
       body: {
         payment_method_id: propsValue.paymentMethodId,
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

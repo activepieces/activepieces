@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { gotifyAuth } from '../../';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { gotifyAuth } from '../../'
 
 export const sendNotification = createAction({
   auth: gotifyAuth,
@@ -20,18 +20,17 @@ export const sendNotification = createAction({
     }),
     priority: Property.Number({
       displayName: 'Priority',
-      description:
-        'The priority of the notification (0-10). 0 is lowest priority.',
+      description: 'The priority of the notification (0-10). 0 is lowest priority.',
       required: false,
     }),
   },
   async run({ auth, propsValue }) {
-    const baseUrl = auth.base_url.replace(/\/$/, '');
-    const appToken = auth.app_token;
+    const baseUrl = auth.base_url.replace(/\/$/, '')
+    const appToken = auth.app_token
 
-    const title = propsValue.title;
-    const message = propsValue.message;
-    const priority = propsValue.priority;
+    const title = propsValue.title
+    const message = propsValue.message
+    const priority = propsValue.priority
 
     return await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -41,6 +40,6 @@ export const sendNotification = createAction({
         message,
         ...(priority && { priority: +priority }),
       },
-    });
+    })
   },
-});
+})

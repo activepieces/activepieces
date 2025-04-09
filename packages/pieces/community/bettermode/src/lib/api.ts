@@ -1,17 +1,9 @@
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { BettermodeAuthType } from './auth';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { BettermodeAuthType } from './auth'
 
-type KeyValuePair = { [key: string]: string | boolean | object | undefined };
+type KeyValuePair = { [key: string]: string | boolean | object | undefined }
 
-const bettermodeAPI = async (
-  auth: BettermodeAuthType,
-  query: string,
-  variables: KeyValuePair = {}
-) => {
+const bettermodeAPI = async (auth: BettermodeAuthType, query: string, variables: KeyValuePair = {}) => {
   const request: HttpRequest = {
     method: HttpMethod.POST,
     url: auth.region,
@@ -23,31 +15,31 @@ const bettermodeAPI = async (
       query: query,
       variables: variables,
     }),
-  };
-
-  const response = await httpClient.sendRequest(request);
-
-  if (response.body['errors']) {
-    throw new Error(response.body['errors'][0]['message']);
   }
 
-  return response.body['data'];
-};
+  const response = await httpClient.sendRequest(request)
+
+  if (response.body['errors']) {
+    throw new Error(response.body['errors'][0]['message'])
+  }
+
+  return response.body['data']
+}
 
 const getGuestToken = async (auth: BettermodeAuthType) => {
   const query = `query GetGuestToken($domain: String!) {
 		tokens(networkDomain: $domain) {
 			accessToken
 		}
-	}`;
+	}`
 
-  const variables = { domain: auth.domain };
-  const response = await bettermodeAPI(auth, query, variables);
+  const variables = { domain: auth.domain }
+  const response = await bettermodeAPI(auth, query, variables)
 
-  auth.token = response.tokens.accessToken;
+  auth.token = response.tokens.accessToken
 
-  return auth;
-};
+  return auth
+}
 
 export const getAuthToken = async (auth: BettermodeAuthType) => {
   const query = `mutation getAuthToken($email: String!, $password: String!) {
@@ -58,21 +50,21 @@ export const getAuthToken = async (auth: BettermodeAuthType) => {
 				name
 			}
 		}
-	}`;
+	}`
 
   const variables = {
     email: auth.email,
     password: auth.password,
-  };
+  }
 
-  auth = await getGuestToken(auth);
-  const response = await bettermodeAPI(auth, query, variables);
+  auth = await getGuestToken(auth)
+  const response = await bettermodeAPI(auth, query, variables)
 
-  auth.token = response.loginNetwork.accessToken;
-  auth.memberId = response.loginNetwork.member.id;
+  auth.token = response.loginNetwork.accessToken
+  auth.memberId = response.loginNetwork.member.id
 
-  return auth;
-};
+  return auth
+}
 
 const getPostType = async (auth: BettermodeAuthType, postTypeName: string) => {
   const query = `query getPostType($postTypeName: String!) {
@@ -82,15 +74,15 @@ const getPostType = async (auth: BettermodeAuthType, postTypeName: string) => {
 				name
 			}
 		}
-	}`;
+	}`
 
-  if (!auth.memberId) auth = await getAuthToken(auth);
+  if (!auth.memberId) auth = await getAuthToken(auth)
 
-  const variables = { postTypeName: postTypeName };
-  const response = await bettermodeAPI(auth, query, variables);
+  const variables = { postTypeName: postTypeName }
+  const response = await bettermodeAPI(auth, query, variables)
 
-  return response.postTypes.nodes[0];
-};
+  return response.postTypes.nodes[0]
+}
 
 export const listBadges = async (auth: BettermodeAuthType) => {
   const query = `query {
@@ -100,14 +92,14 @@ export const listBadges = async (auth: BettermodeAuthType) => {
 				name
 			}
 		}
-	}`;
+	}`
 
-  if (!auth.memberId) auth = await getAuthToken(auth);
+  if (!auth.memberId) auth = await getAuthToken(auth)
 
-  const response = await bettermodeAPI(auth, query);
+  const response = await bettermodeAPI(auth, query)
 
-  return response.network.badges;
-};
+  return response.network.badges
+}
 
 export const listMemberSpaces = async (auth: BettermodeAuthType) => {
   const query = `query listMemberSpaces($memberId: ID!) {
@@ -117,15 +109,15 @@ export const listMemberSpaces = async (auth: BettermodeAuthType) => {
 				name
 			}
 		}
-	}`;
+	}`
 
-  if (!auth.memberId) auth = await getAuthToken(auth);
+  if (!auth.memberId) auth = await getAuthToken(auth)
 
-  const variables = { memberId: auth.memberId };
-  const response = await bettermodeAPI(auth, query, variables);
+  const variables = { memberId: auth.memberId }
+  const response = await bettermodeAPI(auth, query, variables)
 
-  return response.spaces.nodes;
-};
+  return response.spaces.nodes
+}
 
 const getMemberByEmail = async (auth: BettermodeAuthType, email: string) => {
   const query = `query getMemberId($email: String!) {
@@ -135,25 +127,21 @@ const getMemberByEmail = async (auth: BettermodeAuthType, email: string) => {
                 name
             }
         }
-	}`;
+	}`
 
-  if (!auth.memberId) auth = await getAuthToken(auth);
+  if (!auth.memberId) auth = await getAuthToken(auth)
 
-  const variables = { email: email };
-  const response = await bettermodeAPI(auth, query, variables);
+  const variables = { email: email }
+  const response = await bettermodeAPI(auth, query, variables)
 
   if (response.members.nodes.length == 0) {
-    throw new Error(`Member with email ${email} not found`);
+    throw new Error(`Member with email ${email} not found`)
   }
 
-  return response.members.nodes[0];
-};
+  return response.members.nodes[0]
+}
 
-export const assignBadgeToMember = async (
-  auth: BettermodeAuthType,
-  badgeId: string,
-  email: string
-) => {
+export const assignBadgeToMember = async (auth: BettermodeAuthType, badgeId: string, email: string) => {
   const query = `mutation assignBadgeToMember($badgeId: String!, $memberId: String!) {
 		assignBadge(
 			id: $badgeId,
@@ -163,22 +151,18 @@ export const assignBadgeToMember = async (
 		) {
 			status
 		}
-	}`;
+	}`
 
-  if (!auth.memberId) auth = await getAuthToken(auth);
+  if (!auth.memberId) auth = await getAuthToken(auth)
 
-  const member = await getMemberByEmail(auth, email);
-  const variables = { badgeId: badgeId, memberId: member.id };
-  const response = await bettermodeAPI(auth, query, variables);
+  const member = await getMemberByEmail(auth, email)
+  const variables = { badgeId: badgeId, memberId: member.id }
+  const response = await bettermodeAPI(auth, query, variables)
 
-  return response.assignBadge;
-};
+  return response.assignBadge
+}
 
-export const revokeBadgeFromMember = async (
-  auth: BettermodeAuthType,
-  badgeId: string,
-  email: string
-) => {
+export const revokeBadgeFromMember = async (auth: BettermodeAuthType, badgeId: string, email: string) => {
   const query = `mutation revokeBadgeFromMember($badgeId: String!, $memberId: String!) {
 		revokeBadge(
 			id: $badgeId,
@@ -188,16 +172,16 @@ export const revokeBadgeFromMember = async (
 		) {
 			status
 		}
-	}`;
+	}`
 
-  if (!auth.memberId) auth = await getAuthToken(auth);
+  if (!auth.memberId) auth = await getAuthToken(auth)
 
-  const member = await getMemberByEmail(auth, email);
-  const variables = { badgeId: badgeId, memberId: member.id };
-  const response = await bettermodeAPI(auth, query, variables);
+  const member = await getMemberByEmail(auth, email)
+  const variables = { badgeId: badgeId, memberId: member.id }
+  const response = await bettermodeAPI(auth, query, variables)
 
-  return response.revokeBadge;
-};
+  return response.revokeBadge
+}
 
 export const createPostOfType = async (
   auth: BettermodeAuthType,
@@ -206,7 +190,7 @@ export const createPostOfType = async (
   tagNames: string,
   title: string,
   content: string,
-  locked = false
+  locked = false,
 ) => {
   const query = `mutation createPostOfType($spaceId: ID!, $postTypeId: String!, $locked: Boolean!, $tagNames: [String!], $title: String!, $content: String!) {
 		createPost(
@@ -233,11 +217,11 @@ export const createPostOfType = async (
 			url
 			createdAt
 		}
-	}`;
+	}`
 
-  auth = await getAuthToken(auth);
+  auth = await getAuthToken(auth)
 
-  const postType = await getPostType(auth, postTypeName);
+  const postType = await getPostType(auth, postTypeName)
 
   const variables = {
     spaceId: spaceId,
@@ -246,10 +230,10 @@ export const createPostOfType = async (
     tagNames: tagNames.split(',').map((tag: string) => tag.trim()),
     title: JSON.stringify(title),
     content: JSON.stringify(content),
-  };
-  const response = await bettermodeAPI(auth, query, variables);
-  return response.createPost;
-};
+  }
+  const response = await bettermodeAPI(auth, query, variables)
+  return response.createPost
+}
 
 export const createDiscussion = async (
   auth: BettermodeAuthType,
@@ -257,18 +241,10 @@ export const createDiscussion = async (
   tagNames: string,
   title: string,
   content: string,
-  locked = false
+  locked = false,
 ) => {
-  return await createPostOfType(
-    auth,
-    'Discussion',
-    spaceId,
-    tagNames,
-    title,
-    content,
-    locked
-  );
-};
+  return await createPostOfType(auth, 'Discussion', spaceId, tagNames, title, content, locked)
+}
 
 export const createQuestion = async (
   auth: BettermodeAuthType,
@@ -276,17 +252,9 @@ export const createQuestion = async (
   tagNames: string,
   title: string,
   content: string,
-  locked = false
+  locked = false,
 ) => {
-  return await createPostOfType(
-    auth,
-    'Question',
-    spaceId,
-    tagNames,
-    title,
-    content,
-    locked
-  );
-};
+  return await createPostOfType(auth, 'Question', spaceId, tagNames, title, content, locked)
+}
 
 // TODO: assignBadge to member

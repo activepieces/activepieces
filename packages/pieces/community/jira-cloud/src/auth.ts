@@ -1,13 +1,8 @@
-import {
-  PieceAuth,
-  Property,
-  ShortTextProperty,
-  StaticPropsValue,
-} from '@activepieces/pieces-framework';
-import { getUsers, sendJiraRequest } from './lib/common';
-import { HttpError, HttpMethod } from '@activepieces/pieces-common';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { HttpError, HttpMethod } from '@activepieces/pieces-common'
+import { propsValidation } from '@activepieces/pieces-common'
+import { PieceAuth, Property, ShortTextProperty, StaticPropsValue } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { getUsers, sendJiraRequest } from './lib/common'
 
 export const jiraCloudAuth = PieceAuth.CustomAuth({
   description: `
@@ -18,8 +13,7 @@ You can generate your API token from:
   props: {
     instanceUrl: Property.ShortText({
       displayName: 'Instance URL',
-      description:
-        'The link of your Jira instance (e.g https://example.atlassian.net)',
+      description: 'The link of your Jira instance (e.g https://example.atlassian.net)',
       required: true,
     }),
     email: Property.ShortText({
@@ -38,29 +32,28 @@ You can generate your API token from:
       await propsValidation.validateZod(auth, {
         instanceUrl: z.string().url(),
         email: z.string().email(),
-      });
+      })
 
       await sendJiraRequest({
         auth: auth,
         method: HttpMethod.GET,
         url: 'myself',
-      });
+      })
       return {
         valid: true,
-      };
+      }
     } catch (e) {
-      const message = ((e as HttpError).response?.body as any)?.message;
+      const message = ((e as HttpError).response?.body as any)?.message
       return {
         valid: false,
         error: message ?? 'Invalid credentials',
-      };
+      }
     }
   },
-});
+})
 
 export type JiraAuth = {
-  instanceUrl: string;
-  email: string;
-  apiToken: string;
-
+  instanceUrl: string
+  email: string
+  apiToken: string
 }

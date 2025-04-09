@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { chargekeepAuth } from '../..';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { chargekeepAuth } from '../..'
 
 export const addOrUpdateSubscription = createAction({
   name: 'addOrUpdateSubscription',
@@ -19,8 +19,7 @@ export const addOrUpdateSubscription = createAction({
     }),
     contactXref: Property.ShortText({
       displayName: 'External Contact ID',
-      description:
-        'ContactXref have to be specified and correct to look up the correct contact',
+      description: 'ContactXref have to be specified and correct to look up the correct contact',
       required: false,
     }),
     productCode: Property.ShortText({
@@ -31,8 +30,7 @@ export const addOrUpdateSubscription = createAction({
     }),
     paymentPeriodType: Property.StaticDropdown({
       displayName: 'Payment Period Type',
-      description:
-        'The chosen Period Type has to be set for the Product on Sperse side',
+      description: 'The chosen Period Type has to be set for the Product on Sperse side',
       required: true,
       defaultValue: 'Monthly',
       options: {
@@ -88,7 +86,7 @@ export const addOrUpdateSubscription = createAction({
       productCode: context.propsValue.productCode,
       paymentPeriodType: context.propsValue.paymentPeriodType,
       hasRecurringBilling: context.propsValue.hasRecurringBilling,
-    };
+    }
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.PUT,
@@ -100,11 +98,11 @@ export const addOrUpdateSubscription = createAction({
       body: {
         ...subscription,
       },
-    });
+    })
 
     return {
       status: res.status,
       body: res.body,
-    };
+    }
   },
-});
+})

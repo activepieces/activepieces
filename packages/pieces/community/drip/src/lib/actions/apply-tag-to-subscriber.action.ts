@@ -1,11 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { dripCommon } from '../common';
-import { dripAuth } from '../../';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { dripAuth } from '../../'
+import { dripCommon } from '../common'
 
 export const dripApplyTagToSubscriber = createAction({
   auth: dripAuth,
@@ -37,7 +33,7 @@ export const dripApplyTagToSubscriber = createAction({
         Authorization: dripCommon.authorizationHeader(auth),
       },
       queryParams: {},
-    };
-    return await httpClient.sendRequest<Record<string, never>>(request);
+    }
+    return await httpClient.sendRequest<Record<string, never>>(request)
   },
-});
+})

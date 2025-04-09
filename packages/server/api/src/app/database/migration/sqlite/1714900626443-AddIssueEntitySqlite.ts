@@ -1,10 +1,10 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddIssueEntitySqlite1714900626443 implements MigrationInterface {
-    name = 'AddIssueEntitySqlite1714900626443'
+  name = 'AddIssueEntitySqlite1714900626443'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             CREATE TABLE "issue" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -17,13 +17,13 @@ export class AddIssueEntitySqlite1714900626443 implements MigrationInterface {
                 CONSTRAINT "REL_6c7309a7ac3112d264f5d7b49f" UNIQUE ("flowId")
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_issue_flow_id" ON "issue" ("flowId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_issue_project_id_flow_id" ON "issue" ("projectId", "flowId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -87,7 +87,7 @@ export class AddIssueEntitySqlite1714900626443 implements MigrationInterface {
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_platform"(
                 "id",
                 "created",
@@ -170,20 +170,20 @@ export class AddIssueEntitySqlite1714900626443 implements MigrationInterface {
             false
             FROM "platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_platform"
                 RENAME TO "platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_issue_flow_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_issue_project_id_flow_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_issue" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -198,7 +198,7 @@ export class AddIssueEntitySqlite1714900626443 implements MigrationInterface {
                 CONSTRAINT "fk_issue_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE RESTRICT
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_issue"(
                     "id",
                     "created",
@@ -219,33 +219,33 @@ export class AddIssueEntitySqlite1714900626443 implements MigrationInterface {
                 "lastOccurrence"
             FROM "issue"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "issue"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_issue"
                 RENAME TO "issue"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_issue_flow_id" ON "issue" ("flowId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_issue_project_id_flow_id" ON "issue" ("projectId", "flowId")
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_issue_project_id_flow_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_issue_flow_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "issue"
                 RENAME TO "temporary_issue"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "issue" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -258,7 +258,7 @@ export class AddIssueEntitySqlite1714900626443 implements MigrationInterface {
                 CONSTRAINT "REL_6c7309a7ac3112d264f5d7b49f" UNIQUE ("flowId")
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "issue"(
                     "id",
                     "created",
@@ -279,20 +279,20 @@ export class AddIssueEntitySqlite1714900626443 implements MigrationInterface {
                 "lastOccurrence"
             FROM "temporary_issue"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_issue"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_issue_project_id_flow_id" ON "issue" ("projectId", "flowId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_issue_flow_id" ON "issue" ("flowId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "platform"
                 RENAME TO "temporary_platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -355,7 +355,7 @@ export class AddIssueEntitySqlite1714900626443 implements MigrationInterface {
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "platform"(
                     "id",
                     "created",
@@ -436,18 +436,17 @@ export class AddIssueEntitySqlite1714900626443 implements MigrationInterface {
                 "customDomainsEnabled"
             FROM "temporary_platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_issue_project_id_flow_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_issue_flow_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "issue"
         `)
-    }
-
+  }
 }

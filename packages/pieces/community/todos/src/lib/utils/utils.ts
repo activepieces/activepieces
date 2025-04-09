@@ -1,7 +1,12 @@
-import { HttpMethod, AuthenticationType, HttpRequest, httpClient } from "@activepieces/pieces-common";
-import { Property } from "@activepieces/pieces-framework";
-import { CreateTodoRequestBody, SeekPage, STATUS_VARIANT, TodoWithAssignee, UserWithMetaInformation } from "@activepieces/shared";
-
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property } from '@activepieces/pieces-framework'
+import {
+  CreateTodoRequestBody,
+  STATUS_VARIANT,
+  SeekPage,
+  TodoWithAssignee,
+  UserWithMetaInformation,
+} from '@activepieces/shared'
 
 export const createTodoProps = {
   title: Property.ShortText({
@@ -18,15 +23,15 @@ export const createTodoProps = {
     displayName: 'Assignee',
     required: false,
     options: async (_, context) => {
-      const baseApiUrl = context.server.publicUrl;
-      const apiKey = context.server.token;
-      const users = await listAssignee(baseApiUrl, apiKey);
+      const baseApiUrl = context.server.publicUrl
+      const apiKey = context.server.token
+      const users = await listAssignee(baseApiUrl, apiKey)
       return {
         options: users.data.map((user) => ({
           value: user.id,
           label: `${user.firstName} ${user.lastName}`,
         })),
-      };
+      }
     },
     refreshers: [],
   }),
@@ -71,29 +76,29 @@ export const createTodoProps = {
 }
 
 export function constructTodoUrl(publicUrl: string, todoId: string, status: string, isTest: boolean) {
-  return `${publicUrl}v1/todos/${todoId}/resolve?status=${status}&isTest=${isTest}`;
+  return `${publicUrl}v1/todos/${todoId}/resolve?status=${status}&isTest=${isTest}`
 }
 
 type ApprovalParms = {
   propsValue: {
-    title: string;
-    description?: string;
-    statusOptions: unknown[];
-    assigneeId?: string;
-  };
+    title: string
+    description?: string
+    statusOptions: unknown[]
+    assigneeId?: string
+  }
   flows: {
     current: {
-      id: string;
-    };
-  };
+      id: string
+    }
+  }
   run: {
-    id: string;
-  };
+    id: string
+  }
   server: {
-    publicUrl: string;
-    token: string;
-  };
-  generateResumeUrl: (options: { queryParams: Record<string, any> }) => string;
+    publicUrl: string
+    token: string
+  }
+  generateResumeUrl: (options: { queryParams: Record<string, any> }) => string
 }
 export async function sendTodoApproval(context: ApprovalParms, isTest: boolean) {
   const requestBody: CreateTodoRequestBody = {
@@ -111,7 +116,7 @@ export async function sendTodoApproval(context: ApprovalParms, isTest: boolean) 
     resolveUrl: context.generateResumeUrl({
       queryParams: {},
     }),
-  };
+  }
   return await httpClient.sendRequest<TodoWithAssignee>({
     method: HttpMethod.POST,
     url: `${context.server.publicUrl}v1/todos`,
@@ -120,13 +125,10 @@ export async function sendTodoApproval(context: ApprovalParms, isTest: boolean) 
       type: AuthenticationType.BEARER_TOKEN,
       token: context.server.token,
     },
-  });
+  })
 }
 
-export async function listAssignee(
-  publicUrl: string,
-  token: string
-): Promise<SeekPage<UserWithMetaInformation>> {
+export async function listAssignee(publicUrl: string, token: string): Promise<SeekPage<UserWithMetaInformation>> {
   const request: HttpRequest = {
     method: HttpMethod.GET,
     url: `${publicUrl}v1/todos/assignees`,
@@ -134,9 +136,7 @@ export async function listAssignee(
       type: AuthenticationType.BEARER_TOKEN,
       token: token,
     },
-  };
-  const res = await httpClient.sendRequest<SeekPage<UserWithMetaInformation>>(
-    request
-  );
-  return res.body;
+  }
+  const res = await httpClient.sendRequest<SeekPage<UserWithMetaInformation>>(request)
+  return res.body
 }

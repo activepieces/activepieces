@@ -1,11 +1,7 @@
-import qs from 'qs';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { LEVER_BASE_URL, leverAuth } from '../..';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import qs from 'qs'
+import { LEVER_BASE_URL, leverAuth } from '../..'
 
 export const getOpportunity = createAction({
   name: 'getOpportunity',
@@ -26,17 +22,15 @@ export const getOpportunity = createAction({
   async run({ auth, propsValue }) {
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `${LEVER_BASE_URL}/opportunities/${
-        propsValue.opportunityId
-      }?${decodeURIComponent(
-        qs.stringify({ expand: propsValue.expand }, { arrayFormat: 'repeat' })
+      url: `${LEVER_BASE_URL}/opportunities/${propsValue.opportunityId}?${decodeURIComponent(
+        qs.stringify({ expand: propsValue.expand }, { arrayFormat: 'repeat' }),
       )}`,
       authentication: {
         type: AuthenticationType.BASIC,
         username: auth.apiKey,
         password: '',
       },
-    });
-    return response.body.data;
+    })
+    return response.body.data
   },
-});
+})

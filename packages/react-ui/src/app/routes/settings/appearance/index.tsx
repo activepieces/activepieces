@@ -1,16 +1,16 @@
-import { t } from 'i18next';
+import { t } from 'i18next'
 
-import { LanguageSwitcher } from '@/app/routes/settings/appearance/language-switcher';
-import { useTheme } from '@/components/theme-provider';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Separator } from '@/components/ui/separator';
+import { LanguageSwitcher } from '@/app/routes/settings/appearance/language-switcher'
+import { useTheme } from '@/components/theme-provider'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Separator } from '@/components/ui/separator'
 
 export default function AppearancePage() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme()
 
   const handleThemeChange = (value: 'dark' | 'light') => {
-    setTheme(value);
-  };
+    setTheme(value)
+  }
 
   return (
     <div className="flex flex-col items-center w-full gap-4">
@@ -18,17 +18,13 @@ export default function AppearancePage() {
         <div>
           <h3 className="text-xl font-semibold">{t('Appearance')}</h3>
           <p className="text-sm text-muted-foreground">
-            {t(
-              'Customize the appearance of the app. Automatically switch between day and night themes.',
-            )}
+            {t('Customize the appearance of the app. Automatically switch between day and night themes.')}
           </p>
         </div>
         <Separator />
         <div className="space-y-8">
           <div className="space-y-1">
-            <div className="text-sm text-muted-foreground">
-              {t('Select the theme for the dashboard.')}
-            </div>
+            <div className="text-sm text-muted-foreground">{t('Select the theme for the dashboard.')}</div>
             <RadioGroup
               onValueChange={handleThemeChange}
               defaultValue={theme}
@@ -55,9 +51,7 @@ export default function AppearancePage() {
                     </div>
                   </div>
                 </div>
-                <span className="block w-full p-2 text-center font-normal">
-                  {t('Light')}
-                </span>
+                <span className="block w-full p-2 text-center font-normal">{t('Light')}</span>
               </label>
               <label className="[&:has([data-state=checked])>div]:border-primary">
                 <RadioGroupItem value="dark" className="sr-only" />
@@ -80,9 +74,7 @@ export default function AppearancePage() {
                     </div>
                   </div>
                 </div>
-                <span className="block w-full p-2 text-center font-normal">
-                  {t('Dark')}
-                </span>
+                <span className="block w-full p-2 text-center font-normal">{t('Dark')}</span>
               </label>
             </RadioGroup>
           </div>
@@ -91,5 +83,5 @@ export default function AppearancePage() {
         <LanguageSwitcher></LanguageSwitcher>
       </div>
     </div>
-  );
+  )
 }

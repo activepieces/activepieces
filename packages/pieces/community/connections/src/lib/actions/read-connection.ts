@@ -1,5 +1,5 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { isNil } from '@activepieces/shared'
 
 const markdown = `
 **Advanced Piece**
@@ -10,7 +10,7 @@ Use this piece if you are unsure which connection to use beforehand, such as whe
 - You can retrieve the external ID from the connection settings page by hovering over the connection name.
 - Use this action to retrieve connection values by their external IDs from this project.
 - After testing the step, you can use the dynamic value in the piece by clicking (X) and referring to this step.
-`;
+`
 
 export const readConnection = createAction({
   name: 'read_connection',
@@ -27,13 +27,15 @@ export const readConnection = createAction({
     }),
   },
   async run(ctx) {
-    const connection = await ctx.connections.get(ctx.propsValue.connection_name);
+    const connection = await ctx.connections.get(ctx.propsValue.connection_name)
     if (isNil(connection)) {
-      throw new Error(JSON.stringify({
-        message: 'Connection not found',
-        connectionName: ctx.propsValue.connection_name,
-      }));
+      throw new Error(
+        JSON.stringify({
+          message: 'Connection not found',
+          connectionName: ctx.propsValue.connection_name,
+        }),
+      )
     }
-    return connection;
+    return connection
   },
-});
+})

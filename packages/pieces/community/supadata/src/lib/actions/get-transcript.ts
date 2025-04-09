@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common';
-import { supadataAuth } from '../..';
-import { supadataConfig } from '../config';
+import { HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { supadataAuth } from '../..'
+import { supadataConfig } from '../config'
 
 export const getTranscriptAction = createAction({
   name: 'get_transcript',
@@ -16,7 +16,8 @@ export const getTranscriptAction = createAction({
     }),
     lang: Property.ShortText({
       displayName: 'Language Preference',
-      description: 'Preferred language of the transcript. If not available, the first available language will be returned.',
+      description:
+        'Preferred language of the transcript. If not available, the first available language will be returned.',
       required: false,
     }),
     text: Property.Checkbox({
@@ -24,17 +25,17 @@ export const getTranscriptAction = createAction({
       description: 'If true, the transcript will be merged into a single text instead of timestamped chunks.',
       required: false,
       defaultValue: true,
-    })
+    }),
   },
   async run(context) {
-    const { url, text, lang } = context.propsValue;
-    const qs:QueryParams = {
+    const { url, text, lang } = context.propsValue
+    const qs: QueryParams = {
       url,
       text: text ? 'true' : 'false',
     }
 
     if (lang) {
-      qs['lang'] = lang;
+      qs['lang'] = lang
     }
 
     const response = await httpClient.sendRequest({
@@ -44,8 +45,8 @@ export const getTranscriptAction = createAction({
         [supadataConfig.accessTokenHeaderKey]: context.auth,
       },
       queryParams: qs,
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-}); 
+})

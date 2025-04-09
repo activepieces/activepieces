@@ -1,15 +1,15 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query'
 
-import { ApEdition, AppConnectionType } from '@activepieces/shared';
+import { ApEdition, AppConnectionType } from '@activepieces/shared'
 
-import { oauthAppsApi } from './oauth2-apps-api';
+import { oauthAppsApi } from './oauth2-apps-api'
 
 type PieceToClientIdMap = {
   [pieceName: string]: {
-    type: AppConnectionType.CLOUD_OAUTH2 | AppConnectionType.PLATFORM_OAUTH2;
-    clientId: string;
-  };
-};
+    type: AppConnectionType.CLOUD_OAUTH2 | AppConnectionType.PLATFORM_OAUTH2
+    clientId: string
+  }
+}
 
 export const oauth2AppsHooks = {
   useOAuth2AppConfigured(pieceId: string) {
@@ -18,18 +18,18 @@ export const oauth2AppsHooks = {
       queryFn: async () => {
         const response = await oauthAppsApi.listOAuthAppsCredentials({
           limit: 1000000,
-        });
-        return response.data;
+        })
+        return response.data
       },
       select: (data) => {
-        return data.find((app) => app.pieceName === pieceId);
+        return data.find((app) => app.pieceName === pieceId)
       },
       staleTime: Infinity,
-    });
+    })
     return {
       refetch: query.refetch,
       oauth2App: query.data,
-    };
+    }
   },
   usePieceToClientIdMap(cloudAuthEnabled: boolean, edition: ApEdition) {
     return useQuery<PieceToClientIdMap, Error>({
@@ -43,26 +43,24 @@ export const oauth2AppsHooks = {
             : await oauthAppsApi.listOAuthAppsCredentials({
                 limit: 1000000,
                 cursor: undefined,
-              });
-        const cloudApps = !cloudAuthEnabled
-          ? {}
-          : await oauthAppsApi.listCloudOAuthApps(edition);
-        const appsMap: PieceToClientIdMap = {};
+              })
+        const cloudApps = !cloudAuthEnabled ? {} : await oauthAppsApi.listCloudOAuthApps(edition)
+        const appsMap: PieceToClientIdMap = {}
         Object.keys(cloudApps).forEach((key) => {
           appsMap[key] = {
             type: AppConnectionType.CLOUD_OAUTH2,
             clientId: cloudApps[key].clientId,
-          };
-        });
+          }
+        })
         apps.data.forEach((app) => {
           appsMap[app.pieceName] = {
             type: AppConnectionType.PLATFORM_OAUTH2,
             clientId: app.clientId,
-          };
-        });
-        return appsMap;
+          }
+        })
+        return appsMap
       },
       staleTime: 0,
-    });
+    })
   },
-};
+}

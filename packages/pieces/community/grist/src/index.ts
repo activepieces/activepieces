@@ -1,18 +1,13 @@
-import {
-  createPiece,
-  PieceAuth,
-  PiecePropValueSchema,
-  Property,
-} from '@activepieces/pieces-framework';
-import { gristCreateRecordAction } from './lib/actions/create-record.action';
-import { gristUpdateRecordAction } from './lib/actions/update-record.action';
-import { gristUploadAttachmentsToDocumnetAction } from './lib/actions/upload-attachments-to-document.action';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { gristNewRecordTrigger } from './lib/triggers/new-record.trigger';
-import { gristUpdatedRecordTrigger } from './lib/triggers/updated-record.trigger';
-import { gristSearchRecordAction } from './lib/actions/search-record.action';
-import { GristAPIClient } from './lib/common/helpers';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, PiecePropValueSchema, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { gristCreateRecordAction } from './lib/actions/create-record.action'
+import { gristSearchRecordAction } from './lib/actions/search-record.action'
+import { gristUpdateRecordAction } from './lib/actions/update-record.action'
+import { gristUploadAttachmentsToDocumnetAction } from './lib/actions/upload-attachments-to-document.action'
+import { GristAPIClient } from './lib/common/helpers'
+import { gristNewRecordTrigger } from './lib/triggers/new-record.trigger'
+import { gristUpdatedRecordTrigger } from './lib/triggers/updated-record.trigger'
 
 export const gristAuth = PieceAuth.CustomAuth({
   required: true,
@@ -32,27 +27,27 @@ export const gristAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      const authValue = auth as PiecePropValueSchema<typeof gristAuth>;
+      const authValue = auth as PiecePropValueSchema<typeof gristAuth>
 
       const client = new GristAPIClient({
         domainUrl: authValue.domain,
         apiKey: authValue.apiKey,
-      });
+      })
 
       // https://support.getgrist.com/api/#tag/orgs
-      await client.listOrgs();
+      await client.listOrgs()
 
       return {
         valid: true,
-      };
+      }
     } catch (error) {
       return {
         valid: false,
         error: 'Please provide valid API key and domain URL.',
-      };
+      }
     }
   },
-});
+})
 
 export const grist = createPiece({
   displayName: 'Grist',
@@ -70,16 +65,12 @@ export const grist = createPiece({
     createCustomApiCallAction({
       auth: gristAuth,
       baseUrl: (auth) => {
-        return `${
-          (auth as PiecePropValueSchema<typeof gristAuth>).domain
-        }/api/`;
+        return `${(auth as PiecePropValueSchema<typeof gristAuth>).domain}/api/`
       },
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${
-          (auth as PiecePropValueSchema<typeof gristAuth>).apiKey
-        }`,
+        Authorization: `Bearer ${(auth as PiecePropValueSchema<typeof gristAuth>).apiKey}`,
       }),
     }),
   ],
   triggers: [gristNewRecordTrigger, gristUpdatedRecordTrigger],
-});
+})

@@ -1,16 +1,16 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { isNil } from '@activepieces/shared'
+import { googleSheetsAuth } from '../..'
 import {
-  areSheetIdsValid,
   Dimension,
+  ValueInputOption,
+  areSheetIdsValid,
   googleSheetsCommon,
   objectToArray,
   stringifyArray,
-  ValueInputOption,
-} from '../common/common';
-import { googleSheetsAuth } from '../..';
-import { isNil } from '@activepieces/shared';
-import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
-import { commonProps, rowValuesProp } from '../common/props';
+} from '../common/common'
+import { commonProps, rowValuesProp } from '../common/props'
 
 export const insertRowAction = createAction({
   auth: googleSheetsAuth,
@@ -33,25 +33,27 @@ export const insertRowAction = createAction({
     values: rowValuesProp(),
   },
   async run({ propsValue, auth }) {
-    const { values, spreadsheetId:inputSpreadsheetId, sheetId:inputSheetId, as_string, first_row_headers } = propsValue;
-    const accessToken = auth.access_token;
+    const {
+      values,
+      spreadsheetId: inputSpreadsheetId,
+      sheetId: inputSheetId,
+      as_string,
+      first_row_headers,
+    } = propsValue
+    const accessToken = auth.access_token
 
     if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
-			throw new Error('Please select a spreadsheet and sheet first.');
-		}
+      throw new Error('Please select a spreadsheet and sheet first.')
+    }
 
-    const sheetId = Number(inputSheetId);
-		const spreadsheetId = inputSpreadsheetId as string;
+    const sheetId = Number(inputSheetId)
+    const spreadsheetId = inputSpreadsheetId as string
 
-    const sheetName = await googleSheetsCommon.findSheetName(
-      accessToken,
-      spreadsheetId,
-      sheetId
-    );
+    const sheetName = await googleSheetsCommon.findSheetName(accessToken, spreadsheetId, sheetId)
 
     const formattedValues = first_row_headers
-      ? objectToArray(values).map(val => isNil(val) ? '' : val)
-      : values.values;
+      ? objectToArray(values).map((val) => (isNil(val) ? '' : val))
+      : values.values
 
     const res = await appendGoogleSheetValues({
       accessToken,
@@ -60,20 +62,20 @@ export const insertRowAction = createAction({
       spreadSheetId: spreadsheetId,
       valueInputOption: as_string ? ValueInputOption.RAW : ValueInputOption.USER_ENTERED,
       values: stringifyArray(formattedValues),
-    });
+    })
 
-    const updatedRowNumber = extractRowNumber(res.body.updates.updatedRange);
-    return { ...res.body, row: updatedRowNumber };
+    const updatedRowNumber = extractRowNumber(res.body.updates.updatedRange)
+    return { ...res.body, row: updatedRowNumber }
   },
-});
+})
 
 function extractRowNumber(updatedRange: string): number {
-  const rowRange = updatedRange.split('!')[1];
-  return parseInt(rowRange.split(':')[0].substring(1), 10);
+  const rowRange = updatedRange.split('!')[1]
+  return parseInt(rowRange.split(':')[0].substring(1), 10)
 }
 
 async function appendGoogleSheetValues(params: AppendGoogleSheetValuesParams) {
-  const { accessToken, majorDimension, range, spreadSheetId, valueInputOption, values } = params;
+  const { accessToken, majorDimension, range, spreadSheetId, valueInputOption, values } = params
 
   const request: HttpRequest = {
     method: HttpMethod.POST,
@@ -81,7 +83,7 @@ async function appendGoogleSheetValues(params: AppendGoogleSheetValuesParams) {
     body: {
       majorDimension,
       range: `${range}!A:A`,
-      values: values.map(val => ({ values: val })),
+      values: values.map((val) => ({ values: val })),
     },
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
@@ -90,16 +92,16 @@ async function appendGoogleSheetValues(params: AppendGoogleSheetValuesParams) {
     queryParams: {
       valueInputOption,
     },
-  };
+  }
 
-  return httpClient.sendRequest(request);
+  return httpClient.sendRequest(request)
 }
 
 type AppendGoogleSheetValuesParams = {
-  values: string[];
-  spreadSheetId: string;
-  range: string;
-  valueInputOption: ValueInputOption;
-  majorDimension: Dimension;
-  accessToken: string;
-};
+  values: string[]
+  spreadSheetId: string
+  range: string
+  valueInputOption: ValueInputOption
+  majorDimension: Dimension
+  accessToken: string
+}

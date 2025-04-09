@@ -1,9 +1,9 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { readFileAction } from './lib/actions/read-file';
-import { createFile } from './lib/actions/create-file';
-import { changeFileEncoding } from './lib/actions/change-file-encoding';
-import { checkFileType} from './lib/actions/check-file-type';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { changeFileEncoding } from './lib/actions/change-file-encoding'
+import { checkFileType } from './lib/actions/check-file-type'
+import { createFile } from './lib/actions/create-file'
+import { readFileAction } from './lib/actions/read-file'
 
 export const filesHelper = createPiece({
   displayName: 'Files Helper',
@@ -15,4 +15,4 @@ export const filesHelper = createPiece({
   authors: ['kishanprmr', 'MoShizzle', 'abuaboud', 'Seb-C'],
   actions: [readFileAction, createFile, changeFileEncoding, checkFileType],
   triggers: [],
-});
+})

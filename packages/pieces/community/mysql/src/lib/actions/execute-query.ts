@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { mysqlCommon, mysqlConnect, warningMarkdown } from '../common';
-import { mysqlAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { mysqlAuth } from '../..'
+import { mysqlCommon, mysqlConnect, warningMarkdown } from '../common'
 
 export default createAction({
   auth: mysqlAuth,
@@ -22,15 +22,12 @@ export default createAction({
     }),
   },
   async run(context) {
-    const conn = await mysqlConnect(context.auth, context.propsValue);
+    const conn = await mysqlConnect(context.auth, context.propsValue)
     try {
-      const results = await conn.query(
-        context.propsValue.query,
-        context.propsValue.args || []
-      );
-      return Array.isArray(results) ? { results } : results;
+      const results = await conn.query(context.propsValue.query, context.propsValue.args || [])
+      return Array.isArray(results) ? { results } : results
     } finally {
-      await conn.end();
+      await conn.end()
     }
   },
-});
+})

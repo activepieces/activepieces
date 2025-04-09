@@ -1,12 +1,9 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { harvestAuth } from '../..';
-import {
-  getAccessTokenOrThrow,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { callHarvestApi, filterDynamicFields } from '../common';
-import { propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common'
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { harvestAuth } from '../..'
+import { callHarvestApi, filterDynamicFields } from '../common'
 
 export const getRoles = createAction({
   name: 'get_roles', // Must be a unique across the piece, this shouldn't be changed.
@@ -29,24 +26,19 @@ export const getRoles = createAction({
     // Validate the input properties using Zod
     await propsValidation.validateZod(context.propsValue, {
       per_page: z
-      .string()
-      .optional()
-      .transform((val) => (val === undefined || val === '' ? undefined : parseInt(val, 10)))
-      .refine(
-        (val) => val === undefined || (Number.isInteger(val) && val >= 1 && val <= 2000),
-        'Per Page must be a number between 1 and 2000.'
-      ),
-    });
+        .string()
+        .optional()
+        .transform((val) => (val === undefined || val === '' ? undefined : parseInt(val, 10)))
+        .refine(
+          (val) => val === undefined || (Number.isInteger(val) && val >= 1 && val <= 2000),
+          'Per Page must be a number between 1 and 2000.',
+        ),
+    })
 
-    const params = filterDynamicFields(context.propsValue);
+    const params = filterDynamicFields(context.propsValue)
 
-    const response = await callHarvestApi(
-        HttpMethod.GET,
-        `roles`,
-        getAccessTokenOrThrow(context.auth),
-        params
-      );
-  
-      return response.body;  },
-});
+    const response = await callHarvestApi(HttpMethod.GET, `roles`, getAccessTokenOrThrow(context.auth), params)
 
+    return response.body
+  },
+})

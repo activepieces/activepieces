@@ -1,11 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { dropboxAuth } from '../../';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { dropboxAuth } from '../../'
 
 export const dropboxCreateNewFolder = createAction({
   auth: dropboxAuth,
@@ -29,7 +24,7 @@ export const dropboxCreateNewFolder = createAction({
     const body = {
       autorename: context.propsValue.autorename ? true : false,
       path: context.propsValue.path,
-    };
+    }
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -39,15 +34,15 @@ export const dropboxCreateNewFolder = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
-    };
+    }
 
-    const result = await httpClient.sendRequest(request);
-    console.debug('Folder creation response', result);
+    const result = await httpClient.sendRequest(request)
+    console.debug('Folder creation response', result)
 
     if (result.status == 200) {
-      return result.body;
+      return result.body
     } else {
-      return result;
+      return result
     }
   },
-});
+})

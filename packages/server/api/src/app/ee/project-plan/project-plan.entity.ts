@@ -1,59 +1,54 @@
 import { Project, ProjectPlan } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import {
-    ApIdSchema,
-    ARRAY_COLUMN_TYPE,
-    BaseColumnSchemaPart,
-    isPostgres,
-} from '../../database/database-common'
+import { ARRAY_COLUMN_TYPE, ApIdSchema, BaseColumnSchemaPart, isPostgres } from '../../database/database-common'
 
 export type ProjectPlanSchema = {
-    project: Project
+  project: Project
 } & ProjectPlan
 
 export const ProjectPlanEntity = new EntitySchema<ProjectPlanSchema>({
-    name: 'project_plan',
-    columns: {
-        ...BaseColumnSchemaPart,
-        projectId: ApIdSchema,
-        name: {
-            type: String,
-        },
-        pieces: {
-            type: ARRAY_COLUMN_TYPE,
-            array: isPostgres(),
-            nullable: false,
-        },
-        piecesFilterType: {
-            type: String,
-        },
-        tasks: {
-            type: Number,
-            nullable: true,
-        },
-        aiTokens: {
-            type: Number,
-            nullable: true,
-        },
+  name: 'project_plan',
+  columns: {
+    ...BaseColumnSchemaPart,
+    projectId: ApIdSchema,
+    name: {
+      type: String,
     },
-    indices: [
-        {
-            name: 'idx_plan_project_id',
-            columns: ['projectId'],
-            unique: true,
-        },
-    ],
-    relations: {
-        project: {
-            type: 'one-to-one',
-            target: 'project',
-            cascade: true,
-            onDelete: 'CASCADE',
-            joinColumn: {
-                name: 'projectId',
-                referencedColumnName: 'id',
-                foreignKeyConstraintName: 'fk_project_plan_project_id',
-            },
-        },
+    pieces: {
+      type: ARRAY_COLUMN_TYPE,
+      array: isPostgres(),
+      nullable: false,
     },
+    piecesFilterType: {
+      type: String,
+    },
+    tasks: {
+      type: Number,
+      nullable: true,
+    },
+    aiTokens: {
+      type: Number,
+      nullable: true,
+    },
+  },
+  indices: [
+    {
+      name: 'idx_plan_project_id',
+      columns: ['projectId'],
+      unique: true,
+    },
+  ],
+  relations: {
+    project: {
+      type: 'one-to-one',
+      target: 'project',
+      cascade: true,
+      onDelete: 'CASCADE',
+      joinColumn: {
+        name: 'projectId',
+        referencedColumnName: 'id',
+        foreignKeyConstraintName: 'fk_project_plan_project_id',
+      },
+    },
+  },
 })

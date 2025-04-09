@@ -1,4 +1,4 @@
-import { EntityProp } from '../types';
+import { EntityProp } from '../types'
 
 export const currenciesEntityProps: EntityProp[] = [
   {
@@ -16,8 +16,7 @@ export const currenciesEntityProps: EntityProp[] = [
   {
     name: 'amountDecimalPlaces',
     displayName: 'Amount Decimal Places',
-    description:
-      'Specifies the number of decimal places the system will display on amounts for this currency.',
+    description: 'Specifies the number of decimal places the system will display on amounts for this currency.',
     type: 'text',
     isRequired: false,
   },
@@ -27,6 +26,6 @@ export const currenciesEntityProps: EntityProp[] = [
     type: 'number',
     isRequired: false,
   },
-];
+]
 
-export const currenciesEntityNumberProps = ['amountRoundingPrecision'];
+export const currenciesEntityNumberProps = ['amountRoundingPrecision']

@@ -1,17 +1,8 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import {
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
-  HttpRequest,
-  propsValidation,
-} from '@activepieces/pieces-common';
-import { z } from 'zod';
-import { saasticCommon } from '../common';
-import { saasticAuth } from '../..';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient, propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { saasticAuth } from '../..'
+import { saasticCommon } from '../common'
 
 export const createCustomer = createAction({
   auth: saasticAuth,
@@ -27,7 +18,7 @@ export const createCustomer = createAction({
     }),
     last_name: Property.LongText({
       displayName: 'Last Name',
-      description: "The customer's last name.", 
+      description: "The customer's last name.",
       required: true,
     }),
     email: Property.LongText({
@@ -51,7 +42,7 @@ export const createCustomer = createAction({
     await propsValidation.validateZod(context.propsValue, {
       email: z.string().email(),
       signed_up_at: z.string().datetime().optional(),
-    });
+    })
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -68,11 +59,11 @@ export const createCustomer = createAction({
         token: context.auth,
       },
       queryParams: {},
-    };
-    await httpClient.sendRequest(request);
+    }
+    await httpClient.sendRequest(request)
 
     return {
       success: true,
-    };
+    }
   },
-});
+})

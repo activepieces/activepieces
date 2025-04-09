@@ -1,7 +1,7 @@
-import { gristAuth } from '../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { commonProps } from '../common/props';
-import { GristAPIClient, transformTableColumnValues } from '../common/helpers';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { gristAuth } from '../..'
+import { GristAPIClient, transformTableColumnValues } from '../common/helpers'
+import { commonProps } from '../common/props'
 
 export const gristUpdateRecordAction = createAction({
   auth: gristAuth,
@@ -19,37 +19,30 @@ export const gristUpdateRecordAction = createAction({
     table_columns: commonProps.table_columns,
   },
   async run(context) {
-    const documentId = context.propsValue.document_id;
-    const tableId = context.propsValue.table_id;
-    const recordId = context.propsValue.record_id;
-    const tableColumnValues = context.propsValue.table_columns;
+    const documentId = context.propsValue.document_id
+    const tableId = context.propsValue.table_id
+    const recordId = context.propsValue.record_id
+    const tableColumnValues = context.propsValue.table_columns
 
     const client = new GristAPIClient({
       domainUrl: context.auth.domain,
       apiKey: context.auth.apiKey,
-    });
+    })
 
-    const tableColumnSchema = await client.listTableColumns(
-      documentId as string,
-      tableId as string
-    );
+    const tableColumnSchema = await client.listTableColumns(documentId as string, tableId as string)
 
     const transformedColumnValues = transformTableColumnValues({
       tableColumnSchema,
       tableColumnValues,
-    });
+    })
 
-    const updateRecordResponse = await client.updateRcordsInTable(
-      documentId,
-      tableId,
-      {
-        records: [{ id: recordId, fields: transformedColumnValues }],
-      }
-    );
+    const updateRecordResponse = await client.updateRcordsInTable(documentId, tableId, {
+      records: [{ id: recordId, fields: transformedColumnValues }],
+    })
 
     return {
       id: recordId,
       fields: transformedColumnValues,
-    };
+    }
   },
-});
+})

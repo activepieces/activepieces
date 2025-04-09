@@ -1,9 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { BASE_URL, personalAiAuth } from '../../../index';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { BASE_URL, personalAiAuth } from '../../../index'
 
 export const uploadFile = createAction({
-  auth:personalAiAuth,
+  auth: personalAiAuth,
   name: 'upload_file',
   displayName: 'Upload File',
   description: 'Upload a file to AI assistant.',
@@ -47,17 +47,20 @@ export const uploadFile = createAction({
     }),
   },
   async run(context) {
-    const { auth, propsValue: { file, fileName, domainName, tags, sourceName, createdTime, isStack } } = context;
+    const {
+      auth,
+      propsValue: { file, fileName, domainName, tags, sourceName, createdTime, isStack },
+    } = context
 
     // Create form data for file upload
-    const formData = new FormData();
-    const blob = new Blob([file.data], { type: 'application/octet-stream' });
-    formData.append('file', blob, fileName);
-    if (domainName) formData.append('DomainName', domainName);
-    if (tags) formData.append('Tags', tags);
-    if (sourceName) formData.append('SourceName', sourceName);
-    if (createdTime) formData.append('CreatedTime', createdTime);
-    if (isStack !== undefined) formData.append('is_stack', isStack.toString());
+    const formData = new FormData()
+    const blob = new Blob([file.data], { type: 'application/octet-stream' })
+    formData.append('file', blob, fileName)
+    if (domainName) formData.append('DomainName', domainName)
+    if (tags) formData.append('Tags', tags)
+    if (sourceName) formData.append('SourceName', sourceName)
+    if (createdTime) formData.append('CreatedTime', createdTime)
+    if (isStack !== undefined) formData.append('is_stack', isStack.toString())
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -66,8 +69,8 @@ export const uploadFile = createAction({
         'x-api-key': auth as string,
       },
       body: formData,
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

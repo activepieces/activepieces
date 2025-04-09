@@ -1,9 +1,5 @@
-import {
-  HttpMethod,
-  httpClient,
-  getAccessTokenOrThrow,
-} from '@activepieces/pieces-common';
-import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, getAccessTokenOrThrow, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework'
 
 export const facebookPagesCommon = {
   baseUrl: 'https://graph.facebook.com/v17.0',
@@ -17,36 +13,32 @@ export const facebookPagesCommon = {
           disabled: true,
           options: [],
           placeholder: 'Connect your account',
-        };
+        }
       }
 
       try {
-        const accessToken: string = getAccessTokenOrThrow(
-          auth as OAuth2PropertyValue
-        );
-        const pages: any[] = (
-          await facebookPagesCommon.getPages(accessToken)
-        ).map((page: FacebookPage) => {
+        const accessToken: string = getAccessTokenOrThrow(auth as OAuth2PropertyValue)
+        const pages: any[] = (await facebookPagesCommon.getPages(accessToken)).map((page: FacebookPage) => {
           return {
             label: page.name,
             value: {
               id: page.id,
               accessToken: page.access_token,
             },
-          };
-        });
+          }
+        })
 
         return {
           options: pages,
           placeholder: 'Choose a page',
-        };
+        }
       } catch (e) {
-        console.debug(e);
+        console.debug(e)
         return {
           disabled: true,
           options: [],
           placeholder: 'Connect your account',
-        };
+        }
       }
     },
   }),
@@ -88,16 +80,12 @@ export const facebookPagesCommon = {
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${facebookPagesCommon.baseUrl}/me/accounts?access_token=${accessToken}`,
-    });
+    })
 
-    return response.body.data;
+    return response.body.data
   },
 
-  createPost: async (
-    page: FacebookPageDropdown,
-    message: string,
-    link: string | undefined
-  ) => {
+  createPost: async (page: FacebookPageDropdown, message: string, link: string | undefined) => {
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${facebookPagesCommon.baseUrl}/${page.id}/feed`,
@@ -106,14 +94,10 @@ export const facebookPagesCommon = {
         message: message,
         link: link,
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-  createPhotoPost: async (
-    page: FacebookPageDropdown,
-    caption: string | undefined,
-    photo: string
-  ) => {
+  createPhotoPost: async (page: FacebookPageDropdown, caption: string | undefined, photo: string) => {
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${facebookPagesCommon.baseUrl}/${page.id}/photos`,
@@ -122,16 +106,16 @@ export const facebookPagesCommon = {
         url: photo,
         caption: caption,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
 
   createVideoPost: async (
     page: FacebookPageDropdown,
     title: string | undefined,
     description: string | undefined,
-    video: string
+    video: string,
   ) => {
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -142,22 +126,22 @@ export const facebookPagesCommon = {
         description: description,
         file_url: video,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-};
+}
 
 export interface FacebookPage {
-  id: string;
-  name: string;
-  category: string;
-  category_list: string[];
-  access_token: string;
-  tasks: string[];
+  id: string
+  name: string
+  category: string
+  category_list: string[]
+  access_token: string
+  tasks: string[]
 }
 
 export interface FacebookPageDropdown {
-  id: string;
-  accessToken: string;
+  id: string
+  accessToken: string
 }

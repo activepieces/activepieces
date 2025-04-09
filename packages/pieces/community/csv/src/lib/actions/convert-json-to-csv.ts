@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { flatten } from 'safe-flat';
-import { stringify } from "csv-stringify/sync";
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { stringify } from 'csv-stringify/sync'
+import { flatten } from 'safe-flat'
 
 const markdown = `
 **Notes**:
@@ -28,7 +28,7 @@ export const jsonToCsvAction = createAction({
           address: {
             street: '123 Main St',
             city: 'Los Angeles',
-          }
+          },
         },
         {
           name: 'Jane',
@@ -36,11 +36,10 @@ export const jsonToCsvAction = createAction({
           address: {
             street: '123 Main St',
             city: 'Los Angeles',
-          }
-        }
+          },
+        },
       ],
-      description:
-        'Provide a JSON array to convert to CSV format.',
+      description: 'Provide a JSON array to convert to CSV format.',
       required: true,
     }),
     delimiter_type: Property.StaticDropdown({
@@ -57,17 +56,19 @@ export const jsonToCsvAction = createAction({
     }),
   },
   async run(context) {
-    const { json_array, delimiter_type } = context.propsValue;
+    const { json_array, delimiter_type } = context.propsValue
     if (!Array.isArray(json_array)) {
-      throw new Error(JSON.stringify({
-        message: 'The input should be a JSON array.',
-      }))
+      throw new Error(
+        JSON.stringify({
+          message: 'The input should be a JSON array.',
+        }),
+      )
     }
-    const flattened = json_array.map((item) => flatten(item) as Record<string, string>);
+    const flattened = json_array.map((item) => flatten(item) as Record<string, string>)
 
     return stringify(flattened, {
       header: true,
       delimiter: delimiter_type,
-    });
+    })
   },
-});
+})

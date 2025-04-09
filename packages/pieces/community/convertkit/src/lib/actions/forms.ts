@@ -1,17 +1,13 @@
-import { createAction } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { Subscription } from '../common/types';
-import { convertkitAuth } from '../..';
-import { formId } from '../common/forms';
-import { subscriberEmail, subscriberFirstName } from '../common/subscribers';
-import { allFields } from '../common/custom-fields';
-import { FORMS_API_ENDPOINT } from '../common/constants';
-import { fetchForms } from '../common/service';
-import { tags } from '../common/tags';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { convertkitAuth } from '../..'
+import { FORMS_API_ENDPOINT } from '../common/constants'
+import { allFields } from '../common/custom-fields'
+import { formId } from '../common/forms'
+import { fetchForms } from '../common/service'
+import { subscriberEmail, subscriberFirstName } from '../common/subscribers'
+import { tags } from '../common/tags'
+import { Subscription } from '../common/types'
 
 export const listForms = createAction({
   auth: convertkitAuth,
@@ -20,16 +16,16 @@ export const listForms = createAction({
   description: 'Returns a list of all forms',
   props: {},
   run(context) {
-    return fetchForms(context.auth);
+    return fetchForms(context.auth)
   },
-});
+})
 
 // Clone and set required to false for custom fields property
 const allFieldsRequiredRefreshers = {
   ...allFields,
   required: false,
   refreshers: ['auth, formId'],
-};
+}
 
 // TODO: fields do not show up. Why?
 export const addSubscriberToForm = createAction({
@@ -45,9 +41,9 @@ export const addSubscriberToForm = createAction({
     fields: allFieldsRequiredRefreshers,
   },
   async run(context) {
-    const { formId, email, firstName, tags, fields } = context.propsValue;
+    const { formId, email, firstName, tags, fields } = context.propsValue
 
-    const url = `${FORMS_API_ENDPOINT}/${formId}/subscribe`;
+    const url = `${FORMS_API_ENDPOINT}/${formId}/subscribe`
 
     const body = {
       api_secret: context.auth,
@@ -55,24 +51,24 @@ export const addSubscriberToForm = createAction({
       first_name: firstName,
       tags,
       fields,
-    };
+    }
 
     const request: HttpRequest = {
       url,
       method: HttpMethod.POST,
       body,
-    };
+    }
 
     const response = await httpClient.sendRequest<{
-      subscription: Subscription;
-    }>(request);
+      subscription: Subscription
+    }>(request)
 
     if (response.status !== 200) {
-      throw new Error(`Error adding subscriber to form: ${response.status}`);
+      throw new Error(`Error adding subscriber to form: ${response.status}`)
     }
-    return response.body.subscription;
+    return response.body.subscription
   },
-});
+})
 
 export const listFormSubscriptions = createAction({
   auth: convertkitAuth,
@@ -83,26 +79,26 @@ export const listFormSubscriptions = createAction({
     formId,
   },
   async run(context) {
-    const url = `${FORMS_API_ENDPOINT}/${context.propsValue.formId}/subscriptions`;
+    const url = `${FORMS_API_ENDPOINT}/${context.propsValue.formId}/subscriptions`
 
     const body = {
       api_secret: context.auth,
-    };
+    }
 
     const request: HttpRequest = {
       url,
       body,
       method: HttpMethod.GET,
-    };
-
-    const response = await httpClient.sendRequest<{
-      subscriptions: Subscription[];
-    }>(request);
-
-    if (response.status !== 200) {
-      throw new Error(`Error listing form subscriptions: ${response.status}`);
     }
 
-    return response.body.subscriptions;
+    const response = await httpClient.sendRequest<{
+      subscriptions: Subscription[]
+    }>(request)
+
+    if (response.status !== 200) {
+      throw new Error(`Error listing form subscriptions: ${response.status}`)
+    }
+
+    return response.body.subscriptions
   },
-});
+})

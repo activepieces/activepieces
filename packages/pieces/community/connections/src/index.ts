@@ -1,6 +1,6 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { readConnection } from './lib/actions/read-connection';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { readConnection } from './lib/actions/read-connection'
 
 export const connections = createPiece({
   displayName: 'Connections',
@@ -9,7 +9,7 @@ export const connections = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/connections.png',
   categories: [PieceCategory.CORE],
   auth: PieceAuth.None(),
-  authors: ["kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: ['kishanprmr', 'AbdulTheActivePiecer', 'khaledmashaly', 'abuaboud'],
   actions: [readConnection],
   triggers: [],
-});
+})

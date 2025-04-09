@@ -1,8 +1,4 @@
-import {
-  PieceAuth,
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
+import { PieceAuth, Property, createAction } from '@activepieces/pieces-framework'
 
 export const generateRandom = createAction({
   name: 'generateRandom_math',
@@ -30,8 +26,8 @@ export const generateRandom = createAction({
     }),
   },
   async run(context) {
-    const min = context.propsValue['first_number'];
-    const max = context.propsValue['second_number'];
-    return Math.floor(Math.random() * (max - min + 1) + min);
+    const min = context.propsValue['first_number']
+    const max = context.propsValue['second_number']
+    return Math.floor(Math.random() * (max - min + 1) + min)
   },
-});
+})

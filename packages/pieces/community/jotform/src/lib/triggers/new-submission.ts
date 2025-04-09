@@ -1,6 +1,6 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { WebhookInformation, jotformCommon } from '../common';
-import { jotformAuth } from '../..';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { jotformAuth } from '../..'
+import { WebhookInformation, jotformCommon } from '../common'
 
 export const newSubmission = createTrigger({
   auth: jotformAuth,
@@ -14,35 +14,22 @@ export const newSubmission = createTrigger({
   },
   //Set the webhook URL in Jotform and save the webhook URL in store for disable behavior
   async onEnable(context) {
-    await jotformCommon.subscribeWebhook(
-      context.propsValue['formId'],
-      context.webhookUrl,
-      context.auth
-    );
+    await jotformCommon.subscribeWebhook(context.propsValue['formId'], context.webhookUrl, context.auth)
 
-    await context.store?.put<WebhookInformation>(
-      '_new_jotform_submission_trigger',
-      {
-        jotformWebhook: context.webhookUrl,
-      }
-    );
+    await context.store?.put<WebhookInformation>('_new_jotform_submission_trigger', {
+      jotformWebhook: context.webhookUrl,
+    })
   },
   //Delete the webhook URL from Jotform
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_new_jotform_submission_trigger'
-    );
+    const response = await context.store?.get<WebhookInformation>('_new_jotform_submission_trigger')
 
     if (response !== null && response !== undefined) {
-      await jotformCommon.unsubscribeWebhook(
-        context.propsValue['formId'],
-        response.jotformWebhook,
-        context.auth
-      );
+      await jotformCommon.unsubscribeWebhook(context.propsValue['formId'], response.jotformWebhook, context.auth)
     }
   },
   //Return new submission
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
-});
+})

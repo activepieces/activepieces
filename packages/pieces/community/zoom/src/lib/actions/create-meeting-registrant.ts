@@ -1,13 +1,8 @@
-import { createAction } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { RegistrationResponse } from '../common/models';
-import { getRegistarantProps } from '../common/props';
-import { zoomAuth } from '../..';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { zoomAuth } from '../..'
+import { RegistrationResponse } from '../common/models'
+import { getRegistarantProps } from '../common/props'
 
 export const zoomCreateMeetingRegistrant = createAction({
   auth: zoomAuth,
@@ -33,15 +28,13 @@ export const zoomCreateMeetingRegistrant = createAction({
       org: context.propsValue.org,
       purchasing_time_frame: context.propsValue.purchasing_time_frame,
       role_in_purchase_process: context.propsValue.role_in_purchase_process,
-    };
+    }
 
-    if (
-      context.propsValue.custom_questions &&
-      Object.keys(context.propsValue.custom_questions).length > 0
-    ) {
-      body.custom_questions = Object.entries(
-        context.propsValue.custom_questions
-      ).map(([key, value]) => ({ title: key, value: value }));
+    if (context.propsValue.custom_questions && Object.keys(context.propsValue.custom_questions).length > 0) {
+      body.custom_questions = Object.entries(context.propsValue.custom_questions).map(([key, value]) => ({
+        title: key,
+        value: value,
+      }))
     }
 
     const request: HttpRequest = {
@@ -53,15 +46,15 @@ export const zoomCreateMeetingRegistrant = createAction({
         token: context.auth.access_token,
       },
       queryParams: {},
-    };
+    }
 
-    const result = await httpClient.sendRequest<RegistrationResponse>(request);
-    console.debug('Meeting registration response', result);
+    const result = await httpClient.sendRequest<RegistrationResponse>(request)
+    console.debug('Meeting registration response', result)
 
     if (result.status === 201) {
-      return result.body;
+      return result.body
     } else {
-      return result;
+      return result
     }
   },
-});
+})

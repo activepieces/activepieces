@@ -1,13 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import FormData from 'form-data';
-import { googleDriveAuth } from '../../';
-import mime from 'mime-types';
-import { common } from '../common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import FormData from 'form-data'
+import mime from 'mime-types'
+import { googleDriveAuth } from '../../'
+import { common } from '../common'
 
 export const googleDriveUploadFile = createAction({
   auth: googleDriveAuth,
@@ -29,32 +25,28 @@ export const googleDriveUploadFile = createAction({
     include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
-    const fileData = context.propsValue.file;
-    const mimeType = mime.lookup(fileData.extension ? fileData.extension : '');
+    const fileData = context.propsValue.file
+    const mimeType = mime.lookup(fileData.extension ? fileData.extension : '')
 
     const meta = {
       mimeType: mimeType,
       name: context.propsValue.fileName,
-      ...(context.propsValue.parentFolder
-        ? { parents: [context.propsValue.parentFolder] }
-        : {}),
-    };
+      ...(context.propsValue.parentFolder ? { parents: [context.propsValue.parentFolder] } : {}),
+    }
 
-    const metaBuffer = Buffer.from(JSON.stringify(meta), 'utf-8');
-    const fileBuffer = Buffer.from(fileData.base64, 'base64');
+    const metaBuffer = Buffer.from(JSON.stringify(meta), 'utf-8')
+    const fileBuffer = Buffer.from(fileData.base64, 'base64')
 
-    const form = new FormData();
-    form.append('Metadata', metaBuffer, { contentType: 'application/json' });
-    form.append('Media', fileBuffer);
+    const form = new FormData()
+    form.append('Metadata', metaBuffer, { contentType: 'application/json' })
+    form.append('Media', fileBuffer)
 
     const result = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `https://www.googleapis.com/upload/drive/v3/files`,
       queryParams: {
         uploadType: 'multipart',
-        supportsAllDrives: String(
-          context.propsValue.include_team_drives || false
-        ),
+        supportsAllDrives: String(context.propsValue.include_team_drives || false),
       },
       body: form,
       headers: {
@@ -64,9 +56,9 @@ export const googleDriveUploadFile = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
-    });
+    })
 
-    console.debug('File upload response', result);
-    return result.body;
+    console.debug('File upload response', result)
+    return result.body
   },
-});
+})

@@ -1,6 +1,6 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { trueLayerCommon } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { trueLayerCommon } from '../../common'
 
 export const merchantAccountGetSweeping = createAction({
   auth: trueLayerCommon.auth,
@@ -25,4 +25,4 @@ export const merchantAccountGetSweeping = createAction({
 
     return response.body
   },
-});
+})

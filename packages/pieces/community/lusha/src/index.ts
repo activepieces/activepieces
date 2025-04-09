@@ -1,33 +1,33 @@
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { searchCompanies } from "./lib/actions/companies/search";
-import { enrichCompanies } from "./lib/actions/companies/enrich";
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { enrichCompanies } from './lib/actions/companies/enrich'
+import { searchCompanies } from './lib/actions/companies/search'
 
 export const lushaAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   required: true,
   description: 'Please enter the API Key obtained from Lusha.',
-});
+})
 
 export const lusha = createPiece({
-  displayName: "Lusha",
+  displayName: 'Lusha',
   auth: lushaAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: "https://cdn.activepieces.com/pieces/lusha.png",
-  authors: ["Kevinyu-alan"],
+  logoUrl: 'https://cdn.activepieces.com/pieces/lusha.png',
+  authors: ['Kevinyu-alan'],
   actions: [
     searchCompanies,
     enrichCompanies,
     createCustomApiCallAction({
       baseUrl: () => {
-        return 'https://api.lusha.com';
+        return 'https://api.lusha.com'
       },
       auth: lushaAuth,
       authMapping: async (auth) => ({
         'x-app': 'activepieces',
-        'api_key': auth as string,
+        api_key: auth as string,
       }),
-    })
+    }),
   ],
-    triggers: [],
-});
+  triggers: [],
+})

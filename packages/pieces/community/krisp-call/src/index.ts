@@ -1,11 +1,11 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { addContact } from './lib/actions/add-contact';
-import { deleteContacts } from './lib/actions/delete-contacts';
-import { sendSms } from './lib/actions/send-sms';
-import { sendMms } from './lib/actions/send-mms';
-import { triggers } from './lib/triggers';
-import { PieceCategory } from '@activepieces/shared';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { addContact } from './lib/actions/add-contact'
+import { deleteContacts } from './lib/actions/delete-contacts'
+import { sendMms } from './lib/actions/send-mms'
+import { sendSms } from './lib/actions/send-sms'
+import { triggers } from './lib/triggers'
 
 export const krispcallAuth = PieceAuth.CustomAuth({
   props: {
@@ -22,18 +22,18 @@ export const krispcallAuth = PieceAuth.CustomAuth({
         headers: {
           'X-API-KEY': auth.apiKey,
         },
-      });
-      return { valid: true };
+      })
+      return { valid: true }
     } catch (error: any) {
-      return { valid: false, error: error.message };
+      return { valid: false, error: error.message }
     }
   },
   required: true,
-});
+})
 
 export type krispcallAuth = {
-  apiKey: string;
-};
+  apiKey: string
+}
 
 export const KrispCall = createPiece({
   displayName: 'KrispCall',
@@ -46,4 +46,4 @@ export const KrispCall = createPiece({
   authors: ['deependra321'],
   actions: [addContact, deleteContacts, sendSms, sendMms],
   triggers: triggers,
-});
+})

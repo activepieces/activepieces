@@ -1,13 +1,13 @@
-import { cn } from '../../lib/utils';
+import { cn } from '../../lib/utils'
 
-import { LoadingSpinner } from './spinner';
+import { LoadingSpinner } from './spinner'
 
 export const LoadingScreen = ({
   brightSpinner = false,
   mode = 'fullscreen',
 }: {
-  brightSpinner?: boolean;
-  mode?: 'fullscreen' | 'container';
+  brightSpinner?: boolean
+  mode?: 'fullscreen' | 'container'
 }) => {
   switch (mode) {
     case 'fullscreen':
@@ -20,7 +20,7 @@ export const LoadingScreen = ({
             size={50}
           ></LoadingSpinner>
         </div>
-      );
+      )
     case 'container':
       return (
         <div className="flex h-full w-full items-center justify-center">
@@ -31,6 +31,6 @@ export const LoadingScreen = ({
             size={50}
           />
         </div>
-      );
+      )
   }
-};
+}

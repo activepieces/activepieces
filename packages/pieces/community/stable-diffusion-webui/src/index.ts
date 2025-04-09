@@ -1,9 +1,5 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { textToImage } from './lib/actions/text-to-image';
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { textToImage } from './lib/actions/text-to-image'
 
 export const stableDiffusionAuth = PieceAuth.CustomAuth({
   required: true,
@@ -13,11 +9,11 @@ export const stableDiffusionAuth = PieceAuth.CustomAuth({
       required: true,
     }),
   },
-});
+})
 
 export type StableDiffusionAuthType = {
-  baseUrl: string;
-};
+  baseUrl: string
+}
 
 export const stableDiffusion = createPiece({
   displayName: 'Stable Dffusion web UI',
@@ -29,4 +25,4 @@ export const stableDiffusion = createPiece({
   authors: ['AdamSelene', 'abuaboud'],
   actions: [textToImage],
   triggers: [],
-});
+})

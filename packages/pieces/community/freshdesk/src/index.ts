@@ -1,15 +1,11 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { getContactFromID } from './lib/actions/get-contact-from-id';
-import { getTicketStatus } from './lib/actions/get-ticket-status';
-import { getTickets } from './lib/actions/get-tickets';
-import { getContacts } from './lib/actions/get-contacts';
-import { getAllTicketsByStatus } from './lib/actions/get-all-tickets-by-status';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { getAllTicketsByStatus } from './lib/actions/get-all-tickets-by-status'
+import { getContactFromID } from './lib/actions/get-contact-from-id'
+import { getContacts } from './lib/actions/get-contacts'
+import { getTicketStatus } from './lib/actions/get-ticket-status'
+import { getTickets } from './lib/actions/get-tickets'
 
 export const freshdeskAuth = PieceAuth.CustomAuth({
   props: {
@@ -26,7 +22,7 @@ export const freshdeskAuth = PieceAuth.CustomAuth({
   },
   description: `Get the API token by visiting your profile settings and clicking View API key`,
   required: true,
-});
+})
 
 export const freshdesk = createPiece({
   displayName: 'Freshdesk',
@@ -34,7 +30,7 @@ export const freshdesk = createPiece({
 
   logoUrl: 'https://cdn.activepieces.com/pieces/freshdesk.png',
   categories: [PieceCategory.CUSTOMER_SUPPORT],
-  authors: ["buttonsbond","kishanprmr","MoShizzle","AbdulTheActivePiecer","abuaboud"],
+  authors: ['buttonsbond', 'kishanprmr', 'MoShizzle', 'AbdulTheActivePiecer', 'abuaboud'],
   auth: freshdeskAuth,
   actions: [
     getTickets,
@@ -51,4 +47,4 @@ export const freshdesk = createPiece({
     }),
   ],
   triggers: [],
-});
+})

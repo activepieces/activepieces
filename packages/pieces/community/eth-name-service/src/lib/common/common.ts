@@ -1,6 +1,4 @@
-import {
-  PieceAuth,
-} from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const ensCommon = {
   auth: PieceAuth.SecretText({
@@ -12,22 +10,22 @@ export const ensCommon = {
     url: string,
     method: string,
     data: object | undefined = undefined,
-    token: string | undefined = undefined
+    token: string | undefined = undefined,
   ) {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-    };
+    }
 
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers['Authorization'] = `Bearer ${token}`
     }
 
     const response = await fetch(url, {
       method,
       headers,
       body: data ? JSON.stringify(data) : undefined,
-    });
+    })
 
-    return response.json();
+    return response.json()
   },
-};
+}

@@ -1,26 +1,18 @@
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { randomUUID } from 'crypto'
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue } from '@activepieces/pieces-framework'
+import { googleCalendarCommon } from '.'
 import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { randomUUID } from 'crypto';
-import { googleCalendarCommon } from '.';
-import {
-  GoogleWatchResponse,
-  GoogleWatchType,
-  CalendarObject,
   CalendarList,
+  CalendarObject,
+  GetColorsResponse,
   GoogleCalendarEvent,
   GoogleCalendarEventList,
-  GetColorsResponse,
-} from './types';
+  GoogleWatchResponse,
+  GoogleWatchType,
+} from './types'
 
-export async function stopWatchEvent(
-  body: GoogleWatchResponse,
-  authProp: OAuth2PropertyValue
-) {
+export async function stopWatchEvent(body: GoogleWatchResponse, authProp: OAuth2PropertyValue) {
   const request: HttpRequest = {
     method: HttpMethod.POST,
     url: `${googleCalendarCommon.baseUrl}/channels/stop`,
@@ -32,14 +24,14 @@ export async function stopWatchEvent(
       type: AuthenticationType.BEARER_TOKEN,
       token: authProp.access_token,
     },
-  };
-  await httpClient.sendRequest<any>(request);
+  }
+  await httpClient.sendRequest<any>(request)
 }
 
 export async function watchEvent(
   calendarId: string,
   webhookUrl: string,
-  authProp: OAuth2PropertyValue
+  authProp: OAuth2PropertyValue,
 ): Promise<GoogleWatchResponse> {
   const request: HttpRequest = {
     method: HttpMethod.POST,
@@ -53,23 +45,18 @@ export async function watchEvent(
       type: AuthenticationType.BEARER_TOKEN,
       token: authProp.access_token,
     },
-  };
-  const { body: webhook } = await httpClient.sendRequest<GoogleWatchResponse>(
-    request
-  );
-  return webhook;
+  }
+  const { body: webhook } = await httpClient.sendRequest<GoogleWatchResponse>(request)
+  return webhook
 }
 
-export async function getCalendars(
-  authProp: OAuth2PropertyValue,
-  minAccessRole?: 'writer'
-): Promise<CalendarObject[]> {
+export async function getCalendars(authProp: OAuth2PropertyValue, minAccessRole?: 'writer'): Promise<CalendarObject[]> {
   // docs: https://developers.google.com/calendar/api/v3/reference/calendarList/list
   const queryParams: Record<string, string> = {
     showDeleted: 'false',
-  };
+  }
   if (minAccessRole) {
-    queryParams['minAccessRole'] = minAccessRole;
+    queryParams['minAccessRole'] = minAccessRole
   }
   const request: HttpRequest = {
     method: HttpMethod.GET,
@@ -79,14 +66,12 @@ export async function getCalendars(
       type: AuthenticationType.BEARER_TOKEN,
       token: authProp.access_token,
     },
-  };
-  const response = await httpClient.sendRequest<CalendarList>(request);
-  return response.body.items;
+  }
+  const response = await httpClient.sendRequest<CalendarList>(request)
+  return response.body.items
 }
 
-export async function getColors(
-  authProp: OAuth2PropertyValue
-): Promise<GetColorsResponse> {
+export async function getColors(authProp: OAuth2PropertyValue): Promise<GetColorsResponse> {
   const request: HttpRequest = {
     method: HttpMethod.GET,
     url: `${googleCalendarCommon.baseUrl}/colors`,
@@ -94,21 +79,21 @@ export async function getColors(
       type: AuthenticationType.BEARER_TOKEN,
       token: authProp.access_token,
     },
-  };
-  const response = await httpClient.sendRequest<GetColorsResponse>(request);
-  return response.body;
+  }
+  const response = await httpClient.sendRequest<GetColorsResponse>(request)
+  return response.body
 }
 
 export async function getEvents(
   calendarId: string,
   expandRecurringEvent: boolean,
   authProp: OAuth2PropertyValue,
-  minUpdated?: Date
+  minUpdated?: Date,
 ): Promise<GoogleCalendarEvent[]> {
   // docs: https://developers.google.com/calendar/api/v3/reference/events/list
-  const now = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(now.getDate() - 1);
+  const now = new Date()
+  const yesterday = new Date()
+  yesterday.setDate(now.getDate() - 1)
 
   const qParams: Record<string, string> = {
     updatedMin: minUpdated?.toISOString() ?? yesterday.toISOString(),
@@ -116,7 +101,7 @@ export async function getEvents(
     orderBy: 'updated',
     singleEvents: expandRecurringEvent ? 'true' : 'false',
     showDeleted: 'true',
-  };
+  }
 
   const request: HttpRequest = {
     method: HttpMethod.GET,
@@ -126,29 +111,24 @@ export async function getEvents(
       type: AuthenticationType.BEARER_TOKEN,
       token: authProp.access_token,
     },
-  };
+  }
 
-  let eventList: GoogleCalendarEvent[] = [];
-  let pageToken = '';
+  let eventList: GoogleCalendarEvent[] = []
+  let pageToken = ''
   do {
-    qParams['pageToken'] = pageToken;
-    const { body: res } = await httpClient.sendRequest<GoogleCalendarEventList>(
-      request
-    );
+    qParams['pageToken'] = pageToken
+    const { body: res } = await httpClient.sendRequest<GoogleCalendarEventList>(request)
     if (res.items.length > 0) {
-      eventList = [...eventList, ...res.items];
+      eventList = [...eventList, ...res.items]
     }
-    pageToken = res.nextPageToken;
-  } while (pageToken);
+    pageToken = res.nextPageToken
+  } while (pageToken)
 
-  return eventList;
+  return eventList
 }
 
-export async function getLatestEvent(
-  calendarId: string,
-  authProp: OAuth2PropertyValue
-): Promise<GoogleCalendarEvent> {
-  const eventList = await getEvents(calendarId, false, authProp);
-  const lastUpdatedEvent = eventList.pop()!; // You can retrieve the last updated event.
-  return lastUpdatedEvent;
+export async function getLatestEvent(calendarId: string, authProp: OAuth2PropertyValue): Promise<GoogleCalendarEvent> {
+  const eventList = await getEvents(calendarId, false, authProp)
+  const lastUpdatedEvent = eventList.pop()! // You can retrieve the last updated event.
+  return lastUpdatedEvent
 }

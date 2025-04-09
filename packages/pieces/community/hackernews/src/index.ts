@@ -1,5 +1,5 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { fetchTopStories } from './lib/actions/top-stories-in-hacker-news';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { fetchTopStories } from './lib/actions/top-stories-in-hacker-news'
 
 export const hackernews = createPiece({
   displayName: 'Hacker News',
@@ -9,7 +9,7 @@ export const hackernews = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/hackernews.png',
   auth: PieceAuth.None(),
   categories: [],
-  authors: ["kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: ['kishanprmr', 'AbdulTheActivePiecer', 'khaledmashaly', 'abuaboud'],
   actions: [fetchTopStories],
   triggers: [],
-});
+})

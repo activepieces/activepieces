@@ -1,24 +1,21 @@
-import { useState } from 'react';
+import { useState } from 'react'
 
 interface ReadMoreProps {
-  text: string;
-  amountOfCharacters?: number;
+  text: string
+  amountOfCharacters?: number
 }
 
-export const ReadMoreDescription = ({
-  text,
-  amountOfCharacters = 80,
-}: ReadMoreProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const itCanOverflow = text.length > amountOfCharacters;
-  const beginText = itCanOverflow ? text.slice(0, amountOfCharacters) : text;
-  const endText = text.slice(amountOfCharacters);
+export const ReadMoreDescription = ({ text, amountOfCharacters = 80 }: ReadMoreProps) => {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const itCanOverflow = text.length > amountOfCharacters
+  const beginText = itCanOverflow ? text.slice(0, amountOfCharacters) : text
+  const endText = text.slice(amountOfCharacters)
 
   const handleKeyboard = (e: { code: string }) => {
     if (e.code === 'Space' || e.code === 'Enter') {
-      setIsExpanded(!isExpanded);
+      setIsExpanded(!isExpanded)
     }
-  };
+  }
 
   return (
     <p className="text-muted-foreground text-xs whitespace-pre-wrap">
@@ -26,10 +23,7 @@ export const ReadMoreDescription = ({
       {itCanOverflow && (
         <>
           {!isExpanded && <span>... </span>}
-          <span
-            className={`${!isExpanded && 'hidden'} whitespace-pre-wrap`}
-            aria-hidden={!isExpanded}
-          >
+          <span className={`${!isExpanded && 'hidden'} whitespace-pre-wrap`} aria-hidden={!isExpanded}>
             {endText}
           </span>
           <span
@@ -45,5 +39,5 @@ export const ReadMoreDescription = ({
         </>
       )}
     </p>
-  );
-};
+  )
+}

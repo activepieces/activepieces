@@ -1,6 +1,6 @@
-import { reoonEmailVerifyAuth } from '../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { VerifyEmailMode, verifySingleEmail } from '../common/send-util';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { reoonEmailVerifyAuth } from '../..'
+import { VerifyEmailMode, verifySingleEmail } from '../common/send-util'
 
 export const verifyEmail = createAction({
   auth: reoonEmailVerifyAuth,
@@ -16,8 +16,7 @@ export const verifyEmail = createAction({
     mode: Property.StaticDropdown<VerifyEmailMode, true>({
       displayName: 'Mode',
       defaultValue: 'power',
-      description:
-        'Verification mode (Power mode is more accurate but a bit slower)',
+      description: 'Verification mode (Power mode is more accurate but a bit slower)',
       options: {
         placeholder: 'Select a mode',
         options: [
@@ -35,10 +34,6 @@ export const verifyEmail = createAction({
     }),
   },
   async run(context) {
-    return verifySingleEmail(
-      context.propsValue.email,
-      context.propsValue.mode,
-      context.auth
-    ).then((res) => res.body);
+    return verifySingleEmail(context.propsValue.email, context.propsValue.mode, context.auth).then((res) => res.body)
   },
-});
+})

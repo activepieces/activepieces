@@ -1,11 +1,7 @@
-import { baseUrl, getTimezones } from '../common';
-import { sessionAuth } from '../..';
-import {
-  HttpMethod,
-  httpClient,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { sessionAuth } from '../..'
+import { baseUrl, getTimezones } from '../common'
 
 export const createSession = createAction({
   auth: sessionAuth,
@@ -36,16 +32,16 @@ export const createSession = createAction({
       required: true,
       refreshers: [],
       options: async () => {
-        const timezones = await getTimezones();
+        const timezones = await getTimezones()
 
         return {
           options: timezones.map((timezone) => {
             return {
               label: timezone,
               value: timezone,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   },
@@ -63,13 +59,13 @@ export const createSession = createAction({
         plannedEnd: propsValue['plannedEnd'],
         timeZone: propsValue['timezone'],
       },
-    };
+    }
 
-    const response = await httpClient.sendRequest(request);
+    const response = await httpClient.sendRequest(request)
     return {
       id: response.body['id'],
       name: response.body['name'],
       link: response.body['sessionLink'],
-    };
+    }
   },
-});
+})

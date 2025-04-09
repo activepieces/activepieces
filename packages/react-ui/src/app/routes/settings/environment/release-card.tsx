@@ -1,35 +1,35 @@
-import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { Package } from 'lucide-react';
+import { useMutation } from '@tanstack/react-query'
+import { t } from 'i18next'
+import { Package } from 'lucide-react'
 
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { toast, INTERNAL_ERROR_TOAST } from '@/components/ui/use-toast';
-import { projectHooks } from '@/hooks/project-hooks';
-import { projectApi } from '@/lib/project-api';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast'
+import { projectHooks } from '@/hooks/project-hooks'
+import { projectApi } from '@/lib/project-api'
+import { cn } from '@/lib/utils'
 
 const ReleaseCard = () => {
-  const { project, refetch } = projectHooks.useCurrentProject();
+  const { project, refetch } = projectHooks.useCurrentProject()
 
   const { mutate } = useMutation({
     mutationFn: () => {
       return projectApi.update(project.id, {
         releasesEnabled: !project.releasesEnabled,
-      });
+      })
     },
     onSuccess: () => {
-      refetch();
+      refetch()
       toast({
         title: t('Releases Enabled'),
         description: t('You have successfully enabled releases'),
         duration: 3000,
-      });
+      })
     },
     onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
+      toast(INTERNAL_ERROR_TOAST)
     },
-  });
+  })
 
   return (
     <Card className="w-full px-4 py-4">
@@ -56,8 +56,8 @@ const ReleaseCard = () => {
         </div>
       </div>
     </Card>
-  );
-};
+  )
+}
 
-ReleaseCard.displayName = 'ReleaseCard';
-export { ReleaseCard };
+ReleaseCard.displayName = 'ReleaseCard'
+export { ReleaseCard }

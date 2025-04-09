@@ -1,11 +1,11 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { sendMessage } from './lib/actions/send-message';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { sendMessage } from './lib/actions/send-message'
 
 export const returningAiAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   required: true,
   description: 'Add api key from returning.ai',
-});
+})
 
 export const returningAi = createPiece({
   displayName: 'Returning AI',
@@ -15,4 +15,4 @@ export const returningAi = createPiece({
   authors: ['mg-wunna'],
   actions: [sendMessage],
   triggers: [],
-});
+})

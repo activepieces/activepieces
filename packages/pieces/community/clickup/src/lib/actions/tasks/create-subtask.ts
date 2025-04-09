@@ -1,8 +1,8 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
-import { clickupCommon, callClickUpApi } from '../../common';
-import { clickupAuth } from '../../../';
+import { clickupAuth } from '../../../'
+import { callClickUpApi, clickupCommon } from '../../common'
 
 export const createClickupSubtask = createAction({
   auth: clickupAuth,
@@ -26,7 +26,7 @@ export const createClickupSubtask = createAction({
     }),
   },
   async run(configValue) {
-    const { list_id, task_id, name, description } = configValue.propsValue;
+    const { list_id, task_id, name, description } = configValue.propsValue
     const response = await callClickUpApi(
       HttpMethod.POST,
       `list/${list_id}/task`,
@@ -35,9 +35,9 @@ export const createClickupSubtask = createAction({
         name,
         description,
         parent: task_id,
-      }
-    );
+      },
+    )
 
-    return response.body;
+    return response.body
   },
-});
+})

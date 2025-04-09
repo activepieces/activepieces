@@ -1,16 +1,13 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { twinLabsAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { twinLabsAuth } from '../..'
 
 export const startBrowsingTask = createAction({
   name: 'startBrowsingTask',
   auth: twinLabsAuth,
   displayName: 'Browse',
-  description:
-    'Browse the internet with an AI web navigation agent that can find information for you',
+  description: 'Browse the internet with an AI web navigation agent that can find information for you',
   props: {
-
-
     startUrl: Property.ShortText({
       displayName: 'startUrl',
       required: true,
@@ -27,10 +24,10 @@ export const startBrowsingTask = createAction({
 
   async run(context) {
     interface ApiResponse {
-      output: any;
-      status: string;
-      taskId: string;
-      [key: string]: any;
+      output: any
+      status: string
+      taskId: string
+      [key: string]: any
     }
 
     // Start the browsing task
@@ -47,20 +44,19 @@ export const startBrowsingTask = createAction({
         outputType: 'string',
         completionCallbackUrl: 'https://',
       },
-    });
+    })
 
-    const taskId = res.body.taskId;
-    let taskStatus = res.body.status;
+    const taskId = res.body.taskId
+    let taskStatus = res.body.status
 
-    const maxTime = Date.now() + 15 * 60 * 1000; // 15 minutes timeout
-
+    const maxTime = Date.now() + 15 * 60 * 1000 // 15 minutes timeout
 
     // Initialize statusResponse to store the last response
-    let statusResponse: ApiResponse = res.body;
+    let statusResponse: ApiResponse = res.body
 
     // Poll for task completion every 5 seconds until timeout
     while (taskStatus !== 'COMPLETED' && Date.now() < maxTime) {
-      await new Promise((resolve) => setTimeout(resolve, 5000)); // wait 5 seconds
+      await new Promise((resolve) => setTimeout(resolve, 5000)) // wait 5 seconds
 
       const response = await httpClient.sendRequest<ApiResponse>({
         method: HttpMethod.GET,
@@ -69,14 +65,13 @@ export const startBrowsingTask = createAction({
           'x-api-key': context.auth,
           'Content-Type': 'application/json',
         },
-      });
+      })
 
-      statusResponse = response.body; // update statusResponse with the latest response
-      taskStatus = statusResponse.status;
+      statusResponse = response.body // update statusResponse with the latest response
+      taskStatus = statusResponse.status
     }
 
-
     // Return the final statusResponse in all cases
-    return statusResponse;
+    return statusResponse
   },
-});
+})

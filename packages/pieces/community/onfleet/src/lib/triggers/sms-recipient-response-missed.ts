@@ -1,10 +1,6 @@
-import {
-  TriggerStrategy,
-  WebhookHandshakeStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
-import { common, OnfleetWebhookTriggers } from '../common';
-import { onfleetAuth } from '../..';
+import { TriggerStrategy, WebhookHandshakeStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
+import { OnfleetWebhookTriggers, common } from '../common'
 
 export const smsRecipientResponseMissed = createTrigger({
   auth: onfleetAuth,
@@ -19,26 +15,24 @@ export const smsRecipientResponseMissed = createTrigger({
     const webhookId = await common.subscribeWebhook(
       context.auth,
       context.webhookUrl,
-      OnfleetWebhookTriggers.SMS_RECIPIENT_MISSED
-    );
+      OnfleetWebhookTriggers.SMS_RECIPIENT_MISSED,
+    )
 
     await context.store?.put('_sms_recipient_response_missed_trigger', {
       webhookId: webhookId,
-    });
+    })
   },
   //Delete the webhook
   async onDisable(context) {
-    const response: any = await context.store?.get(
-      '_sms_recipient_response_missed_trigger'
-    );
+    const response: any = await context.store?.get('_sms_recipient_response_missed_trigger')
 
     if (response !== null && response !== undefined) {
-      await common.unsubscribeWebhook(context.auth, response.webhookId);
+      await common.unsubscribeWebhook(context.auth, response.webhookId)
     }
   },
   //Return task
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
 
   handshakeConfiguration: {
@@ -50,8 +44,8 @@ export const smsRecipientResponseMissed = createTrigger({
     return {
       status: 200,
       body: context.payload.queryParams['check'],
-    };
+    }
   },
 
   sampleData: {},
-});
+})

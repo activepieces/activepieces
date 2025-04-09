@@ -1,18 +1,14 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  OAuth2PropertyValue,
-  PieceAuth,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { typeformNewSubmission } from './lib/trigger/new-submission';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { typeformNewSubmission } from './lib/trigger/new-submission'
 
 export const typeformAuth = PieceAuth.OAuth2({
   required: true,
   tokenUrl: 'https://api.typeform.com/oauth/token',
   authUrl: 'https://admin.typeform.com/oauth/authorize',
   scope: ['webhooks:write', 'forms:read'],
-});
+})
 
 export const typeform = createPiece({
   displayName: 'Typeform',
@@ -31,6 +27,6 @@ export const typeform = createPiece({
     }),
   ],
   auth: typeformAuth,
-  authors: ["ashrafsamhouri","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ['ashrafsamhouri', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
   triggers: [typeformNewSubmission],
-});
+})

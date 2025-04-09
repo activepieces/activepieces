@@ -1,9 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { BASE_URL, personalAiAuth } from '../../../index';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { BASE_URL, personalAiAuth } from '../../../index'
 
 export const getDocument = createAction({
-  auth:personalAiAuth,
+  auth: personalAiAuth,
   name: 'get_document',
   displayName: 'Get Document',
   description: 'Retrieve a document from AI assistant.',
@@ -27,7 +27,10 @@ export const getDocument = createAction({
     }),
   },
   async run(context) {
-    const { auth, propsValue: { documentId, domainName, includeContent } } = context;
+    const {
+      auth,
+      propsValue: { documentId, domainName, includeContent },
+    } = context
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
@@ -41,8 +44,8 @@ export const getDocument = createAction({
         ...(domainName && { DomainName: domainName }),
         ...(includeContent !== undefined && { IncludeContent: includeContent.toString() }),
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

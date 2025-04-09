@@ -1,29 +1,14 @@
-import {
-  DedupeStrategy,
-  Polling,
-  httpClient,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import {
-  createTrigger,
-  PiecePropValueSchema,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import { vtigerAuth } from '../..';
-import {
-  elementTypeProperty,
-  instanceLogin,
-  prepareHttpRequest,
-} from '../common';
-import dayjs from 'dayjs';
+import { DedupeStrategy, Polling, httpClient, pollingHelper } from '@activepieces/pieces-common'
+import { PiecePropValueSchema, Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { vtigerAuth } from '../..'
+import { elementTypeProperty, instanceLogin, prepareHttpRequest } from '../common'
 
 export const newOrUpdatedRecord = createTrigger({
   auth: vtigerAuth,
   name: 'new_or_updated_record',
   displayName: 'New or Updated Record',
-  description:
-    'Triggers when a new record is introduced or a record is updated.',
+  description: 'Triggers when a new record is introduced or a record is updated.',
   props: {
     elementType: elementTypeProperty,
     watchBy: Property.StaticDropdown({
@@ -56,18 +41,18 @@ export const newOrUpdatedRecord = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async test(ctx) {
-    return await pollingHelper.test(polling, { ...ctx });
+    return await pollingHelper.test(polling, { ...ctx })
   },
   async onEnable(ctx) {
-    await pollingHelper.onEnable(polling, { ...ctx });
+    await pollingHelper.onEnable(polling, { ...ctx })
   },
   async onDisable(ctx) {
-    await pollingHelper.onDisable(polling, { ...ctx });
+    await pollingHelper.onDisable(polling, { ...ctx })
   },
   async run(ctx) {
-    return await pollingHelper.poll(polling, { ...ctx });
+    return await pollingHelper.poll(polling, { ...ctx })
   },
-});
+})
 
 const polling: Polling<
   PiecePropValueSchema<typeof vtigerAuth>,
@@ -75,78 +60,72 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const items = await fetchRecords({ auth, propsValue, lastFetchEpochMS });
+    const items = await fetchRecords({ auth, propsValue, lastFetchEpochMS })
 
     return (items ?? []).map((item) => {
       return {
         epochMilliSeconds: dayjs(
-          propsValue.watchBy === 'createdtime'
-            ? item['createdtime']
-            : item['modifiedtime']
+          propsValue.watchBy === 'createdtime' ? item['createdtime'] : item['modifiedtime'],
         ).valueOf(),
         data: item,
-      };
-    });
+      }
+    })
   },
-};
+}
 
 const fetchRecords = async ({
   auth,
   propsValue,
   lastFetchEpochMS,
 }: {
-  auth: Record<string, string>;
-  propsValue: Record<string, unknown>;
-  lastFetchEpochMS: number;
+  auth: Record<string, string>
+  propsValue: Record<string, unknown>
+  lastFetchEpochMS: number
 }) => {
-  const vtigerInstance = await instanceLogin(
-    auth['instance_url'],
-    auth['username'],
-    auth['password']
-  );
+  const vtigerInstance = await instanceLogin(auth['instance_url'], auth['username'], auth['password'])
   if (vtigerInstance === null) {
-    return [];
+    return []
   }
 
-  const query = `SELECT * FROM ${propsValue['elementType']} ;`;
+  const query = `SELECT * FROM ${propsValue['elementType']} ;`
 
   const httpRequest = prepareHttpRequest(
     auth['instance_url'],
     vtigerInstance.sessionId ?? vtigerInstance.sessionName,
     'query',
-    { query }
-  );
+    { query },
+  )
   const response = await httpClient.sendRequest<{
-    success: boolean;
-    result: Record<string, string>[];
-  }>(httpRequest);
+    success: boolean
+    result: Record<string, string>[]
+  }>(httpRequest)
 
   if (response.body.success) {
-    const lastFetch = dayjs(lastFetchEpochMS);
-    const records = response.body.result;
-    const limit = propsValue['limit'] as number;
+    const lastFetch = dayjs(lastFetchEpochMS)
+    const records = response.body.result
+    const limit = propsValue['limit'] as number
 
     const newOrUpdatedRecords = records.filter((record) => {
-      const watchTime = dayjs(record[propsValue['watchBy'] as string] ?? 0);
-      return watchTime.diff(lastFetch) >= 0;
-    });
+      const watchTime = dayjs(record[propsValue['watchBy'] as string] ?? 0)
+      return watchTime.diff(lastFetch) >= 0
+    })
     const sortedRecords = newOrUpdatedRecords.sort((a, b) => {
-      const key = propsValue['watchBy'] as string;
+      const key = propsValue['watchBy'] as string
       if (a[key] < b[key]) {
-        return -1;
+        return -1
       }
       if (a[key] > b[key]) {
-        return 1;
+        return 1
       }
-      return 0;
-    });
+      return 0
+    })
 
     if (limit > 0) {
-      return sortedRecords.slice(0, limit);
+      return sortedRecords.slice(0, limit)
     } else {
-      return sortedRecords;
+      return sortedRecords
     }
   }
 
-  return [];
-};
+  return []
+}

@@ -1,8 +1,4 @@
-import {
-  createTrigger,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
+import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
 
 const emailBouncedMessage = `
 
@@ -18,7 +14,7 @@ const emailBouncedMessage = `
 
   5. Select the event type as "Email Bounced".
   6. Click on the "Test Trigger" button to simulate a test and capture the webhook response here.
-  `;
+  `
 
 export const emailBounced = createTrigger({
   name: 'emailBounced',
@@ -54,6 +50,6 @@ export const emailBounced = createTrigger({
     // Implement webhook unsubscription logic here
   },
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
-});
+})

@@ -1,6 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { getOrdersByDate } from '../api';
-import { cartloomAuth } from '../auth';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { getOrdersByDate } from '../api'
+import { cartloomAuth } from '../auth'
 
 export const getOrderEmailAction = createAction({
   name: 'get_orders_by_email',
@@ -29,8 +29,7 @@ export const getOrderEmailAction = createAction({
       search_type: 'email',
       keyword: context.propsValue.email,
       start_date: context.propsValue.start.split('T')[0],
-      end_date:
-        context.propsValue.end || new Date().toISOString().split('T')[0],
-    });
+      end_date: context.propsValue.end || new Date().toISOString().split('T')[0],
+    })
   },
-});
+})

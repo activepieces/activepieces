@@ -1,11 +1,11 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework'
 
 const markdown = `
 This action add a tag to the current execution, this tag can be used to filter the execution in the **API** only at this moment.
 <br>
 <br>
 **Note:** If you are looking to use it in the user interface, please open a feature request.
-`;
+`
 
 export const addTag = createAction({
   name: 'add_tag',
@@ -32,9 +32,9 @@ export const addTag = createAction({
   async run(ctx) {
     await ctx.tags.add({
       name: ctx.propsValue.name,
-    });
+    })
     return {
       success: true,
-    };
+    }
   },
-});
+})

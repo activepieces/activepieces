@@ -1,76 +1,56 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { ColumnDef } from '@tanstack/react-table';
-import { t } from 'i18next';
-import {
-  CheckIcon,
-  PlayIcon,
-  Redo,
-  RotateCw,
-  ChevronDown,
-  History,
-} from 'lucide-react';
-import { useMemo, useCallback, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { ColumnDef } from '@tanstack/react-table'
+import { t } from 'i18next'
+import { CheckIcon, ChevronDown, History, PlayIcon, Redo, RotateCw } from 'lucide-react'
+import { useCallback, useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
-import { useNewWindow } from '@/components/embed-provider';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import { useNewWindow } from '@/components/embed-provider'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
-  LIMIT_QUERY_PARAM,
   DataTable,
+  LIMIT_QUERY_PARAM,
   RowDataWithActions,
-} from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { MessageTooltip } from '@/components/ui/message-tooltip';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
-import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
-import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
-import { flowsHooks } from '@/features/flows/lib/flows-hooks';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
-import { formatUtils } from '@/lib/utils';
-import {
-  FlowRetryStrategy,
-  FlowRun,
-  FlowRunStatus,
-  isFailedState,
-  Permission,
-} from '@activepieces/shared';
+} from '@/components/ui/data-table'
+import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { MessageTooltip } from '@/components/ui/message-tooltip'
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip'
+import { StatusIconWithText } from '@/components/ui/status-icon-with-text'
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast'
+import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils'
+import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api'
+import { flowsHooks } from '@/features/flows/lib/flows-hooks'
+import { useAuthorization } from '@/hooks/authorization-hooks'
+import { authenticationSession } from '@/lib/authentication-session'
+import { formatUtils } from '@/lib/utils'
+import { FlowRetryStrategy, FlowRun, FlowRunStatus, Permission, isFailedState } from '@activepieces/shared'
 
 type SelectedRow = {
-  id: string;
-  status: FlowRunStatus;
-};
+  id: string
+  status: FlowRunStatus
+}
 
 export const RunsTable = () => {
-  const [searchParams] = useSearchParams();
-  const [selectedRows, setSelectedRows] = useState<Array<SelectedRow>>([]);
-  const [selectedAll, setSelectedAll] = useState(false);
-  const [excludedRows, setExcludedRows] = useState<Set<string>>(new Set());
-  const projectId = authenticationSession.getProjectId()!;
+  const [searchParams] = useSearchParams()
+  const [selectedRows, setSelectedRows] = useState<Array<SelectedRow>>([])
+  const [selectedAll, setSelectedAll] = useState(false)
+  const [excludedRows, setExcludedRows] = useState<Set<string>>(new Set())
+  const projectId = authenticationSession.getProjectId()!
   const { data, isLoading } = useQuery({
     queryKey: ['flow-run-table', searchParams.toString(), projectId],
     staleTime: 0,
     gcTime: 0,
     queryFn: () => {
-      const status = searchParams.getAll('status') as FlowRunStatus[];
-      const flowId = searchParams.getAll('flowId');
-      const cursor = searchParams.get(CURSOR_QUERY_PARAM);
-      const limit = searchParams.get(LIMIT_QUERY_PARAM)
-        ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
-        : 10;
-      const createdAfter = searchParams.get('createdAfter');
-      const createdBefore = searchParams.get('createdBefore');
+      const status = searchParams.getAll('status') as FlowRunStatus[]
+      const flowId = searchParams.getAll('flowId')
+      const cursor = searchParams.get(CURSOR_QUERY_PARAM)
+      const limit = searchParams.get(LIMIT_QUERY_PARAM) ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!) : 10
+      const createdAfter = searchParams.get('createdAfter')
+      const createdBefore = searchParams.get('createdBefore')
 
       return flowRunsApi.list({
         status: status ?? undefined,
@@ -80,19 +60,19 @@ export const RunsTable = () => {
         limit,
         createdAfter: createdAfter ?? undefined,
         createdBefore: createdBefore ?? undefined,
-      });
+      })
     },
-  });
+  })
 
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   const { data: flowsData, isFetching: isFetchingFlows } = flowsHooks.useFlows({
     limit: 1000,
     cursor: undefined,
-  });
-  const openNewWindow = useNewWindow();
-  const flows = flowsData?.data;
-  const { checkAccess } = useAuthorization();
-  const userHasPermissionToRetryRun = checkAccess(Permission.WRITE_RUN);
+  })
+  const openNewWindow = useNewWindow()
+  const flows = flowsData?.data
+  const { checkAccess } = useAuthorization()
+  const userHasPermissionToRetryRun = checkAccess(Permission.WRITE_RUN)
 
   const filters = useMemo(
     () => [
@@ -118,7 +98,7 @@ export const RunsTable = () => {
               label: formatUtils.convertEnumToHumanReadable(status),
               value: status,
               icon: flowRunUtils.getStatusIcon(status).Icon,
-            };
+            }
           }),
         icon: CheckIcon,
       } as const,
@@ -131,17 +111,17 @@ export const RunsTable = () => {
       } as const,
     ],
     [flows],
-  );
+  )
 
   const replayRun = useMutation({
     mutationFn: (retryParams: {
-      runIds: string[];
-      strategy: FlowRetryStrategy;
+      runIds: string[]
+      strategy: FlowRetryStrategy
     }) => {
-      const status = searchParams.getAll('status') as FlowRunStatus[];
-      const flowId = searchParams.getAll('flowId');
-      const createdAfter = searchParams.get('createdAfter') || undefined;
-      const createdBefore = searchParams.get('createdBefore') || undefined;
+      const status = searchParams.getAll('status') as FlowRunStatus[]
+      const flowId = searchParams.getAll('flowId')
+      const createdAfter = searchParams.get('createdAfter') || undefined
+      const createdBefore = searchParams.get('createdBefore') || undefined
       return flowRunsApi.bulkRetry({
         projectId: authenticationSession.getProjectId()!,
         flowRunIds: selectedAll ? undefined : retryParams.runIds,
@@ -151,35 +131,30 @@ export const RunsTable = () => {
         flowId,
         createdAfter,
         createdBefore,
-      });
+      })
     },
     onSuccess: () => {
       toast({
         title: t('Runs replayed successfully'),
         variant: 'default',
-      });
-      navigate(window.location.pathname);
+      })
+      navigate(window.location.pathname)
     },
     onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
+      toast(INTERNAL_ERROR_TOAST)
     },
-  });
+  })
 
   const bulkActions: BulkAction<FlowRun>[] = useMemo(
     () => [
       {
         render: (_, resetSelection) => {
-          const allFailed = selectedRows.every((row) =>
-            isFailedState(row.status),
-          );
-          const isDisabled =
-            selectedRows.length === 0 || !userHasPermissionToRetryRun;
+          const allFailed = selectedRows.every((row) => isFailedState(row.status))
+          const isDisabled = selectedRows.length === 0 || !userHasPermissionToRetryRun
 
           return (
             <div onClick={(e) => e.stopPropagation()}>
-              <PermissionNeededTooltip
-                hasPermission={userHasPermissionToRetryRun}
-              >
+              <PermissionNeededTooltip hasPermission={userHasPermissionToRetryRun}>
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild disabled={isDisabled}>
                     <Button disabled={isDisabled} className="h-9 w-full">
@@ -197,18 +172,16 @@ export const RunsTable = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <PermissionNeededTooltip
-                      hasPermission={userHasPermissionToRetryRun}
-                    >
+                    <PermissionNeededTooltip hasPermission={userHasPermissionToRetryRun}>
                       <DropdownMenuItem
                         disabled={!userHasPermissionToRetryRun}
                         onClick={() => {
                           replayRun.mutate({
                             runIds: selectedRows.map((row) => row.id),
                             strategy: FlowRetryStrategy.ON_LATEST_VERSION,
-                          });
-                          resetSelection();
-                          setSelectedRows([]);
+                          })
+                          resetSelection()
+                          setSelectedRows([])
                         }}
                         className="cursor-pointer"
                       >
@@ -221,9 +194,7 @@ export const RunsTable = () => {
 
                     {selectedRows.some((row) => isFailedState(row.status)) && (
                       <MessageTooltip
-                        message={t(
-                          'Only failed runs can be retried from failed step',
-                        )}
+                        message={t('Only failed runs can be retried from failed step')}
                         isDisabled={!allFailed}
                       >
                         <DropdownMenuItem
@@ -232,11 +203,11 @@ export const RunsTable = () => {
                             replayRun.mutate({
                               runIds: selectedRows.map((row) => row.id),
                               strategy: FlowRetryStrategy.FROM_FAILED_STEP,
-                            });
-                            resetSelection();
-                            setSelectedRows([]);
-                            setSelectedAll(false);
-                            setExcludedRows(new Set());
+                            })
+                            resetSelection()
+                            setSelectedRows([])
+                            setSelectedAll(false)
+                            setExcludedRows(new Set())
                           }}
                           className="cursor-pointer"
                         >
@@ -251,27 +222,23 @@ export const RunsTable = () => {
                 </DropdownMenu>
               </PermissionNeededTooltip>
             </div>
-          );
+          )
         },
       },
     ],
     [replayRun, userHasPermissionToRetryRun, t, selectedRows, data],
-  );
+  )
 
   const handleRowClick = useCallback(
     (row: FlowRun, newWindow: boolean) => {
       if (newWindow) {
-        openNewWindow(
-          authenticationSession.appendProjectRoutePrefix(`/runs/${row.id}`),
-        );
+        openNewWindow(authenticationSession.appendProjectRoutePrefix(`/runs/${row.id}`))
       } else {
-        navigate(
-          authenticationSession.appendProjectRoutePrefix(`/runs/${row.id}`),
-        );
+        navigate(authenticationSession.appendProjectRoutePrefix(`/runs/${row.id}`))
       }
     },
     [navigate, openNewWindow],
-  );
+  )
 
   const columns: ColumnDef<RowDataWithActions<FlowRun>>[] = [
     {
@@ -281,31 +248,27 @@ export const RunsTable = () => {
           <Checkbox
             checked={selectedAll || table.getIsAllPageRowsSelected()}
             onCheckedChange={(value) => {
-              const isChecked = !!value;
-              table.toggleAllPageRowsSelected(isChecked);
+              const isChecked = !!value
+              table.toggleAllPageRowsSelected(isChecked)
 
               if (isChecked) {
                 const currentPageRows = table.getRowModel().rows.map((row) => ({
                   id: row.original.id,
                   status: row.original.status,
-                }));
+                }))
 
                 setSelectedRows((prev) => {
                   const uniqueRows = new Map<string, SelectedRow>([
-                    ...prev.map(
-                      (row) => [row.id, row] as [string, SelectedRow],
-                    ),
-                    ...currentPageRows.map(
-                      (row) => [row.id, row] as [string, SelectedRow],
-                    ),
-                  ]);
+                    ...prev.map((row) => [row.id, row] as [string, SelectedRow]),
+                    ...currentPageRows.map((row) => [row.id, row] as [string, SelectedRow]),
+                  ])
 
-                  return Array.from(uniqueRows.values());
-                });
+                  return Array.from(uniqueRows.values())
+                })
               } else {
-                setSelectedAll(false);
-                setSelectedRows([]);
-                setExcludedRows(new Set());
+                setSelectedAll(false)
+                setSelectedRows([])
+                setExcludedRows(new Set())
               }
             }}
           />
@@ -320,16 +283,14 @@ export const RunsTable = () => {
                 <DropdownMenuItem
                   className="cursor-pointer"
                   onClick={() => {
-                    const currentPageRows = table
-                      .getRowModel()
-                      .rows.map((row) => ({
-                        id: row.original.id,
-                        status: row.original.status,
-                      }));
-                    setSelectedRows(currentPageRows);
-                    setSelectedAll(false);
-                    setExcludedRows(new Set());
-                    table.toggleAllPageRowsSelected(true);
+                    const currentPageRows = table.getRowModel().rows.map((row) => ({
+                      id: row.original.id,
+                      status: row.original.status,
+                    }))
+                    setSelectedRows(currentPageRows)
+                    setSelectedAll(false)
+                    setExcludedRows(new Set())
+                    table.toggleAllPageRowsSelected(true)
                   }}
                 >
                   {t('Select shown')}
@@ -341,11 +302,11 @@ export const RunsTable = () => {
                       const allRows = data.data.map((row) => ({
                         id: row.id,
                         status: row.status,
-                      }));
-                      setSelectedRows(allRows);
-                      setSelectedAll(true);
-                      setExcludedRows(new Set());
-                      table.toggleAllPageRowsSelected(true);
+                      }))
+                      setSelectedRows(allRows)
+                      setSelectedAll(true)
+                      setExcludedRows(new Set())
+                      table.toggleAllPageRowsSelected(true)
                     }
                   }}
                 >
@@ -357,26 +318,24 @@ export const RunsTable = () => {
         </div>
       ),
       cell: ({ row }) => {
-        const isExcluded = excludedRows.has(row.original.id);
+        const isExcluded = excludedRows.has(row.original.id)
         const isSelected = selectedAll
           ? !isExcluded
-          : selectedRows.some(
-              (selectedRow) => selectedRow.id === row.original.id,
-            );
+          : selectedRows.some((selectedRow) => selectedRow.id === row.original.id)
 
         return (
           <Checkbox
             checked={isSelected}
             onCheckedChange={(value) => {
-              const isChecked = !!value;
+              const isChecked = !!value
 
               if (selectedAll) {
                 if (isChecked) {
-                  const newExcluded = new Set(excludedRows);
-                  newExcluded.delete(row.original.id);
-                  setExcludedRows(newExcluded);
+                  const newExcluded = new Set(excludedRows)
+                  newExcluded.delete(row.original.id)
+                  setExcludedRows(newExcluded)
                 } else {
-                  setExcludedRows(new Set([...excludedRows, row.original.id]));
+                  setExcludedRows(new Set([...excludedRows, row.original.id]))
                 }
               } else {
                 if (isChecked) {
@@ -386,84 +345,61 @@ export const RunsTable = () => {
                       id: row.original.id,
                       status: row.original.status,
                     },
-                  ]);
+                  ])
                 } else {
-                  setSelectedRows((prev) =>
-                    prev.filter(
-                      (selectedRow) => selectedRow.id !== row.original.id,
-                    ),
-                  );
+                  setSelectedRows((prev) => prev.filter((selectedRow) => selectedRow.id !== row.original.id))
                 }
               }
-              row.toggleSelected(isChecked);
+              row.toggleSelected(isChecked)
             }}
           />
-        );
+        )
       },
     },
     {
       accessorKey: 'flowId',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Flow')} />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t('Flow')} />,
       cell: ({ row }) => {
-        return <div className="text-left">{row.original.flowDisplayName}</div>;
+        return <div className="text-left">{row.original.flowDisplayName}</div>
       },
     },
     {
       accessorKey: 'status',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Status')} />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t('Status')} />,
       cell: ({ row }) => {
-        const status = row.original.status;
-        const { variant, Icon } = flowRunUtils.getStatusIcon(status);
+        const status = row.original.status
+        const { variant, Icon } = flowRunUtils.getStatusIcon(status)
         return (
           <div className="text-left">
-            <StatusIconWithText
-              icon={Icon}
-              text={formatUtils.convertEnumToHumanReadable(status)}
-              variant={variant}
-            />
+            <StatusIconWithText icon={Icon} text={formatUtils.convertEnumToHumanReadable(status)} variant={variant} />
           </div>
-        );
+        )
       },
     },
     {
       accessorKey: 'created',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Start Time')} />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t('Start Time')} />,
       cell: ({ row }) => {
-        return (
-          <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.startTime))}
-          </div>
-        );
+        return <div className="text-left">{formatUtils.formatDate(new Date(row.original.startTime))}</div>
       },
     },
     {
       accessorKey: 'duration',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Duration')} />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t('Duration')} />,
       cell: ({ row }) => {
         return (
           <div className="text-left">
-            {row.original.finishTime &&
-              formatUtils.formatDuration(row.original.duration)}
+            {row.original.finishTime && formatUtils.formatDuration(row.original.duration)}
           </div>
-        );
+        )
       },
     },
-  ];
+  ]
 
   return (
     <DataTable
       emptyStateTextTitle={t('No flow runs found')}
-      emptyStateTextDescription={t(
-        'Come back later when your automations start running',
-      )}
+      emptyStateTextDescription={t('Come back later when your automations start running')}
       emptyStateIcon={<History className="size-14" />}
       columns={columns}
       page={data}
@@ -472,5 +408,5 @@ export const RunsTable = () => {
       bulkActions={bulkActions}
       onRowClick={(row, newWindow) => handleRowClick(row, newWindow)}
     />
-  );
-};
+  )
+}

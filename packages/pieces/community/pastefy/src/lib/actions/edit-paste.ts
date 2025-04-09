@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { formatDate, makeClient, pastefyCommon } from '../common';
-import { pastefyAuth } from '../..';
-import CryptoJS from 'crypto-js';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import CryptoJS from 'crypto-js'
+import { pastefyAuth } from '../..'
+import { formatDate, makeClient, pastefyCommon } from '../common'
 
 export default createAction({
   auth: pastefyAuth,
@@ -34,16 +34,16 @@ export default createAction({
     }),
   },
   async run(context) {
-    const client = makeClient(context.auth, context.propsValue);
-    const password = context.propsValue.password;
-    let content = context.propsValue.content;
-    let title = context.propsValue.title;
+    const client = makeClient(context.auth, context.propsValue)
+    const password = context.propsValue.password
+    let content = context.propsValue.content
+    let title = context.propsValue.title
     if (password) {
       if (content) {
-        content = CryptoJS.AES.encrypt(content, password).toString();
+        content = CryptoJS.AES.encrypt(content, password).toString()
       }
       if (title) {
-        title = CryptoJS.AES.encrypt(title, password).toString();
+        title = CryptoJS.AES.encrypt(title, password).toString()
       }
     }
     const res = await client.editPaste(context.propsValue.paste_id, {
@@ -53,7 +53,7 @@ export default createAction({
       folder: context.propsValue.folder_id,
       visibility: context.propsValue.visibility,
       expire_at: formatDate(context.propsValue.expiry),
-    });
-    return res;
+    })
+    return res
   },
-});
+})

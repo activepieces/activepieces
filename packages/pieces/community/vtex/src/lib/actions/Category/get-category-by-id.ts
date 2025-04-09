@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { Category } from '../../common/Category';
-import { vtexAuth } from '../../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { vtexAuth } from '../../..'
+import { Category } from '../../common/Category'
 
 export const getCategoryById = createAction({
   auth: vtexAuth,
@@ -15,11 +15,11 @@ export const getCategoryById = createAction({
     }),
   },
   async run(context) {
-    const { hostUrl, appKey, appToken } = context.auth;
-    const { categoryId } = context.propsValue;
+    const { hostUrl, appKey, appToken } = context.auth
+    const { categoryId } = context.propsValue
 
-    const category = new Category(hostUrl, appKey, appToken);
+    const category = new Category(hostUrl, appKey, appToken)
 
-    return await category.getCategory(categoryId);
+    return await category.getCategory(categoryId)
   },
-});
+})

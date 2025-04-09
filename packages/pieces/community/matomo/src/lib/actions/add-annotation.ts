@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { addAnnotation } from '../api';
-import { matomoAuth } from '../auth';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { addAnnotation } from '../api'
+import { matomoAuth } from '../auth'
 
 export const addAnnotationAction = createAction({
   name: 'add_annotation',
@@ -29,6 +29,6 @@ export const addAnnotationAction = createAction({
       note: context.propsValue.note,
       date: context.propsValue.date,
       starred: context.propsValue.starred ? '1' : '0',
-    });
+    })
   },
-});
+})

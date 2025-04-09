@@ -1,5 +1,5 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import jimp from 'jimp';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import jimp from 'jimp'
 
 export const cropImage = createAction({
   name: 'crop_image',
@@ -18,8 +18,7 @@ export const cropImage = createAction({
     }),
     top: Property.Number({
       displayName: 'Top',
-      description:
-        'Represents the vertical position, indicating the starting point from the top of the image.',
+      description: 'Represents the vertical position, indicating the starting point from the top of the image.',
       required: true,
     }),
     width: Property.Number({
@@ -34,32 +33,28 @@ export const cropImage = createAction({
     }),
     resultFileName: Property.ShortText({
       displayName: 'Result File Name',
-      description:
-        'Specifies the output file name for the cropped image (without extension).',
+      description: 'Specifies the output file name for the cropped image (without extension).',
       required: false,
     }),
   },
   async run(context) {
-    const image = await jimp.read(context.propsValue.image.data);
+    const image = await jimp.read(context.propsValue.image.data)
     await image.crop(
       context.propsValue.left,
       context.propsValue.top,
       context.propsValue.width,
-      context.propsValue.height
-    );
+      context.propsValue.height,
+    )
 
-    const imageBuffer = await image.getBufferAsync(image.getMIME());
+    const imageBuffer = await image.getBufferAsync(image.getMIME())
 
-    const fileName =
-      (context.propsValue.resultFileName ?? 'image') +
-      '.' +
-      image.getExtension();
+    const fileName = (context.propsValue.resultFileName ?? 'image') + '.' + image.getExtension()
 
     const imageReference = await context.files.write({
       fileName: fileName,
       data: imageBuffer,
-    });
+    })
 
-    return imageReference;
+    return imageReference
   },
-});
+})

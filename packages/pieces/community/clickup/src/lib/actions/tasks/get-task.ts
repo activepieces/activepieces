@@ -1,8 +1,7 @@
-import { Property, createAction } from "@activepieces/pieces-framework";
-import { HttpMethod, getAccessTokenOrThrow } from "@activepieces/pieces-common";
-import { callClickUpApi } from "../../common";
-import { clickupAuth } from "../../../";
-
+import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { clickupAuth } from '../../../'
+import { callClickUpApi } from '../../common'
 
 export const getClickupTask = createAction({
   auth: clickupAuth,
@@ -14,14 +13,17 @@ export const getClickupTask = createAction({
       description: 'The id of the tas to get',
       displayName: 'Task ID',
       required: true,
-  }),
+    }),
   },
   async run(configValue) {
-    const { task_id } = configValue.propsValue;
-    const response = await callClickUpApi(HttpMethod.GET,
-      `task/${task_id}`, getAccessTokenOrThrow(configValue.auth), {
-    });
+    const { task_id } = configValue.propsValue
+    const response = await callClickUpApi(
+      HttpMethod.GET,
+      `task/${task_id}`,
+      getAccessTokenOrThrow(configValue.auth),
+      {},
+    )
 
-    return response.body;
+    return response.body
   },
-});
+})

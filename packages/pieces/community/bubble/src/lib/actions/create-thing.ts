@@ -1,12 +1,8 @@
-import { createAction } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
 
-import { bubbleAuth } from '../../index';
-import { bubbleCommon } from '../common';
+import { bubbleAuth } from '../../index'
+import { bubbleCommon } from '../common'
 
 export const bubbleCreateThingAction = createAction({
   auth: bubbleAuth,
@@ -18,10 +14,10 @@ export const bubbleCreateThingAction = createAction({
     fields: bubbleCommon.fields,
   },
   async run(context) {
-    const { appname, token } = context.auth;
-    const { typename, fields } = context.propsValue;
+    const { appname, token } = context.auth
+    const { typename, fields } = context.propsValue
 
-    const server_url = `https://${appname}.bubbleapps.io/api/1.1/obj/${typename}`;
+    const server_url = `https://${appname}.bubbleapps.io/api/1.1/obj/${typename}`
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -35,8 +31,8 @@ export const bubbleCreateThingAction = createAction({
         token,
       },
       body: fields,
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

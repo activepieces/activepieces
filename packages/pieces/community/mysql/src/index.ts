@@ -1,10 +1,6 @@
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import actions from './lib/actions';
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import actions from './lib/actions'
 
 export const mysqlAuth = PieceAuth.CustomAuth({
   props: {
@@ -36,7 +32,7 @@ export const mysqlAuth = PieceAuth.CustomAuth({
     }),
   },
   required: true,
-});
+})
 
 export const mysql = createPiece({
   displayName: 'MySQL',
@@ -45,8 +41,8 @@ export const mysql = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mysql.png',
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  authors: ["JanHolger","kishanprmr","khaledmashaly","abuaboud"],
+  authors: ['JanHolger', 'kishanprmr', 'khaledmashaly', 'abuaboud'],
   auth: mysqlAuth,
   actions,
   triggers: [],
-});
+})

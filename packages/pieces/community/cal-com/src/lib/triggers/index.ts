@@ -1,5 +1,5 @@
-import { EventTrigger } from '../common';
-import { registerWebhooks } from './register-webhook';
+import { EventTrigger } from '../common'
+import { registerWebhooks } from './register-webhook'
 
 export const triggers = [
   {
@@ -194,5 +194,5 @@ export const triggers = [
     displayName: eventTrigger.displayName,
     sampleData: eventTrigger.sampleData,
     description: `Create a webhook to monitor when ${eventTrigger.displayName}`,
-  })
-);
+  }),
+)

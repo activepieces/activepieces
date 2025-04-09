@@ -1,10 +1,10 @@
-import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { useEffect, useState } from 'react';
+import { useMutation } from '@tanstack/react-query'
+import { t } from 'i18next'
+import { useEffect, useState } from 'react'
 
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { useAuthorization } from '@/hooks/authorization-hooks';
+import { LoadingSpinner } from '@/components/ui/spinner'
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast'
+import { useAuthorization } from '@/hooks/authorization-hooks'
 import {
   Flow,
   FlowOperationType,
@@ -13,55 +13,43 @@ import {
   Permission,
   PopulatedFlow,
   isNil,
-} from '@activepieces/shared';
+} from '@activepieces/shared'
 
-import { Switch } from '../../../components/ui/switch';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '../../../components/ui/tooltip';
-import { flowsApi } from '../lib/flows-api';
-import { flowsUtils } from '../lib/flows-utils';
+import { Switch } from '../../../components/ui/switch'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../../components/ui/tooltip'
+import { flowsApi } from '../lib/flows-api'
+import { flowsUtils } from '../lib/flows-utils'
 
 type FlowStatusToggleProps = {
-  flow: Flow;
-  flowVersion: FlowVersion;
-};
+  flow: Flow
+  flowVersion: FlowVersion
+}
 
 const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
-  const [isFlowPublished, setIsChecked] = useState(
-    flow.status === FlowStatus.ENABLED,
-  );
-  const { checkAccess } = useAuthorization();
-  const userHasPermissionToToggleFlowStatus = checkAccess(
-    Permission.UPDATE_FLOW_STATUS,
-  );
+  const [isFlowPublished, setIsChecked] = useState(flow.status === FlowStatus.ENABLED)
+  const { checkAccess } = useAuthorization()
+  const userHasPermissionToToggleFlowStatus = checkAccess(Permission.UPDATE_FLOW_STATUS)
 
   useEffect(() => {
-    setIsChecked(flow.status === FlowStatus.ENABLED);
-  }, [flow.status]);
+    setIsChecked(flow.status === FlowStatus.ENABLED)
+  }, [flow.status])
 
-  const { mutate: changeStatus, isPending: isLoading } = useMutation<
-    PopulatedFlow,
-    Error,
-    void
-  >({
+  const { mutate: changeStatus, isPending: isLoading } = useMutation<PopulatedFlow, Error, void>({
     mutationFn: async (): Promise<PopulatedFlow> => {
       return flowsApi.update(flow.id, {
         type: FlowOperationType.CHANGE_STATUS,
         request: {
           status: isFlowPublished ? FlowStatus.DISABLED : FlowStatus.ENABLED,
         },
-      });
+      })
     },
     onSuccess: (flow) => {
-      setIsChecked(flow.status === FlowStatus.ENABLED);
+      setIsChecked(flow.status === FlowStatus.ENABLED)
     },
     onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
+      toast(INTERNAL_ERROR_TOAST)
     },
-  });
+  })
 
   return (
     <>
@@ -71,11 +59,7 @@ const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
             <Switch
               checked={isFlowPublished}
               onCheckedChange={() => changeStatus()}
-              disabled={
-                isLoading ||
-                !userHasPermissionToToggleFlowStatus ||
-                isNil(flow.publishedVersionId)
-              }
+              disabled={isLoading || !userHasPermissionToToggleFlowStatus || isNil(flow.publishedVersionId)}
             />
           </div>
         </TooltipTrigger>
@@ -84,8 +68,8 @@ const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
             ? isNil(flow.publishedVersionId)
               ? t('Please publish flow first')
               : isFlowPublished
-              ? t('Flow is on')
-              : t('Flow is off')
+                ? t('Flow is on')
+                : t('Flow is off')
             : t('Permission Needed')}
         </TooltipContent>
       </Tooltip>
@@ -95,19 +79,15 @@ const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
         isFlowPublished && (
           <Tooltip>
             <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <div className="p-2 rounded-full ">
-                {flowsUtils.flowStatusIconRenderer(flow, flowVersion)}
-              </div>
+              <div className="p-2 rounded-full ">{flowsUtils.flowStatusIconRenderer(flow, flowVersion)}</div>
             </TooltipTrigger>
-            <TooltipContent side="bottom">
-              {flowsUtils.flowStatusToolTipRenderer(flow, flowVersion)}
-            </TooltipContent>
+            <TooltipContent side="bottom">{flowsUtils.flowStatusToolTipRenderer(flow, flowVersion)}</TooltipContent>
           </Tooltip>
         )
       )}
     </>
-  );
-};
+  )
+}
 
-FlowStatusToggle.displayName = 'FlowStatusToggle';
-export { FlowStatusToggle };
+FlowStatusToggle.displayName = 'FlowStatusToggle'
+export { FlowStatusToggle }

@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { sendinblueAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { sendinblueAuth } from '../..'
 
 export const createOrUpdateContact = createAction({
   auth: sendinblueAuth,
@@ -61,11 +61,11 @@ export const createOrUpdateContact = createAction({
     }),
   },
   async run(context) {
-    let listIds: number[] = [];
+    let listIds: number[] = []
     if (context.propsValue.list_ids) {
       listIds = context.propsValue.list_ids.map((listId) => {
-        return parseInt(listId as unknown as string);
-      });
+        return parseInt(listId as unknown as string)
+      })
     }
     const contact = {
       email: context.propsValue.email,
@@ -76,15 +76,13 @@ export const createOrUpdateContact = createAction({
       listIds: listIds,
       smtpBlacklistSender: context.propsValue.smtp_blacklist_sender,
       updateEnabled: true,
-    };
-    const identifier = context.propsValue.email;
+    }
+    const identifier = context.propsValue.email
 
     // filter out undefined values
-    const body = Object.fromEntries(
-      Object.entries(contact).filter(([_, value]) => Boolean(value))
-    );
+    const body = Object.fromEntries(Object.entries(contact).filter(([_, value]) => Boolean(value)))
 
-    console.log('Contact update request ' + identifier);
+    console.log('Contact update request ' + identifier)
     const updateResponse = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `https://api.sendinblue.com/v3/contacts`,
@@ -92,8 +90,8 @@ export const createOrUpdateContact = createAction({
       headers: {
         'api-key': context.auth,
       },
-    });
-    console.debug('Contact update response', updateResponse);
+    })
+    console.debug('Contact update response', updateResponse)
 
     const contactREsponse = await httpClient.sendRequest({
       method: HttpMethod.GET,
@@ -101,7 +99,7 @@ export const createOrUpdateContact = createAction({
       headers: {
         'api-key': context.auth,
       },
-    });
-    return contactREsponse.body;
+    })
+    return contactREsponse.body
   },
-});
+})

@@ -13,10 +13,10 @@ export default {
       },
     ],
   },
-  "moduleNameMapper": {
-    "isolated-vm": "<rootDir>/__mocks__/isolated-vm.js"
+  moduleNameMapper: {
+    'isolated-vm': '<rootDir>/__mocks__/isolated-vm.js',
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../../coverage/packages/server/api',
-  testTimeout: 120000
-};
+  testTimeout: 120000,
+}

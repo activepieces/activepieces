@@ -1,8 +1,8 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
-import { clickupCommon, callClickUpApi } from '../../common';
-import { clickupAuth } from '../../../';
+import { clickupAuth } from '../../../'
+import { callClickUpApi, clickupCommon } from '../../common'
 
 export const createClickupTask = createAction({
   auth: clickupAuth,
@@ -15,11 +15,7 @@ export const createClickupTask = createAction({
     list_id: clickupCommon.list_id(),
     status_id: clickupCommon.status_id(),
     priority_id: clickupCommon.priority_id(),
-    assignee_id: clickupCommon.assignee_id(
-      false,
-      'Assignee Id',
-      'ID of assignee for Clickup Task'
-    ),
+    assignee_id: clickupCommon.assignee_id(false, 'Assignee Id', 'ID of assignee for Clickup Task'),
     name: Property.ShortText({
       description: 'The name of task',
       displayName: 'Name',
@@ -37,15 +33,8 @@ export const createClickupTask = createAction({
     }),
   },
   async run(configValue) {
-    const {
-      list_id,
-      name,
-      description,
-      status_id,
-      priority_id,
-      assignee_id,
-      markdown_description,
-    } = configValue.propsValue;
+    const { list_id, name, description, status_id, priority_id, assignee_id, markdown_description } =
+      configValue.propsValue
     const response = await callClickUpApi(
       HttpMethod.POST,
       `list/${list_id}/task`,
@@ -57,9 +46,9 @@ export const createClickupTask = createAction({
         status: status_id,
         priority: priority_id,
         assignees: assignee_id,
-      }
-    );
+      },
+    )
 
-    return response.body;
+    return response.body
   },
-});
+})

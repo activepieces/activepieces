@@ -1,11 +1,11 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { storageAddtoList } from './lib/actions/store-add-to-list';
-import { storageAppendAction } from './lib/actions/store-append-action';
-import { storageGetAction } from './lib/actions/store-get-action';
-import { storagePutAction } from './lib/actions/store-put-action';
-import { storageRemoveFromList } from './lib/actions/store-remove-from-list';
-import { storageRemoveValue } from './lib/actions/store-remove-value';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { storageAddtoList } from './lib/actions/store-add-to-list'
+import { storageAppendAction } from './lib/actions/store-append-action'
+import { storageGetAction } from './lib/actions/store-get-action'
+import { storagePutAction } from './lib/actions/store-put-action'
+import { storageRemoveFromList } from './lib/actions/store-remove-from-list'
+import { storageRemoveValue } from './lib/actions/store-remove-value'
 
 export const storage = createPiece({
   displayName: 'Storage',
@@ -14,7 +14,16 @@ export const storage = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/store.png',
   categories: [PieceCategory.CORE],
   auth: PieceAuth.None(),
-  authors: ["JanHolger","fardeenpanjwani-codeglo","Abdallah-Alwarawreh","Salem-Alaa","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: [
+    'JanHolger',
+    'fardeenpanjwani-codeglo',
+    'Abdallah-Alwarawreh',
+    'Salem-Alaa',
+    'kishanprmr',
+    'MoShizzle',
+    'khaledmashaly',
+    'abuaboud',
+  ],
   actions: [
     storageGetAction,
     storagePutAction,
@@ -24,4 +33,4 @@ export const storage = createPiece({
     storageRemoveFromList,
   ],
   triggers: [],
-});
+})

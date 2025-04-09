@@ -1,11 +1,7 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  createPiece,
-  OAuth2PropertyValue,
-  PieceAuth,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { createTask } from './lib/actions/create-task';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { createTask } from './lib/actions/create-task'
 
 const mddescription = `
 # How to add a new connection
@@ -17,7 +13,7 @@ const mddescription = `
 6. copy the redirect url from the piece and fill the url field ( without https:// )
 7. check out Milestones , Subtasks , Projects , Statuses , Tasks and Portfolios
 8. copy the client id and client secret and paste them in the piece
-`;
+`
 
 export const niftyAuth = PieceAuth.OAuth2({
   authUrl: 'https://nifty.pm/authorize',
@@ -25,7 +21,7 @@ export const niftyAuth = PieceAuth.OAuth2({
   required: true,
   description: mddescription,
   scope: ['task', 'project', 'subtask', 'milestone', 'subteam'],
-});
+})
 
 export const nifty = createPiece({
   displayName: 'Nifty',
@@ -35,7 +31,7 @@ export const nifty = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/nifty.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ["kishanprmr","MoShizzle","abuaboud"],
+  authors: ['kishanprmr', 'MoShizzle', 'abuaboud'],
   actions: [
     createTask,
     createCustomApiCallAction({
@@ -47,4 +43,4 @@ export const nifty = createPiece({
     }),
   ],
   triggers: [],
-});
+})

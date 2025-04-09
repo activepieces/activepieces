@@ -1,7 +1,7 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { collectionName, convertToFilter, seclectPointsProps } from '../common';
-import { qdrantAuth } from '../..';
-import { QdrantClient } from '@qdrant/js-client-rest';
+import { createAction } from '@activepieces/pieces-framework'
+import { QdrantClient } from '@qdrant/js-client-rest'
+import { qdrantAuth } from '../..'
+import { collectionName, convertToFilter, seclectPointsProps } from '../common'
 
 export const deletePoints = createAction({
   auth: qdrantAuth,
@@ -16,22 +16,20 @@ export const deletePoints = createAction({
     const client = new QdrantClient({
       apiKey: auth.key,
       url: auth.serverAddress,
-    });
+    })
 
-    const collectionName = propsValue.collectionName as string;
+    const collectionName = propsValue.collectionName as string
     if (propsValue.getPointsBy === 'Ids') {
-      const ids = JSON.parse(propsValue.infosToGetPoint['ids']);
+      const ids = JSON.parse(propsValue.infosToGetPoint['ids'])
       return await client.delete(collectionName, {
         points: ids instanceof Array ? ids : [ids],
-      });
+      })
     }
-    const filter = convertToFilter(
-      propsValue.infosToGetPoint as { must: any; must_not: any }
-    );
+    const filter = convertToFilter(propsValue.infosToGetPoint as { must: any; must_not: any })
     // console.log(JSON.stringify(filter))
     return await client.delete(collectionName, {
       filter,
       wait: true,
-    });
+    })
   },
-});
+})

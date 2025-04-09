@@ -1,8 +1,8 @@
-import { createPiece, PieceAuth, OAuth2PropertyValue } from "@activepieces/pieces-framework";
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { refreshSheetsCharts } from "./lib/actions/refresh-charts";
-import { generateFromTemplate } from "./lib/actions/generate-from-template";
-import { getPresentation } from "./lib/actions/get-presentation";
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { generateFromTemplate } from './lib/actions/generate-from-template'
+import { getPresentation } from './lib/actions/get-presentation'
+import { refreshSheetsCharts } from './lib/actions/refresh-charts'
 
 export const googleSlidesAuth = PieceAuth.OAuth2({
   description: '',
@@ -15,14 +15,14 @@ export const googleSlidesAuth = PieceAuth.OAuth2({
     'https://www.googleapis.com/auth/drive',
     'https://www.googleapis.com/auth/spreadsheets',
   ],
-});
+})
 
 export const googleSlide = createPiece({
-  displayName: "Google Slides",
+  displayName: 'Google Slides',
   auth: googleSlidesAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: "https://cdn.activepieces.com/pieces/google-slides.png",
-  authors: ["Kevinyu-alan"],
+  logoUrl: 'https://cdn.activepieces.com/pieces/google-slides.png',
+  authors: ['Kevinyu-alan'],
   actions: [
     getPresentation,
     refreshSheetsCharts,
@@ -36,4 +36,4 @@ export const googleSlide = createPiece({
     }),
   ],
   triggers: [],
-});
+})

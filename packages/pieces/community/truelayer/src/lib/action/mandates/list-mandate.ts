@@ -1,12 +1,13 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { trueLayerCommon } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { trueLayerCommon } from '../../common'
 
 export const listMandate = createAction({
   auth: trueLayerCommon.auth,
   name: 'list-mandate',
   displayName: 'List Mandates',
-  description: 'List all the mandates associated with the client. This API must be called using a backend bearer token.',
+  description:
+    'List all the mandates associated with the client. This API must be called using a backend bearer token.',
   props: {
     user_id: Property.ShortText({
       displayName: 'User ID',
@@ -38,6 +39,6 @@ export const listMandate = createAction({
       },
     })
 
-    return response.body;
+    return response.body
   },
-});
+})

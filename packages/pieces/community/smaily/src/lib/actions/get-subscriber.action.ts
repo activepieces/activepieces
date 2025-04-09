@@ -1,17 +1,12 @@
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { smailyAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { smailyAuth } from '../../'
 
 export const getSubscriberAction = createAction({
   auth: smailyAuth,
   name: 'get-subscriber',
   displayName: 'Get Subscriber',
-  description:
-    'Retrives detailed subscriber information for a given email address.',
+  description: 'Retrives detailed subscriber information for a given email address.',
   props: {
     email: Property.ShortText({
       displayName: 'Email',
@@ -33,8 +28,8 @@ export const getSubscriberAction = createAction({
         username: contex.auth.username,
         password: contex.auth.password,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

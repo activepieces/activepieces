@@ -1,5 +1,5 @@
 export interface RecipientField {
-  key: string;
-  label: string;
-  type: string;
+  key: string
+  label: string
+  type: string
 }

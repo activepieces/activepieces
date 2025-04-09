@@ -1,23 +1,18 @@
-import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { discordAuth } from '../../index';
-import { discordCommon } from '../common';
-import FormData from 'form-data';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { ApFile, Property, createAction } from '@activepieces/pieces-framework'
+import FormData from 'form-data'
+import { discordAuth } from '../../index'
+import { discordCommon } from '../common'
 
 interface FileObject {
-  file:ApFile
+  file: ApFile
 }
 
 export const sendMessageWithBot = createAction({
   name: 'sendMessageWithBot',
-  auth:discordAuth,
+  auth: discordAuth,
   displayName: 'Send Message with Bot',
-  description:
-    'Send messages via bot to any channel or thread you want, with an optional file attachment.',
+  description: 'Send messages via bot to any channel or thread you want, with an optional file attachment.',
   props: {
     channel_id: discordCommon.channel,
     message: Property.LongText({
@@ -39,20 +34,20 @@ export const sendMessageWithBot = createAction({
     }),
   },
   async run(configValue) {
-    const channelId = configValue.propsValue.channel_id;
-    const message = configValue.propsValue.message;
-    const files = configValue.propsValue.files as FileObject[] ?? [];
-  
-    const formData = new FormData();
-    formData.append('content', message);
-  
+    const channelId = configValue.propsValue.channel_id
+    const message = configValue.propsValue.message
+    const files = (configValue.propsValue.files as FileObject[]) ?? []
+
+    const formData = new FormData()
+    formData.append('content', message)
+
     if (files && files.length > 0) {
       files.forEach((fileObj, index) => {
-        const file = fileObj.file;
-        formData.append(`files[${index}]`, file.data, file.filename);
-      });
+        const file = fileObj.file
+        formData.append(`files[${index}]`, file.data, file.filename)
+      })
     }
-  
+
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `https://discord.com/api/v10/channels/${channelId}/messages`,
@@ -61,11 +56,10 @@ export const sendMessageWithBot = createAction({
         'Content-Type': 'multipart/form-data',
       },
       body: formData,
-    };
-  
-    const res = await httpClient.sendRequest<never>(request);
-  
-    return res.body;
-  }
-  
-});
+    }
+
+    const res = await httpClient.sendRequest<never>(request)
+
+    return res.body
+  },
+})

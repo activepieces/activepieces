@@ -1,8 +1,8 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { addAnnotationAction } from './lib/actions/add-annotation';
-import { matomoAuth } from './lib/auth';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { addAnnotationAction } from './lib/actions/add-annotation'
+import { matomoAuth } from './lib/auth'
 
 export const matomo = createPiece({
   displayName: 'Matomo',
@@ -12,7 +12,7 @@ export const matomo = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/matomo.png',
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
-  authors: ["joeworkman","kishanprmr","MoShizzle","abuaboud"],
+  authors: ['joeworkman', 'kishanprmr', 'MoShizzle', 'abuaboud'],
   actions: [
     addAnnotationAction,
     createCustomApiCallAction({
@@ -24,6 +24,6 @@ export const matomo = createPiece({
     }),
   ],
   triggers: [],
-});
+})
 
 // Matomo API Docs: https://developer.matomo.org/api-reference/reporting-api

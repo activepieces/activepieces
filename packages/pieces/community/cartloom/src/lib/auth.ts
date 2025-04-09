@@ -1,10 +1,7 @@
-import {
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { getProducts } from './api';
+import { PieceAuth, Property } from '@activepieces/pieces-framework'
+import { getProducts } from './api'
 
-export type CartloomAuthType = { apiKey: string; domain: string };
+export type CartloomAuthType = { apiKey: string; domain: string }
 
 export const cartloomAuth = PieceAuth.CustomAuth({
   description: 'Cartloom Authentication',
@@ -18,30 +15,28 @@ export const cartloomAuth = PieceAuth.CustomAuth({
     apiKey: PieceAuth.SecretText({
       displayName: 'API Key',
       description: 'The API key for your Cartloom account',
-      required: true
+      required: true,
     }),
   },
   validate: async ({ auth }) => {
     try {
-      await validateAuth(auth);
+      await validateAuth(auth)
       return {
         valid: true,
-      };
+      }
     } catch (e) {
       return {
         valid: false,
         error: (e as Error)?.message,
-      };
+      }
     }
   },
   required: true,
-});
+})
 
 const validateAuth = async (auth: CartloomAuthType) => {
-  const response = await getProducts(auth);
+  const response = await getProducts(auth)
   if (response.success !== true) {
-    throw new Error(
-      'Authentication failed. Please check your domain and API key and try again.'
-    );
+    throw new Error('Authentication failed. Please check your domain and API key and try again.')
   }
-};
+}

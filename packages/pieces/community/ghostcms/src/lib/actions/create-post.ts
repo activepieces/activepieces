@@ -1,12 +1,8 @@
-import {
-  createAction,
-  DynamicPropsValue,
-  Property,
-} from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { DynamicPropsValue, Property, createAction } from '@activepieces/pieces-framework'
 
-import { ghostAuth } from '../..';
-import { common } from '../common';
+import { ghostAuth } from '../..'
+import { common } from '../common'
 
 export const createPost = createAction({
   name: 'create_post',
@@ -78,8 +74,8 @@ export const createPost = createAction({
       queryParams: {
         source: 'html',
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

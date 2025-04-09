@@ -1,15 +1,7 @@
-import {
-  createCustomApiCallAction,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { askChatbot } from './lib/actions/ask-chatbot';
+import { HttpMethod, createCustomApiCallAction, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { askChatbot } from './lib/actions/ask-chatbot'
 
 const markdownDescription = `
 Follow these instructions to get your re:tune chat ID and API Key:
@@ -20,7 +12,7 @@ Follow these instructions to get your re:tune chat ID and API Key:
 e.g from this: https://retune.so/chat/acewocwe-123123-123123-123123/ your chat ID is "acewocwe-123123-123123-123123"
 4. To get the API key, go to https://retune.so/settings
 5. Scroll to the bottom to find "Re:tune API Keys" and copy your key below
-`;
+`
 
 export const retuneAuth = PieceAuth.CustomAuth({
   description: markdownDescription,
@@ -42,7 +34,7 @@ export const retuneAuth = PieceAuth.CustomAuth({
   validate: async (auth) => {
     try {
       await httpClient.sendRequest<{
-        data: { id: string }[];
+        data: { id: string }[]
       }>({
         url: `https://retune.so/api/chat/${auth.auth.chatId}/threads`,
         method: HttpMethod.POST,
@@ -50,29 +42,28 @@ export const retuneAuth = PieceAuth.CustomAuth({
           'X-Workspace-API-Key': auth.auth.apiKey,
         },
         body: {},
-      });
+      })
       return {
         valid: true,
-      };
+      }
     } catch (e) {
       return {
         valid: false,
         error: 'Invalid API key',
-      };
+      }
     }
   },
-});
+})
 
 export const retune = createPiece({
   displayName: 're:tune',
-  description:
-    'Everything you need to transform your business with AI, from custom chatbots to autonomous agents.',
+  description: 'Everything you need to transform your business with AI, from custom chatbots to autonomous agents.',
 
   auth: retuneAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/retune.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ["kishanprmr","MoShizzle","abuaboud"],
+  authors: ['kishanprmr', 'MoShizzle', 'abuaboud'],
   actions: [
     askChatbot,
     createCustomApiCallAction({
@@ -84,4 +75,4 @@ export const retune = createPiece({
     }),
   ],
   triggers: [],
-});
+})

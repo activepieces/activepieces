@@ -1,8 +1,8 @@
-import { t } from 'i18next';
-import { UseFormReturn } from 'react-hook-form';
+import { t } from 'i18next'
+import { UseFormReturn } from 'react-hook-form'
 
-import { FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Label } from '@/components/ui/label';
+import { FormField, FormItem, FormMessage } from '@/components/ui/form'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -11,12 +11,12 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { PlatformRole } from '@activepieces/shared';
+} from '@/components/ui/select'
+import { PlatformRole } from '@activepieces/shared'
 
 type PlatformRoleSelectProps = {
-  form: UseFormReturn<any>;
-};
+  form: UseFormReturn<any>
+}
 export const PlatformRoleSelect = ({ form }: PlatformRoleSelectProps) => {
   return (
     <FormField
@@ -40,5 +40,5 @@ export const PlatformRoleSelect = ({ form }: PlatformRoleSelectProps) => {
         </FormItem>
       )}
     ></FormField>
-  );
-};
+  )
+}

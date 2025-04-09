@@ -1,11 +1,10 @@
-import { googleGeminiAuth } from '../../index';
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { defaultLLM, getGeminiModelOptions } from '../common/common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { GoogleGenerativeAI } from '@google/generative-ai'
+import { googleGeminiAuth } from '../../index'
+import { defaultLLM, getGeminiModelOptions } from '../common/common'
 
 export const generateContentAction = createAction({
-  description:
-    'Generate content using Google Gemini using the "gemini-pro" model',
+  description: 'Generate content using Google Gemini using the "gemini-pro" model',
   displayName: 'Generate Content',
   name: 'generate_content',
   auth: googleGeminiAuth,
@@ -25,9 +24,9 @@ export const generateContentAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const genAI = new GoogleGenerativeAI(auth);
-    const model = genAI.getGenerativeModel({ model: propsValue.model });
-    const result = await model.generateContent(propsValue.prompt);
-    return result.response.text();
+    const genAI = new GoogleGenerativeAI(auth)
+    const model = genAI.getGenerativeModel({ model: propsValue.model })
+    const result = await model.generateContent(propsValue.prompt)
+    return result.response.text()
   },
-});
+})

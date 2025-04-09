@@ -1,11 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { discordAuth } from '../../index';
-import { discordCommon } from '../common';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { discordAuth } from '../../index'
+import { discordCommon } from '../common'
 
 export const discordRenameChannel = createAction({
   auth: discordAuth,
@@ -32,12 +28,12 @@ export const discordRenameChannel = createAction({
         authorization: `Bot ${configValue.auth}`,
         'Content-Type': 'application/json',
       },
-    };
+    }
 
-    const res = await httpClient.sendRequest<never>(request);
+    const res = await httpClient.sendRequest<never>(request)
 
     return {
       success: res.status === 204,
-    };
+    }
   },
-});
+})

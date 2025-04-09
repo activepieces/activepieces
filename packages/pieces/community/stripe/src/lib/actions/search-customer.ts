@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { stripeAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { stripeAuth } from '../..'
 
 export const stripeSearchCustomer = createAction({
   name: 'search_customer',
@@ -17,7 +17,7 @@ export const stripeSearchCustomer = createAction({
   async run(context) {
     const customer = {
       email: context.propsValue.email,
-    };
+    }
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: 'https://api.stripe.com/v1/customers/search',
@@ -28,7 +28,7 @@ export const stripeSearchCustomer = createAction({
       body: {
         query: 'email:' + "'" + customer.email + "'",
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

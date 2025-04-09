@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query'
 
-import { gitSyncApi } from './git-sync-api';
+import { gitSyncApi } from './git-sync-api'
 
 export const gitSyncHooks = {
   useGitSync: (projectId: string, enabled: boolean) => {
@@ -9,11 +9,11 @@ export const gitSyncHooks = {
       queryFn: () => gitSyncApi.get(projectId),
       staleTime: Infinity,
       enabled: enabled,
-    });
+    })
     return {
       gitSync: query.data,
       isLoading: query.isLoading,
       refetch: query.refetch,
-    };
+    }
   },
-};
+}

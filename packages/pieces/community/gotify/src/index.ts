@@ -1,10 +1,6 @@
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { sendNotification } from './lib/actions/send-notification';
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { sendNotification } from './lib/actions/send-notification'
 
 export const gotifyAuth = PieceAuth.CustomAuth({
   description: `
@@ -28,7 +24,7 @@ export const gotifyAuth = PieceAuth.CustomAuth({
     }),
   },
   required: true,
-});
+})
 
 export const gotify = createPiece({
   displayName: 'Gotify',
@@ -37,8 +33,8 @@ export const gotify = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/gotify.png',
   minimumSupportedRelease: '0.30.0',
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  authors: ["MyWay","kishanprmr","khaledmashaly","abuaboud"],
+  authors: ['MyWay', 'kishanprmr', 'khaledmashaly', 'abuaboud'],
   auth: gotifyAuth,
   actions: [sendNotification],
   triggers: [],
-});
+})

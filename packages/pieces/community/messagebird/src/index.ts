@@ -1,7 +1,7 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { sendSMSAction } from './lib/actions/send-sms.action';
-import { PieceCategory } from '@activepieces/shared';
-import { birdAuth } from './lib/auth';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { sendSMSAction } from './lib/actions/send-sms.action'
+import { birdAuth } from './lib/auth'
 
 export const messagebird = createPiece({
   displayName: 'Bird',
@@ -13,4 +13,4 @@ export const messagebird = createPiece({
   authors: ['kishanprmr', 'geekyme'],
   actions: [sendSMSAction],
   triggers: [],
-});
+})

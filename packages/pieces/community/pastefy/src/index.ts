@@ -1,15 +1,11 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import actions from './lib/actions';
-import triggers from './lib/triggers';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import actions from './lib/actions'
+import triggers from './lib/triggers'
 
 const markdown = `
 Create an account and obtain the API Key from Pastefy.
-`;
+`
 
 export const pastefyAuth = PieceAuth.CustomAuth({
   description: markdown,
@@ -25,7 +21,7 @@ export const pastefyAuth = PieceAuth.CustomAuth({
       required: false,
     }),
   },
-});
+})
 
 export const pastefy = createPiece({
   displayName: 'Pastefy',
@@ -33,25 +29,23 @@ export const pastefy = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/pastefy.png',
   categories: [],
-  authors: ["JanHolger","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ['JanHolger', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
   auth: pastefyAuth,
   actions: [
     ...actions,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        const typedAuth = auth as { instance_url: string };
-        return typedAuth.instance_url + '/api/v2';
+        const typedAuth = auth as { instance_url: string }
+        return typedAuth.instance_url + '/api/v2'
       },
       auth: pastefyAuth,
       authMapping: async (auth) => {
-        const typedAuth = auth as { token?: string };
+        const typedAuth = auth as { token?: string }
         return {
-          Authorization: typedAuth.token
-            ? `Bearer ${typedAuth.token}`
-            : undefined,
-        };
+          Authorization: typedAuth.token ? `Bearer ${typedAuth.token}` : undefined,
+        }
       },
     }),
   ],
   triggers: triggers,
-});
+})

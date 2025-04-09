@@ -1,4 +1,4 @@
-import { moxieCRMRegisterTrigger } from './register-trigger';
+import { moxieCRMRegisterTrigger } from './register-trigger'
 export const enum MoxieCRMEventType {
   CLIENT_CREATED = 'ClientCreate',
   CLIENT_UPDATED = 'ClientUpdate',
@@ -337,8 +337,7 @@ const MoxieCRMWebhookSampleData = {
     country: null,
     website: null,
     leadSource: null,
-    sourceUrl:
-      'https://hello.withmoxie.dev/00/hectic-lab/test-new-client?inPortal=true',
+    sourceUrl: 'https://hello.withmoxie.dev/00/hectic-lab/test-new-client?inPortal=true',
     Field6: 'Answer to your first question',
     Field7: 'Another to your other question',
     submittedAt: '2023-07-19T17:54:05.257Z',
@@ -417,8 +416,7 @@ const MoxieCRMWebhookSampleData = {
         name: 'Geoff Mina',
         given_name: 'Geoff',
         family_name: 'Mina',
-        picture:
-          'https://lh3.googleusercontent.com/a/AGNmyxYxJL9h8SnY6z2oXg7fNHAdov1TJ4--RQtiAMn8=s96-c',
+        picture: 'https://lh3.googleusercontent.com/a/AGNmyxYxJL9h8SnY6z2oXg7fNHAdov1TJ4--RQtiAMn8=s96-c',
         email: 'geoff.mina@hectic.us',
         email_verified: true,
         locale: 'en',
@@ -576,15 +574,13 @@ const MoxieCRMWebhookSampleData = {
         fileName: 'Screenshot 2023-07-19 at 6.11.40 PM.png',
         fileType: 'PNG',
         timestamp: '2023-07-20T10:54:30.759Z',
-        fileIconUrl:
-          'https://struxture-www-assets.s3.us-east-2.amazonaws.com/file-icons/png.png',
+        fileIconUrl: 'https://struxture-www-assets.s3.us-east-2.amazonaws.com/file-icons/png.png',
       },
       {
         fileName: 'Screenshot 2023-07-19 at 1.50.59 PM.png',
         fileType: 'PNG',
         timestamp: '2023-07-20T10:54:30.991Z',
-        fileIconUrl:
-          'https://struxture-www-assets.s3.us-east-2.amazonaws.com/file-icons/png.png',
+        fileIconUrl: 'https://struxture-www-assets.s3.us-east-2.amazonaws.com/file-icons/png.png',
       },
     ],
     workflow: [
@@ -695,7 +691,7 @@ const MoxieCRMWebhookSampleData = {
       },
     ],
   },
-};
+}
 
 export const moxieCRMTriggers = [
   {
@@ -852,4 +848,4 @@ export const moxieCRMTriggers = [
     eventType: MoxieCRMEventType.PAYMENT_RECEIVED,
     sampleData: MoxieCRMWebhookSampleData.INVOICE_EVENT_SAMPLE_DATA,
   },
-].map((props) => moxieCRMRegisterTrigger(props));
+].map((props) => moxieCRMRegisterTrigger(props))

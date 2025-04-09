@@ -1,18 +1,18 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
-import duration from 'dayjs/plugin/duration';
-import advancedFormat from 'dayjs/plugin/advancedFormat';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import advancedFormat from 'dayjs/plugin/advancedFormat'
+import duration from 'dayjs/plugin/duration'
 import {
-  optionalTimeFormats,
-  timeFormat,
-  timeParts,
-  timeFormatDescription,
-  parseDate,
   getCorrectedFormat,
-} from '../common';
+  optionalTimeFormats,
+  parseDate,
+  timeFormat,
+  timeFormatDescription,
+  timeParts,
+} from '../common'
 
-dayjs.extend(duration);
-dayjs.extend(advancedFormat);
+dayjs.extend(duration)
+dayjs.extend(advancedFormat)
 
 export const dateDifferenceAction = createAction({
   name: 'date_difference',
@@ -73,44 +73,42 @@ export const dateDifferenceAction = createAction({
     }),
   },
   async run(context) {
-    const inputStartDate = context.propsValue.startDate;
-    const startDateFormat = getCorrectedFormat(context.propsValue.startDateFormat);
-    const inputEndDate = context.propsValue.endDate;
-    const endDateFormat = getCorrectedFormat(context.propsValue.endDateFormat);
-    const startDate = parseDate(inputStartDate, startDateFormat);
-    const endDate = parseDate(inputEndDate, endDateFormat);
+    const inputStartDate = context.propsValue.startDate
+    const startDateFormat = getCorrectedFormat(context.propsValue.startDateFormat)
+    const inputEndDate = context.propsValue.endDate
+    const endDateFormat = getCorrectedFormat(context.propsValue.endDateFormat)
+    const startDate = parseDate(inputStartDate, startDateFormat)
+    const endDate = parseDate(inputEndDate, endDateFormat)
 
-    const unitDifference = context.propsValue.unitDifference;
-    const difference = dayjs.duration(endDate.diff(startDate));
+    const unitDifference = context.propsValue.unitDifference
+    const difference = dayjs.duration(endDate.diff(startDate))
 
-    const outputresponse: Record<string, number> = {};
+    const outputresponse: Record<string, number> = {}
     for (let i = 0; i < unitDifference.length; i++) {
       switch (unitDifference[i]) {
         case timeParts.year:
-          outputresponse[timeParts.year] = difference.years();
-          break;
+          outputresponse[timeParts.year] = difference.years()
+          break
         case timeParts.month:
-          outputresponse[timeParts.month] = difference.months();
-          break;
+          outputresponse[timeParts.month] = difference.months()
+          break
         case timeParts.day:
-          outputresponse[timeParts.day] = difference.days();
-          break;
+          outputresponse[timeParts.day] = difference.days()
+          break
         case timeParts.hour:
-          outputresponse[timeParts.hour] = difference.hours();
-          break;
+          outputresponse[timeParts.hour] = difference.hours()
+          break
         case timeParts.minute:
-          outputresponse[timeParts.minute] = difference.minutes();
-          break;
+          outputresponse[timeParts.minute] = difference.minutes()
+          break
         case timeParts.second:
-          outputresponse[timeParts.second] = difference.seconds();
-          break;
+          outputresponse[timeParts.second] = difference.seconds()
+          break
         default:
-          throw new Error(
-            `Invalid unit :\n${JSON.stringify(unitDifference[i])}`
-          );
+          throw new Error(`Invalid unit :\n${JSON.stringify(unitDifference[i])}`)
       }
     }
 
-    return outputresponse;
+    return outputresponse
   },
-});
+})

@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { scrapegraphaiAuth } from '../../index';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { scrapegraphaiAuth } from '../../index'
 
 export const markdownify = createAction({
   name: 'markdownify',
@@ -25,8 +25,8 @@ export const markdownify = createAction({
       body: {
         website_url: propsValue.website_url,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-}); 
+})

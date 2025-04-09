@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { upgradechatAuth } from '../../';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { upgradechatAuth } from '../../'
 
 export const getContactDetails = createAction({
   name: 'getContactDetails',
@@ -38,36 +38,29 @@ export const getContactDetails = createAction({
       affiliateCode: context.propsValue.affiliateCode,
       userId: context.propsValue.userId,
       userEmail: context.propsValue.userEmail,
-    };
+    }
 
     // Filter out keys with undefined values
     const filteredContact: Record<string, string | number> = Object.fromEntries(
-      Object.entries(contact).filter(([, value]) => value !== undefined)
-    ) as Record<string, string | number>; // Cast to ensure it's the correct type
+      Object.entries(contact).filter(([, value]) => value !== undefined),
+    ) as Record<string, string | number> // Cast to ensure it's the correct type
 
     // Create query parameters from the filtered contact object
-    const queryParams = new URLSearchParams(
-      Object.entries(filteredContact).map(([key, value]) => [
-        key,
-        String(value),
-      ])
-    );
+    const queryParams = new URLSearchParams(Object.entries(filteredContact).map(([key, value]) => [key, String(value)]))
 
     // Send GET request with query parameters in the URL
     const res = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `${
-        context.auth.base_url
-      }/api/services/CRM/Contact/GetContactData?${queryParams.toString()}`,
+      url: `${context.auth.base_url}/api/services/CRM/Contact/GetContactData?${queryParams.toString()}`,
       headers: {
         'api-key': context.auth.api_key,
         'Content-Type': 'application/json',
       },
-    });
+    })
 
     return {
       status: res.status,
       body: res.body,
-    };
+    }
   },
-});
+})

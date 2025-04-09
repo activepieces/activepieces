@@ -1,6 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { vboutAuth } from '../..';
-import { makeClient, vboutCommon } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { vboutAuth } from '../..'
+import { makeClient, vboutCommon } from '../common'
 
 export const updateContactAction = createAction({
   auth: vboutAuth,
@@ -22,19 +22,19 @@ export const updateContactAction = createAction({
     fields: vboutCommon.listFields,
   },
   async run(context) {
-    const client = makeClient(context.auth as string);
-    const { email } = context.propsValue;
-    const res = await client.getContactByEmail(email as string);
-    const contact = res.response.data.contact;
+    const client = makeClient(context.auth as string)
+    const { email } = context.propsValue
+    const res = await client.getContactByEmail(email as string)
+    const contact = res.response.data.contact
 
     if ('errorCode' in contact) {
-      return res;
+      return res
     } else {
-      const contactId = contact[0].id;
+      const contactId = contact[0].id
       return await client.updateContact({
         id: contactId,
         ...context.propsValue,
-      });
+      })
     }
   },
-});
+})

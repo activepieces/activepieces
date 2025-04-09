@@ -1,10 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { dropboxAuth } from '../../';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { dropboxAuth } from '../../'
 
 export const dropboxDeleteFile = createAction({
   auth: dropboxAuth,
@@ -14,15 +10,14 @@ export const dropboxDeleteFile = createAction({
   props: {
     path: Property.ShortText({
       displayName: 'Path',
-      description:
-        'The path of the file to be deleted (e.g. /folder1/file.txt)',
+      description: 'The path of the file to be deleted (e.g. /folder1/file.txt)',
       required: true,
     }),
   },
   async run(context) {
     const params = {
       path: context.propsValue.path,
-    };
+    }
 
     const result = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -35,8 +30,8 @@ export const dropboxDeleteFile = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
-    });
+    })
 
-    return result.body;
+    return result.body
   },
-});
+})

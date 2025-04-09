@@ -1,8 +1,4 @@
-import {
-  createTrigger,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
+import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
 
 const leadNotInterestedMessage = `
 
@@ -19,7 +15,7 @@ const leadNotInterestedMessage = `
 
   5. Select the event type as "Lead Not Interested".
   6. Click on the "Test Trigger" button to simulate a test and capture the webhook response here.
-  `;
+  `
 
 export const leadNotInterested = createTrigger({
   name: 'leadNotInterested',
@@ -55,6 +51,6 @@ export const leadNotInterested = createTrigger({
     // Implement webhook unsubscription logic here
   },
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
-});
+})

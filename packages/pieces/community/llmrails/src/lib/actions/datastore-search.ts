@@ -1,10 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { llmrailsAuth } from '../..';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { llmrailsAuth } from '../..'
 
 export const datastoreSearch = createAction({
   auth: llmrailsAuth,
@@ -35,7 +31,7 @@ export const datastoreSearch = createAction({
     }),
   },
   async run(context) {
-    const datastoreId = context.propsValue.datastoreId;
+    const datastoreId = context.propsValue.datastoreId
 
     const request: HttpRequest = {
       url: `https://api.llmrails.com/v1/datastores/${datastoreId}/search`,
@@ -49,9 +45,9 @@ export const datastoreSearch = createAction({
         'X-API-KEY': context.auth,
         Accept: 'application/json',
       },
-    };
-    const response = await httpClient.sendRequest(request);
+    }
+    const response = await httpClient.sendRequest(request)
 
-    return response.body;
+    return response.body
   },
-});
+})

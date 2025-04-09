@@ -1,10 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { stabilityAiAuth } from '../..';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { stabilityAiAuth } from '../..'
 
 export const textToImage = createAction({
   auth: stabilityAiAuth,
@@ -26,14 +22,12 @@ export const textToImage = createAction({
     }),
     height: Property.Number({
       displayName: 'height',
-      description:
-        'Height of the image in pixels. Must be in increments of 64 and >= 128',
+      description: 'Height of the image in pixels. Must be in increments of 64 and >= 128',
       required: false,
     }),
     width: Property.Number({
       displayName: 'width',
-      description:
-        'Width of the image in pixels. Must be in increments of 64 and >= 128',
+      description: 'Width of the image in pixels. Must be in increments of 64 and >= 128',
       required: false,
     }),
     samples: Property.ShortText({
@@ -90,8 +84,7 @@ export const textToImage = createAction({
     style_preset: Property.StaticDropdown({
       displayName: 'style_preset',
       required: false,
-      description:
-        'Pass in a style preset to guide the image model towards a particular style.',
+      description: 'Pass in a style preset to guide the image model towards a particular style.',
       options: {
         options: [
           {
@@ -203,23 +196,13 @@ export const textToImage = createAction({
     }),
   },
   async run(context) {
-    const {
-      prompt,
-      cfg_scale,
-      clip_guidance_preset,
-      height,
-      width,
-      samples,
-      steps,
-      style_preset,
-      engine_id,
-      weight,
-    } = context.propsValue;
+    const { prompt, cfg_scale, clip_guidance_preset, height, width, samples, steps, style_preset, engine_id, weight } =
+      context.propsValue
 
-    const engineId = engine_id || 'stable-diffusion-v1-5';
-    const apiHost = 'https://api.stability.ai';
+    const engineId = engine_id || 'stable-diffusion-v1-5'
+    const apiHost = 'https://api.stability.ai'
 
-    const apiKey = context.auth.api_key;
+    const apiKey = context.auth.api_key
 
     const requestBody = {
       text_prompts: [
@@ -235,7 +218,7 @@ export const textToImage = createAction({
       samples: Number(samples) || 1,
       steps: Number(steps) || 50,
       style_preset,
-    };
+    }
 
     const request: HttpRequest<Record<string, unknown>> = {
       method: HttpMethod.POST,
@@ -245,11 +228,11 @@ export const textToImage = createAction({
         Accept: 'application/json',
       },
       body: requestBody,
-    };
+    }
 
     const { body } = await httpClient.sendRequest<{
-      artifacts: { base64: string }[];
-    }>(request);
+      artifacts: { base64: string }[]
+    }>(request)
 
     return Promise.all(
       body.artifacts.map((artifact) =>
@@ -258,29 +241,29 @@ export const textToImage = createAction({
             fileName: `image-${Date.now()}.png`,
             data: Buffer.from(artifact.base64, 'base64'),
           })
-          .then((file) => ({ image: file }))
-      )
-    );
+          .then((file) => ({ image: file })),
+      ),
+    )
   },
-});
+})
 
 function getDefaultSize(engineId: string) {
   switch (engineId) {
     case 'stable-diffusion-xl-1024-v1-0':
-      return 1024;
+      return 1024
     case 'stable-diffusion-768-v2-1':
-      return 768;
+      return 768
     case 'stable-diffusion-512-v2-1':
-      return 512;
+      return 512
     case 'stable-diffusion-768-v2-0':
-      return 768;
+      return 768
     case 'stable-diffusion-512-v2-0':
-      return 512;
+      return 512
     case 'stable-diffusion-v1-5':
-      return 512;
+      return 512
     case 'stable-diffusion-v1':
-      return 512;
+      return 512
     default:
-      return 512;
+      return 512
   }
 }

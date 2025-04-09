@@ -1,15 +1,6 @@
-import {
-  createAction,
-  Property,
-  BasicAuthPropertyValue,
-} from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { generatebannersAuth } from '../../';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { BasicAuthPropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { generatebannersAuth } from '../../'
 
 export const renderTemplate = createAction({
   auth: generatebannersAuth,
@@ -22,24 +13,23 @@ export const renderTemplate = createAction({
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
-        const authentication = auth as BasicAuthPropertyValue;
+        const authentication = auth as BasicAuthPropertyValue
         if (!auth) {
           return {
             disabled: true,
             options: [],
             placeholder: 'Please enter your API key first.',
-          };
+          }
         }
 
-        const response =
-          await httpClient.sendRequest<GenerateBannersTemplateList>({
-            method: HttpMethod.GET,
-            url: `https://api.generatebanners.com/api/v1/${authentication.username}/template`,
-            authentication: {
-              type: AuthenticationType.BEARER_TOKEN,
-              token: authentication.password,
-            },
-          });
+        const response = await httpClient.sendRequest<GenerateBannersTemplateList>({
+          method: HttpMethod.GET,
+          url: `https://api.generatebanners.com/api/v1/${authentication.username}/template`,
+          authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: authentication.password,
+          },
+        })
 
         if (response.status === 200) {
           return {
@@ -48,16 +38,16 @@ export const renderTemplate = createAction({
               return {
                 label: template.name,
                 value: template.id,
-              };
+              }
             }),
-          };
+          }
         }
 
         return {
           disabled: true,
           options: [],
           placeholder: 'Error fetching templates',
-        };
+        }
       },
     }),
     filetype: Property.StaticDropdown({
@@ -87,7 +77,7 @@ export const renderTemplate = createAction({
       refreshers: ['template_id'],
       props: async ({ auth, template_id }) => {
         if (!auth || !template_id) {
-          return {};
+          return {}
         }
         const request: HttpRequest = {
           method: HttpMethod.GET,
@@ -96,12 +86,12 @@ export const renderTemplate = createAction({
             type: AuthenticationType.BEARER_TOKEN,
             token: auth['password'],
           },
-        };
-        const result = await httpClient.sendRequest(request);
+        }
+        const result = await httpClient.sendRequest(request)
         if (result.status === 200) {
           // Allowing any because the properties are defined on GenerateBanners
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const properties: any = {};
+          const properties: any = {}
           for (const variable of result.body['template']['variables']) {
             if (!variable.hidden) {
               switch (variable.property) {
@@ -109,33 +99,31 @@ export const renderTemplate = createAction({
                   properties[variable.name] = Property.LongText({
                     displayName: variable.name,
                     required: false,
-                  });
-                  break;
+                  })
+                  break
                 default:
                   properties[variable.name] = Property.ShortText({
                     displayName: variable.name,
                     required: false,
-                  });
+                  })
               }
             }
           }
-          return properties;
+          return properties
         } else {
-          return {};
+          return {}
         }
       },
     }),
   },
   async run({ auth, propsValue }) {
     // Build the querystring from the dynamic properties
-    const query = [];
+    const query = []
     if (propsValue.variables) {
-      const props = Object.entries(propsValue.variables);
+      const props = Object.entries(propsValue.variables)
       for (const [propertyKey, propertyValue] of props) {
         if (propertyValue) {
-          query.push(
-            `${propertyKey}=${encodeURIComponent(propertyValue as string)}`
-          );
+          query.push(`${propertyKey}=${encodeURIComponent(propertyValue as string)}`)
         }
       }
     }
@@ -144,30 +132,28 @@ export const renderTemplate = createAction({
       method: HttpMethod.GET,
       url: `https://api.generatebanners.com/api/v1/${auth.username}/template/${
         propsValue.template_id
-      }/sign-url?filetype=${encodeURIComponent(
-        propsValue.filetype
-      )}&${query.join('&')}`,
+      }/sign-url?filetype=${encodeURIComponent(propsValue.filetype)}&${query.join('&')}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: auth.password,
       },
-    };
-    const result = await httpClient.sendRequest(request);
+    }
+    const result = await httpClient.sendRequest(request)
     if (result.status === 200 || result.status === 202) {
       // Return an url for more flexibility
-      return result.body['url'];
+      return result.body['url']
     } else {
-      return {};
+      return {}
     }
   },
-});
+})
 
 interface GenerateBannersTemplateList {
-  templates: GenerateBannersTemplate[];
+  templates: GenerateBannersTemplate[]
 }
 
 interface GenerateBannersTemplate {
-  id: string;
-  name: string;
-  variables: [];
+  id: string
+  name: string
+  variables: []
 }

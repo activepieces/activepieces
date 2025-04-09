@@ -1,53 +1,53 @@
 interface BaseField {
-  name: string;
-  displayName: string;
-  description?: string;
-  isRequired: boolean;
+  name: string
+  displayName: string
+  description?: string
+  isRequired: boolean
 }
 
 interface TextField extends BaseField {
-  type: 'text';
+  type: 'text'
 }
 
 interface MultiTextField extends BaseField {
-  type: 'multi_text';
+  type: 'multi_text'
 }
 
 interface NumberField extends BaseField {
-  type: 'number';
+  type: 'number'
 }
 interface BooleanField extends BaseField {
-  type: 'boolean';
+  type: 'boolean'
 }
 
 interface DateField extends BaseField {
-  type: 'date';
+  type: 'date'
 }
 
 interface StaticSelectField extends BaseField {
-  type: 'static_select';
-  options: Array<{ label: string; value: string }>;
+  type: 'static_select'
+  options: Array<{ label: string; value: string }>
 }
 
 interface StaticMultiSelectField extends BaseField {
-  type: 'static_multi_select';
-  options: Array<{ label: string; value: string }>;
+  type: 'static_multi_select'
+  options: Array<{ label: string; value: string }>
 }
 
 interface DynamicSingleSelectField extends BaseField {
-  type: 'dynamic_select';
+  type: 'dynamic_select'
   options: {
-    sourceFieldSlug: string;
-    labelField: string;
-  };
+    sourceFieldSlug: string
+    labelField: string
+  }
 }
 
 interface DynamicMultiSelectField extends BaseField {
-  type: 'dynamic_multi_select';
+  type: 'dynamic_multi_select'
   options: {
-    sourceFieldSlug: string;
-    labelField: string;
-  };
+    sourceFieldSlug: string
+    labelField: string
+  }
 }
 
 export type EntityProp =
@@ -59,4 +59,4 @@ export type EntityProp =
   | StaticMultiSelectField
   | StaticSelectField
   | DynamicMultiSelectField
-  | DynamicSingleSelectField;
+  | DynamicSingleSelectField

@@ -1,11 +1,8 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
-import { saveBlogImage } from '../api';
-import { cmsAuth } from '../auth';
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { saveBlogImage } from '../api'
+import { cmsAuth } from '../auth'
 
 export const saveBlogImageAction = createAction({
   name: 'save_blog_image',
@@ -66,8 +63,7 @@ export const saveBlogImageAction = createAction({
     }),
     lcrop: Property.StaticDropdown({
       displayName: 'Thumbnail Landscape Crop',
-      description:
-        'The method to use when cropping the landscape thumbnail for the square thumbnail',
+      description: 'The method to use when cropping the landscape thumbnail for the square thumbnail',
       required: true,
       defaultValue: 'center',
       options: {
@@ -80,8 +76,7 @@ export const saveBlogImageAction = createAction({
     }),
     pcrop: Property.StaticDropdown({
       displayName: 'Thumbnail Landscape Crop',
-      description:
-        'The method to use when cropping the landscape thumbnail for the square thumbnail',
+      description: 'The method to use when cropping the landscape thumbnail for the square thumbnail',
       required: true,
       defaultValue: 'middle',
       options: {
@@ -104,13 +99,13 @@ export const saveBlogImageAction = createAction({
       quality: z.number().min(1).max(100),
       scaleTh: z.number().min(1),
       scaleSq: z.number().min(1),
-    });
+    })
 
-    const slug = context.propsValue.slug;
+    const slug = context.propsValue.slug
     const image = {
       filename: context.propsValue.image.filename,
       base64: context.propsValue.image.base64,
-    };
+    }
     return await saveBlogImage(context.auth, slug, image, {
       permalink: context.propsValue.permalink,
       thumbs: 1,
@@ -126,6 +121,6 @@ export const saveBlogImageAction = createAction({
       // Cannot add support for ext option with how this API is built.
       // it would break the saving of the blog post since it would try
       // to save the blog post JSON file with the extension of the ext option
-    });
+    })
   },
-});
+})

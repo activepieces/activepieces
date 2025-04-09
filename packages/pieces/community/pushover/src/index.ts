@@ -1,6 +1,6 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { sendNotification } from './lib/actions/send-notification';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { sendNotification } from './lib/actions/send-notification'
 
 export const pushoverAuth = PieceAuth.CustomAuth({
   description: `
@@ -29,7 +29,7 @@ export const pushoverAuth = PieceAuth.CustomAuth({
     }),
   },
   required: true,
-});
+})
 
 export const pushover = createPiece({
   displayName: 'Pushover',
@@ -38,8 +38,8 @@ export const pushover = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/pushover.png',
   categories: [PieceCategory.COMMUNICATION],
   minimumSupportedRelease: '0.30.0',
-  authors: ["MyWay","Vitalini","kishanprmr","khaledmashaly","abuaboud"],
+  authors: ['MyWay', 'Vitalini', 'kishanprmr', 'khaledmashaly', 'abuaboud'],
   auth: pushoverAuth,
   actions: [sendNotification],
   triggers: [],
-});
+})

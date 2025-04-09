@@ -1,10 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { resendAuth } from '../..';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { resendAuth } from '../..'
 
 export const sendEmail = createAction({
   auth: resendAuth,
@@ -59,7 +55,7 @@ export const sendEmail = createAction({
             { label: 'Plain Text', value: 'text' },
             { label: 'HTML', value: 'html' },
           ],
-        };
+        }
       },
     }),
     content: Property.ShortText({
@@ -69,17 +65,7 @@ export const sendEmail = createAction({
     }),
   },
   async run(context) {
-    const {
-      to,
-      from,
-      from_name,
-      reply_to,
-      subject,
-      content_type,
-      content,
-      cc,
-      bcc,
-    } = context.propsValue;
+    const { to, from, from_name, reply_to, subject, content_type, content, cc, bcc } = context.propsValue
     const requestBody: Record<string, unknown> = {
       to,
       from: from_name ? `${from_name} <${from}>` : from,
@@ -87,11 +73,11 @@ export const sendEmail = createAction({
       cc,
       bcc,
       subject: subject,
-    };
+    }
     if (content_type === 'text') {
-      requestBody['text'] = content;
+      requestBody['text'] = content
     } else if (content_type === 'html') {
-      requestBody['html'] = content;
+      requestBody['html'] = content
     }
     return await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -102,6 +88,6 @@ export const sendEmail = createAction({
         token: context.auth,
       },
       queryParams: {},
-    });
+    })
   },
-});
+})

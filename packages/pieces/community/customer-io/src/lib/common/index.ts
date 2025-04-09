@@ -7,4 +7,4 @@ export const customerIOCommon = {
     trackUrl: 'https://track-eu.customer.io/api/v1/',
     apiUrl: 'https://api-eu.customer.io/v1/',
   },
-};
+}

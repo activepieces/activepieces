@@ -11,67 +11,62 @@ const telemetryEnabled = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)
 const analytics = new Analytics({ writeKey: '42TtMD2Fh9PEIcDO2CagCGFmtoPwOmqK' })
 
 export const telemetry = (log: FastifyBaseLogger) => ({
-    async identify(user: User, identity: UserIdentity, projectId: ProjectId): Promise<void> {
-        if (!telemetryEnabled) {
-            return
-        }
-        const identify = {
-            userId: user.id,
-            traits: {
-                email: identity.email,
-                firstName: identity.firstName,
-                lastName: identity.lastName,
-                projectId,
-                firstSeenAt: user.created,
-                ...(await getMetadata()),
-            },
-        }
-        analytics.identify(identify)
-    },
-    async trackPlatform(platformId: ProjectId, event: TelemetryEvent): Promise<void> {
-        if (!telemetryEnabled) {
-            return
-        }
-        const platform = await platformService.getOneOrThrow(platformId)
-        await this.trackUser(platform.ownerId, event)
-    },
-    async trackProject(
-        projectId: ProjectId,
-        event: TelemetryEvent,
-    ): Promise<void> {
-        if (!telemetryEnabled) {
-            return
-        }
-        const project = await projectService.getOne(projectId)
-        this.trackUser(project!.ownerId, event).catch((e) =>
-            log.error(e, '[Telemetry#trackProject] this.trackUser'),
-        )
-    },
-    isEnabled: () => telemetryEnabled,
-    async trackUser(userId: UserId, event: TelemetryEvent): Promise<void> {
-        if (!telemetryEnabled) {
-            return
-        }
-        const payloadEvent = {
-            userId,
-            event: event.name,
-            properties: {
-                ...event.payload,
-                ...(await getMetadata()),
-                datetime: new Date().toISOString(),
-            },
-        }
-        log.info(payloadEvent, '[Telemetry#trackUser] sending event')
-        analytics.track(payloadEvent)
-    },
+  async identify(user: User, identity: UserIdentity, projectId: ProjectId): Promise<void> {
+    if (!telemetryEnabled) {
+      return
+    }
+    const identify = {
+      userId: user.id,
+      traits: {
+        email: identity.email,
+        firstName: identity.firstName,
+        lastName: identity.lastName,
+        projectId,
+        firstSeenAt: user.created,
+        ...(await getMetadata()),
+      },
+    }
+    analytics.identify(identify)
+  },
+  async trackPlatform(platformId: ProjectId, event: TelemetryEvent): Promise<void> {
+    if (!telemetryEnabled) {
+      return
+    }
+    const platform = await platformService.getOneOrThrow(platformId)
+    await this.trackUser(platform.ownerId, event)
+  },
+  async trackProject(projectId: ProjectId, event: TelemetryEvent): Promise<void> {
+    if (!telemetryEnabled) {
+      return
+    }
+    const project = await projectService.getOne(projectId)
+    this.trackUser(project!.ownerId, event).catch((e) => log.error(e, '[Telemetry#trackProject] this.trackUser'))
+  },
+  isEnabled: () => telemetryEnabled,
+  async trackUser(userId: UserId, event: TelemetryEvent): Promise<void> {
+    if (!telemetryEnabled) {
+      return
+    }
+    const payloadEvent = {
+      userId,
+      event: event.name,
+      properties: {
+        ...event.payload,
+        ...(await getMetadata()),
+        datetime: new Date().toISOString(),
+      },
+    }
+    log.info(payloadEvent, '[Telemetry#trackUser] sending event')
+    analytics.track(payloadEvent)
+  },
 })
 
 async function getMetadata() {
-    const currentVersion = await apVersionUtil.getCurrentRelease()
-    const edition = system.getEdition()
-    return {
-        activepiecesVersion: currentVersion,
-        activepiecesEnvironment: system.get(AppSystemProp.ENVIRONMENT),
-        activepiecesEdition: edition,
-    }
+  const currentVersion = await apVersionUtil.getCurrentRelease()
+  const edition = system.getEdition()
+  return {
+    activepiecesVersion: currentVersion,
+    activepiecesEnvironment: system.get(AppSystemProp.ENVIRONMENT),
+    activepiecesEdition: edition,
+  }
 }

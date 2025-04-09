@@ -1,11 +1,8 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  OAuth2PropertyValue,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import actions from './lib/actions';
-import { spotifyCommon } from './lib/common';
-import triggers from './lib/triggers';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, createPiece } from '@activepieces/pieces-framework'
+import actions from './lib/actions'
+import { spotifyCommon } from './lib/common'
+import triggers from './lib/triggers'
 
 export const spotify = createPiece({
   displayName: 'Spotify',
@@ -15,7 +12,7 @@ export const spotify = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/spotify.png',
   categories: [],
-  authors: ["JanHolger","kishanprmr","MoShizzle","abuaboud","jerboa88"],
+  authors: ['JanHolger', 'kishanprmr', 'MoShizzle', 'abuaboud', 'jerboa88'],
   actions: [
     ...actions,
     createCustomApiCallAction({
@@ -27,4 +24,4 @@ export const spotify = createPiece({
     }),
   ],
   triggers,
-});
+})

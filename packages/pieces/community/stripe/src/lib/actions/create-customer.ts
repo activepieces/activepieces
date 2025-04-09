@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { stripeAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { stripeAuth } from '../..'
 
 export const stripeCreateCustomer = createAction({
   name: 'create_customer',
@@ -59,7 +59,7 @@ export const stripeCreateCustomer = createAction({
         state: context.propsValue.state,
         country: context.propsValue.country,
       },
-    };
+    }
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: 'https://api.stripe.com/v1/customers',
@@ -74,7 +74,7 @@ export const stripeCreateCustomer = createAction({
         phone: customer.phone,
         address: customer.address,
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

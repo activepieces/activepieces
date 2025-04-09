@@ -1,79 +1,63 @@
-import { BellIcon, EyeNoneIcon, EyeOpenIcon } from '@radix-ui/react-icons';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { t } from 'i18next';
-import React from 'react';
+import { BellIcon, EyeNoneIcon, EyeOpenIcon } from '@radix-ui/react-icons'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { t } from 'i18next'
+import React from 'react'
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
-import { projectApi } from '@/lib/project-api';
-import {
-  NotificationStatus,
-  Permission,
-  ProjectWithLimits,
-} from '@activepieces/shared';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast'
+import { useAuthorization } from '@/hooks/authorization-hooks'
+import { projectHooks } from '@/hooks/project-hooks'
+import { authenticationSession } from '@/lib/authentication-session'
+import { projectApi } from '@/lib/project-api'
+import { NotificationStatus, Permission, ProjectWithLimits } from '@activepieces/shared'
 
-import { AlertOption } from './alert-option';
+import { AlertOption } from './alert-option'
 
 const AlertFrequencyCard = React.memo(() => {
-  const queryClient = useQueryClient();
-  const { project, updateCurrentProject } = projectHooks.useCurrentProject();
-  const { toast } = useToast();
-  const { checkAccess } = useAuthorization();
-  const writeAlertPermission =
-    checkAccess(Permission.WRITE_ALERT) &&
-    checkAccess(Permission.WRITE_PROJECT);
+  const queryClient = useQueryClient()
+  const { project, updateCurrentProject } = projectHooks.useCurrentProject()
+  const { toast } = useToast()
+  const { checkAccess } = useAuthorization()
+  const writeAlertPermission = checkAccess(Permission.WRITE_ALERT) && checkAccess(Permission.WRITE_PROJECT)
   const mutation = useMutation<
     ProjectWithLimits,
     Error,
     {
-      notifyStatus: NotificationStatus;
+      notifyStatus: NotificationStatus
     }
   >({
     mutationFn: (request) => {
-      updateCurrentProject(queryClient, request);
-      return projectApi.update(authenticationSession.getProjectId()!, request);
+      updateCurrentProject(queryClient, request)
+      return projectApi.update(authenticationSession.getProjectId()!, request)
     },
     onSuccess: () => {
       toast({
         title: t('Success'),
         description: t('Your changes have been saved.'),
         duration: 3000,
-      });
+      })
     },
     onError: (error) => {
-      toast(INTERNAL_ERROR_TOAST);
-      console.log(error);
+      toast(INTERNAL_ERROR_TOAST)
+      console.log(error)
     },
-  });
+  })
 
   const onChangeStatus = (status: NotificationStatus) => {
     mutation.mutate({
       notifyStatus: status,
-    });
-  };
+    })
+  }
 
   return (
     <Card className="w-full">
       <CardHeader className="pb-3">
         <CardTitle>{t('Alerts')}</CardTitle>
-        <CardDescription>
-          {t('Choose what you want to be notified about.')}
-        </CardDescription>
+        <CardDescription>{t('Choose what you want to be notified about.')}</CardDescription>
         {writeAlertPermission === false && (
           <p>
             <span className="text-destructive">*</span>{' '}
-            {t(
-              'Project and alert permissions are required to change this setting.',
-            )}
+            {t('Project and alert permissions are required to change this setting.')}
           </p>
         )}
       </CardHeader>
@@ -104,8 +88,8 @@ const AlertFrequencyCard = React.memo(() => {
         />
       </CardContent>
     </Card>
-  );
-});
+  )
+})
 
-AlertFrequencyCard.displayName = 'AlertFrequencyCard';
-export { AlertFrequencyCard };
+AlertFrequencyCard.displayName = 'AlertFrequencyCard'
+export { AlertFrequencyCard }

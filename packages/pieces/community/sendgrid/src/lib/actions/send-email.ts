@@ -1,12 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { sendgridCommon } from '../common';
-import { sendgridAuth } from '../..';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { sendgridAuth } from '../..'
+import { sendgridCommon } from '../common'
 
 export const sendEmail = createAction({
   auth: sendgridAuth,
@@ -50,7 +45,7 @@ export const sendEmail = createAction({
             { label: 'Plain Text', value: 'text' },
             { label: 'HTML', value: 'html' },
           ],
-        };
+        }
       },
     }),
     content: Property.ShortText({
@@ -60,8 +55,7 @@ export const sendEmail = createAction({
     }),
   },
   async run(context) {
-    const { to, from, from_name, reply_to, subject, content_type, content } =
-      context.propsValue;
+    const { to, from, from_name, reply_to, subject, content_type, content } = context.propsValue
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${sendgridCommon.baseUrl}/mail/send`,
@@ -73,7 +67,7 @@ export const sendEmail = createAction({
                 email: (x as string).trim(),
               },
             ],
-          };
+          }
         }),
         from: {
           email: from,
@@ -95,11 +89,11 @@ export const sendEmail = createAction({
         token: context.auth,
       },
       queryParams: {},
-    };
-    await httpClient.sendRequest(request);
+    }
+    await httpClient.sendRequest(request)
 
     return {
       success: true,
-    };
+    }
   },
-});
+})

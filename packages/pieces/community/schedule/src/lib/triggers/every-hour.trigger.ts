@@ -1,5 +1,5 @@
-import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { createTrigger, Property } from '@activepieces/pieces-framework';
+import { TriggerStrategy } from '@activepieces/pieces-framework'
+import { Property, createTrigger } from '@activepieces/pieces-framework'
 
 export const everyHourTrigger = createTrigger({
   name: 'every_hour',
@@ -15,26 +15,22 @@ export const everyHourTrigger = createTrigger({
     }),
   },
   onEnable: async (ctx) => {
-    const cronExpression = ctx.propsValue.run_on_weekends
-      ? `0 * * * *`
-      : `0 * * * 1-5`;
+    const cronExpression = ctx.propsValue.run_on_weekends ? `0 * * * *` : `0 * * * 1-5`
     ctx.setSchedule({
       cronExpression: cronExpression,
       timezone: 'UTC',
-    });
+    })
   },
   run(ctx) {
-    const cronExpression = ctx.propsValue.run_on_weekends
-      ? `0 * * * *`
-      : `0 * * * 1-5`;
+    const cronExpression = ctx.propsValue.run_on_weekends ? `0 * * * *` : `0 * * * 1-5`
     return Promise.resolve([
       {
         cron_expression: cronExpression,
         timezone: 'UTC',
       },
-    ]);
+    ])
   },
   onDisable: async () => {
-    console.log('onDisable');
+    console.log('onDisable')
   },
-});
+})

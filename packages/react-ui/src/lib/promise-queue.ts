@@ -1,29 +1,29 @@
-import { Mutex } from 'async-mutex';
+import { Mutex } from 'async-mutex'
 
 export class PromiseQueue {
-  private queue: (() => Promise<unknown>)[] = [];
-  private lock: Mutex = new Mutex();
-  private halted = false;
+  private queue: (() => Promise<unknown>)[] = []
+  private lock: Mutex = new Mutex()
+  private halted = false
 
   add(promise: () => Promise<unknown>) {
-    this.queue.push(promise);
-    this.run();
+    this.queue.push(promise)
+    this.run()
   }
 
   halt() {
-    this.halted = true;
+    this.halted = true
   }
   size() {
-    return this.queue.length;
+    return this.queue.length
   }
 
   private run() {
     this.lock.runExclusive(async () => {
-      const promise = this.queue.shift()!;
+      const promise = this.queue.shift()!
       if (this.halted) {
-        return;
+        return
       }
-      await promise();
-    });
+      await promise()
+    })
   }
 }

@@ -1,17 +1,17 @@
-import { SparklesIcon, AlertCircle } from 'lucide-react';
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { AlertCircle, SparklesIcon } from 'lucide-react'
+import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 
 interface PlatformAlertProps {
-  title: string;
-  description: React.ReactNode;
-  actionText?: string;
-  actionLink?: string;
-  icon?: React.ReactNode;
-  type?: 'default' | 'destructive';
+  title: string
+  description: React.ReactNode
+  actionText?: string
+  actionLink?: string
+  icon?: React.ReactNode
+  type?: 'default' | 'destructive'
 }
 
 export const PlatformAlert: React.FC<PlatformAlertProps> = ({
@@ -22,7 +22,7 @@ export const PlatformAlert: React.FC<PlatformAlertProps> = ({
   icon = <SparklesIcon className="h-4 w-4" />,
   type = 'default',
 }) => {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   return (
     <Alert variant={type} className="flex items-start">
@@ -34,18 +34,14 @@ export const PlatformAlert: React.FC<PlatformAlertProps> = ({
       {actionText && actionLink && (
         <Button
           variant="link"
-          className={
-            type === 'destructive'
-              ? ' text-destructive-300'
-              : 'text-primary-300'
-          }
+          className={type === 'destructive' ? ' text-destructive-300' : 'text-primary-300'}
           onClick={() => navigate(actionLink)}
         >
           {actionText}
         </Button>
       )}
     </Alert>
-  );
-};
+  )
+}
 
-export default PlatformAlert;
+export default PlatformAlert

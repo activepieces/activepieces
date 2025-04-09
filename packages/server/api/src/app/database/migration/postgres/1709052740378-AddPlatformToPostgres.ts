@@ -3,10 +3,10 @@ import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 
 export class AddPlatformToPostgres1709052740378 implements MigrationInterface {
-    name = 'AddPlatformToPostgres1709052740378'
+  name = 'AddPlatformToPostgres1709052740378'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             CREATE TABLE "platform" (
                 "id" character varying(21) NOT NULL,
                 "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
@@ -43,41 +43,40 @@ export class AddPlatformToPostgres1709052740378 implements MigrationInterface {
                 CONSTRAINT "PK_c33d6abeebd214bd2850bfd6b8e" PRIMARY KEY ("id")
             )
         `)
-        await migrateProjects(queryRunner)
-        await queryRunner.query(`
+    await migrateProjects(queryRunner)
+    await queryRunner.query(`
             ALTER TABLE "project" DROP COLUMN "type"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "platform"
             ADD CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE RESTRICT
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             ALTER TABLE "platform" DROP CONSTRAINT "fk_platform_user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "project"
             ADD "type" character varying NOT NULL DEFAULT 'STANDALONE'
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "platform"
         `)
-    }
-
+  }
 }
 
 async function migrateProjects(queryRunner: QueryRunner) {
-    const log = system.globalLogger()
-    log.info('CreateDefaultPlatform1705967115116 up')
-    const standaloneProjects = await queryRunner.query('select * from project where "platformId" is null;')
-    log.info(`Found ${standaloneProjects.length} standalone projects`)
-    for (const project of standaloneProjects) {
-        const ownerId = project.ownerId
-        const platformId = apId()
-        await queryRunner.query(
-            `INSERT INTO "platform"
+  const log = system.globalLogger()
+  log.info('CreateDefaultPlatform1705967115116 up')
+  const standaloneProjects = await queryRunner.query('select * from project where "platformId" is null;')
+  log.info(`Found ${standaloneProjects.length} standalone projects`)
+  for (const project of standaloneProjects) {
+    const ownerId = project.ownerId
+    const platformId = apId()
+    await queryRunner.query(
+      `INSERT INTO "platform"
             ("id", "created", "updated", "ownerId", "name", "primaryColor",
             "logoIconUrl", "fullLogoUrl", "favIconUrl", "filteredPieceNames",
             "filteredPieceBehavior", "smtpHost", "smtpPort", "smtpUser",
@@ -94,10 +93,10 @@ async function migrateProjects(queryRunner: QueryRunner) {
             'https://cdn.activepieces.com/brand/favicon.ico', '{}',
             'BLOCKED', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
             'f', 't', 'en', 'f', 'f', '{}', 'f', 'f', '{}', 'f', 'f', 'f');`,
-            [platformId, ownerId],
-        )
-        await queryRunner.query(`update "project" set "platformId" = '${platformId}' where "id" = '${project.id}'`)
-        await queryRunner.query(`update "user" set "platformId" = '${platformId}' where "id" = '${ownerId}'`)
-    }
-    log.info('CreateDefaultPlatform1705967115116 up done')
+      [platformId, ownerId],
+    )
+    await queryRunner.query(`update "project" set "platformId" = '${platformId}' where "id" = '${project.id}'`)
+    await queryRunner.query(`update "user" set "platformId" = '${platformId}' where "id" = '${ownerId}'`)
+  }
+  log.info('CreateDefaultPlatform1705967115116 up done')
 }

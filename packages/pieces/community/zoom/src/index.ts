@@ -1,12 +1,8 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  OAuth2PropertyValue,
-  PieceAuth,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { zoomCreateMeeting } from './lib/actions/create-meeting';
-import { zoomCreateMeetingRegistrant } from './lib/actions/create-meeting-registrant';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { zoomCreateMeeting } from './lib/actions/create-meeting'
+import { zoomCreateMeetingRegistrant } from './lib/actions/create-meeting-registrant'
 
 export const zoomAuth = PieceAuth.OAuth2({
   description: `
@@ -20,7 +16,7 @@ export const zoomAuth = PieceAuth.OAuth2({
   required: true,
   // scope: ['meeting:write:admin', 'meeting:write'],
   scope: [],
-});
+})
 
 export const zoom = createPiece({
   displayName: 'Zoom',
@@ -36,14 +32,14 @@ export const zoom = createPiece({
       baseUrl: () => 'https://api.zoom.us/v2',
       auth: zoomAuth,
       authMapping: async (auth) => {
-        const typedAuth = auth as OAuth2PropertyValue;
+        const typedAuth = auth as OAuth2PropertyValue
         return {
           Authorization: `Bearer ${typedAuth.access_token}`,
-        };
+        }
       },
     }),
   ],
   auth: zoomAuth,
   authors: ['kanarelo', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
   triggers: [],
-});
+})

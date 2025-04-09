@@ -1,18 +1,7 @@
-import { microsoftSharePointAuth } from '../../';
-import {
-  DropdownOption,
-  DynamicPropsValue,
-  PiecePropValueSchema,
-  Property,
-} from '@activepieces/pieces-framework';
-import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
-import {
-  Site,
-  Drive,
-  List,
-  ListItem,
-  ColumnDefinition,
-} from '@microsoft/microsoft-graph-types';
+import { DropdownOption, DynamicPropsValue, PiecePropValueSchema, Property } from '@activepieces/pieces-framework'
+import { Client, PageCollection } from '@microsoft/microsoft-graph-client'
+import { ColumnDefinition, Drive, List, ListItem, Site } from '@microsoft/microsoft-graph-types'
+import { microsoftSharePointAuth } from '../../'
 
 export const microsoftSharePointCommon = {
   siteId: Property.Dropdown({
@@ -25,43 +14,41 @@ export const microsoftSharePointCommon = {
           disabled: true,
           placeholder: 'Please connect your account first.',
           options: [],
-        };
+        }
       }
 
-      const authValue = auth as PiecePropValueSchema<
-        typeof microsoftSharePointAuth
-      >;
+      const authValue = auth as PiecePropValueSchema<typeof microsoftSharePointAuth>
 
       const client = Client.initWithMiddleware({
         authProvider: {
           getAccessToken: () => Promise.resolve(authValue.access_token),
         },
-      });
+      })
 
-      const options: DropdownOption<string>[] = [];
+      const options: DropdownOption<string>[] = []
 
       // https://sharepoint.stackexchange.com/questions/238094/how-could-i-get-all-root-level-sites-excluding-sub-site-using-microsoft-graph
       let response: PageCollection = await client
         .api('/sites?search=*&$select=displayName,id,name')
         // .search('*')
         // .select('id,name,displayName,webUrl')
-        .get();
+        .get()
 
       while (response.value.length > 0) {
         for (const site of response.value as Site[]) {
-          options.push({ label: site.displayName!, value: site.id! });
+          options.push({ label: site.displayName!, value: site.id! })
         }
         if (response['@odata.nextLink']) {
-          response = await client.api(response['@odata.nextLink']).get();
+          response = await client.api(response['@odata.nextLink']).get()
         } else {
-          break;
+          break
         }
       }
 
       return {
         disabled: false,
         options,
-      };
+      }
     },
   }),
   driveId: Property.Dropdown({
@@ -74,41 +61,36 @@ export const microsoftSharePointCommon = {
           disabled: true,
           placeholder: 'Please connect your account first and select site.',
           options: [],
-        };
+        }
       }
 
-      const authValue = auth as PiecePropValueSchema<
-        typeof microsoftSharePointAuth
-      >;
+      const authValue = auth as PiecePropValueSchema<typeof microsoftSharePointAuth>
 
       const client = Client.initWithMiddleware({
         authProvider: {
           getAccessToken: () => Promise.resolve(authValue.access_token),
         },
-      });
+      })
 
-      const options: DropdownOption<string>[] = [];
+      const options: DropdownOption<string>[] = []
 
-      let response: PageCollection = await client
-        .api(`/sites/${siteId}/drives`)
-        .select('id,name')
-        .get();
+      let response: PageCollection = await client.api(`/sites/${siteId}/drives`).select('id,name').get()
 
       while (response.value.length > 0) {
         for (const drive of response.value as Drive[]) {
-          options.push({ label: drive.name!, value: drive.id! });
+          options.push({ label: drive.name!, value: drive.id! })
         }
         if (response['@odata.nextLink']) {
-          response = await client.api(response['@odata.nextLink']).get();
+          response = await client.api(response['@odata.nextLink']).get()
         } else {
-          break;
+          break
         }
       }
 
       return {
         disabled: false,
         options,
-      };
+      }
     },
   }),
   listId: Property.Dropdown({
@@ -121,41 +103,36 @@ export const microsoftSharePointCommon = {
           disabled: true,
           placeholder: 'Please connect your account first and select site.',
           options: [],
-        };
+        }
       }
 
-      const authValue = auth as PiecePropValueSchema<
-        typeof microsoftSharePointAuth
-      >;
+      const authValue = auth as PiecePropValueSchema<typeof microsoftSharePointAuth>
 
       const client = Client.initWithMiddleware({
         authProvider: {
           getAccessToken: () => Promise.resolve(authValue.access_token),
         },
-      });
+      })
 
-      const options: DropdownOption<string>[] = [];
+      const options: DropdownOption<string>[] = []
 
-      let response: PageCollection = await client
-        .api(`/sites/${siteId}/lists`)
-        .select('displayName,id')
-        .get();
+      let response: PageCollection = await client.api(`/sites/${siteId}/lists`).select('displayName,id').get()
 
       while (response.value.length > 0) {
         for (const list of response.value as List[]) {
-          options.push({ label: list.displayName!, value: list.id! });
+          options.push({ label: list.displayName!, value: list.id! })
         }
         if (response['@odata.nextLink']) {
-          response = await client.api(response['@odata.nextLink']).get();
+          response = await client.api(response['@odata.nextLink']).get()
         } else {
-          break;
+          break
         }
       }
 
       return {
         disabled: false,
         options,
-      };
+      }
     },
   }),
   listColumns: Property.DynamicProperties({
@@ -163,36 +140,32 @@ export const microsoftSharePointCommon = {
     refreshers: ['siteId', 'listId'],
     required: true,
     props: async ({ auth, siteId, listId }) => {
-      if (!auth || !siteId || !listId) return {};
+      if (!auth || !siteId || !listId) return {}
 
-      const fields: DynamicPropsValue = {};
+      const fields: DynamicPropsValue = {}
 
-      const authValue = auth as PiecePropValueSchema<
-        typeof microsoftSharePointAuth
-      >;
+      const authValue = auth as PiecePropValueSchema<typeof microsoftSharePointAuth>
 
       const client = Client.initWithMiddleware({
         authProvider: {
           getAccessToken: () => Promise.resolve(authValue.access_token),
         },
-      });
+      })
 
-      const columns: ColumnDefinition[] = [];
+      const columns: ColumnDefinition[] = []
 
-      let response: PageCollection = await client
-        .api(`/sites/${siteId}/lists/${listId}/columns`)
-        .get();
+      let response: PageCollection = await client.api(`/sites/${siteId}/lists/${listId}/columns`).get()
 
       while (response.value.length > 0) {
         for (const column of response.value as ColumnDefinition[]) {
           if (!column.readOnly) {
-            columns.push(column);
+            columns.push(column)
           }
         }
         if (response['@odata.nextLink']) {
-          response = await client.api(response['@odata.nextLink']).get();
+          response = await client.api(response['@odata.nextLink']).get()
         } else {
-          break;
+          break
         }
       }
       for (const column of columns) {
@@ -200,13 +173,13 @@ export const microsoftSharePointCommon = {
           displayName: column.displayName!,
           description: column.description ?? '',
           required: false,
-        };
+        }
         if (column.boolean) {
-          fields[column.name!] = Property.Checkbox(params);
+          fields[column.name!] = Property.Checkbox(params)
         } else if (column.text) {
-          fields[column.name!] = Property.LongText(params);
+          fields[column.name!] = Property.LongText(params)
         } else if (column.dateTime) {
-          fields[column.name!] = Property.DateTime(params);
+          fields[column.name!] = Property.DateTime(params)
         } else if (column.choice) {
           if (column.choice.displayAs === 'checkBoxes') {
             fields[column.name!] = Property.StaticMultiSelectDropdown({
@@ -220,7 +193,7 @@ export const microsoftSharePointCommon = {
                     }))
                   : [],
               },
-            });
+            })
           } else {
             fields[column.name!] = Property.StaticDropdown({
               ...params,
@@ -233,16 +206,16 @@ export const microsoftSharePointCommon = {
                     }))
                   : [],
               },
-            });
+            })
           }
         } else if (column.number) {
-          fields[column.name!] = Property.Number(params);
+          fields[column.name!] = Property.Number(params)
         } else if (column.currency) {
-          fields[column.name!] = Property.Number(params);
+          fields[column.name!] = Property.Number(params)
         }
       }
 
-      return fields;
+      return fields
     },
   }),
   listItemId: Property.Dropdown({
@@ -255,45 +228,41 @@ export const microsoftSharePointCommon = {
           disabled: true,
           placeholder: 'Please connect your account first and select site.',
           options: [],
-        };
+        }
       }
 
-      const authValue = auth as PiecePropValueSchema<
-        typeof microsoftSharePointAuth
-      >;
+      const authValue = auth as PiecePropValueSchema<typeof microsoftSharePointAuth>
 
       const client = Client.initWithMiddleware({
         authProvider: {
           getAccessToken: () => Promise.resolve(authValue.access_token),
         },
-      });
+      })
 
-      const options: DropdownOption<string>[] = [];
+      const options: DropdownOption<string>[] = []
 
       let response: PageCollection = await client
-        .api(
-          `/sites/${siteId}/lists/${listId}/items?$select=id&$expand=fields($select=Title)`
-        )
-        .get();
+        .api(`/sites/${siteId}/lists/${listId}/items?$select=id&$expand=fields($select=Title)`)
+        .get()
 
       while (response.value.length > 0) {
         for (const item of response.value as ListItem[]) {
           options.push({
             label: (item.fields as any).Title ?? `Item ${item.id}`,
             value: item.id!,
-          });
+          })
         }
         if (response['@odata.nextLink']) {
-          response = await client.api(response['@odata.nextLink']).get();
+          response = await client.api(response['@odata.nextLink']).get()
         } else {
-          break;
+          break
         }
       }
 
       return {
         disabled: false,
         options,
-      };
+      }
     },
   }),
-};
+}

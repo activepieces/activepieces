@@ -1,33 +1,22 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { typeboxResolver } from '@hookform/resolvers/typebox'
+import { Static, Type } from '@sinclair/typebox'
+import { useMutation } from '@tanstack/react-query'
+import { t } from 'i18next'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { TagInput } from '@/components/ui/tag-input';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { templatesApi } from '@/features/templates/lib/templates-api';
-import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
-import {
-  FlowTemplate,
-  FlowVersionTemplate,
-  TemplateType,
-} from '@activepieces/shared';
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { TagInput } from '@/components/ui/tag-input'
+import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast'
+import { templatesApi } from '@/features/templates/lib/templates-api'
+import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
+import { FlowTemplate, FlowVersionTemplate, TemplateType } from '@activepieces/shared'
 
-import { Textarea } from '../../../../../components/ui/textarea';
+import { Textarea } from '../../../../../components/ui/textarea'
 
 const UpsertFlowTemplateSchema = Type.Object({
   displayName: Type.String({
@@ -38,18 +27,18 @@ const UpsertFlowTemplateSchema = Type.Object({
   blogUrl: Type.String(),
   template: FlowVersionTemplate,
   tags: Type.Optional(Type.Array(Type.String())),
-});
-type UpsertFlowTemplateSchema = Static<typeof UpsertFlowTemplateSchema>;
+})
+type UpsertFlowTemplateSchema = Static<typeof UpsertFlowTemplateSchema>
 export const UpsertTemplateDialog = ({
   children,
   onDone,
   template,
 }: {
-  children: React.ReactNode;
-  onDone: () => void;
-  template?: CreateFlowTemplateRequest;
+  children: React.ReactNode
+  onDone: () => void
+  template?: CreateFlowTemplateRequest
 }) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
   const form = useForm<UpsertFlowTemplateSchema>({
     defaultValues: {
       displayName: template?.template.displayName || '',
@@ -59,14 +48,14 @@ export const UpsertTemplateDialog = ({
       template: template?.template,
     },
     resolver: typeboxResolver(UpsertFlowTemplateSchema),
-  });
+  })
 
-  const { toast } = useToast();
+  const { toast } = useToast()
 
   const { mutate, isPending } = useMutation({
     mutationKey: ['create-template'],
     mutationFn: () => {
-      const formValue = form.getValues();
+      const formValue = form.getValues()
       return templatesApi.create({
         template: {
           ...formValue.template,
@@ -78,43 +67,41 @@ export const UpsertTemplateDialog = ({
         description: formValue.description,
         id: template?.id,
         tags: formValue.tags,
-      });
+      })
     },
     onSuccess: () => {
-      onDone();
-      setOpen(false);
+      onDone()
+      setOpen(false)
     },
     onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-      setOpen(false);
+      toast(INTERNAL_ERROR_TOAST)
+      setOpen(false)
     },
-  });
+  })
 
   const onSubmit = () => {
     if (!form.getValues().template) {
       form.setError('template', {
         message: t('Template is required'),
-      });
-      return;
+      })
+      return
     }
 
-    mutate();
-  };
+    mutate()
+  }
 
   return (
     <Dialog
       open={open}
       onOpenChange={(open) => {
-        setOpen(open);
-        form.reset();
+        setOpen(open)
+        form.reset()
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {template ? t('Update New Template') : t('Create New Template')}
-          </DialogTitle>
+          <DialogTitle>{template ? t('Update New Template') : t('Create New Template')}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
@@ -123,16 +110,9 @@ export const UpsertTemplateDialog = ({
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
                   <Label htmlFor="name">
-                    {t('Name')}{' '}
-                    <span className="text-destructive-300">{'*'}</span>
+                    {t('Name')} <span className="text-destructive-300">{'*'}</span>
                   </Label>
-                  <Input
-                    {...field}
-                    required
-                    id="name"
-                    placeholder={t('Template Name')}
-                    className="rounded-sm"
-                  />
+                  <Input {...field} required id="name" placeholder={t('Template Name')} className="rounded-sm" />
                   <FormMessage />
                 </FormItem>
               )}
@@ -160,13 +140,7 @@ export const UpsertTemplateDialog = ({
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
                   <Label htmlFor="blogUrl">{t('Blog URL')}</Label>
-                  <Input
-                    {...field}
-                    required
-                    id="blogUrl"
-                    placeholder={t('Template Blog URL')}
-                    className="rounded-sm"
-                  />
+                  <Input {...field} required id="blogUrl" placeholder={t('Template Blog URL')} className="rounded-sm" />
                   <FormMessage />
                 </FormItem>
               )}
@@ -177,9 +151,7 @@ export const UpsertTemplateDialog = ({
                 <FormItem className="grid space-y-2">
                   <Label htmlFor="template">
                     {t('Template')}
-                    {!template && (
-                      <span className="text-destructive-300">{' *'} </span>
-                    )}
+                    {!template && <span className="text-destructive-300">{' *'} </span>}
                   </Label>
                   <Input
                     type="file"
@@ -188,14 +160,14 @@ export const UpsertTemplateDialog = ({
                       e.target.files &&
                         e.target.files[0].text().then((text) => {
                           try {
-                            const json = JSON.parse(text) as FlowTemplate;
-                            field.onChange(json.template);
+                            const json = JSON.parse(text) as FlowTemplate
+                            field.onChange(json.template)
                           } catch (e) {
                             form.setError('template', {
                               message: t('Invalid JSON'),
-                            });
+                            })
                           }
-                        });
+                        })
                     }}
                     required
                     id="template"
@@ -211,10 +183,7 @@ export const UpsertTemplateDialog = ({
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
                   <Label htmlFor="tags">{t('Tags')}</Label>
-                  <TagInput
-                    onChange={(tags) => field.onChange(tags)}
-                    value={field.value}
-                  />
+                  <TagInput onChange={(tags) => field.onChange(tags)} value={field.value} />
                   <FormMessage />
                 </FormItem>
               )}
@@ -225,9 +194,9 @@ export const UpsertTemplateDialog = ({
           <Button
             variant={'outline'}
             onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              setOpen(false);
+              e.stopPropagation()
+              e.preventDefault()
+              setOpen(false)
             }}
           >
             {t('Cancel')}
@@ -236,7 +205,7 @@ export const UpsertTemplateDialog = ({
             disabled={isPending}
             loading={isPending}
             onClick={(e) => {
-              form.handleSubmit(onSubmit)(e);
+              form.handleSubmit(onSubmit)(e)
             }}
           >
             {t('Save')}
@@ -244,5 +213,5 @@ export const UpsertTemplateDialog = ({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}

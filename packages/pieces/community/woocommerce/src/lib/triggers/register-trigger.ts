@@ -3,9 +3,9 @@ import {
   TriggerStrategy,
   WebhookHandshakeStrategy,
   createTrigger,
-} from '@activepieces/pieces-framework';
-import { wooAuth } from '../../';
-import { WebhookInformation, wooCommon } from '../common';
+} from '@activepieces/pieces-framework'
+import { wooAuth } from '../../'
+import { WebhookInformation, wooCommon } from '../common'
 export const woocommerceRegisterTrigger = ({
   name,
   topic,
@@ -13,11 +13,11 @@ export const woocommerceRegisterTrigger = ({
   description,
   sampleData,
 }: {
-  name: string;
-  topic: string;
-  displayName: string;
-  description: string;
-  sampleData: unknown;
+  name: string
+  topic: string
+  displayName: string
+  description: string
+  sampleData: unknown
 }) =>
   createTrigger({
     auth: wooAuth,
@@ -32,22 +32,14 @@ export const woocommerceRegisterTrigger = ({
         displayName,
         context.webhookUrl,
         topic,
-        context.auth as PiecePropValueSchema<typeof wooAuth>
-      );
-      await context.store.put<WebhookInformation>(
-        `$woocommerce_trigger_${name}`,
-        res.body
-      );
+        context.auth as PiecePropValueSchema<typeof wooAuth>,
+      )
+      await context.store.put<WebhookInformation>(`$woocommerce_trigger_${name}`, res.body)
     },
     async onDisable(context) {
-      const webhook = await context.store.get<WebhookInformation>(
-        `$woocommerce_trigger_${name}`
-      );
+      const webhook = await context.store.get<WebhookInformation>(`$woocommerce_trigger_${name}`)
       if (webhook != null) {
-        await wooCommon.deleteWebhook(
-          webhook.id,
-          context.auth as PiecePropValueSchema<typeof wooAuth>
-        );
+        await wooCommon.deleteWebhook(webhook.id, context.auth as PiecePropValueSchema<typeof wooAuth>)
       }
     },
     // WooCommerce sends a request verifying the webhook that contains only the webhook_id.
@@ -59,9 +51,9 @@ export const woocommerceRegisterTrigger = ({
       return {
         status: 200,
         body: { webhook_id: (context.payload.body as any)['webhook_id'] },
-      };
+      }
     },
     async run(context) {
-      return [context.payload.body];
+      return [context.payload.body]
     },
-  });
+  })

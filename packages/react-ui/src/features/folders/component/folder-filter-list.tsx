@@ -1,8 +1,8 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { HttpStatusCode } from 'axios';
-import { t } from 'i18next';
+import { typeboxResolver } from '@hookform/resolvers/typebox'
+import { Static, Type } from '@sinclair/typebox'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { HttpStatusCode } from 'axios'
+import { t } from 'i18next'
 import {
   ArrowDownZA,
   ArrowUpAz,
@@ -14,77 +14,62 @@ import {
   Shapes,
   TableProperties,
   Trash2,
-} from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
-import { useLocation, useSearchParams } from 'react-router-dom';
+} from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { FormProvider, useForm } from 'react-hook-form'
+import { useLocation, useSearchParams } from 'react-router-dom'
 
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
-import { TextWithIcon } from '@/components/ui/text-with-icon';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
-import { cn } from '@/lib/utils';
-import { FolderDto, isNil, Permission } from '@activepieces/shared';
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { FormField, FormItem, FormMessage } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
+import { TextWithIcon } from '@/components/ui/text-with-icon'
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast'
+import { flowsApi } from '@/features/flows/lib/flows-api'
+import { useAuthorization } from '@/hooks/authorization-hooks'
+import { api } from '@/lib/api'
+import { authenticationSession } from '@/lib/authentication-session'
+import { cn } from '@/lib/utils'
+import { FolderDto, Permission, isNil } from '@activepieces/shared'
 
-import { foldersApi } from '../lib/folders-api';
-import { foldersHooks } from '../lib/folders-hooks';
-import { foldersUtils } from '../lib/folders-utils';
+import { foldersApi } from '../lib/folders-api'
+import { foldersHooks } from '../lib/folders-hooks'
+import { foldersUtils } from '../lib/folders-utils'
 
-import { RenameFolderDialog } from './rename-folder-dialog';
+import { RenameFolderDialog } from './rename-folder-dialog'
 
 const CreateFolderFormSchema = Type.Object({
   displayName: Type.String({
     errorMessage: t('Please enter folder name'),
   }),
-});
+})
 
-type CreateFolderFormSchema = Static<typeof CreateFolderFormSchema>;
+type CreateFolderFormSchema = Static<typeof CreateFolderFormSchema>
 
 const FolderIcon = ({ isFolderOpen }: { isFolderOpen: boolean }) => {
   return isFolderOpen ? (
     <FolderOpen
-      className={cn(
-        'border-0 text-muted-foreground flex-shrink-0 w-4.5 h-4.5',
-        {
-          'text-primary': isFolderOpen,
-        },
-      )}
+      className={cn('border-0 text-muted-foreground flex-shrink-0 w-4.5 h-4.5', {
+        'text-primary': isFolderOpen,
+      })}
     />
   ) : (
     <Folder className=" flex-shrink-0 w-4 h-4" />
-  );
-};
+  )
+}
 type FolderItemProps = {
-  folder: FolderDto;
-  refetch: () => void;
-  updateSearchParams: (folderId: string | undefined) => void;
-  selectedFolderId: string | null;
-  userHasPermissionToUpdateFolders: boolean;
-};
+  folder: FolderDto
+  refetch: () => void
+  updateSearchParams: (folderId: string | undefined) => void
+  selectedFolderId: string | null
+  userHasPermissionToUpdateFolders: boolean
+}
 const FolderItem = ({
   folder,
   refetch,
@@ -92,7 +77,7 @@ const FolderItem = ({
   selectedFolderId,
   userHasPermissionToUpdateFolders,
 }: FolderItemProps) => {
-  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false)
   return (
     <div key={folder.id} className="group py-1">
       <Button
@@ -107,12 +92,9 @@ const FolderItem = ({
           icon={<FolderIcon isFolderOpen={selectedFolderId === folder.id} />}
           text={
             <div
-              className={cn(
-                'flex-grow whitespace-break-spaces break-all text-start truncate',
-                {
-                  'text-primary': selectedFolderId === folder.id,
-                },
-              )}
+              className={cn('flex-grow whitespace-break-spaces break-all text-start truncate', {
+                'text-primary': selectedFolderId === folder.id,
+              })}
             >
               {folder.displayName}
             </div>
@@ -140,14 +122,8 @@ const FolderItem = ({
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent>
-                  <PermissionNeededTooltip
-                    hasPermission={userHasPermissionToUpdateFolders}
-                  >
-                    <RenameFolderDialog
-                      folderId={folder.id}
-                      name={folder.displayName}
-                      onRename={() => refetch()}
-                    >
+                  <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateFolders}>
+                    <RenameFolderDialog folderId={folder.id} name={folder.displayName} onRename={() => refetch()}>
                       <DropdownMenuItem
                         disabled={!userHasPermissionToUpdateFolders}
                         onSelect={(e) => e.preventDefault()}
@@ -159,19 +135,15 @@ const FolderItem = ({
                       </DropdownMenuItem>
                     </RenameFolderDialog>
                   </PermissionNeededTooltip>
-                  <PermissionNeededTooltip
-                    hasPermission={userHasPermissionToUpdateFolders}
-                  >
+                  <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateFolders}>
                     <ConfirmationDeleteDialog
                       title={t('Delete {folderName}', {
                         folderName: folder.displayName,
                       })}
-                      message={t(
-                        'If you delete this folder, we will keep its flows and move them to Uncategorized.',
-                      )}
+                      message={t('If you delete this folder, we will keep its flows and move them to Uncategorized.')}
                       mutationFn={async () => {
-                        await foldersApi.delete(folder.id);
-                        refetch();
+                        await foldersApi.delete(folder.id)
+                        refetch()
                       }}
                       entityName={folder.displayName}
                     >
@@ -181,9 +153,7 @@ const FolderItem = ({
                       >
                         <div className="flex flex-row gap-2 items-center">
                           <Trash2 className="h-4 w-4 text-destructive" />
-                          <span className="text-destructive">
-                            {t('Delete')}
-                          </span>
+                          <span className="text-destructive">{t('Delete')}</span>
                         </div>
                       </DropdownMenuItem>
                     </ConfirmationDeleteDialog>
@@ -195,82 +165,66 @@ const FolderItem = ({
         </TextWithIcon>
       </Button>
     </div>
-  );
-};
+  )
+}
 
 const FolderFilterList = ({ refresh }: { refresh: number }) => {
-  const location = useLocation();
-  const { checkAccess } = useAuthorization();
-  const userHasPermissionToUpdateFolders = checkAccess(Permission.WRITE_FOLDER);
-  const [searchParams, setSearchParams] = useSearchParams(location.search);
-  const selectedFolderId = searchParams.get(folderIdParamName);
-  const [
-    sortedAlphabeticallyIncreasingly,
-    setSortedAlphabeticallyIncreasingly,
-  ] = useState(true);
+  const location = useLocation()
+  const { checkAccess } = useAuthorization()
+  const userHasPermissionToUpdateFolders = checkAccess(Permission.WRITE_FOLDER)
+  const [searchParams, setSearchParams] = useSearchParams(location.search)
+  const selectedFolderId = searchParams.get(folderIdParamName)
+  const [sortedAlphabeticallyIncreasingly, setSortedAlphabeticallyIncreasingly] = useState(true)
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
   const form = useForm<CreateFolderFormSchema>({
     resolver: typeboxResolver(CreateFolderFormSchema),
-  });
+  })
 
   const updateSearchParams = (folderId: string | undefined) => {
-    const newQueryParameters: URLSearchParams = new URLSearchParams(
-      searchParams,
-    );
+    const newQueryParameters: URLSearchParams = new URLSearchParams(searchParams)
     if (folderId) {
-      newQueryParameters.set(folderIdParamName, folderId);
+      newQueryParameters.set(folderIdParamName, folderId)
     } else {
-      newQueryParameters.delete(folderIdParamName);
+      newQueryParameters.delete(folderIdParamName)
     }
-    newQueryParameters.delete('cursor');
+    newQueryParameters.delete('cursor')
 
-    setSearchParams(newQueryParameters);
-  };
+    setSearchParams(newQueryParameters)
+  }
 
-  const {
-    folders,
-    isLoading,
-    refetch: refetchFolders,
-  } = foldersHooks.useFolders();
+  const { folders, isLoading, refetch: refetchFolders } = foldersHooks.useFolders()
 
   const { data: allFlowsCount, refetch: refetchAllFlowsCount } = useQuery({
     queryKey: ['flowsCount', authenticationSession.getProjectId()],
     queryFn: flowsApi.count,
-  });
+  })
 
   const sortedFolders = useMemo(() => {
     return folders?.sort((a, b) => {
       if (sortedAlphabeticallyIncreasingly) {
-        return a.displayName.localeCompare(b.displayName);
+        return a.displayName.localeCompare(b.displayName)
       } else {
-        return b.displayName.localeCompare(a.displayName);
+        return b.displayName.localeCompare(a.displayName)
       }
-    });
-  }, [
-    folders?.map((folder) => folder.displayName).join(','),
-    sortedAlphabeticallyIncreasingly,
-  ]);
+    })
+  }, [folders?.map((folder) => folder.displayName).join(','), sortedAlphabeticallyIncreasingly])
 
-  const { mutate, isPending } = useMutation<
-    FolderDto,
-    Error,
-    CreateFolderFormSchema
-  >({
+  const { mutate, isPending } = useMutation<FolderDto, Error, CreateFolderFormSchema>({
     mutationFn: async (data) => {
       return await foldersApi.create({
         displayName: data.displayName,
         projectId: authenticationSession.getProjectId()!,
-      });
+      })
     },
     onSuccess: (folder) => {
-      form.reset();
-      setIsDialogOpen(false);
-      updateSearchParams(folder.id);
-      refetchFolders();
+      form.reset()
+      setIsDialogOpen(false)
+      updateSearchParams(folder.id)
+      refetchFolders()
       toast({
         title: t('Added folder successfully'),
-      });
+      })
     },
     onError: (error) => {
       if (api.isError(error)) {
@@ -278,24 +232,24 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
           case HttpStatusCode.Conflict: {
             form.setError('root.serverError', {
               message: t('The folder name already exists.'),
-            });
-            break;
+            })
+            break
           }
           default: {
-            toast(INTERNAL_ERROR_TOAST);
-            break;
+            toast(INTERNAL_ERROR_TOAST)
+            break
           }
         }
       }
     },
-  });
+  })
 
   useEffect(() => {
-    refetchFolders();
-    refetchAllFlowsCount();
-  }, [refresh]);
-  const isInUncategorized = selectedFolderId === 'NULL';
-  const isInAllFlows = isNil(selectedFolderId);
+    refetchFolders()
+    refetchAllFlowsCount()
+  }, [refresh])
+  const isInUncategorized = selectedFolderId === 'NULL'
+  const isInAllFlows = isNil(selectedFolderId)
   return (
     <div className="py-2 pr-2">
       <div className="flex flex-row items-center mb-2">
@@ -305,11 +259,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() =>
-              setSortedAlphabeticallyIncreasingly(
-                !sortedAlphabeticallyIncreasingly,
-              )
-            }
+            onClick={() => setSortedAlphabeticallyIncreasingly(!sortedAlphabeticallyIncreasingly)}
           >
             {sortedAlphabeticallyIncreasingly ? (
               <ArrowUpAz className="w-4 h-4"></ArrowUpAz>
@@ -317,17 +267,10 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
               <ArrowDownZA className="w-4 h-4"></ArrowDownZA>
             )}
           </Button>
-          <PermissionNeededTooltip
-            hasPermission={userHasPermissionToUpdateFolders}
-          >
+          <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateFolders}>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  disabled={!userHasPermissionToUpdateFolders}
-                  size="icon"
-                  className="mr-1"
-                >
+                <Button variant="ghost" disabled={!userHasPermissionToUpdateFolders} size="icon" className="mr-1">
                   <PlusIcon size={18} />
                 </Button>
               </DialogTrigger>
@@ -355,15 +298,10 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                       )}
                     />
                     {form?.formState?.errors?.root?.serverError && (
-                      <FormMessage>
-                        {form.formState.errors.root.serverError.message}
-                      </FormMessage>
+                      <FormMessage>{form.formState.errors.root.serverError.message}</FormMessage>
                     )}
                     <DialogFooter>
-                      <Button
-                        variant={'outline'}
-                        onClick={() => setIsDialogOpen(false)}
-                      >
+                      <Button variant={'outline'} onClick={() => setIsDialogOpen(false)}>
                         {t('Cancel')}
                       </Button>
                       <Button type="submit" loading={isPending}>
@@ -395,12 +333,9 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
             }
             text={
               <div
-                className={cn(
-                  'flex-grow whitespace-break-spaces break-all text-start truncate',
-                  {
-                    'text-primary': isInAllFlows,
-                  },
-                )}
+                className={cn('flex-grow whitespace-break-spaces break-all text-start truncate', {
+                  'text-primary': isInAllFlows,
+                })}
               >
                 {t('All flows')}
               </div>
@@ -426,12 +361,9 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
             }
             text={
               <div
-                className={cn(
-                  'flex-grow whitespace-break-spaces break-all text-start truncate',
-                  {
-                    'text-primary': isInUncategorized,
-                  },
-                )}
+                className={cn('flex-grow whitespace-break-spaces break-all text-start truncate', {
+                  'text-primary': isInUncategorized,
+                })}
               >
                 {t('Uncategorized')}
               </div>
@@ -458,23 +390,21 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
               sortedFolders.map((folder) => {
                 return (
                   <FolderItem
-                    userHasPermissionToUpdateFolders={
-                      userHasPermissionToUpdateFolders
-                    }
+                    userHasPermissionToUpdateFolders={userHasPermissionToUpdateFolders}
                     key={folder.id}
                     folder={folder}
                     refetch={refetchFolders}
                     selectedFolderId={selectedFolderId}
                     updateSearchParams={updateSearchParams}
                   />
-                );
+                )
               })}
           </div>
         </ScrollArea>
       </div>
     </div>
-  );
-};
+  )
+}
 
-const folderIdParamName = 'folderId';
-export { FolderFilterList, folderIdParamName };
+const folderIdParamName = 'folderId'
+export { FolderFilterList, folderIdParamName }

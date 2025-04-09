@@ -1,14 +1,7 @@
-import {
-  DynamicPropsValue,
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { mondayAuth } from '../..';
-import { makeClient, mondayCommon } from '../common';
-import {
-  convertPropValueToMondayColumnValue,
-  generateColumnIdTypeMap,
-} from '../common/helper';
+import { DynamicPropsValue, Property, createAction } from '@activepieces/pieces-framework'
+import { mondayAuth } from '../..'
+import { makeClient, mondayCommon } from '../common'
+import { convertPropValueToMondayColumnValue, generateColumnIdTypeMap } from '../common/helper'
 
 export const createItemAction = createAction({
   auth: mondayAuth,
@@ -34,30 +27,26 @@ export const createItemAction = createAction({
     }),
   },
   async run(context) {
-    const { board_id, item_name, create_labels_if_missing } =
-      context.propsValue;
-    const group_id = context.propsValue.group_id!;
-    const columnValuesInput = context.propsValue.column_values;
-    const mondayColumnValues: DynamicPropsValue = {};
+    const { board_id, item_name, create_labels_if_missing } = context.propsValue
+    const group_id = context.propsValue.group_id!
+    const columnValuesInput = context.propsValue.column_values
+    const mondayColumnValues: DynamicPropsValue = {}
 
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth as string)
     const res = await client.listBoardColumns({
       boardId: board_id as unknown as string,
-    });
-    const columns = res.data.boards[0]?.columns;
+    })
+    const columns = res.data.boards[0]?.columns
 
     // map board column id with column type
-    const columnIdTypeMap = generateColumnIdTypeMap(columns);
+    const columnIdTypeMap = generateColumnIdTypeMap(columns)
 
     Object.keys(columnValuesInput).forEach((key) => {
       if (columnValuesInput[key] !== '') {
-        const columnType: string = columnIdTypeMap[key];
-        mondayColumnValues[key] = convertPropValueToMondayColumnValue(
-          columnType,
-          columnValuesInput[key]
-        );
+        const columnType: string = columnIdTypeMap[key]
+        mondayColumnValues[key] = convertPropValueToMondayColumnValue(columnType, columnValuesInput[key])
       }
-    });
+    })
 
     return await client.createItem({
       itemName: item_name,
@@ -65,6 +54,6 @@ export const createItemAction = createAction({
       groupId: group_id,
       columnValues: JSON.stringify(mondayColumnValues),
       createLabels: create_labels_if_missing ?? false,
-    });
+    })
   },
-});
+})

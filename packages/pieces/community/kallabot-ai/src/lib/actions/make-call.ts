@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { kallabotAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { kallabotAuth } from '../..'
 
 export const makeCallAction = createAction({
   name: 'make-call',
@@ -17,39 +17,39 @@ export const makeCallAction = createAction({
         try {
           const response = await fetch('https://api.kallabot.com/v1/agents', {
             headers: {
-              'Authorization': `Bearer ${auth}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          const data = await response.json();
-          
+              Authorization: `Bearer ${auth}`,
+              'Content-Type': 'application/json',
+            },
+          })
+
+          const data = await response.json()
+
           if (!data.agents || data.agents.length === 0) {
             return {
               options: [],
               disabled: true,
-              placeholder: 'No agents found'
-            };
+              placeholder: 'No agents found',
+            }
           }
 
           return {
             options: data.agents.map((agent: any) => {
-              const truncatedId = `${agent.agent_id.substring(0, 8)}...`;
+              const truncatedId = `${agent.agent_id.substring(0, 8)}...`
               return {
                 label: `${agent.name} (${truncatedId})`,
-                value: agent.agent_id
-              };
-            })
-          };
+                value: agent.agent_id,
+              }
+            }),
+          }
         } catch (e) {
-          console.error('Error fetching agents:', e);
+          console.error('Error fetching agents:', e)
           return {
             options: [],
             disabled: true,
-            placeholder: 'Failed to load agents'
-          };
+            placeholder: 'Failed to load agents',
+          }
         }
-      }
+      },
     }),
     recipient_phone_number: Property.ShortText({
       displayName: 'Recipient Phone Number',
@@ -65,36 +65,36 @@ export const makeCallAction = createAction({
         try {
           const response = await fetch('https://api.kallabot.com/account-phone-numbers', {
             headers: {
-              'Authorization': `Bearer ${auth}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          const data = await response.json();
-          
+              Authorization: `Bearer ${auth}`,
+              'Content-Type': 'application/json',
+            },
+          })
+
+          const data = await response.json()
+
           if (!data.phone_numbers || data.phone_numbers.length === 0) {
             return {
               options: [],
               disabled: true,
-              placeholder: 'No phone numbers available'
-            };
+              placeholder: 'No phone numbers available',
+            }
           }
 
           return {
             options: data.phone_numbers.map((number: any) => ({
               label: `${number.phone_number} (${number.friendly_name})`,
-              value: number.phone_number
-            }))
-          };
+              value: number.phone_number,
+            })),
+          }
         } catch (e) {
-          console.error('Error fetching phone numbers:', e);
+          console.error('Error fetching phone numbers:', e)
           return {
             options: [],
             disabled: true,
-            placeholder: 'Failed to load phone numbers'
-          };
+            placeholder: 'Failed to load phone numbers',
+          }
         }
-      }
+      },
     }),
     record: Property.Checkbox({
       displayName: 'Record Call',
@@ -104,7 +104,8 @@ export const makeCallAction = createAction({
     }),
     template_variables: Property.Object({
       displayName: 'Template Variables',
-      description: 'Variables to replace placeholders in agent prompts. Only required if your agent prompts contain variables in {{variable.name}} format. Example: if prompt has {{customer.name}}, provide {"customer": {"name": "John"}}',
+      description:
+        'Variables to replace placeholders in agent prompts. Only required if your agent prompts contain variables in {{variable.name}} format. Example: if prompt has {{customer.name}}, provide {"customer": {"name": "John"}}',
       required: false,
     }),
   },
@@ -113,7 +114,7 @@ export const makeCallAction = createAction({
       method: HttpMethod.POST,
       url: 'https://api.kallabot.com/call',
       headers: {
-        'Authorization': `Bearer ${context.auth}`,
+        Authorization: `Bearer ${context.auth}`,
         'Content-Type': 'application/json',
       },
       body: {
@@ -123,8 +124,8 @@ export const makeCallAction = createAction({
         record: context.propsValue.record,
         template_variables: context.propsValue.template_variables,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

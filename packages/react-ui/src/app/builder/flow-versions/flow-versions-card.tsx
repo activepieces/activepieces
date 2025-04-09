@@ -1,16 +1,13 @@
-import { DotsVerticalIcon } from '@radix-ui/react-icons';
-import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { Eye, EyeIcon, Pencil } from 'lucide-react';
-import React, { useState } from 'react';
+import { DotsVerticalIcon } from '@radix-ui/react-icons'
+import { useMutation } from '@tanstack/react-query'
+import { t } from 'i18next'
+import { Eye, EyeIcon, Pencil } from 'lucide-react'
+import React, { useState } from 'react'
 
-import {
-  LeftSideBarType,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
-import { AvatarLetter } from '@/components/ui/avatar-letter';
-import { Button } from '@/components/ui/button';
-import { CardListItem } from '@/components/ui/card-list';
+import { LeftSideBarType, useBuilderStateContext } from '@/app/builder/builder-hooks'
+import { AvatarLetter } from '@/components/ui/avatar-letter'
+import { Button } from '@/components/ui/button'
+import { CardListItem } from '@/components/ui/card-list'
 import {
   Dialog,
   DialogClose,
@@ -20,25 +17,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
-import { LoadingSpinner } from '@/components/ui/spinner';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { formatUtils } from '@/lib/utils';
+} from '@/components/ui/dialog'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip'
+import { LoadingSpinner } from '@/components/ui/spinner'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast'
+import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot'
+import { flowsApi } from '@/features/flows/lib/flows-api'
+import { useAuthorization } from '@/hooks/authorization-hooks'
+import { formatUtils } from '@/lib/utils'
 import {
   FlowOperationType,
   FlowVersion,
@@ -46,30 +34,24 @@ import {
   FlowVersionState,
   Permission,
   PopulatedFlow,
-} from '@activepieces/shared';
+} from '@activepieces/shared'
 
 type UseAsDraftOptionProps = {
-  versionNumber: number;
-  onConfirm: () => void;
-};
-const UseAsDraftDropdownMenuOption = ({
-  versionNumber,
-  onConfirm,
-}: UseAsDraftOptionProps) => {
-  const { checkAccess } = useAuthorization();
-  const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
+  versionNumber: number
+  onConfirm: () => void
+}
+const UseAsDraftDropdownMenuOption = ({ versionNumber, onConfirm }: UseAsDraftOptionProps) => {
+  const { checkAccess } = useAuthorization()
+  const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW)
 
   return (
     <Dialog>
-      <DialogTrigger
-        disabled={!userHasPermissionToWriteFlow}
-        className="w-full"
-      >
+      <DialogTrigger disabled={!userHasPermissionToWriteFlow} className="w-full">
         <PermissionNeededTooltip hasPermission={userHasPermissionToWriteFlow}>
           <DropdownMenuItem
             className="w-full"
             onSelect={(e) => {
-              e.preventDefault();
+              e.preventDefault()
             }}
             disabled={!userHasPermissionToWriteFlow}
           >
@@ -99,91 +81,77 @@ const UseAsDraftDropdownMenuOption = ({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-};
-UseAsDraftDropdownMenuOption.displayName = 'UseAsDraftDropdownMenuOption';
+  )
+}
+UseAsDraftDropdownMenuOption.displayName = 'UseAsDraftDropdownMenuOption'
 
 type FlowVersionDetailsCardProps = {
-  flowVersion: FlowVersionMetadata;
-  selected: boolean;
-  published: boolean;
-  flowVersionNumber: number;
-};
+  flowVersion: FlowVersionMetadata
+  selected: boolean
+  published: boolean
+  flowVersionNumber: number
+}
 const FlowVersionDetailsCard = React.memo(
-  ({
-    flowVersion,
-    flowVersionNumber,
-    selected,
-    published,
-  }: FlowVersionDetailsCardProps) => {
-    const { checkAccess } = useAuthorization();
-    const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
-    const [setBuilderVersion, setLeftSidebar, setReadonly] =
-      useBuilderStateContext((state) => [
-        state.setVersion,
-        state.setLeftSidebar,
-        state.setReadOnly,
-      ]);
-    const [dropdownMenuOpen, setDropdownMenuOpen] = useState(false);
-    const { mutate, isPending } = useMutation<
-      FlowVersion,
+  ({ flowVersion, flowVersionNumber, selected, published }: FlowVersionDetailsCardProps) => {
+    const { checkAccess } = useAuthorization()
+    const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW)
+    const [setBuilderVersion, setLeftSidebar, setReadonly] = useBuilderStateContext((state) => [
+      state.setVersion,
+      state.setLeftSidebar,
+      state.setReadOnly,
+    ])
+    const [dropdownMenuOpen, setDropdownMenuOpen] = useState(false)
+    const { mutate, isPending } = useMutation<FlowVersion, Error, FlowVersionMetadata>({
+      mutationFn: async (flowVersion) => {
+        const result = await flowsApi.get(flowVersion.flowId, {
+          versionId: flowVersion.id,
+        })
+        return result.version
+      },
+      onSuccess: (populatedFlowVersion) => {
+        setBuilderVersion(populatedFlowVersion)
+        setReadonly(populatedFlowVersion.state === FlowVersionState.LOCKED || !userHasPermissionToWriteFlow)
+      },
+      onError: (error) => {
+        toast(INTERNAL_ERROR_TOAST)
+        console.error(error)
+      },
+    })
+
+    const { mutate: mutateVersionAsDraft, isPending: isDraftPending } = useMutation<
+      PopulatedFlow,
       Error,
       FlowVersionMetadata
     >({
       mutationFn: async (flowVersion) => {
-        const result = await flowsApi.get(flowVersion.flowId, {
-          versionId: flowVersion.id,
-        });
-        return result.version;
+        const result = await flowsApi.update(flowVersion.flowId, {
+          type: FlowOperationType.USE_AS_DRAFT,
+          request: {
+            versionId: flowVersion.id,
+          },
+        })
+        return result
       },
       onSuccess: (populatedFlowVersion) => {
-        setBuilderVersion(populatedFlowVersion);
-        setReadonly(
-          populatedFlowVersion.state === FlowVersionState.LOCKED ||
-            !userHasPermissionToWriteFlow,
-        );
+        setBuilderVersion(populatedFlowVersion.version)
+        setLeftSidebar(LeftSideBarType.NONE)
       },
       onError: (error) => {
-        toast(INTERNAL_ERROR_TOAST);
-        console.error(error);
+        toast(INTERNAL_ERROR_TOAST)
+        console.error(error)
       },
-    });
-
-    const { mutate: mutateVersionAsDraft, isPending: isDraftPending } =
-      useMutation<PopulatedFlow, Error, FlowVersionMetadata>({
-        mutationFn: async (flowVersion) => {
-          const result = await flowsApi.update(flowVersion.flowId, {
-            type: FlowOperationType.USE_AS_DRAFT,
-            request: {
-              versionId: flowVersion.id,
-            },
-          });
-          return result;
-        },
-        onSuccess: (populatedFlowVersion) => {
-          setBuilderVersion(populatedFlowVersion.version);
-          setLeftSidebar(LeftSideBarType.NONE);
-        },
-        onError: (error) => {
-          toast(INTERNAL_ERROR_TOAST);
-          console.error(error);
-        },
-      });
+    })
 
     const handleOverwriteDraft = () => {
-      mutateVersionAsDraft(flowVersion);
-      setDropdownMenuOpen(false);
-    };
+      mutateVersionAsDraft(flowVersion)
+      setDropdownMenuOpen(false)
+    }
 
     return (
       <CardListItem interactive={false}>
         {flowVersion.updatedByUser && (
           <AvatarLetter
-            name={
-              flowVersion.updatedByUser.firstName +
-              ' ' +
-              flowVersion.updatedByUser.lastName
-            }
+            name={flowVersion.updatedByUser.firstName + ' ' + flowVersion.updatedByUser.lastName}
             email={flowVersion.updatedByUser.email}
           />
         )}
@@ -209,42 +177,22 @@ const FlowVersionDetailsCard = React.memo(
           )}
 
           {flowVersion.state === FlowVersionState.DRAFT && (
-            <FlowVersionStateDot
-              state={flowVersion.state}
-              versionId={flowVersion.id}
-            ></FlowVersionStateDot>
+            <FlowVersionStateDot state={flowVersion.state} versionId={flowVersion.id}></FlowVersionStateDot>
           )}
 
           {published && flowVersion.state === FlowVersionState.LOCKED && (
-            <FlowVersionStateDot
-              state={flowVersion.state}
-              versionId={flowVersion.id}
-            ></FlowVersionStateDot>
+            <FlowVersionStateDot state={flowVersion.state} versionId={flowVersion.id}></FlowVersionStateDot>
           )}
 
-          <DropdownMenu
-            onOpenChange={(open) => setDropdownMenuOpen(open)}
-            open={dropdownMenuOpen}
-          >
+          <DropdownMenu onOpenChange={(open) => setDropdownMenuOpen(open)} open={dropdownMenuOpen}>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                disabled={isPending || isDraftPending}
-                size={'icon'}
-              >
-                {(isPending || isDraftPending) && (
-                  <LoadingSpinner className="w-5 h-5" />
-                )}
-                {!isPending && !isDraftPending && (
-                  <DotsVerticalIcon className="w-5 h-5" />
-                )}
+              <Button variant="ghost" disabled={isPending || isDraftPending} size={'icon'}>
+                {(isPending || isDraftPending) && <LoadingSpinner className="w-5 h-5" />}
+                {!isPending && !isDraftPending && <DotsVerticalIcon className="w-5 h-5" />}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-40">
-              <DropdownMenuItem
-                onClick={() => mutate(flowVersion)}
-                className="w-full"
-              >
+              <DropdownMenuItem onClick={() => mutate(flowVersion)} className="w-full">
                 <Eye className="mr-2 h-4 w-4" />
                 <span>{t('View')}</span>
               </DropdownMenuItem>
@@ -258,9 +206,9 @@ const FlowVersionDetailsCard = React.memo(
           </DropdownMenu>
         </div>
       </CardListItem>
-    );
+    )
   },
-);
+)
 
-FlowVersionDetailsCard.displayName = 'FlowVersionDetailsCard';
-export { FlowVersionDetailsCard };
+FlowVersionDetailsCard.displayName = 'FlowVersionDetailsCard'
+export { FlowVersionDetailsCard }

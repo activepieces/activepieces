@@ -1,13 +1,8 @@
-import {
-  createAction,
-  DynamicPropsValue,
-  OAuth2PropertyValue,
-  Property,
-} from '@activepieces/pieces-framework';
-import { Client } from '@notionhq/client';
-import { NotionFieldMapping } from '../common/models';
-import { notionAuth } from '../..';
-import { notionCommon } from '../common';
+import { DynamicPropsValue, OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { Client } from '@notionhq/client'
+import { notionAuth } from '../..'
+import { notionCommon } from '../common'
+import { NotionFieldMapping } from '../common/models'
 
 export const createDatabaseItem = createAction({
   auth: notionAuth,
@@ -24,30 +19,28 @@ export const createDatabaseItem = createAction({
     }),
   },
   async run(context) {
-    const database_id = context.propsValue.database_id!;
-    const databaseFields = context.propsValue.databaseFields!;
-    const content = context.propsValue.content;
-    const notionFields: DynamicPropsValue = {};
+    const database_id = context.propsValue.database_id!
+    const databaseFields = context.propsValue.databaseFields!
+    const content = context.propsValue.content
+    const notionFields: DynamicPropsValue = {}
     const notion = new Client({
       auth: (context.auth as OAuth2PropertyValue).access_token,
       notionVersion: '2022-02-22',
-    });
+    })
     const { properties } = await notion.databases.retrieve({
       database_id: database_id as unknown as string,
-    });
+    })
 
     Object.keys(databaseFields).forEach((key) => {
       if (databaseFields[key] !== '') {
-        const fieldType: string = properties[key]?.type;
+        const fieldType: string = properties[key]?.type
         if (fieldType) {
-          notionFields[key] = NotionFieldMapping[fieldType].buildNotionType(
-            databaseFields[key]
-          );
+          notionFields[key] = NotionFieldMapping[fieldType].buildNotionType(databaseFields[key])
         }
       }
-    });
+    })
 
-    const children: any[] = [];
+    const children: any[] = []
     // Add content to page
     if (content)
       children.push({
@@ -63,7 +56,7 @@ export const createDatabaseItem = createAction({
             },
           ],
         },
-      });
+      })
 
     return await notion.pages.create({
       parent: {
@@ -72,6 +65,6 @@ export const createDatabaseItem = createAction({
       },
       properties: notionFields,
       children: children,
-    });
+    })
   },
-});
+})

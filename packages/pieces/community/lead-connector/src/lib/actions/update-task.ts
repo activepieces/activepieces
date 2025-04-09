@@ -1,16 +1,6 @@
-import {
-  createAction,
-  OAuth2PropertyValue,
-  Property,
-} from '@activepieces/pieces-framework';
-import {
-  getContacts,
-  getTask,
-  getTasks,
-  getUsers,
-  updateTask,
-} from '../common';
-import { leadConnectorAuth } from '../..';
+import { OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { leadConnectorAuth } from '../..'
+import { getContacts, getTask, getTasks, getUsers, updateTask } from '../common'
 
 export const updateTaskAction = createAction({
   auth: leadConnectorAuth,
@@ -28,18 +18,18 @@ export const updateTaskAction = createAction({
           return {
             disabled: true,
             options: [],
-          };
+          }
 
-        const contacts = await getContacts(auth as OAuth2PropertyValue);
+        const contacts = await getContacts(auth as OAuth2PropertyValue)
 
         return {
           options: contacts.map((contact) => {
             return {
               label: contact.contactName,
               value: contact.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     task: Property.Dropdown({
@@ -51,20 +41,17 @@ export const updateTaskAction = createAction({
           return {
             disabled: true,
             options: [],
-          };
+          }
 
-        const tasks = await getTasks(
-          (auth as OAuth2PropertyValue).access_token,
-          contact as string
-        );
+        const tasks = await getTasks((auth as OAuth2PropertyValue).access_token, contact as string)
         return {
           options: tasks.map((task: any) => {
             return {
               label: task.title,
               value: task.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     title: Property.ShortText({
@@ -88,17 +75,17 @@ export const updateTaskAction = createAction({
           return {
             disabled: true,
             options: [],
-          };
+          }
 
-        const users = await getUsers(auth as OAuth2PropertyValue);
+        const users = await getUsers(auth as OAuth2PropertyValue)
         return {
           options: users.map((user: any) => {
             return {
               label: `${user.firstName} ${user.lastName}`,
               value: user.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     completed: Property.Checkbox({
@@ -109,15 +96,7 @@ export const updateTaskAction = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const {
-      contact,
-      task,
-      title,
-      dueDate,
-      description,
-      assignedTo,
-      completed,
-    } = propsValue;
+    const { contact, task, title, dueDate, description, assignedTo, completed } = propsValue
 
     // let originalData: any;
     // if (!title || !dueDate)
@@ -130,10 +109,10 @@ export const updateTaskAction = createAction({
       body: description,
       assignedTo: assignedTo,
       completed,
-    });
+    })
   },
-});
+})
 
 function formatDate(date: string) {
-  return new Date(date).toISOString().split('.')[0] + 'Z';
+  return new Date(date).toISOString().split('.')[0] + 'Z'
 }

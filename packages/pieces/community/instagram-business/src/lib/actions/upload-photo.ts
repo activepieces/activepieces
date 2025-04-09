@@ -1,6 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework'
 
-import { instagramCommon, FacebookPageDropdown } from '../common';
+import { FacebookPageDropdown, instagramCommon } from '../common'
 
 export const uploadPhoto = createAction({
   auth: instagramCommon.authentication,
@@ -13,12 +13,8 @@ export const uploadPhoto = createAction({
     caption: instagramCommon.caption,
   },
   async run({ propsValue }) {
-    const page: FacebookPageDropdown = propsValue.page!;
-    const result = await instagramCommon.createPhotoPost(
-      page,
-      propsValue.caption,
-      propsValue.photo
-    );
-    return result;
+    const page: FacebookPageDropdown = propsValue.page!
+    const result = await instagramCommon.createPhotoPost(page, propsValue.caption, propsValue.photo)
+    return result
   },
-});
+})

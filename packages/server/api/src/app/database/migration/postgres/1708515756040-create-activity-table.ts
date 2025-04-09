@@ -6,13 +6,13 @@ import { isNotOneOfTheseEditions } from '../../database-common'
 const log = system.globalLogger()
 
 export class CreateActivityTable1708515756040 implements MigrationInterface {
-    name = 'CreateActivityTable1708515756040'
+  name = 'CreateActivityTable1708515756040'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
-            return
-        }
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+      return
+    }
+    await queryRunner.query(`
             CREATE TABLE "activity" (
                 "id" character varying(21) NOT NULL,
                 "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
@@ -24,31 +24,31 @@ export class CreateActivityTable1708515756040 implements MigrationInterface {
                 CONSTRAINT "PK_24625a1d6b1b089c8ae206fe467" PRIMARY KEY ("id")
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_activity_project_id_created_desc" ON "activity" ("projectId", "created" DESC)
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "activity"
             ADD CONSTRAINT "fk_activity_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE RESTRICT ON UPDATE RESTRICT
         `)
 
-        log.info({ name: this.name }, 'up')
-    }
+    log.info({ name: this.name }, 'up')
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
-            return
-        }
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+      return
+    }
+    await queryRunner.query(`
             ALTER TABLE "activity" DROP CONSTRAINT "fk_activity_project_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_activity_project_id_created_desc"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "activity"
         `)
 
-        log.info({ name: this.name }, 'down')
-    }
+    log.info({ name: this.name }, 'down')
+  }
 }

@@ -1,21 +1,16 @@
-import { User } from 'lucide-react';
-import React from 'react';
+import { User } from 'lucide-react'
+import React from 'react'
 
-import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip'
 
 type UserFullNameProps = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  className?: string;
-};
+  firstName: string
+  lastName: string
+  email: string
+  className?: string
+}
 
-const UserFullName: React.FC<UserFullNameProps> = ({
-  firstName,
-  lastName,
-  email,
-  className,
-}) => {
+const UserFullName: React.FC<UserFullNameProps> = ({ firstName, lastName, email, className }) => {
   return (
     <div className={`flex items-center ${className}`}>
       <User className="mr-2" size={16} />
@@ -30,7 +25,7 @@ const UserFullName: React.FC<UserFullNameProps> = ({
         </TooltipContent>
       </Tooltip>
     </div>
-  );
-};
+  )
+}
 
-export { UserFullName };
+export { UserFullName }

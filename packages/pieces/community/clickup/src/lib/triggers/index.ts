@@ -1,6 +1,6 @@
-import { ClickupEventType } from '../common/models';
-import { clickupRegisterTrigger } from './register-trigger';
-import { triggerTaskTagUpdated } from './task-tag-updated';
+import { ClickupEventType } from '../common/models'
+import { clickupRegisterTrigger } from './register-trigger'
+import { triggerTaskTagUpdated } from './task-tag-updated'
 
 export const sampleTask = {
   id: 'string',
@@ -22,8 +22,7 @@ export const sampleTask = {
     id: 183,
     username: 'John Doe',
     color: '#827718',
-    profilePicture:
-      'https://attachments-public.clickup.com/profilePictures/183_abc.jpg',
+    profilePicture: 'https://attachments-public.clickup.com/profilePictures/183_abc.jpg',
   },
   assignees: ['string'],
   checklists: ['string'],
@@ -63,7 +62,7 @@ export const sampleTask = {
     id: '789',
   },
   url: 'string',
-};
+}
 
 export const triggers = [
   {
@@ -232,6 +231,6 @@ export const triggers = [
       webhook_id: 'eda9be69-dbb9-4c59-a3e2-3f871d5d3b9e',
     },
   },
-].map((props) => clickupRegisterTrigger(props));
+].map((props) => clickupRegisterTrigger(props))
 
-export const clickupTriggers = [...triggers, triggerTaskTagUpdated];
+export const clickupTriggers = [...triggers, triggerTaskTagUpdated]

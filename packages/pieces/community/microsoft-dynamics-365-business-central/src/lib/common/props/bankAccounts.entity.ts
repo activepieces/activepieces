@@ -1,4 +1,4 @@
-import { EntityProp } from '../types';
+import { EntityProp } from '../types'
 
 export const bankAccountsEntityProps: EntityProp[] = [
   {
@@ -31,4 +31,4 @@ export const bankAccountsEntityProps: EntityProp[] = [
     type: 'text',
     isRequired: false,
   },
-];
+]

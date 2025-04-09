@@ -1,12 +1,8 @@
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
 
-import { PieceCategory } from '@activepieces/shared';
-import actions from './lib/actions';
-import triggers from './lib/triggers';
+import { PieceCategory } from '@activepieces/shared'
+import actions from './lib/actions'
+import triggers from './lib/triggers'
 
 export const clockodoAuth = PieceAuth.CustomAuth({
   required: true,
@@ -32,7 +28,7 @@ export const clockodoAuth = PieceAuth.CustomAuth({
       required: true,
     }),
   },
-});
+})
 
 export const clockodo = createPiece({
   displayName: 'Clockodo',
@@ -40,8 +36,8 @@ export const clockodo = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/clockodo.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ["JanHolger","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ['JanHolger', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
   auth: clockodoAuth,
   actions,
   triggers,
-});
+})

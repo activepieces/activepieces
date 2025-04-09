@@ -1,9 +1,9 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
-import { getCredits } from './api';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { PieceAuth } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { getCredits } from './api'
 
-export type ClearoutAuthType = { apiKey: string };
+export type ClearoutAuthType = { apiKey: string }
 
 export const clearoutAuth = PieceAuth.CustomAuth({
   description:
@@ -17,29 +17,27 @@ export const clearoutAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      await validateAuth(auth);
+      await validateAuth(auth)
       return {
         valid: true,
-      };
+      }
     } catch (e) {
       return {
         valid: false,
         error: (e as Error)?.message,
-      };
+      }
     }
   },
   required: true,
-});
+})
 
 const validateAuth = async (auth: ClearoutAuthType) => {
   await propsValidation.validateZod(auth, {
     apiKey: z.string().min(1),
-  });
+  })
 
-  const response = await getCredits(auth);
+  const response = await getCredits(auth)
   if (response.success !== true) {
-    throw new Error(
-      'Authentication failed. Please check your domain and API key and try again.'
-    );
+    throw new Error('Authentication failed. Please check your domain and API key and try again.')
   }
-};
+}

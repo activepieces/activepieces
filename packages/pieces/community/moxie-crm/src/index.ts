@@ -1,14 +1,10 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { moxieCreateClientAction } from './lib/actions/create-client';
-import { moxieCreateProjectAction } from './lib/actions/create-project';
-import { moxieCreateTaskAction } from './lib/actions/create-task';
-import { moxieCRMTriggers } from './lib/triggers';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { moxieCreateClientAction } from './lib/actions/create-client'
+import { moxieCreateProjectAction } from './lib/actions/create-project'
+import { moxieCreateTaskAction } from './lib/actions/create-task'
+import { moxieCRMTriggers } from './lib/triggers'
 export const moxieCRMAuth = PieceAuth.CustomAuth({
   required: true,
   description: `
@@ -31,7 +27,7 @@ export const moxieCRMAuth = PieceAuth.CustomAuth({
       required: true,
     }),
   },
-});
+})
 
 export const moxieCrm = createPiece({
   displayName: 'Moxie',
@@ -40,7 +36,7 @@ export const moxieCrm = createPiece({
   auth: moxieCRMAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/moxie-crm.png',
-  authors: ["kishanprmr","MoShizzle","abuaboud"],
+  authors: ['kishanprmr', 'MoShizzle', 'abuaboud'],
   categories: [PieceCategory.SALES_AND_CRM],
   actions: [
     moxieCreateClientAction,
@@ -55,4 +51,4 @@ export const moxieCrm = createPiece({
     }),
   ],
   triggers: moxieCRMTriggers,
-});
+})

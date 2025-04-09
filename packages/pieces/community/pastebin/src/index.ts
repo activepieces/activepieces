@@ -1,10 +1,6 @@
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import actions from './lib/actions';
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import actions from './lib/actions'
 
 const markdownDescription = `
 Here are the simple steps to get your credentials:
@@ -13,7 +9,7 @@ Here are the simple steps to get your credentials:
 2. Go to **https://pastebin.com/doc_api**.
 3. Copy your unique Developer API Key and paste it.
 4. Provide your username and password if you want to create **private pastes** under your account.
-`;
+`
 
 export const pastebinAuth = PieceAuth.CustomAuth({
   required: true,
@@ -32,7 +28,7 @@ export const pastebinAuth = PieceAuth.CustomAuth({
       required: false,
     }),
   },
-});
+})
 
 export const pastebin = createPiece({
   displayName: 'Pastebin',
@@ -40,9 +36,9 @@ export const pastebin = createPiece({
 
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/pastebin.png',
-  authors: ["JanHolger","kishanprmr","khaledmashaly","abuaboud"],
+  authors: ['JanHolger', 'kishanprmr', 'khaledmashaly', 'abuaboud'],
   categories: [],
   auth: pastebinAuth,
   actions,
   triggers: [],
-});
+})

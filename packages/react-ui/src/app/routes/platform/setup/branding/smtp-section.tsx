@@ -1,47 +1,25 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { CheckCircle2, Mailbox } from 'lucide-react';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { typeboxResolver } from '@hookform/resolvers/typebox'
+import { Static, Type } from '@sinclair/typebox'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { t } from 'i18next'
+import { CheckCircle2, Mailbox } from 'lucide-react'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_MESSAGE, useToast } from '@/components/ui/use-toast';
-import { platformHooks } from '@/hooks/platform-hooks';
-import { api } from '@/lib/api';
-import { platformApi } from '@/lib/platforms-api';
-import { ApErrorParams, ErrorCode, isNil } from '@activepieces/shared';
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Form, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { INTERNAL_ERROR_MESSAGE, useToast } from '@/components/ui/use-toast'
+import { platformHooks } from '@/hooks/platform-hooks'
+import { api } from '@/lib/api'
+import { platformApi } from '@/lib/platforms-api'
+import { ApErrorParams, ErrorCode, isNil } from '@activepieces/shared'
 
 const FromSchema = Type.Object({
   host: Type.String({
@@ -65,24 +43,24 @@ const FromSchema = Type.Object({
     minLength: 1,
     errorMessage: t('Invalid sender name'),
   }),
-});
+})
 
-type FromSchema = Static<typeof FromSchema>;
+type FromSchema = Static<typeof FromSchema>
 
 export const SmtpSection = () => {
-  const { platform, setCurrentPlatform } = platformHooks.useCurrentPlatform();
-  const [isOpen, setIsOpen] = useState(false);
+  const { platform, setCurrentPlatform } = platformHooks.useCurrentPlatform()
+  const [isOpen, setIsOpen] = useState(false)
   const form = useForm<FromSchema>({
     defaultValues: {
       port: '587',
     },
     resolver: typeboxResolver(FromSchema),
-  });
+  })
 
-  const { toast } = useToast();
+  const { toast } = useToast()
 
-  const smtpConfigured = !isNil(platform?.smtp);
-  const queryClient = useQueryClient();
+  const smtpConfigured = !isNil(platform?.smtp)
+  const queryClient = useQueryClient()
   const { mutate: updatePlatform, isPending } = useMutation({
     mutationFn: async (request: FromSchema | null) => {
       if (request) {
@@ -94,38 +72,38 @@ export const SmtpSection = () => {
             },
           },
           platform.id,
-        );
+        )
       } else {
         return platformApi.update(
           {
             smtp: null,
           },
           platform.id,
-        );
+        )
       }
     },
     onSuccess: (platform) => {
-      setIsOpen(false);
+      setIsOpen(false)
       toast({
         title: t('Success'),
         description: t('Your changes have been saved.'),
         duration: 3000,
-      });
-      setCurrentPlatform(queryClient, platform);
+      })
+      setCurrentPlatform(queryClient, platform)
     },
     onError: (e) => {
-      let message = INTERNAL_ERROR_MESSAGE;
+      let message = INTERNAL_ERROR_MESSAGE
       if (api.isError(e)) {
-        const responseData = e.response?.data as ApErrorParams;
+        const responseData = e.response?.data as ApErrorParams
         if (responseData.code === ErrorCode.INVALID_SMTP_CREDENTIALS) {
-          message = `Invalid SMTP credentials, please check the credentials, \n ${responseData.params.message}`;
+          message = `Invalid SMTP credentials, please check the credentials, \n ${responseData.params.message}`
         }
       }
       form.setError('root.serverError', {
         message: message,
-      });
+      })
     },
-  });
+  })
 
   return (
     <>
@@ -156,9 +134,7 @@ export const SmtpSection = () => {
                 title={t('Disable Mail Server')}
                 message={
                   <>
-                    <p>
-                      {t('Are you sure you want to disable your mail server?')}
-                    </p>
+                    <p>{t('Are you sure you want to disable your mail server?')}</p>
                     <p>
                       {t(
                         'This will stop you from sending emails for issues, quota limits, invitations and forgot password.',
@@ -168,7 +144,7 @@ export const SmtpSection = () => {
                 }
                 entityName={t('mail server')}
                 mutationFn={async () => {
-                  updatePlatform(null);
+                  updatePlatform(null)
                 }}
                 buttonText={t('Confirm')}
               >
@@ -182,15 +158,13 @@ export const SmtpSection = () => {
               key={isOpen ? 'open' : 'closed'}
               onOpenChange={(open) => {
                 if (!open) {
-                  form.reset();
+                  form.reset()
                 }
-                setIsOpen(open);
+                setIsOpen(open)
               }}
             >
               <DialogTrigger asChild>
-                <Button variant={'basic'}>
-                  {smtpConfigured ? t('Update') : t('Configure')}
-                </Button>
+                <Button variant={'basic'}>{smtpConfigured ? t('Update') : t('Configure')}</Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
@@ -198,12 +172,7 @@ export const SmtpSection = () => {
                 </DialogHeader>
                 <div className="grid gap-1 mt-4 w-[">
                   <Form {...form}>
-                    <form
-                      onSubmit={form.handleSubmit((data) =>
-                        updatePlatform(data),
-                      )}
-                      className="grid space-y-4"
-                    >
+                    <form onSubmit={form.handleSubmit((data) => updatePlatform(data))} className="grid space-y-4">
                       <FormField
                         name="host"
                         render={({ field }) => (
@@ -226,10 +195,7 @@ export const SmtpSection = () => {
                         render={({ field }) => (
                           <FormItem className="grid space-y-2">
                             <FormLabel htmlFor="port">{t('Port')}</FormLabel>
-                            <Select
-                              value={field.value?.toString() ?? ''}
-                              onValueChange={field.onChange}
-                            >
+                            <Select value={field.value?.toString() ?? ''} onValueChange={field.onChange}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Port" />
                               </SelectTrigger>
@@ -249,14 +215,8 @@ export const SmtpSection = () => {
                         name="user"
                         render={({ field }) => (
                           <FormItem className="grid space-y-2">
-                            <FormLabel htmlFor="user">
-                              {t('Username')}
-                            </FormLabel>
-                            <Input
-                              {...field}
-                              id="user"
-                              className="rounded-sm"
-                            />
+                            <FormLabel htmlFor="user">{t('Username')}</FormLabel>
+                            <Input {...field} id="user" className="rounded-sm" />
                             <FormMessage />
                           </FormItem>
                         )}
@@ -266,15 +226,8 @@ export const SmtpSection = () => {
                         name="password"
                         render={({ field }) => (
                           <FormItem className="grid space-y-2">
-                            <FormLabel htmlFor="password">
-                              {t('Password')}
-                            </FormLabel>
-                            <Input
-                              {...field}
-                              type="password"
-                              id="password"
-                              className="rounded-sm"
-                            />
+                            <FormLabel htmlFor="password">{t('Password')}</FormLabel>
+                            <Input {...field} type="password" id="password" className="rounded-sm" />
                             <FormMessage />
                           </FormItem>
                         )}
@@ -284,14 +237,8 @@ export const SmtpSection = () => {
                         name="senderEmail"
                         render={({ field }) => (
                           <FormItem className="grid space-y-2">
-                            <FormLabel htmlFor="senderEmail">
-                              {t('Sender Email')}
-                            </FormLabel>
-                            <Input
-                              {...field}
-                              id="senderEmail"
-                              className="rounded-sm"
-                            />
+                            <FormLabel htmlFor="senderEmail">{t('Sender Email')}</FormLabel>
+                            <Input {...field} id="senderEmail" className="rounded-sm" />
                             <FormMessage />
                           </FormItem>
                         )}
@@ -301,14 +248,8 @@ export const SmtpSection = () => {
                         name="senderName"
                         render={({ field }) => (
                           <FormItem className="grid space-y-2">
-                            <FormLabel htmlFor="senderName">
-                              {t('Sender Name')}
-                            </FormLabel>
-                            <Input
-                              {...field}
-                              id="senderName"
-                              className="rounded-sm"
-                            />
+                            <FormLabel htmlFor="senderName">{t('Sender Name')}</FormLabel>
+                            <Input {...field} id="senderName" className="rounded-sm" />
                             <FormMessage />
                           </FormItem>
                         )}
@@ -316,16 +257,11 @@ export const SmtpSection = () => {
 
                       {form?.formState?.errors?.root?.serverError && (
                         <div className="w-[400px]">
-                          <FormMessage>
-                            {form.formState.errors.root.serverError.message}
-                          </FormMessage>
+                          <FormMessage>{form.formState.errors.root.serverError.message}</FormMessage>
                         </div>
                       )}
                       <div className="flex gap-2 justify-end mt-4">
-                        <Button
-                          variant={'outline'}
-                          onClick={() => setIsOpen(false)}
-                        >
+                        <Button variant={'outline'} onClick={() => setIsOpen(false)}>
                           {t('Cancel')}
                         </Button>
 
@@ -342,5 +278,5 @@ export const SmtpSection = () => {
         </div>
       </Card>
     </>
-  );
-};
+  )
+}

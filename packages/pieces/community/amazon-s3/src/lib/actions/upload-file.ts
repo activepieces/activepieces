@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { amazonS3Auth } from '../..';
-import { createS3 } from '../common';
-import { ObjectCannedACL } from '@aws-sdk/client-s3';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { ObjectCannedACL } from '@aws-sdk/client-s3'
+import { amazonS3Auth } from '../..'
+import { createS3 } from '../common'
 
 export const amazons3UploadFile = createAction({
   auth: amazonS3Auth,
@@ -104,18 +104,18 @@ export const amazons3UploadFile = createAction({
     }),
   },
   async run(context) {
-    const { bucket } = context.auth;
-    const { file, fileName, acl, type } = context.propsValue;
+    const { bucket } = context.auth
+    const { file, fileName, acl, type } = context.propsValue
 
-    const s3 = createS3(context.auth);
+    const s3 = createS3(context.auth)
 
-    const contentType = type;
-    const [_, ext] = contentType.split('/');
-    const extension = '.' + ext;
+    const contentType = type
+    const [_, ext] = contentType.split('/')
+    const extension = '.' + ext
 
-    const generatedName = new Date().toISOString() + Date.now() + extension;
+    const generatedName = new Date().toISOString() + Date.now() + extension
 
-    const finalFileName = fileName ? fileName + extension : generatedName;
+    const finalFileName = fileName ? fileName + extension : generatedName
 
     const uploadResponse = await s3.putObject({
       Bucket: bucket,
@@ -123,11 +123,11 @@ export const amazons3UploadFile = createAction({
       ACL: acl as ObjectCannedACL | undefined,
       ContentType: contentType,
       Body: file.data,
-    });
+    })
 
     return {
       fileName: finalFileName,
       etag: uploadResponse.ETag,
-    };
+    }
   },
-});
+})

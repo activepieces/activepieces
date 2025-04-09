@@ -1,12 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { googleContactsCommon } from '../common';
-import { googleContactsAuth } from '../../';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { googleContactsAuth } from '../../'
+import { googleContactsCommon } from '../common'
 
 export const googleContactsAddContactAction = createAction({
   auth: googleContactsAuth,
@@ -59,14 +54,14 @@ export const googleContactsAddContactAction = createAction({
           familyName: context.propsValue['lastName'],
         },
       ],
-    };
-    const contact: Record<string, unknown> = {};
+    }
+    const contact: Record<string, unknown> = {}
     if (context.propsValue['email']) {
-      contact['emailAddresses'] = [{ value: context.propsValue['email'] }];
+      contact['emailAddresses'] = [{ value: context.propsValue['email'] }]
     }
 
     if (context.propsValue['phoneNumber']) {
-      contact['phoneNumbers'] = [{ value: context.propsValue['phoneNumber'] }];
+      contact['phoneNumbers'] = [{ value: context.propsValue['phoneNumber'] }]
     }
 
     if (context.propsValue['company'] || context.propsValue['jobTitle']) {
@@ -75,9 +70,9 @@ export const googleContactsAddContactAction = createAction({
           name: context.propsValue['company'] || undefined,
           title: context.propsValue['jobTitle'] || undefined,
         },
-      ];
+      ]
     }
-    requestBody = { ...requestBody, ...contact };
+    requestBody = { ...requestBody, ...contact }
     const request: HttpRequest<Record<string, unknown>> = {
       method: HttpMethod.POST,
       url: `${googleContactsCommon.baseUrl}:createContact`,
@@ -86,7 +81,7 @@ export const googleContactsAddContactAction = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
-    };
-    return (await httpClient.sendRequest(request)).body;
+    }
+    return (await httpClient.sendRequest(request)).body
   },
-});
+})

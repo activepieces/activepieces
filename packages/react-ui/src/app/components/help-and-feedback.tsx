@@ -1,24 +1,17 @@
-import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
-import { t } from 'i18next';
-import { ChevronRight, BookOpen, History } from 'lucide-react';
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { QuestionMarkCircledIcon } from '@radix-ui/react-icons'
+import { t } from 'i18next'
+import { BookOpen, ChevronRight, History } from 'lucide-react'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { SidebarMenuButton } from '@/components/ui/sidebar-shadcn';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId, supportUrl } from '@activepieces/shared';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { SidebarMenuButton } from '@/components/ui/sidebar-shadcn'
+import { flagsHooks } from '@/hooks/flags-hooks'
+import { ApFlagId, supportUrl } from '@activepieces/shared'
 
 export const HelpAndFeedback = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const { data: showCommunity } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_COMMUNITY,
-  );
+  const [isOpen, setIsOpen] = useState(false)
+  const { data: showCommunity } = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_COMMUNITY)
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -66,12 +59,7 @@ export const HelpAndFeedback = () => {
 
         {showCommunity && (
           <DropdownMenuItem asChild>
-            <Link
-              to={supportUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex justify-between w-full"
-            >
+            <Link to={supportUrl} target="_blank" rel="noopener noreferrer" className="flex justify-between w-full">
               <div className="flex items-center gap-2">
                 <QuestionMarkCircledIcon className="size-4" />
                 <span>{t('Community Support')}</span>
@@ -81,5 +69,5 @@ export const HelpAndFeedback = () => {
         )}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-};
+  )
+}

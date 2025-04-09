@@ -1,4 +1,4 @@
-import { EntityProp } from '../types';
+import { EntityProp } from '../types'
 
 export const salesOrdersEntityProps: EntityProp[] = [
   {
@@ -180,8 +180,7 @@ export const salesOrdersEntityProps: EntityProp[] = [
   },
   {
     name: 'partialShipping',
-    displayName:
-      'Specifies whether partial shipping of items is preferred or not.',
+    displayName: 'Specifies whether partial shipping of items is preferred or not.',
     type: 'boolean',
     isRequired: false,
   },
@@ -208,11 +207,10 @@ export const salesOrdersEntityProps: EntityProp[] = [
   {
     name: 'fullyShipped',
     displayName: 'Fully Shipped?',
-    description:
-      'Specifies whether the items of the sales order were fully shipped or not.',
+    description: 'Specifies whether the items of the sales order were fully shipped or not.',
     type: 'boolean',
     isRequired: false,
   },
-];
+]
 
-export const salesOrderLinesEntityNumberProps = ['discountAmount'];
+export const salesOrderLinesEntityNumberProps = ['discountAmount']

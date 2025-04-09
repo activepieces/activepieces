@@ -1,3 +1,3 @@
-import playlistItemsChanged from './playlist-items-changed';
+import playlistItemsChanged from './playlist-items-changed'
 
-export default [playlistItemsChanged];
+export default [playlistItemsChanged]

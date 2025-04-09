@@ -1,19 +1,9 @@
-import {
-  DedupeStrategy,
-  HttpMethod,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import {
-  OAuth2PropertyValue,
-  Property,
-  TriggerStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
-import { querySalesforceApi, salesforcesCommon } from '../common';
+import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { querySalesforceApi, salesforcesCommon } from '../common'
 
-import dayjs from 'dayjs';
-import { salesforceAuth } from '../..';
+import dayjs from 'dayjs'
+import { salesforceAuth } from '../..'
 
 export const newRecord = createTrigger({
   auth: salesforceAuth,
@@ -36,21 +26,21 @@ export const newRecord = createTrigger({
       store: ctx.store,
       propsValue: ctx.propsValue,
       files: ctx.files,
-    });
+    })
   },
   async onEnable(ctx) {
     await pollingHelper.onEnable(polling, {
       auth: ctx.auth,
       store: ctx.store,
       propsValue: ctx.propsValue,
-    });
+    })
   },
   async onDisable(ctx) {
     await pollingHelper.onDisable(polling, {
       auth: ctx.auth,
       store: ctx.store,
       propsValue: ctx.propsValue,
-    });
+    })
   },
   async run(ctx) {
     return await pollingHelper.poll(polling, {
@@ -58,62 +48,53 @@ export const newRecord = createTrigger({
       store: ctx.store,
       propsValue: ctx.propsValue,
       files: ctx.files,
-    });
+    })
   },
-});
+})
 
-const polling: Polling<
-  OAuth2PropertyValue,
-  { object: string | undefined; conditions: string | undefined }
-> = {
+const polling: Polling<OAuth2PropertyValue, { object: string | undefined; conditions: string | undefined }> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const items = await getRecords(
       auth,
       propsValue.object!,
       dayjs(lastFetchEpochMS).toISOString(),
-      propsValue.conditions
-    );
+      propsValue.conditions,
+    )
     return items.map((item) => ({
       epochMilliSeconds: dayjs(item.CreatedDate).valueOf(),
       data: item,
-    }));
+    }))
   },
-};
+}
 
 const getRecords = async (
   authentication: OAuth2PropertyValue,
   object: string,
   startDate: string,
-  conditions: string | undefined
+  conditions: string | undefined,
 ) => {
   const response = await querySalesforceApi<{
-    records: { CreatedDate: string }[];
-  }>(
-    HttpMethod.GET,
-    authentication,
-    constructQuery(object, 200, 0, startDate, conditions)
-  );
-  return response.body['records'];
-};
+    records: { CreatedDate: string }[]
+  }>(HttpMethod.GET, authentication, constructQuery(object, 200, 0, startDate, conditions))
+  return response.body['records']
+}
 
 function constructQuery(
   object: string,
   limit: number,
   offset: number,
   startDate: string,
-  conditions: string | undefined
+  conditions: string | undefined,
 ) {
   return `
     SELECT
       FIELDS(ALL)
     FROM
       ${object}
-    WHERE CreatedDate > ${startDate} ${
-    conditions != undefined ? `AND ${conditions}` : ''
-  }
+    WHERE CreatedDate > ${startDate} ${conditions != undefined ? `AND ${conditions}` : ''}
     ORDER BY CreatedDate ASC
     LIMIT ${limit}
     OFFSET ${offset}
-  `;
+  `
 }

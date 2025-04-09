@@ -1,59 +1,54 @@
-import { Property } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework'
 
 export interface AirtableBase {
-  id: string;
-  name: string;
-  permissionLevel: AirtablePermissionLevel;
+  id: string
+  name: string
+  permissionLevel: AirtablePermissionLevel
 }
 
 export interface AirtableRecord {
-  fields: Record<string, unknown>;
-  createdTime: Date;
-  id: string;
+  fields: Record<string, unknown>
+  createdTime: Date
+  id: string
 }
 export interface AirtableField {
-  id: string;
-  name: string;
-  description: string;
-  type: AirtableFieldType;
+  id: string
+  name: string
+  description: string
+  type: AirtableFieldType
   options?: {
-    choices: AirtableChoice[];
-  };
+    choices: AirtableChoice[]
+  }
 }
 export interface AirtableChoice {
-  id: string;
-  name: string;
-  color: string;
+  id: string
+  name: string
+  color: string
 }
 
 export interface AirtableTable {
-  id: string;
-  name: string;
-  fields: AirtableField[];
-  description: string;
-  primaryFieldId: string;
+  id: string
+  name: string
+  fields: AirtableField[]
+  description: string
+  primaryFieldId: string
   views: {
-    id: string;
-    name: string;
-    type: string;
-  }[];
+    id: string
+    name: string
+    type: string
+  }[]
 }
 
 export interface AirtableView {
-  id: string;
-  name: string;
+  id: string
+  name: string
 }
 export interface AirtableCreateRecordBody {
-  records?: AirtableRecord[];
-  fields?: Record<string, unknown>;
+  records?: AirtableRecord[]
+  fields?: Record<string, unknown>
 }
 
-declare type AirtablePermissionLevel =
-  | 'none'
-  | 'read'
-  | 'comment'
-  | 'edit'
-  | 'create';
+declare type AirtablePermissionLevel = 'none' | 'read' | 'comment' | 'edit' | 'create'
 export type AirtableFieldType =
   | 'singleLineText'
   | 'email'
@@ -85,13 +80,9 @@ export type AirtableFieldType =
   | 'button'
   | 'createdBy'
   | 'lastModifiedBy'
-  | 'externalSyncSource';
+  | 'externalSyncSource'
 
-export const AirtableEnterpriseFields = [
-  'singleCollaborator',
-  'multipleCollaborators',
-  'aiText',
-];
+export const AirtableEnterpriseFields = ['singleCollaborator', 'multipleCollaborators', 'aiText']
 
 export const AirtableFieldMapping = {
   singleLineText: Property.ShortText,
@@ -125,4 +116,4 @@ export const AirtableFieldMapping = {
   createdBy: Property.ShortText,
   lastModifiedBy: Property.ShortText,
   externalSyncSource: Property.ShortText,
-};
+}

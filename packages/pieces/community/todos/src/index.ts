@@ -1,8 +1,8 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { createTodo } from './lib/actions/create-todo';
-import { PieceCategory } from '@activepieces/shared';
-import { waitForApproval } from './lib/actions/wait-for-approval';
-import { createTodoAndWait } from './lib/actions/create-todo-and-wait';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { createTodo } from './lib/actions/create-todo'
+import { createTodoAndWait } from './lib/actions/create-todo-and-wait'
+import { waitForApproval } from './lib/actions/wait-for-approval'
 
 export const todos = createPiece({
   displayName: 'Todos',
@@ -15,4 +15,4 @@ export const todos = createPiece({
   categories: [PieceCategory.CORE, PieceCategory.FLOW_CONTROL],
   actions: [createTodo, waitForApproval, createTodoAndWait],
   triggers: [],
-});
+})

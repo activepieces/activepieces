@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
 export const getAddressTokenTransfers = createAction({
   name: 'get_address_token_transfers',
@@ -17,10 +17,10 @@ export const getAddressTokenTransfers = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `https://eth.blockscout.com/api/v2/addresses/${context.propsValue.addressHash}/token-transfers`,
-    });
+    })
     if (response.status !== 200) {
-      throw new Error(`Blockscout API request failed with status ${response.status}`);
+      throw new Error(`Blockscout API request failed with status ${response.status}`)
     }
-    return response.body;
+    return response.body
   },
-});
+})

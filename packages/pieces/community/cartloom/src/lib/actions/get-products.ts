@@ -1,6 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { getProducts } from '../api';
-import { cartloomAuth } from '../auth';
+import { createAction } from '@activepieces/pieces-framework'
+import { getProducts } from '../api'
+import { cartloomAuth } from '../auth'
 
 export const getProductsAction = createAction({
   name: 'get_products',
@@ -9,6 +9,6 @@ export const getProductsAction = createAction({
   description: 'Get a list of products from Cartloom',
   props: {},
   async run(context) {
-    return await getProducts(context.auth);
+    return await getProducts(context.auth)
   },
-});
+})

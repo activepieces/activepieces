@@ -1,8 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createReadStream } from 'fs';
-import FormData from 'form-data';
-import { mindeeAuth } from '../..';
+import { createReadStream } from 'fs'
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import FormData from 'form-data'
+import { mindeeAuth } from '../..'
 
 export const mindeePredictDocumentAction = createAction({
   auth: mindeeAuth,
@@ -12,8 +12,7 @@ export const mindeePredictDocumentAction = createAction({
   props: {
     account_name: Property.ShortText({
       displayName: 'Account Name',
-      description:
-        'Refers to your username or organization name with which you signed up with.',
+      description: 'Refers to your username or organization name with which you signed up with.',
       required: true,
       defaultValue: 'mindee',
     }),
@@ -46,20 +45,19 @@ export const mindeePredictDocumentAction = createAction({
   },
   run: async ({ auth, propsValue: { api_name, account_name, file } }) => {
     let headers,
-      body = {};
+      body = {}
 
     try {
-      const form = new FormData();
+      const form = new FormData()
 
-      if (['https:', 'http:'].includes(new URL(file).protocol))
-        form.append('document', await getRemoteFile(file));
-      else form.append('document', createReadStream(file));
+      if (['https:', 'http:'].includes(new URL(file).protocol)) form.append('document', await getRemoteFile(file))
+      else form.append('document', createReadStream(file))
 
-      body = form;
-      headers = { ...form.getHeaders() };
+      body = form
+      headers = { ...form.getHeaders() }
     } catch (_) {
-      body = { document: file };
-      headers = { 'Content-Type': 'application/json' };
+      body = { document: file }
+      headers = { 'Content-Type': 'application/json' }
     }
 
     const response = await httpClient.sendRequest({
@@ -70,13 +68,13 @@ export const mindeePredictDocumentAction = createAction({
         ...headers,
       },
       body: body,
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})
 
 async function getRemoteFile(url: string): Promise<ArrayBuffer> {
-  const response = await fetch(url);
-  return await response.arrayBuffer();
+  const response = await fetch(url)
+  return await response.arrayBuffer()
 }

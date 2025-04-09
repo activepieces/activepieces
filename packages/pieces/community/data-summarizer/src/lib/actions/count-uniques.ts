@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { common } from '../common';
-import { isNil } from '@activepieces/shared';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { isNil } from '@activepieces/shared'
+import { common } from '../common'
 
 export const countUniques = createAction({
   name: 'countUniques',
@@ -9,39 +9,39 @@ export const countUniques = createAction({
   props: {
     note: common.note,
     values: Property.Array({
-      displayName: "Values",
+      displayName: 'Values',
       required: true,
     }),
     fieldsExplanation: Property.MarkDown({
-      value: "If the data you're passing in is an object, you can specify certain fields to filter on. The object will be discarded if the fields don't exist. Otherwise, leave fields empty."
+      value:
+        "If the data you're passing in is an object, you can specify certain fields to filter on. The object will be discarded if the fields don't exist. Otherwise, leave fields empty.",
     }),
     fields: Property.Array({
-      displayName: "Fields",
-      required: false
-    })
+      displayName: 'Fields',
+      required: false,
+    }),
   },
   async run({ propsValue }) {
-    const values = propsValue.values;
-    const unknownFields = propsValue.fields != undefined && propsValue.fields.length > 0 ? propsValue.fields : null;
+    const values = propsValue.values
+    const unknownFields = propsValue.fields != undefined && propsValue.fields.length > 0 ? propsValue.fields : null
     const fields = validateFields(unknownFields)
     return {
-      numUniques: numUniques(values, fields)
-    };
+      numUniques: numUniques(values, fields),
+    }
   },
-});
+})
 
 function validateFields(fields: unknown[] | null): string[] | null {
-  if (!isNil(fields) && Array.isArray(fields) && fields.every(value => typeof value === 'string')) {
+  if (!isNil(fields) && Array.isArray(fields) && fields.every((value) => typeof value === 'string')) {
     return fields as string[]
-  }
-  else return null
+  } else return null
 }
 
 function numUniques<T>(values: T[], fields: string[] | null = null) {
   if (isNil(fields)) {
-    return new Set(values.map(value => JSON.stringify(value))).size
+    return new Set(values.map((value) => JSON.stringify(value))).size
   }
-  const newValues = values.map(value => {
+  const newValues = values.map((value) => {
     const obj: { [k: string]: unknown } = {}
     if (typeof value !== 'object') {
       return obj
@@ -53,5 +53,5 @@ function numUniques<T>(values: T[], fields: string[] | null = null) {
     }
     return obj
   })
-  return new Set(newValues.map(value => JSON.stringify(value))).size
+  return new Set(newValues.map((value) => JSON.stringify(value))).size
 }

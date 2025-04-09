@@ -1,44 +1,32 @@
-import { t } from 'i18next';
-import React from 'react';
-import { useFieldArray, useFormContext } from 'react-hook-form';
+import { t } from 'i18next'
+import React from 'react'
+import { useFieldArray, useFormContext } from 'react-hook-form'
 
-import { BranchConditionToolbar } from '@/app/builder/step-settings/branch-settings/branch-condition-toolbar';
-import { BranchSingleCondition } from '@/app/builder/step-settings/branch-settings/branch-single-condition';
-import { HorizontalSeparatorWithText } from '@/components/ui/separator';
-import { RouterAction } from '@activepieces/shared';
+import { BranchConditionToolbar } from '@/app/builder/step-settings/branch-settings/branch-condition-toolbar'
+import { BranchSingleCondition } from '@/app/builder/step-settings/branch-settings/branch-single-condition'
+import { HorizontalSeparatorWithText } from '@/components/ui/separator'
+import { RouterAction } from '@activepieces/shared'
 
 type BranchConditionGroupProps = {
-  readonly: boolean;
-  groupIndex: number;
-  onAnd: () => void;
-  onOr: () => void;
-  numberOfGroups: number;
-  handleDelete: (conditionIndex: number) => void;
-  branchIndex: number;
-};
+  readonly: boolean
+  groupIndex: number
+  onAnd: () => void
+  onOr: () => void
+  numberOfGroups: number
+  handleDelete: (conditionIndex: number) => void
+  branchIndex: number
+}
 
 const BranchConditionGroup = React.memo(
-  ({
-    readonly,
-    groupIndex,
-    onAnd,
-    onOr,
-    handleDelete,
-    numberOfGroups,
-    branchIndex,
-  }: BranchConditionGroupProps) => {
-    const form = useFormContext<RouterAction>();
+  ({ readonly, groupIndex, onAnd, onOr, handleDelete, numberOfGroups, branchIndex }: BranchConditionGroupProps) => {
+    const form = useFormContext<RouterAction>()
     const { fields } = useFieldArray({
       control: form.control,
       name: `settings.branches.${branchIndex}.conditions.${groupIndex}` as const,
-    });
+    })
     return (
       <div className="flex flex-col gap-4">
-        {groupIndex > 0 && (
-          <HorizontalSeparatorWithText className="my-2">
-            {t('OR')}
-          </HorizontalSeparatorWithText>
-        )}
+        {groupIndex > 0 && <HorizontalSeparatorWithText className="my-2">{t('OR')}</HorizontalSeparatorWithText>}
         {fields.length === 0 && (
           <BranchConditionToolbar
             readonly={readonly}
@@ -62,18 +50,12 @@ const BranchConditionGroup = React.memo(
             />
           </React.Fragment>
         ))}
-        <BranchConditionToolbar
-          onAnd={onAnd}
-          onOr={onOr}
-          readonly={readonly}
-          showOr={true}
-          showAnd={true}
-        />
+        <BranchConditionToolbar onAnd={onAnd} onOr={onOr} readonly={readonly} showOr={true} showAnd={true} />
       </div>
-    );
+    )
   },
-);
+)
 
-BranchConditionGroup.displayName = 'ConditionGroup';
+BranchConditionGroup.displayName = 'ConditionGroup'
 
-export { BranchConditionGroup };
+export { BranchConditionGroup }

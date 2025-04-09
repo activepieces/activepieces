@@ -1,24 +1,18 @@
-import {
-  Property,
-} from '@activepieces/pieces-framework';
-import {
-  fetchSubscriberByEmail,
-  fetchSubscribedTags,
-  fetchTags,
-} from '../service';
-import { Tag, AuthEmail } from '../types';
+import { Property } from '@activepieces/pieces-framework'
+import { fetchSubscribedTags, fetchSubscriberByEmail, fetchTags } from '../service'
+import { AuthEmail, Tag } from '../types'
 
 export const tagId = Property.ShortText({
   displayName: 'Tag Id',
   description: 'The tag id',
   required: true,
-});
+})
 
 export const name = Property.ShortText({
   displayName: 'Name',
   description: 'The name of the tag',
   required: true,
-});
+})
 
 export const tags = Property.MultiSelectDropdown({
   displayName: 'Tags',
@@ -31,23 +25,23 @@ export const tags = Property.MultiSelectDropdown({
         disabled: true,
         placeholder: 'Connect your account',
         options: [],
-      };
+      }
     }
-    const tags = await fetchTags(auth.toString());
+    const tags = await fetchTags(auth.toString())
     const options = tags.map((tag: Tag) => {
       return {
         label: tag.name,
         value: tag.id,
-      };
-    });
+      }
+    })
 
     return {
       options,
-    };
+    }
   },
-});
+})
 
-export const tagsRequired = { ...tags, required: true };
+export const tagsRequired = { ...tags, required: true }
 
 export const tag = Property.Dropdown({
   displayName: 'Tag',
@@ -60,31 +54,31 @@ export const tag = Property.Dropdown({
         disabled: true,
         placeholder: 'Connect your account',
         options: [],
-      };
+      }
     }
 
-    const tags = await fetchTags(auth.toString());
+    const tags = await fetchTags(auth.toString())
 
     // loop through data and map to options
     const options = tags.map((tag: Tag) => {
       return {
         label: tag.name,
         value: tag.id,
-      };
-    });
+      }
+    })
 
     return {
       options,
-    };
+    }
   },
-});
+})
 
 export const tagsPageNumber = Property.Number({
   displayName: 'Page',
   description: 'Each page of results will contain up to 50 tags.',
   required: false,
   defaultValue: 1,
-});
+})
 export const sortOrder = Property.StaticDropdown({
   displayName: 'Sort Order',
   description: 'Sort order',
@@ -95,7 +89,7 @@ export const sortOrder = Property.StaticDropdown({
       { label: 'Descending', value: 'desc' },
     ],
   },
-});
+})
 export const subscriberState = Property.StaticDropdown({
   displayName: 'Subscriber State',
   description: 'Subscriber state',
@@ -106,10 +100,9 @@ export const subscriberState = Property.StaticDropdown({
       { label: 'canceled', value: 'canceled' },
     ],
   },
-});
+})
 
 // Generate options for tags based on email address
-
 
 export const tagIdByEmail = Property.Dropdown({
   displayName: 'Tag',
@@ -117,55 +110,49 @@ export const tagIdByEmail = Property.Dropdown({
   required: true,
   refreshers: ['auth', 'email'],
   options: async (params: unknown) => {
-    const { auth, email } = params as AuthEmail;
+    const { auth, email } = params as AuthEmail
     if (!auth) {
       return {
         disabled: true,
         placeholder: 'Connect your account.',
         options: [],
-      };
+      }
     }
     if (!email) {
       return {
         disabled: true,
         placeholder: 'Provide a subscriber email address.',
         options: [],
-      };
+      }
     }
-    const subscriber = await fetchSubscriberByEmail(
-      auth.toString(),
-      email.toString()
-    );
+    const subscriber = await fetchSubscriberByEmail(auth.toString(), email.toString())
 
     if (!subscriber) {
       return {
         disabled: true,
         placeholder: 'No subscribers found for this email address.',
         options: [],
-      };
+      }
     }
 
-    const subscriberId = subscriber.id;
-    const tags = await fetchSubscribedTags(
-      auth.toString(),
-      subscriberId.toString()
-    );
+    const subscriberId = subscriber.id
+    const tags = await fetchSubscribedTags(auth.toString(), subscriberId.toString())
 
     // loop through data and map to options
     const options = tags.map((tag: Tag) => {
       return {
         label: tag.name,
         value: tag.id,
-      };
-    });
+      }
+    })
 
     return {
       disabled: false,
       placeholder: 'Choose a tag',
       options,
-    };
+    }
   },
-});
+})
 
 export const tagIdBySubscriberId = Property.Dropdown({
   displayName: 'Tag',
@@ -178,7 +165,7 @@ export const tagIdBySubscriberId = Property.Dropdown({
         disabled: true,
         placeholder: 'Connect your account and',
         options: [],
-      };
+      }
     }
 
     if (!subscriberId) {
@@ -186,35 +173,32 @@ export const tagIdBySubscriberId = Property.Dropdown({
         disabled: true,
         placeholder: 'Provide a subscriber id.',
         options: [],
-      };
+      }
     }
 
     {
-      const tags = await fetchSubscribedTags(
-        auth.toString(),
-        subscriberId.toString()
-      );
+      const tags = await fetchSubscribedTags(auth.toString(), subscriberId.toString())
       if (!tags) {
         return {
           disabled: true,
           placeholder: 'Something went wrong.',
           options: [],
-        };
+        }
       }
       // loop through data and map to options
       const options = tags.map((tag: Tag) => {
         return {
           label: tag.name,
           value: tag.id,
-        };
-      });
+        }
+      })
 
       return {
         options,
-      };
+      }
     }
   },
-});
+})
 
 // WIP debounce
 

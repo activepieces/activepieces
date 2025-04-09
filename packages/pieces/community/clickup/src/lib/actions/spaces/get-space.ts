@@ -1,8 +1,8 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
-import { callClickUpApi } from '../../common';
-import { clickupAuth } from '../../../';
+import { clickupAuth } from '../../../'
+import { callClickUpApi } from '../../common'
 
 export const getClickupSpace = createAction({
   auth: clickupAuth,
@@ -17,13 +17,13 @@ export const getClickupSpace = createAction({
     }),
   },
   async run(configValue) {
-    const { space_id } = configValue.propsValue;
+    const { space_id } = configValue.propsValue
     const response = await callClickUpApi(
       HttpMethod.GET,
       `space/${space_id}`,
       getAccessTokenOrThrow(configValue.auth),
-      {}
-    );
-    return response.body;
+      {},
+    )
+    return response.body
   },
-});
+})

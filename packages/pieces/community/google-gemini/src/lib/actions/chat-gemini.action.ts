@@ -1,14 +1,10 @@
-import { Content, GoogleGenerativeAI } from '@google/generative-ai';
-import {
-  Property,
-  StoreScope,
-  createAction,
-} from '@activepieces/pieces-framework';
-import mime from 'mime-types';
-import { z } from 'zod';
-import { googleGeminiAuth } from '../../index';
-import { defaultLLM, getGeminiModelOptions } from '../common/common';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, StoreScope, createAction } from '@activepieces/pieces-framework'
+import { Content, GoogleGenerativeAI } from '@google/generative-ai'
+import mime from 'mime-types'
+import { z } from 'zod'
+import { googleGeminiAuth } from '../../index'
+import { defaultLLM, getGeminiModelOptions } from '../common/common'
 
 export const chatGemini = createAction({
   auth: googleGeminiAuth,
@@ -39,35 +35,35 @@ export const chatGemini = createAction({
   async run({ auth, propsValue, store }) {
     await propsValidation.validateZod(propsValue, {
       memoryKey: z.string().max(128).optional(),
-    });
+    })
 
-    const { model, prompt, memoryKey } = propsValue;
-    const genAI = new GoogleGenerativeAI(auth);
-    const geminiModel = genAI.getGenerativeModel({ model });
-    let history: Content[] = [];
+    const { model, prompt, memoryKey } = propsValue
+    const genAI = new GoogleGenerativeAI(auth)
+    const geminiModel = genAI.getGenerativeModel({ model })
+    let history: Content[] = []
 
     if (memoryKey) {
-      const storedHistory = await store.get(memoryKey, StoreScope.PROJECT);
+      const storedHistory = await store.get(memoryKey, StoreScope.PROJECT)
       if (Array.isArray(storedHistory)) {
-        history = storedHistory;
+        history = storedHistory
       }
     }
 
     const chat = geminiModel.startChat({
       history: history,
-    });
+    })
 
-    const result = await chat.sendMessage(prompt);
-    const responseText = result.response.text();
+    const result = await chat.sendMessage(prompt)
+    const responseText = result.response.text()
 
     if (memoryKey) {
-      const updatedHistory = await chat.getHistory();
-      await store.put(memoryKey, updatedHistory, StoreScope.PROJECT);
+      const updatedHistory = await chat.getHistory()
+      await store.put(memoryKey, updatedHistory, StoreScope.PROJECT)
     }
 
     return {
       response: responseText,
       history: history,
-    };
+    }
   },
-});
+})

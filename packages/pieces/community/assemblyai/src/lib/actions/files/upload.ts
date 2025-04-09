@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { assemblyaiAuth } from '../../auth';
-import { getAssemblyAIClient } from '../../client';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { assemblyaiAuth } from '../../auth'
+import { getAssemblyAIClient } from '../../client'
 
 export const uploadFile = createAction({
   name: 'uploadFile',
@@ -16,10 +16,8 @@ export const uploadFile = createAction({
     }),
   },
   async run(context) {
-    const client = getAssemblyAIClient(context);
-    const uploadedFile = await client.files.upload(
-      context.propsValue.file.data
-    );
-    return uploadedFile;
+    const client = getAssemblyAIClient(context)
+    const uploadedFile = await client.files.upload(context.propsValue.file.data)
+    return uploadedFile
   },
-});
+})

@@ -1,11 +1,7 @@
-import { beamerAuth } from '../../index';
-import {
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { beamerCommon } from '../common';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { beamerAuth } from '../../index'
+import { beamerCommon } from '../common'
 
 export const createNewFeatureRequest = createAction({
   auth: beamerAuth,
@@ -97,7 +93,7 @@ export const createNewFeatureRequest = createAction({
   },
 
   async run(context) {
-    const apiKey = context.auth;
+    const apiKey = context.auth
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -114,9 +110,9 @@ export const createNewFeatureRequest = createAction({
         status: context.propsValue.status,
         userEmail: context.propsValue.requestedby,
       },
-    };
-    const res = await httpClient.sendRequest<any>(request);
+    }
+    const res = await httpClient.sendRequest<any>(request)
 
-    return res.body;
+    return res.body
   },
-});
+})

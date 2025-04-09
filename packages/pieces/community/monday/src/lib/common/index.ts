@@ -1,10 +1,10 @@
-import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
-import { mondayClient } from './client';
-import { MondayColumnType, MondayNotWritableColumnType } from './constants';
-import { convertMondayColumnToActivepiecesProp } from './helper';
+import { DynamicPropsValue, Property } from '@activepieces/pieces-framework'
+import { mondayClient } from './client'
+import { MondayColumnType, MondayNotWritableColumnType } from './constants'
+import { convertMondayColumnToActivepiecesProp } from './helper'
 
 export function makeClient(apiKey: string): mondayClient {
-  return new mondayClient(apiKey);
+  return new mondayClient(apiKey)
 }
 
 export const mondayCommon = {
@@ -19,20 +19,20 @@ export const mondayCommon = {
             disabled: true,
             placeholder: 'connect your account first',
             options: [],
-          };
+          }
         }
 
-        const client = makeClient(auth as string);
-        const res = await client.listWorkspcaes();
+        const client = makeClient(auth as string)
+        const res = await client.listWorkspcaes()
         return {
           disabled: false,
           options: res.data.workspaces.map((workspace) => {
             return {
               label: workspace.name,
               value: workspace.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   board_id: (required = true) =>
@@ -44,16 +44,15 @@ export const mondayCommon = {
         if (!auth || !workspace_id) {
           return {
             disabled: true,
-            placeholder:
-              'connect your account first and select your workspace.',
+            placeholder: 'connect your account first and select your workspace.',
             options: [],
-          };
+          }
         }
 
-        const client = makeClient(auth as string);
+        const client = makeClient(auth as string)
         const res = await client.listWorkspaceBoards({
           workspaceId: workspace_id as string,
-        });
+        })
 
         return {
           disabled: false,
@@ -63,9 +62,9 @@ export const mondayCommon = {
               return {
                 label: board.name,
                 value: board.id,
-              };
+              }
             }),
-        };
+        }
       },
     }),
   group_id: (required = false) =>
@@ -77,15 +76,14 @@ export const mondayCommon = {
         if (!auth || !board_id) {
           return {
             disabled: true,
-            placeholder:
-              'connect your account first and select workspace board.',
+            placeholder: 'connect your account first and select workspace board.',
             options: [],
-          };
+          }
         }
-        const client = makeClient(auth as string);
+        const client = makeClient(auth as string)
         const res = await client.listBoardGroups({
           boardId: board_id as string,
-        });
+        })
         return {
           disabled: false,
           options:
@@ -95,7 +93,7 @@ export const mondayCommon = {
                   value: group.id,
                 }))
               : [],
-        };
+        }
       },
     }),
   item_id: (required = true) =>
@@ -107,57 +105,54 @@ export const mondayCommon = {
         if (!auth || !board_id) {
           return {
             disabled: true,
-            placeholder:
-              'connect your account first and select workspace board.',
+            placeholder: 'connect your account first and select workspace board.',
             options: [],
-          };
+          }
         }
-        const client = makeClient(auth as string);
+        const client = makeClient(auth as string)
         const res = await client.listBoardItems({
           boardId: board_id as string,
-        });
+        })
 
-        const items = res.data.boards[0]?.items_page.items;
+        const items = res.data.boards[0]?.items_page.items
         return {
           disabled: false,
           options: items.map((item) => {
             return {
               label: item.name,
               value: item.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   columnIds: (required = true) =>
     Property.MultiSelectDropdown({
       displayName: 'Column IDs',
-      description:
-        'Limit data output by specifying column IDs; leave empty to display all columns.',
+      description: 'Limit data output by specifying column IDs; leave empty to display all columns.',
       required,
       refreshers: ['board_id'],
       options: async ({ auth, board_id }) => {
         if (!auth || !board_id) {
           return {
             disabled: true,
-            placeholder:
-              'connect your account first and select workspace board.',
+            placeholder: 'connect your account first and select workspace board.',
             options: [],
-          };
+          }
         }
-        const client = makeClient(auth as string);
+        const client = makeClient(auth as string)
         const res = await client.listBoardColumns({
           boardId: board_id as string,
-        });
+        })
         return {
           disabled: false,
           options: res.data.boards[0].columns.map((column) => {
             return {
               label: column.title,
               value: column.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   columnValues: Property.DynamicProperties({
@@ -170,19 +165,19 @@ export const mondayCommon = {
           disabled: true,
           placeholder: 'connect your account first and select workspace board.',
           options: [],
-        };
+        }
       }
-      const fields: DynamicPropsValue = {};
+      const fields: DynamicPropsValue = {}
       try {
-        const client = makeClient(auth as unknown as string);
+        const client = makeClient(auth as unknown as string)
         const res = await client.listBoardColumns({
           boardId: board_id as unknown as string,
-        });
-        const columns = res.data.boards[0]?.columns;
+        })
+        const columns = res.data.boards[0]?.columns
         for (const column of columns) {
           if (!MondayNotWritableColumnType.includes(column.type)) {
             if (column.type === MondayColumnType.PEOPLE) {
-              const userData = await client.listUsers();
+              const userData = await client.listUsers()
               fields[column.id] = Property.StaticMultiSelectDropdown({
                 displayName: column.title,
                 required: false,
@@ -192,20 +187,20 @@ export const mondayCommon = {
                     return {
                       label: `${user.name} (${user.email})`,
                       value: user.id,
-                    };
+                    }
                   }),
                 },
-              });
+              })
             } else {
-              const prop = convertMondayColumnToActivepiecesProp(column);
-              if (prop != null) fields[column.id] = prop;
+              const prop = convertMondayColumnToActivepiecesProp(column)
+              if (prop != null) fields[column.id] = prop
             }
           }
         }
       } catch (e) {
-        console.debug(e);
+        console.debug(e)
       }
-      return fields;
+      return fields
     },
   }),
-};
+}

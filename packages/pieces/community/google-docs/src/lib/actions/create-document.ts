@@ -1,6 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { docsCommon } from '../common';
-import { googleDocsAuth } from '../..';
+import { createAction } from '@activepieces/pieces-framework'
+import { googleDocsAuth } from '../..'
+import { docsCommon } from '../common'
 
 export const createDocument = createAction({
   auth: googleDocsAuth,
@@ -12,16 +12,13 @@ export const createDocument = createAction({
     body: docsCommon.body,
   },
   async run(context) {
-    const document = await docsCommon.createDocument(
-      context.propsValue.title,
-      context.auth.access_token
-    );
+    const document = await docsCommon.createDocument(context.propsValue.title, context.auth.access_token)
     const response = await docsCommon.writeToDocument(
       document.documentId,
       context.propsValue.body,
-      context.auth.access_token
-    );
+      context.auth.access_token,
+    )
 
-    return response;
+    return response
   },
-});
+})

@@ -1,19 +1,12 @@
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuTrigger,
-} from '@/components/ui/context-menu';
-import { ShortcutProps } from '@/components/ui/shortcut';
-import { Action } from '@activepieces/shared';
+import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from '@/components/ui/context-menu'
+import { ShortcutProps } from '@/components/ui/shortcut'
+import { Action } from '@activepieces/shared'
 
-import { BuilderState } from '../../builder-hooks';
+import { BuilderState } from '../../builder-hooks'
 
-import { CanvasContextMenuContent } from './canvas-context-menu-content';
+import { CanvasContextMenuContent } from './canvas-context-menu-content'
 
-export type CanvasShortcutsProps = Record<
-  'Paste' | 'Delete' | 'Copy' | 'Skip',
-  ShortcutProps
->;
+export type CanvasShortcutsProps = Record<'Paste' | 'Delete' | 'Copy' | 'Skip', ShortcutProps>
 export const CanvasShortcuts: CanvasShortcutsProps = {
   Paste: {
     withCtrl: true,
@@ -36,7 +29,7 @@ export const CanvasShortcuts: CanvasShortcutsProps = {
     withShift: false,
     shortcutKey: 'e',
   },
-};
+}
 export enum ContextMenuType {
   CANVAS = 'CANVAS',
   STEP = 'STEP',
@@ -51,10 +44,10 @@ export type CanvasContextMenuProps = Pick<
   | 'selectedNodes'
   | 'setPieceSelectorStep'
 > & {
-  children?: React.ReactNode;
-  actionsToPaste: Action[];
-  contextMenuType: ContextMenuType;
-};
+  children?: React.ReactNode
+  actionsToPaste: Action[]
+  contextMenuType: ContextMenuType
+}
 export const CanvasContextMenu = ({
   selectedNodes,
   applyOperation,
@@ -84,5 +77,5 @@ export const CanvasContextMenu = ({
         ></CanvasContextMenuContent>
       </ContextMenuContent>
     </ContextMenu>
-  );
-};
+  )
+}

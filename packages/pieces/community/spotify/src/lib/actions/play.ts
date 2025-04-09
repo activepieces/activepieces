@@ -1,5 +1,5 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { spotifyCommon, makeClient } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { makeClient, spotifyCommon } from '../common'
 
 export default createAction({
   name: 'play',
@@ -10,8 +10,7 @@ export default createAction({
     device_id: spotifyCommon.device_id(false),
     context_uri: Property.ShortText({
       displayName: 'Context URI',
-      description:
-        'Spotify URI of the context to play (album, artist, playlist)',
+      description: 'Spotify URI of the context to play (album, artist, playlist)',
       required: false,
     }),
     tracks: Property.Array({
@@ -26,13 +25,13 @@ export default createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient({ auth });
+    const client = makeClient({ auth })
     const res = await client.play({
       device_id: propsValue.device_id,
       context_uri: propsValue.context_uri,
       uris: propsValue.tracks as string[],
       position_ms: propsValue.position_ms,
-    });
-    return res;
+    })
+    return res
   },
-});
+})

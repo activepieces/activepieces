@@ -36,4 +36,4 @@ export const encodings = [
     value: 'hex',
     label: 'Hex',
   },
-];
+]

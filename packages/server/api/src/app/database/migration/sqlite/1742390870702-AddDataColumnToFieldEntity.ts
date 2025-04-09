@@ -1,13 +1,13 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddDataColumnToFieldEntity1742390870702 implements MigrationInterface {
-    name = 'AddDataColumnToFieldEntity1742390870702'
+  name = 'AddDataColumnToFieldEntity1742390870702'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_field_project_id_table_id_name"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_field" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -21,7 +21,7 @@ export class AddDataColumnToFieldEntity1742390870702 implements MigrationInterfa
                 CONSTRAINT "fk_field_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_field"(
                     "id",
                     "created",
@@ -40,20 +40,20 @@ export class AddDataColumnToFieldEntity1742390870702 implements MigrationInterfa
                 "projectId"
             FROM "field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_field"
                 RENAME TO "field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_field_project_id_table_id_name" ON "field" ("projectId", "tableId", "name")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_field_project_id_table_id_name"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_field" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -69,7 +69,7 @@ export class AddDataColumnToFieldEntity1742390870702 implements MigrationInterfa
                 CONSTRAINT "fk_field_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_field"(
                     "id",
                     "created",
@@ -90,27 +90,27 @@ export class AddDataColumnToFieldEntity1742390870702 implements MigrationInterfa
                 "data"
             FROM "field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_field"
                 RENAME TO "field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_field_project_id_table_id_name" ON "field" ("projectId", "tableId", "name")
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_field_project_id_table_id_name"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "field"
                 RENAME TO "temporary_field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "field" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -124,7 +124,7 @@ export class AddDataColumnToFieldEntity1742390870702 implements MigrationInterfa
                 CONSTRAINT "fk_field_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "field"(
                     "id",
                     "created",
@@ -145,20 +145,20 @@ export class AddDataColumnToFieldEntity1742390870702 implements MigrationInterfa
                 "data"
             FROM "temporary_field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_field_project_id_table_id_name" ON "field" ("projectId", "tableId", "name")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_field_project_id_table_id_name"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "field"
                 RENAME TO "temporary_field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "field" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -171,7 +171,7 @@ export class AddDataColumnToFieldEntity1742390870702 implements MigrationInterfa
                 CONSTRAINT "fk_field_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "field"(
                     "id",
                     "created",
@@ -190,12 +190,11 @@ export class AddDataColumnToFieldEntity1742390870702 implements MigrationInterfa
                 "projectId"
             FROM "temporary_field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_field_project_id_table_id_name" ON "field" ("projectId", "tableId", "name")
         `)
-    }
-
+  }
 }

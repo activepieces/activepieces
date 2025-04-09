@@ -1,8 +1,8 @@
-import { businessCentralAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { commonProps, formatRecordFields } from '../common';
-import { makeClient } from '../common/client';
-import { ACTION_ENTITY_DROPDOWN_OPTIONS } from '../common/constants';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { businessCentralAuth } from '../../'
+import { commonProps, formatRecordFields } from '../common'
+import { makeClient } from '../common/client'
+import { ACTION_ENTITY_DROPDOWN_OPTIONS } from '../common/constants'
 
 export const updateRecordAction = createAction({
   auth: businessCentralAuth,
@@ -23,38 +23,38 @@ export const updateRecordAction = createAction({
     record_fields: commonProps.record_fields,
   },
   async run(context) {
-    const companyId = context.propsValue.company_id;
-    const recordType = context.propsValue.record_type;
-    const recordId = context.propsValue.record_id;
-    const recordFields = context.propsValue.record_fields;
+    const companyId = context.propsValue.company_id
+    const recordType = context.propsValue.record_type
+    const recordId = context.propsValue.record_id
+    const recordFields = context.propsValue.record_fields
 
-    const formattedRecordFields = formatRecordFields(recordFields, recordType);
+    const formattedRecordFields = formatRecordFields(recordFields, recordType)
 
-    const client = makeClient(context.auth);
-    let endpoint;
+    const client = makeClient(context.auth)
+    let endpoint
 
     switch (recordType) {
       case 'itemVariants':
-        endpoint = `/companies(${companyId})/items(${recordFields['itemId']})/${recordType}(${recordId})`;
-        delete formattedRecordFields['itemId'];
-        break;
+        endpoint = `/companies(${companyId})/items(${recordFields['itemId']})/${recordType}(${recordId})`
+        delete formattedRecordFields['itemId']
+        break
       case 'salesInvoiceLines':
-        endpoint = `/companies(${companyId})/salesInvoices(${recordFields['salesInvoiceId']})/${recordType}(${recordId})`;
-        delete formattedRecordFields['salesInvoiceId'];
-        break;
+        endpoint = `/companies(${companyId})/salesInvoices(${recordFields['salesInvoiceId']})/${recordType}(${recordId})`
+        delete formattedRecordFields['salesInvoiceId']
+        break
       case 'salesOrderLines':
-        endpoint = `/companies(${companyId})/salesOrders(${recordFields['salesOrderId']})/${recordType}(${recordId})`;
-        delete formattedRecordFields['salesOrderId'];
-        break;
+        endpoint = `/companies(${companyId})/salesOrders(${recordFields['salesOrderId']})/${recordType}(${recordId})`
+        delete formattedRecordFields['salesOrderId']
+        break
       case 'salesQuoteLines':
-        endpoint = `/companies(${companyId})/salesQuotes(${recordFields['salesQuoteId']})/${recordType}(${recordId})`;
-        delete formattedRecordFields['salesQuoteId'];
-        break;
+        endpoint = `/companies(${companyId})/salesQuotes(${recordFields['salesQuoteId']})/${recordType}(${recordId})`
+        delete formattedRecordFields['salesQuoteId']
+        break
       default:
-        endpoint = `/companies(${companyId})/${recordType}(${recordId})`;
-        break;
+        endpoint = `/companies(${companyId})/${recordType}(${recordId})`
+        break
     }
 
-    return await client.updateRecord(endpoint, formattedRecordFields);
+    return await client.updateRecord(endpoint, formattedRecordFields)
   },
-});
+})

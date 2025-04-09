@@ -1,14 +1,13 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework'
 
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { villageAuth } from '../..'
 
 export const fetchCompaniesPaths = createAction({
   name: 'fetchCompaniesPaths',
   auth: villageAuth,
   displayName: 'Find Company Paths',
-  description:
-    'Enrich a company record with all people that have available intro paths',
+  description: 'Enrich a company record with all people that have available intro paths',
   props: {
     user_identifier: Property.LongText({
       displayName: 'User Identifier',
@@ -27,8 +26,7 @@ export const fetchCompaniesPaths = createAction({
     }),
   },
   async run(context) {
-    const { company_domain_url, company_linkedin_url, user_identifier } =
-      context.propsValue;
+    const { company_domain_url, company_linkedin_url, user_identifier } = context.propsValue
 
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
@@ -41,7 +39,7 @@ export const fetchCompaniesPaths = createAction({
         company_domain_url,
         company_linkedin_url,
       },
-    });
-    return res.body;
+    })
+    return res.body
   },
-});
+})

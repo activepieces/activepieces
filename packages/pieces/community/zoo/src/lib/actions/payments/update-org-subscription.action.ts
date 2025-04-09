@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 import { zooAuth } from '../../../index'
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const updateOrgSubscriptionAction = createAction({
   name: 'update_org_subscription',
@@ -25,7 +25,7 @@ export const updateOrgSubscriptionAction = createAction({
       body: {
         plan_id: propsValue.planId,
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

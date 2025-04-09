@@ -1,11 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { dripCommon } from '../common';
-import { dripAuth } from '../../';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { dripAuth } from '../../'
+import { dripCommon } from '../common'
 
 export const dripAddSubscriberToCampaign = createAction({
   auth: dripAuth,
@@ -24,41 +20,39 @@ export const dripAddSubscriberToCampaign = createAction({
             disabled: true,
             options: [],
             placeholder: 'Please fill in API key first',
-          };
+          }
         }
         if (!account_id) {
           return {
             disabled: true,
             options: [],
             placeholder: 'Please select an account first',
-          };
+          }
         }
         const request: HttpRequest = {
           method: HttpMethod.GET,
           url: `${dripCommon.baseUrl(account_id as string)}/campaigns`,
           headers: {
-            Authorization: `Basic ${Buffer.from(auth as string).toString(
-              'base64'
-            )}`,
+            Authorization: `Basic ${Buffer.from(auth as string).toString('base64')}`,
           },
-        };
+        }
         const response = await httpClient.sendRequest<{
-          campaigns: { name: string; id: string }[];
-        }>(request);
+          campaigns: { name: string; id: string }[]
+        }>(request)
         const opts = response.body.campaigns.map((campaign) => {
-          return { value: campaign.id, label: campaign.name };
-        });
+          return { value: campaign.id, label: campaign.name }
+        })
         if (opts.length === 0) {
           return {
             disabled: false,
             options: [],
             placeholder: 'Please create an email series campaign',
-          };
+          }
         }
         return {
           disabled: false,
           options: opts,
-        };
+        }
       },
     }),
     subscriber: dripCommon.subscriber,
@@ -68,9 +62,7 @@ export const dripAddSubscriberToCampaign = createAction({
   async run({ auth, propsValue }) {
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${dripCommon.baseUrl(propsValue.account_id)}/campaigns/${
-        propsValue.campaign_id
-      }/subscribers`,
+      url: `${dripCommon.baseUrl(propsValue.account_id)}/campaigns/${propsValue.campaign_id}/subscribers`,
       body: {
         subscribers: [
           {
@@ -84,7 +76,7 @@ export const dripAddSubscriberToCampaign = createAction({
         Authorization: dripCommon.authorizationHeader(auth),
       },
       queryParams: {},
-    };
-    return await httpClient.sendRequest<Record<string, never>>(request);
+    }
+    return await httpClient.sendRequest<Record<string, never>>(request)
   },
-});
+})

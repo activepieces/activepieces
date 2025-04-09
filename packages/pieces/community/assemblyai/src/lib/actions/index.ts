@@ -1,4 +1,4 @@
-export { uploadFile } from './files';
+export { uploadFile } from './files'
 export {
   transcribe,
   getTranscript,
@@ -9,6 +9,6 @@ export {
   wordSearch,
   listTranscripts,
   deleteTranscript,
-} from './transcripts';
-export { lemurTask, getLemurResponse, purgeLemurRequestData } from './lemur';
-export { customApiCall } from './custom-api-call';
+} from './transcripts'
+export { lemurTask, getLemurResponse, purgeLemurRequestData } from './lemur'
+export { customApiCall } from './custom-api-call'

@@ -1,12 +1,8 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { runMultipleQueries } from './lib/actions/run-multiple-queries';
-import { runQuery } from './lib/actions/run-query';
-import { PieceCategory } from '@activepieces/shared';
-import { insertRowAction } from './lib/actions/insert-row';
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { insertRowAction } from './lib/actions/insert-row'
+import { runMultipleQueries } from './lib/actions/run-multiple-queries'
+import { runQuery } from './lib/actions/run-query'
 
 export const snowflakeAuth = PieceAuth.CustomAuth({
   props: {
@@ -27,14 +23,12 @@ export const snowflakeAuth = PieceAuth.CustomAuth({
     }),
     database: Property.ShortText({
       displayName: 'Database',
-      description:
-        'The default database to use for the session after connecting.',
+      description: 'The default database to use for the session after connecting.',
       required: false,
     }),
     role: Property.ShortText({
       displayName: 'Role',
-      description:
-        'The default security role to use for the session after connecting.',
+      description: 'The default security role to use for the session after connecting.',
       required: false,
     }),
     warehouse: Property.ShortText({
@@ -45,7 +39,7 @@ export const snowflakeAuth = PieceAuth.CustomAuth({
     }),
   },
   required: true,
-});
+})
 export const snowflake = createPiece({
   displayName: 'Snowflake',
   description: 'Data warehouse built for the cloud',
@@ -57,4 +51,4 @@ export const snowflake = createPiece({
   authors: ['AdamSelene', 'abuaboud', 'valentin-mourtialon'],
   actions: [runQuery, runMultipleQueries, insertRowAction],
   triggers: [],
-});
+})

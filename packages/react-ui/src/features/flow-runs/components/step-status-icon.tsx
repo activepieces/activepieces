@@ -1,19 +1,15 @@
-import { t } from 'i18next';
-import React from 'react';
+import { t } from 'i18next'
+import React from 'react'
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
-import { cn } from '@/lib/utils';
-import { StepOutputStatus } from '@activepieces/shared';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils'
+import { cn } from '@/lib/utils'
+import { StepOutputStatus } from '@activepieces/shared'
 
 type StepStatusIconProps = {
-  status: StepOutputStatus;
-  size: '3' | '4' | '5';
-};
+  status: StepOutputStatus
+  size: '3' | '4' | '5'
+}
 
 const statusText = {
   [StepOutputStatus.RUNNING]: t('Step running'),
@@ -21,10 +17,10 @@ const statusText = {
   [StepOutputStatus.STOPPED]: t('Step Stopped'),
   [StepOutputStatus.SUCCEEDED]: t('Step Succeeded'),
   [StepOutputStatus.FAILED]: t('Step Failed'),
-};
+}
 
 const StepStatusIcon = React.memo(({ status, size }: StepStatusIconProps) => {
-  const { variant, Icon } = flowRunUtils.getStatusIconForStep(status);
+  const { variant, Icon } = flowRunUtils.getStatusIconForStep(status)
 
   return (
     <Tooltip>
@@ -45,7 +41,7 @@ const StepStatusIcon = React.memo(({ status, size }: StepStatusIconProps) => {
       </TooltipTrigger>
       <TooltipContent side="bottom">{statusText[status]}</TooltipContent>
     </Tooltip>
-  );
-});
-StepStatusIcon.displayName = 'StepStatusIcon';
-export { StepStatusIcon };
+  )
+})
+StepStatusIcon.displayName = 'StepStatusIcon'
+export { StepStatusIcon }

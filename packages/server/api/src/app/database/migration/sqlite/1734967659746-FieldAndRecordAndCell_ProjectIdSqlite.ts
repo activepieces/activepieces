@@ -1,13 +1,13 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInterface {
-    name = 'FieldAndRecordAndCellProjectId1734967659746'
+  name = 'FieldAndRecordAndCellProjectId1734967659746'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_field_table_id_name"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_field" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -19,7 +19,7 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 CONSTRAINT "fk_field_table_id" FOREIGN KEY ("tableId") REFERENCES "table" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_field"(
                     "id",
                     "created",
@@ -36,14 +36,14 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 "tableId"
             FROM "field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_field"
                 RENAME TO "field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_record" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -53,7 +53,7 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 CONSTRAINT "fk_record_table_id" FOREIGN KEY ("tableId") REFERENCES "table" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_record"("id", "created", "updated", "tableId")
             SELECT "id",
                 "created",
@@ -61,14 +61,14 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 "tableId"
             FROM "record"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "record"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_record"
                 RENAME TO "record"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_cell" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -81,7 +81,7 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 CONSTRAINT "fk_cell_record_id" FOREIGN KEY ("recordId") REFERENCES "record" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_cell"(
                     "id",
                     "created",
@@ -98,20 +98,20 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 "value"
             FROM "cell"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "cell"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_cell"
                 RENAME TO "cell"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_field_project_id_table_id_name" ON "field" ("projectId", "tableId", "name")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_field_project_id_table_id_name"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_field" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -124,7 +124,7 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 CONSTRAINT "fk_field_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_field"(
                     "id",
                     "created",
@@ -143,17 +143,17 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 "projectId"
             FROM "field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_field"
                 RENAME TO "field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE  INDEX "idx_field_project_id_table_id_name" ON "field" ("projectId", "tableId", "name")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_record" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -164,7 +164,7 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 CONSTRAINT "fk_record_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_record"(
                     "id",
                     "created",
@@ -179,14 +179,14 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 "projectId"
             FROM "record"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "record"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_record"
                 RENAME TO "record"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_cell" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -200,7 +200,7 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 CONSTRAINT "fk_cell_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_cell"(
                     "id",
                     "created",
@@ -219,21 +219,21 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 "projectId"
             FROM "cell"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "cell"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_cell"
                 RENAME TO "cell"
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             ALTER TABLE "cell"
                 RENAME TO "temporary_cell"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "cell" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -246,7 +246,7 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 CONSTRAINT "fk_cell_record_id" FOREIGN KEY ("recordId") REFERENCES "record" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "cell"(
                     "id",
                     "created",
@@ -265,14 +265,14 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 "projectId"
             FROM "temporary_cell"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_cell"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "record"
                 RENAME TO "temporary_record"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "record" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -282,7 +282,7 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 CONSTRAINT "fk_record_table_id" FOREIGN KEY ("tableId") REFERENCES "table" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "record"(
                     "id",
                     "created",
@@ -297,17 +297,17 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 "projectId"
             FROM "temporary_record"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_record"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_field_project_id_table_id_name"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "field"
                 RENAME TO "temporary_field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "field" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -319,7 +319,7 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 CONSTRAINT "fk_field_table_id" FOREIGN KEY ("tableId") REFERENCES "table" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "field"(
                     "id",
                     "created",
@@ -338,20 +338,20 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 "projectId"
             FROM "temporary_field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_field_project_id_table_id_name" ON "field" ("projectId", "tableId", "name")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_field_project_id_table_id_name"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "cell"
                 RENAME TO "temporary_cell"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "cell" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -363,7 +363,7 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 CONSTRAINT "fk_cell_record_id" FOREIGN KEY ("recordId") REFERENCES "record" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "cell"(
                     "id",
                     "created",
@@ -380,14 +380,14 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 "value"
             FROM "temporary_cell"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_cell"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "record"
                 RENAME TO "temporary_record"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "record" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -396,7 +396,7 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 CONSTRAINT "fk_record_table_id" FOREIGN KEY ("tableId") REFERENCES "table" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "record"("id", "created", "updated", "tableId")
             SELECT "id",
                 "created",
@@ -404,14 +404,14 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 "tableId"
             FROM "temporary_record"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_record"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "field"
                 RENAME TO "temporary_field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "field" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -422,7 +422,7 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 CONSTRAINT "fk_field_table_id" FOREIGN KEY ("tableId") REFERENCES "table" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "field"(
                     "id",
                     "created",
@@ -439,12 +439,11 @@ export class FieldAndRecordAndCellProjectId1734967659746 implements MigrationInt
                 "tableId"
             FROM "temporary_field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_field_table_id_name" ON "field" ("tableId", "name")
         `)
-    }
-
+  }
 }

@@ -1,5 +1,5 @@
-import { AI, aiProps } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { AI, aiProps } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
 export const generateImage = createAction({
   name: 'generateImage',
@@ -33,7 +33,7 @@ export const generateImage = createAction({
             label: '256x256',
             value: '256x256',
           },
-        ];
+        ]
         if (model == 'dall-e-3')
           options = [
             {
@@ -48,11 +48,11 @@ export const generateImage = createAction({
               label: '1792x1024',
               value: '1792x1024',
             },
-          ];
+          ]
 
         return {
           options: options,
-        };
+        }
       },
     }),
   },
@@ -60,34 +60,30 @@ export const generateImage = createAction({
     const ai = AI({
       provider: context.propsValue.provider,
       server: context.server,
-    });
+    })
 
     const image = ai.image
 
     if (!image) {
-      throw new Error(
-        `Model ${context.propsValue.model} does not support image generation.`
-      );
+      throw new Error(`Model ${context.propsValue.model} does not support image generation.`)
     }
 
-    const advancedOptions = context.propsValue.advancedOptions ?? {};
+    const advancedOptions = context.propsValue.advancedOptions ?? {}
 
     const response = await image.generate({
       model: context.propsValue.model,
       prompt: context.propsValue.prompt,
       size: context.propsValue.resolution,
       advancedOptions: advancedOptions,
-    });
+    })
 
     if (response) {
       return context.files.write({
         data: Buffer.from(response.image, 'base64'),
         fileName: 'image.png',
-      });
+      })
     } else {
-      throw new Error(
-        'Unknown error occurred. Please check image configuration.'
-      );
+      throw new Error('Unknown error occurred. Please check image configuration.')
     }
   },
-});
+})

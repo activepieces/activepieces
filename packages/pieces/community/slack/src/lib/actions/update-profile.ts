@@ -1,6 +1,6 @@
-import { slackAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { WebClient } from '@slack/web-api';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { WebClient } from '@slack/web-api'
+import { slackAuth } from '../../'
 
 export const updateProfileAction = createAction({
   auth: slackAuth,
@@ -29,7 +29,7 @@ export const updateProfileAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = new WebClient(auth.data['authed_user']?.access_token);
+    const client = new WebClient(auth.data['authed_user']?.access_token)
     return client.users.profile.set({
       profile: {
         first_name: propsValue.firstName,
@@ -37,6 +37,6 @@ export const updateProfileAction = createAction({
         email: propsValue.email,
       },
       user: propsValue.userId,
-    });
+    })
   },
-});
+})

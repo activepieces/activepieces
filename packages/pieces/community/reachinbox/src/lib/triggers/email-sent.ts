@@ -1,8 +1,4 @@
-import {
-  createTrigger,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
+import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
 
 const message = `
 
@@ -18,7 +14,7 @@ Follow the below steps:
 
 5. Select the event type as "Email Sent".
 6. Click on the "Test Trigger" button to simulate a test and capture the webhook response here.
-`;
+`
 
 export const emailSent = createTrigger({
   name: 'emailSent',
@@ -60,6 +56,6 @@ export const emailSent = createTrigger({
 
   async run(context) {
     // This will handle the incoming webhook event and return the payload data
-    return [context.payload.body];
+    return [context.payload.body]
   },
-});
+})

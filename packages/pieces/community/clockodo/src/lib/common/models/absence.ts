@@ -25,52 +25,52 @@ export enum AbsenceType {
 }
 
 export interface Absence {
-  id: number;
-  users_id: number;
-  date_since: string;
-  date_until?: string;
-  status: AbsenceStatus;
-  type: AbsenceType;
-  note?: string;
-  count_days?: number;
-  count_hours?: number;
-  sick_note?: boolean;
-  date_enquired?: string;
-  date_approved?: string;
-  approved_by?: number;
+  id: number
+  users_id: number
+  date_since: string
+  date_until?: string
+  status: AbsenceStatus
+  type: AbsenceType
+  note?: string
+  count_days?: number
+  count_hours?: number
+  sick_note?: boolean
+  date_enquired?: string
+  date_approved?: string
+  approved_by?: number
 }
 
 export interface AbsenceCreateRequest {
-  type: AbsenceType;
-  date_since: string;
-  date_until: string | null;
-  note?: string | null;
-  users_id?: number;
-  status?: AbsenceStatus;
-  sick_note?: boolean;
-  count_days?: number;
+  type: AbsenceType
+  date_since: string
+  date_until: string | null
+  note?: string | null
+  users_id?: number
+  status?: AbsenceStatus
+  sick_note?: boolean
+  count_days?: number
 }
 
 export interface AbsenceUpdateRequest {
-  type?: AbsenceType;
-  date_since?: string;
-  date_until?: string | null;
-  note?: string | null;
-  users_id?: number;
-  status?: AbsenceStatus;
-  sick_note?: boolean;
-  count_days?: number;
+  type?: AbsenceType
+  date_since?: string
+  date_until?: string | null
+  note?: string | null
+  users_id?: number
+  status?: AbsenceStatus
+  sick_note?: boolean
+  count_days?: number
 }
 
 export interface AbsenceListRequest {
-  year: number;
-  users_id?: number;
+  year: number
+  users_id?: number
 }
 
 export interface AbsenceListResponse {
-  absences: Absence[];
+  absences: Absence[]
 }
 
 export interface AbsenceSingleResponse {
-  absence: Absence;
+  absence: Absence
 }

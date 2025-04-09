@@ -1,19 +1,14 @@
 interface Props {
-  value: number;
-  size?: number;
-  strokeWidth?: number;
-  label?: string;
+  value: number
+  size?: number
+  strokeWidth?: number
+  label?: string
 }
 
-export const CircularIcon: React.FC<Props> = ({
-  value,
-  size = 50,
-  strokeWidth = 3.5,
-  label,
-}) => {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (value / 100) * circumference;
+export const CircularIcon: React.FC<Props> = ({ value, size = 50, strokeWidth = 3.5, label }) => {
+  const radius = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+  const offset = circumference - (value / 100) * circumference
 
   return (
     <div className="flex items-center gap-3">
@@ -57,9 +52,7 @@ export const CircularIcon: React.FC<Props> = ({
       </svg>
 
       {/* Label */}
-      {label && (
-        <div className="text-sm text-gray-700 dark:text-gray-400">{label}</div>
-      )}
+      {label && <div className="text-sm text-gray-700 dark:text-gray-400">{label}</div>}
     </div>
-  );
-};
+  )
+}

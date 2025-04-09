@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { Brand } from '../../common/Brand';
-import { Replace } from '../../common/types';
-import { vtexAuth } from '../../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { vtexAuth } from '../../..'
+import { Brand } from '../../common/Brand'
+import { Replace } from '../../common/types'
 
 export const updateBrand = createAction({
   auth: vtexAuth,
@@ -49,18 +49,8 @@ export const updateBrand = createAction({
     }),
   },
   async run(context) {
-    const { hostUrl, appKey, appToken } = context.auth;
-    const {
-      Id,
-      Name,
-      SiteTitle,
-      LinkId,
-      Text,
-      MenuHome,
-      Keywords,
-      Active,
-      Score,
-    } = context.propsValue;
+    const { hostUrl, appKey, appToken } = context.auth
+    const { Id, Name, SiteTitle, LinkId, Text, MenuHome, Keywords, Active, Score } = context.propsValue
 
     const brandData = {
       Id,
@@ -72,10 +62,10 @@ export const updateBrand = createAction({
       Keywords,
       Active,
       Score,
-    };
+    }
 
-    const brand = new Brand(hostUrl, appKey, appToken);
+    const brand = new Brand(hostUrl, appKey, appToken)
 
-    return await brand.updateBrand(Id, brandData);
+    return await brand.updateBrand(Id, brandData)
   },
-});
+})

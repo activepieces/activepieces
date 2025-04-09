@@ -1,12 +1,7 @@
-import { clarifaiAuth } from '../../';
-import { Property, createAction } from '@activepieces/pieces-framework';
-import {
-  CommonClarifaiProps,
-  callPostInputs,
-  cleanMultiInputResponse,
-  fileToInput,
-} from '../common';
-import { Data } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { Data } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb'
+import { clarifaiAuth } from '../../'
+import { CommonClarifaiProps, callPostInputs, cleanMultiInputResponse, fileToInput } from '../common'
 
 export const postInputsAction = createAction({
   auth: clarifaiAuth,
@@ -31,17 +26,17 @@ export const postInputsAction = createAction({
     }),
   },
   async run(ctx) {
-    const { auth } = ctx;
-    const { userId, appId, file } = ctx.propsValue;
+    const { auth } = ctx
+    const { userId, appId, file } = ctx.propsValue
 
-    const input = fileToInput(file);
+    const input = fileToInput(file)
 
     const inputs = await callPostInputs({
       auth,
       userId,
       appId,
       input,
-    });
-    return cleanMultiInputResponse(inputs);
+    })
+    return cleanMultiInputResponse(inputs)
   },
-});
+})

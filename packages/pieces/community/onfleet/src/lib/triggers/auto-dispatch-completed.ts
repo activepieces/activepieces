@@ -1,10 +1,6 @@
-import {
-  TriggerStrategy,
-  WebhookHandshakeStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
-import { common, OnfleetWebhookTriggers } from '../common';
-import { onfleetAuth } from '../..';
+import { TriggerStrategy, WebhookHandshakeStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
+import { OnfleetWebhookTriggers, common } from '../common'
 
 export const autoDispatchCompleted = createTrigger({
   auth: onfleetAuth,
@@ -18,26 +14,24 @@ export const autoDispatchCompleted = createTrigger({
     const webhookId = await common.subscribeWebhook(
       context.auth,
       context.webhookUrl,
-      OnfleetWebhookTriggers.AUTO_DISPATCH_COMPLETED
-    );
+      OnfleetWebhookTriggers.AUTO_DISPATCH_COMPLETED,
+    )
 
     await context.store?.put('_auto_dispatch_completed_trigger', {
       webhookId: webhookId,
-    });
+    })
   },
   //Delete the webhook
   async onDisable(context) {
-    const response: any = await context.store?.get(
-      '_auto_dispatch_completed_trigger'
-    );
+    const response: any = await context.store?.get('_auto_dispatch_completed_trigger')
 
     if (response !== null && response !== undefined) {
-      await common.unsubscribeWebhook(context.auth, response.webhookId);
+      await common.unsubscribeWebhook(context.auth, response.webhookId)
     }
   },
   //Return task
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
 
   handshakeConfiguration: {
@@ -49,7 +43,7 @@ export const autoDispatchCompleted = createTrigger({
     return {
       status: 200,
       body: context.payload.queryParams['check'],
-    };
+    }
   },
 
   sampleData: {
@@ -175,4 +169,4 @@ export const autoDispatchCompleted = createTrigger({
     triggerName: 'autoDispatchJobCompleted',
     workerId: null,
   },
-});
+})

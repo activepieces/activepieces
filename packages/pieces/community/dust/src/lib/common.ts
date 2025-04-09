@@ -1,13 +1,8 @@
-import { Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMessageBody,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { DustAuthType } from '..';
+import { HttpMessageBody, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property } from '@activepieces/pieces-framework'
+import { DustAuthType } from '..'
 
-export const DUST_BASE_URL = 'https://dust.tt/api/v1/w';
+export const DUST_BASE_URL = 'https://dust.tt/api/v1/w'
 
 export const assistantProp = Property.Dropdown({
   displayName: 'Agent',
@@ -19,9 +14,9 @@ export const assistantProp = Property.Dropdown({
         disabled: true,
         options: [],
         placeholder: 'Please authenticate first',
-      };
+      }
     }
-    const { workspaceId, apiKey } = auth as DustAuthType;
+    const { workspaceId, apiKey } = auth as DustAuthType
     const request: HttpRequest = {
       method: HttpMethod.GET,
       url: `${DUST_BASE_URL}/${workspaceId}/assistant/agent_configurations`,
@@ -29,50 +24,39 @@ export const assistantProp = Property.Dropdown({
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
-    };
-    const response = await httpClient.sendRequest(request);
+    }
+    const response = await httpClient.sendRequest(request)
     const options = response.body['agentConfigurations']
-      ?.filter(
-        (agentConfiguration: { status: string }) =>
-          agentConfiguration.status === 'active'
-      )
-      ?.map(
-        (agentConfiguration: { name: string; sId: string; scope: string }) => {
-          return {
-            label: `[${agentConfiguration['scope']}] ${agentConfiguration['name']}`,
-            value: agentConfiguration['sId'],
-          };
+      ?.filter((agentConfiguration: { status: string }) => agentConfiguration.status === 'active')
+      ?.map((agentConfiguration: { name: string; sId: string; scope: string }) => {
+        return {
+          label: `[${agentConfiguration['scope']}] ${agentConfiguration['name']}`,
+          value: agentConfiguration['sId'],
         }
-      )
-      ?.sort((a: { label: string }, b: { label: string }) =>
-        a['label'].localeCompare(b['label'])
-      );
+      })
+      ?.sort((a: { label: string }, b: { label: string }) => a['label'].localeCompare(b['label']))
     return {
       options: options,
-    };
+    }
   },
-});
+})
 
 export const usernameProp = Property.ShortText({
   displayName: 'Username',
   required: true,
-});
+})
 export const timezoneProp = Property.ShortText({
   displayName: 'Time zone',
   required: true,
   defaultValue: 'Europe/Paris',
-});
+})
 export const timeoutProp = Property.Number({
   displayName: 'Timeout (seconds)',
   required: true,
   defaultValue: 120,
-});
+})
 
-export async function getConversationContent(
-  conversationId: string,
-  timeout: number,
-  auth: DustAuthType
-) {
+export async function getConversationContent(conversationId: string, timeout: number, auth: DustAuthType) {
   const getConversation = async (conversationId: string) => {
     return httpClient.sendRequest({
       method: HttpMethod.GET,
@@ -81,49 +65,44 @@ export async function getConversationContent(
         'Content-Type': 'application/json',
         Authorization: `Bearer ${auth.apiKey}`,
       },
-    });
-  };
-
-  let conversation = await getConversation(conversationId);
-
-  let retries = 0;
-  const maxRetries = timeout / 10;
-  while (
-    !['succeeded', 'failed'].includes(
-      getConversationStatus(conversation.body)
-    ) &&
-    retries < maxRetries
-  ) {
-    await new Promise((f) => setTimeout(f, 10000));
-
-    conversation = await getConversation(conversationId);
-    retries += 1;
+    })
   }
 
-  const conversationStatus = getConversationStatus(conversation.body);
+  let conversation = await getConversation(conversationId)
+
+  let retries = 0
+  const maxRetries = timeout / 10
+  while (!['succeeded', 'failed'].includes(getConversationStatus(conversation.body)) && retries < maxRetries) {
+    await new Promise((f) => setTimeout(f, 10000))
+
+    conversation = await getConversation(conversationId)
+    retries += 1
+  }
+
+  const conversationStatus = getConversationStatus(conversation.body)
   if (conversationStatus != 'succeeded') {
     if (retries >= maxRetries) {
       throw new Error(
-        `Could not load conversation ${conversationId} after ${timeout}s - ${conversationStatus} - consider increasing timeout value`
-      );
+        `Could not load conversation ${conversationId} after ${timeout}s - ${conversationStatus} - consider increasing timeout value`,
+      )
     } else {
-      const error = getConversationError(conversation.body);
+      const error = getConversationError(conversation.body)
       throw new Error(
-        `Could not load conversation ${conversationId} - ${conversationStatus}: ${error.message} (${error.code})`
-      );
+        `Could not load conversation ${conversationId} - ${conversationStatus}: ${error.message} (${error.code})`,
+      )
     }
   }
 
-  return conversation.body;
+  return conversation.body
 }
 
 function getConversationStatus(conversation: HttpMessageBody): string {
-  return conversation['conversation']['content']?.at(-1)?.at(0)?.status;
+  return conversation['conversation']['content']?.at(-1)?.at(0)?.status
 }
 
 function getConversationError(conversation: HttpMessageBody): {
-  code: string;
-  message: string;
+  code: string
+  message: string
 } {
-  return conversation['conversation']['content']?.at(-1)?.at(0)?.error;
+  return conversation['conversation']['content']?.at(-1)?.at(0)?.error
 }

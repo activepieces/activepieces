@@ -1,12 +1,8 @@
-import { OAuth2PropertyValue, createTrigger } from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import { leadConnectorAuth } from '../..';
-import { getContacts } from '../common';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, createTrigger } from '@activepieces/pieces-framework'
+import { TriggerStrategy } from '@activepieces/pieces-framework'
+import { leadConnectorAuth } from '../..'
+import { getContacts } from '../common'
 
 const polling: Polling<OAuth2PropertyValue, unknown> = {
   strategy: DedupeStrategy.LAST_ITEM,
@@ -15,16 +11,16 @@ const polling: Polling<OAuth2PropertyValue, unknown> = {
       (await getContacts(auth, {
         startAfterId: lastItemId as string,
         sortOrder: 'asc',
-      })) ?? [];
+      })) ?? []
 
     return currentValues.map((contact) => {
       return {
         id: contact.id,
         data: contact,
-      };
-    });
+      }
+    })
   },
-};
+}
 
 export const newContact = createTrigger({
   auth: leadConnectorAuth,
@@ -40,19 +36,19 @@ export const newContact = createTrigger({
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
-    });
+    })
   },
   onDisable: async (context) => {
     await pollingHelper.onDisable(polling, {
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
-    });
+    })
   },
   run: async (context) => {
-    return await pollingHelper.poll(polling, context);
+    return await pollingHelper.poll(polling, context)
   },
   test: async (context) => {
-    return await pollingHelper.test(polling, context);
+    return await pollingHelper.test(polling, context)
   },
-});
+})

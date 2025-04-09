@@ -1,4 +1,4 @@
-import { EntityProp } from '../types';
+import { EntityProp } from '../types'
 
 export const customersEntityProps: EntityProp[] = [
   {
@@ -123,4 +123,4 @@ export const customersEntityProps: EntityProp[] = [
       labelField: 'code',
     },
   },
-];
+]

@@ -1,9 +1,9 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { PieceAuth, Property } from '@activepieces/pieces-framework'
 
 export interface ContentfulAuth {
-  apiKey: string;
-  environment: string;
-  space: string;
+  apiKey: string
+  environment: string
+  space: string
 }
 
 export const ContentfulAuth = PieceAuth.CustomAuth({
@@ -22,4 +22,4 @@ export const ContentfulAuth = PieceAuth.CustomAuth({
       required: true,
     }),
   },
-});
+})

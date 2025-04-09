@@ -1,17 +1,12 @@
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { smailyAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { smailyAuth } from '../../'
 
 export const createOrUpdateSubscriberAction = createAction({
   auth: smailyAuth,
   name: 'create-or-update-subscriber',
   displayName: 'Create or Update Subscriber',
-  description:
-    'Creates a new subscriber or update an existing subscriber by email.',
+  description: 'Creates a new subscriber or update an existing subscriber by email.',
   props: {
     email: Property.ShortText({
       displayName: 'Email',
@@ -52,8 +47,8 @@ export const createOrUpdateSubscriberAction = createAction({
         is_unsubscribed: contex.propsValue.is_unsubscribed,
         ...contex.propsValue.custom_fields,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

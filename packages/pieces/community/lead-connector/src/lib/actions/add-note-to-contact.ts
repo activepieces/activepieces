@@ -1,10 +1,6 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import {
-  addNoteToContact,
-  getContacts,
-  getUsers,
-} from '../common';
-import { leadConnectorAuth } from '../..';
+import { OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { leadConnectorAuth } from '../..'
+import { addNoteToContact, getContacts, getUsers } from '../common'
 
 export const addNoteToContactAction = createAction({
   auth: leadConnectorAuth,
@@ -22,17 +18,17 @@ export const addNoteToContactAction = createAction({
           return {
             disabled: true,
             options: [],
-          };
+          }
 
-        const contacts = await getContacts(auth as OAuth2PropertyValue);
+        const contacts = await getContacts(auth as OAuth2PropertyValue)
         return {
           options: contacts.map((contact) => {
             return {
               label: contact.contactName,
               value: contact.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     note: Property.ShortText({
@@ -48,27 +44,27 @@ export const addNoteToContactAction = createAction({
           return {
             disabled: true,
             options: [],
-          };
+          }
 
-        const users = await getUsers(auth as OAuth2PropertyValue);
+        const users = await getUsers(auth as OAuth2PropertyValue)
         return {
           options: users.map((user: any) => {
             return {
               label: `${user.firstName} ${user.lastName}`,
               value: user.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   },
 
   async run({ auth, propsValue }) {
-    const { contact, note, user } = propsValue;
+    const { contact, note, user } = propsValue
 
     return await addNoteToContact(auth.access_token, contact, {
       body: note,
       userId: user,
-    });
+    })
   },
-});
+})

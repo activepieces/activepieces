@@ -4,4 +4,4 @@ export const figmaCommon = {
   comments: 'v1/files/:file_key/comments',
   webhooks: 'v2/webhooks',
   webhook: 'v2/webhooks/:webhook_id',
-};
+}

@@ -1,30 +1,30 @@
-import { useQueryClient } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { LogOut, SunMoon } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query'
+import { t } from 'i18next'
+import { LogOut, SunMoon } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
-import { useEmbedding } from '@/components/embed-provider';
-import { useTelemetry } from '@/components/telemetry-provider';
-import { userHooks } from '@/hooks/user-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
+import { useEmbedding } from '@/components/embed-provider'
+import { useTelemetry } from '@/components/telemetry-provider'
+import { userHooks } from '@/hooks/user-hooks'
+import { authenticationSession } from '@/lib/authentication-session'
 
-import { Avatar, AvatarFallback } from './avatar';
-import { AvatarLetter } from './avatar-letter';
+import { Avatar, AvatarFallback } from './avatar'
+import { AvatarLetter } from './avatar-letter'
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuLabel,
   DropdownMenuItem,
-} from './dropdown-menu';
-import { TextWithIcon } from './text-with-icon';
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from './dropdown-menu'
+import { TextWithIcon } from './text-with-icon'
 export function UserAvatar() {
-  const { reset } = useTelemetry();
-  const { embedState } = useEmbedding();
-  const { data: user } = userHooks.useCurrentUser();
-  const queryClient = useQueryClient();
+  const { reset } = useTelemetry()
+  const { embedState } = useEmbedding()
+  const { data: user } = userHooks.useCurrentUser()
+  const queryClient = useQueryClient()
   if (!user || embedState.isEmbedded) {
-    return null;
+    return null
   }
 
   return (
@@ -48,19 +48,15 @@ export function UserAvatar() {
         </DropdownMenuLabel>
         <Link to="/settings/appearance">
           <DropdownMenuItem className="cursor-pointer">
-            <TextWithIcon
-              icon={<SunMoon size={18} />}
-              text={t('Appearance')}
-              className="cursor-pointer"
-            />
+            <TextWithIcon icon={<SunMoon size={18} />} text={t('Appearance')} className="cursor-pointer" />
           </DropdownMenuItem>
         </Link>
 
         <DropdownMenuItem
           onClick={() => {
-            userHooks.invalidateCurrentUser(queryClient);
-            authenticationSession.logOut();
-            reset();
+            userHooks.invalidateCurrentUser(queryClient)
+            authenticationSession.logOut()
+            reset()
           }}
           className="cursor-pointer"
         >
@@ -72,5 +68,5 @@ export function UserAvatar() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+  )
 }

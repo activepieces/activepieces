@@ -1,18 +1,14 @@
-import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { DynamicPropsValue, Property } from '@activepieces/pieces-framework'
 
 // Function Section
 export const mapMauticToActivepiecesProperty = (
   type: string,
   fieldMetadata: {
-    displayName: string;
-    required: boolean;
+    displayName: string
+    required: boolean
   },
-  properties: object
+  properties: object,
 ) => {
   switch (type) {
     case 'lookup':
@@ -24,12 +20,12 @@ export const mapMauticToActivepiecesProperty = (
     case 'locale':
     case 'timezone':
     case 'url':
-      return Property.ShortText(fieldMetadata);
+      return Property.ShortText(fieldMetadata)
     case 'date':
     case 'datetime':
-      return Property.DateTime(fieldMetadata);
+      return Property.DateTime(fieldMetadata)
     case 'number':
-      return Property.Number(fieldMetadata);
+      return Property.Number(fieldMetadata)
     case 'boolean':
       return Property.StaticDropdown({
         ...fieldMetadata,
@@ -39,76 +35,60 @@ export const mapMauticToActivepiecesProperty = (
             { value: 'yes', label: 'Yes' },
           ],
         },
-      });
+      })
     case 'multiselect':
       return Property.StaticMultiSelectDropdown({
         ...fieldMetadata,
         options: {
           options: Object.values(properties)[0],
         },
-      });
+      })
     case 'select':
       return Property.StaticDropdown({
         ...fieldMetadata,
         options: {
           options: Object.values(properties)[0],
         },
-      });
+      })
     default:
-      console.error(`No support of type ${type}`);
-      return null;
+      console.error(`No support of type ${type}`)
+      return null
   }
-};
+}
 
 export const fetchDynamicFieldsFromMetadata = async (
   baseUrl: string,
   username: string,
   password: string,
-  type: 'contact' | 'company' | 'lead'
+  type: 'contact' | 'company' | 'lead',
 ) => {
   const request: HttpRequest = {
     method: HttpMethod.GET,
-    url: `${
-      baseUrl.endsWith('/') ? baseUrl : baseUrl + '/'
-    }api/fields/${type}?limit=1000`,
+    url: `${baseUrl.endsWith('/') ? baseUrl : baseUrl + '/'}api/fields/${type}?limit=1000`,
     headers: {
-      Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString(
-        'base64'
-      )}`,
+      Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,
       'Content-Type': 'application/json',
     },
-  };
-
-  const result = await httpClient.sendRequest(request);
-  if (result.status == 200) {
-    return Object.values(result.body.fields).reduce(
-      (fields: DynamicPropsValue, field) => {
-        const {
-          label: displayName,
-          alias,
-          type,
-          properties,
-        } = field as Record<string, any>;
-        const fieldMetadata = {
-          displayName,
-          required: false,
-        };
-        if (!type) return {};
-        const f = mapMauticToActivepiecesProperty(
-          type,
-          fieldMetadata,
-          properties
-        );
-        if (f) {
-          fields[alias] = f;
-        }
-        return fields;
-      },
-      {}
-    );
   }
-  throw Error(`Unable to fetch ${type} metadata`);
-};
+
+  const result = await httpClient.sendRequest(request)
+  if (result.status == 200) {
+    return Object.values(result.body.fields).reduce((fields: DynamicPropsValue, field) => {
+      const { label: displayName, alias, type, properties } = field as Record<string, any>
+      const fieldMetadata = {
+        displayName,
+        required: false,
+      }
+      if (!type) return {}
+      const f = mapMauticToActivepiecesProperty(type, fieldMetadata, properties)
+      if (f) {
+        fields[alias] = f
+      }
+      return fields
+    }, {})
+  }
+  throw Error(`Unable to fetch ${type} metadata`)
+}
 
 export const getFields = (type: 'contact' | 'company' | 'lead') =>
   Property.DynamicProperties({
@@ -117,8 +97,8 @@ export const getFields = (type: 'contact' | 'company' | 'lead') =>
     required: true,
     refreshers: [],
     props: async ({ auth }) => {
-      if (!auth) return {};
-      const { base_url, username, password } = auth;
-      return fetchDynamicFieldsFromMetadata(base_url, username, password, type);
+      if (!auth) return {}
+      const { base_url, username, password } = auth
+      return fetchDynamicFieldsFromMetadata(base_url, username, password, type)
     },
-  });
+  })

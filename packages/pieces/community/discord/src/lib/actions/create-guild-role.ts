@@ -1,11 +1,7 @@
-import {
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { discordAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { discordCommon } from '../common';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { discordAuth } from '../../index'
+import { discordCommon } from '../common'
 
 export const discordCreateGuildRole = createAction({
   auth: discordAuth,
@@ -26,8 +22,7 @@ export const discordCreateGuildRole = createAction({
     }),
     display_separated: Property.Checkbox({
       displayName: 'Display Separated',
-      description:
-        'Whether the role should be displayed separately in the sidebar',
+      description: 'Whether the role should be displayed separately in the sidebar',
       required: false,
     }),
     role_mentionable: Property.Checkbox({
@@ -56,9 +51,9 @@ export const discordCreateGuildRole = createAction({
         hoist: configValue.propsValue.display_separated,
         mentionable: configValue.propsValue.role_mentionable,
       },
-    };
+    }
 
-    const res = await httpClient.sendRequest(request);
+    const res = await httpClient.sendRequest(request)
 
     return {
       success: res.status === 201,
@@ -66,6 +61,6 @@ export const discordCreateGuildRole = createAction({
         id: res.body.id,
         name: res.body.name,
       },
-    };
+    }
   },
-});
+})

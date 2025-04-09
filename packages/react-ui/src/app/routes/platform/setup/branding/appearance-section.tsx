@@ -1,33 +1,20 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { useForm } from 'react-hook-form';
+import { typeboxResolver } from '@hookform/resolvers/typebox'
+import { Static, Type } from '@sinclair/typebox'
+import { useMutation } from '@tanstack/react-query'
+import { t } from 'i18next'
+import { useForm } from 'react-hook-form'
 
-import { LocalesEnum } from '@/app/routes/settings/appearance/language-switcher';
-import { Button } from '@/components/ui/button';
-import { ColorPicker } from '@/components/ui/color-picker';
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { platformHooks } from '@/hooks/platform-hooks';
-import { platformApi } from '@/lib/platforms-api';
-import { localesMap } from '@/lib/utils';
+import { LocalesEnum } from '@/app/routes/settings/appearance/language-switcher'
+import { Button } from '@/components/ui/button'
+import { ColorPicker } from '@/components/ui/color-picker'
+import { Form, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
+import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast'
+import { platformHooks } from '@/hooks/platform-hooks'
+import { platformApi } from '@/lib/platforms-api'
+import { localesMap } from '@/lib/utils'
 
 const FromSchema = Type.Object({
   name: Type.String(),
@@ -36,13 +23,13 @@ const FromSchema = Type.Object({
   faviconUrl: Type.String(),
   language: Type.String(),
   color: Type.String(),
-});
+})
 
-type FromSchema = Static<typeof FromSchema>;
+type FromSchema = Static<typeof FromSchema>
 
 export const AppearanceSection = () => {
-  const { platform } = platformHooks.useCurrentPlatform();
-  const locales = Object.entries(localesMap);
+  const { platform } = platformHooks.useCurrentPlatform()
+  const locales = Object.entries(localesMap)
   const form = useForm({
     defaultValues: {
       name: platform?.name,
@@ -53,9 +40,9 @@ export const AppearanceSection = () => {
       color: platform?.primaryColor,
     },
     resolver: typeboxResolver(FromSchema),
-  });
+  })
 
-  const { toast } = useToast();
+  const { toast } = useToast()
 
   const { mutate: updatePlatform, isPending } = useMutation({
     mutationFn: async () => {
@@ -69,21 +56,21 @@ export const AppearanceSection = () => {
           primaryColor: form.getValues().color,
         },
         platform.id,
-      );
-      window.location.reload();
+      )
+      window.location.reload()
     },
     onSuccess: () => {
       toast({
         title: t('Success'),
         description: t('Your changes have been saved.'),
         duration: 3000,
-      });
-      form.reset(form.getValues());
+      })
+      form.reset(form.getValues())
     },
     onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
+      toast(INTERNAL_ERROR_TOAST)
     },
-  });
+  })
 
   return (
     <>
@@ -92,23 +79,14 @@ export const AppearanceSection = () => {
 
       <div className="grid gap-4">
         <Form {...form}>
-          <form
-            className="grid space-y-4 mt-4"
-            onSubmit={form.handleSubmit(() => updatePlatform())}
-          >
+          <form className="grid space-y-4 mt-4" onSubmit={form.handleSubmit(() => updatePlatform())}>
             <div className="max-w-[600px] grid space-y-4">
               <FormField
                 name="name"
                 render={({ field }) => (
                   <FormItem className="grid space-y-2">
                     <FormLabel htmlFor="name">{t('Project Name')}</FormLabel>
-                    <Input
-                      {...field}
-                      required
-                      id="name"
-                      placeholder={t('Project Name')}
-                      className="rounded-sm"
-                    />
+                    <Input {...field} required id="name" placeholder={t('Project Name')} className="rounded-sm" />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -151,9 +129,7 @@ export const AppearanceSection = () => {
                 name="faviconUrl"
                 render={({ field }) => (
                   <FormItem className="grid space-y-2">
-                    <FormLabel htmlFor="faviconUrl">
-                      {t('Favicon URL')}
-                    </FormLabel>
+                    <FormLabel htmlFor="faviconUrl">{t('Favicon URL')}</FormLabel>
                     <Input
                       {...field}
                       required
@@ -170,20 +146,14 @@ export const AppearanceSection = () => {
                 name="language"
                 render={({ field }) => (
                   <FormItem className="grid space-y-2">
-                    <FormLabel htmlFor="language">
-                      {t('Default Language')}
-                    </FormLabel>
+                    <FormLabel htmlFor="language">{t('Default Language')}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <SelectTrigger>
                         <SelectValue placeholder={t('Select Language')} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          {locales.length === 0 && (
-                            <SelectItem value="NULL">
-                              {t('No Languages')}
-                            </SelectItem>
-                          )}
+                          {locales.length === 0 && <SelectItem value="NULL">{t('No Languages')}</SelectItem>}
                           {locales.map(([locale, name]) => (
                             <SelectItem key={locale} value={locale}>
                               {name}
@@ -215,16 +185,10 @@ export const AppearanceSection = () => {
             </div>
 
             {form?.formState?.errors?.root?.serverError && (
-              <FormMessage>
-                {form.formState.errors.root.serverError.message}
-              </FormMessage>
+              <FormMessage>{form.formState.errors.root.serverError.message}</FormMessage>
             )}
             <div className="flex gap-2 justify-end mt-4">
-              <Button
-                type="submit"
-                loading={isPending}
-                disabled={!form.formState.isValid}
-              >
+              <Button type="submit" loading={isPending} disabled={!form.formState.isValid}>
                 {t('Save')}
               </Button>
             </div>
@@ -232,5 +196,5 @@ export const AppearanceSection = () => {
         </Form>
       </div>
     </>
-  );
-};
+  )
+}

@@ -1,6 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { retuneAuth } from '../../index';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { retuneAuth } from '../../index'
 
 export const askChatbot = createAction({
   auth: retuneAuth,
@@ -21,16 +21,16 @@ export const askChatbot = createAction({
             'X-Workspace-API-Key': (auth as any).apiKey,
           },
           body: {},
-        });
+        })
 
         return {
           options: options.body['threads'].map((item: any) => {
             return {
               label: item.name ?? item.id,
               value: item.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     message: Property.ShortText({
@@ -40,7 +40,7 @@ export const askChatbot = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { thread, message } = propsValue;
+    const { thread, message } = propsValue
 
     const response = await httpClient.sendRequest({
       url: `https://retune.so/api/chat/${auth.chatId}/response`,
@@ -52,8 +52,8 @@ export const askChatbot = createAction({
         threadId: thread,
         input: message,
       },
-    });
+    })
 
-    return (response.body as any).response.value;
+    return (response.body as any).response.value
   },
-});
+})

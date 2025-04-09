@@ -1,10 +1,10 @@
-import { Edit2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import type { RenderEditCellProps } from 'react-data-grid';
+import { Edit2 } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import type { RenderEditCellProps } from 'react-data-grid'
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils'
 
-import { Row } from '../lib/types';
+import { Row } from '../lib/types'
 
 const NumberEditor = ({
   row,
@@ -13,36 +13,30 @@ const NumberEditor = ({
   onClose,
   value: initialValue,
 }: RenderEditCellProps<Row, { id: string }> & {
-  value: string;
+  value: string
 }) => {
-  const [value, setValue] = useState(initialValue);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [value, setValue] = useState(initialValue)
+  const inputRef = useRef<HTMLInputElement>(null)
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    inputRef.current?.focus()
+  }, [])
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = event.target.value;
-    setValue(newValue);
-    onRowChange({ ...row, [column.key]: newValue }, false);
-  };
+    const newValue = event.target.value
+    setValue(newValue)
+    onRowChange({ ...row, [column.key]: newValue }, false)
+  }
 
   const commitChanges = () => {
     if (value !== row[column.key]) {
-      onRowChange({ ...row, [column.key]: value }, true);
+      onRowChange({ ...row, [column.key]: value }, true)
     }
-    onClose();
-  };
+    onClose()
+  }
 
   return (
     <div className="h-full relative w-full">
-      <div
-        className={cn(
-          'h-full flex items-center gap-2',
-          'border-2 border-primary',
-          'bg-background',
-        )}
-      >
+      <div className={cn('h-full flex items-center gap-2', 'border-2 border-primary', 'bg-background')}>
         <input
           ref={inputRef}
           value={value ?? ''}
@@ -50,14 +44,14 @@ const NumberEditor = ({
           onChange={handleChange}
           onBlur={commitChanges}
           onKeyDown={(e) => {
-            e.stopPropagation();
+            e.stopPropagation()
             if (e.key === 'Enter') {
-              commitChanges();
-              e.preventDefault();
+              commitChanges()
+              e.preventDefault()
             }
             if (e.key === 'Escape') {
-              onClose();
-              e.preventDefault();
+              onClose()
+              e.preventDefault()
             }
           }}
           className={cn(
@@ -73,7 +67,7 @@ const NumberEditor = ({
         </div>
       </div>
     </div>
-  );
-};
-NumberEditor.displayName = 'NumberEditor';
-export { NumberEditor };
+  )
+}
+NumberEditor.displayName = 'NumberEditor'
+export { NumberEditor }

@@ -1,12 +1,13 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { trueLayerCommon } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { trueLayerCommon } from '../../common'
 
 export const getMandate = createAction({
   auth: trueLayerCommon.auth,
   name: 'get-mandate',
   displayName: 'Get Mandate',
-  description: 'Returns a mandate with the stated ID. This endpoint can be called either by the regular `backend token` or the `mandate token` for that mandate.',
+  description:
+    'Returns a mandate with the stated ID. This endpoint can be called either by the regular `backend token` or the `mandate token` for that mandate.',
   props: {
     id: Property.ShortText({
       displayName: 'Mandate ID',
@@ -23,6 +24,6 @@ export const getMandate = createAction({
       },
     })
 
-    return response.body;
+    return response.body
   },
-});
+})

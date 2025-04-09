@@ -1,10 +1,7 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { common, getScopeAndKey } from './common';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { common, getScopeAndKey } from './common'
 
 export const storagePutAction = createAction({
   name: 'put',
@@ -32,17 +29,13 @@ export const storagePutAction = createAction({
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
       key: z.string().max(128),
-    });
+    })
 
     const { key, scope } = getScopeAndKey({
       runId: context.run.id,
       key: context.propsValue['key'],
       scope: context.propsValue.store_scope,
-    });
-    return await context.store.put(
-      key,
-      context.propsValue['value'],
-     scope
-    );
+    })
+    return await context.store.put(key, context.propsValue['value'], scope)
   },
-});
+})

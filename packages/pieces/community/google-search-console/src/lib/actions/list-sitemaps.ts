@@ -1,6 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { googleSearchConsoleAuth, createAuthClient } from '../../';
-import { commonProps } from '../common';
+import { createAction } from '@activepieces/pieces-framework'
+import { createAuthClient, googleSearchConsoleAuth } from '../../'
+import { commonProps } from '../common'
 
 export const listSitemaps = createAction({
   auth: googleSearchConsoleAuth,
@@ -11,10 +11,10 @@ export const listSitemaps = createAction({
     siteUrl: commonProps.siteUrl,
   },
   async run(context) {
-    const webmasters = createAuthClient(context.auth.access_token);
+    const webmasters = createAuthClient(context.auth.access_token)
     const res = await webmasters.sitemaps.list({
       siteUrl: context.propsValue.siteUrl,
-    });
-    return res.data;
+    })
+    return res.data
   },
-});
+})

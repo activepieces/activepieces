@@ -1,13 +1,5 @@
-import {
-  Property,
-  BasicAuthPropertyValue,
-} from '@activepieces/pieces-framework';
-import {
-  HttpMethod,
-  HttpMessageBody,
-  httpClient,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMessageBody, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { BasicAuthPropertyValue, Property } from '@activepieces/pieces-framework'
 
 export const twilioCommon = {
   phone_number: Property.Dropdown({
@@ -21,35 +13,35 @@ export const twilioCommon = {
           disabled: true,
           placeholder: 'connect your account first',
           options: [],
-        };
+        }
       }
 
-      const basicAuthProperty = auth as BasicAuthPropertyValue;
+      const basicAuthProperty = auth as BasicAuthPropertyValue
       const response = await callTwilioApi<{
         incoming_phone_numbers: {
-          phone_number: string;
-          friendly_name: string;
-        }[];
+          phone_number: string
+          friendly_name: string
+        }[]
       }>(HttpMethod.GET, 'IncomingPhoneNumbers.json', {
         account_sid: basicAuthProperty.username,
         auth_token: basicAuthProperty.password,
-      });
+      })
       return {
         disabled: false,
         options: response.body.incoming_phone_numbers.map((number: any) => ({
           value: number.phone_number,
           label: number.friendly_name,
         })),
-      };
+      }
     },
   }),
-};
+}
 
 export const callTwilioApi = async <T extends HttpMessageBody>(
   method: HttpMethod,
   path: string,
   auth: { account_sid: string; auth_token: string },
-  body?: any
+  body?: any,
 ) => {
   return await httpClient.sendRequest<T>({
     method,
@@ -63,5 +55,5 @@ export const callTwilioApi = async <T extends HttpMessageBody>(
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: body,
-  });
-};
+  })
+}

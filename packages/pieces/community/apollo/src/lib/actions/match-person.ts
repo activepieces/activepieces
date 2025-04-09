@@ -1,6 +1,6 @@
-import { apolloAuth } from '../../';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { Property, StoreScope, createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, StoreScope, createAction } from '@activepieces/pieces-framework'
+import { apolloAuth } from '../../'
 
 export const matchPerson = createAction({
   name: 'matchPerson',
@@ -22,9 +22,9 @@ export const matchPerson = createAction({
   auth: apolloAuth,
   async run({ propsValue, auth, store }) {
     if (propsValue.cacheResponse) {
-      const cachedResult = await store.get(`_apollo_person_${propsValue.email}`, StoreScope.PROJECT);
+      const cachedResult = await store.get(`_apollo_person_${propsValue.email}`, StoreScope.PROJECT)
       if (cachedResult) {
-        return cachedResult;
+        return cachedResult
       }
     }
     const result = await httpClient.sendRequest<{ person: Record<string, unknown> }>({
@@ -36,12 +36,12 @@ export const matchPerson = createAction({
       body: {
         api_key: auth,
         email: propsValue.email,
-      }
-    });
-    const personResult = result.body.person || {};
+      },
+    })
+    const personResult = result.body.person || {}
     if (propsValue.cacheResponse) {
-      await store.put(`_apollo_person_${propsValue.email}`, personResult, StoreScope.PROJECT);
+      await store.put(`_apollo_person_${propsValue.email}`, personResult, StoreScope.PROJECT)
     }
-    return personResult;
+    return personResult
   },
-});
+})

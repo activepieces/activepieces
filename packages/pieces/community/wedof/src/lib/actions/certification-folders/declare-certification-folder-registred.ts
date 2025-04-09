@@ -1,8 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
-import { wedofCommon } from '../../common/wedof';
-import dayjs from 'dayjs';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { wedofAuth } from '../../..'
+import { wedofCommon } from '../../common/wedof'
 
 export const declareCertificationFolderRegistred = createAction({
   auth: wedofAuth,
@@ -12,8 +12,7 @@ export const declareCertificationFolderRegistred = createAction({
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de certification',
-      description:
-        'Sélectionner la propriété {externalId} du dossier de certification',
+      description: 'Sélectionner la propriété {externalId} du dossier de certification',
       required: true,
     }),
     enrollmentDate: Property.DateTime({
@@ -55,21 +54,17 @@ export const declareCertificationFolderRegistred = createAction({
       examinationType: context.propsValue.examinationType,
       examinationPlace: context.propsValue.examinationPlace,
       comment: context.propsValue.comment,
-    };
+    }
     return (
       await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url:
-          wedofCommon.baseUrl +
-          '/certificationFolders/' +
-          context.propsValue.externalId +
-          '/register',
+        url: wedofCommon.baseUrl + '/certificationFolders/' + context.propsValue.externalId + '/register',
         body: message,
         headers: {
           'Content-Type': 'application/json',
           'X-Api-Key': context.auth as string,
         },
       })
-    ).body;
+    ).body
   },
-});
+})

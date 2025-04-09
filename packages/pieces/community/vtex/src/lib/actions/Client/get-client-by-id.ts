@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { Client } from '../../common/Client';
-import { vtexAuth } from '../../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { vtexAuth } from '../../..'
+import { Client } from '../../common/Client'
 
 export const getClientById = createAction({
   auth: vtexAuth,
@@ -15,11 +15,11 @@ export const getClientById = createAction({
     }),
   },
   async run(context) {
-    const { hostUrl, appKey, appToken } = context.auth;
-    const { clientId } = context.propsValue;
+    const { hostUrl, appKey, appToken } = context.auth
+    const { clientId } = context.propsValue
 
-    const client = new Client(hostUrl, appKey, appToken);
+    const client = new Client(hostUrl, appKey, appToken)
 
-    return await client.getClientById(clientId);
+    return await client.getClientById(clientId)
   },
-});
+})

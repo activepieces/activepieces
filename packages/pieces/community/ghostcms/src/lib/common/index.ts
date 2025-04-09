@@ -1,7 +1,7 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { Property } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property } from '@activepieces/pieces-framework'
 
-import jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken'
 
 export const common = {
   properties: {
@@ -16,22 +16,22 @@ export const common = {
               disabled: true,
               placeholder: 'Connect your account',
               options: [],
-            };
+            }
           }
 
-          const newsletters = (
-            (await common.getNewsletters(auth)) as { newsletters: any[] }
-          ).newsletters.map((newsletter: any) => {
-            return {
-              label: newsletter.name,
-              value: newsletter.id,
-            };
-          });
+          const newsletters = ((await common.getNewsletters(auth)) as { newsletters: any[] }).newsletters.map(
+            (newsletter: any) => {
+              return {
+                label: newsletter.name,
+                value: newsletter.id,
+              }
+            },
+          )
           return {
             options: newsletters,
-          };
+          }
         },
-      });
+      })
     },
     member: (required = true) => {
       return Property.Dropdown({
@@ -44,22 +44,20 @@ export const common = {
               disabled: true,
               placeholder: 'Connect your account',
               options: [],
-            };
+            }
           }
 
-          const members = (
-            (await common.getMembers(auth)) as { members: any[] }
-          ).members.map((member: any) => {
+          const members = ((await common.getMembers(auth)) as { members: any[] }).members.map((member: any) => {
             return {
               label: member.name ?? member.email,
               value: member.id,
-            };
-          });
+            }
+          })
           return {
             options: members,
-          };
+          }
         },
-      });
+      })
     },
     author: Property.Dropdown({
       displayName: 'Author',
@@ -71,20 +69,18 @@ export const common = {
             disabled: true,
             placeholder: 'Connect your account',
             options: [],
-          };
+          }
         }
 
-        const authors: any[] = (
-          (await common.getUsers(auth)) as { users: any[] }
-        ).users.map((user: any) => {
+        const authors: any[] = ((await common.getUsers(auth)) as { users: any[] }).users.map((user: any) => {
           return {
             label: user.name ?? user.email,
             value: user.email,
-          };
-        });
+          }
+        })
         return {
           options: authors,
-        };
+        }
       },
     }),
     tags: Property.MultiSelectDropdown({
@@ -97,32 +93,30 @@ export const common = {
             disabled: true,
             placeholder: 'Connect your account',
             options: [],
-          };
+          }
         }
 
-        const tags: any[] = (
-          (await common.getTags(auth)) as { tags: any[] }
-        ).tags.map((tag: any) => {
+        const tags: any[] = ((await common.getTags(auth)) as { tags: any[] }).tags.map((tag: any) => {
           return {
             label: tag.name,
             value: tag.name,
-          };
-        });
+          }
+        })
         return {
           options: tags,
-        };
+        }
       },
     }),
   },
 
   jwtFromApiKey: (apiKey: string) => {
-    const [id, secret] = apiKey.split(':');
+    const [id, secret] = apiKey.split(':')
 
     return jwt.sign({}, Buffer.from(secret, 'hex'), {
       keyid: id,
       expiresIn: '5m',
       audience: '/admin/',
-    });
+    })
   },
 
   async subscribeWebhook(auth: any, webhookType: string, webhookUrl: string) {
@@ -140,9 +134,9 @@ export const common = {
           },
         ],
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
 
   async unsubscribeWebhook(auth: any, webhookId: string) {
@@ -152,9 +146,9 @@ export const common = {
       headers: {
         Authorization: `Ghost ${common.jwtFromApiKey(auth.apiKey)}`,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
 
   async getNewsletters(auth: any) {
@@ -164,9 +158,9 @@ export const common = {
       headers: {
         Authorization: `Ghost ${common.jwtFromApiKey(auth.apiKey)}`,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
 
   async getMembers(auth: any) {
@@ -176,9 +170,9 @@ export const common = {
       headers: {
         Authorization: `Ghost ${common.jwtFromApiKey(auth.apiKey)}`,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
 
   async getUsers(auth: any) {
@@ -188,9 +182,9 @@ export const common = {
       headers: {
         Authorization: `Ghost ${common.jwtFromApiKey(auth.apiKey)}`,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
 
   async getTags(auth: any) {
@@ -200,8 +194,8 @@ export const common = {
       headers: {
         Authorization: `Ghost ${common.jwtFromApiKey(auth.apiKey)}`,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-};
+}

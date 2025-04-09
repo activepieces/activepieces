@@ -4,14 +4,14 @@ import { isNotOneOfTheseEditions } from '../../../../database/database-common'
 import { system } from '../../../../helper/system/system'
 
 export class AddPlatform1697717995884 implements MigrationInterface {
-    name = 'AddPlatform1697717995884'
+  name = 'AddPlatform1697717995884'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        const logger = system.globalLogger()
-        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
-            return
-        }
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    const logger = system.globalLogger()
+    if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+      return
+    }
+    await queryRunner.query(`
             CREATE TABLE "platform" (
                 "id" character varying(21) NOT NULL,
                 "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
@@ -26,26 +26,26 @@ export class AddPlatform1697717995884 implements MigrationInterface {
                 CONSTRAINT "PK_c33d6abeebd214bd2850bfd6b8e" PRIMARY KEY ("id")
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "platform"
             ADD CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE RESTRICT
         `)
 
-        logger.info('AddPlatform1697717995884 up')
-    }
+    logger.info('AddPlatform1697717995884 up')
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        const logger = system.globalLogger()
-        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
-            return
-        }
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    const logger = system.globalLogger()
+    if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+      return
+    }
+    await queryRunner.query(`
             ALTER TABLE "platform" DROP CONSTRAINT "fk_platform_user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "platform"
         `)
 
-        logger.info('AddPlatform1697717995884 down')
-    }
+    logger.info('AddPlatform1697717995884 down')
+  }
 }

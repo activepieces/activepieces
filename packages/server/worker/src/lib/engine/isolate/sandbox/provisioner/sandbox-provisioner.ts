@@ -11,67 +11,61 @@ const globalCachePath = path.resolve('cache', 'ns')
 const globalCodesPath = path.resolve('cache', 'codes')
 
 export const sandboxProvisioner = (log: FastifyBaseLogger) => ({
-    async provision({
-        customPiecesPathKey,
-        pieces = [],
-        codeSteps = [],
-        ...cacheInfo
-    }: ProvisionParams): Promise<IsolateSandbox> {
-        try {
+  async provision({
+    customPiecesPathKey,
+    pieces = [],
+    codeSteps = [],
+    ...cacheInfo
+  }: ProvisionParams): Promise<IsolateSandbox> {
+    try {
+      const customPiecesPath = path.resolve('cache', 'custom', customPiecesPathKey)
+      await executionFiles(log).provision({
+        pieces,
+        codeSteps,
+        globalCachePath,
+        globalCodesPath,
+        customPiecesPath,
+      })
 
+      const hasAnyCustomPieces = pieces.some((f: PiecePackage) => f.pieceType === PieceType.CUSTOM)
+      const sandbox = await sandboxManager(log).allocate()
+      const flowVersionId = codeSteps.length > 0 ? codeSteps[0].flowVersionId : undefined
+      await sandbox.assignCache({
+        globalCachePath,
+        globalCodesPath,
+        flowVersionId,
+        customPiecesPath: hasAnyCustomPieces ? customPiecesPath : undefined,
+        log,
+      })
 
-            const customPiecesPath = path.resolve('cache', 'custom', customPiecesPathKey)
-            await executionFiles(log).provision({
-                pieces,
-                codeSteps,
-                globalCachePath,
-                globalCodesPath,
-                customPiecesPath,
-            })
+      return sandbox
+    } catch (error) {
+      const contextKey = '[SandboxProvisioner#provision]'
+      const contextValue = { pieces, codeSteps, cacheInfo }
 
-            const hasAnyCustomPieces = pieces.some((f: PiecePackage) => f.pieceType === PieceType.CUSTOM)
-            const sandbox = await sandboxManager(log).allocate()
-            const flowVersionId = codeSteps.length > 0 ? codeSteps[0].flowVersionId : undefined
-            await sandbox.assignCache({
-                globalCachePath,
-                globalCodesPath,
-                flowVersionId,
-                customPiecesPath: hasAnyCustomPieces ? customPiecesPath : undefined,
-                log,
-            })
+      const enrichedError = enrichErrorContext({
+        error,
+        key: contextKey,
+        value: contextValue,
+      })
 
-            return sandbox
-        }
-        catch (error) {
-            const contextKey = '[SandboxProvisioner#provision]'
-            const contextValue = { pieces, codeSteps, cacheInfo }
+      throw enrichedError
+    }
+  },
 
-            const enrichedError = enrichErrorContext({
-                error,
-                key: contextKey,
-                value: contextValue,
-            })
+  async release({ sandbox }: ReleaseParams): Promise<void> {
+    log.debug({ boxId: sandbox.boxId }, '[SandboxProvisioner#release]')
 
-            throw enrichedError
-        }
-    },
-
-    async release({ sandbox }: ReleaseParams): Promise<void> {
-        log.debug(
-            { boxId: sandbox.boxId },
-            '[SandboxProvisioner#release]',
-        )
-
-        await sandboxManager(log).release(sandbox.boxId)
-    },
+    await sandboxManager(log).release(sandbox.boxId)
+  },
 })
 
 type ProvisionParams = {
-    pieces?: PiecePackage[]
-    codeSteps?: CodeArtifact[]
-    customPiecesPathKey: string
+  pieces?: PiecePackage[]
+  codeSteps?: CodeArtifact[]
+  customPiecesPathKey: string
 }
 
 type ReleaseParams = {
-    sandbox: IsolateSandbox
+  sandbox: IsolateSandbox
 }

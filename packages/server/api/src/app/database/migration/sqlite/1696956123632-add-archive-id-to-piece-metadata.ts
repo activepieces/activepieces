@@ -2,15 +2,14 @@ import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 const log = system.globalLogger()
 
-export class AddArchiveIdToPieceMetadata1696956123632
-implements MigrationInterface {
-    name = 'AddArchiveIdToPieceMetadata1696956123632'
+export class AddArchiveIdToPieceMetadata1696956123632 implements MigrationInterface {
+  name = 'AddArchiveIdToPieceMetadata1696956123632'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_piece_metadata_name_project_id_version"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_piece_metadata" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -33,7 +32,7 @@ implements MigrationInterface {
                 CONSTRAINT "fk_piece_metadata_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_piece_metadata"(
                     "id",
                     "created",
@@ -70,20 +69,20 @@ implements MigrationInterface {
                 "packageType"
             FROM "piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_piece_metadata"
                 RENAME TO "piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_piece_metadata_name_project_id_version" ON "piece_metadata" ("name", "version", "projectId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_piece_metadata_name_project_id_version"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_piece_metadata" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -107,7 +106,7 @@ implements MigrationInterface {
                 CONSTRAINT "fk_piece_metadata_file" FOREIGN KEY ("archiveId") REFERENCES "file" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_piece_metadata"(
                     "id",
                     "created",
@@ -146,31 +145,34 @@ implements MigrationInterface {
                 "archiveId"
             FROM "piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_piece_metadata"
                 RENAME TO "piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_piece_metadata_name_project_id_version" ON "piece_metadata" ("name", "version", "projectId")
         `)
 
-        log.info({
-            name: this.name,
-        }, 'up')
-    }
+    log.info(
+      {
+        name: this.name,
+      },
+      'up',
+    )
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_piece_metadata_name_project_id_version"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "piece_metadata"
                 RENAME TO "temporary_piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "piece_metadata" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -193,7 +195,7 @@ implements MigrationInterface {
                 CONSTRAINT "fk_piece_metadata_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "piece_metadata"(
                     "id",
                     "created",
@@ -232,20 +234,20 @@ implements MigrationInterface {
                 "archiveId"
             FROM "temporary_piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_piece_metadata_name_project_id_version" ON "piece_metadata" ("name", "version", "projectId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_piece_metadata_name_project_id_version"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "piece_metadata"
                 RENAME TO "temporary_piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "piece_metadata" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -266,7 +268,7 @@ implements MigrationInterface {
                 CONSTRAINT "fk_piece_metadata_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "piece_metadata"(
                     "id",
                     "created",
@@ -303,15 +305,18 @@ implements MigrationInterface {
                 "packageType"
             FROM "temporary_piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_piece_metadata_name_project_id_version" ON "piece_metadata" ("name", "version", "projectId")
         `)
 
-        log.info({
-            name: this.name,
-        }, 'down')
-    }
+    log.info(
+      {
+        name: this.name,
+      },
+      'down',
+    )
+  }
 }

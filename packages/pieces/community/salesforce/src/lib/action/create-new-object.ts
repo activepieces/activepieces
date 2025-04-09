@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { callSalesforceApi, salesforcesCommon } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { salesforceAuth } from '../..';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { salesforceAuth } from '../..'
+import { callSalesforceApi, salesforcesCommon } from '../common'
 
 export const createNewObject = createAction({
   auth: salesforceAuth,
@@ -18,15 +18,10 @@ export const createNewObject = createAction({
     }),
   },
   async run(context) {
-    const { data, object } = context.propsValue;
-    const response = await callSalesforceApi(
-      HttpMethod.POST,
-      context.auth,
-      `/services/data/v56.0/sobjects/${object}`,
-      {
-        ...data,
-      }
-    );
-    return response;
+    const { data, object } = context.propsValue
+    const response = await callSalesforceApi(HttpMethod.POST, context.auth, `/services/data/v56.0/sobjects/${object}`, {
+      ...data,
+    })
+    return response
   },
-});
+})

@@ -1,6 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { kimaiCommon, makeClient } from '../common';
-import { kimaiAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { kimaiAuth } from '../..'
+import { kimaiCommon, makeClient } from '../common'
 
 export const kimaiCreateTimesheetAction = createAction({
   auth: kimaiAuth,
@@ -27,15 +27,15 @@ export const kimaiCreateTimesheetAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { project, activity, begin, end, description } = propsValue;
+    const { project, activity, begin, end, description } = propsValue
 
-    const client = await makeClient(auth);
+    const client = await makeClient(auth)
     return await client.createTimesheet({
       project,
       activity,
       begin,
       end,
       description,
-    });
+    })
   },
-});
+})

@@ -1,6 +1,6 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { convertJsonToXml } from './lib/actions/convert-json-to-xml';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { convertJsonToXml } from './lib/actions/convert-json-to-xml'
 
 export const xml = createPiece({
   displayName: 'XML',
@@ -10,7 +10,7 @@ export const xml = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/xml.png',
   categories: [PieceCategory.CORE],
   auth: PieceAuth.None(),
-  authors: ["Willianwg","kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: ['Willianwg', 'kishanprmr', 'AbdulTheActivePiecer', 'khaledmashaly', 'abuaboud'],
   actions: [convertJsonToXml],
   triggers: [],
-});
+})

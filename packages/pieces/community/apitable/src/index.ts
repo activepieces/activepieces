@@ -1,16 +1,11 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  createPiece,
-  PieceAuth,
-  PiecePropValueSchema,
-  Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { createRecordAction } from './lib/actions/create-record';
-import { findRecordAction } from './lib/actions/find-record';
-import { updateRecordAction } from './lib/actions/update-record';
-import { newRecordTrigger } from './lib/triggers/new-record';
-import { makeClient } from './lib/common';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, PiecePropValueSchema, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { createRecordAction } from './lib/actions/create-record'
+import { findRecordAction } from './lib/actions/find-record'
+import { updateRecordAction } from './lib/actions/update-record'
+import { makeClient } from './lib/common'
+import { newRecordTrigger } from './lib/triggers/new-record'
 
 export const APITableAuth = PieceAuth.CustomAuth({
   required: true,
@@ -40,21 +35,19 @@ export const APITableAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      const client = makeClient(
-        auth as PiecePropValueSchema<typeof APITableAuth>
-      );
-      await client.listSpaces();
+      const client = makeClient(auth as PiecePropValueSchema<typeof APITableAuth>)
+      await client.listSpaces()
       return {
         valid: true,
-      };
+      }
     } catch (e) {
       return {
         valid: false,
         error: 'Invalid Token or Instance URL.',
-      };
+      }
     }
   },
-});
+})
 
 export const apitable = createPiece({
   displayName: 'AITable',
@@ -63,20 +56,14 @@ export const apitable = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/apitable.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: [
-    'alerdenisov',
-    'Abdallah-Alwarawreh',
-    'kishanprmr',
-    'MoShizzle',
-    'abuaboud',
-  ],
+  authors: ['alerdenisov', 'Abdallah-Alwarawreh', 'kishanprmr', 'MoShizzle', 'abuaboud'],
   actions: [
     createRecordAction,
     updateRecordAction,
     findRecordAction,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        return (auth as { apiTableUrl: string }).apiTableUrl;
+        return (auth as { apiTableUrl: string }).apiTableUrl
       },
       auth: APITableAuth,
       authMapping: async (auth) => ({
@@ -85,4 +72,4 @@ export const apitable = createPiece({
     }),
   ],
   triggers: [newRecordTrigger],
-});
+})

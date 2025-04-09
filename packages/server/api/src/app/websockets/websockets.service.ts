@@ -10,21 +10,20 @@ export type WebsocketListener<T> = (socket: Socket) => (data: T) => Promise<void
 const listener: Record<string, WebsocketListener<any>> = {}
 
 export const websocketService = {
-    async init(socket: Socket, log: FastifyBaseLogger): Promise<void> {
-        const principal = await accessTokenManager.verifyPrincipal(socket.handshake.auth.token)
-        await socket.join(principal.projectId)
-        for (const [event, handler] of Object.entries(listener)) {
-            socket.on(event, async (data) => {
-                try {
-                    await handler(socket)(data)
-                }
-                catch (error) {
-                    exceptionHandler.handle(error, log)
-                }
-            })
+  async init(socket: Socket, log: FastifyBaseLogger): Promise<void> {
+    const principal = await accessTokenManager.verifyPrincipal(socket.handshake.auth.token)
+    await socket.join(principal.projectId)
+    for (const [event, handler] of Object.entries(listener)) {
+      socket.on(event, async (data) => {
+        try {
+          await handler(socket)(data)
+        } catch (error) {
+          exceptionHandler.handle(error, log)
         }
-    },
-    addListener<T>(event: WebsocketServerEvent, handler: WebsocketListener<T>): void {
-        listener[event] = handler
-    },
+      })
+    }
+  },
+  addListener<T>(event: WebsocketServerEvent, handler: WebsocketListener<T>): void {
+    listener[event] = handler
+  },
 }

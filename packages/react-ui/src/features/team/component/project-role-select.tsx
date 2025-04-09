@@ -1,8 +1,8 @@
-import { t } from 'i18next';
-import { UseFormReturn } from 'react-hook-form';
+import { t } from 'i18next'
+import { UseFormReturn } from 'react-hook-form'
 
-import { FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Label } from '@/components/ui/label';
+import { FormField, FormItem, FormMessage } from '@/components/ui/form'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -11,45 +11,45 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { platformHooks } from '@/hooks/platform-hooks';
-import { DefaultProjectRole } from '@activepieces/shared';
+} from '@/components/ui/select'
+import { platformHooks } from '@/hooks/platform-hooks'
+import { DefaultProjectRole } from '@activepieces/shared'
 
 type ProjectRoleSelectProps = {
-  form: UseFormReturn<any>;
-};
+  form: UseFormReturn<any>
+}
 
 const RolesDisplayNames: { [k: string]: string } = {
   [DefaultProjectRole.ADMIN]: t('Admin'),
   [DefaultProjectRole.EDITOR]: t('Editor'),
   [DefaultProjectRole.OPERATOR]: t('Operator'),
   [DefaultProjectRole.VIEWER]: t('Viewer'),
-};
+}
 
 const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {
-  const { platform } = platformHooks.useCurrentPlatform();
+  const { platform } = platformHooks.useCurrentPlatform()
 
   const invitationRoles = Object.values(DefaultProjectRole)
     .filter((f) => {
       if (f === DefaultProjectRole.ADMIN) {
-        return true;
+        return true
       }
-      const showNonAdmin = platform.projectRolesEnabled;
-      return showNonAdmin;
+      const showNonAdmin = platform.projectRolesEnabled
+      return showNonAdmin
     })
     .map((role) => {
       return {
         value: role,
         name: RolesDisplayNames[role],
-      };
+      }
     })
     .map((r) => {
       return (
         <SelectItem key={r.value} value={r.value}>
           {r.name}
         </SelectItem>
-      );
-    });
+      )
+    })
 
   return (
     <FormField
@@ -73,7 +73,7 @@ const ProjectRoleSelect = ({ form }: ProjectRoleSelectProps) => {
         </FormItem>
       )}
     ></FormField>
-  );
-};
+  )
+}
 
-export { ProjectRoleSelect };
+export { ProjectRoleSelect }

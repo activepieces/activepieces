@@ -1,55 +1,53 @@
-import { pipedriveAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { pipedriveApiCall } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { pipedriveAuth } from '../../index'
+import { pipedriveApiCall } from '../common'
 
 export const findUserAction = createAction({
-	auth: pipedriveAuth,
-	name: 'find-user',
-	displayName: 'Find User',
-	description: 'Find a user by name or email.',
-	props: {
-		field: Property.StaticDropdown({
-			displayName: 'Field to search by',
-			required: true,
-			options: {
-				disabled: false,
-				options: [
-					{
-						label: 'Name',
-						value: 'name',
-					},
-					{
-						label: 'Email',
-						value: 'email',
-					},
-				],
-			},
-		}),
-		fieldValue: Property.ShortText({
-			displayName: 'Field Value',
-			required: true,
-		}),
-	},
-	async run(context) {
-		const { field, fieldValue } = context.propsValue;
+  auth: pipedriveAuth,
+  name: 'find-user',
+  displayName: 'Find User',
+  description: 'Find a user by name or email.',
+  props: {
+    field: Property.StaticDropdown({
+      displayName: 'Field to search by',
+      required: true,
+      options: {
+        disabled: false,
+        options: [
+          {
+            label: 'Name',
+            value: 'name',
+          },
+          {
+            label: 'Email',
+            value: 'email',
+          },
+        ],
+      },
+    }),
+    fieldValue: Property.ShortText({
+      displayName: 'Field Value',
+      required: true,
+    }),
+  },
+  async run(context) {
+    const { field, fieldValue } = context.propsValue
 
-		const response = await pipedriveApiCall<{ success: boolean; data: Array<Record<string, any>> }>(
-			{
-				accessToken: context.auth.access_token,
-				apiDomain: context.auth.data['api_domain'],
-				method: HttpMethod.GET,
-				resourceUri: '/users/find',
-				query: {
-					term: fieldValue,
-					search_by_email: field == 'email' ? 1 : 0,
-				},
-			},
-		);
+    const response = await pipedriveApiCall<{ success: boolean; data: Array<Record<string, any>> }>({
+      accessToken: context.auth.access_token,
+      apiDomain: context.auth.data['api_domain'],
+      method: HttpMethod.GET,
+      resourceUri: '/users/find',
+      query: {
+        term: fieldValue,
+        search_by_email: field == 'email' ? 1 : 0,
+      },
+    })
 
-		return {
-            found: response.data.length === 0? false: true,
-            data: response.data
-        };
-	},
-});
+    return {
+      found: response.data.length === 0 ? false : true,
+      data: response.data,
+    }
+  },
+})

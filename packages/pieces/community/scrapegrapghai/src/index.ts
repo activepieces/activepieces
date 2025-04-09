@@ -1,9 +1,9 @@
-import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { smartScraper } from './lib/actions/smart-scraper';
-import { localScraper } from './lib/actions/local-scraper';
-import { markdownify } from './lib/actions/markdownify';
+import { HttpMethod, createCustomApiCallAction, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { localScraper } from './lib/actions/local-scraper'
+import { markdownify } from './lib/actions/markdownify'
+import { smartScraper } from './lib/actions/smart-scraper'
 
 const markdownDescription = `
 Follow these steps to obtain your ScrapeGraphAI API Key:
@@ -11,7 +11,7 @@ Follow these steps to obtain your ScrapeGraphAI API Key:
 1. Visit [ScrapeGraphAI](https://scrapegraphai.com) and create an account.
 2. Log in and navigate to your dashboard.
 3. Locate and copy your API key from the dashboard.
-`;
+`
 
 export const scrapegraphaiAuth = PieceAuth.SecretText({
   description: markdownDescription,
@@ -30,18 +30,18 @@ export const scrapegraphaiAuth = PieceAuth.SecretText({
           user_prompt: 'test',
           website_url: 'https://www.example.com',
         },
-      });
+      })
       return {
         valid: true,
-      };
+      }
     } catch (e) {
       return {
         valid: false,
         error: 'Invalid API Key',
-      };
+      }
     }
   },
-});
+})
 
 export const scrapegraphai = createPiece({
   displayName: 'ScrapeGraphAI',
@@ -49,7 +49,7 @@ export const scrapegraphai = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/scrapegraphai.jpg',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ["OsamaHaikal"],
+  authors: ['OsamaHaikal'],
   auth: scrapegraphaiAuth,
   actions: [
     smartScraper,
@@ -64,5 +64,4 @@ export const scrapegraphai = createPiece({
     }),
   ],
   triggers: [],
-});
-    
+})

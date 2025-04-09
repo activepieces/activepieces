@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { ReachinboxAuth } from '../..'; // Ensure proper authentication setup
-import { reachinboxCommon } from '../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { ReachinboxAuth } from '../..' // Ensure proper authentication setup
+import { reachinboxCommon } from '../common'
 
 export const addBlocklist = createAction({
   auth: ReachinboxAuth,
@@ -11,8 +11,7 @@ export const addBlocklist = createAction({
   props: {
     emails: Property.Array({
       displayName: 'Email Addresses',
-      description:
-        'Enter the email addresses to block (e.g., ["abc@gmail.com"])',
+      description: 'Enter the email addresses to block (e.g., ["abc@gmail.com"])',
       required: false,
     }),
     domains: Property.Array({
@@ -27,20 +26,18 @@ export const addBlocklist = createAction({
     }),
   },
   async run(context) {
-    const { emails, domains, keywords } = context.propsValue;
+    const { emails, domains, keywords } = context.propsValue
 
     // Ensure at least one of emails, domains, or keywords is provided
     if (!emails?.length && !domains?.length && !keywords?.length) {
-      throw new Error(
-        'Please provide at least one email, domain, or keyword to block.'
-      );
+      throw new Error('Please provide at least one email, domain, or keyword to block.')
     }
 
     const body = {
       emails: emails || [],
       domains: domains || [],
       keywords: keywords || [],
-    };
+    }
 
     try {
       const response = await httpClient.sendRequest({
@@ -51,22 +48,22 @@ export const addBlocklist = createAction({
           'Content-Type': 'application/json',
         },
         body,
-      });
+      })
 
       if (response.status === 200) {
         return {
           success: true,
           message: response.body.message || 'Blocklist updated successfully.',
-        };
+        }
       } else {
-        throw new Error(`Failed to update blocklist: ${response.body.message}`);
+        throw new Error(`Failed to update blocklist: ${response.body.message}`)
       }
     } catch (error: unknown) {
       if (error instanceof Error) {
-        throw new Error(`Error updating blocklist: ${error.message}`);
+        throw new Error(`Error updating blocklist: ${error.message}`)
       } else {
-        throw new Error('Unknown error occurred while updating the blocklist.');
+        throw new Error('Unknown error occurred while updating the blocklist.')
       }
     }
   },
-});
+})

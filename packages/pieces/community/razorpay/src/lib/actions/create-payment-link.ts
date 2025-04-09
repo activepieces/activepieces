@@ -1,9 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { generateRazorpayAuthHeader, RazorpayCredentials } from '../common/utils';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { razorpayAuth } from '../..';
-
-
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { razorpayAuth } from '../..'
+import { RazorpayCredentials, generateRazorpayAuthHeader } from '../common/utils'
 
 export const createPaymentlink = createAction({
   name: 'create-payment-link',
@@ -68,7 +66,7 @@ export const createPaymentlink = createAction({
   },
   async run(context) {
     // Convert amount from rupee format to the format expected by Razorpay
-    const amountWithoutDecimal = Math.round(context.propsValue.amount * 100);
+    const amountWithoutDecimal = Math.round(context.propsValue.amount * 100)
 
     const paymentLinkData = {
       amount: amountWithoutDecimal,
@@ -89,9 +87,9 @@ export const createPaymentlink = createAction({
       },
       callback_url: context.propsValue.callback_url,
       callback_method: context.propsValue.callback_method,
-    };
+    }
 
-    const authHeader = await generateRazorpayAuthHeader(context.auth as RazorpayCredentials);
+    const authHeader = await generateRazorpayAuthHeader(context.auth as RazorpayCredentials)
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -101,8 +99,8 @@ export const createPaymentlink = createAction({
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(paymentLinkData),
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

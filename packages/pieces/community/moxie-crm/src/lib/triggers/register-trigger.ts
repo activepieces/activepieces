@@ -1,10 +1,6 @@
-import {
-  TriggerStrategy,
-  createTrigger,
-  Property,
-} from '@activepieces/pieces-framework';
-import { MoxieCRMEventType } from '.';
-import { moxieCRMAuth } from '../../';
+import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { MoxieCRMEventType } from '.'
+import { moxieCRMAuth } from '../../'
 export const moxieCRMRegisterTrigger = ({
   name,
   displayName,
@@ -12,11 +8,11 @@ export const moxieCRMRegisterTrigger = ({
   eventType,
   sampleData,
 }: {
-  name: string;
-  displayName: string;
-  description: string;
-  eventType: MoxieCRMEventType;
-  sampleData: unknown;
+  name: string
+  displayName: string
+  description: string
+  eventType: MoxieCRMEventType
+  sampleData: unknown
 }) =>
   createTrigger({
     auth: moxieCRMAuth,
@@ -47,6 +43,6 @@ export const moxieCRMRegisterTrigger = ({
       // Empty
     },
     async run(context) {
-      return [context.payload.body];
+      return [context.payload.body]
     },
-  });
+  })

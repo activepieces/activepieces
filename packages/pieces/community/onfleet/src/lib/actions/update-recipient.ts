@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { onfleetAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
 
-import Onfleet from '@onfleet/node-onfleet';
+import Onfleet from '@onfleet/node-onfleet'
 
 export const updateRecipient = createAction({
   auth: onfleetAuth,
@@ -29,17 +29,13 @@ export const updateRecipient = createAction({
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth)
     const recipient: any = {
       name: context.propsValue['name'] ?? undefined,
       notes: context.propsValue['notes'] ?? undefined,
-      skipSMSNotifications:
-        context.propsValue['skipSMSNotifications'] ?? undefined,
-    };
+      skipSMSNotifications: context.propsValue['skipSMSNotifications'] ?? undefined,
+    }
 
-    return await onfleetApi.recipients.update(
-      context.propsValue['id'],
-      recipient
-    );
+    return await onfleetApi.recipients.update(context.propsValue['id'], recipient)
   },
-});
+})

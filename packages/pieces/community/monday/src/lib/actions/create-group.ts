@@ -1,6 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { mondayAuth } from '../..';
-import { makeClient, mondayCommon } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { mondayAuth } from '../..'
+import { makeClient, mondayCommon } from '../common'
 
 export const createGroupAction = createAction({
   auth: mondayAuth,
@@ -16,12 +16,12 @@ export const createGroupAction = createAction({
     }),
   },
   async run(context) {
-    const { board_id, group_name } = context.propsValue;
+    const { board_id, group_name } = context.propsValue
 
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth as string)
     return await client.createGroup({
       boardId: board_id as string,
       groupName: group_name as string,
-    });
+    })
   },
-});
+})

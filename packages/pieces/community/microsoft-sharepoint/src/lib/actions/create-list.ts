@@ -1,8 +1,8 @@
-import { microsoftSharePointAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { microsoftSharePointCommon } from '../common';
-import { Client } from '@microsoft/microsoft-graph-client';
-import { List } from '@microsoft/microsoft-graph-types';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { Client } from '@microsoft/microsoft-graph-client'
+import { List } from '@microsoft/microsoft-graph-types'
+import { microsoftSharePointAuth } from '../../'
+import { microsoftSharePointCommon } from '../common'
 
 export const createListAction = createAction({
   auth: microsoftSharePointAuth,
@@ -21,19 +21,19 @@ export const createListAction = createAction({
     }),
   },
   async run(context) {
-    const { siteId, displayName, description } = context.propsValue;
+    const { siteId, displayName, description } = context.propsValue
 
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
-    });
+    })
 
     const listInput: List = {
       displayName,
       description,
-    };
+    }
 
-    return await client.api(`/sites/${siteId}/lists`).post(listInput);
+    return await client.api(`/sites/${siteId}/lists`).post(listInput)
   },
-});
+})

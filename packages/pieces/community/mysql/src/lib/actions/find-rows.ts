@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { mysqlCommon, mysqlConnect, sanitizeColumnName, warningMarkdown } from '../common';
-import { mysqlAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { mysqlAuth } from '../..'
+import { mysqlCommon, mysqlConnect, sanitizeColumnName, warningMarkdown } from '../common'
 
 export default createAction({
   auth: mysqlAuth,
@@ -28,20 +28,18 @@ export default createAction({
     }),
   },
   async run(context) {
-    const columns = (context.propsValue.columns as string[]) || ['*'];
-    const qsColumns = columns
-      .map((c) => sanitizeColumnName(c))
-      .join(',');
+    const columns = (context.propsValue.columns as string[]) || ['*']
+    const qsColumns = columns.map((c) => sanitizeColumnName(c)).join(',')
 
-    const qs = `SELECT ${qsColumns} FROM ${sanitizeColumnName(context.propsValue.table)} WHERE ${context.propsValue.condition};`;
+    const qs = `SELECT ${qsColumns} FROM ${sanitizeColumnName(context.propsValue.table)} WHERE ${context.propsValue.condition};`
 
-    const conn = await mysqlConnect(context.auth, context.propsValue);
+    const conn = await mysqlConnect(context.auth, context.propsValue)
 
     try {
-      const results = await conn.query(qs, context.propsValue.args);
-      return { results };
+      const results = await conn.query(qs, context.propsValue.args)
+      return { results }
     } finally {
-      await conn.end();
+      await conn.end()
     }
   },
-});
+})

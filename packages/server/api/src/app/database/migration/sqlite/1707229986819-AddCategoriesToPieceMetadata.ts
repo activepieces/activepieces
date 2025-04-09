@@ -1,20 +1,19 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddCategoriesToPieceMetadata1707229986819
-implements MigrationInterface {
-    name = 'AddCategoriesToPieceMetadata1707229986819'
+export class AddCategoriesToPieceMetadata1707229986819 implements MigrationInterface {
+  name = 'AddCategoriesToPieceMetadata1707229986819'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_partial_unique_email_platform_id_is_null"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -34,7 +33,7 @@ implements MigrationInterface {
                 CONSTRAINT "UQ_e12875dfb3b1d92d7d7c5377e22" UNIQUE ("email")
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_user"(
                     "id",
                     "created",
@@ -69,27 +68,27 @@ implements MigrationInterface {
                 "verified"
             FROM "user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_user"
                 RENAME TO "user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_partial_unique_email_platform_id_is_null" ON "user" ("email")
             WHERE "platformId" IS NULL
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_piece_metadata_name_project_id_version"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_piece_metadata" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -115,7 +114,7 @@ implements MigrationInterface {
                 CONSTRAINT "fk_piece_metadata_file" FOREIGN KEY ("archiveId") REFERENCES "file" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_piece_metadata"(
                     "id",
                     "created",
@@ -156,26 +155,26 @@ implements MigrationInterface {
                 "platformId"
             FROM "piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_piece_metadata"
                 RENAME TO "piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_piece_metadata_name_project_id_version" ON "piece_metadata" ("name", "version", "projectId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_partial_unique_email_platform_id_is_null"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -195,7 +194,7 @@ implements MigrationInterface {
                 CONSTRAINT "UQ_e12875dfb3b1d92d7d7c5377e22" UNIQUE ("email")
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_user"(
                     "id",
                     "created",
@@ -230,40 +229,40 @@ implements MigrationInterface {
                 "verified"
             FROM "user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_user"
                 RENAME TO "user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_partial_unique_email_platform_id_is_null" ON "user" ("email")
             WHERE "platformId" IS NULL
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_partial_unique_email_platform_id_is_null"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "user"
                 RENAME TO "temporary_user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -283,7 +282,7 @@ implements MigrationInterface {
                 CONSTRAINT "UQ_e12875dfb3b1d92d7d7c5377e22" UNIQUE ("email")
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "user"(
                     "id",
                     "created",
@@ -318,27 +317,27 @@ implements MigrationInterface {
                 "verified"
             FROM "temporary_user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_partial_unique_email_platform_id_is_null" ON "user" ("email")
             WHERE "platformId" IS NULL
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_piece_metadata_name_project_id_version"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "piece_metadata"
                 RENAME TO "temporary_piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "piece_metadata" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -363,7 +362,7 @@ implements MigrationInterface {
                 CONSTRAINT "fk_piece_metadata_file" FOREIGN KEY ("archiveId") REFERENCES "file" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "piece_metadata"(
                     "id",
                     "created",
@@ -404,26 +403,26 @@ implements MigrationInterface {
                 "platformId"
             FROM "temporary_piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_piece_metadata_name_project_id_version" ON "piece_metadata" ("name", "version", "projectId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_partial_unique_email_platform_id_is_null"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "user"
                 RENAME TO "temporary_user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -443,7 +442,7 @@ implements MigrationInterface {
                 CONSTRAINT "UQ_e12875dfb3b1d92d7d7c5377e22" UNIQUE ("email")
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "user"(
                     "id",
                     "created",
@@ -478,18 +477,18 @@ implements MigrationInterface {
                 "verified"
             FROM "temporary_user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_partial_unique_email_platform_id_is_null" ON "user" ("email")
             WHERE "platformId" IS NULL
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
         `)
-    }
+  }
 }

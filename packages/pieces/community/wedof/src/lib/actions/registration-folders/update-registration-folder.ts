@@ -1,20 +1,18 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { wedofCommon } from '../../common/wedof';
-import dayjs from 'dayjs';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { wedofAuth } from '../../..'
+import { wedofCommon } from '../../common/wedof'
 
 export const updateRegistrationFolder = createAction({
   auth: wedofAuth,
   name: 'updateRegistrationFolder',
   displayName: 'Mettre à jour un dossier de formation',
-  description:
-    "Met à jour certaines informations modifiables d'un dossier de formation",
+  description: "Met à jour certaines informations modifiables d'un dossier de formation",
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de formation',
-      description:
-        'Sélectionner la propriété {externalId} du dossier de formation',
+      description: 'Sélectionner la propriété {externalId} du dossier de formation',
       required: true,
     }),
     price: Property.Number({
@@ -44,7 +42,8 @@ export const updateRegistrationFolder = createAction({
     }),
     completionRate: Property.Number({
       displayName: "Taux d'avancement",
-      description: "Taux d'avancement en % compris entre 0% et 100%. Uniquement sous format d'un entier. Uniquement possible à l'état En formation et Sortie de formation",
+      description:
+        "Taux d'avancement en % compris entre 0% et 100%. Uniquement sous format d'un entier. Uniquement possible à l'état En formation et Sortie de formation",
       required: false,
     }),
     indicativeDuration: Property.Number({
@@ -58,8 +57,9 @@ export const updateRegistrationFolder = createAction({
       required: false,
     }),
     tags: Property.Array({
-      displayName: "Tags",
-      description: "Liste de tags associée au dossier de formation, si vous souhaitez garder vos précédents tags, il faut les réécrire dans le champ",
+      displayName: 'Tags',
+      description:
+        'Liste de tags associée au dossier de formation, si vous souhaitez garder vos précédents tags, il faut les réécrire dans le champ',
       required: false,
     }),
   },
@@ -82,20 +82,17 @@ export const updateRegistrationFolder = createAction({
         weeklyDuration: context.propsValue.weeklyDuration ?? null,
       },
       tags: context.propsValue.tags as string[],
-    };
+    }
     return (
       await httpClient.sendRequest({
         method: HttpMethod.PUT,
         body: message,
-        url:
-          wedofCommon.baseUrl +
-          '/registrationFolders/' +
-          context.propsValue.externalId,
+        url: wedofCommon.baseUrl + '/registrationFolders/' + context.propsValue.externalId,
         headers: {
           'Content-Type': 'application/json',
           'X-Api-Key': context.auth as string,
         },
       })
-    ).body;
+    ).body
   },
-});
+})

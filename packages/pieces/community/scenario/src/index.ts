@@ -1,14 +1,9 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { BasicAuthConnectionValue } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { BasicAuthConnectionValue } from '@activepieces/shared'
 
 export const scenarioAuth = PieceAuth.BasicAuth({
-  description:
-    'Follow [these instructions](https://docs.scenario.com/docs/get-api-key) to get your API key',
+  description: 'Follow [these instructions](https://docs.scenario.com/docs/get-api-key) to get your API key',
   required: true,
   username: Property.ShortText({
     displayName: 'API access key',
@@ -19,7 +14,7 @@ export const scenarioAuth = PieceAuth.BasicAuth({
     displayName: 'API secret',
     required: true,
   }),
-});
+})
 
 export const scenario = createPiece({
   displayName: 'Scenario',
@@ -32,14 +27,12 @@ export const scenario = createPiece({
       baseUrl: () => `https://api.cloud.scenario.com/v1/`,
       auth: scenarioAuth,
       authMapping: async (auth) => {
-        const { username, password } = auth as BasicAuthConnectionValue;
+        const { username, password } = auth as BasicAuthConnectionValue
         return {
-          Authorization: `Basic ${Buffer.from(
-            `${username}:${password}`
-          ).toString('base64')}`,
-        };
+          Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,
+        }
       },
     }),
   ],
   triggers: [],
-});
+})

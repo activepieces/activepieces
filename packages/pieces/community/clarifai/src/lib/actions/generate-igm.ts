@@ -1,16 +1,11 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { clarifaiAuth } from '../..';
-import {
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { clarifaiAuth } from '../..'
 
 export const clarifaiGenerateIGM = createAction({
   name: 'generate-igm',
   displayName: 'Ask IGM',
-  description:
-    'Generate an image using the Image generating models supported by clarifai.',
+  description: 'Generate an image using the Image generating models supported by clarifai.',
   auth: clarifaiAuth,
   props: {
     models: Property.Dropdown({
@@ -24,7 +19,7 @@ export const clarifaiGenerateIGM = createAction({
             disabled: true,
             options: [],
             placeholder: 'Please add an PAT key',
-          };
+          }
         }
         const request: HttpRequest = {
           method: HttpMethod.GET,
@@ -32,30 +27,30 @@ export const clarifaiGenerateIGM = createAction({
           headers: {
             Authorization: ('Key ' + auth) as string,
           },
-        };
+        }
         try {
           const response = await httpClient.sendRequest<{
             models: {
-              id: string;
-              name: string;
-            }[];
-          }>(request);
+              id: string
+              name: string
+            }[]
+          }>(request)
 
           return {
             options: response.body.models.map((model) => {
               return {
                 label: model.name,
                 value: model.id,
-              };
+              }
             }),
             disabled: false,
-          };
+          }
         } catch (error) {
           return {
             options: [],
             disabled: true,
             placeholder: `Couldn't Load Models:\n${error}`,
-          };
+          }
         }
       },
       defaultValue: 'general-image-generator-dalle-mini',
@@ -67,7 +62,7 @@ export const clarifaiGenerateIGM = createAction({
     }),
   },
   run: async (context) => {
-    const mId = context.propsValue.models as string;
+    const mId = context.propsValue.models as string
 
     const findModel: HttpRequest = {
       method: HttpMethod.GET,
@@ -75,25 +70,25 @@ export const clarifaiGenerateIGM = createAction({
       headers: {
         Authorization: ('Key ' + context.auth) as string,
       },
-    };
-    let model;
+    }
+    let model
     try {
       const response = await httpClient.sendRequest<{
         models: {
-          id: string;
-          name: string;
+          id: string
+          name: string
           model_version: {
-            id: string;
-            app_id: string;
-            user_id: string;
-          };
-        }[];
-      }>(findModel);
-      model = response.body.models[0];
+            id: string
+            app_id: string
+            user_id: string
+          }
+        }[]
+      }>(findModel)
+      model = response.body.models[0]
     } catch (error) {
-      throw new Error(`Couldn't find model ${mId}\n${error}`);
+      throw new Error(`Couldn't find model ${mId}\n${error}`)
     }
-    const prompt = context.propsValue.prompt as string;
+    const prompt = context.propsValue.prompt as string
     const sendPrompt: HttpRequest = {
       method: HttpMethod.POST,
       url: `https://api.clarifai.com/v2/users/${model.model_version.user_id}/apps/${model.model_version.app_id}/models/${model.id}/versions/${model.model_version.id}/outputs`,
@@ -111,36 +106,30 @@ export const clarifaiGenerateIGM = createAction({
           },
         ],
       },
-    };
+    }
 
     try {
       const response = await httpClient.sendRequest<{
         outputs: {
-          id: string;
+          id: string
           data: {
             image: {
-              base64: string;
+              base64: string
               image_info: {
-                format: string;
-              };
-            };
-          };
-        }[];
-      }>(sendPrompt);
+                format: string
+              }
+            }
+          }
+        }[]
+      }>(sendPrompt)
       return {
         result: await context.files.write({
-          fileName:
-            response.body.outputs[0].id +
-            '.' +
-            response.body.outputs[0].data.image.image_info.format,
-          data: Buffer.from(
-            response.body.outputs[0].data.image.base64,
-            'base64'
-          ),
+          fileName: response.body.outputs[0].id + '.' + response.body.outputs[0].data.image.image_info.format,
+          data: Buffer.from(response.body.outputs[0].data.image.base64, 'base64'),
         }),
-      };
+      }
     } catch (error) {
-      throw new Error(`Couldn't send prompt to model ${mId}\n${error}`);
+      throw new Error(`Couldn't send prompt to model ${mId}\n${error}`)
     }
   },
-});
+})

@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { onfleetAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
 
-import Onfleet from '@onfleet/node-onfleet';
+import Onfleet from '@onfleet/node-onfleet'
 
 export const completeTask = createAction({
   auth: onfleetAuth,
@@ -26,13 +26,13 @@ export const completeTask = createAction({
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth)
 
     return await onfleetApi.tasks.forceComplete(context.propsValue.task, {
       completionDetails: {
         success: context.propsValue.success,
         notes: context.propsValue.notes,
       },
-    });
+    })
   },
-});
+})

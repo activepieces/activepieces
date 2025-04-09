@@ -1,45 +1,36 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { typeboxResolver } from '@hookform/resolvers/typebox'
+import { Static, Type } from '@sinclair/typebox'
+import { useMutation } from '@tanstack/react-query'
+import { t } from 'i18next'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
-import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-api';
-import type { AiProviderMetadata } from '@activepieces/pieces-common';
-import { AiProviderConfig } from '@activepieces/shared';
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast'
+import { aiProviderApi } from '@/features/platform-admin-panel/lib/ai-provider-api'
+import type { AiProviderMetadata } from '@activepieces/pieces-common'
+import { AiProviderConfig } from '@activepieces/shared'
 
-import { ApMarkdown } from '../../../../../../components/custom/markdown';
+import { ApMarkdown } from '../../../../../../components/custom/markdown'
 
 const EnableAiProviderConfigInput = Type.Composite([
   Type.Omit(AiProviderConfig, ['id', 'created', 'updated', 'platformId']),
   Type.Object({
     id: Type.Optional(Type.String()),
   }),
-]);
-export type EnableAiProviderConfigInput = Static<
-  typeof EnableAiProviderConfigInput
->;
+])
+export type EnableAiProviderConfigInput = Static<typeof EnableAiProviderConfigInput>
 
 type UpsertAIProviderDialogProps = {
-  provider: EnableAiProviderConfigInput;
-  providerMetadata: AiProviderMetadata;
-  children: React.ReactNode;
-  onSave: () => void;
-};
+  provider: EnableAiProviderConfigInput
+  providerMetadata: AiProviderMetadata
+  children: React.ReactNode
+  onSave: () => void
+}
 
 export const UpsertAIProviderDialog = ({
   children,
@@ -47,68 +38,63 @@ export const UpsertAIProviderDialog = ({
   provider,
   providerMetadata,
 }: UpsertAIProviderDialogProps) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
   const form = useForm({
     resolver: typeboxResolver(EnableAiProviderConfigInput),
     defaultValues: provider,
-  });
+  })
 
-  const { toast } = useToast();
+  const { toast } = useToast()
 
   const { mutate, isPending } = useMutation({
     mutationFn: () => {
-      const headerValue =
-        form.getValues().config.defaultHeaders[providerMetadata.auth.name];
+      const headerValue = form.getValues().config.defaultHeaders[providerMetadata.auth.name]
       const defaultHeaders =
         typeof headerValue === 'string' && headerValue.trim() !== ''
           ? {
-              [providerMetadata.auth.name]:
-                providerMetadata.auth.mapper(headerValue),
+              [providerMetadata.auth.name]: providerMetadata.auth.mapper(headerValue),
             }
-          : {};
+          : {}
       return aiProviderApi.upsert({
         ...form.getValues(),
         config: {
           ...form.getValues().config,
           defaultHeaders,
         },
-      });
+      })
     },
     onSuccess: (data) => {
-      form.reset(data);
-      setOpen(false);
-      onSave();
+      form.reset(data)
+      setOpen(false)
+      onSave()
     },
     onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-      setOpen(false);
+      toast(INTERNAL_ERROR_TOAST)
+      setOpen(false)
     },
-  });
+  })
 
   return (
     <Dialog
       open={open}
       onOpenChange={(open) => {
         if (!open) {
-          form.reset(provider);
+          form.reset(provider)
         }
-        setOpen(open);
+        setOpen(open)
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {provider.id ? t('Update AI Provider') : t('Enable AI Provider')} (
-            {providerMetadata.label})
+            {provider.id ? t('Update AI Provider') : t('Enable AI Provider')} ({providerMetadata.label})
           </DialogTitle>
         </DialogHeader>
 
         {providerMetadata.instructionsMarkdown && (
           <div className="mb-4">
-            <ApMarkdown
-              markdown={providerMetadata.instructionsMarkdown}
-            ></ApMarkdown>
+            <ApMarkdown markdown={providerMetadata.instructionsMarkdown}></ApMarkdown>
           </div>
         )}
 
@@ -137,11 +123,7 @@ export const UpsertAIProviderDialog = ({
               defaultValue={provider.id ? '' : undefined}
               render={({ field }) => (
                 <FormItem className="grid space-y-3">
-                  <Label
-                    htmlFor={`config.defaultHeaders.${providerMetadata.auth.name}`}
-                  >
-                    {t('API Key')}
-                  </Label>
+                  <Label htmlFor={`config.defaultHeaders.${providerMetadata.auth.name}`}>{t('API Key')}</Label>
                   <div className="flex gap-2 items-center justify-center">
                     <Input
                       autoFocus
@@ -158,9 +140,7 @@ export const UpsertAIProviderDialog = ({
             />
 
             {form?.formState?.errors?.root?.serverError && (
-              <FormMessage>
-                {form.formState.errors.root.serverError.message}
-              </FormMessage>
+              <FormMessage>{form.formState.errors.root.serverError.message}</FormMessage>
             )}
           </form>
         </Form>
@@ -168,9 +148,9 @@ export const UpsertAIProviderDialog = ({
           <Button
             variant={'outline'}
             onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              setOpen(false);
+              e.stopPropagation()
+              e.preventDefault()
+              setOpen(false)
             }}
           >
             {t('Cancel')}
@@ -179,9 +159,9 @@ export const UpsertAIProviderDialog = ({
             disabled={!form.formState.isValid}
             loading={isPending}
             onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              mutate();
+              e.stopPropagation()
+              e.preventDefault()
+              mutate()
             }}
           >
             {t('Save')}
@@ -189,5 +169,5 @@ export const UpsertAIProviderDialog = ({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}

@@ -1,4 +1,4 @@
-import { EntityProp } from '../types';
+import { EntityProp } from '../types'
 
 export const itemCategoriesEntityProps: EntityProp[] = [
   {
@@ -17,4 +17,4 @@ export const itemCategoriesEntityProps: EntityProp[] = [
     type: 'text',
     isRequired: false,
   },
-];
+]

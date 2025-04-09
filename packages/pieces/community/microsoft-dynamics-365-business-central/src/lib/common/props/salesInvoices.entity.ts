@@ -1,4 +1,4 @@
-import { EntityProp } from '../types';
+import { EntityProp } from '../types'
 
 // https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/api-reference/v2.0/resources/dynamics_salesinvoice
 
@@ -195,4 +195,4 @@ export const salesInvoicesEntityProps: EntityProp[] = [
     type: 'text',
     isRequired: false,
   },
-];
+]

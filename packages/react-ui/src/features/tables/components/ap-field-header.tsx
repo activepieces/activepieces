@@ -1,40 +1,26 @@
-import { ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { ChevronDown } from 'lucide-react'
+import { useState } from 'react'
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { cn } from '@/lib/utils';
-import { Permission } from '@activepieces/shared';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { useAuthorization } from '@/hooks/authorization-hooks'
+import { cn } from '@/lib/utils'
+import { Permission } from '@activepieces/shared'
 
-import { ClientField } from '../lib/store/ap-tables-client-state';
-import { FieldHeaderContext, tablesUtils } from '../lib/utils';
+import { ClientField } from '../lib/store/ap-tables-client-state'
+import { FieldHeaderContext, tablesUtils } from '../lib/utils'
 
-import ApFieldActionMenuItemRenderer, {
-  FieldActionType,
-} from './field-action-menu-item-renderer';
+import ApFieldActionMenuItemRenderer, { FieldActionType } from './field-action-menu-item-renderer'
 
 type ApFieldHeaderProps = {
-  field: ClientField & { index: number };
-};
+  field: ClientField & { index: number }
+}
 
 export function ApFieldHeader({ field }: ApFieldHeaderProps) {
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [popoverContent, setPopoverContent] = useState<React.ReactNode>(null);
-  const userHasTableWritePermission = useAuthorization().checkAccess(
-    Permission.WRITE_TABLE,
-  );
-  const actions = userHasTableWritePermission
-    ? [FieldActionType.RENAME, FieldActionType.DELETE]
-    : [];
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false)
+  const [popoverContent, setPopoverContent] = useState<React.ReactNode>(null)
+  const userHasTableWritePermission = useAuthorization().checkAccess(Permission.WRITE_TABLE)
+  const actions = userHasTableWritePermission ? [FieldActionType.RENAME, FieldActionType.DELETE] : []
 
   return (
     <FieldHeaderContext.Provider
@@ -58,9 +44,7 @@ export function ApFieldHeader({ field }: ApFieldHeaderProps) {
               {tablesUtils.getColumnIcon(field.type)}
               <span className="text-sm">{field.name}</span>
             </div>
-            {actions && actions.length > 0 && (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            )}
+            {actions && actions.length > 0 && <ChevronDown className="h-4 w-4 text-muted-foreground" />}
           </div>
         </DropdownMenuTrigger>
         {actions && actions.length > 0 && (
@@ -71,9 +55,7 @@ export function ApFieldHeader({ field }: ApFieldHeaderProps) {
             className="w-56 rounded-sm"
           >
             {actions.map((action, index) => (
-              <div key={index}>
-                {<ApFieldActionMenuItemRenderer action={action} />}
-              </div>
+              <div key={index}>{<ApFieldActionMenuItemRenderer action={action} />}</div>
             ))}
           </DropdownMenuContent>
         )}
@@ -87,5 +69,5 @@ export function ApFieldHeader({ field }: ApFieldHeaderProps) {
         </PopoverContent>
       </Popover>
     </FieldHeaderContext.Provider>
-  );
+  )
 }

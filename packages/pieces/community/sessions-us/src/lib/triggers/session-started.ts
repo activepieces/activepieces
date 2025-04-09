@@ -1,7 +1,4 @@
-import {
-  createSessionsUsWebhookTrigger,
-  SessionsUsWebhookTrigger,
-} from '../common';
+import { SessionsUsWebhookTrigger, createSessionsUsWebhookTrigger } from '../common'
 
 export const sessionStarted = createSessionsUsWebhookTrigger({
   name: 'session_started',
@@ -37,4 +34,4 @@ export const sessionStarted = createSessionsUsWebhookTrigger({
       ],
     },
   },
-});
+})

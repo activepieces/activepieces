@@ -1,7 +1,7 @@
-import { microsoftSharePointAuth } from '../../';
-import { createAction } from '@activepieces/pieces-framework';
-import { microsoftSharePointCommon } from '../common';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { createAction } from '@activepieces/pieces-framework'
+import { Client } from '@microsoft/microsoft-graph-client'
+import { microsoftSharePointAuth } from '../../'
+import { microsoftSharePointCommon } from '../common'
 
 export const updateListItemAction = createAction({
   auth: microsoftSharePointAuth,
@@ -15,25 +15,23 @@ export const updateListItemAction = createAction({
     listColumns: microsoftSharePointCommon.listColumns,
   },
   async run(context) {
-    const { siteId, listId, listItemId, listColumns } = context.propsValue;
+    const { siteId, listId, listItemId, listColumns } = context.propsValue
 
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
-    });
-    const fieldWithArrayValues: Record<string, string> = {};
+    })
+    const fieldWithArrayValues: Record<string, string> = {}
 
     Object.entries(listColumns).forEach(([key, value]) => {
       // https://learn.microsoft.com/en-us/answers/questions/1517379/upload-multiple-choice-fields-item-in-sharepoint-w
       if (Array.isArray(value)) {
-        fieldWithArrayValues[`${key}@odata.type`] = 'Collection(Edm.String)';
+        fieldWithArrayValues[`${key}@odata.type`] = 'Collection(Edm.String)'
       }
-    });
-    const itemInput = { ...listColumns, ...fieldWithArrayValues };
+    })
+    const itemInput = { ...listColumns, ...fieldWithArrayValues }
 
-    return await client
-      .api(`/sites/${siteId}/lists/${listId}/items/${listItemId}/fields`)
-      .patch(itemInput);
+    return await client.api(`/sites/${siteId}/lists/${listId}/items/${listItemId}/fields`).patch(itemInput)
   },
-});
+})

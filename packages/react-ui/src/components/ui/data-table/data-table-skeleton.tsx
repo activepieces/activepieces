@@ -1,9 +1,9 @@
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton'
 
 export function DataTableSkeleton({
   skeletonRowCount = 10,
 }: {
-  skeletonRowCount?: number;
+  skeletonRowCount?: number
 }) {
   return (
     <div>
@@ -13,7 +13,7 @@ export function DataTableSkeleton({
         ))}
       </div>
     </div>
-  );
+  )
 }
 
 function TableRowSkeleton() {
@@ -25,5 +25,5 @@ function TableRowSkeleton() {
     >
       <Skeleton className="w-full" />
     </div>
-  );
+  )
 }

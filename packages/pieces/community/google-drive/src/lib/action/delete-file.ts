@@ -1,8 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleDriveAuth } from '../../';
-import { common } from '../common';
-import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { google } from 'googleapis'
+import { OAuth2Client } from 'googleapis-common'
+import { googleDriveAuth } from '../../'
+import { common } from '../common'
 
 export const googleDriveDeleteFile = createAction({
   auth: googleDriveAuth,
@@ -18,16 +18,16 @@ export const googleDriveDeleteFile = createAction({
     include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = new OAuth2Client()
+    authClient.setCredentials(context.auth)
 
-    const drive = google.drive({ version: 'v3', auth: authClient });
+    const drive = google.drive({ version: 'v3', auth: authClient })
 
     const response = await drive.files.delete({
       fileId: context.propsValue.fileId,
       supportsAllDrives: context.propsValue.include_team_drives,
-    });
+    })
 
-    return response.data;
+    return response.data
   },
-});
+})

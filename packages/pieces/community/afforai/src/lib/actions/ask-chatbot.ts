@@ -1,10 +1,6 @@
-import { afforaiAuth } from '../../';
-import { Property, createAction } from '@activepieces/pieces-framework';
-import {
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { afforaiAuth } from '../../'
 
 export const askChatbotAction = createAction({
   auth: afforaiAuth,
@@ -47,8 +43,7 @@ export const askChatbotAction = createAction({
       },
     }),
     powerful: Property.Checkbox({
-      displayName:
-        'AI should search more deeply for information in the given files ?',
+      displayName: 'AI should search more deeply for information in the given files ?',
       required: true,
     }),
     google: Property.Checkbox({
@@ -57,8 +52,8 @@ export const askChatbotAction = createAction({
     }),
   },
   async run(context) {
-    const { sessionID, powerful, google } = context.propsValue;
-    const history = context.propsValue.history as ChatHistory[];
+    const { sessionID, powerful, google } = context.propsValue
+    const history = context.propsValue.history as ChatHistory[]
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -70,14 +65,14 @@ export const askChatbotAction = createAction({
         powerful: powerful,
         google: google,
       },
-    };
+    }
 
-    const res = await httpClient.sendRequest(request);
-    return res.body;
+    const res = await httpClient.sendRequest(request)
+    return res.body
   },
-});
+})
 
 type ChatHistory = {
-  role: string;
-  content: string;
-};
+  role: string
+  content: string
+}

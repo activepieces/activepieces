@@ -1,10 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { activePieceAuth } from '../../index';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { activePieceAuth } from '../../index'
 
 export const listProject = createAction({
   name: 'list_project',
@@ -20,8 +16,8 @@ export const listProject = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: auth.apiKey,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

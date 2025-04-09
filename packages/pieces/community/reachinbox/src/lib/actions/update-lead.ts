@@ -1,12 +1,12 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { fetchCampaigns, reachinboxCommon } from '../common/index';
-import { ReachinboxAuth } from '../..';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { ReachinboxAuth } from '../..'
+import { fetchCampaigns, reachinboxCommon } from '../common/index'
 
 // Define the structure for custom variables
 interface CustomVariable {
-  key: string;
-  value: string;
+  key: string
+  value: string
 }
 
 // Define the updateLead action
@@ -18,19 +18,18 @@ export const updateLead = createAction({
   props: {
     campaignId: Property.Dropdown({
       displayName: 'Select Campaign',
-      description:
-        'Choose a campaign from the list or enter the campaign ID manually.',
+      description: 'Choose a campaign from the list or enter the campaign ID manually.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        const campaigns = await fetchCampaigns(auth as string);
+        const campaigns = await fetchCampaigns(auth as string)
         return {
           options: campaigns.map((campaign) => ({
             label: campaign.name,
             value: campaign.id,
           })),
           disabled: campaigns.length === 0,
-        };
+        }
       },
     }),
     leadId: Property.Dropdown({
@@ -40,7 +39,7 @@ export const updateLead = createAction({
       refreshers: ['campaignId'],
       options: async ({ auth, campaignId }) => {
         if (!campaignId) {
-          return { options: [], disabled: true };
+          return { options: [], disabled: true }
         }
 
         const response = await httpClient.sendRequest({
@@ -49,15 +48,13 @@ export const updateLead = createAction({
           headers: {
             Authorization: `Bearer ${auth as string}`,
           },
-        });
+        })
 
         if (response.status !== 200) {
-          throw new Error('Failed to fetch leads.');
+          throw new Error('Failed to fetch leads.')
         }
 
-        const leads = Array.isArray(response.body.data.leads)
-          ? response.body.data.leads
-          : [];
+        const leads = Array.isArray(response.body.data.leads) ? response.body.data.leads : []
 
         return {
           options: leads.map((lead: { email: string; id: string }) => ({
@@ -65,7 +62,7 @@ export const updateLead = createAction({
             value: lead.id,
           })),
           disabled: leads.length === 0,
-        };
+        }
       },
     }),
     email: Property.ShortText({
@@ -103,25 +100,23 @@ export const updateLead = createAction({
     }),
   },
   async run(context) {
-    const { campaignId, leadId, email, firstName, lastName, customVariables } =
-      context.propsValue;
+    const { campaignId, leadId, email, firstName, lastName, customVariables } = context.propsValue
 
     if (!campaignId || !leadId) {
-      throw new Error('Campaign ID and Lead ID are required.');
+      throw new Error('Campaign ID and Lead ID are required.')
     }
 
     // Safely cast customVariables to CustomVariable[], default to an empty array if undefined
-    const customVariablesArray: CustomVariable[] = (customVariables ||
-      []) as CustomVariable[];
+    const customVariablesArray: CustomVariable[] = (customVariables || []) as CustomVariable[]
 
     // Process the custom variables into a key-value object for the lead attributes
-    const customVariablesObject: Record<string, string> = {};
+    const customVariablesObject: Record<string, string> = {}
     customVariablesArray.forEach((variable: CustomVariable) => {
-      customVariablesObject[variable.key] = variable.value;
-    });
+      customVariablesObject[variable.key] = variable.value
+    })
 
     // Include the custom variables in the lead update request
-    const url = `${reachinboxCommon.baseUrl}leads/update`;
+    const url = `${reachinboxCommon.baseUrl}leads/update`
 
     try {
       const response = await httpClient.sendRequest({
@@ -141,18 +136,18 @@ export const updateLead = createAction({
             ...customVariablesObject, // Add custom variables dynamically
           },
         },
-      });
+      })
 
       if (response.status === 200) {
         return {
           success: true,
           message: response.body.message || 'Lead updated successfully.',
-        };
+        }
       } else {
-        throw new Error(`Failed to update lead: ${response.body.message}`);
+        throw new Error(`Failed to update lead: ${response.body.message}`)
       }
     } catch (error: any) {
-      throw new Error(`Failed to update lead: ${error.message}`);
+      throw new Error(`Failed to update lead: ${error.message}`)
     }
   },
-});
+})

@@ -1,7 +1,7 @@
-import { ExpandIcon, MinusIcon, PanelRightDashedIcon } from 'lucide-react';
+import { ExpandIcon, MinusIcon, PanelRightDashedIcon } from 'lucide-react'
 
-import { Button } from '../../../components/ui/button';
-import { cn } from '../../../lib/utils';
+import { Button } from '../../../components/ui/button'
+import { cn } from '../../../lib/utils'
 
 export enum DataSelectorSizeState {
   EXPANDED,
@@ -10,23 +10,23 @@ export enum DataSelectorSizeState {
 }
 
 type DataSelectorSizeTogglersPorps = {
-  state: DataSelectorSizeState;
-  setListSizeState: (state: DataSelectorSizeState) => void;
-};
+  state: DataSelectorSizeState
+  setListSizeState: (state: DataSelectorSizeState) => void
+}
 
 export const DataSelectorSizeTogglers = ({
   state,
   setListSizeState: setDataSelectorSizeState,
 }: DataSelectorSizeTogglersPorps) => {
   const handleClick = (newState: DataSelectorSizeState) => {
-    setDataSelectorSizeState(newState);
-  };
+    setDataSelectorSizeState(newState)
+  }
 
   const buttonClassName = (btnState: DataSelectorSizeState) =>
     cn('', {
       'text-outline': state === btnState,
       'text-outline opacity-50': state !== btnState,
-    });
+    })
 
   return (
     <>
@@ -55,5 +55,5 @@ export const DataSelectorSizeTogglers = ({
         <MinusIcon></MinusIcon>
       </Button>
     </>
-  );
-};
+  )
+}

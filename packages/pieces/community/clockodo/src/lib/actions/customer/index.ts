@@ -1,13 +1,7 @@
-import createAction from './create-customer';
-import getAction from './get-customer';
-import updateAction from './update-customer';
-import listAction from './list-customers';
-import deleteAction from './delete-customer';
+import createAction from './create-customer'
+import deleteAction from './delete-customer'
+import getAction from './get-customer'
+import listAction from './list-customers'
+import updateAction from './update-customer'
 
-export default [
-  createAction,
-  getAction,
-  updateAction,
-  listAction,
-  deleteAction,
-];
+export default [createAction, getAction, updateAction, listAction, deleteAction]

@@ -1,11 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { oneDriveAuth } from '../../';
-import { oneDriveCommon } from '../common/common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { oneDriveAuth } from '../../'
+import { oneDriveCommon } from '../common/common'
 
 export const listFolders = createAction({
   auth: oneDriveAuth,
@@ -16,7 +12,7 @@ export const listFolders = createAction({
     parentFolder: oneDriveCommon.parentFolder,
   },
   async run(context) {
-    const parentId = context.propsValue.parentFolder ?? 'root';
+    const parentId = context.propsValue.parentFolder ?? 'root'
 
     const result = await httpClient.sendRequest({
       method: HttpMethod.GET,
@@ -25,8 +21,8 @@ export const listFolders = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
-    });
+    })
 
-    return result.body['value'];
+    return result.body['value']
   },
-});
+})

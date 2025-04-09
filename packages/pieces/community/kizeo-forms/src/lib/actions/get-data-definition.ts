@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { endpoint, kizeoFormsCommon } from '../common';
-import { kizeoFormsAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { kizeoFormsAuth } from '../..'
+import { endpoint, kizeoFormsCommon } from '../common'
 
 export const getDataDefinition = createAction({
   auth: kizeoFormsAuth,
@@ -18,21 +18,19 @@ export const getDataDefinition = createAction({
     }),
   },
   async run(context) {
-    const { formId, dataId } = context.propsValue;
+    const { formId, dataId } = context.propsValue
     const response = await httpClient.sendRequest<{ data: unknown }>({
       method: HttpMethod.GET,
-      url:
-        endpoint +
-        `v3/forms/${formId}/data/${dataId}?format=4&used-with-actives-pieces=`,
+      url: endpoint + `v3/forms/${formId}/data/${dataId}?format=4&used-with-actives-pieces=`,
       headers: {
         'Content-Type': 'application/json',
         Authorization: context.auth,
       },
-    });
+    })
     if (response.status === 200) {
-      return response.body.data;
+      return response.body.data
     }
 
-    return [];
+    return []
   },
-});
+})

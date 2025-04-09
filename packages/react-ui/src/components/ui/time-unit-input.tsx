@@ -1,36 +1,26 @@
-import React, { useRef } from 'react';
+import React, { useRef } from 'react'
 
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
+import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
+import { isNil } from '@activepieces/shared'
 
-import { AutoComplete } from './autocomplete';
-import {
-  Period,
-  TimePickerType,
-  getArrowByType,
-  getDateByType,
-  setDateByType,
-} from './time-picker-utils';
+import { AutoComplete } from './autocomplete'
+import { Period, TimePickerType, getArrowByType, getDateByType, setDateByType } from './time-picker-utils'
 
-export interface TimeUnitPickerInputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
-  picker: TimePickerType;
-  date: Date | undefined;
-  setDate: (date: Date) => void;
-  period?: Period;
-  onRightFocus?: () => void;
-  onLeftFocus?: () => void;
-  isActive: boolean;
-  autoCompleteList?: { value: string; label: string }[];
-  isAutocompleteOpen?: boolean;
-  name?: string;
+export interface TimeUnitPickerInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  picker: TimePickerType
+  date: Date | undefined
+  setDate: (date: Date) => void
+  period?: Period
+  onRightFocus?: () => void
+  onLeftFocus?: () => void
+  isActive: boolean
+  autoCompleteList?: { value: string; label: string }[]
+  isAutocompleteOpen?: boolean
+  name?: string
 }
 
-const TimeUnitPickerInputInner = React.forwardRef<
-  HTMLInputElement,
-  TimeUnitPickerInputProps
->(
+const TimeUnitPickerInputInner = React.forwardRef<HTMLInputElement, TimeUnitPickerInputProps>(
   (
     {
       className,
@@ -54,8 +44,8 @@ const TimeUnitPickerInputInner = React.forwardRef<
     },
     ref,
   ) => {
-    const [flag, setFlag] = React.useState<boolean>(false);
-    const [prevIntKey, setPrevIntKey] = React.useState<string>('0');
+    const [flag, setFlag] = React.useState<boolean>(false)
+    const [prevIntKey, setPrevIntKey] = React.useState<string>('0')
 
     /**
      * allow the user to enter the second digit within 2 seconds
@@ -64,16 +54,16 @@ const TimeUnitPickerInputInner = React.forwardRef<
     React.useEffect(() => {
       if (flag) {
         const timer = setTimeout(() => {
-          setFlag(false);
-        }, 2000);
+          setFlag(false)
+        }, 2000)
 
-        return () => clearTimeout(timer);
+        return () => clearTimeout(timer)
       }
-    }, [flag]);
+    }, [flag])
 
     const calculatedValue = React.useMemo(() => {
-      return getDateByType(date, picker);
-    }, [date, picker]);
+      return getDateByType(date, picker)
+    }, [date, picker])
 
     const calculateNewValue = (key: string) => {
       /*
@@ -81,34 +71,33 @@ const TimeUnitPickerInputInner = React.forwardRef<
        * The second entered digit will break the condition and the value will be set to 10-12.
        */
       if (picker === '12hours') {
-        if (flag && calculatedValue.slice(1, 2) === '1' && prevIntKey === '0')
-          return '0' + key;
+        if (flag && calculatedValue.slice(1, 2) === '1' && prevIntKey === '0') return '0' + key
       }
 
-      return !flag ? '0' + key : calculatedValue.slice(1, 2) + key;
-    };
+      return !flag ? '0' + key : calculatedValue.slice(1, 2) + key
+    }
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      onKeyDown?.(e);
-      if (e.key === 'Tab') return;
-      e.preventDefault();
-      if (e.key === 'ArrowRight') onRightFocus?.();
-      if (e.key === 'ArrowLeft') onLeftFocus?.();
+      onKeyDown?.(e)
+      if (e.key === 'Tab') return
+      e.preventDefault()
+      if (e.key === 'ArrowRight') onRightFocus?.()
+      if (e.key === 'ArrowLeft') onLeftFocus?.()
       if (['ArrowUp', 'ArrowDown'].includes(e.key) && !isAutocompleteOpen) {
-        const step = e.key === 'ArrowUp' ? 1 : -1;
-        const newValue = getArrowByType(calculatedValue, step, picker);
-        if (flag) setFlag(false);
-        const tempDate = new Date(date);
-        setDate(setDateByType(tempDate, newValue, picker, period));
+        const step = e.key === 'ArrowUp' ? 1 : -1
+        const newValue = getArrowByType(calculatedValue, step, picker)
+        if (flag) setFlag(false)
+        const tempDate = new Date(date)
+        setDate(setDateByType(tempDate, newValue, picker, period))
       }
       if (e.key >= '0' && e.key <= '9') {
-        if (picker === '12hours') setPrevIntKey(e.key);
-        const newValue = calculateNewValue(e.key);
-        setFlag((prev) => !prev);
-        const tempDate = new Date(date);
-        setDate(setDateByType(tempDate, newValue, picker, period));
+        if (picker === '12hours') setPrevIntKey(e.key)
+        const newValue = calculateNewValue(e.key)
+        setFlag((prev) => !prev)
+        const tempDate = new Date(date)
+        setDate(setDateByType(tempDate, newValue, picker, period))
       }
-    };
+    }
 
     return (
       <Input
@@ -124,63 +113,54 @@ const TimeUnitPickerInputInner = React.forwardRef<
         )}
         value={value || calculatedValue}
         onChange={(e) => {
-          e.preventDefault();
-          onChange?.(e);
+          e.preventDefault()
+          onChange?.(e)
         }}
         type={type}
         inputMode="decimal"
         onKeyDown={handleKeyDown}
         onClick={onClick}
       />
-    );
+    )
   },
-);
-TimeUnitPickerInputInner.displayName = 'TimeUnitPickerInputInner';
-const TimeUnitPickerInput = React.forwardRef<
-  HTMLInputElement,
-  TimeUnitPickerInputProps
->((props, ref) => {
-  const { autoCompleteList, isActive } = props;
-  const [open, setOpen] = React.useState(false);
-  const listRef = useRef<HTMLDivElement>(null);
-  const [filterValue, setFilterValue] = React.useState('');
+)
+TimeUnitPickerInputInner.displayName = 'TimeUnitPickerInputInner'
+const TimeUnitPickerInput = React.forwardRef<HTMLInputElement, TimeUnitPickerInputProps>((props, ref) => {
+  const { autoCompleteList, isActive } = props
+  const [open, setOpen] = React.useState(false)
+  const listRef = useRef<HTMLDivElement>(null)
+  const [filterValue, setFilterValue] = React.useState('')
   if (isNil(autoCompleteList) || autoCompleteList.length === 0) {
-    return <TimeUnitPickerInputInner {...props} ref={ref} />;
+    return <TimeUnitPickerInputInner {...props} ref={ref} />
   }
   return (
     <>
       <TimeUnitPickerInputInner
         {...props}
         onKeyDown={(e) => {
-          props.onKeyDown?.(e);
-          if (
-            e.key === 'ArrowDown' ||
-            e.key === 'ArrowUp' ||
-            (e.key === 'Enter' && open)
-          ) {
+          props.onKeyDown?.(e)
+          if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || (e.key === 'Enter' && open)) {
             const event = new KeyboardEvent('keydown', {
               key: e.key,
               bubbles: true,
               cancelable: true,
-            });
+            })
             if (listRef.current) {
-              listRef.current.dispatchEvent(event);
+              listRef.current.dispatchEvent(event)
             }
-            event.preventDefault();
+            event.preventDefault()
           }
         }}
         setDate={(date) => {
-          props.setDate(date);
-          const filterValue = getDateByType(date, props.picker);
-          setFilterValue(
-            filterValue[0] === '0' ? filterValue.slice(1) : filterValue,
-          );
+          props.setDate(date)
+          const filterValue = getDateByType(date, props.picker)
+          setFilterValue(filterValue[0] === '0' ? filterValue.slice(1) : filterValue)
         }}
         ref={ref}
         isAutocompleteOpen={open}
         onClick={() => {
-          setFilterValue('');
-          setOpen(true);
+          setFilterValue('')
+          setOpen(true)
         }}
       />
       <AutoComplete
@@ -189,30 +169,24 @@ const TimeUnitPickerInput = React.forwardRef<
           'hover:bg-accent': !isActive,
           'text-foreground': isActive,
         })}
-        items={autoCompleteList.filter((item) =>
-          item.label.includes(filterValue),
-        )}
+        items={autoCompleteList.filter((item) => item.label.includes(filterValue))}
         selectedValue={''}
         open={open}
         setOpen={(open) => {
-          setFilterValue('');
-          setOpen(open);
+          setFilterValue('')
+          setOpen(open)
         }}
         listRef={listRef}
         onSelectedValueChange={(value) => {
-          const tempDate = new Date(
-            props.date || new Date(new Date().setHours(0, 0, 0, 0)),
-          );
-          props.setDate(
-            setDateByType(tempDate, value, props.picker, props.period),
-          );
+          const tempDate = new Date(props.date || new Date(new Date().setHours(0, 0, 0, 0)))
+          props.setDate(setDateByType(tempDate, value, props.picker, props.period))
         }}
       >
         <div className="w-full -mt-2"></div>
       </AutoComplete>
     </>
-  );
-});
-TimeUnitPickerInput.displayName = 'TimeUnitPickerInput';
+  )
+})
+TimeUnitPickerInput.displayName = 'TimeUnitPickerInput'
 
-export { TimeUnitPickerInput };
+export { TimeUnitPickerInput }

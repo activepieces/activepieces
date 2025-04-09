@@ -1,34 +1,25 @@
-import { t } from 'i18next';
-import { Trash, CopyPlus, Pencil } from 'lucide-react';
-import React, { useState } from 'react';
+import { t } from 'i18next'
+import { CopyPlus, Pencil, Trash } from 'lucide-react'
+import React, { useState } from 'react'
 
-import {
-  RouterAction,
-  BranchExecutionType,
-  isNil,
-  RouterActionSettings,
-} from '@activepieces/shared';
+import { BranchExecutionType, RouterAction, RouterActionSettings, isNil } from '@activepieces/shared'
 
-import { InvalidStepIcon } from '../../../../components/custom/alert-icon';
-import { Button } from '../../../../components/ui/button';
-import EditableText from '../../../../components/ui/editable-text';
-import { Separator } from '../../../../components/ui/separator';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '../../../../components/ui/tooltip';
-import { cn } from '../../../../lib/utils';
+import { InvalidStepIcon } from '../../../../components/custom/alert-icon'
+import { Button } from '../../../../components/ui/button'
+import EditableText from '../../../../components/ui/editable-text'
+import { Separator } from '../../../../components/ui/separator'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../../../components/ui/tooltip'
+import { cn } from '../../../../lib/utils'
 
 type BranchListProps = {
-  step: RouterAction;
-  setSelectedBranchIndex: (index: number) => void;
-  deleteBranch: (index: number) => void;
-  duplicateBranch: (index: number) => void;
-  errors: unknown[];
-  readonly: boolean;
-  branchNameChanged: (index: number, name: string) => void;
-};
+  step: RouterAction
+  setSelectedBranchIndex: (index: number) => void
+  deleteBranch: (index: number) => void
+  duplicateBranch: (index: number) => void
+  errors: unknown[]
+  readonly: boolean
+  branchNameChanged: (index: number, name: string) => void
+}
 export const BranchesList = ({
   step,
   setSelectedBranchIndex,
@@ -38,9 +29,7 @@ export const BranchesList = ({
   readonly,
   branchNameChanged,
 }: BranchListProps) => {
-  const [branchNameEditingIndex, setBranchNameEditingIndex] = useState<
-    number | null
-  >(null);
+  const [branchNameEditingIndex, setBranchNameEditingIndex] = useState<number | null>(null)
   return step.settings.branches.map((branch, index) =>
     branch.branchType === BranchExecutionType.FALLBACK ? (
       <React.Fragment key={index}></React.Fragment>
@@ -51,48 +40,44 @@ export const BranchesList = ({
           branchIndex={index}
           readonly={readonly}
           onClick={() => {
-            setSelectedBranchIndex(index);
+            setSelectedBranchIndex(index)
           }}
           errors={errors}
           duplicateBranch={() => {
-            duplicateBranch(index);
+            duplicateBranch(index)
           }}
           deleteBranch={() => {
-            deleteBranch(index);
+            deleteBranch(index)
           }}
           isEditingBranchName={branchNameEditingIndex === index}
           setIsEditingBranchName={(isEditing) =>
-            isEditing
-              ? setBranchNameEditingIndex(index)
-              : setBranchNameEditingIndex(null)
+            isEditing ? setBranchNameEditingIndex(index) : setBranchNameEditingIndex(null)
           }
           branchNameChanged={(name) => {
-            branchNameChanged(index, name);
+            branchNameChanged(index, name)
           }}
           showDeleteButton={step.settings.branches.length > 2}
         ></BranchListItem>
 
-        {index === step.settings.branches.length - 2 ? null : (
-          <Separator></Separator>
-        )}
+        {index === step.settings.branches.length - 2 ? null : <Separator></Separator>}
       </React.Fragment>
     ),
-  );
-};
+  )
+}
 
 type BranchListItemProps = {
-  branch: RouterActionSettings['branches'][number];
-  branchIndex: number;
-  readonly: boolean;
-  onClick: () => void;
-  errors: unknown[];
-  duplicateBranch: () => void;
-  deleteBranch: () => void;
-  isEditingBranchName: boolean;
-  setIsEditingBranchName: (isEditing: boolean) => void;
-  branchNameChanged: (name: string) => void;
-  showDeleteButton: boolean;
-};
+  branch: RouterActionSettings['branches'][number]
+  branchIndex: number
+  readonly: boolean
+  onClick: () => void
+  errors: unknown[]
+  duplicateBranch: () => void
+  deleteBranch: () => void
+  isEditingBranchName: boolean
+  setIsEditingBranchName: (isEditing: boolean) => void
+  branchNameChanged: (name: string) => void
+  showDeleteButton: boolean
+}
 
 export const BranchListItem = ({
   branch,
@@ -113,7 +98,7 @@ export const BranchListItem = ({
         'flex items-center gap-2 transition-all   has-[div.button-group:hover]:bg-background  text-sm hover:bg-gray-100 dark:hover:bg-accent px-2 cursor-pointer'
       }
       onClick={() => {
-        onClick();
+        onClick()
       }}
     >
       <EditableText
@@ -122,7 +107,7 @@ export const BranchListItem = ({
         value={branch.branchName}
         onValueChange={(value) => {
           if (value) {
-            branchNameChanged(value);
+            branchNameChanged(value)
           }
         }}
         isEditing={isEditingBranchName}
@@ -140,9 +125,7 @@ export const BranchListItem = ({
                 className="stroke-0 animate-fade shrink-0"
               ></InvalidStepIcon>
             </TooltipTrigger>
-            <TooltipContent side="bottom">
-              {t('Incomplete branch settings')}
-            </TooltipContent>
+            <TooltipContent side="bottom">{t('Incomplete branch settings')}</TooltipContent>
           </Tooltip>
         </div>
       )}
@@ -160,8 +143,8 @@ export const BranchListItem = ({
                 variant={'ghost'}
                 size={'icon'}
                 onClick={(e) => {
-                  e.stopPropagation();
-                  deleteBranch();
+                  e.stopPropagation()
+                  deleteBranch()
                 }}
               >
                 <Trash className="w-4 h-4 stroke-destructive"></Trash>
@@ -176,8 +159,8 @@ export const BranchListItem = ({
               variant={'ghost'}
               size={'icon'}
               onClick={(e) => {
-                e.stopPropagation();
-                setIsEditingBranchName(true);
+                e.stopPropagation()
+                setIsEditingBranchName(true)
               }}
             >
               <Pencil className="h-4 w-4" />
@@ -192,8 +175,8 @@ export const BranchListItem = ({
               variant={'ghost'}
               size={'icon'}
               onClick={(e) => {
-                e.stopPropagation();
-                duplicateBranch();
+                e.stopPropagation()
+                duplicateBranch()
               }}
             >
               <CopyPlus className="h-4 w-4" />
@@ -203,5 +186,5 @@ export const BranchListItem = ({
         </Tooltip>
       </div>
     </div>
-  );
-};
+  )
+}

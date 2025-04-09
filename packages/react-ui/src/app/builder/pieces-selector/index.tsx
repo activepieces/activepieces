@@ -1,65 +1,58 @@
-import React, { useState, useMemo, useRef } from 'react';
-import { useDebounce } from 'use-debounce';
+import React, { useState, useMemo, useRef } from 'react'
+import { useDebounce } from 'use-debounce'
 
-import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks'
+import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils'
+import { PieceTagEnum, PieceTagGroup } from '@/app/builder/pieces-selector/piece-tag-group'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Separator } from '@/components/ui/separator'
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook'
 import {
-  PieceTagEnum,
-  PieceTagGroup,
-} from '@/app/builder/pieces-selector/piece-tag-group';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Separator } from '@/components/ui/separator';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import {
-  StepMetadata,
-  PieceSelectorOperation,
   HandleSelectCallback,
-  StepMetadataWithSuggestions,
   PieceSelectorItem,
+  PieceSelectorOperation,
   PieceStepMetadataWithSuggestions,
-} from '@/features/pieces/lib/types';
-import { platformHooks } from '@/hooks/platform-hooks';
-import { useIsMobile } from '@/hooks/use-mobile';
+  StepMetadata,
+  StepMetadataWithSuggestions,
+} from '@/features/pieces/lib/types'
+import { platformHooks } from '@/hooks/platform-hooks'
+import { useIsMobile } from '@/hooks/use-mobile'
 import {
   Action,
   ActionType,
   BranchExecutionType,
   BranchOperator,
-  flowOperations,
   FlowOperationType,
-  flowStructureUtil,
-  isNil,
   RouterExecutionType,
   StepLocationRelativeToParent,
   TodoType,
   Trigger,
   TriggerType,
-} from '@activepieces/shared';
+  flowOperations,
+  flowStructureUtil,
+  isNil,
+} from '@activepieces/shared'
 
-import { SearchInput } from '../../../components/ui/search-input';
+import { SearchInput } from '../../../components/ui/search-input'
 
-import { AskAiButton } from './ask-ai';
-import { PiecesCardList } from './pieces-card-list';
-import { StepsCardList } from './steps-card-list';
+import { AskAiButton } from './ask-ai'
+import { PiecesCardList } from './pieces-card-list'
+import { StepsCardList } from './steps-card-list'
 
 type PieceSelectorProps = {
-  children: React.ReactNode;
-  open: boolean;
-  asChild?: boolean;
-  initialSelectedPiece?: string | undefined;
-  onOpenChange: (open: boolean) => void;
-} & { operation: PieceSelectorOperation };
+  children: React.ReactNode
+  open: boolean
+  asChild?: boolean
+  initialSelectedPiece?: string | undefined
+  onOpenChange: (open: boolean) => void
+} & { operation: PieceSelectorOperation }
 
 type PieceGroup = {
-  title: string;
-  pieces: StepMetadataWithSuggestions[];
-};
+  title: string
+  pieces: StepMetadataWithSuggestions[]
+}
 
-const hiddenActionsOrTriggers = ['createTodoAndWait', 'wait_for_approval'];
+const hiddenActionsOrTriggers = ['createTodoAndWait', 'wait_for_approval']
 
 const PieceSelector = ({
   children,
@@ -69,88 +62,70 @@ const PieceSelector = ({
   operation,
   initialSelectedPiece,
 }: PieceSelectorProps) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedQuery] = useDebounce(searchQuery, 300);
-  const [selectedPieceMetadata, setSelectedMetadata] = useState<
-    StepMetadata | undefined
-  >(undefined);
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedQuery] = useDebounce(searchQuery, 300)
+  const [selectedPieceMetadata, setSelectedMetadata] = useState<StepMetadata | undefined>(undefined)
 
-  const initiallySelectedMetaDataRef = useRef<StepMetadata | undefined>(
-    undefined,
-  );
+  const initiallySelectedMetaDataRef = useRef<StepMetadata | undefined>(undefined)
 
-  const [selectedTag, setSelectedTag] = useState<PieceTagEnum>(
-    PieceTagEnum.ALL,
-  );
-  const [applyOperation, selectStepByName, flowVersion, setAskAiButtonProps] =
-    useBuilderStateContext((state) => [
-      state.applyOperation,
-      state.selectStepByName,
-      state.flowVersion,
-      state.setAskAiButtonProps,
-    ]);
+  const [selectedTag, setSelectedTag] = useState<PieceTagEnum>(PieceTagEnum.ALL)
+  const [applyOperation, selectStepByName, flowVersion, setAskAiButtonProps] = useBuilderStateContext((state) => [
+    state.applyOperation,
+    state.selectStepByName,
+    state.flowVersion,
+    state.setAskAiButtonProps,
+  ])
 
-  const isTrigger = operation.type === FlowOperationType.UPDATE_TRIGGER;
-  const { metadata, isLoading: isLoadingPieces } =
-    piecesHooks.useAllStepsMetadata({
-      searchQuery: debouncedQuery,
-      type: isTrigger ? 'trigger' : 'action',
-    });
+  const isTrigger = operation.type === FlowOperationType.UPDATE_TRIGGER
+  const { metadata, isLoading: isLoadingPieces } = piecesHooks.useAllStepsMetadata({
+    searchQuery: debouncedQuery,
+    type: isTrigger ? 'trigger' : 'action',
+  })
 
-  const { platform } = platformHooks.useCurrentPlatform();
+  const { platform } = platformHooks.useCurrentPlatform()
 
   const pieceGroups = useMemo(() => {
-    if (!metadata) return [];
+    if (!metadata) return []
 
     const filteredMetadataOnTag = metadata.filter((stepMetadata) => {
       switch (selectedTag) {
         case PieceTagEnum.CORE:
-          return pieceSelectorUtils.isCorePiece(stepMetadata);
+          return pieceSelectorUtils.isCorePiece(stepMetadata)
         case PieceTagEnum.AI:
-          return pieceSelectorUtils.isAiPiece(stepMetadata);
+          return pieceSelectorUtils.isAiPiece(stepMetadata)
         case PieceTagEnum.APPS:
-          return pieceSelectorUtils.isAppPiece(stepMetadata);
+          return pieceSelectorUtils.isAppPiece(stepMetadata)
         case PieceTagEnum.ALL:
         default:
-          return true;
+          return true
       }
-    });
+    })
 
     const piecesMetadata =
-      debouncedQuery.length > 0
-        ? filterOutPiecesWithNoSuggestions(filteredMetadataOnTag)
-        : filteredMetadataOnTag;
+      debouncedQuery.length > 0 ? filterOutPiecesWithNoSuggestions(filteredMetadataOnTag) : filteredMetadataOnTag
 
-    initiallySelectedMetaDataRef.current = piecesMetadata.find(
-      (p) => p.displayName === initialSelectedPiece,
-    );
-    setSelectedMetadata(initiallySelectedMetaDataRef.current);
+    initiallySelectedMetaDataRef.current = piecesMetadata.find((p) => p.displayName === initialSelectedPiece)
+    setSelectedMetadata(initiallySelectedMetaDataRef.current)
 
     if (debouncedQuery.length > 0 && piecesMetadata.length > 0) {
-      return [{ title: 'Search Results', pieces: piecesMetadata }];
+      return [{ title: 'Search Results', pieces: piecesMetadata }]
     }
 
-    const flowControllerPieces = piecesMetadata.filter(
-      (p) => pieceSelectorUtils.isFlowController(p) && !isTrigger,
-    );
-    const universalAiPieces = piecesMetadata.filter(
-      (p) => pieceSelectorUtils.isUniversalAiPiece(p) && !isTrigger,
-    );
+    const flowControllerPieces = piecesMetadata.filter((p) => pieceSelectorUtils.isFlowController(p) && !isTrigger)
+    const universalAiPieces = piecesMetadata.filter((p) => pieceSelectorUtils.isUniversalAiPiece(p) && !isTrigger)
     const utilityCorePieces = piecesMetadata.filter(
       (p) => pieceSelectorUtils.isUtilityCorePiece(p, platform) && !isTrigger,
-    );
+    )
     const popularPieces = piecesMetadata.filter(
-      (p) =>
-        pieceSelectorUtils.isPopularPieces(p, platform) &&
-        selectedTag !== PieceTagEnum.AI,
-    );
+      (p) => pieceSelectorUtils.isPopularPieces(p, platform) && selectedTag !== PieceTagEnum.AI,
+    )
     const other = piecesMetadata.filter(
       (p) =>
         !popularPieces.includes(p) &&
         !utilityCorePieces.includes(p) &&
         !flowControllerPieces.includes(p) &&
         !universalAiPieces.includes(p),
-    );
+    )
 
     const groups: PieceGroup[] = [
       { title: 'Popular', pieces: popularPieces },
@@ -158,33 +133,22 @@ const PieceSelector = ({
       { title: 'Utility', pieces: utilityCorePieces },
       { title: 'Universal AI', pieces: universalAiPieces },
       { title: 'Other', pieces: other },
-    ];
+    ]
 
-    return groups.filter((group) => group.pieces.length > 0);
-  }, [
-    metadata,
-    selectedTag,
-    debouncedQuery,
-    platform,
-    isTrigger,
-    initialSelectedPiece,
-  ]);
+    return groups.filter((group) => group.pieces.length > 0)
+  }, [metadata, selectedTag, debouncedQuery, platform, isTrigger, initialSelectedPiece])
 
-  const piecesIsLoaded = !isLoadingPieces && pieceGroups.length > 0;
-  const noResultsFound = !isLoadingPieces && pieceGroups.length === 0;
+  const piecesIsLoaded = !isLoadingPieces && pieceGroups.length > 0
+  const noResultsFound = !isLoadingPieces && pieceGroups.length === 0
 
-  const {
-    listHeightRef,
-    popoverTriggerRef,
-    aboveListSectionHeight,
-    maxListHeight,
-  } = pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace(open);
+  const { listHeightRef, popoverTriggerRef, aboveListSectionHeight, maxListHeight } =
+    pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace(open)
 
   const resetField = () => {
-    setSearchQuery('');
-    setSelectedMetadata(initiallySelectedMetaDataRef.current);
-    setSelectedTag(PieceTagEnum.ALL);
-  };
+    setSearchQuery('')
+    setSelectedMetadata(initiallySelectedMetaDataRef.current)
+    setSelectedTag(PieceTagEnum.ALL)
+  }
 
   const handleAddAction = (
     stepName: string,
@@ -199,7 +163,7 @@ const PieceSelector = ({
       stepMetadata,
       actionOrTrigger,
       settings: settings,
-    });
+    })
 
     applyOperation({
       type: FlowOperationType.ADD_ACTION,
@@ -211,42 +175,34 @@ const PieceSelector = ({
           valid: valid ?? stepData.valid,
         } as Action,
       },
-    });
-  };
+    })
+  }
 
-  const handleAddCreateTodoAction = (
-    stepMetadata: StepMetadata,
-    actionOrTrigger: PieceSelectorItem,
-    type?: string,
-  ) => {
+  const handleAddCreateTodoAction = (stepMetadata: StepMetadata, actionOrTrigger: PieceSelectorItem, type?: string) => {
     if (operation.type !== FlowOperationType.ADD_ACTION) {
-      return;
+      return
     }
     const routerAction = {
       name: 'router',
       displayName: 'Check Todo Status',
       description: 'Split your flow into branches depending on todo status',
       type: ActionType.ROUTER,
-    } as PieceSelectorItem;
+    } as PieceSelectorItem
 
     const routerStepMetadata = {
       displayName: 'Check Todo Status',
       logoUrl: stepMetadata.logoUrl,
       description: 'Split your flow into branches depending on todo status',
       type: ActionType.ROUTER,
-    } as StepMetadata;
+    } as StepMetadata
 
-    const newStepNames = pieceSelectorUtils.getStepNames(
-      stepMetadata,
-      flowVersion,
-      3,
-    );
+    const newStepNames = pieceSelectorUtils.getStepNames(stepMetadata, flowVersion, 3)
 
     const stepData = pieceSelectorUtils.getDefaultStep({
       stepName: newStepNames[0],
       stepMetadata,
       actionOrTrigger,
-    });
+    })
 
     applyOperation({
       type: FlowOperationType.ADD_ACTION,
@@ -254,15 +210,15 @@ const PieceSelector = ({
         ...operation.actionLocation,
         action: stepData as Action,
       },
-    });
+    })
     flowOperations.apply(flowVersion, {
       type: FlowOperationType.ADD_ACTION,
       request: {
         ...operation.actionLocation,
         action: stepData as Action,
       },
-    });
-    selectStepByName(stepData.name);
+    })
+    selectStepByName(stepData.name)
 
     switch (type) {
       case TodoType.INTERNAL: {
@@ -294,32 +250,23 @@ const PieceSelector = ({
               description: routerStepMetadata.description,
             },
           },
-        };
+        }
 
-        handleAddAction(
-          newStepNames[1],
-          routerStepMetadata,
-          stepData,
-          routerAction,
-          routerInternalSettings,
-          true,
-        );
-        break;
+        handleAddAction(newStepNames[1], routerStepMetadata, stepData, routerAction, routerInternalSettings, true)
+        break
       }
       case TodoType.EXTERNAL: {
-        const waitForApprovalAction = (
-          stepMetadata as PieceStepMetadataWithSuggestions
-        )?.suggestedActions?.find(
+        const waitForApprovalAction = (stepMetadata as PieceStepMetadataWithSuggestions)?.suggestedActions?.find(
           (action: any) => action.name === 'wait_for_approval',
-        ) as PieceSelectorItem;
+        ) as PieceSelectorItem
 
-        const waitForApprovalStepName = newStepNames[1];
+        const waitForApprovalStepName = newStepNames[1]
 
         const waitForApprovalStepData = pieceSelectorUtils.getDefaultStep({
           stepName: waitForApprovalStepName,
           stepMetadata,
           actionOrTrigger: waitForApprovalAction,
-        });
+        })
 
         const waitForApprovalStepDataSettings = {
           ...waitForApprovalStepData.settings,
@@ -327,7 +274,7 @@ const PieceSelector = ({
             ...waitForApprovalStepData.settings.input,
             taskId: `{{ ${stepData.name}['id'] }}`,
           },
-        };
+        }
 
         handleAddAction(
           waitForApprovalStepName,
@@ -336,7 +283,7 @@ const PieceSelector = ({
           waitForApprovalAction,
           waitForApprovalStepDataSettings,
           true,
-        );
+        )
 
         const routerExternalSettings = {
           branches: [
@@ -366,7 +313,7 @@ const PieceSelector = ({
               description: routerStepMetadata.description,
             },
           },
-        };
+        }
 
         handleAddAction(
           newStepNames[2],
@@ -375,47 +322,37 @@ const PieceSelector = ({
           routerAction,
           routerExternalSettings,
           true,
-        );
-        break;
+        )
+        break
       }
     }
-  };
+  }
 
-  const handleSelect: HandleSelectCallback = async (
-    stepMetadata,
-    actionOrTrigger,
-    type?: string,
-  ) => {
-    resetField();
-    onOpenChange(false);
+  const handleSelect: HandleSelectCallback = async (stepMetadata, actionOrTrigger, type?: string) => {
+    resetField()
+    onOpenChange(false)
 
-    const newStepName = pieceSelectorUtils.getStepName(
-      stepMetadata,
-      flowVersion,
-    );
+    const newStepName = pieceSelectorUtils.getStepName(stepMetadata, flowVersion)
 
     const stepData = pieceSelectorUtils.getDefaultStep({
       stepName: newStepName,
       stepMetadata,
       actionOrTrigger,
-    });
+    })
 
     switch (operation.type) {
       case FlowOperationType.UPDATE_TRIGGER: {
         applyOperation({
           type: FlowOperationType.UPDATE_TRIGGER,
           request: stepData as Trigger,
-        });
-        selectStepByName('trigger');
-        break;
+        })
+        selectStepByName('trigger')
+        break
       }
       case FlowOperationType.ADD_ACTION: {
-        if (
-          stepData.settings.pieceName === '@activepieces/piece-todos' &&
-          type
-        ) {
-          handleAddCreateTodoAction(stepMetadata, actionOrTrigger, type);
-          break;
+        if (stepData.settings.pieceName === '@activepieces/piece-todos' && type) {
+          handleAddCreateTodoAction(stepMetadata, actionOrTrigger, type)
+          break
         }
         applyOperation({
           type: FlowOperationType.ADD_ACTION,
@@ -423,29 +360,19 @@ const PieceSelector = ({
             ...operation.actionLocation,
             action: stepData as Action,
           },
-        });
-        selectStepByName(stepData.name);
-        break;
+        })
+        selectStepByName(stepData.name)
+        break
       }
       case FlowOperationType.UPDATE_ACTION: {
-        const currentAction = flowStructureUtil.getStep(
-          operation.stepName,
-          flowVersion.trigger,
-        );
+        const currentAction = flowStructureUtil.getStep(operation.stepName, flowVersion.trigger)
         if (isNil(currentAction)) {
-          console.error(
-            "Trying to update an action that's not in the displayed flow version",
-          );
-          return;
+          console.error("Trying to update an action that's not in the displayed flow version")
+          return
         }
-        if (
-          currentAction.type === TriggerType.EMPTY ||
-          currentAction.type === TriggerType.PIECE
-        ) {
-          console.error(
-            "Trying to update an action that's actually the trigger in the displayed flow version",
-          );
-          return;
+        if (currentAction.type === TriggerType.EMPTY || currentAction.type === TriggerType.PIECE) {
+          console.error("Trying to update an action that's actually the trigger in the displayed flow version")
+          return
         }
         if (
           (currentAction.type !== ActionType.PIECE &&
@@ -455,7 +382,7 @@ const PieceSelector = ({
             stepData.type === ActionType.PIECE &&
             stepData.settings.actionName === currentAction.settings.actionName)
         ) {
-          return;
+          return
         }
 
         applyOperation({
@@ -470,24 +397,24 @@ const PieceSelector = ({
             },
             valid: stepData.valid,
           },
-        });
-        break;
+        })
+        break
       }
     }
 
-    setAskAiButtonProps(null);
-  };
-  const isMobile = useIsMobile();
+    setAskAiButtonProps(null)
+  }
+  const isMobile = useIsMobile()
   return (
     <Popover
       open={open}
       modal={true}
       onOpenChange={(open) => {
         if (!open) {
-          resetField();
-          listHeightRef.current = maxListHeight;
+          resetField()
+          listHeightRef.current = maxListHeight
         }
-        onOpenChange(open);
+        onOpenChange(open)
       }}
     >
       <PopoverTrigger ref={popoverTriggerRef} asChild={asChild}>
@@ -495,12 +422,12 @@ const PieceSelector = ({
       </PopoverTrigger>
       <PopoverContent
         onContextMenu={(e) => {
-          e.stopPropagation();
+          e.stopPropagation()
         }}
         className="w-[340px] md:w-[600px] p-0 shadow-lg"
         onClick={(e) => {
-          e.stopPropagation();
-          e.preventDefault();
+          e.stopPropagation()
+          e.preventDefault()
         }}
       >
         <>
@@ -515,9 +442,9 @@ const PieceSelector = ({
                 value={searchQuery}
                 showDeselect={searchQuery.length > 0}
                 onChange={(e) => {
-                  setSearchQuery(e);
-                  setSelectedTag(PieceTagEnum.ALL);
-                  setSelectedMetadata(undefined);
+                  setSearchQuery(e)
+                  setSelectedTag(PieceTagEnum.ALL)
+                  setSelectedMetadata(undefined)
                 }}
               />
               {operation.type !== FlowOperationType.UPDATE_TRIGGER && (
@@ -525,7 +452,7 @@ const PieceSelector = ({
                   varitant="ghost"
                   operation={operation}
                   onClick={() => {
-                    onOpenChange(false);
+                    onOpenChange(false)
                   }}
                 ></AskAiButton>
               )}
@@ -533,14 +460,10 @@ const PieceSelector = ({
 
             <PieceTagGroup
               selectedTag={selectedTag}
-              type={
-                operation.type === FlowOperationType.UPDATE_TRIGGER
-                  ? 'trigger'
-                  : 'action'
-              }
+              type={operation.type === FlowOperationType.UPDATE_TRIGGER ? 'trigger' : 'action'}
               onSelectTag={(value) => {
-                setSelectedTag(value);
-                setSelectedMetadata(undefined);
+                setSelectedTag(value)
+                setSelectedMetadata(undefined)
               }}
             />
             <Separator orientation="horizontal" />
@@ -567,18 +490,16 @@ const PieceSelector = ({
                 hiddenActionsOrTriggers={hiddenActionsOrTriggers}
               />
 
-              {debouncedQuery.length === 0 &&
-                piecesIsLoaded &&
-                !noResultsFound && (
-                  <>
-                    <Separator orientation="vertical" className="h-full" />
-                    <StepsCardList
-                      hiddenActionsOrTriggers={hiddenActionsOrTriggers}
-                      selectedPieceMetadata={selectedPieceMetadata}
-                      handleSelect={handleSelect}
-                    />
-                  </>
-                )}
+              {debouncedQuery.length === 0 && piecesIsLoaded && !noResultsFound && (
+                <>
+                  <Separator orientation="vertical" className="h-full" />
+                  <StepsCardList
+                    hiddenActionsOrTriggers={hiddenActionsOrTriggers}
+                    selectedPieceMetadata={selectedPieceMetadata}
+                    handleSelect={handleSelect}
+                  />
+                </>
+              )}
             </div>
           )}
 
@@ -608,28 +529,19 @@ const PieceSelector = ({
         </>
       </PopoverContent>
     </Popover>
-  );
-};
+  )
+}
 
-export { PieceSelector };
+export { PieceSelector }
 
-function filterOutPiecesWithNoSuggestions(
-  metadata: StepMetadataWithSuggestions[],
-) {
+function filterOutPiecesWithNoSuggestions(metadata: StepMetadataWithSuggestions[]) {
   return metadata.filter((step) => {
     const isActionWithSuggestions =
-      step.type === ActionType.PIECE &&
-      step.suggestedActions &&
-      step.suggestedActions.length > 0;
+      step.type === ActionType.PIECE && step.suggestedActions && step.suggestedActions.length > 0
     const isTriggerWithSuggestions =
-      step.type === TriggerType.PIECE &&
-      step.suggestedTriggers &&
-      step.suggestedTriggers.length > 0;
-    const isNotPieceType =
-      step.type !== ActionType.PIECE && step.type !== TriggerType.PIECE;
+      step.type === TriggerType.PIECE && step.suggestedTriggers && step.suggestedTriggers.length > 0
+    const isNotPieceType = step.type !== ActionType.PIECE && step.type !== TriggerType.PIECE
 
-    return (
-      isActionWithSuggestions || isTriggerWithSuggestions || isNotPieceType
-    );
-  });
+    return isActionWithSuggestions || isTriggerWithSuggestions || isNotPieceType
+  })
 }

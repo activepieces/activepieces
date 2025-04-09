@@ -1,11 +1,7 @@
-import {
-  PiecePropValueSchema,
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { flowluAuth } from '../../..';
-import { flowluCommon, makeClient } from '../../common';
-import { flowluProps } from '../../common/props';
+import { PiecePropValueSchema, Property, createAction } from '@activepieces/pieces-framework'
+import { flowluAuth } from '../../..'
+import { flowluCommon, makeClient } from '../../common'
+import { flowluProps } from '../../common/props'
 
 export const createContactAction = createAction({
   auth: flowluAuth,
@@ -29,9 +25,7 @@ export const createContactAction = createAction({
     ...flowluProps.account,
   },
   async run(context) {
-    const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof flowluAuth>
-    );
-    return await client.createAccount({ type: 2, ...context.propsValue });
+    const client = makeClient(context.auth as PiecePropValueSchema<typeof flowluAuth>)
+    return await client.createAccount({ type: 2, ...context.propsValue })
   },
-});
+})

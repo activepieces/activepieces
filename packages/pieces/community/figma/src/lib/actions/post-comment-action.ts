@@ -1,8 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
-import { figmaCommon } from '../common';
-import { figmaPostRequestWithMessage } from '../common/utils';
-import { figmaAuth } from '../../';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { assertNotNullOrUndefined } from '@activepieces/shared'
+import { figmaAuth } from '../../'
+import { figmaCommon } from '../common'
+import { figmaPostRequestWithMessage } from '../common/utils'
 
 export const postCommentAction = createAction({
   auth: figmaAuth,
@@ -22,18 +22,15 @@ export const postCommentAction = createAction({
     }),
   },
   async run(context) {
-    const token = context.auth.access_token;
-    const { file_key, message } = context.propsValue;
+    const token = context.auth.access_token
+    const { file_key, message } = context.propsValue
 
-    assertNotNullOrUndefined(token, 'token');
-    assertNotNullOrUndefined(file_key, 'file_key');
-    assertNotNullOrUndefined(message, 'comment');
+    assertNotNullOrUndefined(token, 'token')
+    assertNotNullOrUndefined(file_key, 'file_key')
+    assertNotNullOrUndefined(message, 'comment')
 
-    const url = `${figmaCommon.baseUrl}/${figmaCommon.comments}`.replace(
-      ':file_key',
-      file_key
-    );
+    const url = `${figmaCommon.baseUrl}/${figmaCommon.comments}`.replace(':file_key', file_key)
 
-    return figmaPostRequestWithMessage({ token, url, message });
+    return figmaPostRequestWithMessage({ token, url, message })
   },
-});
+})

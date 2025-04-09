@@ -1,12 +1,12 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { wedofCommon } from '../../common/wedof';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { wedofAuth } from '../../..'
+import { wedofCommon } from '../../common/wedof'
 
 export const deletePartnership = createAction({
   auth: wedofAuth,
   name: 'deletePartnership',
-  displayName: "Supprimer un partenariat",
+  displayName: 'Supprimer un partenariat',
   description: "Supprime un partenariat à l'état Demande à compléter",
   props: {
     certifInfo: Property.ShortText({
@@ -35,6 +35,6 @@ export const deletePartnership = createAction({
           'X-Api-Key': context.auth as string,
         },
       })
-    ).body;
+    ).body
   },
-});
+})

@@ -1,12 +1,12 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { getTranscriptAction } from './lib/actions/get-transcript';
-import { PieceCategory } from '@activepieces/shared';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { supadataConfig } from './lib/config';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { getTranscriptAction } from './lib/actions/get-transcript'
+import { supadataConfig } from './lib/config'
 
 const markdownDescription = `
 To obtain your free Supadata API Key, sign up at [Supadata](https://supadata.ai) and then copy the key available in the [dashboard](https://dash.supadata.ai).
-`;
+`
 
 export const supadataAuth = PieceAuth.SecretText({
   description: markdownDescription,
@@ -20,18 +20,18 @@ export const supadataAuth = PieceAuth.SecretText({
         headers: {
           [supadataConfig.accessTokenHeaderKey]: auth.auth,
         },
-      });
+      })
       return {
         valid: true,
-      };
+      }
     } catch (e) {
       return {
         valid: false,
         error: 'Invalid API Key.',
-      };
+      }
     }
   },
-});
+})
 
 export const supadata = createPiece({
   displayName: 'Supadata',
@@ -43,4 +43,4 @@ export const supadata = createPiece({
   description: 'YouTube Transcripts',
   actions: [getTranscriptAction],
   triggers: [],
-}); 
+})

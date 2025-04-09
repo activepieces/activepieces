@@ -1,12 +1,12 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { getTranscriptAction } from './lib/actions/get-transcript';
-import { PieceCategory } from '@activepieces/shared';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { gistlyConfig } from './lib/config';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { getTranscriptAction } from './lib/actions/get-transcript'
+import { gistlyConfig } from './lib/config'
 
 const markdownDescription = `
 To obtain your free Gistly API Key, sign up at [Gistly](https://gist.ly/youtube-transcript-api) and then copy the key available in the [dashboard](https://api-portal.gist.ly/).
-`;
+`
 
 export const gistlyAuth = PieceAuth.SecretText({
   description: markdownDescription,
@@ -20,18 +20,18 @@ export const gistlyAuth = PieceAuth.SecretText({
         headers: {
           [gistlyConfig.accessTokenHeaderKey]: auth.auth,
         },
-      });
+      })
       return {
         valid: true,
-      };
+      }
     } catch (e) {
       return {
         valid: false,
         error: 'Invalid API Key.',
-      };
+      }
     }
   },
-});
+})
 
 export const gistly = createPiece({
   displayName: 'Gistly',
@@ -43,4 +43,4 @@ export const gistly = createPiece({
   description: 'YouTube Transcripts',
   actions: [getTranscriptAction],
   triggers: [],
-}); 
+})

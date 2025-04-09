@@ -1,11 +1,7 @@
-import { createAction } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { excelAuth } from '../../index';
-import { excelCommon } from '../common/common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { excelAuth } from '../../index'
+import { excelCommon } from '../common/common'
 
 export const deleteWorksheetAction = createAction({
   auth: excelAuth,
@@ -17,8 +13,8 @@ export const deleteWorksheetAction = createAction({
     worksheet_id: excelCommon.worksheet_id,
   },
   async run({ propsValue, auth }) {
-    const workbookId = propsValue['workbook_id'];
-    const worksheetId = propsValue['worksheet_id'];
+    const workbookId = propsValue['workbook_id']
+    const worksheetId = propsValue['worksheet_id']
 
     const request = {
       method: HttpMethod.DELETE,
@@ -27,9 +23,9 @@ export const deleteWorksheetAction = createAction({
         type: AuthenticationType.BEARER_TOKEN as const,
         token: auth['access_token'],
       },
-    };
+    }
 
-    const response = await httpClient.sendRequest(request);
-    return response.body;
+    const response = await httpClient.sendRequest(request)
+    return response.body
   },
-});
+})

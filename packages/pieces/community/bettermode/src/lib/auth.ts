@@ -1,23 +1,19 @@
-import {
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
-import { getAuthToken } from './api';
+import { propsValidation } from '@activepieces/pieces-common'
+import { PieceAuth, Property } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { getAuthToken } from './api'
 
 export type BettermodeAuthType = {
-  region: string;
-  domain: string;
-  email: string;
-  password: string;
-  token?: string;
-  memberId?: string;
-};
+  region: string
+  domain: string
+  email: string
+  password: string
+  token?: string
+  memberId?: string
+}
 
 export const bettermodeAuth = PieceAuth.CustomAuth({
-  description:
-    'Your domain should be the base URL of your Bettermode community. Example: community.example.com',
+  description: 'Your domain should be the base URL of your Bettermode community. Example: community.example.com',
   props: {
     region: Property.StaticDropdown({
       displayName: 'Region',
@@ -48,30 +44,28 @@ export const bettermodeAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      await validateAuth(auth);
+      await validateAuth(auth)
       return {
         valid: true,
-      };
+      }
     } catch (e) {
       return {
         valid: false,
         error: (e as Error)?.message,
-      };
+      }
     }
   },
   required: true,
-});
+})
 
 const validateAuth = async (auth: BettermodeAuthType) => {
   await propsValidation.validateZod(auth, {
     domain: z.string().url(),
     email: z.string().email(),
-  });
+  })
 
-  const response = await getAuthToken(auth);
+  const response = await getAuthToken(auth)
   if (!response.memberId) {
-    throw new Error(
-      'Authentication failed. Please check your credentials and try again.'
-    );
+    throw new Error('Authentication failed. Please check your credentials and try again.')
   }
-};
+}

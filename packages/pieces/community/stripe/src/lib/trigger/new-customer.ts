@@ -1,7 +1,7 @@
-import { createTrigger } from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { stripeCommon } from '../common';
-import { stripeAuth } from '../..';
+import { createTrigger } from '@activepieces/pieces-framework'
+import { TriggerStrategy } from '@activepieces/pieces-framework'
+import { stripeAuth } from '../..'
+import { stripeCommon } from '../common'
 
 export const stripeNewCustomer = createTrigger({
   auth: stripeAuth,
@@ -41,35 +41,29 @@ export const stripeNewCustomer = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const webhook = await stripeCommon.subscribeWebhook(
-      'customer.created',
-      context.webhookUrl,
-      context.auth
-    );
+    const webhook = await stripeCommon.subscribeWebhook('customer.created', context.webhookUrl, context.auth)
     await context.store.put<WebhookInformation>('_new_customer_trigger', {
       webhookId: webhook.id,
-    });
+    })
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_new_customer_trigger'
-    );
+    const response = await context.store?.get<WebhookInformation>('_new_customer_trigger')
     if (response !== null && response !== undefined) {
-      await stripeCommon.unsubscribeWebhook(response.webhookId, context.auth);
+      await stripeCommon.unsubscribeWebhook(response.webhookId, context.auth)
     }
   },
   async run(context) {
-    const payloadBody = context.payload.body as PayloadBody;
-    return [payloadBody.data.object];
+    const payloadBody = context.payload.body as PayloadBody
+    return [payloadBody.data.object]
   },
-});
+})
 
 type PayloadBody = {
   data: {
-    object: unknown;
-  };
-};
+    object: unknown
+  }
+}
 
 interface WebhookInformation {
-  webhookId: string;
+  webhookId: string
 }

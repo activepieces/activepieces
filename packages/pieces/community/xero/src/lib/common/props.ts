@@ -1,10 +1,5 @@
-import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework'
 
 export const props = {
   tenant_id: Property.Dropdown({
@@ -17,7 +12,7 @@ export const props = {
           disabled: true,
           options: [],
           placeholder: 'Please authenticate first',
-        };
+        }
 
       const request: HttpRequest = {
         method: HttpMethod.GET,
@@ -26,19 +21,20 @@ export const props = {
           type: AuthenticationType.BEARER_TOKEN,
           token: (auth as OAuth2PropertyValue).access_token,
         },
-      };
+      }
 
-      const result = await httpClient.sendRequest<
-        {
-          id: string;
-          authEventId: string;
-          tenantId: string;
-          tenantType: string;
-          tenantName: string;
-          createdDateUtc: string;
-          updatedDateUtc: string;
-        }[]
-      >(request);
+      const result =
+        await httpClient.sendRequest<
+          {
+            id: string
+            authEventId: string
+            tenantId: string
+            tenantType: string
+            tenantName: string
+            createdDateUtc: string
+            updatedDateUtc: string
+          }[]
+        >(request)
 
       if (result.status === 200) {
         return {
@@ -49,14 +45,14 @@ export const props = {
               value: result.body?.[0].tenantId,
             },
           ],
-        };
+        }
       }
 
       return {
         disabled: true,
         options: [],
         placeholder: 'Error processing tenant_id',
-      };
+      }
     },
   }),
   invoice_id: Property.ShortText({
@@ -82,4 +78,4 @@ export const props = {
       description: 'Email address of the contact.',
       required: required,
     }),
-};
+}

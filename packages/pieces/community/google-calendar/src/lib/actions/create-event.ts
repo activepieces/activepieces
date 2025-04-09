@@ -1,9 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleCalendarCommon } from '../common';
-import dayjs from 'dayjs';
-import { googleCalendarAuth } from '../../';
-import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { google } from 'googleapis'
+import { OAuth2Client } from 'googleapis-common'
+import { googleCalendarAuth } from '../../'
+import { googleCalendarCommon } from '../common'
 
 export const createEvent = createAction({
   auth: googleCalendarAuth,
@@ -89,37 +89,35 @@ export const createEvent = createAction({
       guests_can_modify: guestsCanModify,
       guests_can_invite_others: guestsCanInviteOthers,
       guests_can_see_other_guests: guestsCanSeeOtherGuests,
-    } = configValue.propsValue;
+    } = configValue.propsValue
 
     const start = {
       dateTime: dayjs(start_date_time).format('YYYY-MM-DDTHH:mm:ss.sssZ'),
-    };
-    const endTime = end_date_time
-      ? end_date_time
-      : dayjs(start_date_time).add(30, 'm');
+    }
+    const endTime = end_date_time ? end_date_time : dayjs(start_date_time).add(30, 'm')
     const end = {
       dateTime: dayjs(endTime).format('YYYY-MM-DDTHH:mm:ss.sssZ'),
-    };
+    }
 
     /*const attachment = {
       fileUrl: configValue.propsValue.attachment,
     };*/
 
-    const attendeesArray = configValue.propsValue.attendees as string[];
+    const attendeesArray = configValue.propsValue.attendees as string[]
 
-    const sendNotifications = configValue.propsValue.send_notifications;
+    const sendNotifications = configValue.propsValue.send_notifications
 
-    const attendeesObject = [];
+    const attendeesObject = []
     if (attendeesArray) {
       for (const attendee of attendeesArray) {
-        attendeesObject.push({ email: attendee });
+        attendeesObject.push({ email: attendee })
       }
     }
 
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(configValue.auth);
+    const authClient = new OAuth2Client()
+    authClient.setCredentials(configValue.auth)
 
-    const calendar = google.calendar({ version: 'v3', auth: authClient });
+    const calendar = google.calendar({ version: 'v3', auth: authClient })
 
     const response = await calendar.events.insert({
       calendarId,
@@ -137,8 +135,8 @@ export const createEvent = createAction({
         guestsCanModify,
         guestsCanSeeOtherGuests,
       },
-    });
+    })
 
-    return response.data;
+    return response.data
   },
-});
+})

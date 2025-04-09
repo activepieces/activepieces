@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework'
 
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { villageAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { villageAuth } from '../..'
 
 export const fetchPeoplePaths = createAction({
   name: 'fetchPeoplePaths',
@@ -21,7 +21,7 @@ export const fetchPeoplePaths = createAction({
     }),
   },
   async run(context) {
-    const { person_linkedin_url, user_identifier } = context.propsValue;
+    const { person_linkedin_url, user_identifier } = context.propsValue
 
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
@@ -33,7 +33,7 @@ export const fetchPeoplePaths = createAction({
         person_linkedin_url,
         user_identifier,
       },
-    });
-    return res.body;
+    })
+    return res.body
   },
-});
+})

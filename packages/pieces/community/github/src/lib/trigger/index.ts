@@ -1,5 +1,5 @@
-import { Trigger } from '@activepieces/pieces-framework';
-import { githubRegisterTrigger } from './register-trigger';
+import { Trigger } from '@activepieces/pieces-framework'
+import { githubRegisterTrigger } from './register-trigger'
 
 export enum GithubEventType {
   PULL_REQUEST = 'pull_request',
@@ -23,8 +23,7 @@ export const registered = [
         html_url: 'https://github.com/activepieces/activepieces/pull/2',
         diff_url: 'https://github.com/activepieces/activepieces/pull/2.diff',
         patch_url: 'https://github.com/activepieces/activepieces/pull/2.patch',
-        issue_url:
-          'https://api.github.com/repos/activepieces/activepieces/issues/2',
+        issue_url: 'https://api.github.com/repos/activepieces/activepieces/issues/2',
         number: 2,
         state: 'open',
         locked: false,
@@ -38,18 +37,14 @@ export const registered = [
           url: 'https://api.github.com/users/jesska',
           html_url: 'https://github.com/jesska',
           followers_url: 'https://api.github.com/users/jesska/followers',
-          following_url:
-            'https://api.github.com/users/jesska/following{/other_user}',
+          following_url: 'https://api.github.com/users/jesska/following{/other_user}',
           gists_url: 'https://api.github.com/users/jesska/gists{/gist_id}',
-          starred_url:
-            'https://api.github.com/users/jesska/starred{/owner}{/repo}',
-          subscriptions_url:
-            'https://api.github.com/users/jesska/subscriptions',
+          starred_url: 'https://api.github.com/users/jesska/starred{/owner}{/repo}',
+          subscriptions_url: 'https://api.github.com/users/jesska/subscriptions',
           organizations_url: 'https://api.github.com/users/jesska/orgs',
           repos_url: 'https://api.github.com/users/jesska/repos',
           events_url: 'https://api.github.com/users/jesska/events{/privacy}',
-          received_events_url:
-            'https://api.github.com/users/jesska/received_events',
+          received_events_url: 'https://api.github.com/users/jesska/received_events',
           type: 'User',
           site_admin: false,
         },
@@ -66,14 +61,10 @@ export const registered = [
         labels: [],
         milestone: null,
         draft: false,
-        commits_url:
-          'https://api.github.com/repos/activepieces/activepieces/pulls/2/commits',
-        review_comments_url:
-          'https://api.github.com/repos/activepieces/activepieces/pulls/2/comments',
-        review_comment_url:
-          'https://api.github.com/repos/activepieces/activepieces/pulls/comments{/number}',
-        comments_url:
-          'https://api.github.com/repos/activepieces/activepieces/issues/2/comments',
+        commits_url: 'https://api.github.com/repos/activepieces/activepieces/pulls/2/commits',
+        review_comments_url: 'https://api.github.com/repos/activepieces/activepieces/pulls/2/comments',
+        review_comment_url: 'https://api.github.com/repos/activepieces/activepieces/pulls/comments{/number}',
+        comments_url: 'https://api.github.com/repos/activepieces/activepieces/issues/2/comments',
         statuses_url:
           'https://api.github.com/repos/activepieces/activepieces/statuses/309b7842c3c8a7cd275a4a6da1e89713917bcdc6',
         head: {
@@ -121,18 +112,14 @@ export const registered = [
           url: 'https://api.github.com/users/jesska',
           html_url: 'https://github.com/jesska',
           followers_url: 'https://api.github.com/users/jesska/followers',
-          following_url:
-            'https://api.github.com/users/jesska/following{/other_user}',
+          following_url: 'https://api.github.com/users/jesska/following{/other_user}',
           gists_url: 'https://api.github.com/users/jesska/gists{/gist_id}',
-          starred_url:
-            'https://api.github.com/users/jesska/starred{/owner}{/repo}',
-          subscriptions_url:
-            'https://api.github.com/users/jesska/subscriptions',
+          starred_url: 'https://api.github.com/users/jesska/starred{/owner}{/repo}',
+          subscriptions_url: 'https://api.github.com/users/jesska/subscriptions',
           organizations_url: 'https://api.github.com/users/jesska/orgs',
           repos_url: 'https://api.github.com/users/jesska/repos',
           events_url: 'https://api.github.com/users/jesska/events{/privacy}',
-          received_events_url:
-            'https://api.github.com/users/jesska/received_events',
+          received_events_url: 'https://api.github.com/users/jesska/received_events',
           type: 'User',
           site_admin: false,
         },
@@ -140,77 +127,43 @@ export const registered = [
         description: 'Automate!',
         fork: false,
         url: 'https://api.github.com/repos/activepieces/activepieces',
-        forks_url:
-          'https://api.github.com/repos/activepieces/activepieces/forks',
-        keys_url:
-          'https://api.github.com/repos/activepieces/activepieces/keys{/key_id}',
-        collaborators_url:
-          'https://api.github.com/repos/activepieces/activepieces/collaborators{/collaborator}',
-        teams_url:
-          'https://api.github.com/repos/activepieces/activepieces/teams',
-        hooks_url:
-          'https://api.github.com/repos/activepieces/activepieces/hooks',
-        issue_events_url:
-          'https://api.github.com/repos/activepieces/activepieces/issues/events{/number}',
-        events_url:
-          'https://api.github.com/repos/activepieces/activepieces/events',
-        assignees_url:
-          'https://api.github.com/repos/activepieces/activepieces/assignees{/user}',
-        branches_url:
-          'https://api.github.com/repos/activepieces/activepieces/branches{/branch}',
+        forks_url: 'https://api.github.com/repos/activepieces/activepieces/forks',
+        keys_url: 'https://api.github.com/repos/activepieces/activepieces/keys{/key_id}',
+        collaborators_url: 'https://api.github.com/repos/activepieces/activepieces/collaborators{/collaborator}',
+        teams_url: 'https://api.github.com/repos/activepieces/activepieces/teams',
+        hooks_url: 'https://api.github.com/repos/activepieces/activepieces/hooks',
+        issue_events_url: 'https://api.github.com/repos/activepieces/activepieces/issues/events{/number}',
+        events_url: 'https://api.github.com/repos/activepieces/activepieces/events',
+        assignees_url: 'https://api.github.com/repos/activepieces/activepieces/assignees{/user}',
+        branches_url: 'https://api.github.com/repos/activepieces/activepieces/branches{/branch}',
         tags_url: 'https://api.github.com/repos/activepieces/activepieces/tags',
-        blobs_url:
-          'https://api.github.com/repos/activepieces/activepieces/git/blobs{/sha}',
-        git_tags_url:
-          'https://api.github.com/repos/activepieces/activepieces/git/tags{/sha}',
-        git_refs_url:
-          'https://api.github.com/repos/activepieces/activepieces/git/refs{/sha}',
-        trees_url:
-          'https://api.github.com/repos/activepieces/activepieces/git/trees{/sha}',
-        statuses_url:
-          'https://api.github.com/repos/activepieces/activepieces/statuses/{sha}',
-        languages_url:
-          'https://api.github.com/repos/activepieces/activepieces/languages',
-        stargazers_url:
-          'https://api.github.com/repos/activepieces/activepieces/stargazers',
-        contributors_url:
-          'https://api.github.com/repos/activepieces/activepieces/contributors',
-        subscribers_url:
-          'https://api.github.com/repos/activepieces/activepieces/subscribers',
-        subscription_url:
-          'https://api.github.com/repos/activepieces/activepieces/subscription',
-        commits_url:
-          'https://api.github.com/repos/activepieces/activepieces/commits{/sha}',
-        git_commits_url:
-          'https://api.github.com/repos/activepieces/activepieces/git/commits{/sha}',
-        comments_url:
-          'https://api.github.com/repos/activepieces/activepieces/comments{/number}',
-        issue_comment_url:
-          'https://api.github.com/repos/activepieces/activepieces/issues/comments{/number}',
-        contents_url:
-          'https://api.github.com/repos/activepieces/activepieces/contents/{+path}',
-        compare_url:
-          'https://api.github.com/repos/activepieces/activepieces/compare/{base}...{head}',
-        merges_url:
-          'https://api.github.com/repos/activepieces/activepieces/merges',
-        archive_url:
-          'https://api.github.com/repos/activepieces/activepieces/{archive_format}{/ref}',
-        downloads_url:
-          'https://api.github.com/repos/activepieces/activepieces/downloads',
-        issues_url:
-          'https://api.github.com/repos/activepieces/activepieces/issues{/number}',
-        pulls_url:
-          'https://api.github.com/repos/activepieces/activepieces/pulls{/number}',
-        milestones_url:
-          'https://api.github.com/repos/activepieces/activepieces/milestones{/number}',
+        blobs_url: 'https://api.github.com/repos/activepieces/activepieces/git/blobs{/sha}',
+        git_tags_url: 'https://api.github.com/repos/activepieces/activepieces/git/tags{/sha}',
+        git_refs_url: 'https://api.github.com/repos/activepieces/activepieces/git/refs{/sha}',
+        trees_url: 'https://api.github.com/repos/activepieces/activepieces/git/trees{/sha}',
+        statuses_url: 'https://api.github.com/repos/activepieces/activepieces/statuses/{sha}',
+        languages_url: 'https://api.github.com/repos/activepieces/activepieces/languages',
+        stargazers_url: 'https://api.github.com/repos/activepieces/activepieces/stargazers',
+        contributors_url: 'https://api.github.com/repos/activepieces/activepieces/contributors',
+        subscribers_url: 'https://api.github.com/repos/activepieces/activepieces/subscribers',
+        subscription_url: 'https://api.github.com/repos/activepieces/activepieces/subscription',
+        commits_url: 'https://api.github.com/repos/activepieces/activepieces/commits{/sha}',
+        git_commits_url: 'https://api.github.com/repos/activepieces/activepieces/git/commits{/sha}',
+        comments_url: 'https://api.github.com/repos/activepieces/activepieces/comments{/number}',
+        issue_comment_url: 'https://api.github.com/repos/activepieces/activepieces/issues/comments{/number}',
+        contents_url: 'https://api.github.com/repos/activepieces/activepieces/contents/{+path}',
+        compare_url: 'https://api.github.com/repos/activepieces/activepieces/compare/{base}...{head}',
+        merges_url: 'https://api.github.com/repos/activepieces/activepieces/merges',
+        archive_url: 'https://api.github.com/repos/activepieces/activepieces/{archive_format}{/ref}',
+        downloads_url: 'https://api.github.com/repos/activepieces/activepieces/downloads',
+        issues_url: 'https://api.github.com/repos/activepieces/activepieces/issues{/number}',
+        pulls_url: 'https://api.github.com/repos/activepieces/activepieces/pulls{/number}',
+        milestones_url: 'https://api.github.com/repos/activepieces/activepieces/milestones{/number}',
         notifications_url:
           'https://api.github.com/repos/activepieces/activepieces/notifications{?since,all,participating}',
-        labels_url:
-          'https://api.github.com/repos/activepieces/activepieces/labels{/name}',
-        releases_url:
-          'https://api.github.com/repos/activepieces/activepieces/releases{/id}',
-        deployments_url:
-          'https://api.github.com/repos/activepieces/activepieces/deployments',
+        labels_url: 'https://api.github.com/repos/activepieces/activepieces/labels{/name}',
+        releases_url: 'https://api.github.com/repos/activepieces/activepieces/releases{/id}',
+        deployments_url: 'https://api.github.com/repos/activepieces/activepieces/deployments',
         created_at: '2019-01-22T20:57:01Z',
         updated_at: '2023-02-18T11:05:49Z',
         pushed_at: '2019-02-22T20:19:33Z',
@@ -254,19 +207,14 @@ export const registered = [
         url: 'https://api.github.com/users/activepieces',
         html_url: 'https://github.com/activepieces',
         followers_url: 'https://api.github.com/users/activepieces/followers',
-        following_url:
-          'https://api.github.com/users/activepieces/following{/other_user}',
+        following_url: 'https://api.github.com/users/activepieces/following{/other_user}',
         gists_url: 'https://api.github.com/users/activepieces/gists{/gist_id}',
-        starred_url:
-          'https://api.github.com/users/activepieces/starred{/owner}{/repo}',
-        subscriptions_url:
-          'https://api.github.com/users/activepieces/subscriptions',
+        starred_url: 'https://api.github.com/users/activepieces/starred{/owner}{/repo}',
+        subscriptions_url: 'https://api.github.com/users/activepieces/subscriptions',
         organizations_url: 'https://api.github.com/users/activepieces/orgs',
         repos_url: 'https://api.github.com/users/activepieces/repos',
-        events_url:
-          'https://api.github.com/users/activepieces/events{/privacy}',
-        received_events_url:
-          'https://api.github.com/users/activepieces/received_events',
+        events_url: 'https://api.github.com/users/activepieces/events{/privacy}',
+        received_events_url: 'https://api.github.com/users/activepieces/received_events',
         type: 'User',
         site_admin: false,
       },
@@ -294,20 +242,14 @@ export const registered = [
           url: 'https://api.github.com/users/activepieces',
           html_url: 'https://github.com/activepieces',
           followers_url: 'https://api.github.com/users/activepieces/followers',
-          following_url:
-            'https://api.github.com/users/activepieces/following{/other_user}',
-          gists_url:
-            'https://api.github.com/users/activepieces/gists{/gist_id}',
-          starred_url:
-            'https://api.github.com/users/activepieces/starred{/owner}{/repo}',
-          subscriptions_url:
-            'https://api.github.com/users/activepieces/subscriptions',
+          following_url: 'https://api.github.com/users/activepieces/following{/other_user}',
+          gists_url: 'https://api.github.com/users/activepieces/gists{/gist_id}',
+          starred_url: 'https://api.github.com/users/activepieces/starred{/owner}{/repo}',
+          subscriptions_url: 'https://api.github.com/users/activepieces/subscriptions',
           organizations_url: 'https://api.github.com/users/activepieces/orgs',
           repos_url: 'https://api.github.com/users/activepieces/repos',
-          events_url:
-            'https://api.github.com/users/activepieces/events{/privacy}',
-          received_events_url:
-            'https://api.github.com/users/activepieces/received_events',
+          events_url: 'https://api.github.com/users/activepieces/events{/privacy}',
+          received_events_url: 'https://api.github.com/users/activepieces/received_events',
           type: 'User',
           site_admin: false,
         },
@@ -315,77 +257,43 @@ export const registered = [
         description: 'Automate',
         fork: false,
         url: 'https://api.github.com/repos/activepieces/activepieces',
-        forks_url:
-          'https://api.github.com/repos/activepieces/activepieces/forks',
-        keys_url:
-          'https://api.github.com/repos/activepieces/activepieces/keys{/key_id}',
-        collaborators_url:
-          'https://api.github.com/repos/activepieces/activepieces/collaborators{/collaborator}',
-        teams_url:
-          'https://api.github.com/repos/activepieces/activepieces/teams',
-        hooks_url:
-          'https://api.github.com/repos/activepieces/activepieces/hooks',
-        issue_events_url:
-          'https://api.github.com/repos/activepieces/activepieces/issues/events{/number}',
-        events_url:
-          'https://api.github.com/repos/activepieces/activepieces/events',
-        assignees_url:
-          'https://api.github.com/repos/activepieces/activepieces/assignees{/user}',
-        branches_url:
-          'https://api.github.com/repos/activepieces/activepieces/branches{/branch}',
+        forks_url: 'https://api.github.com/repos/activepieces/activepieces/forks',
+        keys_url: 'https://api.github.com/repos/activepieces/activepieces/keys{/key_id}',
+        collaborators_url: 'https://api.github.com/repos/activepieces/activepieces/collaborators{/collaborator}',
+        teams_url: 'https://api.github.com/repos/activepieces/activepieces/teams',
+        hooks_url: 'https://api.github.com/repos/activepieces/activepieces/hooks',
+        issue_events_url: 'https://api.github.com/repos/activepieces/activepieces/issues/events{/number}',
+        events_url: 'https://api.github.com/repos/activepieces/activepieces/events',
+        assignees_url: 'https://api.github.com/repos/activepieces/activepieces/assignees{/user}',
+        branches_url: 'https://api.github.com/repos/activepieces/activepieces/branches{/branch}',
         tags_url: 'https://api.github.com/repos/activepieces/activepieces/tags',
-        blobs_url:
-          'https://api.github.com/repos/activepieces/activepieces/git/blobs{/sha}',
-        git_tags_url:
-          'https://api.github.com/repos/activepieces/activepieces/git/tags{/sha}',
-        git_refs_url:
-          'https://api.github.com/repos/activepieces/activepieces/git/refs{/sha}',
-        trees_url:
-          'https://api.github.com/repos/activepieces/activepieces/git/trees{/sha}',
-        statuses_url:
-          'https://api.github.com/repos/activepieces/activepieces/statuses/{sha}',
-        languages_url:
-          'https://api.github.com/repos/activepieces/activepieces/languages',
-        stargazers_url:
-          'https://api.github.com/repos/activepieces/activepieces/stargazers',
-        contributors_url:
-          'https://api.github.com/repos/activepieces/activepieces/contributors',
-        subscribers_url:
-          'https://api.github.com/repos/activepieces/activepieces/subscribers',
-        subscription_url:
-          'https://api.github.com/repos/activepieces/activepieces/subscription',
-        commits_url:
-          'https://api.github.com/repos/activepieces/activepieces/commits{/sha}',
-        git_commits_url:
-          'https://api.github.com/repos/activepieces/activepieces/git/commits{/sha}',
-        comments_url:
-          'https://api.github.com/repos/activepieces/activepieces/comments{/number}',
-        issue_comment_url:
-          'https://api.github.com/repos/activepieces/activepieces/issues/comments{/number}',
-        contents_url:
-          'https://api.github.com/repos/activepieces/activepieces/contents/{+path}',
-        compare_url:
-          'https://api.github.com/repos/activepieces/activepieces/compare/{base}...{head}',
-        merges_url:
-          'https://api.github.com/repos/activepieces/activepieces/merges',
-        archive_url:
-          'https://api.github.com/repos/activepieces/activepieces/{archive_format}{/ref}',
-        downloads_url:
-          'https://api.github.com/repos/activepieces/activepieces/downloads',
-        issues_url:
-          'https://api.github.com/repos/activepieces/activepieces/issues{/number}',
-        pulls_url:
-          'https://api.github.com/repos/activepieces/activepieces/pulls{/number}',
-        milestones_url:
-          'https://api.github.com/repos/activepieces/activepieces/milestones{/number}',
+        blobs_url: 'https://api.github.com/repos/activepieces/activepieces/git/blobs{/sha}',
+        git_tags_url: 'https://api.github.com/repos/activepieces/activepieces/git/tags{/sha}',
+        git_refs_url: 'https://api.github.com/repos/activepieces/activepieces/git/refs{/sha}',
+        trees_url: 'https://api.github.com/repos/activepieces/activepieces/git/trees{/sha}',
+        statuses_url: 'https://api.github.com/repos/activepieces/activepieces/statuses/{sha}',
+        languages_url: 'https://api.github.com/repos/activepieces/activepieces/languages',
+        stargazers_url: 'https://api.github.com/repos/activepieces/activepieces/stargazers',
+        contributors_url: 'https://api.github.com/repos/activepieces/activepieces/contributors',
+        subscribers_url: 'https://api.github.com/repos/activepieces/activepieces/subscribers',
+        subscription_url: 'https://api.github.com/repos/activepieces/activepieces/subscription',
+        commits_url: 'https://api.github.com/repos/activepieces/activepieces/commits{/sha}',
+        git_commits_url: 'https://api.github.com/repos/activepieces/activepieces/git/commits{/sha}',
+        comments_url: 'https://api.github.com/repos/activepieces/activepieces/comments{/number}',
+        issue_comment_url: 'https://api.github.com/repos/activepieces/activepieces/issues/comments{/number}',
+        contents_url: 'https://api.github.com/repos/activepieces/activepieces/contents/{+path}',
+        compare_url: 'https://api.github.com/repos/activepieces/activepieces/compare/{base}...{head}',
+        merges_url: 'https://api.github.com/repos/activepieces/activepieces/merges',
+        archive_url: 'https://api.github.com/repos/activepieces/activepieces/{archive_format}{/ref}',
+        downloads_url: 'https://api.github.com/repos/activepieces/activepieces/downloads',
+        issues_url: 'https://api.github.com/repos/activepieces/activepieces/issues{/number}',
+        pulls_url: 'https://api.github.com/repos/activepieces/activepieces/pulls{/number}',
+        milestones_url: 'https://api.github.com/repos/activepieces/activepieces/milestones{/number}',
         notifications_url:
           'https://api.github.com/repos/activepieces/activepieces/notifications{?since,all,participating}',
-        labels_url:
-          'https://api.github.com/repos/activepieces/activepieces/labels{/name}',
-        releases_url:
-          'https://api.github.com/repos/activepieces/activepieces/releases{/id}',
-        deployments_url:
-          'https://api.github.com/repos/activepieces/activepieces/deployments',
+        labels_url: 'https://api.github.com/repos/activepieces/activepieces/labels{/name}',
+        releases_url: 'https://api.github.com/repos/activepieces/activepieces/releases{/id}',
+        deployments_url: 'https://api.github.com/repos/activepieces/activepieces/deployments',
         created_at: '2019-01-22T20:57:01Z',
         updated_at: '2023-02-18T11:18:55Z',
         pushed_at: '2019-02-22T20:19:33Z',
@@ -429,19 +337,14 @@ export const registered = [
         url: 'https://api.github.com/users/activepieces',
         html_url: 'https://github.com/activepieces',
         followers_url: 'https://api.github.com/users/activepieces/followers',
-        following_url:
-          'https://api.github.com/users/activepieces/following{/other_user}',
+        following_url: 'https://api.github.com/users/activepieces/following{/other_user}',
         gists_url: 'https://api.github.com/users/activepieces/gists{/gist_id}',
-        starred_url:
-          'https://api.github.com/users/activepieces/starred{/owner}{/repo}',
-        subscriptions_url:
-          'https://api.github.com/users/activepieces/subscriptions',
+        starred_url: 'https://api.github.com/users/activepieces/starred{/owner}{/repo}',
+        subscriptions_url: 'https://api.github.com/users/activepieces/subscriptions',
         organizations_url: 'https://api.github.com/users/activepieces/orgs',
         repos_url: 'https://api.github.com/users/activepieces/repos',
-        events_url:
-          'https://api.github.com/users/activepieces/events{/privacy}',
-        received_events_url:
-          'https://api.github.com/users/activepieces/received_events',
+        events_url: 'https://api.github.com/users/activepieces/events{/privacy}',
+        received_events_url: 'https://api.github.com/users/activepieces/received_events',
         type: 'User',
         site_admin: false,
       },
@@ -455,14 +358,10 @@ export const registered = [
       action: 'opened',
       issue: {
         url: 'https://api.github.com/repos/activepieces/activepieces/issues/1',
-        repository_url:
-          'https://api.github.com/repos/activepieces/activepieces',
-        labels_url:
-          'https://api.github.com/repos/activepieces/activepieces/issues/1/labels{/name}',
-        comments_url:
-          'https://api.github.com/repos/activepieces/activepieces/issues/1/comments',
-        events_url:
-          'https://api.github.com/repos/activepieces/activepieces/issues/1/events',
+        repository_url: 'https://api.github.com/repos/activepieces/activepieces',
+        labels_url: 'https://api.github.com/repos/activepieces/activepieces/issues/1/labels{/name}',
+        comments_url: 'https://api.github.com/repos/activepieces/activepieces/issues/1/comments',
+        events_url: 'https://api.github.com/repos/activepieces/activepieces/issues/1/events',
         html_url: 'https://github.com/activepieces/activepieces/issues/1',
         id: 1590311655,
         node_id: 'I_kwDOCfU56M5eyjrn',
@@ -477,18 +376,14 @@ export const registered = [
           url: 'https://api.github.com/users/jesska',
           html_url: 'https://github.com/jesska',
           followers_url: 'https://api.github.com/users/jesska/followers',
-          following_url:
-            'https://api.github.com/users/jesska/following{/other_user}',
+          following_url: 'https://api.github.com/users/jesska/following{/other_user}',
           gists_url: 'https://api.github.com/users/jesska/gists{/gist_id}',
-          starred_url:
-            'https://api.github.com/users/jesska/starred{/owner}{/repo}',
-          subscriptions_url:
-            'https://api.github.com/users/jesska/subscriptions',
+          starred_url: 'https://api.github.com/users/jesska/starred{/owner}{/repo}',
+          subscriptions_url: 'https://api.github.com/users/jesska/subscriptions',
           organizations_url: 'https://api.github.com/users/jesska/orgs',
           repos_url: 'https://api.github.com/users/jesska/repos',
           events_url: 'https://api.github.com/users/jesska/events{/privacy}',
-          received_events_url:
-            'https://api.github.com/users/jesska/received_events',
+          received_events_url: 'https://api.github.com/users/jesska/received_events',
           type: 'User',
           site_admin: false,
         },
@@ -517,8 +412,7 @@ export const registered = [
           rocket: 0,
           eyes: 0,
         },
-        timeline_url:
-          'https://api.github.com/repos/activepieces/activepieces/issues/1/timeline',
+        timeline_url: 'https://api.github.com/repos/activepieces/activepieces/issues/1/timeline',
         performed_via_github_app: null,
         state_reason: null,
       },
@@ -537,18 +431,14 @@ export const registered = [
           url: 'https://api.github.com/users/jesska',
           html_url: 'https://github.com/jesska',
           followers_url: 'https://api.github.com/users/jesska/followers',
-          following_url:
-            'https://api.github.com/users/jesska/following{/other_user}',
+          following_url: 'https://api.github.com/users/jesska/following{/other_user}',
           gists_url: 'https://api.github.com/users/jesska/gists{/gist_id}',
-          starred_url:
-            'https://api.github.com/users/jesska/starred{/owner}{/repo}',
-          subscriptions_url:
-            'https://api.github.com/users/jesska/subscriptions',
+          starred_url: 'https://api.github.com/users/jesska/starred{/owner}{/repo}',
+          subscriptions_url: 'https://api.github.com/users/jesska/subscriptions',
           organizations_url: 'https://api.github.com/users/jesska/orgs',
           repos_url: 'https://api.github.com/users/jesska/repos',
           events_url: 'https://api.github.com/users/jesska/events{/privacy}',
-          received_events_url:
-            'https://api.github.com/users/jesska/received_events',
+          received_events_url: 'https://api.github.com/users/jesska/received_events',
           type: 'User',
           site_admin: false,
         },
@@ -556,77 +446,43 @@ export const registered = [
         description: 'Automate!',
         fork: false,
         url: 'https://api.github.com/repos/activepieces/activepieces',
-        forks_url:
-          'https://api.github.com/repos/activepieces/activepieces/forks',
-        keys_url:
-          'https://api.github.com/repos/activepieces/activepieces/keys{/key_id}',
-        collaborators_url:
-          'https://api.github.com/repos/activepieces/activepieces/collaborators{/collaborator}',
-        teams_url:
-          'https://api.github.com/repos/activepieces/activepieces/teams',
-        hooks_url:
-          'https://api.github.com/repos/activepieces/activepieces/hooks',
-        issue_events_url:
-          'https://api.github.com/repos/activepieces/activepieces/issues/events{/number}',
-        events_url:
-          'https://api.github.com/repos/activepieces/activepieces/events',
-        assignees_url:
-          'https://api.github.com/repos/activepieces/activepieces/assignees{/user}',
-        branches_url:
-          'https://api.github.com/repos/activepieces/activepieces/branches{/branch}',
+        forks_url: 'https://api.github.com/repos/activepieces/activepieces/forks',
+        keys_url: 'https://api.github.com/repos/activepieces/activepieces/keys{/key_id}',
+        collaborators_url: 'https://api.github.com/repos/activepieces/activepieces/collaborators{/collaborator}',
+        teams_url: 'https://api.github.com/repos/activepieces/activepieces/teams',
+        hooks_url: 'https://api.github.com/repos/activepieces/activepieces/hooks',
+        issue_events_url: 'https://api.github.com/repos/activepieces/activepieces/issues/events{/number}',
+        events_url: 'https://api.github.com/repos/activepieces/activepieces/events',
+        assignees_url: 'https://api.github.com/repos/activepieces/activepieces/assignees{/user}',
+        branches_url: 'https://api.github.com/repos/activepieces/activepieces/branches{/branch}',
         tags_url: 'https://api.github.com/repos/activepieces/activepieces/tags',
-        blobs_url:
-          'https://api.github.com/repos/activepieces/activepieces/git/blobs{/sha}',
-        git_tags_url:
-          'https://api.github.com/repos/activepieces/activepieces/git/tags{/sha}',
-        git_refs_url:
-          'https://api.github.com/repos/activepieces/activepieces/git/refs{/sha}',
-        trees_url:
-          'https://api.github.com/repos/activepieces/activepieces/git/trees{/sha}',
-        statuses_url:
-          'https://api.github.com/repos/activepieces/activepieces/statuses/{sha}',
-        languages_url:
-          'https://api.github.com/repos/activepieces/activepieces/languages',
-        stargazers_url:
-          'https://api.github.com/repos/activepieces/activepieces/stargazers',
-        contributors_url:
-          'https://api.github.com/repos/activepieces/activepieces/contributors',
-        subscribers_url:
-          'https://api.github.com/repos/activepieces/activepieces/subscribers',
-        subscription_url:
-          'https://api.github.com/repos/activepieces/activepieces/subscription',
-        commits_url:
-          'https://api.github.com/repos/activepieces/activepieces/commits{/sha}',
-        git_commits_url:
-          'https://api.github.com/repos/activepieces/activepieces/git/commits{/sha}',
-        comments_url:
-          'https://api.github.com/repos/activepieces/activepieces/comments{/number}',
-        issue_comment_url:
-          'https://api.github.com/repos/activepieces/activepieces/issues/comments{/number}',
-        contents_url:
-          'https://api.github.com/repos/activepieces/activepieces/contents/{+path}',
-        compare_url:
-          'https://api.github.com/repos/activepieces/activepieces/compare/{base}...{head}',
-        merges_url:
-          'https://api.github.com/repos/activepieces/activepieces/merges',
-        archive_url:
-          'https://api.github.com/repos/activepieces/activepieces/{archive_format}{/ref}',
-        downloads_url:
-          'https://api.github.com/repos/activepieces/activepieces/downloads',
-        issues_url:
-          'https://api.github.com/repos/activepieces/activepieces/issues{/number}',
-        pulls_url:
-          'https://api.github.com/repos/activepieces/activepieces/pulls{/number}',
-        milestones_url:
-          'https://api.github.com/repos/activepieces/activepieces/milestones{/number}',
+        blobs_url: 'https://api.github.com/repos/activepieces/activepieces/git/blobs{/sha}',
+        git_tags_url: 'https://api.github.com/repos/activepieces/activepieces/git/tags{/sha}',
+        git_refs_url: 'https://api.github.com/repos/activepieces/activepieces/git/refs{/sha}',
+        trees_url: 'https://api.github.com/repos/activepieces/activepieces/git/trees{/sha}',
+        statuses_url: 'https://api.github.com/repos/activepieces/activepieces/statuses/{sha}',
+        languages_url: 'https://api.github.com/repos/activepieces/activepieces/languages',
+        stargazers_url: 'https://api.github.com/repos/activepieces/activepieces/stargazers',
+        contributors_url: 'https://api.github.com/repos/activepieces/activepieces/contributors',
+        subscribers_url: 'https://api.github.com/repos/activepieces/activepieces/subscribers',
+        subscription_url: 'https://api.github.com/repos/activepieces/activepieces/subscription',
+        commits_url: 'https://api.github.com/repos/activepieces/activepieces/commits{/sha}',
+        git_commits_url: 'https://api.github.com/repos/activepieces/activepieces/git/commits{/sha}',
+        comments_url: 'https://api.github.com/repos/activepieces/activepieces/comments{/number}',
+        issue_comment_url: 'https://api.github.com/repos/activepieces/activepieces/issues/comments{/number}',
+        contents_url: 'https://api.github.com/repos/activepieces/activepieces/contents/{+path}',
+        compare_url: 'https://api.github.com/repos/activepieces/activepieces/compare/{base}...{head}',
+        merges_url: 'https://api.github.com/repos/activepieces/activepieces/merges',
+        archive_url: 'https://api.github.com/repos/activepieces/activepieces/{archive_format}{/ref}',
+        downloads_url: 'https://api.github.com/repos/activepieces/activepieces/downloads',
+        issues_url: 'https://api.github.com/repos/activepieces/activepieces/issues{/number}',
+        pulls_url: 'https://api.github.com/repos/activepieces/activepieces/pulls{/number}',
+        milestones_url: 'https://api.github.com/repos/activepieces/activepieces/milestones{/number}',
         notifications_url:
           'https://api.github.com/repos/activepieces/activepieces/notifications{?since,all,participating}',
-        labels_url:
-          'https://api.github.com/repos/activepieces/activepieces/labels{/name}',
-        releases_url:
-          'https://api.github.com/repos/activepieces/activepieces/releases{/id}',
-        deployments_url:
-          'https://api.github.com/repos/activepieces/activepieces/deployments',
+        labels_url: 'https://api.github.com/repos/activepieces/activepieces/labels{/name}',
+        releases_url: 'https://api.github.com/repos/activepieces/activepieces/releases{/id}',
+        deployments_url: 'https://api.github.com/repos/activepieces/activepieces/deployments',
         created_at: '2019-01-22T20:57:01Z',
         updated_at: '2023-02-18T11:05:49Z',
         pushed_at: '2019-02-22T20:19:33Z',
@@ -670,19 +526,14 @@ export const registered = [
         url: 'https://api.github.com/users/activepieces',
         html_url: 'https://github.com/activepieces',
         followers_url: 'https://api.github.com/users/activepieces/followers',
-        following_url:
-          'https://api.github.com/users/activepieces/following{/other_user}',
+        following_url: 'https://api.github.com/users/activepieces/following{/other_user}',
         gists_url: 'https://api.github.com/users/activepieces/gists{/gist_id}',
-        starred_url:
-          'https://api.github.com/users/activepieces/starred{/owner}{/repo}',
-        subscriptions_url:
-          'https://api.github.com/users/activepieces/subscriptions',
+        starred_url: 'https://api.github.com/users/activepieces/starred{/owner}{/repo}',
+        subscriptions_url: 'https://api.github.com/users/activepieces/subscriptions',
         organizations_url: 'https://api.github.com/users/activepieces/orgs',
         repos_url: 'https://api.github.com/users/activepieces/repos',
-        events_url:
-          'https://api.github.com/users/activepieces/events{/privacy}',
-        received_events_url:
-          'https://api.github.com/users/activepieces/received_events',
+        events_url: 'https://api.github.com/users/activepieces/events{/privacy}',
+        received_events_url: 'https://api.github.com/users/activepieces/received_events',
         type: 'User',
         site_admin: false,
       },
@@ -749,18 +600,14 @@ export const registered = [
           url: 'https://api.github.com/users/jesska',
           html_url: 'https://github.com/jesska',
           followers_url: 'https://api.github.com/users/jesska/followers',
-          following_url:
-            'https://api.github.com/users/jesska/following{/other_user}',
+          following_url: 'https://api.github.com/users/jesska/following{/other_user}',
           gists_url: 'https://api.github.com/users/jesska/gists{/gist_id}',
-          starred_url:
-            'https://api.github.com/users/jesska/starred{/owner}{/repo}',
-          subscriptions_url:
-            'https://api.github.com/users/jesska/subscriptions',
+          starred_url: 'https://api.github.com/users/jesska/starred{/owner}{/repo}',
+          subscriptions_url: 'https://api.github.com/users/jesska/subscriptions',
           organizations_url: 'https://api.github.com/users/jesska/orgs',
           repos_url: 'https://api.github.com/users/jesska/repos',
           events_url: 'https://api.github.com/users/jesska/events{/privacy}',
-          received_events_url:
-            'https://api.github.com/users/jesska/received_events',
+          received_events_url: 'https://api.github.com/users/jesska/received_events',
           type: 'User',
           site_admin: false,
         },
@@ -768,77 +615,43 @@ export const registered = [
         description: 'Automate!',
         fork: false,
         url: 'https://api.github.com/repos/activepieces/activepieces',
-        forks_url:
-          'https://api.github.com/repos/activepieces/activepieces/forks',
-        keys_url:
-          'https://api.github.com/repos/activepieces/activepieces/keys{/key_id}',
-        collaborators_url:
-          'https://api.github.com/repos/activepieces/activepieces/collaborators{/collaborator}',
-        teams_url:
-          'https://api.github.com/repos/activepieces/activepieces/teams',
-        hooks_url:
-          'https://api.github.com/repos/activepieces/activepieces/hooks',
-        issue_events_url:
-          'https://api.github.com/repos/activepieces/activepieces/issues/events{/number}',
-        events_url:
-          'https://api.github.com/repos/activepieces/activepieces/events',
-        assignees_url:
-          'https://api.github.com/repos/activepieces/activepieces/assignees{/user}',
-        branches_url:
-          'https://api.github.com/repos/activepieces/activepieces/branches{/branch}',
+        forks_url: 'https://api.github.com/repos/activepieces/activepieces/forks',
+        keys_url: 'https://api.github.com/repos/activepieces/activepieces/keys{/key_id}',
+        collaborators_url: 'https://api.github.com/repos/activepieces/activepieces/collaborators{/collaborator}',
+        teams_url: 'https://api.github.com/repos/activepieces/activepieces/teams',
+        hooks_url: 'https://api.github.com/repos/activepieces/activepieces/hooks',
+        issue_events_url: 'https://api.github.com/repos/activepieces/activepieces/issues/events{/number}',
+        events_url: 'https://api.github.com/repos/activepieces/activepieces/events',
+        assignees_url: 'https://api.github.com/repos/activepieces/activepieces/assignees{/user}',
+        branches_url: 'https://api.github.com/repos/activepieces/activepieces/branches{/branch}',
         tags_url: 'https://api.github.com/repos/activepieces/activepieces/tags',
-        blobs_url:
-          'https://api.github.com/repos/activepieces/activepieces/git/blobs{/sha}',
-        git_tags_url:
-          'https://api.github.com/repos/activepieces/activepieces/git/tags{/sha}',
-        git_refs_url:
-          'https://api.github.com/repos/activepieces/activepieces/git/refs{/sha}',
-        trees_url:
-          'https://api.github.com/repos/activepieces/activepieces/git/trees{/sha}',
-        statuses_url:
-          'https://api.github.com/repos/activepieces/activepieces/statuses/{sha}',
-        languages_url:
-          'https://api.github.com/repos/activepieces/activepieces/languages',
-        stargazers_url:
-          'https://api.github.com/repos/activepieces/activepieces/stargazers',
-        contributors_url:
-          'https://api.github.com/repos/activepieces/activepieces/contributors',
-        subscribers_url:
-          'https://api.github.com/repos/activepieces/activepieces/subscribers',
-        subscription_url:
-          'https://api.github.com/repos/activepieces/activepieces/subscription',
-        commits_url:
-          'https://api.github.com/repos/activepieces/activepieces/commits{/sha}',
-        git_commits_url:
-          'https://api.github.com/repos/activepieces/activepieces/git/commits{/sha}',
-        comments_url:
-          'https://api.github.com/repos/activepieces/activepieces/comments{/number}',
-        issue_comment_url:
-          'https://api.github.com/repos/activepieces/activepieces/issues/comments{/number}',
-        contents_url:
-          'https://api.github.com/repos/activepieces/activepieces/contents/{+path}',
-        compare_url:
-          'https://api.github.com/repos/activepieces/activepieces/compare/{base}...{head}',
-        merges_url:
-          'https://api.github.com/repos/activepieces/activepieces/merges',
-        archive_url:
-          'https://api.github.com/repos/activepieces/activepieces/{archive_format}{/ref}',
-        downloads_url:
-          'https://api.github.com/repos/activepieces/activepieces/downloads',
-        issues_url:
-          'https://api.github.com/repos/activepieces/activepieces/issues{/number}',
-        pulls_url:
-          'https://api.github.com/repos/activepieces/activepieces/pulls{/number}',
-        milestones_url:
-          'https://api.github.com/repos/activepieces/activepieces/milestones{/number}',
+        blobs_url: 'https://api.github.com/repos/activepieces/activepieces/git/blobs{/sha}',
+        git_tags_url: 'https://api.github.com/repos/activepieces/activepieces/git/tags{/sha}',
+        git_refs_url: 'https://api.github.com/repos/activepieces/activepieces/git/refs{/sha}',
+        trees_url: 'https://api.github.com/repos/activepieces/activepieces/git/trees{/sha}',
+        statuses_url: 'https://api.github.com/repos/activepieces/activepieces/statuses/{sha}',
+        languages_url: 'https://api.github.com/repos/activepieces/activepieces/languages',
+        stargazers_url: 'https://api.github.com/repos/activepieces/activepieces/stargazers',
+        contributors_url: 'https://api.github.com/repos/activepieces/activepieces/contributors',
+        subscribers_url: 'https://api.github.com/repos/activepieces/activepieces/subscribers',
+        subscription_url: 'https://api.github.com/repos/activepieces/activepieces/subscription',
+        commits_url: 'https://api.github.com/repos/activepieces/activepieces/commits{/sha}',
+        git_commits_url: 'https://api.github.com/repos/activepieces/activepieces/git/commits{/sha}',
+        comments_url: 'https://api.github.com/repos/activepieces/activepieces/comments{/number}',
+        issue_comment_url: 'https://api.github.com/repos/activepieces/activepieces/issues/comments{/number}',
+        contents_url: 'https://api.github.com/repos/activepieces/activepieces/contents/{+path}',
+        compare_url: 'https://api.github.com/repos/activepieces/activepieces/compare/{base}...{head}',
+        merges_url: 'https://api.github.com/repos/activepieces/activepieces/merges',
+        archive_url: 'https://api.github.com/repos/activepieces/activepieces/{archive_format}{/ref}',
+        downloads_url: 'https://api.github.com/repos/activepieces/activepieces/downloads',
+        issues_url: 'https://api.github.com/repos/activepieces/activepieces/issues{/number}',
+        pulls_url: 'https://api.github.com/repos/activepieces/activepieces/pulls{/number}',
+        milestones_url: 'https://api.github.com/repos/activepieces/activepieces/milestones{/number}',
         notifications_url:
           'https://api.github.com/repos/activepieces/activepieces/notifications{?since,all,participating}',
-        labels_url:
-          'https://api.github.com/repos/activepieces/activepieces/labels{/name}',
-        releases_url:
-          'https://api.github.com/repos/activepieces/activepieces/releases{/id}',
-        deployments_url:
-          'https://api.github.com/repos/activepieces/activepieces/deployments',
+        labels_url: 'https://api.github.com/repos/activepieces/activepieces/labels{/name}',
+        releases_url: 'https://api.github.com/repos/activepieces/activepieces/releases{/id}',
+        deployments_url: 'https://api.github.com/repos/activepieces/activepieces/deployments',
         created_at: '2019-01-22T20:57:01Z',
         updated_at: '2023-02-18T11:05:49Z',
         pushed_at: '2019-02-22T20:19:33Z',
@@ -882,26 +695,19 @@ export const registered = [
         url: 'https://api.github.com/users/activepieces',
         html_url: 'https://github.com/activepieces',
         followers_url: 'https://api.github.com/users/activepieces/followers',
-        following_url:
-          'https://api.github.com/users/activepieces/following{/other_user}',
+        following_url: 'https://api.github.com/users/activepieces/following{/other_user}',
         gists_url: 'https://api.github.com/users/activepieces/gists{/gist_id}',
-        starred_url:
-          'https://api.github.com/users/activepieces/starred{/owner}{/repo}',
-        subscriptions_url:
-          'https://api.github.com/users/activepieces/subscriptions',
+        starred_url: 'https://api.github.com/users/activepieces/starred{/owner}{/repo}',
+        subscriptions_url: 'https://api.github.com/users/activepieces/subscriptions',
         organizations_url: 'https://api.github.com/users/activepieces/orgs',
         repos_url: 'https://api.github.com/users/activepieces/repos',
-        events_url:
-          'https://api.github.com/users/activepieces/events{/privacy}',
-        received_events_url:
-          'https://api.github.com/users/activepieces/received_events',
+        events_url: 'https://api.github.com/users/activepieces/events{/privacy}',
+        received_events_url: 'https://api.github.com/users/activepieces/received_events',
         type: 'User',
         site_admin: false,
       },
     },
   },
-];
+]
 
-export const githubTriggers: Trigger[] = registered.map((def) =>
-  githubRegisterTrigger(def)
-);
+export const githubTriggers: Trigger[] = registered.map((def) => githubRegisterTrigger(def))

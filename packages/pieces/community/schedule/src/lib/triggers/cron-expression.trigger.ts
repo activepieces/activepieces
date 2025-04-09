@@ -1,6 +1,6 @@
-import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { createTrigger, Property } from '@activepieces/pieces-framework';
-import { timezoneOptions } from '../common';
+import { TriggerStrategy } from '@activepieces/pieces-framework'
+import { Property, createTrigger } from '@activepieces/pieces-framework'
+import { timezoneOptions } from '../common'
 
 export const cronExpressionTrigger = createTrigger({
   name: 'cron_expression',
@@ -28,12 +28,12 @@ export const cronExpressionTrigger = createTrigger({
     ctx.setSchedule({
       cronExpression: ctx.propsValue.cronExpression,
       timezone: ctx.propsValue.timezone,
-    });
+    })
   },
   run(context) {
-    return Promise.resolve([{}]);
+    return Promise.resolve([{}])
   },
   onDisable: async () => {
-    console.log('onDisable');
+    console.log('onDisable')
   },
-});
+})

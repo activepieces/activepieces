@@ -1,8 +1,8 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { onfleetAuth } from '../..';
-import { common } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
+import { common } from '../common'
 
-import Onfleet from '@onfleet/node-onfleet';
+import Onfleet from '@onfleet/node-onfleet'
 
 export const createHub = createAction({
   auth: onfleetAuth,
@@ -20,9 +20,9 @@ export const createHub = createAction({
     teams: common.teams,
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth)
 
-    let address;
+    let address
     if (context.propsValue.unparsedDestination) {
       address = {
         number: '',
@@ -30,7 +30,7 @@ export const createHub = createAction({
         city: '',
         country: '',
         unparsed: context.propsValue.destination['unparsedAddress'],
-      };
+      }
     } else {
       address = {
         number: context.propsValue.destination['number'],
@@ -41,18 +41,18 @@ export const createHub = createAction({
         state: context.propsValue.destination['state'],
         postalCode: context.propsValue.destination['postalCode'],
         name: context.propsValue.destination['name'],
-      };
+      }
     }
 
     const options: any = {
       address: address,
       name: context.propsValue.name,
-    };
-
-    if (context.propsValue.teams) {
-      options.teams = context.propsValue.teams;
     }
 
-    return await onfleetApi.hubs.create(options);
+    if (context.propsValue.teams) {
+      options.teams = context.propsValue.teams
+    }
+
+    return await onfleetApi.hubs.create(options)
   },
-});
+})

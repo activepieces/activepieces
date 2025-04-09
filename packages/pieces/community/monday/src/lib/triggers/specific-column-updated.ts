@@ -1,16 +1,8 @@
-import {
-  Property,
-  TriggerStrategy,
-  WebhookHandshakeStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
-import { mondayAuth } from '../..';
-import { makeClient, mondayCommon } from '../common';
-import {
-  MondayNotWritableColumnType,
-  MondayWebhookEventType,
-} from '../common/constants';
-import { WebhookInformation } from '../common/models';
+import { Property, TriggerStrategy, WebhookHandshakeStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { mondayAuth } from '../..'
+import { makeClient, mondayCommon } from '../common'
+import { MondayNotWritableColumnType, MondayWebhookEventType } from '../common/constants'
+import { WebhookInformation } from '../common/models'
 
 export const specificColumnValueUpdatedTrigger = createTrigger({
   auth: mondayAuth,
@@ -28,28 +20,25 @@ export const specificColumnValueUpdatedTrigger = createTrigger({
         if (!auth || !board_id) {
           return {
             disabled: true,
-            placeholder:
-              'connect your account first and select workspace board.',
+            placeholder: 'connect your account first and select workspace board.',
             options: [],
-          };
+          }
         }
-        const client = makeClient(auth as string);
+        const client = makeClient(auth as string)
         const res = await client.listBoardColumns({
           boardId: board_id as string,
-        });
+        })
         return {
           disabled: false,
           options: res.data.boards[0].columns
-            .filter(
-              (column) => !MondayNotWritableColumnType.includes(column.type)
-            )
+            .filter((column) => !MondayNotWritableColumnType.includes(column.type))
             .map((column) => {
               return {
                 label: column.title,
                 value: column.id,
-              };
+              }
             }),
-        };
+        }
       },
     }),
   },
@@ -85,31 +74,26 @@ export const specificColumnValueUpdatedTrigger = createTrigger({
     },
   },
   async onEnable(context) {
-    const { board_id, column_id } = context.propsValue;
+    const { board_id, column_id } = context.propsValue
 
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth as string)
     const res = await client.createWebhook({
       boardId: board_id,
       url: context.webhookUrl,
       event: MondayWebhookEventType.CHANGE_SPECIFIC_COLUMN_VALUE,
       config: JSON.stringify({ columnId: column_id }),
-    });
-    await context.store.put<WebhookInformation>(
-      'monday_specific_column_updated',
-      res.data
-    );
+    })
+    await context.store.put<WebhookInformation>('monday_specific_column_updated', res.data)
   },
   async onDisable(context) {
-    const webhook = await context.store.get<WebhookInformation>(
-      'monday_specific_column_updated'
-    );
+    const webhook = await context.store.get<WebhookInformation>('monday_specific_column_updated')
     if (webhook != null) {
-      const client = makeClient(context.auth as string);
-      await client.deleteWebhook({ webhookId: webhook.id });
+      const client = makeClient(context.auth as string)
+      await client.deleteWebhook({ webhookId: webhook.id })
     }
   },
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
   handshakeConfiguration: {
     strategy: WebhookHandshakeStrategy.BODY_PARAM_PRESENT,
@@ -119,6 +103,6 @@ export const specificColumnValueUpdatedTrigger = createTrigger({
     return {
       status: 200,
       body: { challenge: (context.payload.body as any)['challenge'] },
-    };
+    }
   },
-});
+})

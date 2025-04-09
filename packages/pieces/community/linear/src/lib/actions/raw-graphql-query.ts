@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { linearAuth } from '../..';
-import { makeClient } from '../common/client';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { linearAuth } from '../..'
+import { makeClient } from '../common/client'
 
 export const linearRawGraphqlQuery = createAction({
   name: 'rawGraphqlQuery',
@@ -12,11 +12,8 @@ export const linearRawGraphqlQuery = createAction({
     variables: Property.Object({ displayName: 'Parameters', required: false }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth as string);
-    const result = await client.rawRequest(
-      propsValue.query,
-      propsValue.variables
-    );
-    return result;
+    const client = makeClient(auth as string)
+    const result = await client.rawRequest(propsValue.query, propsValue.variables)
+    return result
   },
-});
+})

@@ -1,9 +1,6 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { talkableAuth } from '../../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { talkableAuth } from '../../..'
 
 export const createPurchase = createAction({
   name: 'create_purchase', // Must be a unique across the piece, this shouldn't be changed.
@@ -109,7 +106,7 @@ export const createPurchase = createAction({
     }),
     items: Property.Json({
       displayName: 'Items',
-      description: "You can pass items with purchase",
+      description: 'You can pass items with purchase',
       required: false,
       defaultValue: [
         { price: 10, quantity: 1, product_id: 'SKU1' },
@@ -118,21 +115,20 @@ export const createPurchase = createAction({
     }),
   },
   async run(context) {
-    const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
-    const { site, api_key } = context.auth;
-    const createPurchaseResponse = await httpClient
-      .sendRequest<string[]>({
-        method: HttpMethod.POST,
-        url: `${TALKABLE_API_URL}/origins/purchase`,
-        headers: {
-          Authorization: `Bearer ${api_key}`,
-          'Content-Type': 'application/json',
-        },
-        body: {
-          site_slug: site,
-          data: context.propsValue,
-        },
-      });
-    return createPurchaseResponse.body;
+    const TALKABLE_API_URL = 'https://www.talkable.com/api/v2'
+    const { site, api_key } = context.auth
+    const createPurchaseResponse = await httpClient.sendRequest<string[]>({
+      method: HttpMethod.POST,
+      url: `${TALKABLE_API_URL}/origins/purchase`,
+      headers: {
+        Authorization: `Bearer ${api_key}`,
+        'Content-Type': 'application/json',
+      },
+      body: {
+        site_slug: site,
+        data: context.propsValue,
+      },
+    })
+    return createPurchaseResponse.body
   },
-});
+})

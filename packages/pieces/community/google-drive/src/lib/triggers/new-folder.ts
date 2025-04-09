@@ -1,21 +1,14 @@
-import {
-  PiecePropValueSchema,
-  createTrigger,
-} from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common'
+import { PiecePropValueSchema, createTrigger } from '@activepieces/pieces-framework'
+import { TriggerStrategy } from '@activepieces/pieces-framework'
 
-import dayjs from 'dayjs';
-import { googleDriveAuth } from '../..';
-import { common } from '../common';
+import dayjs from 'dayjs'
+import { googleDriveAuth } from '../..'
+import { common } from '../common'
 
 const polling: Polling<
   PiecePropValueSchema<typeof googleDriveAuth>,
-  { parentFolder?: any,include_team_drives?:boolean }
+  { parentFolder?: any; include_team_drives?: boolean }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
@@ -23,15 +16,15 @@ const polling: Polling<
       (await common.getFolders(auth, {
         parent: propsValue.parentFolder,
         createdTime: lastFetchEpochMS,
-        includeTeamDrive:propsValue.include_team_drives
-      })) ?? [];
+        includeTeamDrive: propsValue.include_team_drives,
+      })) ?? []
     const items = currentValues.map((item: any) => ({
       epochMilliSeconds: dayjs(item.createdTime).valueOf(),
       data: item,
-    }));
-    return items;
+    }))
+    return items
   },
-};
+}
 
 export const newFolder = createTrigger({
   auth: googleDriveAuth,
@@ -48,20 +41,20 @@ export const newFolder = createTrigger({
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
-    });
+    })
   },
   onDisable: async (context) => {
     await pollingHelper.onDisable(polling, {
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
-    });
+    })
   },
   run: async (context) => {
-    return await pollingHelper.poll(polling, context);
+    return await pollingHelper.poll(polling, context)
   },
   test: async (context) => {
-    return await pollingHelper.test(polling, context);
+    return await pollingHelper.test(polling, context)
   },
 
   sampleData: {
@@ -70,4 +63,4 @@ export const newFolder = createTrigger({
     id: '1aMEtTqIYn5651wdK7WLxaK_SDim4mvXW',
     name: 'New Folder WOOOO',
   },
-});
+})

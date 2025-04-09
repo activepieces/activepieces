@@ -1,22 +1,22 @@
-import { Download } from 'lucide-react';
-import React from 'react';
+import { Download } from 'lucide-react'
+import React from 'react'
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { PieceIcon } from '@/features/pieces/components/piece-icon';
-import { AnalyticsReportResponse } from '@activepieces/shared';
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { PieceIcon } from '@/features/pieces/components/piece-icon'
+import { AnalyticsReportResponse } from '@activepieces/shared'
 
 type ReportItem = {
-  name: React.ReactNode;
-  value: React.ReactNode;
-};
+  name: React.ReactNode
+  value: React.ReactNode
+}
 
 type ReportProps = {
-  title: string;
-  data?: ReportItem[];
-  downloadCSV: () => void;
-};
+  title: string
+  data?: ReportItem[]
+  downloadCSV: () => void
+}
 
 function Report({ title, data, downloadCSV }: ReportProps) {
   return (
@@ -43,44 +43,39 @@ function Report({ title, data, downloadCSV }: ReportProps) {
         )}
       </CardContent>
     </Card>
-  );
+  )
 }
 
-const downloadCSV = (
-  data: Record<string, unknown>[] | undefined,
-  title: string,
-) => {
+const downloadCSV = (data: Record<string, unknown>[] | undefined, title: string) => {
   if (!data) {
-    return;
+    return
   }
   const csvContent = [
     Object.keys(data[0]).join(','),
     ...data.map((item) =>
       Object.values(item)
-        .map((value) =>
-          typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value,
-        )
+        .map((value) => (typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value))
         .join(','),
     ),
-  ].join('\n');
+  ].join('\n')
 
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
 
-  const link = document.createElement('a');
+  const link = document.createElement('a')
   if (link.download !== undefined) {
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `${title}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `${title}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
-};
+}
 
 type ReportsProps = {
-  report?: AnalyticsReportResponse;
-};
+  report?: AnalyticsReportResponse
+}
 
 function Reports({ report }: ReportsProps) {
   const topPiecesData = report?.topPieces
@@ -101,14 +96,14 @@ function Reports({ report }: ReportsProps) {
         </div>
       ),
       value: piece.usageCount,
-    }));
+    }))
 
   const topProjectsData = report?.topProjects
     .sort((a, b) => b.activeFlows - a.activeFlows)
     .map((project) => ({
       name: <>{project.displayName}</>,
       value: project.activeFlows,
-    }));
+    }))
 
   return (
     <div>
@@ -125,8 +120,8 @@ function Reports({ report }: ReportsProps) {
         />
       </div>
     </div>
-  );
+  )
 }
 
-Reports.displayName = 'Reports';
-export { Reports };
+Reports.displayName = 'Reports'
+export { Reports }

@@ -1,8 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { linearAuth } from '../../..';
-import { props } from '../../common/props';
-import { makeClient } from '../../common/client';
-import { LinearDocument } from '@linear/sdk';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { LinearDocument } from '@linear/sdk'
+import { linearAuth } from '../../..'
+import { makeClient } from '../../common/client'
+import { props } from '../../common/props'
 
 export const linearUpdateIssue = createAction({
   auth: linearAuth,
@@ -26,7 +26,7 @@ export const linearUpdateIssue = createAction({
     priority_id: props.priority_id(),
   },
   async run({ auth, propsValue }) {
-    const issueId = propsValue.issue_id!;
+    const issueId = propsValue.issue_id!
     const issue: LinearDocument.IssueUpdateInput = {
       title: propsValue.title,
       description: propsValue.description,
@@ -34,18 +34,18 @@ export const linearUpdateIssue = createAction({
       stateId: propsValue.state_id,
       priority: propsValue.priority_id,
       labelIds: propsValue.labels,
-    };
-    const client = makeClient(auth as string);
-    const result = await client.updateIssue(issueId, issue);
+    }
+    const client = makeClient(auth as string)
+    const result = await client.updateIssue(issueId, issue)
     if (result.success) {
-      const updatedIssue = await result.issue;
+      const updatedIssue = await result.issue
       return {
         success: result.success,
         lastSyncId: result.lastSyncId,
         issue: updatedIssue,
-      };
+      }
     } else {
       throw new Error(`Unexpected error: ${result}`)
     }
   },
-});
+})

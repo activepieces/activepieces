@@ -1,28 +1,28 @@
-import Document from '@tiptap/extension-document';
-import HardBreak from '@tiptap/extension-hard-break';
-import History from '@tiptap/extension-history';
-import Mention, { MentionNodeAttrs } from '@tiptap/extension-mention';
-import Paragraph from '@tiptap/extension-paragraph';
-import Placeholder from '@tiptap/extension-placeholder';
-import Text from '@tiptap/extension-text';
-import { useEditor, EditorContent } from '@tiptap/react';
+import Document from '@tiptap/extension-document'
+import HardBreak from '@tiptap/extension-hard-break'
+import History from '@tiptap/extension-history'
+import Mention, { MentionNodeAttrs } from '@tiptap/extension-mention'
+import Paragraph from '@tiptap/extension-paragraph'
+import Placeholder from '@tiptap/extension-placeholder'
+import Text from '@tiptap/extension-text'
+import { EditorContent, useEditor } from '@tiptap/react'
 
-import './tip-tap.css';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import { cn } from '@/lib/utils';
-import { flowStructureUtil, isNil } from '@activepieces/shared';
+import './tip-tap.css'
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook'
+import { cn } from '@/lib/utils'
+import { flowStructureUtil, isNil } from '@activepieces/shared'
 
-import { useBuilderStateContext } from '../../builder-hooks';
+import { useBuilderStateContext } from '../../builder-hooks'
 
-import { textMentionUtils } from './text-input-utils';
+import { textMentionUtils } from './text-input-utils'
 
 type TextInputWithMentionsProps = {
-  className?: string;
-  initialValue?: unknown;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
-};
+  className?: string
+  initialValue?: unknown
+  onChange: (value: string) => void
+  placeholder?: string
+  disabled?: boolean
+}
 const extensions = (placeholder?: string) => {
   return [
     Document,
@@ -41,25 +41,24 @@ const extensions = (placeholder?: string) => {
       },
       deleteTriggerWithBackspace: true,
       renderHTML({ node }) {
-        const mentionAttrs: MentionNodeAttrs =
-          node.attrs as unknown as MentionNodeAttrs;
-        return textMentionUtils.generateMentionHtmlElement(mentionAttrs);
+        const mentionAttrs: MentionNodeAttrs = node.attrs as unknown as MentionNodeAttrs
+        return textMentionUtils.generateMentionHtmlElement(mentionAttrs)
       },
     }),
-  ];
-};
+  ]
+}
 
 function convertToText(value: unknown): string {
   if (isNil(value)) {
-    return '';
+    return ''
   }
   if (typeof value === 'string') {
-    return value;
+    return value
   }
   if (typeof value === 'number') {
-    return value.toString();
+    return value.toString()
   }
-  return JSON.stringify(value);
+  return JSON.stringify(value)
 }
 
 export const TextInputWithMentions = ({
@@ -69,43 +68,29 @@ export const TextInputWithMentions = ({
   disabled,
   placeholder,
 }: TextInputWithMentionsProps) => {
-  const steps = useBuilderStateContext((state) =>
-    flowStructureUtil.getAllSteps(state.flowVersion.trigger),
-  );
-  const stepsMetadata = piecesHooks
-    .useStepsMetadata(steps)
-    .map(({ data: metadata }, index) => {
-      if (metadata) {
-        return {
-          ...metadata,
-          stepDisplayName: steps[index].displayName,
-        };
+  const steps = useBuilderStateContext((state) => flowStructureUtil.getAllSteps(state.flowVersion.trigger))
+  const stepsMetadata = piecesHooks.useStepsMetadata(steps).map(({ data: metadata }, index) => {
+    if (metadata) {
+      return {
+        ...metadata,
+        stepDisplayName: steps[index].displayName,
       }
-      return undefined;
-    });
+    }
+    return undefined
+  })
 
-  const setInsertMentionHandler = useBuilderStateContext(
-    (state) => state.setInsertMentionHandler,
-  );
+  const setInsertMentionHandler = useBuilderStateContext((state) => state.setInsertMentionHandler)
 
   const insertMention = (propertyPath: string) => {
-    const mentionNode = textMentionUtils.createMentionNodeFromText(
-      `{{${propertyPath}}}`,
-      steps,
-      stepsMetadata,
-    );
-    editor?.chain().focus().insertContent(mentionNode).run();
-  };
+    const mentionNode = textMentionUtils.createMentionNodeFromText(`{{${propertyPath}}}`, steps, stepsMetadata)
+    editor?.chain().focus().insertContent(mentionNode).run()
+  }
   const editor = useEditor({
     editable: !disabled,
     extensions: extensions(placeholder),
     content: {
       type: 'doc',
-      content: textMentionUtils.convertTextToTipTapJsonContent(
-        convertToText(initialValue),
-        steps,
-        stepsMetadata,
-      ),
+      content: textMentionUtils.convertTextToTipTapJsonContent(convertToText(initialValue), steps, stepsMetadata),
     },
     editorProps: {
       attributes: {
@@ -120,17 +105,16 @@ export const TextInputWithMentions = ({
       },
     },
     onUpdate: ({ editor }) => {
-      const editorContent = editor.getJSON();
-      const textResult =
-        textMentionUtils.convertTiptapJsonToText(editorContent);
+      const editorContent = editor.getJSON()
+      const textResult = textMentionUtils.convertTiptapJsonToText(editorContent)
       if (onChange) {
-        onChange(textResult);
+        onChange(textResult)
       }
     },
     onFocus: () => {
-      setInsertMentionHandler(insertMention);
+      setInsertMentionHandler(insertMention)
     },
-  });
+  })
 
-  return <EditorContent editor={editor} />;
-};
+  return <EditorContent editor={editor} />
+}

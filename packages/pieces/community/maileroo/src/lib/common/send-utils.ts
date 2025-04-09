@@ -1,6 +1,6 @@
-import { Property, StaticPropsValue } from '@activepieces/pieces-framework';
-import FormData from 'form-data';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, StaticPropsValue } from '@activepieces/pieces-framework'
+import FormData from 'form-data'
 
 export const createCommonProps = () => {
   return {
@@ -44,35 +44,29 @@ export const createCommonProps = () => {
       description: 'File to attach to the email you want to send',
       required: false,
     }),
-  };
-};
+  }
+}
 
-export const createFormData = (
-  propsValue: StaticPropsValue<ReturnType<typeof createCommonProps>>
-): FormData => {
-  const { to, from, from_name, reply_to, subject, cc, bcc } = propsValue;
+export const createFormData = (propsValue: StaticPropsValue<ReturnType<typeof createCommonProps>>): FormData => {
+  const { to, from, from_name, reply_to, subject, cc, bcc } = propsValue
 
-  const formData = new FormData();
-  formData.append('from', `${from_name} <${from}>`);
-  formData.append('to', to.join(','));
-  formData.append('subject', subject);
-  formData.append('reply_to', reply_to ?? from);
+  const formData = new FormData()
+  formData.append('from', `${from_name} <${from}>`)
+  formData.append('to', to.join(','))
+  formData.append('subject', subject)
+  formData.append('reply_to', reply_to ?? from)
 
   if (cc) {
-    formData.append('cc', cc.join(','));
+    formData.append('cc', cc.join(','))
   }
   if (bcc) {
-    formData.append('bcc', bcc.join(','));
+    formData.append('bcc', bcc.join(','))
   }
 
-  return formData;
-};
+  return formData
+}
 
-export const sendFormData = async (
-  url: string,
-  formData: FormData,
-  auth: string
-) => {
+export const sendFormData = async (url: string, formData: FormData, auth: string) => {
   return httpClient.sendRequest({
     method: HttpMethod.POST,
     url: `https://smtp.maileroo.com/${url}`,
@@ -81,8 +75,8 @@ export const sendFormData = async (
       ['X-API-Key']: auth,
       ...formData.getHeaders(),
     },
-  });
-};
+  })
+}
 
 export const checkEmail = async (email: string, apiKey: string) => {
   return httpClient.sendRequest({
@@ -95,5 +89,5 @@ export const checkEmail = async (email: string, apiKey: string) => {
       'X-API-Key': apiKey,
       'Content-Type': 'application/json',
     },
-  });
-};
+  })
+}

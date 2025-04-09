@@ -1,18 +1,14 @@
 import {
   AuthenticationType,
   DedupeStrategy,
-  httpClient,
   HttpMethod,
   Polling,
+  httpClient,
   pollingHelper,
-} from '@activepieces/pieces-common';
-import {
-  createTrigger,
-  OAuth2PropertyValue,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
-import { zohoCrmAuth } from '../..';
+} from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { zohoCrmAuth } from '../..'
 
 export const newContact = createTrigger({
   auth: zohoCrmAuth,
@@ -96,7 +92,7 @@ export const newContact = createTrigger({
       store: context.store,
       propsValue: context.propsValue,
       files: context.files,
-    });
+    })
   },
   async test({ auth, propsValue, store, files }): Promise<unknown[]> {
     return await pollingHelper.test(polling, {
@@ -104,29 +100,29 @@ export const newContact = createTrigger({
       store: store,
       propsValue: propsValue,
       files: files,
-    });
+    })
   },
   async onEnable({ auth, propsValue, store }): Promise<void> {
     await pollingHelper.onEnable(polling, {
       auth,
       store: store,
       propsValue: propsValue,
-    });
+    })
   },
   async onDisable({ auth, propsValue, store }): Promise<void> {
     await pollingHelper.onDisable(polling, {
       auth,
       store: store,
       propsValue: propsValue,
-    });
+    })
   },
-});
+})
 
 const polling: Polling<OAuth2PropertyValue, unknown> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth }) => {
     const response = await httpClient.sendRequest<{
-      data: { Created_Time: string }[];
+      data: { Created_Time: string }[]
     }>({
       url: `${auth.data.api_domain}/crm/v4/Contacts`,
       method: HttpMethod.GET,
@@ -187,10 +183,10 @@ const polling: Polling<OAuth2PropertyValue, unknown> = {
         type: AuthenticationType.BEARER_TOKEN,
         token: auth.access_token,
       },
-    });
+    })
     return response.body.data.map((record) => ({
       epochMilliSeconds: dayjs(record.Created_Time).valueOf(),
       data: record,
-    }));
+    }))
   },
-};
+}

@@ -1,7 +1,7 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { assemblyaiAuth } from '../../auth';
-import { getAssemblyAIClient } from '../../client';
-import { transcriptIdProp } from './shared-props';
+import { createAction } from '@activepieces/pieces-framework'
+import { assemblyaiAuth } from '../../auth'
+import { getAssemblyAIClient } from '../../client'
+import { transcriptIdProp } from './shared-props'
 
 export const deleteTranscript = createAction({
   name: 'deleteTranscript',
@@ -13,10 +13,8 @@ export const deleteTranscript = createAction({
     id: transcriptIdProp,
   },
   async run(context) {
-    const client = getAssemblyAIClient(context);
-    const deleteResponse = await client.transcripts.delete(
-      context.propsValue.id
-    );
-    return deleteResponse;
+    const client = getAssemblyAIClient(context)
+    const deleteResponse = await client.transcripts.delete(context.propsValue.id)
+    return deleteResponse
   },
-});
+})

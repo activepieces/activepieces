@@ -1,13 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { googleCalendarCommon } from '../common';
-import dayjs from 'dayjs';
-import { googleCalendarAuth } from '../../';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { googleCalendarAuth } from '../../'
+import { googleCalendarCommon } from '../common'
 
 export const getEvents = createAction({
   auth: googleCalendarAuth,
@@ -55,48 +50,38 @@ export const getEvents = createAction({
       required: false,
     }),
     singleEvents: Property.Checkbox({
-			displayName: 'Expand Recurring Event?',
-      description: "Whether to expand recurring events into instances and only return single one-off events and instances of recurring events, but not the underlying recurring events themselves.",
-			required: true,
-			defaultValue: false,
-		}),
+      displayName: 'Expand Recurring Event?',
+      description:
+        'Whether to expand recurring events into instances and only return single one-off events and instances of recurring events, but not the underlying recurring events themselves.',
+      required: true,
+      defaultValue: false,
+    }),
   },
   async run(configValue) {
     // docs: https://developers.google.com/calendar/api/v3/reference/events/list
-    const {
-      calendar_id: calendarId,
-      start_date,
-      end_date,
-      search,
-      event_types,
-      singleEvents,
-    } = configValue.propsValue;
-    const { access_token: token } = configValue.auth;
-    const queryParams: Record<string, string> = { showDeleted: 'false' };
-    let url = `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events`;
+    const { calendar_id: calendarId, start_date, end_date, search, event_types, singleEvents } = configValue.propsValue
+    const { access_token: token } = configValue.auth
+    const queryParams: Record<string, string> = { showDeleted: 'false' }
+    let url = `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events`
 
-    if(singleEvents !== null) {
-      queryParams['singleEvents'] = singleEvents ? 'true' : 'false';
+    if (singleEvents !== null) {
+      queryParams['singleEvents'] = singleEvents ? 'true' : 'false'
     }
 
     if (search) {
-      queryParams['q'] = `"${search}"`;
+      queryParams['q'] = `"${search}"`
     }
 
     // date range
     if (start_date) {
-      queryParams['timeMin'] = dayjs(start_date).format(
-        'YYYY-MM-DDTHH:mm:ss.sssZ'
-      );
+      queryParams['timeMin'] = dayjs(start_date).format('YYYY-MM-DDTHH:mm:ss.sssZ')
     }
     if (start_date && end_date) {
-      queryParams['timeMax'] = dayjs(end_date).format(
-        'YYYY-MM-DDTHH:mm:ss.sssZ'
-      );
+      queryParams['timeMax'] = dayjs(end_date).format('YYYY-MM-DDTHH:mm:ss.sssZ')
     }
     // filter by event type
     if (event_types.length > 0) {
-      url += `?${event_types.map((type) => `eventTypes=${type}`).join('&')}`;
+      url += `?${event_types.map((type) => `eventTypes=${type}`).join('&')}`
     }
     const request: HttpRequest<Record<string, unknown>> = {
       method: HttpMethod.GET,
@@ -106,7 +91,7 @@ export const getEvents = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token,
       },
-    };
-    return await httpClient.sendRequest(request);
+    }
+    return await httpClient.sendRequest(request)
   },
-});
+})

@@ -1,7 +1,7 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { triggers } from './lib/triggers';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { triggers } from './lib/triggers'
 
 const markdownPropertyDescription = `
 **Enable Basic Authentication:**
@@ -12,13 +12,13 @@ const markdownPropertyDescription = `
 4. Depending on your usage, you may 'Select all scopes'
 5. Submit the form
 6. The token will be created. Copy the token and paste it in the 'Token' input
-`;
+`
 
 export const frameAuth = PieceAuth.SecretText({
   displayName: 'Token',
   description: markdownPropertyDescription,
   required: true,
-});
+})
 
 export const frame = createPiece({
   displayName: 'Frame',
@@ -28,7 +28,7 @@ export const frame = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/frameio.png',
   categories: [PieceCategory.MARKETING],
-  authors: ["kanarelo","kishanprmr","MoShizzle","abuaboud"],
+  authors: ['kanarelo', 'kishanprmr', 'MoShizzle', 'abuaboud'],
   actions: [
     createCustomApiCallAction({
       baseUrl: () => 'https://api.frame.io/v2',
@@ -39,4 +39,4 @@ export const frame = createPiece({
     }),
   ],
   triggers,
-});
+})

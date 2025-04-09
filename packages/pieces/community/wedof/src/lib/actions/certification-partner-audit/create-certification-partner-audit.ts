@@ -1,13 +1,13 @@
-import { wedofAuth } from '../../../index';
-import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofCommon } from '../../common/wedof';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { DynamicPropsValue, Property, createAction } from '@activepieces/pieces-framework'
+import { wedofAuth } from '../../../index'
+import { wedofCommon } from '../../common/wedof'
 
 export const createCertificationPartnerAudit = createAction({
   auth: wedofAuth,
   name: 'createCertificationPartnerAudit',
-  displayName: "Créer un audit sur un partenariat de certification",
-  description: "Permet de créer un audit sur un partenariat de certification",
+  displayName: 'Créer un audit sur un partenariat de certification',
+  description: 'Permet de créer un audit sur un partenariat de certification',
   props: {
     certifInfo: Property.ShortText({
       displayName: 'N° certifInfo',
@@ -16,8 +16,7 @@ export const createCertificationPartnerAudit = createAction({
     }),
     siret: Property.ShortText({
       displayName: 'N° de siret',
-      description:
-        'Sélectionner le SIRET du partenaire',
+      description: 'Sélectionner le SIRET du partenaire',
       required: true,
     }),
     templateId: Property.DynamicProperties({
@@ -26,8 +25,8 @@ export const createCertificationPartnerAudit = createAction({
       required: true,
       props: async ({ auth, certifInfo }) => {
         if (!certifInfo) {
-          console.error('certifInfo is undefined');
-          return {};
+          console.error('certifInfo is undefined')
+          return {}
         }
         try {
           const response = await httpClient.sendRequest({
@@ -38,13 +37,13 @@ export const createCertificationPartnerAudit = createAction({
               'Content-Type': 'application/json',
               'X-Api-Key': auth as unknown as string,
             },
-          });
-    
+          })
+
           const options = response.body.map((template: { id: string; name: string }) => ({
             label: template.name,
             value: template.id,
-          }));
-    
+          }))
+
           return {
             templateId: Property.StaticDropdown({
               displayName: "Modèle d'audit",
@@ -53,33 +52,34 @@ export const createCertificationPartnerAudit = createAction({
                 options: options,
               },
             }),
-          } as DynamicPropsValue;
-    
+          } as DynamicPropsValue
         } catch (error) {
-          console.error('Error fetching templates:', error);
-          return {};
+          console.error('Error fetching templates:', error)
+          return {}
         }
       },
     }),
   },
   async run(context) {
-     const message = {
+    const message = {
       templateId: context.propsValue.templateId['templateId'] ?? null,
-      };
-      return (
-        await httpClient.sendRequest({
-          method: HttpMethod.POST,
-          url:
-            wedofCommon.baseUrl +
-            '/certifications/' +
-            context.propsValue.certifInfo +
-            '/partners/'+ context.propsValue.siret + '/audits',
-          body: message,
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Api-Key': context.auth as string,
-          },
-        })
-      ).body;
+    }
+    return (
+      await httpClient.sendRequest({
+        method: HttpMethod.POST,
+        url:
+          wedofCommon.baseUrl +
+          '/certifications/' +
+          context.propsValue.certifInfo +
+          '/partners/' +
+          context.propsValue.siret +
+          '/audits',
+        body: message,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Api-Key': context.auth as string,
+        },
+      })
+    ).body
   },
-});
+})

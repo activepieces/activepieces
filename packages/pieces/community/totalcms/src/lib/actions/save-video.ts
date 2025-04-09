@@ -1,11 +1,8 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { saveContent } from '../api';
-import { cmsAuth } from '../auth';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { saveContent } from '../api'
+import { cmsAuth } from '../auth'
 
 export const saveVideoAction = createAction({
   name: 'save_video',
@@ -27,13 +24,13 @@ export const saveVideoAction = createAction({
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
       video: z.string().url(),
-    });
+    })
 
-    const slug = context.propsValue.slug;
-    const video = context.propsValue.video;
+    const slug = context.propsValue.slug
+    const video = context.propsValue.video
     return await saveContent(context.auth, 'video', slug, {
       nodecode: true,
       video: video,
-    });
+    })
   },
-});
+})

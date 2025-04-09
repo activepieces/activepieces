@@ -1,10 +1,6 @@
-import {
-  OAuth2PropertyValue,
-  Property,
-  DynamicPropsValue,
-} from '@activepieces/pieces-framework';
-import { Client } from '@notionhq/client';
-import { NotionFieldMapping } from './models';
+import { DynamicPropsValue, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework'
+import { Client } from '@notionhq/client'
+import { NotionFieldMapping } from './models'
 
 export const notionCommon = {
   baseUrl: 'https://api.notion.com/v1',
@@ -19,18 +15,18 @@ export const notionCommon = {
           disabled: true,
           placeholder: 'Please connect your Notion account first',
           options: [],
-        };
+        }
       }
       const notion = new Client({
         auth: (auth as OAuth2PropertyValue).access_token,
         notionVersion: '2022-02-22',
-      });
+      })
       const databases = await notion.search({
         filter: {
           property: 'object',
           value: 'database',
         },
-      });
+      })
       return {
         placeholder: 'Select a database',
         options: databases.results
@@ -39,7 +35,7 @@ export const notionCommon = {
             label: database.title?.[0]?.plain_text ?? 'Unknown title',
             value: database.id,
           })),
-      };
+      }
     },
   }),
   database_item_id: Property.Dropdown({
@@ -51,29 +47,28 @@ export const notionCommon = {
       if (!auth || !database_id) {
         return {
           disabled: true,
-          placeholder:
-            'Please connect your Notion account first and select database',
+          placeholder: 'Please connect your Notion account first and select database',
           options: [],
-        };
+        }
       }
       const notion = new Client({
         auth: (auth as OAuth2PropertyValue).access_token,
         notionVersion: '2022-02-22',
-      });
+      })
       const { results } = await notion.databases.query({
         database_id: database_id as string,
         filter_properties: ['title'],
-      });
+      })
       return {
         disabled: false,
         options: results.map((item: any) => {
-          const property: any = Object.values(item.properties)[0];
+          const property: any = Object.values(item.properties)[0]
           return {
             label: property.title[0]?.plain_text ?? 'No Title',
             value: item.id,
-          };
+          }
         }),
-      };
+      }
     },
   }),
   databaseFields: Property.DynamicProperties({
@@ -84,22 +79,21 @@ export const notionCommon = {
       if (!auth || !database_id) {
         return {
           disabled: true,
-          placeholder:
-            'Please connect your Notion account first and select database',
+          placeholder: 'Please connect your Notion account first and select database',
           options: [],
-        };
+        }
       }
-      const fields: DynamicPropsValue = {};
+      const fields: DynamicPropsValue = {}
       try {
         const notion = new Client({
           auth: (auth as OAuth2PropertyValue).access_token,
           notionVersion: '2022-02-22',
-        });
+        })
         const { properties } = await notion.databases.retrieve({
           database_id: database_id as unknown as string,
-        });
+        })
         for (const key in properties) {
-          const property = properties[key];
+          const property = properties[key]
           if (
             [
               'rollup',
@@ -115,36 +109,33 @@ export const notionCommon = {
               'last_edited_time',
             ].includes(property.type)
           ) {
-            continue;
+            continue
           }
           if (property.type === 'people') {
-            const { results } = await notion.users.list({ page_size: 100 });
+            const { results } = await notion.users.list({ page_size: 100 })
             fields[property.name] = Property.StaticMultiSelectDropdown({
               displayName: property.name,
               required: false,
               options: {
                 disabled: false,
                 options: results
-                  .filter(
-                    (user) => user.type === 'person' && user.name !== null
-                  )
+                  .filter((user) => user.type === 'person' && user.name !== null)
                   .map((option: { id: string; name: any }) => {
                     return {
                       label: option.name,
                       value: option.id,
-                    };
+                    }
                   }),
               },
-            });
+            })
           } else {
-            fields[property.name] =
-              NotionFieldMapping[property.type].buildActivepieceType(property);
+            fields[property.name] = NotionFieldMapping[property.type].buildActivepieceType(property)
           }
         }
       } catch (e) {
-        console.debug(e);
+        console.debug(e)
       }
-      return fields;
+      return fields
     },
   }),
   filterDatabaseFields: Property.DynamicProperties({
@@ -155,23 +146,22 @@ export const notionCommon = {
       if (!auth || !database_id) {
         return {
           disabled: true,
-          placeholder:
-            'Please connect your Notion account first and select database',
+          placeholder: 'Please connect your Notion account first and select database',
           options: [],
-        };
+        }
       }
-      const fields: DynamicPropsValue = {};
+      const fields: DynamicPropsValue = {}
       try {
         const notion = new Client({
           auth: (auth as OAuth2PropertyValue).access_token,
           notionVersion: '2022-02-22',
-        });
+        })
         const { properties } = await notion.databases.retrieve({
           database_id: database_id as unknown as string,
-        });
+        })
 
         for (const key in properties) {
-          const property = properties[key];
+          const property = properties[key]
           if (
             [
               'rollup',
@@ -190,23 +180,21 @@ export const notionCommon = {
               'last_edited_time',
             ].includes(property.type)
           ) {
-            continue;
+            continue
           }
-          fields[property.name] =
-            NotionFieldMapping[property.type].buildActivepieceType(property);
+          fields[property.name] = NotionFieldMapping[property.type].buildActivepieceType(property)
         }
       } catch (e) {
-        console.debug(e);
+        console.debug(e)
       }
-      return fields;
+      return fields
     },
   }),
 
   page: Property.Dropdown<string>({
     displayName: 'Page',
     required: true,
-    description:
-      'Select the page you want to use. Only your most recently edited 100 pages will appear.',
+    description: 'Select the page you want to use. Only your most recently edited 100 pages will appear.',
     refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
@@ -214,44 +202,42 @@ export const notionCommon = {
           disabled: true,
           placeholder: 'Please connect your Notion account first',
           options: [],
-        };
+        }
       }
-      const pages = await getPages(auth as OAuth2PropertyValue);
+      const pages = await getPages(auth as OAuth2PropertyValue)
 
       return {
         placeholder: 'Select a page',
         options: pages.map((page: any) => ({
           label:
-            page.properties.Name?.title[0]?.plain_text ??
-            page.properties.title?.title[0]?.text?.content ??
-            'No Title',
+            page.properties.Name?.title[0]?.plain_text ?? page.properties.title?.title[0]?.text?.content ?? 'No Title',
           value: page.id,
         })),
-      };
+      }
     },
   }),
-};
+}
 
 export async function getPages(
   auth: OAuth2PropertyValue,
   search?: {
-    editedAfter?: Date;
-    createdAfter?: Date;
+    editedAfter?: Date
+    createdAfter?: Date
   },
   sort?: {
-    property: string;
-    direction: 'ascending' | 'descending';
-  }
+    property: string
+    direction: 'ascending' | 'descending'
+  },
 ): Promise<any[]> {
   const notion = new Client({
     auth: auth.access_token,
     notionVersion: '2022-02-22',
-  });
+  })
 
   let filter: any = {
     property: 'object',
     value: 'page',
-  };
+  }
   if (search?.editedAfter)
     filter = {
       and: [
@@ -266,7 +252,7 @@ export async function getPages(
           },
         },
       ],
-    };
+    }
   if (search?.createdAfter)
     filter = {
       and: [
@@ -281,16 +267,16 @@ export async function getPages(
           },
         },
       ],
-    };
+    }
 
   const sortObj: any = {
     direction: sort?.direction ?? 'descending',
     timestamp: sort?.property ?? 'last_edited_time',
-  };
+  }
 
   const pages = await notion.search({
     filter: filter,
     sort: sortObj,
-  });
-  return pages.results as any[];
+  })
+  return pages.results as any[]
 }

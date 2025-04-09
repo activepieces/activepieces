@@ -1,13 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { outlookCalendarAuth } from '../..';
-import { outlookCalendarCommon } from '../common/common';
-import dayjs from 'dayjs';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { outlookCalendarAuth } from '../..'
+import { outlookCalendarCommon } from '../common/common'
 
 export const createEventAction = createAction({
   auth: outlookCalendarAuth,
@@ -36,11 +31,9 @@ export const createEventAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const startDateTime = dayjs(propsValue.start).format('YYYY-MM-DDTHH:mm:ss');
-    const endTime = propsValue.end
-      ? propsValue.end
-      : dayjs(startDateTime).add(30, 'm');
-    const endDateTime = dayjs(endTime).format('YYYY-MM-DDTHH:mm:ss');
+    const startDateTime = dayjs(propsValue.start).format('YYYY-MM-DDTHH:mm:ss')
+    const endTime = propsValue.end ? propsValue.end : dayjs(startDateTime).add(30, 'm')
+    const endDateTime = dayjs(endTime).format('YYYY-MM-DDTHH:mm:ss')
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -64,10 +57,10 @@ export const createEventAction = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: auth['access_token'],
       },
-    };
+    }
 
-    const response = await httpClient.sendRequest(request);
+    const response = await httpClient.sendRequest(request)
 
-    return response.body;
+    return response.body
   },
-});
+})

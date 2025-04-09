@@ -1,6 +1,6 @@
-import { slackAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { WebClient } from '@slack/web-api';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { WebClient } from '@slack/web-api'
+import { slackAuth } from '../../'
 
 export const createChannelAction = createAction({
   auth: slackAuth,
@@ -19,10 +19,10 @@ export const createChannelAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = new WebClient(auth.access_token);
+    const client = new WebClient(auth.access_token)
     return await client.conversations.create({
       name: propsValue.channelName,
       is_private: propsValue.isPrivate,
-    });
+    })
   },
-});
+})

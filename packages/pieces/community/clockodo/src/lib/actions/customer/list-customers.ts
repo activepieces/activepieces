@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { makeClient } from '../../common';
-import { CustomerListFilter } from '../../common/models/customer';
-import { clockodoAuth } from '../../../';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { clockodoAuth } from '../../../'
+import { makeClient } from '../../common'
+import { CustomerListFilter } from '../../common/models/customer'
 
 export default createAction({
   auth: clockodoAuth,
@@ -22,24 +22,24 @@ export default createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth)
     const filter: CustomerListFilter = {
       active: propsValue.active_filter,
-    };
+    }
     if (propsValue.page !== undefined) {
       const res = await client.listCustomers({
         page: propsValue.page,
         filter,
-      });
+      })
       return {
         pagination: res.paging,
         customers: res.customers,
-      };
+      }
     } else {
-      const customers = await client.listAllCustomers(filter);
+      const customers = await client.listAllCustomers(filter)
       return {
         customers,
-      };
+      }
     }
   },
-});
+})

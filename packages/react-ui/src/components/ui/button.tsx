@@ -1,28 +1,23 @@
-import { Slot } from '@radix-ui/react-slot';
-import { cva, type VariantProps } from 'class-variance-authority';
-import * as React from 'react';
+import { Slot } from '@radix-ui/react-slot'
+import { type VariantProps, cva } from 'class-variance-authority'
+import * as React from 'react'
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils'
 
-import { Shortcut } from './shortcut';
-import { LoadingSpinner } from './spinner';
+import { Shortcut } from './shortcut'
+import { LoadingSpinner } from './spinner'
 
 const buttonVariants = cva(
   'ring-offset-background inline-flex items-center justify-center whitespace-nowrap rounded-sm text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
   {
     variants: {
       variant: {
-        default:
-          'bg-primary stroke-background text-primary-foreground enabled:hover:bg-primary/90',
+        default: 'bg-primary stroke-background text-primary-foreground enabled:hover:bg-primary/90',
         basic: 'text-primary underline-offset-4 enabled:hover:bg-accent',
-        destructive:
-          'bg-destructive text-background enabled:hover:bg-destructive/90',
-        outline:
-          'border-input bg-background enabled:hover:bg-accent enabled:hover:text-accent-foreground border',
-        secondary:
-          'bg-secondary text-secondary-foreground enabled:hover:bg-secondary/80',
-        ghost:
-          'enabled:hover:bg-accent enabled:hover:text-accent-foreground focus-visible:ring-0',
+        destructive: 'bg-destructive text-background enabled:hover:bg-destructive/90',
+        outline: 'border-input bg-background enabled:hover:bg-accent enabled:hover:text-accent-foreground border',
+        secondary: 'bg-secondary text-secondary-foreground enabled:hover:bg-secondary/80',
+        ghost: 'enabled:hover:bg-accent enabled:hover:text-accent-foreground focus-visible:ring-0',
         link: 'text-primary underline-offset-4 enabled:hover:underline',
         transparent: 'text-primary enabled:hover:bg-transparent',
         'outline-primary':
@@ -41,15 +36,15 @@ const buttonVariants = cva(
       size: 'default',
     },
   },
-);
+)
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
-  loading?: boolean;
-  keyboardShortcut?: string;
-  onKeyboardShortcut?: () => void;
+  asChild?: boolean
+  loading?: boolean
+  keyboardShortcut?: string
+  onKeyboardShortcut?: () => void
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -68,34 +63,34 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref,
   ) => {
-    const Comp = asChild ? Slot : 'button';
+    const Comp = asChild ? Slot : 'button'
 
-    const isMac = /(Mac)/i.test(navigator.userAgent);
-    const isEscape = keyboardShortcut?.toLocaleLowerCase() === 'esc';
+    const isMac = /(Mac)/i.test(navigator.userAgent)
+    const isEscape = keyboardShortcut?.toLocaleLowerCase() === 'esc'
     React.useEffect(() => {
       if (keyboardShortcut) {
-        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('keydown', handleKeyDown)
       }
 
       return () => {
-        document.removeEventListener('keydown', handleKeyDown);
-      };
-    }, [keyboardShortcut, disabled]);
+        document.removeEventListener('keydown', handleKeyDown)
+      }
+    }, [keyboardShortcut, disabled])
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      const isEscapePressed = event.key === 'Escape' && isEscape;
+      const isEscapePressed = event.key === 'Escape' && isEscape
       const isCtrlWithShortcut =
         keyboardShortcut &&
         event.key === keyboardShortcut.toLocaleLowerCase() &&
-        (isMac ? event.metaKey : event.ctrlKey);
+        (isMac ? event.metaKey : event.ctrlKey)
       if (isEscapePressed || isCtrlWithShortcut) {
-        event.preventDefault();
-        event.stopPropagation();
+        event.preventDefault()
+        event.stopPropagation()
         if (onKeyboardShortcut && !disabled) {
-          onKeyboardShortcut();
+          onKeyboardShortcut()
         }
       }
-    };
+    }
 
     return (
       <Comp
@@ -104,15 +99,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || loading}
         {...props}
         onClick={(e) => {
-          loading ? e.stopPropagation() : props.onClick && props.onClick(e);
+          loading ? e.stopPropagation() : props.onClick && props.onClick(e)
         }}
       >
         {loading ? (
-          <LoadingSpinner
-            className={
-              variant === 'default' ? 'stroke-background' : 'stroke-foreground'
-            }
-          />
+          <LoadingSpinner className={variant === 'default' ? 'stroke-background' : 'stroke-foreground'} />
         ) : (
           <>
             {keyboardShortcut && (
@@ -125,9 +116,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           </>
         )}
       </Comp>
-    );
+    )
   },
-);
-Button.displayName = 'Button';
+)
+Button.displayName = 'Button'
 
-export { Button, buttonVariants };
+export { Button, buttonVariants }

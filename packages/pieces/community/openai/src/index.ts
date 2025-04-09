@@ -4,18 +4,18 @@ import {
   HttpMethod,
   createCustomApiCallAction,
   httpClient,
-} from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { askAssistant } from './lib/actions/ask-assistant';
-import { generateImage } from './lib/actions/generate-image';
-import { askOpenAI } from './lib/actions/send-prompt';
-import { textToSpeech } from './lib/actions/text-to-speech';
-import { transcribeAction } from './lib/actions/transcriptions';
-import { translateAction } from './lib/actions/translation';
-import { visionPrompt } from './lib/actions/vision-prompt';
-import { baseUrl } from './lib/common/common';
-import { extractStructuredDataAction } from './lib/actions/extract-structure-data.action';
+} from '@activepieces/pieces-common'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { askAssistant } from './lib/actions/ask-assistant'
+import { extractStructuredDataAction } from './lib/actions/extract-structure-data.action'
+import { generateImage } from './lib/actions/generate-image'
+import { askOpenAI } from './lib/actions/send-prompt'
+import { textToSpeech } from './lib/actions/text-to-speech'
+import { transcribeAction } from './lib/actions/transcriptions'
+import { translateAction } from './lib/actions/translation'
+import { visionPrompt } from './lib/actions/vision-prompt'
+import { baseUrl } from './lib/common/common'
 
 export const openaiAuth = PieceAuth.SecretText({
   description: AI_PROVIDERS_MAKRDOWN.openai,
@@ -24,7 +24,7 @@ export const openaiAuth = PieceAuth.SecretText({
   validate: async (auth) => {
     try {
       await httpClient.sendRequest<{
-        data: { id: string }[];
+        data: { id: string }[]
       }>({
         url: `${baseUrl}/models`,
         method: HttpMethod.GET,
@@ -32,18 +32,18 @@ export const openaiAuth = PieceAuth.SecretText({
           type: AuthenticationType.BEARER_TOKEN,
           token: auth.auth as string,
         },
-      });
+      })
       return {
         valid: true,
-      };
+      }
     } catch (e) {
       return {
         valid: false,
         error: 'Invalid API key',
-      };
+      }
     }
   },
-});
+})
 
 export const openai = createPiece({
   displayName: 'OpenAI',
@@ -67,7 +67,7 @@ export const openai = createPiece({
       authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${auth}`,
-        };
+        }
       },
     }),
   ],
@@ -83,4 +83,4 @@ export const openai = createPiece({
     'abuaboud',
   ],
   triggers: [],
-});
+})

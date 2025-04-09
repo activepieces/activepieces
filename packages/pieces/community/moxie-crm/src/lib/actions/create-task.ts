@@ -1,10 +1,6 @@
-import {
-  Property,
-  createAction,
-  PiecePropValueSchema,
-} from '@activepieces/pieces-framework';
-import { makeClient, reformatDate } from '../common';
-import { moxieCRMAuth } from '../..';
+import { PiecePropValueSchema, Property, createAction } from '@activepieces/pieces-framework'
+import { moxieCRMAuth } from '../..'
+import { makeClient, reformatDate } from '../common'
 
 export const moxieCreateTaskAction = createAction({
   auth: moxieCRMAuth,
@@ -27,22 +23,20 @@ export const moxieCreateTaskAction = createAction({
             disabled: true,
             placeholder: 'Connect your account first',
             options: [],
-          };
+          }
         }
 
-        const client = await makeClient(
-          auth as PiecePropValueSchema<typeof moxieCRMAuth>
-        );
-        const clients = await client.listClients();
+        const client = await makeClient(auth as PiecePropValueSchema<typeof moxieCRMAuth>)
+        const clients = await client.listClients()
         return {
           disabled: false,
           options: clients.map((client) => {
             return {
               label: client.name,
               value: client.name,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     projectName: Property.Dropdown({
@@ -56,21 +50,19 @@ export const moxieCreateTaskAction = createAction({
             disabled: true,
             placeholder: 'Connect your account first and select client',
             options: [],
-          };
+          }
         }
-        const client = await makeClient(
-          auth as PiecePropValueSchema<typeof moxieCRMAuth>
-        );
-        const projects = await client.searchProjects(clientName as string);
+        const client = await makeClient(auth as PiecePropValueSchema<typeof moxieCRMAuth>)
+        const projects = await client.searchProjects(clientName as string)
         return {
           disabled: false,
           options: projects.map((project) => {
             return {
               label: project.name,
               value: project.name,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     status: Property.Dropdown({
@@ -84,21 +76,19 @@ export const moxieCreateTaskAction = createAction({
             disabled: true,
             placeholder: 'Connect your account first',
             options: [],
-          };
+          }
         }
-        const client = await makeClient(
-          auth as PiecePropValueSchema<typeof moxieCRMAuth>
-        );
-        const stages = await client.listProjectTaskStages();
+        const client = await makeClient(auth as PiecePropValueSchema<typeof moxieCRMAuth>)
+        const stages = await client.listProjectTaskStages()
         return {
           disabled: false,
           options: stages.map((stage) => {
             return {
               label: stage.label,
               value: stage.label,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     description: Property.LongText({
@@ -136,15 +126,13 @@ export const moxieCreateTaskAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { name, clientName, projectName, status, description, priority } =
-      propsValue;
-    const dueDate = reformatDate(propsValue.dueDate) as string;
-    const startDate = reformatDate(propsValue.startDate) as string;
-    const tasks = (propsValue.tasks as string[]) || [];
-    const assignedTo = (propsValue.assignedTo as string[]) || [];
-    const customValues =
-      (propsValue.customValues as Record<string, string>) || {};
-    const client = await makeClient(auth);
+    const { name, clientName, projectName, status, description, priority } = propsValue
+    const dueDate = reformatDate(propsValue.dueDate) as string
+    const startDate = reformatDate(propsValue.startDate) as string
+    const tasks = (propsValue.tasks as string[]) || []
+    const assignedTo = (propsValue.assignedTo as string[]) || []
+    const customValues = (propsValue.customValues as Record<string, string>) || {}
+    const client = await makeClient(auth)
     return await client.createTask({
       name,
       clientName,
@@ -157,6 +145,6 @@ export const moxieCreateTaskAction = createAction({
       tasks,
       assignedTo,
       customValues,
-    });
+    })
   },
-});
+})

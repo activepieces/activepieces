@@ -1,7 +1,7 @@
-import { baseUrl, getEvents } from '../common';
-import { sessionAuth } from '../..';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { sessionAuth } from '../..'
+import { baseUrl, getEvents } from '../common'
 
 export const publishEvent = createAction({
   auth: sessionAuth,
@@ -19,18 +19,18 @@ export const publishEvent = createAction({
           return {
             disabled: true,
             options: [],
-          };
+          }
         }
 
-        const events = await getEvents(auth as string);
+        const events = await getEvents(auth as string)
         return {
           options: events.map((event) => {
             return {
               label: event.session.name,
               value: event.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   },
@@ -42,7 +42,7 @@ export const publishEvent = createAction({
       headers: {
         'x-api-key': auth,
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

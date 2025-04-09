@@ -1,10 +1,5 @@
-import {
-  AI,
-  AIChatMessage,
-  AIChatRole,
-  aiProps,
-} from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { AI, AIChatMessage, AIChatRole, aiProps } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
 export const askAi = createAction({
   name: 'askAi',
@@ -35,22 +30,19 @@ export const askAi = createAction({
     }),
   },
   async run(context) {
+    const ai = AI({ provider: context.propsValue.provider, server: context.server })
 
-    const ai = AI({ provider: context.propsValue.provider, server: context.server });
-
-    const storage = context.store;
+    const storage = context.store
 
     const conversationKey = context.propsValue.conversationKey
       ? `ask-ai-conversation:${context.propsValue.conversationKey}`
-      : null;
+      : null
 
-    let conversation: { messages: AIChatMessage[] } | undefined = undefined;
+    let conversation: { messages: AIChatMessage[] } | undefined = undefined
     if (conversationKey) {
-      conversation = (await storage.get<{ messages: AIChatMessage[] }>(
-        conversationKey
-      )) ?? { messages: [] };
+      conversation = (await storage.get<{ messages: AIChatMessage[] }>(conversationKey)) ?? { messages: [] }
       if (!conversation) {
-        await storage.put(conversationKey, { messages: [] });
+        await storage.put(conversationKey, { messages: [] })
       }
     }
 
@@ -67,22 +59,22 @@ export const askAi = createAction({
         : [{ role: AIChatRole.USER, content: context.propsValue.prompt }],
       creativity: context.propsValue.creativity,
       maxTokens: context.propsValue.maxTokens,
-    });
+    })
 
     conversation?.messages.push({
       role: AIChatRole.USER,
       content: context.propsValue.prompt,
-    });
+    })
 
     conversation?.messages.push({
       role: AIChatRole.ASSISTANT,
       content: response.choices[0].content,
-    });
+    })
 
     if (conversationKey) {
-      await storage.put(conversationKey, conversation);
+      await storage.put(conversationKey, conversation)
     }
 
-    return response.choices[0].content;
+    return response.choices[0].content
   },
-});
+})

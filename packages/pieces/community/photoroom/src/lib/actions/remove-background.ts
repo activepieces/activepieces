@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { photoroomAuth } from '../..';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { photoroomAuth } from '../..'
 
 export const removeBackground = createAction({
   name: 'removeBackground',
@@ -15,8 +15,8 @@ export const removeBackground = createAction({
     }),
   },
   async run({ auth, propsValue, files }) {
-    const form = new FormData();
-    form.append('image_file', new Blob([propsValue.file.data]));
+    const form = new FormData()
+    form.append('image_file', new Blob([propsValue.file.data]))
     const response = await httpClient.sendRequest({
       url: `https://sdk.photoroom.com/v1/segment`,
       method: HttpMethod.POST,
@@ -25,14 +25,14 @@ export const removeBackground = createAction({
         'Content-Type': 'multipart/form-data',
       },
       body: form,
-    });
+    })
     const imageUrl = await files.write({
       fileName: propsValue.filename,
       data: Buffer.from(response.body.result_b64, 'base64'),
-    });
+    })
     return {
       fileName: propsValue.filename,
       url: imageUrl,
-    };
+    }
   },
-});
+})

@@ -1,173 +1,155 @@
-import { Property, ApFile } from '@activepieces/pieces-framework';
-import { grpc } from 'clarifai-nodejs-grpc';
+import { promisify } from 'util'
+import { ApFile, Property } from '@activepieces/pieces-framework'
+import { grpc } from 'clarifai-nodejs-grpc'
 import {
-  Model,
-  Data,
-  Input,
-  UserAppIDSet,
-  Image,
-  Video,
   Audio,
+  Data,
+  Image,
+  Input,
+  Model,
   Text,
-} from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb';
-import { V2Client } from 'clarifai-nodejs-grpc/proto/clarifai/api/service_grpc_pb';
+  UserAppIDSet,
+  Video,
+} from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb'
+import { V2Client } from 'clarifai-nodejs-grpc/proto/clarifai/api/service_grpc_pb'
 import {
-  MultiOutputResponse,
-  PostModelOutputsRequest,
   MultiInputResponse,
+  MultiOutputResponse,
   PostInputsRequest,
-  PostWorkflowResultsResponse,
+  PostModelOutputsRequest,
   PostWorkflowResultsRequest,
-} from 'clarifai-nodejs-grpc/proto/clarifai/api/service_pb';
-import { promisify } from 'util';
+  PostWorkflowResultsResponse,
+} from 'clarifai-nodejs-grpc/proto/clarifai/api/service_pb'
 
 function initClarifaiClient() {
-  const clarifai = new V2Client(
-    'api.clarifai.com',
-    grpc.ChannelCredentials.createSsl()
-  );
-  return clarifai;
+  const clarifai = new V2Client('api.clarifai.com', grpc.ChannelCredentials.createSsl())
+  return clarifai
 }
 
-export const clarifaiClient = initClarifaiClient();
+export const clarifaiClient = initClarifaiClient()
 
 export interface CallModelRequest {
-  auth: string;
-  modelUrl: string;
-  input: Input;
+  auth: string
+  modelUrl: string
+  input: Input
 }
 
 export interface CallWorkflowRequest {
-  auth: string;
-  workflowUrl: string;
-  input: Input;
+  auth: string
+  workflowUrl: string
+  input: Input
 }
 
 export interface CallPostInputsRequest {
-  auth: string;
-  userId: string;
-  appId: string;
-  input: Input;
+  auth: string
+  userId: string
+  appId: string
+  input: Input
 }
 
 export function callClarifaiModel({ auth, modelUrl, input }: CallModelRequest) {
-  const [userId, appId, modelId, versionId] = parseEntityUrl(modelUrl);
+  const [userId, appId, modelId, versionId] = parseEntityUrl(modelUrl)
 
-  const req = new PostModelOutputsRequest();
-  req.setUserAppId(userAppIdSet(userId, appId));
-  req.setModelId(modelId);
+  const req = new PostModelOutputsRequest()
+  req.setUserAppId(userAppIdSet(userId, appId))
+  req.setModelId(modelId)
   if (versionId) {
-    req.setVersionId(versionId);
+    req.setVersionId(versionId)
   }
-  req.setInputsList([input]);
+  req.setInputsList([input])
 
-  const metadata = authMetadata(auth);
+  const metadata = authMetadata(auth)
   // TODO: we should really be using the async version of this, circle back with clarifai team to see if we can
   // tweak the protoc settings to build a promise-compatible version of our API client.
-  const postModelOutputs = promisify<
-    PostModelOutputsRequest,
-    grpc.Metadata,
-    MultiOutputResponse
-  >(clarifaiClient.postModelOutputs.bind(clarifaiClient));
-  return postModelOutputs(req, metadata);
+  const postModelOutputs = promisify<PostModelOutputsRequest, grpc.Metadata, MultiOutputResponse>(
+    clarifaiClient.postModelOutputs.bind(clarifaiClient),
+  )
+  return postModelOutputs(req, metadata)
 }
 
-export function callClarifaiWorkflow({
-  auth,
-  workflowUrl,
-  input,
-}: CallWorkflowRequest) {
-  const [userId, appId, workflowId, versionId] = parseEntityUrl(workflowUrl);
+export function callClarifaiWorkflow({ auth, workflowUrl, input }: CallWorkflowRequest) {
+  const [userId, appId, workflowId, versionId] = parseEntityUrl(workflowUrl)
 
-  const req = new PostWorkflowResultsRequest();
-  req.setUserAppId(userAppIdSet(userId, appId));
-  req.setWorkflowId(workflowId);
+  const req = new PostWorkflowResultsRequest()
+  req.setUserAppId(userAppIdSet(userId, appId))
+  req.setWorkflowId(workflowId)
   if (versionId) {
-    req.setVersionId(versionId);
+    req.setVersionId(versionId)
   }
-  req.setInputsList([input]);
+  req.setInputsList([input])
 
-  const metadata = authMetadata(auth);
+  const metadata = authMetadata(auth)
   // TODO: we should really be using the async version of this, circle back with clarifai team to see if we can
   // tweak the protoc settings to build a promise-compatible version of our API client.
-  const postWorkflowResults = promisify<
-    PostWorkflowResultsRequest,
-    grpc.Metadata,
-    PostWorkflowResultsResponse
-  >(clarifaiClient.postWorkflowResults.bind(clarifaiClient));
-  return postWorkflowResults(req, metadata);
+  const postWorkflowResults = promisify<PostWorkflowResultsRequest, grpc.Metadata, PostWorkflowResultsResponse>(
+    clarifaiClient.postWorkflowResults.bind(clarifaiClient),
+  )
+  return postWorkflowResults(req, metadata)
 }
 
-export function callPostInputs({
-  auth,
-  userId,
-  appId,
-  input,
-}: CallPostInputsRequest) {
-  const req = new PostInputsRequest();
-  req.setUserAppId(userAppIdSet(userId, appId));
-  req.setInputsList([input]);
+export function callPostInputs({ auth, userId, appId, input }: CallPostInputsRequest) {
+  const req = new PostInputsRequest()
+  req.setUserAppId(userAppIdSet(userId, appId))
+  req.setInputsList([input])
 
-  const metadata = authMetadata(auth);
+  const metadata = authMetadata(auth)
   // TODO: we should really be using the async version of this, circle back with clarifai team to see if we can
   // tweak the protoc settings to build a promise-compatible version of our API client.
-  const postInputs = promisify<
-    PostInputsRequest,
-    grpc.Metadata,
-    MultiInputResponse
-  >(clarifaiClient.postInputs.bind(clarifaiClient));
-  return postInputs(req, metadata);
+  const postInputs = promisify<PostInputsRequest, grpc.Metadata, MultiInputResponse>(
+    clarifaiClient.postInputs.bind(clarifaiClient),
+  )
+  return postInputs(req, metadata)
 }
 
 export function fileToInput(file: ApFile) {
-  const input = new Input();
-  const inputData = new Data();
+  const input = new Input()
+  const inputData = new Data()
 
-  const base64 = file.base64;
-  const mimeType = detectMimeType(base64, file.filename);
+  const base64 = file.base64
+  const mimeType = detectMimeType(base64, file.filename)
   if (mimeType.startsWith('image')) {
-    const dataImage = new Image();
-    dataImage.setBase64(base64);
-    inputData.setImage(dataImage);
+    const dataImage = new Image()
+    dataImage.setBase64(base64)
+    inputData.setImage(dataImage)
   } else if (mimeType.startsWith('video')) {
-    const dataVideo = new Video();
-    dataVideo.setBase64(base64);
-    inputData.setVideo(dataVideo);
+    const dataVideo = new Video()
+    dataVideo.setBase64(base64)
+    inputData.setVideo(dataVideo)
   } else if (mimeType.startsWith('audio')) {
-    const dataAudio = new Audio();
-    dataAudio.setBase64(base64);
-    inputData.setAudio(dataAudio);
+    const dataAudio = new Audio()
+    dataAudio.setBase64(base64)
+    inputData.setAudio(dataAudio)
   } else {
     // sending the rest of text may not always work, but it's worth a shot
-    const dataText = new Text();
-    dataText.setRaw(base64);
-    inputData.setText(dataText);
+    const dataText = new Text()
+    dataText.setRaw(base64)
+    inputData.setText(dataText)
   }
-  input.setData(inputData);
-  return input;
+  input.setData(inputData)
+  return input
 }
 
 export function textToInput(text: string) {
-  const input = new Input();
-  const inputData = new Data();
-  const dataText = new Text();
-  dataText.setRaw(text);
-  inputData.setText(dataText);
-  input.setData(inputData);
-  return input;
+  const input = new Input()
+  const inputData = new Data()
+  const dataText = new Text()
+  dataText.setRaw(text)
+  inputData.setText(dataText)
+  input.setData(inputData)
+  return input
 }
 
 function userAppIdSet(userId: string, appId: string) {
-  const set = new UserAppIDSet();
-  set.setUserId(userId);
-  set.setAppId(appId);
-  return set;
+  const set = new UserAppIDSet()
+  set.setUserId(userId)
+  set.setAppId(appId)
+  return set
 }
 
 function authMetadata(auth: string) {
-  const metadata = new grpc.Metadata();
-  metadata.set('authorization', 'Key ' + auth);
-  return metadata;
+  const metadata = new grpc.Metadata()
+  metadata.set('authorization', 'Key ' + auth)
+  return metadata
 }
 
 export const CommonClarifaiProps = {
@@ -183,49 +165,45 @@ export const CommonClarifaiProps = {
     displayName: 'Workflow URL',
     required: true,
   }),
-};
-
-function parseEntityUrl(entityUrl: string): [string, string, string, string] {
-  const url = new URL(entityUrl);
-  const parts = url.pathname.split('/');
-  let version = '';
-  if (parts.length === 7 && parts[5] === 'versions') {
-    version = parts[6];
-  }
-  return [parts[1], parts[2], parts[4], version];
 }
 
-export function removeListFromPropertyNames(
-  obj: Record<string, unknown>
-): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
+function parseEntityUrl(entityUrl: string): [string, string, string, string] {
+  const url = new URL(entityUrl)
+  const parts = url.pathname.split('/')
+  let version = ''
+  if (parts.length === 7 && parts[5] === 'versions') {
+    version = parts[6]
+  }
+  return [parts[1], parts[2], parts[4], version]
+}
+
+export function removeListFromPropertyNames(obj: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(obj)) {
     if (key.endsWith('List') && Array.isArray(value)) {
       if (value.length === 0) {
         // remove empty lists by default
-        continue;
+        continue
       }
       // remove 'List' and recurse on every item in the array
       result[key.slice(0, -4)] = value.map((item) => {
         // if the item is an object, recurse on it
         if (Object.prototype.toString.call(item) === '[object Object]') {
-          return removeListFromPropertyNames(item);
+          return removeListFromPropertyNames(item)
         }
         // otherwise, return the item as-is
-        return item;
-      });
+        return item
+      })
     } else {
       // if the item is an object, recurse on it
       if (Object.prototype.toString.call(value) === '[object Object]') {
-        result[key] = removeListFromPropertyNames(
-          value as Record<string, unknown>
-        );
+        result[key] = removeListFromPropertyNames(value as Record<string, unknown>)
       } else {
-        result[key] = value;
+        result[key] = value
       }
     }
   }
-  return result;
+  return result
 }
 
 /**
@@ -236,14 +214,14 @@ export function removeListFromPropertyNames(
  * @returns {String}
  */
 function detectMimeType(base64String: string, fileName: string | undefined) {
-  let ext = 'undefined';
+  let ext = 'undefined'
   if (fileName === undefined || fileName === null || fileName === '') {
-    ext = 'bin';
+    ext = 'bin'
   } else {
-    ext = fileName.substring(fileName.lastIndexOf('.') + 1);
-    if (ext === undefined || ext === null || ext === '') ext = 'bin';
+    ext = fileName.substring(fileName.lastIndexOf('.') + 1)
+    if (ext === undefined || ext === null || ext === '') ext = 'bin'
   }
-  ext = ext.toLowerCase();
+  ext = ext.toLowerCase()
   // This is not an exhaustive list by any stretch.
   const signatures = {
     JVBERi0: 'application/pdf',
@@ -254,21 +232,21 @@ function detectMimeType(base64String: string, fileName: string | undefined) {
     '/9j/': 'image/jpg',
     UEs: 'application/vnd.openxmlformats-officedocument.',
     PK: 'application/zip',
-  };
+  }
   for (const [key, value] of Object.entries(signatures)) {
-    let modiifedValue = value;
+    let modiifedValue = value
     if (base64String.indexOf(key) === 0) {
       // var x = signatures[s];
       // if an office file format
       if (ext.length > 3 && ext.substring(0, 3) === 'ppt') {
-        modiifedValue += 'presentationml.presentation';
+        modiifedValue += 'presentationml.presentation'
       } else if (ext.length > 3 && ext.substring(0, 3) === 'xls') {
-        modiifedValue += 'spreadsheetml.sheet';
+        modiifedValue += 'spreadsheetml.sheet'
       } else if (ext.length > 3 && ext.substring(0, 3) === 'doc') {
-        modiifedValue += 'wordprocessingml.document';
+        modiifedValue += 'wordprocessingml.document'
       }
       // return
-      return modiifedValue;
+      return modiifedValue
     }
   }
   // if we are here we can only go off the extensions
@@ -361,75 +339,73 @@ function detectMimeType(base64String: string, fileName: string | undefined) {
     xml: 'text/xml',
     xyz: 'chemical/x-pdb',
     zip: 'application/zip',
-  };
+  }
   for (const [key, value] of Object.entries(extensions)) {
     if (ext.indexOf(key) === 0) {
-      return value;
+      return value
     }
   }
   // if we are here - not sure what type this is
-  return 'unknown';
+  return 'unknown'
 }
 
 export function cleanMultiOutputResponse(outputs: MultiOutputResponse) {
   if (outputs.getOutputsList().length === 0) {
-    throw new Error('No outputs found from Clarifai');
+    throw new Error('No outputs found from Clarifai')
   }
-  const data = outputs.getOutputsList()[0].getData();
+  const data = outputs.getOutputsList()[0].getData()
   if (data == undefined) {
-    throw new Error('No data found from Clarifai');
+    throw new Error('No data found from Clarifai')
   } else {
-    const result = Data.toObject(false, data);
-    return removeListFromPropertyNames(result);
+    const result = Data.toObject(false, data)
+    return removeListFromPropertyNames(result)
   }
 }
 
 export function cleanMultiInputResponse(inputs: MultiInputResponse) {
   if (inputs.getInputsList().length === 0) {
-    throw new Error('No inputs found from Clarifai');
+    throw new Error('No inputs found from Clarifai')
   }
-  const data = inputs.getInputsList()[0].getData();
+  const data = inputs.getInputsList()[0].getData()
   if (data == undefined) {
-    throw new Error('No data found from Clarifai');
+    throw new Error('No data found from Clarifai')
   } else {
-    const result = Data.toObject(false, data);
-    return removeListFromPropertyNames(result);
+    const result = Data.toObject(false, data)
+    return removeListFromPropertyNames(result)
   }
 }
 
-export function cleanPostWorkflowResultsResponse(
-  response: PostWorkflowResultsResponse
-) {
+export function cleanPostWorkflowResultsResponse(response: PostWorkflowResultsResponse) {
   if (response.getResultsList().length === 0) {
-    throw new Error('No results found from Clarifai');
+    throw new Error('No results found from Clarifai')
   }
   // one result per input in the workflow.
-  const results = response.getResultsList();
+  const results = response.getResultsList()
   if (results == undefined || results.length === 0) {
-    throw new Error('No results found from Clarifai');
+    throw new Error('No results found from Clarifai')
   } else {
-    const result = results[0];
-    const outputs = result.getOutputsList();
+    const result = results[0]
+    const outputs = result.getOutputsList()
     if (outputs == undefined || outputs.length === 0) {
-      throw new Error('No outputs found from Clarifai');
+      throw new Error('No outputs found from Clarifai')
     }
-    const array: any[] = [];
+    const array: any[] = []
     for (const output of outputs) {
-      const model = output.getModel();
+      const model = output.getModel()
       if (model == undefined) {
-        throw new Error('No model found from Clarifai');
+        throw new Error('No model found from Clarifai')
       }
-      const m = Model.toObject(false, model);
-      const data = output.getData();
-      let out: any = { output: 'suppressed' };
+      const m = Model.toObject(false, model)
+      const data = output.getData()
+      let out: any = { output: 'suppressed' }
       if (data != undefined) {
-        out = Data.toObject(false, data);
+        out = Data.toObject(false, data)
       }
       array.push({
         model: removeListFromPropertyNames(m),
         data: removeListFromPropertyNames(out),
-      });
+      })
     }
-    return array;
+    return array
   }
 }

@@ -1,10 +1,10 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class TablesProductSqlite1734354249984 implements MigrationInterface {
-    name = 'TablesProduct1734354249984'
+  name = 'TablesProduct1734354249984'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             CREATE TABLE "table" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -13,10 +13,10 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 "projectId" varchar(21) NOT NULL
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_table_project_id_name" ON "table" ("projectId", "name")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "field" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -26,10 +26,10 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 "tableId" varchar(21) NOT NULL
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_field_table_id_name" ON "field" ("tableId", "name")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "record" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -37,7 +37,7 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 "tableId" varchar(21) NOT NULL
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "cell" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -47,10 +47,10 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 "value" varchar NOT NULL
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_table_project_id_name"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_table" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -60,7 +60,7 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 CONSTRAINT "fk_table_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_table"("id", "created", "updated", "name", "projectId")
             SELECT "id",
                 "created",
@@ -69,20 +69,20 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 "projectId"
             FROM "table"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "table"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_table"
                 RENAME TO "table"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_table_project_id_name" ON "table" ("projectId", "name")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_field_table_id_name"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_field" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -93,7 +93,7 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 CONSTRAINT "fk_field_table_id" FOREIGN KEY ("tableId") REFERENCES "table" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_field"(
                     "id",
                     "created",
@@ -110,17 +110,17 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 "tableId"
             FROM "field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_field"
                 RENAME TO "field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_field_table_id_name" ON "field" ("tableId", "name")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_record" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -129,7 +129,7 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 CONSTRAINT "fk_record_table_id" FOREIGN KEY ("tableId") REFERENCES "table" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_record"("id", "created", "updated", "tableId")
             SELECT "id",
                 "created",
@@ -137,14 +137,14 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 "tableId"
             FROM "record"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "record"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_record"
                 RENAME TO "record"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_cell" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -156,7 +156,7 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 CONSTRAINT "fk_cell_field_id" FOREIGN KEY ("fieldId") REFERENCES "field" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_cell"(
                     "id",
                     "created",
@@ -173,21 +173,21 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 "value"
             FROM "cell"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "cell"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_cell"
                 RENAME TO "cell"
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             ALTER TABLE "cell"
                 RENAME TO "temporary_cell"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "cell" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -197,7 +197,7 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 "value" varchar NOT NULL
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "cell"(
                     "id",
                     "created",
@@ -214,14 +214,14 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 "value"
             FROM "temporary_cell"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_cell"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "record"
                 RENAME TO "temporary_record"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "record" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -229,7 +229,7 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 "tableId" varchar(21) NOT NULL
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "record"("id", "created", "updated", "tableId")
             SELECT "id",
                 "created",
@@ -237,17 +237,17 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 "tableId"
             FROM "temporary_record"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_record"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_field_table_id_name"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "field"
                 RENAME TO "temporary_field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "field" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -257,7 +257,7 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 "tableId" varchar(21) NOT NULL
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "field"(
                     "id",
                     "created",
@@ -274,20 +274,20 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 "tableId"
             FROM "temporary_field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
               CREATE INDEX "idx_field_table_id_name" ON "field" ("tableId", "name")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_table_project_id_name"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "table"
                 RENAME TO "temporary_table"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "table" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -296,7 +296,7 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 "projectId" varchar(21) NOT NULL
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "table"("id", "created", "updated", "name", "projectId")
             SELECT "id",
                 "created",
@@ -305,30 +305,29 @@ export class TablesProductSqlite1734354249984 implements MigrationInterface {
                 "projectId"
             FROM "temporary_table"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_table"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
                      CREATE INDEX "idx_table_project_id_name" ON "table" ("projectId", "name")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "cell"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "record"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_field_table_id_name"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "field"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_table_project_id_name"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "table"
         `)
-    }
-
+  }
 }

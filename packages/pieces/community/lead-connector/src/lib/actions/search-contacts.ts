@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { getContacts } from '../common';
-import { leadConnectorAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { leadConnectorAuth } from '../..'
+import { getContacts } from '../common'
 
 export const searchContactsAction = createAction({
   auth: leadConnectorAuth,
@@ -16,10 +16,10 @@ export const searchContactsAction = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const { query } = propsValue;
+    const { query } = propsValue
 
     return await getContacts(auth, {
       query: query,
-    });
+    })
   },
-});
+})

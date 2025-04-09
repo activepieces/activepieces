@@ -1,8 +1,8 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { generatePassword } from './lib/actions/generate-password';
-import { hashText } from './lib/actions/hash-text';
-import { hmacSignature } from './lib/actions/hmac-signature';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { generatePassword } from './lib/actions/generate-password'
+import { hashText } from './lib/actions/hash-text'
+import { hmacSignature } from './lib/actions/hmac-signature'
 
 export const Crypto = createPiece({
   displayName: 'Crypto',
@@ -14,4 +14,4 @@ export const Crypto = createPiece({
   authors: ['AbdullahBitar', 'kishanprmr', 'abuaboud', 'matthieu-lombard', 'antonyvigouret'],
   actions: [hashText, hmacSignature, generatePassword],
   triggers: [],
-});
+})

@@ -3,8 +3,6 @@ export * from './piece'
 export * from './utils'
 
 export enum PieceSyncMode {
-    OFFICIAL_AUTO = 'OFFICIAL_AUTO',
-    NONE = 'NONE',
+  OFFICIAL_AUTO = 'OFFICIAL_AUTO',
+  NONE = 'NONE',
 }
-
-  

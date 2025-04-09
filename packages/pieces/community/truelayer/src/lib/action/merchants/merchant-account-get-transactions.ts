@@ -1,12 +1,13 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { trueLayerCommon } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { trueLayerCommon } from '../../common'
 
 export const merchantAccountGetTransactions = createAction({
   auth: trueLayerCommon.auth,
   name: 'merchant-account-get-transactions',
   displayName: 'Get Transactions',
-  description: 'Get the transactions of a single merchant account. If pagination is missing, add a header `tl-enable-pagination: true` to enable pagination.',
+  description:
+    'Get the transactions of a single merchant account. If pagination is missing, add a header `tl-enable-pagination: true` to enable pagination.',
   props: {
     id: Property.ShortText({
       displayName: 'Merchant Account ID',
@@ -15,17 +16,20 @@ export const merchantAccountGetTransactions = createAction({
     }),
     from: Property.ShortText({
       displayName: 'Start Timestamp',
-      description: 'Timestamp for the start of the range to query (inclusive). Uses the ISO-8601 format of YYYY-MM-DDTHH:MM:SS±HHMM.',
+      description:
+        'Timestamp for the start of the range to query (inclusive). Uses the ISO-8601 format of YYYY-MM-DDTHH:MM:SS±HHMM.',
       required: true,
     }),
     to: Property.ShortText({
       displayName: 'End Timestamp',
-      description: 'Timestamp for the end of the range to query (inclusive). Uses the ISO-8601 format of YYYY-MM-DDTHH:MM:SS±HHMM.',
+      description:
+        'Timestamp for the end of the range to query (inclusive). Uses the ISO-8601 format of YYYY-MM-DDTHH:MM:SS±HHMM.',
       required: true,
     }),
     cursor: Property.ShortText({
       displayName: 'Cursor',
-      description: 'Cursor used for pagination purposes, returned as `next_cursor` in the response payload of the initial request. Not required for the first page.',
+      description:
+        'Cursor used for pagination purposes, returned as `next_cursor` in the response payload of the initial request. Not required for the first page.',
       required: false,
     }),
     type: Property.ShortText({
@@ -50,6 +54,6 @@ export const merchantAccountGetTransactions = createAction({
       },
     })
 
-    return response.body;
+    return response.body
   },
-});
+})

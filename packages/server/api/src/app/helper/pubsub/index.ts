@@ -10,13 +10,11 @@ const queueMode = system.getOrThrow<QueueMode>(AppSystemProp.QUEUE_MODE)
 let _pubsub: typeof memoryPubSub | null = null
 
 export const pubsub = () => {
-    if (!isNil(_pubsub)) {
-        return _pubsub
-    }
-
-    _pubsub = queueMode === QueueMode.MEMORY
-        ? memoryPubSub
-        : redisPubSub(createRedisClient(), createRedisClient())
-
+  if (!isNil(_pubsub)) {
     return _pubsub
+  }
+
+  _pubsub = queueMode === QueueMode.MEMORY ? memoryPubSub : redisPubSub(createRedisClient(), createRedisClient())
+
+  return _pubsub
 }

@@ -1,12 +1,8 @@
-import { createAction } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
 
-import { bubbleAuth } from '../../index';
-import { bubbleCommon } from '../common';
+import { bubbleAuth } from '../../index'
+import { bubbleCommon } from '../common'
 
 export const bubbleUpdateThingAction = createAction({
   auth: bubbleAuth,
@@ -19,10 +15,10 @@ export const bubbleUpdateThingAction = createAction({
     fields: bubbleCommon.fields,
   },
   async run(context) {
-    const { appname, token } = context.auth;
-    const { typename, thing_id } = context.propsValue;
+    const { appname, token } = context.auth
+    const { typename, thing_id } = context.propsValue
 
-    const server_url = `https://${appname}.bubbleapps.io/api/1.1/obj/${typename}/${thing_id}`;
+    const server_url = `https://${appname}.bubbleapps.io/api/1.1/obj/${typename}/${thing_id}`
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.PATCH,
@@ -36,8 +32,8 @@ export const bubbleUpdateThingAction = createAction({
         token,
       },
       body: context.propsValue.fields,
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

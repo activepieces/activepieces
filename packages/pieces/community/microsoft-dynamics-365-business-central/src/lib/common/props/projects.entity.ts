@@ -1,4 +1,4 @@
-import { EntityProp } from '../types';
+import { EntityProp } from '../types'
 
 export const projectsEntityProps: EntityProp[] = [
   {
@@ -12,9 +12,8 @@ export const projectsEntityProps: EntityProp[] = [
   {
     name: 'displayName',
     displayName: 'Display name',
-    description:
-      "Specifies the project's name. This name will appear on all sales documents for the project.",
+    description: "Specifies the project's name. This name will appear on all sales documents for the project.",
     type: 'text',
     isRequired: false,
   },
-];
+]

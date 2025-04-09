@@ -1,108 +1,87 @@
-import { useRef } from 'react';
+import { useRef } from 'react'
 
 import {
   PieceSelectorItem,
   PieceStepMetadata,
   StepMetadata,
   StepMetadataWithSuggestions,
-} from '@/features/pieces/lib/types';
-import {
-  ActionBase,
-  PiecePropertyMap,
-  PropertyType,
-  TriggerBase,
-} from '@activepieces/pieces-framework';
+} from '@/features/pieces/lib/types'
+import { ActionBase, PiecePropertyMap, PropertyType, TriggerBase } from '@activepieces/pieces-framework'
 import {
   Action,
   ActionType,
+  BranchExecutionType,
   BranchOperator,
   CodeAction,
+  FlowVersion,
   PieceAction,
+  PieceCategory,
   PieceTrigger,
+  PlatformWithoutSensitiveData,
+  RouterExecutionType,
   Trigger,
   TriggerType,
   deepMergeAndCast,
-  FlowVersion,
-  PieceCategory,
-  BranchExecutionType,
-  RouterExecutionType,
-  spreadIfDefined,
-  isNil,
   flowStructureUtil,
-  PlatformWithoutSensitiveData,
-} from '@activepieces/shared';
+  isNil,
+  spreadIfDefined,
+} from '@activepieces/shared'
 
-import { formUtils } from '../piece-properties/form-utils';
+import { formUtils } from '../piece-properties/form-utils'
 
 const defaultCode = `export const code = async (inputs) => {
   return true;
-};`;
+};`
 
 function toKey(stepMetadata: StepMetadata): string {
   switch (stepMetadata.type) {
     case ActionType.PIECE:
     case TriggerType.PIECE: {
-      const pieceMetadata: PieceStepMetadata = stepMetadata;
-      return `${stepMetadata.type}-${pieceMetadata.pieceName}-${pieceMetadata.pieceVersion}`;
+      const pieceMetadata: PieceStepMetadata = stepMetadata
+      return `${stepMetadata.type}-${pieceMetadata.pieceName}-${pieceMetadata.pieceVersion}`
     }
     default:
-      return stepMetadata.type.toLowerCase();
+      return stepMetadata.type.toLowerCase()
   }
 }
 
 const isCorePiece = (piece: StepMetadata) =>
   piece.type !== TriggerType.PIECE && piece.type !== ActionType.PIECE
     ? true
-    : (piece as PieceStepMetadata).categories.includes(PieceCategory.CORE);
+    : (piece as PieceStepMetadata).categories.includes(PieceCategory.CORE)
 
-const getStepNames = (
-  piece: StepMetadata,
-  flowVersion: FlowVersion,
-  count: number,
-) => {
+const getStepNames = (piece: StepMetadata, flowVersion: FlowVersion, count: number) => {
   if (piece.type === TriggerType.PIECE) {
-    return ['trigger'];
+    return ['trigger']
   }
-  return flowStructureUtil.findUnusedNames(flowVersion.trigger, count);
-};
+  return flowStructureUtil.findUnusedNames(flowVersion.trigger, count)
+}
 
 const getStepName = (piece: StepMetadata, flowVersion: FlowVersion) => {
   if (piece.type === TriggerType.PIECE) {
-    return 'trigger';
+    return 'trigger'
   }
-  return flowStructureUtil.findUnusedName(flowVersion.trigger);
-};
+  return flowStructureUtil.findUnusedName(flowVersion.trigger)
+}
 
 const isAiPiece = (piece: StepMetadata) =>
   piece.type === TriggerType.PIECE || piece.type === ActionType.PIECE
     ? piece.categories.includes(PieceCategory.ARTIFICIAL_INTELLIGENCE)
-    : false;
+    : false
 
-const isAppPiece = (piece: StepMetadata) =>
-  !isAiPiece(piece) && !isCorePiece(piece);
+const isAppPiece = (piece: StepMetadata) => !isAiPiece(piece) && !isCorePiece(piece)
 
-const isActionOrTrigger = (
-  item: PieceSelectorItem,
-  stepMetadata: StepMetadata,
-): item is ActionBase | TriggerBase => {
-  return [ActionType.PIECE, TriggerType.PIECE].includes(stepMetadata.type);
-};
+const isActionOrTrigger = (item: PieceSelectorItem, stepMetadata: StepMetadata): item is ActionBase | TriggerBase => {
+  return [ActionType.PIECE, TriggerType.PIECE].includes(stepMetadata.type)
+}
 
-const isPieceStepMetadata = (
-  stepMetadata: StepMetadata,
-): stepMetadata is PieceStepMetadata => {
-  return [ActionType.PIECE, TriggerType.PIECE].includes(stepMetadata.type);
-};
+const isPieceStepMetadata = (stepMetadata: StepMetadata): stepMetadata is PieceStepMetadata => {
+  return [ActionType.PIECE, TriggerType.PIECE].includes(stepMetadata.type)
+}
 
-const isPopularPieces = (
-  stepMetadata: StepMetadataWithSuggestions,
-  platform: PlatformWithoutSensitiveData,
-) => {
-  if (
-    stepMetadata.type !== TriggerType.PIECE &&
-    stepMetadata.type !== ActionType.PIECE
-  ) {
-    return false;
+const isPopularPieces = (stepMetadata: StepMetadataWithSuggestions, platform: PlatformWithoutSensitiveData) => {
+  if (stepMetadata.type !== TriggerType.PIECE && stepMetadata.type !== ActionType.PIECE) {
+    return false
   }
   const popularPieces = [
     '@activepieces/piece-gmail',
@@ -113,43 +92,34 @@ const isPopularPieces = (
     '@activepieces/piece-http',
     '@activepieces/piece-forms',
     '@activepieces/piece-slack',
-  ];
-  const pinnedPieces = platform.pinnedPieces ?? [];
-  return [...popularPieces, ...pinnedPieces].includes(
-    (stepMetadata as PieceStepMetadata).pieceName,
-  );
-};
+  ]
+  const pinnedPieces = platform.pinnedPieces ?? []
+  return [...popularPieces, ...pinnedPieces].includes((stepMetadata as PieceStepMetadata).pieceName)
+}
 
 const isFlowController = (stepMetadata: StepMetadata) => {
   if (stepMetadata.type === ActionType.PIECE) {
-    return stepMetadata.categories.includes(PieceCategory.FLOW_CONTROL);
+    return stepMetadata.categories.includes(PieceCategory.FLOW_CONTROL)
   }
-  return [ActionType.LOOP_ON_ITEMS, ActionType.ROUTER].includes(
-    stepMetadata.type as ActionType,
-  );
-};
+  return [ActionType.LOOP_ON_ITEMS, ActionType.ROUTER].includes(stepMetadata.type as ActionType)
+}
 
 const isUniversalAiPiece = (stepMetadata: StepMetadata) => {
   if (stepMetadata.type === ActionType.PIECE) {
-    return stepMetadata.categories.includes(PieceCategory.UNIVERSAL_AI);
+    return stepMetadata.categories.includes(PieceCategory.UNIVERSAL_AI)
   }
-  return false;
-};
+  return false
+}
 
-const isUtilityCorePiece = (
-  stepMetadata: StepMetadata,
-  platform: PlatformWithoutSensitiveData,
-) => {
+const isUtilityCorePiece = (stepMetadata: StepMetadata, platform: PlatformWithoutSensitiveData) => {
   if (stepMetadata.type === ActionType.CODE) {
-    return true;
+    return true
   }
   if (!isCorePiece(stepMetadata)) {
-    return false;
+    return false
   }
-  return (
-    !isFlowController(stepMetadata) && !isPopularPieces(stepMetadata, platform)
-  );
-};
+  return !isFlowController(stepMetadata) && !isPopularPieces(stepMetadata, platform)
+}
 
 const getDefaultStep = ({
   stepName,
@@ -157,10 +127,10 @@ const getDefaultStep = ({
   actionOrTrigger,
   settings,
 }: {
-  stepName: string;
-  stepMetadata: StepMetadata;
-  actionOrTrigger: PieceSelectorItem;
-  settings?: Record<string, unknown>;
+  stepName: string
+  stepMetadata: StepMetadata
+  actionOrTrigger: PieceSelectorItem
+  settings?: Record<string, unknown>
 }): Action | Trigger => {
   const errorHandlingOptions = {
     continueOnFailure: {
@@ -171,10 +141,8 @@ const getDefaultStep = ({
       hide: true,
       value: false,
     },
-  };
-  const isPieceStep =
-    isActionOrTrigger(actionOrTrigger, stepMetadata) &&
-    isPieceStepMetadata(stepMetadata);
+  }
+  const isPieceStep = isActionOrTrigger(actionOrTrigger, stepMetadata) && isPieceStepMetadata(stepMetadata)
   const input = isPieceStep
     ? formUtils.getDefaultValueForStep(
         actionOrTrigger.requireAuth
@@ -185,18 +153,16 @@ const getDefaultStep = ({
           : actionOrTrigger.props,
         {},
       )
-    : {};
+    : {}
 
   const common = {
     name: stepName,
     valid: isPieceStep
       ? checkPieceInputValidity(input, actionOrTrigger.props) &&
-        (actionOrTrigger.requireAuth && !isNil(actionOrTrigger.props['auth'])
-          ? !isNil(input['auth'])
-          : true)
+        (actionOrTrigger.requireAuth && !isNil(actionOrTrigger.props['auth']) ? !isNil(input['auth']) : true)
       : stepMetadata.type === ActionType.CODE
-      ? true
-      : false,
+        ? true
+        : false,
     displayName: actionOrTrigger.displayName,
     skip: false,
     settings: {
@@ -204,7 +170,7 @@ const getDefaultStep = ({
         customizedInputs: {},
       },
     },
-  };
+  }
 
   switch (stepMetadata.type) {
     case ActionType.CODE:
@@ -224,7 +190,7 @@ const getDefaultStep = ({
           },
         },
         common,
-      );
+      )
     case ActionType.LOOP_ON_ITEMS:
       return deepMergeAndCast<Action>(
         {
@@ -237,7 +203,7 @@ const getDefaultStep = ({
           },
         },
         common,
-      );
+      )
     case ActionType.ROUTER:
       return deepMergeAndCast<Action>(
         {
@@ -271,7 +237,7 @@ const getDefaultStep = ({
           children: [null, null],
         },
         common,
-      );
+      )
     case ActionType.PIECE: {
       return deepMergeAndCast<PieceAction>(
         {
@@ -287,7 +253,7 @@ const getDefaultStep = ({
           },
         },
         common,
-      );
+      )
     }
     case TriggerType.PIECE: {
       return deepMergeAndCast<PieceTrigger>(
@@ -303,55 +269,38 @@ const getDefaultStep = ({
           },
         },
         common,
-      );
+      )
     }
     default:
-      throw new Error('Unsupported type: ' + stepMetadata.type);
+      throw new Error('Unsupported type: ' + stepMetadata.type)
   }
-};
+}
 
-const checkPieceInputValidity = (
-  input: Record<string, unknown>,
-  props: PiecePropertyMap,
-) => {
+const checkPieceInputValidity = (input: Record<string, unknown>, props: PiecePropertyMap) => {
   return Object.entries(props).reduce((acc, [key, property]) => {
-    if (
-      property.required &&
-      property.type !== PropertyType.DYNAMIC &&
-      isNil(input[key])
-    ) {
-      return false;
+    if (property.required && property.type !== PropertyType.DYNAMIC && isNil(input[key])) {
+      return false
     }
-    return acc;
-  }, true);
-};
+    return acc
+  }, true)
+}
 
-const maxListHeight = 300;
-const minListHeight = 100;
-const aboveListSectionHeight = 86;
+const maxListHeight = 300
+const minListHeight = 100
+const aboveListSectionHeight = 86
 
-const useAdjustPieceListHeightToAvailableSpace = (
-  isPieceSelectorOpen: boolean,
-) => {
-  const listHeightRef = useRef<number>(maxListHeight);
-  const popoverTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const previousOpenValueRef = useRef<boolean>(isPieceSelectorOpen);
-  if (
-    !previousOpenValueRef.current &&
-    isPieceSelectorOpen &&
-    popoverTriggerRef.current
-  ) {
-    const popoverTriggerRect =
-      popoverTriggerRef.current.getBoundingClientRect();
-    const popOverFullHeight = maxListHeight + aboveListSectionHeight;
+const useAdjustPieceListHeightToAvailableSpace = (isPieceSelectorOpen: boolean) => {
+  const listHeightRef = useRef<number>(maxListHeight)
+  const popoverTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const previousOpenValueRef = useRef<boolean>(isPieceSelectorOpen)
+  if (!previousOpenValueRef.current && isPieceSelectorOpen && popoverTriggerRef.current) {
+    const popoverTriggerRect = popoverTriggerRef.current.getBoundingClientRect()
+    const popOverFullHeight = maxListHeight + aboveListSectionHeight
     const isRenderingPopoverBelowTrigger =
-      popoverTriggerRect.top <
-      (window.innerHeight || document.documentElement.clientHeight) -
-        popoverTriggerRect.bottom;
+      popoverTriggerRect.top < (window.innerHeight || document.documentElement.clientHeight) - popoverTriggerRect.bottom
     if (isRenderingPopoverBelowTrigger) {
       const isPopoverOverflowing =
-        popoverTriggerRect.bottom + popOverFullHeight >
-        (window.innerHeight || document.documentElement.clientHeight);
+        popoverTriggerRect.bottom + popOverFullHeight > (window.innerHeight || document.documentElement.clientHeight)
       if (isPopoverOverflowing) {
         listHeightRef.current = Math.max(
           minListHeight,
@@ -359,27 +308,26 @@ const useAdjustPieceListHeightToAvailableSpace = (
             (window.innerHeight || document.documentElement.clientHeight) -
             popOverFullHeight -
             popoverTriggerRect.bottom,
-        );
+        )
       }
     } else {
-      const isPopoverOverflowing =
-        popoverTriggerRect.top - popOverFullHeight < 0;
+      const isPopoverOverflowing = popoverTriggerRect.top - popOverFullHeight < 0
       if (isPopoverOverflowing) {
         listHeightRef.current = Math.max(
           minListHeight,
           maxListHeight - Math.abs(popoverTriggerRect.top - popOverFullHeight),
-        );
+        )
       }
     }
   }
-  previousOpenValueRef.current = isPieceSelectorOpen;
+  previousOpenValueRef.current = isPieceSelectorOpen
   return {
     listHeightRef,
     popoverTriggerRef,
     maxListHeight,
     aboveListSectionHeight,
-  };
-};
+  }
+}
 
 export const pieceSelectorUtils = {
   getDefaultStep,
@@ -394,4 +342,4 @@ export const pieceSelectorUtils = {
   isFlowController,
   isUniversalAiPiece,
   useAdjustPieceListHeightToAvailableSpace,
-};
+}

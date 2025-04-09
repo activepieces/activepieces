@@ -1,8 +1,8 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { GmailRequests } from '../common/data';
-import { GmailLabel } from '../common/models';
-import { GmailProps } from '../common/props';
-import { gmailAuth } from '../../';
+import { createAction } from '@activepieces/pieces-framework'
+import { gmailAuth } from '../../'
+import { GmailRequests } from '../common/data'
+import { GmailLabel } from '../common/models'
+import { GmailProps } from '../common/props'
 
 export const gmailSearchMail = createAction({
   auth: gmailAuth,
@@ -25,4 +25,4 @@ export const gmailSearchMail = createAction({
       label: label as GmailLabel,
       category: category as string,
     }),
-});
+})

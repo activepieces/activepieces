@@ -1,20 +1,20 @@
 export interface Team {
-  id: number;
-  name: string;
+  id: number
+  name: string
 }
 
 export interface TeamCreateRequest {
-  name: string;
+  name: string
 }
 
 export interface TeamUpdateRequest {
-  name: string;
+  name: string
 }
 
 export interface TeamListResponse {
-  teams: Team[];
+  teams: Team[]
 }
 
 export interface TeamSingleResponse {
-  team: Team;
+  team: Team
 }

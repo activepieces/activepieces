@@ -1,8 +1,8 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { onfleetAuth } from '../..';
-import { common } from '../common';
+import { createAction } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
+import { common } from '../common'
 
-import Onfleet from '@onfleet/node-onfleet';
+import Onfleet from '@onfleet/node-onfleet'
 
 export const getTeams = createAction({
   auth: onfleetAuth,
@@ -11,8 +11,8 @@ export const getTeams = createAction({
   description: 'Gets many existing team',
   props: {},
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth)
 
-    return await onfleetApi.teams.get();
+    return await onfleetApi.teams.get()
   },
-});
+})

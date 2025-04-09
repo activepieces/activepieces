@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { krispcallAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { krispcallAuth } from '../..'
 
 export const deleteContacts = createAction({
   name: 'deleteContacts',
@@ -24,7 +24,7 @@ export const deleteContacts = createAction({
       body: {
         contacts: propsValue.contacts,
       },
-    });
-    return res.body;
+    })
+    return res.body
   },
-});
+})

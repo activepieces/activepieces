@@ -4,19 +4,15 @@ import {
   HttpRequest,
   createCustomApiCallAction,
   httpClient,
-} from '@activepieces/pieces-common';
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { createWordPressPage } from './lib/actions/create-page.action';
-import { createWordPressPost } from './lib/actions/create-post.action';
-import { getWordPressPost } from './lib/actions/get-post.action';
-import { wordpressCommon } from './lib/common';
-import { wordpressNewPost } from './lib/trigger/new-post.trigger';
-import { updateWordPressPost } from './lib/actions/update-post.action';
+} from '@activepieces/pieces-common'
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { createWordPressPage } from './lib/actions/create-page.action'
+import { createWordPressPost } from './lib/actions/create-post.action'
+import { getWordPressPost } from './lib/actions/get-post.action'
+import { updateWordPressPost } from './lib/actions/update-post.action'
+import { wordpressCommon } from './lib/common'
+import { wordpressNewPost } from './lib/trigger/new-post.trigger'
 
 const markdownPropertyDescription = `
 **Enable Basic Authentication:**
@@ -27,7 +23,7 @@ const markdownPropertyDescription = `
 4. Choose "Upload Plugin" and select the downloaded file.
 5. Install and activate the plugin.
 
-`;
+`
 
 export const wordpressAuth = PieceAuth.CustomAuth({
   description: markdownPropertyDescription,
@@ -44,33 +40,30 @@ export const wordpressAuth = PieceAuth.CustomAuth({
     website_url: Property.ShortText({
       displayName: 'Website URL',
       required: true,
-      description:
-        'URL of the wordpress url i.e https://www.example-website.com',
+      description: 'URL of the wordpress url i.e https://www.example-website.com',
     }),
   },
   validate: async ({ auth }) => {
-    const { username, password, website_url } = auth;
+    const { username, password, website_url } = auth
     if (!username || !password || !website_url) {
       return {
         valid: false,
         error: 'please fill all the fields [username, password, website_url] ',
-      };
+      }
     }
     if (!wordpressCommon.isBaseUrl(website_url.trim())) {
       return {
         valid: false,
         error:
           'Please ensure that the website is valid and does not contain any paths, for example, https://example-website.com.',
-      };
+      }
     }
-    const apiEnabled = await wordpressCommon.urlExists(
-      website_url.trim() + '/wp-json'
-    );
+    const apiEnabled = await wordpressCommon.urlExists(website_url.trim() + '/wp-json')
     if (!apiEnabled) {
       return {
         valid: false,
         error: `REST API is not reachable, visit ${website_url.trim()}/wp-json" \n make sure your settings (Settings -> Permalinks) are set to "Post name" (or any option other than "Plain") and disable any security plugins that might block the REST API `,
-      };
+      }
     }
     try {
       const request: HttpRequest = {
@@ -81,19 +74,19 @@ export const wordpressAuth = PieceAuth.CustomAuth({
           username: username,
           password: password,
         },
-      };
-      await httpClient.sendRequest(request);
+      }
+      await httpClient.sendRequest(request)
       return {
         valid: true,
-      };
+      }
     } catch (e: any) {
       return {
         valid: false,
         error: 'Credentials are invalid. ' + e?.message,
-      };
+      }
     }
   },
-});
+})
 
 export const wordpress = createPiece({
   displayName: 'WordPress',
@@ -118,17 +111,14 @@ export const wordpress = createPiece({
     updateWordPressPost,
     getWordPressPost,
     createCustomApiCallAction({
-      baseUrl: (auth) =>
-        (auth as { website_url: string }).website_url.trim() + '/wp-json/wp/v2',
+      baseUrl: (auth) => (auth as { website_url: string }).website_url.trim() + '/wp-json/wp/v2',
       auth: wordpressAuth,
       authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(
-          `${(auth as { username: string }).username}:${
-            (auth as { password: string }).password
-          }`
+          `${(auth as { username: string }).username}:${(auth as { password: string }).password}`,
         ).toString('base64')}`,
       }),
     }),
   ],
   triggers: [wordpressNewPost],
-});
+})

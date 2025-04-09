@@ -1,10 +1,10 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddWorkerMachineSqlite1720100928449 implements MigrationInterface {
-    name = 'AddWorkerMachineSqlite1720100928449'
+  name = 'AddWorkerMachineSqlite1720100928449'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             CREATE TABLE "worker_machine" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -14,7 +14,7 @@ export class AddWorkerMachineSqlite1720100928449 implements MigrationInterface {
                 "information" text NOT NULL
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_worker_machine" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -25,7 +25,7 @@ export class AddWorkerMachineSqlite1720100928449 implements MigrationInterface {
                 CONSTRAINT "FK_7f3c83a5162a2de787dc62bf519" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_worker_machine"(
                     "id",
                     "created",
@@ -42,21 +42,21 @@ export class AddWorkerMachineSqlite1720100928449 implements MigrationInterface {
                 "information"
             FROM "worker_machine"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "worker_machine"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_worker_machine"
                 RENAME TO "worker_machine"
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             ALTER TABLE "worker_machine"
                 RENAME TO "temporary_worker_machine"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "worker_machine" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -66,7 +66,7 @@ export class AddWorkerMachineSqlite1720100928449 implements MigrationInterface {
                 "information" text NOT NULL
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "worker_machine"(
                     "id",
                     "created",
@@ -83,12 +83,11 @@ export class AddWorkerMachineSqlite1720100928449 implements MigrationInterface {
                 "information"
             FROM "temporary_worker_machine"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_worker_machine"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "worker_machine"
         `)
-    }
-
+  }
 }

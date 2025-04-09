@@ -1,6 +1,6 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { advancedMapping } from './lib/actions/advanced-mapping';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { advancedMapping } from './lib/actions/advanced-mapping'
 
 export const dataMapper = createPiece({
   displayName: 'Data Mapper',
@@ -10,7 +10,7 @@ export const dataMapper = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/data-mapper.png',
   auth: PieceAuth.None(),
   categories: [PieceCategory.CORE],
-  authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: ['kishanprmr', 'MoShizzle', 'AbdulTheActivePiecer', 'khaledmashaly', 'abuaboud'],
   actions: [advancedMapping],
   triggers: [],
-});
+})

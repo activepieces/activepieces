@@ -1,6 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { createTask, googleTasksCommon, Task, TaskStatus } from '../common';
-import { googleTasksAuth } from '../../';
+import { createAction } from '@activepieces/pieces-framework'
+import { googleTasksAuth } from '../../'
+import { Task, TaskStatus, createTask, googleTasksCommon } from '../common'
 
 export const googleTasksAddNewTaskAction = createAction({
   auth: googleTasksAuth,
@@ -16,14 +16,12 @@ export const googleTasksAddNewTaskAction = createAction({
   async run({ auth, propsValue }) {
     const task: Task = {
       kind: 'tasks#task',
-      status: propsValue.completed
-        ? TaskStatus.COMPLETED
-        : TaskStatus.NEEDS_ACTION,
+      status: propsValue.completed ? TaskStatus.COMPLETED : TaskStatus.NEEDS_ACTION,
       title: propsValue.title,
       completed: propsValue.completed ? new Date().toISOString() : '',
       notes: propsValue.notes,
-    };
+    }
 
-    return createTask(auth, propsValue.tasks_list!, task);
+    return createTask(auth, propsValue.tasks_list!, task)
   },
-});
+})

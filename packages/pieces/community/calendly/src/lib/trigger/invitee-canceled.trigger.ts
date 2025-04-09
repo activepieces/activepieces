@@ -1,14 +1,9 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { calendlyCommon, CalendlyWebhookInformation } from '../common';
-import { calendlyAuth } from '../../';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { calendlyAuth } from '../../'
+import { CalendlyWebhookInformation, calendlyCommon } from '../common'
 
-const triggerNameInStore = 'calendly_invitee_canceled_trigger';
+const triggerNameInStore = 'calendly_invitee_canceled_trigger'
 
 export const calendlyInviteeCanceled = createTrigger({
   auth: calendlyAuth,
@@ -61,7 +56,7 @@ export const calendlyInviteeCanceled = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const calendlyUser = await calendlyCommon.getUser(context.auth);
+    const calendlyUser = await calendlyCommon.getUser(context.auth)
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${calendlyCommon.baseUrl}/webhook_subscriptions`,
@@ -77,18 +72,16 @@ export const calendlyInviteeCanceled = createTrigger({
         type: AuthenticationType.BEARER_TOKEN,
       },
       queryParams: {},
-    };
+    }
     const { body } = await httpClient.sendRequest<{
-      resource: { uri: string };
-    }>(request);
+      resource: { uri: string }
+    }>(request)
     await context.store?.put<CalendlyWebhookInformation>(triggerNameInStore, {
       webhookId: calendlyCommon.UuidFromUri(body.resource.uri)!,
-    });
+    })
   },
   async onDisable(context) {
-    const response = await context.store?.get<CalendlyWebhookInformation>(
-      triggerNameInStore
-    );
+    const response = await context.store?.get<CalendlyWebhookInformation>(triggerNameInStore)
     if (response !== null && response !== undefined) {
       const request: HttpRequest = {
         method: HttpMethod.DELETE,
@@ -97,11 +90,11 @@ export const calendlyInviteeCanceled = createTrigger({
           token: context.auth,
           type: AuthenticationType.BEARER_TOKEN,
         },
-      };
-      await httpClient.sendRequest(request);
+      }
+      await httpClient.sendRequest(request)
     }
   },
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
-});
+})

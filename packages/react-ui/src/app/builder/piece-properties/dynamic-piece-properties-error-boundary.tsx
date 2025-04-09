@@ -1,17 +1,17 @@
-import { t } from 'i18next';
-import { RefreshCcw } from 'lucide-react';
-import { useRef, useState } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
+import { t } from 'i18next'
+import { RefreshCcw } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { ErrorBoundary } from 'react-error-boundary'
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button'
 
 const DynamicPropertiesErrorBoundary = ({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) => {
-  const [key, setKey] = useState(Date.now());
-  const triedRerenderingRef = useRef(false);
+  const [key, setKey] = useState(Date.now())
+  const triedRerenderingRef = useRef(false)
   return (
     <ErrorBoundary
       key={key}
@@ -23,8 +23,8 @@ const DynamicPropertiesErrorBoundary = ({
               size="icon"
               variant="outline"
               onClick={() => {
-                setKey(Date.now());
-                triedRerenderingRef.current = true;
+                setKey(Date.now())
+                triedRerenderingRef.current = true
               }}
             >
               {<RefreshCcw className="w-4 h-4 !text-foreground"></RefreshCcw>}{' '}
@@ -37,7 +37,7 @@ const DynamicPropertiesErrorBoundary = ({
               size="icon"
               variant="outline"
               onClick={() => {
-                window.location.reload();
+                window.location.reload()
               }}
             >
               {<RefreshCcw className="w-4 h-4 !text-foreground"></RefreshCcw>}{' '}
@@ -48,7 +48,7 @@ const DynamicPropertiesErrorBoundary = ({
     >
       {children}
     </ErrorBoundary>
-  );
-};
-DynamicPropertiesErrorBoundary.displayName = 'DynamicPropertiesErrorBoundary';
-export { DynamicPropertiesErrorBoundary };
+  )
+}
+DynamicPropertiesErrorBoundary.displayName = 'DynamicPropertiesErrorBoundary'
+export { DynamicPropertiesErrorBoundary }

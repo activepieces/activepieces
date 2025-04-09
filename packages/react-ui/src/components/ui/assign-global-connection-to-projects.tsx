@@ -1,22 +1,22 @@
-import { t } from 'i18next';
-import { Control } from 'react-hook-form';
+import { t } from 'i18next'
+import { Control } from 'react-hook-form'
 
-import { projectHooks } from '@/hooks/project-hooks';
-import { isNil } from '@activepieces/shared';
+import { projectHooks } from '@/hooks/project-hooks'
+import { isNil } from '@activepieces/shared'
 
-import { MultiSelectPieceProperty } from '../custom/multi-select-piece-property';
+import { MultiSelectPieceProperty } from '../custom/multi-select-piece-property'
 
-import { FormField, FormItem, FormMessage } from './form';
-import { Label } from './label';
+import { FormField, FormItem, FormMessage } from './form'
+import { Label } from './label'
 
 export const AssignConnectionToProjectsControl = ({
   control,
   name,
 }: {
-  control: Control<any>;
-  name: string;
+  control: Control<any>
+  name: string
 }) => {
-  const { data: projects } = projectHooks.useProjects();
+  const { data: projects } = projectHooks.useProjects()
   return (
     <FormField
       control={control}
@@ -34,7 +34,7 @@ export const AssignConnectionToProjectsControl = ({
             }
             loading={!projects}
             onChange={(value) => {
-              field.onChange(isNil(value) ? [] : value);
+              field.onChange(isNil(value) ? [] : value)
             }}
             initialValues={field.value}
             showDeselect={field.value.length > 0}
@@ -44,5 +44,5 @@ export const AssignConnectionToProjectsControl = ({
         </FormItem>
       )}
     />
-  );
-};
+  )
+}

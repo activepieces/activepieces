@@ -1,5 +1,5 @@
-import { BaseModelSchema } from "@activepieces/shared";
-import { Static, Type } from "@sinclair/typebox";
+import { BaseModelSchema } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
 
 export const PlatformBilling = Type.Object({
   ...BaseModelSchema,

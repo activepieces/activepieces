@@ -1,4 +1,4 @@
-import { createShopifyWebhookTrigger } from '../common/register-webhook';
+import { createShopifyWebhookTrigger } from '../common/register-webhook'
 
 export const newPaidOrder = createShopifyWebhookTrigger({
   name: 'new_paid_order',
@@ -235,4 +235,4 @@ export const newPaidOrder = createShopifyWebhookTrigger({
     refunds: [],
     shipping_lines: [],
   },
-});
+})

@@ -4,7 +4,10 @@ import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorizati
 import { alertsController } from './alerts-controller'
 
 export const alertsModule: FastifyPluginAsyncTypebox = async (app) => {
-    app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.alertsEnabled))
-    await app.register(alertsController, { prefix: '/v1/alerts' })
+  app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
+  app.addHook(
+    'preHandler',
+    platformMustHaveFeatureEnabled((platform) => platform.alertsEnabled),
+  )
+  await app.register(alertsController, { prefix: '/v1/alerts' })
 }

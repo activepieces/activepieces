@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { shopifyAuth } from '../..';
-import { createDraftOrder } from '../common';
-import { ShopifyDraftOrder } from '../common/types';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { shopifyAuth } from '../..'
+import { createDraftOrder } from '../common'
+import { ShopifyDraftOrder } from '../common/types'
 
 export const createDraftOrderAction = createAction({
   auth: shopifyAuth,
@@ -39,8 +39,7 @@ export const createDraftOrderAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { productId, variantId, title, quantity, price, customerId } =
-      propsValue;
+    const { productId, variantId, title, quantity, price, customerId } = propsValue
 
     const draftOrder: Partial<ShopifyDraftOrder> = {
       line_items: [
@@ -52,9 +51,9 @@ export const createDraftOrderAction = createAction({
           price,
         },
       ],
-    };
-    if (customerId) draftOrder.customer = { id: +customerId };
+    }
+    if (customerId) draftOrder.customer = { id: +customerId }
 
-    return await createDraftOrder(draftOrder, auth);
+    return await createDraftOrder(draftOrder, auth)
   },
-});
+})

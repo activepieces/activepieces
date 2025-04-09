@@ -1,11 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework'
 
-import { mailerooAuth } from '../../';
-import {
-  createCommonProps,
-  createFormData,
-  sendFormData,
-} from '../common/send-utils';
+import { mailerooAuth } from '../../'
+import { createCommonProps, createFormData, sendFormData } from '../common/send-utils'
 
 export const sendEmail = createAction({
   auth: mailerooAuth,
@@ -26,7 +22,7 @@ export const sendEmail = createAction({
             { label: 'Plain Text', value: 'text' },
             { label: 'HTML', value: 'html' },
           ],
-        };
+        }
       },
     }),
     content: Property.ShortText({
@@ -36,18 +32,18 @@ export const sendEmail = createAction({
     }),
   },
   async run(context) {
-    const formData = createFormData(context.propsValue);
+    const formData = createFormData(context.propsValue)
 
-    const { content_type, content } = context.propsValue;
+    const { content_type, content } = context.propsValue
 
     if (content_type === 'text') {
-      formData.append('plain', content);
+      formData.append('plain', content)
     } else if (content_type === 'html') {
-      formData.append('html', content);
+      formData.append('html', content)
     }
 
-    const res = await sendFormData('send', formData, context.auth.apiKey);
+    const res = await sendFormData('send', formData, context.auth.apiKey)
 
-    return res.body;
+    return res.body
   },
-});
+})

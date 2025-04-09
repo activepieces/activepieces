@@ -1,10 +1,6 @@
-import {
-  PiecePropValueSchema,
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { baserowAuth } from '../..';
-import { makeClient } from '../common';
+import { PiecePropValueSchema, Property, createAction } from '@activepieces/pieces-framework'
+import { baserowAuth } from '../..'
+import { makeClient } from '../common'
 
 export const listRowsAction = createAction({
   name: 'baserow_list_rows',
@@ -26,8 +22,7 @@ export const listRowsAction = createAction({
     search: Property.ShortText({
       displayName: 'Search',
       required: false,
-      description:
-        'If provided only rows with cell data that matches the search query are going to be returned.',
+      description: 'If provided only rows with cell data that matches the search query are going to be returned.',
     }),
     order_by: Property.ShortText({
       displayName: 'Order By',
@@ -37,10 +32,8 @@ export const listRowsAction = createAction({
     }),
   },
   async run(context) {
-    const { table_id, limit, search, order_by } = context.propsValue;
-    const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof baserowAuth>
-    );
-    return await client.listRows(table_id, limit, search, order_by);
+    const { table_id, limit, search, order_by } = context.propsValue
+    const client = makeClient(context.auth as PiecePropValueSchema<typeof baserowAuth>)
+    return await client.listRows(table_id, limit, search, order_by)
   },
-});
+})

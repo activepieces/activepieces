@@ -1,37 +1,27 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { typeboxResolver } from '@hookform/resolvers/typebox'
+import { Static, Type } from '@sinclair/typebox'
+import { useMutation } from '@tanstack/react-query'
+import { t } from 'i18next'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 
-import { ApMarkdown } from '@/components/custom/markdown';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { platformApi } from '@/lib/platforms-api';
-import {
-  PlatformWithoutSensitiveData,
-  UpdatePlatformRequestBody,
-} from '@activepieces/shared';
+import { ApMarkdown } from '@/components/custom/markdown'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast'
+import { platformApi } from '@/lib/platforms-api'
+import { PlatformWithoutSensitiveData, UpdatePlatformRequestBody } from '@activepieces/shared'
 
 type NewOAuth2DialogProps = {
-  providerName: 'google' | 'github';
-  providerDisplayName: string;
-  platform: PlatformWithoutSensitiveData;
-  connected: boolean;
-  refetch: () => Promise<void>;
-};
+  providerName: 'google' | 'github'
+  providerDisplayName: string
+  platform: PlatformWithoutSensitiveData
+  connected: boolean
+  refetch: () => Promise<void>
+}
 
 const OAuth2FormValues = Type.Object({
   clientId: Type.String({
@@ -40,8 +30,8 @@ const OAuth2FormValues = Type.Object({
   clientSecret: Type.String({
     minLength: 1,
   }),
-});
-type OAuth2FormValues = Static<typeof OAuth2FormValues>;
+})
+type OAuth2FormValues = Static<typeof OAuth2FormValues>
 
 export const NewOAuth2Dialog = ({
   providerDisplayName,
@@ -50,38 +40,38 @@ export const NewOAuth2Dialog = ({
   connected,
   refetch,
 }: NewOAuth2DialogProps) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
   const form = useForm<OAuth2FormValues>({
     resolver: typeboxResolver(OAuth2FormValues),
-  });
+  })
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (request: UpdatePlatformRequestBody) => {
-      await platformApi.update(request, platform.id);
-      await refetch();
+      await platformApi.update(request, platform.id)
+      await refetch()
     },
     onSuccess: () => {
       toast({
         title: t('Success'),
         description: t('Single sign on settings updated'),
         duration: 3000,
-      });
-      setOpen(false);
+      })
+      setOpen(false)
     },
     onError: (error) => {
-      console.error(error);
-      toast(INTERNAL_ERROR_TOAST);
+      console.error(error)
+      toast(INTERNAL_ERROR_TOAST)
     },
-  });
+  })
 
   return (
     <Dialog
       open={open}
       onOpenChange={(open) => {
         if (!open) {
-          form.reset();
+          form.reset()
         }
-        setOpen(open);
+        setOpen(open)
       }}
     >
       <DialogTrigger asChild>
@@ -96,28 +86,21 @@ export const NewOAuth2Dialog = ({
                 federatedAuthProviders: {
                   [providerName]: null,
                 },
-              });
-              e.preventDefault();
+              })
+              e.preventDefault()
             }}
           >
             {t('Disable')}
           </Button>
         ) : (
-          <Button
-            size={'sm'}
-            className="w-32"
-            variant={'basic'}
-            onClick={() => setOpen(true)}
-          >
+          <Button size={'sm'} className="w-32" variant={'basic'} onClick={() => setOpen(true)}>
             {t('Enable')}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {t('Configure {provider} SSO', { provider: providerDisplayName })}
-          </DialogTitle>
+          <DialogTitle>{t('Configure {provider} SSO', { provider: providerDisplayName })}</DialogTitle>
         </DialogHeader>
         <div className="mb-4">
           <ApMarkdown
@@ -136,7 +119,7 @@ export const NewOAuth2Dialog = ({
                 federatedAuthProviders: {
                   [providerName]: data,
                 },
-              });
+              })
             })}
           >
             <FormField
@@ -148,12 +131,7 @@ export const NewOAuth2Dialog = ({
                       provider: providerDisplayName,
                     })}
                   </Label>
-                  <Input
-                    {...field}
-                    required
-                    id="clientId"
-                    className="rounded-sm"
-                  />
+                  <Input {...field} required id="clientId" className="rounded-sm" />
                   <FormMessage />
                 </FormItem>
               )}
@@ -167,32 +145,20 @@ export const NewOAuth2Dialog = ({
                       provider: providerDisplayName,
                     })}
                   </Label>
-                  <Input
-                    {...field}
-                    required
-                    type="password"
-                    id="clientSecret"
-                    className="rounded-sm"
-                  />
+                  <Input {...field} required type="password" id="clientSecret" className="rounded-sm" />
                   <FormMessage />
                 </FormItem>
               )}
             />
             {form?.formState?.errors?.root?.serverError && (
-              <FormMessage>
-                {form.formState.errors.root.serverError.message}
-              </FormMessage>
+              <FormMessage>{form.formState.errors.root.serverError.message}</FormMessage>
             )}
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>
                 {t('Cancel')}
               </Button>
-              <Button
-                loading={isPending}
-                disabled={!form.formState.isValid}
-                type="submit"
-              >
+              <Button loading={isPending} disabled={!form.formState.isValid} type="submit">
                 {t('Save')}
               </Button>
             </DialogFooter>
@@ -200,5 +166,5 @@ export const NewOAuth2Dialog = ({
         </Form>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}

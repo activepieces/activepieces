@@ -1,16 +1,12 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  createPiece,
-  OAuth2PropertyValue,
-  PieceAuth,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { downloadFile } from './lib/actions/download-file';
-import { listFiles } from './lib/actions/list-files';
-import { listFolders } from './lib/actions/list-folders';
-import { uploadFile } from './lib/actions/upload-file';
-import { oneDriveCommon } from './lib/common/common';
-import { newFile } from './lib/triggers/new-file';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { downloadFile } from './lib/actions/download-file'
+import { listFiles } from './lib/actions/list-files'
+import { listFolders } from './lib/actions/list-folders'
+import { uploadFile } from './lib/actions/upload-file'
+import { oneDriveCommon } from './lib/common/common'
+import { newFile } from './lib/triggers/new-file'
 
 export const oneDriveAuth = PieceAuth.OAuth2({
   description: 'Authentication for Microsoft OneDrive',
@@ -18,7 +14,7 @@ export const oneDriveAuth = PieceAuth.OAuth2({
   tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
   required: true,
   scope: ['Files.ReadWrite', 'offline_access'],
-});
+})
 
 export const microsoftOneDrive = createPiece({
   displayName: 'Microsoft OneDrive',
@@ -28,7 +24,7 @@ export const microsoftOneDrive = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/oneDrive.png',
   categories: [PieceCategory.CONTENT_AND_FILES],
-  authors: ["BastienMe","kishanprmr","MoShizzle","abuaboud","ikus060"],
+  authors: ['BastienMe', 'kishanprmr', 'MoShizzle', 'abuaboud', 'ikus060'],
   actions: [
     uploadFile,
     downloadFile,
@@ -43,4 +39,4 @@ export const microsoftOneDrive = createPiece({
     }),
   ],
   triggers: [newFile],
-});
+})

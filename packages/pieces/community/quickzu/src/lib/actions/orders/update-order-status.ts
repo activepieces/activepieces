@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { quickzuAuth } from '../../..';
-import { makeClient, quickzuCommon } from '../../common';
-import { OrderStatus } from '../../common/constants';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { quickzuAuth } from '../../..'
+import { makeClient, quickzuCommon } from '../../common'
+import { OrderStatus } from '../../common/constants'
 
 export const updateOrderStatusAction = createAction({
   auth: quickzuAuth,
@@ -19,15 +19,15 @@ export const updateOrderStatusAction = createAction({
           return {
             label: value,
             value: value,
-          };
+          }
         }),
       },
     }),
   },
   async run(context) {
-    const { orderId, status } = context.propsValue;
+    const { orderId, status } = context.propsValue
 
-    const client = makeClient(context.auth);
-    return await client.updateOrderStatus(orderId!, status);
+    const client = makeClient(context.auth)
+    return await client.updateOrderStatus(orderId!, status)
   },
-});
+})

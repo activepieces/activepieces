@@ -1,10 +1,6 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import {
-  createTask,
-  getContacts,
-  getUsers,
-} from '../common';
-import { leadConnectorAuth } from '../..';
+import { OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { leadConnectorAuth } from '../..'
+import { createTask, getContacts, getUsers } from '../common'
 
 export const createTaskAction = createAction({
   auth: leadConnectorAuth,
@@ -22,18 +18,18 @@ export const createTaskAction = createAction({
           return {
             disabled: true,
             options: [],
-          };
+          }
 
-        const contacts = await getContacts(auth as OAuth2PropertyValue);
+        const contacts = await getContacts(auth as OAuth2PropertyValue)
 
         return {
           options: contacts.map((contact) => {
             return {
               label: contact.contactName,
               value: contact.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     title: Property.ShortText({
@@ -57,17 +53,17 @@ export const createTaskAction = createAction({
           return {
             disabled: true,
             options: [],
-          };
+          }
 
-        const users = await getUsers(auth as OAuth2PropertyValue);
+        const users = await getUsers(auth as OAuth2PropertyValue)
         return {
           options: users.map((user: any) => {
             return {
               label: `${user.firstName} ${user.lastName}`,
               value: user.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     completed: Property.Checkbox({
@@ -78,8 +74,7 @@ export const createTaskAction = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const { contact, title, dueDate, description, assignedTo, completed } =
-      propsValue;
+    const { contact, title, dueDate, description, assignedTo, completed } = propsValue
 
     return await createTask(auth.access_token, contact, {
       title: title,
@@ -88,6 +83,6 @@ export const createTaskAction = createAction({
       body: description,
       assignedTo: assignedTo,
       completed,
-    });
+    })
   },
-});
+})

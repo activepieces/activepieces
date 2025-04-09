@@ -1,38 +1,31 @@
-'use client';
+'use client'
 
-import dayjs from 'dayjs';
-import { t } from 'i18next';
-import * as React from 'react';
-import { DateRange } from 'react-day-picker';
-import { BarChart, CartesianGrid, XAxis, Bar } from 'recharts';
+import dayjs from 'dayjs'
+import { t } from 'i18next'
+import * as React from 'react'
+import { DateRange } from 'react-day-picker'
+import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
 
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart';
-import { DateTimePickerWithRange } from '@/components/ui/date-time-picker-range';
-import { Skeleton } from '@/components/ui/skeleton';
-import { AnalyticsReportResponse } from '@activepieces/shared';
+import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import { DateTimePickerWithRange } from '@/components/ui/date-time-picker-range'
+import { Skeleton } from '@/components/ui/skeleton'
+import { AnalyticsReportResponse } from '@activepieces/shared'
 
 type TaskUsageProps = {
-  report?: AnalyticsReportResponse;
-};
+  report?: AnalyticsReportResponse
+}
 
 export function TaskUsage({ report }: TaskUsageProps) {
-  const [selectedDateRange, setSelectedDateRange] = React.useState<
-    DateRange | undefined
-  >({
+  const [selectedDateRange, setSelectedDateRange] = React.useState<DateRange | undefined>({
     from: dayjs().subtract(3, 'months').toDate(),
     to: dayjs().toDate(),
-  });
+  })
 
   const chartData =
     report?.tasksUsage.map((data) => ({
       date: data.day,
       tasks: data.totalTasks,
-    })) || [];
+    })) || []
 
   const chartConfig = {
     views: {
@@ -41,15 +34,15 @@ export function TaskUsage({ report }: TaskUsageProps) {
     tasks: {
       color: 'hsl(var(--chart-2))',
     },
-  } satisfies ChartConfig;
+  } satisfies ChartConfig
 
   const filteredData = chartData.filter((data) => {
     if (!selectedDateRange?.from || !selectedDateRange?.to) {
-      return true;
+      return true
     }
-    const date = new Date(data.date);
-    return date >= selectedDateRange.from && date <= selectedDateRange.to;
-  });
+    const date = new Date(data.date)
+    return date >= selectedDateRange.from && date <= selectedDateRange.to
+  })
 
   return (
     <>
@@ -68,10 +61,7 @@ export function TaskUsage({ report }: TaskUsageProps) {
       </div>
       <div className="px-2 pt-4 sm:px-6 sm:pt-6">
         {report ? (
-          <ChartContainer
-            config={chartConfig}
-            className="aspect-auto h-[250px] w-full"
-          >
+          <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
             <BarChart
               accessibilityLayer
               data={filteredData}
@@ -88,11 +78,11 @@ export function TaskUsage({ report }: TaskUsageProps) {
                 tickMargin={8}
                 minTickGap={32}
                 tickFormatter={(value) => {
-                  const date = new Date(value);
+                  const date = new Date(value)
                   return date.toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
-                  });
+                  })
                 }}
               />
               <ChartTooltip
@@ -105,7 +95,7 @@ export function TaskUsage({ report }: TaskUsageProps) {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',
-                      });
+                      })
                     }}
                   />
                 }
@@ -118,5 +108,5 @@ export function TaskUsage({ report }: TaskUsageProps) {
         )}
       </div>
     </>
-  );
+  )
 }

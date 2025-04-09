@@ -1,21 +1,17 @@
-import { useQuery } from '@tanstack/react-query';
-import { useParams } from 'react-router-dom';
-import { useSearchParam } from 'react-use';
+import { useQuery } from '@tanstack/react-query'
+import { useParams } from 'react-router-dom'
+import { useSearchParam } from 'react-use'
 
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { ApForm } from '@/features/human-input/components/ap-form';
-import { humanInputApi } from '@/features/human-input/lib/human-input-api';
-import {
-  FormResponse,
-  isNil,
-  USE_DRAFT_QUERY_PARAM_NAME,
-} from '@activepieces/shared';
+import { LoadingSpinner } from '@/components/ui/spinner'
+import { ApForm } from '@/features/human-input/components/ap-form'
+import { humanInputApi } from '@/features/human-input/lib/human-input-api'
+import { FormResponse, USE_DRAFT_QUERY_PARAM_NAME, isNil } from '@activepieces/shared'
 
-import NotFoundPage from '../404-page';
+import NotFoundPage from '../404-page'
 
 export const FormPage = () => {
-  const { flowId } = useParams();
-  const useDraft = useSearchParam(USE_DRAFT_QUERY_PARAM_NAME) === 'true';
+  const { flowId } = useParams()
+  const useDraft = useSearchParam(USE_DRAFT_QUERY_PARAM_NAME) === 'true'
 
   const {
     data: form,
@@ -27,7 +23,7 @@ export const FormPage = () => {
     enabled: !isNil(flowId),
     retry: false,
     staleTime: Infinity,
-  });
+  })
 
   return (
     <>
@@ -45,5 +41,5 @@ export const FormPage = () => {
 
       {form && !isLoading && <ApForm form={form} useDraft={useDraft} />}
     </>
-  );
-};
+  )
+}

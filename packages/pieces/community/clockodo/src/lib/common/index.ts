@@ -1,17 +1,12 @@
-import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
-import { ClockodoClient } from './client';
-import { clockodoAuth } from '../../';
-import { isNil } from '@activepieces/shared';
+import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework'
+import { isNil } from '@activepieces/shared'
+import { clockodoAuth } from '../../'
+import { ClockodoClient } from './client'
 
-type ClockodoAuthValue = PiecePropValueSchema<typeof clockodoAuth>;
+type ClockodoAuthValue = PiecePropValueSchema<typeof clockodoAuth>
 
 export function makeClient(auth: ClockodoAuthValue): ClockodoClient {
-  return new ClockodoClient(
-    auth.email,
-    auth.token,
-    auth.company_name,
-    auth.company_email
-  );
+  return new ClockodoClient(auth.email, auth.token, auth.company_name, auth.company_email)
 }
 
 export const clockodoCommon = {
@@ -54,28 +49,24 @@ export const clockodoCommon = {
             disabled: true,
             placeholder: 'setup authentication first',
             options: [],
-          };
+          }
         }
-        const client = makeClient(auth as ClockodoAuthValue);
+        const client = makeClient(auth as ClockodoAuthValue)
         const customers = await client.listAllCustomers({
           active: active === null ? undefined : active,
-        });
+        })
         return {
           disabled: false,
           options: customers.map((customer) => {
             return {
               label: customer.name,
               value: customer.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
-  project_id: (
-    required = true,
-    requiresCustomer = true,
-    active: boolean | null = true
-  ) =>
+  project_id: (required = true, requiresCustomer = true, active: boolean | null = true) =>
     Property.Dropdown({
       description: 'The ID of the project',
       displayName: 'Project',
@@ -87,31 +78,29 @@ export const clockodoCommon = {
             disabled: true,
             placeholder: 'setup authentication first',
             options: [],
-          };
+          }
         }
         if (requiresCustomer && !customer_id) {
           return {
             disabled: true,
             placeholder: 'select a customer first',
             options: [],
-          };
+          }
         }
-        const client = makeClient(auth as ClockodoAuthValue);
+        const client = makeClient(auth as ClockodoAuthValue)
         const projects = await client.listAllProjects({
           active: active === null ? undefined : active,
-          customers_id: requiresCustomer
-            ? parseInt(customer_id as string)
-            : undefined,
-        });
+          customers_id: requiresCustomer ? parseInt(customer_id as string) : undefined,
+        })
         return {
           disabled: false,
           options: projects.map((project) => {
             return {
               label: project.name,
               value: project.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   user_id: (required = true, active: boolean | null = true) =>
@@ -126,10 +115,10 @@ export const clockodoCommon = {
             disabled: true,
             placeholder: 'setup authentication first',
             options: [],
-          };
+          }
         }
-        const client = makeClient(auth as ClockodoAuthValue);
-        const usersRes = await client.listUsers();
+        const client = makeClient(auth as ClockodoAuthValue)
+        const usersRes = await client.listUsers()
         return {
           disabled: false,
           options: usersRes.users
@@ -138,9 +127,9 @@ export const clockodoCommon = {
               return {
                 label: user.name,
                 value: user.id,
-              };
+              }
             }),
-        };
+        }
       },
     }),
   team_id: (required = true) =>
@@ -155,19 +144,19 @@ export const clockodoCommon = {
             disabled: true,
             placeholder: 'setup authentication first',
             options: [],
-          };
+          }
         }
-        const client = makeClient(auth as ClockodoAuthValue);
-        const teamsRes = await client.listTeams();
+        const client = makeClient(auth as ClockodoAuthValue)
+        const teamsRes = await client.listTeams()
         return {
           disabled: false,
           options: teamsRes.teams.map((team) => {
             return {
               label: team.name,
               value: team.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   service_id: (required = true, active: boolean | null = true) =>
@@ -182,10 +171,10 @@ export const clockodoCommon = {
             disabled: true,
             placeholder: 'setup authentication first',
             options: [],
-          };
+          }
         }
-        const client = makeClient(auth as ClockodoAuthValue);
-        const servicesRes = await client.listServices();
+        const client = makeClient(auth as ClockodoAuthValue)
+        const servicesRes = await client.listServices()
         return {
           disabled: false,
           options: servicesRes.services
@@ -194,9 +183,9 @@ export const clockodoCommon = {
               return {
                 label: service.name,
                 value: service.id,
-              };
+              }
             }),
-        };
+        }
       },
     }),
   language: (required = true) =>
@@ -229,23 +218,23 @@ export const clockodoCommon = {
         ],
       },
     }),
-};
+}
 
 export function emptyToNull(val?: string): undefined | string | null {
-  return val === undefined ? val : val || null;
+  return val === undefined ? val : val || null
 }
 
 export function currentYear(): number {
-  const todaysDate = new Date();
-  return todaysDate.getFullYear();
+  const todaysDate = new Date()
+  return todaysDate.getFullYear()
 }
 
 export function reformatDateTime(s?: string): string | undefined {
-  if (!s) return undefined;
-  return s.replace(/\.[0-9]{3}/, '');
+  if (!s) return undefined
+  return s.replace(/\.[0-9]{3}/, '')
 }
 
 export function reformatDate(s?: string): string | undefined {
-  if (!s) return undefined;
-  return s.split('T', 2)[0];
+  if (!s) return undefined
+  return s.split('T', 2)[0]
 }

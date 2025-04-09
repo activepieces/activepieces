@@ -1,10 +1,5 @@
-import {
-  createTrigger,
-  DynamicPropsValue,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined, MarkdownVariant } from '@activepieces/shared';
+import { DynamicPropsValue, Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { MarkdownVariant, assertNotNullOrUndefined } from '@activepieces/shared'
 
 const liveMarkdown = `**Live URL:**
 \`\`\`text
@@ -12,14 +7,14 @@ const liveMarkdown = `**Live URL:**
 \`\`\`
 generate sample data & triggers published flow.
 
-`;
+`
 
 const testMarkdown = `
 **Test URL:**
 
 if you want to generate sample data without triggering the flow, append \`/test\` to your webhook URL.
 
-`;
+`
 
 const syncMarkdown = `**Synchronous Requests:**
 
@@ -27,7 +22,7 @@ If you expect a response from this webhook, add \`/sync\` to the end of the URL.
 If it takes more than 30 seconds, it will return a 408 Request Timeout response.
 
 To return data, add an Webhook step to your flow with the Return Response action.
-`;
+`
 
 enum AuthType {
   NONE = 'none',
@@ -37,8 +32,7 @@ enum AuthType {
 export const catchWebhook = createTrigger({
   name: 'catch_webhook',
   displayName: 'Catch Webhook',
-  description:
-    'Receive incoming HTTP/webhooks using any HTTP method such as GET, POST, PUT, DELETE, etc.',
+  description: 'Receive incoming HTTP/webhooks using any HTTP method such as GET, POST, PUT, DELETE, etc.',
   props: {
     liveMarkdown: Property.MarkDown({
       value: liveMarkdown,
@@ -71,14 +65,14 @@ export const catchWebhook = createTrigger({
       refreshers: ['authType'],
       props: async ({ authType }) => {
         if (!authType) {
-          return {};
+          return {}
         }
-        const authTypeEnum = authType.toString() as AuthType;
-        let fields: DynamicPropsValue = {};
+        const authTypeEnum = authType.toString() as AuthType
+        let fields: DynamicPropsValue = {}
         switch (authTypeEnum) {
           case AuthType.NONE:
-            fields = {};
-            break;
+            fields = {}
+            break
           case AuthType.BASIC:
             fields = {
               username: Property.ShortText({
@@ -91,14 +85,13 @@ export const catchWebhook = createTrigger({
                 description: 'The password to use for authentication.',
                 required: true,
               }),
-            };
-            break;
+            }
+            break
           case AuthType.HEADER:
             fields = {
               headerName: Property.ShortText({
                 displayName: 'Header Name',
-                description:
-                  'The name of the header to use for authentication.',
+                description: 'The name of the header to use for authentication.',
                 required: true,
               }),
               headerValue: Property.ShortText({
@@ -106,12 +99,12 @@ export const catchWebhook = createTrigger({
                 description: 'The value to check against the header.',
                 required: true,
               }),
-            };
-            break;
+            }
+            break
           default:
-            throw new Error('Invalid authentication type');
+            throw new Error('Invalid authentication type')
         }
-        return fields;
+        return fields
       },
     }),
   },
@@ -124,67 +117,44 @@ export const catchWebhook = createTrigger({
     // ignore
   },
   async run(context) {
-    const authenticationType = context.propsValue.authType;
-    assertNotNullOrUndefined(
-      authenticationType,
-      'Authentication type is required'
-    );
-    const verified = verifyAuth(
-      authenticationType,
-      context.propsValue.authFields ?? {},
-      context.payload.headers
-    );
+    const authenticationType = context.propsValue.authType
+    assertNotNullOrUndefined(authenticationType, 'Authentication type is required')
+    const verified = verifyAuth(authenticationType, context.propsValue.authFields ?? {}, context.payload.headers)
     if (!verified) {
-      return [];
+      return []
     }
-    return [context.payload];
+    return [context.payload]
   },
-});
+})
 
 function verifyAuth(
   authenticationType: AuthType,
   authFields: DynamicPropsValue,
-  headers: Record<string, string>
+  headers: Record<string, string>,
 ): boolean {
   switch (authenticationType) {
     case AuthType.NONE:
-      return true;
+      return true
     case AuthType.BASIC:
-      return verifyBasicAuth(
-        headers['authorization'],
-        authFields['username'],
-        authFields['password']
-      );
+      return verifyBasicAuth(headers['authorization'], authFields['username'], authFields['password'])
     case AuthType.HEADER:
-      return verifyHeaderAuth(
-        headers,
-        authFields['headerName'],
-        authFields['headerValue']
-      );
+      return verifyHeaderAuth(headers, authFields['headerName'], authFields['headerValue'])
     default:
-      throw new Error('Invalid authentication type');
+      throw new Error('Invalid authentication type')
   }
 }
 
-function verifyHeaderAuth(
-  headers: Record<string, string>,
-  headerName: string,
-  headerSecret: string
-) {
-  const headerValue = headers[headerName.toLocaleLowerCase()];
-  return headerValue === headerSecret;
+function verifyHeaderAuth(headers: Record<string, string>, headerName: string, headerSecret: string) {
+  const headerValue = headers[headerName.toLocaleLowerCase()]
+  return headerValue === headerSecret
 }
 
-function verifyBasicAuth(
-  headerValue: string,
-  username: string,
-  password: string
-) {
+function verifyBasicAuth(headerValue: string, username: string, password: string) {
   if (!headerValue.toLocaleLowerCase().startsWith('basic ')) {
-    return false;
+    return false
   }
-  const auth = headerValue.substring(6);
-  const decodedAuth = Buffer.from(auth, 'base64').toString();
-  const [receivedUsername, receivedPassword] = decodedAuth.split(':');
-  return receivedUsername === username && receivedPassword === password;
+  const auth = headerValue.substring(6)
+  const decodedAuth = Buffer.from(auth, 'base64').toString()
+  const [receivedUsername, receivedPassword] = decodedAuth.split(':')
+  return receivedUsername === username && receivedPassword === password
 }

@@ -1,6 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { quickzuAuth } from '../../..';
-import { makeClient, quickzuCommon } from '../../common';
+import { createAction } from '@activepieces/pieces-framework'
+import { quickzuAuth } from '../../..'
+import { makeClient, quickzuCommon } from '../../common'
 
 export const deleteProductAction = createAction({
   auth: quickzuAuth,
@@ -11,9 +11,9 @@ export const deleteProductAction = createAction({
     productId: quickzuCommon.productId(true),
   },
   async run(context) {
-    const { productId } = context.propsValue;
+    const { productId } = context.propsValue
 
-    const client = makeClient(context.auth);
-    return await client.deleteProduct(productId!);
+    const client = makeClient(context.auth)
+    return await client.deleteProduct(productId!)
   },
-});
+})

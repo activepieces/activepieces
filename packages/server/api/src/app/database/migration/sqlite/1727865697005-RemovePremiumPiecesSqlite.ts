@@ -1,16 +1,16 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class RemovePremiumPiecesSqlite1727865697005 implements MigrationInterface {
-    name = 'RemovePremiumPiecesSqlite1727865697005'
+  name = 'RemovePremiumPiecesSqlite1727865697005'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -29,7 +29,7 @@ export class RemovePremiumPiecesSqlite1727865697005 implements MigrationInterfac
                 "tokenVersion" character varying
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_user"(
                     "id",
                     "created",
@@ -64,20 +64,20 @@ export class RemovePremiumPiecesSqlite1727865697005 implements MigrationInterfac
                 "tokenVersion"
             FROM "user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_user"
                 RENAME TO "user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -142,7 +142,7 @@ export class RemovePremiumPiecesSqlite1727865697005 implements MigrationInterfac
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_platform"(
                     "id",
                     "created",
@@ -227,20 +227,20 @@ export class RemovePremiumPiecesSqlite1727865697005 implements MigrationInterfac
                 "analyticsEnabled"
             FROM "platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_platform"
                 RENAME TO "platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -259,7 +259,7 @@ export class RemovePremiumPiecesSqlite1727865697005 implements MigrationInterfac
                 "tokenVersion" varchar
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_user"(
                     "id",
                     "created",
@@ -294,33 +294,33 @@ export class RemovePremiumPiecesSqlite1727865697005 implements MigrationInterfac
                 "tokenVersion"
             FROM "user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_user"
                 RENAME TO "user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "user"
                 RENAME TO "temporary_user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -339,7 +339,7 @@ export class RemovePremiumPiecesSqlite1727865697005 implements MigrationInterfac
                 "tokenVersion" character varying
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "user"(
                     "id",
                     "created",
@@ -374,20 +374,20 @@ export class RemovePremiumPiecesSqlite1727865697005 implements MigrationInterfac
                 "tokenVersion"
             FROM "temporary_user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "platform"
                 RENAME TO "temporary_platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -453,7 +453,7 @@ export class RemovePremiumPiecesSqlite1727865697005 implements MigrationInterfac
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "platform"(
                     "id",
                     "created",
@@ -538,20 +538,20 @@ export class RemovePremiumPiecesSqlite1727865697005 implements MigrationInterfac
                 "analyticsEnabled"
             FROM "temporary_platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "user"
                 RENAME TO "temporary_user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -570,7 +570,7 @@ export class RemovePremiumPiecesSqlite1727865697005 implements MigrationInterfac
                 "tokenVersion" character varying
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "user"(
                     "id",
                     "created",
@@ -605,15 +605,14 @@ export class RemovePremiumPiecesSqlite1727865697005 implements MigrationInterfac
                 "tokenVersion"
             FROM "temporary_user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
         `)
-    }
-
+  }
 }

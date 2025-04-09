@@ -1,13 +1,13 @@
 import {
   AuthenticationType,
-  createCustomApiCallAction,
-  httpClient,
   HttpMethod,
   HttpRequest,
-} from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { askOpenRouterAction } from './lib/actions/ask-open-router';
+  createCustomApiCallAction,
+  httpClient,
+} from '@activepieces/pieces-common'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { askOpenRouterAction } from './lib/actions/ask-open-router'
 
 const markdownDescription = `
 Follow these instructions to get your OpenAI API Key:
@@ -15,7 +15,7 @@ Follow these instructions to get your OpenAI API Key:
 1. Visit the following website: https://openrouter.ai/keys.
 2. Once on the website, click on create a key.
 3. Once you have created a key, copy it and use it for the Api key field on the site.
-`;
+`
 export const openRouterAuth = PieceAuth.SecretText({
   description: markdownDescription,
   displayName: 'Api Key',
@@ -32,19 +32,19 @@ export const openRouterAuth = PieceAuth.SecretText({
           type: AuthenticationType.BEARER_TOKEN,
           token: auth,
         },
-      };
-      await httpClient.sendRequest(request);
+      }
+      await httpClient.sendRequest(request)
       return {
         valid: true,
-      };
+      }
     } catch (error) {
       return {
         valid: false,
         error: 'Invalid API Key',
-      };
+      }
     }
   },
-});
+})
 
 export const openRouter = createPiece({
   displayName: 'OpenRouter',
@@ -53,7 +53,7 @@ export const openRouter = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/open-router.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ["Salem-Alaa","kishanprmr","MoShizzle","abuaboud"],
+  authors: ['Salem-Alaa', 'kishanprmr', 'MoShizzle', 'abuaboud'],
   actions: [
     askOpenRouterAction,
     createCustomApiCallAction({
@@ -65,4 +65,4 @@ export const openRouter = createPiece({
     }),
   ],
   triggers: [],
-});
+})

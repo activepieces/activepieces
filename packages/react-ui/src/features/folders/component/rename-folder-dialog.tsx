@@ -1,34 +1,27 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { typeboxResolver } from '@hookform/resolvers/typebox'
+import { Static, Type } from '@sinclair/typebox'
+import { useMutation } from '@tanstack/react-query'
+import { t } from 'i18next'
+import { useState } from 'react'
+import { FormProvider, useForm } from 'react-hook-form'
 
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { validationUtils } from '@/lib/utils';
-import { Folder } from '@activepieces/shared';
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { FormField, FormItem, FormMessage } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast'
+import { validationUtils } from '@/lib/utils'
+import { Folder } from '@activepieces/shared'
 
-import { foldersApi } from '../lib/folders-api';
+import { foldersApi } from '../lib/folders-api'
 
 const RenameFolderSchema = Type.Object({
   displayName: Type.String({
     errorMessage: t('Please enter a folder name'),
   }),
-});
+})
 
-type RenameFolderSchema = Static<typeof RenameFolderSchema>;
+type RenameFolderSchema = Static<typeof RenameFolderSchema>
 
 const RenameFolderDialog = ({
   children,
@@ -36,15 +29,15 @@ const RenameFolderDialog = ({
   onRename,
   name,
 }: {
-  children: React.ReactNode;
-  folderId: string;
-  onRename: () => void;
-  name: string;
+  children: React.ReactNode
+  folderId: string
+  onRename: () => void
+  name: string
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false)
   const form = useForm<RenameFolderSchema>({
     resolver: typeboxResolver(RenameFolderSchema),
-  });
+  })
 
   const { mutate, isPending } = useMutation<Folder, Error, RenameFolderSchema>({
     mutationFn: async (data) =>
@@ -52,22 +45,22 @@ const RenameFolderDialog = ({
         displayName: data.displayName,
       }),
     onSuccess: () => {
-      setIsOpen(false);
-      onRename();
+      setIsOpen(false)
+      onRename()
       toast({
         title: t('Renamed flow successfully'),
-      });
+      })
     },
     onError: (err) => {
       if (validationUtils.isValidationError(err)) {
         form.setError('displayName', {
           message: t('Folder name already used'),
-        });
+        })
       } else {
-        toast(INTERNAL_ERROR_TOAST);
+        toast(INTERNAL_ERROR_TOAST)
       }
     },
-  });
+  })
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -98,17 +91,15 @@ const RenameFolderDialog = ({
               )}
             />
             {form?.formState?.errors?.root?.serverError && (
-              <FormMessage>
-                {form.formState.errors.root.serverError.message}
-              </FormMessage>
+              <FormMessage>{form.formState.errors.root.serverError.message}</FormMessage>
             )}
             <DialogFooter>
               <Button
                 variant={'outline'}
                 onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  setIsOpen(false);
+                  e.stopPropagation()
+                  e.preventDefault()
+                  setIsOpen(false)
                 }}
               >
                 {t('Cancel')}
@@ -121,7 +112,7 @@ const RenameFolderDialog = ({
         </FormProvider>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}
 
-export { RenameFolderDialog };
+export { RenameFolderDialog }

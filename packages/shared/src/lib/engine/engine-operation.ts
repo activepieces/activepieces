@@ -8,212 +8,214 @@ import { PlatformId } from '../platform'
 import { ProjectId } from '../project/project'
 
 export enum EngineOperationType {
-    EXTRACT_PIECE_METADATA = 'EXTRACT_PIECE_METADATA',
-    EXECUTE_STEP = 'EXECUTE_STEP',
-    EXECUTE_TOOL = 'EXECUTE_TOOL',
-    EXECUTE_FLOW = 'EXECUTE_FLOW',
-    EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
-    EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
-    EXECUTE_VALIDATE_AUTH = 'EXECUTE_VALIDATE_AUTH',
+  EXTRACT_PIECE_METADATA = 'EXTRACT_PIECE_METADATA',
+  EXECUTE_STEP = 'EXECUTE_STEP',
+  EXECUTE_TOOL = 'EXECUTE_TOOL',
+  EXECUTE_FLOW = 'EXECUTE_FLOW',
+  EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
+  EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
+  EXECUTE_VALIDATE_AUTH = 'EXECUTE_VALIDATE_AUTH',
 }
 
 export enum TriggerHookType {
-    ON_ENABLE = 'ON_ENABLE',
-    ON_DISABLE = 'ON_DISABLE',
-    HANDSHAKE = 'HANDSHAKE',
-    RENEW = 'RENEW',
-    RUN = 'RUN',
-    TEST = 'TEST',
+  ON_ENABLE = 'ON_ENABLE',
+  ON_DISABLE = 'ON_DISABLE',
+  HANDSHAKE = 'HANDSHAKE',
+  RENEW = 'RENEW',
+  RUN = 'RUN',
+  TEST = 'TEST',
 }
 
 export type EngineOperation =
-    | ExecuteStepOperation
-    | ExecuteToolOperation
-    | ExecuteFlowOperation
-    | ExecutePropsOptions
-    | ExecuteTriggerOperation<TriggerHookType>
-    | ExecuteExtractPieceMetadata
-    | ExecuteValidateAuthOperation
+  | ExecuteStepOperation
+  | ExecuteToolOperation
+  | ExecuteFlowOperation
+  | ExecutePropsOptions
+  | ExecuteTriggerOperation<TriggerHookType>
+  | ExecuteExtractPieceMetadata
+  | ExecuteValidateAuthOperation
 
 export type BaseEngineOperation = {
-    projectId: ProjectId
-    engineToken: string
-    internalApiUrl: string
-    publicApiUrl: string
+  projectId: ProjectId
+  engineToken: string
+  internalApiUrl: string
+  publicApiUrl: string
 }
 
 export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'> & {
-    piece: PiecePackage
-    platformId: PlatformId
-    auth: AppConnectionValue
+  piece: PiecePackage
+  platformId: PlatformId
+  auth: AppConnectionValue
 }
 
 export type ExecuteExtractPieceMetadata = PiecePackage
 
-export type ExecuteStepOperation = BaseEngineOperation &  {
-    stepName: string
-    flowVersion: FlowVersion
-    sampleData: Record<string, unknown>
+export type ExecuteStepOperation = BaseEngineOperation & {
+  stepName: string
+  flowVersion: FlowVersion
+  sampleData: Record<string, unknown>
 }
 
 export type ExecuteToolOperation = BaseEngineOperation & {
-    actionName: string
-    pieceName: string
-    pieceVersion: string
-    pieceType: PieceType
-    packageType: PackageType
-    input: Record<string, unknown>
+  actionName: string
+  pieceName: string
+  pieceVersion: string
+  pieceType: PieceType
+  packageType: PackageType
+  input: Record<string, unknown>
 }
 
 export type ExecutePropsOptions = BaseEngineOperation & {
-    piece: PiecePackage
-    propertyName: string
-    actionOrTriggerName: string
-    flowVersion: FlowVersion
-    input: Record<string, unknown>
-    sampleData: Record<string, unknown>
-    searchValue?: string
+  piece: PiecePackage
+  propertyName: string
+  actionOrTriggerName: string
+  flowVersion: FlowVersion
+  input: Record<string, unknown>
+  sampleData: Record<string, unknown>
+  searchValue?: string
 }
 
 type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
-    flowVersion: FlowVersion
-    flowRunId: FlowRunId
-    executionType: T
-    runEnvironment: RunEnvironment
-    serverHandlerId: string | null
-    httpRequestId: string | null
-    progressUpdateType: ProgressUpdateType
+  flowVersion: FlowVersion
+  flowRunId: FlowRunId
+  executionType: T
+  runEnvironment: RunEnvironment
+  serverHandlerId: string | null
+  httpRequestId: string | null
+  progressUpdateType: ProgressUpdateType
 }
 
 export enum ProgressUpdateType {
-    WEBHOOK_RESPONSE = 'WEBHOOK_RESPONSE',
-    TEST_FLOW = 'TEST_FLOW',
-    NONE = 'NONE',
+  WEBHOOK_RESPONSE = 'WEBHOOK_RESPONSE',
+  TEST_FLOW = 'TEST_FLOW',
+  NONE = 'NONE',
 }
 
 export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.BEGIN> & {
-    triggerPayload: unknown
+  triggerPayload: unknown
 }
 
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
-    tasks: number
-    resumePayload: ResumePayload
+  tasks: number
+  resumePayload: ResumePayload
 } & ExecutionState
 
 export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation
 
-
 export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOperation & {
-    hookType: HT
-    test: boolean
-    flowVersion: FlowVersion
-    webhookUrl: string
-    triggerPayload?: TriggerPayload
-    appWebhookUrl?: string
-    webhookSecret?: string | Record<string, string>
+  hookType: HT
+  test: boolean
+  flowVersion: FlowVersion
+  webhookUrl: string
+  triggerPayload?: TriggerPayload
+  appWebhookUrl?: string
+  webhookSecret?: string | Record<string, string>
 }
 
-
 export type TriggerPayload<T = unknown> = {
-    body: T
-    rawBody?: unknown
-    headers: Record<string, string>
-    queryParams: Record<string, string>
+  body: T
+  rawBody?: unknown
+  headers: Record<string, string>
+  queryParams: Record<string, string>
 }
 
 export type EventPayload<B = unknown> = {
-    body: B
-    rawBody?: unknown
-    method: string
-    headers: Record<string, string>
-    queryParams: Record<string, string>
+  body: B
+  rawBody?: unknown
+  method: string
+  headers: Record<string, string>
+  queryParams: Record<string, string>
 }
 
 export type ParseEventResponse = {
-    event?: string
-    identifierValue?: string
-    reply?: {
-        headers: Record<string, string>
-        body: unknown
-    }
+  event?: string
+  identifierValue?: string
+  reply?: {
+    headers: Record<string, string>
+    body: unknown
+  }
 }
 
 export type AppEventListener = {
-    events: string[]
-    identifierValue: string
+  events: string[]
+  identifierValue: string
 }
 
-
 type ExecuteTestOrRunTriggerResponse = {
-    success: boolean
-    message?: string
-    output: unknown[]
+  success: boolean
+  message?: string
+  output: unknown[]
 }
 
 type ExecuteHandshakeTriggerResponse = {
-    success: boolean
-    message?: string
-    response?: {
-        status: number
-        body?: unknown
-        headers?: Record<string, string>
-    }
+  success: boolean
+  message?: string
+  response?: {
+    status: number
+    body?: unknown
+    headers?: Record<string, string>
+  }
 }
 
 type ExecuteOnEnableTriggerResponse = {
-    listeners: AppEventListener[]
-    scheduleOptions?: ScheduleOptions
+  listeners: AppEventListener[]
+  scheduleOptions?: ScheduleOptions
 }
 
 export const EngineHttpResponse = Type.Object({
-    status: Type.Number(),
-    body: Type.Unknown(),
-    headers: Type.Record(Type.String(), Type.String()),
+  status: Type.Number(),
+  body: Type.Unknown(),
+  headers: Type.Record(Type.String(), Type.String()),
 })
 
 export type EngineHttpResponse = Static<typeof EngineHttpResponse>
 
-export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends TriggerHookType.RUN ? ExecuteTestOrRunTriggerResponse :
-    H extends TriggerHookType.HANDSHAKE ? ExecuteHandshakeTriggerResponse :
-        H extends TriggerHookType.TEST ? ExecuteTestOrRunTriggerResponse :
-            H extends TriggerHookType.RENEW ? Record<string, never> :
-                H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
-                    ExecuteOnEnableTriggerResponse
+export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends TriggerHookType.RUN
+  ? ExecuteTestOrRunTriggerResponse
+  : H extends TriggerHookType.HANDSHAKE
+    ? ExecuteHandshakeTriggerResponse
+    : H extends TriggerHookType.TEST
+      ? ExecuteTestOrRunTriggerResponse
+      : H extends TriggerHookType.RENEW
+        ? Record<string, never>
+        : H extends TriggerHookType.ON_DISABLE
+          ? Record<string, never>
+          : ExecuteOnEnableTriggerResponse
 
 export type ExecuteActionResponse = {
-    success: boolean
-    input: unknown
-    output: unknown
-    message?: string
+  success: boolean
+  input: unknown
+  output: unknown
+  message?: string
 }
 
 type BaseExecuteValidateAuthResponseOutput<Valid extends boolean> = {
-    valid: Valid
+  valid: Valid
 }
 
 type ValidExecuteValidateAuthResponseOutput = BaseExecuteValidateAuthResponseOutput<true>
 
 type InvalidExecuteValidateAuthResponseOutput = BaseExecuteValidateAuthResponseOutput<false> & {
-    error: string
+  error: string
 }
 export type ExecuteValidateAuthResponse =
-    | ValidExecuteValidateAuthResponseOutput
-    | InvalidExecuteValidateAuthResponseOutput
+  | ValidExecuteValidateAuthResponseOutput
+  | InvalidExecuteValidateAuthResponseOutput
 
 export type ScheduleOptions = {
-    cronExpression: string
-    timezone: string
-    failureCount: number
+  cronExpression: string
+  timezone: string
+  failureCount: number
 }
 
 export type EngineResponse<T> = {
-    status: EngineResponseStatus
-    response: T
+  status: EngineResponseStatus
+  response: T
 }
 
 export enum EngineResponseStatus {
-    OK = 'OK',
-    ERROR = 'ERROR',
-    TIMEOUT = 'TIMEOUT',
-    MEMORY_ISSUE = 'MEMORY_ISSUE',
+  OK = 'OK',
+  ERROR = 'ERROR',
+  TIMEOUT = 'TIMEOUT',
+  MEMORY_ISSUE = 'MEMORY_ISSUE',
 }

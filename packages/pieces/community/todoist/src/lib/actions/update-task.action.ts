@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
-import { todoistRestClient } from '../common/client/rest-client';
-import { todoistAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { assertNotNullOrUndefined } from '@activepieces/shared'
+import { todoistAuth } from '../..'
+import { todoistRestClient } from '../common/client/rest-client'
 
 export const todoistUpdateTaskAction = createAction({
   auth: todoistAuth,
@@ -15,21 +15,18 @@ export const todoistUpdateTaskAction = createAction({
     }),
     content: Property.LongText({
       displayName: 'content',
-      description:
-        "The task's content. It may contain some markdown-formatted text and hyperlinks",
+      description: "The task's content. It may contain some markdown-formatted text and hyperlinks",
       required: false,
     }),
     description: Property.LongText({
       displayName: 'Description',
-      description:
-        'A description for the task. This value may contain some markdown-formatted text and hyperlinks.',
+      description: 'A description for the task. This value may contain some markdown-formatted text and hyperlinks.',
       required: false,
     }),
     labels: Property.Array({
       displayName: 'Labels',
       required: false,
-      description:
-        "The task's labels (a list of names that may represent either personal or shared labels)",
+      description: "The task's labels (a list of names that may represent either personal or shared labels)",
     }),
     priority: Property.Number({
       displayName: 'Priority',
@@ -45,11 +42,11 @@ export const todoistUpdateTaskAction = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const token = auth.access_token;
-    const { task_id, content, description, priority, due_date } = propsValue;
-    const labels = propsValue.labels as string[];
+    const token = auth.access_token
+    const { task_id, content, description, priority, due_date } = propsValue
+    const labels = propsValue.labels as string[]
 
-    assertNotNullOrUndefined(token, 'token');
+    assertNotNullOrUndefined(token, 'token')
     return await todoistRestClient.tasks.update({
       token,
       task_id,
@@ -58,6 +55,6 @@ export const todoistUpdateTaskAction = createAction({
       labels,
       priority,
       due_date,
-    });
+    })
   },
-});
+})

@@ -1,19 +1,15 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import mime from 'mime-types'
+import { dustAuth } from '../..'
 import {
   DUST_BASE_URL,
   assistantProp,
-  usernameProp,
-  timezoneProp,
   getConversationContent,
   timeoutProp,
-} from '../common';
-import { dustAuth } from '../..';
-import mime from 'mime-types';
+  timezoneProp,
+  usernameProp,
+} from '../common'
 
 export const createConversation = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -38,7 +34,7 @@ export const createConversation = createAction({
     const payload: Record<string, any> = {
       visibility: 'unlisted',
       title: propsValue.title || null,
-    };
+    }
     if (propsValue.query) {
       payload['message'] = {
         content: propsValue.query,
@@ -50,20 +46,19 @@ export const createConversation = createAction({
           fullName: null,
           profilePictureUrl: null,
         },
-      };
+      }
     }
     if (propsValue.fragment) {
       const mimeType = propsValue.fragmentName
-        ? mime.lookup(propsValue.fragmentName) ||
-          mime.lookup(propsValue.fragment.filename)
-        : mime.lookup(propsValue.fragment.filename);
+        ? mime.lookup(propsValue.fragmentName) || mime.lookup(propsValue.fragment.filename)
+        : mime.lookup(propsValue.fragment.filename)
       payload['contentFragment'] = {
         title: propsValue.fragmentName || propsValue.fragment.filename,
         content: propsValue.fragment.data.toString('utf-8'),
         contentType: mimeType || 'text/plain',
         context: null,
         url: null,
-      };
+      }
     }
 
     const request: HttpRequest = {
@@ -73,20 +68,14 @@ export const createConversation = createAction({
         'Content-Type': 'application/json',
         Authorization: `Bearer ${auth.apiKey}`,
       },
-      body: JSON.stringify(payload, (key, value) =>
-        typeof value === 'undefined' ? null : value
-      ),
-    };
-    const body = (await httpClient.sendRequest(request)).body;
-    const conversationId = body['conversation']['sId'];
+      body: JSON.stringify(payload, (key, value) => (typeof value === 'undefined' ? null : value)),
+    }
+    const body = (await httpClient.sendRequest(request)).body
+    const conversationId = body['conversation']['sId']
     if (propsValue.query) {
-      return await getConversationContent(
-        conversationId,
-        propsValue.timeout,
-        auth
-      );
+      return await getConversationContent(conversationId, propsValue.timeout, auth)
     } else {
-      return body;
+      return body
     }
   },
-});
+})

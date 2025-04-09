@@ -1,21 +1,21 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
-import dayjs from 'dayjs';
-import { t } from 'i18next';
-import { CircleCheckBig, CalendarDays, Zap, AlertTriangle } from 'lucide-react';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
+import { typeboxResolver } from '@hookform/resolvers/typebox'
+import { Static, Type } from '@sinclair/typebox'
+import dayjs from 'dayjs'
+import { t } from 'i18next'
+import { AlertTriangle, CalendarDays, CircleCheckBig, Zap } from 'lucide-react'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { Link } from 'react-router-dom'
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
-import { formatUtils } from '@/lib/utils';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
+import { flagsHooks } from '@/hooks/flags-hooks'
+import { platformHooks } from '@/hooks/platform-hooks'
+import { formatUtils } from '@/lib/utils'
+import { ApEdition, ApFlagId } from '@activepieces/shared'
 
-import { ActivateLicenseDialog } from './activate-license-dialog';
+import { ActivateLicenseDialog } from './activate-license-dialog'
 
 const LICENSE_PROPS_MAP = {
   environmentEnabled: 'Team Collaboration via Git',
@@ -32,15 +32,15 @@ const LICENSE_PROPS_MAP = {
   flowIssuesEnabled: 'Flow Issues',
   alertsEnabled: 'Alerts',
   ssoEnabled: 'Single Sign On',
-};
+}
 
 const LicenseKeySchema = Type.Object({
   tempLicenseKey: Type.String({
     errorMessage: t('License key is invalid'),
   }),
-});
+})
 
-type LicenseKeySchema = Static<typeof LicenseKeySchema>;
+type LicenseKeySchema = Static<typeof LicenseKeySchema>
 
 const LicenseKeyPage = () => {
   const form = useForm<LicenseKeySchema>({
@@ -49,13 +49,11 @@ const LicenseKeyPage = () => {
       tempLicenseKey: '',
     },
     mode: 'onChange',
-  });
-  const { platform, refetch } = platformHooks.useCurrentPlatform();
-  const [isOpenDialog, setIsOpenDialog] = useState(false);
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const { data: showPlatformDemo } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_PLATFORM_DEMO,
-  );
+  })
+  const { platform, refetch } = platformHooks.useCurrentPlatform()
+  const [isOpenDialog, setIsOpenDialog] = useState(false)
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION)
+  const { data: showPlatformDemo } = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_PLATFORM_DEMO)
 
   if (edition === ApEdition.COMMUNITY || showPlatformDemo) {
     return (
@@ -63,9 +61,7 @@ const LicenseKeyPage = () => {
         <h1 className="text-2xl font-bold w-full">{t('License Key')}</h1>
         <p className="text-md text-gray-500 w-full">
           {showPlatformDemo &&
-            t(
-              'This feature is not self serve in the cloud yet, please contact sales@activepieces.com. ',
-            )}
+            t('This feature is not self serve in the cloud yet, please contact sales@activepieces.com. ')}
           {edition === ApEdition.COMMUNITY && (
             <>
               {t('This feature is not available in your current edition. ')}
@@ -82,35 +78,29 @@ const LicenseKeyPage = () => {
           )}
         </p>
       </div>
-    );
+    )
   }
 
   const handleOpenDialog = () => {
-    form.clearErrors();
-    form.reset({ tempLicenseKey: '' });
-    setIsOpenDialog(true);
-  };
+    form.clearErrors()
+    form.reset({ tempLicenseKey: '' })
+    setIsOpenDialog(true)
+  }
 
   const handleActivateLicenseKey = () => {
-    refetch();
-  };
+    refetch()
+  }
 
-  const expired =
-    platform?.licenseExpiresAt &&
-    dayjs(platform.licenseExpiresAt).isBefore(dayjs());
+  const expired = platform?.licenseExpiresAt && dayjs(platform.licenseExpiresAt).isBefore(dayjs())
   const expiresSoon =
-    !expired &&
-    platform?.licenseExpiresAt &&
-    dayjs(platform.licenseExpiresAt).isBefore(dayjs().add(7, 'day'));
+    !expired && platform?.licenseExpiresAt && dayjs(platform.licenseExpiresAt).isBefore(dayjs().add(7, 'day'))
 
   return (
     <div className="flex-col w-full max-w-2xl">
       <div className="mb-6 flex items-center">
         <div>
           <h1 className="text-2xl font-bold">{t('License Key')}</h1>
-          <p className="text-sm text-gray-500">
-            {t('Activate your platform and unlock enterprise features')}
-          </p>
+          <p className="text-sm text-gray-500">{t('Activate your platform and unlock enterprise features')}</p>
         </div>
       </div>
 
@@ -146,10 +136,7 @@ const LicenseKeyPage = () => {
             <div>
               <p className="font-semibold text-sm">{t('Expiration')}</p>
               <p className="text-xs">
-                {t('Valid until')}{' '}
-                {formatUtils.formatDateOnly(
-                  dayjs(platform.licenseExpiresAt).toDate(),
-                )}
+                {t('Valid until')} {formatUtils.formatDateOnly(dayjs(platform.licenseExpiresAt).toDate())}
                 {(expiresSoon || expired) && (
                   <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-300">
                     <AlertTriangle className="w-3 h-3 mr-1" />
@@ -179,8 +166,8 @@ const LicenseKeyPage = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-LicenseKeyPage.displayName = 'LicenseKeyPage';
-export { LicenseKeyPage };
+LicenseKeyPage.displayName = 'LicenseKeyPage'
+export { LicenseKeyPage }

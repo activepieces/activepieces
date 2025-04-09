@@ -1,7 +1,7 @@
-import { microsoftSharePointAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { microsoftSharePointCommon } from '../common';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { Client } from '@microsoft/microsoft-graph-client'
+import { microsoftSharePointAuth } from '../../'
+import { microsoftSharePointCommon } from '../common'
 
 export const createFolderAction = createAction({
   auth: microsoftSharePointAuth,
@@ -23,19 +23,19 @@ export const createFolderAction = createAction({
     }),
   },
   async run(context) {
-    const { driveId, parentFolder, folderName } = context.propsValue;
+    const { driveId, parentFolder, folderName } = context.propsValue
 
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
-    });
+    })
 
-    const folderPath = parentFolder + folderName;
+    const folderPath = parentFolder + folderName
 
     // https://stackoverflow.com/questions/66631136/creating-nested-folder-in-sharepoint-with-graph-api-fails
     return await client.api(`/drives/${driveId}/root:${folderPath}`).patch({
       folder: {},
-    });
+    })
   },
-});
+})

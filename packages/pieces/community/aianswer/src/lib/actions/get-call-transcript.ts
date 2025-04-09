@@ -1,11 +1,11 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { aiAnswerAuth } from '../..';
-import { aiAnswerConfig } from '../common/models';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { aiAnswerAuth } from '../..'
+import { aiAnswerConfig } from '../common/models'
 
 export const getCallTranscript = createAction({
   name: 'getCallTranscript',
-  auth: aiAnswerAuth,  // Auth configured here
+  auth: aiAnswerAuth, // Auth configured here
   displayName: 'Get Call Transcript',
   description: 'Fetch the transcript of a call by Call ID',
   props: {
@@ -15,7 +15,7 @@ export const getCallTranscript = createAction({
     }),
   },
   async run(context) {
-    const callID = context.propsValue.callID;
+    const callID = context.propsValue.callID
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.GET,
@@ -23,8 +23,8 @@ export const getCallTranscript = createAction({
       headers: {
         [aiAnswerConfig.accessTokenHeaderKey]: context.auth,
       },
-    });
+    })
 
-    return res.body;
+    return res.body
   },
-});
+})

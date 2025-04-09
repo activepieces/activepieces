@@ -1,14 +1,13 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
-import { createAction } from '@activepieces/pieces-framework';
-import { wedofCommon } from '../../common/wedof';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { wedofAuth } from '../../..'
+import { wedofCommon } from '../../common/wedof'
 
 export const getMinimalSessionDates = createAction({
   auth: wedofAuth,
   name: 'getMinimalSessionsDates',
   displayName: 'Date minimale de début de session de formation',
-  description:
-    'Récupération des dates minimales de début de session de formation',
+  description: 'Récupération des dates minimales de début de session de formation',
   props: {},
 
   async run(context) {
@@ -21,6 +20,6 @@ export const getMinimalSessionDates = createAction({
           'X-Api-Key': context.auth as string,
         },
       })
-    ).body;
+    ).body
   },
-});
+})

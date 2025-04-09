@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 import { zooAuth } from '../../../index'
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const kclCompletionsAction = createAction({
   name: 'kcl_completions',
@@ -43,7 +43,7 @@ export const kclCompletionsAction = createAction({
         max_tokens: propsValue.maxTokens,
         stop: propsValue.stop,
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

@@ -1,14 +1,10 @@
-import { createAction } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { convertkitAuth } from '../..';
-import { fieldsArray, label, new_label } from '../common/custom-fields';
-import { CustomField } from '../common/types';
-import { CUSTOM_FIELDS_API_ENDPOINT } from '../common/constants';
-import { fetchCustomFields } from '../common/service';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { convertkitAuth } from '../..'
+import { CUSTOM_FIELDS_API_ENDPOINT } from '../common/constants'
+import { fieldsArray, label, new_label } from '../common/custom-fields'
+import { fetchCustomFields } from '../common/service'
+import { CustomField } from '../common/types'
 
 export const listFields = createAction({
   auth: convertkitAuth,
@@ -17,9 +13,9 @@ export const listFields = createAction({
   description: 'Returns a list of all custom fields',
   props: {},
   async run(context) {
-    return fetchCustomFields(context.auth);
+    return fetchCustomFields(context.auth)
   },
-});
+})
 
 export const createField = createAction({
   auth: convertkitAuth,
@@ -30,29 +26,29 @@ export const createField = createAction({
     fields: fieldsArray,
   },
   async run(context) {
-    const url = CUSTOM_FIELDS_API_ENDPOINT;
+    const url = CUSTOM_FIELDS_API_ENDPOINT
 
     const body = {
       api_secret: context.auth,
       label: context.propsValue.fields,
-    };
+    }
 
     const request: HttpRequest = {
       url,
       method: HttpMethod.POST,
       body,
-    };
+    }
 
     const response = await httpClient.sendRequest<{
-      custom_field: CustomField;
-    }>(request);
+      custom_field: CustomField
+    }>(request)
 
     if (response.status !== 201) {
-      throw new Error(`Error creating field: ${response.status}`);
+      throw new Error(`Error creating field: ${response.status}`)
     }
-    return response.body;
+    return response.body
   },
-});
+})
 
 export const updateField = createAction({
   auth: convertkitAuth,
@@ -64,31 +60,31 @@ export const updateField = createAction({
     new_label,
   },
   async run(context) {
-    const { label, new_label } = context.propsValue;
+    const { label, new_label } = context.propsValue
 
-    const url = `${CUSTOM_FIELDS_API_ENDPOINT}/${label}`;
+    const url = `${CUSTOM_FIELDS_API_ENDPOINT}/${label}`
 
     const body = {
       api_secret: context.auth,
       label: new_label,
-    };
+    }
 
     const request: HttpRequest = {
       url,
       method: HttpMethod.PUT,
       body,
-    };
+    }
 
     const response = await httpClient.sendRequest<{
-      custom_field: CustomField;
-    }>(request);
+      custom_field: CustomField
+    }>(request)
 
     if (response.status !== 204) {
-      throw new Error(`Error updating field: ${response.status}`);
+      throw new Error(`Error updating field: ${response.status}`)
     }
-    return { status: response.status, message: `Field updated`, success: true };
+    return { status: response.status, message: `Field updated`, success: true }
   },
-});
+})
 
 export const deleteField = createAction({
   auth: convertkitAuth,
@@ -99,28 +95,28 @@ export const deleteField = createAction({
     label,
   },
   async run(context) {
-    const { label } = context.propsValue;
+    const { label } = context.propsValue
 
-    const url = `${CUSTOM_FIELDS_API_ENDPOINT}/${label}`;
+    const url = `${CUSTOM_FIELDS_API_ENDPOINT}/${label}`
 
     const body = {
       api_secret: context.auth,
-    };
+    }
 
     const request: HttpRequest = {
       url,
       method: HttpMethod.DELETE,
       body,
-    };
-
-    const response = await httpClient.sendRequest<{
-      custom_field: CustomField;
-    }>(request);
-
-    if (response.status !== 204) {
-      throw new Error(`Error deleting field: ${response.status}`);
     }
 
-    return { status: response.status, message: `Field deleted`, success: true };
+    const response = await httpClient.sendRequest<{
+      custom_field: CustomField
+    }>(request)
+
+    if (response.status !== 204) {
+      throw new Error(`Error deleting field: ${response.status}`)
+    }
+
+    return { status: response.status, message: `Field deleted`, success: true }
   },
-});
+})

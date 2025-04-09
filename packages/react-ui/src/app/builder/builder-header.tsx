@@ -1,87 +1,55 @@
-import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
-import { t } from 'i18next';
-import { ChevronDown, History, Logs } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import {
-  createSearchParams,
-  useLocation,
-  useNavigate,
-  useSearchParams,
-} from 'react-router-dom';
+import { QuestionMarkCircledIcon } from '@radix-ui/react-icons'
+import { t } from 'i18next'
+import { ChevronDown, History, Logs } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { createSearchParams, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 
-import {
-  LeftSideBarType,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
-import { useEmbedding, useNewWindow } from '@/components/embed-provider';
-import { Button } from '@/components/ui/button';
-import EditableText from '@/components/ui/editable-text';
-import { HomeButton } from '@/components/ui/home-button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { UserAvatar } from '@/components/ui/user-avatar';
-import { foldersHooks } from '@/features/folders/lib/folders-hooks';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
-import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
-import {
-  ApFlagId,
-  FlowOperationType,
-  FlowVersionState,
-  Permission,
-  supportUrl,
-} from '@activepieces/shared';
+import { LeftSideBarType, useBuilderStateContext } from '@/app/builder/builder-hooks'
+import { useEmbedding, useNewWindow } from '@/components/embed-provider'
+import { Button } from '@/components/ui/button'
+import EditableText from '@/components/ui/editable-text'
+import { HomeButton } from '@/components/ui/home-button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { UserAvatar } from '@/components/ui/user-avatar'
+import { foldersHooks } from '@/features/folders/lib/folders-hooks'
+import { useAuthorization } from '@/hooks/authorization-hooks'
+import { flagsHooks } from '@/hooks/flags-hooks'
+import { authenticationSession } from '@/lib/authentication-session'
+import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils'
+import { ApFlagId, FlowOperationType, FlowVersionState, Permission, supportUrl } from '@activepieces/shared'
 
-import FlowActionMenu from '../components/flow-actions-menu';
+import FlowActionMenu from '../components/flow-actions-menu'
 
-import { BuilderFlowStatusSection } from './builder-flow-status-section';
+import { BuilderFlowStatusSection } from './builder-flow-status-section'
 
 export const BuilderHeader = () => {
-  const [queryParams] = useSearchParams();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const openNewWindow = useNewWindow();
-  const { data: showSupport } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_COMMUNITY,
-  );
-  const isInRunsPage = useMemo(
-    () => location.pathname.includes('/runs'),
-    [location.pathname],
-  );
-  const hasPermissionToReadRuns = useAuthorization().checkAccess(
-    Permission.READ_FLOW,
-  );
-  const [
-    flow,
-    flowVersion,
-    setLeftSidebar,
-    moveToFolderClientSide,
-    applyOperation,
-  ] = useBuilderStateContext((state) => [
-    state.flow,
-    state.flowVersion,
-    state.setLeftSidebar,
-    state.moveToFolderClientSide,
-    state.applyOperation,
-  ]);
+  const [queryParams] = useSearchParams()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const openNewWindow = useNewWindow()
+  const { data: showSupport } = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_COMMUNITY)
+  const isInRunsPage = useMemo(() => location.pathname.includes('/runs'), [location.pathname])
+  const hasPermissionToReadRuns = useAuthorization().checkAccess(Permission.READ_FLOW)
+  const [flow, flowVersion, setLeftSidebar, moveToFolderClientSide, applyOperation] = useBuilderStateContext(
+    (state) => [
+      state.flow,
+      state.flowVersion,
+      state.setLeftSidebar,
+      state.moveToFolderClientSide,
+      state.applyOperation,
+    ],
+  )
 
-  const { embedState } = useEmbedding();
+  const { embedState } = useEmbedding()
 
-  const { data: folderData } = foldersHooks.useFolder(flow.folderId ?? 'NULL');
+  const { data: folderData } = foldersHooks.useFolder(flow.folderId ?? 'NULL')
 
-  const isLatestVersion =
-    flowVersion.state === FlowVersionState.DRAFT ||
-    flowVersion.id === flow.publishedVersionId;
-  const folderName = folderData?.displayName ?? t('Uncategorized');
-  const [isEditingFlowName, setIsEditingFlowName] = useState(false);
+  const isLatestVersion = flowVersion.state === FlowVersionState.DRAFT || flowVersion.id === flow.publishedVersionId
+  const folderName = folderData?.displayName ?? t('Uncategorized')
+  const [isEditingFlowName, setIsEditingFlowName] = useState(false)
   useEffect(() => {
-    setIsEditingFlowName(queryParams.get(NEW_FLOW_QUERY_PARAM) === 'true');
-  }, []);
+    setIsEditingFlowName(queryParams.get(NEW_FLOW_QUERY_PARAM) === 'true')
+  }, [])
   return (
     <div className="bg-background select-none">
       <div className="relative items-center flex h-[55px] w-full p-4 bg-muted/30">
@@ -95,10 +63,7 @@ export const BuilderHeader = () => {
                     <TooltipTrigger
                       onClick={() =>
                         navigate({
-                          pathname:
-                            authenticationSession.appendProjectRoutePrefix(
-                              '/flows',
-                            ),
+                          pathname: authenticationSession.appendProjectRoutePrefix('/flows'),
                           search: createSearchParams({
                             folderId: folderData?.id ?? 'NULL',
                           }).toString(),
@@ -141,12 +106,10 @@ export const BuilderHeader = () => {
             flowVersion={flowVersion}
             readonly={!isLatestVersion}
             onDelete={() => {
-              navigate(
-                authenticationSession.appendProjectRoutePrefix('/flows'),
-              );
+              navigate(authenticationSession.appendProjectRoutePrefix('/flows'))
             }}
             onRename={() => {
-              setIsEditingFlowName(true);
+              setIsEditingFlowName(true)
             }}
             onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
             onDuplicate={() => {}}
@@ -160,11 +123,7 @@ export const BuilderHeader = () => {
           {showSupport && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="gap-2 px-2"
-                  onClick={() => openNewWindow(supportUrl)}
-                >
+                <Button variant="ghost" className="gap-2 px-2" onClick={() => openNewWindow(supportUrl)}>
                   <QuestionMarkCircledIcon className="w-4 h-4"></QuestionMarkCircledIcon>
                   {t('Support')}
                 </Button>
@@ -175,11 +134,7 @@ export const BuilderHeader = () => {
           {hasPermissionToReadRuns && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  onClick={() => setLeftSidebar(LeftSideBarType.RUNS)}
-                  className="gap-2 px-2"
-                >
+                <Button variant="ghost" onClick={() => setLeftSidebar(LeftSideBarType.RUNS)} className="gap-2 px-2">
                   <Logs className="w-4 h-4" />
                   {t('Runs')}
                 </Button>
@@ -191,18 +146,12 @@ export const BuilderHeader = () => {
           {!isInRunsPage && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="gap-2 px-2"
-                  onClick={() => setLeftSidebar(LeftSideBarType.VERSIONS)}
-                >
+                <Button variant="ghost" className="gap-2 px-2" onClick={() => setLeftSidebar(LeftSideBarType.VERSIONS)}>
                   <History className="w-4 h-4" />
                   {t('Versions')}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">
-                {t('Versions History')}
-              </TooltipContent>
+              <TooltipContent side="bottom">{t('Versions History')}</TooltipContent>
             </Tooltip>
           )}
 
@@ -211,5 +160,5 @@ export const BuilderHeader = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

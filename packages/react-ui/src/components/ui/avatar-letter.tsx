@@ -1,9 +1,9 @@
-import { type VariantProps, cva } from 'class-variance-authority';
+import { type VariantProps, cva } from 'class-variance-authority'
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils'
 
-import { Avatar, AvatarFallback } from './avatar';
-import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
+import { Avatar, AvatarFallback } from './avatar'
+import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip'
 
 const avatarLetterVariants = cva('l', {
   variants: {
@@ -15,29 +15,21 @@ const avatarLetterVariants = cva('l', {
   defaultVariants: {
     size: 'md',
   },
-});
+})
 type AvatarLetterProps = VariantProps<typeof avatarLetterVariants> & {
-  name: string;
-  email: string;
-  className?: string;
-  disablePopup?: boolean;
-};
+  name: string
+  email: string
+  className?: string
+  disablePopup?: boolean
+}
 
-const AvatarLetter = ({
-  name,
-  email,
-  className,
-  size,
-  disablePopup,
-}: AvatarLetterProps) => (
+const AvatarLetter = ({ name, email, className, size, disablePopup }: AvatarLetterProps) => (
   <Avatar className={cn(className, avatarLetterVariants({ size }))}>
     <AvatarFallback>
       {!disablePopup && (
         <Tooltip>
           <TooltipTrigger>
-            <span className="text-sm text-background">
-              {email.charAt(0).toLocaleUpperCase()}
-            </span>
+            <span className="text-sm text-background">{email.charAt(0).toLocaleUpperCase()}</span>
           </TooltipTrigger>
           <TooltipContent>
             <span className="text-sm">
@@ -46,12 +38,8 @@ const AvatarLetter = ({
           </TooltipContent>
         </Tooltip>
       )}
-      {disablePopup && (
-        <span className="text-sm text-background">
-          {email.charAt(0).toLocaleUpperCase()}
-        </span>
-      )}
+      {disablePopup && <span className="text-sm text-background">{email.charAt(0).toLocaleUpperCase()}</span>}
     </AvatarFallback>
   </Avatar>
-);
-export { AvatarLetter };
+)
+export { AvatarLetter }

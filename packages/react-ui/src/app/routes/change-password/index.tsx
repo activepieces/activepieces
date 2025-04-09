@@ -1,5 +1,5 @@
-import { FullLogo } from '@/components/ui/full-logo';
-import { ChangePasswordForm } from '@/features/authentication/components/change-password';
+import { FullLogo } from '@/components/ui/full-logo'
+import { ChangePasswordForm } from '@/features/authentication/components/change-password'
 
 const ChangePasswordPage = () => {
   return (
@@ -7,7 +7,7 @@ const ChangePasswordPage = () => {
       <FullLogo />
       <ChangePasswordForm />
     </div>
-  );
-};
+  )
+}
 
-export { ChangePasswordPage };
+export { ChangePasswordPage }

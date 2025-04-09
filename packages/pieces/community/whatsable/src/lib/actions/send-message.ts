@@ -1,8 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient, HttpMethod,
-} from '@activepieces/pieces-common';
-import { whatsableAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { whatsableAuth } from '../..'
 
 export const sendMessage = createAction({
   name: 'sendMessage',
@@ -22,17 +20,17 @@ export const sendMessage = createAction({
     }),
   },
   async run(ctx) {
-    const { to, text } = ctx.propsValue;
+    const { to, text } = ctx.propsValue
     return await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: 'https://dashboard.whatsable.app/api/whatsapp/messages/send',
       headers: {
-        'Authorization': ctx.auth,
+        Authorization: ctx.auth,
       },
       body: {
         to,
         text,
       },
-    });
+    })
   },
-});
+})

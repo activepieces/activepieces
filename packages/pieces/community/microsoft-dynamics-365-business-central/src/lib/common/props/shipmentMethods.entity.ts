@@ -1,4 +1,4 @@
-import { EntityProp } from '../types';
+import { EntityProp } from '../types'
 
 export const shipmentMethodsEntityProps: EntityProp[] = [
   {
@@ -16,4 +16,4 @@ export const shipmentMethodsEntityProps: EntityProp[] = [
     type: 'text',
     isRequired: false,
   },
-];
+]

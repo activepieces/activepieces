@@ -1,8 +1,7 @@
-import { actualBudgetAuth } from '../..';
-import { createAction } from '@activepieces/pieces-framework';
-import * as api from '@actual-app/api';
-import { initializeAndDownloadBudget } from '../common/common';
-
+import { createAction } from '@activepieces/pieces-framework'
+import * as api from '@actual-app/api'
+import { actualBudgetAuth } from '../..'
+import { initializeAndDownloadBudget } from '../common/common'
 
 export const getAccounts = createAction({
   auth: actualBudgetAuth,
@@ -12,8 +11,8 @@ export const getAccounts = createAction({
   props: {},
   async run(context) {
     await initializeAndDownloadBudget(api, context.auth)
-    const accounts = await api.getAccounts();
-    await api.shutdown();
-    return accounts;
+    const accounts = await api.getAccounts()
+    await api.shutdown()
+    return accounts
   },
-});
+})

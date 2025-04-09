@@ -1,15 +1,6 @@
-import {
-  Property,
-  DynamicPropsValue,
-  createAction,
-} from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { bannerbearAuth } from '../../';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { DynamicPropsValue, Property, createAction } from '@activepieces/pieces-framework'
+import { bannerbearAuth } from '../../'
 
 export const bannerbearCreateImageAction = createAction({
   auth: bannerbearAuth,
@@ -28,7 +19,7 @@ export const bannerbearCreateImageAction = createAction({
             disabled: true,
             options: [],
             placeholder: 'Please enter your API key first.',
-          };
+          }
         }
 
         const response = await httpClient.sendRequest<BannerbearTemplate[]>({
@@ -38,7 +29,7 @@ export const bannerbearCreateImageAction = createAction({
             type: AuthenticationType.BEARER_TOKEN,
             token: auth as string,
           },
-        });
+        })
 
         if (response.status === 200) {
           return {
@@ -47,16 +38,16 @@ export const bannerbearCreateImageAction = createAction({
               return {
                 label: template.name,
                 value: template,
-              };
+              }
             }),
-          };
+          }
         }
 
         return {
           disabled: true,
           options: [],
           placeholder: 'Error processing templates',
-        };
+        }
       },
     }),
     template_version: Property.Number({
@@ -70,54 +61,50 @@ export const bannerbearCreateImageAction = createAction({
       required: true,
       refreshers: ['template'],
       props: async ({ auth, template }) => {
-        if (!auth) return {};
-        if (!template) return {};
+        if (!auth) return {}
+        if (!template) return {}
 
-        let fields: DynamicPropsValue = {};
-
-        (template as BannerbearTemplate).available_modifications.map(
-          (modification) => {
-            if ('text' in modification) {
-              fields = {
-                ...BannerbearModificationsMapping.main,
-                ...BannerbearModificationsMapping.text,
-                ...BannerbearModificationsMapping.common,
-              };
-            } else if ('rating' in modification) {
-              fields = {
-                ...BannerbearModificationsMapping.main,
-                ...BannerbearModificationsMapping.star_rating,
-                ...BannerbearModificationsMapping.common,
-              };
-            } else if ('image_url' in modification) {
-              fields = {
-                ...BannerbearModificationsMapping.main,
-                ...BannerbearModificationsMapping.image,
-                ...BannerbearModificationsMapping.common,
-              };
-            } else if ('chart_data' in modification) {
-              fields = {
-                ...BannerbearModificationsMapping.main,
-                ...BannerbearModificationsMapping.barline_chart,
-                ...BannerbearModificationsMapping.common,
-              };
-            } else if ('bar_code_data' in modification) {
-              fields = {
-                ...BannerbearModificationsMapping.main,
-                ...BannerbearModificationsMapping.bar_code,
-                ...BannerbearModificationsMapping.common,
-              };
+        let fields: DynamicPropsValue = {}
+        ;(template as BannerbearTemplate).available_modifications.map((modification) => {
+          if ('text' in modification) {
+            fields = {
+              ...BannerbearModificationsMapping.main,
+              ...BannerbearModificationsMapping.text,
+              ...BannerbearModificationsMapping.common,
+            }
+          } else if ('rating' in modification) {
+            fields = {
+              ...BannerbearModificationsMapping.main,
+              ...BannerbearModificationsMapping.star_rating,
+              ...BannerbearModificationsMapping.common,
+            }
+          } else if ('image_url' in modification) {
+            fields = {
+              ...BannerbearModificationsMapping.main,
+              ...BannerbearModificationsMapping.image,
+              ...BannerbearModificationsMapping.common,
+            }
+          } else if ('chart_data' in modification) {
+            fields = {
+              ...BannerbearModificationsMapping.main,
+              ...BannerbearModificationsMapping.barline_chart,
+              ...BannerbearModificationsMapping.common,
+            }
+          } else if ('bar_code_data' in modification) {
+            fields = {
+              ...BannerbearModificationsMapping.main,
+              ...BannerbearModificationsMapping.bar_code,
+              ...BannerbearModificationsMapping.common,
             }
           }
-        );
+        })
 
-        return fields;
+        return fields
       },
     }),
     transparent: Property.Checkbox({
       displayName: 'Transparent background',
-      description:
-        'Render a PNG with a transparent background. Default is false.',
+      description: 'Render a PNG with a transparent background. Default is false.',
       required: false,
     }),
     render_pdf: Property.Checkbox({
@@ -127,23 +114,19 @@ export const bannerbearCreateImageAction = createAction({
     }),
     metadata: Property.LongText({
       displayName: 'Metadata',
-      description:
-        'Any metadata that you need to store e.g. ID of a record in your DB.',
+      description: 'Any metadata that you need to store e.g. ID of a record in your DB.',
       required: false,
     }),
   },
   async run({ auth, propsValue }) {
     const body = {
-      modifications:
-        Object.keys(propsValue.modifications).length === 0
-          ? []
-          : [propsValue.modifications],
+      modifications: Object.keys(propsValue.modifications).length === 0 ? [] : [propsValue.modifications],
       template_version: propsValue.template_version,
       transparent: propsValue.transparent,
       render_pdf: propsValue.render_pdf,
       template: propsValue.template.uid,
       metadata: propsValue.metadata,
-    };
+    }
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -153,36 +136,36 @@ export const bannerbearCreateImageAction = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: auth,
       },
-    };
+    }
 
-    const result = await httpClient.sendRequest<BannerbearTemplate>(request);
-    console.debug('Image creation complete', result);
+    const result = await httpClient.sendRequest<BannerbearTemplate>(request)
+    console.debug('Image creation complete', result)
 
     if (result.status === 200 || result.status === 202) {
-      return result.body;
+      return result.body
     } else {
-      return result;
+      return result
     }
   },
-});
+})
 
 interface BannerbearTemplate {
-  created_at: string;
-  name: string;
-  self: string;
-  uid: string;
-  preview_url: number;
-  width: number;
-  height: number;
+  created_at: string
+  name: string
+  self: string
+  uid: string
+  preview_url: number
+  width: number
+  height: number
   available_modifications: {
-    name: string;
-    image_url?: string;
-    text?: string;
-    chart_data: string;
-    bar_code_data: number;
-    rating: number;
-  }[];
-  tags: string[];
+    name: string
+    image_url?: string
+    text?: string
+    chart_data: string
+    bar_code_data: number
+    rating: number
+  }[]
+  tags: string[]
 }
 
 const BannerbearModificationsMapping = {
@@ -227,8 +210,7 @@ const BannerbearModificationsMapping = {
     target: Property.ShortText({
       displayName: 'Target',
       required: false,
-      description:
-        'Add a clickable link to a URL on this object when rendering a PDF.',
+      description: 'Add a clickable link to a URL on this object when rendering a PDF.',
     }),
     hide: Property.Checkbox({
       displayName: 'Hide',
@@ -302,14 +284,12 @@ const BannerbearModificationsMapping = {
     disable_face_detect: Property.Checkbox({
       displayName: 'Disable face detect',
       required: false,
-      description:
-        'Set to true to disable face detect for this request (if the image container is using face detect).',
+      description: 'Set to true to disable face detect for this request (if the image container is using face detect).',
     }),
     disable_smart_crop: Property.Checkbox({
       displayName: 'Disable smart crop',
       required: false,
-      description:
-        'Set to true to disable smart crop for this request (if the image container is using smart crop)',
+      description: 'Set to true to disable smart crop for this request (if the image container is using smart crop)',
     }),
   },
   barline_chart: {
@@ -340,4 +320,4 @@ const BannerbearModificationsMapping = {
       description: 'Text to encode as a bar code.',
     }),
   },
-};
+}

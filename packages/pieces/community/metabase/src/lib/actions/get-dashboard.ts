@@ -1,34 +1,34 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { queryMetabaseApi } from '../common';
-import { metabaseAuth } from '../..';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { metabaseAuth } from '../..'
+import { queryMetabaseApi } from '../common'
 
 interface MetabaseParam {
-  id: string;
-  name?: string;
-  slug?: string;
-  type?: string;
+  id: string
+  name?: string
+  slug?: string
+  type?: string
   values_source_config?: {
-    values?: unknown[];
-  };
+    values?: unknown[]
+  }
 }
 interface CardResult {
-  name: string;
-  data?: unknown;
-  error?: string;
+  name: string
+  data?: unknown
+  error?: string
 }
 interface DashboardParameter {
-  id: string;
-  name: string;
-  slug: string;
-  type: string;
-  possible_values?: unknown[];
+  id: string
+  name: string
+  slug: string
+  type: string
+  possible_values?: unknown[]
 }
 
 interface DashboardResult {
-  dashboard_name: string;
-  available_parameters: DashboardParameter[];
-  cards_results: Record<string, CardResult>;
+  dashboard_name: string
+  available_parameters: DashboardParameter[]
+  cards_results: Record<string, CardResult>
 }
 
 export const getDashboardQuestions = createAction({
@@ -50,18 +50,15 @@ export const getDashboardQuestions = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const dashboardId = propsValue.dashboardId.split('-')[0];
+    const dashboardId = propsValue.dashboardId.split('-')[0]
 
-    const dashboardData = await queryMetabaseApi(
-      { endpoint: `dashboard/${dashboardId}`, method: HttpMethod.GET },
-      auth
-    );
+    const dashboardData = await queryMetabaseApi({ endpoint: `dashboard/${dashboardId}`, method: HttpMethod.GET }, auth)
 
     if (dashboardData.error) {
-      throw new Error(`Error fetching dashboard: ${dashboardData.error}`);
+      throw new Error(`Error fetching dashboard: ${dashboardData.error}`)
     }
 
-    const dashboardParameters = dashboardData.parameters || [];
+    const dashboardParameters = dashboardData.parameters || []
 
     const result: DashboardResult = {
       dashboard_name: dashboardData.name || 'Unknown Dashboard',
@@ -73,43 +70,37 @@ export const getDashboardQuestions = createAction({
         possible_values: param.values_source_config?.values || [],
       })),
       cards_results: {},
-    };
+    }
 
     // Execute each card and collect results
     for (const dashcard of dashboardData.dashcards || []) {
-      const cardId = dashcard.card_id;
-      const dashcardId = dashcard.id;
+      const cardId = dashcard.card_id
+      const dashcardId = dashcard.id
 
-      if (!cardId) continue;
+      if (!cardId) continue
 
-      let cardName = 'Unknown';
+      let cardName = 'Unknown'
       if (dashcard.card && typeof dashcard.card === 'object') {
-        cardName = dashcard.card.name || `Card ${cardId}`;
+        cardName = dashcard.card.name || `Card ${cardId}`
       }
 
-      const cardParameters = [];
+      const cardParameters = []
 
       // Map dashboard parameters to card parameters using parameter_mappings
       if (propsValue.parameters && dashcard.parameter_mappings) {
         for (const mapping of dashcard.parameter_mappings) {
-          const paramId = mapping.parameter_id;
+          const paramId = mapping.parameter_id
 
           // Find corresponding dashboard parameter
-          const dashParam = dashboardParameters.find(
-            (p: { id: string }) => p.id === paramId
-          );
+          const dashParam = dashboardParameters.find((p: { id: string }) => p.id === paramId)
 
-          if (
-            dashParam &&
-            dashParam.slug &&
-            propsValue.parameters[dashParam.slug] !== undefined
-          ) {
+          if (dashParam && dashParam.slug && propsValue.parameters[dashParam.slug] !== undefined) {
             cardParameters.push({
               id: paramId,
               target: mapping.target,
               type: dashParam.type,
               value: propsValue.parameters[dashParam.slug],
-            });
+            })
           }
         }
       }
@@ -123,34 +114,29 @@ export const getDashboardQuestions = createAction({
               parameters: cardParameters,
             },
           },
-          auth
-        );
+          auth,
+        )
 
-        const cardIdStr = String(cardId);
+        const cardIdStr = String(cardId)
         result.cards_results[cardIdStr] = {
           name: cardName,
           data: cardResult,
-        };
+        }
       } catch (error: unknown) {
-        let errorMessage = 'Unknown error';
+        let errorMessage = 'Unknown error'
 
-        if (
-          error &&
-          typeof error === 'object' &&
-          'message' in error &&
-          typeof error.message === 'string'
-        ) {
-          errorMessage = error.message;
+        if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+          errorMessage = error.message
         }
 
-        const cardIdStr = String(cardId);
+        const cardIdStr = String(cardId)
         result.cards_results[cardIdStr] = {
           name: cardName,
           error: `Failed to execute: ${errorMessage}`,
-        };
+        }
       }
     }
 
-    return result;
+    return result
   },
-});
+})

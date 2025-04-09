@@ -1,1 +1,1 @@
-export const baseUrl = 'https://api.straico.com/v0';
+export const baseUrl = 'https://api.straico.com/v0'

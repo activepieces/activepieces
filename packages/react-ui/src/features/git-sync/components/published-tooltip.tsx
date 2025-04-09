@@ -1,11 +1,7 @@
-import { t } from 'i18next';
-import React from 'react';
+import { t } from 'i18next'
+import React from 'react'
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 export const PublishedNeededTooltip = React.forwardRef<
   HTMLButtonElement,
@@ -16,13 +12,9 @@ export const PublishedNeededTooltip = React.forwardRef<
       <TooltipTrigger ref={ref} asChild disabled={!allowPush}>
         <div>{children}</div>
       </TooltipTrigger>
-      {!allowPush && (
-        <TooltipContent side="top">
-          {t('Only published flows can be pushed to Git')}
-        </TooltipContent>
-      )}
+      {!allowPush && <TooltipContent side="top">{t('Only published flows can be pushed to Git')}</TooltipContent>}
     </Tooltip>
-  );
-});
+  )
+})
 
-PublishedNeededTooltip.displayName = 'PublishedNeededWrapper';
+PublishedNeededTooltip.displayName = 'PublishedNeededWrapper'

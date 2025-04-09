@@ -1,93 +1,75 @@
-import { nanoid } from 'nanoid';
-import { create } from 'zustand';
+import { nanoid } from 'nanoid'
+import { create } from 'zustand'
 
-import { Field, FieldType, PopulatedRecord, Table } from '@activepieces/shared';
+import { Field, FieldType, PopulatedRecord, Table } from '@activepieces/shared'
 
-import { createServerState } from './ap-tables-server-state';
+import { createServerState } from './ap-tables-server-state'
 
 export type ClientCellData = {
-  fieldIndex: number;
-  value: unknown;
-};
+  fieldIndex: number
+  value: unknown
+}
 
 export type ClientRecordData = {
-  uuid: string;
-  values: ClientCellData[];
-};
+  uuid: string
+  values: ClientCellData[]
+}
 
 export type ClientField = {
-  uuid: string;
-  name: string;
+  uuid: string
+  name: string
 } & (
   | {
-      type: FieldType.DATE | FieldType.NUMBER | FieldType.TEXT;
+      type: FieldType.DATE | FieldType.NUMBER | FieldType.TEXT
     }
   | {
-      type: FieldType.STATIC_DROPDOWN;
+      type: FieldType.STATIC_DROPDOWN
       data: {
-        options: { value: string }[];
-      };
+        options: { value: string }[]
+      }
     }
-);
-const mapRecorddToClientRecordsData = (
-  records: PopulatedRecord[],
-  fields: Field[],
-): ClientRecordData[] => {
+)
+const mapRecorddToClientRecordsData = (records: PopulatedRecord[], fields: Field[]): ClientRecordData[] => {
   return records.map((record) => ({
     uuid: nanoid(),
     values: Object.entries(record.cells).map(([fieldId, cell]) => ({
       fieldIndex: fields.findIndex((field) => field.id === fieldId),
       value: cell.value,
     })),
-  }));
-};
+  }))
+}
 
 export type TableState = {
-  isSaving: boolean;
-  selectedRecords: ReadonlySet<string>;
-  fields: ClientField[];
-  records: ClientRecordData[];
-  table: Table;
-  setSelectedRecords: (selectedRecords: ReadonlySet<string>) => void;
+  isSaving: boolean
+  selectedRecords: ReadonlySet<string>
+  fields: ClientField[]
+  records: ClientRecordData[]
+  table: Table
+  setSelectedRecords: (selectedRecords: ReadonlySet<string>) => void
   selectedCell: {
-    rowIdx: number;
-    columnIdx: number;
-  } | null;
-  setSelectedCell: (
-    selectedCell: { rowIdx: number; columnIdx: number } | null,
-  ) => void;
-  createRecord: (recordData: ClientRecordData) => void;
-  updateRecord: (
-    recordIndex: number,
-    recordData: Pick<ClientRecordData, 'values'>,
-  ) => void;
-  deleteRecords: (recordIndices: string[]) => void;
-  createField: (field: ClientField) => void;
-  deleteField: (fieldIndex: number) => void;
-  renameTable: (newName: string) => void;
-  renameField: (fieldIndex: number, newName: string) => void;
-  setRecords: (records: PopulatedRecord[]) => void;
-};
+    rowIdx: number
+    columnIdx: number
+  } | null
+  setSelectedCell: (selectedCell: { rowIdx: number; columnIdx: number } | null) => void
+  createRecord: (recordData: ClientRecordData) => void
+  updateRecord: (recordIndex: number, recordData: Pick<ClientRecordData, 'values'>) => void
+  deleteRecords: (recordIndices: string[]) => void
+  createField: (field: ClientField) => void
+  deleteField: (fieldIndex: number) => void
+  renameTable: (newName: string) => void
+  renameField: (fieldIndex: number, newName: string) => void
+  setRecords: (records: PopulatedRecord[]) => void
+}
 
-export const createApTableStore = (
-  table: Table,
-  fields: Field[],
-  records: PopulatedRecord[],
-) => {
+export const createApTableStore = (table: Table, fields: Field[], records: PopulatedRecord[]) => {
   return create<TableState>((set) => {
-    const serverState = createServerState(
-      table,
-      fields,
-      records,
-      (isSaving: boolean) => set({ isSaving }),
-    );
+    const serverState = createServerState(table, fields, records, (isSaving: boolean) => set({ isSaving }))
 
     return {
       isSaving: false,
       selectedRecords: new Set(),
       table,
-      setSelectedRecords: (selectedRecords: ReadonlySet<string>) =>
-        set({ selectedRecords }),
+      setSelectedRecords: (selectedRecords: ReadonlySet<string>) => set({ selectedRecords }),
       selectedCell: null,
       renameTable: (newName: string) =>
         set((state) => {
@@ -96,11 +78,9 @@ export const createApTableStore = (
               ...state.table,
               name: newName,
             },
-          };
+          }
         }),
-      setSelectedCell: (
-        selectedCell: { rowIdx: number; columnIdx: number } | null,
-      ) => set({ selectedCell }),
+      setSelectedCell: (selectedCell: { rowIdx: number; columnIdx: number } | null) => set({ selectedCell }),
       fields: fields.map((field) => {
         if (field.type === FieldType.STATIC_DROPDOWN) {
           return {
@@ -108,47 +88,42 @@ export const createApTableStore = (
             name: field.name,
             type: field.type,
             data: field.data,
-          };
+          }
         }
         return {
           uuid: field.id,
           name: field.name,
           type: field.type,
-        };
+        }
       }),
       records: mapRecorddToClientRecordsData(records, fields),
       createRecord: (recordData: ClientRecordData) => {
-        serverState.createRecord(recordData);
+        serverState.createRecord(recordData)
         return set((state) => {
           return {
             records: [...state.records, recordData],
-          };
-        });
+          }
+        })
       },
-      updateRecord: (
-        recordIndex: number,
-        recordData: Pick<ClientRecordData, 'values'>,
-      ) => {
-        serverState.updateRecord(recordIndex, recordData);
+      updateRecord: (recordIndex: number, recordData: Pick<ClientRecordData, 'values'>) => {
+        serverState.updateRecord(recordIndex, recordData)
         return set((state) => {
           return {
             records: state.records.map((record, index) =>
               index === recordIndex ? { ...record, ...recordData } : record,
             ),
-          };
-        });
+          }
+        })
       },
       deleteRecords: (recordIndices: string[]) =>
         set((state) => {
-          serverState.deleteRecords(recordIndices);
+          serverState.deleteRecords(recordIndices)
           return {
-            records: state.records.filter(
-              (_, index) => !recordIndices.includes(index.toString()),
-            ),
-          };
+            records: state.records.filter((_, index) => !recordIndices.includes(index.toString())),
+          }
         }),
       createField: (field: ClientField) => {
-        serverState.createField({ ...field, tableId: table.id });
+        serverState.createField({ ...field, tableId: table.id })
         set((state) => {
           const newState: TableState = {
             ...state,
@@ -163,12 +138,12 @@ export const createApTableStore = (
                 },
               ],
             })),
-          };
-          return newState;
-        });
+          }
+          return newState
+        })
       },
       deleteField: (fieldIndex: number) => {
-        serverState.deleteField(fieldIndex);
+        serverState.deleteField(fieldIndex)
         return set((state) => {
           return {
             records: state.records.map((record) => ({
@@ -176,29 +151,27 @@ export const createApTableStore = (
               values: record.values.filter((_, index) => index !== fieldIndex),
             })),
             fields: state.fields.filter((_, index) => index !== fieldIndex),
-          };
-        });
+          }
+        })
       },
       renameField: (fieldIndex: number, newName: string) => {
-        serverState.renameField(fieldIndex, newName);
+        serverState.renameField(fieldIndex, newName)
         return set((state) => {
           return {
-            fields: state.fields.map((field, index) =>
-              index === fieldIndex ? { ...field, name: newName } : field,
-            ),
-          };
-        });
+            fields: state.fields.map((field, index) => (index === fieldIndex ? { ...field, name: newName } : field)),
+          }
+        })
       },
       setRecords: (records: PopulatedRecord[]) => {
-        serverState.setRecords(records);
+        serverState.setRecords(records)
         return set((state) => {
           return {
             records: mapRecorddToClientRecordsData(records, serverState.fields),
-          };
-        });
+          }
+        })
       },
-    };
-  });
-};
+    }
+  })
+}
 
-export type ApTableStore = ReturnType<typeof createApTableStore>;
+export type ApTableStore = ReturnType<typeof createApTableStore>

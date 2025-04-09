@@ -1,22 +1,22 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { callSevenApi } from '../common';
-import { sevenAuth } from '../index';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { callSevenApi } from '../common'
+import { sevenAuth } from '../index'
 
 interface SubscribeHookResponse {
-  id: number | null;
-  success: boolean;
+  id: number | null
+  success: boolean
 }
 
 interface UnsubscribeHookResponse {
-  success: boolean;
+  success: boolean
 }
 
 interface SevenWebhookInformation {
-  webhookId: number;
+  webhookId: number
 }
 
-const triggerNameInStore = 'seven_new_sms_trigger';
+const triggerNameInStore = 'seven_new_sms_trigger'
 
 export const smsInbound = createTrigger({
   auth: sevenAuth,
@@ -27,8 +27,8 @@ export const smsInbound = createTrigger({
     from: Property.ShortText({
       displayName: 'Phone Number',
       description: 'Optionally limit inbound SMS to this particular phone number.',
-      required: false
-    })
+      required: false,
+    }),
   },
   sampleData: {
     data: {
@@ -36,46 +36,54 @@ export const smsInbound = createTrigger({
       sender: 'SMS',
       system: '491771783130',
       text: 'Hello. I am an example for demonstrating a webhook payload.',
-      time: '1605878104'
+      time: '1605878104',
     },
     webhook_event: 'sms_mo',
-    webhook_timestamp: '2020-12-02 11:55:44'
+    webhook_timestamp: '2020-12-02 11:55:44',
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const { from = '' } = context.propsValue;
-    const { body } = await callSevenApi<SubscribeHookResponse>({
-      body: {
-        event_filter: from,
-        event_type: 'sms_mo',
-        target_url: context.webhookUrl
+    const { from = '' } = context.propsValue
+    const { body } = await callSevenApi<SubscribeHookResponse>(
+      {
+        body: {
+          event_filter: from,
+          event_type: 'sms_mo',
+          target_url: context.webhookUrl,
+        },
+        method: HttpMethod.POST,
       },
-      method: HttpMethod.POST
-    }, 'hooks', context.auth as string);
+      'hooks',
+      context.auth as string,
+    )
 
-    if (!body.success) return;
+    if (!body.success) return
 
     await context.store?.put<SevenWebhookInformation>(triggerNameInStore, {
-      webhookId: body.id!
-    });
+      webhookId: body.id!,
+    })
   },
   async onDisable(context) {
-    const info = await context.store?.get<SevenWebhookInformation>(triggerNameInStore);
-    if (!info) return;
+    const info = await context.store?.get<SevenWebhookInformation>(triggerNameInStore)
+    if (!info) return
 
-    const { body } = await callSevenApi<UnsubscribeHookResponse>({
-      body: {
-        action: 'unsubscribe',
-        id: info.webhookId
+    const { body } = await callSevenApi<UnsubscribeHookResponse>(
+      {
+        body: {
+          action: 'unsubscribe',
+          id: info.webhookId,
+        },
+        method: HttpMethod.POST,
       },
-      method: HttpMethod.POST
-    }, 'hooks', context.auth as string);
+      'hooks',
+      context.auth as string,
+    )
 
-    if (!body.success) return;
+    if (!body.success) return
 
-    await context.store.put(triggerNameInStore, null);
+    await context.store.put(triggerNameInStore, null)
   },
   async run(context) {
-    return [context.payload.body];
-  }
-});
+    return [context.payload.body]
+  },
+})

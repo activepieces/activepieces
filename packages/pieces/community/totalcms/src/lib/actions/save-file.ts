@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { saveFile } from '../api';
-import { cmsAuth } from '../auth';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { saveFile } from '../api'
+import { cmsAuth } from '../auth'
 
 export const saveFileAction = createAction({
   name: 'save_file',
@@ -25,13 +25,13 @@ export const saveFileAction = createAction({
     }),
   },
   async run(context) {
-    const slug = context.propsValue.slug;
+    const slug = context.propsValue.slug
     const file = {
       filename: context.propsValue.file.filename,
       base64: context.propsValue.file.base64,
-    };
+    }
     return await saveFile(context.auth, slug, file, {
       ext: context.propsValue.ext,
-    });
+    })
   },
-});
+})

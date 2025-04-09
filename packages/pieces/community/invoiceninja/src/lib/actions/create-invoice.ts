@@ -1,18 +1,15 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
 
-import { invoiceninjaAuth } from '../..';
+import { invoiceninjaAuth } from '../..'
 
 export const createInvoice = createAction({
   auth: invoiceninjaAuth,
   name: 'create_invoice',
   displayName: 'Create Invoice',
   description: 'Creates an invoice in Invoice Ninja for billing purposes.',
-  
+
   props: {
     client_id: Property.LongText({
       displayName: 'Client ID (alphanumeric)',
@@ -20,7 +17,7 @@ export const createInvoice = createAction({
       required: true,
     }),
     purchase_order_no: Property.LongText({
-      displayName: 'Purchase Order Number (alphanumeric)', 
+      displayName: 'Purchase Order Number (alphanumeric)',
       description: 'Descriptive text or arbitrary number (optional)',
       required: false,
     }),
@@ -39,14 +36,14 @@ export const createInvoice = createAction({
         options: [
           {
             label: 'Amount',
-            value: true
+            value: true,
           },
           {
             label: 'Percentage',
-            value: false
-          }
-        ]
-      }
+            value: false,
+          },
+        ],
+      },
     }),
     public_notes: Property.LongText({
       displayName: 'Public notes for invoice',
@@ -85,62 +82,70 @@ export const createInvoice = createAction({
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
       due_date: z.string().datetime().optional(),
-    });
+    })
 
-    const INapiToken = context.auth.access_token;
+    const INapiToken = context.auth.access_token
     const headers = {
       'X-Api-Token': INapiToken,
       'Content-Type': 'application/json',
-    };
+    }
 
-    const lineItemsArray = JSON.parse(context.propsValue.order_items_json);
+    const lineItemsArray = JSON.parse(context.propsValue.order_items_json)
 
     if (!Array.isArray(lineItemsArray)) {
-      throw new Error('Invalid format for order_items_json. It should be an array of objects.');
+      throw new Error('Invalid format for order_items_json. It should be an array of objects.')
     }
 
     if (lineItemsArray.length === 0) {
-      throw new Error('The line_items array must not be empty.');
+      throw new Error('The line_items array must not be empty.')
     }
 
-    const isValidLineItem = lineItemsArray.every(item => (
-      typeof item === 'object' &&
-      'quantity' in item && typeof item.quantity === 'number' &&
-      'product_key' in item && typeof item.product_key === 'string' &&
-      'discount' in item && typeof item.discount === 'string'
-    ));
+    const isValidLineItem = lineItemsArray.every(
+      (item) =>
+        typeof item === 'object' &&
+        'quantity' in item &&
+        typeof item.quantity === 'number' &&
+        'product_key' in item &&
+        typeof item.product_key === 'string' &&
+        'discount' in item &&
+        typeof item.discount === 'string',
+    )
 
     if (!isValidLineItem) {
-      throw new Error('Each item in the line_items array must be an object with "quantity" (number), "product_key" (string), and "discount" (string).');
+      throw new Error(
+        'Each item in the line_items array must be an object with "quantity" (number), "product_key" (string), and "discount" (string).',
+      )
     }
 
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
-    let errorMessages = '';
+    const baseUrl = context.auth.base_url.replace(/\/$/, '')
+    let errorMessages = ''
 
     try {
-      const lineItemsWithDetailsPromises = lineItemsArray.map(async item => {
+      const lineItemsWithDetailsPromises = lineItemsArray.map(async (item) => {
         try {
           const getProductDetailsResponse = await fetch(`${baseUrl}/api/v1/products/?product_key=${item.product_key}`, {
             method: 'GET',
             headers,
-          });
+          })
 
           if (!getProductDetailsResponse.ok) {
-            console.error(`Failed to get product details for ${item.product_key}. Status: ${getProductDetailsResponse.status}`);
-            errorMessages += `Failed to get product details for ${item.product_key}\n`;
-            return null;
+            console.error(
+              `Failed to get product details for ${item.product_key}. Status: ${getProductDetailsResponse.status}`,
+            )
+            errorMessages += `Failed to get product details for ${item.product_key}\n`
+            return null
           }
 
-          const productDetailsResponseBody = await getProductDetailsResponse.json();
-          const productCount = productDetailsResponseBody.meta.pagination.count;
+          const productDetailsResponseBody = await getProductDetailsResponse.json()
+          const productCount = productDetailsResponseBody.meta.pagination.count
 
           if (productCount < 1) {
-            console.error(`No product details found for ${item.product_key}.`);
-            errorMessages += `No product details found for ${item.product_key}\n`;
-            return null;
+            console.error(`No product details found for ${item.product_key}.`)
+            errorMessages += `No product details found for ${item.product_key}\n`
+            return null
           }
 
-          const productDetails = productDetailsResponseBody.data[0];
+          const productDetails = productDetailsResponseBody.data[0]
 
           return {
             quantity: item.quantity,
@@ -153,26 +158,26 @@ export const createInvoice = createAction({
             tax_name1: productDetails.tax_name1,
             tax_rate1: productDetails.tax_rate1,
             tax_id: productDetails.tax_id,
-          };
+          }
         } catch (error) {
-          console.error(`Error getting product details for ${item.product_key}:`, error);
-          errorMessages += `Error getting product details for ${item.product_key}: ${error}\n`;
-          return null;
+          console.error(`Error getting product details for ${item.product_key}:`, error)
+          errorMessages += `Error getting product details for ${item.product_key}: ${error}\n`
+          return null
         }
-      });
+      })
 
-      const lineItemsWithDetails = await Promise.all(lineItemsWithDetailsPromises);
+      const lineItemsWithDetails = await Promise.all(lineItemsWithDetailsPromises)
 
       if (errorMessages) {
         // If there are error messages, throw an error with the accumulated messages
-        throw new Error(errorMessages.trim());
+        throw new Error(errorMessages.trim())
       }
 
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = today.getMonth() + 1;
-      const day = today.getDate();
-      const formattedDate = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+      const today = new Date()
+      const year = today.getFullYear()
+      const month = today.getMonth() + 1
+      const day = today.getDate()
+      const formattedDate = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
 
       const createInvoiceRequestBody = {
         due_date: context.propsValue.due_date,
@@ -186,30 +191,30 @@ export const createInvoice = createAction({
         is_amount_discount: context.propsValue.discount_type,
         send_email: context.propsValue.send_email,
         mark_sent: context.propsValue.mark_sent,
-      };
+      }
 
       const createInvoiceResponse = await fetch(`${baseUrl}/api/v1/invoices`, {
         method: 'POST',
         headers,
         body: JSON.stringify(createInvoiceRequestBody),
-      });
+      })
 
       if (!createInvoiceResponse.ok) {
-        throw new Error(`Failed to create invoice. Status: ${createInvoiceResponse.status}`);
+        throw new Error(`Failed to create invoice. Status: ${createInvoiceResponse.status}`)
       }
 
-      const createInvoiceResponseBody = await createInvoiceResponse.json();
+      const createInvoiceResponseBody = await createInvoiceResponse.json()
 
-      return createInvoiceResponseBody;
+      return createInvoiceResponseBody
     } catch (error) {
-      console.error('Error creating invoice or getting product details:', error);
+      console.error('Error creating invoice or getting product details:', error)
       if (errorMessages) {
         // If there are error messages, throw an error with the accumulated messages
-        throw new Error(errorMessages.trim());
+        throw new Error(errorMessages.trim())
       } else {
         // If there are no error messages, throw the original error
-        throw error;
+        throw error
       }
-    }  
+    }
   },
-});
+})

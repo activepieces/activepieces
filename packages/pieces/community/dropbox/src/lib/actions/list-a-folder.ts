@@ -1,10 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { dropboxAuth } from '../../';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { dropboxAuth } from '../../'
 
 export const dropboxListAFolder = createAction({
   auth: dropboxAuth,
@@ -14,8 +10,7 @@ export const dropboxListAFolder = createAction({
   props: {
     path: Property.ShortText({
       displayName: 'Path',
-      description:
-        'The path of the folder to be listed (e.g. /folder1). Use an empty string for the root folder.',
+      description: 'The path of the folder to be listed (e.g. /folder1). Use an empty string for the root folder.',
       required: true,
     }),
     recursive: Property.Checkbox({
@@ -27,8 +22,7 @@ export const dropboxListAFolder = createAction({
     }),
     limit: Property.Number({
       displayName: 'Limit',
-      description:
-        'The maximum number of results to return (between 1 and 2000). Default is 2000 if not specified.',
+      description: 'The maximum number of results to return (between 1 and 2000). Default is 2000 if not specified.',
       required: false,
     }),
   },
@@ -37,7 +31,7 @@ export const dropboxListAFolder = createAction({
       path: context.propsValue.path,
       recursive: context.propsValue.recursive,
       limit: context.propsValue.limit || 2000,
-    };
+    }
 
     const result = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -50,8 +44,8 @@ export const dropboxListAFolder = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
-    });
+    })
 
-    return result.body;
+    return result.body
   },
-});
+})

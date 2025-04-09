@@ -1,12 +1,12 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { ReachinboxAuth } from '../..';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { fetchCampaigns, reachinboxCommon } from '../common/index';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { ReachinboxAuth } from '../..'
+import { fetchCampaigns, reachinboxCommon } from '../common/index'
 
 // Define the structure of the pause response
 interface PauseCampaignResponse {
-  status: number;
-  message: string;
+  status: number
+  message: string
 }
 
 export const pauseCampaign = createAction({
@@ -21,7 +21,7 @@ export const pauseCampaign = createAction({
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        const campaigns = await fetchCampaigns(auth as string);
+        const campaigns = await fetchCampaigns(auth as string)
 
         return {
           options: campaigns.map((campaign) => ({
@@ -29,15 +29,15 @@ export const pauseCampaign = createAction({
             value: campaign.id.toString(),
           })),
           disabled: campaigns.length === 0,
-        };
+        }
       },
     }),
   },
   async run(context) {
-    const { campaignId } = context.propsValue;
+    const { campaignId } = context.propsValue
 
     // Build the URL for pausing the campaign
-    const url = `${reachinboxCommon.baseUrl}campaigns/pause`;
+    const url = `${reachinboxCommon.baseUrl}campaigns/pause`
 
     // Make a POST request to pause the selected campaign
     try {
@@ -51,25 +51,25 @@ export const pauseCampaign = createAction({
         body: {
           campaignId, // Pass the selected campaign ID in the request body
         },
-      });
+      })
 
       if (response.body.status === 200) {
         return {
           success: true,
           message: response.body.message,
-        };
+        }
       } else {
-        throw new Error(`Failed to pause campaign: ${response.body.message}`);
+        throw new Error(`Failed to pause campaign: ${response.body.message}`)
       }
     } catch (error: any) {
       if (error.response?.status === 404) {
         return {
           success: false,
           message: 'Campaign not found or unable to pause.',
-        };
+        }
       } else {
-        throw new Error(`Failed to pause campaign: ${error.message}`);
+        throw new Error(`Failed to pause campaign: ${error.message}`)
       }
     }
   },
-});
+})

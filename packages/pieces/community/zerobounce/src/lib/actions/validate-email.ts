@@ -1,7 +1,7 @@
-import { zerobounceAuth } from '../..';
-import { createAction, Property, StoreScope } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, StoreScope, createAction } from '@activepieces/pieces-framework'
+import { isNil } from '@activepieces/shared'
+import { zerobounceAuth } from '../..'
 
 export const validateEmail = createAction({
   name: 'validateEmail',
@@ -21,9 +21,9 @@ export const validateEmail = createAction({
   },
   auth: zerobounceAuth,
   async run({ store, propsValue, auth }) {
-    const key = `_zerobounce_${propsValue.email}`;
+    const key = `_zerobounce_${propsValue.email}`
     if (propsValue.cacheResponse) {
-      const cachedResponse = await store.get(key, StoreScope.PROJECT);
+      const cachedResponse = await store.get(key, StoreScope.PROJECT)
       if (!isNil(cachedResponse)) {
         return cachedResponse
       }
@@ -31,10 +31,10 @@ export const validateEmail = createAction({
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.GET,
       url: `https://api.zerobounce.net/v2/validate?email=${propsValue.email}&api_key=${auth}`,
-    });
+    })
     if (propsValue.cacheResponse) {
-      await store.put(key, res.body, StoreScope.PROJECT);
+      await store.put(key, res.body, StoreScope.PROJECT)
     }
-    return res.body;
+    return res.body
   },
-});
+})

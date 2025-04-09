@@ -1,14 +1,10 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { getBudget } from './lib/actions/get-budget';
-import { importTransaction } from './lib/actions/import-transaction';
-import { getCategories } from './lib/actions/get-categories';
-import { importTransactions } from './lib/actions/import-transactions';
-import { getAccounts } from './lib/actions/get-accounts';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { getAccounts } from './lib/actions/get-accounts'
+import { getBudget } from './lib/actions/get-budget'
+import { getCategories } from './lib/actions/get-categories'
+import { importTransaction } from './lib/actions/import-transaction'
+import { importTransactions } from './lib/actions/import-transactions'
 
 export const actualBudgetAuth = PieceAuth.CustomAuth({
   description: 'Enter authentication details',
@@ -25,8 +21,7 @@ export const actualBudgetAuth = PieceAuth.CustomAuth({
     }),
     sync_id: PieceAuth.SecretText({
       displayName: 'Sync ID',
-      description:
-        'This is the ID from Settings → Show advanced settings → Sync ID',
+      description: 'This is the ID from Settings → Show advanced settings → Sync ID',
       required: true,
     }),
     encryption_password: PieceAuth.SecretText({
@@ -36,7 +31,7 @@ export const actualBudgetAuth = PieceAuth.CustomAuth({
     }),
   },
   required: true,
-});
+})
 
 export const actualbudget = createPiece({
   displayName: 'Actual Budget',
@@ -47,12 +42,6 @@ export const actualbudget = createPiece({
   categories: [PieceCategory.ACCOUNTING],
   authors: ['hugh-codes'],
 
-  actions: [
-    getBudget,
-    importTransaction,
-    importTransactions,
-    getCategories,
-    getAccounts,
-  ],
+  actions: [getBudget, importTransaction, importTransactions, getCategories, getAccounts],
   triggers: [],
-});
+})

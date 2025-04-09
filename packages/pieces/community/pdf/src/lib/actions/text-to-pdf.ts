@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { PDFDocument, StandardFonts } from 'pdf-lib';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { PDFDocument, StandardFonts } from 'pdf-lib'
 
 export const textToPdf = createAction({
   name: 'textToPdf',
@@ -21,36 +21,36 @@ export const textToPdf = createAction({
     },
   },
   async run(context) {
-    const text = context.propsValue.text;
+    const text = context.propsValue.text
 
-    const pageSize: [number, number] = [595, 842]; // Standard A4 size
-    const margin = 50;
-    const topMargin = 70;
-    const fontSize = 12;
-    const lineSpacing = 5;
-    const paragraphSpacing = 8;
-    const fontType: StandardFonts = StandardFonts.Helvetica;
+    const pageSize: [number, number] = [595, 842] // Standard A4 size
+    const margin = 50
+    const topMargin = 70
+    const fontSize = 12
+    const lineSpacing = 5
+    const paragraphSpacing = 8
+    const fontType: StandardFonts = StandardFonts.Helvetica
 
     try {
-      const pdfDoc = await PDFDocument.create();
-      let page = pdfDoc.addPage(pageSize);
-      const { width, height } = page.getSize();
+      const pdfDoc = await PDFDocument.create()
+      let page = pdfDoc.addPage(pageSize)
+      const { width, height } = page.getSize()
 
-      const font = await pdfDoc.embedFont(fontType);
+      const font = await pdfDoc.embedFont(fontType)
 
-      const lineHeight = font.heightAtSize(fontSize) + lineSpacing;
-      const maxWidth = width - margin * 2;
+      const lineHeight = font.heightAtSize(fontSize) + lineSpacing
+      const maxWidth = width - margin * 2
 
-      const paragraphs = text.split('\n');
-      let yPosition = height - topMargin;
+      const paragraphs = text.split('\n')
+      let yPosition = height - topMargin
 
       paragraphs.forEach((paragraph) => {
-        const words = paragraph.split(' ');
-        let line = '';
+        const words = paragraph.split(' ')
+        let line = ''
 
         words.forEach((word) => {
-          const testLine = line + word + ' ';
-          const testLineWidth = font.widthOfTextAtSize(testLine, fontSize);
+          const testLine = line + word + ' '
+          const testLineWidth = font.widthOfTextAtSize(testLine, fontSize)
 
           if (testLineWidth > maxWidth) {
             page.drawText(line.trim(), {
@@ -58,18 +58,18 @@ export const textToPdf = createAction({
               y: yPosition,
               size: fontSize,
               font,
-            });
-            line = word + ' ';
-            yPosition -= lineHeight;
+            })
+            line = word + ' '
+            yPosition -= lineHeight
 
             if (yPosition < margin + lineHeight) {
-              page = pdfDoc.addPage(pageSize);
-              yPosition = height - topMargin;
+              page = pdfDoc.addPage(pageSize)
+              yPosition = height - topMargin
             }
           } else {
-            line = testLine;
+            line = testLine
           }
-        });
+        })
 
         if (line.trim()) {
           page.drawText(line.trim(), {
@@ -77,27 +77,27 @@ export const textToPdf = createAction({
             y: yPosition,
             size: fontSize,
             font,
-          });
-          yPosition -= lineHeight;
+          })
+          yPosition -= lineHeight
         }
 
-        yPosition -= paragraphSpacing;
+        yPosition -= paragraphSpacing
 
         if (yPosition < margin + lineHeight) {
-          page = pdfDoc.addPage(pageSize);
-          yPosition = height - topMargin;
+          page = pdfDoc.addPage(pageSize)
+          yPosition = height - topMargin
         }
-      });
+      })
 
-      const pdfBytes = await pdfDoc.save();
-      const base64Pdf = Buffer.from(pdfBytes).toString('base64');
+      const pdfBytes = await pdfDoc.save()
+      const base64Pdf = Buffer.from(pdfBytes).toString('base64')
 
       return context.files.write({
         data: Buffer.from(base64Pdf, 'base64'),
         fileName: 'text.pdf',
-      });
+      })
     } catch (error) {
-      throw new Error(`Failed to convert text to PDF: ${(error as Error).message}`);
+      throw new Error(`Failed to convert text to PDF: ${(error as Error).message}`)
     }
   },
-});
+})

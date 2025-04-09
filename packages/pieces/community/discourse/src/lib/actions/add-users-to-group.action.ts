@@ -1,7 +1,7 @@
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { discourseAuth } from '../../index';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { discourseAuth } from '../../index'
 
 export const addUsersToGroup = createAction({
   auth: discourseAuth,
@@ -22,19 +22,17 @@ export const addUsersToGroup = createAction({
             'Api-Key': auth.api_key,
             'Api-Username': auth.api_username,
           },
-        });
-        const options = response.body['groups'].map(
-          (res: { display_name: any; id: any }) => {
-            return {
-              label: res.display_name,
-              value: res.id,
-            };
+        })
+        const options = response.body['groups'].map((res: { display_name: any; id: any }) => {
+          return {
+            label: res.display_name,
+            value: res.id,
           }
-        );
+        })
         return {
           options: options,
           disabled: false,
-        };
+        }
       },
     }),
     users: Property.Array({
@@ -44,9 +42,9 @@ export const addUsersToGroup = createAction({
     }),
   },
   async run(context) {
-    const { group_id, users } = context.propsValue;
+    const { group_id, users } = context.propsValue
     //convert array to comma separated string
-    users.join(',');
+    users.join(',')
     const response = await httpClient.sendRequest({
       method: HttpMethod.PUT,
       url: `${context.auth.website_url.trim()}/groups/${group_id}/members.json`,
@@ -57,7 +55,7 @@ export const addUsersToGroup = createAction({
       body: {
         usernames: users.join(','),
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

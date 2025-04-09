@@ -1,13 +1,11 @@
-
-
-export const callableFlowKey = (runId: string) => `callableFlow_${runId}`;
+export const callableFlowKey = (runId: string) => `callableFlow_${runId}`
 
 export type CallableFlowRequest = {
-    data: unknown;
-    callbackUrl: string;
+  data: unknown
+  callbackUrl: string
 }
 export type CallableFlowResponse = {
-    data: unknown;
+  data: unknown
 }
 
-export const MOCK_CALLBACK_IN_TEST_FLOW_URL = 'MOCK';
+export const MOCK_CALLBACK_IN_TEST_FLOW_URL = 'MOCK'

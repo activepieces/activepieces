@@ -1,10 +1,6 @@
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
 
 export const oneDriveCommon = {
   baseUrl: 'https://graph.microsoft.com/v1.0/me/drive',
@@ -19,17 +15,16 @@ export const oneDriveCommon = {
           disabled: true,
           options: [],
           placeholder: 'Please authenticate first',
-        };
+        }
       }
 
-      const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
-      let folders: { id: string; label: string }[] = [];
+      const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue
+      let folders: { id: string; label: string }[] = []
 
       try {
-        folders= await getFoldersRecursively(authProp,'root','');
-
+        folders = await getFoldersRecursively(authProp, 'root', '')
       } catch (e) {
-        throw new Error(`Failed to get folders\nError:${e}`);
+        throw new Error(`Failed to get folders\nError:${e}`)
       }
 
       return {
@@ -38,27 +33,27 @@ export const oneDriveCommon = {
           return {
             label: folder.label,
             value: folder.id,
-          };
+          }
         }),
-      };
+      }
     },
   }),
 
   async getFiles(
     auth: OAuth2PropertyValue,
     search?: {
-      parentFolder?: string;
-      createdTime?: string | number | Date;
-      createdTimeOp?: string;
-    }
+      parentFolder?: string
+      createdTime?: string | number | Date
+      createdTimeOp?: string
+    },
   ) {
-    let url = `${this.baseUrl}/items/root/children?$filter=folder eq null`;
+    let url = `${this.baseUrl}/items/root/children?$filter=folder eq null`
     if (search?.parentFolder) {
-      url = `${this.baseUrl}/items/${search.parentFolder}/children?$filter=folder eq null`;
+      url = `${this.baseUrl}/items/${search.parentFolder}/children?$filter=folder eq null`
     }
 
     const response = await httpClient.sendRequest<{
-      value: { id: string; name: string; createdDateTime: string }[];
+      value: { id: string; name: string; createdDateTime: string }[]
     }>({
       method: HttpMethod.GET,
       url: url,
@@ -70,69 +65,58 @@ export const oneDriveCommon = {
         type: AuthenticationType.BEARER_TOKEN,
         token: auth.access_token,
       },
-    });
+    })
 
-    const files = response.body.value;
+    const files = response.body.value
 
     if (search?.createdTime) {
-      const compareDate = dayjs(search.createdTime);
+      const compareDate = dayjs(search.createdTime)
       return files.filter((file) => {
-        const fileDate = dayjs(file.createdDateTime);
-        const comparison =
-          search.createdTimeOp === '<'
-            ? fileDate.isBefore(compareDate)
-            : fileDate.isAfter(compareDate);
-        return comparison;
-      });
+        const fileDate = dayjs(file.createdDateTime)
+        const comparison = search.createdTimeOp === '<' ? fileDate.isBefore(compareDate) : fileDate.isAfter(compareDate)
+        return comparison
+      })
     }
 
-    return files;
+    return files
   },
-};
-
+}
 
 async function getFoldersRecursively(
   auth: OAuth2PropertyValue,
   folderId: string,
   parentPath = '',
-  result: { label: string; id: string }[] = [])
-  {
-    const url =  `${oneDriveCommon.baseUrl}/items/${folderId}/children?$select=id,name,folder&$filter=folder ne null`;
+  result: { label: string; id: string }[] = [],
+) {
+  const url = `${oneDriveCommon.baseUrl}/items/${folderId}/children?$select=id,name,folder&$filter=folder ne null`
 
-    try
-    {
-      const response = await httpClient.sendRequest<getFoldersResponse>(
-        {
-          method:HttpMethod.GET,
-          url,
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: auth.access_token,
-          },
-        }
-      );
+  try {
+    const response = await httpClient.sendRequest<getFoldersResponse>({
+      method: HttpMethod.GET,
+      url,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: auth.access_token,
+      },
+    })
 
-      const folders = response.body.value;
+    const folders = response.body.value
 
-      for (const folder of folders) 
-        {
-        const path = parentPath ? `${parentPath}/${folder.name}` : folder.name;
-        result.push({ label:path, id: folder.id });
+    for (const folder of folders) {
+      const path = parentPath ? `${parentPath}/${folder.name}` : folder.name
+      result.push({ label: path, id: folder.id })
 
-        await getFoldersRecursively(auth,folder.id,path,result);
-        }
-  }
-    catch(e)
-    {
-      throw new Error(`Failed to get folders\nError: ${e}`);
+      await getFoldersRecursively(auth, folder.id, path, result)
     }
-
-    return result;
+  } catch (e) {
+    throw new Error(`Failed to get folders\nError: ${e}`)
   }
 
+  return result
+}
 
 interface getFoldersResponse {
-  "@odata.nextLink"?: string;
-    "@odata.deltaLink"?: string;
-    value:{id: string; name: string}[];
+  '@odata.nextLink'?: string
+  '@odata.deltaLink'?: string
+  value: { id: string; name: string }[]
 }

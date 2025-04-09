@@ -1,6 +1,6 @@
-import { QdrantClient } from '@qdrant/js-client-rest';
-import { qdrantAuth } from '../..';
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework'
+import { QdrantClient } from '@qdrant/js-client-rest'
+import { qdrantAuth } from '../..'
 
 export const collectionList = createAction({
   auth: qdrantAuth,
@@ -12,8 +12,8 @@ export const collectionList = createAction({
     const client = new QdrantClient({
       apiKey: auth.key,
       url: auth.serverAddress,
-    });
-    const collections = await client.getCollections();
-    return collections;
+    })
+    const collections = await client.getCollections()
+    return collections
   },
-});
+})

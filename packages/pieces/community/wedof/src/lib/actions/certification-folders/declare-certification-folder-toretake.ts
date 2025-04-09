@@ -1,8 +1,8 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { wedofCommon } from '../../common/wedof';
-import dayjs from 'dayjs';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { wedofAuth } from '../../..'
+import { wedofCommon } from '../../common/wedof'
 
 export const declareCertificationFolderToRetake = createAction({
   auth: wedofAuth,
@@ -12,8 +12,7 @@ export const declareCertificationFolderToRetake = createAction({
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de certification',
-      description:
-        'Sélectionner la propriété {externalId} du dossier de certification',
+      description: 'Sélectionner la propriété {externalId} du dossier de certification',
       required: true,
     }),
     detailedResult: Property.ShortText({
@@ -43,7 +42,7 @@ export const declareCertificationFolderToRetake = createAction({
   },
 
   async run(context) {
-     const message = {
+    const message = {
       detailedResult: context.propsValue.detailedResult,
       europeanLanguageLevel: context.propsValue.europeanLanguageLevel,
       examinationDate: context.propsValue.examinationDate
@@ -55,22 +54,18 @@ export const declareCertificationFolderToRetake = createAction({
       examinationPlace: context.propsValue.examinationPlace,
       examinationType: context.propsValue.examinationType,
       comment: context.propsValue.comment,
-    };
+    }
 
     return (
       await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url:
-          wedofCommon.baseUrl +
-          '/certificationFolders/' +
-          context.propsValue.externalId +
-          '/retake',
+        url: wedofCommon.baseUrl + '/certificationFolders/' + context.propsValue.externalId + '/retake',
         body: message,
         headers: {
           'Content-Type': 'application/json',
           'X-Api-Key': context.auth as string,
         },
       })
-    ).body;
+    ).body
   },
-});
+})

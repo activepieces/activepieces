@@ -1,9 +1,6 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { invoiceninjaAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { invoiceninjaAuth } from '../..'
 
 export const createClient = createAction({
   auth: invoiceninjaAuth,
@@ -81,39 +78,42 @@ export const createClient = createAction({
   },
 
   async run(context) {
-    const INapiToken = context.auth.access_token;
+    const INapiToken = context.auth.access_token
     const headers = {
       'X-Api-Token': INapiToken,
       'Content-Type': 'application/json',
-    };
+    }
 
-    const queryParams = new URLSearchParams();
-    queryParams.append('name', context.propsValue.client_business_name);
-    queryParams.append('private_notes', context.propsValue.client_private_notes || '');
-    queryParams.append('address1', context.propsValue.client_address1 || '');
-    queryParams.append('address2', context.propsValue.client_address2 || '');
-    queryParams.append('city', context.propsValue.client_city || '');
-    queryParams.append('state', context.propsValue.client_state || '');
-    queryParams.append('postal_code', context.propsValue.client_postcode || '');
-    queryParams.append('vat_number', context.propsValue.client_tax_no || '');
+    const queryParams = new URLSearchParams()
+    queryParams.append('name', context.propsValue.client_business_name)
+    queryParams.append('private_notes', context.propsValue.client_private_notes || '')
+    queryParams.append('address1', context.propsValue.client_address1 || '')
+    queryParams.append('address2', context.propsValue.client_address2 || '')
+    queryParams.append('city', context.propsValue.client_city || '')
+    queryParams.append('state', context.propsValue.client_state || '')
+    queryParams.append('postal_code', context.propsValue.client_postcode || '')
+    queryParams.append('vat_number', context.propsValue.client_tax_no || '')
     const body = {
-      "contacts": {
-        "first_name": context.propsValue.client_first_name || "", "last_name": context.propsValue.client_last_name || "",
-        "phone": context.propsValue.client_phone || "", "email": context.propsValue.client_email || "", "send_email": context.propsValue.client_send_email || false
-      }
-    };
+      contacts: {
+        first_name: context.propsValue.client_first_name || '',
+        last_name: context.propsValue.client_last_name || '',
+        phone: context.propsValue.client_phone || '',
+        email: context.propsValue.client_email || '',
+        send_email: context.propsValue.client_send_email || false,
+      },
+    }
 
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
-    const url = `${baseUrl}/api/v1/clients/?${queryParams.toString()}`;
+    const baseUrl = context.auth.base_url.replace(/\/$/, '')
+    const url = `${baseUrl}/api/v1/clients/?${queryParams.toString()}`
 
     const httprequestdata = {
       method: HttpMethod.POST,
       url,
       headers,
       body,
-    };
+    }
 
-    const response = await httpClient.sendRequest(httprequestdata);
-    return response.body;
+    const response = await httpClient.sendRequest(httprequestdata)
+    return response.body
   },
-});
+})

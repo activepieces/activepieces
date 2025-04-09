@@ -1,12 +1,7 @@
-import { zuoraAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { getAccessToken } from '../common';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { zuoraAuth } from '../../'
+import { getAccessToken } from '../common'
 
 export const findProductAction = createAction({
   auth: zuoraAuth,
@@ -20,8 +15,8 @@ export const findProductAction = createAction({
     }),
   },
   async run(context) {
-    const sku = context.propsValue.sku;
-    const token = await getAccessToken(context.auth);
+    const sku = context.propsValue.sku
+    const token = await getAccessToken(context.auth)
 
     const request: HttpRequest = {
       method: HttpMethod.GET,
@@ -30,9 +25,9 @@ export const findProductAction = createAction({
       queryParams: {
         'filter[]': `sku.EQ:${sku}`,
       },
-    };
+    }
 
-    const response = await httpClient.sendRequest(request);
-    return response.body;
+    const response = await httpClient.sendRequest(request)
+    return response.body
   },
-});
+})

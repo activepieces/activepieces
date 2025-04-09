@@ -1,11 +1,8 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import OpenAI from 'openai';
-import { openaiAuth } from '../..';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import OpenAI from 'openai'
+import { z } from 'zod'
+import { openaiAuth } from '../..'
 
 export const visionPrompt = createAction({
   auth: openaiAuth,
@@ -26,8 +23,7 @@ export const visionPrompt = createAction({
     detail: Property.Dropdown({
       displayName: 'Detail',
       required: false,
-      description:
-        'Control how the model processes the image and generates textual understanding.',
+      description: 'Control how the model processes the image and generates textual understanding.',
       defaultValue: 'auto',
       refreshers: [],
       options: async () => {
@@ -46,7 +42,7 @@ export const visionPrompt = createAction({
               value: 'auto',
             },
           ],
-        };
+        }
       },
     }),
     temperature: Property.Number({
@@ -88,36 +84,31 @@ export const visionPrompt = createAction({
       displayName: 'Roles',
       required: false,
       description: 'Array of roles to specify more accurate response',
-      defaultValue: [
-        { role: 'system', content: 'You are a helpful assistant.' },
-      ],
+      defaultValue: [{ role: 'system', content: 'You are a helpful assistant.' }],
     }),
   },
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
       temperature: z.number().min(0).max(1),
-    });
+    })
 
     const openai = new OpenAI({
       apiKey: auth,
-    });
-    const { temperature, maxTokens, topP, frequencyPenalty, presencePenalty } =
-      propsValue;
+    })
+    const { temperature, maxTokens, topP, frequencyPenalty, presencePenalty } = propsValue
 
-    const rolesArray = propsValue.roles ? (propsValue.roles as any) : [];
+    const rolesArray = propsValue.roles ? (propsValue.roles as any) : []
     const roles = rolesArray.map((item: any) => {
-      const rolesEnum = ['system', 'user', 'assistant'];
+      const rolesEnum = ['system', 'user', 'assistant']
       if (!rolesEnum.includes(item.role)) {
-        throw new Error(
-          'The only available roles are: [system, user, assistant]'
-        );
+        throw new Error('The only available roles are: [system, user, assistant]')
       }
 
       return {
         role: item.role,
         content: item.content,
-      };
-    });
+      }
+    })
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -144,8 +135,8 @@ export const visionPrompt = createAction({
       top_p: topP,
       frequency_penalty: frequencyPenalty,
       presence_penalty: presencePenalty,
-    });
+    })
 
-    return completion.choices[0].message.content;
+    return completion.choices[0].message.content
   },
-});
+})

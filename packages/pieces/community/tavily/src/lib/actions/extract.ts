@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { tavilyAuth } from '../../index';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { tavilyAuth } from '../../index'
 
 export const extractAction = createAction({
   name: 'extract',
@@ -32,8 +32,8 @@ export const extractAction = createAction({
         urls: propsValue.urls,
         include_images: propsValue.include_images,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-}); 
+})

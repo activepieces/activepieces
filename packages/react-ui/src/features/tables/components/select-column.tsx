@@ -1,16 +1,12 @@
-import {
-  useHeaderRowSelection,
-  useRowSelection,
-  type Column,
-} from 'react-data-grid';
+import { type Column, useHeaderRowSelection, useRowSelection } from 'react-data-grid'
 
-import { Checkbox } from '@/components/ui/checkbox';
-import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox'
+import { cn } from '@/lib/utils'
 
-import { Row } from '../lib/types';
+import { Row } from '../lib/types'
 
 function SelectHeaderCell() {
-  const { isRowSelected, onRowSelectionChange } = useHeaderRowSelection();
+  const { isRowSelected, onRowSelectionChange } = useHeaderRowSelection()
 
   return (
     <div
@@ -24,20 +20,18 @@ function SelectHeaderCell() {
         aria-label="Select all rows"
         checked={Boolean(isRowSelected)}
         onCheckedChange={(checked) => {
-          onRowSelectionChange({ checked: Boolean(checked) });
+          onRowSelectionChange({ checked: Boolean(checked) })
         }}
       />
     </div>
-  );
+  )
 }
 
 function SelectCell({ row, rowIndex }: { row: Row; rowIndex: number }) {
-  const { isRowSelected, onRowSelectionChange } = useRowSelection();
+  const { isRowSelected, onRowSelectionChange } = useRowSelection()
   return (
     <div className="flex items-center justify-start h-full pl-4 group">
-      <div
-        className={cn('group-hover:block hidden', isRowSelected && '!block')}
-      >
+      <div className={cn('group-hover:block hidden', isRowSelected && '!block')}>
         <Checkbox
           aria-label="Select row"
           checked={Boolean(isRowSelected)}
@@ -46,21 +40,14 @@ function SelectCell({ row, rowIndex }: { row: Row; rowIndex: number }) {
               row,
               checked: Boolean(checked),
               isShiftClick: false,
-            });
+            })
           }}
           onClick={(e) => e.stopPropagation()}
         />
       </div>
-      <div
-        className={cn(
-          'group-hover:hidden block select-none',
-          isRowSelected && '!hidden',
-        )}
-      >
-        {rowIndex}
-      </div>
+      <div className={cn('group-hover:hidden block select-none', isRowSelected && '!hidden')}>{rowIndex}</div>
     </div>
-  );
+  )
 }
 
 export const SelectColumn: Column<Row, { id: string }> = {
@@ -73,7 +60,5 @@ export const SelectColumn: Column<Row, { id: string }> = {
   sortable: false,
   frozen: true,
   renderHeaderCell: () => <SelectHeaderCell />,
-  renderCell: (props) => (
-    <SelectCell row={props.row} rowIndex={props.rowIdx + 1} />
-  ),
-};
+  renderCell: (props) => <SelectCell row={props.row} rowIndex={props.rowIdx + 1} />,
+}

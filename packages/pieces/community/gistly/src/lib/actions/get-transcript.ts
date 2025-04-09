@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { gistlyAuth } from '../..';
-import { gistlyConfig } from '../config';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { gistlyAuth } from '../..'
+import { gistlyConfig } from '../config'
 
 export const getTranscriptAction = createAction({
   name: 'get_transcript',
@@ -21,7 +21,7 @@ export const getTranscriptAction = createAction({
     }),
   },
   async run(context) {
-    const { url, text } = context.propsValue;
+    const { url, text } = context.propsValue
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${gistlyConfig.baseUrl}/youtube/transcript`,
@@ -32,8 +32,8 @@ export const getTranscriptAction = createAction({
         url,
         text: text ? 'true' : 'false',
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-}); 
+})

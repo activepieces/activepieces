@@ -1,13 +1,9 @@
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { openaiAuth } from '../..';
-import FormData from 'form-data';
-import mime from 'mime-types';
-import { Languages, baseUrl } from '../common/common';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import FormData from 'form-data'
+import mime from 'mime-types'
+import { openaiAuth } from '../..'
+import { Languages, baseUrl } from '../common/common'
 
 export const transcribeAction = createAction({
   name: 'transcribe',
@@ -31,25 +27,25 @@ export const transcribeAction = createAction({
     }),
   },
   run: async (context) => {
-    const fileData = context.propsValue.audio;
-    const mimeType = mime.lookup(fileData.extension ? fileData.extension : '');
-    let language = context.propsValue.language;
+    const fileData = context.propsValue.audio
+    const mimeType = mime.lookup(fileData.extension ? fileData.extension : '')
+    let language = context.propsValue.language
     // if language is not in languages list, default to english
     if (!Languages.some((l) => l.value === language)) {
-      language = 'en';
+      language = 'en'
     }
 
-    const form = new FormData();
+    const form = new FormData()
     form.append('file', fileData.data, {
       filename: fileData.filename,
       contentType: mimeType as string,
-    });
-    form.append('model', 'whisper-1');
-    form.append('language', language);
+    })
+    form.append('model', 'whisper-1')
+    form.append('language', language)
 
     const headers = {
       Authorization: `Bearer ${context.auth}`,
-    };
+    }
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -59,12 +55,12 @@ export const transcribeAction = createAction({
         ...form.getHeaders(),
         ...headers,
       },
-    };
+    }
     try {
-      const response = await httpClient.sendRequest(request);
-      return response.body;
+      const response = await httpClient.sendRequest(request)
+      return response.body
     } catch (e) {
-      throw new Error(`Error while execution:\n${e}`);
+      throw new Error(`Error while execution:\n${e}`)
     }
   },
-});
+})

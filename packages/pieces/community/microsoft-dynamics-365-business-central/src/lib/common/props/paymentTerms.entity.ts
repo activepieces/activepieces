@@ -1,4 +1,4 @@
-import { EntityProp } from '../types';
+import { EntityProp } from '../types'
 
 export const paymentTermsEntityProps: EntityProp[] = [
   {
@@ -19,8 +19,7 @@ export const paymentTermsEntityProps: EntityProp[] = [
   {
     name: 'dueDateCalculation',
     displayName: 'Due Date Calculation',
-    description:
-      'Specifies the formula that is used to calculate the date that a payment must be made.',
+    description: 'Specifies the formula that is used to calculate the date that a payment must be made.',
     type: 'text',
     isRequired: false,
   },
@@ -46,6 +45,6 @@ export const paymentTermsEntityProps: EntityProp[] = [
       'Specifies if the discount should be applied to payment term. True indicates a discount will be given, false indicates a discount will not be given.',
     isRequired: false,
   },
-];
+]
 
-export const paymentTermsEntityNumberProps = ['discountPercent'];
+export const paymentTermsEntityNumberProps = ['discountPercent']

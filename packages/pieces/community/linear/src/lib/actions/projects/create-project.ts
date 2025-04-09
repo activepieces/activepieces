@@ -1,8 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { linearAuth } from '../../..';
-import { props } from '../../common/props';
-import { makeClient } from '../../common/client';
-import { LinearDocument } from '@linear/sdk';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { LinearDocument } from '@linear/sdk'
+import { linearAuth } from '../../..'
+import { makeClient } from '../../common/client'
+import { props } from '../../common/props'
 
 export const linearCreateProject = createAction({
   auth: linearAuth,
@@ -45,19 +45,19 @@ export const linearCreateProject = createAction({
       color: propsValue.color,
       startDate: propsValue.startDate,
       targetDate: propsValue.targetDate,
-    };
+    }
 
-    const client = makeClient(auth as string);
-    const result = await client.createProject(project);
+    const client = makeClient(auth as string)
+    const result = await client.createProject(project)
     if (result.success) {
-      const createdProject = await result.project;
+      const createdProject = await result.project
       return {
         success: result.success,
         lastSyncId: result.lastSyncId,
         project: createdProject,
-      };
+      }
     } else {
       throw new Error(`Unexpected error: ${result}`)
     }
   },
-});
+})

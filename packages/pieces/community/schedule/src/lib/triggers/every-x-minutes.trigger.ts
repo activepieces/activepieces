@@ -1,8 +1,4 @@
-import {
-  Property,
-  TriggerStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
+import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
 
 export const everyXMinutesTrigger = createTrigger({
   name: 'every_x_minutes',
@@ -26,22 +22,22 @@ export const everyXMinutesTrigger = createTrigger({
     }),
   },
   onEnable: async (ctx) => {
-    const cronExpression = `*/${ctx.propsValue.minutes} * * * *`;
+    const cronExpression = `*/${ctx.propsValue.minutes} * * * *`
     ctx.setSchedule({
       cronExpression: cronExpression,
       timezone: 'UTC',
-    });
+    })
   },
   run(ctx) {
-    const cronExpression = `*/${ctx.propsValue.minutes} * * * *`;
+    const cronExpression = `*/${ctx.propsValue.minutes} * * * *`
     return Promise.resolve([
       {
         cron_expression: cronExpression,
         timezone: 'UTC',
       },
-    ]);
+    ])
   },
   onDisable: async () => {
-    console.log('onDisable');
+    console.log('onDisable')
   },
-});
+})

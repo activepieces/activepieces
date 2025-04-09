@@ -1,5 +1,5 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { assemblyaiAuth } from '../auth';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { assemblyaiAuth } from '../auth'
 
 export const customApiCall = createCustomApiCallAction({
   auth: assemblyaiAuth,
@@ -7,6 +7,6 @@ export const customApiCall = createCustomApiCallAction({
   authMapping: async (auth) => {
     return {
       Authorization: `${auth}`,
-    };
+    }
   },
-});
+})

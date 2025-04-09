@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { onfleetAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
 
-import Onfleet from '@onfleet/node-onfleet';
+import Onfleet from '@onfleet/node-onfleet'
 
 export const cloneTask = createAction({
   auth: onfleetAuth,
@@ -16,8 +16,8 @@ export const cloneTask = createAction({
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth)
 
-    return await onfleetApi.tasks.clone(context.propsValue.task);
+    return await onfleetApi.tasks.clone(context.propsValue.task)
   },
-});
+})

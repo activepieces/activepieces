@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
 export const fetchTopStories = createAction({
   name: 'fetch_top_stories', // Must be a unique across the piece, this shouldn't be changed.
@@ -14,26 +14,21 @@ export const fetchTopStories = createAction({
     }),
   },
   async run(configValue) {
-    const HACKER_NEWS_API_URL = 'https://hacker-news.firebaseio.com/v0/';
+    const HACKER_NEWS_API_URL = 'https://hacker-news.firebaseio.com/v0/'
     const topStoryIdsResponse = await httpClient.sendRequest<string[]>({
       method: HttpMethod.GET,
       url: `${HACKER_NEWS_API_URL}topstories.json`,
-    });
-    const topStoryIds: string[] = topStoryIdsResponse.body;
-    const topStories: Record<string, unknown>[] = [];
-    for (
-      let i = 0;
-      i <
-      Math.min(configValue.propsValue['number_of_stories'], topStoryIds.length);
-      i++
-    ) {
-      const storyId = topStoryIds[i];
+    })
+    const topStoryIds: string[] = topStoryIdsResponse.body
+    const topStories: Record<string, unknown>[] = []
+    for (let i = 0; i < Math.min(configValue.propsValue['number_of_stories'], topStoryIds.length); i++) {
+      const storyId = topStoryIds[i]
       const storyResponse = await httpClient.sendRequest({
         method: HttpMethod.GET,
         url: `${HACKER_NEWS_API_URL}item/${storyId}.json`,
-      });
-      topStories.push(storyResponse.body);
+      })
+      topStories.push(storyResponse.body)
     }
-    return topStories;
+    return topStories
   },
-});
+})

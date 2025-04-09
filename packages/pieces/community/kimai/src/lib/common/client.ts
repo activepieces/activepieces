@@ -1,93 +1,71 @@
-import {
-  HttpMethod,
-  HttpMessageBody,
-  httpClient,
-  HttpResponse,
-} from '@activepieces/pieces-common';
+import { HttpMessageBody, HttpMethod, HttpResponse, httpClient } from '@activepieces/pieces-common'
 
 type PingResponse = {
-  message: string;
-};
+  message: string
+}
 
 type ProjectResponse = {
-  id: number;
-  name: string;
-};
+  id: number
+  name: string
+}
 
 type ActivityResponse = {
-  id: number;
-  parentTitle?: string;
-  name: string;
-};
+  id: number
+  parentTitle?: string
+  name: string
+}
 
 type TimesheetCreateRequest = {
-  project: number;
-  activity: number;
-  begin: string;
-  end?: string;
-  description?: string;
-};
+  project: number
+  activity: number
+  begin: string
+  end?: string
+  description?: string
+}
 
 type TimesheetResponse = {
-  id: number;
-  project: number;
-  activity: number;
-  begin: string;
-  end?: string;
-  description?: string;
-};
+  id: number
+  project: number
+  activity: number
+  begin: string
+  end?: string
+  description?: string
+}
 
 export class KimaiClient {
   constructor(
     private baseUrl: string,
     private user: string,
-    private apiPassword: string
+    private apiPassword: string,
   ) {
     // Remove trailing slash from base URL
-    this.baseUrl = baseUrl.replace(/\/$/, '');
+    this.baseUrl = baseUrl.replace(/\/$/, '')
   }
 
   async ping(): Promise<PingResponse> {
-    return (await this.makeRequest<PingResponse>(HttpMethod.GET, '/api/ping'))
-      .body;
+    return (await this.makeRequest<PingResponse>(HttpMethod.GET, '/api/ping')).body
   }
 
   async getProjects(): Promise<ProjectResponse[]> {
-    return (
-      await this.makeRequest<ProjectResponse[]>(HttpMethod.GET, '/api/projects')
-    ).body;
+    return (await this.makeRequest<ProjectResponse[]>(HttpMethod.GET, '/api/projects')).body
   }
 
-  async getActivities(
-    project: number | undefined = undefined
-  ): Promise<ActivityResponse[]> {
+  async getActivities(project: number | undefined = undefined): Promise<ActivityResponse[]> {
     return (
-      await this.makeRequest<ActivityResponse[]>(
-        HttpMethod.GET,
-        '/api/activities',
-        {
-          project: project,
-        }
-      )
-    ).body;
+      await this.makeRequest<ActivityResponse[]>(HttpMethod.GET, '/api/activities', {
+        project: project,
+      })
+    ).body
   }
 
-  async createTimesheet(
-    createData: TimesheetCreateRequest
-  ): Promise<TimesheetResponse> {
-    return (
-      await this.makeRequest<TimesheetResponse>(
-        HttpMethod.POST,
-        '/api/timesheets',
-        createData
-      )
-    ).body;
+  async createTimesheet(createData: TimesheetCreateRequest): Promise<TimesheetResponse> {
+    return (await this.makeRequest<TimesheetResponse>(HttpMethod.POST, '/api/timesheets', createData)).body
   }
 
   async makeRequest<T extends HttpMessageBody>(
     method: HttpMethod,
     resourceUri: string,
-    body: any | undefined = undefined
+    body: any | undefined = undefined,
   ): Promise<HttpResponse<T>> {
     return await httpClient.sendRequest<T>({
       method: method,
@@ -97,6 +75,6 @@ export class KimaiClient {
         'X-AUTH-TOKEN': this.apiPassword,
       },
       body: body,
-    });
+    })
   }
 }

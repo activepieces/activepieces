@@ -1,11 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { excelAuth } from '../../index';
-import { excelCommon } from '../common/common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { excelAuth } from '../../index'
+import { excelCommon } from '../common/common'
 
 export const createTableAction = createAction({
   auth: excelAuth,
@@ -33,14 +29,13 @@ export const createTableAction = createAction({
             },
           ],
           defaultValue: 'auto',
-        };
+        }
       },
       refreshers: [],
     }),
     range: Property.ShortText({
       displayName: 'Range',
-      description:
-        'The range of cells in A1 notation (e.g., A2:B2) that will be converted to a table',
+      description: 'The range of cells in A1 notation (e.g., A2:B2) that will be converted to a table',
       required: false,
       defaultValue: 'A1:B2',
     }),
@@ -52,12 +47,12 @@ export const createTableAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const workbookId = propsValue['workbook_id'];
-    const worksheetId = propsValue['worksheet_id'];
-    const selectRange = propsValue['selectRange'];
-    const hasHeaders = propsValue['hasHeaders'];
+    const workbookId = propsValue['workbook_id']
+    const worksheetId = propsValue['worksheet_id']
+    const selectRange = propsValue['selectRange']
+    const hasHeaders = propsValue['hasHeaders']
 
-    let range: string | undefined;
+    let range: string | undefined
     if (selectRange === 'auto') {
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
@@ -69,10 +64,10 @@ export const createTableAction = createAction({
         queryParams: {
           select: 'address',
         },
-      });
-      range = response.body['address'].split('!')[1];
+      })
+      range = response.body['address'].split('!')[1]
     } else {
-      range = propsValue['range'];
+      range = propsValue['range']
     }
 
     const result = await httpClient.sendRequest({
@@ -86,8 +81,8 @@ export const createTableAction = createAction({
         address: range,
         hasHeaders,
       },
-    });
+    })
 
-    return result.body;
+    return result.body
   },
-});
+})

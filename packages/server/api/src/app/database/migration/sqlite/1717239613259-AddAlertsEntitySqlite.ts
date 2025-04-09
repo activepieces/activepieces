@@ -3,14 +3,17 @@ import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 
 export class AddAlertsEntitySqlite1717239613259 implements MigrationInterface {
-    name = 'AddAlertsEntitySqlite1717239613259'
+  name = 'AddAlertsEntitySqlite1717239613259'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'up')
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    const log = system.globalLogger()
+    log.info(
+      {
+        name: this.name,
+      },
+      'up',
+    )
+    await queryRunner.query(`
             CREATE TABLE "alert" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -20,7 +23,7 @@ export class AddAlertsEntitySqlite1717239613259 implements MigrationInterface {
                 "receiver" varchar NOT NULL
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -84,7 +87,7 @@ export class AddAlertsEntitySqlite1717239613259 implements MigrationInterface {
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_platform"(
                     "id",
                     "created",
@@ -167,42 +170,45 @@ export class AddAlertsEntitySqlite1717239613259 implements MigrationInterface {
                 false
             FROM "platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_platform"
                 RENAME TO "platform"
         `)
 
-        const projects = await queryRunner.query(`
+    const projects = await queryRunner.query(`
         SELECT p."id" AS "projectId", u."email" AS "receiver"
         FROM "project" p
         INNER JOIN "user" u ON u."id" = p."ownerId"
     `)
 
-        let countAlerts = 0
-        const alertsToInsert = projects.map((project: { projectId: string, receiver: string }) => {
-            const alertId = apId()
-            countAlerts++
-            return queryRunner.query(
-                'INSERT INTO "alert" ("id", "created", "updated", "projectId", "channel", "receiver") VALUES (?, datetime(\'now\'), datetime(\'now\'), ?, \'EMAIL\', ?)',
-                [alertId, project.projectId, project.receiver],
-            )
-        })
-        await Promise.all(alertsToInsert)
+    let countAlerts = 0
+    const alertsToInsert = projects.map((project: { projectId: string; receiver: string }) => {
+      const alertId = apId()
+      countAlerts++
+      return queryRunner.query(
+        'INSERT INTO "alert" ("id", "created", "updated", "projectId", "channel", "receiver") VALUES (?, datetime(\'now\'), datetime(\'now\'), ?, \'EMAIL\', ?)',
+        [alertId, project.projectId, project.receiver],
+      )
+    })
+    await Promise.all(alertsToInsert)
 
-        log.info({
-            name: this.name,
-        }, `CreateAlerts1717239613259 Migrated ${countAlerts} alerts`)
-    }
+    log.info(
+      {
+        name: this.name,
+      },
+      `CreateAlerts1717239613259 Migrated ${countAlerts} alerts`,
+    )
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             ALTER TABLE "platform"
                 RENAME TO "temporary_platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -265,7 +271,7 @@ export class AddAlertsEntitySqlite1717239613259 implements MigrationInterface {
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "platform"(
                     "id",
                     "created",
@@ -346,12 +352,11 @@ export class AddAlertsEntitySqlite1717239613259 implements MigrationInterface {
                 "flowIssuesEnabled"
             FROM "temporary_platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "alert"
         `)
-    }
-
+  }
 }

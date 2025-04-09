@@ -1,6 +1,6 @@
-import { amazonSqsAuth } from '../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { SQS } from 'aws-sdk';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { SQS } from 'aws-sdk'
+import { amazonSqsAuth } from '../..'
 
 export const sendMessage = createAction({
   name: 'sendMessage',
@@ -24,13 +24,13 @@ export const sendMessage = createAction({
       accessKeyId: auth.accessKeyId,
       secretAccessKey: auth.secretAccessKey,
       region: auth.region,
-    });
-    const { queueUrl, messageBody } = propsValue;
+    })
+    const { queueUrl, messageBody } = propsValue
 
     const params = {
       QueueUrl: queueUrl,
       MessageBody: messageBody,
-    };
-    return sqs.sendMessage(params).promise();
+    }
+    return sqs.sendMessage(params).promise()
   },
-});
+})

@@ -1,29 +1,29 @@
-import { Edit2 } from 'lucide-react';
-import { useState } from 'react';
-import { CalculatedColumn } from 'react-data-grid';
+import { Edit2 } from 'lucide-react'
+import { useState } from 'react'
+import { CalculatedColumn } from 'react-data-grid'
 
-import { Button } from '@/components/ui/button';
-import { cn, formatUtils } from '@/lib/utils';
-import { FieldType } from '@activepieces/shared';
+import { Button } from '@/components/ui/button'
+import { cn, formatUtils } from '@/lib/utils'
+import { FieldType } from '@activepieces/shared'
 
-import { ClientField } from '../lib/store/ap-tables-client-state';
-import { Row } from '../lib/types';
+import { ClientField } from '../lib/store/ap-tables-client-state'
+import { Row } from '../lib/types'
 
-import { useTableState } from './ap-table-state-provider';
-import { DateEditor } from './date-editor';
-import { DropdownEditor } from './dropdown-editor';
-import { NumberEditor } from './number-editor';
-import { TextEditor } from './text-editor';
+import { useTableState } from './ap-table-state-provider'
+import { DateEditor } from './date-editor'
+import { DropdownEditor } from './dropdown-editor'
+import { NumberEditor } from './number-editor'
+import { TextEditor } from './text-editor'
 
 type EditableCellProps = {
-  field: ClientField;
-  value: string;
-  row: Row;
-  column: CalculatedColumn<Row, { id: string }>;
-  onRowChange: (row: Row, commitChanges: boolean) => void;
-  rowIdx: number;
-  disabled?: boolean;
-};
+  field: ClientField
+  value: string
+  row: Row
+  column: CalculatedColumn<Row, { id: string }>
+  onRowChange: (row: Row, commitChanges: boolean) => void
+  rowIdx: number
+  disabled?: boolean
+}
 
 const EditorSelector = ({
   field,
@@ -36,34 +36,31 @@ const EditorSelector = ({
   setIsEditing,
   setIsHovered,
 }: {
-  field: ClientField;
-  row: Row;
-  rowIdx: number;
-  column: CalculatedColumn<Row, { id: string }>;
-  value: string;
-  onRowChange: (row: Row, commitChanges: boolean) => void;
-  setValue: (value: string) => void;
-  setIsEditing: (isEditing: boolean) => void;
-  setIsHovered: (isHovered: boolean) => void;
+  field: ClientField
+  row: Row
+  rowIdx: number
+  column: CalculatedColumn<Row, { id: string }>
+  value: string
+  onRowChange: (row: Row, commitChanges: boolean) => void
+  setValue: (value: string) => void
+  setIsEditing: (isEditing: boolean) => void
+  setIsHovered: (isHovered: boolean) => void
 }) => {
   const handleRowChange = (newRow: Row, commitChanges?: boolean) => {
     if (commitChanges) {
-      setValue(newRow[column.key]);
-      onRowChange(newRow, commitChanges);
-      setIsEditing(false);
+      setValue(newRow[column.key])
+      onRowChange(newRow, commitChanges)
+      setIsEditing(false)
     }
-  };
+  }
   const onClose = () => {
-    setIsEditing(false);
-    setIsHovered(false);
-  };
-  const selectedCell = useTableState((state) => state.selectedCell);
-  if (
-    selectedCell?.rowIdx !== rowIdx ||
-    selectedCell?.columnIdx !== column.idx
-  ) {
-    onClose();
-    return null;
+    setIsEditing(false)
+    setIsHovered(false)
+  }
+  const selectedCell = useTableState((state) => state.selectedCell)
+  if (selectedCell?.rowIdx !== rowIdx || selectedCell?.columnIdx !== column.idx) {
+    onClose()
+    return null
   }
   switch (field.type) {
     case FieldType.DATE:
@@ -76,7 +73,7 @@ const EditorSelector = ({
           onRowChange={handleRowChange}
           onClose={onClose}
         />
-      );
+      )
     case FieldType.NUMBER:
       return (
         <NumberEditor
@@ -87,7 +84,7 @@ const EditorSelector = ({
           onRowChange={handleRowChange}
           onClose={onClose}
         ></NumberEditor>
-      );
+      )
     case FieldType.STATIC_DROPDOWN:
       return (
         <DropdownEditor
@@ -99,7 +96,7 @@ const EditorSelector = ({
           onClose={onClose}
           field={field}
         ></DropdownEditor>
-      );
+      )
     default:
       return (
         <TextEditor
@@ -110,9 +107,9 @@ const EditorSelector = ({
           onRowChange={handleRowChange}
           onClose={onClose}
         />
-      );
+      )
   }
-};
+}
 export function EditableCell({
   field,
   value: initialValue,
@@ -122,15 +119,11 @@ export function EditableCell({
   rowIdx,
   disabled = false,
 }: EditableCellProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const [selectedCell, setSelectedCell] = useTableState((state) => [
-    state.selectedCell,
-    state.setSelectedCell,
-  ]);
-  const [value, setValue] = useState(initialValue);
-  const isSelected =
-    selectedCell?.rowIdx === rowIdx && selectedCell?.columnIdx === column.idx;
+  const [isEditing, setIsEditing] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
+  const [selectedCell, setSelectedCell] = useTableState((state) => [state.selectedCell, state.setSelectedCell])
+  const [value, setValue] = useState(initialValue)
+  const isSelected = selectedCell?.rowIdx === rowIdx && selectedCell?.columnIdx === column.idx
   if (isEditing) {
     return (
       <EditorSelector
@@ -144,9 +137,9 @@ export function EditableCell({
         setIsEditing={setIsEditing}
         setIsHovered={setIsHovered}
       />
-    );
+    )
   }
-  const displayedValue = value?.trim()?.replace(/\n/g, ' ');
+  const displayedValue = value?.trim()?.replace(/\n/g, ' ')
   return (
     <div
       id={`editable-cell-${rowIdx}-${column.idx}`}
@@ -157,28 +150,28 @@ export function EditableCell({
       )}
       onMouseEnter={() => {
         if (!disabled) {
-          setIsHovered(true);
+          setIsHovered(true)
         }
       }}
       tabIndex={0}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => {
-        setSelectedCell({ rowIdx, columnIdx: column.idx });
+        setSelectedCell({ rowIdx, columnIdx: column.idx })
         if (!disabled && field.type === FieldType.STATIC_DROPDOWN) {
-          setIsEditing(true);
+          setIsEditing(true)
         }
       }}
       onFocus={() => {
-        setSelectedCell({ rowIdx, columnIdx: column.idx });
+        setSelectedCell({ rowIdx, columnIdx: column.idx })
       }}
       onDoubleClick={() => {
         if (!disabled) {
-          setIsEditing(true);
+          setIsEditing(true)
         }
       }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' && !disabled) {
-          setIsEditing(true);
+          setIsEditing(true)
         }
       }}
     >
@@ -193,8 +186,8 @@ export function EditableCell({
           size="sm"
           className="text-gray-500"
           onClick={(e) => {
-            e.stopPropagation();
-            setIsEditing(true);
+            e.stopPropagation()
+            setIsEditing(true)
           }}
         >
           <div className="hover:bg-primary/10 p-1">
@@ -203,5 +196,5 @@ export function EditableCell({
         </Button>
       )}
     </div>
-  );
+  )
 }

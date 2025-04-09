@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { saveContent } from '../api';
-import { cmsAuth } from '../auth';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { saveContent } from '../api'
+import { cmsAuth } from '../auth'
 
 export const saveBlogPostAction = createAction({
   name: 'save_blog_post',
@@ -15,8 +15,7 @@ export const saveBlogPostAction = createAction({
     }),
     permalink: Property.ShortText({
       displayName: 'Permalink',
-      description:
-        'The permalink of the blog post. Ensure this is unique or it will overwrite the existing post.',
+      description: 'The permalink of the blog post. Ensure this is unique or it will overwrite the existing post.',
       required: true,
     }),
     title: Property.ShortText({
@@ -106,7 +105,7 @@ export const saveBlogPostAction = createAction({
     }),
   },
   async run(context) {
-    const slug = context.propsValue.slug;
+    const slug = context.propsValue.slug
     return await saveContent(context.auth, 'blog', slug, {
       nodecode: true,
       permalink: context.propsValue.permalink,
@@ -127,6 +126,6 @@ export const saveBlogPostAction = createAction({
       draft: context.propsValue.draft ? 'true' : 'false',
       featured: context.propsValue.featured ? 'true' : 'false',
       archived: context.propsValue.archived ? 'true' : 'false',
-    });
+    })
   },
-});
+})

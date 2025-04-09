@@ -1,9 +1,9 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { calculateAverage } from './lib/actions/calculate-average';
-import { calculateSum } from './lib/actions/calculate-sum';
-import { countUniques } from './lib/actions/count-uniques';
-import { getMinMax } from './lib/actions/get-min-max';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { calculateAverage } from './lib/actions/calculate-average'
+import { calculateSum } from './lib/actions/calculate-sum'
+import { countUniques } from './lib/actions/count-uniques'
+import { getMinMax } from './lib/actions/get-min-max'
 
 export const dataSummarizer = createPiece({
   displayName: 'Data Summarizer',
@@ -13,5 +13,5 @@ export const dataSummarizer = createPiece({
   authors: ['tahboubali'],
   actions: [calculateAverage, calculateSum, countUniques, getMinMax],
   triggers: [],
-  categories: [PieceCategory.CORE]
-});
+  categories: [PieceCategory.CORE],
+})

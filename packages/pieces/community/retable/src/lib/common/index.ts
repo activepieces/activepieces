@@ -1,15 +1,15 @@
-import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { DynamicPropsValue, Property } from '@activepieces/pieces-framework'
 
+import { isNil } from '@activepieces/shared'
 import {
-  RetableFieldMapping,
   RetableField,
+  RetableFieldMapping,
   RetableNotSupportedFields,
-  RetableWorkspace,
   RetableProject,
   RetableTable,
-} from './models';
-import { isNil } from '@activepieces/shared';
+  RetableWorkspace,
+} from './models'
 
 export const retableCommon = {
   baseUrl: 'https://api.retable.io/v1/public',
@@ -24,28 +24,28 @@ export const retableCommon = {
             disabled: true,
             options: [],
             placeholder: 'Please connect your account',
-          };
+          }
         }
         const response = await httpClient.sendRequest<{
           data: {
-            workspaces: RetableWorkspace[];
-          };
+            workspaces: RetableWorkspace[]
+          }
         }>({
           method: HttpMethod.GET,
           url: `${retableCommon.baseUrl}/workspace`,
           headers: {
             ApiKey: auth as string,
           },
-        });
+        })
         return {
           disabled: false,
           options: response.body.data.workspaces.map((workspace) => {
             return {
               label: workspace.name,
               value: workspace.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   project_id: (required = true) =>
@@ -59,31 +59,29 @@ export const retableCommon = {
             disabled: true,
             options: [],
             placeholder: 'Please connect your account and select workspace',
-          };
+          }
         }
 
         const response = await httpClient.sendRequest<{
           data: {
-            projects: RetableProject[];
-          };
+            projects: RetableProject[]
+          }
         }>({
           method: HttpMethod.GET,
-          url: `${retableCommon.baseUrl}/workspace/${
-            workspace_id as string
-          }/project`,
+          url: `${retableCommon.baseUrl}/workspace/${workspace_id as string}/project`,
           headers: {
             ApiKey: auth as string,
           },
-        });
+        })
         return {
           disabled: false,
           options: response.body.data.projects.map((project) => {
             return {
               label: project.name,
               value: project.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   retable_id: (required = true) =>
@@ -97,30 +95,28 @@ export const retableCommon = {
             disabled: true,
             options: [],
             placeholder: 'Please connect your account and select project',
-          };
+          }
         }
         const response = await httpClient.sendRequest<{
           data: {
-            retables: RetableTable[];
-          };
+            retables: RetableTable[]
+          }
         }>({
           method: HttpMethod.GET,
-          url: `${retableCommon.baseUrl}/project/${
-            project_id as string
-          }/retable`,
+          url: `${retableCommon.baseUrl}/project/${project_id as string}/retable`,
           headers: {
             ApiKey: auth as string,
           },
-        });
+        })
         return {
           disabled: false,
           options: response.body.data.retables.map((retable) => {
             return {
               label: retable.title,
               value: retable.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   fields: Property.DynamicProperties({
@@ -133,32 +129,32 @@ export const retableCommon = {
           disabled: true,
           options: [],
           placeholder: 'Please connect your account and select retable',
-        };
+        }
       }
-      const fields: DynamicPropsValue = {};
+      const fields: DynamicPropsValue = {}
       const retable = await httpClient.sendRequest<{ data: RetableTable }>({
         method: HttpMethod.GET,
         url: `${retableCommon.baseUrl}/retable/${retable_id}`,
         headers: {
           ApiKey: auth as unknown as string,
         },
-      });
+      })
       retable.body.data.columns.forEach((field: RetableField) => {
         if (!RetableNotSupportedFields.includes(field.type)) {
           const params = {
             displayName: field.title,
             required: false,
-          };
+          }
           if (isNil(RetableFieldMapping[field.type])) {
             fields[field.column_id] = Property.ShortText({
               ...params,
-            });
+            })
           } else {
-            fields[field.column_id] = RetableFieldMapping[field.type](params);
+            fields[field.column_id] = RetableFieldMapping[field.type](params)
           }
         }
-      });
-      return fields;
+      })
+      return fields
     },
   }),
-};
+}

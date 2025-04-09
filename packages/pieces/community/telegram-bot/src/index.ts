@@ -1,12 +1,12 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { telegramCreateInviteLinkAction } from './lib/action/create-invite-link';
-import { telegramGetChatMemberAction } from './lib/action/get-chat-member';
-import { telegramSendMediaAction } from './lib/action/send-media.action';
-import { telegramSendMessageAction } from './lib/action/send-text-message.action';
-import { telegramCommons } from './lib/common';
-import { telegramNewMessage } from './lib/trigger/new-message';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { telegramCreateInviteLinkAction } from './lib/action/create-invite-link'
+import { telegramGetChatMemberAction } from './lib/action/get-chat-member'
+import { telegramSendMediaAction } from './lib/action/send-media.action'
+import { telegramSendMessageAction } from './lib/action/send-text-message.action'
+import { telegramCommons } from './lib/common'
+import { telegramNewMessage } from './lib/trigger/new-message'
 
 const markdownDescription = `
 **Authentication**:
@@ -17,13 +17,13 @@ const markdownDescription = `
 4. Choose a username for your bot.
 5. Copy the token value from the Botfather and use it activepieces connection.
 6. Congratulations! You can now use your new Telegram connection in your flows.
-`;
+`
 
 export const telegramBotAuth = PieceAuth.SecretText({
   displayName: 'Bot Token',
   description: markdownDescription,
   required: true,
-});
+})
 
 export const telegramBot = createPiece({
   displayName: 'Telegram Bot',
@@ -42,6 +42,15 @@ export const telegramBot = createPiece({
       auth: telegramBotAuth,
     }),
   ],
-  authors: ["abdullahranginwala","tanoggy","alerdenisov","Abdallah-Alwarawreh","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: [
+    'abdullahranginwala',
+    'tanoggy',
+    'alerdenisov',
+    'Abdallah-Alwarawreh',
+    'kishanprmr',
+    'MoShizzle',
+    'khaledmashaly',
+    'abuaboud',
+  ],
   triggers: [telegramNewMessage],
-});
+})

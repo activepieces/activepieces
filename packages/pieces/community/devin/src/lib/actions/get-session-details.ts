@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { devinAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { devinAuth } from '../..'
 
 export const getSessionDetails = createAction({
   name: 'get_session_details',
@@ -21,7 +21,7 @@ export const getSessionDetails = createAction({
       headers: {
         Authorization: `Bearer ${auth}`,
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

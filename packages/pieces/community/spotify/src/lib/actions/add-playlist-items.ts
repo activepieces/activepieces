@@ -1,5 +1,5 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { spotifyCommon, makeClient } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { makeClient, spotifyCommon } from '../common'
 
 export default createAction({
   name: 'add_playlist_items',
@@ -21,10 +21,10 @@ export default createAction({
   async run({ auth, propsValue }) {
     const client = makeClient({
       auth,
-    });
+    })
     await client.addItemsToPlaylist(propsValue.playlist_id as string, {
       uris: propsValue.items as string[],
       position: propsValue.position,
-    });
+    })
   },
-});
+})

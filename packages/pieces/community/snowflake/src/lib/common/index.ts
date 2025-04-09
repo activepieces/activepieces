@@ -1,17 +1,11 @@
-import {
-  DynamicPropsValue,
-  PiecePropValueSchema,
-  Property,
-} from '@activepieces/pieces-framework';
-import { snowflakeAuth } from '../..';
-import snowflake from 'snowflake-sdk';
+import { DynamicPropsValue, PiecePropValueSchema, Property } from '@activepieces/pieces-framework'
+import snowflake from 'snowflake-sdk'
+import { snowflakeAuth } from '../..'
 
-const DEFAULT_APPLICATION_NAME = 'ActivePieces';
-const DEFAULT_QUERY_TIMEOUT = 30000;
+const DEFAULT_APPLICATION_NAME = 'ActivePieces'
+const DEFAULT_QUERY_TIMEOUT = 30000
 
-export function configureConnection(
-  auth: PiecePropValueSchema<typeof snowflakeAuth>
-) {
+export function configureConnection(auth: PiecePropValueSchema<typeof snowflakeAuth>) {
   return snowflake.createConnection({
     application: DEFAULT_APPLICATION_NAME,
     timeout: DEFAULT_QUERY_TIMEOUT,
@@ -21,51 +15,47 @@ export function configureConnection(
     database: auth.database,
     warehouse: auth.warehouse,
     account: auth.account,
-  });
+  })
 }
 
 export async function connect(conn: snowflake.Connection) {
   return await new Promise<void>((resolve, reject) => {
     conn.connect((error) => {
       if (error) {
-        reject(error);
+        reject(error)
       } else {
-        resolve();
+        resolve()
       }
-    });
-  });
+    })
+  })
 }
 
 export async function destroy(conn: snowflake.Connection) {
   return await new Promise<void>((resolve, reject) => {
     conn.destroy((error) => {
       if (error) {
-        reject(error);
+        reject(error)
       } else {
-        resolve();
+        resolve()
       }
-    });
-  });
+    })
+  })
 }
 
-export async function execute(
-  conn: snowflake.Connection,
-  sqlText: string,
-  binds: snowflake.Binds
-) {
+export async function execute(conn: snowflake.Connection, sqlText: string, binds: snowflake.Binds) {
   return await new Promise<any[] | undefined>((resolve, reject) => {
     conn.execute({
       sqlText,
       binds,
       complete: (error, _, result) => {
         if (error) {
-          reject(error);
+          reject(error)
         } else {
-          resolve(result);
+          resolve(result)
         }
       },
-    });
-  });
+    })
+  })
 }
 
 export const snowflakeCommonProps = {
@@ -79,18 +69,18 @@ export const snowflakeCommonProps = {
           disabled: true,
           options: [],
           placeholder: 'Please connect your account first',
-        };
+        }
       }
 
-      const authValue = auth as PiecePropValueSchema<typeof snowflakeAuth>;
+      const authValue = auth as PiecePropValueSchema<typeof snowflakeAuth>
 
-      const connection = configureConnection(authValue);
+      const connection = configureConnection(authValue)
 
-      await connect(connection);
+      await connect(connection)
 
-      const response = await execute(connection, 'SHOW DATABASES', []);
+      const response = await execute(connection, 'SHOW DATABASES', [])
 
-      await destroy(connection);
+      await destroy(connection)
 
       return {
         disabled: false,
@@ -99,10 +89,10 @@ export const snowflakeCommonProps = {
               return {
                 label: db.name,
                 value: db.name,
-              };
+              }
             })
           : [],
-      };
+      }
     },
   }),
   schema: Property.Dropdown({
@@ -115,29 +105,25 @@ export const snowflakeCommonProps = {
           disabled: true,
           options: [],
           placeholder: 'Please connect your account first',
-        };
+        }
       }
       if (!database) {
         return {
           disabled: true,
           options: [],
           placeholder: 'Please select database first',
-        };
+        }
       }
 
-      const authValue = auth as PiecePropValueSchema<typeof snowflakeAuth>;
+      const authValue = auth as PiecePropValueSchema<typeof snowflakeAuth>
 
-      const connection = configureConnection(authValue);
+      const connection = configureConnection(authValue)
 
-      await connect(connection);
+      await connect(connection)
 
-      const response = await execute(
-        connection,
-        `SHOW SCHEMAS IN DATABASE ${database}`,
-        []
-      );
+      const response = await execute(connection, `SHOW SCHEMAS IN DATABASE ${database}`, [])
 
-      await destroy(connection);
+      await destroy(connection)
 
       return {
         disabled: false,
@@ -146,10 +132,10 @@ export const snowflakeCommonProps = {
               return {
                 label: schema.name,
                 value: schema.name,
-              };
+              }
             })
           : [],
-      };
+      }
     },
   }),
   table: Property.Dropdown({
@@ -162,36 +148,32 @@ export const snowflakeCommonProps = {
           disabled: true,
           options: [],
           placeholder: 'Please connect your account first',
-        };
+        }
       }
       if (!database) {
         return {
           disabled: true,
           options: [],
           placeholder: 'Please select database first',
-        };
+        }
       }
       if (!schema) {
         return {
           disabled: true,
           options: [],
           placeholder: 'Please select schema first',
-        };
+        }
       }
 
-      const authValue = auth as PiecePropValueSchema<typeof snowflakeAuth>;
+      const authValue = auth as PiecePropValueSchema<typeof snowflakeAuth>
 
-      const connection = configureConnection(authValue);
+      const connection = configureConnection(authValue)
 
-      await connect(connection);
+      await connect(connection)
 
-      const response = await execute(
-        connection,
-        `SHOW TABLES IN SCHEMA ${database}.${schema}`,
-        []
-      );
+      const response = await execute(connection, `SHOW TABLES IN SCHEMA ${database}.${schema}`, [])
 
-      await destroy(connection);
+      await destroy(connection)
 
       return {
         disabled: false,
@@ -200,10 +182,10 @@ export const snowflakeCommonProps = {
               return {
                 label: table.name,
                 value: `${database}.${schema}.${table.name}`,
-              };
+              }
             })
           : [],
-      };
+      }
     },
   }),
   table_column_values: Property.DynamicProperties({
@@ -211,28 +193,28 @@ export const snowflakeCommonProps = {
     required: true,
     refreshers: ['database', 'schema', 'table'],
     props: async ({ auth, table }) => {
-      if (!auth) return {};
-      if (!table) return {};
+      if (!auth) return {}
+      if (!table) return {}
 
-      const authValue = auth as PiecePropValueSchema<typeof snowflakeAuth>;
+      const authValue = auth as PiecePropValueSchema<typeof snowflakeAuth>
 
-      const connection = configureConnection(authValue);
-      await connect(connection);
-      const response = await execute(connection, `DESCRIBE TABLE ${table}`, []);
-      await destroy(connection);
+      const connection = configureConnection(authValue)
+      await connect(connection)
+      const response = await execute(connection, `DESCRIBE TABLE ${table}`, [])
+      await destroy(connection)
 
-      const fields: DynamicPropsValue = {};
+      const fields: DynamicPropsValue = {}
 
       if (response) {
         for (const column of response) {
           fields[column.name] = Property.ShortText({
             displayName: column.name,
             required: false,
-          });
+          })
         }
       }
 
-      return fields;
+      return fields
     },
   }),
-};
+}

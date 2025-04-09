@@ -1,12 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleSearchConsoleAuth } from '../../';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { commonProps } from '../common';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { googleSearchConsoleAuth } from '../../'
+import { commonProps } from '../common'
 
 export const urlInspection = createAction({
   auth: googleSearchConsoleAuth,
@@ -34,10 +29,10 @@ export const urlInspection = createAction({
         inspectionUrl: context.propsValue.url,
         siteUrl: context.propsValue.siteUrl,
       },
-    };
+    }
 
-    const response = await httpClient.sendRequest(request);
+    const response = await httpClient.sendRequest(request)
 
-    return response.body;
+    return response.body
   },
-});
+})

@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { sendfoxAuth } from '../../index';
-import { callsendfoxApi } from '../../common';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { callsendfoxApi } from '../../common'
+import { sendfoxAuth } from '../../index'
 
 export const createList = createAction({
   name: 'create-list',
@@ -15,14 +15,14 @@ export const createList = createAction({
     }),
   },
   async run(context) {
-    const authentication = context.auth;
-    const accessToken = authentication;
-    const task_name = context.propsValue.task_name;
+    const authentication = context.auth
+    const accessToken = authentication
+    const task_name = context.propsValue.task_name
     const response = (
       await callsendfoxApi(HttpMethod.POST, 'lists', accessToken, {
         name: task_name,
       })
-    ).body;
-    return [response];
+    ).body
+    return [response]
   },
-});
+})

@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { sevenAuth } from '../index';
-import { callSevenApi } from '../common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { callSevenApi } from '../common'
+import { sevenAuth } from '../index'
 
 export const sendVoiceCallAction = createAction({
   auth: sevenAuth,
@@ -12,32 +12,34 @@ export const sendVoiceCallAction = createAction({
     to: Property.ShortText({
       description: 'Recipient number(s) of the voice calls.',
       displayName: 'To',
-      required: true
+      required: true,
     }),
     from: Property.ShortText({
       displayName: 'From',
-      required: false
+      required: false,
     }),
     text: Property.LongText({
       displayName: 'Message Body',
       description: 'Text message to be read out.',
-      required: true
+      required: true,
     }),
-
   },
   async run(context) {
-    const { from, text, to } = context.propsValue;
+    const { from, text, to } = context.propsValue
 
-    const response= await callSevenApi({
-      body: {
-        from,
-        text,
-        to
+    const response = await callSevenApi(
+      {
+        body: {
+          from,
+          text,
+          to,
+        },
+        method: HttpMethod.POST,
       },
-      method: HttpMethod.POST
-    }, 'voice', context.auth as string);
+      'voice',
+      context.auth as string,
+    )
 
-    return response.body;
-
-  }
-});
+    return response.body
+  },
+})

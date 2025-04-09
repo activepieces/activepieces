@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { areSheetIdsValid, googleSheetsCommon } from '../common/common';
-import { googleSheetsAuth } from '../..';
-import { commonProps } from '../common/props';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { googleSheetsAuth } from '../..'
+import { areSheetIdsValid, googleSheetsCommon } from '../common/common'
+import { commonProps } from '../common/props'
 
 export const findRowByNumAction = createAction({
   auth: googleSheetsAuth,
@@ -17,11 +17,11 @@ export const findRowByNumAction = createAction({
     }),
   },
   async run(context) {
-    const {spreadsheetId,sheetId,rowNumber} = context.propsValue;
+    const { spreadsheetId, sheetId, rowNumber } = context.propsValue
 
-    if (!areSheetIdsValid(spreadsheetId,sheetId)) {
-			throw new Error('Please select a spreadsheet and sheet first.');
-		}
+    if (!areSheetIdsValid(spreadsheetId, sheetId)) {
+      throw new Error('Please select a spreadsheet and sheet first.')
+    }
 
     const row = await googleSheetsCommon.getGoogleSheetRows({
       accessToken: context.auth.access_token,
@@ -29,7 +29,7 @@ export const findRowByNumAction = createAction({
       spreadsheetId: spreadsheetId as string,
       rowIndex_s: rowNumber,
       rowIndex_e: rowNumber,
-    });
-    return row[0];
+    })
+    return row[0]
   },
-});
+})

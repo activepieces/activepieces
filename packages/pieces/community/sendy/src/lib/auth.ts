@@ -1,12 +1,9 @@
-import {
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { getLists } from './api';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { PieceAuth, Property } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { getLists } from './api'
 
-export type SendyAuthType = { apiKey: string; domain: string; brandId: string };
+export type SendyAuthType = { apiKey: string; domain: string; brandId: string }
 
 const markdownDescription = `
 Your sendy domain should be the base URL of your Sendy installation. Example: https://sendy.example.com
@@ -17,7 +14,7 @@ Follow these instructions to get your Sendy API Key:
 2. Once on the website, locate and click on the API Key and copy it.
 
 Get your Brand ID from the main Brands page. The ID is the first column in the table.
-`;
+`
 
 export const sendyAuth = PieceAuth.CustomAuth({
   description: markdownDescription,
@@ -45,26 +42,24 @@ export const sendyAuth = PieceAuth.CustomAuth({
         domain: z.string().url(),
         apiKey: z.string().min(1).regex(/^\S+$/),
         brandId: z.string().regex(/^[0-9]+$/),
-      });
-      await validateAuth(auth);
+      })
+      await validateAuth(auth)
       return {
         valid: true,
-      };
+      }
     } catch (e) {
       return {
         valid: false,
         error: (e as Error)?.message,
-      };
+      }
     }
   },
   required: true,
-});
+})
 
 const validateAuth = async (auth: SendyAuthType) => {
-  const response = await getLists(auth);
+  const response = await getLists(auth)
   if (response.success !== true) {
-    throw new Error(
-      `Authentication failed. Please check your domain and API key and try again. ${response.text}`
-    );
+    throw new Error(`Authentication failed. Please check your domain and API key and try again. ${response.text}`)
   }
-};
+}

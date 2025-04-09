@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { getConversationContent, timeoutProp } from '../common';
-import { dustAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { dustAuth } from '../..'
+import { getConversationContent, timeoutProp } from '../common'
 
 export const getConversation = createAction({
   name: 'getConversation',
@@ -15,10 +15,6 @@ export const getConversation = createAction({
     timeout: timeoutProp,
   },
   async run({ auth, propsValue }) {
-    return await getConversationContent(
-      propsValue.conversationSid,
-      propsValue.timeout,
-      auth
-    );
+    return await getConversationContent(propsValue.conversationSid, propsValue.timeout, auth)
   },
-});
+})

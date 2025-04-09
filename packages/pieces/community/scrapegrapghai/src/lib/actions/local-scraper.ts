@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { scrapegraphaiAuth } from '../../index';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { scrapegraphaiAuth } from '../../index'
 
 export const localScraper = createAction({
   name: 'local_scraper',
@@ -37,8 +37,8 @@ export const localScraper = createAction({
         user_prompt: propsValue.user_prompt,
         output_schema: propsValue.output_schema,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-}); 
+})

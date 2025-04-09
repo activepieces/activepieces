@@ -1,10 +1,10 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const trueLayerCommon = {
   baseUrl: 'https://api.truelayer.com',
   auth: PieceAuth.OAuth2({
     description: 'Authentication for TrueLayer API',
-    authUrl:'https://auth.truelayer.com',
+    authUrl: 'https://auth.truelayer.com',
     tokenUrl: 'https://auth.truelayer.com/connect/token',
     required: true,
     scope: [
@@ -17,7 +17,7 @@ export const trueLayerCommon = {
       'standing_orders',
       'offline_access',
       'signupplus',
-      'verification'
+      'verification',
     ],
-  })
-};
+  }),
+}

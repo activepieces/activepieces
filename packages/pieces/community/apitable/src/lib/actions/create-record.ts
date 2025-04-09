@@ -1,10 +1,6 @@
-import {
-  DynamicPropsValue,
-  PiecePropValueSchema,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { APITableCommon, createNewFields, makeClient } from '../common';
-import { APITableAuth } from '../../index';
+import { DynamicPropsValue, PiecePropValueSchema, createAction } from '@activepieces/pieces-framework'
+import { APITableAuth } from '../../index'
+import { APITableCommon, createNewFields, makeClient } from '../common'
 
 export const createRecordAction = createAction({
   auth: APITableAuth,
@@ -17,29 +13,27 @@ export const createRecordAction = createAction({
     fields: APITableCommon.fields,
   },
   async run(context) {
-    const auth = context.auth;
-    const datasheetId = context.propsValue.datasheet_id;
-    const dynamicFields: DynamicPropsValue = context.propsValue.fields;
+    const auth = context.auth
+    const datasheetId = context.propsValue.datasheet_id
+    const dynamicFields: DynamicPropsValue = context.propsValue.fields
     const fields: {
-      [n: string]: string;
-    } = {};
+      [n: string]: string
+    } = {}
 
-    const props = Object.entries(dynamicFields);
+    const props = Object.entries(dynamicFields)
     for (const [propertyKey, propertyValue] of props) {
       if (propertyValue !== undefined && propertyValue !== '') {
-        fields[propertyKey] = propertyValue;
+        fields[propertyKey] = propertyValue
       }
     }
 
     const newFields: Record<string, unknown> = await createNewFields(
       auth as PiecePropValueSchema<typeof APITableAuth>,
       datasheetId,
-      fields
-    );
+      fields,
+    )
 
-    const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof APITableAuth>
-    );
+    const client = makeClient(context.auth as PiecePropValueSchema<typeof APITableAuth>)
     const response: any = await client.createRecord(datasheetId as string, {
       records: [
         {
@@ -48,11 +42,11 @@ export const createRecordAction = createAction({
           },
         },
       ],
-    });
+    })
 
     if (!response.success) {
-      throw new Error(JSON.stringify(response, undefined, 2));
+      throw new Error(JSON.stringify(response, undefined, 2))
     }
-    return response;
+    return response
   },
-});
+})

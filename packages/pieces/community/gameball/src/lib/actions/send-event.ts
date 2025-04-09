@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { gameballAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { gameballAuth } from '../..'
 
 export const sendEvent = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -27,14 +27,12 @@ export const sendEvent = createAction({
       },
       // update the event body with eventmetadata if requested in the future.
       body: {
-        "playerUniqueId": context.propsValue.playerUniqueId,
-        "events": {
-          [context.propsValue.eventName]: {
-
-          }
-        }
-      }
-    });
-    return res.body;
+        playerUniqueId: context.propsValue.playerUniqueId,
+        events: {
+          [context.propsValue.eventName]: {},
+        },
+      },
+    })
+    return res.body
   },
-});
+})

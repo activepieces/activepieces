@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { sendfoxAuth } from '../../index';
-import { callsendfoxApi } from '../../common';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { callsendfoxApi } from '../../common'
+import { sendfoxAuth } from '../../index'
 
 export const unsubscribe = createAction({
   name: 'unsubscribe',
@@ -15,14 +15,14 @@ export const unsubscribe = createAction({
     }),
   },
   async run(context) {
-    const authentication = context.auth;
-    const accessToken = authentication;
-    const email = context.propsValue.email;
+    const authentication = context.auth
+    const accessToken = authentication
+    const email = context.propsValue.email
     const response = (
       await callsendfoxApi(HttpMethod.PATCH, 'unsubscribe', accessToken, {
         email: email,
       })
-    ).body;
-    return [response];
+    ).body
+    return [response]
   },
-});
+})

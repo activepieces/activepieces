@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { clickupCommon, callClickUpApi } from '../../common';
-import { clickupAuth } from '../../../';
+import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { clickupAuth } from '../../../'
+import { callClickUpApi, clickupCommon } from '../../common'
 
 export const createClickupFolderlessList = createAction({
   auth: clickupAuth,
@@ -18,16 +18,16 @@ export const createClickupFolderlessList = createAction({
     }),
   },
   async run(configValue) {
-    const { space_id, name } = configValue.propsValue;
+    const { space_id, name } = configValue.propsValue
     const response = await callClickUpApi(
       HttpMethod.POST,
       `space/${space_id}/list`,
       getAccessTokenOrThrow(configValue.auth),
       {
         name,
-      }
-    );
+      },
+    )
 
-    return response.body;
+    return response.body
   },
-});
+})

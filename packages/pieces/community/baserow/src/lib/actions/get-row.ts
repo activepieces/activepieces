@@ -1,10 +1,6 @@
-import {
-  PiecePropValueSchema,
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { baserowAuth } from '../..';
-import { makeClient } from '../common';
+import { PiecePropValueSchema, Property, createAction } from '@activepieces/pieces-framework'
+import { baserowAuth } from '../..'
+import { makeClient } from '../common'
 
 export const getRowAction = createAction({
   name: 'baserow_get_row',
@@ -25,10 +21,8 @@ export const getRowAction = createAction({
     }),
   },
   async run(context) {
-    const { table_id, row_id } = context.propsValue;
-    const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof baserowAuth>
-    );
-    return await client.getRow(table_id, row_id);
+    const { table_id, row_id } = context.propsValue
+    const client = makeClient(context.auth as PiecePropValueSchema<typeof baserowAuth>)
+    return await client.getRow(table_id, row_id)
   },
-});
+})

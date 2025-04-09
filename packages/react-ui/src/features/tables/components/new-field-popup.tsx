@@ -1,94 +1,88 @@
-import { t } from 'i18next';
-import { nanoid } from 'nanoid';
-import { useState } from 'react';
-import { FieldErrors, useForm } from 'react-hook-form';
+import { t } from 'i18next'
+import { nanoid } from 'nanoid'
+import { useState } from 'react'
+import { FieldErrors, useForm } from 'react-hook-form'
 
-import { ArrayInput } from '@/components/ui/array-input';
-import { Button } from '@/components/ui/button';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useTableState } from '@/features/tables/components/ap-table-state-provider';
-import { tablesUtils } from '@/features/tables/lib/utils';
-import { cn } from '@/lib/utils';
-import { FieldType, isNil } from '@activepieces/shared';
+import { ArrayInput } from '@/components/ui/array-input'
+import { Button } from '@/components/ui/button'
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { useTableState } from '@/features/tables/components/ap-table-state-provider'
+import { tablesUtils } from '@/features/tables/lib/utils'
+import { cn } from '@/lib/utils'
+import { FieldType, isNil } from '@activepieces/shared'
 
 type NewFieldDialogProps = {
-  children: React.ReactNode;
-};
+  children: React.ReactNode
+}
 
 type NewFieldFormData =
   | {
-      name: string;
-      type: FieldType.STATIC_DROPDOWN;
+      name: string
+      type: FieldType.STATIC_DROPDOWN
       data: {
-        options: string[];
-      };
+        options: string[]
+      }
     }
   | {
-      name: string;
-      type: FieldType.DATE | FieldType.NUMBER | FieldType.TEXT;
-      data: null;
-    };
+      name: string
+      type: FieldType.DATE | FieldType.NUMBER | FieldType.TEXT
+      data: null
+    }
 
 export function NewFieldPopup({ children }: NewFieldDialogProps) {
-  const [open, setOpen] = useState(false);
-  const fields = useTableState((state) => state.fields);
-  const createField = useTableState((state) => state.createField);
+  const [open, setOpen] = useState(false)
+  const fields = useTableState((state) => state.fields)
+  const createField = useTableState((state) => state.createField)
 
   const form = useForm<NewFieldFormData>({
     resolver: (data) => {
-      const errors: FieldErrors<NewFieldFormData> = {};
+      const errors: FieldErrors<NewFieldFormData> = {}
       if (data.name.length === 0) {
         errors['name'] = {
           message: t('Name is required'),
           type: 'required',
-        };
+        }
       } else {
         if (fields?.find((field) => field.name === data.name)) {
           errors['name'] = {
             message: t('Name must be unique'),
             type: 'unique',
-          };
+          }
         }
       }
       if (isNil(data.type)) {
         errors['type'] = {
           message: t('Type is required'),
           type: 'required',
-        };
+        }
       }
       if (
         data.type === FieldType.STATIC_DROPDOWN &&
-        (isNil(data.data) ||
-          data.data?.options.length === 0 ||
-          !data.data?.options.some((option) => option.length > 0))
+        (isNil(data.data) || data.data?.options.length === 0 || !data.data?.options.some((option) => option.length > 0))
       ) {
         errors['data'] = {
           options: {
             message: t('Please add at least one option'),
             type: 'required',
           },
-        };
+        }
       }
       return {
         values: Object.keys(errors).length === 0 ? data : {},
         errors,
-      };
+      }
     },
     defaultValues: {
       type: FieldType.TEXT,
       data: null,
       name: '',
     },
-  });
+  })
 
   return (
     <Popover open={open} modal={false} onOpenChange={setOpen}>
@@ -99,8 +93,8 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(async (data) => {
-              form.reset();
-              setOpen(false);
+              form.reset()
+              setOpen(false)
               if (data.type === FieldType.STATIC_DROPDOWN) {
                 createField({
                   uuid: nanoid(),
@@ -113,13 +107,13 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                         value: option,
                       })),
                   },
-                });
+                })
               } else {
                 createField({
                   uuid: nanoid(),
                   name: data.name,
                   type: data.type,
-                });
+                })
               }
             })}
             className="mx-2"
@@ -149,21 +143,17 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                           if (value === FieldType.STATIC_DROPDOWN) {
                             form.setValue('data', {
                               options: [''],
-                            });
+                            })
                           } else {
-                            form.setValue('data', null);
+                            form.setValue('data', null)
                           }
-                          field.onChange(value);
+                          field.onChange(value)
                         }}
                         className="p-1"
                       >
                         {Object.values(FieldType).map((type) => (
                           <div key={type} className="flex items-center">
-                            <RadioGroupItem
-                              value={type}
-                              id={type}
-                              className="sr-only"
-                            />
+                            <RadioGroupItem value={type} id={type} className="sr-only" />
                             <Label
                               htmlFor={type}
                               className={cn(
@@ -191,12 +181,7 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                     //needs to be wrapped in form field to show the error message
                     <FormItem className="grid space-y-3">
                       <Label>{t('Options')}</Label>
-                      <ArrayInput
-                        inputName="data.options"
-                        disabled={false}
-                        required={true}
-                        thinInputs={true}
-                      />
+                      <ArrayInput inputName="data.options" disabled={false} required={true} thinInputs={true} />
                       <FormMessage />
                     </FormItem>
                   )}
@@ -204,12 +189,7 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
               )}
             </div>
             <div className="flex justify-end gap-2 pt-2 mt-3">
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={() => setOpen(false)}
-              >
+              <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(false)}>
                 {t('Cancel')}
               </Button>
               <Button type="submit" size="sm">
@@ -220,5 +200,5 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
         </Form>
       </PopoverContent>
     </Popover>
-  );
+  )
 }

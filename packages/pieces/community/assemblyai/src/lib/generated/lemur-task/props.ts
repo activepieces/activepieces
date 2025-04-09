@@ -1,4 +1,4 @@
-import { Property } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework'
 export const props = {
   prompt: Property.ShortText({
     displayName: 'Prompt',
@@ -21,14 +21,12 @@ export const props = {
   context: Property.LongText({
     displayName: 'Context',
     required: false,
-    description:
-      'Context to provide the model. This can be a string or a free-form JSON value.',
+    description: 'Context to provide the model. This can be a string or a free-form JSON value.',
   }),
   final_model: Property.StaticDropdown({
     displayName: 'Final Model',
     required: false,
-    description:
-      'The model that is used for the final prompt after compression is performed.\n',
+    description: 'The model that is used for the final prompt after compression is performed.\n',
     options: {
       options: [
         {
@@ -85,4 +83,4 @@ export const props = {
     description:
       'The temperature to use for the model.\nHigher values result in answers that are more creative, lower values are more conservative.\nCan be any value between 0.0 and 1.0 inclusive.\n',
   }),
-};
+}

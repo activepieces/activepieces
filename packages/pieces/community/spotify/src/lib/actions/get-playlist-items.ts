@@ -1,5 +1,5 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { spotifyCommon, makeClient } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { makeClient, spotifyCommon } from '../common'
 
 export default createAction({
   name: 'get_playlist_items',
@@ -23,16 +23,14 @@ export default createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient({ auth });
+    const client = makeClient({ auth })
     if (propsValue.all) {
-      const items = await client.getAllPlaylistItems(
-        propsValue.playlist_id as string
-      );
-      return { total: items.length, items };
+      const items = await client.getAllPlaylistItems(propsValue.playlist_id as string)
+      return { total: items.length, items }
     }
     return await client.getPlaylistItems(propsValue.playlist_id as string, {
       limit: propsValue.limit,
       offset: propsValue.offset,
-    });
+    })
   },
-});
+})

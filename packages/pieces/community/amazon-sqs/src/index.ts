@@ -1,7 +1,6 @@
-
-import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
-import { SQS } from 'aws-sdk';
-import { sendMessage } from "./lib/actions/send-message";
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { SQS } from 'aws-sdk'
+import { sendMessage } from './lib/actions/send-message'
 
 export const amazonSqsAuth = PieceAuth.CustomAuth({
   props: {
@@ -148,8 +147,8 @@ export const amazonSqsAuth = PieceAuth.CustomAuth({
         accessKeyId: auth.accessKeyId,
         secretAccessKey: auth.secretAccessKey,
         region: auth.region,
-      });
-      await sqs.listQueues().promise();
+      })
+      await sqs.listQueues().promise()
       return {
         valid: true,
       }
@@ -157,19 +156,18 @@ export const amazonSqsAuth = PieceAuth.CustomAuth({
       return {
         valid: false,
         error: (e as Error)?.message,
-      };
+      }
     }
   },
   required: true,
-});
-
+})
 
 export const awsSqs = createPiece({
-  displayName: "Amazon SQS",
+  displayName: 'Amazon SQS',
   auth: amazonSqsAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl: "https://cdn.activepieces.com/pieces/aws-sqs.png",
-  authors: ["abuaboud"],
+  logoUrl: 'https://cdn.activepieces.com/pieces/aws-sqs.png',
+  authors: ['abuaboud'],
   actions: [sendMessage],
   triggers: [],
-});
+})

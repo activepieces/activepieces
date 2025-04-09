@@ -1,7 +1,7 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { catchWebhook } from './lib/triggers/catch-hook';
-import { PieceCategory } from '@activepieces/shared';
-import { returnResponse } from './lib/actions/return-response';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { returnResponse } from './lib/actions/return-response'
+import { catchWebhook } from './lib/triggers/catch-hook'
 
 export const webhook = createPiece({
   displayName: 'Webhook',
@@ -13,4 +13,4 @@ export const webhook = createPiece({
   authors: ['abuaboud', 'pfernandez98', 'kishanprmr'],
   actions: [returnResponse],
   triggers: [catchWebhook],
-});
+})

@@ -1,7 +1,7 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { aiAnswerAuth } from '../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { aiAnswerConfig } from '../common/models';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { aiAnswerAuth } from '../..'
+import { aiAnswerConfig } from '../common/models'
 
 export const createPhoneCall = createAction({
   name: 'createPhoneCall',
@@ -25,9 +25,9 @@ export const createPhoneCall = createAction({
     }),
   },
   async run(context) {
-    const agentID = context.propsValue.agentID;
-    const phoneNumber = context.propsValue.phoneNumber;
-    const details = context.propsValue.details || {}; // Optional details
+    const agentID = context.propsValue.agentID
+    const phoneNumber = context.propsValue.phoneNumber
+    const details = context.propsValue.details || {} // Optional details
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -42,8 +42,8 @@ export const createPhoneCall = createAction({
       body: {
         details, // Include details object in the request body
       },
-    });
+    })
 
-    return res.body;
+    return res.body
   },
-});
+})

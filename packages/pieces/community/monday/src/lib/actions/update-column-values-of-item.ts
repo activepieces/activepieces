@@ -1,13 +1,7 @@
-import {
-  DynamicPropsValue,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { mondayAuth } from '../..';
-import { makeClient, mondayCommon } from '../common';
-import {
-  convertPropValueToMondayColumnValue,
-  generateColumnIdTypeMap,
-} from '../common/helper';
+import { DynamicPropsValue, createAction } from '@activepieces/pieces-framework'
+import { mondayAuth } from '../..'
+import { makeClient, mondayCommon } from '../common'
+import { convertPropValueToMondayColumnValue, generateColumnIdTypeMap } from '../common/helper'
 
 export const updateColumnValuesOfItemAction = createAction({
   auth: mondayAuth,
@@ -21,33 +15,30 @@ export const updateColumnValuesOfItemAction = createAction({
     column_values: mondayCommon.columnValues,
   },
   async run(context) {
-    const { board_id, item_id } = context.propsValue;
-    const columnValuesInput = context.propsValue.column_values;
-    const mondayColumnValues: DynamicPropsValue = {};
+    const { board_id, item_id } = context.propsValue
+    const columnValuesInput = context.propsValue.column_values
+    const mondayColumnValues: DynamicPropsValue = {}
 
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth as string)
     const res = await client.listBoardColumns({
       boardId: board_id as unknown as string,
-    });
-    const columns = res.data.boards[0]?.columns;
+    })
+    const columns = res.data.boards[0]?.columns
 
     // map board column id with column type
-    const columnIdTypeMap = generateColumnIdTypeMap(columns);
+    const columnIdTypeMap = generateColumnIdTypeMap(columns)
 
     Object.keys(columnValuesInput).forEach((key) => {
       if (columnValuesInput[key] !== '') {
-        const columnType: string = columnIdTypeMap[key];
-        mondayColumnValues[key] = convertPropValueToMondayColumnValue(
-          columnType,
-          columnValuesInput[key]
-        );
+        const columnType: string = columnIdTypeMap[key]
+        mondayColumnValues[key] = convertPropValueToMondayColumnValue(columnType, columnValuesInput[key])
       }
-    });
+    })
 
     return await client.updateItem({
       boardId: board_id,
       itemId: item_id,
       columnValues: JSON.stringify(mondayColumnValues),
-    });
+    })
   },
-});
+})

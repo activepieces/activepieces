@@ -1,36 +1,25 @@
-import { Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react'
 
-import {
-  FlowOperationType,
-  StepLocationRelativeToParent,
-} from '@activepieces/shared';
+import { FlowOperationType, StepLocationRelativeToParent } from '@activepieces/shared'
 
-import { BuilderState } from '../../builder-hooks';
-import { ApButtonData } from '../utils/types';
+import { BuilderState } from '../../builder-hooks'
+import { ApButtonData } from '../utils/types'
 
-export const shouldShowAskAiIndicator = (
-  state: BuilderState,
-  buttonData: ApButtonData,
-) =>
+export const shouldShowAskAiIndicator = (state: BuilderState, buttonData: ApButtonData) =>
   state.askAiButtonProps &&
   state.askAiButtonProps.type === FlowOperationType.ADD_ACTION &&
-  state.askAiButtonProps.actionLocation.stepLocationRelativeToParent ===
-    buttonData.stepLocationRelativeToParent &&
-  state.askAiButtonProps.actionLocation.parentStep ===
-    buttonData.parentStepName &&
-  (buttonData.stepLocationRelativeToParent !==
-    StepLocationRelativeToParent.INSIDE_BRANCH ||
-    state.askAiButtonProps.actionLocation.stepLocationRelativeToParent !==
-      StepLocationRelativeToParent.INSIDE_BRANCH ||
-    buttonData.branchIndex ===
-      state.askAiButtonProps.actionLocation.branchIndex);
+  state.askAiButtonProps.actionLocation.stepLocationRelativeToParent === buttonData.stepLocationRelativeToParent &&
+  state.askAiButtonProps.actionLocation.parentStep === buttonData.parentStepName &&
+  (buttonData.stepLocationRelativeToParent !== StepLocationRelativeToParent.INSIDE_BRANCH ||
+    state.askAiButtonProps.actionLocation.stepLocationRelativeToParent !== StepLocationRelativeToParent.INSIDE_BRANCH ||
+    buttonData.branchIndex === state.askAiButtonProps.actionLocation.branchIndex)
 
 const AskAiIndicator = ({
   height,
   width,
 }: {
-  height: number;
-  width: number;
+  height: number
+  width: number
 }) => {
   return (
     <div
@@ -48,7 +37,7 @@ const AskAiIndicator = ({
         }}
       ></Sparkles>
     </div>
-  );
-};
-AskAiIndicator.displayName = 'AskAiIndicator';
-export { AskAiIndicator };
+  )
+}
+AskAiIndicator.displayName = 'AskAiIndicator'
+export { AskAiIndicator }

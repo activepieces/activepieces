@@ -1,14 +1,6 @@
-import {
-  OAuth2PropertyValue,
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { constantContactAuth } from '../../';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { constantContactAuth } from '../../'
 
 export const createOrUpdateContact = createAction({
   auth: constantContactAuth,
@@ -27,14 +19,14 @@ export const createOrUpdateContact = createAction({
             options: [],
             placeholder: 'Connect to Constant Contact to see the lists',
             disabled: true,
-          };
+          }
         }
         return {
           placeholder: 'Select a list',
           disabled: false,
           options: (
             await httpClient.sendRequest<{
-              lists: { list_id: string; name: string }[];
+              lists: { list_id: string; name: string }[]
             }>({
               url: 'https://api.cc.email/v3/contact_lists',
               method: HttpMethod.GET,
@@ -47,9 +39,9 @@ export const createOrUpdateContact = createAction({
             return {
               value: list.list_id,
               label: list.name,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     email_address: Property.ShortText({
@@ -102,6 +94,6 @@ export const createOrUpdateContact = createAction({
           list_memberships: propsValue.list,
         },
       })
-    ).body;
+    ).body
   },
-});
+})

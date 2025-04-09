@@ -1,118 +1,83 @@
-import semVer from 'semver';
+import semVer from 'semver'
 
-import { api } from '@/lib/api';
-import {
-  ChatUIResponse,
-  FormResponse,
-  USE_DRAFT_QUERY_PARAM_NAME,
-  HumanInputFormResult,
-} from '@activepieces/shared';
+import { api } from '@/lib/api'
+import { ChatUIResponse, FormResponse, HumanInputFormResult, USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared'
 
 export const humanInputApi = {
   getForm: (flowId: string, useDraft?: boolean) => {
     return api.get<FormResponse>(`/v1/human-input/form/${flowId}`, {
       [USE_DRAFT_QUERY_PARAM_NAME]: useDraft ?? false,
-    });
+    })
   },
   getChatUI: (flowId: string, useDraft?: boolean) => {
     return api.get<ChatUIResponse>(`/v1/human-input/chat/${flowId}`, {
       [USE_DRAFT_QUERY_PARAM_NAME]: useDraft ?? false,
-    });
+    })
   },
-  submitForm: async (
-    formResult: FormResponse,
-    useDraft: boolean,
-    data: unknown,
-  ) => {
-    const processedData = await processData(
-      data as Record<string, unknown>,
-      formResult,
-    );
-    const suffix = getSuffix(useDraft, formResult.props.waitForResponse);
-    return api.post<HumanInputFormResult | null>(
-      `/v1/webhooks/${formResult.id}${suffix}`,
-      processedData,
-      undefined,
-      {
-        'Content-Type':
-          processedData instanceof FormData
-            ? 'multipart/form-data'
-            : 'application/json',
-      },
-    );
+  submitForm: async (formResult: FormResponse, useDraft: boolean, data: unknown) => {
+    const processedData = await processData(data as Record<string, unknown>, formResult)
+    const suffix = getSuffix(useDraft, formResult.props.waitForResponse)
+    return api.post<HumanInputFormResult | null>(`/v1/webhooks/${formResult.id}${suffix}`, processedData, undefined, {
+      'Content-Type': processedData instanceof FormData ? 'multipart/form-data' : 'application/json',
+    })
   },
-  sendMessage: async ({
-    flowId,
-    chatId,
-    message,
-    files,
-    useDraft,
-  }: SendMessageParams) => {
-    const formData = new FormData();
-    formData.append('chatId', chatId);
-    formData.append('message', message);
+  sendMessage: async ({ flowId, chatId, message, files, useDraft }: SendMessageParams) => {
+    const formData = new FormData()
+    formData.append('chatId', chatId)
+    formData.append('message', message)
     files.forEach((file, index) => {
-      formData.append(`file[${index}]`, file);
-    });
-    const suffix = getSuffix(useDraft, true);
-    return api.post<HumanInputFormResult | null>(
-      `/v1/webhooks/${flowId}${suffix}`,
-      formData,
-      undefined,
-      {
-        'Content-Type': 'multipart/form-data',
-      },
-    );
+      formData.append(`file[${index}]`, file)
+    })
+    const suffix = getSuffix(useDraft, true)
+    return api.post<HumanInputFormResult | null>(`/v1/webhooks/${flowId}${suffix}`, formData, undefined, {
+      'Content-Type': 'multipart/form-data',
+    })
   },
-};
+}
 
 const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
     reader.onloadend = () => {
       if (reader.result) {
-        resolve(reader.result as string);
+        resolve(reader.result as string)
       } else {
-        reject(new Error('Failed to read file'));
+        reject(new Error('Failed to read file'))
       }
-    };
+    }
     reader.onerror = () => {
-      reject(reader.error);
-    };
-  });
-};
+      reject(reader.error)
+    }
+  })
+}
 
-async function processData(
-  data: Record<string, unknown>,
-  formResult: FormResponse,
-) {
-  const useFormData = semVer.gte(formResult.version, '0.4.1');
-  const formData = new FormData();
-  const processedData: Record<string, unknown> = {};
+async function processData(data: Record<string, unknown>, formResult: FormResponse) {
+  const useFormData = semVer.gte(formResult.version, '0.4.1')
+  const formData = new FormData()
+  const processedData: Record<string, unknown> = {}
 
   for (const [key, value] of Object.entries(data)) {
     if (useFormData) {
-      formData.append(key, value instanceof File ? value : String(value));
+      formData.append(key, value instanceof File ? value : String(value))
     } else {
-      processedData[key] =
-        value instanceof File ? await fileToBase64(value) : value;
+      processedData[key] = value instanceof File ? await fileToBase64(value) : value
     }
   }
-  return useFormData ? formData : processedData;
+  return useFormData ? formData : processedData
 }
 
 function getSuffix(useDraft: boolean, waitForResponse: boolean): string {
   if (useDraft) {
-    return waitForResponse ? '/draft/sync' : '/draft';
+    return waitForResponse ? '/draft/sync' : '/draft'
   }
-  return waitForResponse ? '/sync' : '';
+  return waitForResponse ? '/sync' : ''
 }
 
 type SendMessageParams = {
-  flowId: string;
-  chatId: string;
-  message: string;
-  files: File[];
-  useDraft: boolean;
-};
+  flowId: string
+  chatId: string
+  message: string
+  files: File[]
+  useDraft: boolean
+}

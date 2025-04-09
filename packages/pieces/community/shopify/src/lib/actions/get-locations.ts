@@ -1,6 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { shopifyAuth } from '../..';
-import { getLocations } from '../common';
+import { createAction } from '@activepieces/pieces-framework'
+import { shopifyAuth } from '../..'
+import { getLocations } from '../common'
 
 export const getLocationsAction = createAction({
   auth: shopifyAuth,
@@ -9,6 +9,6 @@ export const getLocationsAction = createAction({
   description: `Get locations.`,
   props: {},
   async run({ auth }) {
-    return await getLocations(auth);
+    return await getLocations(auth)
   },
-});
+})

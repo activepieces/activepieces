@@ -1,11 +1,7 @@
-import { baseUrl, getTimezones, slugify } from '../common';
-import { sessionAuth } from '../..';
-import {
-  HttpMethod,
-  httpClient,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { sessionAuth } from '../..'
+import { baseUrl, getTimezones, slugify } from '../common'
 
 export const createEvent = createAction({
   auth: sessionAuth,
@@ -36,16 +32,16 @@ export const createEvent = createAction({
       required: true,
       refreshers: [],
       options: async () => {
-        const timezones = await getTimezones();
+        const timezones = await getTimezones()
 
         return {
           options: timezones.map((timezone) => {
             return {
               label: timezone,
               value: timezone,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   },
@@ -64,9 +60,9 @@ export const createEvent = createAction({
         plannedEnd: propsValue['plannedEnd'],
         timeZone: propsValue['timezone'],
       },
-    };
+    }
 
-    const response = await httpClient.sendRequest(request);
-    return response.body;
+    const response = await httpClient.sendRequest(request)
+    return response.body
   },
-});
+})

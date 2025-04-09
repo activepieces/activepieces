@@ -1,12 +1,8 @@
-import { straicoAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { straicoAuth } from '../../index'
 
-import { baseUrl } from '../common/common';
+import { baseUrl } from '../common/common'
 
 export const promptCompletion = createAction({
   auth: straicoAuth,
@@ -27,11 +23,11 @@ export const promptCompletion = createAction({
             disabled: true,
             placeholder: 'Enter your API key first',
             options: [],
-          };
+          }
         }
         try {
           const models = await httpClient.sendRequest<{
-            data: { name: string, model: string }[];
+            data: { name: string; model: string }[]
           }>({
             url: `${baseUrl}/models`,
             method: HttpMethod.GET,
@@ -39,22 +35,23 @@ export const promptCompletion = createAction({
               type: AuthenticationType.BEARER_TOKEN,
               token: auth as string,
             },
-          });
+          })
           return {
             disabled: false,
-            options: models.body?.data?.map((model: any) => {
-              return {
-                label: model.name,
-                value: model.model,
-              };
-            }) || [],
-          };
+            options:
+              models.body?.data?.map((model: any) => {
+                return {
+                  label: model.name,
+                  value: model.model,
+                }
+              }) || [],
+          }
         } catch (error) {
           return {
             disabled: true,
             options: [],
             placeholder: "Couldn't load models, API key is invalid",
-          };
+          }
         }
       },
     }),
@@ -65,11 +62,15 @@ export const promptCompletion = createAction({
   },
   async run({ auth, propsValue }) {
     const response = await httpClient.sendRequest<{
-      data: { completion: {
-        choices: { message: {
-          content: string;
-        } }[];
-      } };
+      data: {
+        completion: {
+          choices: {
+            message: {
+              content: string
+            }
+          }[]
+        }
+      }
     }>({
       url: `${baseUrl}/prompt/completion`,
       method: HttpMethod.POST,
@@ -81,8 +82,8 @@ export const promptCompletion = createAction({
         model: propsValue.model,
         message: propsValue.prompt,
       },
-    });
+    })
 
-    return response.body.data.completion.choices[0].message.content;
+    return response.body.data.completion.choices[0].message.content
   },
-});
+})

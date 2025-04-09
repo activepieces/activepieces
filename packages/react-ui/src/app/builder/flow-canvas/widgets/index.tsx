@@ -1,29 +1,26 @@
-import { ViewportPortal } from '@xyflow/react';
-import React from 'react';
+import { ViewportPortal } from '@xyflow/react'
+import React from 'react'
 
-import FlowEndWidget from '@/app/builder/flow-canvas/widgets/flow-end-widget';
-import IncompleteSettingsButton from '@/app/builder/flow-canvas/widgets/incomplete-settings-widget';
-import { TestFlowWidget } from '@/app/builder/flow-canvas/widgets/test-flow-widget';
-import ViewOnlyWidget from '@/app/builder/flow-canvas/widgets/view-only-widget';
+import FlowEndWidget from '@/app/builder/flow-canvas/widgets/flow-end-widget'
+import IncompleteSettingsButton from '@/app/builder/flow-canvas/widgets/incomplete-settings-widget'
+import { TestFlowWidget } from '@/app/builder/flow-canvas/widgets/test-flow-widget'
+import ViewOnlyWidget from '@/app/builder/flow-canvas/widgets/view-only-widget'
 
-import { useBuilderStateContext } from '../../builder-hooks';
-import { flowUtilConsts } from '../utils/consts';
+import { useBuilderStateContext } from '../../builder-hooks'
+import { flowUtilConsts } from '../utils/consts'
 
 const AboveFlowWidgets = React.memo(() => {
-  const [flowVersion, setRun, selectStepByName, readonly] =
-    useBuilderStateContext((state) => [
-      state.flowVersion,
-      state.setRun,
-      state.selectStepByName,
-      state.readonly,
-    ]);
+  const [flowVersion, setRun, selectStepByName, readonly] = useBuilderStateContext((state) => [
+    state.flowVersion,
+    state.setRun,
+    state.selectStepByName,
+    state.readonly,
+  ])
   return (
     <ViewportPortal>
       <div
         style={{
-          transform: `translate(0px,-${
-            flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 + 8
-          }px )`,
+          transform: `translate(0px,-${flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 + 8}px )`,
           position: 'absolute',
           pointerEvents: 'auto',
         }}
@@ -31,10 +28,7 @@ const AboveFlowWidgets = React.memo(() => {
         <div className="justify-center items-center flex w-[260px]">
           {!readonly && (
             <>
-              <TestFlowWidget
-                flowVersion={flowVersion}
-                setRun={setRun}
-              ></TestFlowWidget>
+              <TestFlowWidget flowVersion={flowVersion} setRun={setRun}></TestFlowWidget>
               <IncompleteSettingsButton
                 flowVersion={flowVersion}
                 selectStepByName={selectStepByName}
@@ -45,9 +39,9 @@ const AboveFlowWidgets = React.memo(() => {
         </div>
       </div>
     </ViewportPortal>
-  );
-});
-AboveFlowWidgets.displayName = 'AboveFlowWidgets';
+  )
+})
+AboveFlowWidgets.displayName = 'AboveFlowWidgets'
 const BelowFlowWidget = React.memo(() => {
   return (
     <ViewportPortal>
@@ -64,8 +58,8 @@ const BelowFlowWidget = React.memo(() => {
         </div>
       </div>
     </ViewportPortal>
-  );
-});
+  )
+})
 
-BelowFlowWidget.displayName = 'BelowFlowWidget';
-export { AboveFlowWidgets, BelowFlowWidget };
+BelowFlowWidget.displayName = 'BelowFlowWidget'
+export { AboveFlowWidgets, BelowFlowWidget }

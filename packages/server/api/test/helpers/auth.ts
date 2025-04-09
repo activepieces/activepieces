@@ -1,46 +1,41 @@
 import { SigningKeyId } from '@activepieces/ee-shared'
-import { apId, DefaultProjectRole, Principal, PrincipalType } from '@activepieces/shared'
+import { DefaultProjectRole, Principal, PrincipalType, apId } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import jwt, { Algorithm, JwtPayload, SignOptions } from 'jsonwebtoken'
-import {
-    ExternalPrincipal,
-    ExternalTokenPayload,
-} from '../../src/app/ee/managed-authn/lib/external-token-extractor'
+import { ExternalPrincipal, ExternalTokenPayload } from '../../src/app/ee/managed-authn/lib/external-token-extractor'
 
 const generateToken = ({
-    payload,
-    algorithm = 'HS256',
-    key = 'secret',
-    keyId = '1',
-    issuer = 'activepieces',
+  payload,
+  algorithm = 'HS256',
+  key = 'secret',
+  keyId = '1',
+  issuer = 'activepieces',
 }: GenerateTokenParams): string => {
-    const options: SignOptions = {
-        algorithm,
-        expiresIn: '1h',
-        keyid: keyId,
-        issuer,
-    }
+  const options: SignOptions = {
+    algorithm,
+    expiresIn: '1h',
+    keyid: keyId,
+    issuer,
+  }
 
-    return jwt.sign(payload, key, options)
+  return jwt.sign(payload, key, options)
 }
 
-export const generateMockToken = async (
-    principal?: Partial<Principal>,
-): Promise<string> => {
-    const mockPrincipal: Principal = {
-        id: principal?.id ?? apId(),
-        type: principal?.type ?? faker.helpers.enumValue(PrincipalType),
-        projectId: principal?.projectId ?? apId(),
-        platform: principal?.platform ?? {
-            id: apId(),
-        },
-        tokenVersion: principal?.tokenVersion,
-    }
+export const generateMockToken = async (principal?: Partial<Principal>): Promise<string> => {
+  const mockPrincipal: Principal = {
+    id: principal?.id ?? apId(),
+    type: principal?.type ?? faker.helpers.enumValue(PrincipalType),
+    projectId: principal?.projectId ?? apId(),
+    platform: principal?.platform ?? {
+      id: apId(),
+    },
+    tokenVersion: principal?.tokenVersion,
+  }
 
-    return generateToken({
-        payload: mockPrincipal,
-        issuer: 'activepieces',
-    })
+  return generateToken({
+    payload: mockPrincipal,
+    issuer: 'activepieces',
+  })
 }
 
 const MOCK_SIGNING_KEY_PRIVATE_KEY = `-----BEGIN RSA PRIVATE KEY-----
@@ -96,52 +91,52 @@ CEri0OurQ6fh4y87TK4JFbSTPEDkrPh4STPH7TtroBM/rn7Zj4+1Ur1RlgI=
 -----END RSA PRIVATE KEY-----`
 
 export const generateMockExternalToken = (
-    params?: Partial<GenerateMockExternalTokenParams>,
+  params?: Partial<GenerateMockExternalTokenParams>,
 ): GenerateMockExternalTokenReturn => {
-    const mockExternalTokenPayload: ExternalTokenPayload = {
-        externalUserId: params?.externalUserId ?? apId(),
-        role: params?.projectRole as DefaultProjectRole ?? DefaultProjectRole.ADMIN,
-        externalProjectId: params?.externalProjectId ?? apId(),
-        firstName: params?.externalFirstName ?? faker.person.firstName(),
-        pieces: params?.pieces ?? undefined,
-        lastName: params?.externalLastName ?? faker.person.lastName(),
-    }
+  const mockExternalTokenPayload: ExternalTokenPayload = {
+    externalUserId: params?.externalUserId ?? apId(),
+    role: (params?.projectRole as DefaultProjectRole) ?? DefaultProjectRole.ADMIN,
+    externalProjectId: params?.externalProjectId ?? apId(),
+    firstName: params?.externalFirstName ?? faker.person.firstName(),
+    pieces: params?.pieces ?? undefined,
+    lastName: params?.externalLastName ?? faker.person.lastName(),
+  }
 
-    const algorithm = 'RS256'
-    const key = params?.privateKey ?? MOCK_SIGNING_KEY_PRIVATE_KEY
-    const keyId = params?.signingKeyId ?? apId()
+  const algorithm = 'RS256'
+  const key = params?.privateKey ?? MOCK_SIGNING_KEY_PRIVATE_KEY
+  const keyId = params?.signingKeyId ?? apId()
 
-    const mockExternalToken = generateToken({
-        payload: mockExternalTokenPayload,
-        algorithm,
-        key,
-        keyId,
-    })
+  const mockExternalToken = generateToken({
+    payload: mockExternalTokenPayload,
+    algorithm,
+    key,
+    keyId,
+  })
 
-    return {
-        mockExternalToken,
-        mockExternalTokenPayload,
-    }
+  return {
+    mockExternalToken,
+    mockExternalTokenPayload,
+  }
 }
 
 export const decodeToken = (token: string): JwtPayload | null => {
-    return jwt.decode(token, { json: true })
+  return jwt.decode(token, { json: true })
 }
 
 type GenerateTokenParams = {
-    payload: Record<string, unknown>
-    algorithm?: Algorithm
-    key?: string
-    keyId?: string
-    issuer?: string
+  payload: Record<string, unknown>
+  algorithm?: Algorithm
+  key?: string
+  keyId?: string
+  issuer?: string
 }
 
 type GenerateMockExternalTokenParams = ExternalPrincipal & {
-    signingKeyId?: SigningKeyId
-    privateKey?: string
+  signingKeyId?: SigningKeyId
+  privateKey?: string
 }
 
 type GenerateMockExternalTokenReturn = {
-    mockExternalToken: string
-    mockExternalTokenPayload: ExternalTokenPayload
+  mockExternalToken: string
+  mockExternalTokenPayload: ExternalTokenPayload
 }

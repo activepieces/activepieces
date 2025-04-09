@@ -1,8 +1,8 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { onfleetAuth } from '../..';
-import { common } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
+import { common } from '../common'
 
-import Onfleet from '@onfleet/node-onfleet';
+import Onfleet from '@onfleet/node-onfleet'
 
 export const createTeam = createAction({
   auth: onfleetAuth,
@@ -20,13 +20,12 @@ export const createTeam = createAction({
     hub: common.hubOptional,
     enableSelfAssignment: Property.Checkbox({
       displayName: 'Enable Self Assignment',
-      description:
-        'Allows Drivers to Self Assign Tasks that are in the Team unassigned container.',
+      description: 'Allows Drivers to Self Assign Tasks that are in the Team unassigned container.',
       required: false,
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth)
 
     return await onfleetApi.teams.create({
       name: context.propsValue.name,
@@ -34,6 +33,6 @@ export const createTeam = createAction({
       managers: context.propsValue.managers,
       hub: context.propsValue.hub,
       enableSelfAssignment: context.propsValue.enableSelfAssignment,
-    });
+    })
   },
-});
+})

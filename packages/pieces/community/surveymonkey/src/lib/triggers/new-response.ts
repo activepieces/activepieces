@@ -1,6 +1,6 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { smCommon } from '../common';
-import { smAuth } from '../..';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { smAuth } from '../..'
+import { smCommon } from '../common'
 
 export const newResponse = createTrigger({
   auth: smAuth,
@@ -17,37 +17,34 @@ export const newResponse = createTrigger({
     const webhookId = await smCommon.subscribeWebhook(
       context.propsValue.survey as number,
       context.webhookUrl,
-      context.auth['access_token']
-    );
+      context.auth['access_token'],
+    )
 
     await context.store?.put('_new_response_trigger', {
       webhookId: webhookId,
-    });
+    })
   },
   //Delete the webhook from SurveyMonkey
   async onDisable(context) {
-    const response: any = await context.store?.get('_new_response_trigger');
+    const response: any = await context.store?.get('_new_response_trigger')
 
     if (response !== null && response !== undefined) {
-      await smCommon.unsubscribeWebhook(
-        response.webhookId,
-        context.auth['access_token']
-      );
+      await smCommon.unsubscribeWebhook(response.webhookId, context.auth['access_token'])
     }
   },
   //Return new response
   async run(context) {
-    const payloadBody = context.payload.body as PayloadBody;
+    const payloadBody = context.payload.body as PayloadBody
     const responseData = await smCommon.getResponseDetails(
       context.auth['access_token'],
       context.propsValue['survey'] as number,
-      payloadBody.object_id
-    );
+      payloadBody.object_id,
+    )
 
-    return [responseData];
+    return [responseData]
   },
-});
+})
 
 type PayloadBody = {
-  object_id: string | number;
-};
+  object_id: string | number
+}

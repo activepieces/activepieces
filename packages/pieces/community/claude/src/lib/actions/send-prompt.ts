@@ -1,13 +1,10 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import Anthropic from '@anthropic-ai/sdk';
-import mime from 'mime-types';
-import { claudeAuth } from '../..';
-import { TextBlock } from '@anthropic-ai/sdk/resources';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import Anthropic from '@anthropic-ai/sdk'
+import { TextBlock } from '@anthropic-ai/sdk/resources'
+import mime from 'mime-types'
+import { z } from 'zod'
+import { claudeAuth } from '../..'
 
 const billingIssueMessage = `Error Occurred: 429 \n
 
@@ -15,12 +12,12 @@ const billingIssueMessage = `Error Occurred: 429 \n
 2. Generate a new API key. \n
 3. Attempt the process again. \n
 
-For guidance, visit: https://console.anthropic.com/settings/plans`;
+For guidance, visit: https://console.anthropic.com/settings/plans`
 
 const unauthorizedMessage = `Error Occurred: 401 \n
 
 Ensure that your API key is valid. \n
-`;
+`
 
 export const askClaude = createAction({
   auth: claudeAuth,
@@ -43,7 +40,6 @@ export const askClaude = createAction({
           { value: 'claude-3-5-sonnet-latest', label: 'Claude 3.5 Sonnet' },
           { value: 'claude-3-5-haiku-latest', label: 'Claude 3.5 Haiku' },
           { value: 'claude-3-7-sonnet-latest', label: 'Claude 3.7 Sonnet' },
-
         ],
       },
     }),
@@ -82,50 +78,48 @@ export const askClaude = createAction({
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
       temperature: z.number().min(0).max(1.0).optional(),
-    });
+    })
 
     const anthropic = new Anthropic({
       apiKey: auth,
-    });
-    let billingIssue = false;
-    let unauthorized = false;
-    let model = 'claude-3-haiku-20240307';
+    })
+    let billingIssue = false
+    let unauthorized = false
+    let model = 'claude-3-haiku-20240307'
 
     if (propsValue.model) {
-      model = propsValue.model;
+      model = propsValue.model
     }
-    let temperature = 0.5;
+    let temperature = 0.5
     if (propsValue.temperature) {
-      temperature = Number(propsValue.temperature);
+      temperature = Number(propsValue.temperature)
     }
-    let maxTokens = 1000;
+    let maxTokens = 1000
     if (propsValue.maxTokens) {
-      maxTokens = Number(propsValue.maxTokens);
+      maxTokens = Number(propsValue.maxTokens)
     }
-    let systemPrompt = 'You are a helpful assistant.';
+    let systemPrompt = 'You are a helpful assistant.'
     if (propsValue.systemPrompt) {
-      systemPrompt = propsValue.systemPrompt;
+      systemPrompt = propsValue.systemPrompt
     }
 
     type Content =
       | { type: 'text'; text: string }
       | {
-          type: 'image';
-          source: { type: 'base64'; media_type: string; data: string };
-        };
-    const rolesArray = propsValue.roles
-      ? (propsValue.roles as unknown as Array<Content>)
-      : [];
+          type: 'image'
+          source: { type: 'base64'; media_type: string; data: string }
+        }
+    const rolesArray = propsValue.roles ? (propsValue.roles as unknown as Array<Content>) : []
 
-    const rolesEnum = ['user', 'assistant'];
+    const rolesEnum = ['user', 'assistant']
     const roles = rolesArray.map((item: any) => {
       if (!rolesEnum.includes(item.role)) {
-        throw new Error('The only available roles are: [user, assistant]');
+        throw new Error('The only available roles are: [user, assistant]')
       }
-      return item;
-    });
+      return item
+    })
 
-    const defaultMimeType = 'image/jpeg';
+    const defaultMimeType = 'image/jpeg'
     roles.unshift({
       role: 'user',
       content: [
@@ -148,11 +142,11 @@ export const askClaude = createAction({
             ]
           : []),
       ],
-    });
+    })
 
-    const maxRetries = 4;
-    let retries = 0;
-    let response: string | undefined;
+    const maxRetries = 4
+    let retries = 0
+    let response: string | undefined
     while (retries < maxRetries) {
       try {
         const req = await anthropic?.messages.create({
@@ -161,36 +155,36 @@ export const askClaude = createAction({
           temperature: temperature,
           system: systemPrompt,
           messages: roles,
-        });
+        })
 
-        response = (req?.content[0] as TextBlock).text?.trim();
+        response = (req?.content[0] as TextBlock).text?.trim()
 
-        break; // Break out of the loop if the request is successful
+        break // Break out of the loop if the request is successful
       } catch (e: any) {
         if (e?.type?.includes('rate_limit_error')) {
-          billingIssue = true;
+          billingIssue = true
           if (retries + 1 === maxRetries) {
-            throw e;
+            throw e
           }
           // Calculate the time delay for the next retry using exponential backoff
-          const delay = Math.pow(6, retries) * 1000;
-          console.log(`Retrying in ${delay} milliseconds...`);
-          await sleep(delay); // Wait for the calculated delay
-          retries++;
-          break;
+          const delay = Math.pow(6, retries) * 1000
+          console.log(`Retrying in ${delay} milliseconds...`)
+          await sleep(delay) // Wait for the calculated delay
+          retries++
+          break
         } else {
           if (e?.error?.type?.includes('not_found_error')) {
-            unauthorized = true;
-            throw e;
+            unauthorized = true
+            throw e
           }
           const new_error = e as {
-            type: string;
+            type: string
             error: {
-              type: string;
-              message: string;
-            };
-          };
-          throw e;
+              type: string
+              message: string
+            }
+          }
+          throw e
           // throw {
           //   error: new_error.error.message,
           // };
@@ -198,15 +192,15 @@ export const askClaude = createAction({
       }
     }
     if (billingIssue) {
-      throw new Error(billingIssueMessage);
+      throw new Error(billingIssueMessage)
     }
     if (unauthorized) {
-      throw new Error(unauthorizedMessage);
+      throw new Error(unauthorizedMessage)
     }
-    return response;
+    return response
   },
-});
+})
 
 function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }

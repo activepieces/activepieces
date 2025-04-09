@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import pg from 'pg';
-import { postgresAuth } from '../..';
-import { pgClient } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import pg from 'pg'
+import { postgresAuth } from '../..'
+import { pgClient } from '../common'
 
 export const runQuery = createAction({
   auth: postgresAuth,
@@ -11,7 +11,7 @@ export const runQuery = createAction({
   props: {
     markdown: Property.MarkDown({
       value: `
-      **DO NOT** insert dynamic input directly into the query string. Instead, use $1, $2, $3 and add them in args for parameterized queries to prevent **SQL injection.**`
+      **DO NOT** insert dynamic input directly into the query string. Instead, use $1, $2, $3 and add them in args for parameterized queries to prevent **SQL injection.**`,
     }),
 
     query: Property.ShortText({
@@ -40,28 +40,32 @@ export const runQuery = createAction({
     }),
     application_name: Property.ShortText({
       displayName: 'Application Name',
-      description:
-        'A string indicating the name of the client application connecting to the server.',
+      description: 'A string indicating the name of the client application connecting to the server.',
       required: false,
     }),
   },
   async run(context) {
-    const client = await pgClient(context.auth, context.propsValue.query_timeout, context.propsValue.application_name, context.propsValue.connection_timeout_ms);
-    const { query } = context.propsValue;
+    const client = await pgClient(
+      context.auth,
+      context.propsValue.query_timeout,
+      context.propsValue.application_name,
+      context.propsValue.connection_timeout_ms,
+    )
+    const { query } = context.propsValue
     const queryWithMetadata = `
     /* Source : /projects/${context.project.id}/flows/${context.flows.current.id}/runs/${context.run.id} */
     ${query}
     `
-    const args = context.propsValue.args || [];
+    const args = context.propsValue.args || []
     return new Promise((resolve, reject) => {
       client.query(queryWithMetadata, args, function (error: any, results: { rows: unknown }) {
         if (error) {
-          client.end();
-          return reject(error);
+          client.end()
+          return reject(error)
         }
-        resolve(results.rows);
-        client.end();
-      });
-    });
+        resolve(results.rows)
+        client.end()
+      })
+    })
   },
-});
+})

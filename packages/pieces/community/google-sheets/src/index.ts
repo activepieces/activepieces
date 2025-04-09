@@ -1,30 +1,26 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  OAuth2PropertyValue,
-  PieceAuth,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { clearSheetAction } from './lib/actions/clear-sheet';
-import { deleteRowAction } from './lib/actions/delete-row.action';
-import { findRowByNumAction } from './lib/actions/find-row-by-num';
-import { findRowsAction } from './lib/actions/find-rows';
-import { getRowsAction } from './lib/actions/get-rows';
-import { insertRowAction } from './lib/actions/insert-row.action';
-import { updateRowAction } from './lib/actions/update-row';
-import { googleSheetsCommon } from './lib/common/common';
-import { newRowAddedTrigger } from './lib/triggers/new-row-added-webhook';
-import { newOrUpdatedRowTrigger } from './lib/triggers/new-or-updated-row.trigger';
-import { insertMultipleRowsAction } from './lib/actions/insert-multiple-rows.action';
-import { createWorksheetAction } from './lib/actions/create-worksheet';
-import { createSpreadsheetAction } from './lib/actions/create-spreadsheet';
-import { findSpreadsheets } from './lib/actions/find-spreadsheets';
-import { newSpreadsheetTrigger } from './lib/triggers/new-spreadsheet';
-import { newWorksheetTrigger } from './lib/triggers/new-worksheet';
-import { findWorksheetAction } from './lib/actions/find-worksheet';
-import { copyWorksheetAction } from './lib/actions/copy-worksheet';
-import { updateMultipleRowsAction } from './lib/actions/update-multiple-rows';
-import { createColumnAction } from './lib/actions/create-column';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { clearSheetAction } from './lib/actions/clear-sheet'
+import { copyWorksheetAction } from './lib/actions/copy-worksheet'
+import { createColumnAction } from './lib/actions/create-column'
+import { createSpreadsheetAction } from './lib/actions/create-spreadsheet'
+import { createWorksheetAction } from './lib/actions/create-worksheet'
+import { deleteRowAction } from './lib/actions/delete-row.action'
+import { findRowByNumAction } from './lib/actions/find-row-by-num'
+import { findRowsAction } from './lib/actions/find-rows'
+import { findSpreadsheets } from './lib/actions/find-spreadsheets'
+import { findWorksheetAction } from './lib/actions/find-worksheet'
+import { getRowsAction } from './lib/actions/get-rows'
+import { insertMultipleRowsAction } from './lib/actions/insert-multiple-rows.action'
+import { insertRowAction } from './lib/actions/insert-row.action'
+import { updateMultipleRowsAction } from './lib/actions/update-multiple-rows'
+import { updateRowAction } from './lib/actions/update-row'
+import { googleSheetsCommon } from './lib/common/common'
+import { newOrUpdatedRowTrigger } from './lib/triggers/new-or-updated-row.trigger'
+import { newRowAddedTrigger } from './lib/triggers/new-row-added-webhook'
+import { newSpreadsheetTrigger } from './lib/triggers/new-spreadsheet'
+import { newWorksheetTrigger } from './lib/triggers/new-worksheet'
 
 export const googleSheetsAuth = PieceAuth.OAuth2({
   description: '',
@@ -37,7 +33,7 @@ export const googleSheetsAuth = PieceAuth.OAuth2({
     'https://www.googleapis.com/auth/drive.readonly',
     'https://www.googleapis.com/auth/drive',
   ],
-});
+})
 
 export const googleSheets = createPiece({
   minimumSupportedRelease: '0.36.1',
@@ -73,17 +69,17 @@ export const googleSheets = createPiece({
     createCustomApiCallAction({
       auth: googleSheetsAuth,
       baseUrl: () => {
-        return googleSheetsCommon.baseUrl;
+        return googleSheetsCommon.baseUrl
       },
       authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
-        };
+        }
       },
     }),
   ],
   displayName: 'Google Sheets',
   description: 'Create, edit, and collaborate on spreadsheets online',
-  triggers: [newRowAddedTrigger, newOrUpdatedRowTrigger,newSpreadsheetTrigger,newWorksheetTrigger],
+  triggers: [newRowAddedTrigger, newOrUpdatedRowTrigger, newSpreadsheetTrigger, newWorksheetTrigger],
   auth: googleSheetsAuth,
-});
+})

@@ -1,6 +1,6 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { trueLayerCommon } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, createAction } from '@activepieces/pieces-framework'
+import { trueLayerCommon } from '../../common'
 
 export const listOperatingAccounts = createAction({
   auth: trueLayerCommon.auth,
@@ -19,4 +19,4 @@ export const listOperatingAccounts = createAction({
 
     return response.body
   },
-});
+})

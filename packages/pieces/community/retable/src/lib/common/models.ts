@@ -1,27 +1,27 @@
-import { Property } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework'
 export interface RetableWorkspace {
-  id: string;
-  name: string;
+  id: string
+  name: string
 }
 
 export interface RetableProject {
-  id: string;
-  name: string;
+  id: string
+  name: string
 }
 
 export interface RetableField {
-  column_id: string;
-  title: string;
-  type: RetableFieldType;
-  created_at?: string;
+  column_id: string
+  title: string
+  type: RetableFieldType
+  created_at?: string
 }
 export interface RetableTable {
-  id: string;
-  title: string;
-  description?: string;
-  columns: RetableField[];
-  project_id: string;
-  workspace_id: string;
+  id: string
+  title: string
+  description?: string
+  columns: RetableField[]
+  project_id: string
+  workspace_id: string
 }
 
 export type RetableFieldType =
@@ -45,7 +45,7 @@ export type RetableFieldType =
   | 'checkbox'
   | 'number'
   | 'rating'
-  | 'text';
+  | 'text'
 
 export const RetableFieldMapping = {
   text: Property.ShortText,
@@ -66,7 +66,7 @@ export const RetableFieldMapping = {
   calendar: Property.ShortText,
   checkbox: Property.Checkbox,
   number: Property.ShortText,
-};
+}
 
 export const RetableNotSupportedFields = [
   'attachment',
@@ -79,4 +79,4 @@ export const RetableNotSupportedFields = [
   'vote',
   'qr_code',
   'richtext',
-];
+]

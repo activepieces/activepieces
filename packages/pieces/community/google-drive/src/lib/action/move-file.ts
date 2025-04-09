@@ -1,8 +1,8 @@
-import { googleDriveAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { common } from '../common';
-import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { google } from 'googleapis'
+import { OAuth2Client } from 'googleapis-common'
+import { googleDriveAuth } from '../../'
+import { common } from '../common'
 
 export const moveFileAction = createAction({
   auth: googleDriveAuth,
@@ -19,19 +19,19 @@ export const moveFileAction = createAction({
     folderId: common.properties.parentFolder,
   },
   async run(context) {
-    const fileId = context.propsValue.fileId;
-    const folderId = context.propsValue.folderId;
+    const fileId = context.propsValue.fileId
+    const folderId = context.propsValue.folderId
 
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = new OAuth2Client()
+    authClient.setCredentials(context.auth)
 
-    const drive = google.drive({ version: 'v3', auth: authClient });
+    const drive = google.drive({ version: 'v3', auth: authClient })
 
     const file = await drive.files.get({
       fileId,
       supportsAllDrives: context.propsValue.include_team_drives,
       fields: 'id,parents',
-    });
+    })
 
     const response = await drive.files.update({
       fileId: fileId,
@@ -39,8 +39,8 @@ export const moveFileAction = createAction({
       removeParents: file.data.parents?.join(','),
       addParents: folderId,
       supportsAllDrives: context.propsValue.include_team_drives,
-    });
+    })
 
-    return response.data;
+    return response.data
   },
-});
+})

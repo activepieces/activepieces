@@ -1,24 +1,19 @@
-import { useQuery } from '@tanstack/react-query';
-import dayjs from 'dayjs';
-import { t } from 'i18next';
-import { InfoIcon, Network, Server, ServerOff } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query'
+import dayjs from 'dayjs'
+import { t } from 'i18next'
+import { InfoIcon, Network, Server, ServerOff } from 'lucide-react'
 
-import { CircularIcon } from '@/components/custom/circular-icon';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { DataTable } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { TableTitle } from '@/components/ui/table-title';
-import { workersApi } from '@/features/platform-admin-panel/lib/workers-api';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { cn, useTimeAgo } from '@/lib/utils';
-import {
-  ApEdition,
-  ApFlagId,
-  WorkerMachineStatus,
-  WorkerMachineWithStatus,
-} from '@activepieces/shared';
+import { CircularIcon } from '@/components/custom/circular-icon'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { DataTable } from '@/components/ui/data-table'
+import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header'
+import { TableTitle } from '@/components/ui/table-title'
+import { workersApi } from '@/features/platform-admin-panel/lib/workers-api'
+import { flagsHooks } from '@/hooks/flags-hooks'
+import { cn, useTimeAgo } from '@/lib/utils'
+import { ApEdition, ApFlagId, WorkerMachineStatus, WorkerMachineWithStatus } from '@activepieces/shared'
 
-import { WorkerConfigsModal } from './worker-configs-dialog';
+import { WorkerConfigsModal } from './worker-configs-dialog'
 
 const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
   {
@@ -67,33 +62,28 @@ const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
     },
     status: WorkerMachineStatus.ONLINE,
   },
-];
+]
 
 export default function WorkersPage() {
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const showDemoData = edition === ApEdition.CLOUD;
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION)
+  const showDemoData = edition === ApEdition.CLOUD
   const { data: workersData, isLoading } = useQuery<WorkerMachineWithStatus[]>({
     queryKey: ['worker-machines'],
     staleTime: 0,
     gcTime: 0,
     refetchInterval: 5000,
-    queryFn: async () =>
-      showDemoData ? DEMO_WORKERS_DATA : await workersApi.list(),
-  });
+    queryFn: async () => (showDemoData ? DEMO_WORKERS_DATA : await workersApi.list()),
+  })
 
   return (
     <div className="flex flex-col w-full gap-4">
-      <TableTitle description={t('Check the health of your worker machines')}>
-        {t('Workers Machine')}
-      </TableTitle>
+      <TableTitle description={t('Check the health of your worker machines')}>{t('Workers Machine')}</TableTitle>
       {showDemoData && (
         <Alert variant="default" className="mt-4">
           <div className="flex items-center gap-2">
             <InfoIcon size={16} />
             <AlertDescription>
-              {t(
-                'This is demo data. In a real environment, this would show your actual worker machines.',
-              )}
+              {t('This is demo data. In a real environment, this would show your actual worker machines.')}
             </AlertDescription>
           </div>
         </Alert>
@@ -108,25 +98,21 @@ export default function WorkersPage() {
         columns={[
           {
             accessorKey: 'information.ip',
-            header: ({ column }) => (
-              <DataTableColumnHeader column={column} title={t('IP Address')} />
-            ),
+            header: ({ column }) => <DataTableColumnHeader column={column} title={t('IP Address')} />,
             cell: ({ row }) => {
               return (
                 <div className="flex items-center">
                   <Network size={16} className="text-muted-foreground" />
                   <span className="ms-2">{row.original.information.ip}</span>
                 </div>
-              );
+              )
             },
           },
           {
             accessorKey: 'status',
-            header: ({ column }) => (
-              <DataTableColumnHeader column={column} title={t('Status')} />
-            ),
+            header: ({ column }) => <DataTableColumnHeader column={column} title={t('Status')} />,
             cell: ({ row }) => {
-              const status = row.original.status;
+              const status = row.original.status
               return (
                 <div
                   className={cn('flex gap-1 items-center p-2 capitalize', {
@@ -141,108 +127,78 @@ export default function WorkersPage() {
                   )}
                   {t(status.toLowerCase())}
                 </div>
-              );
+              )
             },
           },
           {
             accessorKey: 'information.cpuUsagePercentage',
 
-            header: ({ column }) => (
-              <DataTableColumnHeader column={column} title={t('CPU Usage')} />
-            ),
+            header: ({ column }) => <DataTableColumnHeader column={column} title={t('CPU Usage')} />,
             cell: ({ row }) => {
               return (
                 <div className="flex items-center">
-                  <CircularIcon
-                    value={row.original.information.cpuUsagePercentage}
-                  />
+                  <CircularIcon value={row.original.information.cpuUsagePercentage} />
                 </div>
-              );
+              )
             },
           },
 
           {
             accessorKey: 'information.diskInfo.percentage',
-            header: ({ column }) => (
-              <DataTableColumnHeader column={column} title={t('Disk Usage')} />
-            ),
+            header: ({ column }) => <DataTableColumnHeader column={column} title={t('Disk Usage')} />,
             cell: ({ row }) => {
-              const diskInfo = row.original.information.diskInfo;
-              const totalDisk = diskInfo.total;
-              const freeDisk = diskInfo.free;
-              const usedDisk = totalDisk - freeDisk;
-              const formattedUsedDisk = `${(usedDisk / 1024 ** 3).toFixed(
-                1,
-              )} GB`;
-              const formattedTotalDisk = `${(totalDisk / 1024 ** 3).toFixed(
-                1,
-              )} GB`;
+              const diskInfo = row.original.information.diskInfo
+              const totalDisk = diskInfo.total
+              const freeDisk = diskInfo.free
+              const usedDisk = totalDisk - freeDisk
+              const formattedUsedDisk = `${(usedDisk / 1024 ** 3).toFixed(1)} GB`
+              const formattedTotalDisk = `${(totalDisk / 1024 ** 3).toFixed(1)} GB`
 
               return (
                 <div className="flex items-center text-sm">
                   {formattedUsedDisk} / {formattedTotalDisk}
                 </div>
-              );
+              )
             },
           },
           {
             accessorKey: 'information.ramUsagePercentage',
-            header: ({ column }) => (
-              <DataTableColumnHeader column={column} title={t('RAM Usage')} />
-            ),
+            header: ({ column }) => <DataTableColumnHeader column={column} title={t('RAM Usage')} />,
             cell: ({ row }) => {
-              const ramUsage = row.original.information.ramUsagePercentage;
-              const totalRam =
-                row.original.information.totalAvailableRamInBytes;
-              const usedRam = (totalRam * (ramUsage / 100)) / 1024 ** 3;
-              const formattedUsedRam = `${usedRam.toFixed(1)} GB`;
-              const formattedTotalRam = `${(totalRam / 1024 ** 3).toFixed(
-                1,
-              )} GB`;
+              const ramUsage = row.original.information.ramUsagePercentage
+              const totalRam = row.original.information.totalAvailableRamInBytes
+              const usedRam = (totalRam * (ramUsage / 100)) / 1024 ** 3
+              const formattedUsedRam = `${usedRam.toFixed(1)} GB`
+              const formattedTotalRam = `${(totalRam / 1024 ** 3).toFixed(1)} GB`
 
               return (
                 <div className="flex items-center">
                   {formattedUsedRam} / {formattedTotalRam}
                 </div>
-              );
+              )
             },
           },
           {
             accessorKey: 'updated',
-            header: ({ column }) => (
-              <DataTableColumnHeader
-                column={column}
-                title={t('Last Contact')}
-              />
-            ),
+            header: ({ column }) => <DataTableColumnHeader column={column} title={t('Last Contact')} />,
             cell: ({ row }) => {
               // eslint-disable-next-line react-hooks/rules-of-hooks
-              const timeAgo = useTimeAgo(new Date(row.original.updated));
-              return <div className="text-start">{timeAgo}</div>;
+              const timeAgo = useTimeAgo(new Date(row.original.updated))
+              return <div className="text-start">{timeAgo}</div>
             },
           },
           {
             accessorKey: 'version',
-            header: ({ column }) => (
-              <DataTableColumnHeader column={column} title={t('Version')} />
-            ),
+            header: ({ column }) => <DataTableColumnHeader column={column} title={t('Version')} />,
             cell: ({ row }) => {
-              return (
-                <div className="text-start">
-                  {row.original.information.workerProps.version ?? ' <= 0.39.4'}
-                </div>
-              );
+              return <div className="text-start">{row.original.information.workerProps.version ?? ' <= 0.39.4'}</div>
             },
           },
         ]}
-        actions={[
-          (row) => (
-            <WorkerConfigsModal workerProps={row.information.workerProps} />
-          ),
-        ]}
+        actions={[(row) => <WorkerConfigsModal workerProps={row.information.workerProps} />]}
         page={{ data: workersData ?? [], previous: '', next: '' }}
         isLoading={isLoading}
       />
     </div>
-  );
+  )
 }

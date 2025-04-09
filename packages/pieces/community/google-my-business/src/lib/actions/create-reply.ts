@@ -1,10 +1,7 @@
-import {
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { googleAuth } from '../..';
-import { HttpMethod, httpClient, propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import { HttpMethod, httpClient, propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { googleAuth } from '../..'
 
 export const createReply = createAction({
   name: 'create-reply',
@@ -24,11 +21,11 @@ export const createReply = createAction({
   },
   auth: googleAuth,
   async run(ctx) {
-    const { reviewName, comment } = ctx.propsValue;
+    const { reviewName, comment } = ctx.propsValue
 
     await propsValidation.validateZod(ctx.propsValue, {
       reviewName: z.string().regex(/accounts\/.*\/locations\/.*\/reviews\/.*/),
-    });
+    })
 
     const response = await httpClient.sendRequest({
       url: ` https://mybusiness.googleapis.com/v4/${reviewName}/reply`,
@@ -39,7 +36,7 @@ export const createReply = createAction({
       body: {
         comment,
       },
-    });
-    return response;
+    })
+    return response
   },
-});
+})

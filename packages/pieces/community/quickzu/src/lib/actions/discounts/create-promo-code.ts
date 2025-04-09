@@ -1,16 +1,8 @@
-import {
-  DynamicPropsValue,
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { quickzuAuth } from '../../..';
-import { makeClient } from '../../common';
-import {
-  DiscountFilterType,
-  DiscountMethod,
-  DiscountValueType,
-} from '../../common/constants';
-import { ProductDiscountInput } from '../../common/types';
+import { DynamicPropsValue, Property, createAction } from '@activepieces/pieces-framework'
+import { quickzuAuth } from '../../..'
+import { makeClient } from '../../common'
+import { DiscountFilterType, DiscountMethod, DiscountValueType } from '../../common/constants'
+import { ProductDiscountInput } from '../../common/types'
 
 export const createPromoCodeAction = createAction({
   auth: quickzuAuth,
@@ -42,7 +34,7 @@ export const createPromoCodeAction = createAction({
           return {
             label: value.toLowerCase(),
             value: value,
-          };
+          }
         }),
       },
     }),
@@ -51,17 +43,17 @@ export const createPromoCodeAction = createAction({
       refreshers: ['filter_type'],
       required: true,
       props: async ({ auth, filter_type }) => {
-        if (!auth) return {};
-        if (!filter_type) return {};
+        if (!auth) return {}
+        if (!filter_type) return {}
 
-        const fields: DynamicPropsValue = {};
-        const discountFilterType = filter_type as unknown as DiscountFilterType;
+        const fields: DynamicPropsValue = {}
+        const discountFilterType = filter_type as unknown as DiscountFilterType
 
-        const client = makeClient(auth as unknown as string);
+        const client = makeClient(auth as unknown as string)
 
         switch (discountFilterType) {
           case DiscountFilterType.CATEGORIES: {
-            const res = await client.listCategories();
+            const res = await client.listCategories()
             fields['values'] = Property.StaticMultiSelectDropdown({
               displayName: 'Categories',
               required: true,
@@ -72,14 +64,14 @@ export const createPromoCodeAction = createAction({
                   return {
                     label: category.name,
                     value: category._id,
-                  };
+                  }
                 }),
               },
-            });
-            break;
+            })
+            break
           }
           case DiscountFilterType.PRODUCTS: {
-            const res = await client.listProducts();
+            const res = await client.listProducts()
             fields['values'] = Property.StaticMultiSelectDropdown({
               displayName: 'Products',
               required: true,
@@ -90,18 +82,18 @@ export const createPromoCodeAction = createAction({
                   return {
                     label: product.name,
                     value: product._id,
-                  };
+                  }
                 }),
               },
-            });
-            break;
+            })
+            break
           }
           case DiscountFilterType.ALL_PRODUCTS: {
-            fields['values'] = [];
-            break;
+            fields['values'] = []
+            break
           }
         }
-        return fields;
+        return fields
       },
     }),
     promo_code: Property.ShortText({
@@ -127,7 +119,7 @@ export const createPromoCodeAction = createAction({
             return {
               label: value.toLowerCase(),
               value: value,
-            };
+            }
           }),
       },
     }),
@@ -160,7 +152,7 @@ export const createPromoCodeAction = createAction({
       value,
       is_enabled,
       is_visible,
-    } = context.propsValue;
+    } = context.propsValue
 
     const input: ProductDiscountInput = {
       discount_method: DiscountMethod.SUB_TOTAL,
@@ -175,14 +167,14 @@ export const createPromoCodeAction = createAction({
       value,
       is_enabled,
       is_visible,
-    };
+    }
     if (filter_type === DiscountFilterType.CATEGORIES) {
-      input.selectedCategories = selectedFilterValues['values'];
+      input.selectedCategories = selectedFilterValues['values']
     } else if (filter_type === DiscountFilterType.PRODUCTS) {
-      input.selectedProducts = selectedFilterValues['values'];
+      input.selectedProducts = selectedFilterValues['values']
     }
 
-    const client = makeClient(context.auth);
-    return await client.createProductDiscount(input);
+    const client = makeClient(context.auth)
+    return await client.createProductDiscount(input)
   },
-});
+})

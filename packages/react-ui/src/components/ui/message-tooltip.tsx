@@ -1,11 +1,7 @@
-import { t } from 'i18next';
-import React from 'react';
+import { t } from 'i18next'
+import React from 'react'
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 export const MessageTooltip = React.forwardRef<
   HTMLButtonElement,
@@ -16,11 +12,9 @@ export const MessageTooltip = React.forwardRef<
       <TooltipTrigger ref={ref} asChild>
         <div>{children}</div>
       </TooltipTrigger>
-      {isDisabled && (
-        <TooltipContent side="bottom">{t(message)}</TooltipContent>
-      )}
+      {isDisabled && <TooltipContent side="bottom">{t(message)}</TooltipContent>}
     </Tooltip>
-  );
-});
+  )
+})
 
-MessageTooltip.displayName = 'MessageTooltip';
+MessageTooltip.displayName = 'MessageTooltip'

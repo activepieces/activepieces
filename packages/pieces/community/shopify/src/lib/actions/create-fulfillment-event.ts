@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { shopifyAuth } from '../..';
-import { createFulfillmentEvent } from '../common';
-import { ShopifyFulfillmentEventStatuses } from '../common/types';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { shopifyAuth } from '../..'
+import { createFulfillmentEvent } from '../common'
+import { ShopifyFulfillmentEventStatuses } from '../common/types'
 
 export const createFulfillmentEventAction = createAction({
   auth: shopifyAuth,
@@ -25,17 +25,13 @@ export const createFulfillmentEventAction = createAction({
       refreshers: [],
       options: async () => {
         return {
-          options: Object.values(ShopifyFulfillmentEventStatuses).map(
-            (status) => {
-              return {
-                label:
-                  status.charAt(0).toUpperCase() +
-                  status.slice(1).replaceAll('_', ' '),
-                value: status,
-              };
+          options: Object.values(ShopifyFulfillmentEventStatuses).map((status) => {
+            return {
+              label: status.charAt(0).toUpperCase() + status.slice(1).replaceAll('_', ' '),
+              value: status,
             }
-          ),
-        };
+          }),
+        }
       },
     }),
     message: Property.ShortText({
@@ -44,7 +40,7 @@ export const createFulfillmentEventAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { orderId, fulfillmentId, status, message } = propsValue;
+    const { orderId, fulfillmentId, status, message } = propsValue
 
     return await createFulfillmentEvent(
       fulfillmentId,
@@ -53,7 +49,7 @@ export const createFulfillmentEventAction = createAction({
         status,
         message,
       },
-      auth
-    );
+      auth,
+    )
   },
-});
+})

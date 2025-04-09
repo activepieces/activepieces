@@ -1,66 +1,45 @@
-import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { useMemo, useRef, useState } from 'react';
-import { SubmitHandler, useForm } from 'react-hook-form';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query'
+import { t } from 'i18next'
+import { useMemo, useRef, useState } from 'react'
+import { SubmitHandler, useForm } from 'react-hook-form'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { CheckEmailNote } from '@/features/authentication/components/check-email-note';
-import { PasswordValidator } from '@/features/authentication/components/password-validator';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { HttpError, api } from '@/lib/api';
-import { authenticationApi } from '@/lib/authentication-api';
-import { authenticationSession } from '@/lib/authentication-session';
-import { cn, formatUtils } from '@/lib/utils';
-import { OtpType } from '@activepieces/ee-shared';
-import {
-  ApEdition,
-  ApFlagId,
-  AuthenticationResponse,
-  ErrorCode,
-  isNil,
-  SignUpRequest,
-} from '@activepieces/shared';
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { CheckEmailNote } from '@/features/authentication/components/check-email-note'
+import { PasswordValidator } from '@/features/authentication/components/password-validator'
+import { flagsHooks } from '@/hooks/flags-hooks'
+import { HttpError, api } from '@/lib/api'
+import { authenticationApi } from '@/lib/authentication-api'
+import { authenticationSession } from '@/lib/authentication-session'
+import { cn, formatUtils } from '@/lib/utils'
+import { OtpType } from '@activepieces/ee-shared'
+import { ApEdition, ApFlagId, AuthenticationResponse, ErrorCode, SignUpRequest, isNil } from '@activepieces/shared'
 
-import { passwordValidation } from '../lib/password-validation-utils';
+import { passwordValidation } from '../lib/password-validation-utils'
 
 type SignUpSchema = {
-  email: string;
-  firstName: string;
-  lastName: string;
-  password: string;
-  newsLetter: boolean;
-};
+  email: string
+  firstName: string
+  lastName: string
+  password: string
+  newsLetter: boolean
+}
 
 const SignUpForm = ({
   showCheckYourEmailNote,
   setShowCheckYourEmailNote,
 }: {
-  showCheckYourEmailNote: boolean;
-  setShowCheckYourEmailNote: (value: boolean) => void;
+  showCheckYourEmailNote: boolean
+  setShowCheckYourEmailNote: (value: boolean) => void
 }) => {
-  const [searchParams] = useSearchParams();
-  const { data: termsOfServiceUrl } = flagsHooks.useFlag<string>(
-    ApFlagId.TERMS_OF_SERVICE_URL,
-  );
-  const { data: privacyPolicyUrl } = flagsHooks.useFlag<string>(
-    ApFlagId.PRIVACY_POLICY_URL,
-  );
+  const [searchParams] = useSearchParams()
+  const { data: termsOfServiceUrl } = flagsHooks.useFlag<string>(ApFlagId.TERMS_OF_SERVICE_URL)
+  const { data: privacyPolicyUrl } = flagsHooks.useFlag<string>(ApFlagId.PRIVACY_POLICY_URL)
 
   const form = useForm<SignUpSchema>({
     defaultValues: {
@@ -68,122 +47,108 @@ const SignUpForm = ({
       password: '',
       email: searchParams.get('email') || '',
     },
-  });
-  const websiteName = flagsHooks.useWebsiteBranding()?.websiteName;
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  })
+  const websiteName = flagsHooks.useWebsiteBranding()?.websiteName
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION)
   const showNewsLetterCheckbox = useMemo(() => {
     if (!edition || !websiteName) {
-      return false;
+      return false
     }
     switch (edition) {
       case ApEdition.CLOUD: {
-        if (
-          typeof websiteName === 'string' &&
-          websiteName.toLowerCase() === 'activepieces'
-        ) {
-          form.setValue('newsLetter', true);
-          return true;
+        if (typeof websiteName === 'string' && websiteName.toLowerCase() === 'activepieces') {
+          form.setValue('newsLetter', true)
+          return true
         }
-        return false;
+        return false
       }
       case ApEdition.ENTERPRISE:
-        return false;
+        return false
       case ApEdition.COMMUNITY: {
-        form.setValue('newsLetter', true);
-        return true;
+        form.setValue('newsLetter', true)
+        return true
       }
     }
-  }, [edition, websiteName]);
-  const navigate = useNavigate();
-  const from = searchParams.get('from');
+  }, [edition, websiteName])
+  const navigate = useNavigate()
+  const from = searchParams.get('from')
 
-  const { mutate, isPending } = useMutation<
-    AuthenticationResponse,
-    HttpError,
-    SignUpRequest
-  >({
+  const { mutate, isPending } = useMutation<AuthenticationResponse, HttpError, SignUpRequest>({
     mutationFn: authenticationApi.signUp,
     onSuccess: (data) => {
       if (data.verified) {
-        authenticationSession.saveResponse(data);
-        navigate(from || '/flows');
+        authenticationSession.saveResponse(data)
+        navigate(from || '/flows')
       } else {
-        setShowCheckYourEmailNote(true);
+        setShowCheckYourEmailNote(true)
       }
     },
     onError: (error) => {
       if (api.isError(error)) {
-        const errorCode: ErrorCode | undefined = (
-          error.response?.data as { code: ErrorCode }
-        )?.code;
+        const errorCode: ErrorCode | undefined = (error.response?.data as { code: ErrorCode })?.code
         if (isNil(errorCode)) {
           form.setError('root.serverError', {
             message: t('Something went wrong, please try again later'),
-          });
-          return;
+          })
+          return
         }
         switch (errorCode) {
           case ErrorCode.EMAIL_IS_NOT_VERIFIED: {
-            setShowCheckYourEmailNote(true);
-            break;
+            setShowCheckYourEmailNote(true)
+            break
           }
           case ErrorCode.INVITATION_ONLY_SIGN_UP: {
             form.setError('root.serverError', {
-              message: t(
-                'Sign up is restricted. You need an invitation to join. Please contact the administrator.',
-              ),
-            });
-            break;
+              message: t('Sign up is restricted. You need an invitation to join. Please contact the administrator.'),
+            })
+            break
           }
           case ErrorCode.EXISTING_USER: {
             form.setError('root.serverError', {
               message: t('Email is already used'),
-            });
-            break;
+            })
+            break
           }
           case ErrorCode.EMAIL_AUTH_DISABLED: {
             form.setError('root.serverError', {
               message: t('Email authentication is disabled'),
-            });
-            break;
+            })
+            break
           }
           case ErrorCode.DOMAIN_NOT_ALLOWED: {
             form.setError('root.serverError', {
               message: t('Email domain is disallowed'),
-            });
-            break;
+            })
+            break
           }
           default: {
             form.setError('root.serverError', {
               message: t('Something went wrong, please try again later'),
-            });
-            break;
+            })
+            break
           }
         }
       }
     },
-  });
+  })
 
   const onSubmit: SubmitHandler<SignUpSchema> = (data) => {
     form.setError('root.serverError', {
       message: undefined,
-    });
+    })
     mutate({
       ...data,
       email: data.email.trim().toLowerCase(),
       trackEvents: true,
-    });
-  };
+    })
+  }
 
-  const [isPasswordFocused, setPasswordFocused] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [isPasswordFocused, setPasswordFocused] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   return showCheckYourEmailNote ? (
     <div className="pt-6">
-      <CheckEmailNote
-        email={form.getValues().email.trim().toLowerCase()}
-        type={OtpType.EMAIL_VERIFICATION}
-      />
+      <CheckEmailNote email={form.getValues().email.trim().toLowerCase()} type={OtpType.EMAIL_VERIFICATION} />
     </div>
   ) : (
     <>
@@ -199,14 +164,7 @@ const SignUpForm = ({
               render={({ field }) => (
                 <FormItem className="w-full grid space-y-2">
                   <Label htmlFor="firstName">{t('First Name')}</Label>
-                  <Input
-                    {...field}
-                    required
-                    id="firstName"
-                    type="text"
-                    placeholder={'John'}
-                    className="rounded-sm"
-                  />
+                  <Input {...field} required id="firstName" type="text" placeholder={'John'} className="rounded-sm" />
                   <FormMessage />
                 </FormItem>
               )}
@@ -220,14 +178,7 @@ const SignUpForm = ({
               render={({ field }) => (
                 <FormItem className="w-full grid space-y-2">
                   <Label htmlFor="lastName">{t('Last Name')}</Label>
-                  <Input
-                    {...field}
-                    required
-                    id="lastName"
-                    type="text"
-                    placeholder={'Doe'}
-                    className="rounded-sm"
-                  />
+                  <Input {...field} required id="lastName" type="text" placeholder={'Doe'} className="rounded-sm" />
                   <FormMessage />
                 </FormItem>
               )}
@@ -238,8 +189,7 @@ const SignUpForm = ({
             name="email"
             rules={{
               required: t('Email is required'),
-              validate: (email: string) =>
-                formatUtils.emailRegex.test(email) || t('Email is invalid'),
+              validate: (email: string) => formatUtils.emailRegex.test(email) || t('Email is invalid'),
             }}
             render={({ field }) => (
               <FormItem className="grid space-y-2">
@@ -268,8 +218,8 @@ const SignUpForm = ({
                 className="grid space-y-2"
                 onClick={() => inputRef?.current?.focus()}
                 onFocus={() => {
-                  setPasswordFocused(true);
-                  setTimeout(() => inputRef?.current?.focus());
+                  setPasswordFocused(true)
+                  setTimeout(() => inputRef?.current?.focus())
                 }}
                 onBlur={() => setPasswordFocused(false)}
               >
@@ -309,9 +259,7 @@ const SignUpForm = ({
                       onCheckedChange={field.onChange}
                     ></Checkbox>
                   </FormControl>
-                  <Label htmlFor="newsLetter">
-                    {t(`Receive updates and newsletters from activepieces`)}
-                  </Label>
+                  <Label htmlFor="newsLetter">{t(`Receive updates and newsletters from activepieces`)}</Label>
                   <FormMessage />
                 </FormItem>
               )}
@@ -319,14 +267,9 @@ const SignUpForm = ({
           )}
 
           {form?.formState?.errors?.root?.serverError && (
-            <FormMessage>
-              {form.formState.errors.root.serverError.message}
-            </FormMessage>
+            <FormMessage>{form.formState.errors.root.serverError.message}</FormMessage>
           )}
-          <Button
-            loading={isPending}
-            onClick={(e) => form.handleSubmit(onSubmit)(e)}
-          >
+          <Button loading={isPending} onClick={(e) => form.handleSubmit(onSubmit)(e)}>
             {t('Sign up')}
           </Button>
         </form>
@@ -338,8 +281,7 @@ const SignUpForm = ({
             'mt-4': termsOfServiceUrl || privacyPolicyUrl,
           })}
         >
-          {(termsOfServiceUrl || privacyPolicyUrl) &&
-            t('By creating an account, you agree to our')}
+          {(termsOfServiceUrl || privacyPolicyUrl) && t('By creating an account, you agree to our')}
           {termsOfServiceUrl && (
             <Link
               to={termsOfServiceUrl || ''}
@@ -363,9 +305,9 @@ const SignUpForm = ({
         </div>
       )}
     </>
-  );
-};
+  )
+}
 
-SignUpForm.displayName = 'SignUp';
+SignUpForm.displayName = 'SignUp'
 
-export { SignUpForm };
+export { SignUpForm }

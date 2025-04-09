@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { discourseAuth } from '../../index';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { discourseAuth } from '../../index'
 
 export const createTopic = createAction({
   auth: discourseAuth,
@@ -31,28 +31,26 @@ export const createTopic = createAction({
             'Api-Key': auth.api_key,
             'Api-Username': auth.api_username,
           },
-        });
-        const options = response.body['category_list']['categories'].map(
-          (res: { name: any; id: any }) => {
-            return {
-              label: res.name,
-              value: res.id,
-            };
+        })
+        const options = response.body['category_list']['categories'].map((res: { name: any; id: any }) => {
+          return {
+            label: res.name,
+            value: res.id,
           }
-        );
+        })
 
         return {
           options: options,
           disabled: false,
-        };
+        }
       },
       refreshers: [],
     }),
   },
   async run(context) {
-    const { title, raw, category } = context.propsValue;
+    const { title, raw, category } = context.propsValue
 
-    console.log('new post action');
+    console.log('new post action')
 
     return await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -66,6 +64,6 @@ export const createTopic = createAction({
         raw: raw,
         category: category,
       },
-    });
+    })
   },
-});
+})

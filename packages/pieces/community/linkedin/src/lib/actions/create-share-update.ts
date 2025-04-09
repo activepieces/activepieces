@@ -1,13 +1,8 @@
-import { createAction } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { Image, linkedinCommon, santizeText } from '../common';
-import jwt, { JwtPayload } from 'jsonwebtoken';
-import { linkedinAuth } from '../..';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import jwt, { JwtPayload } from 'jsonwebtoken'
+import { linkedinAuth } from '../..'
+import { Image, linkedinCommon, santizeText } from '../common'
 
 export const createShareUpdate = createAction({
   auth: linkedinAuth,
@@ -24,19 +19,13 @@ export const createShareUpdate = createAction({
   },
 
   run: async (context) => {
-    
-    const token = context.auth.data.id_token;
-    const decoded: JwtPayload = jwt.decode(token) as JwtPayload;
-    const imageUrl = context.propsValue.imageUrl;
-    const { text, link, linkDescription, linkTitle, visibility } =
-      context.propsValue;
-    let image: Image | undefined;
+    const token = context.auth.data.id_token
+    const decoded: JwtPayload = jwt.decode(token) as JwtPayload
+    const imageUrl = context.propsValue.imageUrl
+    const { text, link, linkDescription, linkTitle, visibility } = context.propsValue
+    let image: Image | undefined
     if (imageUrl) {
-      image = await linkedinCommon.uploadImage(
-        context.auth.access_token,
-        `person:${decoded.sub}`,
-        imageUrl
-      );
+      image = await linkedinCommon.uploadImage(context.auth.access_token, `person:${decoded.sub}`, imageUrl)
     }
 
     const requestBody = linkedinCommon.generatePostRequestBody({
@@ -47,8 +36,8 @@ export const createShareUpdate = createAction({
       linkTitle,
       visibility,
       image,
-    });
-    const createPostHeaders: any = linkedinCommon.linkedinHeaders;
+    })
+    const createPostHeaders: any = linkedinCommon.linkedinHeaders
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -59,11 +48,11 @@ export const createShareUpdate = createAction({
       },
       headers: createPostHeaders,
       body: requestBody,
-    };
+    }
 
-    const response = await httpClient.sendRequest(request);
+    const response = await httpClient.sendRequest(request)
     return {
       success: true,
-    };
+    }
   },
-});
+})

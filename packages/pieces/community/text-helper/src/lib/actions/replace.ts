@@ -1,8 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework'
 
 export const replace = createAction({
-  description:
-    'Replaces all instances of any word, character or phrase in text, with another.',
+  description: 'Replaces all instances of any word, character or phrase in text, with another.',
   displayName: 'Replace',
   name: 'replace',
   errorHandlingOptions: {
@@ -36,16 +35,10 @@ export const replace = createAction({
   },
   run: async (ctx) => {
     if (ctx.propsValue.replaceOnlyFirst) {
-      const expression = RegExp(ctx.propsValue.searchValue);
-      return ctx.propsValue.text.replace(
-        expression,
-        ctx.propsValue.replaceValue || ''
-      );
+      const expression = RegExp(ctx.propsValue.searchValue)
+      return ctx.propsValue.text.replace(expression, ctx.propsValue.replaceValue || '')
     }
-    const expression = RegExp(ctx.propsValue.searchValue, 'g');
-    return ctx.propsValue.text.replaceAll(
-      expression,
-      ctx.propsValue.replaceValue || ''
-    );
+    const expression = RegExp(ctx.propsValue.searchValue, 'g')
+    return ctx.propsValue.text.replaceAll(expression, ctx.propsValue.replaceValue || '')
   },
-});
+})

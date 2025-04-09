@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { createDiscount } from '../api';
-import { CartloomAuthType, cartloomAuth } from '../auth';
-import { buildProductsDropdown } from '../props';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { createDiscount } from '../api'
+import { CartloomAuthType, cartloomAuth } from '../auth'
+import { buildProductsDropdown } from '../props'
 
 export const createDiscountAction = createAction({
   name: 'create_discount',
@@ -98,19 +98,16 @@ export const createDiscountAction = createAction({
       description: 'Select the products to apply the discount to',
       required: false,
       refreshers: [],
-      options: async ({ auth }) =>
-        await buildProductsDropdown(auth as CartloomAuthType),
+      options: async ({ auth }) => await buildProductsDropdown(auth as CartloomAuthType),
     }),
     targetAmount: Property.Number({
       displayName: 'Target Amount',
-      description:
-        'The target amount for the discount when the target is set to Total',
+      description: 'The target amount for the discount when the target is set to Total',
       required: false,
     }),
     targetQuantity: Property.Number({
       displayName: 'Target Quantity',
-      description:
-        'The target quantity for the discount when the target is set to All or Products',
+      description: 'The target quantity for the discount when the target is set to All or Products',
       required: false,
       defaultValue: 0,
     }),
@@ -138,6 +135,6 @@ export const createDiscountAction = createAction({
       target_amount: context.propsValue.targetAmount,
       target_quantity: context.propsValue.targetQuantity,
       allowance: context.propsValue.allowance,
-    });
+    })
   },
-});
+})

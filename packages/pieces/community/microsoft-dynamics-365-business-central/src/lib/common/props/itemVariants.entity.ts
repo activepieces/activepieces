@@ -1,4 +1,4 @@
-import { EntityProp } from '../types';
+import { EntityProp } from '../types'
 
 export const itemVariantsEntityProps: EntityProp[] = [
   {
@@ -25,4 +25,4 @@ export const itemVariantsEntityProps: EntityProp[] = [
     type: 'text',
     isRequired: false,
   },
-];
+]

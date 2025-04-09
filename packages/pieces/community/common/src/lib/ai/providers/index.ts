@@ -1,15 +1,11 @@
-import { Property } from '@activepieces/pieces-framework';
-import {
-  AiProviderWithoutSensitiveData,
-  isNil,
-  SeekPage,
-} from '@activepieces/shared';
-import { Static, Type } from '@sinclair/typebox';
-import { httpClient, HttpMethod } from '../../http';
-import { anthropic } from './anthropic';
-import { openai, openaiModels } from './openai';
-import { replicate, replicateModels } from './replicate';
-import { authHeader, hasMapper, model } from './utils';
+import { Property } from '@activepieces/pieces-framework'
+import { AiProviderWithoutSensitiveData, SeekPage, isNil } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
+import { HttpMethod, httpClient } from '../../http'
+import { anthropic } from './anthropic'
+import { openai, openaiModels } from './openai'
+import { replicate, replicateModels } from './replicate'
+import { authHeader, hasMapper, model } from './utils'
 
 export const AI_PROVIDERS_MAKRDOWN = {
   openai: `Follow these instructions to get your OpenAI API Key:
@@ -29,7 +25,7 @@ It is strongly recommended that you add your credit card information to your Ope
 1. Visit the following website: https://replicate.com/account/api-tokens.
 2. Once on the website, locate and click on the option to obtain your Replicate API Key.
 `,
-};
+}
 
 export const AI_PROVIDERS = [
   {
@@ -74,10 +70,10 @@ export const AI_PROVIDERS = [
         supported: ['text', 'function'],
       }),
       model({
-        label:'claude-3-7-sonnet',
-        value:'claude-3-7-sonnet-latest',
-        supported:['text','function']
-      })
+        label: 'claude-3-7-sonnet',
+        value: 'claude-3-7-sonnet-latest',
+        supported: ['text', 'function'],
+      }),
     ],
     auth: authHeader({ name: 'x-api-key', bearer: false }),
     factory: anthropic,
@@ -93,42 +89,36 @@ export const AI_PROVIDERS = [
     factory: replicate,
     instructionsMarkdown: AI_PROVIDERS_MAKRDOWN.replicate,
   },
-];
+]
 
-export const aiProps = (
-  supported: 'text' | 'image' | 'function' | 'moderation'
-) => ({
+export const aiProps = (supported: 'text' | 'image' | 'function' | 'moderation') => ({
   provider: Property.Dropdown<AiProvider, true>({
     displayName: 'Provider',
     required: true,
     defaultValue: 'openai',
     refreshers: [],
     options: async (_, ctx) => {
-      const providers = await httpClient.sendRequest<
-        SeekPage<AiProviderWithoutSensitiveData>
-      >({
+      const providers = await httpClient.sendRequest<SeekPage<AiProviderWithoutSensitiveData>>({
         method: HttpMethod.GET,
         url: `${ctx.server.apiUrl}v1/ai-providers`,
         headers: {
           Authorization: `Bearer ${ctx.server.token}`,
         },
-      });
+      })
       if (providers.body.data.length === 0) {
         return {
           disabled: true,
           options: [],
           placeholder: 'No AI providers configured by the admin.',
-        };
+        }
       }
 
       const providersWithMetadata = providers.body.data.flatMap((p) => {
         const providerMetadata = AI_PROVIDERS.find(
-          (meta) =>
-            meta.value === p.provider &&
-            meta.models.some((m) => m.supported.includes(supported))
-        );
+          (meta) => meta.value === p.provider && meta.models.some((m) => m.supported.includes(supported)),
+        )
         if (isNil(providerMetadata)) {
-          return [];
+          return []
         }
         return [
           {
@@ -137,14 +127,14 @@ export const aiProps = (
             label: providerMetadata.label,
             models: providerMetadata.models,
           },
-        ];
-      });
+        ]
+      })
 
       return {
         placeholder: 'Select AI Provider',
         disabled: false,
         options: providersWithMetadata,
-      };
+      }
     },
   }),
   model: Property.Dropdown<string, true>({
@@ -159,15 +149,15 @@ export const aiProps = (
 
           options: [],
           placeholder: 'Select AI Provider',
-        };
+        }
       }
-      const models = AI_PROVIDERS.find(
-        (p) => p.value === provider
-      )?.models.filter((m) => m.supported.includes(supported));
+      const models = AI_PROVIDERS.find((p) => p.value === provider)?.models.filter((m) =>
+        m.supported.includes(supported),
+      )
       return {
         disabled: isNil(models),
         options: models ?? [],
-      };
+      }
     },
   }),
   advancedOptions: Property.DynamicProperties<false>({
@@ -175,23 +165,21 @@ export const aiProps = (
     required: false,
     refreshers: ['provider', 'model'],
     props: async ({ model, provider }) => {
-      const modelMetadata = AI_PROVIDERS.find(
-        (p) => p.value === (provider as unknown as string)
-      )?.models.find((m) => m.value === (model as unknown as string));
+      const modelMetadata = AI_PROVIDERS.find((p) => p.value === (provider as unknown as string))?.models.find(
+        (m) => m.value === (model as unknown as string),
+      )
       if (isNil(modelMetadata) || !hasMapper(modelMetadata)) {
-        return {};
+        return {}
       }
-      return modelMetadata.mapper.advancedOptions ?? {};
+      return modelMetadata.mapper.advancedOptions ?? {}
     },
   }),
-});
+})
 
-export type AiProviderMetadata = (typeof AI_PROVIDERS)[number];
+export type AiProviderMetadata = (typeof AI_PROVIDERS)[number]
 
-export const AiProvider = Type.Union(
-  AI_PROVIDERS.map((p) => Type.Literal(p.value))
-);
+export const AiProvider = Type.Union(AI_PROVIDERS.map((p) => Type.Literal(p.value)))
 
-export type AiProvider = Static<typeof AiProvider>;
+export type AiProvider = Static<typeof AiProvider>
 
-export * from './utils';
+export * from './utils'

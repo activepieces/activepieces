@@ -1,7 +1,7 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { assemblyaiAuth } from '../../auth';
-import { getAssemblyAIClient } from '../../client';
-import { lemurRequestIdProp } from './shared-props';
+import { createAction } from '@activepieces/pieces-framework'
+import { assemblyaiAuth } from '../../auth'
+import { getAssemblyAIClient } from '../../client'
+import { lemurRequestIdProp } from './shared-props'
 
 export const getLemurResponse = createAction({
   name: 'getLemurResponse',
@@ -13,10 +13,8 @@ export const getLemurResponse = createAction({
     request_id: lemurRequestIdProp,
   },
   async run(context) {
-    const client = getAssemblyAIClient(context);
-    const lemurResponse = await client.lemur.getResponse(
-      context.propsValue.request_id
-    );
-    return lemurResponse;
+    const client = getAssemblyAIClient(context)
+    const lemurResponse = await client.lemur.getResponse(context.propsValue.request_id)
+    return lemurResponse
   },
-});
+})

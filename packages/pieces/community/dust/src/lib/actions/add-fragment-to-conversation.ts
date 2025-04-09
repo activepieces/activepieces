@@ -1,12 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { dustAuth } from '../..';
-import { DUST_BASE_URL } from '../common';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import mime from 'mime-types';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import mime from 'mime-types'
+import { dustAuth } from '../..'
+import { DUST_BASE_URL } from '../common'
 
 export const addFragmentToConversation = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -28,9 +24,8 @@ export const addFragmentToConversation = createAction({
   },
   async run({ auth, propsValue }) {
     const mimeType = propsValue.fragmentName
-      ? mime.lookup(propsValue.fragmentName) ||
-        mime.lookup(propsValue.fragment.filename)
-      : mime.lookup(propsValue.fragment.filename);
+      ? mime.lookup(propsValue.fragmentName) || mime.lookup(propsValue.fragment.filename)
+      : mime.lookup(propsValue.fragment.filename)
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -47,9 +42,9 @@ export const addFragmentToConversation = createAction({
           context: null,
           url: null,
         },
-        (key, value) => (typeof value === 'undefined' ? null : value)
+        (key, value) => (typeof value === 'undefined' ? null : value),
       ),
-    };
-    return (await httpClient.sendRequest(request)).body;
+    }
+    return (await httpClient.sendRequest(request)).body
   },
-});
+})

@@ -1,28 +1,24 @@
-import * as React from 'react';
-import TextareaAutosize from 'react-textarea-autosize';
+import * as React from 'react'
+import TextareaAutosize from 'react-textarea-autosize'
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils'
 
-type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>;
-type Style = Omit<
-  NonNullable<TextareaProps['style']>,
-  'maxHeight' | 'minHeight'
-> & {
-  height?: number;
-};
+type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>
+type Style = Omit<NonNullable<TextareaProps['style']>, 'maxHeight' | 'minHeight'> & {
+  height?: number
+}
 type TextareaHeightChangeMeta = {
-  rowHeight: number;
-};
+  rowHeight: number
+}
 interface TextareaAutosizeProps extends Omit<TextareaProps, 'style'> {
-  maxRows?: number;
-  minRows?: number;
-  onHeightChange?: (height: number, meta: TextareaHeightChangeMeta) => void;
-  cacheMeasurements?: boolean;
-  style?: Style;
+  maxRows?: number
+  minRows?: number
+  onHeightChange?: (height: number, meta: TextareaHeightChangeMeta) => void
+  cacheMeasurements?: boolean
+  style?: Style
 }
 
-export type ResizableTextareaProps = TextareaAutosizeProps &
-  React.RefAttributes<HTMLTextAreaElement>;
+export type ResizableTextareaProps = TextareaAutosizeProps & React.RefAttributes<HTMLTextAreaElement>
 const Textarea = React.forwardRef<
   HTMLTextAreaElement,
   TextareaAutosizeProps & React.RefAttributes<HTMLTextAreaElement>
@@ -39,8 +35,8 @@ const Textarea = React.forwardRef<
       ref={ref}
       {...props}
     />
-  );
-});
-Textarea.displayName = 'Textarea';
+  )
+})
+Textarea.displayName = 'Textarea'
 
-export { Textarea };
+export { Textarea }

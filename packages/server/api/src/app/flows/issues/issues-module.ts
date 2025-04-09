@@ -3,6 +3,6 @@ import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/author
 import { issuesController } from './issues-controller'
 
 export const issuesModule: FastifyPluginAsyncTypebox = async (app) => {
-    app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-    await app.register(issuesController, { prefix: '/v1/issues' })
+  app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
+  await app.register(issuesController, { prefix: '/v1/issues' })
 }

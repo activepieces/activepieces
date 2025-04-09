@@ -1,4 +1,4 @@
-import { frameRegisterTrigger } from './register-trigger';
+import { frameRegisterTrigger } from './register-trigger'
 
 export const triggers = [
   {
@@ -64,4 +64,4 @@ export const triggers = [
       url: 'string',
     },
   },
-].map((props) => frameRegisterTrigger(props));
+].map((props) => frameRegisterTrigger(props))

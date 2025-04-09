@@ -1,7 +1,7 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework'
 // eslint-disable-next-line @nx/enforce-module-boundaries
-import { Mailchain } from '@mailchain/sdk';
-import { mailchainCommon } from '../common/common';
+import { Mailchain } from '@mailchain/sdk'
+import { mailchainCommon } from '../common/common'
 
 export const sendEmail = createAction({
   name: 'sendEmail',
@@ -17,13 +17,12 @@ export const sendEmail = createAction({
   },
   async run({ auth, propsValue: { to, subject, content } }) {
     try {
-      const secretRecoveryPhrase = auth;
+      const secretRecoveryPhrase = auth
 
-      const mailchain =
-        Mailchain.fromSecretRecoveryPhrase(secretRecoveryPhrase);
+      const mailchain = Mailchain.fromSecretRecoveryPhrase(secretRecoveryPhrase)
 
-      const user = await mailchain.user();
-      console.log(`username: ${user.username}, address: ${user.address}`);
+      const user = await mailchain.user()
+      console.log(`username: ${user.username}, address: ${user.address}`)
 
       const { data, error } = await mailchain.sendMail({
         from: user.address, // sender address
@@ -33,15 +32,15 @@ export const sendEmail = createAction({
           text: content,
           html: content,
         },
-      });
+      })
       if (error) {
-        console.error('Error sending email (mailchain)', error);
-        throw error;
+        console.error('Error sending email (mailchain)', error)
+        throw error
       }
-      return data;
+      return data
     } catch (error) {
-      console.error('Error sending email (mailchain)', error);
-      throw error;
+      console.error('Error sending email (mailchain)', error)
+      throw error
     }
   },
-});
+})

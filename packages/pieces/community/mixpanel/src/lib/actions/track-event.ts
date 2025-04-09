@@ -1,12 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { mixpanelAuth } from '../../index';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { mixpanelAuth } from '../../index'
 
-const API_URL = 'https://api.mixpanel.com';
+const API_URL = 'https://api.mixpanel.com'
 
 export const trackEvent = createAction({
   name: 'track_event',
@@ -16,8 +12,7 @@ export const trackEvent = createAction({
   props: {
     event: Property.ShortText({
       displayName: 'Event',
-      description:
-        "A name for this Event. For example, 'Brand Mentioned in Tweet' or 'Payment Made'.",
+      description: "A name for this Event. For example, 'Brand Mentioned in Tweet' or 'Payment Made'.",
       required: true,
     }),
     distinct_id: Property.ShortText({
@@ -34,8 +29,8 @@ export const trackEvent = createAction({
     }),
   },
   async run(context) {
-    const projectToken = context.auth;
-    const { event, distinct_id, event_properties } = context.propsValue;
+    const projectToken = context.auth
+    const { event, distinct_id, event_properties } = context.propsValue
 
     const eventPayload = [
       {
@@ -46,7 +41,7 @@ export const trackEvent = createAction({
           ...event_properties,
         },
       },
-    ];
+    ]
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -60,8 +55,8 @@ export const trackEvent = createAction({
         username: projectToken,
         password: '',
       },
-    });
+    })
 
-    return response;
+    return response
   },
-});
+})

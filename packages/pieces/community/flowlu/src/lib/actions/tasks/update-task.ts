@@ -1,11 +1,8 @@
-import {
-  PiecePropValueSchema, Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
-import { flowluAuth } from '../../../';
-import { flowluCommon, makeClient } from '../../common';
-import { flowluProps } from '../../common/props';
+import { PiecePropValueSchema, Property, createAction } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { flowluAuth } from '../../../'
+import { flowluCommon, makeClient } from '../../common'
+import { flowluProps } from '../../common/props'
 
 export const updateTaskAction = createAction({
   auth: flowluAuth,
@@ -21,17 +18,13 @@ export const updateTaskAction = createAction({
     ...flowluProps.task,
   },
   async run(context) {
-    const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof flowluAuth>
-    );
+    const client = makeClient(context.auth as PiecePropValueSchema<typeof flowluAuth>)
     return await client.updateTask(context.propsValue.task_id!, {
       name: context.propsValue.name,
       description: context.propsValue.description,
       priority: context.propsValue.priority,
       plan_start_date: context.propsValue.plan_start_date
-        ? dayjs(context.propsValue.plan_start_date).format(
-          'YYYY-MM-DD HH:mm:ss'
-        )
+        ? dayjs(context.propsValue.plan_start_date).format('YYYY-MM-DD HH:mm:ss')
         : undefined,
       deadline: context.propsValue.deadline
         ? dayjs(context.propsValue.deadline).format('YYYY-MM-DD HH:mm:ss')
@@ -43,6 +36,6 @@ export const updateTaskAction = createAction({
       owner_id: context.propsValue.owner_id,
       workflow_id: context.propsValue.workflow_id,
       workflow_stage_id: context.propsValue.workflow_stage_id,
-    });
+    })
   },
-});
+})

@@ -1,42 +1,27 @@
-import { APITableAuth } from '../../index';
-import {
-  PiecePropValueSchema,
-  TriggerStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import { APITableCommon, makeClient } from '../common';
-import dayjs from 'dayjs';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common'
+import { PiecePropValueSchema, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { APITableAuth } from '../../index'
+import { APITableCommon, makeClient } from '../common'
 
-const polling: Polling<
-  PiecePropValueSchema<typeof APITableAuth>,
-  { datasheet_id: string }
-> = {
+const polling: Polling<PiecePropValueSchema<typeof APITableAuth>, { datasheet_id: string }> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue: { datasheet_id }, lastFetchEpochMS }) => {
-    const client = makeClient(
-      auth as PiecePropValueSchema<typeof APITableAuth>
-    );
+    const client = makeClient(auth as PiecePropValueSchema<typeof APITableAuth>)
     const records = await client.listRecords(datasheet_id as string, {
       filterByFormula: `CREATED_TIME() > ${
-        lastFetchEpochMS === 0
-          ? dayjs().subtract(1, 'day').valueOf()
-          : lastFetchEpochMS
+        lastFetchEpochMS === 0 ? dayjs().subtract(1, 'day').valueOf() : lastFetchEpochMS
       }`,
-    });
+    })
 
     return records.data.records.map((record) => {
       return {
         epochMilliSeconds: record.createdAt,
         data: record,
-      };
-    });
+      }
+    })
   },
-};
+}
 
 export const newRecordTrigger = createTrigger({
   auth: APITableAuth,
@@ -64,21 +49,21 @@ export const newRecordTrigger = createTrigger({
       auth: context.auth,
       propsValue: { datasheet_id: context.propsValue.datasheet_id },
       files: context.files,
-    });
+    })
   },
   async onEnable(context) {
     await pollingHelper.onEnable(polling, {
       store: context.store,
       auth: context.auth,
       propsValue: { datasheet_id: context.propsValue.datasheet_id },
-    });
+    })
   },
   async onDisable(context) {
     await pollingHelper.onDisable(polling, {
       store: context.store,
       auth: context.auth,
       propsValue: { datasheet_id: context.propsValue.datasheet_id },
-    });
+    })
   },
   async run(context) {
     return await pollingHelper.poll(polling, {
@@ -86,6 +71,6 @@ export const newRecordTrigger = createTrigger({
       auth: context.auth,
       propsValue: { datasheet_id: context.propsValue.datasheet_id },
       files: context.files,
-    });
+    })
   },
-});
+})

@@ -1,12 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import FormData from 'form-data';
-import { googleDriveAuth } from '../../';
-import { common } from '../common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import FormData from 'form-data'
+import { googleDriveAuth } from '../../'
+import { common } from '../common'
 
 export const googleDriveCreateNewTextFile = createAction({
   auth: googleDriveAuth,
@@ -53,19 +49,17 @@ export const googleDriveCreateNewTextFile = createAction({
     const meta = {
       mimeType: context.propsValue.fileType,
       name: context.propsValue.fileName,
-      ...(context.propsValue.parentFolder
-        ? { parents: [context.propsValue.parentFolder] }
-        : {}),
-    };
+      ...(context.propsValue.parentFolder ? { parents: [context.propsValue.parentFolder] } : {}),
+    }
 
-    const metaBuffer = Buffer.from(JSON.stringify(meta), 'utf-8');
-    const textBuffer = Buffer.from(context.propsValue.text!, 'utf-8');
+    const metaBuffer = Buffer.from(JSON.stringify(meta), 'utf-8')
+    const textBuffer = Buffer.from(context.propsValue.text!, 'utf-8')
 
-    const form = new FormData();
-    form.append('Metadata', metaBuffer, { contentType: 'application/json' });
+    const form = new FormData()
+    form.append('Metadata', metaBuffer, { contentType: 'application/json' })
     form.append('Media', textBuffer, {
       contentType: context.propsValue.fileType,
-    });
+    })
 
     const result = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -81,9 +75,9 @@ export const googleDriveCreateNewTextFile = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
-    });
+    })
 
-    console.debug('File creation response', result);
-    return result.body;
+    console.debug('File creation response', result)
+    return result.body
   },
-});
+})

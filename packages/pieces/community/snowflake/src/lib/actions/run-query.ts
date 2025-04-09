@@ -1,9 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import snowflake from 'snowflake-sdk';
-import { snowflakeAuth } from '../../index';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import snowflake from 'snowflake-sdk'
+import { snowflakeAuth } from '../../index'
 
-const DEFAULT_APPLICATION_NAME = 'ActivePieces';
-const DEFAULT_QUERY_TIMEOUT = 30000;
+const DEFAULT_APPLICATION_NAME = 'ActivePieces'
+const DEFAULT_QUERY_TIMEOUT = 30000
 
 export const runQuery = createAction({
   name: 'runQuery',
@@ -18,8 +18,7 @@ export const runQuery = createAction({
     }),
     binds: Property.Array({
       displayName: 'Parameters',
-      description:
-        'Binding parameters for the SQL query (to prevent SQL injection attacks)',
+      description: 'Binding parameters for the SQL query (to prevent SQL injection attacks)',
       required: false,
     }),
     timeout: Property.Number({
@@ -31,15 +30,13 @@ export const runQuery = createAction({
     }),
     application: Property.ShortText({
       displayName: 'Application name',
-      description:
-        'A string indicating the name of the client application connecting to the server.',
+      description: 'A string indicating the name of the client application connecting to the server.',
       required: false,
       defaultValue: DEFAULT_APPLICATION_NAME,
     }),
   },
   async run(context) {
-    const { username, password, role, database, warehouse, account } =
-      context.auth;
+    const { username, password, role, database, warehouse, account } = context.auth
 
     const connection = snowflake.createConnection({
       application: context.propsValue.application,
@@ -50,32 +47,32 @@ export const runQuery = createAction({
       database,
       warehouse,
       account,
-    });
+    })
 
     return new Promise((resolve, reject) => {
       connection.connect(function (err, conn) {
         if (err) {
-          reject(err);
+          reject(err)
         }
-      });
+      })
 
-      const { sqlText, binds } = context.propsValue;
+      const { sqlText, binds } = context.propsValue
 
       connection.execute({
         sqlText,
         binds: binds as snowflake.Binds,
         complete: (err, stmt, rows) => {
           if (err) {
-            reject(err);
+            reject(err)
           }
           connection.destroy((err, conn) => {
             if (err) {
-              reject(err);
+              reject(err)
             }
-          });
-          resolve(rows);
+          })
+          resolve(rows)
         },
-      });
-    });
+      })
+    })
   },
-});
+})

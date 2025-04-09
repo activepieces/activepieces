@@ -1,13 +1,13 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { queryMetabaseApi } from '../common';
-import { metabaseAuth } from '../..';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { metabaseAuth } from '../..'
+import { queryMetabaseApi } from '../common'
 
 interface MetabaseParam {
-  id: string;
-  target: unknown[];
-  type: string[];
-  slug: string;
+  id: string
+  target: unknown[]
+  type: string[]
+  slug: string
 }
 
 export const getQuestion = createAction({
@@ -27,12 +27,9 @@ export const getQuestion = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const questionId = propsValue.questionId.split('-')[0];
-    const card = await queryMetabaseApi(
-      { endpoint: `card/${questionId}`, method: HttpMethod.GET },
-      auth
-    );
-    const parameters = card['parameters'] as MetabaseParam[];
+    const questionId = propsValue.questionId.split('-')[0]
+    const card = await queryMetabaseApi({ endpoint: `card/${questionId}`, method: HttpMethod.GET }, auth)
+    const parameters = card['parameters'] as MetabaseParam[]
 
     const response = await queryMetabaseApi(
       {
@@ -42,28 +39,23 @@ export const getQuestion = createAction({
           collection_preview: false,
           ignore_cache: false,
           parameters: parameters
-            .filter(
-              (param) =>
-                propsValue.parameters &&
-                propsValue.parameters[param.slug] !== undefined
-            )
+            .filter((param) => propsValue.parameters && propsValue.parameters[param.slug] !== undefined)
             .map((param) => {
               return {
                 id: param.id,
                 target: param.target,
                 type: param.type,
-                value:
-                  propsValue.parameters && propsValue.parameters[param.slug],
-              };
+                value: propsValue.parameters && propsValue.parameters[param.slug],
+              }
             }),
         },
       },
-      auth
-    );
+      auth,
+    )
     if (response.error) {
-      throw new Error(response.error);
+      throw new Error(response.error)
     } else {
-      return response;
+      return response
     }
   },
-});
+})

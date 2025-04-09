@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { freshdeskAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { freshdeskAuth } from '../..'
 
 export const getContactFromID = createAction({
   auth: freshdeskAuth,
@@ -17,29 +17,29 @@ export const getContactFromID = createAction({
   },
 
   async run(context) {
-    const FDapiToken = context.auth.access_token;
-    const FDcontactID = context.propsValue.contactid;
+    const FDapiToken = context.auth.access_token
+    const FDcontactID = context.propsValue.contactid
 
     const headers = {
       Authorization: FDapiToken,
       'Content-Type': 'application/json',
-    };
+    }
 
     // Remove trailing slash from base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.base_url.replace(/\/$/, '')
     // not needed for gettickets ?${queryParams.toString()}
-    const url = `${baseUrl}/api/v2/contacts/${FDcontactID}`;
+    const url = `${baseUrl}/api/v2/contacts/${FDcontactID}`
     const httprequestdata = {
       method: HttpMethod.GET,
       url,
       headers,
-    };
-    const response = await httpClient.sendRequest(httprequestdata);
+    }
+    const response = await httpClient.sendRequest(httprequestdata)
 
     if (response.status == 200) {
-      return response.body;
+      return response.body
     } else {
-      return response;
+      return response
     }
   },
-});
+})

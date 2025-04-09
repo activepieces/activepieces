@@ -1,5 +1,5 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { ContentfulAuth, PropertyKeys, makeClient } from '../../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { ContentfulAuth, PropertyKeys, makeClient } from '../../common'
 
 export const ContentfulGetRecordAction = createAction({
   name: 'contentful_record_get',
@@ -14,9 +14,9 @@ export const ContentfulGetRecordAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { client } = makeClient(auth);
+    const { client } = makeClient(auth)
     return await client.entry.get({
       entryId: propsValue[PropertyKeys.ENTITY_ID] as string,
-    });
+    })
   },
-});
+})

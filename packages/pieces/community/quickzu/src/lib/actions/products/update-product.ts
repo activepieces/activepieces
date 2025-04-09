@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { quickzuAuth } from '../../..';
-import { makeClient, quickzuCommon } from '../../common';
-import { ProductUnit } from '../../common/constants';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { quickzuAuth } from '../../..'
+import { makeClient, quickzuCommon } from '../../common'
+import { ProductUnit } from '../../common/constants'
 
 export const updateProductAction = createAction({
   auth: quickzuAuth,
@@ -37,7 +37,7 @@ export const updateProductAction = createAction({
           return {
             label: val,
             value: val,
-          };
+          }
         }),
       },
     }),
@@ -76,9 +76,9 @@ export const updateProductAction = createAction({
       exclude_tax,
       enable_variants,
       status,
-    } = context.propsValue;
+    } = context.propsValue
 
-    const client = makeClient(context.auth);
+    const client = makeClient(context.auth)
 
     return await client.updateProduct(productId!, {
       name,
@@ -95,6 +95,6 @@ export const updateProductAction = createAction({
       meta: {
         nonveg: false,
       },
-    });
+    })
   },
-});
+})

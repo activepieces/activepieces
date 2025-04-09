@@ -1,13 +1,9 @@
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
-import { dripCommon } from '../common';
-import { dripAuth } from '../../';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { dripAuth } from '../../'
+import { dripCommon } from '../common'
 
-const triggerNameInStore = 'drip_new_subscriber_trigger';
+const triggerNameInStore = 'drip_new_subscriber_trigger'
 export const dripNewSubscriberEvent = createTrigger({
   auth: dripAuth,
   name: 'new_subscriber',
@@ -36,38 +32,34 @@ export const dripNewSubscriberEvent = createTrigger({
         Authorization: dripCommon.authorizationHeader(auth),
       },
       queryParams: {},
-    };
+    }
     const { body } = await httpClient.sendRequest<{
-      webhooks: { id: string }[];
-    }>(request);
+      webhooks: { id: string }[]
+    }>(request)
     await store.put<DripWebhookInformation>(triggerNameInStore, {
       webhookId: body.webhooks[0].id,
       userId: propsValue.account_id,
-    });
+    })
   },
   async onDisable(context) {
-    const response = await context.store?.get<DripWebhookInformation>(
-      triggerNameInStore
-    );
+    const response = await context.store?.get<DripWebhookInformation>(triggerNameInStore)
     if (response !== null && response !== undefined) {
       const request: HttpRequest = {
         method: HttpMethod.DELETE,
-        url: `${dripCommon.baseUrl(response.userId)}/webhooks/${
-          response.webhookId
-        }`,
+        url: `${dripCommon.baseUrl(response.userId)}/webhooks/${response.webhookId}`,
         headers: {
           Authorization: dripCommon.authorizationHeader(context.auth),
         },
-      };
-      await httpClient.sendRequest(request);
+      }
+      await httpClient.sendRequest(request)
     }
   },
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
-});
+})
 
 interface DripWebhookInformation {
-  webhookId: string;
-  userId: string;
+  webhookId: string
+  userId: string
 }

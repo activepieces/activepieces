@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType, HttpRequest } from '@activepieces/pieces-common';
-import { googleSheetsAuth } from '../..';
-import { includeTeamDrivesProp } from '../common/props';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { googleSheetsAuth } from '../..'
+import { includeTeamDrivesProp } from '../common/props'
 
 export const findSpreadsheets = createAction({
   name: 'find_spreadsheets',
@@ -17,33 +17,30 @@ export const findSpreadsheets = createAction({
     }),
     exact_match: Property.Checkbox({
       displayName: 'Exact Match',
-      description: 'If true, only return spreadsheets that exactly match the name. If false, return spreadsheets that contain the name.',
+      description:
+        'If true, only return spreadsheets that exactly match the name. If false, return spreadsheets that contain the name.',
       required: false,
       defaultValue: false,
     }),
   },
   async run({ propsValue, auth }) {
-    const searchValue = propsValue.spreadsheet_name;
-    const queries = [
-      "mimeType='application/vnd.google-apps.spreadsheet'",
-      'trashed=false',
-    ];
+    const searchValue = propsValue.spreadsheet_name
+    const queries = ["mimeType='application/vnd.google-apps.spreadsheet'", 'trashed=false']
 
     if (propsValue.exact_match) {
-      queries.push(`name = '${searchValue}'`);
+      queries.push(`name = '${searchValue}'`)
     } else {
-      queries.push(`name contains '${searchValue}'`);
+      queries.push(`name contains '${searchValue}'`)
     }
 
-    const files = [];
-    let pageToken = null;
+    const files = []
+    let pageToken = null
 
-    do
-    {
-      const request :HttpRequest = {
-        method:HttpMethod.GET,
+    do {
+      const request: HttpRequest = {
+        method: HttpMethod.GET,
         url: 'https://www.googleapis.com/drive/v3/files',
-        queryParams:{
+        queryParams: {
           q: queries.join(' and '),
           includeItemsFromAllDrives: propsValue.includeTeamDrives ? 'true' : 'false',
           supportsAllDrives: 'true',
@@ -53,30 +50,28 @@ export const findSpreadsheets = createAction({
           type: AuthenticationType.BEARER_TOKEN,
           token: auth.access_token,
         },
-
       }
       if (pageToken) {
         if (request.queryParams !== undefined) {
-          request.queryParams['pageToken'] = pageToken;
+          request.queryParams['pageToken'] = pageToken
         }
       }
       try {
         const response = await httpClient.sendRequest<{
-          files: { id: string; name: string }[];
-          nextPageToken: string;
-        }>(request);
+          files: { id: string; name: string }[]
+          nextPageToken: string
+        }>(request)
 
-        files.push(...response.body.files);
-        pageToken = response.body.nextPageToken;
+        files.push(...response.body.files)
+        pageToken = response.body.nextPageToken
       } catch (e) {
-        throw new Error(`Failed to get folders\nError:${e}`);
+        throw new Error(`Failed to get folders\nError:${e}`)
       }
-
-    }while(pageToken);
+    } while (pageToken)
 
     return {
       found: files.length > 0,
-      spreadsheets:files,
-    };
+      spreadsheets: files,
+    }
   },
-});
+})

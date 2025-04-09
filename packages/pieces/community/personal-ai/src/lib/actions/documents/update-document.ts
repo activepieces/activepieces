@@ -1,9 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { BASE_URL, personalAiAuth } from '../../../index';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { BASE_URL, personalAiAuth } from '../../../index'
 
 export const updateDocument = createAction({
-  auth:personalAiAuth,
+  auth: personalAiAuth,
   name: 'update_document',
   displayName: 'Update Document',
   description: 'Update an existing document in AI assistant.',
@@ -52,7 +52,10 @@ export const updateDocument = createAction({
     }),
   },
   async run(context) {
-    const { auth, propsValue: { documentId, text, title, domainName, tags, sourceName, createdTime, isStack } } = context;
+    const {
+      auth,
+      propsValue: { documentId, text, title, domainName, tags, sourceName, createdTime, isStack },
+    } = context
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.PUT,
@@ -71,8 +74,8 @@ export const updateDocument = createAction({
         ...(createdTime && { CreatedTime: createdTime }),
         ...(isStack !== undefined && { is_stack: isStack }),
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

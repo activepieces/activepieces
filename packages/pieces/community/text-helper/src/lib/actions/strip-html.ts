@@ -1,5 +1,5 @@
-import { stripHtml } from 'string-strip-html';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { stripHtml } from 'string-strip-html'
 
 export const stripHtmlContent = createAction({
   name: 'stripHtml',
@@ -12,6 +12,6 @@ export const stripHtmlContent = createAction({
     }),
   },
   async run({ propsValue }) {
-    return stripHtml(propsValue.html).result;
+    return stripHtml(propsValue.html).result
   },
-});
+})

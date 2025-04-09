@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { talkableAuth } from '../../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { talkableAuth } from '../../..'
 
 export const refund = createAction({
   name: 'refund', // Must be a unique across the piece, this shouldn't be changed.
@@ -25,25 +25,24 @@ export const refund = createAction({
     }),
   },
   async run(context) {
-    const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
-    const { site, api_key } = context.auth;
-    const { origin_slug, refund_subtotal, refunded_at } = context.propsValue;
-    const refundResponse = await httpClient
-      .sendRequest<string[]>({
-        method: HttpMethod.POST,
-        url: `${TALKABLE_API_URL}/origins/${origin_slug}/refund`,
-        headers: {
-          Authorization: `Bearer ${api_key}`,
-          'Content-Type': 'application/json',
+    const TALKABLE_API_URL = 'https://www.talkable.com/api/v2'
+    const { site, api_key } = context.auth
+    const { origin_slug, refund_subtotal, refunded_at } = context.propsValue
+    const refundResponse = await httpClient.sendRequest<string[]>({
+      method: HttpMethod.POST,
+      url: `${TALKABLE_API_URL}/origins/${origin_slug}/refund`,
+      headers: {
+        Authorization: `Bearer ${api_key}`,
+        'Content-Type': 'application/json',
+      },
+      body: {
+        site_slug: site,
+        data: {
+          refunded_at,
+          refund_subtotal,
         },
-        body: {
-          site_slug: site,
-          data: {
-            refunded_at,
-            refund_subtotal,
-          },
-        },
-      });
-    return refundResponse.body;
+      },
+    })
+    return refundResponse.body
   },
-});
+})

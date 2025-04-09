@@ -2,14 +2,17 @@ import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 
 export class AddGlobalConnectionsAndRbacForPlatformSqlite1731604290560 implements MigrationInterface {
-    name = 'AddGlobalConnectionsAndRbacForPlatformSqlite1731604290560'
+  name = 'AddGlobalConnectionsAndRbacForPlatformSqlite1731604290560'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'up')
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    const log = system.globalLogger()
+    log.info(
+      {
+        name: this.name,
+      },
+      'up',
+    )
+    await queryRunner.query(`
             CREATE TABLE "temporary_platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -71,7 +74,7 @@ export class AddGlobalConnectionsAndRbacForPlatformSqlite1731604290560 implement
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_platform"(
                     "id",
                     "created",
@@ -150,25 +153,28 @@ export class AddGlobalConnectionsAndRbacForPlatformSqlite1731604290560 implement
                 false as "customRolesEnabled"
             FROM "platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_platform"
                 RENAME TO "platform"
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        const log = system.globalLogger()
-        log.info({
-            name: this.name,
-        }, 'down')
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    const log = system.globalLogger()
+    log.info(
+      {
+        name: this.name,
+      },
+      'down',
+    )
+    await queryRunner.query(`
             ALTER TABLE "platform"
                 RENAME TO "temporary_platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -228,7 +234,7 @@ export class AddGlobalConnectionsAndRbacForPlatformSqlite1731604290560 implement
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "platform"(
                     "id",
                     "created",
@@ -303,9 +309,8 @@ export class AddGlobalConnectionsAndRbacForPlatformSqlite1731604290560 implement
                 "pinnedPieces"
             FROM "temporary_platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_platform"
         `)
-    }
-
+  }
 }

@@ -1,8 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleDriveAuth } from '../../';
-import { common } from '../common';
-import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { google } from 'googleapis'
+import { OAuth2Client } from 'googleapis-common'
+import { googleDriveAuth } from '../../'
+import { common } from '../common'
 
 export const googleDriveTrashFile = createAction({
   auth: googleDriveAuth,
@@ -18,19 +18,19 @@ export const googleDriveTrashFile = createAction({
     include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = new OAuth2Client()
+    authClient.setCredentials(context.auth)
 
-    const drive = google.drive({ version: 'v3', auth: authClient });
+    const drive = google.drive({ version: 'v3', auth: authClient })
     const body_value = {
       trashed: true,
-    };
+    }
     const response = await drive.files.update({
       fileId: context.propsValue.fileId,
       supportsAllDrives: context.propsValue.include_team_drives,
       requestBody: body_value,
-    });
+    })
 
-    return response.data;
+    return response.data
   },
-});
+})

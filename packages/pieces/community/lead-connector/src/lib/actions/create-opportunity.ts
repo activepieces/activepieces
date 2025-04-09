@@ -1,19 +1,15 @@
+import { propsValidation } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { leadConnectorAuth } from '../..'
 import {
-  createAction,
-  OAuth2PropertyValue,
-  Property,
-} from '@activepieces/pieces-framework';
-import {
+  LeadConnectorOpportunityStatus,
   createOpportunity,
   getContacts,
   getPipeline,
   getPipelines,
   getUsers,
-  LeadConnectorOpportunityStatus,
-} from '../common';
-import { leadConnectorAuth } from '../..';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+} from '../common'
 
 export const createOpportunityAction = createAction({
   auth: leadConnectorAuth,
@@ -31,18 +27,18 @@ export const createOpportunityAction = createAction({
           return {
             disabled: true,
             options: [],
-          };
+          }
         }
 
-        const pipelines = await getPipelines(auth as OAuth2PropertyValue);
+        const pipelines = await getPipelines(auth as OAuth2PropertyValue)
         return {
           options: pipelines.map((pipeline: any) => {
             return {
               label: pipeline.name,
               value: pipeline.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     stage: Property.Dropdown({
@@ -55,23 +51,20 @@ export const createOpportunityAction = createAction({
           return {
             disabled: true,
             options: [],
-          };
+          }
         }
 
-        const pipelineObj = await getPipeline(
-          auth as OAuth2PropertyValue,
-          pipeline as string
-        );
+        const pipelineObj = await getPipeline(auth as OAuth2PropertyValue, pipeline as string)
         return {
           options: pipelineObj
             ? pipelineObj.stages.map((stage: any) => {
                 return {
                   label: stage.name,
                   value: stage.id,
-                };
+                }
               })
             : [],
-        };
+        }
       },
     }),
     title: Property.ShortText({
@@ -88,17 +81,17 @@ export const createOpportunityAction = createAction({
           return {
             disabled: true,
             options: [],
-          };
+          }
 
-        const contacts = await getContacts(auth as OAuth2PropertyValue);
+        const contacts = await getContacts(auth as OAuth2PropertyValue)
         return {
           options: contacts.map((contact) => {
             return {
               label: contact.contactName,
               value: contact.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     status: Property.Dropdown({
@@ -106,16 +99,16 @@ export const createOpportunityAction = createAction({
       required: true,
       refreshers: [],
       options: async () => {
-        const statuses = Object.values(LeadConnectorOpportunityStatus);
+        const statuses = Object.values(LeadConnectorOpportunityStatus)
 
         return {
           options: statuses.map((status) => {
             return {
               label: status.charAt(0).toUpperCase() + status.slice(1),
               value: status,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     assignedTo: Property.Dropdown({
@@ -127,17 +120,17 @@ export const createOpportunityAction = createAction({
           return {
             disabled: true,
             options: [],
-          };
+          }
 
-        const users = await getUsers(auth as OAuth2PropertyValue);
+        const users = await getUsers(auth as OAuth2PropertyValue)
         return {
           options: users.map((user: any) => {
             return {
               label: `${user.firstName} ${user.lastName}`,
               value: user.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     monetaryValue: Property.Number({
@@ -149,17 +142,9 @@ export const createOpportunityAction = createAction({
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
       monetaryValue: z.number().optional(),
-    });
+    })
 
-    const {
-      pipeline,
-      stage,
-      contact,
-      status,
-      title,
-      assignedTo,
-      monetaryValue,
-    } = propsValue;
+    const { pipeline, stage, contact, status, title, assignedTo, monetaryValue } = propsValue
 
     return await createOpportunity(auth, {
       pipelineStageId: stage,
@@ -169,6 +154,6 @@ export const createOpportunityAction = createAction({
       pipelineId: pipeline,
       assignedTo: assignedTo,
       monetaryValue: monetaryValue,
-    });
+    })
   },
-});
+})

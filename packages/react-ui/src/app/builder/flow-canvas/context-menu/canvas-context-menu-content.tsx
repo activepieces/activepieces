@@ -1,14 +1,5 @@
-import { t } from 'i18next';
-import {
-  ArrowLeftRight,
-  ClipboardPaste,
-  ClipboardPlus,
-  Copy,
-  CopyPlus,
-  Route,
-  RouteOff,
-  Trash,
-} from 'lucide-react';
+import { t } from 'i18next'
+import { ArrowLeftRight, ClipboardPaste, ClipboardPlus, Copy, CopyPlus, Route, RouteOff, Trash } from 'lucide-react'
 
 import {
   ContextMenuItem,
@@ -16,15 +7,15 @@ import {
   ContextMenuSub,
   ContextMenuSubContent,
   ContextMenuSubTrigger,
-} from '@/components/ui/context-menu';
-import { Shortcut, ShortcutProps } from '@/components/ui/shortcut';
+} from '@/components/ui/context-menu'
+import { Shortcut, ShortcutProps } from '@/components/ui/shortcut'
 import {
   Action,
   ActionType,
   FlowOperationType,
-  flowStructureUtil,
   StepLocationRelativeToParent,
-} from '@activepieces/shared';
+  flowStructureUtil,
+} from '@activepieces/shared'
 
 import {
   copySelectedNodes,
@@ -32,28 +23,24 @@ import {
   getLastLocationAsPasteLocation,
   pasteNodes,
   toggleSkipSelectedNodes,
-} from '../bulk-actions';
+} from '../bulk-actions'
 
-import {
-  CanvasContextMenuProps,
-  CanvasShortcuts,
-  ContextMenuType,
-} from './canvas-context-menu';
+import { CanvasContextMenuProps, CanvasShortcuts, ContextMenuType } from './canvas-context-menu'
 
 const ShortcutWrapper = ({
   children,
   shortcut,
 }: {
-  children: React.ReactNode;
-  shortcut: ShortcutProps;
+  children: React.ReactNode
+  shortcut: ShortcutProps
 }) => {
   return (
     <div className="flex items-center justify-between gap-4 flex-grow">
       <div className="flex gap-2 items-center">{children}</div>
       <Shortcut {...shortcut} className="text-end" />
     </div>
-  );
-};
+  )
+}
 
 export const CanvasContextMenuContent = ({
   selectedNodes,
@@ -66,56 +53,35 @@ export const CanvasContextMenuContent = ({
   setPieceSelectorStep,
   contextMenuType,
 }: CanvasContextMenuProps) => {
-  const disabled = selectedNodes.length === 0;
+  const disabled = selectedNodes.length === 0
   const areAllStepsSkipped = selectedNodes.every(
-    (node) =>
-      !!(flowStructureUtil.getStep(node, flowVersion.trigger) as Action)?.skip,
-  );
-  const doSelectedNodesIncludeTrigger = selectedNodes.some(
-    (node) => node === flowVersion.trigger.name,
-  );
-  const disabledPaste = actionsToPaste.length === 0;
-  const firstSelectedStep = flowStructureUtil.getStep(
-    selectedNodes[0],
-    flowVersion.trigger,
-  );
-  const showPasteAfterLastStep =
-    !readonly && contextMenuType === ContextMenuType.CANVAS;
+    (node) => !!(flowStructureUtil.getStep(node, flowVersion.trigger) as Action)?.skip,
+  )
+  const doSelectedNodesIncludeTrigger = selectedNodes.some((node) => node === flowVersion.trigger.name)
+  const disabledPaste = actionsToPaste.length === 0
+  const firstSelectedStep = flowStructureUtil.getStep(selectedNodes[0], flowVersion.trigger)
+  const showPasteAfterLastStep = !readonly && contextMenuType === ContextMenuType.CANVAS
   const showPasteAsFirstLoopAction =
     selectedNodes.length === 1 &&
     firstSelectedStep?.type === ActionType.LOOP_ON_ITEMS &&
     !readonly &&
-    contextMenuType === ContextMenuType.STEP;
+    contextMenuType === ContextMenuType.STEP
   const showPasteAsBranchChild =
     selectedNodes.length === 1 &&
     firstSelectedStep?.type === ActionType.ROUTER &&
     !readonly &&
-    contextMenuType === ContextMenuType.STEP;
-  const showPasteAfterCurrentStep =
-    selectedNodes.length === 1 &&
-    !readonly &&
-    contextMenuType === ContextMenuType.STEP;
-  const showReplace =
-    selectedNodes.length === 1 &&
-    !readonly &&
-    contextMenuType === ContextMenuType.STEP;
-  const showCopy =
-    !doSelectedNodesIncludeTrigger && contextMenuType === ContextMenuType.STEP;
+    contextMenuType === ContextMenuType.STEP
+  const showPasteAfterCurrentStep = selectedNodes.length === 1 && !readonly && contextMenuType === ContextMenuType.STEP
+  const showReplace = selectedNodes.length === 1 && !readonly && contextMenuType === ContextMenuType.STEP
+  const showCopy = !doSelectedNodesIncludeTrigger && contextMenuType === ContextMenuType.STEP
   const showDuplicate =
     selectedNodes.length === 1 &&
     !doSelectedNodesIncludeTrigger &&
     contextMenuType === ContextMenuType.STEP &&
-    !readonly;
-  const showSkip =
-    !doSelectedNodesIncludeTrigger &&
-    contextMenuType === ContextMenuType.STEP &&
-    !readonly;
-  const isTriggerTheOnlySelectedNode =
-    selectedNodes.length === 1 && doSelectedNodesIncludeTrigger;
-  const showDelete =
-    !readonly &&
-    contextMenuType === ContextMenuType.STEP &&
-    !isTriggerTheOnlySelectedNode;
+    !readonly
+  const showSkip = !doSelectedNodesIncludeTrigger && contextMenuType === ContextMenuType.STEP && !readonly
+  const isTriggerTheOnlySelectedNode = selectedNodes.length === 1 && doSelectedNodesIncludeTrigger
+  const showDelete = !readonly && contextMenuType === ContextMenuType.STEP && !isTriggerTheOnlySelectedNode
 
   const duplicateStep = () => {
     applyOperation({
@@ -123,15 +89,15 @@ export const CanvasContextMenuContent = ({
       request: {
         stepName: selectedNodes[0],
       },
-    });
-  };
+    })
+  }
   return (
     <>
       {showReplace && (
         <ContextMenuItem
           disabled={disabled}
           onClick={() => {
-            setPieceSelectorStep(selectedNodes[0]);
+            setPieceSelectorStep(selectedNodes[0])
           }}
           className="flex items-center gap-2"
         >
@@ -142,7 +108,7 @@ export const CanvasContextMenuContent = ({
         <ContextMenuItem
           disabled={disabled}
           onClick={() => {
-            copySelectedNodes({ selectedNodes, flowVersion });
+            copySelectedNodes({ selectedNodes, flowVersion })
           }}
         >
           <ShortcutWrapper shortcut={CanvasShortcuts['Copy']}>
@@ -153,11 +119,7 @@ export const CanvasContextMenuContent = ({
 
       <>
         {showDuplicate && (
-          <ContextMenuItem
-            disabled={disabled}
-            onClick={duplicateStep}
-            className="flex items-center gap-2"
-          >
+          <ContextMenuItem disabled={disabled} onClick={duplicateStep} className="flex items-center gap-2">
             <CopyPlus className="w-4 h-4"></CopyPlus> {t('Duplicate')}
           </ContextMenuItem>
         )}
@@ -170,22 +132,16 @@ export const CanvasContextMenuContent = ({
                 selectedNodes,
                 flowVersion,
                 applyOperation,
-              });
+              })
             }}
           >
             <ShortcutWrapper shortcut={CanvasShortcuts['Skip']}>
-              {areAllStepsSkipped ? (
-                <Route className="h-4 w-4"></Route>
-              ) : (
-                <RouteOff className="h-4 w-4"></RouteOff>
-              )}
+              {areAllStepsSkipped ? <Route className="h-4 w-4"></Route> : <RouteOff className="h-4 w-4"></RouteOff>}
               {t(areAllStepsSkipped ? 'Unskip' : 'Skip')}
             </ShortcutWrapper>
           </ContextMenuItem>
         )}
-        {(showPasteAsFirstLoopAction ||
-          showPasteAsBranchChild ||
-          showPasteAfterCurrentStep) && (
+        {(showPasteAsFirstLoopAction || showPasteAsBranchChild || showPasteAfterCurrentStep) && (
           <ContextMenuSeparator></ContextMenuSeparator>
         )}
 
@@ -193,20 +149,14 @@ export const CanvasContextMenuContent = ({
           <ContextMenuItem
             disabled={disabledPaste}
             onClick={() => {
-              const pasteLocation = getLastLocationAsPasteLocation(flowVersion);
+              const pasteLocation = getLastLocationAsPasteLocation(flowVersion)
               if (pasteLocation) {
-                pasteNodes(
-                  actionsToPaste,
-                  flowVersion,
-                  pasteLocation,
-                  applyOperation,
-                );
+                pasteNodes(actionsToPaste, flowVersion, pasteLocation, applyOperation)
               }
             }}
             className="flex items-center gap-2"
           >
-            <ClipboardPlus className="w-4 h-4"></ClipboardPlus>{' '}
-            {t('Paste After Last Step')}
+            <ClipboardPlus className="w-4 h-4"></ClipboardPlus> {t('Paste After Last Step')}
           </ContextMenuItem>
         )}
 
@@ -219,16 +169,14 @@ export const CanvasContextMenuContent = ({
                 flowVersion,
                 {
                   parentStepName: selectedNodes[0],
-                  stepLocationRelativeToParent:
-                    StepLocationRelativeToParent.INSIDE_LOOP,
+                  stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
                 },
                 applyOperation,
-              );
+              )
             }}
             className="flex items-center gap-2"
           >
-            <ClipboardPaste className="w-4 h-4"></ClipboardPaste>{' '}
-            {t('Paste Inside Loop')}
+            <ClipboardPaste className="w-4 h-4"></ClipboardPaste> {t('Paste Inside Loop')}
           </ContextMenuItem>
         )}
 
@@ -241,72 +189,63 @@ export const CanvasContextMenuContent = ({
                 flowVersion,
                 {
                   parentStepName: selectedNodes[0],
-                  stepLocationRelativeToParent:
-                    StepLocationRelativeToParent.AFTER,
+                  stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
                 },
                 applyOperation,
-              );
+              )
             }}
             className="flex items-center gap-2"
           >
-            <ClipboardPlus className="w-4 h-4"></ClipboardPlus>{' '}
-            {t('Paste After')}
+            <ClipboardPlus className="w-4 h-4"></ClipboardPlus> {t('Paste After')}
           </ContextMenuItem>
         )}
 
         {showPasteAsBranchChild && !disabledPaste && (
           <ContextMenuSub>
             <ContextMenuSubTrigger className="flex items-center gap-2">
-              <ClipboardPaste className="w-4 h-4"></ClipboardPaste>{' '}
-              {t('Paste Inside...')}
+              <ClipboardPaste className="w-4 h-4"></ClipboardPaste> {t('Paste Inside...')}
             </ContextMenuSubTrigger>
             <ContextMenuSubContent>
               {firstSelectedStep &&
-                firstSelectedStep.settings.branches.map(
-                  (branch, branchIndex) => (
-                    <ContextMenuItem
-                      key={branch.branchName}
-                      onClick={() => {
-                        pasteNodes(
-                          actionsToPaste,
-                          flowVersion,
-                          {
-                            parentStepName: selectedNodes[0],
-                            stepLocationRelativeToParent:
-                              StepLocationRelativeToParent.INSIDE_BRANCH,
-                            branchIndex,
-                          },
-                          applyOperation,
-                        );
-                      }}
-                    >
-                      {branch.branchName}
-                    </ContextMenuItem>
-                  ),
-                )}
+                firstSelectedStep.settings.branches.map((branch, branchIndex) => (
+                  <ContextMenuItem
+                    key={branch.branchName}
+                    onClick={() => {
+                      pasteNodes(
+                        actionsToPaste,
+                        flowVersion,
+                        {
+                          parentStepName: selectedNodes[0],
+                          stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH,
+                          branchIndex,
+                        },
+                        applyOperation,
+                      )
+                    }}
+                  >
+                    {branch.branchName}
+                  </ContextMenuItem>
+                ))}
               <ContextMenuItem
                 onClick={() => {
                   applyOperation({
                     type: FlowOperationType.ADD_BRANCH,
                     request: {
                       stepName: firstSelectedStep.name,
-                      branchIndex:
-                        firstSelectedStep.settings.branches.length - 1,
+                      branchIndex: firstSelectedStep.settings.branches.length - 1,
                       branchName: `Branch ${firstSelectedStep.settings.branches.length}`,
                     },
-                  });
+                  })
                   pasteNodes(
                     actionsToPaste,
                     flowVersion,
                     {
                       parentStepName: firstSelectedStep.name,
-                      stepLocationRelativeToParent:
-                        StepLocationRelativeToParent.INSIDE_BRANCH,
-                      branchIndex:
-                        firstSelectedStep.settings.branches.length - 1,
+                      stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH,
+                      branchIndex: firstSelectedStep.settings.branches.length - 1,
                     },
                     applyOperation,
-                  );
+                  )
                 }}
               >
                 + {t('New Branch')}
@@ -317,8 +256,7 @@ export const CanvasContextMenuContent = ({
 
         {showPasteAsBranchChild && disabledPaste && (
           <ContextMenuItem disabled={true} className="flex items-center gap-2">
-            <ClipboardPaste className="w-4 h-4"></ClipboardPaste>{' '}
-            {t('Paste Inside Branch')}
+            <ClipboardPaste className="w-4 h-4"></ClipboardPaste> {t('Paste Inside Branch')}
           </ContextMenuItem>
         )}
         {showDelete && (
@@ -332,7 +270,7 @@ export const CanvasContextMenuContent = ({
                   applyOperation,
                   selectedStep,
                   exitStepSettings,
-                });
+                })
               }}
             >
               <ShortcutWrapper shortcut={CanvasShortcuts['Delete']}>
@@ -344,5 +282,5 @@ export const CanvasContextMenuContent = ({
         )}
       </>
     </>
-  );
-};
+  )
+}

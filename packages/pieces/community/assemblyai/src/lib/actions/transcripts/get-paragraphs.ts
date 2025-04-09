@@ -1,7 +1,7 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { assemblyaiAuth } from '../../auth';
-import { getAssemblyAIClient } from '../../client';
-import { transcriptIdProp } from './shared-props';
+import { createAction } from '@activepieces/pieces-framework'
+import { assemblyaiAuth } from '../../auth'
+import { getAssemblyAIClient } from '../../client'
+import { transcriptIdProp } from './shared-props'
 
 export const getParagraphs = createAction({
   name: 'getTranscriptParagraphs',
@@ -13,10 +13,8 @@ export const getParagraphs = createAction({
     id: transcriptIdProp,
   },
   async run(context) {
-    const client = getAssemblyAIClient(context);
-    const paragraphsResponse = await client.transcripts.paragraphs(
-      context.propsValue.id
-    );
-    return paragraphsResponse;
+    const client = getAssemblyAIClient(context)
+    const paragraphsResponse = await client.transcripts.paragraphs(context.propsValue.id)
+    return paragraphsResponse
   },
-});
+})

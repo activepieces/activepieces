@@ -1,8 +1,8 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { onfleetAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
 
-import Onfleet from '@onfleet/node-onfleet';
-import dayjs from 'dayjs';
+import Onfleet from '@onfleet/node-onfleet'
+import dayjs from 'dayjs'
 
 export const getTasks = createAction({
   auth: onfleetAuth,
@@ -43,27 +43,22 @@ export const getTasks = createAction({
               value: 3,
             },
           ],
-        };
+        }
       },
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth)
 
-    const from = context.propsValue.from
-      ? dayjs(context.propsValue.from).valueOf()
-      : undefined;
-    const to = context.propsValue.to
-      ? dayjs(context.propsValue.to).valueOf()
-      : undefined;
+    const from = context.propsValue.from ? dayjs(context.propsValue.from).valueOf() : undefined
+    const to = context.propsValue.to ? dayjs(context.propsValue.to).valueOf() : undefined
 
-    const options: any = {};
+    const options: any = {}
 
-    if (from) options.from = from;
-    if (to) options.to = to;
-    if (context.propsValue.state)
-      options.state = context.propsValue.state.join(',');
+    if (from) options.from = from
+    if (to) options.to = to
+    if (context.propsValue.state) options.state = context.propsValue.state.join(',')
 
-    return await onfleetApi.tasks.get(options);
+    return await onfleetApi.tasks.get(options)
   },
-});
+})

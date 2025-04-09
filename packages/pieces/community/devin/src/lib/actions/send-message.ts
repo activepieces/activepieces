@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { devinAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { devinAuth } from '../..'
 
 export const sendMessage = createAction({
   name: 'send_message',
@@ -29,7 +29,7 @@ export const sendMessage = createAction({
       body: {
         message: propsValue.message,
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

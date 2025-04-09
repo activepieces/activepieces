@@ -1,102 +1,80 @@
-import { useMutation } from '@tanstack/react-query';
-import { HttpStatusCode } from 'axios';
-import { t } from 'i18next';
-import JSZip from 'jszip';
-import { TriangleAlert } from 'lucide-react';
-import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query'
+import { HttpStatusCode } from 'axios'
+import { t } from 'i18next'
+import JSZip from 'jszip'
+import { TriangleAlert } from 'lucide-react'
+import React, { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-import { useTelemetry } from '@/components/telemetry-provider';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTrigger,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { useTelemetry } from '@/components/telemetry-provider'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import {
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectGroup,
-  SelectLabel,
   SelectItem,
-} from '@/components/ui/select';
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { foldersHooks } from '@/features/folders/lib/folders-hooks';
-import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
-import {
-  FlowOperationType,
-  FlowTemplate,
-  PopulatedFlow,
-  TelemetryEventName,
-} from '@activepieces/shared';
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { LoadingSpinner } from '@/components/ui/spinner'
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast'
+import { foldersHooks } from '@/features/folders/lib/folders-hooks'
+import { api } from '@/lib/api'
+import { authenticationSession } from '@/lib/authentication-session'
+import { FlowOperationType, FlowTemplate, PopulatedFlow, TelemetryEventName } from '@activepieces/shared'
 
-import { FormError } from '../../../components/ui/form';
-import { flowsApi } from '../lib/flows-api';
+import { FormError } from '../../../components/ui/form'
+import { flowsApi } from '../lib/flows-api'
 
 export type ImportFlowDialogProps =
   | {
-      insideBuilder: false;
-      onRefresh: () => void;
+      insideBuilder: false
+      onRefresh: () => void
     }
   | {
-      insideBuilder: true;
-      flowId: string;
-    };
+      insideBuilder: true
+      flowId: string
+    }
 
-const readTemplateJson = async (
-  templateFile: File,
-): Promise<FlowTemplate | null> => {
+const readTemplateJson = async (templateFile: File): Promise<FlowTemplate | null> => {
   return new Promise((resolve) => {
-    const reader = new FileReader();
+    const reader = new FileReader()
 
     reader.onload = () => {
       try {
-        const template = JSON.parse(reader.result as string) as FlowTemplate;
-        const { template: tmpl, name } = template;
+        const template = JSON.parse(reader.result as string) as FlowTemplate
+        const { template: tmpl, name } = template
         if (!tmpl || !name || !tmpl.trigger) {
-          resolve(null);
+          resolve(null)
         } else {
-          resolve(template);
+          resolve(template)
         }
       } catch {
-        resolve(null);
+        resolve(null)
       }
-    };
-    reader.readAsText(templateFile);
-  });
-};
+    }
+    reader.readAsText(templateFile)
+  })
+}
 
-const ImportFlowDialog = (
-  props: ImportFlowDialogProps & { children: React.ReactNode },
-) => {
-  const { capture } = useTelemetry();
-  const [templates, setTemplates] = useState<FlowTemplate[]>([]);
+const ImportFlowDialog = (props: ImportFlowDialogProps & { children: React.ReactNode }) => {
+  const { capture } = useTelemetry()
+  const [templates, setTemplates] = useState<FlowTemplate[]>([])
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [failedFiles, setFailedFiles] = useState<string[]>([]);
-  const [selectedFolderName, setSelectedFolderName] = useState<
-    string | undefined
-  >(undefined);
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [failedFiles, setFailedFiles] = useState<string[]>([])
+  const [selectedFolderName, setSelectedFolderName] = useState<string | undefined>(undefined)
 
-  const { folders, isLoading } = foldersHooks.useFolders();
+  const { folders, isLoading } = foldersHooks.useFolders()
 
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
-  const { mutate: importFlows, isPending } = useMutation<
-    PopulatedFlow[],
-    Error,
-    FlowTemplate[]
-  >({
+  const { mutate: importFlows, isPending } = useMutation<PopulatedFlow[], Error, FlowTemplate[]>({
     mutationFn: async (templates: FlowTemplate[]) => {
       const importPromises = templates.map(async (template) => {
         const flow = props.insideBuilder
@@ -105,11 +83,10 @@ const ImportFlowDialog = (
               displayName: template.name,
               projectId: authenticationSession.getProjectId()!,
               folderName:
-                selectedFolderName === undefined ||
-                selectedFolderName === 'Uncategorized'
+                selectedFolderName === undefined || selectedFolderName === 'Uncategorized'
                   ? undefined
                   : selectedFolderName,
-            });
+            })
 
         return await flowsApi.update(flow.id, {
           type: FlowOperationType.IMPORT_FLOW,
@@ -118,129 +95,118 @@ const ImportFlowDialog = (
             trigger: template.template.trigger,
             schemaVersion: template.template.schemaVersion,
           },
-        });
-      });
+        })
+      })
 
-      return Promise.all(importPromises);
+      return Promise.all(importPromises)
     },
 
     onSuccess: (flows: PopulatedFlow[]) => {
       capture({
         name: TelemetryEventName.FLOW_IMPORTED_USING_FILE,
         payload: {
-          location: props.insideBuilder
-            ? 'inside the builder'
-            : 'inside dashboard',
+          location: props.insideBuilder ? 'inside the builder' : 'inside dashboard',
           multiple: flows.length > 1,
         },
-      });
+      })
 
       toast({
         title: t(`flowsImported`, {
           flowsCount: flows.length,
         }),
         variant: 'default',
-      });
+      })
 
       if (flows.length === 1) {
-        navigate(`/flows/${flows[0].id}`, { replace: true });
-        return;
+        navigate(`/flows/${flows[0].id}`, { replace: true })
+        return
       }
-      setIsDialogOpen(false);
+      setIsDialogOpen(false)
       if (flows.length === 1 || props.insideBuilder) {
-        navigate(`/flow-import-redirect/${flows[0].id}`);
+        navigate(`/flow-import-redirect/${flows[0].id}`)
       }
       if (!props.insideBuilder) {
-        props.onRefresh();
+        props.onRefresh()
       }
     },
     onError: (err) => {
-      if (
-        api.isError(err) &&
-        err.response?.status === HttpStatusCode.BadRequest
-      ) {
-        setErrorMessage(t('Template file is invalid'));
-        console.log(err);
+      if (api.isError(err) && err.response?.status === HttpStatusCode.BadRequest) {
+        setErrorMessage(t('Template file is invalid'))
+        console.log(err)
       } else {
-        toast(INTERNAL_ERROR_TOAST);
+        toast(INTERNAL_ERROR_TOAST)
       }
     },
-  });
+  })
 
   const handleSubmit = async () => {
     if (templates.length === 0) {
       setErrorMessage(
         failedFiles.length
-          ? t(
-              'No valid templates found. The following files failed to import: ',
-            ) + failedFiles.join(', ')
+          ? t('No valid templates found. The following files failed to import: ') + failedFiles.join(', ')
           : t('Please select a file first'),
-      );
+      )
     } else {
-      setErrorMessage('');
-      importFlows(templates);
+      setErrorMessage('')
+      importFlows(templates)
     }
-  };
+  }
 
-  const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const files = event.target.files;
-    if (!files?.[0]) return;
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (!files?.[0]) return
 
-    setTemplates([]);
-    setFailedFiles([]);
-    setErrorMessage('');
-    const file = files[0];
-    const newTemplates: FlowTemplate[] = [];
+    setTemplates([])
+    setFailedFiles([])
+    setErrorMessage('')
+    const file = files[0]
+    const newTemplates: FlowTemplate[] = []
 
     if (file.type === 'application/zip' && !props.insideBuilder) {
-      const zip = new JSZip();
-      const zipContent = await zip.loadAsync(file);
-      const jsonFiles = Object.keys(zipContent.files).filter((fileName) =>
-        fileName.endsWith('.json'),
-      );
+      const zip = new JSZip()
+      const zipContent = await zip.loadAsync(file)
+      const jsonFiles = Object.keys(zipContent.files).filter((fileName) => fileName.endsWith('.json'))
 
       for (const fileName of jsonFiles) {
-        const fileData = await zipContent.files[fileName].async('string');
-        const template = await readTemplateJson(new File([fileData], fileName));
+        const fileData = await zipContent.files[fileName].async('string')
+        const template = await readTemplateJson(new File([fileData], fileName))
         if (template) {
-          newTemplates.push(template);
+          newTemplates.push(template)
         } else {
-          setFailedFiles((prevFailedFiles) => [...prevFailedFiles, fileName]);
+          setFailedFiles((prevFailedFiles) => [...prevFailedFiles, fileName])
         }
       }
     } else if (file.type === 'application/json') {
-      const template = await readTemplateJson(file);
+      const template = await readTemplateJson(file)
       if (template) {
-        newTemplates.push(template);
+        newTemplates.push(template)
       } else {
-        setFailedFiles((prevFailedFiles) => [...prevFailedFiles, file.name]);
+        setFailedFiles((prevFailedFiles) => [...prevFailedFiles, file.name])
       }
     } else {
-      setErrorMessage(t('Unsupported file type'));
-      return;
+      setErrorMessage(t('Unsupported file type'))
+      return
     }
 
-    console.log('handleFileChange 3');
-    console.log(newTemplates);
+    console.log('handleFileChange 3')
+    console.log(newTemplates)
 
-    setTemplates(newTemplates);
-  };
+    setTemplates(newTemplates)
+  }
 
   const handleFolderSelect = (folderName: string | undefined) => {
-    setSelectedFolderName(folderName);
-  };
+    setSelectedFolderName(folderName)
+  }
 
   return (
     <Dialog
       open={isDialogOpen}
       onOpenChange={(open) => {
-        setIsDialogOpen(open);
+        setIsDialogOpen(open)
         if (!open) {
-          setErrorMessage('');
-          setTemplates([]);
-          setFailedFiles([]);
+          setErrorMessage('')
+          setTemplates([])
+          setFailedFiles([])
         }
       }}
     >
@@ -253,18 +219,14 @@ const ImportFlowDialog = (
               <div className="flex gap-1 items-center text-muted-foreground">
                 <TriangleAlert className="w-5 h-5 stroke-warning"></TriangleAlert>
                 <div className="font-semibold">{t('Warning')}:</div>
-                <div>
-                  {t('Importing a flow will overwrite your current one.')}
-                </div>
+                <div>{t('Importing a flow will overwrite your current one.')}</div>
               </div>
             )}
           </div>
         </DialogHeader>
         <div className="flex flex-col gap-4">
           <div className="w-full flex flex-col gap-2 justify-between items-start">
-            <span className="w-16 text-sm font-medium text-gray-700">
-              {t('Flow')}
-            </span>
+            <span className="w-16 text-sm font-medium text-gray-700">{t('Flow')}</span>
             <Input
               id="file-input"
               type="file"
@@ -275,27 +237,20 @@ const ImportFlowDialog = (
           </div>
           {!props.insideBuilder && (
             <div className="w-full flex flex-col gap-2 justify-between items-start">
-              <span className="w-16 text-sm font-medium text-gray-700">
-                {t('Folder')}
-              </span>
+              <span className="w-16 text-sm font-medium text-gray-700">{t('Folder')}</span>
               {isLoading ? (
                 <div className="flex justify-center items-center w-full">
                   <LoadingSpinner className="h-5 w-5" />
                 </div>
               ) : (
-                <Select
-                  onValueChange={handleFolderSelect}
-                  defaultValue={selectedFolderName}
-                >
+                <Select onValueChange={handleFolderSelect} defaultValue={selectedFolderName}>
                   <SelectTrigger>
                     <SelectValue placeholder={t('Select a folder')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
                       <SelectLabel>{t('Folders')}</SelectLabel>
-                      <SelectItem value="Uncategorized">
-                        {t('Uncategorized')}
-                      </SelectItem>
+                      <SelectItem value="Uncategorized">{t('Uncategorized')}</SelectItem>
                       {folders?.map((folder) => (
                         <SelectItem key={folder.id} value={folder.displayName}>
                           {folder.displayName}
@@ -314,11 +269,7 @@ const ImportFlowDialog = (
           </FormError>
         )}
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => setIsDialogOpen(false)}
-            disabled={isPending}
-          >
+          <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isPending}>
             {t('Cancel')}
           </Button>
           <Button onClick={handleSubmit} loading={isPending}>
@@ -327,7 +278,7 @@ const ImportFlowDialog = (
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}
 
-export { ImportFlowDialog };
+export { ImportFlowDialog }

@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { saveContent } from '../api';
-import { cmsAuth } from '../auth';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { saveContent } from '../api'
+import { cmsAuth } from '../auth'
 
 export const saveToggleAction = createAction({
   name: 'save_toggle',
@@ -20,11 +20,11 @@ export const saveToggleAction = createAction({
     }),
   },
   async run(context) {
-    const slug = context.propsValue.slug;
-    const status = context.propsValue.status ? 'true' : 'false';
+    const slug = context.propsValue.slug
+    const status = context.propsValue.status ? 'true' : 'false'
     return await saveContent(context.auth, 'toggle', slug, {
       nodecode: true,
       state: status,
-    });
+    })
   },
-});
+})

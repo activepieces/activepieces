@@ -1,13 +1,13 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddFlowSchemaVersionSqlite1730760312426 implements MigrationInterface {
-    name = 'AddFlowSchemaVersionSqlite1730760312426'
+  name = 'AddFlowSchemaVersionSqlite1730760312426'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_flow_version_flow_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_flow_version" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -24,7 +24,7 @@ export class AddFlowSchemaVersionSqlite1730760312426 implements MigrationInterfa
                     CONSTRAINT "fk_flow_version_flow" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_flow_version"(
                     "id",
                     "created",
@@ -47,27 +47,27 @@ export class AddFlowSchemaVersionSqlite1730760312426 implements MigrationInterfa
                 "state"
             FROM "flow_version"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "flow_version"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_flow_version"
                 RENAME TO "flow_version"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_flow_version_flow_id" ON "flow_version" ("flowId")
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_flow_version_flow_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "flow_version"
                 RENAME TO "temporary_flow_version"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "flow_version" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -83,7 +83,7 @@ export class AddFlowSchemaVersionSqlite1730760312426 implements MigrationInterfa
                     CONSTRAINT "fk_flow_version_flow" FOREIGN KEY ("flowId") REFERENCES "flow" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "flow_version"(
                     "id",
                     "created",
@@ -106,12 +106,11 @@ export class AddFlowSchemaVersionSqlite1730760312426 implements MigrationInterfa
                 "state"
             FROM "temporary_flow_version"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_flow_version"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_flow_version_flow_id" ON "flow_version" ("flowId")
         `)
-    }
-
+  }
 }

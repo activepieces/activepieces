@@ -1,10 +1,10 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class CreateProjectRoleTableSqlite1732482844483 implements MigrationInterface {
-    name = 'CreateProjectRoleTableSqlite1732482844483'
+  name = 'CreateProjectRoleTableSqlite1732482844483'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             CREATE TABLE "project_role" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -15,10 +15,10 @@ export class CreateProjectRoleTableSqlite1732482844483 implements MigrationInter
                 "type" varchar NOT NULL
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_invitation_email_platform_project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_user_invitation" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -33,7 +33,7 @@ export class CreateProjectRoleTableSqlite1732482844483 implements MigrationInter
                 CONSTRAINT "FK_aa50e85a5d89f9289163d0e0f91" FOREIGN KEY ("projectRoleId") REFERENCES "project_role" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_user_invitation"(
                     "id",
                     "created",
@@ -58,23 +58,23 @@ export class CreateProjectRoleTableSqlite1732482844483 implements MigrationInter
                 "email"
             FROM "user_invitation"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "user_invitation"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_user_invitation"
                 RENAME TO "user_invitation"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_invitation_email_platform_project" ON "user_invitation" ("email", "platformId", "projectId")
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_user_invitation_email_platform_project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_user_invitation" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -88,7 +88,7 @@ export class CreateProjectRoleTableSqlite1732482844483 implements MigrationInter
                 "email" varchar NOT NULL
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_user_invitation"(
                     "id",
                     "created",
@@ -113,18 +113,18 @@ export class CreateProjectRoleTableSqlite1732482844483 implements MigrationInter
                 "email"
             FROM "user_invitation"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "user_invitation"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_user_invitation"
                 RENAME TO "user_invitation"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_invitation_email_platform_project" ON "user_invitation" ("email", "platformId", "projectId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "project_role"
         `)
-    }
+  }
 }

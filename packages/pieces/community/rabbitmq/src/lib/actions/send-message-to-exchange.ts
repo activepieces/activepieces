@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { rabbitmqAuth } from '../..';
-import { rabbitmqConnect } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { rabbitmqAuth } from '../..'
+import { rabbitmqConnect } from '../common'
 
 export const sendMessageToExchange = createAction({
   auth: rabbitmqAuth,
@@ -24,39 +24,33 @@ export const sendMessageToExchange = createAction({
       description: 'The data to send',
       required: true,
       defaultValue: {
-        "key": "value",
-        "nested": { "key": "value" },
-        "array": ["value1", "value2"]
+        key: 'value',
+        nested: { key: 'value' },
+        array: ['value1', 'value2'],
       },
     }),
   },
   async run(context) {
-    let connection;
-    let channel;
+    let connection
+    let channel
     try {
-      const exchange = context.propsValue.exchange;
-      const routingKey = context.propsValue.routingKey || '';
+      const exchange = context.propsValue.exchange
+      const routingKey = context.propsValue.routingKey || ''
 
-      connection = await rabbitmqConnect(context.auth);
-      channel = await connection.createChannel();
+      connection = await rabbitmqConnect(context.auth)
+      channel = await connection.createChannel()
 
-      await channel.checkExchange(exchange);
+      await channel.checkExchange(exchange)
 
-      const result = channel.publish(
-        exchange,
-        routingKey,
-        Buffer.from(JSON.stringify(context.propsValue.data))
-      );
+      const result = channel.publish(exchange, routingKey, Buffer.from(JSON.stringify(context.propsValue.data)))
 
       if (!result) {
-        throw new Error('Failed to send message to exchange');
+        throw new Error('Failed to send message to exchange')
       }
-      return result;
+      return result
     } finally {
-      if (channel)
-        await channel.close();
-      if (connection)
-        await connection.close();
+      if (channel) await channel.close()
+      if (connection) await connection.close()
     }
-  }
-});
+  },
+})

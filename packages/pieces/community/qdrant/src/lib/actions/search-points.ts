@@ -1,12 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  collectionName,
-  convertToFilter,
-  decodeEmbeddings,
-  filteringProps,
-} from '../common';
-import { qdrantAuth } from '../..';
-import { QdrantClient } from '@qdrant/js-client-rest';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { QdrantClient } from '@qdrant/js-client-rest'
+import { qdrantAuth } from '../..'
+import { collectionName, convertToFilter, decodeEmbeddings, filteringProps } from '../common'
 
 export const searchPoints = createAction({
   auth: qdrantAuth,
@@ -37,36 +32,33 @@ export const searchPoints = createAction({
     const client = new QdrantClient({
       apiKey: auth.key,
       url: auth.serverAddress,
-    });
-    const { must, must_not } = propsValue;
+    })
+    const { must, must_not } = propsValue
 
     const filter = convertToFilter({
       must,
       must_not,
-    });
+    })
 
-    let vector = Array.from(decodeEmbeddings(propsValue.vector.data)[0]);
+    let vector = Array.from(decodeEmbeddings(propsValue.vector.data)[0])
     const negativeVector = propsValue.negativeVector
       ? Array.from(decodeEmbeddings(propsValue.vector.data)[0])
-      : undefined;
+      : undefined
 
-    if (
-      !(vector instanceof Array) ||
-      (negativeVector != undefined && !(negativeVector instanceof Array))
-    )
-      throw new Error('Vectors should be arrays of numbers');
+    if (!(vector instanceof Array) || (negativeVector != undefined && !(negativeVector instanceof Array)))
+      throw new Error('Vectors should be arrays of numbers')
 
-    const limit = propsValue.limitResult ?? 20;
+    const limit = propsValue.limitResult ?? 20
 
     if (negativeVector) {
       // math func on: https://qdrant.tech/documentation/concepts/search/?selector=aHRtbCA%2BIGJvZHkgPiBkaXY6bnRoLW9mLXR5cGUoMSkgPiBzZWN0aW9uID4gZGl2ID4gZGl2ID4gZGl2ID4gYXJ0aWNsZSA%2BIGgyOm50aC1vZi10eXBlKDUp
-      vector = vector.map((vec, i) => vec * 2 + negativeVector[i]);
+      vector = vector.map((vec, i) => vec * 2 + negativeVector[i])
     }
     return await client.search(propsValue.collectionName, {
       vector,
       filter,
       limit,
       with_payload: true,
-    });
+    })
   },
-});
+})

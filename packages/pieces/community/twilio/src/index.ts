@@ -1,8 +1,8 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { twilioSendSms } from './lib/action/send-sms';
-import { twilioNewIncomingSms } from './lib/trigger/new-incoming-sms';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { twilioSendSms } from './lib/action/send-sms'
+import { twilioNewIncomingSms } from './lib/trigger/new-incoming-sms'
 
 export const twilioAuth = PieceAuth.BasicAuth({
   description: 'The authentication to use to connect to Twilio',
@@ -16,12 +16,11 @@ export const twilioAuth = PieceAuth.BasicAuth({
     displayName: 'Auth token',
     description: 'The auth token to use to connect to Twilio',
   },
-});
+})
 
 export const twilio = createPiece({
   displayName: 'Twilio',
-  description:
-    'Cloud communications platform for building SMS, Voice & Messaging applications',
+  description: 'Cloud communications platform for building SMS, Voice & Messaging applications',
 
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/twilio.png',
@@ -34,13 +33,11 @@ export const twilio = createPiece({
       auth: twilioAuth,
       authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(
-          `${(auth as { username: string }).username}:${
-            (auth as { password: string }).password
-          }`
+          `${(auth as { username: string }).username}:${(auth as { password: string }).password}`,
         ).toString('base64')}`,
       }),
     }),
   ],
-  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ['kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
   triggers: [twilioNewIncomingSms],
-});
+})

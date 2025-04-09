@@ -1,8 +1,8 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { callFlow } from './lib/actions/call-flow';
-import { callableFlow } from './lib/triggers/callable-flow';
-import { response } from './lib/actions/respond';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { callFlow } from './lib/actions/call-flow'
+import { response } from './lib/actions/respond'
+import { callableFlow } from './lib/triggers/callable-flow'
 
 export const flows = createPiece({
   displayName: 'Sub Flows',
@@ -14,4 +14,4 @@ export const flows = createPiece({
   authors: ['hazemadelkhalel'],
   actions: [callFlow, response],
   triggers: [callableFlow],
-});
+})

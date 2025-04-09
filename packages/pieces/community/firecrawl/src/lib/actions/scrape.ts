@@ -1,12 +1,13 @@
-import { createAction, Property, DynamicPropsValue, InputPropertyMap } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { firecrawlAuth } from '../../index';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { DynamicPropsValue, InputPropertyMap, Property, createAction } from '@activepieces/pieces-framework'
+import { firecrawlAuth } from '../../index'
 
 export const scrape = createAction({
   auth: firecrawlAuth,
   name: 'scrape',
   displayName: 'Scrape Website',
-  description: 'Scrape a website by performing a series of actions like clicking, typing, taking screenshots, and extracting data.',
+  description:
+    'Scrape a website by performing a series of actions like clicking, typing, taking screenshots, and extracting data.',
   props: {
     url: Property.ShortText({
       displayName: 'Website URL',
@@ -21,7 +22,8 @@ export const scrape = createAction({
     }),
     useActions: Property.Checkbox({
       displayName: 'Perform Actions Before Scraping',
-      description: 'Enable to perform a sequence of actions on the page before scraping (like clicking buttons, filling forms, etc.). See [Firecrawl Actions Documentation](https://docs.firecrawl.dev/api-reference/endpoint/scrape#body-actions) for details on available actions and their parameters.',
+      description:
+        'Enable to perform a sequence of actions on the page before scraping (like clicking buttons, filling forms, etc.). See [Firecrawl Actions Documentation](https://docs.firecrawl.dev/api-reference/endpoint/scrape#body-actions) for details on available actions and their parameters.',
       required: false,
       defaultValue: false,
     }),
@@ -31,12 +33,12 @@ export const scrape = createAction({
       required: false,
       refreshers: ['useActions'],
       props: async (propsValue: Record<string, DynamicPropsValue>): Promise<InputPropertyMap> => {
-        const useActions = propsValue['useActions'] as unknown as boolean;
-        
+        const useActions = propsValue['useActions'] as unknown as boolean
+
         if (!useActions) {
-          return {};
+          return {}
         }
-        
+
         return {
           actions: Property.Json({
             displayName: 'Actions',
@@ -45,7 +47,7 @@ export const scrape = createAction({
             defaultValue: [
               {
                 type: 'wait',
-                selector: '#example'
+                selector: '#example',
               },
               {
                 type: 'write',
@@ -61,7 +63,7 @@ export const scrape = createAction({
               },
             ],
           }),
-        };
+        }
       },
     }),
     extractionType: Property.Dropdown({
@@ -74,9 +76,9 @@ export const scrape = createAction({
           options: [
             { label: 'Default', value: 'default' },
             { label: 'Prompt', value: 'prompt' },
-            { label: 'JSON Schema', value: 'schema' }
-          ]
-        };
+            { label: 'JSON Schema', value: 'schema' },
+          ],
+        }
       },
       defaultValue: 'default',
     }),
@@ -86,12 +88,12 @@ export const scrape = createAction({
       required: false,
       refreshers: ['extractionType'],
       props: async (propsValue: Record<string, DynamicPropsValue>): Promise<InputPropertyMap> => {
-        const extractionType = propsValue['extractionType'] as unknown as string;
-        
+        const extractionType = propsValue['extractionType'] as unknown as string
+
         if (extractionType === 'default') {
-          return {};
+          return {}
         }
-        
+
         if (extractionType === 'prompt') {
           return {
             prompt: Property.LongText({
@@ -100,9 +102,9 @@ export const scrape = createAction({
               required: true,
               defaultValue: 'Extract the main product information including name, price, and description.',
             }),
-          };
+          }
         }
-        
+
         if (extractionType === 'schema') {
           return {
             schema: Property.Json({
@@ -110,18 +112,18 @@ export const scrape = createAction({
               description: 'JSON schema defining the structure of data to extract.',
               required: true,
               defaultValue: {
-                "type": "object",
-                "properties": {
-                  "company_name": {"type": "string"},
-                  "pricing_tiers": {"type": "array", "items": {"type": "string"}},
-                  "has_free_tier": {"type": "boolean"}
-                }
+                type: 'object',
+                properties: {
+                  company_name: { type: 'string' },
+                  pricing_tiers: { type: 'array', items: { type: 'string' } },
+                  has_free_tier: { type: 'boolean' },
+                },
               },
             }),
-          };
+          }
         }
-        
-        return {};
+
+        return {}
       },
     }),
   },
@@ -129,37 +131,37 @@ export const scrape = createAction({
     const body: Record<string, any> = {
       url: propsValue.url,
       timeout: propsValue.timeout,
-    };
-    
+    }
+
     // Only include actions if the toggle is enabled and actions are provided
     if (propsValue.useActions && propsValue.actionProperties && propsValue.actionProperties['actions']) {
-      body['actions'] = propsValue.actionProperties['actions'] || [];
+      body['actions'] = propsValue.actionProperties['actions'] || []
     }
-    
+
     // Add extraction options based on the selected type
-    const extractionType = propsValue.extractionType as string;
-    
+    const extractionType = propsValue.extractionType as string
+
     if (extractionType !== 'default' && propsValue.extractProperties) {
-      body['formats'] = ['json'];
-      body['jsonOptions'] = {};
-      
+      body['formats'] = ['json']
+      body['jsonOptions'] = {}
+
       if (extractionType === 'prompt' && propsValue.extractProperties['prompt']) {
-        body['jsonOptions']['prompt'] = propsValue.extractProperties['prompt'];
+        body['jsonOptions']['prompt'] = propsValue.extractProperties['prompt']
       } else if (extractionType === 'schema' && propsValue.extractProperties['schema']) {
-        body['jsonOptions']['schema'] = propsValue.extractProperties['schema'];
+        body['jsonOptions']['schema'] = propsValue.extractProperties['schema']
       }
     }
-    
+
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: 'https://api.firecrawl.dev/v1/scrape',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${auth}`,
+        Authorization: `Bearer ${auth}`,
       },
       body: body,
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-}); 
+})

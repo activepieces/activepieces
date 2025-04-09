@@ -1,6 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { makeClient, pastefyCommon } from '../common';
-import { pastefyAuth } from '../..';
+import { createAction } from '@activepieces/pieces-framework'
+import { pastefyAuth } from '../..'
+import { makeClient, pastefyCommon } from '../common'
 
 export default createAction({
   auth: pastefyAuth,
@@ -11,10 +11,8 @@ export default createAction({
     parent_id: pastefyCommon.folder_id(false, 'Start Folder'),
   },
   async run(context) {
-    const client = makeClient(context.auth, context.propsValue);
-    const hierarchy = await client.getFolderHierarchy(
-      context.propsValue.parent_id
-    );
-    return hierarchy;
+    const client = makeClient(context.auth, context.propsValue)
+    const hierarchy = await client.getFolderHierarchy(context.propsValue.parent_id)
+    return hierarchy
   },
-});
+})

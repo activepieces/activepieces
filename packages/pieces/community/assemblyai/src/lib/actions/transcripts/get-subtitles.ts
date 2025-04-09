@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { SubtitleFormat } from 'assemblyai';
-import { assemblyaiAuth } from '../../auth';
-import { getAssemblyAIClient } from '../../client';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { SubtitleFormat } from 'assemblyai'
+import { assemblyaiAuth } from '../../auth'
+import { getAssemblyAIClient } from '../../client'
 
 export const getSubtitles = createAction({
   name: 'getSubtitles',
@@ -38,12 +38,12 @@ export const getSubtitles = createAction({
     }),
   },
   async run(context) {
-    const client = getAssemblyAIClient(context);
+    const client = getAssemblyAIClient(context)
     const subtitles = await client.transcripts.subtitles(
       context.propsValue.id,
       context.propsValue.format as SubtitleFormat,
-      context.propsValue.chars_per_caption
-    );
-    return subtitles;
+      context.propsValue.chars_per_caption,
+    )
+    return subtitles
   },
-});
+})

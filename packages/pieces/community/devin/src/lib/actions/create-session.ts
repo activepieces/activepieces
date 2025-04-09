@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { devinAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { devinAuth } from '../..'
 
 export const createSession = createAction({
   name: 'create_session',
@@ -43,7 +43,7 @@ export const createSession = createAction({
         unlisted: propsValue.unlisted,
         idempotent: propsValue.idempotent,
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

@@ -1,6 +1,6 @@
-import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
-import { PastebinClient } from './client';
-import { pastebinAuth } from '../..';
+import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework'
+import { pastebinAuth } from '../..'
+import { PastebinClient } from './client'
 
 export const pastebinCommon = {
   paste_format: (required = true) =>
@@ -278,15 +278,13 @@ export const pastebinCommon = {
         ],
       },
     }),
-};
+}
 
-export async function makeClient(
-  auth: PiecePropValueSchema<typeof pastebinAuth>
-): Promise<PastebinClient> {
-  const client = new PastebinClient(auth.token);
+export async function makeClient(auth: PiecePropValueSchema<typeof pastebinAuth>): Promise<PastebinClient> {
+  const client = new PastebinClient(auth.token)
   if (auth.username && auth.password) {
-    const userKey = await client.login(auth.username, auth.password);
-    client.setUserKey(userKey);
+    const userKey = await client.login(auth.username, auth.password)
+    client.setUserKey(userKey)
   }
-  return client;
+  return client
 }

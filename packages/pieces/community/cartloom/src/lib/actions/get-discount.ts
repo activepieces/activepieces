@@ -1,6 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { getDiscount } from '../api';
-import { cartloomAuth } from '../auth';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { getDiscount } from '../api'
+import { cartloomAuth } from '../auth'
 
 export const getDiscountAction = createAction({
   name: 'get_discount',
@@ -15,6 +15,6 @@ export const getDiscountAction = createAction({
     }),
   },
   async run(context) {
-    return await getDiscount(context.auth, context.propsValue.discountId);
+    return await getDiscount(context.auth, context.propsValue.discountId)
   },
-});
+})

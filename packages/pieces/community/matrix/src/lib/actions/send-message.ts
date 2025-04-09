@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { getRoomId, sendMessage as sendMatrixMessage } from '../common/common';
-import { matrixAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { matrixAuth } from '../..'
+import { getRoomId, sendMessage as sendMatrixMessage } from '../common/common'
 
 export const sendMessage = createAction({
   auth: matrixAuth,
@@ -10,8 +10,7 @@ export const sendMessage = createAction({
   props: {
     room_alias: Property.ShortText({
       displayName: 'Room Alias',
-      description:
-        'Copy it from room settings -> advanced -> room addresses -> main address',
+      description: 'Copy it from room settings -> advanced -> room addresses -> main address',
       required: true,
     }),
     message: Property.LongText({
@@ -21,17 +20,10 @@ export const sendMessage = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const baseUrl = auth.base_url.replace(/\/$/, '');
-    const accessToken = auth.access_token;
-    const roomId = (
-      await getRoomId(baseUrl, propsValue.room_alias, accessToken)
-    ).body.room_id;
+    const baseUrl = auth.base_url.replace(/\/$/, '')
+    const accessToken = auth.access_token
+    const roomId = (await getRoomId(baseUrl, propsValue.room_alias, accessToken)).body.room_id
 
-    return await sendMatrixMessage(
-      baseUrl,
-      roomId,
-      accessToken,
-      propsValue.message
-    );
+    return await sendMatrixMessage(baseUrl, roomId, accessToken, propsValue.message)
   },
-});
+})

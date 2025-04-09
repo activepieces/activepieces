@@ -1,49 +1,41 @@
-import { t } from 'i18next';
-import { RefreshCw, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { t } from 'i18next'
+import { RefreshCw, Trash2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { Button } from '@/components/ui/button';
-import { HomeButton } from '@/components/ui/home-button';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { cn, NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
-import { Permission } from '@activepieces/shared';
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog'
+import { Button } from '@/components/ui/button'
+import { HomeButton } from '@/components/ui/home-button'
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip'
+import { useAuthorization } from '@/hooks/authorization-hooks'
+import { NEW_TABLE_QUERY_PARAM, cn } from '@/lib/utils'
+import { Permission } from '@activepieces/shared'
 
-import ApTableName from './ap-table-name';
-import { useTableState } from './ap-table-state-provider';
-import { ExportCsvButton } from './export-csv-button';
-import { ImportCsvDialog } from './import-csv-dialog';
+import ApTableName from './ap-table-name'
+import { useTableState } from './ap-table-state-provider'
+import { ExportCsvButton } from './export-csv-button'
+import { ImportCsvDialog } from './import-csv-dialog'
 
 type ApTableHeaderProps = {
-  isFetchingNextPage: boolean;
-};
+  isFetchingNextPage: boolean
+}
 const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
-  const [
-    isSaving,
-    selectedRecords,
-    setSelectedRecords,
-    deleteRecords,
-    records,
-  ] = useTableState((state) => [
+  const [isSaving, selectedRecords, setSelectedRecords, deleteRecords, records] = useTableState((state) => [
     state.isSaving,
     state.selectedRecords,
     state.setSelectedRecords,
     state.deleteRecords,
     state.records,
-  ]);
-  const [searchParams] = useSearchParams();
-  const userHasTableWritePermission = useAuthorization().checkAccess(
-    Permission.WRITE_TABLE,
-  );
+  ])
+  const [searchParams] = useSearchParams()
+  const userHasTableWritePermission = useAuthorization().checkAccess(Permission.WRITE_TABLE)
 
-  const [isEditingTableName, setIsEditingTableName] = useState(false);
+  const [isEditingTableName, setIsEditingTableName] = useState(false)
   useEffect(() => {
-    setIsEditingTableName(searchParams.get(NEW_TABLE_QUERY_PARAM) === 'true');
-  }, []);
+    setIsEditingTableName(searchParams.get(NEW_TABLE_QUERY_PARAM) === 'true')
+  }, [])
 
-  const tableData = useTableState((state) => state.table);
+  const tableData = useTableState((state) => state.table)
   return (
     <div className="flex flex-col gap-4 flex-none px-4">
       <div className="flex items-center justify-between">
@@ -76,23 +68,15 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
             <ImportCsvDialog />
             <ExportCsvButton />
             <div onClick={(e) => e.stopPropagation()}>
-              <PermissionNeededTooltip
-                hasPermission={userHasTableWritePermission}
-              >
+              <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
                 <ConfirmationDeleteDialog
                   title={t('Delete Records')}
-                  message={t(
-                    'Are you sure you want to delete the selected records? This action cannot be undone.',
-                  )}
-                  entityName={
-                    selectedRecords.size === 1 ? t('record') : t('records')
-                  }
+                  message={t('Are you sure you want to delete the selected records? This action cannot be undone.')}
+                  entityName={selectedRecords.size === 1 ? t('record') : t('records')}
                   mutationFn={async () => {
-                    const indices = Array.from(selectedRecords).map((row) =>
-                      records.findIndex((r) => r.uuid === row),
-                    );
-                    deleteRecords(indices.map((index) => index.toString()));
-                    setSelectedRecords(new Set());
+                    const indices = Array.from(selectedRecords).map((row) => records.findIndex((r) => r.uuid === row))
+                    deleteRecords(indices.map((index) => index.toString()))
+                    setSelectedRecords(new Set())
                   }}
                 >
                   <Button
@@ -113,9 +97,9 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-ApTableHeader.displayName = 'ApTableHeader';
+ApTableHeader.displayName = 'ApTableHeader'
 
-export default ApTableHeader;
+export default ApTableHeader

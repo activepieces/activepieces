@@ -1,10 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { activePieceAuth } from '../../index';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { activePieceAuth } from '../../index'
 
 export const createProject = createAction({
   name: 'create_project',
@@ -29,8 +25,8 @@ export const createProject = createAction({
       body: {
         displayName: propsValue['display_name'],
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

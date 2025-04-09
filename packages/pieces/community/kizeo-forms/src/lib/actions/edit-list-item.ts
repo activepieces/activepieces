@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { endpoint, kizeoFormsCommon } from '../common';
-import { kizeoFormsAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { kizeoFormsAuth } from '../..'
+import { endpoint, kizeoFormsCommon } from '../common'
 
 export const editListItem = createAction({
   auth: kizeoFormsAuth,
@@ -24,17 +24,17 @@ export const editListItem = createAction({
     properties: kizeoFormsCommon.listProperties,
   },
   async run(context) {
-    const { listId, itemId, itemLabel, properties } = context.propsValue;
+    const { listId, itemId, itemLabel, properties } = context.propsValue
 
     type Body = {
       items: [
         {
-          item_id: string;
-          label: string;
-          properties: Record<string, string | number>;
-        }
-      ];
-    };
+          item_id: string
+          label: string
+          properties: Record<string, string | number>
+        },
+      ]
+    }
 
     const body: Body = {
       items: [
@@ -44,13 +44,11 @@ export const editListItem = createAction({
           properties: {},
         },
       ],
-    };
+    }
     for (let i = 0; i < Object.keys(properties).length; i++) {
-      const propertyId = Object.keys(properties)[i];
-      const propertyValue = properties[Object.keys(properties)[i]];
-      body.items[0].properties[propertyId] = parseFloat(propertyValue)
-        ? parseFloat(propertyValue)
-        : propertyValue;
+      const propertyId = Object.keys(properties)[i]
+      const propertyValue = properties[Object.keys(properties)[i]]
+      body.items[0].properties[propertyId] = parseFloat(propertyValue) ? parseFloat(propertyValue) : propertyValue
     }
 
     const response = await httpClient.sendRequest({
@@ -61,11 +59,11 @@ export const editListItem = createAction({
         Authorization: context.auth,
       },
       body: body,
-    });
+    })
 
     if (response.status === 200) {
-      return response.body;
+      return response.body
     }
-    return [];
+    return []
   },
-});
+})

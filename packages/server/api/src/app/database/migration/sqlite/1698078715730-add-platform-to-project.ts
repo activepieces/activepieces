@@ -3,16 +3,19 @@ import { system } from '../../../helper/system/system'
 
 const log = system.globalLogger()
 export class AddPlatformToProject1698078715730 implements MigrationInterface {
-    name = 'AddPlatformToProject1698078715730'
+  name = 'AddPlatformToProject1698078715730'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        log.info({
-            name: this.name,
-        }, 'up')
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    log.info(
+      {
+        name: this.name,
+      },
+      'up',
+    )
+    await queryRunner.query(`
             DROP INDEX "idx_project_owner_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_project" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -25,7 +28,7 @@ export class AddPlatformToProject1698078715730 implements MigrationInterface {
                 CONSTRAINT "fk_project_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_project"(
                     "id",
                     "created",
@@ -42,31 +45,34 @@ export class AddPlatformToProject1698078715730 implements MigrationInterface {
                 "notifyStatus"
             FROM "project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_project"
                 RENAME TO "project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
         `)
 
-        log.info({
-            name: this.name,
-        }, 'up')
-    }
+    log.info(
+      {
+        name: this.name,
+      },
+      'up',
+    )
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_project_owner_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "project"
                 RENAME TO "temporary_project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "project" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -77,7 +83,7 @@ export class AddPlatformToProject1698078715730 implements MigrationInterface {
                 CONSTRAINT "fk_project_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "project"(
                     "id",
                     "created",
@@ -94,15 +100,18 @@ export class AddPlatformToProject1698078715730 implements MigrationInterface {
                 "notifyStatus"
             FROM "temporary_project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
         `)
 
-        log.info({
-            name: this.name,
-        }, 'down')
-    }
+    log.info(
+      {
+        name: this.name,
+      },
+      'down',
+    )
+  }
 }

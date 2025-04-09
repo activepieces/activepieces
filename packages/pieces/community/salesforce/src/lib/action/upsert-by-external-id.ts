@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { callSalesforceApi, salesforcesCommon } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { salesforceAuth } from '../..';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { salesforceAuth } from '../..'
+import { callSalesforceApi, salesforcesCommon } from '../common'
 
 export const upsertByExternalId = createAction({
   auth: salesforceAuth,
@@ -25,13 +25,11 @@ export const upsertByExternalId = createAction({
     }),
   },
   async run(context) {
-    const records = context.propsValue?.records?.records;
+    const records = context.propsValue?.records?.records
     if (!records) {
-      throw new Error(
-        'Expect records field inside json to be an array with records to upsert'
-      );
+      throw new Error('Expect records field inside json to be an array with records to upsert')
     }
-    const { object, external_field } = context.propsValue;
+    const { object, external_field } = context.propsValue
     const response = await callSalesforceApi(
       HttpMethod.PATCH,
       context.auth,
@@ -39,8 +37,8 @@ export const upsertByExternalId = createAction({
       {
         allOrNone: false,
         ...context.propsValue.records,
-      }
-    );
-    return response;
+      },
+    )
+    return response
   },
-});
+})

@@ -1,8 +1,8 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { instantVerifyAction } from './lib/actions/instant-verify';
-import { clearoutAuth } from './lib/auth';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { instantVerifyAction } from './lib/actions/instant-verify'
+import { clearoutAuth } from './lib/auth'
 
 export const clearout = createPiece({
   displayName: 'Clearout',
@@ -11,7 +11,7 @@ export const clearout = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/clearout.png',
   categories: [PieceCategory.SALES_AND_CRM],
-  authors: ["joeworkman","kishanprmr","MoShizzle","abuaboud"],
+  authors: ['joeworkman', 'kishanprmr', 'MoShizzle', 'abuaboud'],
   actions: [
     instantVerifyAction,
     createCustomApiCallAction({
@@ -23,6 +23,6 @@ export const clearout = createPiece({
     }),
   ],
   triggers: [],
-});
+})
 
 // Clearout API Docs https://docs.clearout.io/api.html

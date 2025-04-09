@@ -1,9 +1,9 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
-import { saveContent } from './api';
+import { propsValidation } from '@activepieces/pieces-common'
+import { PieceAuth, Property } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { saveContent } from './api'
 
-export type TotalCMSAuthType = { license: string; domain: string };
+export type TotalCMSAuthType = { license: string; domain: string }
 
 export const cmsAuth = PieceAuth.CustomAuth({
   description: 'Setup your Total CMS connection',
@@ -24,18 +24,16 @@ export const cmsAuth = PieceAuth.CustomAuth({
     await propsValidation.validateZod(auth, {
       domain: z.string().url(),
       license: z.string(),
-    });
+    })
 
     const response = await saveContent(auth, 'text', 'activepieces', {
       text: 'verified',
-    });
+    })
     if (response.success !== true) {
-      throw new Error(
-        'Authentication failed. Please check your domain and license key and try again.'
-      );
+      throw new Error('Authentication failed. Please check your domain and license key and try again.')
     }
     return {
       valid: true,
-    };
+    }
   },
-});
+})

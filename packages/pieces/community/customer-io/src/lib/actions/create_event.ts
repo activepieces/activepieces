@@ -1,7 +1,7 @@
-import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
-import { customerIOAuth } from '../../index';
-import { customerIOCommon } from '../common';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { DynamicPropsValue, Property, createAction } from '@activepieces/pieces-framework'
+import { customerIOAuth } from '../../index'
+import { customerIOCommon } from '../common'
 
 export const createEvent = createAction({
   auth: customerIOAuth,
@@ -11,12 +11,13 @@ export const createEvent = createAction({
   props: {
     customer_identifier: Property.ShortText({
       displayName: 'Customer identifier',
-      description: 'The unique value representing a person. You may identify a person by id, email address, or the cio_id (when updating people), depending on your workspace settings',
+      description:
+        'The unique value representing a person. You may identify a person by id, email address, or the cio_id (when updating people), depending on your workspace settings',
       required: true,
     }),
     event_name: Property.ShortText({
       displayName: 'Event Name',
-      description: 'The name of the event. This is how you\'ll reference the event in campaigns or segments',
+      description: "The name of the event. This is how you'll reference the event in campaigns or segments",
       required: true,
     }),
     body_type: Property.StaticDropdown({
@@ -43,49 +44,44 @@ export const createEvent = createAction({
       refreshers: ['body_type'],
       required: false,
       props: async ({ body_type }) => {
-        if (!body_type) return {};
+        if (!body_type) return {}
 
-        const bodyTypeInput = body_type as unknown as string;
+        const bodyTypeInput = body_type as unknown as string
 
-        const fields: DynamicPropsValue = {};
+        const fields: DynamicPropsValue = {}
 
         switch (bodyTypeInput) {
           case 'json':
             fields['data'] = Property.Json({
               displayName: 'JSON Body',
               required: true,
-            });
-            break;
+            })
+            break
           case 'key_value':
             fields['data'] = Property.Object({
               displayName: 'Key Value',
               required: true,
-            });
-            break;
+            })
+            break
         }
-        return fields;
+        return fields
       },
     }),
   },
   async run(context) {
-    const {
-      body,
-      body_type,
-    } = context.propsValue;
+    const { body, body_type } = context.propsValue
 
-    const basic_track_api = `${
-      Buffer.from(
-        `${context.auth.track_site_id}:${context.auth.track_api_key}`,
-        'utf8'
-      ).toString('base64')
-    }`
+    const basic_track_api = `${Buffer.from(
+      `${context.auth.track_site_id}:${context.auth.track_api_key}`,
+      'utf8',
+    ).toString('base64')}`
 
     const headers = {
       Authorization: `Basic ${basic_track_api}`,
       'Content-Type': 'application/json',
     }
-    const encoded_email = encodeURIComponent(context.propsValue.customer_identifier);
-    const url = customerIOCommon[context.auth.region || 'us'].trackUrl + 'customers/' + encoded_email + '/events';
+    const encoded_email = encodeURIComponent(context.propsValue.customer_identifier)
+    const url = customerIOCommon[context.auth.region || 'us'].trackUrl + 'customers/' + encoded_email + '/events'
 
     const httprequestdata = {
       method: HttpMethod.POST,
@@ -96,6 +92,6 @@ export const createEvent = createAction({
         data: body ? body['data'] : {},
       },
     }
-    return await httpClient.sendRequest(httprequestdata);
+    return await httpClient.sendRequest(httprequestdata)
   },
 })

@@ -1,19 +1,14 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { DUST_BASE_URL } from '../common';
-import { dustAuth } from '../..';
-import mimeTypes from 'mime-types';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import mimeTypes from 'mime-types'
+import { dustAuth } from '../..'
+import { DUST_BASE_URL } from '../common'
 
 export const upsertDocument = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'addDocument',
   displayName: 'Add or update document',
-  description:
-    'Insert a new document to a Data Source (or update an existing one)',
+  description: 'Insert a new document to a Data Source (or update an existing one)',
   auth: dustAuth,
   props: {
     datasource: Property.ShortText({
@@ -48,7 +43,7 @@ export const upsertDocument = createAction({
   async run({ auth, propsValue }) {
     const tags = propsValue.title
       ? [`title:${propsValue.title}`, ...(propsValue.tags as string[])]
-      : (propsValue.tags as string[]);
+      : (propsValue.tags as string[])
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${DUST_BASE_URL}/${auth.workspaceId}/data_sources/${
@@ -64,11 +59,11 @@ export const upsertDocument = createAction({
           source_url: propsValue.sourceUrl,
           tags: tags,
         },
-        (key, value) => (typeof value === 'undefined' ? null : value)
+        (key, value) => (typeof value === 'undefined' ? null : value),
       ),
-    };
+    }
 
-    const response = await httpClient.sendRequest(request);
-    return response.body;
+    const response = await httpClient.sendRequest(request)
+    return response.body
   },
-});
+})

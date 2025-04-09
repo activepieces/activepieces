@@ -1,47 +1,39 @@
-import { t } from 'i18next';
-import React from 'react';
-import { useFormContext } from 'react-hook-form';
+import { t } from 'i18next'
+import React from 'react'
+import { useFormContext } from 'react-hook-form'
 
-import { ApMarkdown } from '@/components/custom/markdown';
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { platformHooks } from '@/hooks/platform-hooks';
-import {
-  CodeAction,
-  FlowOperationType,
-  MarkdownVariant,
-} from '@activepieces/shared';
+import { ApMarkdown } from '@/components/custom/markdown'
+import { FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { platformHooks } from '@/hooks/platform-hooks'
+import { CodeAction, FlowOperationType, MarkdownVariant } from '@activepieces/shared'
 
-import { useBuilderStateContext } from '../../builder-hooks';
-import { DictionaryProperty } from '../../piece-properties/dictionary-property';
-import { AskAiButton } from '../../pieces-selector/ask-ai';
+import { useBuilderStateContext } from '../../builder-hooks'
+import { DictionaryProperty } from '../../piece-properties/dictionary-property'
+import { AskAiButton } from '../../pieces-selector/ask-ai'
 
-import { CodeEditor } from './code-editor';
+import { CodeEditor } from './code-editor'
 
 const markdown = `
 To use data from previous steps in your code, include them as pairs of keys and values below. 
 
 You can access these inputs in your code using \`inputs.key\`, where \`key\` is the name you assigned below.  
-`;
+`
 
 const warningMarkdown = `
 **const code** is the entry to the code. If it is removed or renamed, your step will fail.
-`;
+`
 
 type CodeSettingsProps = {
-  readonly: boolean;
-};
+  readonly: boolean
+}
 
 const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
-  const form = useFormContext<CodeAction>();
-  const [selectedStep, refreshStepFormSettingsToggle] = useBuilderStateContext(
-    (state) => [state.selectedStep || '', state.refreshStepFormSettingsToggle],
-  );
-  const isCopilotEnabled = platformHooks.isCopilotEnabled();
+  const form = useFormContext<CodeAction>()
+  const [selectedStep, refreshStepFormSettingsToggle] = useBuilderStateContext((state) => [
+    state.selectedStep || '',
+    state.refreshStepFormSettingsToggle,
+  ])
+  const isCopilotEnabled = platformHooks.isCopilotEnabled()
   return (
     <div className="flex flex-col gap-4">
       <FormField
@@ -78,10 +70,7 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
       />
 
       <div>
-        <ApMarkdown
-          markdown={warningMarkdown}
-          variant={MarkdownVariant.WARNING}
-        />
+        <ApMarkdown markdown={warningMarkdown} variant={MarkdownVariant.WARNING} />
       </div>
       <FormField
         control={form.control}
@@ -99,7 +88,7 @@ const CodeSettings = React.memo(({ readonly }: CodeSettingsProps) => {
         )}
       />
     </div>
-  );
-});
-CodeSettings.displayName = 'CodeSettings';
-export { CodeSettings };
+  )
+})
+CodeSettings.displayName = 'CodeSettings'
+export { CodeSettings }

@@ -1,19 +1,14 @@
-import {
-  HttpRequest,
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { isNotUndefined, pickBy } from '@activepieces/shared';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { isNotUndefined, pickBy } from '@activepieces/shared'
 import {
   TodoistCreateTaskRequest,
   TodoistProject,
   TodoistSection,
   TodoistTask,
   TodoistUpdateTaskRequest,
-} from '../models';
+} from '../models'
 
-const API = 'https://api.todoist.com/rest/v2';
+const API = 'https://api.todoist.com/rest/v2'
 
 export const todoistRestClient = {
   projects: {
@@ -25,17 +20,17 @@ export const todoistRestClient = {
           type: AuthenticationType.BEARER_TOKEN,
           token,
         },
-      };
+      }
 
-      const response = await httpClient.sendRequest<TodoistProject[]>(request);
-      return response.body;
+      const response = await httpClient.sendRequest<TodoistProject[]>(request)
+      return response.body
     },
   },
 
   sections: {
     async list(params: SectionsListPrams): Promise<TodoistSection[]> {
-      const qs: Record<string, any> = {};
-      if (params.project_id) qs['project_id'] = params.project_id;
+      const qs: Record<string, any> = {}
+      if (params.project_id) qs['project_id'] = params.project_id
 
       const request: HttpRequest = {
         method: HttpMethod.GET,
@@ -45,10 +40,10 @@ export const todoistRestClient = {
           token: params.token,
         },
         queryParams: qs,
-      };
+      }
 
-      const response = await httpClient.sendRequest<TodoistSection[]>(request);
-      return response.body;
+      const response = await httpClient.sendRequest<TodoistSection[]>(request)
+      return response.body
     },
   },
 
@@ -71,7 +66,7 @@ export const todoistRestClient = {
         priority,
         section_id,
         ...dueDateParams(due_date),
-      };
+      }
 
       const request: HttpRequest<TodoistCreateTaskRequest> = {
         method: HttpMethod.POST,
@@ -81,10 +76,10 @@ export const todoistRestClient = {
           token,
         },
         body,
-      };
+      }
 
-      const response = await httpClient.sendRequest<TodoistTask>(request);
-      return response.body;
+      const response = await httpClient.sendRequest<TodoistTask>(request)
+      return response.body
     },
 
     async update(params: TasksUpdateParams): Promise<TodoistTask> {
@@ -94,7 +89,7 @@ export const todoistRestClient = {
         labels: params.labels?.length === 0 ? undefined : params.labels,
         priority: params.priority,
         ...dueDateParams(params.due_date),
-      };
+      }
 
       const request: HttpRequest<TodoistUpdateTaskRequest> = {
         method: HttpMethod.POST,
@@ -104,21 +99,17 @@ export const todoistRestClient = {
           token: params.token,
         },
         body,
-      };
+      }
 
-      const response = await httpClient.sendRequest<TodoistTask>(request);
-      return response.body;
+      const response = await httpClient.sendRequest<TodoistTask>(request)
+      return response.body
     },
 
-    async list({
-      token,
-      project_id,
-      filter,
-    }: TasksListParams): Promise<TodoistTask[]> {
+    async list({ token, project_id, filter }: TasksListParams): Promise<TodoistTask[]> {
       const queryParams = {
         filter,
         project_id,
-      };
+      }
 
       const request: HttpRequest = {
         method: HttpMethod.GET,
@@ -128,10 +119,10 @@ export const todoistRestClient = {
           token,
         },
         queryParams: pickBy(queryParams, isNotUndefined),
-      };
+      }
 
-      const response = await httpClient.sendRequest<TodoistTask[]>(request);
-      return response.body;
+      const response = await httpClient.sendRequest<TodoistTask[]>(request)
+      return response.body
     },
 
     async close({ token, task_id }: { token: string; task_id: string }) {
@@ -142,48 +133,48 @@ export const todoistRestClient = {
           type: AuthenticationType.BEARER_TOKEN,
           token,
         },
-      };
+      }
 
-      const response = await httpClient.sendRequest(request);
-      return response.body;
+      const response = await httpClient.sendRequest(request)
+      return response.body
     },
   },
-};
+}
 
 type ProjectsListParams = {
-  token: string;
-};
+  token: string
+}
 
 type SectionsListPrams = {
-  token: string;
-  project_id?: string;
-};
+  token: string
+  project_id?: string
+}
 
 type TasksCreateParams = {
-  token: string;
-} & TodoistCreateTaskRequest;
+  token: string
+} & TodoistCreateTaskRequest
 
 type TasksUpdateParams = {
-  token: string;
-  task_id: string;
-} & TodoistUpdateTaskRequest;
+  token: string
+  task_id: string
+} & TodoistUpdateTaskRequest
 
 type TasksListParams = {
-  token: string;
-  project_id?: string | undefined;
-  filter?: string | undefined;
-};
+  token: string
+  project_id?: string | undefined
+  filter?: string | undefined
+}
 
 const dueDateParams = (dueDate?: string) => {
   if (dueDate) {
-    const parsedDate = Date.parse(dueDate);
+    const parsedDate = Date.parse(dueDate)
     if (isNaN(parsedDate)) {
-      return { due_string: dueDate };
+      return { due_string: dueDate }
     } else if (/\d{4}-\d{2}-\d{2}/.test(dueDate)) {
-      return { due_date: dueDate };
+      return { due_date: dueDate }
     } else {
-      return { due_datetime: new Date(parsedDate).toISOString() };
+      return { due_datetime: new Date(parsedDate).toISOString() }
     }
   }
-  return {};
-};
+  return {}
+}

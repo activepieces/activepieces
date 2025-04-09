@@ -1,6 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { clockodoCommon, emptyToNull, makeClient } from '../../common';
-import { clockodoAuth } from '../../../';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { clockodoAuth } from '../../../'
+import { clockodoCommon, emptyToNull, makeClient } from '../../common'
 
 export default createAction({
   auth: clockodoAuth,
@@ -55,7 +55,7 @@ export default createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth)
     const res = await client.updateUser(propsValue.user_id as number, {
       name: propsValue.name,
       email: propsValue.email,
@@ -68,7 +68,7 @@ export default createAction({
       can_generally_see_absences: propsValue.can_generally_see_absences,
       can_generally_manage_absences: propsValue.can_generally_manage_absences,
       can_add_customers: propsValue.can_add_customers,
-    });
-    return res.user;
+    })
+    return res.user
   },
-});
+})

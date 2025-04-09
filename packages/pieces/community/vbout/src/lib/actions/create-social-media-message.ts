@@ -1,6 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { vboutAuth } from '../../';
-import { makeClient, vboutCommon } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { vboutAuth } from '../../'
+import { makeClient, vboutCommon } from '../common'
 export const createSocialMediaMessageAction = createAction({
   auth: vboutAuth,
   name: 'vbout_create_social_media_message',
@@ -15,7 +15,7 @@ export const createSocialMediaMessageAction = createAction({
     channelid: vboutCommon.socialMediaProfile,
   },
   async run(context) {
-    const client = makeClient(context.auth as string);
-    return await client.createSocialMediaPost(context.propsValue);
+    const client = makeClient(context.auth as string)
+    return await client.createSocialMediaPost(context.propsValue)
   },
-});
+})

@@ -1,62 +1,54 @@
-import { t } from 'i18next';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { t } from 'i18next'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 
-import { flowStructureUtil } from '@activepieces/shared';
+import { flowStructureUtil } from '@activepieces/shared'
 
-import { useApRipple } from '../../../components/theme-provider';
-import { Button } from '../../../components/ui/button';
-import { PieceIcon } from '../../../features/pieces/components/piece-icon';
-import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
-import { useBuilderStateContext } from '../builder-hooks';
+import { useApRipple } from '../../../components/theme-provider'
+import { Button } from '../../../components/ui/button'
+import { PieceIcon } from '../../../features/pieces/components/piece-icon'
+import { piecesHooks } from '../../../features/pieces/lib/pieces-hook'
+import { useBuilderStateContext } from '../builder-hooks'
 
-import { DataSelectorTreeNode } from './type';
+import { DataSelectorTreeNode } from './type'
 
 const ToggleIcon = ({ expanded }: { expanded: boolean }) => {
-  const toggleIconSize = 15;
+  const toggleIconSize = 15
   return expanded ? (
     <ChevronUp height={toggleIconSize} width={toggleIconSize}></ChevronUp>
   ) : (
     <ChevronDown height={toggleIconSize} width={toggleIconSize}></ChevronDown>
-  );
-};
+  )
+}
 
 type DataSelectorNodeContentProps = {
-  expanded: boolean;
-  setExpanded: (expanded: boolean) => void;
-  depth: number;
-  node: DataSelectorTreeNode;
-};
+  expanded: boolean
+  setExpanded: (expanded: boolean) => void
+  depth: number
+  node: DataSelectorTreeNode
+}
 const handleKeyPress = (event: React.KeyboardEvent<HTMLDivElement>) => {
   if (event.key === 'Enter' || event.key === ' ') {
-    event.preventDefault();
+    event.preventDefault()
     if (event.target) {
-      (event.target as HTMLDivElement).click();
+      ;(event.target as HTMLDivElement).click()
     }
   }
-};
+}
 
-const DataSelectorNodeContent = ({
-  node,
-  expanded,
-  setExpanded,
-  depth,
-}: DataSelectorNodeContentProps) => {
-  const flowVersion = useBuilderStateContext((state) => state.flowVersion);
-  const insertMention = useBuilderStateContext((state) => state.insertMention);
+const DataSelectorNodeContent = ({ node, expanded, setExpanded, depth }: DataSelectorNodeContentProps) => {
+  const flowVersion = useBuilderStateContext((state) => state.flowVersion)
+  const insertMention = useBuilderStateContext((state) => state.insertMention)
 
-  const [ripple, rippleEvent] = useApRipple();
+  const [ripple, rippleEvent] = useApRipple()
   const step =
     node.data.type === 'value'
       ? flowStructureUtil.getStep(node.data.propertyPath, flowVersion.trigger)
       : node.data.type === 'test'
-      ? flowStructureUtil.getStep(node.data.stepName, flowVersion.trigger)
-      : undefined;
-  const stepMetadata = step
-    ? piecesHooks.useStepMetadata({ step }).stepMetadata
-    : undefined;
-  const showInsertButton =
-    node.data.type === 'value' && node.data.insertable && !node.isLoopStepNode;
-  const showNodeValue = !node.children && node.data.type === 'value';
+        ? flowStructureUtil.getStep(node.data.stepName, flowVersion.trigger)
+        : undefined
+  const stepMetadata = step ? piecesHooks.useStepMetadata({ step }).stepMetadata : undefined
+  const showInsertButton = node.data.type === 'value' && node.data.insertable && !node.isLoopStepNode
+  const showNodeValue = !node.children && node.data.type === 'value'
 
   return (
     <div
@@ -65,15 +57,11 @@ const DataSelectorNodeContent = ({
       ref={ripple}
       onClick={(e) => {
         if (node.children && node.children.length > 0) {
-          rippleEvent(e);
-          setExpanded(!expanded);
-        } else if (
-          insertMention &&
-          node.data.type === 'value' &&
-          node.data.insertable
-        ) {
-          rippleEvent(e);
-          insertMention(node.data.propertyPath);
+          rippleEvent(e)
+          setExpanded(!expanded)
+        } else if (insertMention && node.data.type === 'value' && node.data.insertable) {
+          rippleEvent(e)
+          insertMention(node.data.propertyPath)
         }
       }}
       className="w-full max-w-full select-none focus:outline-none hover:bg-accent focus:bg-accent focus:bg-opacity-75 hover:bg-opacity-75 cursor-pointer group"
@@ -96,16 +84,12 @@ const DataSelectorNodeContent = ({
             ></PieceIcon>
           </div>
         )}
-        {node.data.type !== 'test' && (
-          <div className=" truncate">{node.data.displayName}</div>
-        )}
+        {node.data.type !== 'test' && <div className=" truncate">{node.data.displayName}</div>}
 
         {showNodeValue && (
           <>
             <div className="flex-shrink-0">:</div>
-            <div className="flex-1 text-primary truncate">
-              {`${node.data.type === 'value' ? node.data.value : ''}`}
-            </div>
+            <div className="flex-1 text-primary truncate">{`${node.data.type === 'value' ? node.data.value : ''}`}</div>
           </>
         )}
 
@@ -116,11 +100,9 @@ const DataSelectorNodeContent = ({
               variant="basic"
               size="sm"
               onClick={(e) => {
-                e.stopPropagation();
+                e.stopPropagation()
                 if (insertMention) {
-                  insertMention(
-                    node.data.type === 'value' ? node.data.propertyPath : '',
-                  );
+                  insertMention(node.data.type === 'value' ? node.data.propertyPath : '')
                 }
               }}
             >
@@ -135,7 +117,7 @@ const DataSelectorNodeContent = ({
         </div>
       </div>
     </div>
-  );
-};
-DataSelectorNodeContent.displayName = 'DataSelectorNodeContent';
-export { DataSelectorNodeContent };
+  )
+}
+DataSelectorNodeContent.displayName = 'DataSelectorNodeContent'
+export { DataSelectorNodeContent }

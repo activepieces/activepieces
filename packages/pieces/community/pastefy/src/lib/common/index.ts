@@ -1,39 +1,34 @@
-import {
-  PiecePropValueSchema,
-  PiecePropertyMap,
-  Property,
-  StaticPropsValue,
-} from '@activepieces/pieces-framework';
-import { PastefyClient } from './client';
-import { FolderHierarchy } from './models/folder';
-import { PasteVisibility } from './models/paste';
-import { pastefyAuth } from '../..';
+import { PiecePropValueSchema, PiecePropertyMap, Property, StaticPropsValue } from '@activepieces/pieces-framework'
+import { pastefyAuth } from '../..'
+import { PastefyClient } from './client'
+import { FolderHierarchy } from './models/folder'
+import { PasteVisibility } from './models/paste'
 
 interface FlatFolder {
-  id: string;
-  name: string;
+  id: string
+  name: string
 }
 
 function flattenFolderHierarchy(hierarchy: FolderHierarchy[]): FlatFolder[] {
-  const folders: FlatFolder[] = [];
+  const folders: FlatFolder[] = []
   for (const h of hierarchy) {
-    folders.push({ id: h.id, name: h.name });
+    folders.push({ id: h.id, name: h.name })
     flattenFolderHierarchy(h.children).forEach((e) => {
       folders.push({
         id: e.id,
         name: h.name + ' / ' + e.name,
-      });
-    });
+      })
+    })
   }
-  return folders;
+  return folders
 }
 
 export function formatDate(date?: string): string | undefined {
-  if (!date) return date;
+  if (!date) return date
   return date
     .replace('T', ' ')
     .replace('Z', '')
-    .replace(/\.[0-9]{3}/, '');
+    .replace(/\.[0-9]{3}/, '')
 }
 
 export const pastefyCommon = {
@@ -49,13 +44,10 @@ export const pastefyCommon = {
             disabled: true,
             placeholder: 'setup authentication first',
             options: [],
-          };
+          }
         }
-        const client = makeClient(
-          auth as PiecePropValueSchema<typeof pastefyAuth>,
-          { auth }
-        );
-        const folders = await client.getFolderHierarchy();
+        const client = makeClient(auth as PiecePropValueSchema<typeof pastefyAuth>, { auth })
+        const folders = await client.getFolderHierarchy()
 
         return {
           disabled: false,
@@ -63,9 +55,9 @@ export const pastefyCommon = {
             return {
               label: folder.name,
               value: folder.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   visibility: (required = true) =>
@@ -80,11 +72,11 @@ export const pastefyCommon = {
         ],
       },
     }),
-};
+}
 
 export function makeClient(
   auth: PiecePropValueSchema<typeof pastefyAuth>,
-  propsValue: StaticPropsValue<PiecePropertyMap>
+  propsValue: StaticPropsValue<PiecePropertyMap>,
 ): PastefyClient {
-  return new PastefyClient(auth.token || undefined, propsValue.instance_url);
+  return new PastefyClient(auth.token || undefined, propsValue.instance_url)
 }

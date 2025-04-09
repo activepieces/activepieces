@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { quickzuAuth } from '../../..';
-import { makeClient } from '../../common';
-import { BusinessTimingInput } from '../../common/types';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { quickzuAuth } from '../../..'
+import { makeClient } from '../../common'
+import { BusinessTimingInput } from '../../common/types'
 
 export const updateBusinessTimeAction = createAction({
   auth: quickzuAuth,
@@ -48,26 +48,26 @@ export const updateBusinessTimeAction = createAction({
     }),
   },
   async run(context) {
-    const items = context.propsValue.items as BusinessDayHour[];
+    const items = context.propsValue.items as BusinessDayHour[]
     const input: BusinessTimingInput = {
       timing: {},
-    };
+    }
     for (const day of items) {
       input.timing[day.weekday] = {
         start: day.start,
         end: day.end,
         status: day.status,
-      };
+      }
     }
 
-    const client = makeClient(context.auth);
-    return await client.updateBusinessTime(input);
+    const client = makeClient(context.auth)
+    return await client.updateBusinessTime(input)
   },
-});
+})
 
 type BusinessDayHour = {
-  weekday: string;
-  start: string;
-  end: string;
-  status: boolean;
-};
+  weekday: string
+  start: string
+  end: string
+  status: boolean
+}

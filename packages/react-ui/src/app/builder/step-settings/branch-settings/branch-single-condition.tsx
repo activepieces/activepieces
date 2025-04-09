@@ -1,35 +1,24 @@
-import { t } from 'i18next';
-import { Trash } from 'lucide-react';
-import { useFormContext } from 'react-hook-form';
+import { t } from 'i18next'
+import { Trash } from 'lucide-react'
+import { useFormContext } from 'react-hook-form'
 
-import { SearchableSelect } from '@/components/custom/searchable-select';
-import { Button } from '@/components/ui/button';
-import { FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { cn } from '@/lib/utils';
-import {
-  BranchOperator,
-  textConditions,
-  singleValueConditions,
-  RouterAction,
-} from '@activepieces/shared';
+import { SearchableSelect } from '@/components/custom/searchable-select'
+import { Button } from '@/components/ui/button'
+import { FormField, FormItem, FormMessage } from '@/components/ui/form'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
+import { cn } from '@/lib/utils'
+import { BranchOperator, RouterAction, singleValueConditions, textConditions } from '@activepieces/shared'
 
-import { InvalidStepIcon } from '../../../../components/custom/alert-icon';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '../../../../components/ui/tooltip';
-import { TextInputWithMentions } from '../../piece-properties/text-input-with-mentions';
+import { InvalidStepIcon } from '../../../../components/custom/alert-icon'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../../../components/ui/tooltip'
+import { TextInputWithMentions } from '../../piece-properties/text-input-with-mentions'
 
 const textToBranchOperation: Record<BranchOperator, string> = {
   [BranchOperator.TEXT_CONTAINS]: t('(Text) Contains'),
   [BranchOperator.TEXT_DOES_NOT_CONTAIN]: t('(Text) Does not contain'),
   [BranchOperator.TEXT_EXACTLY_MATCHES]: t('(Text) Exactly matches'),
-  [BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH]: t(
-    '(Text) Does not exactly match',
-  ),
+  [BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH]: t('(Text) Does not exactly match'),
   [BranchOperator.TEXT_STARTS_WITH]: t('(Text) Starts with'),
   [BranchOperator.TEXT_DOES_NOT_START_WITH]: t('(Text) Does not start with'),
   [BranchOperator.TEXT_ENDS_WITH]: t('(Text) Ends with'),
@@ -48,22 +37,22 @@ const textToBranchOperation: Record<BranchOperator, string> = {
   [BranchOperator.LIST_IS_NOT_EMPTY]: t('(List) Is not empty'),
   [BranchOperator.EXISTS]: t('Exists'),
   [BranchOperator.DOES_NOT_EXIST]: t('Does not exist'),
-};
+}
 const operationOptions = Object.keys(textToBranchOperation).map((operator) => {
   return {
     label: textToBranchOperation[operator as BranchOperator],
     value: operator,
-  };
-});
+  }
+})
 
 type BranchSingleConditionProps = {
-  showDelete: boolean;
-  groupIndex: number;
-  conditionIndex: number;
-  readonly: boolean;
-  deleteClick: () => void;
-  branchIndex: number;
-};
+  showDelete: boolean
+  groupIndex: number
+  conditionIndex: number
+  readonly: boolean
+  deleteClick: () => void
+  branchIndex: number
+}
 
 const BranchSingleCondition = ({
   deleteClick,
@@ -73,20 +62,15 @@ const BranchSingleCondition = ({
   readonly,
   branchIndex,
 }: BranchSingleConditionProps) => {
-  const form = useFormContext<RouterAction>();
+  const form = useFormContext<RouterAction>()
 
-  const condition = form.getValues(
-    `settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}`,
-  );
+  const condition = form.getValues(`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}`)
 
-  const isTextCondition =
-    condition.operator && textConditions.includes(condition?.operator);
-  const isSingleValueCondition =
-    condition.operator && singleValueConditions.includes(condition?.operator);
+  const isTextCondition = condition.operator && textConditions.includes(condition?.operator)
+  const isSingleValueCondition = condition.operator && singleValueConditions.includes(condition?.operator)
   const isInvalid = isSingleValueCondition
     ? condition.firstValue.length === 0
-    : condition.firstValue.length === 0 ||
-      ('secondValue' in condition && condition.secondValue?.length === 0);
+    : condition.firstValue.length === 0 || ('secondValue' in condition && condition.secondValue?.length === 0)
   return (
     <>
       <div className="flex items-center gap-2">
@@ -99,9 +83,7 @@ const BranchSingleCondition = ({
                 className="stroke-0 animate-fade shrink-0"
               ></InvalidStepIcon>
             </TooltipTrigger>
-            <TooltipContent side="bottom">
-              {t('Incomplete condition')}
-            </TooltipContent>
+            <TooltipContent side="bottom">{t('Incomplete condition')}</TooltipContent>
           </Tooltip>
         )}
         <div
@@ -124,7 +106,7 @@ const BranchSingleCondition = ({
                   ></TextInputWithMentions>
                   <FormMessage />
                 </FormItem>
-              );
+              )
             }}
           />
           <FormField
@@ -138,19 +120,15 @@ const BranchSingleCondition = ({
                   options={operationOptions}
                   placeholder={''}
                   onChange={(e) => {
-                    if (
-                      isSingleValueCondition &&
-                      e !== null &&
-                      !singleValueConditions.includes(e as BranchOperator)
-                    ) {
+                    if (isSingleValueCondition && e !== null && !singleValueConditions.includes(e as BranchOperator)) {
                       //TODO: fix this
                       //@ts-expect-ignore
                       form.setValue(
                         `settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.secondValue`,
                         '' as any,
-                      );
+                      )
                     }
-                    field.onChange(e);
+                    field.onChange(e)
                   }}
                 />
                 <FormMessage />
@@ -201,20 +179,15 @@ const BranchSingleCondition = ({
         <div className="flex-grow"></div>
         <div>
           {showDelete && (
-            <Button
-              variant={'basic'}
-              className="text-destructive gap-2 items-center"
-              size={'sm'}
-              onClick={deleteClick}
-            >
+            <Button variant={'basic'} className="text-destructive gap-2 items-center" size={'sm'} onClick={deleteClick}>
               <Trash className="w-4 h-4"></Trash> {t('Remove')}
             </Button>
           )}
         </div>
       </div>
     </>
-  );
-};
+  )
+}
 
-BranchSingleCondition.displayName = 'BranchSingleCondition';
-export { BranchSingleCondition };
+BranchSingleCondition.displayName = 'BranchSingleCondition'
+export { BranchSingleCondition }

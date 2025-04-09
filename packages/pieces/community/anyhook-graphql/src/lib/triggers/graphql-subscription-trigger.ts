@@ -1,6 +1,6 @@
-import { TriggerStrategy, createTrigger, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { createGraphQLSubscription, deleteGraphQLSubscription } from './helpers';
-import { graphqlCommon } from '../common/common';
+import { PieceAuth, Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { graphqlCommon } from '../common/common'
+import { createGraphQLSubscription, deleteGraphQLSubscription } from './helpers'
 
 export const graphqlSubscriptionTrigger = createTrigger({
   auth: graphqlCommon.auth,
@@ -24,7 +24,8 @@ export const graphqlSubscriptionTrigger = createTrigger({
       displayName: 'GraphQL Query',
       description: 'GraphQL subscription query to listen to events',
       required: true,
-      defaultValue: 'subscription { EVM(network: eth, trigger_on: head) { Blocks { Block { BaseFee BaseFeeInUSD Bloom Coinbase } } } }',
+      defaultValue:
+        'subscription { EVM(network: eth, trigger_on: head) { Blocks { Block { BaseFee BaseFeeInUSD Bloom Coinbase } } } }',
     }),
   },
   async onEnable(context) {
@@ -33,21 +34,21 @@ export const graphqlSubscriptionTrigger = createTrigger({
       context.propsValue.headers,
       context.propsValue.query,
       context.webhookUrl,
-      context.auth.proxyBaseUrl
-    );
+      context.auth.proxyBaseUrl,
+    )
 
     // Store subscription info
-    await context.store.put('graphql_subscription_trigger', subscriptionInfo.subscriptionId);
+    await context.store.put('graphql_subscription_trigger', subscriptionInfo.subscriptionId)
   },
   async onDisable(context) {
-    const subscriptionId: string = (await context.store.get('graphql_subscription_trigger')) as string;
+    const subscriptionId: string = (await context.store.get('graphql_subscription_trigger')) as string
     if (subscriptionId) {
-      await deleteGraphQLSubscription(subscriptionId, context.auth.proxyBaseUrl);
-      await context.store.delete('graphql_subscription_trigger');
+      await deleteGraphQLSubscription(subscriptionId, context.auth.proxyBaseUrl)
+      await context.store.delete('graphql_subscription_trigger')
     }
   },
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
   async test(context) {
     return [
@@ -55,7 +56,7 @@ export const graphqlSubscriptionTrigger = createTrigger({
         event: 'GraphQL event data',
         details: 'Details of the event',
       },
-    ];
+    ]
   },
   sampleData: {},
-});
+})

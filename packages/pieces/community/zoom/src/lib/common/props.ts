@@ -1,4 +1,4 @@
-import { Property } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework'
 
 export const getRegistarantProps = () => ({
   meeting_id: Property.ShortText({
@@ -123,4 +123,4 @@ export const getRegistarantProps = () => ({
       ],
     },
   }),
-});
+})

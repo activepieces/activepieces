@@ -1,6 +1,6 @@
-import { slackAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { UsersListResponse, WebClient } from '@slack/web-api';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { UsersListResponse, WebClient } from '@slack/web-api'
+import { slackAuth } from '../../'
 
 export const findUserByHandleAction = createAction({
   auth: slackAuth,
@@ -15,21 +15,19 @@ export const findUserByHandleAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const handle = propsValue.handle.replace('@', '');
-    const client = new WebClient(auth.access_token);
+    const handle = propsValue.handle.replace('@', '')
+    const client = new WebClient(auth.access_token)
     for await (const page of client.paginate('users.list', {
       limit: 1000, // Only limits page size, not total number of results
     })) {
-      const response = page as UsersListResponse;
+      const response = page as UsersListResponse
       if (response.members) {
-        const matchedMember = response.members.find(
-          (member) => member.profile?.display_name === handle
-        );
+        const matchedMember = response.members.find((member) => member.profile?.display_name === handle)
         if (matchedMember) {
-          return matchedMember;
+          return matchedMember
         }
       }
     }
-    throw new Error(`Could not find user with handle @${handle}`);
+    throw new Error(`Could not find user with handle @${handle}`)
   },
-});
+})

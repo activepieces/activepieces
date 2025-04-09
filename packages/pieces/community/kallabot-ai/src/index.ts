@@ -1,10 +1,7 @@
-import {
-  createPiece,
-  PieceAuth,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { makeCallAction } from './lib/actions/make-call';
-import { getCallDetailsAction } from './lib/actions/get-call-details';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { getCallDetailsAction } from './lib/actions/get-call-details'
+import { makeCallAction } from './lib/actions/make-call'
 
 const authDescription = `
 Follow these steps to obtain your Kallbot API Key:
@@ -14,13 +11,13 @@ Follow these steps to obtain your Kallbot API Key:
 3. Select **Settings** from the dropdown menu.
 4. Navigate to the **API & Integrations** tab.
 5. Copy the generated API key and paste it here.
-`;
+`
 
 export const kallabotAuth = PieceAuth.SecretText({
   description: authDescription,
   displayName: 'API Key',
-  required: true
-});
+  required: true,
+})
 
 export const kallabotAi = createPiece({
   displayName: 'Kallabot',
@@ -32,4 +29,4 @@ export const kallabotAi = createPiece({
   actions: [makeCallAction, getCallDetailsAction],
   triggers: [],
   description: 'AI-powered voice agents and conversational interfaces.',
-});
+})

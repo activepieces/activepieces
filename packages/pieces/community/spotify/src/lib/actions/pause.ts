@@ -1,5 +1,5 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { spotifyCommon, makeClient } from '../common';
+import { createAction } from '@activepieces/pieces-framework'
+import { makeClient, spotifyCommon } from '../common'
 
 export default createAction({
   name: 'pause',
@@ -10,10 +10,10 @@ export default createAction({
     device_id: spotifyCommon.device_id(false),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient({ auth });
+    const client = makeClient({ auth })
     const res = await client.pause({
       device_id: propsValue.device_id,
-    });
-    return res;
+    })
+    return res
   },
-});
+})

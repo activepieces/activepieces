@@ -1,40 +1,28 @@
-import {
-  createTrigger,
-  TriggerStrategy,
-  PiecePropValueSchema,
-} from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import { weblingAuth } from '../../index';
-import { WeblingChanges } from '../common/types';
-import { getChanges } from '../common/helpers';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common'
+import { PiecePropValueSchema, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { weblingAuth } from '../../index'
+import { getChanges } from '../common/helpers'
+import { WeblingChanges } from '../common/types'
 
-const polling: Polling<
-  PiecePropValueSchema<typeof weblingAuth>,
-  { calendarId?: string }
-> = {
+const polling: Polling<PiecePropValueSchema<typeof weblingAuth>, { calendarId?: string }> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const changes: WeblingChanges = await getChanges(auth, lastFetchEpochMS);
+    const changes: WeblingChanges = await getChanges(auth, lastFetchEpochMS)
     const items = [
       {
         epochMilliSeconds: Date.now(), // maybe use revision instead?
         data: changes,
       },
-    ];
-    return items;
+    ]
+    return items
   },
-};
+}
 
 export const onChangedData = createTrigger({
   auth: weblingAuth,
   name: 'onChangedData',
   displayName: 'On Changed Data',
-  description:
-    'Triggers when anything was added, updated or deleted since last request.',
+  description: 'Triggers when anything was added, updated or deleted since last request.',
   props: {},
   sampleData: {
     objects: {
@@ -80,39 +68,39 @@ export const onChangedData = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async test(context) {
-    const { store, auth, propsValue } = context;
+    const { store, auth, propsValue } = context
     return await pollingHelper.test(polling, {
       store,
       auth,
       propsValue,
       files: context.files,
-    });
+    })
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
+    const { store, auth, propsValue } = context
     await pollingHelper.onEnable(polling, {
       store,
       auth,
       propsValue,
-    });
+    })
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
+    const { store, auth, propsValue } = context
     await pollingHelper.onDisable(polling, {
       store,
       auth,
       propsValue,
-    });
+    })
   },
 
   async run(context) {
-    const { store, auth, propsValue } = context;
+    const { store, auth, propsValue } = context
     return await pollingHelper.poll(polling, {
       store,
       auth,
       propsValue,
       files: context.files,
-    });
+    })
   },
-});
+})

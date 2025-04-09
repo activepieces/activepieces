@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { getBlogPost } from '../api';
-import { cmsAuth } from '../auth';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { getBlogPost } from '../api'
+import { cmsAuth } from '../auth'
 
 export const getBlogPostAction = createAction({
   name: 'get_blog_post',
@@ -20,8 +20,8 @@ export const getBlogPostAction = createAction({
     }),
   },
   async run(context) {
-    const slug = context.propsValue.slug;
-    const permalink = context.propsValue.permalink;
-    return await getBlogPost(context.auth, slug, permalink);
+    const slug = context.propsValue.slug
+    const permalink = context.propsValue.permalink
+    return await getBlogPost(context.auth, slug, permalink)
   },
-});
+})

@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { clickupCommon, callClickUpApi } from '../../common';
-import { clickupAuth } from '../../../';
+import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { clickupAuth } from '../../../'
+import { callClickUpApi, clickupCommon } from '../../common'
 
 export const createClickupTaskComment = createAction({
   auth: clickupAuth,
@@ -18,30 +18,21 @@ export const createClickupTaskComment = createAction({
       displayName: 'Comment',
       required: true,
     }),
-    assignee_id: clickupCommon.single_assignee_id(
-      false,
-      'Assignee Id',
-      'ID of assignee for Task Comment'
-    ),
+    assignee_id: clickupCommon.single_assignee_id(false, 'Assignee Id', 'ID of assignee for Task Comment'),
   },
   async run(configValue) {
-    const { task_id, comment } = configValue.propsValue;
+    const { task_id, comment } = configValue.propsValue
 
-    let assignee_id = configValue.propsValue.assignee_id;
+    let assignee_id = configValue.propsValue.assignee_id
 
     if (!assignee_id) {
-      const user_request = await callClickUpApi(
-        HttpMethod.GET,
-        `/user`,
-        getAccessTokenOrThrow(configValue.auth),
-        {}
-      );
+      const user_request = await callClickUpApi(HttpMethod.GET, `/user`, getAccessTokenOrThrow(configValue.auth), {})
 
       if (user_request.body['user'] === undefined) {
-        throw 'Please connect to your ClickUp account';
+        throw 'Please connect to your ClickUp account'
       }
 
-      assignee_id = user_request.body['user']['id'];
+      assignee_id = user_request.body['user']['id']
     }
 
     const response = await callClickUpApi(
@@ -52,9 +43,9 @@ export const createClickupTaskComment = createAction({
         comment_text: comment,
         assignee: assignee_id,
         notify_all: true,
-      }
-    );
+      },
+    )
 
-    return response.body;
+    return response.body
   },
-});
+})

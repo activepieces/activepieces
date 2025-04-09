@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { Converter, Flavor } from 'showdown';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { Converter, Flavor } from 'showdown'
+import { z } from 'zod'
 
 export const markdownToHTML = createAction({
   name: 'markdown_to_html',
@@ -54,8 +54,7 @@ export const markdownToHTML = createAction({
     }),
     simpleLineBreaks: Property.Checkbox({
       displayName: 'Simple Line Breaks',
-      description:
-        'Parses line breaks as &lt;br&gt;, without needing 2 spaces at the end of the line',
+      description: 'Parses line breaks as &lt;br&gt;, without needing 2 spaces at the end of the line',
       required: true,
       defaultValue: false,
     }),
@@ -68,7 +67,7 @@ export const markdownToHTML = createAction({
   run: async (context) => {
     await propsValidation.validateZod(context.propsValue, {
       headerLevelStart: z.number().min(1).max(6),
-    });
+    })
 
     const converter = new Converter({
       headerLevelStart: context.propsValue.headerLevelStart,
@@ -77,9 +76,9 @@ export const markdownToHTML = createAction({
       tables: context.propsValue.tables,
       simpleLineBreaks: context.propsValue.simpleLineBreaks,
       openLinksInNewWindow: context.propsValue.openLinksInNewWindow,
-    });
-    console.log('noHeaderId', context.propsValue.noHeaderId);
-    converter.setFlavor(context.propsValue.flavor as Flavor);
-    return converter.makeHtml(context.propsValue.markdown);
+    })
+    console.log('noHeaderId', context.propsValue.noHeaderId)
+    converter.setFlavor(context.propsValue.flavor as Flavor)
+    return converter.makeHtml(context.propsValue.markdown)
   },
-});
+})

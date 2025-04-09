@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 import { zooAuth } from '../../../index'
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const deleteShortlinkAction = createAction({
   name: 'delete_shortlink',
@@ -22,7 +22,7 @@ export const deleteShortlinkAction = createAction({
       headers: {
         Authorization: `Bearer ${auth}`,
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

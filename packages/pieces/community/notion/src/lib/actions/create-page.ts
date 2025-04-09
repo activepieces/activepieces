@@ -1,12 +1,8 @@
-import {
-  createAction,
-  OAuth2PropertyValue,
-  Property,
-} from '@activepieces/pieces-framework';
-import { Client } from '@notionhq/client';
+import { OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { Client } from '@notionhq/client'
 
-import { notionAuth } from '../..';
-import { notionCommon } from '../common';
+import { notionAuth } from '../..'
+import { notionCommon } from '../common'
 
 export const createPage = createAction({
   auth: notionAuth,
@@ -28,12 +24,12 @@ export const createPage = createAction({
   },
 
   async run(context) {
-    const { pageId, title, content } = context.propsValue;
+    const { pageId, title, content } = context.propsValue
 
     const notion = new Client({
       auth: (context.auth as OAuth2PropertyValue).access_token,
       notionVersion: '2022-02-22',
-    });
+    })
 
     const pageProperties: any = {
       title: {
@@ -45,9 +41,9 @@ export const createPage = createAction({
           },
         ],
       },
-    };
+    }
 
-    const children: any[] = [];
+    const children: any[] = []
     // Add content to page
     if (content)
       children.push({
@@ -63,7 +59,7 @@ export const createPage = createAction({
             },
           ],
         },
-      });
+      })
 
     const page = await notion.pages.create({
       parent: {
@@ -71,7 +67,7 @@ export const createPage = createAction({
       },
       properties: pageProperties,
       children: children,
-    });
-    return page;
+    })
+    return page
   },
-});
+})

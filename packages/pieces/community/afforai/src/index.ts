@@ -1,6 +1,6 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { askChatbotAction } from './lib/actions/ask-chatbot';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { askChatbotAction } from './lib/actions/ask-chatbot'
 
 export const afforaiAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -11,7 +11,7 @@ export const afforaiAuth = PieceAuth.SecretText({
   2. Navigate to **API** section on left panel.
   3. On the top-right, you can find you API key.
   `,
-});
+})
 export const afforai = createPiece({
   displayName: 'Afforai',
   description:
@@ -20,7 +20,7 @@ export const afforai = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/afforai.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ["kishanprmr","abuaboud"],
+  authors: ['kishanprmr', 'abuaboud'],
   actions: [askChatbotAction],
   triggers: [],
-});
+})

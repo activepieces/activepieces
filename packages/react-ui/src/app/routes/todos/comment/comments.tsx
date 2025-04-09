@@ -1,20 +1,20 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query'
 
-import { Skeleton } from '@/components/ui/skeleton';
-import { todoCommentApi } from '@/features/todos/lib/todos-comment-api';
-import { TodoCommentWithUser } from '@activepieces/ee-shared';
-import { TodoWithAssignee } from '@activepieces/shared';
+import { Skeleton } from '@/components/ui/skeleton'
+import { todoCommentApi } from '@/features/todos/lib/todos-comment-api'
+import { TodoCommentWithUser } from '@activepieces/ee-shared'
+import { TodoWithAssignee } from '@activepieces/shared'
 
-import { CommentCard } from './comment-card';
+import { CommentCard } from './comment-card'
 
 type CommentsProps = {
-  task: TodoWithAssignee;
-};
+  task: TodoWithAssignee
+}
 
 function Comments({ task }: CommentsProps) {
   const { data: comments, isLoading: isLoadingComments } = useQuery<
     {
-      comments: TodoCommentWithUser[];
+      comments: TodoCommentWithUser[]
     },
     Error
   >({
@@ -26,20 +26,18 @@ function Comments({ task }: CommentsProps) {
         todoId: task.id,
         cursor: undefined,
         limit: 10,
-      });
-      return { comments: response.data };
+      })
+      return { comments: response.data }
     },
     staleTime: 0,
     gcTime: 0,
     enabled: task.id !== undefined,
-  });
+  })
 
   return (
     <div className="flex flex-col w-full pt-2 gap-2">
       <span className="text-lg font-bold mb-2"> Comments </span>
-      {comments?.comments.length === 0 && (
-        <span className="text-sm text-muted-foreground">No comments yet</span>
-      )}
+      {comments?.comments.length === 0 && <span className="text-sm text-muted-foreground">No comments yet</span>}
 
       {isLoadingComments && (
         <div className="flex flex-col gap-4">
@@ -70,7 +68,7 @@ function Comments({ task }: CommentsProps) {
           />
         ))}
     </div>
-  );
+  )
 }
 
-export { Comments };
+export { Comments }

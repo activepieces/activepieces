@@ -1,13 +1,9 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  OAuth2PropertyValue,
-  PieceAuth,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { gmailSendEmailAction } from './lib/actions/send-email-action';
-import { gmailNewEmailTrigger } from './lib/triggers/new-email';
-import { gmailNewLabeledEmailTrigger } from './lib/triggers/new-labeled-email';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { gmailSendEmailAction } from './lib/actions/send-email-action'
+import { gmailNewEmailTrigger } from './lib/triggers/new-email'
+import { gmailNewLabeledEmailTrigger } from './lib/triggers/new-labeled-email'
 
 export const gmailAuth = PieceAuth.OAuth2({
   description: '',
@@ -20,15 +16,12 @@ export const gmailAuth = PieceAuth.OAuth2({
     'https://www.googleapis.com/auth/gmail.readonly',
     'https://www.googleapis.com/auth/gmail.compose',
   ],
-});
+})
 
 export const gmail = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/gmail.png',
-  categories: [
-    PieceCategory.COMMUNICATION,
-    PieceCategory.BUSINESS_INTELLIGENCE,
-  ],
+  categories: [PieceCategory.COMMUNICATION, PieceCategory.BUSINESS_INTELLIGENCE],
   actions: [
     gmailSendEmailAction,
     createCustomApiCallAction({
@@ -56,4 +49,4 @@ export const gmail = createPiece({
   ],
   triggers: [gmailNewEmailTrigger, gmailNewLabeledEmailTrigger],
   auth: gmailAuth,
-});
+})

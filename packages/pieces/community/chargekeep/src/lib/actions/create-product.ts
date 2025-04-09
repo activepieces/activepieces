@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { chargekeepAuth } from '../..';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { chargekeepAuth } from '../..'
 
 export const createProduct = createAction({
   name: 'createProduct',
@@ -296,7 +296,7 @@ export const createProduct = createAction({
           gracePeriodDayCount: context.propsValue.gracePeriodDayCount,
         },
       ],
-    };
+    }
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -308,11 +308,11 @@ export const createProduct = createAction({
       body: {
         ...product,
       },
-    });
+    })
 
     return {
       status: res.status,
       body: res.body,
-    };
+    }
   },
-});
+})

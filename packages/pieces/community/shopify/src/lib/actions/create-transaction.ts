@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { shopifyAuth } from '../..';
-import { createTransaction } from '../common';
-import { ShopifyTransactionKinds } from '../common/types';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { shopifyAuth } from '../..'
+import { createTransaction } from '../common'
+import { ShopifyTransactionKinds } from '../common/types'
 
 export const createTransactionAction = createAction({
   auth: shopifyAuth,
@@ -24,9 +24,9 @@ export const createTransactionAction = createAction({
             return {
               label: kind.charAt(0).toUpperCase() + kind.slice(1),
               value: kind,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     currency: Property.ShortText({
@@ -60,8 +60,7 @@ export const createTransactionAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { orderId, kind, currency, amount, parentId, source, test } =
-      propsValue;
+    const { orderId, kind, currency, amount, parentId, source, test } = propsValue
 
     return await createTransaction(
       orderId,
@@ -73,7 +72,7 @@ export const createTransactionAction = createAction({
         source,
         test,
       },
-      auth
-    );
+      auth,
+    )
   },
-});
+})

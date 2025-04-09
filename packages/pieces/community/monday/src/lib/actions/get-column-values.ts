@@ -1,7 +1,7 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { mondayAuth } from '../..';
-import { makeClient, mondayCommon } from '../common';
-import { parseMondayColumnValue } from '../common/helper';
+import { createAction } from '@activepieces/pieces-framework'
+import { mondayAuth } from '../..'
+import { makeClient, mondayCommon } from '../common'
+import { parseMondayColumnValue } from '../common/helper'
 
 export const getItemsColumnValuesAction = createAction({
   auth: mondayAuth,
@@ -15,22 +15,22 @@ export const getItemsColumnValuesAction = createAction({
     column_ids: mondayCommon.columnIds(false),
   },
   async run(context) {
-    const { board_id, item_id, column_ids } = context.propsValue;
+    const { board_id, item_id, column_ids } = context.propsValue
 
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth as string)
     const res = await client.getItemColumnValues({
       boardId: board_id as string,
       itemId: item_id as string,
       columnIds: column_ids as string[],
-    });
-    const item = res.data.boards[0].items_page.items[0];
+    })
+    const item = res.data.boards[0].items_page.items[0]
     const transformedValues: Record<string, any> = {
       id: item.id,
       name: item.name,
-    };
-    for (const column of item.column_values) {
-      transformedValues[column.id] = parseMondayColumnValue(column);
     }
-    return transformedValues;
+    for (const column of item.column_values) {
+      transformedValues[column.id] = parseMondayColumnValue(column)
+    }
+    return transformedValues
   },
-});
+})

@@ -1,7 +1,7 @@
-import { Property, createAction } from "@activepieces/pieces-framework";
-import { HttpMethod, getAccessTokenOrThrow } from "@activepieces/pieces-common";
-import { callClickUpApi, clickupCommon } from "../../common"
-import { clickupAuth } from "../../../";
+import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { clickupAuth } from '../../../'
+import { callClickUpApi, clickupCommon } from '../../common'
 
 export const setClickupCustomFieldValue = createAction({
   auth: clickupAuth,
@@ -15,21 +15,21 @@ export const setClickupCustomFieldValue = createAction({
     task_id: clickupCommon.task_id(true),
     field_id: clickupCommon.field_id(true),
     value: Property.LongText({
-      displayName: "Value",
-      description: "The new value to be set",
-      required: true
-    })
+      displayName: 'Value',
+      description: 'The new value to be set',
+      required: true,
+    }),
   },
   async run(configValue) {
-    const { field_id, task_id, value } = configValue.propsValue;
+    const { field_id, task_id, value } = configValue.propsValue
 
     const response = await callClickUpApi<Record<string, unknown>>(
       HttpMethod.POST,
-      `task/${task_id}/field/${field_id}`, 
-      getAccessTokenOrThrow(configValue.auth), 
-      { value: value }
-    );
+      `task/${task_id}/field/${field_id}`,
+      getAccessTokenOrThrow(configValue.auth),
+      { value: value },
+    )
 
     return response.body
-  }
+  },
 })

@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { telegramCommons } from '../common';
-import { telegramBotAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { telegramBotAuth } from '../..'
+import { telegramCommons } from '../common'
 
 const chatId = `
 
@@ -12,10 +12,10 @@ const chatId = `
 4. The bot will reply with your chat ID.
 
 **Note: Remember to initiate the chat with the bot, or you'll get an error for "chat not found.**
-`;
+`
 const format = `
 [Link example](https://core.telegram.org/bots/api#formatting-options)
-`;
+`
 export const telegramSendMessageAction = createAction({
   auth: telegramBotAuth,
   name: 'send_text_message',
@@ -31,8 +31,7 @@ export const telegramSendMessageAction = createAction({
     }),
     message_thread_id: Property.ShortText({
       displayName: 'Message Thread Id',
-      description:
-        'Unique identifier for the target message thread of the forums; for forums supergroups only',
+      description: 'Unique identifier for the target message thread of the forums; for forums supergroups only',
       required: false,
     }),
     format: Property.StaticDropdown({
@@ -86,6 +85,6 @@ export const telegramSendMessageAction = createAction({
         reply_markup: ctx.propsValue['reply_markup'] ?? undefined,
         disable_web_page_preview: ctx.propsValue['web_page_preview'] ?? false,
       },
-    });
+    })
   },
-});
+})

@@ -1,40 +1,26 @@
-import {
-  PiecePropValueSchema,
-  Property,
-  TriggerStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
-import {
-  Polling,
-  DedupeStrategy,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import { jiraCloudAuth } from '../../auth';
-import { searchIssuesByJql } from '../common';
-import dayjs from 'dayjs';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common'
+import { PiecePropValueSchema, Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { jiraCloudAuth } from '../../auth'
+import { searchIssuesByJql } from '../common'
 
-const polling: Polling<
-  PiecePropValueSchema<typeof jiraCloudAuth>,
-  { jql?: string; sanitizeJql?: boolean }
-> = {
+const polling: Polling<PiecePropValueSchema<typeof jiraCloudAuth>, { jql?: string; sanitizeJql?: boolean }> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS, propsValue }) => {
-    const { jql, sanitizeJql } = propsValue;
-    const searchQuery = `${jql ? jql + ' AND ' : ''}created > '${dayjs(
-      lastFetchEpochMS
-    ).format('YYYY-MM-DD HH:mm')}'`;
+    const { jql, sanitizeJql } = propsValue
+    const searchQuery = `${jql ? jql + ' AND ' : ''}created > '${dayjs(lastFetchEpochMS).format('YYYY-MM-DD HH:mm')}'`
     const issues = await searchIssuesByJql({
       auth,
       jql: searchQuery,
       maxResults: 50,
       sanitizeJql: sanitizeJql ?? false,
-    });
+    })
     return issues.map((issue) => ({
       epochMilliSeconds: Date.parse(issue.fields.created),
       data: issue,
-    }));
+    }))
   },
-};
+}
 
 export const newIssue = createTrigger({
   name: 'new_issue',
@@ -56,15 +42,15 @@ export const newIssue = createTrigger({
   },
   sampleData: {},
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
+    await pollingHelper.onEnable(polling, context)
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+    await pollingHelper.onDisable(polling, context)
   },
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    return await pollingHelper.poll(polling, context)
   },
   async test(context) {
-    return await pollingHelper.test(polling, context);
+    return await pollingHelper.test(polling, context)
   },
-});
+})

@@ -1,6 +1,5 @@
 module.exports = {
-    code: async (params) => {
-      return params; 
-    }
-  };
-  
+  code: async (params) => {
+    return params
+  },
+}

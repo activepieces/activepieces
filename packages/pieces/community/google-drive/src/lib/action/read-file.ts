@@ -1,6 +1,6 @@
-import { googleDriveAuth } from '../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { downloadFileFromDrive } from '../common/get-file-content';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { googleDriveAuth } from '../..'
+import { downloadFileFromDrive } from '../common/get-file-content'
 
 export const readFile = createAction({
   auth: googleDriveAuth,
@@ -21,4 +21,4 @@ export const readFile = createAction({
   run: async ({ auth, propsValue, files }) => {
     return downloadFileFromDrive(auth, files, propsValue.fileId, propsValue.fileName)
   },
-});
+})

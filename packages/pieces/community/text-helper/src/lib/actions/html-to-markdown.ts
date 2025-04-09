@@ -1,5 +1,5 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import TurndownService from 'turndown';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import TurndownService from 'turndown'
 
 export const htmlToMarkdown = createAction({
   name: 'html_to_markdown',
@@ -21,9 +21,9 @@ export const htmlToMarkdown = createAction({
     }),
   },
   run: async (context) => {
-    const html = context.propsValue.html;
-    const service = new TurndownService();
-    service.remove('script');
-    return service.turndown(html);
+    const html = context.propsValue.html
+    const service = new TurndownService()
+    service.remove('script')
+    return service.turndown(html)
   },
-});
+})

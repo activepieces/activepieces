@@ -1,6 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { makeClient, pastebinCommon } from '../common';
-import { pastebinAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { pastebinAuth } from '../..'
+import { makeClient, pastebinCommon } from '../common'
 
 export default createAction({
   auth: pastebinAuth,
@@ -14,10 +14,10 @@ export default createAction({
     }),
   },
   async run(context) {
-    const client = await makeClient(context.auth);
-    const content = await client.getPasteContent(context.propsValue.paste_id);
+    const client = await makeClient(context.auth)
+    const content = await client.getPasteContent(context.propsValue.paste_id)
     return {
       content,
-    };
+    }
   },
-});
+})

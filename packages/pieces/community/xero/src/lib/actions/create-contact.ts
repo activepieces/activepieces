@@ -1,12 +1,7 @@
-import { createAction } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { props } from '../common/props';
-import { xeroAuth } from '../..';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { xeroAuth } from '../..'
+import { props } from '../common/props'
 
 export const xeroCreateContact = createAction({
   auth: xeroAuth,
@@ -20,7 +15,7 @@ export const xeroCreateContact = createAction({
     email: props.contact_email(false),
   },
   async run(context) {
-    const { name, email, contact_id, tenant_id } = context.propsValue;
+    const { name, email, contact_id, tenant_id } = context.propsValue
     const body = {
       Contacts: [
         {
@@ -28,8 +23,8 @@ export const xeroCreateContact = createAction({
           EmailAddress: email,
         },
       ],
-    };
-    const url = 'https://api.xero.com/api.xro/2.0/Contacts';
+    }
+    const url = 'https://api.xero.com/api.xro/2.0/Contacts'
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -42,15 +37,15 @@ export const xeroCreateContact = createAction({
       headers: {
         'Xero-Tenant-Id': tenant_id,
       },
-    };
-
-    const result = await httpClient.sendRequest(request);
-    console.debug('Contact creation response', result);
-
-    if (result.status === 200) {
-      return result.body;
     }
 
-    return result;
+    const result = await httpClient.sendRequest(request)
+    console.debug('Contact creation response', result)
+
+    if (result.status === 200) {
+      return result.body
+    }
+
+    return result
   },
-});
+})

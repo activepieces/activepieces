@@ -1,29 +1,42 @@
-import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { DynamicPropsValue, Property, TriggerHookContext } from "@activepieces/pieces-framework";
-import { CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, PopulatedRecord, SeekPage, StaticDropdownEmptyOption, Table, TableWebhookEventType } from "@activepieces/shared";
-import { z } from 'zod';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { DynamicPropsValue, Property, TriggerHookContext } from '@activepieces/pieces-framework'
+import {
+  CreateTableWebhookRequest,
+  Field,
+  FieldType,
+  MarkdownVariant,
+  PopulatedRecord,
+  SeekPage,
+  StaticDropdownEmptyOption,
+  Table,
+  TableWebhookEventType,
+} from '@activepieces/shared'
+import { z } from 'zod'
 
 type FormattedRecord = {
-  id: string;
-  created: string;
-  updated: string;
-  cells: Record<string, {
-    fieldName: string;
-    updated: string;
-    created: string;
-    value: unknown;
-  }>;
+  id: string
+  created: string
+  updated: string
+  cells: Record<
+    string,
+    {
+      fieldName: string
+      updated: string
+      created: string
+      value: unknown
+    }
+  >
 }
 const getFieldTypeText = (fieldType: FieldType) => {
   switch (fieldType) {
     case FieldType.STATIC_DROPDOWN:
-      return 'Single Select';
+      return 'Single Select'
     case FieldType.DATE:
-      return 'Date';
+      return 'Date'
     case FieldType.NUMBER:
-      return 'Number';
+      return 'Number'
     case FieldType.TEXT:
-      return 'Text';
+      return 'Text'
   }
 }
 export const tablesCommon = {
@@ -41,17 +54,17 @@ export const tablesCommon = {
             type: AuthenticationType.BEARER_TOKEN,
             token: context.server.token,
           },
-        });
+        })
         const resultBody = res.body as SeekPage<Table>
-        const tables = [...resultBody.data];
+        const tables = [...resultBody.data]
         if (!Array.isArray(tables) || tables.length === 0) {
           return {
             options: [],
             disabled: true,
             placeholder: 'No tables found. Please create a table first.',
-          };
+          }
         }
-        let next = resultBody.next;
+        let next = resultBody.next
         while (next) {
           const nextPage = await httpClient.sendRequest({
             method: HttpMethod.GET,
@@ -60,7 +73,7 @@ export const tablesCommon = {
               type: AuthenticationType.BEARER_TOKEN,
               token: context.server.token,
             },
-          });
+          })
           const nextPageBody = nextPage.body as SeekPage<Table>
           tables.push(...nextPageBody.data)
           next = nextPageBody.next
@@ -68,14 +81,14 @@ export const tablesCommon = {
 
         return {
           options: tables.map((table: Table) => ({ label: table.name, value: table.id })),
-        };
+        }
       } catch (e) {
-        console.error('Error fetching tables:', e);
+        console.error('Error fetching tables:', e)
         return {
           options: [],
           disabled: true,
           placeholder: 'Error loading tables. Please try again.',
-        };
+        }
       }
     },
   }),
@@ -86,7 +99,10 @@ export const tablesCommon = {
     required: true,
   }),
 
-  async getTableFields({ tableId, context }: { tableId: string, context: { server: { apiUrl: string, token: string } } }) {
+  async getTableFields({
+    tableId,
+    context,
+  }: { tableId: string; context: { server: { apiUrl: string; token: string } } }) {
     const fieldsResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${context.server.apiUrl}v1/fields`,
@@ -97,51 +113,64 @@ export const tablesCommon = {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,
       },
-    });
+    })
 
-    return fieldsResponse.body as Field[];
+    return fieldsResponse.body as Field[]
   },
 
   createFieldValidations(tableFields: Field[]) {
-    const fieldValidations: Record<string, z.ZodType> = {};
-    tableFields.forEach(field => {
+    const fieldValidations: Record<string, z.ZodType> = {}
+    tableFields.forEach((field) => {
       switch (field.type) {
         case FieldType.NUMBER:
-          fieldValidations[field.id] = z.union([z.number(), z.string().transform(val => {
-            const num = Number(val);
-            if (isNaN(num)) throw new Error(`Invalid number for field "${field.name}"`);
-            return num;
-          })]).optional();
-          break;
+          fieldValidations[field.id] = z
+            .union([
+              z.number(),
+              z.string().transform((val) => {
+                const num = Number(val)
+                if (isNaN(num)) throw new Error(`Invalid number for field "${field.name}"`)
+                return num
+              }),
+            ])
+            .optional()
+          break
         case FieldType.DATE:
-          fieldValidations[field.id] = z.union([z.date(), z.string().transform(val => {
-            const date = new Date(val);
-            if (isNaN(date.getTime())) throw new Error(`Invalid date for field "${field.name}"`);
-            return date;
-          })]).optional();
-          break;
+          fieldValidations[field.id] = z
+            .union([
+              z.date(),
+              z.string().transform((val) => {
+                const date = new Date(val)
+                if (isNaN(date.getTime())) throw new Error(`Invalid date for field "${field.name}"`)
+                return date
+              }),
+            ])
+            .optional()
+          break
         default:
-          fieldValidations[field.id] = z.string().optional();
+          fieldValidations[field.id] = z.string().optional()
       }
-    });
-    return fieldValidations;
+    })
+    return fieldValidations
   },
 
-  async createFieldProperties({ tableId, context }: { tableId: string, context: { server: { apiUrl: string, token: string } } }): Promise<DynamicPropsValue> {
-    const fields: DynamicPropsValue = {};
+  async createFieldProperties({
+    tableId,
+    context,
+  }: { tableId: string; context: { server: { apiUrl: string; token: string } } }): Promise<DynamicPropsValue> {
+    const fields: DynamicPropsValue = {}
 
     try {
-      const tableFields = await this.getTableFields({ tableId, context });
+      const tableFields = await this.getTableFields({ tableId, context })
       if (!Array.isArray(tableFields) || tableFields.length === 0) {
         fields['markdown'] = Property.MarkDown({
           value: `We couldn't find any fields in the selected table. Please add fields to the table first.`,
           variant: MarkdownVariant.INFO,
-        });
-        return fields;
+        })
+        return fields
       }
 
       for (const field of tableFields) {
-        const description = getFieldTypeText(field.type);
+        const description = getFieldTypeText(field.type)
 
         switch (field.type) {
           case FieldType.NUMBER:
@@ -149,46 +178,49 @@ export const tablesCommon = {
               displayName: field.name,
               description,
               required: false,
-            });
-            break;
+            })
+            break
           case FieldType.DATE:
             fields[field.id] = Property.DateTime({
               displayName: field.name,
               description,
               required: false,
-            });
-            break;
+            })
+            break
           case FieldType.STATIC_DROPDOWN:
             fields[field.id] = Property.StaticDropdown({
               displayName: field.name,
               description,
-              defaultValue:'',
+              defaultValue: '',
               required: false,
               options: {
-                options:[StaticDropdownEmptyOption,...field.data.options.map(option => ({ label: option.value, value: option.value }))],
+                options: [
+                  StaticDropdownEmptyOption,
+                  ...field.data.options.map((option) => ({ label: option.value, value: option.value })),
+                ],
               },
-            });
-            break;
+            })
+            break
           default:
             fields[field.id] = Property.ShortText({
               displayName: field.name,
               description,
               required: false,
               defaultValue: '',
-            });
-            break;
+            })
+            break
         }
       }
 
-      return fields;
+      return fields
     } catch (e) {
-      console.error('Error fetching fields:', e);
+      console.error('Error fetching fields:', e)
       fields['markdown'] = Property.MarkDown({
         value: `We couldn't find any fields in the selected table. Please add fields to the table first.`,
         variant: MarkdownVariant.INFO,
-      });
+      })
 
-      return fields;
+      return fields
     }
   },
 
@@ -199,11 +231,11 @@ export const tablesCommon = {
     flowId,
     server,
   }: {
-    tableId: string;
-    events: TableWebhookEventType[];
-    webhookUrl: string;
-    flowId: string;
-    server: { apiUrl: string, token: string };
+    tableId: string
+    events: TableWebhookEventType[]
+    webhookUrl: string
+    flowId: string
+    server: { apiUrl: string; token: string }
   }) {
     const request: CreateTableWebhookRequest = {
       events,
@@ -218,9 +250,9 @@ export const tablesCommon = {
         type: AuthenticationType.BEARER_TOKEN,
         token: server.token,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
 
   async deleteWebhook({
@@ -228,9 +260,9 @@ export const tablesCommon = {
     webhookId,
     server,
   }: {
-    tableId: string;
-    webhookId: string;
-    server: { apiUrl: string, token: string };
+    tableId: string
+    webhookId: string
+    server: { apiUrl: string; token: string }
   }) {
     const response = await httpClient.sendRequest({
       method: HttpMethod.DELETE,
@@ -239,24 +271,26 @@ export const tablesCommon = {
         type: AuthenticationType.BEARER_TOKEN,
         token: server.token,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
 
   async getRecentRecords({
     tableId,
     limit = 5,
-    context
+    context,
   }: {
-    tableId: string,
-    limit?: number,
-    context: { server: { apiUrl: string, token: string } }
+    tableId: string
+    limit?: number
+    context: { server: { apiUrl: string; token: string } }
   }) {
     if ((tableId ?? '').toString().length === 0) {
-        throw new Error(JSON.stringify({
-            message: 'Please add some records to the table before testing this trigger'
-        }))
+      throw new Error(
+        JSON.stringify({
+          message: 'Please add some records to the table before testing this trigger',
+        }),
+      )
     }
 
     const response = await httpClient.sendRequest({
@@ -264,32 +298,38 @@ export const tablesCommon = {
       url: `${context.server.apiUrl}v1/records/list`,
       body: {
         tableId,
-        limit
+        limit,
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,
       },
-    });
+    })
 
-    return response.body.data.map(this.formatRecord);
-
+    return response.body.data.map(this.formatRecord)
   },
   formatRecord(record: PopulatedRecord | { record: PopulatedRecord }): FormattedRecord {
-    const actualRecord = 'record' in record ? record.record : record;
-    
+    const actualRecord = 'record' in record ? record.record : record
+
     return {
       id: actualRecord.id,
       created: actualRecord.created,
       updated: actualRecord.updated,
-      cells: actualRecord.cells ? Object.fromEntries(Object.entries(actualRecord.cells).map(([fieldId, cell]) => {
-        return [fieldId, {
-          fieldName: cell.fieldName,
-          updated: cell.updated,
-          created: cell.created,
-          value: cell.value 
-        }]
-      })) : {},
+      cells: actualRecord.cells
+        ? Object.fromEntries(
+            Object.entries(actualRecord.cells).map(([fieldId, cell]) => {
+              return [
+                fieldId,
+                {
+                  fieldName: cell.fieldName,
+                  updated: cell.updated,
+                  created: cell.created,
+                  value: cell.value,
+                },
+              ]
+            }),
+          )
+        : {},
     }
-  }
+  },
 }

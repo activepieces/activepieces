@@ -1,9 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { BASE_URL, personalAiAuth } from '../../../index';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { BASE_URL, personalAiAuth } from '../../../index'
 
 export const createMemory = createAction({
-  auth:personalAiAuth,
+  auth: personalAiAuth,
   name: 'create_memory',
   displayName: 'Create Memory',
   description: 'Upload memories to your AI assistant stack.',
@@ -41,7 +41,10 @@ export const createMemory = createAction({
     }),
   },
   async run(context) {
-    const { auth, propsValue: { text, sourceName, createdTime, rawFeedText, domainName, tags } } = context;
+    const {
+      auth,
+      propsValue: { text, sourceName, createdTime, rawFeedText, domainName, tags },
+    } = context
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -58,8 +61,8 @@ export const createMemory = createAction({
         ...(domainName && { DomainName: domainName }),
         ...(tags && { Tags: tags }),
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

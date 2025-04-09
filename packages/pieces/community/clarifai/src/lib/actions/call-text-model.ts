@@ -1,12 +1,7 @@
-import { clarifaiAuth } from '../../';
-import { Property, createAction } from '@activepieces/pieces-framework';
-import {
-  CommonClarifaiProps,
-  callClarifaiModel,
-  cleanMultiOutputResponse,
-  textToInput,
-} from '../common';
-import { Data } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { Data } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb'
+import { clarifaiAuth } from '../../'
+import { CommonClarifaiProps, callClarifaiModel, cleanMultiOutputResponse, textToInput } from '../common'
 
 export const textClassifierModelPredictAction = createAction({
   auth: clarifaiAuth,
@@ -22,19 +17,19 @@ export const textClassifierModelPredictAction = createAction({
     }),
   },
   async run(ctx) {
-    const { auth } = ctx;
-    const { modelUrl, txt } = ctx.propsValue;
+    const { auth } = ctx
+    const { modelUrl, txt } = ctx.propsValue
 
-    const input = textToInput(txt);
+    const input = textToInput(txt)
 
     const outputs = await callClarifaiModel({
       auth,
       modelUrl,
       input,
-    });
-    return cleanMultiOutputResponse(outputs);
+    })
+    return cleanMultiOutputResponse(outputs)
   },
-});
+})
 
 export const textToTextModelPredictAction = createAction({
   auth: clarifaiAuth,
@@ -50,16 +45,16 @@ export const textToTextModelPredictAction = createAction({
     }),
   },
   async run(ctx) {
-    const { auth } = ctx;
-    const { modelUrl, txt } = ctx.propsValue;
+    const { auth } = ctx
+    const { modelUrl, txt } = ctx.propsValue
 
-    const input = textToInput(txt);
+    const input = textToInput(txt)
 
     const outputs = await callClarifaiModel({
       auth,
       modelUrl,
       input,
-    });
-    return cleanMultiOutputResponse(outputs);
+    })
+    return cleanMultiOutputResponse(outputs)
   },
-});
+})

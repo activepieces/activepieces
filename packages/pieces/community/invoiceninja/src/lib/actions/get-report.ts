@@ -1,7 +1,7 @@
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
 // action to return reports from InvoiceNinja with filtering
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { invoiceninjaAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { invoiceninjaAuth } from '../..'
 export const getReport = createAction({
   auth: invoiceninjaAuth,
   name: 'getreport_task',
@@ -35,44 +35,39 @@ export const getReport = createAction({
   },
 
   async run(context) {
-    const INapiToken = context.auth.access_token;
+    const INapiToken = context.auth.access_token
 
     const headers = {
       'X-Api-Token': INapiToken,
       serializers: 'JSON',
       'Content-Type': 'application/json',
-    };
+    }
 
-    const report_keys = JSON.stringify(['client', 'name', 'date']);
-    const queryParams = new URLSearchParams();
-    queryParams.append('report_keys', report_keys);
-    queryParams.append('date_range', 'last7');
+    const report_keys = JSON.stringify(['client', 'name', 'date'])
+    const queryParams = new URLSearchParams()
+    queryParams.append('report_keys', report_keys)
+    queryParams.append('date_range', 'last7')
     // date range - last7, last_quarter, last_year etc..
-    queryParams.append(
-      'per_page',
-      context.propsValue.numberOfResults?.toString() || '9999'
-    ); // otherwise it only returns 20 per page hopefully
+    queryParams.append('per_page', context.propsValue.numberOfResults?.toString() || '9999') // otherwise it only returns 20 per page hopefully
 
     // Remove trailing slash from base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
-    const url = `${baseUrl}/api/v1/reports/${
-      context.propsValue.reportType
-    }?${queryParams.toString()}`;
+    const baseUrl = context.auth.base_url.replace(/\/$/, '')
+    const url = `${baseUrl}/api/v1/reports/${context.propsValue.reportType}?${queryParams.toString()}`
     // console.log("INVOICENINJA: " + url);
     const httprequestdata = {
       method: HttpMethod.GET,
       url,
       headers,
-    };
+    }
 
     try {
-      const response = await httpClient.sendRequest(httprequestdata);
-      const my = [];
+      const response = await httpClient.sendRequest(httprequestdata)
+      const my = []
       // Process the response here (status 2xx).
       if (response.body.meta.pagination.total > 0) {
-        return response.body;
+        return response.body
 
-        const NumberOfInvoices = response.body.meta.pagination.count;
+        const NumberOfInvoices = response.body.meta.pagination.count
 
         for (let i = 0; i < NumberOfInvoices; i++) {
           my.push({
@@ -94,18 +89,18 @@ export const getReport = createAction({
               balance: response.body.data[i].balance,
               paid: response.body.data[i].paid_to_date,
             },
-          });
+          })
           // console.log("INVOICENINJA: (" + i.toString() + ") " + response.body.data[i].amount);
         }
-        return my;
+        return my
       } else {
-        return false;
+        return false
       } // this is still returned so if it is false we'll return notfound or similar
     } catch (error) {
       // Handle the error when the request fails (status other than 2xx).
       // console.log((error as Error).message);
-      return (error as Error).message;
+      return (error as Error).message
       //       return "There was a problem getting information from your Invoice Ninja";
     }
   },
-});
+})

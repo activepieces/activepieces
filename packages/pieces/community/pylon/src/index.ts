@@ -1,16 +1,15 @@
-
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
 
 const auth = PieceAuth.SecretText({
-  displayName: "API Key",
+  displayName: 'API Key',
   required: true,
 })
 export const pylon = createPiece({
-  displayName: "Pylon",
+  displayName: 'Pylon',
   auth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: "https://cdn.activepieces.com/pieces/pylon.png",
+  logoUrl: 'https://cdn.activepieces.com/pieces/pylon.png',
   authors: [],
   actions: [
     createCustomApiCallAction({
@@ -19,9 +18,9 @@ export const pylon = createPiece({
       authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${auth}`,
-        };
+        }
       },
-    })
+    }),
   ],
   triggers: [],
-});
+})

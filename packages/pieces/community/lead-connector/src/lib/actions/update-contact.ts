@@ -1,19 +1,8 @@
-import {
-  createAction,
-  OAuth2PropertyValue,
-  Property,
-} from '@activepieces/pieces-framework';
-import {
-  Country,
-  getCountries,
-  getTags,
-  getTimezones,
-  LeadConnectorContactDto,
-  updateContact,
-} from '../common';
-import { leadConnectorAuth } from '../..';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { leadConnectorAuth } from '../..'
+import { Country, LeadConnectorContactDto, getCountries, getTags, getTimezones, updateContact } from '../common'
 
 export const updateContactAction = createAction({
   auth: leadConnectorAuth,
@@ -59,17 +48,17 @@ export const updateContactAction = createAction({
           return {
             disabled: true,
             options: [],
-          };
+          }
 
-        const tags = await getTags(auth as OAuth2PropertyValue);
+        const tags = await getTags(auth as OAuth2PropertyValue)
         return {
           options: tags.map((tag) => {
             return {
               label: tag.name,
               value: tag.name,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     source: Property.ShortText({
@@ -78,20 +67,19 @@ export const updateContactAction = createAction({
     }),
     country: Property.Dropdown({
       displayName: 'Country',
-      description:
-        'When using a dynamic value, make sure to use the ISO-2 country code, and not the country name.',
+      description: 'When using a dynamic value, make sure to use the ISO-2 country code, and not the country name.',
       required: false,
       refreshers: [],
       options: async () => {
-        const countries = await getCountries();
+        const countries = await getCountries()
         return {
           options: countries.map((country: Country) => {
             return {
               label: country.name,
               value: country.iso2Code,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     city: Property.ShortText({
@@ -119,17 +107,17 @@ export const updateContactAction = createAction({
           return {
             disabled: true,
             options: [],
-          };
+          }
 
-        const timezones = await getTimezones(auth as OAuth2PropertyValue);
+        const timezones = await getTimezones(auth as OAuth2PropertyValue)
         return {
           options: timezones.map((timezone) => {
             return {
               label: timezone,
               value: timezone,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   },
@@ -139,7 +127,7 @@ export const updateContactAction = createAction({
       email: z.string().email().optional(),
       phone: z.string().optional(),
       website: z.string().url().optional(),
-    });
+    })
 
     const {
       id,
@@ -157,7 +145,7 @@ export const updateContactAction = createAction({
       address,
       postalCode,
       timezone,
-    } = propsValue;
+    } = propsValue
 
     const contact: LeadConnectorContactDto = {
       firstName: firstName,
@@ -174,8 +162,8 @@ export const updateContactAction = createAction({
       address1: address,
       postalCode: postalCode,
       timezone: timezone,
-    };
+    }
 
-    return await updateContact(auth.access_token, id, contact);
+    return await updateContact(auth.access_token, id, contact)
   },
-});
+})

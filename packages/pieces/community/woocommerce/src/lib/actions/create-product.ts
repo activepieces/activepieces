@@ -1,12 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  AuthenticationType,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
-import { wooAuth } from '../..';
+import { wooAuth } from '../..'
 
 export const wooCreateProduct = createAction({
   name: 'Create Product',
@@ -66,27 +61,26 @@ export const wooCreateProduct = createAction({
     }),
     images: Property.LongText({
       displayName: 'Images',
-      description:
-        'Enter the URLs of images you want to upload (comma separated)',
+      description: 'Enter the URLs of images you want to upload (comma separated)',
       required: true,
     }),
   },
   async run(configValue) {
-    const trimmedBaseUrl = configValue.auth.baseUrl.replace(/\/$/, '');
+    const trimmedBaseUrl = configValue.auth.baseUrl.replace(/\/$/, '')
 
-    const name = configValue.propsValue['name'];
-    const type = configValue.propsValue['type'];
-    const regular_price = configValue.propsValue['regular_price'];
-    const description = configValue.propsValue['description'];
-    const short_description = configValue.propsValue['short_description'];
+    const name = configValue.propsValue['name']
+    const type = configValue.propsValue['type']
+    const regular_price = configValue.propsValue['regular_price']
+    const description = configValue.propsValue['description']
+    const short_description = configValue.propsValue['short_description']
     const categories =
       configValue.propsValue['categories'].split(',').map((id) => ({
         id,
-      })) || [];
+      })) || []
     const images =
       configValue.propsValue['images'].split(',').map((url) => ({
         src: url,
-      })) || [];
+      })) || []
 
     const body = {
       name,
@@ -96,7 +90,7 @@ export const wooCreateProduct = createAction({
       short_description,
       categories,
       images,
-    };
+    }
 
     const request: HttpRequest = {
       url: `${trimmedBaseUrl}/wp-json/wc/v3/products`,
@@ -107,10 +101,10 @@ export const wooCreateProduct = createAction({
         password: configValue.auth.consumerSecret,
       },
       body,
-    };
+    }
 
-    const res = await httpClient.sendRequest(request);
+    const res = await httpClient.sendRequest(request)
 
-    return res.body;
+    return res.body
   },
-});
+})

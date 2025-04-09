@@ -1,8 +1,8 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { addGreetAction } from './lib/actions/add-greet';
-import { bonjoroAuth } from './lib/auth';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { addGreetAction } from './lib/actions/add-greet'
+import { bonjoroAuth } from './lib/auth'
 
 export const bonjoro = createPiece({
   displayName: 'Bonjoro',
@@ -11,7 +11,7 @@ export const bonjoro = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/bonjoro.png',
   categories: [PieceCategory.CUSTOMER_SUPPORT],
-  authors: ["joeworkman","kishanprmr","MoShizzle","abuaboud"],
+  authors: ['joeworkman', 'kishanprmr', 'MoShizzle', 'abuaboud'],
   actions: [
     addGreetAction,
     createCustomApiCallAction({
@@ -23,7 +23,7 @@ export const bonjoro = createPiece({
     }),
   ],
   triggers: [],
-});
+})
 
 // https://vimily.github.io/bonjoro-api-docs/
 // https://www.bonjoro.com/settings/api#/

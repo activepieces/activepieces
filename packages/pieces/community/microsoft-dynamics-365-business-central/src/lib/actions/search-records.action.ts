@@ -1,8 +1,8 @@
-import { businessCentralAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { commonProps } from '../common';
-import { makeClient } from '../common/client';
-import { TRIGGER_ENTITY_DROPDOWN_OPTIONS } from '../common/constants';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { businessCentralAuth } from '../../'
+import { commonProps } from '../common'
+import { makeClient } from '../common/client'
+import { TRIGGER_ENTITY_DROPDOWN_OPTIONS } from '../common/constants'
 
 export const searchRecordsAction = createAction({
   auth: businessCentralAuth,
@@ -25,22 +25,22 @@ export const searchRecordsAction = createAction({
     record_filter_fields: commonProps.record_filter_fields,
   },
   async run(context) {
-    const companyId = context.propsValue.company_id;
-    const recordType = context.propsValue.record_type;
-    const recordFilterFields = context.propsValue.record_filter_fields;
+    const companyId = context.propsValue.company_id
+    const recordType = context.propsValue.record_type
+    const recordFilterFields = context.propsValue.record_filter_fields
 
-    const filterFieldsArray = [];
+    const filterFieldsArray = []
 
     for (const key in recordFilterFields) {
       if (recordFilterFields[key]) {
-        filterFieldsArray.push(`${key} eq '${recordFilterFields[key]}'`);
+        filterFieldsArray.push(`${key} eq '${recordFilterFields[key]}'`)
       }
     }
 
-    const client = makeClient(context.auth);
+    const client = makeClient(context.auth)
 
     return await client.filterRecords(companyId, recordType, {
       $filter: filterFieldsArray.join(' and '),
-    });
+    })
   },
-});
+})

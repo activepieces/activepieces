@@ -1,28 +1,24 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleSearchConsoleAuth, createAuthClient } from '../../';
-import { commonProps } from '../common';
-import dayjs from 'dayjs';
-
+import { Property, createAction } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { createAuthClient, googleSearchConsoleAuth } from '../../'
+import { commonProps } from '../common'
 
 export const searchAnalytics = createAction({
   auth: googleSearchConsoleAuth,
   name: 'search_analytics',
   displayName: 'Search Analytics',
-  description:
-    'Query traffic data for your site using the Google Search Console API.',
+  description: 'Query traffic data for your site using the Google Search Console API.',
   props: {
     siteUrl: commonProps.siteUrl,
     startDate: Property.DateTime({
       displayName: 'Start Date',
-      description:
-        'The start date of the date range to query (in YYYY-MM-DD format).',
+      description: 'The start date of the date range to query (in YYYY-MM-DD format).',
       required: true,
       defaultValue: new Date().toISOString().split('T')[0],
     }),
     endDate: Property.DateTime({
       displayName: 'End Date',
-      description:
-        'The end date of the date range to query (in YYYY-MM-DD format).',
+      description: 'The end date of the date range to query (in YYYY-MM-DD format).',
       required: true,
       defaultValue: new Date().toISOString().split('T')[0],
     }),
@@ -39,8 +35,7 @@ export const searchAnalytics = createAction({
       properties: {
         dimension: Property.ShortText({
           displayName: 'Dimension',
-          description:
-            'The dimension to filter by (e.g., query, page, country, device).',
+          description: 'The dimension to filter by (e.g., query, page, country, device).',
           required: true,
         }),
         operator: Property.ShortText({
@@ -58,8 +53,7 @@ export const searchAnalytics = createAction({
     }),
     aggregationType: Property.ShortText({
       displayName: 'Aggregation Type',
-      description:
-        'How data is aggregated. Options include "auto", "byPage", "byProperty".',
+      description: 'How data is aggregated. Options include "auto", "byPage", "byProperty".',
       required: false,
     }),
     rowLimit: Property.Number({
@@ -69,14 +63,13 @@ export const searchAnalytics = createAction({
     }),
     startRow: Property.Number({
       displayName: 'Start Row',
-      description:
-        'The first row to return. Use this parameter to paginate results.',
+      description: 'The first row to return. Use this parameter to paginate results.',
       required: false,
     }),
   },
   async run(context) {
-    const webmasters = createAuthClient(context.auth.access_token);
-    const filters = context.propsValue.filters as any;
+    const webmasters = createAuthClient(context.auth.access_token)
+    const filters = context.propsValue.filters as any
     const res = await webmasters.searchanalytics.query({
       siteUrl: context.propsValue.siteUrl,
       requestBody: {
@@ -92,7 +85,7 @@ export const searchAnalytics = createAction({
         rowLimit: context.propsValue.rowLimit,
         startRow: context.propsValue.startRow,
       },
-    });
-    return res;
+    })
+    return res
   },
-});
+})

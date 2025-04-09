@@ -1,17 +1,12 @@
-import {
-  TriggerStrategy,
-  WebhookHandshakeStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
-import { common, OnfleetWebhookTriggers } from '../common';
-import { onfleetAuth } from '../..';
+import { TriggerStrategy, WebhookHandshakeStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
+import { OnfleetWebhookTriggers, common } from '../common'
 
 export const taskArrival = createTrigger({
   auth: onfleetAuth,
   name: 'task_arrival',
   displayName: 'Task Arrival',
-  description:
-    'Triggers when a task worker arriving at or closer than threshold value provided, in meters',
+  description: 'Triggers when a task worker arriving at or closer than threshold value provided, in meters',
   type: TriggerStrategy.WEBHOOK,
   props: {},
   //Create the webhook and save the webhook ID in store for disable behavior
@@ -19,24 +14,24 @@ export const taskArrival = createTrigger({
     const webhookId = await common.subscribeWebhook(
       context.auth,
       context.webhookUrl,
-      OnfleetWebhookTriggers.TASK_ARRIVAL
-    );
+      OnfleetWebhookTriggers.TASK_ARRIVAL,
+    )
 
     await context.store?.put('_task_arrival_trigger', {
       webhookId: webhookId,
-    });
+    })
   },
   //Delete the webhook
   async onDisable(context) {
-    const response: any = await context.store?.get('_task_arrival_trigger');
+    const response: any = await context.store?.get('_task_arrival_trigger')
 
     if (response !== null && response !== undefined) {
-      await common.unsubscribeWebhook(context.auth, response.webhookId);
+      await common.unsubscribeWebhook(context.auth, response.webhookId)
     }
   },
   //Return task
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
 
   handshakeConfiguration: {
@@ -48,7 +43,7 @@ export const taskArrival = createTrigger({
     return {
       status: 200,
       body: context.payload.queryParams['check'],
-    };
+    }
   },
 
   sampleData: {
@@ -140,4 +135,4 @@ export const taskArrival = createTrigger({
     actionContext: null,
     time: 1615505822024,
   },
-});
+})

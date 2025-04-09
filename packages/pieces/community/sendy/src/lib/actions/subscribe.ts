@@ -1,12 +1,9 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { subscribe } from '../api';
-import { buildListDropdown } from '../props';
-import { sendyAuth, SendyAuthType } from '../auth';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { subscribe } from '../api'
+import { SendyAuthType, sendyAuth } from '../auth'
+import { buildListDropdown } from '../props'
 
 export const subscribeAction = createAction({
   name: 'subscribe',
@@ -19,8 +16,7 @@ export const subscribeAction = createAction({
       description: 'Select the list to subscribe to',
       required: true,
       refreshers: ['auth'],
-      options: async ({ auth }) =>
-        await buildListDropdown(auth as SendyAuthType),
+      options: async ({ auth }) => await buildListDropdown(auth as SendyAuthType),
     }),
     email: Property.ShortText({
       displayName: 'Email',
@@ -49,8 +45,7 @@ export const subscribeAction = createAction({
     }),
     gdpr: Property.Checkbox({
       displayName: 'GDPR compliant',
-      description:
-        "If you're signing up EU users in a GDPR compliant manner, set to true",
+      description: "If you're signing up EU users in a GDPR compliant manner, set to true",
       required: false,
       defaultValue: true,
     }),
@@ -66,7 +61,7 @@ export const subscribeAction = createAction({
     await propsValidation.validateZod(context.propsValue, {
       email: z.string().email(),
       referrer: z.string().url(),
-    });
+    })
 
     return await subscribe(context.auth, {
       list: context.propsValue.list,
@@ -77,6 +72,6 @@ export const subscribeAction = createAction({
       referrer: context.propsValue.referrer,
       gdpr: context.propsValue.gdpr,
       silent: context.propsValue.silent,
-    });
+    })
   },
-});
+})

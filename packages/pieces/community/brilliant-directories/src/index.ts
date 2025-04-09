@@ -1,11 +1,7 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { createNewUser } from './lib/actions/create-new-user';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { createNewUser } from './lib/actions/create-new-user'
 
 export const brilliantDirectoriesAuth = PieceAuth.CustomAuth({
   required: true,
@@ -29,7 +25,7 @@ export const brilliantDirectoriesAuth = PieceAuth.CustomAuth({
       defaultValue: 'https://yoursitehere.com/api',
     }),
   },
-});
+})
 
 export const brilliantDirectories = createPiece({
   displayName: 'Brilliant Directories',
@@ -39,7 +35,7 @@ export const brilliantDirectories = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/brilliant-directories.png',
   categories: [],
-  authors: ["ShayPunter","dennisrongo","kishanprmr","MoShizzle","abuaboud"],
+  authors: ['ShayPunter', 'dennisrongo', 'kishanprmr', 'MoShizzle', 'abuaboud'],
   actions: [
     createNewUser,
     createCustomApiCallAction({
@@ -51,4 +47,4 @@ export const brilliantDirectories = createPiece({
     }),
   ],
   triggers: [],
-});
+})

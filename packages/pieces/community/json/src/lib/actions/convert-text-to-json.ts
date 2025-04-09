@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework'
 
 export const convertTextToJson = createAction({
   name: 'convert_text_to_json',
@@ -12,8 +12,8 @@ export const convertTextToJson = createAction({
     }),
   },
   async run(context) {
-    const { text } = context.propsValue;
+    const { text } = context.propsValue
     const result = JSON.parse(text)
     return result
   },
-});
+})

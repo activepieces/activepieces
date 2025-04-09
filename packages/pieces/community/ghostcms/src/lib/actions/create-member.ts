@@ -1,8 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
-import { ghostAuth } from '../..';
-import { common } from '../common';
+import { ghostAuth } from '../..'
+import { common } from '../common'
 
 export const createMember = createAction({
   name: 'create_member',
@@ -26,13 +26,13 @@ export const createMember = createAction({
   },
 
   async run(context) {
-    const newsletters: any[] = [];
+    const newsletters: any[] = []
     if (context.propsValue.newsletters) {
       context.propsValue.newsletters.forEach((newsletter: any) => {
         newsletters.push({
           id: newsletter,
-        });
-      });
+        })
+      })
     }
 
     const response = await httpClient.sendRequest({
@@ -51,8 +51,8 @@ export const createMember = createAction({
           },
         ],
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

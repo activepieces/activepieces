@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { callSalesforceApi, salesforcesCommon } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { salesforceAuth } from '../..';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { salesforceAuth } from '../..'
+import { callSalesforceApi, salesforcesCommon } from '../common'
 
 export const UpdateObjectById = createAction({
   auth: salesforceAuth,
@@ -24,15 +24,15 @@ export const UpdateObjectById = createAction({
     }),
   },
   async run(context) {
-    const { object, id, data } = context.propsValue;
+    const { object, id, data } = context.propsValue
     const response = await callSalesforceApi(
       HttpMethod.PATCH,
       context.auth,
       `/services/data/v56.0/sobjects/${object}/${id}`,
       {
         ...data,
-      }
-    );
-    return response;
+      },
+    )
+    return response
   },
-});
+})

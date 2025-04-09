@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { mysqlCommon, mysqlConnect, sanitizeColumnName, warningMarkdown } from '../common';
-import { mysqlAuth } from '../..';
-import sqlstring from 'sqlstring';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import sqlstring from 'sqlstring'
+import { mysqlAuth } from '../..'
+import { mysqlCommon, mysqlConnect, sanitizeColumnName, warningMarkdown } from '../common'
 
 export default createAction({
   auth: mysqlAuth,
@@ -22,18 +22,18 @@ export default createAction({
     }),
   },
   async run(context) {
-    const tableName = sanitizeColumnName(context.propsValue.table);
-    const searchColumn = sanitizeColumnName(context.propsValue.search_column);
-    const searchValue = context.propsValue.search_value;
+    const tableName = sanitizeColumnName(context.propsValue.table)
+    const searchColumn = sanitizeColumnName(context.propsValue.search_column)
+    const searchValue = context.propsValue.search_value
 
-    const queryString = `DELETE FROM ${tableName} WHERE ${searchColumn}=?;`;
+    const queryString = `DELETE FROM ${tableName} WHERE ${searchColumn}=?;`
 
-    const connection = await mysqlConnect(context.auth, context.propsValue);
+    const connection = await mysqlConnect(context.auth, context.propsValue)
     try {
-      const result = await connection.query(queryString, [searchValue]);
-      return result;
+      const result = await connection.query(queryString, [searchValue])
+      return result
     } finally {
-      await connection.end();
+      await connection.end()
     }
   },
-});
+})

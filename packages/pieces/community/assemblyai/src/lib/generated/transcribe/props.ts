@@ -1,4 +1,4 @@
-import { Property } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework'
 export const props = {
   audio_url: Property.ShortText({
     displayName: 'Audio URL',
@@ -437,8 +437,7 @@ export const props = {
   speech_model: Property.StaticDropdown({
     displayName: 'Speech Model',
     required: false,
-    description:
-      'The speech model to use for the transcription. When `null`, the "best" model is used.',
+    description: 'The speech model to use for the transcription. When `null`, the "best" model is used.',
     options: {
       options: [
         {
@@ -467,8 +466,7 @@ export const props = {
   disfluencies: Property.Checkbox({
     displayName: 'Disfluencies',
     required: false,
-    description:
-      'Transcribe Filler Words, like "umm", in your media file; can be true or false',
+    description: 'Transcribe Filler Words, like "umm", in your media file; can be true or false',
     defaultValue: false,
   }),
   dual_channel: Property.Checkbox({
@@ -486,8 +484,7 @@ export const props = {
   webhook_auth_header_name: Property.ShortText({
     displayName: 'Webhook Auth Header Name',
     required: false,
-    description:
-      'The header name to be sent with the transcript completed or failed webhook requests',
+    description: 'The header name to be sent with the transcript completed or failed webhook requests',
   }),
   webhook_auth_header_value: Property.ShortText({
     displayName: 'Webhook Auth Header Value',
@@ -504,20 +501,17 @@ export const props = {
   audio_start_from: Property.Number({
     displayName: 'Audio Start From',
     required: false,
-    description:
-      'The point in time, in milliseconds, to begin transcribing in your media file',
+    description: 'The point in time, in milliseconds, to begin transcribing in your media file',
   }),
   audio_end_at: Property.Number({
     displayName: 'Audio End At',
     required: false,
-    description:
-      'The point in time, in milliseconds, to stop transcribing in your media file',
+    description: 'The point in time, in milliseconds, to stop transcribing in your media file',
   }),
   word_boost: Property.Array({
     displayName: 'Word Boost',
     required: false,
-    description:
-      'The list of custom vocabulary to boost transcription probability for',
+    description: 'The list of custom vocabulary to boost transcription probability for',
   }),
   boost_param: Property.StaticDropdown({
     displayName: 'Word Boost Level',
@@ -543,15 +537,13 @@ export const props = {
   filter_profanity: Property.Checkbox({
     displayName: 'Filter Profanity',
     required: false,
-    description:
-      'Filter profanity from the transcribed text, can be true or false',
+    description: 'Filter profanity from the transcribed text, can be true or false',
     defaultValue: false,
   }),
   redact_pii: Property.Checkbox({
     displayName: 'Redact PII',
     required: false,
-    description:
-      'Redact PII from the transcribed text using the Redact PII model, can be true or false',
+    description: 'Redact PII from the transcribed text using the Redact PII model, can be true or false',
     defaultValue: false,
   }),
   redact_pii_audio: Property.Checkbox({
@@ -799,8 +791,7 @@ export const props = {
   content_safety_confidence: Property.Number({
     displayName: 'Content Moderation Confidence',
     required: false,
-    description:
-      'The confidence threshold for the Content Moderation model. Values must be between 25 and 100.',
+    description: 'The confidence threshold for the Content Moderation model. Values must be between 25 and 100.',
   }),
   iab_categories: Property.Checkbox({
     displayName: 'Topic Detection',
@@ -905,4 +896,4 @@ export const props = {
     required: false,
     description: 'The list of custom topics',
   }),
-};
+}

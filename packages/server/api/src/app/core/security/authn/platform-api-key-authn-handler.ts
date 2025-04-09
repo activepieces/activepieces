@@ -1,14 +1,14 @@
 import { ApiKey } from '@activepieces/ee-shared'
 import {
-    ActivepiecesError,
-    EndpointScope,
-    ErrorCode,
-    isNil,
-    isObject,
-    Principal,
-    PrincipalType,
-    Project,
-    ProjectId,
+  ActivepiecesError,
+  EndpointScope,
+  ErrorCode,
+  Principal,
+  PrincipalType,
+  Project,
+  ProjectId,
+  isNil,
+  isObject,
 } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { nanoid } from 'nanoid'
@@ -24,158 +24,142 @@ import { requestUtils } from '../../request/request-utils'
 import { BaseSecurityHandler } from '../security-handler'
 
 export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
-    private static readonly HEADER_NAME = 'authorization'
-    private static readonly HEADER_PREFIX = 'Bearer '
-    private static readonly API_KEY_PREFIX = 'sk-'
+  private static readonly HEADER_NAME = 'authorization'
+  private static readonly HEADER_PREFIX = 'Bearer '
+  private static readonly API_KEY_PREFIX = 'sk-'
 
-    protected canHandle(request: FastifyRequest): Promise<boolean> {
-        const prefix = `${PlatformApiKeyAuthnHandler.HEADER_PREFIX}${PlatformApiKeyAuthnHandler.API_KEY_PREFIX}`
-        const routeMatches = request.headers[PlatformApiKeyAuthnHandler.HEADER_NAME]?.startsWith(prefix) ?? false
-        const skipAuth = request.routeConfig.skipAuth
-        return Promise.resolve(routeMatches && !skipAuth)
+  protected canHandle(request: FastifyRequest): Promise<boolean> {
+    const prefix = `${PlatformApiKeyAuthnHandler.HEADER_PREFIX}${PlatformApiKeyAuthnHandler.API_KEY_PREFIX}`
+    const routeMatches = request.headers[PlatformApiKeyAuthnHandler.HEADER_NAME]?.startsWith(prefix) ?? false
+    const skipAuth = request.routeConfig.skipAuth
+    return Promise.resolve(routeMatches && !skipAuth)
+  }
+
+  protected async doHandle(request: FastifyRequest): Promise<void> {
+    const apiKeyValue = this.extractApiKeyValue(request)
+    const apiKey = await apiKeyService.getByValueOrThrow(apiKeyValue)
+    const principal = await this.createPrincipal(request, apiKey)
+    request.principal = principal
+  }
+
+  private extractApiKeyValue(request: FastifyRequest): string {
+    const header = request.headers[PlatformApiKeyAuthnHandler.HEADER_NAME]
+    const prefix = PlatformApiKeyAuthnHandler.HEADER_PREFIX
+    const apiKeyValue = header?.substring(prefix.length)
+
+    if (isNil(apiKeyValue)) {
+      throw new ActivepiecesError({
+        code: ErrorCode.AUTHENTICATION,
+        params: {
+          message: 'missing api key',
+        },
+      })
     }
 
-    protected async doHandle(request: FastifyRequest): Promise<void> {
-        const apiKeyValue = this.extractApiKeyValue(request)
-        const apiKey = await apiKeyService.getByValueOrThrow(apiKeyValue)
-        const principal = await this.createPrincipal(request, apiKey)
-        request.principal = principal
+    return apiKeyValue
+  }
+
+  private async createPrincipal(request: FastifyRequest, apiKey: ApiKey): Promise<Principal> {
+    const principal: Principal = {
+      id: apiKey.id,
+      type: PrincipalType.SERVICE,
+      projectId: 'ANONYMOUS_' + nanoid(),
+      platform: {
+        id: apiKey.platformId,
+      },
     }
 
-    private extractApiKeyValue(request: FastifyRequest): string {
-        const header = request.headers[PlatformApiKeyAuthnHandler.HEADER_NAME]
-        const prefix = PlatformApiKeyAuthnHandler.HEADER_PREFIX
-        const apiKeyValue = header?.substring(prefix.length)
-
-        if (isNil(apiKeyValue)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHENTICATION,
-                params: {
-                    message: 'missing api key',
-                },
-            })
-        }
-
-        return apiKeyValue
+    if (request.routeConfig.scope === EndpointScope.PLATFORM) {
+      return principal
     }
 
-    private async createPrincipal(
-        request: FastifyRequest,
-        apiKey: ApiKey,
-    ): Promise<Principal> {
-        const principal: Principal = {
-            id: apiKey.id,
-            type: PrincipalType.SERVICE,
-            projectId: 'ANONYMOUS_' + nanoid(),
-            platform: {
-                id: apiKey.platformId,
-            },
-        }
+    const projectId = await this.extractProjectIdOrThrow(request)
 
-        if (request.routeConfig.scope === EndpointScope.PLATFORM) {
-            return principal
-        }
+    try {
+      const project = await projectService.getOneOrThrow(projectId)
 
-        const projectId = await this.extractProjectIdOrThrow(request)
+      this.assertApiKeyAndProjectBelongToSamePlatform(project, apiKey)
 
-        try {
-            const project = await projectService.getOneOrThrow(projectId)
+      principal.projectId = projectId
+      return principal
+    } catch (e) {
+      throw new ActivepiecesError({
+        code: ErrorCode.AUTHORIZATION,
+        params: {
+          message: 'invalid api key',
+        },
+      })
+    }
+  }
 
-            this.assertApiKeyAndProjectBelongToSamePlatform(project, apiKey)
-
-            principal.projectId = projectId
-            return principal
-        }
-        catch (e) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
-                params: {
-                    message: 'invalid api key',
-                },
-            })
-        }
+  private async extractProjectIdOrThrow(request: FastifyRequest): Promise<ProjectId> {
+    const projectIdFromRequest = requestUtils.extractProjectId(request)
+    const projectIdFromResource = await this.extractProjectIdFromResource(request)
+    const projectId = projectIdFromRequest ?? projectIdFromResource
+    if (isNil(projectId)) {
+      throw new ActivepiecesError({
+        code: ErrorCode.AUTHORIZATION,
+        params: {
+          message: 'missing project id',
+        },
+      })
     }
 
-    private async extractProjectIdOrThrow(
-        request: FastifyRequest,
-    ): Promise<ProjectId> {
-        const projectIdFromRequest = requestUtils.extractProjectId(request)
-        const projectIdFromResource = await this.extractProjectIdFromResource(request)
-        const projectId = projectIdFromRequest ?? projectIdFromResource
-        if (isNil(projectId)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
-                params: {
-                    message: 'missing project id',
-                },
-            })
-        }
+    return projectId
+  }
 
-        return projectId
+  private async extractProjectIdFromResource(request: FastifyRequest): Promise<string | undefined> {
+    const oneResourceRoute =
+      request.routerPath.includes(':id') &&
+      isObject(request.params) &&
+      'id' in request.params &&
+      typeof request.params.id === 'string'
+
+    if (!oneResourceRoute) {
+      return undefined
     }
 
-    private async extractProjectIdFromResource(
-        request: FastifyRequest,
-    ): Promise<string | undefined> {
-        const oneResourceRoute =
-            request.routerPath.includes(':id') &&
-            isObject(request.params) &&
-            'id' in request.params &&
-            typeof request.params.id === 'string'
+    const resourceName = extractResourceName(request.routerPath)
+    const { id } = request.params as { id: string }
+    return this.getProjectIdFromResource(resourceName, id)
+  }
 
-        if (!oneResourceRoute) {
-            return undefined
-        }
-
-        const resourceName = extractResourceName(request.routerPath)
-        const { id } = request.params as { id: string }
-        return this.getProjectIdFromResource(resourceName, id)
+  private async getProjectIdFromResource(resource: string | undefined, id: string): Promise<string | undefined> {
+    const tableName = this.getTableNameFromResource(resource)
+    if (isNil(tableName)) {
+      return undefined
     }
+    const entity = await databaseConnection().getRepository(tableName).findOneBy({
+      id,
+    })
+    return entity?.projectId
+  }
 
-    private async getProjectIdFromResource(
-        resource: string | undefined,
-        id: string,
-    ): Promise<string | undefined> {
-        const tableName = this.getTableNameFromResource(resource)
-        if (isNil(tableName)) {
-            return undefined
-        }
-        const entity = await databaseConnection().getRepository(tableName).findOneBy({
-            id,
-        })
-        return entity?.projectId
+  private getTableNameFromResource(resource: string | undefined): string | undefined {
+    if (isNil(resource)) {
+      return undefined
     }
+    switch (resource) {
+      case 'flows':
+        return FlowEntity.options.name
+      case 'app-connections':
+        return AppConnectionEntity.options.name
+      case 'project-members':
+        return ProjectMemberEntity.options.name
+      case 'folders':
+        return FolderEntity.options.name
+    }
+    return undefined
+  }
 
-    private getTableNameFromResource(
-        resource: string | undefined,
-    ): string | undefined {
-        if (isNil(resource)) {
-            return undefined
-        }
-        switch (resource) {
-            case 'flows':
-                return FlowEntity.options.name
-            case 'app-connections':
-                return AppConnectionEntity.options.name
-            case 'project-members':
-                return ProjectMemberEntity.options.name
-            case 'folders':
-                return FolderEntity.options.name
-        }
-        return undefined
+  private assertApiKeyAndProjectBelongToSamePlatform(project: Project, apiKey: ApiKey): void {
+    if (project.platformId !== apiKey.platformId) {
+      throw new ActivepiecesError({
+        code: ErrorCode.AUTHORIZATION,
+        params: {
+          message: 'invalid project id and platform id',
+        },
+      })
     }
-
-    private assertApiKeyAndProjectBelongToSamePlatform(
-        project: Project,
-        apiKey: ApiKey,
-    ): void {
-        if (project.platformId !== apiKey.platformId) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
-                params: {
-                    message: 'invalid project id and platform id',
-                },
-            })
-        }
-    }
+  }
 }

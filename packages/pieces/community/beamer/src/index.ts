@@ -1,12 +1,12 @@
-import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { createComment } from './lib/actions/create-comment';
-import { createNewFeatureRequest } from './lib/actions/create-feature-request';
-import { createBeamerPost } from './lib/actions/create-posts';
-import { createVote } from './lib/actions/create-vote';
-import { beamerCommon } from './lib/common';
-import { newPost } from './lib/trigger/new-post';
+import { HttpMethod, createCustomApiCallAction, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { createComment } from './lib/actions/create-comment'
+import { createNewFeatureRequest } from './lib/actions/create-feature-request'
+import { createBeamerPost } from './lib/actions/create-posts'
+import { createVote } from './lib/actions/create-vote'
+import { beamerCommon } from './lib/common'
+import { newPost } from './lib/trigger/new-post'
 
 export const beamerAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -23,15 +23,15 @@ export const beamerAuth = PieceAuth.SecretText({
       })
       return {
         valid: true,
-      };
+      }
     } catch (e) {
       return {
         valid: false,
         error: 'Invalid API key.',
-      };
+      }
     }
   },
-});
+})
 
 export const beamer = createPiece({
   displayName: 'Beamer',
@@ -39,7 +39,7 @@ export const beamer = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/beamer.png',
   categories: [PieceCategory.PRODUCTIVITY],
   auth: beamerAuth,
-  authors: ["i-nithin","kishanprmr","MoShizzle","abuaboud"],
+  authors: ['i-nithin', 'kishanprmr', 'MoShizzle', 'abuaboud'],
   actions: [
     createBeamerPost,
     createNewFeatureRequest,
@@ -54,4 +54,4 @@ export const beamer = createPiece({
     }),
   ],
   triggers: [newPost],
-});
+})

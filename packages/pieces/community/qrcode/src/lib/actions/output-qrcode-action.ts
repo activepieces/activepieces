@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { toBuffer } from 'qrcode';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { toBuffer } from 'qrcode'
 
 export const outputQrcodeAction = createAction({
   name: 'text_to_qrcode',
@@ -12,13 +12,13 @@ export const outputQrcodeAction = createAction({
     }),
   },
   async run(context) {
-    const { text } = context.propsValue;
+    const { text } = context.propsValue
 
-    const qrcodeBuffer = await toBuffer(text);
+    const qrcodeBuffer = await toBuffer(text)
 
     return await context.files.write({
       fileName: 'qr-code.png',
       data: qrcodeBuffer,
-    });
+    })
   },
-});
+})

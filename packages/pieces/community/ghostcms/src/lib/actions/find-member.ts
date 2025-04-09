@@ -1,8 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
-import { ghostAuth } from '../..';
-import { common } from '../common';
+import { ghostAuth } from '../..'
+import { common } from '../common'
 
 export const findMember = createAction({
   name: 'find_member',
@@ -26,8 +26,8 @@ export const findMember = createAction({
       queryParams: {
         filter: `email:${context.propsValue.email}`,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

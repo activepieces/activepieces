@@ -1,51 +1,36 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { ColumnDef } from '@tanstack/react-table';
-import { t } from 'i18next';
-import {
-  CheckIcon,
-  ChevronDown,
-  EllipsisVertical,
-  Import,
-  Plus,
-  Workflow,
-} from 'lucide-react';
-import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { ColumnDef } from '@tanstack/react-table'
+import { t } from 'i18next'
+import { CheckIcon, ChevronDown, EllipsisVertical, Import, Plus, Workflow } from 'lucide-react'
+import { useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
-import { useEmbedding, useNewWindow } from '@/components/embed-provider';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
-import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
-import { SelectFlowTemplateDialog } from '@/features/flows/components/select-flow-template-dialog';
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { useFlowsBulkActions } from '@/features/flows/lib/use-flows-bulk-actions';
-import { FolderBadge } from '@/features/folders/component/folder-badge';
-import {
-  FolderFilterList,
-  folderIdParamName,
-} from '@/features/folders/component/folder-filter-list';
-import { foldersApi } from '@/features/folders/lib/folders-api';
-import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
-import { formatUtils, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
-import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
+import { useEmbedding, useNewWindow } from '@/components/embed-provider'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { DataTable, RowDataWithActions } from '@/components/ui/data-table'
+import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip'
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast'
+import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle'
+import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog'
+import { SelectFlowTemplateDialog } from '@/features/flows/components/select-flow-template-dialog'
+import { flowsApi } from '@/features/flows/lib/flows-api'
+import { useFlowsBulkActions } from '@/features/flows/lib/use-flows-bulk-actions'
+import { FolderBadge } from '@/features/folders/component/folder-badge'
+import { FolderFilterList, folderIdParamName } from '@/features/folders/component/folder-filter-list'
+import { foldersApi } from '@/features/folders/lib/folders-api'
+import { PieceIconList } from '@/features/pieces/components/piece-icon-list'
+import { useAuthorization } from '@/hooks/authorization-hooks'
+import { authenticationSession } from '@/lib/authentication-session'
+import { NEW_FLOW_QUERY_PARAM, formatUtils } from '@/lib/utils'
+import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared'
 
-import FlowActionMenu from '../../../app/components/flow-actions-menu';
-import { TableTitle } from '../../../components/ui/table-title';
+import FlowActionMenu from '../../../app/components/flow-actions-menu'
+import { TableTitle } from '../../../components/ui/table-title'
 
-import TaskLimitAlert from './task-limit-alert';
+import TaskLimitAlert from './task-limit-alert'
 
 const filters = [
   {
@@ -63,33 +48,31 @@ const filters = [
       return {
         label: formatUtils.convertEnumToHumanReadable(status),
         value: status,
-      };
+      }
     }),
     icon: CheckIcon,
   } as const,
-];
+]
 
 const FlowsPage = () => {
-  const { checkAccess } = useAuthorization();
-  const doesUserHavePermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
-  const { embedState } = useEmbedding();
-  const navigate = useNavigate();
-  const [refresh, setRefresh] = useState(0);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const openNewWindow = useNewWindow();
-  const [searchParams] = useSearchParams();
-  const projectId = authenticationSession.getProjectId()!;
+  const { checkAccess } = useAuthorization()
+  const doesUserHavePermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW)
+  const { embedState } = useEmbedding()
+  const navigate = useNavigate()
+  const [refresh, setRefresh] = useState(0)
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const openNewWindow = useNewWindow()
+  const [searchParams] = useSearchParams()
+  const projectId = authenticationSession.getProjectId()!
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['flow-table', searchParams.toString(), projectId],
     staleTime: 0,
     queryFn: () => {
-      const name = searchParams.get('name');
-      const status = searchParams.getAll('status') as FlowStatus[];
-      const cursor = searchParams.get('cursor');
-      const limit = searchParams.get('limit')
-        ? parseInt(searchParams.get('limit')!)
-        : 10;
-      const folderId = searchParams.get('folderId') ?? undefined;
+      const name = searchParams.get('name')
+      const status = searchParams.getAll('status') as FlowStatus[]
+      const cursor = searchParams.get('cursor')
+      const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 10
+      const folderId = searchParams.get('folderId') ?? undefined
 
       return flowsApi.list({
         projectId,
@@ -98,190 +81,135 @@ const FlowsPage = () => {
         name: name ?? undefined,
         status,
         folderId,
-      });
+      })
     },
-  });
+  })
 
-  const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation<
-    PopulatedFlow,
-    Error,
-    void
-  >({
+  const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation<PopulatedFlow, Error, void>({
     mutationFn: async () => {
-      const folderId = searchParams.get(folderIdParamName);
-      const folder =
-        folderId && folderId !== 'NULL'
-          ? await foldersApi.get(folderId)
-          : undefined;
+      const folderId = searchParams.get(folderIdParamName)
+      const folder = folderId && folderId !== 'NULL' ? await foldersApi.get(folderId) : undefined
       const flow = await flowsApi.create({
         projectId: authenticationSession.getProjectId()!,
         displayName: t('Untitled'),
         folderName: folder?.displayName,
-      });
-      return flow;
+      })
+      return flow
     },
     onSuccess: (flow) => {
-      navigate(`/flows/${flow.id}?${NEW_FLOW_QUERY_PARAM}=true`);
+      navigate(`/flows/${flow.id}?${NEW_FLOW_QUERY_PARAM}=true`)
     },
     onError: () => toast(INTERNAL_ERROR_TOAST),
-  });
+  })
 
-  const [selectedRows, setSelectedRows] = useState<Array<PopulatedFlow>>([]);
+  const [selectedRows, setSelectedRows] = useState<Array<PopulatedFlow>>([])
 
   const columns: (ColumnDef<RowDataWithActions<PopulatedFlow>> & {
-    accessorKey: string;
+    accessorKey: string
   })[] = [
     {
       id: 'select',
       header: ({ table }) => (
         <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            table.getIsSomePageRowsSelected()
-          }
+          checked={table.getIsAllPageRowsSelected() || table.getIsSomePageRowsSelected()}
           onCheckedChange={(value) => {
-            const isChecked = !!value;
-            table.toggleAllPageRowsSelected(isChecked);
+            const isChecked = !!value
+            table.toggleAllPageRowsSelected(isChecked)
 
             if (isChecked) {
-              const allRowIds = table
-                .getRowModel()
-                .rows.map((row) => row.original);
+              const allRowIds = table.getRowModel().rows.map((row) => row.original)
 
-              const newSelectedRowIds = [...allRowIds, ...selectedRows];
+              const newSelectedRowIds = [...allRowIds, ...selectedRows]
 
-              const uniqueRowIds = Array.from(
-                new Map(
-                  newSelectedRowIds.map((item) => [item.id, item]),
-                ).values(),
-              );
+              const uniqueRowIds = Array.from(new Map(newSelectedRowIds.map((item) => [item.id, item])).values())
 
-              setSelectedRows(uniqueRowIds);
+              setSelectedRows(uniqueRowIds)
             } else {
               const filteredRowIds = selectedRows.filter((row) => {
-                return !table
-                  .getRowModel()
-                  .rows.some((r) => r.original.version.id === row.version.id);
-              });
-              setSelectedRows(filteredRowIds);
+                return !table.getRowModel().rows.some((r) => r.original.version.id === row.version.id)
+              })
+              setSelectedRows(filteredRowIds)
             }
           }}
         />
       ),
       cell: ({ row }) => {
         const isChecked = selectedRows.some(
-          (selectedRow) =>
-            selectedRow.id === row.original.id &&
-            selectedRow.status === row.original.status,
-        );
+          (selectedRow) => selectedRow.id === row.original.id && selectedRow.status === row.original.status,
+        )
         return (
           <Checkbox
             checked={isChecked}
             onCheckedChange={(value) => {
-              const isChecked = !!value;
-              let newSelectedRows = [...selectedRows];
+              const isChecked = !!value
+              let newSelectedRows = [...selectedRows]
               if (isChecked) {
-                const exists = newSelectedRows.some(
-                  (selectedRow) => selectedRow.id === row.original.id,
-                );
+                const exists = newSelectedRows.some((selectedRow) => selectedRow.id === row.original.id)
                 if (!exists) {
-                  newSelectedRows.push(row.original);
+                  newSelectedRows.push(row.original)
                 }
               } else {
-                newSelectedRows = newSelectedRows.filter(
-                  (selectedRow) => selectedRow.id !== row.original.id,
-                );
+                newSelectedRows = newSelectedRows.filter((selectedRow) => selectedRow.id !== row.original.id)
               }
-              setSelectedRows(newSelectedRows);
-              row.toggleSelected(!!value);
+              setSelectedRows(newSelectedRows)
+              row.toggleSelected(!!value)
             }}
           />
-        );
+        )
       },
       accessorKey: 'select',
     },
     {
       accessorKey: 'name',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t('Name')} />,
       cell: ({ row }) => {
-        const status = row.original.version.displayName;
-        return <div className="text-left">{status}</div>;
+        const status = row.original.version.displayName
+        return <div className="text-left">{status}</div>
       },
     },
     {
       accessorKey: 'steps',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Steps')} />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t('Steps')} />,
       cell: ({ row }) => {
-        return (
-          <PieceIconList
-            trigger={row.original.version.trigger}
-            maxNumberOfIconsToShow={2}
-          />
-        );
+        return <PieceIconList trigger={row.original.version.trigger} maxNumberOfIconsToShow={2} />
       },
     },
     {
       accessorKey: 'folderId',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Folder')} />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t('Folder')} />,
       cell: ({ row }) => {
-        const folderId = row.original.folderId;
+        const folderId = row.original.folderId
         return (
           <div className="text-left min-w-[150px]">
-            {folderId ? (
-              <FolderBadge folderId={folderId} />
-            ) : (
-              <span>{t('Uncategorized')}</span>
-            )}
+            {folderId ? <FolderBadge folderId={folderId} /> : <span>{t('Uncategorized')}</span>}
           </div>
-        );
+        )
       },
     },
     {
       accessorKey: 'created',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Created')} />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t('Created')} />,
       cell: ({ row }) => {
-        const created = row.original.created;
-        return (
-          <div className="text-left font-medium min-w-[150px]">
-            {formatUtils.formatDate(new Date(created))}
-          </div>
-        );
+        const created = row.original.created
+        return <div className="text-left font-medium min-w-[150px]">{formatUtils.formatDate(new Date(created))}</div>
       },
     },
     {
       accessorKey: 'status',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Status')} />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title={t('Status')} />,
       cell: ({ row }) => {
         return (
-          <div
-            className="flex items-center space-x-2"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <FlowStatusToggle
-              flow={row.original}
-              flowVersion={row.original.version}
-            ></FlowStatusToggle>
+          <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
+            <FlowStatusToggle flow={row.original} flowVersion={row.original.version}></FlowStatusToggle>
           </div>
-        );
+        )
       },
     },
     {
       accessorKey: 'actions',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="" />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
       cell: ({ row }) => {
-        const flow = row.original;
+        const flow = row.original
         return (
           <div onClick={(e) => e.stopPropagation()}>
             <FlowActionMenu
@@ -290,29 +218,29 @@ const FlowsPage = () => {
               readonly={false}
               flowVersion={flow.version}
               onRename={() => {
-                setRefresh(refresh + 1);
-                refetch();
+                setRefresh(refresh + 1)
+                refetch()
               }}
               onMoveTo={() => {
-                setRefresh(refresh + 1);
-                refetch();
+                setRefresh(refresh + 1)
+                refetch()
               }}
               onDuplicate={() => {
-                setRefresh(refresh + 1);
-                refetch();
+                setRefresh(refresh + 1)
+                refetch()
               }}
               onDelete={() => {
-                setRefresh(refresh + 1);
-                refetch();
+                setRefresh(refresh + 1)
+                refetch()
               }}
             >
               <EllipsisVertical className="h-10 w-10" />
             </FlowActionMenu>
           </div>
-        );
+        )
       },
     },
-  ];
+  ]
 
   const bulkActions = useFlowsBulkActions({
     selectedRows,
@@ -322,26 +250,20 @@ const FlowsPage = () => {
     setSelectedRows,
     setRefresh,
     refetch,
-  });
+  })
   return (
     <div className="flex flex-col gap-4 grow">
       <TaskLimitAlert />
       <div className="flex flex-col gap-4 w-full grow">
         <div className="flex">
-          <TableTitle
-            description={t('Create and manage your automation flows')}
-          >
-            {t('Flows')}
-          </TableTitle>
+          <TableTitle description={t('Create and manage your automation flows')}>{t('Flows')}</TableTitle>
           <div className="ml-auto flex flex-row gap-2">
-            <PermissionNeededTooltip
-              hasPermission={doesUserHavePermissionToWriteFlow}
-            >
+            <PermissionNeededTooltip hasPermission={doesUserHavePermissionToWriteFlow}>
               <ImportFlowDialog
                 insideBuilder={false}
                 onRefresh={() => {
-                  setRefresh(refresh + 1);
-                  refetch();
+                  setRefresh(refresh + 1)
+                  refetch()
                 }}
               >
                 <Button
@@ -355,14 +277,9 @@ const FlowsPage = () => {
               </ImportFlowDialog>
             </PermissionNeededTooltip>
 
-            <PermissionNeededTooltip
-              hasPermission={doesUserHavePermissionToWriteFlow}
-            >
+            <PermissionNeededTooltip hasPermission={doesUserHavePermissionToWriteFlow}>
               <DropdownMenu modal={false}>
-                <DropdownMenuTrigger
-                  disabled={!doesUserHavePermissionToWriteFlow}
-                  asChild
-                >
+                <DropdownMenuTrigger disabled={!doesUserHavePermissionToWriteFlow} asChild>
                   <Button
                     disabled={!doesUserHavePermissionToWriteFlow}
                     variant="default"
@@ -376,8 +293,8 @@ const FlowsPage = () => {
                 <DropdownMenuContent>
                   <DropdownMenuItem
                     onSelect={(e) => {
-                      e.preventDefault();
-                      createFlow();
+                      e.preventDefault()
+                      createFlow()
                     }}
                     disabled={isCreateFlowPending}
                   >
@@ -385,10 +302,7 @@ const FlowsPage = () => {
                     <span>{t('From scratch')}</span>
                   </DropdownMenuItem>
                   <SelectFlowTemplateDialog>
-                    <DropdownMenuItem
-                      onSelect={(e) => e.preventDefault()}
-                      disabled={isCreateFlowPending}
-                    >
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} disabled={isCreateFlowPending}>
                       <Workflow className="h-4 w-4 me-2" />
                       <span>{t('Use a template')}</span>
                     </DropdownMenuItem>
@@ -403,31 +317,18 @@ const FlowsPage = () => {
           <div className="w-full">
             <DataTable
               emptyStateTextTitle={t('No flows found')}
-              emptyStateTextDescription={t(
-                'Create a workflow to start automating',
-              )}
+              emptyStateTextDescription={t('Create a workflow to start automating')}
               emptyStateIcon={<Workflow className="size-14" />}
-              columns={columns.filter(
-                (column) =>
-                  !embedState.hideFolders || column.accessorKey !== 'folderId',
-              )}
+              columns={columns.filter((column) => !embedState.hideFolders || column.accessorKey !== 'folderId')}
               page={data}
               isLoading={isLoading}
               filters={filters}
               bulkActions={bulkActions}
               onRowClick={(row, newWindow) => {
                 if (newWindow) {
-                  openNewWindow(
-                    authenticationSession.appendProjectRoutePrefix(
-                      `/flows/${row.id}`,
-                    ),
-                  );
+                  openNewWindow(authenticationSession.appendProjectRoutePrefix(`/flows/${row.id}`))
                 } else {
-                  navigate(
-                    authenticationSession.appendProjectRoutePrefix(
-                      `/flows/${row.id}`,
-                    ),
-                  );
+                  navigate(authenticationSession.appendProjectRoutePrefix(`/flows/${row.id}`))
                 }
               }}
             />
@@ -435,7 +336,7 @@ const FlowsPage = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export { FlowsPage };
+export { FlowsPage }

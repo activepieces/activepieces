@@ -1,10 +1,6 @@
-import { birdAuth } from '../auth';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { birdAuth } from '../auth'
 
 export const sendSMSAction = createAction({
   auth: birdAuth,
@@ -29,35 +25,35 @@ export const sendSMSAction = createAction({
     }),
   },
   async run(context) {
-    const { recipient, message, reference } = context.propsValue;
-    const auth = context.auth as { apiKey: string; workspaceId: string; channelId: string };
-    
+    const { recipient, message, reference } = context.propsValue
+    const auth = context.auth as { apiKey: string; workspaceId: string; channelId: string }
+
     // Format request for Bird Channels API
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `https://api.bird.com/workspaces/${auth.workspaceId}/channels/${auth.channelId}/messages`,
       headers: {
-        'Authorization': `Bearer ${auth.apiKey}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${auth.apiKey}`,
+        'Content-Type': 'application/json',
       },
       body: {
         receiver: {
           contacts: [
             {
-              identifierValue: recipient
-            }
-          ]
+              identifierValue: recipient,
+            },
+          ],
         },
         body: {
           type: 'text',
           text: {
-            text: message
-          }
+            text: message,
+          },
         },
         ...(reference && { reference }),
       },
-    };
+    }
 
-    return await httpClient.sendRequest(request);
+    return await httpClient.sendRequest(request)
   },
-});
+})

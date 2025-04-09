@@ -1,17 +1,9 @@
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
-import {
-  Property,
-  TriggerStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
-import { endpoint, kizeoFormsCommon } from '../common';
-import { kizeoFormsAuth } from '../..';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { kizeoFormsAuth } from '../..'
+import { endpoint, kizeoFormsCommon } from '../common'
 
-const triggerNameInStore = 'event_on_data_trigger';
+const triggerNameInStore = 'event_on_data_trigger'
 export const eventOnData = createTrigger({
   auth: kizeoFormsAuth,
   name: 'event_on_data',
@@ -220,27 +212,24 @@ export const eventOnData = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const { formId, event1, event2, event3, event4, event5 } =
-      context.propsValue;
+    const { formId, event1, event2, event3, event4, event5 } = context.propsValue
     const onEvents = [
       event1,
       event2 !== '' ? event2 : null,
       event3 !== '' ? event3 : null,
       event4 !== '' ? event4 : null,
       event5 !== '' ? event5 : null,
-    ].filter(Boolean);
-    const webhookUrl = context.webhookUrl;
+    ].filter(Boolean)
+    const webhookUrl = context.webhookUrl
     // eslint-disable-next-line no-useless-escape
-    const match = webhookUrl.match(/\/webhooks\/([^\/]+)/);
-    let workflowId = 'FlowId';
+    const match = webhookUrl.match(/\/webhooks\/([^\/]+)/)
+    let workflowId = 'FlowId'
     if (match) {
-      workflowId = match[1];
+      workflowId = match[1]
     }
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url:
-        endpoint +
-        `public/v4/forms/${formId}/third_party_webhooks?used-with-actives-pieces=`,
+      url: endpoint + `public/v4/forms/${formId}/third_party_webhooks?used-with-actives-pieces=`,
       body: {
         on_events: onEvents,
         url: webhookUrl,
@@ -253,73 +242,67 @@ export const eventOnData = createTrigger({
         Authorization: context.auth,
       },
       queryParams: {},
-    };
-    const { body } = await httpClient.sendRequest<{ id: string }>(request);
+    }
+    const { body } = await httpClient.sendRequest<{ id: string }>(request)
     await context.store?.put<KizeoFormsWebhookInformation>(triggerNameInStore, {
       webhookId: body.id,
-    });
+    })
   },
   async onDisable(context) {
-    const { formId } = context.propsValue;
-    const response = await context.store?.get<KizeoFormsWebhookInformation>(
-      triggerNameInStore
-    );
+    const { formId } = context.propsValue
+    const response = await context.store?.get<KizeoFormsWebhookInformation>(triggerNameInStore)
     if (response !== null && response !== undefined) {
       const request: HttpRequest = {
         method: HttpMethod.DELETE,
         url:
-          endpoint +
-          `public/v4/forms/${formId}/third_party_webhooks/${response.webhookId}?used-with-actives-pieces=`,
+          endpoint + `public/v4/forms/${formId}/third_party_webhooks/${response.webhookId}?used-with-actives-pieces=`,
         headers: {
           Authorization: context.auth,
         },
-      };
-      await httpClient.sendRequest(request);
+      }
+      await httpClient.sendRequest(request)
     }
   },
   async run(context) {
     if (!context.payload.body) {
-      return [];
+      return []
     }
-    const body = context.payload.body as BodyDataType;
+    const body = context.payload.body as BodyDataType
     const formattedData: FormattedData = {
       id: body.id,
-    };
+    }
     if (context.propsValue.format === 'simple') {
       for (const fieldKey in body.data.fields) {
-        if (
-          body.data.fields[fieldKey].result &&
-          body.data.fields[fieldKey].result?.value !== undefined
-        ) {
-          const newFieldKey = fieldKey;
-          formattedData[newFieldKey] = body.data.fields[fieldKey].result?.value;
+        if (body.data.fields[fieldKey].result && body.data.fields[fieldKey].result?.value !== undefined) {
+          const newFieldKey = fieldKey
+          formattedData[newFieldKey] = body.data.fields[fieldKey].result?.value
         }
       }
-      return [formattedData];
+      return [formattedData]
     }
 
-    return [body];
+    return [body]
   },
-});
+})
 
 interface FormattedData {
-  id: string;
-  [key: string]: any;
+  id: string
+  [key: string]: any
 }
 
 interface BodyDataType {
-  id: string;
+  id: string
   data: {
     fields: {
       [key: string]: {
         result?: {
-          value: any;
-        };
-      };
-    };
-  };
+          value: any
+        }
+      }
+    }
+  }
 }
 
 interface KizeoFormsWebhookInformation {
-  webhookId: string;
+  webhookId: string
 }

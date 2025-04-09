@@ -1,11 +1,8 @@
-import {
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { ContentfulAuth, PropertyKeys, makeClient } from '../../common';
-import { ContentfulProperty } from '../../properties';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { ContentfulAuth, PropertyKeys, makeClient } from '../../common'
+import { ContentfulProperty } from '../../properties'
 
 export const ContentfulSearchRecordsAction = createAction({
   name: 'contentful_record_search',
@@ -46,11 +43,10 @@ export const ContentfulSearchRecordsAction = createAction({
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
       [PropertyKeys.QUERY_INCLUDE]: z.number().min(1),
-    });
+    })
 
-    const { client } = makeClient(auth);
-    const select =
-      (propsValue[PropertyKeys.QUERY_SELECT] as string[]) || undefined;
+    const { client } = makeClient(auth)
+    const select = (propsValue[PropertyKeys.QUERY_SELECT] as string[]) || undefined
     return client.entry.getMany({
       query: {
         ...(propsValue[PropertyKeys.QUERY] as any),
@@ -60,6 +56,6 @@ export const ContentfulSearchRecordsAction = createAction({
         include: (propsValue[PropertyKeys.QUERY_INCLUDE] as number) || 1,
         select: select?.join(','),
       },
-    });
+    })
   },
-});
+})

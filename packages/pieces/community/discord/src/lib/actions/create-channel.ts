@@ -1,11 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { discordAuth } from '../../index';
-import { discordCommon } from '../common';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { discordAuth } from '../../index'
+import { discordCommon } from '../common'
 
 export const discordCreateChannel = createAction({
   auth: discordAuth,
@@ -32,9 +28,9 @@ export const discordCreateChannel = createAction({
         authorization: `Bot ${configValue.auth}`,
         'Content-Type': 'application/json',
       },
-    };
+    }
 
-    const res = await httpClient.sendRequest(request);
+    const res = await httpClient.sendRequest(request)
 
     return {
       success: res.status === 201,
@@ -42,6 +38,6 @@ export const discordCreateChannel = createAction({
         id: res.body.id,
         name: res.body.name,
       },
-    };
+    }
   },
-});
+})

@@ -1,16 +1,12 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { convertkitAuth } from '../..'
 import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { convertkitAuth } from '../..';
-import {
+  broadcastContent,
+  broadcastEmailAddress,
   broadcastId,
   broadcastPageNumber,
-  broadcastContent,
   description,
-  broadcastEmailAddress,
   emailLayoutTemplate,
   isPublic,
   publishedAt,
@@ -18,10 +14,10 @@ import {
   subject,
   thumbnailAlt,
   thumbnailUrl,
-} from '../common/broadcasts';
-import { Broadcast } from '../common/types';
-import { BROADCASTS_API_ENDPOINT } from '../common/constants';
-import { fetchBroadcasts } from '../common/service';
+} from '../common/broadcasts'
+import { BROADCASTS_API_ENDPOINT } from '../common/constants'
+import { fetchBroadcasts } from '../common/service'
+import { Broadcast } from '../common/types'
 
 export const listBroadcasts = createAction({
   auth: convertkitAuth,
@@ -32,10 +28,10 @@ export const listBroadcasts = createAction({
     page: broadcastPageNumber,
   },
   run(context) {
-    const page = context.propsValue.page || 1;
-    return fetchBroadcasts(context.auth, page);
+    const page = context.propsValue.page || 1
+    return fetchBroadcasts(context.auth, page)
   },
-});
+})
 
 export const createBroadcast = createAction({
   auth: convertkitAuth,
@@ -66,8 +62,8 @@ export const createBroadcast = createAction({
       subject,
       thumbnailAlt,
       thumbnailUrl,
-    } = context.propsValue;
-    const url = BROADCASTS_API_ENDPOINT;
+    } = context.propsValue
+    const url = BROADCASTS_API_ENDPOINT
 
     const body = {
       api_secret: context.auth,
@@ -81,7 +77,7 @@ export const createBroadcast = createAction({
       subject,
       thumbnail_alt: thumbnailAlt,
       thumbnail_url: thumbnailUrl,
-    };
+    }
 
     const request: HttpRequest = {
       url,
@@ -90,16 +86,14 @@ export const createBroadcast = createAction({
       headers: {
         'Content-Type': 'application/json',
       },
-    };
-    const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(
-      request
-    );
-    if (response.status !== 201) {
-      throw new Error(`Error creating broadcast: ${response.status}`);
     }
-    return response.body.broadcast;
+    const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(request)
+    if (response.status !== 201) {
+      throw new Error(`Error creating broadcast: ${response.status}`)
+    }
+    return response.body.broadcast
   },
-});
+})
 
 export const getBroadcastById = createAction({
   auth: convertkitAuth,
@@ -110,27 +104,25 @@ export const getBroadcastById = createAction({
     broadcastId: broadcastId,
   },
   async run(context) {
-    const { broadcastId } = context.propsValue;
-    const url = `${BROADCASTS_API_ENDPOINT}/${broadcastId}`;
+    const { broadcastId } = context.propsValue
+    const url = `${BROADCASTS_API_ENDPOINT}/${broadcastId}`
 
     const body = {
       api_secret: context.auth,
-    };
+    }
 
     const request: HttpRequest = {
       url,
       body,
       method: HttpMethod.GET,
-    };
-    const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(
-      request
-    );
-    if (response.status !== 200) {
-      throw new Error(`Error fetching broadcast: ${response.status}`);
     }
-    return response.body.broadcast;
+    const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(request)
+    if (response.status !== 200) {
+      throw new Error(`Error fetching broadcast: ${response.status}`)
+    }
+    return response.body.broadcast
   },
-});
+})
 
 export const updateBroadcast = createAction({
   auth: convertkitAuth,
@@ -164,9 +156,9 @@ export const updateBroadcast = createAction({
       subject,
       thumbnailAlt,
       thumbnailUrl,
-    } = context.propsValue;
+    } = context.propsValue
 
-    const url = `${BROADCASTS_API_ENDPOINT}/${broadcastId}`;
+    const url = `${BROADCASTS_API_ENDPOINT}/${broadcastId}`
 
     const body = {
       api_secret: context.auth,
@@ -180,7 +172,7 @@ export const updateBroadcast = createAction({
       subject,
       thumbnail_alt: thumbnailAlt,
       thumbnail_url: thumbnailUrl,
-    };
+    }
 
     const request: HttpRequest = {
       url,
@@ -189,16 +181,14 @@ export const updateBroadcast = createAction({
       headers: {
         'Content-Type': 'application/json',
       },
-    };
-    const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(
-      request
-    );
-    if (response.status !== 200) {
-      throw new Error(`Error updating broadcast: ${response.status}`);
     }
-    return response.body.broadcast;
+    const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(request)
+    if (response.status !== 200) {
+      throw new Error(`Error updating broadcast: ${response.status}`)
+    }
+    return response.body.broadcast
   },
-});
+})
 
 export const broadcastStats = createAction({
   auth: convertkitAuth,
@@ -209,27 +199,25 @@ export const broadcastStats = createAction({
     broadcastId: broadcastId,
   },
   async run(context) {
-    const { broadcastId } = context.propsValue;
-    const url = `${BROADCASTS_API_ENDPOINT}/${broadcastId}/stats`;
+    const { broadcastId } = context.propsValue
+    const url = `${BROADCASTS_API_ENDPOINT}/${broadcastId}/stats`
 
     const body = {
       api_secret: context.auth,
-    };
+    }
 
     const request: HttpRequest = {
       url,
       body,
       method: HttpMethod.GET,
-    };
-    const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(
-      request
-    );
-    if (response.status !== 200) {
-      throw new Error(`Error fetching broadcast stats: ${response.status}`);
     }
-    return response.body.broadcast;
+    const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(request)
+    if (response.status !== 200) {
+      throw new Error(`Error fetching broadcast stats: ${response.status}`)
+    }
+    return response.body.broadcast
   },
-});
+})
 
 export const deleteBroadcast = createAction({
   auth: convertkitAuth,
@@ -240,28 +228,26 @@ export const deleteBroadcast = createAction({
     broadcastId: broadcastId,
   },
   async run(context) {
-    const { broadcastId } = context.propsValue;
-    const url = `${BROADCASTS_API_ENDPOINT}/${broadcastId}`;
+    const { broadcastId } = context.propsValue
+    const url = `${BROADCASTS_API_ENDPOINT}/${broadcastId}`
 
     const body = {
       api_secret: context.auth,
-    };
+    }
 
     const request: HttpRequest = {
       url,
       body,
       method: HttpMethod.DELETE,
-    };
-    const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(
-      request
-    );
+    }
+    const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(request)
     if (response.status !== 204) {
-      throw new Error(`Error deleting broadcast: ${response.status}`);
+      throw new Error(`Error deleting broadcast: ${response.status}`)
     }
     return {
       message: `Broadcast ${broadcastId} deleted successfully`,
       status: response.status,
       success: true,
-    };
+    }
   },
-});
+})

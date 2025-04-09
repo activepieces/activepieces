@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { makeClient, pastebinCommon } from '../common';
-import { PasteExpiry, PastePrivacy } from '../common/client';
-import { pastebinAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { pastebinAuth } from '../..'
+import { makeClient, pastebinCommon } from '../common'
+import { PasteExpiry, PastePrivacy } from '../common/client'
 
 export default createAction({
   auth: pastebinAuth,
@@ -52,7 +52,7 @@ export default createAction({
     }),
   },
   async run(context) {
-    const client = await makeClient(context.auth);
+    const client = await makeClient(context.auth)
     const url = await client.createPaste({
       paste_code: context.propsValue.content,
       paste_format: context.propsValue.format,
@@ -60,11 +60,11 @@ export default createAction({
       paste_private: context.propsValue.privacy,
       paste_expiry_date: context.propsValue.expiry,
       folder_key: context.propsValue.folder,
-    });
-    const id = url.split('/').reduce((c, v) => v);
+    })
+    const id = url.split('/').reduce((c, v) => v)
     return {
       id,
       url,
-    };
+    }
   },
-});
+})

@@ -1,17 +1,12 @@
-import {
-  Property,
-  TriggerStrategy,
-  WebhookHandshakeStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
-import { quickzuAuth } from '../../';
+import { Property, TriggerStrategy, WebhookHandshakeStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { quickzuAuth } from '../../'
 
 const markdown = `
 - Go to the **Settings->API and Webhooks** section.
 - In the webhook settings, paste this URL: 
   \`{{webhookUrl}}\`
 - Click on **Save**.
-`;
+`
 const sampleData = {
   payload: {
     id: '65cc96cfcf7028f638e20b0c',
@@ -217,14 +212,13 @@ const sampleData = {
   },
   resource: 'order',
   operation: 'create',
-};
+}
 
 export const orderCreatedTrigger = createTrigger({
   auth: quickzuAuth,
   name: 'quickzu_order_created_trigger',
   displayName: 'Order Created/Updated',
-  description:
-    'Triggers when a new order is created or a order status is changed in store.',
+  description: 'Triggers when a new order is created or a order status is changed in store.',
   type: TriggerStrategy.WEBHOOK,
   sampleData: sampleData,
   props: {
@@ -239,7 +233,7 @@ export const orderCreatedTrigger = createTrigger({
     // Empty
   },
   async run(context) {
-    return [context.payload];
+    return [context.payload]
   },
   handshakeConfiguration: {
     strategy: WebhookHandshakeStrategy.BODY_PARAM_PRESENT,
@@ -249,6 +243,6 @@ export const orderCreatedTrigger = createTrigger({
     return {
       status: 200,
       body: {},
-    };
+    }
   },
-});
+})

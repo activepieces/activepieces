@@ -1,12 +1,8 @@
-import {
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { Property, createAction } from '@activepieces/pieces-framework';
-import FormData from 'form-data';
-import { acumbamailAuth } from '../../';
-import { acumbamailCommon } from '../common';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import FormData from 'form-data'
+import { acumbamailAuth } from '../../'
+import { acumbamailCommon } from '../common'
 
 export const createSubscriberListAction = createAction({
   auth: acumbamailAuth,
@@ -38,25 +34,24 @@ export const createSubscriberListAction = createAction({
     }),
   },
   async run(context) {
-    const { listname, sender_email, company, address, phone } =
-      context.propsValue;
+    const { listname, sender_email, company, address, phone } = context.propsValue
 
-    const form = new FormData();
-    form.append('auth_token', context.auth);
-    form.append('name', listname);
-    form.append('sender_email', sender_email);
-    form.append('company', company ?? '');
-    form.append('address', address ?? '');
-    form.append('phone', phone ?? '');
+    const form = new FormData()
+    form.append('auth_token', context.auth)
+    form.append('name', listname)
+    form.append('sender_email', sender_email)
+    form.append('company', company ?? '')
+    form.append('address', address ?? '')
+    form.append('phone', phone ?? '')
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: acumbamailCommon.baseUrl + '/createList/',
       headers: form.getHeaders(),
       body: form,
-    };
+    }
 
-    const res = await httpClient.sendRequest(request);
-    return res.body;
+    const res = await httpClient.sendRequest(request)
+    return res.body
   },
-});
+})

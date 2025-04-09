@@ -1,19 +1,15 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { addUsersToGroup } from './lib/actions/add-users-to-group.action';
-import { changeUserTrustLevel } from './lib/actions/change-trust-level.action';
-import { createPost } from './lib/actions/create-post.action';
-import { createTopic } from './lib/actions/create-topic.action';
-import { sendPrivateMessage } from './lib/actions/send-private-message.action';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { addUsersToGroup } from './lib/actions/add-users-to-group.action'
+import { changeUserTrustLevel } from './lib/actions/change-trust-level.action'
+import { createPost } from './lib/actions/create-post.action'
+import { createTopic } from './lib/actions/create-topic.action'
+import { sendPrivateMessage } from './lib/actions/send-private-message.action'
 
 const markdownPropertyDescription = `
 *Get your api Key: https://discourse.yourinstance.com/admin/api/keys
-`;
+`
 
 export const discourseAuth = PieceAuth.CustomAuth({
   description: markdownPropertyDescription,
@@ -30,11 +26,10 @@ export const discourseAuth = PieceAuth.CustomAuth({
     website_url: Property.ShortText({
       displayName: 'Website URL',
       required: true,
-      description:
-        'URL of the discourse url i.e https://discourse.yourinstance.com',
+      description: 'URL of the discourse url i.e https://discourse.yourinstance.com',
     }),
   },
-});
+})
 
 export const discourse = createPiece({
   displayName: 'Discourse',
@@ -43,7 +38,7 @@ export const discourse = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/discourse.png',
   categories: [PieceCategory.COMMUNICATION],
-  authors: ["pfernandez98","kishanprmr","MoShizzle","abuaboud"],
+  authors: ['pfernandez98', 'kishanprmr', 'MoShizzle', 'abuaboud'],
   actions: [
     createPost,
     createTopic,
@@ -60,4 +55,4 @@ export const discourse = createPiece({
     }),
   ],
   triggers: [],
-});
+})

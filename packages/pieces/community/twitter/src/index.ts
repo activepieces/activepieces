@@ -1,12 +1,8 @@
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { TwitterApi } from 'twitter-api-v2';
-import { createTweet } from './lib/actions/create-tweet';
-import { createReply } from './lib/actions/create-reply';
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { TwitterApi } from 'twitter-api-v2'
+import { createReply } from './lib/actions/create-reply'
+import { createTweet } from './lib/actions/create-tweet'
 
 const markdownDescription = `
 If you don't have the credentials down below, please follow these steps to obtain the required credentials:
@@ -32,7 +28,7 @@ If you don't have the credentials down below, please follow these steps to obtai
         **Access Token Secret**
 
 
-`;
+`
 
 export const twitterAuth = PieceAuth.CustomAuth({
   description: markdownDescription,
@@ -59,27 +55,25 @@ export const twitterAuth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
-    const { consumerKey, consumerSecret, accessToken, accessTokenSecret } =
-      auth;
+    const { consumerKey, consumerSecret, accessToken, accessTokenSecret } = auth
     const userClient = new TwitterApi({
       appKey: consumerKey,
       appSecret: consumerSecret,
       accessToken: accessToken,
       accessSecret: accessTokenSecret,
-    });
+    })
     try {
-      await userClient.v2.me();
-      return { valid: true };
+      await userClient.v2.me()
+      return { valid: true }
     } catch (e) {
       return {
         valid: false,
-        error:
-          'Please make sure you have followed steps carefully and that your app is placed in a project.',
-      };
+        error: 'Please make sure you have followed steps carefully and that your app is placed in a project.',
+      }
     }
   },
   required: true,
-});
+})
 
 export const twitter = createPiece({
   displayName: 'Twitter',
@@ -87,8 +81,8 @@ export const twitter = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/twitter.png',
   categories: [PieceCategory.COMMUNICATION],
-  authors: ["Abdallah-Alwarawreh","Salem-Alaa","kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: ['Abdallah-Alwarawreh', 'Salem-Alaa', 'kishanprmr', 'AbdulTheActivePiecer', 'khaledmashaly', 'abuaboud'],
   auth: twitterAuth,
   actions: [createTweet, createReply],
   triggers: [],
-});
+})

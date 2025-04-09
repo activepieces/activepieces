@@ -1,8 +1,4 @@
-import {
-  Property,
-  TriggerStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
+import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
 
 const markdown = `
 - Go to the "Integration" section.
@@ -10,7 +6,7 @@ const markdown = `
 - Add a webhook to that form.
 - In the webhook settings, paste this URL: 
   \`{{webhookUrl}}\`
-`;
+`
 
 export const newPost = createTrigger({
   name: 'new_post_on_beamer',
@@ -31,6 +27,6 @@ export const newPost = createTrigger({
     // IGNORED
   },
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
-});
+})

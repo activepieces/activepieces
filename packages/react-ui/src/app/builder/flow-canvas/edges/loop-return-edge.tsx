@@ -1,11 +1,11 @@
-import { BaseEdge, EdgeProps } from '@xyflow/react';
+import { BaseEdge, EdgeProps } from '@xyflow/react'
 
-import { StepLocationRelativeToParent } from '@activepieces/shared';
+import { StepLocationRelativeToParent } from '@activepieces/shared'
 
-import { flowUtilConsts } from '../utils/consts';
-import { ApLoopReturnEdge } from '../utils/types';
+import { flowUtilConsts } from '../utils/consts'
+import { ApLoopReturnEdge } from '../utils/types'
 
-import { ApAddButton } from './add-button';
+import { ApAddButton } from './add-button'
 
 export const ApLoopReturnLineCanvasEdge = ({
   sourceX,
@@ -15,20 +15,14 @@ export const ApLoopReturnLineCanvasEdge = ({
   data,
   id,
 }: EdgeProps & ApLoopReturnEdge) => {
-  const horizontalLineLength =
-    Math.abs(sourceX - targetX) - 2 * flowUtilConsts.ARC_LENGTH;
+  const horizontalLineLength = Math.abs(sourceX - targetX) - 2 * flowUtilConsts.ARC_LENGTH
 
-  const verticalLineLength =
-    data.verticalSpaceBetweenReturnNodeStartAndEnd -
-    flowUtilConsts.ARC_LENGTH / 2;
-  const ARROW_RIGHT = ` m-5 -6 l6 6  m-6 0 m6 0 l-6 6 m3 -6`;
+  const verticalLineLength = data.verticalSpaceBetweenReturnNodeStartAndEnd - flowUtilConsts.ARC_LENGTH / 2
+  const ARROW_RIGHT = ` m-5 -6 l6 6  m-6 0 m6 0 l-6 6 m3 -6`
   const endLineLength =
-    flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS -
-    2 * flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
+    flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS - 2 * flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE
   const path = `
-  M ${sourceX - 0.5} ${
-    sourceY - flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE * 2 - 1
-  }
+  M ${sourceX - 0.5} ${sourceY - flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE * 2 - 1}
   v 1
   ${flowUtilConsts.ARC_LEFT_DOWN} h -${horizontalLineLength}
   ${flowUtilConsts.ARC_RIGHT_UP} v -${verticalLineLength}
@@ -38,30 +32,19 @@ export const ApLoopReturnLineCanvasEdge = ({
    ${ARROW_RIGHT}
  
   M ${sourceX - flowUtilConsts.ARC_LENGTH - horizontalLineLength / 2} ${
-    sourceY +
-    flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
-    flowUtilConsts.ARC_LENGTH / 2
+    sourceY + flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE + flowUtilConsts.ARC_LENGTH / 2
   }
-   v${endLineLength} ${
-    data.drawArrowHeadAfterEnd ? flowUtilConsts.ARROW_DOWN : ''
-  } 
-   `;
+   v${endLineLength} ${data.drawArrowHeadAfterEnd ? flowUtilConsts.ARROW_DOWN : ''} 
+   `
   const buttonPosition = {
     x:
-      sourceX -
-      horizontalLineLength / 2 -
-      flowUtilConsts.ARC_LENGTH -
-      flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2,
+      sourceX - horizontalLineLength / 2 - flowUtilConsts.ARC_LENGTH - flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2,
     y: sourceY + endLineLength / 2,
-  };
-  const showDebugForLineEndPoint = false;
+  }
+  const showDebugForLineEndPoint = false
   return (
     <>
-      <BaseEdge
-        path={path}
-        style={{ strokeWidth: `${flowUtilConsts.LINE_WIDTH}px` }}
-        className="relative"
-      ></BaseEdge>
+      <BaseEdge path={path} style={{ strokeWidth: `${flowUtilConsts.LINE_WIDTH}px` }} className="relative"></BaseEdge>
       {showDebugForLineEndPoint && (
         <foreignObject
           x={targetX}
@@ -98,5 +81,5 @@ export const ApLoopReturnLineCanvasEdge = ({
         </foreignObject>
       )}
     </>
-  );
-};
+  )
+}

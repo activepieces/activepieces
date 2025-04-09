@@ -6,16 +6,16 @@ export enum UserType {
 }
 
 export interface User {
-  name: string;
-  avatar?: string;
-  displayName: string;
+  name: string
+  avatar?: string
+  displayName: string
 }
 
 export interface DetailedUser extends User {
-  id: string;
-  color: string;
-  profile_picture?: string;
-  logged_in: true;
-  auth_type: string;
-  type: UserType;
+  id: string
+  color: string
+  profile_picture?: string
+  logged_in: true
+  auth_type: string
+  type: UserType
 }

@@ -1,6 +1,6 @@
 export enum MarkdownVariant {
-    BORDERLESS = 'BORDERLESS',
-    INFO = 'INFO',
-    WARNING = 'WARNING',
-    TIP = 'TIP',
+  BORDERLESS = 'BORDERLESS',
+  INFO = 'INFO',
+  WARNING = 'WARNING',
+  TIP = 'TIP',
 }

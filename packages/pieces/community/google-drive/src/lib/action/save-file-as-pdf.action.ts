@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { googleDriveAuth } from '../../index';
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
-import { Stream } from 'stream';
-import { common } from '../common';
+import { Stream } from 'stream'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { google } from 'googleapis'
+import { OAuth2Client } from 'googleapis-common'
+import { googleDriveAuth } from '../../index'
+import { common } from '../common'
 
 export const saveFileAsPdf = createAction({
   displayName: 'Save Document as PDF',
@@ -31,14 +31,14 @@ export const saveFileAsPdf = createAction({
     include_team_drives: common.properties.include_team_drives,
   },
   async run(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = new OAuth2Client()
+    authClient.setCredentials(context.auth)
 
-    const documentId = context.propsValue.documentId;
-    const folderId = context.propsValue.folderId;
-    const nameForNewFile = context.propsValue.name;
+    const documentId = context.propsValue.documentId
+    const folderId = context.propsValue.folderId
+    const nameForNewFile = context.propsValue.name
 
-    const drive = google.drive({ version: 'v3', auth: authClient });
+    const drive = google.drive({ version: 'v3', auth: authClient })
 
     const result = await drive.files.export(
       {
@@ -47,28 +47,28 @@ export const saveFileAsPdf = createAction({
       },
       {
         responseType: 'arraybuffer',
-      }
-    );
+      },
+    )
 
     const requestBody = {
       name: nameForNewFile + '.pdf',
       parents: [folderId],
-    };
-    const templateBuffer = Buffer.from(result.data as any, 'base64');
+    }
+    const templateBuffer = Buffer.from(result.data as any, 'base64')
 
-    const stream = new Stream.PassThrough().end(templateBuffer);
+    const stream = new Stream.PassThrough().end(templateBuffer)
 
     const media = {
       mimeType: 'application/pdf',
       body: stream,
-    };
+    }
 
     const file = await drive.files.create({
       requestBody,
       media: media,
       supportsAllDrives: context.propsValue.include_team_drives,
-    });
+    })
 
-    return file.data;
+    return file.data
   },
-});
+})

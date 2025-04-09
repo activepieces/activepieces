@@ -1,6 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { apifyAuth } from '../..';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { apifyAuth } from '../..'
 
 export const getActors = createAction({
   name: 'getActors',
@@ -9,21 +9,21 @@ export const getActors = createAction({
   description: 'Gets the list of Actors available to the user.',
   props: {},
   async run(context) {
-    const apifyToken = context.auth.apikey;
+    const apifyToken = context.auth.apikey
     const headers = {
       Authorization: 'Bearer ' + apifyToken,
       'Content-Type': 'application/json',
-    };
+    }
 
-    const url = 'https://api.apify.com/v2/acts/';
+    const url = 'https://api.apify.com/v2/acts/'
 
     const httprequestdata = {
       method: HttpMethod.GET,
       url,
       headers,
-    };
+    }
 
-    const response = await httpClient.sendRequest(httprequestdata);
-    return response.body;
+    const response = await httpClient.sendRequest(httprequestdata)
+    return response.body
   },
-});
+})

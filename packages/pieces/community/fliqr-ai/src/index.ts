@@ -1,9 +1,9 @@
-import { HttpMethod, createCustomApiCallAction, httpClient } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { getFliqrAccountDetails } from './lib/actions/get-account-details';
-import { fliqrConfig } from './lib/common/models';
-import { getFliqrAccountFlows } from './lib/actions/get-account-flows';
-import { PieceCategory } from '@activepieces/shared';
+import { HttpMethod, createCustomApiCallAction, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { getFliqrAccountDetails } from './lib/actions/get-account-details'
+import { getFliqrAccountFlows } from './lib/actions/get-account-flows'
+import { fliqrConfig } from './lib/common/models'
 
 export const fliqrAuth = PieceAuth.SecretText({
   displayName: 'Fliqr API Access Token',
@@ -20,23 +20,23 @@ export const fliqrAuth = PieceAuth.SecretText({
   validate: async (auth) => {
     try {
       await httpClient.sendRequest<string[]>({
-      method: HttpMethod.GET,
-      url: `${fliqrConfig.baseUrl}/accounts/me`,
-      headers: {
-        [fliqrConfig.accessTokenHeaderKey]: auth.auth,
+        method: HttpMethod.GET,
+        url: `${fliqrConfig.baseUrl}/accounts/me`,
+        headers: {
+          [fliqrConfig.accessTokenHeaderKey]: auth.auth,
         },
-    });
+      })
       return {
         valid: true,
-      };
+      }
     } catch (e) {
       return {
         valid: false,
         error: 'Invalid personal access token',
-      };
+      }
     }
   },
-});
+})
 
 export const fliqrAi = createPiece({
   displayName: 'Fliqr AI',
@@ -45,10 +45,11 @@ export const fliqrAi = createPiece({
 
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/fliqr-ai.png',
-  authors: ["drona2938"],
-  categories: [PieceCategory.COMMUNICATION,PieceCategory.CUSTOMER_SUPPORT,PieceCategory.MARKETING],
+  authors: ['drona2938'],
+  categories: [PieceCategory.COMMUNICATION, PieceCategory.CUSTOMER_SUPPORT, PieceCategory.MARKETING],
   auth: fliqrAuth,
-  actions: [ getFliqrAccountDetails, 
+  actions: [
+    getFliqrAccountDetails,
     getFliqrAccountFlows,
     createCustomApiCallAction({
       baseUrl: () => fliqrConfig.baseUrl,
@@ -59,4 +60,4 @@ export const fliqrAi = createPiece({
     }),
   ],
   triggers: [],
-});
+})

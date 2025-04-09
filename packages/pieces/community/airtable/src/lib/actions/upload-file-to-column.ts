@@ -1,13 +1,8 @@
-import { airtableAuth } from '../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { airtableCommon } from '../common';
-import { AirtableTable } from './../common/models';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { airtableAuth } from '../..'
+import { airtableCommon } from '../common'
+import { AirtableTable } from './../common/models'
 
 export const airtableUploadFileToColumnAction = createAction({
   auth: airtableAuth,
@@ -27,14 +22,14 @@ export const airtableUploadFileToColumnAction = createAction({
             placeholder: 'Please select table first',
             options: [],
             disabled: true,
-          };
+          }
         }
 
         const airtable: AirtableTable = await airtableCommon.fetchTable({
           token: auth as unknown as string,
           baseId: base as unknown as string,
           tableId: tableId as unknown as string,
-        });
+        })
 
         return {
           disabled: false,
@@ -45,9 +40,9 @@ export const airtableUploadFileToColumnAction = createAction({
               return {
                 label: field.name,
                 value: field.id,
-              };
+              }
             }),
-        };
+        }
       },
     }),
     recordId: Property.ShortText({
@@ -73,14 +68,14 @@ export const airtableUploadFileToColumnAction = createAction({
     }),
   },
   async run(context) {
-    const baseId = context.propsValue.base;
-    const recordId = context.propsValue.recordId;
-    const fieldId = context.propsValue.attachment_column;
-    const fileInput = context.propsValue.file;
+    const baseId = context.propsValue.base
+    const recordId = context.propsValue.recordId
+    const fieldId = context.propsValue.attachment_column
+    const fileInput = context.propsValue.file
 
-    const fileName = context.propsValue.filename ?? fileInput.filename;
-    const fileBase64Data = fileInput.base64;
-    const fileContentType = context.propsValue.file_content_type;
+    const fileName = context.propsValue.filename ?? fileInput.filename
+    const fileBase64Data = fileInput.base64
+    const fileContentType = context.propsValue.file_content_type
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -94,9 +89,9 @@ export const airtableUploadFileToColumnAction = createAction({
         file: fileBase64Data,
         filename: fileName,
       },
-    };
+    }
 
-    const response = await httpClient.sendRequest(request);
-    return response.body;
+    const response = await httpClient.sendRequest(request)
+    return response.body
   },
-});
+})

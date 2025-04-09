@@ -1,11 +1,7 @@
-import {
-  PiecePropValueSchema,
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { flowluAuth } from '../../../';
-import { makeClient } from '../../common';
-import { flowluProps } from '../../common/props';
+import { PiecePropValueSchema, Property, createAction } from '@activepieces/pieces-framework'
+import { flowluAuth } from '../../../'
+import { makeClient } from '../../common'
+import { flowluProps } from '../../common/props'
 
 export const createOpportunityAction = createAction({
   auth: flowluAuth,
@@ -20,9 +16,7 @@ export const createOpportunityAction = createAction({
     ...flowluProps.opportunity,
   },
   async run(context) {
-    const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof flowluAuth>
-    );
-    return await client.createOpportunity(context.propsValue);
+    const client = makeClient(context.auth as PiecePropValueSchema<typeof flowluAuth>)
+    return await client.createOpportunity(context.propsValue)
   },
-});
+})

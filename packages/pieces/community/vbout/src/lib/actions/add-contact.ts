@@ -1,6 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { vboutAuth } from '../..';
-import { makeClient, vboutCommon } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { vboutAuth } from '../..'
+import { makeClient, vboutCommon } from '../common'
 
 export const addContactAction = createAction({
   auth: vboutAuth,
@@ -21,7 +21,7 @@ export const addContactAction = createAction({
     fields: vboutCommon.listFields,
   },
   async run(context) {
-    const client = makeClient(context.auth as string);
-    return await client.addContact(context.propsValue);
+    const client = makeClient(context.auth as string)
+    return await client.addContact(context.propsValue)
   },
-});
+})

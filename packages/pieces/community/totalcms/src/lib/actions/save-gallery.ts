@@ -1,11 +1,8 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { saveGallery } from '../api';
-import { cmsAuth } from '../auth';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { saveGallery } from '../api'
+import { cmsAuth } from '../auth'
 
 export const saveGalleryAction = createAction({
   name: 'save_gallery',
@@ -61,8 +58,7 @@ export const saveGalleryAction = createAction({
     }),
     lcrop: Property.StaticDropdown({
       displayName: 'Thumbnail Landscape Crop',
-      description:
-        'The method to use when cropping the landscape thumbnail for the square thumbnail',
+      description: 'The method to use when cropping the landscape thumbnail for the square thumbnail',
       required: true,
       defaultValue: 'center',
       options: {
@@ -75,8 +71,7 @@ export const saveGalleryAction = createAction({
     }),
     pcrop: Property.StaticDropdown({
       displayName: 'Thumbnail Landscape Crop',
-      description:
-        'The method to use when cropping the landscape thumbnail for the square thumbnail',
+      description: 'The method to use when cropping the landscape thumbnail for the square thumbnail',
       required: true,
       defaultValue: 'middle',
       options: {
@@ -99,13 +94,13 @@ export const saveGalleryAction = createAction({
       quality: z.number().min(1).max(100),
       scaleTh: z.number().min(1),
       scaleSq: z.number().min(1),
-    });
+    })
 
-    const slug = context.propsValue.slug;
+    const slug = context.propsValue.slug
     const image = {
       filename: context.propsValue.image.filename,
       base64: context.propsValue.image.base64,
-    };
+    }
     return await saveGallery(context.auth, slug, image, {
       thumbs: 1,
       optimize: 1,
@@ -117,6 +112,6 @@ export const saveGalleryAction = createAction({
       resize: context.propsValue.resize,
       lcrop: context.propsValue.lcrop,
       pcrop: context.propsValue.pcrop,
-    });
+    })
   },
-});
+})

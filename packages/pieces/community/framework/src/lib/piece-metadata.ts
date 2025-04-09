@@ -1,9 +1,9 @@
-import { PiecePropertyMap } from "./property";
-import { WebhookRenewConfiguration, TriggerStrategy, WebhookHandshakeConfiguration } from "./trigger/trigger";
-import { ErrorHandlingOptionsParam } from "./action/action";
-import { PieceAuthProperty } from "./property/authentication";
-import { Static, Type } from "@sinclair/typebox";
-import { PackageType, PieceCategory, PieceType, ProjectId, TriggerTestStrategy } from "@activepieces/shared";
+import { PackageType, PieceCategory, PieceType, ProjectId, TriggerTestStrategy } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
+import { ErrorHandlingOptionsParam } from './action/action'
+import { PiecePropertyMap } from './property'
+import { PieceAuthProperty } from './property/authentication'
+import { TriggerStrategy, WebhookHandshakeConfiguration, WebhookRenewConfiguration } from './trigger/trigger'
 
 export const PieceBase = Type.Object({
   id: Type.Optional(Type.String()),
@@ -23,20 +23,20 @@ export const PieceBase = Type.Object({
 })
 
 export type PieceBase = {
-  id?: string;
-  name: string;
-  displayName: string;
-  logoUrl: string;
-  description: string;
-  projectId?: ProjectId;
-  platformId?: string;
-  authors: string[],
-  directoryPath?: string;
-  auth?: PieceAuthProperty;
-  version: string;
-  categories?: PieceCategory[];
-  minimumSupportedRelease?: string;
-  maximumSupportedRelease?: string;
+  id?: string
+  name: string
+  displayName: string
+  logoUrl: string
+  description: string
+  projectId?: ProjectId
+  platformId?: string
+  authors: string[]
+  directoryPath?: string
+  auth?: PieceAuthProperty
+  version: string
+  categories?: PieceCategory[]
+  minimumSupportedRelease?: string
+  maximumSupportedRelease?: string
 }
 
 export const ActionBase = Type.Object({
@@ -49,61 +49,60 @@ export const ActionBase = Type.Object({
 })
 
 export type ActionBase = {
-  name: string,
-  displayName: string,
-  description: string,
-  props: PiecePropertyMap,
-  requireAuth: boolean;
-  errorHandlingOptions?: ErrorHandlingOptionsParam;
+  name: string
+  displayName: string
+  description: string
+  props: PiecePropertyMap
+  requireAuth: boolean
+  errorHandlingOptions?: ErrorHandlingOptionsParam
 }
 
 export const TriggerBase = Type.Composite([
-  Type.Omit(ActionBase, ["requireAuth"]),
+  Type.Omit(ActionBase, ['requireAuth']),
   Type.Object({
     type: Type.Enum(TriggerStrategy),
     sampleData: Type.Unknown(),
     handshakeConfiguration: Type.Optional(WebhookHandshakeConfiguration),
     renewConfiguration: Type.Optional(WebhookRenewConfiguration),
     testStrategy: Type.Enum(TriggerTestStrategy),
-  })
+  }),
 ])
 export type TriggerBase = ActionBase & {
-  type: TriggerStrategy;
-  sampleData: unknown,
-  handshakeConfiguration?: WebhookHandshakeConfiguration;
-  renewConfiguration?: WebhookRenewConfiguration;
-  testStrategy: TriggerTestStrategy;
-};
+  type: TriggerStrategy
+  sampleData: unknown
+  handshakeConfiguration?: WebhookHandshakeConfiguration
+  renewConfiguration?: WebhookRenewConfiguration
+  testStrategy: TriggerTestStrategy
+}
 
 export const PieceMetadata = Type.Composite([
   PieceBase,
   Type.Object({
     actions: Type.Record(Type.String(), ActionBase),
     triggers: Type.Record(Type.String(), TriggerBase),
-  })
+  }),
 ])
 
 export type PieceMetadata = PieceBase & {
-  actions: Record<string, ActionBase>;
-  triggers: Record<string, TriggerBase>;
-};
+  actions: Record<string, ActionBase>
+  triggers: Record<string, TriggerBase>
+}
 
 export const PieceMetadataSummary = Type.Composite([
-  Type.Omit(PieceMetadata, ["actions", "triggers"]),
+  Type.Omit(PieceMetadata, ['actions', 'triggers']),
   Type.Object({
     actions: Type.Number(),
     triggers: Type.Number(),
     suggestedActions: Type.Optional(Type.Array(TriggerBase)),
     suggestedTriggers: Type.Optional(Type.Array(ActionBase)),
-  })
+  }),
 ])
-export type PieceMetadataSummary = Omit<PieceMetadata, "actions" | "triggers"> & {
-  actions: number;
-  triggers: number;
-  suggestedActions?: ActionBase[];
-  suggestedTriggers?: TriggerBase[];
+export type PieceMetadataSummary = Omit<PieceMetadata, 'actions' | 'triggers'> & {
+  actions: number
+  triggers: number
+  suggestedActions?: ActionBase[]
+  suggestedTriggers?: TriggerBase[]
 }
-
 
 const PiecePackageMetadata = Type.Object({
   projectUsage: Type.Number(),
@@ -114,14 +113,8 @@ const PiecePackageMetadata = Type.Object({
 })
 type PiecePackageMetadata = Static<typeof PiecePackageMetadata>
 
-export const PieceMetadataModel = Type.Composite([
-  PieceMetadata,
-  PiecePackageMetadata,
-])
+export const PieceMetadataModel = Type.Composite([PieceMetadata, PiecePackageMetadata])
 export type PieceMetadataModel = PieceMetadata & PiecePackageMetadata
 
-export const PieceMetadataModelSummary = Type.Composite([
-  PieceMetadataSummary,
-  PiecePackageMetadata,
-])
+export const PieceMetadataModelSummary = Type.Composite([PieceMetadataSummary, PiecePackageMetadata])
 export type PieceMetadataModelSummary = PieceMetadataSummary & PiecePackageMetadata

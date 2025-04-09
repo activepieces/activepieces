@@ -1,16 +1,16 @@
-import { t } from 'i18next';
-import { LucideIcon, SearchX } from 'lucide-react';
-import React from 'react';
-import { Link } from 'react-router-dom';
+import { t } from 'i18next'
+import { LucideIcon, SearchX } from 'lucide-react'
+import React from 'react'
+import { Link } from 'react-router-dom'
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button'
 
 interface NotFoundPageProps {
-  title?: string;
-  description?: string;
-  showHomeButton?: boolean;
-  buttonText?: string;
-  icon?: LucideIcon;
+  title?: string
+  description?: string
+  showHomeButton?: boolean
+  buttonText?: string
+  icon?: LucideIcon
 }
 
 const NotFoundPage: React.FC<NotFoundPageProps> = ({
@@ -26,13 +26,9 @@ const NotFoundPage: React.FC<NotFoundPageProps> = ({
         <div className="mx-auto mb-8 flex justify-center">
           <Icon className="h-24 w-24" />
         </div>
-        <p className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-          {t(title)}
-        </p>
+        <p className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-4xl">{t(title)}</p>
 
-        <p className="mb-4 text-lg font-light text-foreground">
-          {t(description)}
-        </p>
+        <p className="mb-4 text-lg font-light text-foreground">{t(description)}</p>
         {showHomeButton && (
           <Link to="/">
             <Button size="lg" variant={'default'}>
@@ -42,7 +38,7 @@ const NotFoundPage: React.FC<NotFoundPageProps> = ({
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default NotFoundPage;
+export default NotFoundPage

@@ -1,6 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { mauticCommon, searchEntity } from '../common';
-import { mauticAuth } from '../..';
+import { createAction } from '@activepieces/pieces-framework'
+import { mauticAuth } from '../..'
+import { mauticCommon, searchEntity } from '../common'
 
 export const searchCompany = createAction({
   auth: mauticAuth,
@@ -11,18 +11,17 @@ export const searchCompany = createAction({
     fields: mauticCommon.companyFields,
   },
   run: async function (context) {
-    const { base_url, username, password } = context.auth;
-    const url =
-      (base_url.endsWith('/') ? base_url : base_url + '/') + 'api/companies';
-    const fields = context.propsValue.fields;
-    const keys = Object.keys(fields);
-    let searchParams = '?';
+    const { base_url, username, password } = context.auth
+    const url = (base_url.endsWith('/') ? base_url : base_url + '/') + 'api/companies'
+    const fields = context.propsValue.fields
+    const keys = Object.keys(fields)
+    let searchParams = '?'
     for (const key of keys) {
       if (fields[key]) {
-        searchParams += `search=${key}:${fields[key]}&`;
+        searchParams += `search=${key}:${fields[key]}&`
       }
     }
-    const response = await searchEntity(url, searchParams, username, password);
-    return Object.values(response.body.companies)[0];
+    const response = await searchEntity(url, searchParams, username, password)
+    return Object.values(response.body.companies)[0]
   },
-});
+})

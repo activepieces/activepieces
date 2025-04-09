@@ -1,89 +1,69 @@
-import { t } from 'i18next';
-import { useMemo, useRef, useState } from 'react';
+import { t } from 'i18next'
+import { useMemo, useRef, useState } from 'react'
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
-import { ActionType, isNil } from '@activepieces/shared';
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
+import { ActionType, isNil } from '@activepieces/shared'
 
-import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
-import { useBuilderStateContext } from '../builder-hooks';
+import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils'
+import { useBuilderStateContext } from '../builder-hooks'
 
 const LoopIterationInput = ({ stepName }: { stepName: string }) => {
-  const [setLoopIndex, currentIndex, run, flowVersion, loopsIndexes] =
-    useBuilderStateContext((state) => [
-      state.setLoopIndex,
-      state.loopsIndexes[stepName] ?? 0,
-      state.run,
-      state.flowVersion,
-      state.loopsIndexes,
-    ]);
+  const [setLoopIndex, currentIndex, run, flowVersion, loopsIndexes] = useBuilderStateContext((state) => [
+    state.setLoopIndex,
+    state.loopsIndexes[stepName] ?? 0,
+    state.run,
+    state.flowVersion,
+    state.loopsIndexes,
+  ])
 
   const stepOutput = useMemo(() => {
     return run && run.steps
-      ? flowRunUtils.extractStepOutput(
-          stepName,
-          loopsIndexes,
-          run.steps,
-          flowVersion.trigger,
-        )
-      : null;
-  }, [run, stepName, loopsIndexes, flowVersion.trigger]);
+      ? flowRunUtils.extractStepOutput(stepName, loopsIndexes, run.steps, flowVersion.trigger)
+      : null
+  }, [run, stepName, loopsIndexes, flowVersion.trigger])
 
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [isFocused, setIsFocused] = useState(false)
   const totalIterations =
-    stepOutput &&
-    stepOutput.output &&
-    stepOutput.type === ActionType.LOOP_ON_ITEMS
+    stepOutput && stepOutput.output && stepOutput.type === ActionType.LOOP_ON_ITEMS
       ? stepOutput.output.iterations.length
-      : 0;
+      : 0
 
   useMemo(() => {
-    if (
-      totalIterations <= currentIndex ||
-      currentIndex === Number.MAX_SAFE_INTEGER
-    ) {
-      setLoopIndex(stepName, totalIterations - 1);
+    if (totalIterations <= currentIndex || currentIndex === Number.MAX_SAFE_INTEGER) {
+      setLoopIndex(stepName, totalIterations - 1)
     }
-  }, [totalIterations, currentIndex]);
+  }, [totalIterations, currentIndex])
 
   function onChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const value = e.target.value ?? '1';
-    const parsedValue = Math.max(
-      1,
-      Math.min(parseInt(value) ?? 1, totalIterations),
-    );
-    setLoopIndex(stepName, parsedValue - 1);
+    const value = e.target.value ?? '1'
+    const parsedValue = Math.max(1, Math.min(parseInt(value) ?? 1, totalIterations))
+    setLoopIndex(stepName, parsedValue - 1)
   }
 
   function removeFocus() {
-    setIsFocused(false);
+    setIsFocused(false)
     if (inputRef.current) {
-      inputRef.current.blur();
+      inputRef.current.blur()
     }
     if (!isNil(inputRef.current) && inputRef.current.value.length === 0) {
-      setLoopIndex(stepName, 0);
+      setLoopIndex(stepName, 0)
     }
   }
 
   return (
     <>
-      {!isFocused && (
-        <div className="text-sm duration-300 animate-fade">
-          {t('Iteration')}
-        </div>
-      )}
+      {!isFocused && <div className="text-sm duration-300 animate-fade">{t('Iteration')}</div>}
       <div
         dir="rtl"
         className=" transition-all duration-300 ease-expand-out relative"
         onClick={(e) => {
-          e.stopPropagation();
+          e.stopPropagation()
         }}
         style={{
-          width: isFocused
-            ? '100%'
-            : (inputRef.current?.value.length || 1) * 2.6 + 1 + 'ch',
+          width: isFocused ? '100%' : (inputRef.current?.value.length || 1) * 2.6 + 1 + 'ch',
           minWidth: isFocused ? '100px' : undefined,
         }}
       >
@@ -102,9 +82,9 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
             variant="transparent"
             className="p-1 text-xs rounded-xs h-auto pointer-events-auto "
             onClick={(e) => {
-              inputRef.current?.blur();
-              e.stopPropagation();
-              e.preventDefault();
+              inputRef.current?.blur()
+              e.stopPropagation()
+              e.preventDefault()
             }}
           >
             {t('Done')}
@@ -115,9 +95,7 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
           ref={inputRef}
           className="h-7 flex-grow-0  transition-all duration-300 ease-expand-out text-center focus:text-start rounded-sm  focus:w-full p-1"
           style={{
-            width: isFocused
-              ? '100%'
-              : (inputRef.current?.value.length || 1) * 2.6 + 1 + 'ch',
+            width: isFocused ? '100%' : (inputRef.current?.value.length || 1) * 2.6 + 1 + 'ch',
           }}
           value={currentIndex + 1}
           type="number"
@@ -126,27 +104,27 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
           onChange={onChange}
           onFocus={() => setIsFocused(true)}
           onBlur={() => {
-            setIsFocused(false);
+            setIsFocused(false)
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
-              onChange(e as unknown as React.ChangeEvent<HTMLInputElement>);
-              removeFocus();
+              onChange(e as unknown as React.ChangeEvent<HTMLInputElement>)
+              removeFocus()
             }
             if (e.key === 'Escape') {
-              removeFocus();
+              removeFocus()
             }
-            e.stopPropagation();
+            e.stopPropagation()
           }}
           onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
+            e.preventDefault()
+            e.stopPropagation()
           }}
         />
       </div>
     </>
-  );
-};
+  )
+}
 
-LoopIterationInput.displayName = 'LoopIterationInput';
-export { LoopIterationInput };
+LoopIterationInput.displayName = 'LoopIterationInput'
+export { LoopIterationInput }

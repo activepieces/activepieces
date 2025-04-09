@@ -1,9 +1,6 @@
-import {
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
 
 export const generatePassword = createAction({
   name: 'generate-password',
@@ -31,20 +28,21 @@ export const generatePassword = createAction({
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
       length: z.number().max(256),
-    });
+    })
 
-    const charset = context.propsValue.characterSet === 'alphanumeric'
-      ? 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-      : 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=';
-    
-    let password = '';
-    const length = context.propsValue.length;
+    const charset =
+      context.propsValue.characterSet === 'alphanumeric'
+        ? 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+        : 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-='
+
+    let password = ''
+    const length = context.propsValue.length
 
     for (let i = 0; i < length; i++) {
-      const randomIndex = Math.floor(Math.random() * charset.length);
-      password += charset[randomIndex];
+      const randomIndex = Math.floor(Math.random() * charset.length)
+      password += charset[randomIndex]
     }
 
-    return password;
+    return password
   },
-});
+})

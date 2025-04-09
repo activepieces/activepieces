@@ -1,6 +1,6 @@
-import { ContentFields } from 'contentful-management';
+import { ContentFields } from 'contentful-management'
 
-type FieldProcessor = (field: ContentFields, value: any) => any;
+type FieldProcessor = (field: ContentFields, value: any) => any
 
 export const FieldProcessors: Record<string, FieldProcessor> = {
   Link: (field, value) => {
@@ -10,11 +10,11 @@ export const FieldProcessors: Record<string, FieldProcessor> = {
         linkType: field.linkType,
         id: value,
       },
-    };
+    }
   },
   Array: (field, value) => {
     if (field.items?.type === 'Symbol') {
-      return value;
+      return value
     }
     if (field.items?.type === 'Link') {
       return value.map((v: string) => ({
@@ -23,8 +23,8 @@ export const FieldProcessors: Record<string, FieldProcessor> = {
           linkType: field.items?.linkType,
           id: v,
         },
-      }));
+      }))
     }
   },
   Basic: (field, value) => value,
-};
+}

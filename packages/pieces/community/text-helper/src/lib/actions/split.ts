@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework'
 
 export const split = createAction({
   description: 'Split a text by a delimiter',
@@ -23,6 +23,6 @@ export const split = createAction({
     }),
   },
   run: async (ctx) => {
-    return ctx.propsValue.text.split(ctx.propsValue.delimiter);
+    return ctx.propsValue.text.split(ctx.propsValue.delimiter)
   },
-});
+})

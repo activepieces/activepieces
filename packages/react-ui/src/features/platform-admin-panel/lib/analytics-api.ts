@@ -1,8 +1,8 @@
-import { api } from '@/lib/api';
-import { AnalyticsReportResponse } from '@activepieces/shared';
+import { api } from '@/lib/api'
+import { AnalyticsReportResponse } from '@activepieces/shared'
 
 export const analyticsApi = {
   get(): Promise<AnalyticsReportResponse> {
-    return api.get<AnalyticsReportResponse>('/v1/analytics');
+    return api.get<AnalyticsReportResponse>('/v1/analytics')
   },
-};
+}

@@ -1,6 +1,6 @@
-import { reoonEmailVerifyAuth } from '../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { verifyEmailsResult } from '../common/send-util';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { reoonEmailVerifyAuth } from '../..'
+import { verifyEmailsResult } from '../common/send-util'
 
 export const bulkVerificationResult = createAction({
   auth: reoonEmailVerifyAuth,
@@ -16,10 +16,10 @@ export const bulkVerificationResult = createAction({
     }),
   },
   async run(context) {
-    const { task_id } = context.propsValue;
+    const { task_id } = context.propsValue
 
-    const response = await verifyEmailsResult(task_id, context.auth);
+    const response = await verifyEmailsResult(task_id, context.auth)
 
-    return response.body;
+    return response.body
   },
-});
+})

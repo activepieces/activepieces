@@ -1,11 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { excelAuth } from '../..';
-import { excelCommon } from '../common/common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { excelAuth } from '../..'
+import { excelCommon } from '../common/common'
 
 export const lookupTableColumnAction = createAction({
   auth: excelAuth,
@@ -34,14 +30,14 @@ export const lookupTableColumnAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const workbookId = propsValue['workbook_id'];
-    const worksheetId = propsValue['worksheet_id'];
-    const tableName = propsValue['table_id'];
-    const lookupColumn = propsValue['lookup_column'];
-    const lookupValue = propsValue['lookup_value'];
-    const returnAllMatches = propsValue['return_all_matches'];
+    const workbookId = propsValue['workbook_id']
+    const worksheetId = propsValue['worksheet_id']
+    const tableName = propsValue['table_id']
+    const lookupColumn = propsValue['lookup_column']
+    const lookupValue = propsValue['lookup_value']
+    const returnAllMatches = propsValue['return_all_matches']
 
-    const rowsUrl = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableName}/rows`;
+    const rowsUrl = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableName}/rows`
     const rowsResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: rowsUrl,
@@ -49,9 +45,9 @@ export const lookupTableColumnAction = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: auth['access_token'],
       },
-    });
+    })
 
-    const columnsUrl = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableName}/columns`;
+    const columnsUrl = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableName}/columns`
     const columnsResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: columnsUrl,
@@ -59,30 +55,24 @@ export const lookupTableColumnAction = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: auth['access_token'],
       },
-    });
+    })
 
-    const columns = columnsResponse.body['value'];
-    const columnIndex = columns.findIndex(
-      (column: any) => column.name === lookupColumn
-    );
+    const columns = columnsResponse.body['value']
+    const columnIndex = columns.findIndex((column: any) => column.name === lookupColumn)
 
     if (columnIndex === -1) {
-      throw new Error(`Column "${lookupColumn}" not found in the table.`);
+      throw new Error(`Column "${lookupColumn}" not found in the table.`)
     }
 
-    const rows = rowsResponse.body['value'];
-    const matchedRows = rows.filter(
-      (row: any) => row.values[0][columnIndex] === lookupValue
-    );
+    const rows = rowsResponse.body['value']
+    const matchedRows = rows.filter((row: any) => row.values[0][columnIndex] === lookupValue)
 
-    const matchedValues = matchedRows.map(
-      (row: { values: any[] }) => row.values[0]
-    );
+    const matchedValues = matchedRows.map((row: { values: any[] }) => row.values[0])
 
     if (returnAllMatches) {
-      return matchedValues;
+      return matchedValues
     } else {
-      return matchedValues[0] || null;
+      return matchedValues[0] || null
     }
   },
-});
+})

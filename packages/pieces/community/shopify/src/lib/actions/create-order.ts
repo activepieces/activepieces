@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { shopifyAuth } from '../..';
-import { createOrder } from '../common';
-import { ShopifyOrder } from '../common/types';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { shopifyAuth } from '../..'
+import { createOrder } from '../common'
+import { ShopifyOrder } from '../common/types'
 
 export const createOrderAction = createAction({
   auth: shopifyAuth,
@@ -69,7 +69,7 @@ export const createOrderAction = createAction({
       sendReceipt,
       sendFulfillmentReceipt,
       tags,
-    } = propsValue;
+    } = propsValue
 
     const order: Partial<ShopifyOrder> = {
       line_items: [
@@ -81,15 +81,15 @@ export const createOrderAction = createAction({
           price,
         },
       ],
-    };
-    if (customerId) order.customer = { id: +customerId };
-    if (email) {
-      order.email = email;
-      order.send_receipt = sendReceipt;
-      order.send_fulfillment_receipt = sendFulfillmentReceipt;
     }
-    if (tags) order.tags = tags;
+    if (customerId) order.customer = { id: +customerId }
+    if (email) {
+      order.email = email
+      order.send_receipt = sendReceipt
+      order.send_fulfillment_receipt = sendFulfillmentReceipt
+    }
+    if (tags) order.tags = tags
 
-    return await createOrder(order, auth);
+    return await createOrder(order, auth)
   },
-});
+})

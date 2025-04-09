@@ -1,7 +1,7 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { telegramBotAuth } from '../..';
-import { telegramCommons } from '../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { telegramBotAuth } from '../..'
+import { telegramCommons } from '../common'
 
 const chatId = `
 **How to obtain Chat ID:**
@@ -11,10 +11,10 @@ const chatId = `
 4. The bot will reply with your chat ID.
 
 **Note: Remember to initiate the chat with the bot, or you'll get an error for "chat not found.**
-`;
+`
 const format = `
 [Link example](https://core.telegram.org/bots/api#formatting-options)
-`;
+`
 export const telegramCreateInviteLinkAction = createAction({
   auth: telegramBotAuth,
   name: 'create_invite_link',
@@ -60,6 +60,6 @@ export const telegramCreateInviteLinkAction = createAction({
           member_limit: ctx.propsValue.member_limit ?? undefined,
         },
       })
-      .then((res) => res.body);
+      .then((res) => res.body)
   },
-});
+})

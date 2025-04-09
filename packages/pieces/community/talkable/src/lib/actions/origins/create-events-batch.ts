@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { talkableAuth } from '../../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { talkableAuth } from '../../..'
 
 export const createEventsBatch = createAction({
   name: 'create_events_batch', // Must be a unique across the piece, this shouldn't be changed.
@@ -42,8 +42,7 @@ export const createEventsBatch = createAction({
           traffic_source: 'in-store',
           coupon_codes: ['C0001', 'C0002'],
           currency_iso_code: 'USD',
-          shipping_address:
-            '456 White Finch St., North Augusta, South Carolina, 29860, United States',
+          shipping_address: '456 White Finch St., North Augusta, South Carolina, 29860, United States',
           shipping_zip: '29860',
           items: [
             {
@@ -57,22 +56,21 @@ export const createEventsBatch = createAction({
     }),
   },
   async run(context) {
-    const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
-    const { site, api_key } = context.auth;
-    const createEventsBatch = await httpClient
-      .sendRequest<string[]>({
-        method: HttpMethod.POST,
-        url: `${TALKABLE_API_URL}/origins/batch/events`,
-        headers: {
-          Authorization: `Bearer ${api_key}`,
-          'Content-Type': 'application/json',
-        },
-        body: {
-          site_slug: site,
-          data: context.propsValue.events,
-          create_offers: context.propsValue.create_offers,
-        },
-      });
-    return createEventsBatch.body;
+    const TALKABLE_API_URL = 'https://www.talkable.com/api/v2'
+    const { site, api_key } = context.auth
+    const createEventsBatch = await httpClient.sendRequest<string[]>({
+      method: HttpMethod.POST,
+      url: `${TALKABLE_API_URL}/origins/batch/events`,
+      headers: {
+        Authorization: `Bearer ${api_key}`,
+        'Content-Type': 'application/json',
+      },
+      body: {
+        site_slug: site,
+        data: context.propsValue.events,
+        create_offers: context.propsValue.create_offers,
+      },
+    })
+    return createEventsBatch.body
   },
-});
+})

@@ -1,4 +1,4 @@
-import { createShopifyWebhookTrigger } from '../common/register-webhook';
+import { createShopifyWebhookTrigger } from '../common/register-webhook'
 
 export const updatedProduct = createShopifyWebhookTrigger({
   name: 'updated_product',
@@ -84,4 +84,4 @@ export const updatedProduct = createShopifyWebhookTrigger({
       variant_ids: [],
     },
   },
-});
+})

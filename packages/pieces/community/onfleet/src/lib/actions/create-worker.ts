@@ -1,8 +1,8 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { onfleetAuth } from '../..';
-import { common } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
+import { common } from '../common'
 
-import Onfleet from '@onfleet/node-onfleet';
+import Onfleet from '@onfleet/node-onfleet'
 
 export const createWorker = createAction({
   auth: onfleetAuth,
@@ -31,7 +31,7 @@ export const createWorker = createAction({
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth)
 
     return await onfleetApi.workers.create({
       name: context.propsValue.name,
@@ -39,6 +39,6 @@ export const createWorker = createAction({
       teams: context.propsValue.teams as string[],
       capacity: context.propsValue.capacity,
       displayName: context.propsValue.displayName,
-    });
+    })
   },
-});
+})

@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { count } from '../api';
-import { buildListDropdown } from '../props';
-import { sendyAuth, SendyAuthType } from '../auth';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { count } from '../api'
+import { SendyAuthType, sendyAuth } from '../auth'
+import { buildListDropdown } from '../props'
 
 export const countAction = createAction({
   name: 'count_subscribers',
@@ -14,13 +14,12 @@ export const countAction = createAction({
       description: 'Select the list to get the status from',
       required: true,
       refreshers: ['auth'],
-      options: async ({ auth }) =>
-        await buildListDropdown(auth as SendyAuthType),
+      options: async ({ auth }) => await buildListDropdown(auth as SendyAuthType),
     }),
   },
   async run(context) {
     return await count(context.auth, {
       list_id: context.propsValue.list,
-    });
+    })
   },
-});
+})

@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { callTwilioApi, twilioCommon } from '../common';
-import { twilioAuth } from '../..';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { twilioAuth } from '../..'
+import { callTwilioApi, twilioCommon } from '../common'
 
 export const twilioSendSms = createAction({
   auth: twilioAuth,
@@ -22,9 +22,9 @@ export const twilioSendSms = createAction({
     }),
   },
   async run(context) {
-    const { body, to, from } = context.propsValue;
-    const account_sid = context.auth.username;
-    const auth_token = context.auth.password;
+    const { body, to, from } = context.propsValue
+    const account_sid = context.auth.username
+    const auth_token = context.auth.password
     return await callTwilioApi(
       HttpMethod.POST,
       'Messages.json',
@@ -33,7 +33,7 @@ export const twilioSendSms = createAction({
         From: from,
         Body: body,
         To: to,
-      }
-    );
+      },
+    )
   },
-});
+})

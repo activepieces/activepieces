@@ -1,11 +1,8 @@
-import {
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { shopifyAuth } from '../..';
-import { updateCustomer } from '../common';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { shopifyAuth } from '../..'
+import { updateCustomer } from '../common'
 
 export const updateCustomerAction = createAction({
   auth: shopifyAuth,
@@ -51,20 +48,11 @@ export const updateCustomerAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const {
-      customerId,
-      email,
-      verifiedEmail,
-      sendEmailInvite,
-      firstName,
-      lastName,
-      phoneNumber,
-      tags,
-    } = propsValue;
+    const { customerId, email, verifiedEmail, sendEmailInvite, firstName, lastName, phoneNumber, tags } = propsValue
 
     await propsValidation.validateZod(propsValue, {
       email: z.string().email().optional(),
-    });
+    })
 
     return await updateCustomer(
       customerId,
@@ -77,7 +65,7 @@ export const updateCustomerAction = createAction({
         phone: phoneNumber,
         tags,
       },
-      auth
-    );
+      auth,
+    )
   },
-});
+})

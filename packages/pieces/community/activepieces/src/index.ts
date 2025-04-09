@@ -1,12 +1,8 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { createProject } from './lib/actions/create-project';
-import { listProject } from './lib/actions/list-project';
-import { updateProject } from './lib/actions/update-project';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { createProject } from './lib/actions/create-project'
+import { listProject } from './lib/actions/list-project'
+import { updateProject } from './lib/actions/update-project'
 
 const markdown = `
 Activepieces Platform API is available under the Platform Edition.
@@ -14,7 +10,7 @@ Activepieces Platform API is available under the Platform Edition.
 
 **Note**: The API Key is available in the Platform Dashboard.
 
-`;
+`
 
 export const activePieceAuth = PieceAuth.CustomAuth({
   description: markdown,
@@ -30,7 +26,7 @@ export const activePieceAuth = PieceAuth.CustomAuth({
       required: true,
     }),
   },
-});
+})
 
 export const activepieces = createPiece({
   displayName: 'Activepieces Platform',
@@ -45,7 +41,7 @@ export const activepieces = createPiece({
     listProject,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        return `${(auth as { baseApiUrl: string }).baseApiUrl}`;
+        return `${(auth as { baseApiUrl: string }).baseApiUrl}`
       },
       auth: activePieceAuth,
       authMapping: async (auth) => ({
@@ -54,4 +50,4 @@ export const activepieces = createPiece({
     }),
   ],
   triggers: [],
-});
+})

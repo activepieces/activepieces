@@ -1,27 +1,18 @@
-import {
-  Action,
-  ActionType,
-  isNil,
-  Trigger,
-  isObject,
-} from '@activepieces/shared';
+import { Action, ActionType, Trigger, isNil, isObject } from '@activepieces/shared'
 
 import {
-  DataSelectorTreeNode,
   DataSelectorTestNodeData,
-  DataSelectorTreeNodeDataUnion,
+  DataSelectorTreeNode,
   DataSelectorTreeNodeData,
-} from './type';
+  DataSelectorTreeNodeDataUnion,
+} from './type'
 
-type PathSegment = string | number;
+type PathSegment = string | number
 
-const MAX_CHUNK_LENGTH = 10;
-const JOINED_VALUES_MAX_LENGTH = 32;
+const MAX_CHUNK_LENGTH = 10
+const JOINED_VALUES_MAX_LENGTH = 32
 
-function buildTestStepNode(
-  displayName: string,
-  stepName: string,
-): DataSelectorTreeNode<DataSelectorTreeNodeData> {
+function buildTestStepNode(displayName: string, stepName: string): DataSelectorTreeNode<DataSelectorTreeNodeData> {
   return {
     key: stepName,
     data: {
@@ -41,7 +32,7 @@ function buildTestStepNode(
         key: `test_${stepName}`,
       },
     ],
-  };
+  }
 }
 
 function buildChunkNode(
@@ -55,73 +46,65 @@ function buildChunkNode(
       displayName,
     },
     children,
-  };
+  }
 }
 
 type Node = {
-  values: unknown[];
-  properties: Record<string, Node>;
-};
+  values: unknown[]
+  properties: Record<string, Node>
+}
 
-function mergeUniqueKeys(
-  obj: Record<string, Node>,
-  obj2: Record<string, Node>,
-): Record<string, Node> {
-  const result: Record<string, Node> = { ...obj };
+function mergeUniqueKeys(obj: Record<string, Node>, obj2: Record<string, Node>): Record<string, Node> {
+  const result: Record<string, Node> = { ...obj }
   for (const [key, values] of Object.entries(obj2)) {
-    const properties = mergeUniqueKeys(
-      result[key]?.properties || {},
-      values.properties,
-    );
+    const properties = mergeUniqueKeys(result[key]?.properties || {}, values.properties)
     result[key] = {
       values: [...(result[key]?.values || []), ...values.values],
       properties,
-    };
+    }
   }
-  return result;
+  return result
 }
 
 function extractUniqueKeys(obj: unknown): Record<string, Node> {
-  let result: Record<string, Node> = {};
+  let result: Record<string, Node> = {}
   if (isObject(obj)) {
     for (const [entryKey, entryValue] of Object.entries(obj)) {
-      const resultValue = result[entryKey]?.values || [];
+      const resultValue = result[entryKey]?.values || []
       if (Array.isArray(entryValue)) {
-        const filteredValues = entryValue.filter(
-          (v) => !isObject(v) && !Array.isArray(v),
-        );
-        resultValue.push(...filteredValues);
+        const filteredValues = entryValue.filter((v) => !isObject(v) && !Array.isArray(v))
+        resultValue.push(...filteredValues)
       } else if (!isObject(entryValue)) {
-        resultValue.push(entryValue);
+        resultValue.push(entryValue)
       }
-      const properties = extractUniqueKeys(entryValue);
+      const properties = extractUniqueKeys(entryValue)
       result[entryKey] = {
         values: resultValue,
         properties,
-      };
+      }
     }
   } else if (Array.isArray(obj)) {
     for (const value of obj) {
-      const properties = extractUniqueKeys(value);
-      result = mergeUniqueKeys(result, properties);
+      const properties = extractUniqueKeys(value)
+      result = mergeUniqueKeys(result, properties)
     }
   }
-  return result;
+  return result
 }
 
 function convertArrayToZippedView(
   obj: Record<string, Node>,
   propertyPath: PathSegment[],
 ): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] {
-  const result: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] = [];
+  const result: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] = []
   for (const [key, node] of Object.entries(obj)) {
-    const stepName = propertyPath[0];
-    const subPath = [...propertyPath.slice(1), key];
+    const stepName = propertyPath[0]
+    const subPath = [...propertyPath.slice(1), key]
 
     const propertyPathWithFlattenArray = `flattenNestedKeys(${stepName}, ['${subPath
       .map((s) => String(s))
-      .join("', '")}'])`;
-    const joinedValues = node.values.join(', ');
+      .join("', '")}'])`
+    const joinedValues = node.values.join(', ')
     result.push({
       key: key,
       data: {
@@ -138,21 +121,17 @@ function convertArrayToZippedView(
         Object.keys(node.properties).length > 0
           ? convertArrayToZippedView(node.properties, [...propertyPath, key])
           : undefined,
-    });
+    })
   }
-  return result;
+  return result
 }
 
 function buildJsonPath(propertyPath: PathSegment[]): string {
-  const propertyPathWithoutStepName = propertyPath.slice(1);
+  const propertyPathWithoutStepName = propertyPath.slice(1)
   //need array indexes to not be quoted so we can add 1 to them when displaying the path in mention
   return propertyPathWithoutStepName.reduce((acc, segment) => {
-    return `${acc}[${
-      typeof segment === 'string'
-        ? `'${escapeMentionKey(String(segment))}'`
-        : segment
-    }]`;
-  }, `${propertyPath[0]}`) as string;
+    return `${acc}[${typeof segment === 'string' ? `'${escapeMentionKey(String(segment))}'` : segment}]`
+  }, `${propertyPath[0]}`) as string
 }
 
 function buildDataSelectorNode(
@@ -163,9 +142,8 @@ function buildDataSelectorNode(
   insertable = true,
 ): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   const isEmptyArrayOrObject =
-    (Array.isArray(value) && value.length === 0) ||
-    (isObject(value) && Object.keys(value).length === 0);
-  const jsonPath = buildJsonPath(propertyPath);
+    (Array.isArray(value) && value.length === 0) || (isObject(value) && Object.keys(value).length === 0)
+  const jsonPath = buildJsonPath(propertyPath)
 
   return {
     key: jsonPath,
@@ -177,23 +155,20 @@ function buildDataSelectorNode(
       insertable,
     },
     children,
-  };
+  }
 }
 
 function breakArrayIntoChunks<T>(
   array: T[],
   chunkSize: number,
 ): { items: T[]; range: { start: number; end: number } }[] {
-  return Array.from(
-    { length: Math.ceil(array.length / chunkSize) },
-    (_, i) => ({
-      items: array.slice(i * chunkSize, i * chunkSize + chunkSize),
-      range: {
-        start: i * chunkSize + 1,
-        end: Math.min((i + 1) * chunkSize, array.length),
-      },
-    }),
-  );
+  return Array.from({ length: Math.ceil(array.length / chunkSize) }, (_, i) => ({
+    items: array.slice(i * chunkSize, i * chunkSize + chunkSize),
+    range: {
+      start: i * chunkSize + 1,
+      end: Math.min((i + 1) * chunkSize, array.length),
+    },
+  }))
 }
 
 function traverseOutput(
@@ -204,40 +179,23 @@ function traverseOutput(
   insertable = true,
 ): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
   if (Array.isArray(node)) {
-    const isArrayOfObjects = node.some((value) => isObject(value));
+    const isArrayOfObjects = node.some((value) => isObject(value))
     if (!zipArraysOfProperties || !isArrayOfObjects) {
       const mentionNodes = node.map((value, idx) =>
-        traverseOutput(
-          `${displayName} [${idx + 1}]`,
-          [...propertyPath, idx],
-          value,
-          zipArraysOfProperties,
-          insertable,
-        ),
-      );
-      const chunks = breakArrayIntoChunks(mentionNodes, MAX_CHUNK_LENGTH);
-      const isSingleChunk = chunks.length === 1;
+        traverseOutput(`${displayName} [${idx + 1}]`, [...propertyPath, idx], value, zipArraysOfProperties, insertable),
+      )
+      const chunks = breakArrayIntoChunks(mentionNodes, MAX_CHUNK_LENGTH)
+      const isSingleChunk = chunks.length === 1
       if (isSingleChunk) {
-        return buildDataSelectorNode(
-          displayName,
-          propertyPath,
-          node,
-          mentionNodes,
-          insertable,
-        );
+        return buildDataSelectorNode(displayName, propertyPath, node, mentionNodes, insertable)
       }
       return buildDataSelectorNode(
         displayName,
         propertyPath,
         undefined,
-        chunks.map((chunk) =>
-          buildChunkNode(
-            `${displayName} [${chunk.range.start}-${chunk.range.end}]`,
-            chunk.items,
-          ),
-        ),
+        chunks.map((chunk) => buildChunkNode(`${displayName} [${chunk.range.start}-${chunk.range.end}]`, chunk.items)),
         insertable,
-      );
+      )
     } else {
       return buildDataSelectorNode(
         displayName,
@@ -245,7 +203,7 @@ function traverseOutput(
         node,
         convertArrayToZippedView(extractUniqueKeys(node), propertyPath),
         insertable,
-      );
+      )
     }
   } else if (isObject(node)) {
     const children = Object.entries(node).map(([key, value]) => {
@@ -254,58 +212,35 @@ function traverseOutput(
           key,
           [...propertyPath, key],
           value,
-          convertArrayToZippedView(extractUniqueKeys(value), [
-            ...propertyPath,
-            key,
-          ]),
+          convertArrayToZippedView(extractUniqueKeys(value), [...propertyPath, key]),
           insertable,
-        );
+        )
       }
-      return traverseOutput(
-        key,
-        [...propertyPath, key],
-        value,
-        zipArraysOfProperties,
-        insertable,
-      );
-    });
-    return buildDataSelectorNode(
-      displayName,
-      propertyPath,
-      node,
-      children,
-      insertable,
-    );
+      return traverseOutput(key, [...propertyPath, key], value, zipArraysOfProperties, insertable)
+    })
+    return buildDataSelectorNode(displayName, propertyPath, node, children, insertable)
   } else {
-    return buildDataSelectorNode(
-      displayName,
-      propertyPath,
-      node,
-      undefined,
-      insertable,
-    );
+    return buildDataSelectorNode(displayName, propertyPath, node, undefined, insertable)
   }
 }
 
 function escapeMentionKey(key: string) {
-  return key.replaceAll(/[\\"'\n\r\t’]/g, (char) => `\\${char}`);
+  return key.replaceAll(/[\\"'\n\r\t’]/g, (char) => `\\${char}`)
 }
 
-function getSearchableValue(
-  item: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>,
-) {
+function getSearchableValue(item: DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>) {
   if (item.data.type === 'test') {
-    return item.data.parentDisplayName;
+    return item.data.parentDisplayName
   }
   if (item.data.type === 'chunk') {
-    return item.data.displayName;
+    return item.data.displayName
   }
   if (!isNil(item.data.value)) {
-    return JSON.stringify(item.data.value).toLowerCase();
+    return JSON.stringify(item.data.value).toLowerCase()
   } else if (item.data.value === null) {
-    return 'null';
+    return 'null'
   }
-  return '';
+  return ''
 }
 
 function traverseStep(
@@ -313,32 +248,20 @@ function traverseStep(
   sampleData: Record<string, unknown>,
   zipArraysOfProperties: boolean,
 ): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion> {
-  const displayName = `${step.dfsIndex + 1}. ${step.displayName}`;
-  const stepNeedsTesting = isNil(step.settings.inputUiInfo?.lastTestDate);
+  const displayName = `${step.dfsIndex + 1}. ${step.displayName}`
+  const stepNeedsTesting = isNil(step.settings.inputUiInfo?.lastTestDate)
   if (stepNeedsTesting) {
-    return buildTestStepNode(displayName, step.name);
+    return buildTestStepNode(displayName, step.name)
   }
   if (step.type === ActionType.LOOP_ON_ITEMS) {
-    const copiedSampleData = JSON.parse(JSON.stringify(sampleData[step.name]));
-    delete copiedSampleData['iterations'];
-    const headNode = traverseOutput(
-      displayName,
-      [step.name],
-      copiedSampleData,
-      zipArraysOfProperties,
-      true,
-    );
-    headNode.isLoopStepNode = true;
-    return headNode;
+    const copiedSampleData = JSON.parse(JSON.stringify(sampleData[step.name]))
+    delete copiedSampleData['iterations']
+    const headNode = traverseOutput(displayName, [step.name], copiedSampleData, zipArraysOfProperties, true)
+    headNode.isLoopStepNode = true
+    return headNode
   }
 
-  return traverseOutput(
-    displayName,
-    [step.name],
-    sampleData[step.name],
-    zipArraysOfProperties,
-    true,
-  );
+  return traverseOutput(displayName, [step.name], sampleData[step.name], zipArraysOfProperties, true)
 }
 
 function filterBy(
@@ -346,44 +269,37 @@ function filterBy(
   query: string | undefined,
 ): DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[] {
   if (!query) {
-    return mentions;
+    return mentions
   }
 
   const res = mentions
     .map((item) => {
-      const filteredChildren = !isNil(item.children)
-        ? filterBy(item.children, query)
-        : undefined;
+      const filteredChildren = !isNil(item.children) ? filterBy(item.children, query) : undefined
 
       if (filteredChildren && filteredChildren.length) {
         return {
           ...item,
           children: filteredChildren,
-        };
+        }
       }
-      const searchableValue = getSearchableValue(item);
+      const searchableValue = getSearchableValue(item)
 
-      const displayName =
-        item.data.type === 'value' ? item.data.displayName.toLowerCase() : '';
+      const displayName = item.data.type === 'value' ? item.data.displayName.toLowerCase() : ''
       const matchDisplayNameOrValue =
         displayName.toLowerCase().includes(query.toLowerCase()) ||
-        searchableValue.toLowerCase().includes(query.toLowerCase());
+        searchableValue.toLowerCase().includes(query.toLowerCase())
       if (matchDisplayNameOrValue) {
-        return item;
+        return item
       }
-      return null;
+      return null
     })
-    .filter(
-      (f) => !isNil(f),
-    ) as DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[];
-  return res;
+    .filter((f) => !isNil(f)) as DataSelectorTreeNode<DataSelectorTreeNodeDataUnion>[]
+  return res
 }
 
 export const dataSelectorUtils = {
-  isTestStepNode: (
-    node: DataSelectorTreeNode,
-  ): node is DataSelectorTreeNode<DataSelectorTestNodeData> =>
+  isTestStepNode: (node: DataSelectorTreeNode): node is DataSelectorTreeNode<DataSelectorTestNodeData> =>
     node.data.type === 'test',
   traverseStep,
   filterBy,
-};
+}

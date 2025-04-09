@@ -1,8 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
-import { wedofCommon } from '../../common/wedof';
-import dayjs from 'dayjs';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { wedofAuth } from '../../..'
+import { wedofCommon } from '../../common/wedof'
 
 export const declareCertificationFolderSuccess = createAction({
   auth: wedofAuth,
@@ -12,8 +12,7 @@ export const declareCertificationFolderSuccess = createAction({
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de certification',
-      description:
-        'Sélectionner la propriété {externalId} du dossier de certification',
+      description: 'Sélectionner la propriété {externalId} du dossier de certification',
       required: true,
     }),
     detailedResult: Property.ShortText({
@@ -27,8 +26,7 @@ export const declareCertificationFolderSuccess = createAction({
       required: true,
     }),
     digitalProofLink: Property.ShortText({
-      displayName:
-        "Lien vers la preuve numérique de l'obtention de la certification",
+      displayName: "Lien vers la preuve numérique de l'obtention de la certification",
       required: false,
     }),
     gradePass: wedofCommon.gradePass,
@@ -40,28 +38,22 @@ export const declareCertificationFolderSuccess = createAction({
   async run(context) {
     const message = {
       detailedResult: context.propsValue.detailedResult,
-      issueDate: context.propsValue.issueDate
-        ? dayjs(context.propsValue.issueDate).format('YYYY-MM-DD')
-        : null,
+      issueDate: context.propsValue.issueDate ? dayjs(context.propsValue.issueDate).format('YYYY-MM-DD') : null,
       digitalProofLink: context.propsValue.digitalProofLink,
       europeanLanguageLevel: context.propsValue.europeanLanguageLevel,
       gradePass: context.propsValue.gradePass,
       comment: context.propsValue.comment,
-    };
+    }
     return (
       await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url:
-          wedofCommon.baseUrl +
-          '/certificationFolders/' +
-          context.propsValue.externalId +
-          '/success',
+        url: wedofCommon.baseUrl + '/certificationFolders/' + context.propsValue.externalId + '/success',
         body: message,
         headers: {
           'Content-Type': 'application/json',
           'X-Api-Key': context.auth as string,
         },
       })
-    ).body;
+    ).body
   },
-});
+})

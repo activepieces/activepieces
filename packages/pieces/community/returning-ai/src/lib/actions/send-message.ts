@@ -1,6 +1,6 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { getApiEndpoint } from '../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { getApiEndpoint } from '../common'
 
 export const sendMessage = createAction({
   name: 'sendMessage',
@@ -22,14 +22,14 @@ export const sendMessage = createAction({
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        const authToken = auth as string;
+        const authToken = auth as string
 
         if (!authToken) {
           return {
             disabled: true,
             options: [],
             placeholder: 'Please authenticate first',
-          };
+          }
         }
 
         const response = await httpClient.sendRequest({
@@ -38,23 +38,21 @@ export const sendMessage = createAction({
           headers: {
             Authorization: `Bearer ${authToken.split(':')[1]}`,
           },
-        });
+        })
 
         if (response.body.status === 'success') {
           return {
-            options: response.body.data.map(
-              (channel: { _id: string; topic: string }) => ({
-                label: channel.topic,
-                value: channel._id,
-              })
-            ),
-          };
+            options: response.body.data.map((channel: { _id: string; topic: string }) => ({
+              label: channel.topic,
+              value: channel._id,
+            })),
+          }
         } else {
           return {
             disabled: true,
             options: [],
             placeholder: response.body.message,
-          };
+          }
         }
       },
     }),
@@ -65,7 +63,7 @@ export const sendMessage = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const authToken = auth as string;
+    const authToken = auth as string
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${getApiEndpoint(authToken)}/apis/v1/messages`,
@@ -77,8 +75,8 @@ export const sendMessage = createAction({
         message: propsValue.message,
         sender: propsValue.user,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

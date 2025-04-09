@@ -1,8 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
-import { ghostAuth } from '../..';
-import { common } from '../common';
+import { ghostAuth } from '../..'
+import { common } from '../common'
 
 export const updateMember = createAction({
   name: 'update_member',
@@ -27,27 +27,26 @@ export const updateMember = createAction({
   },
 
   async run(context) {
-    const newsletters: any[] = [];
+    const newsletters: any[] = []
     if (context.propsValue.newsletters) {
       context.propsValue.newsletters.forEach((newsletter: any) => {
         newsletters.push({
           id: newsletter,
-        });
-      });
+        })
+      })
     }
 
     const data: {
-      email?: string;
-      name?: string;
-      note?: string;
-      newsletters?: any[];
-    } = {};
+      email?: string
+      name?: string
+      note?: string
+      newsletters?: any[]
+    } = {}
 
-    if (context.propsValue.email) data.email = context.propsValue.email;
-    if (context.propsValue.name) data.name = context.propsValue.name;
-    if (context.propsValue.note) data.note = context.propsValue.note;
-    if (context.propsValue.newsletters)
-      data.newsletters = context.propsValue.newsletters;
+    if (context.propsValue.email) data.email = context.propsValue.email
+    if (context.propsValue.name) data.name = context.propsValue.name
+    if (context.propsValue.note) data.note = context.propsValue.note
+    if (context.propsValue.newsletters) data.newsletters = context.propsValue.newsletters
 
     const response = await httpClient.sendRequest({
       url: `${context.auth.baseUrl}/ghost/api/admin/members/${context.propsValue.member}`,
@@ -58,8 +57,8 @@ export const updateMember = createAction({
       body: {
         members: [data],
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

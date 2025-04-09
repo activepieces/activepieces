@@ -1,6 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { freshdeskAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { freshdeskAuth } from '../..'
 
 export const getTickets = createAction({
   auth: freshdeskAuth,
@@ -10,28 +10,28 @@ export const getTickets = createAction({
   props: {},
 
   async run(context) {
-    const FDapiToken = context.auth.access_token;
+    const FDapiToken = context.auth.access_token
 
     const headers = {
       Authorization: FDapiToken,
       'Content-Type': 'application/json',
-    };
+    }
 
     // Remove trailing slash from base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.base_url.replace(/\/$/, '')
     // not needed for gettickets ?${queryParams.toString()}
-    const url = `${baseUrl}/api/v2/tickets/`;
+    const url = `${baseUrl}/api/v2/tickets/`
     const httprequestdata = {
       method: HttpMethod.GET,
       url,
       headers,
-    };
-    const response = await httpClient.sendRequest(httprequestdata);
+    }
+    const response = await httpClient.sendRequest(httprequestdata)
 
     if (response.status == 200) {
-      return response.body;
+      return response.body
     } else {
-      return response;
+      return response
     }
   },
-});
+})

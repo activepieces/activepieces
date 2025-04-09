@@ -1,14 +1,6 @@
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
 
-export const figmaGetRequest = async ({
-  token,
-  url,
-}: FigmaGetRequestParams) => {
+export const figmaGetRequest = async ({ token, url }: FigmaGetRequestParams) => {
   const request: HttpRequest = {
     method: HttpMethod.GET,
     url: url,
@@ -16,22 +8,18 @@ export const figmaGetRequest = async ({
       type: AuthenticationType.BEARER_TOKEN,
       token,
     },
-  };
+  }
 
-  const response = await httpClient.sendRequest(request);
+  const response = await httpClient.sendRequest(request)
 
   return {
     success: true,
     request_body: request.body,
     response_body: response.body,
-  };
-};
+  }
+}
 
-export const figmaPostRequestWithMessage = async ({
-  token,
-  url,
-  message,
-}: FigmaPostRequestWithMessageParams) => {
+export const figmaPostRequestWithMessage = async ({ token, url, message }: FigmaPostRequestWithMessageParams) => {
   const request: HttpRequest<FigmaPostRequestWithMessageBody> = {
     method: HttpMethod.POST,
     url: url,
@@ -42,16 +30,16 @@ export const figmaPostRequestWithMessage = async ({
       type: AuthenticationType.BEARER_TOKEN,
       token,
     },
-  };
+  }
 
-  const response = await httpClient.sendRequest(request);
+  const response = await httpClient.sendRequest(request)
 
   return {
     success: true,
     request_body: request.body,
     response_body: response.body,
-  };
-};
+  }
+}
 
 export const figmaWebhookPostRequest = async ({
   token,
@@ -74,21 +62,18 @@ export const figmaWebhookPostRequest = async ({
       type: AuthenticationType.BEARER_TOKEN,
       token,
     },
-  };
+  }
 
-  const response = await httpClient.sendRequest(request);
+  const response = await httpClient.sendRequest(request)
 
   return {
     success: true,
     request_body: request.body,
     response_body: response.body,
-  };
-};
+  }
+}
 
-export const figmaDeleteRequest = async ({
-  token,
-  url,
-}: FigmaGetRequestParams) => {
+export const figmaDeleteRequest = async ({ token, url }: FigmaGetRequestParams) => {
   const request: HttpRequest = {
     method: HttpMethod.DELETE,
     url: url,
@@ -96,44 +81,44 @@ export const figmaDeleteRequest = async ({
       type: AuthenticationType.BEARER_TOKEN,
       token,
     },
-  };
+  }
 
-  const response = await httpClient.sendRequest(request);
+  const response = await httpClient.sendRequest(request)
 
   return {
     success: true,
     request_body: request.body,
     response_body: response.body,
-  };
-};
+  }
+}
 
 type FigmaGetRequestParams = {
-  token: string;
-  url: string;
-};
+  token: string
+  url: string
+}
 
 type FigmaPostRequestWithMessageParams = {
-  token: string;
-  url: string;
-  message: string;
-};
+  token: string
+  url: string
+  message: string
+}
 
 type FigmaPostRequestWithMessageBody = {
-  message: string;
-};
+  message: string
+}
 
 type FigmaWebhookPostRequestParams = {
-  token: string;
-  url: string;
-  eventType: string;
-  teamId: string;
-  endpoint: string;
-  passcode: string;
-};
+  token: string
+  url: string
+  eventType: string
+  teamId: string
+  endpoint: string
+  passcode: string
+}
 
 type FigmaWebhookPostRequestBody = {
-  event_type: string;
-  team_id: string;
-  endpoint: string;
-  passcode: string;
-};
+  event_type: string
+  team_id: string
+  endpoint: string
+  passcode: string
+}

@@ -1,4 +1,4 @@
-import { createShopifyWebhookTrigger } from '../common/register-webhook';
+import { createShopifyWebhookTrigger } from '../common/register-webhook'
 
 export const newCancelledOrder = createShopifyWebhookTrigger({
   name: 'new_cancelled_order',
@@ -472,8 +472,7 @@ export const newCancelledOrder = createShopifyWebhookTrigger({
         transactions: [
           {
             id: 6492880732470,
-            admin_graphql_api_id:
-              'gid://shopify/OrderTransaction/6492880732470',
+            admin_graphql_api_id: 'gid://shopify/OrderTransaction/6492880732470',
             amount: '1806.38',
             authorization: null,
             created_at: '2023-03-24T18:08:18-04:00',
@@ -750,4 +749,4 @@ export const newCancelledOrder = createShopifyWebhookTrigger({
       },
     ],
   },
-});
+})

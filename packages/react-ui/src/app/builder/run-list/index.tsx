@@ -1,35 +1,24 @@
-import { useQuery } from '@tanstack/react-query';
-import { t } from 'i18next';
-import React, { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query'
+import { t } from 'i18next'
+import React, { useEffect } from 'react'
 
-import {
-  LeftSideBarType,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
-import {
-  CardList,
-  CardListEmpty,
-  CardListItemSkeleton,
-} from '@/components/ui/card-list';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
-import { authenticationSession } from '@/lib/authentication-session';
-import { FlowRun, SeekPage } from '@activepieces/shared';
+import { LeftSideBarType, useBuilderStateContext } from '@/app/builder/builder-hooks'
+import { CardList, CardListEmpty, CardListItemSkeleton } from '@/components/ui/card-list'
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
+import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api'
+import { authenticationSession } from '@/lib/authentication-session'
+import { FlowRun, SeekPage } from '@activepieces/shared'
 
-import { SidebarHeader } from '../sidebar-header';
+import { SidebarHeader } from '../sidebar-header'
 
-import { FlowRunCard } from './flow-run-card';
+import { FlowRunCard } from './flow-run-card'
 
 type FlowRunsListProps = {
-  recentRuns?: number;
-};
+  recentRuns?: number
+}
 
 const RunsList = React.memo(({ recentRuns = 20 }: FlowRunsListProps) => {
-  const [flow, setLeftSidebar, run] = useBuilderStateContext((state) => [
-    state.flow,
-    state.setLeftSidebar,
-    state.run,
-  ]);
+  const [flow, setLeftSidebar, run] = useBuilderStateContext((state) => [state.flow, state.setLeftSidebar, state.run])
 
   const {
     data: flowPage,
@@ -47,27 +36,22 @@ const RunsList = React.memo(({ recentRuns = 20 }: FlowRunsListProps) => {
         cursor: undefined,
       }),
     staleTime: 15 * 1000,
-  });
+  })
 
   //so the user doesn't have to refresh the browser each time they want to refetch, they just have to close the left side bar and reopen
   useEffect(() => {
     return () => {
-      refetch();
-    };
-  }, []);
+      refetch()
+    }
+  }, [])
 
   return (
     <>
-      <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>
-        {t('Recent Runs')}
-      </SidebarHeader>
+      <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>{t('Recent Runs')}</SidebarHeader>
       <CardList>
-        {isLoading ||
-          (isRefetching && <CardListItemSkeleton numberOfCards={10} />)}
+        {isLoading || (isRefetching && <CardListItemSkeleton numberOfCards={10} />)}
         {isError && <div>{t('Error, please try again.')}</div>}
-        {flowPage && flowPage.data.length === 0 && (
-          <CardListEmpty message={t('No runs found')} />
-        )}
+        {flowPage && flowPage.data.length === 0 && <CardListEmpty message={t('No runs found')} />}
 
         <ScrollArea className="w-full h-full">
           {!isRefetching &&
@@ -76,7 +60,7 @@ const RunsList = React.memo(({ recentRuns = 20 }: FlowRunsListProps) => {
             flowPage.data.map((flowRun: FlowRun) => (
               <FlowRunCard
                 refetchRuns={() => {
-                  refetch();
+                  refetch()
                 }}
                 run={flowRun}
                 key={flowRun.id + flowRun.status}
@@ -87,8 +71,8 @@ const RunsList = React.memo(({ recentRuns = 20 }: FlowRunsListProps) => {
         </ScrollArea>
       </CardList>
     </>
-  );
-});
+  )
+})
 
-RunsList.displayName = 'RunsList';
-export { RunsList };
+RunsList.displayName = 'RunsList'
+export { RunsList }

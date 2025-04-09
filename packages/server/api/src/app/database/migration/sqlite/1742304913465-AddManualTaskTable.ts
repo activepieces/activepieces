@@ -1,10 +1,10 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddManualTaskTable1742304913465 implements MigrationInterface {
-    name = 'AddManualTaskTable1742304913465'
+  name = 'AddManualTaskTable1742304913465'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             CREATE TABLE "manual_task" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -21,25 +21,25 @@ export class AddManualTaskTable1742304913465 implements MigrationInterface {
                 "approvalUrl" varchar
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_manual_task_project_id" ON "manual_task" ("projectId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_manual_task_flow_id" ON "manual_task" ("flowId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_manual_task_platform_id" ON "manual_task" ("platformId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_manual_task_project_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_manual_task_flow_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_manual_task_platform_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_manual_task" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -61,7 +61,7 @@ export class AddManualTaskTable1742304913465 implements MigrationInterface {
                 CONSTRAINT "fk_manual_task_assignee_id" FOREIGN KEY ("assigneeId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_manual_task"(
                     "id",
                     "created",
@@ -92,39 +92,39 @@ export class AddManualTaskTable1742304913465 implements MigrationInterface {
                 "approvalUrl"
             FROM "manual_task"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "manual_task"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_manual_task"
                 RENAME TO "manual_task"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_manual_task_project_id" ON "manual_task" ("projectId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_manual_task_flow_id" ON "manual_task" ("flowId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_manual_task_platform_id" ON "manual_task" ("platformId")
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_manual_task_platform_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_manual_task_flow_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_manual_task_project_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "manual_task"
                 RENAME TO "temporary_manual_task"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "manual_task" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -141,7 +141,7 @@ export class AddManualTaskTable1742304913465 implements MigrationInterface {
                 "approvalUrl" varchar
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "manual_task"(
                     "id",
                     "created",
@@ -172,30 +172,29 @@ export class AddManualTaskTable1742304913465 implements MigrationInterface {
                 "approvalUrl"
             FROM "temporary_manual_task"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_manual_task"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_manual_task_platform_id" ON "manual_task" ("platformId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_manual_task_flow_id" ON "manual_task" ("flowId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_manual_task_project_id" ON "manual_task" ("projectId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_manual_task_platform_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_manual_task_flow_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_manual_task_project_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "manual_task"
         `)
-    }
-
+  }
 }

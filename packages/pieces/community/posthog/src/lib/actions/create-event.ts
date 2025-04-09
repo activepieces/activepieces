@@ -1,12 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { EventBody, EventCaptureResponse } from '../common/models';
-import { posthogAuth } from '../..';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { posthogAuth } from '../..'
+import { EventBody, EventCaptureResponse } from '../common/models'
 
 export const posthogCreateEvent = createAction({
   auth: posthogAuth,
@@ -68,7 +63,7 @@ export const posthogCreateEvent = createAction({
       properties: context.propsValue.properties || {},
       distinct_id: context.propsValue.distinct_id,
       category: context.propsValue.category,
-    };
+    }
 
     const request: HttpRequest<EventBody> = {
       method: HttpMethod.POST,
@@ -78,15 +73,15 @@ export const posthogCreateEvent = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth,
       },
-    };
-
-    const result = await httpClient.sendRequest<EventCaptureResponse>(request);
-    console.debug('Event creation response', result);
-
-    if (result.status === 200) {
-      return result.body;
     }
 
-    return result;
+    const result = await httpClient.sendRequest<EventCaptureResponse>(request)
+    console.debug('Event creation response', result)
+
+    if (result.status === 200) {
+      return result.body
+    }
+
+    return result
   },
-});
+})

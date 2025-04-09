@@ -1,34 +1,26 @@
-import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { DynamicPropsValue, Property } from '@activepieces/pieces-framework'
 
 export type LeverFieldType = {
-  id: string;
-  text: string;
-  description: string;
-  required: boolean;
-  type: string;
-  options?: { text: string; optionId: string }[];
-  scores?: { text: string; description: string }[];
-};
+  id: string
+  text: string
+  description: string
+  required: boolean
+  type: string
+  options?: { text: string; optionId: string }[]
+  scores?: { text: string; description: string }[]
+}
 
 export const LeverFieldMapping: Record<
   string,
   {
-    buildActivepieceType: (
-      fields: DynamicPropsValue,
-      field: LeverFieldType
-    ) => void;
+    buildActivepieceType: (fields: DynamicPropsValue, field: LeverFieldType) => void
     buildLeverType: (
       id: string,
-      propsValues: DynamicPropsValue[]
+      propsValues: DynamicPropsValue[],
     ) => {
-      id: string;
-      value:
-        | string
-        | string[]
-        | number
-        | number[]
-        | { score: number; comment?: string }[];
-    };
+      id: string
+      value: string | string[] | number | number[] | { score: number; comment?: string }[]
+    }
   }
 > = {
   default: {
@@ -63,11 +55,11 @@ export const LeverFieldMapping: Record<
         required: field.required,
       })),
     buildLeverType: (id, propsValues) => {
-      const value = propsValues[0] as unknown as boolean;
+      const value = propsValues[0] as unknown as boolean
       return {
         id,
         value: value === true ? 'yes' : value === false ? 'no' : 'null',
-      };
+      }
     },
   },
   dropdown: {
@@ -80,7 +72,7 @@ export const LeverFieldMapping: Record<
           disabled: false,
           options:
             field.options?.map((option: { text: string; optionId: string }) => {
-              return { value: option.text, label: option.text };
+              return { value: option.text, label: option.text }
             }) || [],
         },
       })),
@@ -99,7 +91,7 @@ export const LeverFieldMapping: Record<
           disabled: false,
           options:
             field.options?.map((option: { text: string; optionId: string }) => {
-              return { value: option.text, label: option.text };
+              return { value: option.text, label: option.text }
             }) || [],
         },
       })),
@@ -118,7 +110,7 @@ export const LeverFieldMapping: Record<
           disabled: false,
           options:
             field.options?.map((option: { text: string; optionId: string }) => {
-              return { value: option.text, label: option.text };
+              return { value: option.text, label: option.text }
             }) || [],
         },
       })),
@@ -136,7 +128,7 @@ export const LeverFieldMapping: Record<
         options: {
           options:
             field.options?.map((option) => {
-              return { value: option.text, label: option.text };
+              return { value: option.text, label: option.text }
             }) || [],
         },
       })),
@@ -161,7 +153,7 @@ export const LeverFieldMapping: Record<
               { label: '👍👍', value: 4 },
             ],
           },
-        });
+        })
       }),
     buildLeverType: (id, propsValues) => ({
       id,
@@ -169,8 +161,8 @@ export const LeverFieldMapping: Record<
         return {
           score: propsValue as unknown as number,
           comment: '',
-        };
+        }
       }),
     }),
   },
-};
+}

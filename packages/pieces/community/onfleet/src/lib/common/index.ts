@@ -1,6 +1,6 @@
-import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
+import { DynamicPropsValue, Property } from '@activepieces/pieces-framework'
 
-import Onfleet from '@onfleet/node-onfleet';
+import Onfleet from '@onfleet/node-onfleet'
 
 export const common = {
   destination: Property.DynamicProperties({
@@ -9,14 +9,14 @@ export const common = {
     required: true,
     refreshers: ['unparsedDestination'],
     props: async (propsValue) => {
-      let fields: DynamicPropsValue = {};
+      let fields: DynamicPropsValue = {}
       if (propsValue['unparsedDestination']) {
         fields = {
           unparsedAddress: Property.ShortText({
             displayName: 'Address',
             required: true,
           }),
-        };
+        }
       } else {
         fields = {
           number: Property.ShortText({
@@ -51,16 +51,15 @@ export const common = {
             displayName: 'Destination Name',
             required: false,
           }),
-        };
+        }
       }
 
-      return fields;
+      return fields
     },
   }),
   unparsedDestination: Property.Checkbox({
     displayName: 'Unparsed Destination',
-    description:
-      'Check this box if the destination is a single unparsed string',
+    description: 'Check this box if the destination is a single unparsed string',
     required: true,
     defaultValue: false,
   }),
@@ -75,20 +74,20 @@ export const common = {
           disabled: true,
           options: [],
           placeholder: 'Enter API Key',
-        };
+        }
       }
-      const teams = await common.getTeams(auth as string);
+      const teams = await common.getTeams(auth as string)
       const options: any[] = teams.map((team: any) => {
         return {
           label: team.name,
           value: team.id,
-        };
-      });
+        }
+      })
 
       return {
         options: options,
         placeholder: 'Choose team',
-      };
+      }
     },
   }),
   teamsRequired: Property.MultiSelectDropdown({
@@ -101,20 +100,20 @@ export const common = {
           disabled: true,
           options: [],
           placeholder: 'Enter API Key',
-        };
+        }
       }
-      const teams = await common.getTeams(auth as string);
+      const teams = await common.getTeams(auth as string)
       const options: any[] = teams.map((team: any) => {
         return {
           label: team.name,
           value: team.id,
-        };
-      });
+        }
+      })
 
       return {
         options: options,
         placeholder: 'Choose team',
-      };
+      }
     },
   }),
   team: Property.Dropdown({
@@ -127,20 +126,20 @@ export const common = {
           disabled: true,
           options: [],
           placeholder: 'Enter API Key',
-        };
+        }
       }
-      const teams = await common.getTeams(auth as string);
+      const teams = await common.getTeams(auth as string)
       const options: any[] = teams.map((team: any) => {
         return {
           label: team.name,
           value: team.id,
-        };
-      });
+        }
+      })
 
       return {
         options: options,
         placeholder: 'Choose team',
-      };
+      }
     },
   }),
 
@@ -153,20 +152,20 @@ export const common = {
         return {
           options: [],
           placeholder: 'Enter API Key or use an expression',
-        };
+        }
       }
-      const hubs = await common.getHubs(auth as string);
+      const hubs = await common.getHubs(auth as string)
       const options: any[] = hubs.map((hub: any) => {
         return {
           label: hub.name,
           value: hub.id,
-        };
-      });
+        }
+      })
 
       return {
         options: options,
         placeholder: 'Choose hub',
-      };
+      }
     },
   }),
   hubOptional: Property.Dropdown({
@@ -178,20 +177,20 @@ export const common = {
         return {
           options: [],
           placeholder: 'Enter API Key or use an expression',
-        };
+        }
       }
-      const hubs = await common.getHubs(auth as string);
+      const hubs = await common.getHubs(auth as string)
       const options: any[] = hubs.map((hub: any) => {
         return {
           label: hub.name,
           value: hub.id,
-        };
-      });
+        }
+      })
 
       return {
         options: options,
         placeholder: 'Choose hub',
-      };
+      }
     },
   }),
 
@@ -204,20 +203,20 @@ export const common = {
         return {
           options: [],
           placeholder: 'Enter API Key or use an expression',
-        };
+        }
       }
-      const admins = await common.getAdmins(auth as string);
+      const admins = await common.getAdmins(auth as string)
       const options: any[] = admins.map((admin: any) => {
         return {
           label: admin.name,
           value: admin.id,
-        };
-      });
+        }
+      })
 
       return {
         options: options,
         placeholder: 'Choose admin',
-      };
+      }
     },
   }),
   managers: Property.MultiSelectDropdown({
@@ -229,20 +228,20 @@ export const common = {
         return {
           options: [],
           placeholder: 'Enter API Key or use an expression',
-        };
+        }
       }
-      const admins = await common.getAdmins(auth as string);
+      const admins = await common.getAdmins(auth as string)
       const options: any[] = admins.map((admin: any) => {
         return {
           label: admin.name,
           value: admin.id,
-        };
-      });
+        }
+      })
 
       return {
         options: options,
         placeholder: 'Choose managers',
-      };
+      }
     },
   }),
   managersOptional: Property.MultiSelectDropdown({
@@ -254,20 +253,20 @@ export const common = {
         return {
           options: [],
           placeholder: 'Enter API Key or use an expression',
-        };
+        }
       }
-      const admins = await common.getAdmins(auth as string);
+      const admins = await common.getAdmins(auth as string)
       const options: any[] = admins.map((admin: any) => {
         return {
           label: admin.name,
           value: admin.id,
-        };
-      });
+        }
+      })
 
       return {
         options: options,
         placeholder: 'Choose managers',
-      };
+      }
     },
   }),
 
@@ -280,20 +279,20 @@ export const common = {
         return {
           options: [],
           placeholder: 'Enter API Key or use an expression',
-        };
+        }
       }
-      const workers = await common.getWorkers(auth as string);
+      const workers = await common.getWorkers(auth as string)
       const options: any[] = workers.map((worker: any) => {
         return {
           label: worker.name,
           value: worker.id,
-        };
-      });
+        }
+      })
 
       return {
         options: options,
         placeholder: 'Choose worker',
-      };
+      }
     },
   }),
 
@@ -306,20 +305,20 @@ export const common = {
         return {
           options: [],
           placeholder: 'Enter API Key or use an expression',
-        };
+        }
       }
-      const workers = await common.getWorkers(auth as string);
+      const workers = await common.getWorkers(auth as string)
       const options: any[] = workers.map((worker: any) => {
         return {
           label: worker.name,
           value: worker.id,
-        };
-      });
+        }
+      })
 
       return {
         options: options,
         placeholder: 'Choose workers',
-      };
+      }
     },
   }),
   workersOptional: Property.MultiSelectDropdown({
@@ -331,64 +330,64 @@ export const common = {
         return {
           options: [],
           placeholder: 'Enter API Key or use an expression',
-        };
+        }
       }
-      const workers = await common.getWorkers(auth as string);
+      const workers = await common.getWorkers(auth as string)
       const options: any[] = workers.map((worker: any) => {
         return {
           label: worker.name,
           value: worker.id,
-        };
-      });
+        }
+      })
 
       return {
         options: options,
         placeholder: 'Choose workers',
-      };
+      }
     },
   }),
 
   async getTeams(apiKey: string) {
-    const onfleetApi = new Onfleet(apiKey);
+    const onfleetApi = new Onfleet(apiKey)
 
-    return await onfleetApi.teams.get();
+    return await onfleetApi.teams.get()
   },
 
   async getHubs(apiKey: string) {
-    const onfleetApi = new Onfleet(apiKey);
+    const onfleetApi = new Onfleet(apiKey)
 
-    return await onfleetApi.hubs.get();
+    return await onfleetApi.hubs.get()
   },
 
   async getAdmins(apiKey: string) {
-    const onfleetApi = new Onfleet(apiKey);
+    const onfleetApi = new Onfleet(apiKey)
 
-    return await onfleetApi.administrators.get();
+    return await onfleetApi.administrators.get()
   },
 
   async getWorkers(apiKey: string) {
-    const onfleetApi = new Onfleet(apiKey);
+    const onfleetApi = new Onfleet(apiKey)
 
-    return await onfleetApi.workers.get();
+    return await onfleetApi.workers.get()
   },
 
   async subscribeWebhook(apiKey: string, webhookUrl: string, triggerId: any) {
-    const onfleetApi = new Onfleet(apiKey);
+    const onfleetApi = new Onfleet(apiKey)
 
     return (
       await onfleetApi.webhooks.create({
         url: webhookUrl,
         trigger: triggerId,
       })
-    ).id;
+    ).id
   },
 
   async unsubscribeWebhook(apiKey: string, webhookId: string) {
-    const onfleetApi = new Onfleet(apiKey);
+    const onfleetApi = new Onfleet(apiKey)
 
-    return await onfleetApi.webhooks.deleteOne(webhookId);
+    return await onfleetApi.webhooks.deleteOne(webhookId)
   },
-};
+}
 
 export enum OnfleetWebhookTriggers {
   TASK_STARTED = 0,

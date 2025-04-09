@@ -1,11 +1,10 @@
-import { createAction, Property, PropertyType } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
+import { Property, PropertyType, createAction } from '@activepieces/pieces-framework'
+import { MarkdownVariant } from '@activepieces/shared'
 
 export const createApprovalLink = createAction({
   name: 'create_approval_links',
   displayName: 'Create Approval Links',
-  description:
-    'Create links only without pausing the flow, use wait for approval to pause',
+  description: 'Create links only without pausing the flow, use wait for approval to pause',
   props: {
     markdown: Property.MarkDown({
       variant: MarkdownVariant.WARNING,
@@ -28,6 +27,6 @@ export const createApprovalLink = createAction({
       disapprovalLink: ctx.generateResumeUrl({
         queryParams: { action: 'disapprove' },
       }),
-    };
+    }
   },
-});
+})

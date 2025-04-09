@@ -1,8 +1,8 @@
-import { Property, createTrigger } from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
+import { Property, createTrigger } from '@activepieces/pieces-framework'
+import { TriggerStrategy } from '@activepieces/pieces-framework'
 
-import { googlePubsubAuth } from '../..';
-import { common } from '../common';
+import { googlePubsubAuth } from '../..'
+import { common } from '../common'
 
 export const newMessageInTopic = createTrigger({
   auth: googlePubsubAuth,
@@ -19,8 +19,8 @@ export const newMessageInTopic = createTrigger({
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        const json = (auth as { json: string }).json;
-        return common.getTopics(json);
+        const json = (auth as { json: string }).json
+        return common.getTopics(json)
       },
     }),
     ackDeadlineSeconds: Property.Number({
@@ -31,13 +31,13 @@ export const newMessageInTopic = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   onEnable: async (context) => {
-    const json = (context.auth as { json: string }).json;
-    const client = common.getClient(json);
+    const json = (context.auth as { json: string }).json
+    const client = common.getClient(json)
 
-    const { topic, subscription } = context.propsValue;
-    const project = common.getProjectId(context.auth.json as string);
+    const { topic, subscription } = context.propsValue
+    const project = common.getProjectId(context.auth.json as string)
 
-    const url = `https://pubsub.googleapis.com/v1/projects/${project}/subscriptions/${subscription}`;
+    const url = `https://pubsub.googleapis.com/v1/projects/${project}/subscriptions/${subscription}`
     const body = {
       topic,
       pushConfig: {
@@ -45,58 +45,56 @@ export const newMessageInTopic = createTrigger({
         attributes: {},
       },
       ackDeadlineSeconds: context.propsValue.ackDeadlineSeconds,
-    };
+    }
 
     await client.request({
       url,
       method: 'PUT',
       data: JSON.stringify(body),
-    });
+    })
 
     await context.store.put<ISubscriptionInfo>('_trigger', {
       project,
       subscription,
-    });
+    })
   },
   onDisable: async (context) => {
-    const response = await context.store.get<ISubscriptionInfo>('_trigger');
+    const response = await context.store.get<ISubscriptionInfo>('_trigger')
 
     if (response !== null && response !== undefined) {
-      const json = (context.auth as { json: string }).json;
-      const client = common.getClient(json);
-      const { project, subscription } = response;
-      const url = `https://pubsub.googleapis.com/v1/projects/${project}/subscriptions/${subscription}`;
+      const json = (context.auth as { json: string }).json
+      const client = common.getClient(json)
+      const { project, subscription } = response
+      const url = `https://pubsub.googleapis.com/v1/projects/${project}/subscriptions/${subscription}`
 
       await client.request({
         url,
         method: 'DELETE',
-      });
+      })
     }
   },
   async run(context) {
-    console.debug('payload received', context.payload.body);
-    const payloadBody = context.payload.body as PayloadBody;
-    const { data } = payloadBody.message;
-    const object = data
-      ? JSON.parse(Buffer.from(data, 'base64').toString())
-      : {};
+    console.debug('payload received', context.payload.body)
+    const payloadBody = context.payload.body as PayloadBody
+    const { data } = payloadBody.message
+    const object = data ? JSON.parse(Buffer.from(data, 'base64').toString()) : {}
 
-    return [object];
+    return [object]
   },
   sampleData: {
     x: 1.0,
     y: -1.0,
     text: 'Just text sample',
   },
-});
+})
 
 interface ISubscriptionInfo {
-  project: string;
-  subscription: string;
+  project: string
+  subscription: string
 }
 
 type PayloadBody = {
   message: {
-    data: string;
-  };
-};
+    data: string
+  }
+}

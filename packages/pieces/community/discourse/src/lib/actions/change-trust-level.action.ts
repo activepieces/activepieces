@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { discourseAuth } from '../../index';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { discourseAuth } from '../../index'
 
 export const changeUserTrustLevel = createAction({
   auth: discourseAuth,
@@ -26,30 +26,30 @@ export const changeUserTrustLevel = createAction({
             'Api-Key': auth.api_key,
             'Api-Username': auth.api_username,
           },
-        });
+        })
 
-        const result: { name: string; value: number }[] = [];
-        const trust_levels = response.body['trust_levels'];
+        const result: { name: string; value: number }[] = []
+        const trust_levels = response.body['trust_levels']
         for (const key in trust_levels) {
-          result.push({ name: key, value: trust_levels[key] });
+          result.push({ name: key, value: trust_levels[key] })
         }
 
         const options = result.map((res) => {
           return {
             label: res.name,
             value: res.value,
-          };
-        });
+          }
+        })
         return {
           options: options,
           disabled: false,
-        };
+        }
       },
       refreshers: [],
     }),
   },
   async run(context) {
-    const { user_id, new_trust_level } = context.propsValue;
+    const { user_id, new_trust_level } = context.propsValue
     return await httpClient.sendRequest({
       method: HttpMethod.PUT,
       url: `${context.auth.website_url.trim()}/u/${user_id}.json`,
@@ -60,6 +60,6 @@ export const changeUserTrustLevel = createAction({
       body: {
         trust_level: new_trust_level,
       },
-    });
+    })
   },
-});
+})

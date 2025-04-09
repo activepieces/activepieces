@@ -1,7 +1,7 @@
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
 
-import { ghostAuth } from '../..';
-import { common } from '../common';
+import { ghostAuth } from '../..'
+import { common } from '../common'
 
 export const postPublished = createTrigger({
   auth: ghostAuth,
@@ -11,27 +11,23 @@ export const postPublished = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {
-    const webhookData: any = await common.subscribeWebhook(
-      context.auth,
-      'post.published',
-      context.webhookUrl
-    );
+    const webhookData: any = await common.subscribeWebhook(context.auth, 'post.published', context.webhookUrl)
 
     await context.store?.put('_post_published_trigger', {
       webhookId: webhookData.webhooks[0].id,
-    });
+    })
   },
   async onDisable(context) {
     const response: {
-      webhookId: string;
-    } | null = await context.store?.get('_post_published_trigger');
+      webhookId: string
+    } | null = await context.store?.get('_post_published_trigger')
 
     if (response !== null && response !== undefined) {
-      await common.unsubscribeWebhook(context.auth, response.webhookId);
+      await common.unsubscribeWebhook(context.auth, response.webhookId)
     }
   },
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
 
   sampleData: {
@@ -117,8 +113,7 @@ export const postPublished = createTrigger({
             updated_at: '2023-07-24T13:05:18.000Z',
             cover_image: null,
             accessibility: '{"nightShift":true}',
-            profile_image:
-              'https://www.gravatar.com/avatar/123123123?s=250&r=x&d=mp',
+            profile_image: 'https://www.gravatar.com/avatar/123123123?s=250&r=x&d=mp',
             meta_description: null,
             comment_notifications: true,
             mention_notifications: true,
@@ -182,8 +177,7 @@ export const postPublished = createTrigger({
           updated_at: '2023-07-24T13:05:18.000Z',
           cover_image: null,
           accessibility: '{"nightShift":true}',
-          profile_image:
-            'https://www.gravatar.com/avatar/123123123?s=250&r=x&d=mp',
+          profile_image: 'https://www.gravatar.com/avatar/123123123?s=250&r=x&d=mp',
           meta_description: null,
           comment_notifications: true,
           mention_notifications: true,
@@ -207,4 +201,4 @@ export const postPublished = createTrigger({
       },
     },
   },
-});
+})

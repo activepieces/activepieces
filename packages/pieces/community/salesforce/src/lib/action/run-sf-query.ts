@@ -1,8 +1,8 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { salesforcesCommon } from '../common';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { querySalesforceApi } from '../common';
-import { salesforceAuth } from '../..';
+import { HttpMethod } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { salesforceAuth } from '../..'
+import { salesforcesCommon } from '../common'
+import { querySalesforceApi } from '../common'
 
 export const runQuery = createAction({
   auth: salesforceAuth,
@@ -17,10 +17,10 @@ export const runQuery = createAction({
     }),
   },
   async run(context) {
-    const { query } = context.propsValue;
+    const { query } = context.propsValue
     const response = await await querySalesforceApi<{
-      records: { CreatedDate: string }[];
-    }>(HttpMethod.GET, context.auth, query);
-    return response;
+      records: { CreatedDate: string }[]
+    }>(HttpMethod.GET, context.auth, query)
+    return response
   },
-});
+})

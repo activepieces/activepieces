@@ -1,12 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
-import { wooAuth } from '../..';
+import { wooAuth } from '../..'
 
 export const wooCreateCustomer = createAction({
   name: 'Create Customer',
@@ -71,13 +66,13 @@ export const wooCreateCustomer = createAction({
     }),
   },
   async run(configValue) {
-    const trimmedBaseUrl = configValue.auth.baseUrl.replace(/\/$/, '');
+    const trimmedBaseUrl = configValue.auth.baseUrl.replace(/\/$/, '')
 
-    const email = configValue.propsValue['email'];
-    const first_name = configValue.propsValue['first_name'];
-    const last_name = configValue.propsValue['last_name'];
-    const username = configValue.propsValue['username'];
-    const password = configValue.propsValue['password'];
+    const email = configValue.propsValue['email']
+    const first_name = configValue.propsValue['first_name']
+    const last_name = configValue.propsValue['last_name']
+    const username = configValue.propsValue['username']
+    const password = configValue.propsValue['password']
 
     const billing = {
       first_name,
@@ -89,7 +84,7 @@ export const wooCreateCustomer = createAction({
       country: configValue.propsValue['country'],
       email,
       phone: configValue.propsValue['phone'],
-    };
+    }
 
     const request: HttpRequest = {
       url: `${trimmedBaseUrl}//wp-json/wc/v3/customers`,
@@ -108,10 +103,10 @@ export const wooCreateCustomer = createAction({
         billing,
         shipping: billing,
       },
-    };
+    }
 
-    const res = await httpClient.sendRequest(request);
+    const res = await httpClient.sendRequest(request)
 
-    return res.body;
+    return res.body
   },
-});
+})

@@ -1,29 +1,24 @@
-import { useDndMonitor, useDroppable, DragMoveEvent } from '@dnd-kit/core';
-import { Plus } from 'lucide-react';
-import React, { useState } from 'react';
+import { DragMoveEvent, useDndMonitor, useDroppable } from '@dnd-kit/core'
+import { Plus } from 'lucide-react'
+import React, { useState } from 'react'
 
-import { PieceSelector } from '@/app/builder/pieces-selector';
-import { cn } from '@/lib/utils';
-import {
-  FlowOperationType,
-  StepLocationRelativeToParent,
-  isNil,
-} from '@activepieces/shared';
+import { PieceSelector } from '@/app/builder/pieces-selector'
+import { cn } from '@/lib/utils'
+import { FlowOperationType, StepLocationRelativeToParent, isNil } from '@activepieces/shared'
 
-import { useBuilderStateContext } from '../../builder-hooks';
-import { flowUtilConsts } from '../utils/consts';
-import { ApButtonData } from '../utils/types';
+import { useBuilderStateContext } from '../../builder-hooks'
+import { flowUtilConsts } from '../utils/consts'
+import { ApButtonData } from '../utils/types'
 
-import { AskAiIndicator, shouldShowAskAiIndicator } from './ask-ai-indicator';
+import { AskAiIndicator, shouldShowAskAiIndicator } from './ask-ai-indicator'
 
 const ApAddButton = React.memo((props: ApButtonData) => {
-  const [isStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
-  const [activeDraggingStep, readonly, showAskAiIndicator] =
-    useBuilderStateContext((state) => [
-      state.activeDraggingStep,
-      state.readonly,
-      shouldShowAskAiIndicator(state, props),
-    ]);
+  const [isStepInsideDropZone, setIsStepInsideDropzone] = useState(false)
+  const [activeDraggingStep, readonly, showAskAiIndicator] = useBuilderStateContext((state) => [
+    state.activeDraggingStep,
+    state.readonly,
+    shouldShowAskAiIndicator(state, props),
+  ])
 
   const { setNodeRef } = useDroppable({
     id: props.edgeId,
@@ -31,20 +26,20 @@ const ApAddButton = React.memo((props: ApButtonData) => {
       accepts: flowUtilConsts.DRAGGED_STEP_TAG,
       ...props,
     },
-  });
+  })
 
-  const [actionMenuOpen, setActionMenuOpen] = useState(false);
+  const [actionMenuOpen, setActionMenuOpen] = useState(false)
 
-  const showDropIndicator = !isNil(activeDraggingStep);
+  const showDropIndicator = !isNil(activeDraggingStep)
 
   useDndMonitor({
     onDragMove(event: DragMoveEvent) {
-      setIsStepInsideDropzone(event.collisions?.[0]?.id === props.edgeId);
+      setIsStepInsideDropzone(event.collisions?.[0]?.id === props.edgeId)
     },
     onDragEnd() {
-      setIsStepInsideDropzone(false);
+      setIsStepInsideDropzone(false)
     },
-  });
+  })
 
   return (
     <>
@@ -73,14 +68,12 @@ const ApAddButton = React.memo((props: ApButtonData) => {
       {!showDropIndicator && !readonly && (
         <PieceSelector
           operation={
-            props.stepLocationRelativeToParent ===
-            StepLocationRelativeToParent.INSIDE_BRANCH
+            props.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_BRANCH
               ? {
                   type: FlowOperationType.ADD_ACTION,
                   actionLocation: {
                     parentStep: props.parentStepName,
-                    stepLocationRelativeToParent:
-                      props.stepLocationRelativeToParent,
+                    stepLocationRelativeToParent: props.stepLocationRelativeToParent,
                     branchIndex: props.branchIndex,
                   },
                 }
@@ -88,8 +81,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                   type: FlowOperationType.ADD_ACTION,
                   actionLocation: {
                     parentStep: props.parentStepName,
-                    stepLocationRelativeToParent:
-                      props.stepLocationRelativeToParent,
+                    stepLocationRelativeToParent: props.stepLocationRelativeToParent,
                   },
                 }
           }
@@ -115,18 +107,14 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                   width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
                   height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
                 }}
-                className={cn(
-                  'rounded-xss cursor-pointer transition-all z-50',
-                  {
-                    'shadow-add-button': actionMenuOpen,
-                  },
-                )}
+                className={cn('rounded-xss cursor-pointer transition-all z-50', {
+                  'shadow-add-button': actionMenuOpen,
+                })}
               >
                 <div
                   style={{
                     width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
-                    height:
-                      flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
+                    height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
                   }}
                   className={cn(
                     'bg-light-blue  relative group overflow-visible rounded-xss cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
@@ -135,9 +123,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                     },
                   )}
                 >
-                  {!actionMenuOpen && (
-                    <Plus className="w-3 h-3 stroke-[3px] text-white" />
-                  )}
+                  {!actionMenuOpen && <Plus className="w-3 h-3 stroke-[3px] text-white" />}
                 </div>
               </div>
             )}
@@ -145,8 +131,8 @@ const ApAddButton = React.memo((props: ApButtonData) => {
         </PieceSelector>
       )}
     </>
-  );
-});
+  )
+})
 
-ApAddButton.displayName = 'ApAddButton';
-export { ApAddButton };
+ApAddButton.displayName = 'ApAddButton'
+export { ApAddButton }

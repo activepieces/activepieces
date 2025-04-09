@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { fetchCampaigns, reachinboxCommon } from '../common/index';
-import { ReachinboxAuth } from '../..';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { ReachinboxAuth } from '../..'
+import { fetchCampaigns, reachinboxCommon } from '../common/index'
 
 export const startCampaign = createAction({
   auth: ReachinboxAuth,
@@ -11,12 +11,11 @@ export const startCampaign = createAction({
   props: {
     campaignId: Property.Dropdown({
       displayName: 'Select Campaign',
-      description:
-        'Choose a campaign from the list or enter the campaign ID manually.',
+      description: 'Choose a campaign from the list or enter the campaign ID manually.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        const campaigns = await fetchCampaigns(auth as string);
+        const campaigns = await fetchCampaigns(auth as string)
 
         return {
           options: campaigns.map((campaign) => ({
@@ -24,18 +23,18 @@ export const startCampaign = createAction({
             value: campaign.id,
           })),
           disabled: campaigns.length === 0,
-        };
+        }
       },
     }),
   },
   async run(context) {
-    const { campaignId } = context.propsValue;
+    const { campaignId } = context.propsValue
 
     if (!campaignId) {
-      throw new Error('Campaign ID is required.');
+      throw new Error('Campaign ID is required.')
     }
 
-    const url = `${reachinboxCommon.baseUrl}campaigns/start`;
+    const url = `${reachinboxCommon.baseUrl}campaigns/start`
 
     try {
       const response = await httpClient.sendRequest({
@@ -48,18 +47,18 @@ export const startCampaign = createAction({
         body: {
           campaignId: campaignId,
         },
-      });
+      })
 
       if (response.status === 200) {
         return {
           success: true,
           message: response.body.message || 'Campaign started successfully.',
-        };
+        }
       } else {
-        throw new Error(`Failed to start campaign: ${response.body.message}`);
+        throw new Error(`Failed to start campaign: ${response.body.message}`)
       }
     } catch (error: any) {
-      throw new Error(`Failed to start campaign: ${error.message}`);
+      throw new Error(`Failed to start campaign: ${error.message}`)
     }
   },
-});
+})

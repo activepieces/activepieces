@@ -1,6 +1,6 @@
-import { slackAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { WebClient } from '@slack/web-api';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { WebClient } from '@slack/web-api'
+import { slackAuth } from '../../'
 
 export const findUserByEmailAction = createAction({
   auth: slackAuth,
@@ -14,10 +14,10 @@ export const findUserByEmailAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const email = propsValue.email;
-    const client = new WebClient(auth.access_token);
+    const email = propsValue.email
+    const client = new WebClient(auth.access_token)
     return await client.users.lookupByEmail({
       email,
-    });
+    })
   },
-});
+})

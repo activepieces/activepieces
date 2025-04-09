@@ -1,12 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { outlookCalendarAuth } from '../..';
-import { outlookCalendarCommon } from '../common/common';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { outlookCalendarAuth } from '../..'
+import { outlookCalendarCommon } from '../common/common'
 
 export const deleteEventAction = createAction({
   auth: outlookCalendarAuth,
@@ -29,10 +24,10 @@ export const deleteEventAction = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: auth['access_token'],
       },
-    };
+    }
 
-    const response = await httpClient.sendRequest(request);
+    const response = await httpClient.sendRequest(request)
 
-    return response.body;
+    return response.body
   },
-});
+})

@@ -1,11 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import {
-  clockodoCommon,
-  emptyToNull,
-  makeClient,
-  reformatDate,
-} from '../../common';
-import { clockodoAuth } from '../../../';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { clockodoAuth } from '../../../'
+import { clockodoCommon, emptyToNull, makeClient, reformatDate } from '../../common'
 
 export default createAction({
   auth: clockodoAuth,
@@ -53,7 +48,7 @@ export default createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth)
     const res = await client.updateAbsence(propsValue.absence_id, {
       date_since: reformatDate(propsValue.date_since),
       date_until: reformatDate(propsValue.date_until),
@@ -62,7 +57,7 @@ export default createAction({
       count_days: propsValue.half_days ? 0.5 : 1,
       note: emptyToNull(propsValue.note),
       sick_note: propsValue.sick_note,
-    });
-    return res.absence;
+    })
+    return res.absence
   },
-});
+})

@@ -1,11 +1,7 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { textToImage } from './lib/actions/text-to-image';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { textToImage } from './lib/actions/text-to-image'
 
 export const stabilityAiAuth = PieceAuth.CustomAuth({
   description: `Please visit https://platform.stability.ai/docs/getting-started/authentication to get your API Key`,
@@ -16,17 +12,16 @@ export const stabilityAiAuth = PieceAuth.CustomAuth({
     }),
   },
   required: true,
-});
+})
 
 export const stabilityAi = createPiece({
   displayName: 'Stability AI',
-  description:
-    'Generative AI video model based on the image model Stable Diffusion.',
+  description: 'Generative AI video model based on the image model Stable Diffusion.',
 
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/stability-ai.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
-  authors: ["Willianwg","camilou","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: ['Willianwg', 'camilou', 'kishanprmr', 'MoShizzle', 'AbdulTheActivePiecer', 'khaledmashaly', 'abuaboud'],
   auth: stabilityAiAuth,
   actions: [
     textToImage,
@@ -39,4 +34,4 @@ export const stabilityAi = createPiece({
     }),
   ],
   triggers: [],
-});
+})

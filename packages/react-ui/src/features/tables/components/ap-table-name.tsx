@@ -1,41 +1,36 @@
-import { useMutation } from '@tanstack/react-query';
-import { Pencil } from 'lucide-react';
+import { useMutation } from '@tanstack/react-query'
+import { Pencil } from 'lucide-react'
 
-import EditableText from '@/components/ui/editable-text';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { cn } from '@/lib/utils';
-import { Permission } from '@activepieces/shared';
+import EditableText from '@/components/ui/editable-text'
+import { useAuthorization } from '@/hooks/authorization-hooks'
+import { cn } from '@/lib/utils'
+import { Permission } from '@activepieces/shared'
 
-import { tablesApi } from '../lib/tables-api';
+import { tablesApi } from '../lib/tables-api'
 
-import { useTableState } from './ap-table-state-provider';
+import { useTableState } from './ap-table-state-provider'
 
 type ApTableNameProps = {
-  tableName: string;
-  isEditingTableName: boolean;
-  setIsEditingTableName: (val: boolean) => void;
-};
+  tableName: string
+  isEditingTableName: boolean
+  setIsEditingTableName: (val: boolean) => void
+}
 
-const ApTableName = ({
-  tableName,
-  isEditingTableName,
-  setIsEditingTableName,
-}: ApTableNameProps) => {
-  const renameTable = useTableState((state) => state.renameTable);
-  const tableId = useTableState((state) => state.table?.id);
+const ApTableName = ({ tableName, isEditingTableName, setIsEditingTableName }: ApTableNameProps) => {
+  const renameTable = useTableState((state) => state.renameTable)
+  const tableId = useTableState((state) => state.table?.id)
   const { mutate: updateTable } = useMutation({
-    mutationFn: (newName: string) =>
-      tablesApi.update(tableId, { name: newName }),
+    mutationFn: (newName: string) => tablesApi.update(tableId, { name: newName }),
     onSuccess: () => {},
-  });
+  })
 
-  const isReadOnly = !useAuthorization().checkAccess(Permission.WRITE_TABLE);
+  const isReadOnly = !useAuthorization().checkAccess(Permission.WRITE_TABLE)
 
   return (
     <div
       onClick={() => {
         if (!isReadOnly && !isEditingTableName) {
-          setIsEditingTableName(true);
+          setIsEditingTableName(true)
         }
       }}
       className={cn('flex items-center gap-2')}
@@ -45,17 +40,17 @@ const ApTableName = ({
         value={tableName}
         readonly={isReadOnly}
         onValueChange={(newName) => {
-          renameTable(newName);
-          updateTable(newName);
+          renameTable(newName)
+          updateTable(newName)
         }}
         isEditing={isEditingTableName}
         setIsEditing={setIsEditingTableName}
       />
       {!isReadOnly && !isEditingTableName && <Pencil className="w-4 h-4" />}
     </div>
-  );
-};
+  )
+}
 
-ApTableName.displayName = 'ApTableName';
+ApTableName.displayName = 'ApTableName'
 
-export default ApTableName;
+export default ApTableName

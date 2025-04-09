@@ -1,12 +1,9 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { endpoint, kizeoFormsCommon } from '../common';
-import { kizeoFormsAuth } from '../..';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { kizeoFormsAuth } from '../..'
+import { endpoint, kizeoFormsCommon } from '../common'
 
 export const getAllListItems = createAction({
   auth: kizeoFormsAuth,
@@ -44,30 +41,27 @@ export const getAllListItems = createAction({
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
       limit: z.number().min(1).optional(),
-    });
-    const { listId, search, offset, limit, sort, direction } =
-      context.propsValue;
+    })
+    const { listId, search, offset, limit, sort, direction } = context.propsValue
 
-    let parameters = '';
-    if (search) parameters += `search=${search}&`;
-    if (offset) parameters += `offset=${offset}&`;
-    if (limit) parameters += `limit=${limit}&`;
-    if (sort) parameters += `sort=${sort}&`;
-    if (direction) parameters += `direction=${direction}&`;
+    let parameters = ''
+    if (search) parameters += `search=${search}&`
+    if (offset) parameters += `offset=${offset}&`
+    if (limit) parameters += `limit=${limit}&`
+    if (sort) parameters += `sort=${sort}&`
+    if (direction) parameters += `direction=${direction}&`
 
     const response = await httpClient.sendRequest<{ data: unknown }>({
       method: HttpMethod.GET,
-      url:
-        endpoint +
-        `public/v4/lists/${listId}/items?${parameters}used-with-activepieces=`,
+      url: endpoint + `public/v4/lists/${listId}/items?${parameters}used-with-activepieces=`,
       headers: {
         'Content-Type': 'application/json',
         Authorization: context.auth,
       },
-    });
+    })
     if (response.status === 200) {
-      return response.body;
+      return response.body
     }
-    return [];
+    return []
   },
-});
+})

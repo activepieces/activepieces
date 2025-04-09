@@ -1,28 +1,24 @@
-import {
-  OAuth2PropertyValue,
-  PieceAuth,
-  createPiece,
-} from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework'
 
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
-import { addPermission } from './lib/action/add-permission.action';
-import { googleDriveCreateNewFolder } from './lib/action/create-new-folder';
-import { googleDriveCreateNewTextFile } from './lib/action/create-new-text-file';
-import { deletePermission } from './lib/action/delete-permission.action';
-import { duplicateFileAction } from './lib/action/duplicate-file.action';
-import { googleDriveGetResourceById } from './lib/action/get-file-by-id';
-import { googleDriveListFiles } from './lib/action/list-files.action';
-import { readFile } from './lib/action/read-file';
-import { saveFileAsPdf } from './lib/action/save-file-as-pdf.action';
-import { googleDriveSearchFolder } from './lib/action/search-folder-or-file.action';
-import { googleDriveUploadFile } from './lib/action/upload-file';
-import { newFile } from './lib/triggers/new-file';
-import { newFolder } from './lib/triggers/new-folder';
-import { setPublicAccess } from './lib/action/set-public-access';
-import { moveFileAction } from './lib/action/move-file';
-import { googleDriveDeleteFile } from './lib/action/delete-file';
-import { googleDriveTrashFile } from './lib/action/send-to-trash';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceCategory } from '@activepieces/shared'
+import { addPermission } from './lib/action/add-permission.action'
+import { googleDriveCreateNewFolder } from './lib/action/create-new-folder'
+import { googleDriveCreateNewTextFile } from './lib/action/create-new-text-file'
+import { googleDriveDeleteFile } from './lib/action/delete-file'
+import { deletePermission } from './lib/action/delete-permission.action'
+import { duplicateFileAction } from './lib/action/duplicate-file.action'
+import { googleDriveGetResourceById } from './lib/action/get-file-by-id'
+import { googleDriveListFiles } from './lib/action/list-files.action'
+import { moveFileAction } from './lib/action/move-file'
+import { readFile } from './lib/action/read-file'
+import { saveFileAsPdf } from './lib/action/save-file-as-pdf.action'
+import { googleDriveSearchFolder } from './lib/action/search-folder-or-file.action'
+import { googleDriveTrashFile } from './lib/action/send-to-trash'
+import { setPublicAccess } from './lib/action/set-public-access'
+import { googleDriveUploadFile } from './lib/action/upload-file'
+import { newFile } from './lib/triggers/new-file'
+import { newFolder } from './lib/triggers/new-folder'
 
 export const googleDriveAuth = PieceAuth.OAuth2({
   description: '',
@@ -30,7 +26,7 @@ export const googleDriveAuth = PieceAuth.OAuth2({
   tokenUrl: 'https://oauth2.googleapis.com/token',
   required: true,
   scope: ['https://www.googleapis.com/auth/drive'],
-});
+})
 
 export const googleDrive = createPiece({
   minimumSupportedRelease: '0.5.6',
@@ -77,4 +73,4 @@ export const googleDrive = createPiece({
     }),
   ],
   auth: googleDriveAuth,
-});
+})

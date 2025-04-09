@@ -1,13 +1,13 @@
-import { BetaBadge } from '@/components/custom/beta-badge';
+import { BetaBadge } from '@/components/custom/beta-badge'
 
 export const TableTitle = ({
   children,
   description,
   beta = false,
 }: {
-  children: React.ReactNode;
-  description?: React.ReactNode;
-  beta?: boolean;
+  children: React.ReactNode
+  description?: React.ReactNode
+  beta?: boolean
 }) => {
   return (
     <div className="flex items-center justify-between mb-4">
@@ -20,11 +20,9 @@ export const TableTitle = ({
             </div>
           )}
         </div>
-        {description && (
-          <span className="text-md text-muted-foreground">{description}</span>
-        )}
+        {description && <span className="text-md text-muted-foreground">{description}</span>}
       </div>
     </div>
-  );
-};
-TableTitle.displayName = 'TableTitle';
+  )
+}
+TableTitle.displayName = 'TableTitle'

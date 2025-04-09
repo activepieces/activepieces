@@ -1,8 +1,8 @@
-import { asanaCommon, callAsanaApi, getTags } from '../common';
-import { getAccessTokenOrThrow, HttpMethod } from '@activepieces/pieces-common';
-import dayjs from 'dayjs';
-import { asanaAuth } from '../../';
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { asanaAuth } from '../../'
+import { asanaCommon, callAsanaApi, getTags } from '../common'
 
 export const asanaCreateTaskAction = createAction({
   auth: asanaAuth,
@@ -18,8 +18,7 @@ export const asanaCreateTaskAction = createAction({
       required: true,
     }),
     notes: Property.LongText({
-      description:
-        'Free-form textual information associated with the task (i.e. its description).',
+      description: 'Free-form textual information associated with the task (i.e. its description).',
       displayName: 'Task Description',
       required: true,
     }),
@@ -33,50 +32,39 @@ export const asanaCreateTaskAction = createAction({
     assignee: asanaCommon.assignee,
   },
   async run(configValue) {
-    const { auth } = configValue;
-    const { project, name, notes, tags, workspace, due_on, assignee } =
-      configValue.propsValue;
+    const { auth } = configValue
+    const { project, name, notes, tags, workspace, due_on, assignee } = configValue.propsValue
 
-    const convertedDueAt = due_on ? dayjs(due_on).toISOString() : undefined;
+    const convertedDueAt = due_on ? dayjs(due_on).toISOString() : undefined
 
     // User can provide tags name as dynamic value, we need to convert them to tags gids
-    const userTags = tags ?? [];
-    const convertedTags = await getTags(auth.access_token, workspace);
+    const userTags = tags ?? []
+    const convertedTags = await getTags(auth.access_token, workspace)
     const tagsGids = userTags
       .map((tag: string) => {
-        const foundTagById = convertedTags.find(
-          (convertedTag) => convertedTag.gid === tag
-        );
+        const foundTagById = convertedTags.find((convertedTag) => convertedTag.gid === tag)
         if (foundTagById) {
-          return foundTagById.gid;
+          return foundTagById.gid
         }
-        const foundTag = convertedTags.find(
-          (convertedTag) =>
-            convertedTag.name?.toLowerCase() === tag.toLowerCase()
-        );
+        const foundTag = convertedTags.find((convertedTag) => convertedTag.name?.toLowerCase() === tag.toLowerCase())
         if (foundTag) {
-          return foundTag.gid;
+          return foundTag.gid
         }
-        return null;
+        return null
       })
-      .filter((tag) => tag !== null);
+      .filter((tag) => tag !== null)
 
     return (
-      await callAsanaApi(
-        HttpMethod.POST,
-        `tasks`,
-        getAccessTokenOrThrow(auth),
-        {
-          data: {
-            name,
-            projects: [project],
-            notes,
-            assignee,
-            due_at: convertedDueAt,
-            tags: tagsGids,
-          },
-        }
-      )
-    ).body['data'];
+      await callAsanaApi(HttpMethod.POST, `tasks`, getAccessTokenOrThrow(auth), {
+        data: {
+          name,
+          projects: [project],
+          notes,
+          assignee,
+          due_at: convertedDueAt,
+          tags: tagsGids,
+        },
+      })
+    ).body['data']
   },
-});
+})

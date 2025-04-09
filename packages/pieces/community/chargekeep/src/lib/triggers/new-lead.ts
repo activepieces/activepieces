@@ -1,6 +1,6 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { chargekeepAuth } from '../..';
-import { chargekeepCommon } from '../common/common';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { chargekeepAuth } from '../..'
+import { chargekeepCommon } from '../common/common'
 
 export const newLead = createTrigger({
   auth: chargekeepAuth,
@@ -202,33 +202,27 @@ export const newLead = createTrigger({
       'LeadCreated',
       context.auth.base_url,
       context.auth.api_key,
-      context.webhookUrl
-    );
+      context.webhookUrl,
+    )
 
     await context.store?.put<WebhookInformation>('_new_lead_trigger', {
       webhookId: webhookId,
-    });
+    })
   },
 
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_new_lead_trigger'
-    );
+    const response = await context.store?.get<WebhookInformation>('_new_lead_trigger')
 
     if (response !== null && response !== undefined) {
-      await chargekeepCommon.unsubscribeWebhook(
-        context.auth.base_url,
-        context.auth.api_key,
-        response.webhookId
-      );
+      await chargekeepCommon.unsubscribeWebhook(context.auth.base_url, context.auth.api_key, response.webhookId)
     }
   },
 
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
-});
+})
 
 interface WebhookInformation {
-  webhookId: number;
+  webhookId: number
 }

@@ -1,86 +1,48 @@
-import { Node, useKeyPress, useReactFlow } from '@xyflow/react';
-import { t } from 'i18next';
-import {
-  Fullscreen,
-  Hand,
-  Minus,
-  MousePointer,
-  Plus,
-  RotateCw,
-} from 'lucide-react';
-import { useCallback, useEffect } from 'react';
+import { Node, useKeyPress, useReactFlow } from '@xyflow/react'
+import { t } from 'i18next'
+import { Fullscreen, Hand, Minus, MousePointer, Plus, RotateCw } from 'lucide-react'
+import { useCallback, useEffect } from 'react'
 
-import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 
-import { useBuilderStateContext } from '../builder-hooks';
+import { useBuilderStateContext } from '../builder-hooks'
 
-import { flowUtilConsts } from './utils/consts';
-import { flowCanvasUtils } from './utils/flow-canvas-utils';
-import { ApNode } from './utils/types';
-const verticalPaddingOnFitView = 100;
-const duration = 500;
+import { flowUtilConsts } from './utils/consts'
+import { flowCanvasUtils } from './utils/flow-canvas-utils'
+import { ApNode } from './utils/types'
+const verticalPaddingOnFitView = 100
+const duration = 500
 // Calculate the node's position in relation to the canvas
-const calculateNodePositionInCanvas = (
-  canvasWidth: number,
-  node: Node,
-  zoom: number,
-) => ({
-  x:
-    node.position.x +
-    canvasWidth / 2 -
-    (flowUtilConsts.AP_NODE_SIZE.STEP.width * zoom) / 2,
-  y:
-    node.position.y +
-    flowUtilConsts.AP_NODE_SIZE.GRAPH_END_WIDGET.height +
-    verticalPaddingOnFitView * zoom,
-});
+const calculateNodePositionInCanvas = (canvasWidth: number, node: Node, zoom: number) => ({
+  x: node.position.x + canvasWidth / 2 - (flowUtilConsts.AP_NODE_SIZE.STEP.width * zoom) / 2,
+  y: node.position.y + flowUtilConsts.AP_NODE_SIZE.GRAPH_END_WIDGET.height + verticalPaddingOnFitView * zoom,
+})
 
 // Check if the node is out of view
-const isNodeOutOfView = (
-  nodePosition: { x: number; y: number },
-  canvas: { width: number; height: number },
-) =>
-  nodePosition.y > canvas.height ||
-  nodePosition.x > canvas.width ||
-  nodePosition.x < 0;
+const isNodeOutOfView = (nodePosition: { x: number; y: number }, canvas: { width: number; height: number }) =>
+  nodePosition.y > canvas.height || nodePosition.x > canvas.width || nodePosition.x < 0
 
-const calculateViewportDelta = (
-  nodePosition: { x: number; y: number },
-  canvas: { width: number; height: number },
-) => ({
+const calculateViewportDelta = (nodePosition: { x: number; y: number }, canvas: { width: number; height: number }) => ({
   x:
     nodePosition.x > canvas.width
-      ? -1 *
-        (nodePosition.x -
-          canvas.width +
-          flowUtilConsts.AP_NODE_SIZE.STEP.width * 2)
+      ? -1 * (nodePosition.x - canvas.width + flowUtilConsts.AP_NODE_SIZE.STEP.width * 2)
       : nodePosition.x < 0
-      ? -1 * nodePosition.x
-      : 0,
-  y:
-    nodePosition.y > canvas.height
-      ? nodePosition.y - canvas.height + flowUtilConsts.AP_NODE_SIZE.STEP.height
-      : 0,
-});
+        ? -1 * nodePosition.x
+        : 0,
+  y: nodePosition.y > canvas.height ? nodePosition.y - canvas.height + flowUtilConsts.AP_NODE_SIZE.STEP.height : 0,
+})
 
 const PanningModeIndicator = ({ toggled }: { toggled: boolean }) => {
   return (
     <div
-      className={cn(
-        'absolute transition-all bg-primary/15 w-full h-full top-0 left-0',
-        {
-          'opacity-0': !toggled,
-        },
-      )}
+      className={cn('absolute transition-all bg-primary/15 w-full h-full top-0 left-0', {
+        'opacity-0': !toggled,
+      })}
     ></div>
-  );
-};
+  )
+}
 
 const CanvasControls = ({
   canvasWidth,
@@ -88,114 +50,93 @@ const CanvasControls = ({
   hasCanvasBeenInitialised,
   selectedStep,
 }: {
-  canvasWidth: number;
-  canvasHeight: number;
-  hasCanvasBeenInitialised: boolean;
-  selectedStep: string | null;
+  canvasWidth: number
+  canvasHeight: number
+  hasCanvasBeenInitialised: boolean
+  selectedStep: string | null
 }) => {
-  const {
-    zoomIn,
-    zoomOut,
-    zoomTo,
-    setViewport,
-    getNodes,
-    getNode,
-    getViewport,
-  } = useReactFlow();
+  const { zoomIn, zoomOut, zoomTo, setViewport, getNodes, getNode, getViewport } = useReactFlow()
   const handleZoomIn = useCallback(() => {
     zoomIn({
       duration,
-    });
-  }, [zoomIn]);
+    })
+  }, [zoomIn])
 
   const handleZoomOut = useCallback(() => {
     zoomOut({
       duration,
-    });
-  }, [zoomOut]);
+    })
+  }, [zoomOut])
 
   const handleZoomReset = useCallback(() => {
-    zoomTo(1, { duration });
-  }, [zoomTo]);
+    zoomTo(1, { duration })
+  }, [zoomTo])
 
   const handleFitToView = useCallback(
     (isInitialRenderCall: boolean) => {
-      const nodes = getNodes();
-      if (nodes.length === 0) return;
+      const nodes = getNodes()
+      if (nodes.length === 0) return
       const graphHeight = flowCanvasUtils.calculateGraphBoundingBox({
         nodes: nodes as ApNode[],
         edges: [],
-      }).height;
-      const zoomRatio = Math.min(
-        Math.max(canvasHeight / graphHeight, 0.9),
-        1.25,
-      );
+      }).height
+      const zoomRatio = Math.min(Math.max(canvasHeight / graphHeight, 0.9), 1.25)
 
       setViewport(
         {
-          x:
-            canvasWidth / 2 -
-            (flowUtilConsts.AP_NODE_SIZE.STEP.width * zoomRatio) / 2,
+          x: canvasWidth / 2 - (flowUtilConsts.AP_NODE_SIZE.STEP.width * zoomRatio) / 2,
           y: nodes[0].position.y + verticalPaddingOnFitView * zoomRatio,
           zoom: zoomRatio,
         },
         {
           duration: isInitialRenderCall ? 0 : duration,
         },
-      );
+      )
     },
     [getNodes, canvasHeight, setViewport, canvasWidth],
-  );
+  )
 
   useEffect(() => {
-    if (!hasCanvasBeenInitialised) return;
+    if (!hasCanvasBeenInitialised) return
 
-    handleFitToView(true);
+    handleFitToView(true)
 
     if (selectedStep) {
-      adjustViewportForSelectedStep(selectedStep);
+      adjustViewportForSelectedStep(selectedStep)
     }
-  }, [hasCanvasBeenInitialised]);
+  }, [hasCanvasBeenInitialised])
 
   // Helper function to adjust the viewport for the selected step
   const adjustViewportForSelectedStep = (stepId: string) => {
-    const node = getNode(stepId);
-    if (!node) return;
+    const node = getNode(stepId)
+    if (!node) return
 
-    const viewport = getViewport();
+    const viewport = getViewport()
 
     const canvas = {
       height: canvasHeight / viewport.zoom,
       width: canvasWidth / viewport.zoom,
-    };
+    }
 
-    const nodePositionInRelationToCanvas = calculateNodePositionInCanvas(
-      canvasWidth,
-      node,
-      viewport.zoom,
-    );
+    const nodePositionInRelationToCanvas = calculateNodePositionInCanvas(canvasWidth, node, viewport.zoom)
 
     if (isNodeOutOfView(nodePositionInRelationToCanvas, canvas)) {
-      const delta = calculateViewportDelta(
-        nodePositionInRelationToCanvas,
-        canvas,
-      );
+      const delta = calculateViewportDelta(nodePositionInRelationToCanvas, canvas)
 
       setViewport({
         x: viewport.x + delta.x,
         y: viewport.y - delta.y - flowUtilConsts.AP_NODE_SIZE.STEP.height,
         zoom: viewport.zoom,
-      });
+      })
     }
-  };
+  }
 
   const [setPanningMode, panningMode] = useBuilderStateContext((state) => {
-    return [state.setPanningMode, state.panningMode];
-  });
-  const spacePressed = useKeyPress('Space');
-  const shiftPressed = useKeyPress('Shift');
-  const isInGrabMode =
-    (spacePressed || panningMode === 'grab') && !shiftPressed;
+    return [state.setPanningMode, state.panningMode]
+  })
+  const spacePressed = useKeyPress('Space')
+  const shiftPressed = useKeyPress('Shift')
+  const isInGrabMode = (spacePressed || panningMode === 'grab') && !shiftPressed
 
   return (
     <>
@@ -207,7 +148,7 @@ const CanvasControls = ({
               size="sm"
               onClick={() => {
                 if (!spacePressed) {
-                  setPanningMode('pan');
+                  setPanningMode('pan')
                 }
               }}
               className="relative focus:outline-0"
@@ -226,7 +167,7 @@ const CanvasControls = ({
               size="sm"
               onClick={() => {
                 if (!spacePressed) {
-                  setPanningMode('grab');
+                  setPanningMode('grab')
                 }
               }}
               className="relative focus:outline-0"
@@ -269,11 +210,7 @@ const CanvasControls = ({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => handleFitToView(false)}
-            >
+            <Button variant="secondary" size="sm" onClick={() => handleFitToView(false)}>
               <Fullscreen className="w-5 h-5" />
             </Button>
           </TooltipTrigger>
@@ -281,7 +218,7 @@ const CanvasControls = ({
         </Tooltip>
       </div>
     </>
-  );
-};
+  )
+}
 
-export { CanvasControls };
+export { CanvasControls }

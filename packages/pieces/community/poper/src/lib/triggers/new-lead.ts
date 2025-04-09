@@ -1,8 +1,4 @@
-import {
-  createTrigger,
-  TriggerStrategy,
-  Property,
-} from '@activepieces/pieces-framework';
+import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
 
 const message = `
 1. Log in to your [Poper Account](https://app.poper.ai/).
@@ -12,7 +8,7 @@ const message = `
   \`\`\`text
   {{webhookUrl}}
   \`\`\`
-`;
+`
 
 export const newLead = createTrigger({
   name: 'newLead',
@@ -32,6 +28,6 @@ export const newLead = createTrigger({
     // ignore
   },
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
-});
+})

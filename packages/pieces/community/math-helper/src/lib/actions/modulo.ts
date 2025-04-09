@@ -1,8 +1,4 @@
-import {
-  createAction,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
+import { PieceAuth, Property, createAction } from '@activepieces/pieces-framework'
 
 export const modulo = createAction({
   name: 'modulo_math',
@@ -30,8 +26,6 @@ export const modulo = createAction({
     }),
   },
   async run(context) {
-    return (
-      context.propsValue['first_number'] % context.propsValue['second_number']
-    );
+    return context.propsValue['first_number'] % context.propsValue['second_number']
   },
-});
+})

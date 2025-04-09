@@ -1,7 +1,7 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { wedofCommon } from '../../common/wedof';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { wedofAuth } from '../../..'
+import { wedofCommon } from '../../common/wedof'
 
 export const declareCertificationFolderFailed = createAction({
   auth: wedofAuth,
@@ -11,8 +11,7 @@ export const declareCertificationFolderFailed = createAction({
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de certification',
-      description:
-        'Sélectionner la propriété {externalId} du dossier de certification',
+      description: 'Sélectionner la propriété {externalId} du dossier de certification',
       required: true,
     }),
     detailedResult: Property.ShortText({
@@ -31,22 +30,18 @@ export const declareCertificationFolderFailed = createAction({
       detailedResult: context.propsValue.detailedResult,
       europeanLanguageLevel: context.propsValue.europeanLanguageLevel,
       comment: context.propsValue.comment,
-    };
+    }
 
     return (
       await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url:
-          wedofCommon.baseUrl +
-          '/certificationFolders/' +
-          context.propsValue.externalId +
-          '/fail',
+        url: wedofCommon.baseUrl + '/certificationFolders/' + context.propsValue.externalId + '/fail',
         body: message,
         headers: {
           'Content-Type': 'application/json',
           'X-Api-Key': context.auth as string,
         },
       })
-    ).body;
+    ).body
   },
-});
+})

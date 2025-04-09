@@ -1,12 +1,13 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { trueLayerCommon } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { trueLayerCommon } from '../../common'
 
 export const getPayment = createAction({
   auth: trueLayerCommon.auth,
   name: 'get-payment',
   displayName: 'Get Payment',
-  description: 'Returns payment details. This API can be called using either the `resource_token` associated with the payment or a backend bearer token.',
+  description:
+    'Returns payment details. This API can be called using either the `resource_token` associated with the payment or a backend bearer token.',
   props: {
     id: Property.ShortText({
       displayName: 'Payment ID',
@@ -15,7 +16,7 @@ export const getPayment = createAction({
     }),
   },
   run: async (ctx) => {
-    const response = await  httpClient.sendRequest({
+    const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${trueLayerCommon.baseUrl}/v3/payments/${ctx.propsValue.id}`,
       headers: {
@@ -23,6 +24,6 @@ export const getPayment = createAction({
       },
     })
 
-    return response.body;
+    return response.body
   },
-});
+})

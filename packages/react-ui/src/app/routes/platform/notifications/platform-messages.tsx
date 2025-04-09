@@ -1,8 +1,8 @@
-import { notificationHooks } from './hooks/notifictions-hooks';
-import PlatformAlert from './platform-alert';
+import { notificationHooks } from './hooks/notifictions-hooks'
+import PlatformAlert from './platform-alert'
 
 export const PlatformMessages = () => {
-  const messages = notificationHooks.useNotifications();
+  const messages = notificationHooks.useNotifications()
 
   return (
     <div className="space-y-4">
@@ -17,5 +17,5 @@ export const PlatformMessages = () => {
         />
       ))}
     </div>
-  );
-};
+  )
+}

@@ -1,16 +1,10 @@
-import {
-  AuthenticationType,
-  HttpMessageBody,
-  HttpMethod,
-  HttpResponse,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMessageBody, HttpMethod, HttpResponse, httpClient } from '@activepieces/pieces-common'
 
 export async function calltidycalapi<T extends HttpMessageBody>(
   method: HttpMethod,
   apiUrl: string,
   accessToken: string,
-  body: any | undefined
+  body: any | undefined,
 ): Promise<HttpResponse<T>> {
   return await httpClient.sendRequest<T>({
     method: method,
@@ -20,5 +14,5 @@ export async function calltidycalapi<T extends HttpMessageBody>(
       token: accessToken,
     },
     body: body,
-  });
+  })
 }

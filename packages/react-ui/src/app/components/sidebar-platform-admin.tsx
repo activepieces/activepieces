@@ -1,32 +1,29 @@
-import { t } from 'i18next';
-import { LogOut, Shield } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { t } from 'i18next'
+import { LogOut, Shield } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
 
-import { useEmbedding } from '@/components/embed-provider';
-import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
-import { userHooks } from '@/hooks/user-hooks';
-import { cn } from '@/lib/utils';
-import { PlatformRole } from '@activepieces/shared';
+import { useEmbedding } from '@/components/embed-provider'
+import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks'
+import { userHooks } from '@/hooks/user-hooks'
+import { cn } from '@/lib/utils'
+import { PlatformRole } from '@activepieces/shared'
 
-import { notificationHooks } from '../routes/platform/notifications/hooks/notifictions-hooks';
+import { notificationHooks } from '../routes/platform/notifications/hooks/notifictions-hooks'
 
 export function SidebarPlatformAdminButton() {
-  const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
-  const { embedState } = useEmbedding();
-  const location = useLocation();
-  const isInPlatformAdmin = location.pathname.startsWith('/platform');
-  const messages = notificationHooks.useNotifications();
-  const platformRole = userHooks.getCurrentUserPlatformRole();
+  const showPlatformAdminDashboard = useShowPlatformAdminDashboard()
+  const { embedState } = useEmbedding()
+  const location = useLocation()
+  const isInPlatformAdmin = location.pathname.startsWith('/platform')
+  const messages = notificationHooks.useNotifications()
+  const platformRole = userHooks.getCurrentUserPlatformRole()
 
   if (embedState.isEmbedded || !showPlatformAdminDashboard) {
-    return null;
+    return null
   }
 
   return (
-    <Link
-      to={isInPlatformAdmin ? '/' : '/platform'}
-      className="w-full flex items-center gap-2 relative"
-    >
+    <Link to={isInPlatformAdmin ? '/' : '/platform'} className="w-full flex items-center gap-2 relative">
       <div
         className={cn(
           'w-full relative flex items-center gap-1 justify-between hover:bg-accent rounded-lg transition-colors',
@@ -46,12 +43,10 @@ export function SidebarPlatformAdminButton() {
             </>
           )}
         </div>
-        {messages.length > 0 &&
-          !isInPlatformAdmin &&
-          platformRole === PlatformRole.ADMIN && (
-            <span className="bg-primary absolute right-3 top-1/2 transform -translate-y-1/2 size-2 rounded-full"></span>
-          )}
+        {messages.length > 0 && !isInPlatformAdmin && platformRole === PlatformRole.ADMIN && (
+          <span className="bg-primary absolute right-3 top-1/2 transform -translate-y-1/2 size-2 rounded-full"></span>
+        )}
       </div>
     </Link>
-  );
+  )
 }

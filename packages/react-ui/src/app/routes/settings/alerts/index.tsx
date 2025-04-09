@@ -1,5 +1,5 @@
-import AlertsEmailsCard from '@/app/routes/settings/alerts/alerts-email-list-card';
-import { AlertFrequencyCard } from '@/app/routes/settings/alerts/alerts-frequency-card';
+import AlertsEmailsCard from '@/app/routes/settings/alerts/alerts-email-list-card'
+import { AlertFrequencyCard } from '@/app/routes/settings/alerts/alerts-frequency-card'
 
 export default function AlertsPage() {
   return (
@@ -7,5 +7,5 @@ export default function AlertsPage() {
       <AlertFrequencyCard />
       <AlertsEmailsCard />
     </div>
-  );
+  )
 }

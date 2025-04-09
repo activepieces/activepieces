@@ -1,7 +1,7 @@
-import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
-import { CreateRecordsRequest } from '@activepieces/shared';
-import { tablesCommon } from '../common';
+import { AuthenticationType, HttpMethod, httpClient, propsValidation } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createAction } from '@activepieces/pieces-framework'
+import { CreateRecordsRequest } from '@activepieces/shared'
+import { tablesCommon } from '../common'
 
 export const createRecords = createAction({
   name: 'tables-create-records',
@@ -16,14 +16,14 @@ export const createRecords = createAction({
       required: true,
       refreshers: ['table_id'],
       props: async ({ table_id }, context) => {
-        const tableId = table_id as unknown as string;
+        const tableId = table_id as unknown as string
         if ((tableId ?? '').toString().length === 0) {
-          return {};
+          return {}
         }
 
-        const fields = await tablesCommon.createFieldProperties({ tableId, context });
+        const fields = await tablesCommon.createFieldProperties({ tableId, context })
         if ('markdown' in fields) {
-          return fields;
+          return fields
         }
 
         return {
@@ -33,12 +33,12 @@ export const createRecords = createAction({
             required: true,
             properties: fields,
           }),
-        };
+        }
       },
     }),
   },
   async run(context) {
-    const { table_id: tableId, values } = context.propsValue;
+    const { table_id: tableId, values } = context.propsValue
 
     const records: CreateRecordsRequest['records'] = values['values'].map((record: Record<string, unknown>) =>
       Object.entries(record)
@@ -46,14 +46,16 @@ export const createRecords = createAction({
         .map(([fieldId, value]) => ({
           fieldId,
           value,
-        }))
+        })),
     )
-    const tableFields = await tablesCommon.getTableFields({ tableId, context });
-    const fieldValidations = tablesCommon.createFieldValidations(tableFields);
+    const tableFields = await tablesCommon.getTableFields({ tableId, context })
+    const fieldValidations = tablesCommon.createFieldValidations(tableFields)
 
     for (const record of values['values']) {
-      const cleanedRecord = Object.fromEntries(Object.entries(record).filter(([_, value]) => value !== null && value !== undefined && value !== ''));
-      await propsValidation.validateZod(cleanedRecord, fieldValidations);
+      const cleanedRecord = Object.fromEntries(
+        Object.entries(record).filter(([_, value]) => value !== null && value !== undefined && value !== ''),
+      )
+      await propsValidation.validateZod(cleanedRecord, fieldValidations)
     }
 
     const response = await httpClient.sendRequest({
@@ -67,8 +69,8 @@ export const createRecords = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,
       },
-    });
+    })
 
-    return response.body.map(tablesCommon.formatRecord);
+    return response.body.map(tablesCommon.formatRecord)
   },
-});
+})

@@ -1,24 +1,16 @@
-import { perplexityAiAuth } from '../../';
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { perplexityAiAuth } from '../../'
 
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
 
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { z } from 'zod'
 
 export const createChatCompletionAction = createAction({
   auth: perplexityAiAuth,
   name: 'ask-ai',
   displayName: 'Ask AI',
-  description:
-    'Enables users to generate prompt completion based on a specified model.',
+  description: 'Enables users to generate prompt completion based on a specified model.',
   props: {
     model: Property.StaticDropdown({
       displayName: 'Model',
@@ -28,21 +20,21 @@ export const createChatCompletionAction = createAction({
         options: [
           // https://docs.perplexity.ai/guides/model-cards
           {
-            label:'sonar-reasoning-pro',
-            value:'sonar-reasoning-pro'
+            label: 'sonar-reasoning-pro',
+            value: 'sonar-reasoning-pro',
           },
           {
-            label:'sonar-reasoning',
-            value:'sonar-reasoning'
+            label: 'sonar-reasoning',
+            value: 'sonar-reasoning',
           },
           {
-            label:'sonar-pro',
-            value:'sonar-pro'
+            label: 'sonar-pro',
+            value: 'sonar-pro',
           },
           {
-            label:'sonar',
-            value:'sonar'
-          }
+            label: 'sonar',
+            value: 'sonar',
+          },
         ],
       },
     }),
@@ -88,34 +80,28 @@ export const createChatCompletionAction = createAction({
       required: false,
       description:
         'Array of roles to specify more accurate response.After the (optional) system message, user and assistant roles should alternate with user then assistant, ending in user.',
-      defaultValue: [
-        { role: 'system', content: 'You are a helpful assistant.' },
-      ],
+      defaultValue: [{ role: 'system', content: 'You are a helpful assistant.' }],
     }),
   },
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
       temperature: z.number().min(0).max(2).optional(),
-    });
+    })
 
-    const rolesArray = context.propsValue.roles
-      ? (context.propsValue.roles as any)
-      : [];
+    const rolesArray = context.propsValue.roles ? (context.propsValue.roles as any) : []
     const roles = rolesArray.map((item: any) => {
-      const rolesEnum = ['system', 'user', 'assistant'];
+      const rolesEnum = ['system', 'user', 'assistant']
       if (!rolesEnum.includes(item.role)) {
-        throw new Error(
-          'The only available roles are: [system, user, assistant]'
-        );
+        throw new Error('The only available roles are: [system, user, assistant]')
       }
 
       return {
         role: item.role,
         content: item.content,
-      };
-    });
+      }
+    })
 
-    roles.push({ role: 'user', content: context.propsValue.prompt });
+    roles.push({ role: 'user', content: context.propsValue.prompt })
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -135,16 +121,15 @@ export const createChatCompletionAction = createAction({
         presence_penalty: context.propsValue.presence_penalty,
         frequency_penalty: context.propsValue.frequency_penalty,
       },
-    });
+    })
 
     if (response.status === 200) {
-     
       return {
-        result:response.body.choices[0].message.content,
-        citations:response.body.citations
+        result: response.body.choices[0].message.content,
+        citations: response.body.citations,
       }
     }
 
-    return response.body;
+    return response.body
   },
-});
+})

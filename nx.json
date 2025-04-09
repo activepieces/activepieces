@@ -7,7 +7,7 @@
       "cache": true
     },
     "lint": {
-      "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
+      "inputs": ["default", "{workspaceRoot}/.eslintrc.json", "{workspaceRoot}/biome.json"],
       "cache": true
     },
     "test": {
@@ -36,6 +36,10 @@
       "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
       "cache": true
     },
+    "biome": {
+      "cache": true,
+      "inputs": ["default", "{workspaceRoot}/biome.json"]
+    },
     "@nx/angular:ng-packagr-lite": {
       "cache": true,
       "dependsOn": ["^build"],
@@ -52,6 +56,7 @@
     "production": [
       "default",
       "!{projectRoot}/.eslintrc.json",
+      "!{projectRoot}/biome.json",
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
       "!{projectRoot}/tsconfig.spec.json",
       "!{projectRoot}/jest.config.[jt]s",

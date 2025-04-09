@@ -1,8 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
-import { figmaCommon } from '../common';
-import { figmaGetRequest } from '../common/utils';
-import { figmaAuth } from '../../';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { assertNotNullOrUndefined } from '@activepieces/shared'
+import { figmaAuth } from '../../'
+import { figmaCommon } from '../common'
+import { figmaGetRequest } from '../common/utils'
 
 export const getCommentsAction = createAction({
   auth: figmaAuth,
@@ -17,17 +17,14 @@ export const getCommentsAction = createAction({
     }),
   },
   async run(context) {
-    const token = context.auth.access_token;
-    const fileKey = context.propsValue.file_key;
+    const token = context.auth.access_token
+    const fileKey = context.propsValue.file_key
 
-    assertNotNullOrUndefined(token, 'token');
-    assertNotNullOrUndefined(fileKey, 'file_key');
+    assertNotNullOrUndefined(token, 'token')
+    assertNotNullOrUndefined(fileKey, 'file_key')
 
-    const url = `${figmaCommon.baseUrl}/${figmaCommon.comments}`.replace(
-      ':file_key',
-      fileKey
-    );
+    const url = `${figmaCommon.baseUrl}/${figmaCommon.comments}`.replace(':file_key', fileKey)
 
-    return figmaGetRequest({ token, url });
+    return figmaGetRequest({ token, url })
   },
-});
+})

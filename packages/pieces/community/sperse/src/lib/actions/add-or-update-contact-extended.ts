@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { sperseAuth } from '../..';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { sperseAuth } from '../..'
 
 export const addOrUpdateContactExtended = createAction({
   name: 'addOrUpdateContactExtended',
@@ -10,8 +10,7 @@ export const addOrUpdateContactExtended = createAction({
   props: {
     matchExisting: Property.StaticDropdown({
       displayName: 'Match Existing Contact',
-      description:
-        'If "Yes", will try to find an existing record using Email and Full Name and update it.',
+      description: 'If "Yes", will try to find an existing record using Email and Full Name and update it.',
       required: false,
       defaultValue: true,
       options: {
@@ -50,8 +49,7 @@ export const addOrUpdateContactExtended = createAction({
     }),
     ignoreInvalidValues: Property.StaticDropdown({
       displayName: 'Ignore Invalid Values',
-      description:
-        'If "Yes", will save the record even if there are some validation errors.',
+      description: 'If "Yes", will save the record even if there are some validation errors.',
       required: false,
       defaultValue: true,
       options: {
@@ -105,8 +103,7 @@ export const addOrUpdateContactExtended = createAction({
     // user info
     createUser: Property.StaticDropdown({
       displayName: 'Create User',
-      description:
-        'If "Yes" then User will be created. Personal email will be used as User Name.',
+      description: 'If "Yes" then User will be created. Personal email will be used as User Name.',
       required: false,
       defaultValue: true,
       options: {
@@ -125,8 +122,7 @@ export const addOrUpdateContactExtended = createAction({
     }),
     sendWelcomeEmail: Property.StaticDropdown({
       displayName: 'Send Welcome Email',
-      description:
-        'If "Yes" then Welcome Email will be sent to the newly created user.',
+      description: 'If "Yes" then Welcome Email will be sent to the newly created user.',
       required: false,
       defaultValue: true,
       options: {
@@ -145,8 +141,7 @@ export const addOrUpdateContactExtended = createAction({
     }),
     userPassword: Property.ShortText({
       displayName: 'User Password',
-      description:
-        'If password is not passed then it will be automatically generated.',
+      description: 'If password is not passed then it will be automatically generated.',
       required: false,
     }),
     // fullname
@@ -223,8 +218,7 @@ export const addOrUpdateContactExtended = createAction({
     }),
     isActiveMilitaryDuty: Property.StaticDropdown({
       displayName: 'Is Active Military Duty',
-      description:
-        'Possible values are: Yes, No. If nothing is chosen that means "Unknown".',
+      description: 'Possible values are: Yes, No. If nothing is chosen that means "Unknown".',
       required: false,
       options: {
         disabled: false,
@@ -242,8 +236,7 @@ export const addOrUpdateContactExtended = createAction({
     }),
     isUSCitizen: Property.StaticDropdown({
       displayName: 'Is US Citizen',
-      description:
-        'Possible values are: Yes, No. If nothing is chosen that means "Unknown".',
+      description: 'Possible values are: Yes, No. If nothing is chosen that means "Unknown".',
       required: false,
       options: {
         disabled: false,
@@ -366,8 +359,7 @@ export const addOrUpdateContactExtended = createAction({
     // home address
     home_street: Property.LongText({
       displayName: 'Home Street',
-      description:
-        "The contact's full street address (can include apartment or unit number).",
+      description: "The contact's full street address (can include apartment or unit number).",
       required: false,
     }),
     home_addressLine2: Property.LongText({
@@ -758,8 +750,7 @@ export const addOrUpdateContactExtended = createAction({
     }),
     affiliateCode: Property.ShortText({
       displayName: 'Affiliate Code',
-      description:
-        'The affiliate/referer partner through which the contact signed up.',
+      description: 'The affiliate/referer partner through which the contact signed up.',
       required: false,
     }),
     campaignId: Property.ShortText({
@@ -772,8 +763,7 @@ export const addOrUpdateContactExtended = createAction({
     }),
     refererURL: Property.LongText({
       displayName: 'Referer URL',
-      description:
-        'The webpage where the contact clicked a link that sent them to your website.',
+      description: 'The webpage where the contact clicked a link that sent them to your website.',
       required: false,
     }),
     applicantId: Property.ShortText({
@@ -807,15 +797,13 @@ export const addOrUpdateContactExtended = createAction({
     }),
     entryUrl: Property.LongText({
       displayName: 'Entry URL',
-      description:
-        'The first page of visit through which the contact visited your website.',
+      description: 'The first page of visit through which the contact visited your website.',
       required: false,
     }),
     // contact Attributes
     leadStageName: Property.ShortText({
       displayName: 'Lead Stage Name',
-      description:
-        'The first page of visit through which the contact visited your website.',
+      description: 'The first page of visit through which the contact visited your website.',
       required: false,
     }),
     star: Property.ShortText({
@@ -892,8 +880,7 @@ export const addOrUpdateContactExtended = createAction({
     }),
     sub1_paymentPeriodType: Property.StaticDropdown({
       displayName: 'Product Payment Period Type',
-      description:
-        'The chosen Period Type has to be set for the Product on Sperse side',
+      description: 'The chosen Period Type has to be set for the Product on Sperse side',
       required: false,
       options: {
         disabled: false,
@@ -957,8 +944,7 @@ export const addOrUpdateContactExtended = createAction({
     }),
     sub2_paymentPeriodType: Property.StaticDropdown({
       displayName: 'Product Payment Period Type',
-      description:
-        'The chosen Period Type has to be set for the Product on Sperse side',
+      description: 'The chosen Period Type has to be set for the Product on Sperse side',
       required: false,
       options: {
         disabled: false,
@@ -1022,8 +1008,7 @@ export const addOrUpdateContactExtended = createAction({
     }),
     sub3_paymentPeriodType: Property.StaticDropdown({
       displayName: 'Product Payment Period Type',
-      description:
-        'The chosen Period Type has to be set for the Product on Sperse side',
+      description: 'The chosen Period Type has to be set for the Product on Sperse side',
       required: false,
       options: {
         disabled: false,
@@ -1270,7 +1255,7 @@ export const addOrUpdateContactExtended = createAction({
       classificationInfo: {
         rating: context.propsValue.rating,
       },
-    };
+    }
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -1282,11 +1267,11 @@ export const addOrUpdateContactExtended = createAction({
       body: {
         ...customer,
       },
-    });
+    })
 
     return {
       status: res.status,
       body: res.body,
-    };
+    }
   },
-});
+})

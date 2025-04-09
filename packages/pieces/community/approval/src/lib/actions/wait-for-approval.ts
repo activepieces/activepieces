@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { ExecutionType, MarkdownVariant, PauseType } from '@activepieces/shared';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { ExecutionType, MarkdownVariant, PauseType } from '@activepieces/shared'
 
 export const waitForApprovalLink = createAction({
   name: 'wait_for_approval',
@@ -24,17 +24,17 @@ export const waitForApprovalLink = createAction({
       ctx.run.pause({
         pauseMetadata: {
           type: PauseType.WEBHOOK,
-          response: {}
+          response: {},
         },
-      });
+      })
 
       return {
         approved: true,
-      };
+      }
     } else {
       return {
         approved: ctx.resumePayload.queryParams['action'] === 'approve',
-      };
+      }
     }
   },
-});
+})

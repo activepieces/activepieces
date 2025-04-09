@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 import { zooAuth } from '../../../index'
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const listOrgShortlinksAction = createAction({
   name: 'list_org_shortlinks',
@@ -31,7 +31,7 @@ export const listOrgShortlinksAction = createAction({
         ...(propsValue.limit && { limit: propsValue.limit.toString() }),
         ...(propsValue.offset && { offset: propsValue.offset.toString() }),
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

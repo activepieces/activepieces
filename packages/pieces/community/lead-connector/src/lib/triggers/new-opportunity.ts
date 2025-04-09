@@ -1,12 +1,8 @@
-import { OAuth2PropertyValue, Property, createTrigger } from '@activepieces/pieces-framework';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import { leadConnectorAuth } from '../..';
-import { getOpportunities, getPipelines } from '../common';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property, createTrigger } from '@activepieces/pieces-framework'
+import { TriggerStrategy } from '@activepieces/pieces-framework'
+import { leadConnectorAuth } from '../..'
+import { getOpportunities, getPipelines } from '../common'
 
 const polling: Polling<OAuth2PropertyValue, { pipeline: string }> = {
   strategy: DedupeStrategy.LAST_ITEM,
@@ -14,16 +10,16 @@ const polling: Polling<OAuth2PropertyValue, { pipeline: string }> = {
     const currentValues =
       (await getOpportunities(auth, propsValue.pipeline, {
         startAfterId: lastItemId as string | undefined,
-      })) ?? [];
+      })) ?? []
 
     return currentValues.map((opportunity: any) => {
       return {
         id: opportunity.id,
         data: opportunity,
-      };
-    });
+      }
+    })
   },
-};
+}
 
 export const newOpportunity = createTrigger({
   auth: leadConnectorAuth,
@@ -41,18 +37,18 @@ export const newOpportunity = createTrigger({
           return {
             disabled: true,
             options: [],
-          };
+          }
         }
 
-        const pipelines = await getPipelines(auth as OAuth2PropertyValue);
+        const pipelines = await getPipelines(auth as OAuth2PropertyValue)
         return {
           options: pipelines.map((pipeline: any) => {
             return {
               label: pipeline.name,
               value: pipeline.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   },
@@ -64,14 +60,14 @@ export const newOpportunity = createTrigger({
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
-    });
+    })
   },
   onDisable: async (context) => {
     await pollingHelper.onDisable(polling, {
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
-    });
+    })
   },
   run: async (context) => {
     return await pollingHelper.poll(polling, {
@@ -79,7 +75,7 @@ export const newOpportunity = createTrigger({
       store: context.store,
       propsValue: context.propsValue,
       files: context.files,
-    });
+    })
   },
   test: async (context) => {
     return await pollingHelper.test(polling, {
@@ -87,6 +83,6 @@ export const newOpportunity = createTrigger({
       store: context.store,
       propsValue: context.propsValue,
       files: context.files,
-    });
+    })
   },
-});
+})

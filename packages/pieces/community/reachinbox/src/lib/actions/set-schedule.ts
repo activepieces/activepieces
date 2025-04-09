@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { fetchCampaigns, reachinboxCommon } from '../common/index';
-import { ReachinboxAuth } from '../..';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { ReachinboxAuth } from '../..'
+import { fetchCampaigns, reachinboxCommon } from '../common/index'
 
 export const setSchedule = createAction({
   auth: ReachinboxAuth,
@@ -11,12 +11,11 @@ export const setSchedule = createAction({
   props: {
     campaignId: Property.Dropdown({
       displayName: 'Select Campaign',
-      description:
-        'Choose a campaign from the list or enter the campaign ID manually.',
+      description: 'Choose a campaign from the list or enter the campaign ID manually.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        const campaigns = await fetchCampaigns(auth as string);
+        const campaigns = await fetchCampaigns(auth as string)
 
         return {
           options: campaigns.map((campaign) => ({
@@ -24,7 +23,7 @@ export const setSchedule = createAction({
             value: campaign.id.toString(),
           })),
           disabled: campaigns.length === 0,
-        };
+        }
       },
     }),
     scheduleName: Property.ShortText({
@@ -116,7 +115,7 @@ export const setSchedule = createAction({
       thursday,
       friday,
       saturday,
-    } = context.propsValue;
+    } = context.propsValue
 
     const schedules = [
       {
@@ -136,9 +135,9 @@ export const setSchedule = createAction({
         },
         timezone: timezone,
       },
-    ];
+    ]
 
-    const url = `${reachinboxCommon.baseUrl}campaigns/set-schedule`;
+    const url = `${reachinboxCommon.baseUrl}campaigns/set-schedule`
 
     try {
       const response = await httpClient.sendRequest({
@@ -154,18 +153,18 @@ export const setSchedule = createAction({
           endDate: endDate,
           schedules: schedules,
         },
-      });
+      })
 
       if (response.status === 200) {
         return {
           success: true,
           message: response.body.message || 'Schedule updated successfully.',
-        };
+        }
       } else {
-        throw new Error(`Failed to update schedule: ${response.body.message}`);
+        throw new Error(`Failed to update schedule: ${response.body.message}`)
       }
     } catch (error: any) {
-      throw new Error(`Failed to update schedule: ${error.message}`);
+      throw new Error(`Failed to update schedule: ${error.message}`)
     }
   },
-});
+})

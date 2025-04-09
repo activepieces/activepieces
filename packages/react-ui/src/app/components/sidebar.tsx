@@ -1,21 +1,12 @@
-import { t } from 'i18next';
-import {
-  ChevronDownIcon,
-  ChevronUpIcon,
-  LockKeyhole,
-  Settings,
-} from 'lucide-react';
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { t } from 'i18next'
+import { ChevronDownIcon, ChevronUpIcon, LockKeyhole, Settings } from 'lucide-react'
+import React from 'react'
+import { Link, useLocation } from 'react-router-dom'
 
-import { BetaBadge } from '@/components/custom/beta-badge';
-import {
-  Collapsible,
-  CollapsibleTrigger,
-  CollapsibleContent,
-} from '@/components/ui/collapsible';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+import { BetaBadge } from '@/components/custom/beta-badge'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Separator } from '@/components/ui/separator'
 import {
   Sidebar,
   SidebarContent,
@@ -23,45 +14,45 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuSubItem,
-  SidebarMenuSub,
-  SidebarMenuItem,
   SidebarMenuAction,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
   SidebarSeparator,
-} from '@/components/ui/sidebar-shadcn';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
-import { cn } from '@/lib/utils';
-import { ApFlagId } from '@activepieces/shared';
+} from '@/components/ui/sidebar-shadcn'
+import { flagsHooks } from '@/hooks/flags-hooks'
+import { authenticationSession } from '@/lib/authentication-session'
+import { cn } from '@/lib/utils'
+import { ApFlagId } from '@activepieces/shared'
 
-import { ShowPoweredBy } from '../../components/show-powered-by';
-import { platformHooks } from '../../hooks/platform-hooks';
+import { ShowPoweredBy } from '../../components/show-powered-by'
+import { platformHooks } from '../../hooks/platform-hooks'
 
-import { ApDashboardSidebarHeader } from './ap-dashboard-sidebar-header';
-import { HelpAndFeedback } from './help-and-feedback';
-import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
-import { SidebarUser } from './sidebar-user';
-import UsageLimitsButton from './usage-limits-button';
+import { ApDashboardSidebarHeader } from './ap-dashboard-sidebar-header'
+import { HelpAndFeedback } from './help-and-feedback'
+import { SidebarPlatformAdminButton } from './sidebar-platform-admin'
+import { SidebarUser } from './sidebar-user'
+import UsageLimitsButton from './usage-limits-button'
 
 type Link = {
-  icon: React.ReactNode;
-  label: string;
-  to: string;
-  notification?: boolean;
-};
+  icon: React.ReactNode
+  label: string
+  to: string
+  notification?: boolean
+}
 
 type CustomTooltipLinkProps = {
-  to: string;
-  label: string;
-  Icon?: React.ElementType;
-  extraClasses?: string;
-  notification?: boolean;
-  locked?: boolean;
-  newWindow?: boolean;
-  isActive?: (pathname: string) => boolean;
-  isSubItem: boolean;
-};
+  to: string
+  label: string
+  Icon?: React.ElementType
+  extraClasses?: string
+  notification?: boolean
+  locked?: boolean
+  newWindow?: boolean
+  isActive?: (pathname: string) => boolean
+  isSubItem: boolean
+}
 export const CustomTooltipLink = ({
   to,
   label,
@@ -72,16 +63,11 @@ export const CustomTooltipLink = ({
   newWindow,
   isActive,
 }: CustomTooltipLinkProps) => {
-  const location = useLocation();
+  const location = useLocation()
 
-  const isLinkActive =
-    location.pathname.startsWith(to) || isActive?.(location.pathname);
+  const isLinkActive = location.pathname.startsWith(to) || isActive?.(location.pathname)
   return (
-    <Link
-      to={to}
-      target={newWindow ? '_blank' : ''}
-      rel={newWindow ? 'noopener noreferrer' : ''}
-    >
+    <Link to={to} target={newWindow ? '_blank' : ''} rel={newWindow ? 'noopener noreferrer' : ''}>
       <div
         className={cn(
           'relative flex items-center gap-1 justify-between hover:bg-accent rounded-lg transition-colors',
@@ -89,74 +75,66 @@ export const CustomTooltipLink = ({
           isLinkActive && '!bg-primary/10 !text-primary',
         )}
       >
-        <div
-          className={`w-full flex items-center justify-between gap-2 px-2 py-1.5 ${
-            !Icon ? 'p-2' : ''
-          }`}
-        >
+        <div className={`w-full flex items-center justify-between gap-2 px-2 py-1.5 ${!Icon ? 'p-2' : ''}`}>
           <div className="flex items-center gap-2 justify-between w-full">
             <div className="flex items-center gap-2">
               {Icon && <Icon className={`size-4`} />}
               <span className={`text-sm`}>{label}</span>
             </div>
-            {(label === 'Tables' || label === 'Todos' || label === 'MCP') && (
-              <BetaBadge showTooltip={false} />
-            )}
+            {(label === 'Tables' || label === 'Todos' || label === 'MCP') && <BetaBadge showTooltip={false} />}
           </div>
-          {locked && (
-            <LockKeyhole className="size-4 stroke-[2px]" color="grey" />
-          )}
+          {locked && <LockKeyhole className="size-4 stroke-[2px]" color="grey" />}
         </div>
         {notification && !locked && (
           <span className="bg-destructive absolute right-2 top-1/2 transform -translate-y-1/2 size-2 rounded-full "></span>
         )}
       </div>
     </Link>
-  );
-};
+  )
+}
 
 export type SidebarGroup = {
-  name?: string;
-  putEmptySpaceTop?: boolean;
-  label: string;
-  icon: React.ElementType;
-  items: SidebarLink[];
-  type: 'group';
-  defaultOpen: boolean;
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  isActive?: (pathname: string) => boolean;
-  separatorBefore?: boolean;
-  separatorAfter?: boolean;
-};
+  name?: string
+  putEmptySpaceTop?: boolean
+  label: string
+  icon: React.ElementType
+  items: SidebarLink[]
+  type: 'group'
+  defaultOpen: boolean
+  open: boolean
+  setOpen: (open: boolean) => void
+  isActive?: (pathname: string) => boolean
+  separatorBefore?: boolean
+  separatorAfter?: boolean
+}
 
 export type SidebarLink = {
-  to: string;
-  label: string;
-  name?: string;
-  icon?: React.ElementType;
-  type: 'link';
-  notification?: boolean;
-  locked?: boolean;
-  hasPermission?: boolean;
-  showInEmbed?: boolean;
-  isSubItem: boolean;
-  isActive?: (pathname: string) => boolean;
-  separatorBefore?: boolean;
-  separatorAfter?: boolean;
-};
+  to: string
+  label: string
+  name?: string
+  icon?: React.ElementType
+  type: 'link'
+  notification?: boolean
+  locked?: boolean
+  hasPermission?: boolean
+  showInEmbed?: boolean
+  isSubItem: boolean
+  isActive?: (pathname: string) => boolean
+  separatorBefore?: boolean
+  separatorAfter?: boolean
+}
 
-export type SidebarItem = SidebarLink | SidebarGroup;
+export type SidebarItem = SidebarLink | SidebarGroup
 
 type SidebarProps = {
-  children: React.ReactNode;
-  items: SidebarItem[];
-  isHomeDashboard?: boolean;
-  hideSideNav?: boolean;
-  hideHeader?: boolean;
-  removeGutters?: boolean;
-  removeBottomPadding?: boolean;
-};
+  children: React.ReactNode
+  items: SidebarItem[]
+  isHomeDashboard?: boolean
+  hideSideNav?: boolean
+  hideHeader?: boolean
+  removeGutters?: boolean
+  removeBottomPadding?: boolean
+}
 export function SidebarComponent({
   children,
   items,
@@ -166,11 +144,9 @@ export function SidebarComponent({
   removeGutters = false,
   removeBottomPadding = false,
 }: SidebarProps) {
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { data: showBilling } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_BILLING,
-  );
-  const location = useLocation();
+  const { platform } = platformHooks.useCurrentPlatform()
+  const { data: showBilling } = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_BILLING)
+  const location = useLocation()
 
   return (
     <div className="flex min-h-screen w-full">
@@ -188,33 +164,22 @@ export function SidebarComponent({
                       <>
                         {item.separatorBefore && <SidebarSeparator />}
                         <SidebarGroup key={item.name} className="py-2">
-                          {item.name && (
-                            <SidebarGroupLabel>{item.name}</SidebarGroupLabel>
-                          )}
+                          {item.name && <SidebarGroupLabel>{item.name}</SidebarGroupLabel>}
                           <SidebarMenu className="py-0">
                             <Collapsible
-                              defaultOpen={
-                                item.defaultOpen ||
-                                item.isActive?.(location.pathname)
-                              }
+                              defaultOpen={item.defaultOpen || item.isActive?.(location.pathname)}
                               className="group/collapsible"
                               onOpenChange={(open) => {
-                                item.setOpen(open);
+                                item.setOpen(open)
                               }}
                             >
                               <SidebarMenuItem>
                                 <CollapsibleTrigger asChild>
                                   <SidebarMenuButton className="py-0 gap-2 hover:bg-gray-200 rounded-lg transition-colors">
-                                    {item.icon && (
-                                      <item.icon className="size-4" />
-                                    )}
+                                    {item.icon && <item.icon className="size-4" />}
                                     <span>{item.label}</span>
                                     <SidebarMenuAction>
-                                      {item.open ? (
-                                        <ChevronUpIcon />
-                                      ) : (
-                                        <ChevronDownIcon />
-                                      )}
+                                      {item.open ? <ChevronUpIcon /> : <ChevronDownIcon />}
                                     </SidebarMenuAction>
                                   </SidebarMenuButton>
                                 </CollapsibleTrigger>
@@ -248,9 +213,7 @@ export function SidebarComponent({
                       <>
                         {item.separatorBefore && <SidebarSeparator />}
                         <SidebarGroup key={item.label} className="py-1">
-                          {item.name && (
-                            <SidebarGroupLabel>{item.name}</SidebarGroupLabel>
-                          )}
+                          {item.name && <SidebarGroupLabel>{item.name}</SidebarGroupLabel>}
                           <SidebarMenu className="gap-0 p-0">
                             <SidebarMenuItem key={item.label}>
                               <SidebarMenuButton asChild>
@@ -285,9 +248,7 @@ export function SidebarComponent({
                         <SidebarMenuItem>
                           <SidebarMenuButton asChild>
                             <CustomTooltipLink
-                              to={authenticationSession.appendProjectRoutePrefix(
-                                '/settings',
-                              )}
+                              to={authenticationSession.appendProjectRoutePrefix('/settings')}
                               label={t('Project Settings')}
                               Icon={Settings}
                               isSubItem={false}
@@ -325,10 +286,7 @@ export function SidebarComponent({
           {children}
         </div>
       </div>
-      <ShowPoweredBy
-        show={platform?.showPoweredBy && isHomeDashboard}
-        position="absolute"
-      />
+      <ShowPoweredBy show={platform?.showPoweredBy && isHomeDashboard} position="absolute" />
     </div>
-  );
+  )
 }

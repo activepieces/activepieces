@@ -1,6 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { airtableCommon } from '../common';
-import { airtableAuth } from '../../index';
+import { createAction } from '@activepieces/pieces-framework'
+import { airtableAuth } from '../../index'
+import { airtableCommon } from '../common'
 
 export const airtableDeleteRecordAction = createAction({
   auth: airtableAuth,
@@ -13,14 +13,14 @@ export const airtableDeleteRecordAction = createAction({
     recordId: airtableCommon.recordId,
   },
   async run(context) {
-    const personalToken = context.auth;
-    const { base: baseId, tableId, recordId } = context.propsValue;
+    const personalToken = context.auth
+    const { base: baseId, tableId, recordId } = context.propsValue
 
     return await airtableCommon.deleteRecord({
       personalToken,
       baseId: baseId as string,
       tableId: tableId as string,
       recordId: recordId as string,
-    });
+    })
   },
-});
+})

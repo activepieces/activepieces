@@ -1,8 +1,8 @@
-import { typeformCommon, formsDropdown } from '../common';
-import { nanoid } from 'nanoid';
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { typeformAuth } from '../..';
+import { getAccessTokenOrThrow } from '@activepieces/pieces-common'
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { nanoid } from 'nanoid'
+import { typeformAuth } from '../..'
+import { formsDropdown, typeformCommon } from '../common'
 
 export const typeformNewSubmission = createTrigger({
   auth: typeformAuth,
@@ -57,35 +57,33 @@ export const typeformNewSubmission = createTrigger({
     thankyou_screen_ref: '01GQZMFYADET9MXFKPGFQG08T9',
   },
   async onEnable(context) {
-    const randomTag = `ap_new_submission_${nanoid()}`;
+    const randomTag = `ap_new_submission_${nanoid()}`
     await typeformCommon.subscribeWebhook(
       context.propsValue['form_id']!,
       randomTag,
       context.webhookUrl,
-      getAccessTokenOrThrow(context.auth)
-    );
+      getAccessTokenOrThrow(context.auth),
+    )
     await context.store?.put<WebhookInformation>('_new_submission_trigger', {
       tag: randomTag,
-    });
+    })
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_new_submission_trigger'
-    );
+    const response = await context.store?.get<WebhookInformation>('_new_submission_trigger')
     if (response !== null && response !== undefined) {
       await typeformCommon.unsubscribeWebhook(
         context.propsValue['form_id']!,
         response.tag,
-        getAccessTokenOrThrow(context.auth)
-      );
+        getAccessTokenOrThrow(context.auth),
+      )
     }
   },
   async run(context) {
-    const body = context.payload.body as { form_response: unknown };
-    return [body.form_response];
+    const body = context.payload.body as { form_response: unknown }
+    return [body.form_response]
   },
-});
+})
 
 interface WebhookInformation {
-  tag: string;
+  tag: string
 }

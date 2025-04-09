@@ -1,4 +1,4 @@
-import { EntityProp } from '../types';
+import { EntityProp } from '../types'
 
 export const itemsEntityProps: EntityProp[] = [
   {
@@ -61,8 +61,7 @@ export const itemsEntityProps: EntityProp[] = [
   {
     name: 'priceIncludesTax',
     displayName: 'Price Includes Tax?',
-    description:
-      'Specifies that the unitPrice includes tax. Set to true, if unitPrice includes tax.',
+    description: 'Specifies that the unitPrice includes tax. Set to true, if unitPrice includes tax.',
     type: 'boolean',
     isRequired: false,
   },
@@ -104,6 +103,6 @@ export const itemsEntityProps: EntityProp[] = [
     isRequired: false,
     type: 'text',
   },
-];
+]
 
-export const itemsEntityNumberProps = ['unitPrice', 'unitCost'];
+export const itemsEntityNumberProps = ['unitPrice', 'unitCost']

@@ -1,13 +1,13 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { sendReviewInvite } from './lib/actions/send-review-invite';
-import { PieceCategory } from '@activepieces/shared';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { sendReviewInvite } from './lib/actions/send-review-invite'
 
 export const cloutlyAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   required: true,
   description: 'Please enter the API Key obtained from Cloutly.',
-});
+})
 
 export const cloutly = createPiece({
   displayName: 'Cloutly',
@@ -21,7 +21,7 @@ export const cloutly = createPiece({
     sendReviewInvite,
     createCustomApiCallAction({
       baseUrl: () => {
-        return 'https://app.cloutly.com/api/v1';
+        return 'https://app.cloutly.com/api/v1'
       },
       auth: cloutlyAuth,
       authMapping: async (auth) => ({
@@ -31,4 +31,4 @@ export const cloutly = createPiece({
     }),
   ],
   triggers: [],
-});
+})

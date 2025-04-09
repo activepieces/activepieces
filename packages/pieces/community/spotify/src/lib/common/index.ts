@@ -1,10 +1,6 @@
-import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import {
-  OAuth2PropertyValue,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { SpotifyWebApi } from './client';
+import { getAccessTokenOrThrow } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, PieceAuth, Property } from '@activepieces/pieces-framework'
+import { SpotifyWebApi } from './client'
 
 const markdownDescription = `
 To obtain a client ID and client secret for Spotify, follow these simple steps:
@@ -15,7 +11,7 @@ To obtain a client ID and client secret for Spotify, follow these simple steps:
 4. Fill in the required information, such as the **App Name** and **App Description**.
 5. Once your app is created, you will see the **client ID** and **client secret** on the app's dashboard.
 6. **Copy** the client ID and client secret and **paste** them below.
-`;
+`
 
 export const spotifyCommon = {
   authentication: PieceAuth.OAuth2({
@@ -47,21 +43,21 @@ export const spotifyCommon = {
             disabled: true,
             placeholder: 'setup authentication first',
             options: [],
-          };
+          }
         }
         const client = makeClient({
           auth: auth as OAuth2PropertyValue,
-        });
-        const res = await client.getDevices();
+        })
+        const res = await client.getDevices()
         return {
           disabled: false,
           options: res.devices.map((device) => {
             return {
               label: device.name,
               value: device.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   playlist_id: (required = true) =>
@@ -75,28 +71,28 @@ export const spotifyCommon = {
             disabled: true,
             placeholder: 'setup authentication first',
             options: [],
-          };
+          }
         }
         const client = makeClient({
           auth: auth as OAuth2PropertyValue,
-        });
-        const playlists = await client.getAllCurrentUserPlaylists();
+        })
+        const playlists = await client.getAllCurrentUserPlaylists()
         return {
           disabled: false,
           options: playlists.map((playlist) => {
             return {
               label: playlist.name,
               value: playlist.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
-};
+}
 
 export function makeClient(propsValue: {
-  auth: OAuth2PropertyValue;
+  auth: OAuth2PropertyValue
 }): SpotifyWebApi {
-  const token = getAccessTokenOrThrow(propsValue.auth);
-  return new SpotifyWebApi(token);
+  const token = getAccessTokenOrThrow(propsValue.auth)
+  return new SpotifyWebApi(token)
 }

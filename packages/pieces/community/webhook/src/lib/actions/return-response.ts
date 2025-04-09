@@ -1,10 +1,6 @@
-import {
-  DynamicPropsValue,
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { StopResponse } from '@activepieces/shared';
-import { StatusCodes } from 'http-status-codes';
+import { DynamicPropsValue, Property, createAction } from '@activepieces/pieces-framework'
+import { StopResponse } from '@activepieces/shared'
+import { StatusCodes } from 'http-status-codes'
 
 enum ResponseType {
   JSON = 'json',
@@ -44,22 +40,22 @@ export const returnResponse = createAction({
       refreshers: ['responseType'],
       required: true,
       props: async ({ responseType }) => {
-        if (!responseType) return {};
+        if (!responseType) return {}
 
-        const bodyTypeInput = responseType as unknown as ResponseType;
+        const bodyTypeInput = responseType as unknown as ResponseType
 
-        const fields: DynamicPropsValue = {};
+        const fields: DynamicPropsValue = {}
 
         if (bodyTypeInput !== ResponseType.REDIRECT) {
           fields['status'] = Property.Number({
             displayName: 'Status',
             required: false,
             defaultValue: 200,
-          });
+          })
           fields['headers'] = Property.Object({
             displayName: 'Headers',
             required: false,
-          });
+          })
         }
 
         switch (bodyTypeInput) {
@@ -67,22 +63,22 @@ export const returnResponse = createAction({
             fields['body'] = Property.Json({
               displayName: 'JSON Body',
               required: true,
-            });
-            break;
+            })
+            break
           case ResponseType.RAW:
             fields['body'] = Property.LongText({
               displayName: 'Raw Body',
               required: true,
-            });
-            break;
+            })
+            break
           case ResponseType.REDIRECT:
             fields['body'] = Property.LongText({
               displayName: 'Redirect URL',
               required: true,
-            });
-            break;
+            })
+            break
         }
-        return fields;
+        return fields
       },
     }),
     respond: Property.StaticDropdown({
@@ -100,52 +96,52 @@ export const returnResponse = createAction({
   },
 
   async run(context) {
-    const { fields, responseType, respond } = context.propsValue;
-    const bodyInput = fields ['body'];
-    const headers = fields['headers'];
-    const status = fields['status'];
-    
+    const { fields, responseType, respond } = context.propsValue
+    const bodyInput = fields['body']
+    const headers = fields['headers']
+    const status = fields['status']
+
     const response: StopResponse = {
       status: status ?? StatusCodes.OK,
       headers: (headers as Record<string, string>) ?? {},
-    };
+    }
 
     switch (responseType) {
       case ResponseType.JSON:
-        response.body = praseToJson(bodyInput);
-        break;
+        response.body = praseToJson(bodyInput)
+        break
       case ResponseType.RAW:
-        response.body = bodyInput;
-        break;
+        response.body = bodyInput
+        break
       case ResponseType.REDIRECT:
-        response.status = StatusCodes.MOVED_PERMANENTLY;
-        response.headers = { ...response.headers, Location: ensureProtocol(bodyInput) };
-        break;
+        response.status = StatusCodes.MOVED_PERMANENTLY
+        response.headers = { ...response.headers, Location: ensureProtocol(bodyInput) }
+        break
     }
-    
+
     if (respond === 'respond') {
       context.run.respond({
         response: response,
-      });
+      })
     } else {
       context.run.stop({
         response: response,
-      });
+      })
     }
-    return response;
+    return response
   },
-});
+})
 
 function praseToJson(body: unknown) {
   if (typeof body === 'string') {
-    return JSON.parse(body);
+    return JSON.parse(body)
   }
-  return JSON.parse(JSON.stringify(body));
+  return JSON.parse(JSON.stringify(body))
 }
 
 function ensureProtocol(url: string): string {
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    return `https://${url}`;
+    return `https://${url}`
   }
-  return url;
+  return url
 }

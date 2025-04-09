@@ -87,12 +87,8 @@ export const ACTION_ENTITY_DROPDOWN_OPTIONS = [
     label: 'Vendors',
     value: 'vendors',
   },
-];
+]
 
-export const TRIGGER_ENTITY_DROPDOWN_OPTIONS =
-  ACTION_ENTITY_DROPDOWN_OPTIONS.filter(
-    (option) =>
-      !['salesQuoteLines', 'salesOrderLines', 'salesInvoiceLines'].includes(
-        option.value
-      )
-  );
+export const TRIGGER_ENTITY_DROPDOWN_OPTIONS = ACTION_ENTITY_DROPDOWN_OPTIONS.filter(
+  (option) => !['salesQuoteLines', 'salesOrderLines', 'salesInvoiceLines'].includes(option.value),
+)

@@ -1,5 +1,5 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import jimp from 'jimp';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import jimp from 'jimp'
 
 export const resizeImage = createAction({
   name: 'resize_image',
@@ -27,28 +27,21 @@ export const resizeImage = createAction({
     }),
     resultFileName: Property.ShortText({
       displayName: 'Result File Name',
-      description:
-        'Specifies the output file name for the result image (without extension).',
+      description: 'Specifies the output file name for the result image (without extension).',
       required: false,
     }),
   },
   async run(context) {
-    const image = await jimp.read(context.propsValue.image.data);
-    await image.resize(
-      context.propsValue.width,
-      context.propsValue.aspectRatio ? jimp.AUTO : context.propsValue.height
-    );
+    const image = await jimp.read(context.propsValue.image.data)
+    await image.resize(context.propsValue.width, context.propsValue.aspectRatio ? jimp.AUTO : context.propsValue.height)
 
-    const imageBuffer = await image.getBufferAsync(image.getMIME());
+    const imageBuffer = await image.getBufferAsync(image.getMIME())
 
     const imageReference = await context.files.write({
-      fileName:
-        (context.propsValue.resultFileName ?? 'image') +
-        '.' +
-        image.getExtension(),
+      fileName: (context.propsValue.resultFileName ?? 'image') + '.' + image.getExtension(),
       data: imageBuffer,
-    });
+    })
 
-    return imageReference;
+    return imageReference
   },
-});
+})

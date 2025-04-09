@@ -1,15 +1,11 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  OAuth2PropertyValue,
-  PieceAuth,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { googleContactsAddContactAction } from './lib/action/create-contact';
-import { googleContactsUpdateContactAction } from './lib/action/update-contact';
-import { googleContactsSearchContactsAction } from './lib/action/search-contact';
-import { googleContactsCommon } from './lib/common';
-import { googleContactNewOrUpdatedContact } from './lib/trigger/new-contact';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { googleContactsAddContactAction } from './lib/action/create-contact'
+import { googleContactsSearchContactsAction } from './lib/action/search-contact'
+import { googleContactsUpdateContactAction } from './lib/action/update-contact'
+import { googleContactsCommon } from './lib/common'
+import { googleContactNewOrUpdatedContact } from './lib/trigger/new-contact'
 
 export const googleContactsAuth = PieceAuth.OAuth2({
   description: '',
@@ -18,7 +14,7 @@ export const googleContactsAuth = PieceAuth.OAuth2({
   tokenUrl: 'https://oauth2.googleapis.com/token',
   required: true,
   scope: ['https://www.googleapis.com/auth/contacts'],
-});
+})
 
 export const googleContacts = createPiece({
   minimumSupportedRelease: '0.30.0',
@@ -39,15 +35,7 @@ export const googleContacts = createPiece({
   displayName: 'Google Contacts',
   description: 'Stay connected and organized',
 
-  authors: [
-    'Abdallah-Alwarawreh',
-    'Salem-Alaa',
-    'kishanprmr',
-    'MoShizzle',
-    'khaledmashaly',
-    'abuaboud',
-    'ikus060',
-  ],
+  authors: ['Abdallah-Alwarawreh', 'Salem-Alaa', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud', 'ikus060'],
   triggers: [googleContactNewOrUpdatedContact],
   auth: googleContactsAuth,
-});
+})

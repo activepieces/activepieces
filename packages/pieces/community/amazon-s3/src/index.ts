@@ -1,13 +1,9 @@
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { readFile } from './lib/actions/read-file';
-import { amazons3UploadFile } from './lib/actions/upload-file';
-import { createS3 } from './lib/common';
-import { newFile } from './lib/triggers/new-file';
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { readFile } from './lib/actions/read-file'
+import { amazons3UploadFile } from './lib/actions/upload-file'
+import { createS3 } from './lib/common'
+import { newFile } from './lib/triggers/new-file'
 
 const description = `
 This piece allows you to upload files to Amazon S3 or other S3 compatible services.
@@ -15,7 +11,7 @@ This piece allows you to upload files to Amazon S3 or other S3 compatible servic
 Amazon S3 Settings:
 Regions: https://docs.aws.amazon.com/general/latest/gr/s3.html
 Endpoint: leave blank
-`;
+`
 
 export const amazonS3Auth = PieceAuth.CustomAuth({
   description: description,
@@ -166,24 +162,24 @@ export const amazonS3Auth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
-    const s3 = createS3(auth);
+    const s3 = createS3(auth)
     try {
       await s3.listObjectsV2({
         Bucket: auth.bucket,
         MaxKeys: 1,
-      });
+      })
       return {
         valid: true,
-      };
+      }
     } catch (e) {
       return {
         valid: false,
         error: (e as Error)?.message,
-      };
+      }
     }
   },
   required: true,
-});
+})
 
 export const amazonS3 = createPiece({
   displayName: 'Amazon S3',
@@ -191,9 +187,9 @@ export const amazonS3 = createPiece({
 
   logoUrl: 'https://cdn.activepieces.com/pieces/amazon-s3.png',
   minimumSupportedRelease: '0.30.0',
-  authors: ["Willianwg","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: ['Willianwg', 'kishanprmr', 'MoShizzle', 'AbdulTheActivePiecer', 'khaledmashaly', 'abuaboud'],
   categories: [PieceCategory.DEVELOPER_TOOLS],
   auth: amazonS3Auth,
   actions: [amazons3UploadFile, readFile],
   triggers: [newFile],
-});
+})

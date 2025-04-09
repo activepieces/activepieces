@@ -1,13 +1,8 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  HttpMethod,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import { calltidycalapi } from '../common';
-import { tidyCalAuth } from '../../';
-import dayjs from 'dayjs';
+import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common'
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { tidyCalAuth } from '../../'
+import { calltidycalapi } from '../common'
 
 export const tidycalnewbooking = createTrigger({
   auth: tidyCalAuth,
@@ -46,14 +41,14 @@ export const tidycalnewbooking = createTrigger({
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
-    });
+    })
   },
   onDisable: async (context) => {
     await pollingHelper.onDisable(polling, {
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue,
-    });
+    })
   },
   run: async (context) => {
     return await pollingHelper.poll(polling, {
@@ -61,7 +56,7 @@ export const tidycalnewbooking = createTrigger({
       store: context.store,
       propsValue: context.propsValue,
       files: context.files,
-    });
+    })
   },
   test: async (context) => {
     return await pollingHelper.test(polling, {
@@ -69,30 +64,30 @@ export const tidycalnewbooking = createTrigger({
       store: context.store,
       propsValue: context.propsValue,
       files: context.files,
-    });
+    })
   },
-});
+})
 
 const polling: Polling<string, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
     const currentValues = await calltidycalapi<{
       data: {
-        id: string;
-        created_at: string;
-      }[];
-    }>(HttpMethod.GET, `bookings?cancelled=false`, auth, undefined);
+        id: string
+        created_at: string
+      }[]
+    }>(HttpMethod.GET, `bookings?cancelled=false`, auth, undefined)
 
-    const createdBookings = currentValues.body;
+    const createdBookings = currentValues.body
     const bookings = createdBookings.data.filter((item) => {
-      const created_at = dayjs(item.created_at);
-      return created_at.isAfter(lastFetchEpochMS);
-    });
+      const created_at = dayjs(item.created_at)
+      return created_at.isAfter(lastFetchEpochMS)
+    })
     return bookings.map((item) => {
       return {
         epochMilliSeconds: dayjs(item.created_at).valueOf(),
         data: item,
-      };
-    });
+      }
+    })
   },
-};
+}

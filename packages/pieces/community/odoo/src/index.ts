@@ -1,10 +1,6 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import Odoo from './commom/index';
-import actions from './lib/actions';
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import Odoo from './commom/index'
+import actions from './lib/actions'
 
 export const odooAuth = PieceAuth.CustomAuth({
   props: {
@@ -31,7 +27,7 @@ export const odooAuth = PieceAuth.CustomAuth({
   },
   // Optional Validation
   validate: async ({ auth }) => {
-    const { base_url, database, username, api_key } = auth;
+    const { base_url, database, username, api_key } = auth
 
     const odoo = new Odoo({
       url: base_url,
@@ -39,24 +35,23 @@ export const odooAuth = PieceAuth.CustomAuth({
       db: database,
       username: username,
       password: api_key,
-    });
+    })
 
     try {
-      await odoo.connect();
+      await odoo.connect()
 
       return {
         valid: true,
-      };
+      }
     } catch (err) {
       return {
         valid: false,
-        error:
-          'Connection failed. Please check your credentials and try again.',
-      };
+        error: 'Connection failed. Please check your credentials and try again.',
+      }
     }
   },
   required: true,
-});
+})
 
 export const odoo = createPiece({
   displayName: 'Odoo',
@@ -64,7 +59,7 @@ export const odoo = createPiece({
   auth: odooAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/odoo.png',
-  authors: ["mariomeyer","kishanprmr","abuaboud"],
+  authors: ['mariomeyer', 'kishanprmr', 'abuaboud'],
   actions,
   triggers: [],
-});
+})

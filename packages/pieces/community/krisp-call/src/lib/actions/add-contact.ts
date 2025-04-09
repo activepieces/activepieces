@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { krispcallAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { krispcallAuth } from '../..'
 
 export const addContact = createAction({
   name: 'addContact',
@@ -48,7 +48,7 @@ export const addContact = createAction({
         email: propsValue.email,
         address: propsValue.address,
       },
-    });
-    return res.body;
+    })
+    return res.body
   },
-});
+})

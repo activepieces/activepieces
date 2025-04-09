@@ -1,6 +1,6 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { tallyFormsNewSubmission } from './lib/triggers/new-submission';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { tallyFormsNewSubmission } from './lib/triggers/new-submission'
 export const tally = createPiece({
   displayName: 'Tally',
   description: 'Receive form submissions from Tally forms',
@@ -8,7 +8,7 @@ export const tally = createPiece({
   minimumSupportedRelease: '0.27.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/tally.png',
   categories: [PieceCategory.FORMS_AND_SURVEYS],
-  authors: ["kishanprmr","abuaboud"],
+  authors: ['kishanprmr', 'abuaboud'],
   actions: [],
   triggers: [tallyFormsNewSubmission],
-});
+})

@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { talkableAuth } from '../../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { talkableAuth } from '../../..'
 
 export const findPerson = createAction({
   name: 'find_person', // Must be a unique across the piece, this shouldn't be changed.
@@ -48,20 +48,19 @@ export const findPerson = createAction({
     }),
   },
   async run(context) {
-    const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
-    const { site, api_key } = context.auth;
-    const personInfoResponse = await httpClient
-      .sendRequest<string[]>({
-        method: HttpMethod.GET,
-        url: `${TALKABLE_API_URL}/people/${context.propsValue['email']}${context.propsValue['scope']}`,
-        headers: {
-          Authorization: `Bearer ${api_key}`,
-          'Content-Type': 'application/json',
-        },
-        body: {
-          site_slug: site,
-        },
-      });
-    return personInfoResponse.body;
+    const TALKABLE_API_URL = 'https://www.talkable.com/api/v2'
+    const { site, api_key } = context.auth
+    const personInfoResponse = await httpClient.sendRequest<string[]>({
+      method: HttpMethod.GET,
+      url: `${TALKABLE_API_URL}/people/${context.propsValue['email']}${context.propsValue['scope']}`,
+      headers: {
+        Authorization: `Bearer ${api_key}`,
+        'Content-Type': 'application/json',
+      },
+      body: {
+        site_slug: site,
+      },
+    })
+    return personInfoResponse.body
   },
-});
+})

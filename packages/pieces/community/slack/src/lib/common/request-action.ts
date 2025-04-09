@@ -1,28 +1,24 @@
-import { slackSendMessage } from './utils';
-import {
-  assertNotNullOrUndefined,
-  ExecutionType,
-  PauseType,
-} from '@activepieces/shared';
+import { ExecutionType, PauseType, assertNotNullOrUndefined } from '@activepieces/shared'
+import { slackSendMessage } from './utils'
 
 export const requestAction = async (conversationId: string, context: any) => {
-  const { actions } = context.propsValue;
-  assertNotNullOrUndefined(actions, 'actions');
+  const { actions } = context.propsValue
+  assertNotNullOrUndefined(actions, 'actions')
 
   if (!actions.length) {
-    throw new Error(`Must have at least one button action`);
+    throw new Error(`Must have at least one button action`)
   }
 
   const actionTextToIds = actions.map((actionText: string) => {
     if (!actionText) {
-      throw new Error(`Button text for the action cannot be empty`);
+      throw new Error(`Button text for the action cannot be empty`)
     }
 
     return {
       actionText,
       actionId: encodeURI(actionText as string),
-    };
-  });
+    }
+  })
 
   if (context.executionType === ExecutionType.BEGIN) {
     context.run.pause({
@@ -30,18 +26,18 @@ export const requestAction = async (conversationId: string, context: any) => {
         type: PauseType.WEBHOOK,
         actions: actionTextToIds.map((action: any) => action.actionId),
       },
-    });
+    })
 
-    const token = context.auth.access_token;
-    const { text, username, profilePicture } = context.propsValue;
+    const token = context.auth.access_token
+    const { text, username, profilePicture } = context.propsValue
 
-    assertNotNullOrUndefined(token, 'token');
-    assertNotNullOrUndefined(text, 'text');
+    assertNotNullOrUndefined(token, 'token')
+    assertNotNullOrUndefined(text, 'text')
 
     const actionElements = actionTextToIds.map((action: any) => {
       const actionLink = context.generateResumeUrl({
         queryParams: { action: action.actionId },
-      });
+      })
 
       return {
         type: 'button',
@@ -51,8 +47,8 @@ export const requestAction = async (conversationId: string, context: any) => {
         },
         style: 'primary',
         url: actionLink,
-      };
-    });
+      }
+    })
 
     await slackSendMessage({
       token,
@@ -74,16 +70,16 @@ export const requestAction = async (conversationId: string, context: any) => {
         },
       ],
       conversationId: conversationId,
-    });
+    })
 
     return {
       action: 'N/A',
-    };
+    }
   } else {
-    const payload = context.resumePayload.queryParams as { action: string };
+    const payload = context.resumePayload.queryParams as { action: string }
 
     return {
       action: decodeURI(payload.action),
-    };
+    }
   }
-};
+}

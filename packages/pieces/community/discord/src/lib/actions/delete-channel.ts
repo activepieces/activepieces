@@ -1,11 +1,7 @@
-import {
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { createAction } from '@activepieces/pieces-framework';
-import { discordAuth } from '../../index';
-import { discordCommon } from '../common';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { discordAuth } from '../../index'
+import { discordCommon } from '../common'
 
 export const discordDeleteChannel = createAction({
   auth: discordAuth,
@@ -24,10 +20,10 @@ export const discordDeleteChannel = createAction({
         authorization: `Bot ${configValue.auth}`,
         'Content-Type': 'application/json',
       },
-    };
+    }
 
-    const res = await httpClient.sendRequest<never>(request);
+    const res = await httpClient.sendRequest<never>(request)
 
-    return res.body;
+    return res.body
   },
-});
+})

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.5.3/schema.json",
+  "extends": ["../server/api/biome.json"],
+  "organizeImports": {
+    "enabled": true
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "suspicious": {
+        "noConsole": "off"
+      }
+    }
+  },
+  "formatter": {
+    "enabled": true
+  },
+  "files": {
+    "ignore": ["node_modules/**/*"],
+    "include": ["**/*.ts", "**/*.js"]
+  },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  }
+}

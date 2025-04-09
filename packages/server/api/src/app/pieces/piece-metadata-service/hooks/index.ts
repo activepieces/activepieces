@@ -4,54 +4,50 @@ import { filterPiecesBasedOnEmbedding, filterPiecesBasedUser } from './piece-fil
 import { sortAndOrderPieces } from './piece-sorting'
 
 export const defaultPieceHooks: PieceMetadataServiceHooks = {
-    async filterPieces(params) {
-        const sortedPieces = sortAndOrderPieces(
-            params.sortBy,
-            params.orderBy,
-            params.pieces,
-        )
-        
-        const userBasedPieces = await filterPiecesBasedUser({
-            categories: params.categories,
-            searchQuery: params.searchQuery,
-            pieces: sortedPieces,
-            platformId: params.platformId,
-            suggestionType: params.suggestionType,
-        })
+  async filterPieces(params) {
+    const sortedPieces = sortAndOrderPieces(params.sortBy, params.orderBy, params.pieces)
 
-        const platformEmbeddedBasedPieces = filterPiecesBasedOnEmbedding({
-            platformId: params.platformId,
-            pieces: userBasedPieces,
-        })
+    const userBasedPieces = await filterPiecesBasedUser({
+      categories: params.categories,
+      searchQuery: params.searchQuery,
+      pieces: sortedPieces,
+      platformId: params.platformId,
+      suggestionType: params.suggestionType,
+    })
 
-        return platformEmbeddedBasedPieces
-    },
+    const platformEmbeddedBasedPieces = filterPiecesBasedOnEmbedding({
+      platformId: params.platformId,
+      pieces: userBasedPieces,
+    })
+
+    return platformEmbeddedBasedPieces
+  },
 }
 
 let hooks = defaultPieceHooks
 
 export const pieceMetadataServiceHooks = {
-    set(newHooks: PieceMetadataServiceHooks): void {
-        hooks = newHooks
-    },
+  set(newHooks: PieceMetadataServiceHooks): void {
+    hooks = newHooks
+  },
 
-    get(): PieceMetadataServiceHooks {
-        return hooks
-    },
+  get(): PieceMetadataServiceHooks {
+    return hooks
+  },
 }
 
 export type PieceMetadataServiceHooks = {
-    filterPieces(p: FilterPiecesParams): Promise<PieceMetadataSchema[]>
+  filterPieces(p: FilterPiecesParams): Promise<PieceMetadataSchema[]>
 }
 
 export type FilterPiecesParams = {
-    includeHidden?: boolean
-    platformId?: PlatformId
-    searchQuery?: string
-    categories?: PieceCategory[]
-    projectId?: string
-    sortBy?: PieceSortBy
-    orderBy?: PieceOrderBy
-    pieces: PieceMetadataSchema[]
-    suggestionType?: SuggestionType
+  includeHidden?: boolean
+  platformId?: PlatformId
+  searchQuery?: string
+  categories?: PieceCategory[]
+  projectId?: string
+  sortBy?: PieceSortBy
+  orderBy?: PieceOrderBy
+  pieces: PieceMetadataSchema[]
+  suggestionType?: SuggestionType
 }

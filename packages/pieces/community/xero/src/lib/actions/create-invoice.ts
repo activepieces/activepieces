@@ -1,14 +1,9 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
-import { props } from '../common/props';
-import dayjs from 'dayjs';
-import { xeroAuth } from '../..';
+import dayjs from 'dayjs'
+import { xeroAuth } from '../..'
+import { props } from '../common/props'
 
 export const xeroCreateInvoice = createAction({
   auth: xeroAuth,
@@ -66,12 +61,11 @@ export const xeroCreateInvoice = createAction({
     }),
   },
   async run(context) {
-    const { invoice_id, contact_id, email, name, tenant_id, ...invoice } =
-      context.propsValue;
+    const { invoice_id, contact_id, email, name, tenant_id, ...invoice } = context.propsValue
 
-    const contact: Record<string, unknown> = { Name: name };
-    if (email) contact['EmailAddress'] = email;
-    if (contact_id) contact['ContactID'] = contact_id;
+    const contact: Record<string, unknown> = { Name: name }
+    if (email) contact['EmailAddress'] = email
+    if (contact_id) contact['ContactID'] = contact_id
 
     const body = {
       Invoices: [
@@ -85,9 +79,9 @@ export const xeroCreateInvoice = createAction({
           Status: invoice.status,
         },
       ],
-    };
+    }
 
-    const url = 'https://api.xero.com/api.xro/2.0/Invoices';
+    const url = 'https://api.xero.com/api.xro/2.0/Invoices'
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: invoice_id ? `${url}/${invoice_id}` : url,
@@ -99,15 +93,15 @@ export const xeroCreateInvoice = createAction({
       headers: {
         'Xero-Tenant-Id': tenant_id,
       },
-    };
-
-    const result = await httpClient.sendRequest(request);
-    console.debug('Invoice creation response', result);
-
-    if (result.status === 200) {
-      return result.body;
     }
 
-    return result;
+    const result = await httpClient.sendRequest(request)
+    console.debug('Invoice creation response', result)
+
+    if (result.status === 200) {
+      return result.body
+    }
+
+    return result
   },
-});
+})

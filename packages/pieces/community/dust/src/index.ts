@@ -1,13 +1,9 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { createConversation } from './lib/actions/create-conversation';
-import { replyToConversation } from './lib/actions/reply-to-conversation';
-import { upsertDocument } from './lib/actions/upsert-document';
-import { addFragmentToConversation } from './lib/actions/add-fragment-to-conversation';
-import { getConversation } from './lib/actions/get-conversation';
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { addFragmentToConversation } from './lib/actions/add-fragment-to-conversation'
+import { createConversation } from './lib/actions/create-conversation'
+import { getConversation } from './lib/actions/get-conversation'
+import { replyToConversation } from './lib/actions/reply-to-conversation'
+import { upsertDocument } from './lib/actions/upsert-document'
 
 export const dustAuth = PieceAuth.CustomAuth({
   description: 'Dust authentication requires an API key.',
@@ -23,12 +19,12 @@ export const dustAuth = PieceAuth.CustomAuth({
       description: "Can be found in any of the workspace's URL",
     }),
   },
-});
+})
 
 export type DustAuthType = {
-  apiKey: string;
-  workspaceId: string;
-};
+  apiKey: string
+  workspaceId: string
+}
 
 export const dust = createPiece({
   displayName: 'Dust',
@@ -37,12 +33,6 @@ export const dust = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/dust.png',
   authors: ['AdamSelene', 'abuaboud'],
-  actions: [
-    createConversation,
-    getConversation,
-    replyToConversation,
-    addFragmentToConversation,
-    upsertDocument,
-  ],
+  actions: [createConversation, getConversation, replyToConversation, addFragmentToConversation, upsertDocument],
   triggers: [],
-});
+})

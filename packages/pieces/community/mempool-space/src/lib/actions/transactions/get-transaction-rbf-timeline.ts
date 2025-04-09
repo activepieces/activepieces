@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { MEMPOOL_API_BASE_URL } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { MEMPOOL_API_BASE_URL } from '../../common'
 
 export const getTransactionRbfTimeline = createAction({
   name: 'get_transaction_rbf_timeline',
@@ -18,7 +18,7 @@ export const getTransactionRbfTimeline = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${MEMPOOL_API_BASE_URL}/api/tx/${propsValue.txid}/rbf-timeline`,
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

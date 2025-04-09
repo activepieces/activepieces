@@ -1,15 +1,11 @@
-import { createAction } from '@activepieces/pieces-framework';
-import {
-  ExecutionType,
-  PauseType,
-} from '@activepieces/shared';
-import { sendTodoApproval, createTodoProps } from '../utils/utils';
+import { createAction } from '@activepieces/pieces-framework'
+import { ExecutionType, PauseType } from '@activepieces/shared'
+import { createTodoProps, sendTodoApproval } from '../utils/utils'
 
 export const createTodoAndWait = createAction({
   name: 'createTodoAndWait',
   displayName: 'Create Todo and Wait',
-  description:
-    'Creates a todo for a user and wait for their response or take action.',
+  description: 'Creates a todo for a user and wait for their response or take action.',
   props: createTodoProps,
   errorHandlingOptions: {
     continueOnFailure: {
@@ -26,13 +22,13 @@ export const createTodoAndWait = createAction({
           type: PauseType.WEBHOOK,
           response: {},
         },
-      });
-      const response = await sendTodoApproval(context, true);
-      return response.body;
+      })
+      const response = await sendTodoApproval(context, true)
+      return response.body
     } else {
       return {
         status: context.resumePayload.queryParams['status'],
-      };
+      }
     }
   },
   async run(context) {
@@ -42,13 +38,13 @@ export const createTodoAndWait = createAction({
           type: PauseType.WEBHOOK,
           response: {},
         },
-      });
-      const response = await sendTodoApproval(context, false);
-      return response.body;
+      })
+      const response = await sendTodoApproval(context, false)
+      return response.body
     } else {
       return {
         status: context.resumePayload.queryParams['status'],
-      };
+      }
     }
   },
-});
+})

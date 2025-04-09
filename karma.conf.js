@@ -1,8 +1,8 @@
 // Karma configuration file, see link for more information
 // https://karma-runner.github.io/1.0/config/configuration-file.html
 
-const { join } = require('path');
-const { constants } = require('karma');
+const { join } = require('path')
+const { constants } = require('karma')
 
 module.exports = () => {
   return {
@@ -40,5 +40,5 @@ module.exports = () => {
     browsers: ['Chrome'],
     singleRun: true,
     restartOnFileChange: true,
-  };
-};
+  }
+}

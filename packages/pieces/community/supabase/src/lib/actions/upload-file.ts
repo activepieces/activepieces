@@ -1,6 +1,6 @@
-import { supabaseAuth } from '../../index';
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { createClient } from '@supabase/supabase-js';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { createClient } from '@supabase/supabase-js'
+import { supabaseAuth } from '../../index'
 
 export const uploadFile = createAction({
   auth: supabaseAuth,
@@ -22,23 +22,19 @@ export const uploadFile = createAction({
     }),
   },
   async run(context) {
-    const { url, apiKey } = context.auth;
-    const { file, filePath, bucket } = context.propsValue;
-    const base64 = file.base64;
+    const { url, apiKey } = context.auth
+    const { file, filePath, bucket } = context.propsValue
+    const base64 = file.base64
     // Convert base64 to array buffer
-    const arrayBuffer = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-    const supabase = createClient(url, apiKey);
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(filePath, arrayBuffer);
+    const arrayBuffer = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
+    const supabase = createClient(url, apiKey)
+    const { data, error } = await supabase.storage.from(bucket).upload(filePath, arrayBuffer)
     if (error) {
-      throw new Error(error.message);
+      throw new Error(error.message)
     }
-    const { data: pbData } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(filePath);
+    const { data: pbData } = supabase.storage.from(bucket).getPublicUrl(filePath)
     return {
       publicUrl: pbData.publicUrl,
-    };
+    }
   },
-});
+})

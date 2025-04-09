@@ -1,8 +1,8 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { onfleetAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
 
-import Onfleet from '@onfleet/node-onfleet';
-import dayjs from 'dayjs';
+import Onfleet from '@onfleet/node-onfleet'
+import dayjs from 'dayjs'
 
 export const updateTask = createAction({
   auth: onfleetAuth,
@@ -47,20 +47,19 @@ export const updateTask = createAction({
     }),
     serviceTime: Property.Number({
       displayName: 'Service Time',
-      description:
-        "The number of minutes to be spent by the worker on arrival at this task's destination",
+      description: "The number of minutes to be spent by the worker on arrival at this task's destination",
       required: false,
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth)
 
     const completeAfter = context.propsValue.completeAfter
       ? dayjs(context.propsValue.completeAfter).valueOf()
-      : undefined;
+      : undefined
     const completeBefore = context.propsValue.completeBefore
       ? dayjs(context.propsValue.completeBefore).valueOf()
-      : undefined;
+      : undefined
 
     return await onfleetApi.tasks.update(context.propsValue.task, {
       merchant: context.propsValue.merchant,
@@ -70,6 +69,6 @@ export const updateTask = createAction({
       serviceTime: context.propsValue.serviceTime,
       completeAfter: completeAfter,
       completeBefore: completeBefore,
-    });
+    })
   },
-});
+})

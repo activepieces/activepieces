@@ -1,10 +1,10 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddExternalIdForFlowSqlite1735262810939 implements MigrationInterface {
-    name = 'AddExternalIdForFlowSqlite1735262810939'
+  name = 'AddExternalIdForFlowSqlite1735262810939'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             CREATE TABLE "temporary_platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -67,7 +67,7 @@ export class AddExternalIdForFlowSqlite1735262810939 implements MigrationInterfa
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_platform"(
                     "id",
                     "created",
@@ -148,20 +148,20 @@ export class AddExternalIdForFlowSqlite1735262810939 implements MigrationInterfa
                 "copilotSettings"
             FROM "platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_platform"
                 RENAME TO "platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_flow_folder_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_flow_project_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_flow" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -179,7 +179,7 @@ export class AddExternalIdForFlowSqlite1735262810939 implements MigrationInterfa
                     CONSTRAINT "fk_flow_published_version" FOREIGN KEY ("publishedVersionId") REFERENCES "flow_version" ("id") ON DELETE RESTRICT ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_flow"(
                     "id",
                     "created",
@@ -200,26 +200,26 @@ export class AddExternalIdForFlowSqlite1735262810939 implements MigrationInterfa
                 "publishedVersionId"
             FROM "flow"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "flow"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_flow"
                 RENAME TO "flow"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_flow_folder_id" ON "flow" ("folderId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_flow_project_id" ON "flow" ("projectId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_project_platform_id_external_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_project_owner_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_project" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -235,7 +235,7 @@ export class AddExternalIdForFlowSqlite1735262810939 implements MigrationInterfa
                 CONSTRAINT "fk_project_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_project"(
                     "id",
                     "created",
@@ -258,34 +258,34 @@ export class AddExternalIdForFlowSqlite1735262810939 implements MigrationInterfa
                 "deleted"
             FROM "project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_project"
                 RENAME TO "project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_project_platform_id_external_id" ON "project" ("platformId", "externalId")
             WHERE "deleted" IS NULL
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_project_owner_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_project_platform_id_external_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "project"
                 RENAME TO "temporary_project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "project" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -300,7 +300,7 @@ export class AddExternalIdForFlowSqlite1735262810939 implements MigrationInterfa
                 CONSTRAINT "fk_project_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "project"(
                     "id",
                     "created",
@@ -323,27 +323,27 @@ export class AddExternalIdForFlowSqlite1735262810939 implements MigrationInterfa
                 "deleted"
             FROM "temporary_project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_project_platform_id_external_id" ON "project" ("platformId", "externalId")
             WHERE "deleted" IS NULL
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_flow_project_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_flow_folder_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "flow"
                 RENAME TO "temporary_flow"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "flow" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -360,7 +360,7 @@ export class AddExternalIdForFlowSqlite1735262810939 implements MigrationInterfa
                     CONSTRAINT "fk_flow_published_version" FOREIGN KEY ("publishedVersionId") REFERENCES "flow_version" ("id") ON DELETE RESTRICT ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "flow"(
                     "id",
                     "created",
@@ -381,20 +381,20 @@ export class AddExternalIdForFlowSqlite1735262810939 implements MigrationInterfa
                 "publishedVersionId"
             FROM "temporary_flow"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_flow"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_flow_project_id" ON "flow" ("projectId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_flow_folder_id" ON "flow" ("folderId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "platform"
                 RENAME TO "temporary_platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -457,7 +457,7 @@ export class AddExternalIdForFlowSqlite1735262810939 implements MigrationInterfa
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "platform"(
                     "id",
                     "created",
@@ -538,9 +538,8 @@ export class AddExternalIdForFlowSqlite1735262810939 implements MigrationInterfa
                 "copilotSettings"
             FROM "temporary_platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_platform"
         `)
-    }
-
+  }
 }

@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { rabbitmqAuth } from '../..';
-import { rabbitmqConnect } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { rabbitmqAuth } from '../..'
+import { rabbitmqConnect } from '../common'
 
 export const sendMessageToQueue = createAction({
   auth: rabbitmqAuth,
@@ -18,38 +18,35 @@ export const sendMessageToQueue = createAction({
       description: 'The data to send',
       required: true,
       defaultValue: {
-        "key": "value",
-        "nested": { "key": "value" },
-        "array": ["value1", "value2"]
+        key: 'value',
+        nested: { key: 'value' },
+        array: ['value1', 'value2'],
       },
     }),
   },
   async run(context) {
-    const queue = context.propsValue.queue;
-    let connection;
-    let channel;
+    const queue = context.propsValue.queue
+    let connection
+    let channel
     try {
-      connection = await rabbitmqConnect(context.auth);
-      channel = await connection.createChannel();
+      connection = await rabbitmqConnect(context.auth)
+      channel = await connection.createChannel()
 
-      await channel.checkQueue(queue);
+      await channel.checkQueue(queue)
 
-      const result = channel.sendToQueue(
-        queue,
-        Buffer.from(JSON.stringify(context.propsValue.data))
-      );
+      const result = channel.sendToQueue(queue, Buffer.from(JSON.stringify(context.propsValue.data)))
 
       if (!result) {
-        throw new Error('Failed to send message to exchange');
+        throw new Error('Failed to send message to exchange')
       }
-      return result;
+      return result
     } finally {
       if (channel) {
-        await channel.close();
+        await channel.close()
       }
       if (connection) {
-        await connection.close();
+        await connection.close()
       }
     }
-  }
-});
+  },
+})

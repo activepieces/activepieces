@@ -1,11 +1,10 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import Crypto from 'crypto';
-import { Buffer } from 'buffer';
+import { Buffer } from 'buffer'
+import Crypto from 'crypto'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
 export const hmacSignature = createAction({
   name: 'hmac-signature',
-  description:
-    'Converts text to a HMAC signed hash value using various hashing algorithms',
+  description: 'Converts text to a HMAC signed hash value using various hashing algorithms',
   displayName: 'Generate HMAC Signature',
   props: {
     secretKey: Property.ShortText({
@@ -46,17 +45,14 @@ export const hmacSignature = createAction({
   async run(context) {
     const hashAlgorithm = Crypto.createHmac(
       context.propsValue.method,
-      Buffer.from(
-        context.propsValue.secretKey,
-        context.propsValue.secretKeyEncoding
-      )
-    );
+      Buffer.from(context.propsValue.secretKey, context.propsValue.secretKeyEncoding),
+    )
 
-    const text = context.propsValue.text;
-    hashAlgorithm.update(text);
+    const text = context.propsValue.text
+    hashAlgorithm.update(text)
 
-    const hashedString = hashAlgorithm.digest('hex');
+    const hashedString = hashAlgorithm.digest('hex')
 
-    return hashedString;
+    return hashedString
   },
-});
+})

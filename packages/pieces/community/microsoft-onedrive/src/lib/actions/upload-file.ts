@@ -1,14 +1,10 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { oneDriveAuth } from '../../';
-import mime from 'mime-types';
-import { oneDriveCommon } from '../common/common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import mime from 'mime-types'
+import { oneDriveAuth } from '../../'
+import { oneDriveCommon } from '../common/common'
 
-const CHUNK_SIZE = 10485760; // Use 10MiB per chunk
+const CHUNK_SIZE = 10485760 // Use 10MiB per chunk
 
 export const uploadFile = createAction({
   auth: oneDriveAuth,
@@ -29,19 +25,15 @@ export const uploadFile = createAction({
     parentId: oneDriveCommon.parentFolder,
   },
   async run(context) {
-    const fileData = context.propsValue.file;
-    const mimeTypeLookup = mime.lookup(
-      fileData.extension ? fileData.extension : ''
-    );
-    const mimeType = mimeTypeLookup
-      ? mimeTypeLookup
-      : 'application/octet-stream'; // Fallback to a default MIME type
-    const encodedFilename = encodeURIComponent(context.propsValue.fileName);
-    const parentId = context.propsValue.parentId ?? 'root';
+    const fileData = context.propsValue.file
+    const mimeTypeLookup = mime.lookup(fileData.extension ? fileData.extension : '')
+    const mimeType = mimeTypeLookup ? mimeTypeLookup : 'application/octet-stream' // Fallback to a default MIME type
+    const encodedFilename = encodeURIComponent(context.propsValue.fileName)
+    const parentId = context.propsValue.parentId ?? 'root'
 
     if (fileData.data.length <= 4 * 1024 * 1024) {
       // If file is smaller than 4MiB, use simple upload
-      const base64Data = Buffer.from(fileData.base64, 'base64');
+      const base64Data = Buffer.from(fileData.base64, 'base64')
       const result = await httpClient.sendRequest({
         method: HttpMethod.PUT,
         url: `${oneDriveCommon.baseUrl}/items/${parentId}:/${encodedFilename}:/content`,
@@ -54,9 +46,9 @@ export const uploadFile = createAction({
           type: AuthenticationType.BEARER_TOKEN,
           token: context.auth.access_token,
         },
-      });
+      })
 
-      return result.body;
+      return result.body
     } else {
       // For files larger than 4MiB, use chunked upload
       const session = await httpClient.sendRequest({
@@ -75,19 +67,19 @@ export const uploadFile = createAction({
           type: AuthenticationType.BEARER_TOKEN,
           token: context.auth.access_token,
         },
-      });
+      })
 
-      const uploadUrl = session.body.uploadUrl;
-      let start = 0;
-      let end = CHUNK_SIZE - 1;
-      const fileSize = fileData.data.length;
-      let result;
+      const uploadUrl = session.body.uploadUrl
+      let start = 0
+      let end = CHUNK_SIZE - 1
+      const fileSize = fileData.data.length
+      let result
       while (start < fileSize) {
         if (end >= fileSize) {
-          end = fileSize - 1;
+          end = fileSize - 1
         }
 
-        const chunk = fileData.data.slice(start, end + 1);
+        const chunk = fileData.data.slice(start, end + 1)
 
         result = await httpClient.sendRequest({
           method: HttpMethod.PUT,
@@ -97,13 +89,13 @@ export const uploadFile = createAction({
             'Content-Length': chunk.length.toString(),
             'Content-Range': `bytes ${start}-${end}/${fileSize}`,
           },
-        });
+        })
 
-        start += CHUNK_SIZE;
-        end += CHUNK_SIZE;
+        start += CHUNK_SIZE
+        end += CHUNK_SIZE
       }
 
-      return result?.body;
+      return result?.body
     }
   },
-});
+})

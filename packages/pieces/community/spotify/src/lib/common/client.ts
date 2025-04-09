@@ -1,11 +1,5 @@
-import {
-  AuthenticationType,
-  HttpMessageBody,
-  HttpMethod,
-  QueryParams,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { SearchRequest, SearchResult } from './models/search';
+import { AuthenticationType, HttpMessageBody, HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common'
+import { Pagination, PaginationRequest } from './models/common'
 import {
   DeviceListResponse,
   PlaybackPauseRequest,
@@ -13,7 +7,7 @@ import {
   PlaybackSeekRequest,
   PlaybackState,
   PlaybackVolumeRequest,
-} from './models/playback';
+} from './models/playback'
 import {
   Playlist,
   PlaylistAddItemsRequest,
@@ -22,32 +16,26 @@ import {
   PlaylistRemoveItemsRequest,
   PlaylistReorderItemsRequest,
   PlaylistUpdateRequest,
-} from './models/playlist';
-import { User } from './models/user';
-import { Pagination, PaginationRequest } from './models/common';
+} from './models/playlist'
+import { SearchRequest, SearchResult } from './models/search'
+import { User } from './models/user'
 
-function emptyValueFilter(
-  accessor: (key: string) => any
-): (key: string) => boolean {
+function emptyValueFilter(accessor: (key: string) => any): (key: string) => boolean {
   return (key: string) => {
-    const val = accessor(key);
-    return (
-      val !== null &&
-      val !== undefined &&
-      (typeof val != 'string' || val.length > 0)
-    );
-  };
+    const val = accessor(key)
+    return val !== null && val !== undefined && (typeof val != 'string' || val.length > 0)
+  }
 }
 
 export function prepareQuery(request?: Record<string, any>): QueryParams {
-  const params: QueryParams = {};
-  if (!request) return params;
+  const params: QueryParams = {}
+  if (!request) return params
   Object.keys(request)
     .filter(emptyValueFilter((k) => request[k]))
     .forEach((k: string) => {
-      params[k] = (request as Record<string, any>)[k].toString();
-    });
-  return params;
+      params[k] = (request as Record<string, any>)[k].toString()
+    })
+  return params
 }
 
 export class SpotifyWebApi {
@@ -57,7 +45,7 @@ export class SpotifyWebApi {
     method: HttpMethod,
     url: string,
     query?: QueryParams,
-    body?: object
+    body?: object,
   ): Promise<T> {
     const res = await httpClient.sendRequest<T>({
       method,
@@ -68,190 +56,125 @@ export class SpotifyWebApi {
         type: AuthenticationType.BEARER_TOKEN,
         token: this.accessToken,
       },
-    });
-    return res.body;
+    })
+    return res.body
   }
 
   async search(request: SearchRequest): Promise<SearchResult> {
-    const res = await this.makeRequest<SearchResult>(
-      HttpMethod.GET,
-      '/search',
-      prepareQuery(request)
-    );
-    return res;
+    const res = await this.makeRequest<SearchResult>(HttpMethod.GET, '/search', prepareQuery(request))
+    return res
   }
 
   async getDevices(): Promise<DeviceListResponse> {
-    return await this.makeRequest<DeviceListResponse>(
-      HttpMethod.GET,
-      '/me/player/devices'
-    );
+    return await this.makeRequest<DeviceListResponse>(HttpMethod.GET, '/me/player/devices')
   }
 
   async getPlaybackState(): Promise<PlaybackState> {
-    return await this.makeRequest<PlaybackState>(HttpMethod.GET, '/me/player');
+    return await this.makeRequest<PlaybackState>(HttpMethod.GET, '/me/player')
   }
 
   async setVolume(request: PlaybackVolumeRequest) {
-    await this.makeRequest(
-      HttpMethod.PUT,
-      '/me/player/volume',
-      prepareQuery(request)
-    );
+    await this.makeRequest(HttpMethod.PUT, '/me/player/volume', prepareQuery(request))
   }
 
   async pause(request: PlaybackPauseRequest) {
-    await this.makeRequest(
-      HttpMethod.PUT,
-      '/me/player/pause',
-      prepareQuery(request)
-    );
+    await this.makeRequest(HttpMethod.PUT, '/me/player/pause', prepareQuery(request))
   }
 
   async play(request: PlaybackPlayRequest) {
-    const query: QueryParams = {};
-    if (request.device_id) query.device_id = request.device_id;
-    request.device_id = undefined;
-    await this.makeRequest(HttpMethod.PUT, '/me/player/play', query, request);
+    const query: QueryParams = {}
+    if (request.device_id) query.device_id = request.device_id
+    request.device_id = undefined
+    await this.makeRequest(HttpMethod.PUT, '/me/player/play', query, request)
   }
 
   async seek(request: PlaybackSeekRequest) {
-    await this.makeRequest(
-      HttpMethod.PUT,
-      '/me/player/seek',
-      prepareQuery(request)
-    );
+    await this.makeRequest(HttpMethod.PUT, '/me/player/seek', prepareQuery(request))
   }
 
   async getCurrentUser(): Promise<User> {
-    return await this.makeRequest<User>(HttpMethod.GET, '/me');
+    return await this.makeRequest<User>(HttpMethod.GET, '/me')
   }
 
-  async getCurrentUserPlaylists(
-    request?: PaginationRequest
-  ): Promise<Pagination<Playlist>> {
-    return await this.makeRequest<Pagination<Playlist>>(
-      HttpMethod.GET,
-      '/me/playlists',
-      prepareQuery(request)
-    );
+  async getCurrentUserPlaylists(request?: PaginationRequest): Promise<Pagination<Playlist>> {
+    return await this.makeRequest<Pagination<Playlist>>(HttpMethod.GET, '/me/playlists', prepareQuery(request))
   }
 
   async getAllCurrentUserPlaylists(): Promise<Playlist[]> {
-    const playlists: Playlist[] = [];
-    let total = 99999;
+    const playlists: Playlist[] = []
+    let total = 99999
     while (playlists.length < total) {
       const res = await this.getCurrentUserPlaylists({
         limit: 50,
         offset: playlists.length,
-      });
-      total = res.total;
-      res.items.forEach((item) => playlists.push(item));
+      })
+      total = res.total
+      res.items.forEach((item) => playlists.push(item))
     }
-    return playlists;
+    return playlists
   }
 
-  async createPlaylist(
-    userId: string,
-    request: PlaylistCreateRequest
-  ): Promise<Playlist> {
-    return await this.makeRequest<Playlist>(
-      HttpMethod.POST,
-      '/users/' + userId + '/playlists',
-      undefined,
-      request
-    );
+  async createPlaylist(userId: string, request: PlaylistCreateRequest): Promise<Playlist> {
+    return await this.makeRequest<Playlist>(HttpMethod.POST, '/users/' + userId + '/playlists', undefined, request)
   }
 
   async updatePlaylist(id: string, request: PlaylistUpdateRequest) {
-    await this.makeRequest(
-      HttpMethod.PUT,
-      '/playlists/' + id,
-      undefined,
-      request
-    );
+    await this.makeRequest(HttpMethod.PUT, '/playlists/' + id, undefined, request)
   }
 
   async getPlaylist(id: string): Promise<Playlist> {
-    return await this.makeRequest<Playlist>(HttpMethod.GET, '/playlists/' + id);
+    return await this.makeRequest<Playlist>(HttpMethod.GET, '/playlists/' + id)
   }
 
-  async getPlaylistItems(
-    id: string,
-    request?: PaginationRequest
-  ): Promise<Pagination<PlaylistItem>> {
+  async getPlaylistItems(id: string, request?: PaginationRequest): Promise<Pagination<PlaylistItem>> {
     return await this.makeRequest<Pagination<PlaylistItem>>(
       HttpMethod.GET,
       '/playlists/' + id + '/tracks',
-      prepareQuery(request)
-    );
+      prepareQuery(request),
+    )
   }
 
   async getAllPlaylistItems(id: string): Promise<PlaylistItem[]> {
-    const items: PlaylistItem[] = [];
-    let total = 99999;
+    const items: PlaylistItem[] = []
+    let total = 99999
     while (items.length < total) {
       const res = await this.getPlaylistItems(id, {
         limit: 50,
         offset: items.length,
-      });
-      total = res.total;
-      res.items.forEach((item) => items.push(item));
+      })
+      total = res.total
+      res.items.forEach((item) => items.push(item))
     }
-    return items;
+    return items
   }
 
-  async getSavedTracks(
-    request?: PaginationRequest
-  ): Promise<Pagination<PlaylistItem>> {
-    return await this.makeRequest<Pagination<PlaylistItem>>(
-      HttpMethod.GET,
-      '/me/tracks',
-      prepareQuery(request)
-    );
+  async getSavedTracks(request?: PaginationRequest): Promise<Pagination<PlaylistItem>> {
+    return await this.makeRequest<Pagination<PlaylistItem>>(HttpMethod.GET, '/me/tracks', prepareQuery(request))
   }
 
   async getAllSavedTracks(): Promise<PlaylistItem[]> {
-    const items: PlaylistItem[] = [];
-    let total = 99999;
+    const items: PlaylistItem[] = []
+    let total = 99999
     while (items.length < total) {
       const res = await this.getSavedTracks({
         limit: 50,
         offset: items.length,
-      });
-      total = res.total;
-      res.items.forEach((item) => items.push(item));
+      })
+      total = res.total
+      res.items.forEach((item) => items.push(item))
     }
-    return items;
+    return items
   }
 
   async addItemsToPlaylist(id: string, request: PlaylistAddItemsRequest) {
-    await this.makeRequest(
-      HttpMethod.POST,
-      '/playlists/' + id + '/tracks',
-      undefined,
-      request
-    );
+    await this.makeRequest(HttpMethod.POST, '/playlists/' + id + '/tracks', undefined, request)
   }
 
-  async removeItemsFromPlaylist(
-    id: string,
-    request: PlaylistRemoveItemsRequest
-  ) {
-    await this.makeRequest(
-      HttpMethod.DELETE,
-      '/playlists/' + id + '/tracks',
-      undefined,
-      request
-    );
+  async removeItemsFromPlaylist(id: string, request: PlaylistRemoveItemsRequest) {
+    await this.makeRequest(HttpMethod.DELETE, '/playlists/' + id + '/tracks', undefined, request)
   }
 
   async reorderPlaylist(id: string, request: PlaylistReorderItemsRequest) {
-    await this.makeRequest(
-      HttpMethod.PUT,
-      '/playlists/' + id + '/tracks',
-      undefined,
-      request
-    );
+    await this.makeRequest(HttpMethod.PUT, '/playlists/' + id + '/tracks', undefined, request)
   }
 }

@@ -1,29 +1,21 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { convertkitAuth } from '../..'
+import { TAGS_API_ENDPOINT } from '../common/constants'
+import { allFields } from '../common/custom-fields'
+import { fetchTags } from '../common/service'
+import { subscriberEmail, subscriberFirstName, subscriberId } from '../common/subscribers'
 import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { convertkitAuth } from '../..';
-import {
-  tag,
-  tagsRequired,
   name,
+  sortOrder,
+  subscriberState,
+  tag,
   tagIdByEmail,
   tagIdBySubscriberId,
   tagsPageNumber,
-  sortOrder,
-  subscriberState,
-} from '../common/tags';
-import {
-  subscriberId,
-  subscriberEmail,
-  subscriberFirstName,
-} from '../common/subscribers';
-import { Tag } from '../common/types';
-import { allFields } from '../common/custom-fields';
-import { TAGS_API_ENDPOINT } from '../common/constants';
-import { fetchTags } from '../common/service';
+  tagsRequired,
+} from '../common/tags'
+import { Tag } from '../common/types'
 
 export const listTags = createAction({
   auth: convertkitAuth,
@@ -32,9 +24,9 @@ export const listTags = createAction({
   description: 'Returns a list of all tags',
   props: {},
   run(context) {
-    return fetchTags(context.auth);
+    return fetchTags(context.auth)
   },
-});
+})
 
 export const createTag = createAction({
   auth: convertkitAuth,
@@ -45,28 +37,28 @@ export const createTag = createAction({
     name,
   },
   async run(context) {
-    const url = TAGS_API_ENDPOINT;
+    const url = TAGS_API_ENDPOINT
 
     const body = {
       api_secret: context.auth,
       tag: { name: context.propsValue.name },
-    };
+    }
 
     const request: HttpRequest = {
       url,
       method: HttpMethod.POST,
       body,
-    };
-
-    const response = await httpClient.sendRequest<{ tag: Tag }>(request);
-
-    if (response.status !== 201) {
-      throw new Error(`Error creating tag: ${response.status}`);
     }
 
-    return response.body;
+    const response = await httpClient.sendRequest<{ tag: Tag }>(request)
+
+    if (response.status !== 201) {
+      throw new Error(`Error creating tag: ${response.status}`)
+    }
+
+    return response.body
   },
-});
+})
 
 // TODO:
 // fields do not show up in the UI
@@ -84,13 +76,13 @@ export const tagSubscriber = createAction({
     fields: allFields,
   },
   async run(context) {
-    const { email, firstName, tags, fields } = context.propsValue;
+    const { email, firstName, tags, fields } = context.propsValue
     if (!tags || tags.length === 0) {
-      throw new Error('At least one tag is required');
+      throw new Error('At least one tag is required')
     }
-    const tagId = tags[0];
+    const tagId = tags[0]
 
-    const url = `${TAGS_API_ENDPOINT}/${tagId}/subscribe`;
+    const url = `${TAGS_API_ENDPOINT}/${tagId}/subscribe`
 
     const body = {
       email,
@@ -98,25 +90,25 @@ export const tagSubscriber = createAction({
       tags,
       fields,
       api_secret: context.auth,
-    };
+    }
 
     const request: HttpRequest = {
       url,
       method: HttpMethod.POST,
       body,
-    };
-
-    const response = await httpClient.sendRequest<{
-      subscription: Tag;
-    }>(request);
-
-    if (response.status !== 200) {
-      throw new Error(`Error tagging subscriber: ${response.status}`);
     }
 
-    return response.body.subscription;
+    const response = await httpClient.sendRequest<{
+      subscription: Tag
+    }>(request)
+
+    if (response.status !== 200) {
+      throw new Error(`Error tagging subscriber: ${response.status}`)
+    }
+
+    return response.body.subscription
   },
-});
+})
 
 export const removeTagFromSubscriberByEmail = createAction({
   auth: convertkitAuth,
@@ -128,29 +120,29 @@ export const removeTagFromSubscriberByEmail = createAction({
     tagId: tagIdByEmail,
   },
   async run(context) {
-    const { email, tagId } = context.propsValue;
-    const url = `${TAGS_API_ENDPOINT}/${tagId}/unsubscribe`;
+    const { email, tagId } = context.propsValue
+    const url = `${TAGS_API_ENDPOINT}/${tagId}/unsubscribe`
 
     const body = {
       email,
       api_secret: context.auth,
-    };
+    }
 
     const request: HttpRequest = {
       url,
       method: HttpMethod.POST,
       body,
-    };
-
-    const response = await httpClient.sendRequest<{ subscriber: Tag }>(request);
-
-    if (response.status !== 200) {
-      throw new Error(`Error removing tag from subscriber: ${response.status}`);
     }
 
-    return response.body;
+    const response = await httpClient.sendRequest<{ subscriber: Tag }>(request)
+
+    if (response.status !== 200) {
+      throw new Error(`Error removing tag from subscriber: ${response.status}`)
+    }
+
+    return response.body
   },
-});
+})
 
 export const removeTagFromSubscriberById = createAction({
   auth: convertkitAuth,
@@ -162,29 +154,29 @@ export const removeTagFromSubscriberById = createAction({
     tagId: tagIdBySubscriberId,
   },
   async run(context) {
-    const { subscriberId, tagId } = context.propsValue;
-    const url = `${TAGS_API_ENDPOINT}/${tagId}/unsubscribe`;
+    const { subscriberId, tagId } = context.propsValue
+    const url = `${TAGS_API_ENDPOINT}/${tagId}/unsubscribe`
 
     const body = {
       id: subscriberId,
       api_secret: context.auth,
-    };
+    }
 
     const request: HttpRequest = {
       url,
       method: HttpMethod.POST,
       body,
-    };
-
-    const response = await httpClient.sendRequest<{ subscriber: Tag }>(request);
-
-    if (response.status !== 200) {
-      throw new Error(`Error removing tag from subscriber: ${response.status}`);
     }
 
-    return response.body;
+    const response = await httpClient.sendRequest<{ subscriber: Tag }>(request)
+
+    if (response.status !== 200) {
+      throw new Error(`Error removing tag from subscriber: ${response.status}`)
+    }
+
+    return response.body
   },
-});
+})
 
 export const listSubscriptionsToATag = createAction({
   auth: convertkitAuth,
@@ -198,30 +190,30 @@ export const listSubscriptionsToATag = createAction({
     subscriberState,
   },
   async run(context) {
-    const { tagId, page, sortOrder, subscriberState } = context.propsValue;
-    const url = `${TAGS_API_ENDPOINT}/${tagId}/subscriptions?`;
+    const { tagId, page, sortOrder, subscriberState } = context.propsValue
+    const url = `${TAGS_API_ENDPOINT}/${tagId}/subscriptions?`
 
     const body = {
       api_secret: context.auth,
       page,
       sort_order: sortOrder,
       subscriber_state: subscriberState,
-    };
+    }
 
     const request: HttpRequest = {
       url,
       method: HttpMethod.GET,
       body,
-    };
-
-    const response = await httpClient.sendRequest<{
-      subscriptions: Tag[];
-    }>(request);
-
-    if (response.status !== 200) {
-      throw new Error(`Error listing subscriptions to tag: ${response.status}`);
     }
 
-    return response.body.subscriptions;
+    const response = await httpClient.sendRequest<{
+      subscriptions: Tag[]
+    }>(request)
+
+    if (response.status !== 200) {
+      throw new Error(`Error listing subscriptions to tag: ${response.status}`)
+    }
+
+    return response.body.subscriptions
   },
-});
+})

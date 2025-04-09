@@ -1,6 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { makeClient, pastefyCommon } from '../common';
-import { pastefyAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { pastefyAuth } from '../..'
+import { makeClient, pastefyCommon } from '../common'
 
 export default createAction({
   auth: pastefyAuth,
@@ -15,11 +15,11 @@ export default createAction({
     parent_id: pastefyCommon.folder_id(false, 'Parent Folder'),
   },
   async run(context) {
-    const client = makeClient(context.auth, context.propsValue);
+    const client = makeClient(context.auth, context.propsValue)
     const res = await client.createFolder({
       name: context.propsValue.name as string,
       parent: context.propsValue.parent_id,
-    });
-    return res.folder;
+    })
+    return res.folder
   },
-});
+})

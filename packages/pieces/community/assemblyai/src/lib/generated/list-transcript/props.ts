@@ -1,4 +1,4 @@
-import { Property } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework'
 export const props = {
   limit: Property.Number({
     displayName: 'Limit',
@@ -51,4 +51,4 @@ export const props = {
     description: 'Only get throttled transcripts, overrides the status filter',
     defaultValue: false,
   }),
-};
+}

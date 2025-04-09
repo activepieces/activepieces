@@ -1,18 +1,13 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { discordAuth } from '../../index';
-import { ExecutionType, PauseType } from '@activepieces/shared';
-import { discordCommon } from '../common';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { ExecutionType, PauseType } from '@activepieces/shared'
+import { discordAuth } from '../../index'
+import { discordCommon } from '../common'
 
 export const discordSendApprovalMessage = createAction({
   auth: discordAuth,
   name: 'request_approval_message',
-  description:
-    'send a message to a channel asking for approval and wait for a response',
+  description: 'send a message to a channel asking for approval and wait for a response',
   displayName: 'Request Approval in a Channel',
   props: {
     content: Property.LongText({
@@ -29,7 +24,7 @@ export const discordSendApprovalMessage = createAction({
           type: PauseType.WEBHOOK,
           response: {},
         },
-      });
+      })
 
       const approvalLink = ctx.generateResumeUrl({
         queryParams: { action: 'approve' },
@@ -37,7 +32,6 @@ export const discordSendApprovalMessage = createAction({
       const disapprovalLink = ctx.generateResumeUrl({
         queryParams: { action: 'disapprove' },
       })
-
 
       const request: HttpRequest<any> = {
         method: HttpMethod.POST,
@@ -68,15 +62,14 @@ export const discordSendApprovalMessage = createAction({
           authorization: `Bot ${ctx.auth}`,
           'Content-Type': 'application/json',
         },
-      };
+      }
 
-      await httpClient.sendRequest<never>(request);
-      return {};
+      await httpClient.sendRequest<never>(request)
+      return {}
     } else {
-
       return {
         approved: ctx.resumePayload.queryParams['action'] === 'approve',
-      };
+      }
     }
   },
-});
+})

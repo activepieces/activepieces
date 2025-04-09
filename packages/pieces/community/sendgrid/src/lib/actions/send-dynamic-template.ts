@@ -1,11 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { sendgridCommon } from '../common';
-import { sendgridAuth } from '../..';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { sendgridAuth } from '../..'
+import { sendgridCommon } from '../common'
 
 export const sendDynamicTemplate = createAction({
   auth: sendgridAuth,
@@ -45,8 +41,7 @@ export const sendDynamicTemplate = createAction({
     }),
   },
   async run(context) {
-    const { to, from, template_id, template_data, reply_to, from_name } =
-      context.propsValue;
+    const { to, from, template_id, template_data, reply_to, from_name } = context.propsValue
     const message = {
       personalizations: to.map((email) => ({
         to: [{ email: (email as string).trim() }],
@@ -55,7 +50,7 @@ export const sendDynamicTemplate = createAction({
       from: { email: from, name: from_name },
       reply_to: { email: reply_to ?? from },
       template_id,
-    };
+    }
 
     await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -66,9 +61,9 @@ export const sendDynamicTemplate = createAction({
         token: context.auth,
       },
       queryParams: {},
-    });
+    })
     return {
       success: true,
-    };
+    }
   },
-});
+})

@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { talkableAuth } from '../../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { talkableAuth } from '../../..'
 
 export const getLoyaltyRedeemActions = createAction({
   name: 'get_loyalty_redeem_actions', // Must be a unique across the piece, this shouldn't be changed.
@@ -15,20 +15,19 @@ export const getLoyaltyRedeemActions = createAction({
     }),
   },
   async run(context) {
-    const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
-    const { site, api_key } = context.auth;
-    const getLoyaltyRedeemActionsResponse = await httpClient
-      .sendRequest<string[]>({
-        method: HttpMethod.GET,
-        url: `${TALKABLE_API_URL}/loyalty/members/${context.propsValue['person_email']}/redeem_actions`,
-        headers: {
-          Authorization: `Bearer ${api_key}`,
-          'Content-Type': 'application/json',
-        },
-        body: {
-          site_slug: site,
-        },
-      });
-    return getLoyaltyRedeemActionsResponse.body;
+    const TALKABLE_API_URL = 'https://www.talkable.com/api/v2'
+    const { site, api_key } = context.auth
+    const getLoyaltyRedeemActionsResponse = await httpClient.sendRequest<string[]>({
+      method: HttpMethod.GET,
+      url: `${TALKABLE_API_URL}/loyalty/members/${context.propsValue['person_email']}/redeem_actions`,
+      headers: {
+        Authorization: `Bearer ${api_key}`,
+        'Content-Type': 'application/json',
+      },
+      body: {
+        site_slug: site,
+      },
+    })
+    return getLoyaltyRedeemActionsResponse.body
   },
-});
+})

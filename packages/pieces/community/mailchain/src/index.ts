@@ -1,7 +1,7 @@
-import { createPiece } from '@activepieces/pieces-framework';
-import { mailchainCommon } from './lib/common/common';
-import { getAuthenticatedUser } from './lib/actions/get-authenticated-user';
-import { sendEmail } from './lib/actions/send-email';
+import { createPiece } from '@activepieces/pieces-framework'
+import { getAuthenticatedUser } from './lib/actions/get-authenticated-user'
+import { sendEmail } from './lib/actions/send-email'
+import { mailchainCommon } from './lib/common/common'
 
 export const mailchain = createPiece({
   displayName: 'Mailchain',
@@ -10,9 +10,8 @@ export const mailchain = createPiece({
   auth: mailchainCommon.auth,
   minimumSupportedRelease: '0.20.0',
   categories: [],
-  logoUrl:
-    'https://cdn.activepieces.com/pieces/mailchain.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/mailchain.png',
   authors: ['ahmad-swanblocks'],
   actions: [getAuthenticatedUser, sendEmail],
   triggers: [],
-});
+})

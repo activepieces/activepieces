@@ -1,4 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
+import { Property, createAction } from '@activepieces/pieces-framework'
 
 export const concat = createAction({
   description: 'Concatenate two or more texts',
@@ -24,6 +24,6 @@ export const concat = createAction({
     }),
   },
   run: async (ctx) => {
-    return (ctx.propsValue.texts ?? []).join(ctx.propsValue.separator ?? '');
+    return (ctx.propsValue.texts ?? []).join(ctx.propsValue.separator ?? '')
   },
-});
+})

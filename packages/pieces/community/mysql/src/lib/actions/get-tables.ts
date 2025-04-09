@@ -1,6 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { mysqlConnect, mysqlGetTableNames } from '../common';
-import { mysqlAuth } from '../..';
+import { createAction } from '@activepieces/pieces-framework'
+import { mysqlAuth } from '../..'
+import { mysqlConnect, mysqlGetTableNames } from '../common'
 
 export default createAction({
   auth: mysqlAuth,
@@ -9,12 +9,12 @@ export default createAction({
   description: 'Returns a list of tables in the database',
   props: {},
   async run(context) {
-    const conn = await mysqlConnect(context.auth, context.propsValue);
+    const conn = await mysqlConnect(context.auth, context.propsValue)
     try {
-      const tables = await mysqlGetTableNames(conn);
-      return { tables };
+      const tables = await mysqlGetTableNames(conn)
+      return { tables }
     } finally {
-      await conn.end();
+      await conn.end()
     }
   },
-});
+})

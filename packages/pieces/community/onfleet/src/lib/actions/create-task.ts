@@ -1,13 +1,9 @@
-import {
-  DynamicPropsValue,
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { onfleetAuth } from '../..';
-import { common } from '../common';
+import { DynamicPropsValue, Property, createAction } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
+import { common } from '../common'
 
-import Onfleet from '@onfleet/node-onfleet';
-import dayjs from 'dayjs';
+import Onfleet from '@onfleet/node-onfleet'
+import dayjs from 'dayjs'
 
 export const createTask = createAction({
   auth: onfleetAuth,
@@ -33,14 +29,14 @@ export const createTask = createAction({
       required: true,
       refreshers: ['useRecipientID'],
       props: async ({ useRecipientID }) => {
-        let fields: DynamicPropsValue = {};
+        let fields: DynamicPropsValue = {}
         if (useRecipientID) {
           fields = {
             id: Property.ShortText({
               displayName: 'Recipient ID',
               required: true,
             }),
-          };
+          }
         } else {
           fields = {
             name: Property.ShortText({
@@ -63,10 +59,10 @@ export const createTask = createAction({
               required: false,
               defaultValue: false,
             }),
-          };
+          }
         }
 
-        return fields;
+        return fields
       },
     }),
     useRecipientID: Property.Checkbox({
@@ -112,14 +108,13 @@ export const createTask = createAction({
     }),
     serviceTime: Property.Number({
       displayName: 'Service Time',
-      description:
-        "The number of minutes to be spent by the worker on arrival at this task's destination",
+      description: "The number of minutes to be spent by the worker on arrival at this task's destination",
       required: false,
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
-    let address;
+    const onfleetApi = new Onfleet(context.auth)
+    let address
     if (context.propsValue.unparsedDestination) {
       address = {
         number: '',
@@ -127,7 +122,7 @@ export const createTask = createAction({
         city: '',
         country: '',
         unparsed: context.propsValue.destination['unparsedAddress'],
-      };
+      }
     } else {
       address = {
         number: context.propsValue.destination['number'],
@@ -138,30 +133,29 @@ export const createTask = createAction({
         state: context.propsValue.destination['state'],
         postalCode: context.propsValue.destination['postalCode'],
         name: context.propsValue.destination['name'],
-      };
+      }
     }
 
-    let recipients;
+    let recipients
     if (context.propsValue.useRecipientID) {
-      recipients = [context.propsValue.recipient['id']];
+      recipients = [context.propsValue.recipient['id']]
     } else {
       recipients = [
         {
           name: context.propsValue.recipient['name'],
           phone: context.propsValue.recipient['phone'],
           notes: context.propsValue.recipient['notes'],
-          skipSMSNotifications:
-            context.propsValue.recipient['skipSMSNotifications'],
+          skipSMSNotifications: context.propsValue.recipient['skipSMSNotifications'],
         },
-      ];
+      ]
     }
 
     const completeAfter = context.propsValue.completeAfter
       ? dayjs(context.propsValue.completeAfter).valueOf()
-      : undefined;
+      : undefined
     const completeBefore = context.propsValue.completeBefore
       ? dayjs(context.propsValue.completeBefore).valueOf()
-      : undefined;
+      : undefined
 
     return await onfleetApi.tasks.create({
       destination: {
@@ -174,11 +168,10 @@ export const createTask = createAction({
       quantity: context.propsValue.quantity,
       recipientName: context.propsValue.recipientName,
       recipientNotes: context.propsValue.recipientNotes,
-      recipientSkipSMSNotifications:
-        context.propsValue.recipientSkipSMSNotifications,
+      recipientSkipSMSNotifications: context.propsValue.recipientSkipSMSNotifications,
       serviceTime: context.propsValue.serviceTime,
       completeAfter: completeAfter,
       completeBefore: completeBefore,
-    });
+    })
   },
-});
+})

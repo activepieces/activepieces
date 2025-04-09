@@ -1,9 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
 export const discordSendMessageWebhook = createAction({
   name: 'send_message_webhook',
@@ -42,11 +38,11 @@ export const discordSendMessageWebhook = createAction({
   },
   async run(configValue) {
     const request: HttpRequest<{
-      content: string;
-      username: string | undefined;
-      avatar_url: string | undefined;
-      tts: boolean | undefined;
-      embeds: Record<string, unknown> | undefined;
+      content: string
+      username: string | undefined
+      avatar_url: string | undefined
+      tts: boolean | undefined
+      embeds: Record<string, unknown> | undefined
     }> = {
       method: HttpMethod.POST,
       url: configValue.propsValue['webhook_url'],
@@ -57,7 +53,7 @@ export const discordSendMessageWebhook = createAction({
         tts: configValue.propsValue['tts'],
         embeds: configValue.propsValue['embeds'],
       },
-    };
-    return await httpClient.sendRequest<never>(request);
+    }
+    return await httpClient.sendRequest<never>(request)
   },
-});
+})

@@ -1,9 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { BASE_URL, personalAiAuth } from '../../../index';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { BASE_URL, personalAiAuth } from '../../../index'
 
 export const getConversation = createAction({
-  auth:personalAiAuth,
+  auth: personalAiAuth,
   name: 'get_conversation',
   displayName: 'Get Conversation History',
   description: 'Retrieve conversation history from AI assistant.',
@@ -46,7 +46,10 @@ export const getConversation = createAction({
     }),
   },
   async run(context) {
-    const { auth, propsValue: { channelId, domainName, userName, sessionId, sourceName, limit, skip } } = context;
+    const {
+      auth,
+      propsValue: { channelId, domainName, userName, sessionId, sourceName, limit, skip },
+    } = context
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -64,8 +67,8 @@ export const getConversation = createAction({
         ...(limit !== undefined && { Limit: limit }),
         ...(skip !== undefined && { Skip: skip }),
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

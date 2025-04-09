@@ -1,6 +1,6 @@
-import { cva, type VariantProps } from 'class-variance-authority';
+import { type VariantProps, cva } from 'class-variance-authority'
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils'
 
 const tagVariants = cva(
   'text-xs font-semibold me-2 px-2.5 py-0.5 rounded-full cursor-pointer border border-transparent dark:border-[2px]',
@@ -18,22 +18,16 @@ const tagVariants = cva(
       },
     },
   },
-);
+)
 
 export interface PieceTagProps extends VariantProps<typeof tagVariants> {
-  children: React.ReactNode;
-  selected?: boolean;
-  onClick?: (e: React.MouseEvent<HTMLSpanElement, MouseEvent>) => void;
-  disabled?: boolean;
+  children: React.ReactNode
+  selected?: boolean
+  onClick?: (e: React.MouseEvent<HTMLSpanElement, MouseEvent>) => void
+  disabled?: boolean
 }
 
-const PieceTag = ({
-  variant,
-  children,
-  selected,
-  onClick,
-  disabled,
-}: PieceTagProps) => {
+const PieceTag = ({ variant, children, selected, onClick, disabled }: PieceTagProps) => {
   return (
     <span
       className={cn(tagVariants({ variant }), {
@@ -45,8 +39,8 @@ const PieceTag = ({
     >
       {children}
     </span>
-  );
-};
+  )
+}
 
-PieceTag.displayName = 'PieceTag';
-export { PieceTag };
+PieceTag.displayName = 'PieceTag'
+export { PieceTag }

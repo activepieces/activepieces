@@ -1,6 +1,6 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { gravityFormsNewSubmission } from './lib/triggers/new-submission';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { gravityFormsNewSubmission } from './lib/triggers/new-submission'
 
 export const gravityforms = createPiece({
   displayName: 'Gravity Forms',
@@ -9,8 +9,8 @@ export const gravityforms = createPiece({
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.27.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/gravityforms.svg',
-  authors: ["Abdallah-Alwarawreh","kishanprmr","MoShizzle","abuaboud"],
+  authors: ['Abdallah-Alwarawreh', 'kishanprmr', 'MoShizzle', 'abuaboud'],
   categories: [PieceCategory.FORMS_AND_SURVEYS],
   actions: [],
   triggers: [gravityFormsNewSubmission],
-});
+})

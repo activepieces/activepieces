@@ -1,9 +1,5 @@
-import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework'
 
 export const outlookCalendarCommon = {
   baseUrl: 'https://graph.microsoft.com/v1.0/me',
@@ -16,30 +12,28 @@ export const outlookCalendarCommon = {
           disabled: true,
           options: [],
           placeholder: 'Please authenticate first',
-        };
+        }
       }
-      const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+      const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue
       const calendars: { id: string; name: string }[] = (
-        await httpClient.sendRequest<{ value: { id: string; name: string }[] }>(
-          {
-            method: HttpMethod.GET,
-            url: `${outlookCalendarCommon.baseUrl}/calendars`,
-            authentication: {
-              type: AuthenticationType.BEARER_TOKEN,
-              token: authProp['access_token'],
-            },
-          }
-        )
-      ).body.value;
+        await httpClient.sendRequest<{ value: { id: string; name: string }[] }>({
+          method: HttpMethod.GET,
+          url: `${outlookCalendarCommon.baseUrl}/calendars`,
+          authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: authProp['access_token'],
+          },
+        })
+      ).body.value
       return {
         disabled: false,
         options: calendars.map((calendar: { id: string; name: string }) => {
           return {
             label: calendar.name,
             value: calendar.id,
-          };
+          }
         }),
-      };
+      }
     },
     refreshers: [],
   }),
@@ -52,12 +46,12 @@ export const outlookCalendarCommon = {
           disabled: true,
           options: [],
           placeholder: 'Please authenticate first',
-        };
+        }
       }
-      const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+      const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue
       const timezones: { displayName: string; alias: string }[] = (
         await httpClient.sendRequest<{
-          value: { displayName: string; alias: string }[];
+          value: { displayName: string; alias: string }[]
         }>({
           method: HttpMethod.GET,
           url: `${outlookCalendarCommon.baseUrl}/outlook/supportedTimeZones`,
@@ -66,19 +60,17 @@ export const outlookCalendarCommon = {
             token: authProp['access_token'],
           },
         })
-      ).body.value;
+      ).body.value
       return {
         disabled: false,
-        options: timezones.map(
-          (timezone: { displayName: string; alias: string }) => {
-            return {
-              label: timezone.displayName,
-              value: timezone.alias,
-            };
+        options: timezones.map((timezone: { displayName: string; alias: string }) => {
+          return {
+            label: timezone.displayName,
+            value: timezone.alias,
           }
-        ),
-      };
+        }),
+      }
     },
     refreshers: [],
   }),
-};
+}

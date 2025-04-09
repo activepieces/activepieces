@@ -1,10 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { lineAuth2 } from '../..';
-import {
-  AuthenticationType,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { lineAuth2 } from '../..'
 
 export const pushMessage = createAction({
   name: 'push_message', // Must be a unique across the piece, this shouldn't be changed.
@@ -39,6 +35,6 @@ export const pushMessage = createAction({
           },
         ],
       },
-    });
+    })
   },
-});
+})

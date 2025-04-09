@@ -1,7 +1,7 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { mindeePredictDocumentAction } from './lib/actions/predict-document';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { mindeePredictDocumentAction } from './lib/actions/predict-document'
 
 export const mindeeAuth = PieceAuth.SecretText({
   displayName: 'Api Key',
@@ -12,7 +12,7 @@ export const mindeeAuth = PieceAuth.SecretText({
   3. Copy the Key and paste below.
   `,
   required: true,
-});
+})
 
 export const mindee = createPiece({
   displayName: 'Mindee',
@@ -21,7 +21,7 @@ export const mindee = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/mindee.png',
   categories: [PieceCategory.COMMUNICATION],
-  authors: ["kanarelo","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ['kanarelo', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
   auth: mindeeAuth,
   actions: [
     mindeePredictDocumentAction,
@@ -34,4 +34,4 @@ export const mindee = createPiece({
     }),
   ],
   triggers: [],
-});
+})

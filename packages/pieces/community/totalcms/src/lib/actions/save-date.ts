@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { saveContent } from '../api';
-import { cmsAuth } from '../auth';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { saveContent } from '../api'
+import { cmsAuth } from '../auth'
 
 export const saveDateAction = createAction({
   name: 'save_date',
@@ -20,11 +20,11 @@ export const saveDateAction = createAction({
     }),
   },
   async run(context) {
-    const slug = context.propsValue.slug;
-    const timestamp = context.propsValue.timestamp;
+    const slug = context.propsValue.slug
+    const timestamp = context.propsValue.timestamp
     return await saveContent(context.auth, 'date', slug, {
       nodecode: true,
       timestamp: timestamp.toString(),
-    });
+    })
   },
-});
+})

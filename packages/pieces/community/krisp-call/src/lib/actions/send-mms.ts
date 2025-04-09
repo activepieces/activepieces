@@ -1,12 +1,12 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { krispcallAuth } from '../..';
-import { Property, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework'
+import { krispcallAuth } from '../..'
 
 interface Item {
-  name: string;
-  id: string;
-  number: string;
+  name: string
+  id: string
+  number: string
 }
 
 export const sendMms = createAction({
@@ -23,29 +23,29 @@ export const sendMms = createAction({
       refreshOnSearch: false,
       options: async ({ auth }) => {
         try {
-          const authVaue = auth as PiecePropValueSchema<typeof krispcallAuth>;
+          const authVaue = auth as PiecePropValueSchema<typeof krispcallAuth>
           const res = await httpClient.sendRequest<Item[]>({
             method: HttpMethod.GET,
             url: 'https://automationapi.krispcall.com/api/v1/platform/activepiece/get-numbers',
             headers: {
               'X-API-KEY': authVaue.apiKey,
             },
-          });
+          })
           const mappedOptions = res?.body?.map((item) => {
             return {
               label: item.name,
               value: item.number,
-            };
-          });
+            }
+          })
 
           return {
             disabled: false,
             options: mappedOptions,
-          };
+          }
         } catch (error) {
           // Handle error
-          console.error(error);
-          return { disabled: true, options: [] }; // Return empty options array or handle error accordingly
+          console.error(error)
+          return { disabled: true, options: [] } // Return empty options array or handle error accordingly
         }
       },
     }),
@@ -66,7 +66,7 @@ export const sendMms = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    console.log(auth.apiKey);
+    console.log(auth.apiKey)
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
       url: 'https://automationapi.krispcall.com/api/v1/platform/activepiece/send-mms',
@@ -80,7 +80,7 @@ export const sendMms = createAction({
         content: propsValue.content,
         medias: propsValue.medias,
       },
-    });
-    return res.body;
+    })
+    return res.body
   },
-});
+})

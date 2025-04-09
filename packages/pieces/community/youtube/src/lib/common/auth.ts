@@ -1,4 +1,4 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export const youtubeAuth = PieceAuth.OAuth2({
   description: `
@@ -27,4 +27,4 @@ export const youtubeAuth = PieceAuth.OAuth2({
     'https://www.googleapis.com/auth/youtube.readonly',
     'https://www.googleapis.com/auth/youtube.upload',
   ],
-});
+})

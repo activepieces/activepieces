@@ -1,11 +1,8 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
-import deepEqual from 'deep-equal';
-import { common, getScopeAndKey } from './common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import deepEqual from 'deep-equal'
+import { z } from 'zod'
+import { common, getScopeAndKey } from './common'
 
 export const storageRemoveFromList = createAction({
   name: 'remove_from_list',
@@ -33,38 +30,26 @@ export const storageRemoveFromList = createAction({
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
       key: z.string().max(128),
-    });
+    })
 
     const { key, scope } = getScopeAndKey({
       runId: context.run.id,
       key: context.propsValue['key'],
       scope: context.propsValue.store_scope,
-    });
-    const items =
-      (await context.store.get<unknown[]>(
-        key,
-        scope,
-      )) ?? [];
+    })
+    const items = (await context.store.get<unknown[]>(key, scope)) ?? []
     if (!Array.isArray(items)) {
-      throw new Error(`Key ${context.propsValue['key']} is not an array`);
+      throw new Error(`Key ${context.propsValue['key']} is not an array`)
     }
     for (let i = 0; i < items.length; i++) {
       if (deepEqual(items[i], context.propsValue['value'])) {
-        items.splice(i, 1);
-        return await context.store.put(
-          key,
-          items,
-          scope,
-        );
+        items.splice(i, 1)
+        return await context.store.put(key, items, scope)
       }
     }
     if (items.includes(context.propsValue['value'])) {
-      items.splice(items.indexOf(context.propsValue['value']), 1);
+      items.splice(items.indexOf(context.propsValue['value']), 1)
     }
-    return await context.store.put(
-      key,
-      items,
-      scope,
-    );
+    return await context.store.put(key, items, scope)
   },
-});
+})

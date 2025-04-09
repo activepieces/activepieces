@@ -1,53 +1,46 @@
-import { t } from 'i18next';
-import React from 'react';
-import { ControllerRenderProps, useFormContext } from 'react-hook-form';
+import { t } from 'i18next'
+import React from 'react'
+import { ControllerRenderProps, useFormContext } from 'react-hook-form'
 
-import { JsonEditor } from '@/components/custom/json-editor';
-import { ApMarkdown } from '@/components/custom/markdown';
-import { SearchableSelect } from '@/components/custom/searchable-select';
-import { ColorPicker } from '@/components/ui/color-picker';
-import { FormControl, FormField } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
+import { JsonEditor } from '@/components/custom/json-editor'
+import { ApMarkdown } from '@/components/custom/markdown'
+import { SearchableSelect } from '@/components/custom/searchable-select'
+import { ColorPicker } from '@/components/ui/color-picker'
+import { FormControl, FormField } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import {
+  ArraySubProps,
   OAuth2Props,
   PieceProperty,
   PiecePropertyMap,
   PropertyType,
-  ArraySubProps,
-} from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+} from '@activepieces/pieces-framework'
+import { isNil } from '@activepieces/shared'
 
-import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
+import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property'
 
-import { ArrayPieceProperty } from './array-property';
-import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
-import { BuilderJsonEditorWrapper } from './builder-json-wrapper';
-import CustomProperty from './custom-property';
-import { DictionaryProperty } from './dictionary-property';
-import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
-import { DynamicProperties } from './dynamic-piece-property';
-import { TextInputWithMentions } from './text-input-with-mentions';
+import { ArrayPieceProperty } from './array-property'
+import { AutoFormFieldWrapper } from './auto-form-field-wrapper'
+import { BuilderJsonEditorWrapper } from './builder-json-wrapper'
+import CustomProperty from './custom-property'
+import { DictionaryProperty } from './dictionary-property'
+import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property'
+import { DynamicProperties } from './dynamic-piece-property'
+import { TextInputWithMentions } from './text-input-with-mentions'
 
 type AutoFormProps = {
-  props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;
-  allowDynamicValues: boolean;
-  prefixValue: string;
-  markdownVariables?: Record<string, string>;
-  useMentionTextInput: boolean;
-  disabled?: boolean;
-};
+  props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>
+  allowDynamicValues: boolean
+  prefixValue: string
+  markdownVariables?: Record<string, string>
+  useMentionTextInput: boolean
+  disabled?: boolean
+}
 
 const AutoPropertiesFormComponent = React.memo(
-  ({
-    markdownVariables,
-    props,
-    allowDynamicValues,
-    prefixValue,
-    disabled,
-    useMentionTextInput,
-  }: AutoFormProps) => {
-    const form = useFormContext();
+  ({ markdownVariables, props, allowDynamicValues, prefixValue, disabled, useMentionTextInput }: AutoFormProps) => {
+    const form = useFormContext()
     return (
       Object.keys(props).length > 0 && (
         <div className="flex flex-col gap-4 w-full">
@@ -70,24 +63,24 @@ const AutoPropertiesFormComponent = React.memo(
                   })
                 }
               />
-            );
+            )
           })}
         </div>
       )
-    );
+    )
   },
-);
+)
 
 type selectFormComponentForPropertyParams = {
-  field: ControllerRenderProps<Record<string, any>, string>;
-  propertyName: string;
-  inputName: string;
-  property: PieceProperty;
-  allowDynamicValues: boolean;
-  markdownVariables: Record<string, string>;
-  useMentionTextInput: boolean;
-  disabled: boolean;
-};
+  field: ControllerRenderProps<Record<string, any>, string>
+  propertyName: string
+  inputName: string
+  property: PieceProperty
+  allowDynamicValues: boolean
+  markdownVariables: Record<string, string>
+  useMentionTextInput: boolean
+  disabled: boolean
+}
 
 const selectFormComponentForProperty = ({
   field,
@@ -117,7 +110,7 @@ const selectFormComponentForProperty = ({
             useMentionTextInput={useMentionTextInput}
           ></ArrayPieceProperty>
         </AutoFormFieldWrapper>
-      );
+      )
     case PropertyType.OBJECT:
       return (
         <AutoFormFieldWrapper
@@ -135,7 +128,7 @@ const selectFormComponentForProperty = ({
             useMentionTextInput={useMentionTextInput}
           ></DictionaryProperty>
         </AutoFormFieldWrapper>
-      );
+      )
     case PropertyType.CHECKBOX:
       return (
         <AutoFormFieldWrapper
@@ -148,23 +141,12 @@ const selectFormComponentForProperty = ({
           placeBeforeLabelText={true}
         >
           <FormControl>
-            <Switch
-              id={propertyName}
-              checked={field.value}
-              disabled={disabled}
-              onCheckedChange={field.onChange}
-            />
+            <Switch id={propertyName} checked={field.value} disabled={disabled} onCheckedChange={field.onChange} />
           </FormControl>
         </AutoFormFieldWrapper>
-      );
+      )
     case PropertyType.MARKDOWN:
-      return (
-        <ApMarkdown
-          markdown={property.description}
-          variables={markdownVariables}
-          variant={property.variant}
-        />
-      );
+      return <ApMarkdown markdown={property.description} variables={markdownVariables} variant={property.variant} />
     case PropertyType.STATIC_DROPDOWN:
       return (
         <AutoFormFieldWrapper
@@ -184,7 +166,7 @@ const selectFormComponentForProperty = ({
             showDeselect={!property.required}
           ></SearchableSelect>
         </AutoFormFieldWrapper>
-      );
+      )
     case PropertyType.JSON:
       return (
         <AutoFormFieldWrapper
@@ -196,15 +178,12 @@ const selectFormComponentForProperty = ({
           allowDynamicValues={allowDynamicValues}
         >
           {useMentionTextInput ? (
-            <BuilderJsonEditorWrapper
-              field={field}
-              disabled={disabled}
-            ></BuilderJsonEditorWrapper>
+            <BuilderJsonEditorWrapper field={field} disabled={disabled}></BuilderJsonEditorWrapper>
           ) : (
             <JsonEditor field={field} readonly={disabled}></JsonEditor>
           )}
         </AutoFormFieldWrapper>
-      );
+      )
     case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
       return (
         <AutoFormFieldWrapper
@@ -221,14 +200,10 @@ const selectFormComponentForProperty = ({
             onChange={field.onChange}
             initialValues={field.value}
             disabled={disabled}
-            showDeselect={
-              !isNil(field.value) &&
-              field.value.length > 0 &&
-              !property.required
-            }
+            showDeselect={!isNil(field.value) && field.value.length > 0 && !property.required}
           ></MultiSelectPieceProperty>
         </AutoFormFieldWrapper>
-      );
+      )
     case PropertyType.MULTI_SELECT_DROPDOWN:
     case PropertyType.DROPDOWN:
       return (
@@ -250,7 +225,7 @@ const selectFormComponentForProperty = ({
             showDeselect={!property.required}
           ></DynamicDropdownPieceProperty>
         </AutoFormFieldWrapper>
-      );
+      )
     case PropertyType.DATE_TIME:
     case PropertyType.SHORT_TEXT:
     case PropertyType.LONG_TEXT:
@@ -277,13 +252,11 @@ const selectFormComponentForProperty = ({
               value={field.value}
               onChange={field.onChange}
               disabled={disabled}
-              type={
-                property.type === PropertyType.SECRET_TEXT ? 'password' : 'text'
-              }
+              type={property.type === PropertyType.SECRET_TEXT ? 'password' : 'text'}
             ></Input>
           )}
         </AutoFormFieldWrapper>
-      );
+      )
     case PropertyType.DYNAMIC:
       return (
         <DynamicProperties
@@ -291,11 +264,11 @@ const selectFormComponentForProperty = ({
           propertyName={propertyName}
           disabled={disabled}
         ></DynamicProperties>
-      );
+      )
     case PropertyType.CUSTOM_AUTH:
     case PropertyType.BASIC_AUTH:
     case PropertyType.OAUTH2:
-      return <></>;
+      return <></>
     case PropertyType.CUSTOM:
       return (
         <CustomProperty
@@ -304,7 +277,7 @@ const selectFormComponentForProperty = ({
           onChange={field.onChange}
           disabled={disabled}
         ></CustomProperty>
-      );
+      )
     case PropertyType.COLOR:
       return (
         <AutoFormFieldWrapper
@@ -317,8 +290,8 @@ const selectFormComponentForProperty = ({
         >
           <ColorPicker value={field.value} onChange={field.onChange} />
         </AutoFormFieldWrapper>
-      );
+      )
   }
-};
-AutoPropertiesFormComponent.displayName = 'AutoFormComponent';
-export { AutoPropertiesFormComponent };
+}
+AutoPropertiesFormComponent.displayName = 'AutoFormComponent'
+export { AutoPropertiesFormComponent }

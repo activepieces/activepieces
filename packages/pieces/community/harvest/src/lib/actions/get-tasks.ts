@@ -1,12 +1,9 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { harvestAuth } from '../..';
-import {
-  getAccessTokenOrThrow,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { callHarvestApi, filterDynamicFields } from '../common';
-import { propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
+import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common'
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { harvestAuth } from '../..'
+import { callHarvestApi, filterDynamicFields } from '../common'
 
 export const getTasks = createAction({
   name: 'get_tasks', // Must be a unique across the piece, this shouldn't be changed.
@@ -14,7 +11,7 @@ export const getTasks = createAction({
   displayName: 'Get Tasks',
   description: 'Fetches Tasks',
   props: {
-      is_active: Property.ShortText({
+    is_active: Property.ShortText({
       description: 'Pass `true` to only return active tasks and `false` to return inactive tasks.',
       displayName: 'Is Active',
       required: false,
@@ -39,24 +36,19 @@ export const getTasks = createAction({
     // Validate the input properties using Zod
     await propsValidation.validateZod(context.propsValue, {
       per_page: z
-      .string()
-      .optional()
-      .transform((val) => (val === undefined || val === '' ? undefined : parseInt(val, 10)))
-      .refine(
-        (val) => val === undefined || (Number.isInteger(val) && val >= 1 && val <= 2000),
-        'Per Page must be a number between 1 and 2000.'
-      ),
-    });
+        .string()
+        .optional()
+        .transform((val) => (val === undefined || val === '' ? undefined : parseInt(val, 10)))
+        .refine(
+          (val) => val === undefined || (Number.isInteger(val) && val >= 1 && val <= 2000),
+          'Per Page must be a number between 1 and 2000.',
+        ),
+    })
 
-    const params = filterDynamicFields(context.propsValue);
+    const params = filterDynamicFields(context.propsValue)
 
-    const response = await callHarvestApi(
-        HttpMethod.GET,
-        `tasks`,
-        getAccessTokenOrThrow(context.auth),
-        params
-      );
-  
-      return response.body;  },
-});
+    const response = await callHarvestApi(HttpMethod.GET, `tasks`, getAccessTokenOrThrow(context.auth), params)
 
+    return response.body
+  },
+})

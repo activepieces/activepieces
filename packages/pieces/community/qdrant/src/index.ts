@@ -1,16 +1,12 @@
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { addPointsToCollection } from './lib/actions/add-points';
-import { deleteCollection } from './lib/actions/delete-collection';
-import { deletePoints } from './lib/actions/delete-points';
-import { collectionInfos } from './lib/actions/get-collection-infos';
-import { collectionList } from './lib/actions/get-collection-list';
-import { getPoints } from './lib/actions/get-points';
-import { searchPoints } from './lib/actions/search-points';
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { addPointsToCollection } from './lib/actions/add-points'
+import { deleteCollection } from './lib/actions/delete-collection'
+import { deletePoints } from './lib/actions/delete-points'
+import { collectionInfos } from './lib/actions/get-collection-infos'
+import { collectionList } from './lib/actions/get-collection-list'
+import { getPoints } from './lib/actions/get-points'
+import { searchPoints } from './lib/actions/search-points'
 
 const qdrantConnectionDescription = `
 ### Using Qdrant cloud
@@ -21,7 +17,7 @@ const qdrantConnectionDescription = `
 
 ### Using self-hosted Qdrant
 Try to create your own qdrant instance using the [documentation guides](https://qdrant.tech/documentation/guides/)
-`;
+`
 
 export const qdrantAuth = PieceAuth.CustomAuth({
   description: qdrantConnectionDescription,
@@ -38,7 +34,7 @@ export const qdrantAuth = PieceAuth.CustomAuth({
     }),
   },
   required: true,
-});
+})
 
 export const qdrant = createPiece({
   displayName: 'Qdrant',
@@ -46,7 +42,7 @@ export const qdrant = createPiece({
   auth: qdrantAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/qdrant.png',
-  authors: ["ArmanGiau3","kishanprmr","abuaboud"],
+  authors: ['ArmanGiau3', 'kishanprmr', 'abuaboud'],
   categories: [PieceCategory.DEVELOPER_TOOLS],
   actions: [
     addPointsToCollection,
@@ -58,4 +54,4 @@ export const qdrant = createPiece({
     searchPoints,
   ],
   triggers: [],
-});
+})

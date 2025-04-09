@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { chainalysisApiAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { chainalysisApiAuth } from '../..'
 
 export const checkAddressSanction = createAction({
   name: 'checkAddressSanction',
@@ -15,27 +15,27 @@ export const checkAddressSanction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const address = propsValue.address;
-    const apiKey = auth;
+    const address = propsValue.address
+    const apiKey = auth
 
     try {
       const response = await fetch(`https://public.chainalysis.com/api/v1/address/${address}`, {
         method: 'GET',
         headers: {
           'X-API-Key': apiKey,
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
-      });
+      })
 
       if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
+        throw new Error(`Error: ${response.status} ${response.statusText}`)
       }
 
-      const data = await response.json();
-      return data;
+      const data = await response.json()
+      return data
     } catch (error) {
-      console.error('[chainalysis-api-checkAddressSanction] Error checking address sanction:', error);
-      throw error;
+      console.error('[chainalysis-api-checkAddressSanction] Error checking address sanction:', error)
+      throw error
     }
   },
-});
+})

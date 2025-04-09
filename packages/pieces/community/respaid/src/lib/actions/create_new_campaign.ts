@@ -1,8 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { respaidAuth } from '../..';
-import { respaidCommon } from '../common';
-
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { respaidAuth } from '../..'
+import { respaidCommon } from '../common'
 
 export const createNewCampaign = createAction({
   name: 'create_new_campaign',
@@ -41,13 +40,13 @@ export const createNewCampaign = createAction({
   },
   async run({ auth, propsValue }) {
     if (!Array.isArray(propsValue.importData)) {
-      throw new Error('Import Data must be an array of objects.');
+      throw new Error('Import Data must be an array of objects.')
     }
 
     const requestBody = {
       campaign_name: propsValue.campaign_name,
       is_agency_collection: propsValue.is_agency_collection,
-      import: propsValue.importData.map(invoice => ({
+      import: propsValue.importData.map((invoice) => ({
         unique_identifier: invoice.unique_identifier,
         full_name: invoice.full_name,
         company_name: invoice.company_name,
@@ -61,14 +60,14 @@ export const createNewCampaign = createAction({
         invoice_date: invoice.invoice_date,
         description: invoice.description,
       })),
-    };
+    }
 
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
       url: `${respaidCommon.baseUrl}/actions/import_campaign`,
       headers: respaidCommon.getHeadersStructure(auth),
-      body: ({ type: 'active_pieces', import: JSON.stringify(requestBody) }),
-    });
-    return res.body;
+      body: { type: 'active_pieces', import: JSON.stringify(requestBody) },
+    })
+    return res.body
   },
-});
+})

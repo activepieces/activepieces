@@ -1,28 +1,20 @@
-import {
-  createTrigger,
-  OAuth2PropertyValue,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
-import {
-  Polling,
-  DedupeStrategy,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import { googleContactsAuth } from '../../';
-import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
-import dayjs from 'dayjs';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { google } from 'googleapis'
+import { OAuth2Client } from 'googleapis-common'
+import { googleContactsAuth } from '../../'
 
 const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ store, auth }) => {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(auth);
+    const authClient = new OAuth2Client()
+    authClient.setCredentials(auth)
 
-    const contactsClient = google.people({ version: 'v1', auth: authClient });
+    const contactsClient = google.people({ version: 'v1', auth: authClient })
 
-    let nextPageToken;
-    const contactItems: Array<{ data: any; epochMilliSeconds: number }> = [];
+    let nextPageToken
+    const contactItems: Array<{ data: any; epochMilliSeconds: number }> = []
 
     do {
       const response: any = await contactsClient.people.connections.list({
@@ -61,25 +53,23 @@ const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
           'urls',
           'userDefined',
         ].join(),
-      });
+      })
 
       for (const contact of response.data.connections || []) {
         if (contact.metadata?.deleted !== true) {
           contactItems.push({
             data: contact,
-            epochMilliSeconds: dayjs(
-              contact.metadata?.sources?.[0].updateTime
-            ).valueOf(),
-          });
+            epochMilliSeconds: dayjs(contact.metadata?.sources?.[0].updateTime).valueOf(),
+          })
         }
       }
 
-      nextPageToken = response.data.nextPageToken;
-    } while (nextPageToken);
+      nextPageToken = response.data.nextPageToken
+    } while (nextPageToken)
 
-    return contactItems;
+    return contactItems
   },
-};
+}
 
 export const googleContactNewOrUpdatedContact = createTrigger({
   auth: googleContactsAuth,
@@ -152,14 +142,14 @@ export const googleContactNewOrUpdatedContact = createTrigger({
       store: ctx.store,
       auth: ctx.auth,
       propsValue: {},
-    });
+    })
   },
   async onDisable(ctx) {
     return await pollingHelper.onEnable(polling, {
       store: ctx.store,
       auth: ctx.auth,
       propsValue: {},
-    });
+    })
   },
   async run(ctx) {
     return await pollingHelper.poll(polling, {
@@ -167,7 +157,7 @@ export const googleContactNewOrUpdatedContact = createTrigger({
       auth: ctx.auth,
       propsValue: {},
       files: ctx.files,
-    });
+    })
   },
   test: async (ctx) => {
     return await pollingHelper.test(polling, {
@@ -175,6 +165,6 @@ export const googleContactNewOrUpdatedContact = createTrigger({
       auth: ctx.auth,
       propsValue: {},
       files: ctx.files,
-    });
+    })
   },
-});
+})

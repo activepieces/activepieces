@@ -1,10 +1,6 @@
-import { Edge } from '@xyflow/react';
+import { Edge } from '@xyflow/react'
 
-import {
-  Action,
-  StepLocationRelativeToParent,
-  Trigger,
-} from '@activepieces/shared';
+import { Action, StepLocationRelativeToParent, Trigger } from '@activepieces/shared'
 
 export enum ApNodeType {
   STEP = 'STEP',
@@ -16,84 +12,78 @@ export enum ApNodeType {
   LOOP_RETURN_NODE = 'LOOP_RETURN_NODE',
 }
 export type ApBoundingBox = {
-  width: number;
-  height: number;
-  left: number;
-  right: number;
-};
+  width: number
+  height: number
+  left: number
+  right: number
+}
 
 export type ApStepNode = {
-  id: string;
-  type: ApNodeType.STEP;
+  id: string
+  type: ApNodeType.STEP
   position: {
-    x: number;
-    y: number;
-  };
+    x: number
+    y: number
+  }
   data: {
-    step: Action | Trigger;
-  };
-  selectable?: boolean;
-  style?: React.CSSProperties;
-  draggable?: boolean;
-};
+    step: Action | Trigger
+  }
+  selectable?: boolean
+  style?: React.CSSProperties
+  draggable?: boolean
+}
 
 export type ApLoopReturnNode = {
-  id: string;
-  type: ApNodeType.LOOP_RETURN_NODE;
+  id: string
+  type: ApNodeType.LOOP_RETURN_NODE
   position: {
-    x: number;
-    y: number;
-  };
-  data: Record<string, never>;
-  selectable?: boolean;
-};
+    x: number
+    y: number
+  }
+  data: Record<string, never>
+  selectable?: boolean
+}
 
 export type ApButtonData = {
-  edgeId: string;
+  edgeId: string
 } & (
   | {
-      parentStepName: string;
-      stepLocationRelativeToParent:
-        | StepLocationRelativeToParent.AFTER
-        | StepLocationRelativeToParent.INSIDE_LOOP;
+      parentStepName: string
+      stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER | StepLocationRelativeToParent.INSIDE_LOOP
     }
   | {
-      parentStepName: string;
-      stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
-      branchIndex: number;
+      parentStepName: string
+      stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH
+      branchIndex: number
     }
-);
+)
 
 export type ApBigAddButtonNode = {
-  id: string;
-  type: ApNodeType.BIG_ADD_BUTTON;
+  id: string
+  type: ApNodeType.BIG_ADD_BUTTON
   position: {
-    x: number;
-    y: number;
-  };
-  data: ApButtonData;
-  selectable?: boolean;
-  style?: React.CSSProperties;
-};
+    x: number
+    y: number
+  }
+  data: ApButtonData
+  selectable?: boolean
+  style?: React.CSSProperties
+}
 
 export type ApGraphEndNode = {
-  id: string;
-  type: ApNodeType.GRAPH_END_WIDGET;
+  id: string
+  type: ApNodeType.GRAPH_END_WIDGET
   position: {
-    x: number;
-    y: number;
-  };
+    x: number
+    y: number
+  }
   data: {
-    showWidget?: boolean;
-  };
-  selectable?: boolean;
-};
+    showWidget?: boolean
+  }
+  selectable?: boolean
+}
 
-export type ApNode =
-  | ApStepNode
-  | ApGraphEndNode
-  | ApBigAddButtonNode
-  | ApLoopReturnNode;
+export type ApNode = ApStepNode | ApGraphEndNode | ApBigAddButtonNode | ApLoopReturnNode
 
 export enum ApEdgeType {
   STRAIGHT_LINE = 'ApStraightLineEdge',
@@ -105,72 +95,67 @@ export enum ApEdgeType {
 }
 
 export type ApStraightLineEdge = Edge & {
-  type: ApEdgeType.STRAIGHT_LINE;
+  type: ApEdgeType.STRAIGHT_LINE
   data: {
-    drawArrowHead: boolean;
-    hideAddButton?: boolean;
-    parentStepName: string;
-  };
-};
+    drawArrowHead: boolean
+    hideAddButton?: boolean
+    parentStepName: string
+  }
+}
 
 export type ApLoopStartEdge = Edge & {
-  type: ApEdgeType.LOOP_START_EDGE;
+  type: ApEdgeType.LOOP_START_EDGE
   data: {
-    isLoopEmpty: boolean;
-  };
-};
+    isLoopEmpty: boolean
+  }
+}
 
 export type ApLoopCloseEdge = Edge & {
-  type: ApEdgeType.LOOP_CLOSE_EDGE;
-};
+  type: ApEdgeType.LOOP_CLOSE_EDGE
+}
 
 export type ApLoopReturnEdge = Edge & {
-  type: ApEdgeType.LOOP_RETURN_EDGE;
+  type: ApEdgeType.LOOP_RETURN_EDGE
   data: {
-    parentStepName: string;
-    isLoopEmpty: boolean;
-    drawArrowHeadAfterEnd: boolean;
-    verticalSpaceBetweenReturnNodeStartAndEnd: number;
-  };
-};
+    parentStepName: string
+    isLoopEmpty: boolean
+    drawArrowHeadAfterEnd: boolean
+    verticalSpaceBetweenReturnNodeStartAndEnd: number
+  }
+}
 
 export type ApRouterStartEdge = Edge & {
-  type: ApEdgeType.ROUTER_START_EDGE;
+  type: ApEdgeType.ROUTER_START_EDGE
   data: {
-    isBranchEmpty: boolean;
-    label: string;
-    drawHorizontalLine: boolean;
-    drawStartingVerticalLine: boolean;
+    isBranchEmpty: boolean
+    label: string
+    drawHorizontalLine: boolean
+    drawStartingVerticalLine: boolean
   } & {
-    stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH;
-    branchIndex: number;
-  };
-};
+    stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_BRANCH
+    branchIndex: number
+  }
+}
 
 export type ApRouterEndEdge = Edge & {
-  type: ApEdgeType.ROUTER_END_EDGE;
+  type: ApEdgeType.ROUTER_END_EDGE
   data: {
-    drawHorizontalLine: boolean;
-    verticalSpaceBetweenLastNodeInBranchAndEndLine: number;
+    drawHorizontalLine: boolean
+    verticalSpaceBetweenLastNodeInBranchAndEndLine: number
   } & (
     | {
-        routerOrBranchStepName: string;
-        drawEndingVerticalLine: true;
-        isNextStepEmpty: boolean;
+        routerOrBranchStepName: string
+        drawEndingVerticalLine: true
+        isNextStepEmpty: boolean
       }
     | {
-        drawEndingVerticalLine: false;
+        drawEndingVerticalLine: false
       }
-  );
-};
+  )
+}
 
-export type ApEdge =
-  | ApLoopStartEdge
-  | ApLoopReturnEdge
-  | ApStraightLineEdge
-  | ApRouterStartEdge
-  | ApRouterEndEdge;
+export type ApEdge = ApLoopStartEdge | ApLoopReturnEdge | ApStraightLineEdge | ApRouterStartEdge | ApRouterEndEdge
 export type ApGraph = {
-  nodes: ApNode[];
-  edges: ApEdge[];
-};
+  nodes: ApNode[]
+  edges: ApEdge[]
+}

@@ -1,8 +1,8 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
 
-import { clickupCommon, callClickUpApi } from '../../common';
-import { clickupAuth } from '../../../';
+import { clickupAuth } from '../../../'
+import { callClickUpApi, clickupCommon } from '../../common'
 
 export const deleteClickupTask = createAction({
   auth: clickupAuth,
@@ -13,19 +13,17 @@ export const deleteClickupTask = createAction({
     workspace_id: clickupCommon.workspace_id(),
     space_id: clickupCommon.space_id(),
     list_id: clickupCommon.list_id(),
-    task_id: clickupCommon.task_id()
+    task_id: clickupCommon.task_id(),
   },
   async run(configValue) {
-    const {
-      task_id,
-    } = configValue.propsValue;
+    const { task_id } = configValue.propsValue
     const response = await callClickUpApi(
       HttpMethod.DELETE,
       `task/${task_id}`,
       getAccessTokenOrThrow(configValue.auth),
-      undefined
-    );
+      undefined,
+    )
 
-    return response.body;
+    return response.body
   },
-});
+})

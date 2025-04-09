@@ -1,6 +1,6 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { simplePDFNewSubmission } from './lib/triggers/new-submission';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { simplePDFNewSubmission } from './lib/triggers/new-submission'
 
 export const simplepdf = createPiece({
   displayName: 'SimplePDF',
@@ -8,8 +8,8 @@ export const simplepdf = createPiece({
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/simplepdf.png',
-  authors: ["bendersej","kishanprmr","khaledmashaly","abuaboud"],
+  authors: ['bendersej', 'kishanprmr', 'khaledmashaly', 'abuaboud'],
   categories: [PieceCategory.CONTENT_AND_FILES],
   actions: [],
   triggers: [simplePDFNewSubmission],
-});
+})

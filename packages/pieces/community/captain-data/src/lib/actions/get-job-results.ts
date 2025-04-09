@@ -1,12 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
-import {
-  CAPTAIN_DATA_BASE_URL,
-  captainDataAuth,
-  CaptainDataAuthType,
-} from '../..';
-import { workflowProp } from '../common';
+import { CAPTAIN_DATA_BASE_URL, CaptainDataAuthType, captainDataAuth } from '../..'
+import { workflowProp } from '../common'
 
 export const getJobResults = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -25,7 +21,7 @@ export const getJobResults = createAction({
           return {
             disabled: true,
             options: [],
-          };
+          }
         }
         const response = await httpClient.sendRequest({
           url: `${CAPTAIN_DATA_BASE_URL}/workflows/${workflow}/jobs`,
@@ -34,24 +30,24 @@ export const getJobResults = createAction({
             Authorization: `x-api-key ${(auth as CaptainDataAuthType).apiKey}`,
             'x-project-id': (auth as CaptainDataAuthType).projectId,
           },
-        });
+        })
         return {
           disabled: false,
           options: response.body.map(
             (job: {
-              uid: string;
-              name: string;
-              workflow_name: string;
-              status: string;
-              start_time: string;
+              uid: string
+              name: string
+              workflow_name: string
+              status: string
+              start_time: string
             }) => {
               return {
                 value: job.uid,
                 label: job.start_time,
-              };
-            }
+              }
+            },
           ),
-        };
+        }
       },
     }),
   },
@@ -64,7 +60,7 @@ export const getJobResults = createAction({
         Authorization: `x-api-key ${(auth as CaptainDataAuthType).apiKey}`,
         'x-project-id': (auth as CaptainDataAuthType).projectId,
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

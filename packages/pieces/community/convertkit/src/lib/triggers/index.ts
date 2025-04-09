@@ -1,14 +1,14 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { convertkitAuth } from '../..';
-import { tag } from '../common/tags';
-import { formId } from '../common/forms';
-import { sequenceIdDropdown } from '../common/sequences';
-import { productId } from '../common/purchases';
-import { initiatorValue } from '../common/webhooks';
-import { createWebhook, removeWebhook } from '../common/service';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { convertkitAuth } from '../..'
+import { formId } from '../common/forms'
+import { productId } from '../common/purchases'
+import { sequenceIdDropdown } from '../common/sequences'
+import { createWebhook, removeWebhook } from '../common/service'
+import { tag } from '../common/tags'
+import { initiatorValue } from '../common/webhooks'
 
 interface WebhookInformation {
-  ruleId: number;
+  ruleId: number
 }
 
 const sampleData = {
@@ -20,7 +20,7 @@ const sampleData = {
       sequence_id: 3,
     },
   },
-};
+}
 
 // Tested
 export const addTag = createTrigger({
@@ -34,7 +34,7 @@ export const addTag = createTrigger({
   },
   sampleData,
   async onEnable(context) {
-    const { tagId } = context.propsValue;
+    const { tagId } = context.propsValue
 
     const payload = {
       event: {
@@ -42,31 +42,26 @@ export const addTag = createTrigger({
         tag_id: tagId,
       },
       target_url: context.webhookUrl,
-    };
+    }
 
-    const response = await createWebhook(context.auth, payload);
-    const ruleId = response.id;
+    const response = await createWebhook(context.auth, payload)
+    const ruleId = response.id
 
-    await context.store?.put<WebhookInformation>(
-      `_webhook_subscriber_tag_add`,
-      {
-        ruleId,
-      }
-    );
+    await context.store?.put<WebhookInformation>(`_webhook_subscriber_tag_add`, {
+      ruleId,
+    })
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_subscriber_tag_add'
-    );
+    const response = await context.store?.get<WebhookInformation>('_webhook_subscriber_tag_add')
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth, response.ruleId)
     }
   },
   async run(context) {
-    const body = context.payload.body as { subscriber: unknown };
-    return [body.subscriber];
+    const body = context.payload.body as { subscriber: unknown }
+    return [body.subscriber]
   },
-});
+})
 
 // Tested
 export const removeTag = createTrigger({
@@ -80,7 +75,7 @@ export const removeTag = createTrigger({
   },
   sampleData,
   async onEnable(context) {
-    const { tagId } = context.propsValue;
+    const { tagId } = context.propsValue
 
     const payload = {
       event: {
@@ -88,39 +83,33 @@ export const removeTag = createTrigger({
         tag_id: tagId,
       },
       target_url: context.webhookUrl,
-    };
+    }
 
-    const response = await createWebhook(context.auth, payload);
-    const ruleId = response.id;
+    const response = await createWebhook(context.auth, payload)
+    const ruleId = response.id
 
-    await context.store?.put<WebhookInformation>(
-      `_webhook_subscriber_tag_remove`,
-      {
-        ruleId,
-      }
-    );
+    await context.store?.put<WebhookInformation>(`_webhook_subscriber_tag_remove`, {
+      ruleId,
+    })
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_subscriber_tag_remove'
-    );
+    const response = await context.store?.get<WebhookInformation>('_webhook_subscriber_tag_remove')
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth, response.ruleId)
     }
   },
   async run(context) {
-    const body = context.payload.body as { subscriber: unknown };
-    return [body.subscriber];
+    const body = context.payload.body as { subscriber: unknown }
+    return [body.subscriber]
   },
-});
+})
 
 // Tested
 export const subscriberActivated = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_activated',
   displayName: 'Subscriber activated',
-  description:
-    'Trigger when a subscriber is activated. This happens when a subscriber confirms their subscription.',
+  description: 'Trigger when a subscriber is activated. This happens when a subscriber confirms their subscription.',
   type: TriggerStrategy.WEBHOOK,
   props: {},
   sampleData,
@@ -130,31 +119,26 @@ export const subscriberActivated = createTrigger({
         name: 'subscriber.subscriber_activate',
       },
       target_url: context.webhookUrl,
-    };
+    }
 
-    const response = await createWebhook(context.auth, payload);
-    const ruleId = response.id;
+    const response = await createWebhook(context.auth, payload)
+    const ruleId = response.id
 
-    await context.store?.put<WebhookInformation>(
-      `_webhook_subscriber_activated`,
-      {
-        ruleId,
-      }
-    );
+    await context.store?.put<WebhookInformation>(`_webhook_subscriber_activated`, {
+      ruleId,
+    })
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_subscriber_activated'
-    );
+    const response = await context.store?.get<WebhookInformation>('_webhook_subscriber_activated')
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth, response.ruleId)
     }
   },
   async run(context) {
-    const body = context.payload.body as { subscriber: unknown };
-    return [body.subscriber];
+    const body = context.payload.body as { subscriber: unknown }
+    return [body.subscriber]
   },
-});
+})
 
 // Tested
 export const subscriberUnsubscribed = createTrigger({
@@ -171,31 +155,26 @@ export const subscriberUnsubscribed = createTrigger({
         name: 'subscriber.subscriber_unsubscribe',
       },
       target_url: context.webhookUrl,
-    };
+    }
 
-    const response = await createWebhook(context.auth, payload);
-    const ruleId = response.id;
+    const response = await createWebhook(context.auth, payload)
+    const ruleId = response.id
 
-    await context.store?.put<WebhookInformation>(
-      `_webhook_subscriber_unsubscribed`,
-      {
-        ruleId,
-      }
-    );
+    await context.store?.put<WebhookInformation>(`_webhook_subscriber_unsubscribed`, {
+      ruleId,
+    })
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_subscriber_unsubscribed'
-    );
+    const response = await context.store?.get<WebhookInformation>('_webhook_subscriber_unsubscribed')
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth, response.ruleId)
     }
   },
   async run(context) {
-    const body = context.payload.body as { subscriber: unknown };
-    return [body.subscriber];
+    const body = context.payload.body as { subscriber: unknown }
+    return [body.subscriber]
   },
-});
+})
 
 // Tested
 export const subscriberBounced = createTrigger({
@@ -213,31 +192,26 @@ export const subscriberBounced = createTrigger({
         name: 'subscriber.subscriber_bounce',
       },
       target_url: context.webhookUrl,
-    };
+    }
 
-    const response = await createWebhook(context.auth, payload);
-    const ruleId = response.id;
+    const response = await createWebhook(context.auth, payload)
+    const ruleId = response.id
 
-    await context.store?.put<WebhookInformation>(
-      `_webhook_subscriber_bounced`,
-      {
-        ruleId,
-      }
-    );
+    await context.store?.put<WebhookInformation>(`_webhook_subscriber_bounced`, {
+      ruleId,
+    })
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_subscriber_bounced'
-    );
+    const response = await context.store?.get<WebhookInformation>('_webhook_subscriber_bounced')
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth, response.ruleId)
     }
   },
   async run(context) {
-    const body = context.payload.body as { subscriber: unknown };
-    return [body.subscriber];
+    const body = context.payload.body as { subscriber: unknown }
+    return [body.subscriber]
   },
-});
+})
 
 // UNTESTED
 // TODO: Test this
@@ -247,8 +221,7 @@ export const subscriberComplained = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_complained',
   displayName: 'Subscriber complained',
-  description:
-    'Trigger when a subscriber complained. This happens when a subscriber marks an email as spam.',
+  description: 'Trigger when a subscriber complained. This happens when a subscriber marks an email as spam.',
   type: TriggerStrategy.WEBHOOK,
   props: {},
   sampleData,
@@ -258,31 +231,26 @@ export const subscriberComplained = createTrigger({
         name: 'subscriber.subscriber_complain',
       },
       target_url: context.webhookUrl,
-    };
+    }
 
-    const response = await createWebhook(context.auth, payload);
-    const ruleId = response.id;
+    const response = await createWebhook(context.auth, payload)
+    const ruleId = response.id
 
-    await context.store?.put<WebhookInformation>(
-      `_webhook_subscriber_complained`,
-      {
-        ruleId,
-      }
-    );
+    await context.store?.put<WebhookInformation>(`_webhook_subscriber_complained`, {
+      ruleId,
+    })
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_subscriber_complained'
-    );
+    const response = await context.store?.get<WebhookInformation>('_webhook_subscriber_complained')
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth, response.ruleId)
     }
   },
   async run(context) {
-    const body = context.payload.body as { subscriber: unknown };
-    return [body.subscriber];
+    const body = context.payload.body as { subscriber: unknown }
+    return [body.subscriber]
   },
-});
+})
 
 // Tested
 export const formSubscribed = createTrigger({
@@ -296,7 +264,7 @@ export const formSubscribed = createTrigger({
   },
   sampleData,
   async onEnable(context) {
-    const { formId } = context.propsValue;
+    const { formId } = context.propsValue
 
     const payload = {
       event: {
@@ -304,28 +272,26 @@ export const formSubscribed = createTrigger({
         form_id: formId,
       },
       target_url: context.webhookUrl,
-    };
+    }
 
-    const response = await createWebhook(context.auth, payload);
-    const ruleId = response.id;
+    const response = await createWebhook(context.auth, payload)
+    const ruleId = response.id
 
     await context.store?.put<WebhookInformation>(`_webhook_form_subscribed`, {
       ruleId,
-    });
+    })
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_form_subscribed'
-    );
+    const response = await context.store?.get<WebhookInformation>('_webhook_form_subscribed')
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth, response.ruleId)
     }
   },
   async run(context) {
-    const body = context.payload.body as { subscriber: unknown };
-    return [body.subscriber];
+    const body = context.payload.body as { subscriber: unknown }
+    return [body.subscriber]
   },
-});
+})
 
 // Tested
 export const sequenceSubscribed = createTrigger({
@@ -339,7 +305,7 @@ export const sequenceSubscribed = createTrigger({
   },
   sampleData,
   async onEnable(context) {
-    const { sequenceIdChoice } = context.propsValue;
+    const { sequenceIdChoice } = context.propsValue
 
     const payload = {
       event: {
@@ -347,31 +313,26 @@ export const sequenceSubscribed = createTrigger({
         sequence_id: sequenceIdChoice,
       },
       target_url: context.webhookUrl,
-    };
+    }
 
-    const response = await createWebhook(context.auth, payload);
-    const ruleId = response.id;
+    const response = await createWebhook(context.auth, payload)
+    const ruleId = response.id
 
-    await context.store?.put<WebhookInformation>(
-      `_webhook_sequence_subscribed`,
-      {
-        ruleId,
-      }
-    );
+    await context.store?.put<WebhookInformation>(`_webhook_sequence_subscribed`, {
+      ruleId,
+    })
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_sequence_subscribed'
-    );
+    const response = await context.store?.get<WebhookInformation>('_webhook_sequence_subscribed')
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth, response.ruleId)
     }
   },
   async run(context) {
-    const body = context.payload.body as { subscriber: unknown };
-    return [body.subscriber];
+    const body = context.payload.body as { subscriber: unknown }
+    return [body.subscriber]
   },
-});
+})
 
 // Tested
 export const sequenceCompleted = createTrigger({
@@ -385,7 +346,7 @@ export const sequenceCompleted = createTrigger({
   },
   sampleData,
   async onEnable(context) {
-    const { sequenceIdChoice } = context.propsValue;
+    const { sequenceIdChoice } = context.propsValue
 
     const payload = {
       event: {
@@ -393,31 +354,26 @@ export const sequenceCompleted = createTrigger({
         sequence_id: sequenceIdChoice,
       },
       target_url: context.webhookUrl,
-    };
+    }
 
-    const response = await createWebhook(context.auth, payload);
-    const ruleId = response.id;
+    const response = await createWebhook(context.auth, payload)
+    const ruleId = response.id
 
-    await context.store?.put<WebhookInformation>(
-      `_webhook_sequence_completed`,
-      {
-        ruleId,
-      }
-    );
+    await context.store?.put<WebhookInformation>(`_webhook_sequence_completed`, {
+      ruleId,
+    })
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_sequence_completed'
-    );
+    const response = await context.store?.get<WebhookInformation>('_webhook_sequence_completed')
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth, response.ruleId)
     }
   },
   async run(context) {
-    const body = context.payload.body as { subscriber: unknown };
-    return [body.subscriber];
+    const body = context.payload.body as { subscriber: unknown }
+    return [body.subscriber]
   },
-});
+})
 
 // Tested
 export const linkClicked = createTrigger({
@@ -431,7 +387,7 @@ export const linkClicked = createTrigger({
   },
   sampleData,
   async onEnable(context) {
-    const { initiatorValue } = context.propsValue;
+    const { initiatorValue } = context.propsValue
 
     const payload = {
       event: {
@@ -439,29 +395,27 @@ export const linkClicked = createTrigger({
         initiator_value: initiatorValue,
       },
       target_url: context.webhookUrl,
-    };
+    }
 
-    const response = await createWebhook(context.auth, payload);
-    const ruleId = response.id;
+    const response = await createWebhook(context.auth, payload)
+    const ruleId = response.id
 
     await context.store?.put<WebhookInformation>(`_webhook_link_clicked`, {
       ruleId,
-    });
+    })
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_link_clicked'
-    );
+    const response = await context.store?.get<WebhookInformation>('_webhook_link_clicked')
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth, response.ruleId)
     }
   },
   async run(context) {
-    const { initiatorValue } = context.propsValue;
-    const body = context.payload.body as { subscriber: unknown };
-    return [body.subscriber, initiatorValue];
+    const { initiatorValue } = context.propsValue
+    const body = context.payload.body as { subscriber: unknown }
+    return [body.subscriber, initiatorValue]
   },
-});
+})
 
 // UNTESTED
 // Broken UI at convertkit, reported to support. The Rukes page is not loading. It will load again, when the webhook is canceled.
@@ -476,7 +430,7 @@ export const productPurchased = createTrigger({
   },
   sampleData,
   async onEnable(context) {
-    const { productId } = context.propsValue;
+    const { productId } = context.propsValue
 
     const payload = {
       event: {
@@ -484,28 +438,26 @@ export const productPurchased = createTrigger({
         product_id: productId,
       },
       target_url: context.webhookUrl,
-    };
-    const response = await createWebhook(context.auth, payload);
-    const ruleId = response.id;
+    }
+    const response = await createWebhook(context.auth, payload)
+    const ruleId = response.id
 
     await context.store?.put<WebhookInformation>(`_webhook_product_purchased`, {
       ruleId,
-    });
+    })
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_product_purchased'
-    );
+    const response = await context.store?.get<WebhookInformation>('_webhook_product_purchased')
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth, response.ruleId)
     }
   },
   async run(context) {
-    const { productId } = context.propsValue;
-    const body = context.payload.body as { subscriber: unknown };
-    return [body.subscriber, productId];
+    const { productId } = context.propsValue
+    const body = context.payload.body as { subscriber: unknown }
+    return [body.subscriber, productId]
   },
-});
+})
 
 // Untested. Webhook is created, but I have not tested if the trigger is firing.
 export const purchaseCreated = createTrigger({
@@ -522,27 +474,25 @@ export const purchaseCreated = createTrigger({
         name: 'purchase.purchase_create',
       },
       target_url: context.webhookUrl,
-    };
+    }
 
-    const response = await createWebhook(context.auth, payload);
-    const ruleId = response.id;
+    const response = await createWebhook(context.auth, payload)
+    const ruleId = response.id
 
     await context.store?.put<WebhookInformation>(`_webhook_purchase_created`, {
       ruleId,
-    });
+    })
   },
   async onDisable(context) {
-    const response = await context.store?.get<WebhookInformation>(
-      '_webhook_purchase_created'
-    );
+    const response = await context.store?.get<WebhookInformation>('_webhook_purchase_created')
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth, response.ruleId)
     }
   },
   async run(context) {
     const body = context.payload.body as {
-      purchase: { subscriber: unknown };
-    };
-    return [body.purchase.subscriber];
+      purchase: { subscriber: unknown }
+    }
+    return [body.purchase.subscriber]
   },
-});
+})

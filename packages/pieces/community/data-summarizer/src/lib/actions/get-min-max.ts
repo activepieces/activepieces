@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { common } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { common } from '../common'
 
 export const getMinMax = createAction({
   name: 'getMinMax',
@@ -9,16 +9,15 @@ export const getMinMax = createAction({
     note: common.note,
     values: Property.Array({
       displayName: 'Values',
-      required: true
-    })
+      required: true,
+    }),
   },
   async run({ propsValue }) {
-    const result = common.validateArray(propsValue.values);
-    if (result.hasError) 
-      throw new Error(JSON.stringify(result.error));
+    const result = common.validateArray(propsValue.values)
+    if (result.hasError) throw new Error(JSON.stringify(result.error))
     return {
       max: Math.max(...result.values),
-      min: Math.min(...result.values)
-    };
-  }
-});
+      min: Math.min(...result.values),
+    }
+  },
+})

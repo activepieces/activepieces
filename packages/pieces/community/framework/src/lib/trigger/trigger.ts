@@ -1,23 +1,23 @@
-import { Static, Type } from '@sinclair/typebox';
-import { OnStartContext, ActionContext, TestOrRunHookContext, TriggerHookContext } from '../context';
-import { TriggerBase } from '../piece-metadata';
-import { InputPropertyMap } from '../property';
-import { PieceAuthProperty } from '../property/authentication';
-import { isNil, TriggerTestStrategy } from '@activepieces/shared';
+import { TriggerTestStrategy, isNil } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
+import { ActionContext, OnStartContext, TestOrRunHookContext, TriggerHookContext } from '../context'
+import { TriggerBase } from '../piece-metadata'
+import { InputPropertyMap } from '../property'
+import { PieceAuthProperty } from '../property/authentication'
 
 export const DEDUPE_KEY_PROPERTY = '_dedupe_key'
 
 export enum TriggerStrategy {
   POLLING = 'POLLING',
   WEBHOOK = 'WEBHOOK',
-  APP_WEBHOOK = "APP_WEBHOOK",
+  APP_WEBHOOK = 'APP_WEBHOOK',
 }
 
 export enum WebhookHandshakeStrategy {
   NONE = 'NONE',
   HEADER_PRESENT = 'HEADER_PRESENT',
   QUERY_PRESENT = 'QUERY_PRESENT',
-  BODY_PARAM_PRESENT = 'BODY_PARAM_PRESENT'
+  BODY_PARAM_PRESENT = 'BODY_PARAM_PRESENT',
 }
 
 export enum WebhookRenewStrategy {
@@ -30,7 +30,9 @@ export const WebhookHandshakeConfiguration = Type.Object({
   paramName: Type.Optional(Type.String()),
 })
 
-type OnStartRunner<PieceAuth extends PieceAuthProperty, TriggerProps extends InputPropertyMap> = (ctx: OnStartContext<PieceAuth, TriggerProps>) => Promise<unknown | void>
+type OnStartRunner<PieceAuth extends PieceAuthProperty, TriggerProps extends InputPropertyMap> = (
+  ctx: OnStartContext<PieceAuth, TriggerProps>,
+) => Promise<unknown | void>
 
 export type WebhookHandshakeConfiguration = Static<typeof WebhookHandshakeConfiguration>
 
@@ -46,8 +48,8 @@ export const WebhookRenewConfiguration = Type.Union([
 export type WebhookRenewConfiguration = Static<typeof WebhookRenewConfiguration>
 
 export interface WebhookResponse {
-  status: number,
-  body?: any,
+  status: number
+  body?: any
   headers?: Record<string, string>
 }
 
@@ -66,20 +68,20 @@ type BaseTriggerParams<
   onEnable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
   onDisable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
   run: (context: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
-  test?: (context: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
-  onStart?: OnStartRunner<PieceAuth, TriggerProps>,
+  test?: (context: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
+  onStart?: OnStartRunner<PieceAuth, TriggerProps>
   sampleData: unknown
 }
 
 type WebhookTriggerParams<
-PieceAuth extends PieceAuthProperty,
-TriggerProps extends InputPropertyMap,
-TS extends TriggerStrategy,
+  PieceAuth extends PieceAuthProperty,
+  TriggerProps extends InputPropertyMap,
+  TS extends TriggerStrategy,
 > = BaseTriggerParams<PieceAuth, TriggerProps, TS> & {
   handshakeConfiguration?: WebhookHandshakeConfiguration
-  onHandshake?: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<WebhookResponse>,
+  onHandshake?: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<WebhookResponse>
   renewConfiguration?: WebhookRenewConfiguration
-  onRenew?(context: TriggerHookContext<PieceAuth, TriggerProps, TS>): Promise<void>,
+  onRenew?(context: TriggerHookContext<PieceAuth, TriggerProps, TS>): Promise<void>
 }
 
 type CreateTriggerParams<
@@ -87,14 +89,15 @@ type CreateTriggerParams<
   TriggerProps extends InputPropertyMap,
   TS extends TriggerStrategy,
 > = TS extends TriggerStrategy.WEBHOOK
-    ? WebhookTriggerParams<PieceAuth, TriggerProps, TS>
-    : BaseTriggerParams<PieceAuth, TriggerProps, TS>
+  ? WebhookTriggerParams<PieceAuth, TriggerProps, TS>
+  : BaseTriggerParams<PieceAuth, TriggerProps, TS>
 
 export class ITrigger<
   TS extends TriggerStrategy,
   PieceAuth extends PieceAuthProperty,
   TriggerProps extends InputPropertyMap,
-> implements TriggerBase {
+> implements TriggerBase
+{
   constructor(
     public readonly name: string,
     public readonly displayName: string,
@@ -113,7 +116,7 @@ export class ITrigger<
     public readonly test: (ctx: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
     public readonly sampleData: unknown,
     public readonly testStrategy: TriggerTestStrategy,
-  ) { }
+  ) {}
 }
 
 export type Trigger<
@@ -127,7 +130,9 @@ export const createTrigger = <
   TS extends TriggerStrategy,
   PieceAuth extends PieceAuthProperty,
   TriggerProps extends InputPropertyMap,
->(params: CreateTriggerParams<PieceAuth, TriggerProps, TS>) => {
+>(
+  params: CreateTriggerParams<PieceAuth, TriggerProps, TS>,
+) => {
   switch (params.type) {
     case TriggerStrategy.WEBHOOK:
       return new ITrigger(
@@ -160,7 +165,7 @@ export const createTrigger = <
         { strategy: WebhookHandshakeStrategy.NONE },
         async () => ({ status: 200 }),
         { strategy: WebhookRenewStrategy.NONE },
-        (async () => Promise.resolve()),
+        async () => Promise.resolve(),
         params.onEnable,
         params.onDisable,
         params.onStart ?? (async () => Promise.resolve()),
@@ -180,14 +185,16 @@ export const createTrigger = <
         { strategy: WebhookHandshakeStrategy.NONE },
         async () => ({ status: 200 }),
         { strategy: WebhookRenewStrategy.NONE },
-        (async () => Promise.resolve()),
+        async () => Promise.resolve(),
         params.onEnable,
         params.onDisable,
         params.onStart ?? (async () => Promise.resolve()),
         params.run,
         params.test ?? (() => Promise.resolve([params.sampleData])),
         params.sampleData,
-        (isNil(params.sampleData) && isNil(params.test)) ? TriggerTestStrategy.SIMULATION : TriggerTestStrategy.TEST_FUNCTION,
+        isNil(params.sampleData) && isNil(params.test)
+          ? TriggerTestStrategy.SIMULATION
+          : TriggerTestStrategy.TEST_FUNCTION,
       )
   }
 }

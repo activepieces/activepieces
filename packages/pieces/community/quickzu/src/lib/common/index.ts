@@ -1,10 +1,10 @@
-import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
-import { quickzuAuth } from '../../';
-import { QuickzuAPIClient } from './client';
+import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework'
+import { quickzuAuth } from '../../'
+import { QuickzuAPIClient } from './client'
 
 export function makeClient(auth: PiecePropValueSchema<typeof quickzuAuth>) {
-  const client = new QuickzuAPIClient(auth);
-  return client;
+  const client = new QuickzuAPIClient(auth)
+  return client
 }
 
 export const quickzuCommon = {
@@ -19,10 +19,10 @@ export const quickzuCommon = {
             disabled: true,
             options: [],
             placeholder: 'Please connect your account first.',
-          };
+          }
         }
-        const client = makeClient(auth as string);
-        const res = await client.listCategories();
+        const client = makeClient(auth as string)
+        const res = await client.listCategories()
 
         return {
           disabled: false,
@@ -30,9 +30,9 @@ export const quickzuCommon = {
             return {
               label: category.name,
               value: category._id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   productId: (required = false) =>
@@ -46,10 +46,10 @@ export const quickzuCommon = {
             disabled: true,
             options: [],
             placeholder: 'Please connect your account first.',
-          };
+          }
         }
-        const client = makeClient(auth as string);
-        const res = await client.listProducts();
+        const client = makeClient(auth as string)
+        const res = await client.listProducts()
 
         return {
           disabled: false,
@@ -57,9 +57,9 @@ export const quickzuCommon = {
             return {
               label: product.name,
               value: product._id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   orderId: (required = false) =>
@@ -73,22 +73,20 @@ export const quickzuCommon = {
             disabled: true,
             options: [],
             placeholder: 'Please connect your account first.',
-          };
+          }
         }
-        const client = makeClient(auth as string);
-        const res = await client.listOrders(1, 20);
+        const client = makeClient(auth as string)
+        const res = await client.listOrders(1, 20)
 
         return {
           disabled: false,
-          options: res['data'].map(
-            (order: { _id: string; order_id: number }) => {
-              return {
-                label: order.order_id.toString(),
-                value: order._id,
-              };
+          options: res['data'].map((order: { _id: string; order_id: number }) => {
+            return {
+              label: order.order_id.toString(),
+              value: order._id,
             }
-          ),
-        };
+          }),
+        }
       },
     }),
-};
+}

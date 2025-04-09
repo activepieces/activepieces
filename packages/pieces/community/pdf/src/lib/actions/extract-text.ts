@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import pdfParse from 'pdf-parse';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import pdfParse from 'pdf-parse'
 
 export const extractText = createAction({
   name: 'extractText',
@@ -16,13 +16,13 @@ export const extractText = createAction({
       defaultValue: false,
     },
     retryOnFailure: {
-      hide: true
+      hide: true,
     },
   },
   async run(context) {
-    const file = context.propsValue.file;
-    const dataBuffer = Buffer.from(file.data.buffer);
-    const pdfData = await pdfParse(dataBuffer);
-    return pdfData.text;
+    const file = context.propsValue.file
+    const dataBuffer = Buffer.from(file.data.buffer)
+    const pdfData = await pdfParse(dataBuffer)
+    return pdfData.text
   },
-});
+})

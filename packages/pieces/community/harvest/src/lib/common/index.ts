@@ -1,11 +1,5 @@
-import { DynamicPropsValue } from '@activepieces/pieces-framework';
-import {
-  HttpMethod,
-  HttpMessageBody,
-  HttpResponse,
-  httpClient,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMessageBody, HttpMethod, HttpResponse, httpClient } from '@activepieces/pieces-common'
+import { DynamicPropsValue } from '@activepieces/pieces-framework'
 
 export async function callHarvestApi<T extends HttpMessageBody = any>(
   method: HttpMethod,
@@ -13,7 +7,7 @@ export async function callHarvestApi<T extends HttpMessageBody = any>(
   accessToken: string,
   queryParams: any | undefined = undefined,
   body: any | undefined = undefined,
-  headers: any | undefined = undefined
+  headers: any | undefined = undefined,
 ): Promise<HttpResponse<T>> {
   return await httpClient.sendRequest<T>({
     method: method,
@@ -25,14 +19,14 @@ export async function callHarvestApi<T extends HttpMessageBody = any>(
     headers,
     body,
     queryParams,
-  });
+  })
 }
 
 //Remove null/undefined values and create an array to be used for queryparams
 export function filterDynamicFields(dynamicFields: DynamicPropsValue): { [key: string]: string } {
-  const fields: { [key: string]: string } = {};
+  const fields: { [key: string]: string } = {}
 
-  const props = Object.entries(dynamicFields);
+  const props = Object.entries(dynamicFields)
   for (const [propertyKey, propertyValue] of props) {
     if (
       propertyValue !== null &&
@@ -40,9 +34,9 @@ export function filterDynamicFields(dynamicFields: DynamicPropsValue): { [key: s
       propertyValue !== '' &&
       !(typeof propertyValue === 'string' && propertyValue.trim() === '')
     ) {
-      fields[propertyKey] = propertyValue;
+      fields[propertyKey] = propertyValue
     }
   }
 
-  return fields;
+  return fields
 }

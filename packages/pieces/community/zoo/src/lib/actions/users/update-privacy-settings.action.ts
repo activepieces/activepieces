@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 import { zooAuth } from '../../../index'
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const updatePrivacySettingsAction = createAction({
   name: 'update_privacy_settings',
@@ -23,7 +23,7 @@ export const updatePrivacySettingsAction = createAction({
         Authorization: `Bearer ${auth}`,
       },
       body: propsValue.settings,
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

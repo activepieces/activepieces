@@ -1,19 +1,16 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { makeClient, reformatDateTime } from '../../common';
-import { BillableType, EntryListFilter } from '../../common/models/entry';
-import { clockodoAuth } from '../../../';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { clockodoAuth } from '../../../'
+import { makeClient, reformatDateTime } from '../../common'
+import { BillableType, EntryListFilter } from '../../common/models/entry'
 
-function calculateBillable(
-  billable?: boolean,
-  billed?: boolean
-): BillableType | undefined {
+function calculateBillable(billable?: boolean, billed?: boolean): BillableType | undefined {
   if (billable === undefined && billed === undefined) {
-    return undefined;
+    return undefined
   } else {
     if (billed) {
-      return 2;
+      return 2
     } else {
-      return billable ? 1 : 0;
+      return billable ? 1 : 0
     }
   }
 }
@@ -74,19 +71,16 @@ export default createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth)
     const filter: EntryListFilter = {
       users_id: propsValue.user_id_filter,
       customers_id: propsValue.customer_id_filter,
       projects_id: propsValue.project_id_filter,
       services_id: propsValue.service_id_filter,
-      billable: calculateBillable(
-        propsValue.billable_filter,
-        propsValue.billed_filter
-      ),
-    };
-    const time_since = reformatDateTime(propsValue.time_since) as string;
-    const time_until = reformatDateTime(propsValue.time_until) as string;
+      billable: calculateBillable(propsValue.billable_filter, propsValue.billed_filter),
+    }
+    const time_since = reformatDateTime(propsValue.time_since) as string
+    const time_until = reformatDateTime(propsValue.time_until) as string
     if (propsValue.page !== undefined) {
       const res = await client.listEntries({
         time_since,
@@ -94,20 +88,16 @@ export default createAction({
         enhanced_list: propsValue.enhanced_list,
         page: propsValue.page,
         filter,
-      });
+      })
       return {
         pagination: res.paging,
         entries: res.entries,
-      };
+      }
     } else {
-      const entries = await client.listAllEntries(
-        time_since,
-        time_until,
-        filter
-      );
+      const entries = await client.listAllEntries(time_since, time_until, filter)
       return {
         entries,
-      };
+      }
     }
   },
-});
+})

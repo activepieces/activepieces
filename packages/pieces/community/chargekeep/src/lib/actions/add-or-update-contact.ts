@@ -1,7 +1,7 @@
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
 // add-or-update-contact.ts
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { chargekeepAuth } from '../..';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { chargekeepAuth } from '../..'
 
 export const addOrUpdateContact = createAction({
   name: 'addOrUpdateContact',
@@ -33,8 +33,7 @@ export const addOrUpdateContact = createAction({
     }),
     matchExisting: Property.StaticDropdown({
       displayName: 'Match Existing Contact',
-      description:
-        'If "Yes", will try to find an existing record using Email and Full Name and update it.',
+      description: 'If "Yes", will try to find an existing record using Email and Full Name and update it.',
       required: false,
       defaultValue: true,
       options: {
@@ -194,8 +193,7 @@ export const addOrUpdateContact = createAction({
     // Full Address
     street: Property.ShortText({
       displayName: 'Street',
-      description:
-        "The contact's full street address (can include apartment or unit number).",
+      description: "The contact's full street address (can include apartment or unit number).",
       required: false,
     }),
     addressLine2: Property.ShortText({
@@ -279,20 +277,17 @@ export const addOrUpdateContact = createAction({
     }),
     affiliateCode: Property.ShortText({
       displayName: 'Affiliate Code',
-      description:
-        'The affiliate/referer partner through which the contact signed up.',
+      description: 'The affiliate/referer partner through which the contact signed up.',
       required: false,
     }),
     refererURL: Property.ShortText({
       displayName: 'Referer URL',
-      description:
-        'The webpage where the contact clicked a link that sent them to your website.',
+      description: 'The webpage where the contact clicked a link that sent them to your website.',
       required: false,
     }),
     entryUrl: Property.ShortText({
       displayName: 'Entry URL',
-      description:
-        'The first page of visit through which the contact visited your website.',
+      description: 'The first page of visit through which the contact visited your website.',
       required: false,
     }),
   },
@@ -354,7 +349,7 @@ export const addOrUpdateContact = createAction({
       affiliateCode: context.propsValue.affiliateCode,
       refererUrl: context.propsValue.refererURL,
       entryUrl: context.propsValue.entryUrl,
-    };
+    }
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -366,11 +361,11 @@ export const addOrUpdateContact = createAction({
       body: {
         ...contact,
       },
-    });
+    })
 
     return {
       status: res.status,
       body: res.body,
-    };
+    }
   },
-});
+})

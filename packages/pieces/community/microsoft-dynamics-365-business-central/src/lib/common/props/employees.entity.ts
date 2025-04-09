@@ -1,4 +1,4 @@
-import { EntityProp } from '../types';
+import { EntityProp } from '../types'
 
 export const employeesEntityProps: EntityProp[] = [
   {
@@ -124,4 +124,4 @@ export const employeesEntityProps: EntityProp[] = [
     type: 'date',
     isRequired: false,
   },
-];
+]

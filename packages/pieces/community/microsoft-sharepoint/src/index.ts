@@ -1,31 +1,20 @@
-import {
-  createPiece,
-  PieceAuth,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { createFolderAction } from './lib/actions/create-folder';
-import { createListAction } from './lib/actions/create-list';
-import { createListItemAction } from './lib/actions/create-list-item';
-import { updateListItemAction } from './lib/actions/update-list-item';
-import { deleteListItemAction } from './lib/actions/delete-list-item';
-import { findListItemAction } from './lib/actions/search-list-item';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { createFolderAction } from './lib/actions/create-folder'
+import { createListAction } from './lib/actions/create-list'
+import { createListItemAction } from './lib/actions/create-list-item'
+import { deleteListItemAction } from './lib/actions/delete-list-item'
+import { findListItemAction } from './lib/actions/search-list-item'
+import { updateListItemAction } from './lib/actions/update-list-item'
 
 export const microsoftSharePointAuth = PieceAuth.OAuth2({
   description: 'Authentication for Microsoft SharePoint',
   authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
   tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
   required: true,
-  scope: [
-    'openid',
-    'email',
-    'profile',
-    'offline_access',
-    'Sites.Manage.All',
-    'Files.ReadWrite',
-  ],
-});
+  scope: ['openid', 'email', 'profile', 'offline_access', 'Sites.Manage.All', 'Files.ReadWrite'],
+})
 
 export const microsoftSharePoint = createPiece({
   displayName: 'Microsoft SharePoint',
@@ -50,4 +39,4 @@ export const microsoftSharePoint = createPiece({
     }),
   ],
   triggers: [],
-});
+})

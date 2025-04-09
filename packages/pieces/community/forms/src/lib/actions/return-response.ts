@@ -1,7 +1,7 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { FileResponseInterface, HumanInputFormResult, HumanInputFormResultTypes } from '@activepieces/shared';
-import { StatusCodes } from 'http-status-codes';
-import mime from 'mime-types';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { FileResponseInterface, HumanInputFormResult, HumanInputFormResultTypes } from '@activepieces/shared'
+import { StatusCodes } from 'http-status-codes'
+import mime from 'mime-types'
 
 export const returnResponse = createAction({
   name: 'return_response',
@@ -28,16 +28,16 @@ export const returnResponse = createAction({
   async run({ propsValue, run, files }) {
     const responseFiles: FileResponseInterface[] = []
     if (propsValue.file) {
-      const fileName = propsValue.file.filename;
-      const fileBase64 = propsValue.file.base64;
-      const mimeType = mime.lookup(fileName);
+      const fileName = propsValue.file.filename
+      const fileBase64 = propsValue.file.base64
+      const mimeType = mime.lookup(fileName)
       responseFiles.push({
         url: await files.write({
           fileName,
           data: Buffer.from(fileBase64, 'base64'),
         }),
         mimeType: mimeType || '',
-      });
+      })
     }
     const markdownResponseBody: HumanInputFormResult = {
       type: HumanInputFormResultTypes.MARKDOWN,
@@ -50,7 +50,7 @@ export const returnResponse = createAction({
         body: markdownResponseBody,
         headers: {},
       },
-    });
-    return markdownResponseBody;
+    })
+    return markdownResponseBody
   },
-});
+})

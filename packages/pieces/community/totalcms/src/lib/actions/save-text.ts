@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { saveContent } from '../api';
-import { cmsAuth } from '../auth';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { saveContent } from '../api'
+import { cmsAuth } from '../auth'
 
 export const saveTextAction = createAction({
   name: 'save_text',
@@ -20,11 +20,11 @@ export const saveTextAction = createAction({
     }),
   },
   async run(context) {
-    const slug = context.propsValue.slug;
-    const text = context.propsValue.text;
+    const slug = context.propsValue.slug
+    const text = context.propsValue.text
     return await saveContent(context.auth, 'text', slug, {
       nodecode: true,
       text: text,
-    });
+    })
   },
-});
+})

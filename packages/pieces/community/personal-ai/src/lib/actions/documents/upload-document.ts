@@ -1,9 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { BASE_URL, personalAiAuth } from '../../../index';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { BASE_URL, personalAiAuth } from '../../../index'
 
 export const uploadDocument = createAction({
-  auth:personalAiAuth,
+  auth: personalAiAuth,
   name: 'upload_document',
   displayName: 'Upload Document',
   description: 'Upload a text document to AI assistant.',
@@ -47,7 +47,10 @@ export const uploadDocument = createAction({
     }),
   },
   async run(context) {
-    const { auth, propsValue: { text, title, domainName, tags, sourceName, createdTime, isStack } } = context;
+    const {
+      auth,
+      propsValue: { text, title, domainName, tags, sourceName, createdTime, isStack },
+    } = context
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -65,8 +68,8 @@ export const uploadDocument = createAction({
         ...(createdTime && { CreatedTime: createdTime }),
         ...(isStack !== undefined && { is_stack: isStack }),
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

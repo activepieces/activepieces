@@ -1,29 +1,25 @@
-import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
-import { useQuery } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { CheckCircleIcon, Trash } from 'lucide-react';
+import { QuestionMarkCircledIcon } from '@radix-ui/react-icons'
+import { useQuery } from '@tanstack/react-query'
+import { t } from 'i18next'
+import { CheckCircleIcon, Trash } from 'lucide-react'
 
-import { AddCustomDomainDialog } from '@/app/routes/platform/setup/branding/add-custom-domain';
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { LoadingSpinner } from '@/components/ui/spinner';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { customDomainApi } from '@/features/platform-admin-panel/lib/custom-domain-api';
-import { CustomDomain, CustomDomainStatus } from '@activepieces/ee-shared';
+import { AddCustomDomainDialog } from '@/app/routes/platform/setup/branding/add-custom-domain'
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { LoadingSpinner } from '@/components/ui/spinner'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { customDomainApi } from '@/features/platform-admin-panel/lib/custom-domain-api'
+import { CustomDomain, CustomDomainStatus } from '@activepieces/ee-shared'
 
 const CustomDomainsCard = () => {
   const { data, isLoading, isError, isSuccess, refetch } = useQuery({
     queryKey: ['custom-domain-list'],
     queryFn: async () => {
-      const response = await customDomainApi.list();
-      return response.data;
+      const response = await customDomainApi.list()
+      return response.data
     },
-  });
+  })
 
   return (
     <>
@@ -37,27 +33,18 @@ const CustomDomainsCard = () => {
             </div>
           )}
           {isError && <div>{t('Error, please try again.')}</div>}
-          {isSuccess && data.length === 0 && (
-            <div className="text-center">{t('No domains added yet.')}</div>
-          )}
+          {isSuccess && data.length === 0 && <div className="text-center">{t('No domains added yet.')}</div>}
           {Array.isArray(data) &&
             data.map((domain: CustomDomain) => (
-              <div
-                className="flex items-center justify-between space-x-4"
-                key={domain.id}
-              >
+              <div className="flex items-center justify-between space-x-4" key={domain.id}>
                 <div className="flex gap-2 items-center justify-center">
-                  <p className="text-sm font-medium leading-none fibt">
-                    {domain.domain}
-                  </p>
+                  <p className="text-sm font-medium leading-none fibt">{domain.domain}</p>
                   {domain.status === CustomDomainStatus.ACTIVE && (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <CheckCircleIcon className="h-5 w-5 text-success" />
                       </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        {t('Verified')}
-                      </TooltipContent>
+                      <TooltipContent side="bottom">{t('Verified')}</TooltipContent>
                     </Tooltip>
                   )}
                   {domain.status === CustomDomainStatus.PENDING && (
@@ -66,9 +53,7 @@ const CustomDomainsCard = () => {
                         <QuestionMarkCircledIcon className="h-5 w-5 text-success" />
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
-                        {t(
-                          'Pending, please contact the support for dns verification.',
-                        )}
+                        {t('Pending, please contact the support for dns verification.')}
                       </TooltipContent>
                     </Tooltip>
                   )}
@@ -79,8 +64,8 @@ const CustomDomainsCard = () => {
                     domain: domain.domain,
                   })}
                   mutationFn={async () => {
-                    await customDomainApi.delete(domain.id);
-                    refetch();
+                    await customDomainApi.delete(domain.id)
+                    refetch()
                   }}
                   entityName={t('flow')}
                 >
@@ -88,7 +73,7 @@ const CustomDomainsCard = () => {
                     variant="ghost"
                     className="size-8 p-0"
                     onClick={(e) => {
-                      e.stopPropagation();
+                      e.stopPropagation()
                     }}
                   >
                     <Trash className="size-4 text-destructive" />
@@ -100,8 +85,8 @@ const CustomDomainsCard = () => {
         <AddCustomDomainDialog onAdd={() => refetch()} />
       </div>
     </>
-  );
-};
+  )
+}
 
-CustomDomainsCard.displayName = 'CustomDomainsCard';
-export { CustomDomainsCard };
+CustomDomainsCard.displayName = 'CustomDomainsCard'
+export { CustomDomainsCard }

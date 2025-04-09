@@ -1,4 +1,4 @@
-import newEntryTrigger from './new-entry';
-import newAbsenceEnquiryTrigger from './new-absence-enquiry';
+import newAbsenceEnquiryTrigger from './new-absence-enquiry'
+import newEntryTrigger from './new-entry'
 
-export default [newEntryTrigger, newAbsenceEnquiryTrigger];
+export default [newEntryTrigger, newAbsenceEnquiryTrigger]

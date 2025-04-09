@@ -1,1 +1,1 @@
-export type HttpHeaders = Record<string, string | string[] | undefined>;
+export type HttpHeaders = Record<string, string | string[] | undefined>

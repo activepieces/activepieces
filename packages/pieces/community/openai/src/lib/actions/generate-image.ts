@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import OpenAI from 'openai';
-import { openaiAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import OpenAI from 'openai'
+import { openaiAuth } from '../..'
 
 export const generateImage = createAction({
   auth: openaiAuth,
@@ -26,7 +26,7 @@ export const generateImage = createAction({
               value: 'dall-e-2',
             },
           ],
-        };
+        }
       },
     }),
     prompt: Property.LongText({
@@ -53,7 +53,7 @@ export const generateImage = createAction({
             label: '256x256',
             value: '256x256',
           },
-        ];
+        ]
         if (model == 'dall-e-3')
           options = [
             {
@@ -68,11 +68,11 @@ export const generateImage = createAction({
               label: '1792x1024',
               value: '1792x1024',
             },
-          ];
+          ]
 
         return {
           options: options,
-        };
+        }
       },
     }),
     quality: Property.Dropdown({
@@ -93,24 +93,24 @@ export const generateImage = createAction({
               value: 'hd',
             },
           ],
-        };
+        }
       },
     }),
   },
   async run({ auth, propsValue }) {
     const openai = new OpenAI({
       apiKey: auth,
-    });
+    })
 
-    const { quality, resolution, model, prompt } = propsValue;
+    const { quality, resolution, model, prompt } = propsValue
 
     const image = await openai.images.generate({
       model: model,
       prompt: prompt,
       quality: quality as any,
       size: resolution as any,
-    });
+    })
 
-    return image;
+    return image
   },
-});
+})

@@ -1,12 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpRequest,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { trelloCommon } from '../common';
-import { TrelloCard } from '../common/props/card';
-import { trelloAuth } from '../..';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { trelloAuth } from '../..'
+import { trelloCommon } from '../common'
+import { TrelloCard } from '../common/props/card'
 
 export const getCard = createAction({
   auth: trelloAuth,
@@ -34,7 +30,7 @@ export const getCard = createAction({
       headers: {
         Accept: 'application/json',
       },
-    };
-    return (await httpClient.sendRequest<TrelloCard>(request)).body;
+    }
+    return (await httpClient.sendRequest<TrelloCard>(request)).body
   },
-});
+})

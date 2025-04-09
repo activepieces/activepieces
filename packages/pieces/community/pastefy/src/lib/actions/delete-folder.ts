@@ -1,6 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { makeClient, pastefyCommon } from '../common';
-import { pastefyAuth } from '../..';
+import { createAction } from '@activepieces/pieces-framework'
+import { pastefyAuth } from '../..'
+import { makeClient, pastefyCommon } from '../common'
 
 export default createAction({
   auth: pastefyAuth,
@@ -11,10 +11,8 @@ export default createAction({
     folder_id: pastefyCommon.folder_id(true),
   },
   async run(context) {
-    const client = makeClient(context.auth, context.propsValue);
-    const res = await client.deleteFolder(
-      context.propsValue.folder_id as string
-    );
-    return res;
+    const client = makeClient(context.auth, context.propsValue)
+    const res = await client.deleteFolder(context.propsValue.folder_id as string)
+    return res
   },
-});
+})

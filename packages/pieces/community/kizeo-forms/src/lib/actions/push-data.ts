@@ -1,7 +1,7 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { endpoint, kizeoFormsCommon } from '../common';
-import { kizeoFormsAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { kizeoFormsAuth } from '../..'
+import { endpoint, kizeoFormsCommon } from '../common'
 
 export const pushData = createAction({
   auth: kizeoFormsAuth,
@@ -14,21 +14,21 @@ export const pushData = createAction({
     fields: kizeoFormsCommon.fields,
   },
   async run(context) {
-    const { formId, userId, fields } = context.propsValue;
+    const { formId, userId, fields } = context.propsValue
 
     type Body = {
-      recipient_user_id: string | undefined;
-      fields: Record<string, { value: string }>;
-    };
+      recipient_user_id: string | undefined
+      fields: Record<string, { value: string }>
+    }
 
     const body: Body = {
       recipient_user_id: userId,
       fields: {},
-    };
+    }
 
     for (let i = 0; i < Object.keys(fields).length; i++) {
-      const fieldId = Object.keys(fields)[i];
-      body.fields[fieldId] = { value: fields[Object.keys(fields)[i]] };
+      const fieldId = Object.keys(fields)[i]
+      body.fields[fieldId] = { value: fields[Object.keys(fields)[i]] }
     }
 
     const response = await httpClient.sendRequest<{ data: unknown }>({
@@ -39,11 +39,11 @@ export const pushData = createAction({
         Authorization: context.auth,
       },
       body: body,
-    });
+    })
     if (response.status === 200) {
-      return response.body.data;
+      return response.body.data
     }
 
-    return [];
+    return []
   },
-});
+})

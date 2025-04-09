@@ -1,7 +1,4 @@
-import {
-  createSessionsUsWebhookTrigger,
-  SessionsUsWebhookTrigger,
-} from '../common';
+import { SessionsUsWebhookTrigger, createSessionsUsWebhookTrigger } from '../common'
 
 export const transcriptReady = createSessionsUsWebhookTrigger({
   name: 'transcript_ready',
@@ -27,4 +24,4 @@ export const transcriptReady = createSessionsUsWebhookTrigger({
       ],
     },
   },
-});
+})

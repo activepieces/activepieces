@@ -1,10 +1,6 @@
-import {
-  PiecePropValueSchema,
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { baserowAuth } from '../..';
-import { makeClient } from '../common';
+import { PiecePropValueSchema, Property, createAction } from '@activepieces/pieces-framework'
+import { baserowAuth } from '../..'
+import { makeClient } from '../common'
 
 export const deleteRowAction = createAction({
   name: 'baserow_delete_row',
@@ -25,10 +21,8 @@ export const deleteRowAction = createAction({
     }),
   },
   async run(context) {
-    const { table_id, row_id } = context.propsValue;
-    const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof baserowAuth>
-    );
-    return await client.deleteRow(table_id, row_id);
+    const { table_id, row_id } = context.propsValue
+    const client = makeClient(context.auth as PiecePropValueSchema<typeof baserowAuth>)
+    return await client.deleteRow(table_id, row_id)
   },
-});
+})

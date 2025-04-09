@@ -1,10 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { dropboxAuth } from '../../';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { dropboxAuth } from '../../'
 
 export const dropboxUploadFile = createAction({
   auth: dropboxAuth,
@@ -14,8 +10,7 @@ export const dropboxUploadFile = createAction({
   props: {
     path: Property.ShortText({
       displayName: 'Path',
-      description:
-        'The path where the file should be saved (e.g. /folder1/file.txt)',
+      description: 'The path where the file should be saved (e.g. /folder1/file.txt)',
       required: true,
     }),
     file: Property.File({
@@ -44,7 +39,7 @@ export const dropboxUploadFile = createAction({
     }),
   },
   async run(context) {
-    const fileData = context.propsValue.file;
+    const fileData = context.propsValue.file
 
     const params = {
       autorename: context.propsValue.autorename,
@@ -52,11 +47,14 @@ export const dropboxUploadFile = createAction({
       mode: 'add',
       mute: context.propsValue.mute,
       strict_conflict: context.propsValue.strict_conflict,
-    };
+    }
 
-    const fileBuffer = Buffer.from(fileData.base64, 'base64');
+    const fileBuffer = Buffer.from(fileData.base64, 'base64')
     // For information about Dropbox JSON encoding, see https://www.dropbox.com/developers/reference/json-encoding
-    const dropboxApiArg = JSON.stringify(params).replace(/[\u007f-\uffff]/g, (c) => '\\u'+('000'+c.charCodeAt(0).toString(16)).slice(-4));
+    const dropboxApiArg = JSON.stringify(params).replace(
+      /[\u007f-\uffff]/g,
+      (c) => '\\u' + ('000' + c.charCodeAt(0).toString(16)).slice(-4),
+    )
 
     const result = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -70,8 +68,8 @@ export const dropboxUploadFile = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
-    });
+    })
 
-    return result.body;
+    return result.body
   },
-});
+})

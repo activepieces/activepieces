@@ -1,83 +1,73 @@
-import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
-type SelectColor =
-  | 'default'
-  | 'gray'
-  | 'brown'
-  | 'orange'
-  | 'yellow'
-  | 'green'
-  | 'blue'
-  | 'purple'
-  | 'pink'
-  | 'red';
+import { DynamicPropsValue, Property } from '@activepieces/pieces-framework'
+type SelectColor = 'default' | 'gray' | 'brown' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple' | 'pink' | 'red'
 
 type DateDatabaseProperty = {
-  id: string;
-  name: string;
-  type: 'date';
-  date: Record<string, never>;
-};
+  id: string
+  name: string
+  type: 'date'
+  date: Record<string, never>
+}
 type CheckboxDatabaseProperty = {
-  id: string;
-  name: string;
-  type: 'checkbox';
-  checkbox: Record<string, never>;
-};
+  id: string
+  name: string
+  type: 'checkbox'
+  checkbox: Record<string, never>
+}
 type CreatedByDatabaseProperty = {
-  id: string;
-  name: string;
-  type: 'created_by';
-};
+  id: string
+  name: string
+  type: 'created_by'
+}
 type CreatedTimeDatabaseProperty = {
-  id: string;
-  name: string;
-  type: 'created_time';
-  created_time: Record<string, never>;
-};
+  id: string
+  name: string
+  type: 'created_time'
+  created_time: Record<string, never>
+}
 type EmailDatabaseProperty = {
-  id: string;
-  name: string;
-  type: 'email';
-  email: Record<string, never>;
-};
+  id: string
+  name: string
+  type: 'email'
+  email: Record<string, never>
+}
 type FilesDatabaseProperty = {
-  id: string;
-  name: string;
-  type: 'files';
-  files: Record<string, never>;
-};
+  id: string
+  name: string
+  type: 'files'
+  files: Record<string, never>
+}
 type FormulaDatabaseProperty = {
-  id: string;
-  name: string;
-  type: 'formula';
+  id: string
+  name: string
+  type: 'formula'
   formula: {
-    expression: string;
-  };
-};
+    expression: string
+  }
+}
 type LastEditedByDatabaseProperty = {
-  id: string;
-  name: string;
-  type: 'last_edited_by';
-  last_edited_by: Record<string, never>;
-};
+  id: string
+  name: string
+  type: 'last_edited_by'
+  last_edited_by: Record<string, never>
+}
 type LastEditedTimeDatabaseProperty = {
-  id: string;
-  name: string;
-  type: 'last_edited_time';
-  last_edited_time: Record<string, never>;
-};
+  id: string
+  name: string
+  type: 'last_edited_time'
+  last_edited_time: Record<string, never>
+}
 type MultiSelectDatabaseProperty = {
-  id: string;
-  name: string;
-  type: 'multi_select';
+  id: string
+  name: string
+  type: 'multi_select'
   multi_select: {
     options: {
-      id: string;
-      name: string;
-      color: SelectColor;
-    }[];
-  };
-};
+      id: string
+      name: string
+      color: SelectColor
+    }[]
+  }
+}
 type NumberFormat =
   | 'number'
   | 'number_with_commas'
@@ -118,43 +108,43 @@ type NumberFormat =
   | 'leu'
   | 'argentine_peso'
   | 'uruguayan_peso'
-  | 'peruvian_sol';
+  | 'peruvian_sol'
 type NumberDatabaseProperty = {
-  id: string;
-  name: string;
-  type: 'number';
+  id: string
+  name: string
+  type: 'number'
   number: {
-    format: NumberFormat;
-  };
-};
+    format: NumberFormat
+  }
+}
 type PeopleDatabaseProperty = {
-  id: string;
-  name: string;
-  type: 'people';
-  people: Record<string, never>;
-};
+  id: string
+  name: string
+  type: 'people'
+  people: Record<string, never>
+}
 type PhoneNumberDatabaseProperty = {
-  id: string;
-  name: string;
-  type: 'phone_number';
-  phone_number: Record<string, never>;
-};
+  id: string
+  name: string
+  type: 'phone_number'
+  phone_number: Record<string, never>
+}
 type RelationDatabaseProperty = {
-  id: string;
-  name: string;
-  type: 'relation';
+  id: string
+  name: string
+  type: 'relation'
   relation: {
-    database_id: string;
-    synced_property_id: string;
-    synced_property_name: string;
-  };
-};
+    database_id: string
+    synced_property_id: string
+    synced_property_name: string
+  }
+}
 type RichTextDatabaseProperty = {
-  id: string;
-  name: string;
-  type: 'rich_text';
-  rich_text: Record<string, never>;
-};
+  id: string
+  name: string
+  type: 'rich_text'
+  rich_text: Record<string, never>
+}
 type RollupFunction =
   | 'count'
   | 'count_values'
@@ -179,62 +169,62 @@ type RollupFunction =
   | 'percent_unchecked'
   | 'count_per_group'
   | 'percent_per_group'
-  | 'show_original';
+  | 'show_original'
 
 type RollupDatabaseProperty = {
-  type: 'rollup';
+  type: 'rollup'
   rollup: {
-    rollup_property_name: string;
-    relation_property_name: string;
-    rollup_property_id: string;
-    relation_property_id: string;
-    function: RollupFunction;
-  };
-  id: string;
-  name: string;
-};
+    rollup_property_name: string
+    relation_property_name: string
+    rollup_property_id: string
+    relation_property_id: string
+    function: RollupFunction
+  }
+  id: string
+  name: string
+}
 type SelectDatabaseProperty = {
-  id: string;
-  name: string;
-  type: 'select';
+  id: string
+  name: string
+  type: 'select'
   select: {
     options: {
-      id: string;
-      name: string;
-      color: SelectColor;
-    }[];
-  };
-};
+      id: string
+      name: string
+      color: SelectColor
+    }[]
+  }
+}
 type StatusDatabaseProperty = {
-  id: string;
-  name: string;
-  type: 'status';
+  id: string
+  name: string
+  type: 'status'
   status: {
     options: {
-      id: string;
-      name: string;
-      color: SelectColor;
-    }[];
+      id: string
+      name: string
+      color: SelectColor
+    }[]
     groups: {
-      id: string;
-      name: string;
-      color: SelectColor;
-      option_ids: Array<string>;
-    };
-  };
-};
+      id: string
+      name: string
+      color: SelectColor
+      option_ids: Array<string>
+    }
+  }
+}
 type TitleDatabaseProperty = {
-  type: 'title';
-  title: Record<string, never>;
-  id: string;
-  name: string;
-};
+  type: 'title'
+  title: Record<string, never>
+  id: string
+  name: string
+}
 type UrlDatabaseProperty = {
-  type: 'url';
-  url: Record<string, never>;
-  id: string;
-  name: string;
-};
+  type: 'url'
+  url: Record<string, never>
+  id: string
+  name: string
+}
 export type DatabaseProperty =
   | NumberDatabaseProperty
   | FormulaDatabaseProperty
@@ -255,59 +245,59 @@ export type DatabaseProperty =
   | CreatedByDatabaseProperty
   | CreatedTimeDatabaseProperty
   | LastEditedByDatabaseProperty
-  | LastEditedTimeDatabaseProperty;
+  | LastEditedTimeDatabaseProperty
 
 export interface NotionDatabase {
-  object: 'database';
-  id: string;
-  created_time: string;
+  object: 'database'
+  id: string
+  created_time: string
   created_by: {
-    object: 'user';
-    id: string;
-  };
-  last_edited_time: string;
+    object: 'user'
+    id: string
+  }
+  last_edited_time: string
   last_edited_by: {
-    object: 'user';
-    id: string;
-  };
-  is_inline: boolean;
-  archived: boolean;
-  url: string;
-  public_url: string | null;
+    object: 'user'
+    id: string
+  }
+  is_inline: boolean
+  archived: boolean
+  url: string
+  public_url: string | null
   cover:
     | {
-        type: 'external';
+        type: 'external'
         external: {
-          url: string;
-        };
+          url: string
+        }
       }
     | null
     | {
-        type: 'file';
+        type: 'file'
         file: {
-          url: string;
-          expiry_time: string;
-        };
+          url: string
+          expiry_time: string
+        }
       }
-    | null;
-  properties: Record<string, DatabaseProperty>;
+    | null
+  properties: Record<string, DatabaseProperty>
   parent:
     | {
-        type: 'database_id';
-        database_id: string;
+        type: 'database_id'
+        database_id: string
       }
     | {
-        type: 'page_id';
-        page_id: string;
+        type: 'page_id'
+        page_id: string
       }
     | {
-        type: 'block_id';
-        block_id: string;
+        type: 'block_id'
+        block_id: string
       }
     | {
-        type: 'workspace';
-        workspace: true;
-      };
+        type: 'workspace'
+        workspace: true
+      }
 }
 
 export const NotionFieldMapping: Record<string, any> = {
@@ -355,7 +345,7 @@ export const NotionFieldMapping: Record<string, any> = {
             return {
               label: option.name,
               value: option.name,
-            };
+            }
           }),
         },
       }),
@@ -376,7 +366,7 @@ export const NotionFieldMapping: Record<string, any> = {
             return {
               label: option.name,
               value: option.name,
-            };
+            }
           }),
         },
       }),
@@ -395,7 +385,7 @@ export const NotionFieldMapping: Record<string, any> = {
             return {
               label: option.name,
               value: option.name,
-            };
+            }
           }),
         },
       }),
@@ -469,4 +459,4 @@ export const NotionFieldMapping: Record<string, any> = {
       people: property.map((id: any) => ({ id: id })),
     }),
   },
-};
+}

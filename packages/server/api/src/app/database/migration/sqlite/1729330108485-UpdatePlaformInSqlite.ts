@@ -1,12 +1,10 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class UpdatePlaformInSqlite1729330108485 implements MigrationInterface {
-    name = 'UpdatePlaformInSqlite1729330108485'
+  name = 'UpdatePlaformInSqlite1729330108485'
 
-   
-    public async up(queryRunner: QueryRunner): Promise<void> {
-
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             CREATE TABLE "temporary_platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -72,7 +70,7 @@ export class UpdatePlaformInSqlite1729330108485 implements MigrationInterface {
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_platform"(
                     "id",
                     "created",
@@ -159,21 +157,21 @@ export class UpdatePlaformInSqlite1729330108485 implements MigrationInterface {
                 "licenseKey"
             FROM "platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_platform"
                 RENAME TO "platform"
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             ALTER TABLE "platform"
                 RENAME TO "temporary_platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -239,7 +237,7 @@ export class UpdatePlaformInSqlite1729330108485 implements MigrationInterface {
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "platform"(
                     "id",
                     "created",
@@ -326,9 +324,8 @@ export class UpdatePlaformInSqlite1729330108485 implements MigrationInterface {
                 "licenseKey"
             FROM "temporary_platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_platform"
         `)
-    }
-    
+  }
 }

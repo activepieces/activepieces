@@ -1,12 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
-import { wooAuth } from '../..';
+import { wooAuth } from '../..'
 
 export const wooFindCustomer = createAction({
   name: 'Find Customer',
@@ -21,8 +16,8 @@ export const wooFindCustomer = createAction({
     }),
   },
   async run(configValue) {
-    const trimmedBaseUrl = configValue.auth.baseUrl.replace(/\/$/, '');
-    const email = configValue.propsValue['email'];
+    const trimmedBaseUrl = configValue.auth.baseUrl.replace(/\/$/, '')
+    const email = configValue.propsValue['email']
 
     const request: HttpRequest = {
       method: HttpMethod.GET,
@@ -32,10 +27,10 @@ export const wooFindCustomer = createAction({
         username: configValue.auth.consumerKey,
         password: configValue.auth.consumerSecret,
       },
-    };
+    }
 
-    const res = await httpClient.sendRequest(request);
+    const res = await httpClient.sendRequest(request)
 
-    return res.body;
+    return res.body
   },
-});
+})

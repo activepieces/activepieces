@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { ElevenLabsClient } from 'elevenlabs';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { ElevenLabsClient } from 'elevenlabs'
 
 export const textToSpeech = createAction({
   description: 'Convert text to speech using Elevenlabs',
@@ -19,7 +19,7 @@ export const textToSpeech = createAction({
             disabled: true,
             placeholder: 'Enter your API key first',
             options: [],
-          };
+          }
         }
 
         try {
@@ -29,22 +29,22 @@ export const textToSpeech = createAction({
             headers: {
               'xi-api-key': `${auth}`,
             },
-          });
+          })
           return {
             disabled: false,
             options: request.body['voices'].map((template: any) => {
               return {
                 label: template.name,
                 value: template.voice_id,
-              };
+              }
             }),
-          };
+          }
         } catch (error) {
           return {
             disabled: true,
             options: [],
             placeholder: "Couldn't load voices, check your API key.",
-          };
+          }
         }
       },
     }),
@@ -57,21 +57,21 @@ export const textToSpeech = createAction({
   async run({ auth, propsValue, files }) {
     const elevenlabs = new ElevenLabsClient({
       apiKey: `${auth}`,
-    });
+    })
 
     const audio = await elevenlabs.generate({
       voice: propsValue.voice,
       text: propsValue.text,
-    });
+    })
 
-    const chunks: any[] = [];
+    const chunks: any[] = []
     for await (const chunk of audio) {
-      chunks.push(chunk);
+      chunks.push(chunk)
     }
 
     return files.write({
       fileName: 'audio.mp3',
       data: Buffer.concat(chunks),
-    });
+    })
   },
-});
+})

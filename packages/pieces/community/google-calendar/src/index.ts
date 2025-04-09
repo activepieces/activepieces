@@ -1,18 +1,14 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  OAuth2PropertyValue,
-  PieceAuth,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { createEvent } from './lib/actions/create-event';
-import { createQuickCalendarEvent } from './lib/actions/create-quick-event';
-import { deleteEventAction } from './lib/actions/delete-event.action';
-import { getEvents } from './lib/actions/get-events';
-import { updateEventAction } from './lib/actions/update-event.action';
-import { googleCalendarCommon } from './lib/common';
-import { calendarEventChanged } from './lib/triggers/calendar-event';
-import { addAttendeesToEventAction } from './lib/actions/add-attendees.action';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { addAttendeesToEventAction } from './lib/actions/add-attendees.action'
+import { createEvent } from './lib/actions/create-event'
+import { createQuickCalendarEvent } from './lib/actions/create-quick-event'
+import { deleteEventAction } from './lib/actions/delete-event.action'
+import { getEvents } from './lib/actions/get-events'
+import { updateEventAction } from './lib/actions/update-event.action'
+import { googleCalendarCommon } from './lib/common'
+import { calendarEventChanged } from './lib/triggers/calendar-event'
 
 export const googleCalendarAuth = PieceAuth.OAuth2({
   description: '',
@@ -20,11 +16,8 @@ export const googleCalendarAuth = PieceAuth.OAuth2({
   tokenUrl: 'https://oauth2.googleapis.com/token',
   required: true,
   pkce: true,
-  scope: [
-    'https://www.googleapis.com/auth/calendar.events',
-    'https://www.googleapis.com/auth/calendar.readonly',
-  ],
-});
+  scope: ['https://www.googleapis.com/auth/calendar.events', 'https://www.googleapis.com/auth/calendar.readonly'],
+})
 
 export const googleCalendar = createPiece({
   minimumSupportedRelease: '0.30.0',
@@ -55,14 +48,14 @@ export const googleCalendar = createPiece({
     createCustomApiCallAction({
       auth: googleCalendarAuth,
       baseUrl() {
-        return googleCalendarCommon.baseUrl;
+        return googleCalendarCommon.baseUrl
       },
       authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
-        };
+        }
       },
     }),
   ],
   triggers: [calendarEventChanged],
-});
+})

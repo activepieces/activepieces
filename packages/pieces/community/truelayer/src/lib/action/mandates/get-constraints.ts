@@ -1,12 +1,13 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { trueLayerCommon } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { trueLayerCommon } from '../../common'
 
 export const getConstraints = createAction({
   auth: trueLayerCommon.auth,
   name: 'get-constraints',
   displayName: 'Get Mandate Constraints',
-  description: 'Retrieve the constraints defined on the mandate, as well as the current utilization of those constraints within the periods.',
+  description:
+    'Retrieve the constraints defined on the mandate, as well as the current utilization of those constraints within the periods.',
   props: {
     id: Property.ShortText({
       displayName: 'Mandate ID',
@@ -23,6 +24,5 @@ export const getConstraints = createAction({
       },
     })
     return response.body
-
   },
-});
+})

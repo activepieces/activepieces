@@ -1,9 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { BASE_URL, personalAiAuth } from '../../../index';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { BASE_URL, personalAiAuth } from '../../../index'
 
 export const createCustomTraining = createAction({
-  auth:personalAiAuth,
+  auth: personalAiAuth,
   name: 'create_custom_training',
   displayName: 'Send Custom Training',
   description: 'Send a custom training instruction to AI assistant.',
@@ -53,7 +53,10 @@ export const createCustomTraining = createAction({
     }),
   },
   async run(context) {
-    const { auth, propsValue: { text, context: messageContext, domainName, userName, sessionId, sourceName, isStack, isDraft } } = context;
+    const {
+      auth,
+      propsValue: { text, context: messageContext, domainName, userName, sessionId, sourceName, isStack, isDraft },
+    } = context
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -72,8 +75,8 @@ export const createCustomTraining = createAction({
         ...(isStack !== undefined && { is_stack: isStack }),
         ...(isDraft !== undefined && { is_draft: isDraft }),
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
 export const getAddressCounters = createAction({
   name: 'get_address_counters',
@@ -17,10 +17,10 @@ export const getAddressCounters = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `https://eth.blockscout.com/api/v2/addresses/${context.propsValue.addressHash}/counters`,
-    });
+    })
     if (response.status !== 200) {
-      throw new Error(`Blockscout API request failed with status ${response.status}`);
+      throw new Error(`Blockscout API request failed with status ${response.status}`)
     }
-    return response.body;
+    return response.body
   },
-});
+})

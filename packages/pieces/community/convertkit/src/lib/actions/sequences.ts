@@ -1,17 +1,13 @@
-import { createAction } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { Sequence } from '../common/types';
-import { convertkitAuth } from '../..';
-import { sequenceIdDropdown } from '../common/sequences';
-import { subscriberEmail, subscriberFirstName } from '../common/subscribers';
-import { allFields } from '../common/custom-fields';
-import { tags } from '../common/tags';
-import { SEQUENCES_API_ENDPOINT } from '../common/constants';
-import { fetchSequences } from '../common/service';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { convertkitAuth } from '../..'
+import { SEQUENCES_API_ENDPOINT } from '../common/constants'
+import { allFields } from '../common/custom-fields'
+import { sequenceIdDropdown } from '../common/sequences'
+import { fetchSequences } from '../common/service'
+import { subscriberEmail, subscriberFirstName } from '../common/subscribers'
+import { tags } from '../common/tags'
+import { Sequence } from '../common/types'
 
 export const listSequences = createAction({
   auth: convertkitAuth,
@@ -20,9 +16,9 @@ export const listSequences = createAction({
   description: 'Returns a list of all sequences',
   props: {},
   run(context) {
-    return fetchSequences(context.auth);
+    return fetchSequences(context.auth)
   },
-});
+})
 
 export const addSubscriberToSequence = createAction({
   auth: convertkitAuth,
@@ -37,8 +33,8 @@ export const addSubscriberToSequence = createAction({
     fields: allFields,
   },
   async run(context) {
-    const { sequenceId, email, firstName, tags, fields } = context.propsValue;
-    const url = `${SEQUENCES_API_ENDPOINT}/${sequenceId}/subscribe`;
+    const { sequenceId, email, firstName, tags, fields } = context.propsValue
+    const url = `${SEQUENCES_API_ENDPOINT}/${sequenceId}/subscribe`
 
     const body = {
       api_secret: context.auth,
@@ -46,26 +42,24 @@ export const addSubscriberToSequence = createAction({
       first_name: firstName,
       tags,
       fields,
-    };
+    }
 
     const request: HttpRequest = {
       url,
       method: HttpMethod.POST,
       body,
-    };
+    }
 
     const response = await httpClient.sendRequest<{
-      subscription: Sequence;
-    }>(request);
+      subscription: Sequence
+    }>(request)
 
     if (response.status !== 200) {
-      throw new Error(
-        `Error adding subscriber to sequence: ${response.status}`
-      );
+      throw new Error(`Error adding subscriber to sequence: ${response.status}`)
     }
-    return response.body.subscription;
+    return response.body.subscription
   },
-});
+})
 
 export const listSubscriptionsToSequence = createAction({
   auth: convertkitAuth,
@@ -76,27 +70,25 @@ export const listSubscriptionsToSequence = createAction({
     sequenceId: sequenceIdDropdown,
   },
   async run(context) {
-    const url = `${SEQUENCES_API_ENDPOINT}/${context.propsValue.sequenceId}/subscriptions`;
+    const url = `${SEQUENCES_API_ENDPOINT}/${context.propsValue.sequenceId}/subscriptions`
 
     const body = {
       api_secret: context.auth,
-    };
+    }
 
     const request: HttpRequest = {
       url,
       method: HttpMethod.GET,
       body,
-    };
+    }
 
     const response = await httpClient.sendRequest<{
-      subscriptions: Sequence[];
-    }>(request);
+      subscriptions: Sequence[]
+    }>(request)
 
     if (response.status !== 200) {
-      throw new Error(
-        `Error listing subscriptions to sequence: ${response.status}`
-      );
+      throw new Error(`Error listing subscriptions to sequence: ${response.status}`)
     }
-    return response.body.subscriptions;
+    return response.body.subscriptions
   },
-});
+})

@@ -1,5 +1,5 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
 
 export const ashbyAuth = PieceAuth.CustomAuth({
   required: true,
@@ -9,7 +9,7 @@ export const ashbyAuth = PieceAuth.CustomAuth({
       required: true,
     }),
   },
-});
+})
 
 export const ashby = createPiece({
   displayName: 'Ashby',
@@ -22,15 +22,13 @@ export const ashby = createPiece({
       baseUrl: () => `https://api.ashbyhq.com/`,
       auth: ashbyAuth,
       authMapping: async (auth) => {
-        const { apiKey } = auth as { apiKey: string };
+        const { apiKey } = auth as { apiKey: string }
         return {
-          Authorization: `Basic ${Buffer.from(`${apiKey}:`).toString(
-            'base64'
-          )}`,
+          Authorization: `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`,
           'Content-Type': 'application/json',
-        };
+        }
       },
     }),
   ],
   triggers: [],
-});
+})

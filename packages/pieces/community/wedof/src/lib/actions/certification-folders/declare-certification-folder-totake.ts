@@ -1,20 +1,18 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
-import { wedofCommon } from '../../common/wedof';
-import dayjs from 'dayjs';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { wedofAuth } from '../../..'
+import { wedofCommon } from '../../common/wedof'
 
 export const declareCertificationFolderToTake = createAction({
   auth: wedofAuth,
   name: 'declareCertificationFolderToTake',
   displayName: "Passer un dossier de certification à l'état : Prêt à passer",
-  description:
-    "Change l'état d'un dossier de certification vers : Prêt à passer",
+  description: "Change l'état d'un dossier de certification vers : Prêt à passer",
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de certification',
-      description:
-        'Sélectionner la propriété {externalId} du dossier de certification',
+      description: 'Sélectionner la propriété {externalId} du dossier de certification',
       required: true,
     }),
     enrollmentDate: Property.DateTime({
@@ -38,22 +36,22 @@ export const declareCertificationFolderToTake = createAction({
       required: false,
     }),
     tiersTemps: Property.StaticDropdown({
-      displayName: "Tiers temps",
+      displayName: 'Tiers temps',
       description: "Indique si le candidat a besoin d'un tiers temps",
       required: true,
       options: {
-          disabled: false,
-          options: [
-            {
-              label: "Non",
-              value: false,
-            },
-            {
-              label: 'Oui',
-              value: true,
-            },
-          ],
-        },
+        disabled: false,
+        options: [
+          {
+            label: 'Non',
+            value: false,
+          },
+          {
+            label: 'Oui',
+            value: true,
+          },
+        ],
+      },
     }),
     comment: Property.LongText({
       displayName: 'Commentaire',
@@ -75,21 +73,17 @@ export const declareCertificationFolderToTake = createAction({
       examinationPlace: context.propsValue.examinationPlace,
       tiersTemps: context.propsValue.tiersTemps,
       comment: context.propsValue.comment,
-    };
+    }
     return (
       await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url:
-          wedofCommon.baseUrl +
-          '/certificationFolders/' +
-          context.propsValue.externalId +
-          '/take',
+        url: wedofCommon.baseUrl + '/certificationFolders/' + context.propsValue.externalId + '/take',
         body: message,
         headers: {
           'Content-Type': 'application/json',
           'X-Api-Key': context.auth as string,
         },
       })
-    ).body;
+    ).body
   },
-});
+})

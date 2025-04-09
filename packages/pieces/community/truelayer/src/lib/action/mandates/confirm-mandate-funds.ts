@@ -1,12 +1,13 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { trueLayerCommon } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { trueLayerCommon } from '../../common'
 
 export const confirmMandateFunds = createAction({
   auth: trueLayerCommon.auth,
   name: 'confirm-mandate-funds',
   displayName: 'Confirm Mandate Funds',
-  description: 'Confirm that the PSU has the given funds. This API can be called using the mandate_token associated with the mandate or using a backend bearer token.',
+  description:
+    'Confirm that the PSU has the given funds. This API can be called using the mandate_token associated with the mandate or using a backend bearer token.',
   props: {
     id: Property.ShortText({
       displayName: 'Mandate ID',
@@ -37,6 +38,6 @@ export const confirmMandateFunds = createAction({
       },
     })
 
-    return response.body;
+    return response.body
   },
-});
+})

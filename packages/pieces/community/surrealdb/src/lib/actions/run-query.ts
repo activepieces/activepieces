@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { surrealdbAuth } from '../..';
-import surrealClient from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { surrealdbAuth } from '../..'
+import surrealClient from '../common'
 
 export const runQuery = createAction({
   auth: surrealdbAuth,
@@ -30,30 +30,24 @@ export const runQuery = createAction({
     }),
     query_timeout: Property.Number({
       displayName: 'Query Timeout (ms)',
-      description:
-        'The maximum time to wait for a query to complete before timing out.',
+      description: 'The maximum time to wait for a query to complete before timing out.',
       required: false,
       defaultValue: 30000,
     }),
     application_name: Property.ShortText({
       displayName: 'Application Name',
-      description:
-        'An identifier for the client application executing the query.',
+      description: 'An identifier for the client application executing the query.',
       required: false,
     }),
   },
 
   async run(context) {
     try {
-      const { query, args } = context.propsValue;
-      const response = await surrealClient.query(
-        context.auth,
-        query,
-        args as Record<string, string>
-      );
-      return response.body;
+      const { query, args } = context.propsValue
+      const response = await surrealClient.query(context.auth, query, args as Record<string, string>)
+      return response.body
     } catch (error) {
-      throw new Error(`Query execution failed: ${(error as Error).message}`);
+      throw new Error(`Query execution failed: ${(error as Error).message}`)
     }
   },
-});
+})

@@ -1,8 +1,8 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { Order } from '../../common/Order';
-import { vtexAuth } from '../../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { vtexAuth } from '../../..'
+import { Order } from '../../common/Order'
 
-const year = new Date().getFullYear().toString();
+const year = new Date().getFullYear().toString()
 
 export const getOrderList = createAction({
   auth: vtexAuth,
@@ -41,17 +41,14 @@ export const getOrderList = createAction({
     }),
   },
   async run(context) {
-    const { hostUrl, appKey, appToken } = context.auth;
-    const { fromYear, toYear, fromMonth, toMonth, fromDay, toDay } =
-      context.propsValue;
+    const { hostUrl, appKey, appToken } = context.auth
+    const { fromYear, toYear, fromMonth, toMonth, fromDay, toDay } = context.propsValue
 
-    const order = new Order(hostUrl, appKey, appToken);
+    const order = new Order(hostUrl, appKey, appToken)
 
-    const fromDate = new Date(
-      `${fromYear}-${fromMonth || '01'}-${fromDay || '01'}`
-    );
-    const toDate = new Date(`${toYear}-${toMonth || '12'}-${toDay || '28'}`);
+    const fromDate = new Date(`${fromYear}-${fromMonth || '01'}-${fromDay || '01'}`)
+    const toDate = new Date(`${toYear}-${toMonth || '12'}-${toDay || '28'}`)
 
-    return await order.getOrderList(fromDate, toDate);
+    return await order.getOrderList(fromDate, toDate)
   },
-});
+})

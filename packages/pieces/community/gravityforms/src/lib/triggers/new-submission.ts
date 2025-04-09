@@ -1,9 +1,4 @@
-import {
-  createTrigger,
-  PieceAuth,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
+import { PieceAuth, Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
 
 const markdown = `
 - Go to the "Plugins" section.
@@ -16,7 +11,7 @@ const markdown = `
   \`\`\`
 
 - Keep the other settings unchanged (default).
-`;
+`
 
 export const gravityFormsNewSubmission = createTrigger({
   name: 'new-submission',
@@ -37,6 +32,6 @@ export const gravityFormsNewSubmission = createTrigger({
     // Empty
   },
   async run(context) {
-    return [context.payload];
+    return [context.payload]
   },
-});
+})

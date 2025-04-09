@@ -1,6 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { quickzuAuth } from '../../../';
-import { makeClient } from '../../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { quickzuAuth } from '../../../'
+import { makeClient } from '../../common'
 
 export const listCategoriesAction = createAction({
   auth: quickzuAuth,
@@ -15,9 +15,9 @@ export const listCategoriesAction = createAction({
     }),
   },
   async run(context) {
-    const { term } = context.propsValue;
+    const { term } = context.propsValue
 
-    const client = makeClient(context.auth);
-    return client.listCategories(term);
+    const client = makeClient(context.auth)
+    return client.listCategories(term)
   },
-});
+})

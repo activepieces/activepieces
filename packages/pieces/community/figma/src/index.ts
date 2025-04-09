@@ -1,13 +1,9 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  OAuth2PropertyValue,
-  PieceAuth,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { getCommentsAction } from './lib/actions/get-comments-action';
-import { getFileAction } from './lib/actions/get-file-action';
-import { postCommentAction } from './lib/actions/post-comment-action';
-import { newCommentTrigger } from './lib/trigger/new-comment';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { getCommentsAction } from './lib/actions/get-comments-action'
+import { getFileAction } from './lib/actions/get-file-action'
+import { postCommentAction } from './lib/actions/post-comment-action'
+import { newCommentTrigger } from './lib/trigger/new-comment'
 
 export const figmaAuth = PieceAuth.OAuth2({
   description: '',
@@ -15,7 +11,7 @@ export const figmaAuth = PieceAuth.OAuth2({
   tokenUrl: 'https://www.figma.com/api/oauth/token',
   required: true,
   scope: ['file_read'],
-});
+})
 
 export const figma = createPiece({
   displayName: 'Figma',
@@ -23,7 +19,7 @@ export const figma = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/figma.png',
   categories: [],
-  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ['kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
   auth: figmaAuth,
   actions: [
     getFileAction,
@@ -38,4 +34,4 @@ export const figma = createPiece({
     }),
   ],
   triggers: [newCommentTrigger],
-});
+})

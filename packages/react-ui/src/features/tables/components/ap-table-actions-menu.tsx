@@ -1,40 +1,28 @@
-import { UseMutationResult } from '@tanstack/react-query';
-import { t } from 'i18next';
-import {
-  Download,
-  EllipsisVertical,
-  PencilIcon,
-  TrashIcon,
-} from 'lucide-react';
+import { UseMutationResult } from '@tanstack/react-query'
+import { t } from 'i18next'
+import { Download, EllipsisVertical, PencilIcon, TrashIcon } from 'lucide-react'
 
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { Permission, Table } from '@activepieces/shared';
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip'
+import { useAuthorization } from '@/hooks/authorization-hooks'
+import { Permission, Table } from '@activepieces/shared'
 
-import { tablesApi } from '../lib/tables-api';
-import { tablesUtils } from '../lib/utils';
+import { tablesApi } from '../lib/tables-api'
+import { tablesUtils } from '../lib/utils'
 
-import RenameTableDialog from './rename-table-dialog';
+import RenameTableDialog from './rename-table-dialog'
 
 const ApTableActionsMenu = ({
   table,
   refetch,
   deleteMutation,
 }: {
-  table: Table;
-  refetch: (() => void) | null;
-  deleteMutation: UseMutationResult<void, Error, string[], unknown>;
+  table: Table
+  refetch: (() => void) | null
+  deleteMutation: UseMutationResult<void, Error, string[], unknown>
 }) => {
-  const userHasPermissionToUpdateTable = useAuthorization().checkAccess(
-    Permission.WRITE_TABLE,
-  );
+  const userHasPermissionToUpdateTable = useAuthorization().checkAccess(Permission.WRITE_TABLE)
   return (
     <DropdownMenu modal={true}>
       <DropdownMenuTrigger asChild>
@@ -48,16 +36,11 @@ const ApTableActionsMenu = ({
             tableName={table.name}
             tableId={table.id}
             onRename={() => {
-              refetch?.();
+              refetch?.()
             }}
           >
-            <DropdownMenuItem
-              disabled={!userHasPermissionToUpdateTable}
-              onSelect={(e) => e.preventDefault()}
-            >
-              <PermissionNeededTooltip
-                hasPermission={userHasPermissionToUpdateTable}
-              >
+            <DropdownMenuItem disabled={!userHasPermissionToUpdateTable} onSelect={(e) => e.preventDefault()}>
+              <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateTable}>
                 <div className="flex items-center gap-2">
                   <PencilIcon className="h-4 w-4" />
                   {t('Rename')}
@@ -69,10 +52,10 @@ const ApTableActionsMenu = ({
 
         <DropdownMenuItem
           onClick={async (e) => {
-            const exportedTable = await tablesApi.export(table.id);
-            tablesUtils.exportTables([exportedTable]);
-            e.stopPropagation();
-            e.preventDefault();
+            const exportedTable = await tablesApi.export(table.id)
+            tablesUtils.exportTables([exportedTable])
+            e.stopPropagation()
+            e.preventDefault()
           }}
         >
           <div className="flex gap-2 items-center">
@@ -82,19 +65,14 @@ const ApTableActionsMenu = ({
         </DropdownMenuItem>
 
         <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateTable}>
-          <DropdownMenuItem
-            disabled={!userHasPermissionToUpdateTable}
-            onSelect={(e) => e.preventDefault()}
-          >
+          <DropdownMenuItem disabled={!userHasPermissionToUpdateTable} onSelect={(e) => e.preventDefault()}>
             <ConfirmationDeleteDialog
               title={`${t('Delete')} ${table.name}`}
-              message={t(
-                'Are you sure you want to delete the selected tables? This action cannot be undone.',
-              )}
+              message={t('Are you sure you want to delete the selected tables? This action cannot be undone.')}
               entityName={table.name}
               mutationFn={async () => {
-                await deleteMutation.mutateAsync([table.id]);
-                refetch?.();
+                await deleteMutation.mutateAsync([table.id])
+                refetch?.()
               }}
             >
               <div className="flex items-center gap-2 text-destructive">
@@ -106,8 +84,8 @@ const ApTableActionsMenu = ({
         </PermissionNeededTooltip>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-};
+  )
+}
 
-ApTableActionsMenu.displayName = 'ApTableActionsMenu';
-export { ApTableActionsMenu };
+ApTableActionsMenu.displayName = 'ApTableActionsMenu'
+export { ApTableActionsMenu }

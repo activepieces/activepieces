@@ -1,13 +1,9 @@
-import { gristAuth } from '../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { commonProps } from '../common/props';
-import FormData from 'form-data';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { GristAPIClient } from '../common/helpers';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import FormData from 'form-data'
+import { gristAuth } from '../..'
+import { GristAPIClient } from '../common/helpers'
+import { commonProps } from '../common/props'
 
 export const gristUploadAttachmentsToDocumnetAction = createAction({
   auth: gristAuth,
@@ -28,21 +24,17 @@ export const gristUploadAttachmentsToDocumnetAction = createAction({
     }),
   },
   async run(context) {
-    const documentId = context.propsValue.document_id;
-    const attachment = context.propsValue.attachment;
-    const attachmentName = context.propsValue.attachment_name;
+    const documentId = context.propsValue.document_id
+    const attachment = context.propsValue.attachment
+    const attachmentName = context.propsValue.attachment_name
 
     const client = new GristAPIClient({
       domainUrl: context.auth.domain,
       apiKey: context.auth.apiKey,
-    });
+    })
 
-    const formData = new FormData();
-    formData.append(
-      'upload',
-      Buffer.from(attachment.base64, 'base64'),
-      attachmentName || attachment.filename
-    );
+    const formData = new FormData()
+    formData.append('upload', Buffer.from(attachment.base64, 'base64'), attachmentName || attachment.filename)
 
     const response = await httpClient.sendRequest<Array<number>>({
       method: HttpMethod.POST,
@@ -53,18 +45,15 @@ export const gristUploadAttachmentsToDocumnetAction = createAction({
       },
       headers: { ...formData.getHeaders() },
       body: formData,
-    });
+    })
 
-    const attachmentId = response.body[0];
+    const attachmentId = response.body[0]
 
-    const attachmentMetadata = await client.getDocumentAttachmentMetadata(
-      documentId,
-      attachmentId
-    );
+    const attachmentMetadata = await client.getDocumentAttachmentMetadata(documentId, attachmentId)
 
     return {
       id: attachmentId,
       fields: attachmentMetadata,
-    };
+    }
   },
-});
+})

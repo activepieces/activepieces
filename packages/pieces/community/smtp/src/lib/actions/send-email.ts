@@ -1,8 +1,8 @@
-import { ApFile, Property, createAction } from '@activepieces/pieces-framework';
-import { smtpAuth } from '../..';
-import { smtpCommon } from '../common';
-import { Attachment, Headers } from 'nodemailer/lib/mailer';
-import mime from 'mime-types';
+import { ApFile, Property, createAction } from '@activepieces/pieces-framework'
+import mime from 'mime-types'
+import { Attachment, Headers } from 'nodemailer/lib/mailer'
+import { smtpAuth } from '../..'
+import { smtpCommon } from '../common'
 
 export const sendEmail = createAction({
   auth: smtpAuth,
@@ -15,7 +15,7 @@ export const sendEmail = createAction({
       required: true,
     }),
     senderName: Property.ShortText({
-      displayName: "Sender Name",
+      displayName: 'Sender Name',
       required: false,
     }),
     to: Property.Array({
@@ -78,25 +78,23 @@ export const sendEmail = createAction({
           description: 'In case you want to change the name of the attachment',
           required: false,
         }),
-      }
+      },
     }),
   },
   run: async ({ auth, propsValue }) => {
-    const transporter = smtpCommon.createSMTPTransport(auth);
+    const transporter = smtpCommon.createSMTPTransport(auth)
 
-    const attachments = propsValue['attachments'] as {file: ApFile; name: string | undefined; }[];
+    const attachments = propsValue['attachments'] as { file: ApFile; name: string | undefined }[]
 
-    const attachment_data: Attachment[] = attachments.map(({file, name}) => {
-      const lookupResult = mime.lookup(
-        file.extension ? file.extension : ''
-      );
+    const attachment_data: Attachment[] = attachments.map(({ file, name }) => {
+      const lookupResult = mime.lookup(file.extension ? file.extension : '')
       return {
         filename: name ?? file.filename,
         content: file?.base64,
         contentType: lookupResult ? lookupResult : undefined,
         encoding: 'base64',
-      };
-    });
+      }
+    })
 
     const mailOptions = {
       from: getFrom(propsValue.senderName, propsValue.from),
@@ -109,34 +107,34 @@ export const sendEmail = createAction({
       html: propsValue.body_type === 'html' ? propsValue.body : undefined,
       attachments: attachment_data ? attachment_data : undefined,
       headers: propsValue.customHeaders as Headers,
-    };
+    }
 
-    return await sendWithRetry(transporter, mailOptions);
+    return await sendWithRetry(transporter, mailOptions)
   },
-});
+})
 
 async function sendWithRetry(transporter: any, mailOptions: any) {
-  const maxRetries = 3;
-  let retryCount = 0;
-  
+  const maxRetries = 3
+  let retryCount = 0
+
   while (retryCount < maxRetries) {
     try {
-      const info = await transporter.sendMail(mailOptions);
-      return info;
+      const info = await transporter.sendMail(mailOptions)
+      return info
     } catch (error: any) {
       if ('code' in error && error.code === 'ECONNRESET' && retryCount < maxRetries - 1) {
-        retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        continue;
+        retryCount++
+        await new Promise((resolve) => setTimeout(resolve, 3000))
+        continue
       }
-      throw error;
+      throw error
     }
   }
 }
 
-function getFrom(senderName: string|undefined, from: string) {
+function getFrom(senderName: string | undefined, from: string) {
   if (senderName) {
     return `"${senderName}" <${from}>`
   }
-  return from;
+  return from
 }

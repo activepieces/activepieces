@@ -1,8 +1,8 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
-import { retableAuth } from '../..';
-import { retableCommon } from '../common';
+import { retableAuth } from '../..'
+import { retableCommon } from '../common'
 
 export const retableCreateProjectAction = createAction({
   auth: retableAuth,
@@ -25,7 +25,7 @@ export const retableCreateProjectAction = createAction({
     }),
   },
   async run(context) {
-    const { workspace_id, name, desc, color } = context.propsValue;
+    const { workspace_id, name, desc, color } = context.propsValue
     return (
       await httpClient.sendRequest({
         method: HttpMethod.POST,
@@ -39,6 +39,6 @@ export const retableCreateProjectAction = createAction({
           color: color,
         },
       })
-    ).body;
+    ).body
   },
-});
+})

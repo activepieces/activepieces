@@ -1,14 +1,13 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddAuthorsToPieces1710098009544 implements MigrationInterface {
-    name = 'AddAuthorsToPieces1710098009544'
+  name = 'AddAuthorsToPieces1710098009544'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_piece_metadata_name_project_id_version"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_piece_metadata" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -36,7 +35,7 @@ export class AddAuthorsToPieces1710098009544 implements MigrationInterface {
             )
         `)
 
-        await queryRunner.query(`
+    await queryRunner.query(`
         INSERT INTO "temporary_piece_metadata"(
             "id",
             "created",
@@ -81,26 +80,25 @@ export class AddAuthorsToPieces1710098009544 implements MigrationInterface {
             '[]' AS "authors"
             FROM "piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_piece_metadata"
                 RENAME TO "piece_metadata"
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
         DROP INDEX "idx_piece_metadata_name_project_id_version"
     `)
-        await queryRunner.query(`
+    await queryRunner.query(`
         ALTER TABLE "piece_metadata"
             RENAME TO "temporary_piece_metadata"
     `)
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "piece_metadata" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -126,7 +124,7 @@ export class AddAuthorsToPieces1710098009544 implements MigrationInterface {
                 CONSTRAINT "fk_piece_metadata_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "piece_metadata"(
                     "id",
                     "created",
@@ -169,12 +167,11 @@ export class AddAuthorsToPieces1710098009544 implements MigrationInterface {
                 "categories"
             FROM "temporary_piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_piece_metadata_name_project_id_version" ON "piece_metadata" ("name", "version", "projectId")
         `)
-    }
-
+  }
 }

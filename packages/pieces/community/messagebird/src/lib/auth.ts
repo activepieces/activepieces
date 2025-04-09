@@ -1,9 +1,9 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth } from '@activepieces/pieces-framework'
 
 export interface BirdAuthValue {
-  apiKey: string;
-  workspaceId: string;
-  channelId: string;
+  apiKey: string
+  workspaceId: string
+  channelId: string
 }
 
 export const birdAuth = PieceAuth.CustomAuth({
@@ -25,4 +25,4 @@ export const birdAuth = PieceAuth.CustomAuth({
     }),
   },
   required: true,
-}); 
+})

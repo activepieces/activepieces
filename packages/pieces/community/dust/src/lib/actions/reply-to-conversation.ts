@@ -1,18 +1,14 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { dustAuth } from '../..'
 import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { dustAuth } from '../..';
-import {
-  assistantProp,
   DUST_BASE_URL,
+  assistantProp,
   getConversationContent,
   timeoutProp,
   timezoneProp,
   usernameProp,
-} from '../common';
+} from '../common'
 
 export const replyToConversation = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
@@ -51,14 +47,10 @@ export const replyToConversation = createAction({
             profilePictureUrl: null,
           },
         },
-        (key, value) => (typeof value === 'undefined' ? null : value)
+        (key, value) => (typeof value === 'undefined' ? null : value),
       ),
-    };
-    await httpClient.sendRequest(request);
-    return await getConversationContent(
-      propsValue.conversationId,
-      propsValue.timeout,
-      auth
-    );
+    }
+    await httpClient.sendRequest(request)
+    return await getConversationContent(propsValue.conversationId, propsValue.timeout, auth)
   },
-});
+})

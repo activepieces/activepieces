@@ -1,7 +1,7 @@
-import { wedofAuth } from '../../..';
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { wedofCommon } from '../../common/wedof';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { wedofAuth } from '../../..'
+import { wedofCommon } from '../../common/wedof'
 
 export const certificationFolderSurveyInitialExperienceAvailable = createTrigger({
   auth: wedofAuth,
@@ -11,64 +11,64 @@ export const certificationFolderSurveyInitialExperienceAvailable = createTrigger
   type: TriggerStrategy.WEBHOOK,
   props: {},
   sampleData: {
-    "id": 0,
-    "initialExperience": {
-      "id": 0,
-      "qualification": 0,
-      "certificationName": "string",
-      "job": "string",
-      "companyName": "string",
-      "salaryYearly": 0,
-      "situation": "string",
-      "contractType": "string",
-      "executiveStatus": true,
-      "startDate": "2019-08-24T14:15:22Z",
-      "endDate": "2019-08-24T14:15:22Z",
-      "createdOn": "2019-08-24T14:15:22Z",
-      "updatedOn": "2019-08-24T14:15:22Z"
+    id: 0,
+    initialExperience: {
+      id: 0,
+      qualification: 0,
+      certificationName: 'string',
+      job: 'string',
+      companyName: 'string',
+      salaryYearly: 0,
+      situation: 'string',
+      contractType: 'string',
+      executiveStatus: true,
+      startDate: '2019-08-24T14:15:22Z',
+      endDate: '2019-08-24T14:15:22Z',
+      createdOn: '2019-08-24T14:15:22Z',
+      updatedOn: '2019-08-24T14:15:22Z',
     },
-    "initialExperienceAnsweredDate": "2019-08-24T14:15:22Z",
-    "sixMonthExperience": {
-      "id": 0,
-      "qualification": 0,
-      "certificationName": "string",
-      "job": "string",
-      "companyName": "string",
-      "salaryYearly": 0,
-      "situation": "string",
-      "contractType": "string",
-      "executiveStatus": true,
-      "startDate": "2019-08-24T14:15:22Z",
-      "endDate": "2019-08-24T14:15:22Z",
-      "createdOn": "2019-08-24T14:15:22Z",
-      "updatedOn": "2019-08-24T14:15:22Z"
+    initialExperienceAnsweredDate: '2019-08-24T14:15:22Z',
+    sixMonthExperience: {
+      id: 0,
+      qualification: 0,
+      certificationName: 'string',
+      job: 'string',
+      companyName: 'string',
+      salaryYearly: 0,
+      situation: 'string',
+      contractType: 'string',
+      executiveStatus: true,
+      startDate: '2019-08-24T14:15:22Z',
+      endDate: '2019-08-24T14:15:22Z',
+      createdOn: '2019-08-24T14:15:22Z',
+      updatedOn: '2019-08-24T14:15:22Z',
     },
-    "sixMonthExperienceAnsweredDate": "2019-08-24T14:15:22Z",
-    "sixMonthExperienceStartDate": "2019-08-24T14:15:22Z",
-    "longTermExperience": {
-      "id": 0,
-      "qualification": 0,
-      "certificationName": "string",
-      "job": "string",
-      "companyName": "string",
-      "salaryYearly": 0,
-      "situation": "string",
-      "contractType": "string",
-      "executiveStatus": true,
-      "startDate": "2019-08-24T14:15:22Z",
-      "endDate": "2019-08-24T14:15:22Z",
-      "createdOn": "2019-08-24T14:15:22Z",
-      "updatedOn": "2019-08-24T14:15:22Z"
+    sixMonthExperienceAnsweredDate: '2019-08-24T14:15:22Z',
+    sixMonthExperienceStartDate: '2019-08-24T14:15:22Z',
+    longTermExperience: {
+      id: 0,
+      qualification: 0,
+      certificationName: 'string',
+      job: 'string',
+      companyName: 'string',
+      salaryYearly: 0,
+      situation: 'string',
+      contractType: 'string',
+      executiveStatus: true,
+      startDate: '2019-08-24T14:15:22Z',
+      endDate: '2019-08-24T14:15:22Z',
+      createdOn: '2019-08-24T14:15:22Z',
+      updatedOn: '2019-08-24T14:15:22Z',
     },
-    "longTermExperienceAnsweredDate": "2019-08-24T14:15:22Z",
-    "longTermExperienceStartDate": "2019-08-24T14:15:22Z",
-    "state": "created"
+    longTermExperienceAnsweredDate: '2019-08-24T14:15:22Z',
+    longTermExperienceStartDate: '2019-08-24T14:15:22Z',
+    state: 'created',
   },
 
   async onEnable(context) {
-    const flows = await context.flows.list();
-    const flow = flows.data.find((flow) => flow.id === context.flows.current.id);
-    const name = `<a href="${context.webhookUrl.split('/').slice(0, 3).join('/')}/projects/${context.project.id}/flows/${context.flows.current.id}">${flow?.version.displayName}</a>`;
+    const flows = await context.flows.list()
+    const flow = flows.data.find((flow) => flow.id === context.flows.current.id)
+    const name = `<a href="${context.webhookUrl.split('/').slice(0, 3).join('/')}/projects/${context.project.id}/flows/${context.flows.current.id}">${flow?.version.displayName}</a>`
 
     const message = {
       url: context.webhookUrl,
@@ -77,9 +77,9 @@ export const certificationFolderSurveyInitialExperienceAvailable = createTrigger
       secret: null,
       enabled: true,
       ignoreSsl: false,
-    };
+    }
 
-    const id = await context.store.get('_webhookId');
+    const id = await context.store.get('_webhookId')
 
     if (id === null) {
       const response = await httpClient.sendRequest({
@@ -89,18 +89,18 @@ export const certificationFolderSurveyInitialExperienceAvailable = createTrigger
         headers: {
           'Content-Type': 'application/json',
           'X-Api-Key': context.auth as string,
-          'User-Agent': 'activepieces'
+          'User-Agent': 'activepieces',
         },
-      });
+      })
 
-      await context.store.put('_webhookId', response.body.id);
+      await context.store.put('_webhookId', response.body.id)
     } else {
-      console.log('/////////// webhook already exist ////');
+      console.log('/////////// webhook already exist ////')
     }
   },
 
   async onDisable(context) {
-    const id = await context.store.get('_webhookId');
+    const id = await context.store.get('_webhookId')
 
     await httpClient.sendRequest({
       method: HttpMethod.DELETE,
@@ -108,12 +108,12 @@ export const certificationFolderSurveyInitialExperienceAvailable = createTrigger
       headers: {
         'Content-Type': 'application/json',
         'X-Api-Key': context.auth as string,
-        'User-Agent': 'activepieces'
+        'User-Agent': 'activepieces',
       },
-    });
-    await context.store.delete('_webhookId');
+    })
+    await context.store.delete('_webhookId')
   },
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
-});
+})

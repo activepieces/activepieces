@@ -1,18 +1,18 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import Client from 'ssh2-sftp-client';
-import { Client as FTPClient } from 'basic-ftp';
-import { endClient, getClient, getProtocolBackwardCompatibility, sftpAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { Client as FTPClient } from 'basic-ftp'
+import Client from 'ssh2-sftp-client'
+import { endClient, getClient, getProtocolBackwardCompatibility, sftpAuth } from '../..'
 
 async function deleteFolderFTP(client: FTPClient, directoryPath: string, recursive: boolean) {
   if (recursive) {
-    await client.removeDir(directoryPath);
+    await client.removeDir(directoryPath)
   } else {
-    await client.removeEmptyDir(directoryPath);
+    await client.removeEmptyDir(directoryPath)
   }
 }
 
 async function deleteFolderSFTP(client: Client, directoryPath: string, recursive: boolean) {
-  await client.rmdir(directoryPath, recursive);
+  await client.rmdir(directoryPath, recursive)
 }
 
 export const deleteFolderAction = createAction({
@@ -30,38 +30,37 @@ export const deleteFolderAction = createAction({
       displayName: 'Recursive',
       defaultValue: false,
       required: false,
-      description:
-        'Enable this option to delete the folder and all its contents, including subfolders and files.',
+      description: 'Enable this option to delete the folder and all its contents, including subfolders and files.',
     }),
   },
   async run(context) {
-    const client = await getClient(context.auth);
-    const directoryPath = context.propsValue.folderPath;
-    const recursive = context.propsValue.recursive ?? false;
-    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol);
+    const client = await getClient(context.auth)
+    const directoryPath = context.propsValue.folderPath
+    const recursive = context.propsValue.recursive ?? false
+    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol)
     try {
       switch (protocolBackwardCompatibility) {
         case 'ftps':
         case 'ftp':
-          await deleteFolderFTP(client as FTPClient, directoryPath, recursive);
-          break;
+          await deleteFolderFTP(client as FTPClient, directoryPath, recursive)
+          break
         default:
         case 'sftp':
-          await deleteFolderSFTP(client as Client, directoryPath, recursive);
-          break;
+          await deleteFolderSFTP(client as Client, directoryPath, recursive)
+          break
       }
 
       return {
         status: 'success',
-      };
+      }
     } catch (err) {
-      console.error(err);
+      console.error(err)
       return {
         status: 'error',
         error: err,
-      };
+      }
     } finally {
-      await endClient(client, context.auth.protocol);
+      await endClient(client, context.auth.protocol)
     }
   },
-});
+})

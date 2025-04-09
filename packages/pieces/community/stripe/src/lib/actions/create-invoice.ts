@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { stripeAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { stripeAuth } from '../..'
 
 export const stripeCreateInvoice = createAction({
   name: 'create_invoice',
@@ -29,7 +29,7 @@ export const stripeCreateInvoice = createAction({
       customer: context.propsValue.customer_id,
       currency: context.propsValue.currency,
       description: context.propsValue.description,
-    };
+    }
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -43,7 +43,7 @@ export const stripeCreateInvoice = createAction({
         currency: invoice.currency,
         description: invoice.description,
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

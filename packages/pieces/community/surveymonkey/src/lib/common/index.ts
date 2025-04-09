@@ -1,10 +1,5 @@
-import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  httpClient,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework'
 
 export const smCommon = {
   baseUrl: 'https://api.surveymonkey.com/v3',
@@ -18,15 +13,15 @@ export const smCommon = {
           disabled: true,
           options: [],
           placeholder: 'Connect your account',
-        };
+        }
       }
 
-      const authProp: any = context['auth'];
-      const options: any[] = await smCommon.getSurveys(authProp.access_token);
+      const authProp: any = context['auth']
+      const options: any[] = await smCommon.getSurveys(authProp.access_token)
       return {
         options: options,
         placeholder: 'Choose survey to connect',
-      };
+      }
     },
   }),
   getSurveys: async (accessToken: string) => {
@@ -37,23 +32,19 @@ export const smCommon = {
         type: AuthenticationType.BEARER_TOKEN,
         token: accessToken,
       },
-    };
-    const response = await httpClient.sendRequest(request);
+    }
+    const response = await httpClient.sendRequest(request)
     const newValues = response.body['data'].map((survey: any) => {
       return {
         label: survey.title,
         value: survey.id,
-      };
-    });
+      }
+    })
 
-    return newValues;
+    return newValues
   },
 
-  subscribeWebhook: async (
-    surveyId: string | number,
-    webhookUrl: string,
-    accessToken: string
-  ) => {
+  subscribeWebhook: async (surveyId: string | number, webhookUrl: string, accessToken: string) => {
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${smCommon.baseUrl}/webhooks`,
@@ -68,16 +59,13 @@ export const smCommon = {
         object_ids: [surveyId],
         subscription_url: webhookUrl,
       },
-    };
+    }
 
-    const webhookData = await httpClient.sendRequest(request);
-    return webhookData.body['id'];
+    const webhookData = await httpClient.sendRequest(request)
+    return webhookData.body['id']
   },
 
-  unsubscribeWebhook: async (
-    webhookId: string | number,
-    accessToken: string
-  ) => {
+  unsubscribeWebhook: async (webhookId: string | number, accessToken: string) => {
     const request: HttpRequest = {
       method: HttpMethod.DELETE,
       url: `${smCommon.baseUrl}/webhooks/${webhookId}`,
@@ -85,17 +73,13 @@ export const smCommon = {
         type: AuthenticationType.BEARER_TOKEN,
         token: accessToken,
       },
-    };
+    }
 
-    const deleteResponse = await httpClient.sendRequest(request);
-    return deleteResponse;
+    const deleteResponse = await httpClient.sendRequest(request)
+    return deleteResponse
   },
 
-  async getResponseDetails(
-    accessToken: string,
-    surveyId: string | number,
-    responseId: string | number
-  ) {
+  async getResponseDetails(accessToken: string, surveyId: string | number, responseId: string | number) {
     const request: HttpRequest = {
       method: HttpMethod.GET,
       url: `${smCommon.baseUrl}/surveys/${surveyId}/responses/${responseId}/details`,
@@ -103,9 +87,9 @@ export const smCommon = {
         type: AuthenticationType.BEARER_TOKEN,
         token: accessToken,
       },
-    };
+    }
 
-    const response = await httpClient.sendRequest(request);
-    return response.body;
+    const response = await httpClient.sendRequest(request)
+    return response.body
   },
-};
+}

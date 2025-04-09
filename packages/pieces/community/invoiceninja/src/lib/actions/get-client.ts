@@ -1,10 +1,7 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
-import { z } from 'zod';
-import { invoiceninjaAuth } from '../..';
+import { HttpMethod, httpClient, propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { invoiceninjaAuth } from '../..'
 
 export const getClient = createAction({
   auth: invoiceninjaAuth,
@@ -14,7 +11,7 @@ export const getClient = createAction({
 
   props: {
     email: Property.LongText({
-      displayName: 'Client e-mail address', 
+      displayName: 'Client e-mail address',
       description: 'A valid e-mail address to get client details for',
       required: true,
     }),
@@ -23,47 +20,46 @@ export const getClient = createAction({
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
       email: z.string().email(),
-    });
+    })
 
-    const INapiToken = context.auth.access_token;
+    const INapiToken = context.auth.access_token
 
     const headers = {
       'X-Api-Token': INapiToken,
-    };
-    const queryParams = new URLSearchParams();
-    queryParams.append('email', context.propsValue.email || '');
+    }
+    const queryParams = new URLSearchParams()
+    queryParams.append('email', context.propsValue.email || '')
 
     // Remove trailing slash from base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
-    const url = `${baseUrl}/api/v1/clients/?${queryParams.toString()}`;
+    const baseUrl = context.auth.base_url.replace(/\/$/, '')
+    const url = `${baseUrl}/api/v1/clients/?${queryParams.toString()}`
     const httprequestdata = {
       method: HttpMethod.GET,
       url,
       headers,
-    };
+    }
 
     try {
-      const response = await httpClient.sendRequest(httprequestdata);
+      const response = await httpClient.sendRequest(httprequestdata)
       // Process the successful response here (status 2xx).
       //
       if (response.body.meta.pagination.total > 0) {
         // Each client that is found will have one or more contacts
-        const NumberOfContactsThisClient =
-          response.body.data[0].contacts.length;
+        const NumberOfContactsThisClient = response.body.data[0].contacts.length
         for (let i = 0; i < NumberOfContactsThisClient; i++) {
           // theres a lot of extra data I don't really want in the actual response of contacts so I want to tr and just pick out
           // firstname, lastname, email, etc as I don't think we need the rest, just to keep it simpler
-          delete response.body.data[0].contacts[i].id;
-          delete response.body.data[0].contacts[i].created_at;
-          delete response.body.data[0].contacts[i].updated_at;
-          delete response.body.data[0].contacts[i].archived_at;
-          delete response.body.data[0].contacts[i].is_primary;
-          delete response.body.data[0].contacts[i].is_locked;
-          delete response.body.data[0].contacts[i].contact_key;
-          delete response.body.data[0].contacts[i].send_email;
-          delete response.body.data[0].contacts[i].last_login;
-          delete response.body.data[0].contacts[i].password;
-          delete response.body.data[0].contacts[i].link;
+          delete response.body.data[0].contacts[i].id
+          delete response.body.data[0].contacts[i].created_at
+          delete response.body.data[0].contacts[i].updated_at
+          delete response.body.data[0].contacts[i].archived_at
+          delete response.body.data[0].contacts[i].is_primary
+          delete response.body.data[0].contacts[i].is_locked
+          delete response.body.data[0].contacts[i].contact_key
+          delete response.body.data[0].contacts[i].send_email
+          delete response.body.data[0].contacts[i].last_login
+          delete response.body.data[0].contacts[i].password
+          delete response.body.data[0].contacts[i].link
         }
         const json = [
           {
@@ -88,15 +84,15 @@ export const getClient = createAction({
             client_contacts: response.body.data[0].contacts,
             //meta: response.body.meta,
           },
-        ];
-        return json;
-        return true;
+        ]
+        return json
+        return true
       } else {
-        return false;
+        return false
       } // this is still returned so if it is false we'll return notfound or similar
     } catch (error) {
       // Handle the error when the request fails (status other than 2xx).
-      return 'There was a problem getting information from your Invoice Ninja';
+      return 'There was a problem getting information from your Invoice Ninja'
     }
   },
-});
+})

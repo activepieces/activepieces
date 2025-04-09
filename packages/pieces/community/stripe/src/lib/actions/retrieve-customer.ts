@@ -1,10 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { stripeAuth } from '../..';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { stripeAuth } from '../..'
 
 export const stripeRetrieveCustomer = createAction({
   name: 'retrieve_customer',
@@ -21,7 +17,7 @@ export const stripeRetrieveCustomer = createAction({
   async run(context) {
     const customer = {
       id: context.propsValue.id,
-    };
+    }
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
@@ -30,8 +26,8 @@ export const stripeRetrieveCustomer = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth,
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

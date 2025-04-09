@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 import { zooAuth } from '../../../index'
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const convertLengthAction = createAction({
   name: 'convert_length',
@@ -57,7 +57,7 @@ export const convertLengthAction = createAction({
       queryParams: {
         value: propsValue.value.toString(),
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

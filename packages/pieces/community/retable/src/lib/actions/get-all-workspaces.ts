@@ -1,8 +1,8 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
 
-import { retableAuth } from '../..';
-import { retableCommon } from '../common';
+import { retableAuth } from '../..'
+import { retableCommon } from '../common'
 
 export const retableGetAllWorkspacesAction = createAction({
   auth: retableAuth,
@@ -19,6 +19,6 @@ export const retableGetAllWorkspacesAction = createAction({
           ApiKey: context.auth as string,
         },
       })
-    ).body;
+    ).body
   },
-});
+})

@@ -1,7 +1,7 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework'
 // eslint-disable-next-line @nx/enforce-module-boundaries
-import { Mailchain } from '@mailchain/sdk';
-import { mailchainCommon } from '../common/common';
+import { Mailchain } from '@mailchain/sdk'
+import { mailchainCommon } from '../common/common'
 
 export const getAuthenticatedUser = createAction({
   name: 'getAuthenticatedUser',
@@ -12,16 +12,15 @@ export const getAuthenticatedUser = createAction({
   props: {},
   async run({ auth }) {
     try {
-      const secretRecoveryPhrase = auth;
+      const secretRecoveryPhrase = auth
 
-      const mailchain =
-        Mailchain.fromSecretRecoveryPhrase(secretRecoveryPhrase);
+      const mailchain = Mailchain.fromSecretRecoveryPhrase(secretRecoveryPhrase)
 
-      const user = await mailchain.user();
-      return user;
+      const user = await mailchain.user()
+      return user
     } catch (error) {
-      console.error('Error getting authenticated user (mailchain)', error);
-      throw error;
+      console.error('Error getting authenticated user (mailchain)', error)
+      throw error
     }
   },
-});
+})

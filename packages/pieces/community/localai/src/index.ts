@@ -1,11 +1,7 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { askLocalAI } from './lib/actions/send-prompt';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { askLocalAI } from './lib/actions/send-prompt'
 
 export const localaiAuth = PieceAuth.CustomAuth({
   props: {
@@ -21,7 +17,7 @@ export const localaiAuth = PieceAuth.CustomAuth({
     }),
   },
   required: true,
-});
+})
 export const openai = createPiece({
   displayName: 'LocalAI',
   description:
@@ -36,12 +32,10 @@ export const openai = createPiece({
       baseUrl: (auth) => (auth as { base_url: string }).base_url,
       auth: localaiAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${
-          (auth as { access_token: string }).access_token || ''
-        }`,
+        Authorization: `Bearer ${(auth as { access_token: string }).access_token || ''}`,
       }),
     }),
   ],
-  authors: ["hkboujrida","kishanprmr","MoShizzle","abuaboud"],
+  authors: ['hkboujrida', 'kishanprmr', 'MoShizzle', 'abuaboud'],
   triggers: [],
-});
+})

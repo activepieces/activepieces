@@ -1,8 +1,8 @@
-import { slackAuth } from '../../';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { WebClient } from '@slack/web-api';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { WebClient } from '@slack/web-api'
+import { z } from 'zod'
+import { slackAuth } from '../../'
 
 export const setUserStatusAction = createAction({
   auth: slackAuth,
@@ -17,8 +17,7 @@ export const setUserStatusAction = createAction({
     emoji: Property.ShortText({
       displayName: 'Emoji',
       required: false,
-      description:
-        'Emoji shortname (standard or custom), e.g. :tada: or :train:',
+      description: 'Emoji shortname (standard or custom), e.g. :tada: or :train:',
     }),
     expiration: Property.Number({
       displayName: 'Expires at',
@@ -29,15 +28,15 @@ export const setUserStatusAction = createAction({
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
       text: z.string().max(100),
-    });
+    })
 
-    const client = new WebClient(auth.data['authed_user']?.access_token);
+    const client = new WebClient(auth.data['authed_user']?.access_token)
     return await client.users.profile.set({
       profile: {
         status_text: propsValue.text,
         status_emoji: propsValue.emoji,
         status_expiration: propsValue.expiration,
       },
-    });
+    })
   },
-});
+})

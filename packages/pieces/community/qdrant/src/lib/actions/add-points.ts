@@ -1,8 +1,8 @@
-import { QdrantClient } from '@qdrant/js-client-rest';
-import { qdrantAuth } from '../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { randomUUID } from 'crypto';
-import { collectionName, decodeEmbeddings } from '../common';
+import { randomUUID } from 'crypto'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { QdrantClient } from '@qdrant/js-client-rest'
+import { qdrantAuth } from '../..'
+import { collectionName, decodeEmbeddings } from '../common'
 
 export const addPointsToCollection = createAction({
   auth: qdrantAuth,
@@ -20,8 +20,7 @@ export const addPointsToCollection = createAction({
     }),
     embeddingsIds: Property.Array({
       displayName: 'Embeddings Ids',
-      description:
-        'The ids of the embeddings for the points. If not provided, the ids will be generated automatically',
+      description: 'The ids of the embeddings for the points. If not provided, the ids will be generated automatically',
       required: false,
     }),
     distance: Property.StaticDropdown({
@@ -60,43 +59,38 @@ export const addPointsToCollection = createAction({
     const client = new QdrantClient({
       apiKey: auth.key,
       url: auth.serverAddress,
-    });
-    const embeddings = decodeEmbeddings(propsValue.embeddings.data);
+    })
+    const embeddings = decodeEmbeddings(propsValue.embeddings.data)
 
-    const numberOfEmbeddings = embeddings.length;
-    const embeddingsLen = embeddings[0].length;
+    const numberOfEmbeddings = embeddings.length
+    const embeddingsLen = embeddings[0].length
 
     for (const embedding of embeddings) {
       if (embedding.length != embeddingsLen)
-        throw new Error(
-          'Embeddings must have the same length (=number of dimensions)'
-        );
+        throw new Error('Embeddings must have the same length (=number of dimensions)')
     }
 
-    const embeddingsIds = (propsValue.embeddingsIds as string[]) ?? [];
+    const embeddingsIds = (propsValue.embeddingsIds as string[]) ?? []
 
-    const autoEmbeddingsIds = embeddingsIds.length === 0;
+    const autoEmbeddingsIds = embeddingsIds.length === 0
 
     if (!autoEmbeddingsIds && embeddingsIds.length !== numberOfEmbeddings)
-      throw new Error(
-        'The number of embeddings Ids and the number of embeddings must be the same'
-      );
+      throw new Error('The number of embeddings Ids and the number of embeddings must be the same')
 
-    const payload = propsValue.payload ?? {};
-    const points = [];
+    const payload = propsValue.payload ?? {}
+    const points = []
 
     for (let i = 0; i < numberOfEmbeddings; i++) {
-      const localPayload = { ...payload };
+      const localPayload = { ...payload }
       points.push({
         id: autoEmbeddingsIds ? randomUUID() : embeddingsIds[i],
         payload: localPayload,
         vector: Array.from(embeddings[i]),
-      });
+      })
     }
 
-
-    const collections = (await client.getCollections()).collections;
-    const collectionName = propsValue.collectionName as string;
+    const collections = (await client.getCollections()).collections
+    const collectionName = propsValue.collectionName as string
     if (!collections.find((collection) => collection.name === collectionName)) {
       await client.createCollection(collectionName, {
         vectors: {
@@ -105,14 +99,14 @@ export const addPointsToCollection = createAction({
           on_disk: propsValue.storage === 'Disk',
         },
         on_disk_payload: propsValue.storage === 'Disk',
-      });
+      })
     }
 
     const response = await client.upsert(collectionName, {
       points,
       wait: true,
-    });
+    })
 
-    return response;
+    return response
   },
-});
+})

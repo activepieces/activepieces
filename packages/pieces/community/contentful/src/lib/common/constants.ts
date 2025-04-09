@@ -10,4 +10,4 @@ export const PropertyKeys = {
   QUERY_SKIP: 'skip',
   QUERY_INCLUDE: 'include',
   QUERY_SELECT: 'select',
-};
+}

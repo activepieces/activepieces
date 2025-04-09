@@ -1,12 +1,8 @@
-import {
-  DynamicPropsValue,
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { onfleetAuth } from '../..';
-import { common } from '../common';
+import { DynamicPropsValue, Property, createAction } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
+import { common } from '../common'
 
-import Onfleet from '@onfleet/node-onfleet';
+import Onfleet from '@onfleet/node-onfleet'
 
 export const createDestination = createAction({
   auth: onfleetAuth,
@@ -22,9 +18,9 @@ export const createDestination = createAction({
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth)
 
-    let address;
+    let address
     if (context.propsValue.unparsedDestination) {
       address = {
         number: '',
@@ -32,7 +28,7 @@ export const createDestination = createAction({
         city: '',
         country: '',
         unparsed: context.propsValue.destination['unparsedAddress'],
-      };
+      }
     } else {
       address = {
         number: context.propsValue.destination['number'],
@@ -43,12 +39,12 @@ export const createDestination = createAction({
         state: context.propsValue.destination['state'],
         postalCode: context.propsValue.destination['postalCode'],
         name: context.propsValue.destination['name'],
-      };
+      }
     }
 
     return await onfleetApi.destinations.create({
       address: address,
       notes: context.propsValue.notes,
-    });
+    })
   },
-});
+})

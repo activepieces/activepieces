@@ -1,4 +1,4 @@
-import { EntityProp } from '../types';
+import { EntityProp } from '../types'
 
 export const contactsEntityProps: EntityProp[] = [
   {
@@ -107,4 +107,4 @@ export const contactsEntityProps: EntityProp[] = [
     type: 'text',
     isRequired: false,
   },
-];
+]

@@ -1,15 +1,7 @@
-import {
-  HttpMethod,
-  httpClient,
-  HttpRequest,
-  propsValidation,
-} from '@activepieces/pieces-common';
-import { contigAuth } from '../..';
-import {
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { z } from 'zod';
+import { HttpMethod, HttpRequest, httpClient, propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { contigAuth } from '../..'
 
 export const sendSMS = createAction({
   auth: contigAuth,
@@ -32,9 +24,9 @@ export const sendSMS = createAction({
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
       to: z.string().regex(/^\+\d{1,4}\d+$/),
-    });
+    })
 
-    const { to, message } = context.propsValue;
+    const { to, message } = context.propsValue
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -47,7 +39,7 @@ export const sendSMS = createAction({
         authorization: `Token ${context.auth}`,
         'Content-Type': 'application/json',
       },
-    };
-    return await httpClient.sendRequest(request);
+    }
+    return await httpClient.sendRequest(request)
   },
-});
+})

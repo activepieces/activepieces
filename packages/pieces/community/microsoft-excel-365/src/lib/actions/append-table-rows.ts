@@ -1,11 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { excelAuth } from '../..';
-import { excelCommon } from '../common/common';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { excelAuth } from '../..'
+import { excelCommon } from '../common/common'
 
 export const appendTableRowsAction = createAction({
   auth: excelAuth,
@@ -19,10 +15,10 @@ export const appendTableRowsAction = createAction({
     values: excelCommon.table_values,
   },
   async run({ propsValue, auth }) {
-    const workbookId = propsValue['workbook_id'];
-    const worksheetId = propsValue['worksheet_id'];
-    const tableId = propsValue['table_id'];
-    const valuesToAppend = [Object.values(propsValue['values'])];
+    const workbookId = propsValue['workbook_id']
+    const worksheetId = propsValue['worksheet_id']
+    const tableId = propsValue['table_id']
+    const valuesToAppend = [Object.values(propsValue['values'])]
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -34,8 +30,8 @@ export const appendTableRowsAction = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: auth['access_token'],
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

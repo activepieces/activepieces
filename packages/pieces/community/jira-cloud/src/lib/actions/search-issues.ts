@@ -1,11 +1,8 @@
-import {
-  Property,
-  createAction,
-} from '@activepieces/pieces-framework';
-import { jiraCloudAuth } from '../../auth';
-import { searchIssuesByJql } from '../common';
-import { z } from 'zod';
-import { propsValidation } from '@activepieces/pieces-common';
+import { propsValidation } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { z } from 'zod'
+import { jiraCloudAuth } from '../../auth'
+import { searchIssuesByJql } from '../common'
 
 export const searchIssues = createAction({
   name: 'search_issues',
@@ -33,13 +30,13 @@ export const searchIssues = createAction({
   run: async ({ auth, propsValue }) => {
     await propsValidation.validateZod(propsValue, {
       maxResults: z.number().min(1).max(100),
-    });
-    const { jql, maxResults, sanitizeJql } = propsValue;
+    })
+    const { jql, maxResults, sanitizeJql } = propsValue
     return await searchIssuesByJql({
       auth,
       jql,
       maxResults: maxResults,
       sanitizeJql,
-    });
+    })
   },
-});
+})

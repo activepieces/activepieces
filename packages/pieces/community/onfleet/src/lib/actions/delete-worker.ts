@@ -1,8 +1,8 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { onfleetAuth } from '../..';
-import { common } from '../common';
+import { createAction } from '@activepieces/pieces-framework'
+import { onfleetAuth } from '../..'
+import { common } from '../common'
 
-import Onfleet from '@onfleet/node-onfleet';
+import Onfleet from '@onfleet/node-onfleet'
 
 export const deleteWorker = createAction({
   auth: onfleetAuth,
@@ -13,10 +13,8 @@ export const deleteWorker = createAction({
     worker: common.worker,
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth)
 
-    return await onfleetApi.workers.deleteOne(
-      context.propsValue.worker as string
-    );
+    return await onfleetApi.workers.deleteOne(context.propsValue.worker as string)
   },
-});
+})

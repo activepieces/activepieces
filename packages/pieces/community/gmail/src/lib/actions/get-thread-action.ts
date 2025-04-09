@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { GmailRequests } from '../common/data';
-import { GmailMessageFormat } from '../common/models';
-import { gmailAuth } from '../../';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { gmailAuth } from '../../'
+import { GmailRequests } from '../common/data'
+import { GmailMessageFormat } from '../common/models'
 
 export const gmailGetThread = createAction({
   auth: gmailAuth,
@@ -36,4 +36,4 @@ export const gmailGetThread = createAction({
       thread_id,
       format: format ?? GmailMessageFormat.FULL,
     }),
-});
+})

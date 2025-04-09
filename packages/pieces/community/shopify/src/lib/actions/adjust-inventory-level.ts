@@ -1,6 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { shopifyAuth } from '../..';
-import { adjustInventoryLevel } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { shopifyAuth } from '../..'
+import { adjustInventoryLevel } from '../common'
 
 export const adjustInventoryLevelAction = createAction({
   auth: shopifyAuth,
@@ -20,14 +20,13 @@ export const adjustInventoryLevelAction = createAction({
     }),
     adjustment: Property.Number({
       displayName: 'Adjustment',
-      description:
-        'Positive values increase inventory, negative values decrease it.',
+      description: 'Positive values increase inventory, negative values decrease it.',
       required: true,
     }),
   },
   async run({ auth, propsValue }) {
-    const { id, locationId, adjustment } = propsValue;
+    const { id, locationId, adjustment } = propsValue
 
-    return await adjustInventoryLevel(id, locationId, adjustment, auth);
+    return await adjustInventoryLevel(id, locationId, adjustment, auth)
   },
-});
+})

@@ -8,42 +8,42 @@ import { mockAndSaveBasicSetup } from '../../../../helpers/mocks'
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
-    await initializeDatabase({ runMigrations: false })
-    app = await setupServer()
+  await initializeDatabase({ runMigrations: false })
+  app = await setupServer()
 })
 
 afterAll(async () => {
-    await databaseConnection().destroy()
-    await app?.close()
+  await databaseConnection().destroy()
+  await app?.close()
 })
 
 describe('List flow runs endpoint', () => {
-    it('should return 200', async () => {
-        // arrange
-        const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup()
+  it('should return 200', async () => {
+    // arrange
+    const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup()
 
-        const testToken = await generateMockToken({
-            type: PrincipalType.USER,
-            id: mockOwner.id,
-            projectId: mockProject.id,
-            platform: {
-                id: mockPlatform.id,
-            },
-        })
-
-        // act
-        const response = await app?.inject({
-            method: 'GET',
-            url: '/v1/flow-runs',
-            headers: {
-                authorization: `Bearer ${testToken}`,
-            },
-            query: {
-                projectId: mockProject.id,
-            },
-        })
-
-        // assert
-        expect(response?.statusCode).toBe(200)
+    const testToken = await generateMockToken({
+      type: PrincipalType.USER,
+      id: mockOwner.id,
+      projectId: mockProject.id,
+      platform: {
+        id: mockPlatform.id,
+      },
     })
+
+    // act
+    const response = await app?.inject({
+      method: 'GET',
+      url: '/v1/flow-runs',
+      headers: {
+        authorization: `Bearer ${testToken}`,
+      },
+      query: {
+        projectId: mockProject.id,
+      },
+    })
+
+    // assert
+    expect(response?.statusCode).toBe(200)
+  })
 })

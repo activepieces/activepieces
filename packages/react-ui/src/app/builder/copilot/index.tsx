@@ -1,38 +1,38 @@
-import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
-import { ArrowUp, LoaderCircle } from 'lucide-react';
-import { nanoid } from 'nanoid';
-import { useState, useRef, useEffect } from 'react';
-import { Socket } from 'socket.io-client';
+import { useMutation } from '@tanstack/react-query'
+import { t } from 'i18next'
+import { ArrowUp, LoaderCircle } from 'lucide-react'
+import { nanoid } from 'nanoid'
+import { useEffect, useRef, useState } from 'react'
+import { Socket } from 'socket.io-client'
 
-import { useSocket } from '@/components/socket-provider';
-import { CardList } from '@/components/ui/card-list';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { useSocket } from '@/components/socket-provider'
+import { CardList } from '@/components/ui/card-list'
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast'
 import {
   ActionType,
-  CodeAction,
-  FlowOperationType,
-  flowStructureUtil,
   AskCopilotCodeResponse,
   AskCopilotRequest,
+  AskCopilotTool,
+  CodeAction,
+  FlowOperationType,
   WebsocketClientEvent,
   WebsocketServerEvent,
-  AskCopilotTool,
-} from '@activepieces/shared';
+  flowStructureUtil,
+} from '@activepieces/shared'
 
-import { Textarea } from '../../../components/ui/textarea';
-import { CORE_STEP_METADATA } from '../../../features/pieces/lib/pieces-api';
-import { getCoreActions } from '../../../features/pieces/lib/pieces-hook';
-import { LeftSideBarType, useBuilderStateContext } from '../builder-hooks';
-import { pieceSelectorUtils } from '../pieces-selector/piece-selector-utils';
-import { SidebarHeader } from '../sidebar-header';
+import { Textarea } from '../../../components/ui/textarea'
+import { CORE_STEP_METADATA } from '../../../features/pieces/lib/pieces-api'
+import { getCoreActions } from '../../../features/pieces/lib/pieces-hook'
+import { LeftSideBarType, useBuilderStateContext } from '../builder-hooks'
+import { pieceSelectorUtils } from '../pieces-selector/piece-selector-utils'
+import { SidebarHeader } from '../sidebar-header'
 
-import { ChatMessage, CopilotMessage } from './chat-message';
-import { LoadingMessage } from './loading-message';
+import { ChatMessage, CopilotMessage } from './chat-message'
+import { LoadingMessage } from './loading-message'
 
 interface DefaultEventsMap {
-  [event: string]: (...args: any[]) => void;
+  [event: string]: (...args: any[]) => void
 }
 
 const COPILOT_WELCOME_MESSAGES: CopilotMessage[] = [
@@ -41,36 +41,31 @@ const COPILOT_WELCOME_MESSAGES: CopilotMessage[] = [
     content: 'welcome',
     userType: 'bot',
   },
-];
+]
 
 async function getCodeResponse(
   socket: Socket<DefaultEventsMap, DefaultEventsMap>,
   request: AskCopilotRequest,
 ): Promise<AskCopilotCodeResponse> {
-  const id = nanoid();
+  const id = nanoid()
 
   socket.emit(WebsocketServerEvent.ASK_COPILOT, {
     ...request,
     id,
-  });
+  })
   return new Promise<AskCopilotCodeResponse>((resolve, reject) => {
-    socket.on(
-      WebsocketClientEvent.ASK_COPILOT_FINISHED,
-      (response: AskCopilotCodeResponse) => {
-        resolve(response);
-      },
-    );
+    socket.on(WebsocketClientEvent.ASK_COPILOT_FINISHED, (response: AskCopilotCodeResponse) => {
+      resolve(response)
+    })
     socket.on('error', (error: any) => {
-      reject(error);
-    });
-  });
+      reject(error)
+    })
+  })
 }
 
 export const CopilotSidebar = () => {
-  const [messages, setMessages] = useState<CopilotMessage[]>(
-    COPILOT_WELCOME_MESSAGES,
-  );
-  const [inputMessage, setInputMessage] = useState('');
+  const [messages, setMessages] = useState<CopilotMessage[]>(COPILOT_WELCOME_MESSAGES)
+  const [inputMessage, setInputMessage] = useState('')
   const [
     flowVersion,
     refreshSettings,
@@ -89,21 +84,20 @@ export const CopilotSidebar = () => {
     state.selectStepByName,
     state.setAskAiButtonProps,
     state.selectedStep,
-  ]);
-  const lastMessageRef = useRef<HTMLDivElement>(null);
-  const socket = useSocket();
+  ])
+  const lastMessageRef = useRef<HTMLDivElement>(null)
+  const socket = useSocket()
   const scrollToLastMessage = () => {
     setTimeout(() => {
       lastMessageRef.current?.scrollIntoView({
         behavior: 'smooth',
-      });
-    }, 1);
-  };
+      })
+    }, 1)
+  }
   const { isPending, mutate } = useMutation({
-    mutationFn: (request: AskCopilotRequest) =>
-      getCodeResponse(socket, request),
+    mutationFn: (request: AskCopilotRequest) => getCodeResponse(socket, request),
     onSuccess: (response: AskCopilotCodeResponse) => {
-      console.log(response);
+      console.log(response)
       setMessages((prevMessages) => [
         ...prevMessages,
         {
@@ -117,21 +111,21 @@ export const CopilotSidebar = () => {
           messageType: 'code',
           userType: 'bot',
         },
-      ]);
-      scrollToLastMessage();
+      ])
+      scrollToLastMessage()
     },
     onError: (error: any) => {
       toast({
         title: t('Error generating code'),
         description: error.message,
-      });
+      })
     },
-  });
+  })
 
   const handleSendMessage = () => {
-    const trimmedInputMessage = inputMessage.trim();
+    const trimmedInputMessage = inputMessage.trim()
     if (trimmedInputMessage === '') {
-      return;
+      return
     }
     mutate({
       prompt: inputMessage,
@@ -143,44 +137,41 @@ export const CopilotSidebar = () => {
       flowId: flowVersion.flowId,
       flowVersionId: flowVersion.id,
       selectedStepName: selectedStep ?? undefined,
-    });
+    })
 
-    setMessages([
-      ...messages,
-      { content: inputMessage, userType: 'user', messageType: 'text' },
-    ]);
-    setInputMessage('');
-    scrollToLastMessage();
-  };
-  const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
+    setMessages([...messages, { content: inputMessage, userType: 'user', messageType: 'text' }])
+    setInputMessage('')
+    scrollToLastMessage()
+  }
+  const textAreaRef = useRef<HTMLTextAreaElement | null>(null)
   const applyCodeToCurrentStep = (message: CopilotMessage) => {
     if (!askAiButtonProps) {
-      console.log('no ask ai button props');
-      toast(INTERNAL_ERROR_TOAST);
-      return;
+      console.log('no ask ai button props')
+      toast(INTERNAL_ERROR_TOAST)
+      return
     }
     if (message.messageType !== 'code') {
-      return;
+      return
     }
     if (askAiButtonProps) {
       const stepName =
         askAiButtonProps.type === FlowOperationType.UPDATE_ACTION
           ? askAiButtonProps.stepName
-          : flowStructureUtil.findUnusedName(flowVersion.trigger);
+          : flowStructureUtil.findUnusedName(flowVersion.trigger)
       const codeAction = pieceSelectorUtils.getDefaultStep({
         stepName,
         stepMetadata: CORE_STEP_METADATA[ActionType.CODE],
         actionOrTrigger: getCoreActions(ActionType.CODE)[0],
-      }) as CodeAction;
+      }) as CodeAction
       codeAction.settings = {
         input: message.content.inputs,
         sourceCode: {
           code: message.content.code,
           packageJson: JSON.stringify(message.content.packages, null, 2),
         },
-      };
-      codeAction.displayName = message.content.title;
-      codeAction.customLogoUrl = message.content.icon;
+      }
+      codeAction.displayName = message.content.title
+      codeAction.customLogoUrl = message.content.icon
       if (askAiButtonProps.type === FlowOperationType.ADD_ACTION) {
         applyOperation({
           type: FlowOperationType.ADD_ACTION,
@@ -188,17 +179,14 @@ export const CopilotSidebar = () => {
             action: codeAction,
             ...askAiButtonProps.actionLocation,
           },
-        });
-        selectStepByName(stepName);
+        })
+        selectStepByName(stepName)
         setAskAiButtonProps({
           type: FlowOperationType.UPDATE_ACTION,
           stepName: codeAction.name,
-        });
+        })
       } else {
-        const step = flowStructureUtil.getStep(
-          askAiButtonProps.stepName,
-          flowVersion.trigger,
-        );
+        const step = flowStructureUtil.getStep(askAiButtonProps.stepName, flowVersion.trigger)
         if (step) {
           applyOperation({
             type: FlowOperationType.UPDATE_ACTION,
@@ -210,31 +198,28 @@ export const CopilotSidebar = () => {
                 ...codeAction.settings,
                 input: message.content.inputs,
                 errorHandlingOptions:
-                  step.type === ActionType.CODE ||
-                  step.type === ActionType.PIECE
+                  step.type === ActionType.CODE || step.type === ActionType.PIECE
                     ? step.settings.errorHandlingOptions
                     : codeAction.settings.errorHandlingOptions,
               },
               type: ActionType.CODE,
               valid: true,
             },
-          });
+          })
         }
       }
     }
-    refreshSettings();
-  };
+    refreshSettings()
+  }
   useEffect(() => {
     if (textAreaRef.current) {
-      textAreaRef.current.focus();
+      textAreaRef.current.focus()
     }
-  }, []);
+  }, [])
 
   return (
     <div className="flex flex-col h-full">
-      <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>
-        {t('AI Copilot')}
-      </SidebarHeader>
+      <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>{t('AI Copilot')}</SidebarHeader>
       <div className="flex flex-col flex-grow overflow-hidden ">
         <ScrollArea className="flex-grow overflow-auto">
           <CardList className="pb-3">
@@ -262,8 +247,8 @@ export const CopilotSidebar = () => {
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && !isPending) {
-                handleSendMessage();
-                e.preventDefault();
+                handleSendMessage()
+                e.preventDefault()
               }
             }}
           />
@@ -282,7 +267,7 @@ export const CopilotSidebar = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-CopilotSidebar.displayName = 'ChatSidebar';
+CopilotSidebar.displayName = 'ChatSidebar'

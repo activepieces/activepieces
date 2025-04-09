@@ -1,11 +1,7 @@
-import { createAction } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { excelCommon } from '../common/common';
-import { excelAuth } from '../../index';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { excelAuth } from '../../index'
+import { excelCommon } from '../common/common'
 
 export const convertToRangeAction = createAction({
   auth: excelAuth,
@@ -18,9 +14,9 @@ export const convertToRangeAction = createAction({
     table_id: excelCommon.table_id,
   },
   async run({ propsValue, auth }) {
-    const workbookId = propsValue['workbook_id'];
-    const worksheetId = propsValue['worksheet_id'];
-    const tableId = propsValue['table_id'];
+    const workbookId = propsValue['workbook_id']
+    const worksheetId = propsValue['worksheet_id']
+    const tableId = propsValue['table_id']
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -29,8 +25,8 @@ export const convertToRangeAction = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: auth['access_token'],
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

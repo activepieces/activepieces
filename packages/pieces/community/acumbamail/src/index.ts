@@ -1,11 +1,11 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { addUpdateSubscriberAction } from './lib/actions/add-subscriber';
-import { createSubscriberListAction } from './lib/actions/create-subscriber-list';
-import { unsubscribeAction } from './lib/actions/unsubscribe-subscriber';
-import { deleteSubscriberListAction } from './lib/actions/delete-subscriber-list';
-import { duplicateTemplateAction } from './lib/actions/duplicate-template';
-import { searchSubscriberAction } from './lib/actions/search-subscriber';
-import { removeSubscribeAction } from './lib/actions/delete-subscriber';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { addUpdateSubscriberAction } from './lib/actions/add-subscriber'
+import { createSubscriberListAction } from './lib/actions/create-subscriber-list'
+import { removeSubscribeAction } from './lib/actions/delete-subscriber'
+import { deleteSubscriberListAction } from './lib/actions/delete-subscriber-list'
+import { duplicateTemplateAction } from './lib/actions/duplicate-template'
+import { searchSubscriberAction } from './lib/actions/search-subscriber'
+import { unsubscribeAction } from './lib/actions/unsubscribe-subscriber'
 
 export const acumbamailAuth = PieceAuth.SecretText({
   displayName: 'Auth Token',
@@ -16,7 +16,7 @@ export const acumbamailAuth = PieceAuth.SecretText({
   2. Go to **https://acumbamail.com/apidoc/**.
   3. Under **Customer identifier**, you can find auth token;
   `,
-});
+})
 
 export const acumbamail = createPiece({
   displayName: 'Acumbamail',
@@ -24,7 +24,7 @@ export const acumbamail = createPiece({
   auth: acumbamailAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/acumbamail.png',
-  authors: ["kishanprmr","abuaboud"],
+  authors: ['kishanprmr', 'abuaboud'],
   actions: [
     addUpdateSubscriberAction,
     createSubscriberListAction,
@@ -35,4 +35,4 @@ export const acumbamail = createPiece({
     removeSubscribeAction,
   ],
   triggers: [],
-});
+})

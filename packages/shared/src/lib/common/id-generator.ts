@@ -5,7 +5,7 @@ const ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
 const ID_LENGTH = 21
 
 export const ApId = Type.String({
-    pattern: `^[0-9a-zA-Z]{${ID_LENGTH}}$`,
+  pattern: `^[0-9a-zA-Z]{${ID_LENGTH}}$`,
 })
 
 export type ApId = Static<typeof ApId>

@@ -1,8 +1,4 @@
-import {
-  createTrigger,
-  Property,
-  TriggerStrategy,
-} from '@activepieces/pieces-framework';
+import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
 
 const campaignCompletedMessage = `
   Follow the below steps:
@@ -17,7 +13,7 @@ const campaignCompletedMessage = `
 
   5. Select the event type as "Campaign Completed".
   6. Click on the "Test Trigger" button to simulate a test and capture the webhook response here.
-  `;
+  `
 
 export const campaignCompleted = createTrigger({
   name: 'campaignCompleted',
@@ -53,6 +49,6 @@ export const campaignCompleted = createTrigger({
     // Implement webhook unsubscription logic here
   },
   async run(context) {
-    return [context.payload.body];
+    return [context.payload.body]
   },
-});
+})

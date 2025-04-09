@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { revokeBadgeFromMember } from '../api';
-import { buildBadgesDropdown } from '../props';
-import { bettermodeAuth, BettermodeAuthType } from '../auth';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { revokeBadgeFromMember } from '../api'
+import { BettermodeAuthType, bettermodeAuth } from '../auth'
+import { buildBadgesDropdown } from '../props'
 
 export const revokeBadgeAction = createAction({
   name: 'revoke_badge',
@@ -14,8 +14,7 @@ export const revokeBadgeAction = createAction({
       description: 'The badge to revoke',
       required: true,
       refreshers: [],
-      options: async ({ auth }) =>
-        await buildBadgesDropdown(auth as BettermodeAuthType),
+      options: async ({ auth }) => await buildBadgesDropdown(auth as BettermodeAuthType),
     }),
     email: Property.ShortText({
       displayName: 'Email',
@@ -27,7 +26,7 @@ export const revokeBadgeAction = createAction({
     return await revokeBadgeFromMember(
       context.auth as BettermodeAuthType,
       context.propsValue.badgeId,
-      context.propsValue.email
-    );
+      context.propsValue.email,
+    )
   },
-});
+})

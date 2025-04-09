@@ -1,10 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { freshsalesAuth } from '../../';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { freshsalesAuth } from '../../'
 
 export const freshSalesCreateContact = createAction({
   auth: freshsalesAuth,
@@ -94,8 +90,7 @@ export const freshSalesCreateContact = createAction({
     }),
     keyword: Property.ShortText({
       displayName: 'Keyword',
-      description:
-        'The keywords that the contact used to reach your website/web app',
+      description: 'The keywords that the contact used to reach your website/web app',
       required: false,
     }),
     time_zone: Property.ShortText({
@@ -130,7 +125,7 @@ export const freshSalesCreateContact = createAction({
     }),
   },
   async run(context) {
-    const contact = context.propsValue;
+    const contact = context.propsValue
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -141,15 +136,15 @@ export const freshSalesCreateContact = createAction({
       headers: {
         Authorization: `Token token=${context.auth.password}`,
       },
-    };
+    }
 
-    const result = await httpClient.sendRequest(request);
-    console.debug('Create contact response', result);
+    const result = await httpClient.sendRequest(request)
+    console.debug('Create contact response', result)
 
     if (result.status == 200) {
-      return result.body;
+      return result.body
     } else {
-      return result;
+      return result
     }
   },
-});
+})

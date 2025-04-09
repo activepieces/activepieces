@@ -5,22 +5,25 @@ import { system } from '../../../helper/system/system'
 const log = system.globalLogger()
 
 export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterface {
-    name = 'CreateDefaultPlaformSqlite1709051625110'
+  name = 'CreateDefaultPlaformSqlite1709051625110'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        log.info({
-            name: this.name,
-        }, 'up')
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    log.info(
+      {
+        name: this.name,
+      },
+      'up',
+    )
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_partial_unique_email_platform_id_is_null"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -40,7 +43,7 @@ export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterfa
                 CONSTRAINT "UQ_e12875dfb3b1d92d7d7c5377e22" UNIQUE ("email")
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_user"(
                     "id",
                     "created",
@@ -75,24 +78,24 @@ export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterfa
                 "verified"
             FROM "user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_user"
                 RENAME TO "user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_partial_unique_email_platform_id_is_null" ON "user" ("email")
             WHERE "platformId" IS NULL
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -147,15 +150,15 @@ export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterfa
                 CONSTRAINT "REL_94d6fd6494f0322c6f0e099141" UNIQUE ("ownerId")
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_project_platform_id_external_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_project_owner_id"
         `)
 
-        await migrateProjects(queryRunner)
-        await queryRunner.query(`
+    await migrateProjects(queryRunner)
+    await queryRunner.query(`
             CREATE TABLE "temporary_project" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -168,7 +171,7 @@ export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterfa
                 CONSTRAINT "fk_project_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_project"(
                     "id",
                     "created",
@@ -189,29 +192,29 @@ export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterfa
                 "externalId"
             FROM "project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_project"
                 RENAME TO "project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_project_platform_id_external_id" ON "project" ("platformId", "externalId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_partial_unique_email_platform_id_is_null"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -231,7 +234,7 @@ export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterfa
                 CONSTRAINT "UQ_e12875dfb3b1d92d7d7c5377e22" UNIQUE ("email")
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_user"(
                     "id",
                     "created",
@@ -266,24 +269,24 @@ export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterfa
                 "verified"
             FROM "user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_user"
                 RENAME TO "user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_partial_unique_email_platform_id_is_null" ON "user" ("email")
             WHERE "platformId" IS NULL
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -339,7 +342,7 @@ export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterfa
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_platform"(
                     "id",
                     "created",
@@ -406,21 +409,21 @@ export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterfa
                 "showActivityLog"
             FROM "platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_platform"
                 RENAME TO "platform"
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             ALTER TABLE "platform"
                 RENAME TO "temporary_platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -475,7 +478,7 @@ export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterfa
                 CONSTRAINT "REL_94d6fd6494f0322c6f0e099141" UNIQUE ("ownerId")
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "platform"(
                     "id",
                     "created",
@@ -542,23 +545,23 @@ export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterfa
                 "showActivityLog"
             FROM "temporary_platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_partial_unique_email_platform_id_is_null"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "user"
                 RENAME TO "temporary_user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -578,7 +581,7 @@ export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterfa
                 CONSTRAINT "UQ_e12875dfb3b1d92d7d7c5377e22" UNIQUE ("email")
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "user"(
                     "id",
                     "created",
@@ -613,30 +616,30 @@ export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterfa
                 "verified"
             FROM "temporary_user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_partial_unique_email_platform_id_is_null" ON "user" ("email")
             WHERE "platformId" IS NULL
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_project_owner_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_project_platform_id_external_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "project"
                 RENAME TO "temporary_project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "project" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -650,7 +653,7 @@ export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterfa
                 CONSTRAINT "fk_project_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "project"(
                     "id",
                     "created",
@@ -671,32 +674,32 @@ export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterfa
                 "externalId"
             FROM "temporary_project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_project"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_project_platform_id_external_id" ON "project" ("platformId", "externalId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "platform"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_external_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_partial_unique_email_platform_id_is_null"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_user_platform_id_email"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "user"
                 RENAME TO "temporary_user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "user" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -716,7 +719,7 @@ export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterfa
                 CONSTRAINT "UQ_e12875dfb3b1d92d7d7c5377e22" UNIQUE ("email")
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "user"(
                     "id",
                     "created",
@@ -751,30 +754,29 @@ export class CreateDefaultPlaformSqlite1709051625110 implements MigrationInterfa
                 "verified"
             FROM "temporary_user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_user"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_external_id" ON "user" ("platformId", "externalId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_partial_unique_email_platform_id_is_null" ON "user" ("email")
             WHERE "platformId" IS NULL
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_user_platform_id_email" ON "user" ("platformId", "email")
         `)
-    }
-
+  }
 }
 async function migrateProjects(queryRunner: QueryRunner) {
-    log.info('CreateDefaultPlatform1705967115116 up')
-    const standaloneProjects = await queryRunner.query('select * from project where "platformId" is null;')
-    log.info(`Found ${standaloneProjects.length} standalone projects`)
-    for (const project of standaloneProjects) {
-        const ownerId = project.ownerId
-        const platformId = apId()
-        await queryRunner.query(`
+  log.info('CreateDefaultPlatform1705967115116 up')
+  const standaloneProjects = await queryRunner.query('select * from project where "platformId" is null;')
+  log.info(`Found ${standaloneProjects.length} standalone projects`)
+  for (const project of standaloneProjects) {
+    const ownerId = project.ownerId
+    const platformId = apId()
+    await queryRunner.query(`
         INSERT INTO "platform" (
             "id",
             "created",
@@ -843,8 +845,8 @@ async function migrateProjects(queryRunner: QueryRunner) {
         );
     `)
 
-        await queryRunner.query(`update "project" set "platformId" = '${platformId}' where "id" = '${project.id}'`)
-        await queryRunner.query(`update "user" set "platformId" = '${platformId}' where "id" = '${ownerId}'`)
-    }
-    log.info('CreateDefaultPlatform1705967115116 up done')
+    await queryRunner.query(`update "project" set "platformId" = '${platformId}' where "id" = '${project.id}'`)
+    await queryRunner.query(`update "user" set "platformId" = '${platformId}' where "id" = '${ownerId}'`)
+  }
+  log.info('CreateDefaultPlatform1705967115116 up done')
 }

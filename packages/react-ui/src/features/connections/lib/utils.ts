@@ -1,36 +1,36 @@
-import { t } from 'i18next';
+import { t } from 'i18next'
 
-import { authenticationSession } from '@/lib/authentication-session';
+import { authenticationSession } from '@/lib/authentication-session'
 import {
   CustomAuthProps,
   OAuth2Props,
   PieceMetadataModel,
   PieceMetadataModelSummary,
   PropertyType,
-} from '@activepieces/pieces-framework';
+} from '@activepieces/pieces-framework'
 import {
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
   UpsertAppConnectionRequestBody,
+  apId,
   assertNotNullOrUndefined,
   isNil,
-  apId,
-} from '@activepieces/shared';
+} from '@activepieces/shared'
 
-import { appConnectionsApi } from './app-connections-api';
-import { globalConnectionsApi } from './global-connections-api';
+import { appConnectionsApi } from './app-connections-api'
+import { globalConnectionsApi } from './global-connections-api'
 
 export class ConnectionNameAlreadyExists extends Error {
   constructor() {
-    super(t('Connection name already used'));
-    this.name = 'ConnectionNameAlreadyExists';
+    super(t('Connection name already used'))
+    this.name = 'ConnectionNameAlreadyExists'
   }
 }
 
 export class NoProjectSelected extends Error {
   constructor() {
-    super(t('Please select at least one project'));
-    this.name = 'NoProjectSelected';
+    super(t('Please select at least one project'))
+    this.name = 'NoProjectSelected'
   }
 }
 
@@ -40,26 +40,26 @@ export const newConnectionUtils = {
     reconnectConnection: AppConnectionWithoutSensitiveData | null,
     externalIdComingFromSdk?: string | null,
   ): {
-    externalId: string;
-    displayName: string;
+    externalId: string
+    displayName: string
   } {
     if (reconnectConnection) {
       return {
         externalId: reconnectConnection.externalId,
         displayName: reconnectConnection.displayName,
-      };
+      }
     }
     if (externalIdComingFromSdk) {
       return {
         externalId: externalIdComingFromSdk,
         displayName: externalIdComingFromSdk,
-      };
+      }
     }
 
     return {
       externalId: apId(),
       displayName: piece.displayName,
-    };
+    }
   },
 
   createDefaultValues(
@@ -67,10 +67,10 @@ export const newConnectionUtils = {
     suggestedExternalId: string,
     suggestedDisplayName: string,
   ): Partial<UpsertAppConnectionRequestBody> {
-    const projectId = authenticationSession.getProjectId();
-    assertNotNullOrUndefined(projectId, 'projectId');
+    const projectId = authenticationSession.getProjectId()
+    assertNotNullOrUndefined(projectId, 'projectId')
     if (!piece.auth) {
-      throw new Error(`Unsupported property type: ${piece.auth}`);
+      throw new Error(`Unsupported property type: ${piece.auth}`)
     }
 
     switch (piece.auth.type) {
@@ -85,7 +85,7 @@ export const newConnectionUtils = {
             type: AppConnectionType.SECRET_TEXT,
             secret_text: '',
           },
-        };
+        }
       case PropertyType.BASIC_AUTH:
         return {
           externalId: suggestedExternalId,
@@ -98,7 +98,7 @@ export const newConnectionUtils = {
             username: '',
             password: '',
           },
-        };
+        }
       case PropertyType.CUSTOM_AUTH: {
         return {
           externalId: suggestedExternalId,
@@ -108,11 +108,9 @@ export const newConnectionUtils = {
           type: AppConnectionType.CUSTOM_AUTH,
           value: {
             type: AppConnectionType.CUSTOM_AUTH,
-            props: newConnectionUtils.extractDefaultPropsValues(
-              piece.auth.props,
-            ),
+            props: newConnectionUtils.extractDefaultPropsValues(piece.auth.props),
           },
-        };
+        }
       }
       case PropertyType.OAUTH2:
         return {
@@ -126,43 +124,38 @@ export const newConnectionUtils = {
             scope: piece.auth.scope.join(' '),
             authorization_method: piece.auth?.authorizationMethod,
             client_id: '',
-            props: newConnectionUtils.extractDefaultPropsValues(
-              piece.auth.props,
-            ),
+            props: newConnectionUtils.extractDefaultPropsValues(piece.auth.props),
             code: '',
           },
-        };
+        }
       default:
-        throw new Error(`Unsupported property type: ${piece.auth}`);
+        throw new Error(`Unsupported property type: ${piece.auth}`)
     }
   },
 
   extractDefaultPropsValues(props: CustomAuthProps | OAuth2Props | undefined) {
     if (!props) {
-      return {};
+      return {}
     }
     return Object.entries(props).reduce((acc, [propName, prop]) => {
       if (prop.defaultValue) {
         return {
           ...acc,
           [propName]: prop.defaultValue,
-        };
+        }
       }
       if (prop.type === PropertyType.CHECKBOX) {
         return {
           ...acc,
           [propName]: false,
-        };
+        }
       }
-      return acc;
-    }, {});
+      return acc
+    }, {})
   },
-};
+}
 
-export const isConnectionNameUnique = async (
-  isGlobalConnection: boolean,
-  displayName: string,
-) => {
+export const isConnectionNameUnique = async (isGlobalConnection: boolean, displayName: string) => {
   const connections = isGlobalConnection
     ? await globalConnectionsApi.list({
         limit: 10000,
@@ -170,9 +163,7 @@ export const isConnectionNameUnique = async (
     : await appConnectionsApi.list({
         projectId: authenticationSession.getProjectId()!,
         limit: 10000,
-      });
-  const existingConnection = connections.data.find(
-    (connection) => connection.displayName === displayName,
-  );
-  return isNil(existingConnection);
-};
+      })
+  const existingConnection = connections.data.find((connection) => connection.displayName === displayName)
+  return isNil(existingConnection)
+}

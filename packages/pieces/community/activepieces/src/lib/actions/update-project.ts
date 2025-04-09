@@ -1,10 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { activePieceAuth } from '../../index';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { activePieceAuth } from '../../index'
 
 export const updateProject = createAction({
   name: 'update_project',
@@ -66,8 +62,8 @@ export const updateProject = createAction({
           teamMembers: propsValue['team_members'],
         },
       },
-    });
+    })
 
-    return response.body;
+    return response.body
   },
-});
+})

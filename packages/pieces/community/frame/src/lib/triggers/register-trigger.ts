@@ -1,15 +1,6 @@
-import {
-  Property,
-  TriggerStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpRequest,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { frameAuth } from '../..';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { frameAuth } from '../..'
 
 export const frameRegisterTrigger = ({
   name,
@@ -18,11 +9,11 @@ export const frameRegisterTrigger = ({
   description,
   sampleData,
 }: {
-  name: string;
-  displayName: string;
-  eventType: string;
-  description: string;
-  sampleData: unknown;
+  name: string
+  displayName: string
+  eventType: string
+  description: string
+  sampleData: unknown
 }) =>
   createTrigger({
     auth: frameAuth,
@@ -41,7 +32,7 @@ export const frameRegisterTrigger = ({
               options: [],
               disabled: true,
               placeholder: 'Please authenticate first',
-            };
+            }
           }
 
           const response = await httpClient.sendRequest<Account[]>({
@@ -52,7 +43,7 @@ export const frameRegisterTrigger = ({
               token: auth as unknown as string,
             },
             queryParams: {},
-          });
+          })
 
           try {
             return {
@@ -61,15 +52,15 @@ export const frameRegisterTrigger = ({
                 return {
                   label: account.display_name,
                   value: account.id,
-                };
+                }
               }),
-            };
+            }
           } catch (error) {
             return {
               options: [],
               disabled: true,
               placeholder: `Couldn't load Accounts:\n${error}`,
-            };
+            }
           }
         },
       }),
@@ -84,14 +75,14 @@ export const frameRegisterTrigger = ({
               options: [],
               disabled: true,
               placeholder: 'Please authenticate first',
-            };
+            }
           }
           if (!account_id) {
             return {
               options: [],
               disabled: true,
               placeholder: 'Please select an account first',
-            };
+            }
           }
 
           const response = await httpClient.sendRequest<Team[]>({
@@ -102,7 +93,7 @@ export const frameRegisterTrigger = ({
               token: auth as unknown as string,
             },
             queryParams: {},
-          });
+          })
 
           try {
             return {
@@ -111,15 +102,15 @@ export const frameRegisterTrigger = ({
                 return {
                   label: team.name,
                   value: team.id,
-                };
+                }
               }),
-            };
+            }
           } catch (error) {
             return {
               options: [],
               disabled: true,
               placeholder: `Couldn't load Teams:\n${error}`,
-            };
+            }
           }
         },
       }),
@@ -139,16 +130,11 @@ export const frameRegisterTrigger = ({
           type: AuthenticationType.BEARER_TOKEN,
           token: context.auth,
         },
-      });
-      await context.store.put<WebhookInformation>(
-        `frame_${name}_trigger`,
-        response.body
-      );
+      })
+      await context.store.put<WebhookInformation>(`frame_${name}_trigger`, response.body)
     },
     async onDisable(context) {
-      const webhook = await context.store.get<WebhookInformation>(
-        `frame_${name}_trigger`
-      );
+      const webhook = await context.store.get<WebhookInformation>(`frame_${name}_trigger`)
       if (webhook != null) {
         const request: HttpRequest = {
           method: HttpMethod.DELETE,
@@ -157,38 +143,38 @@ export const frameRegisterTrigger = ({
             type: AuthenticationType.BEARER_TOKEN,
             token: context.auth,
           },
-        };
-        await httpClient.sendRequest(request);
+        }
+        await httpClient.sendRequest(request)
       }
     },
     async run(context) {
-      return [context.payload.body];
+      return [context.payload.body]
     },
-  });
+  })
 
 interface WebhookInformation {
-  id: string;
-  name: string;
-  project_id: string;
-  app_id: string;
-  account_id: string;
-  team_id: string;
-  team: Team[];
-  url: string;
-  active: boolean;
-  events: string[];
-  secret: string;
-  deleted_at: string;
-  inserted_at: string;
-  updated_at: string;
+  id: string
+  name: string
+  project_id: string
+  app_id: string
+  account_id: string
+  team_id: string
+  team: Team[]
+  url: string
+  active: boolean
+  events: string[]
+  secret: string
+  deleted_at: string
+  inserted_at: string
+  updated_at: string
 }
 
 interface Team {
-  id: string;
-  name: string;
+  id: string
+  name: string
 }
 
 interface Account {
-  id: string;
-  display_name: string;
+  id: string
+  display_name: string
 }

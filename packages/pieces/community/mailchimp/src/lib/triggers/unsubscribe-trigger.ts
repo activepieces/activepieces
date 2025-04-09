@@ -1,15 +1,15 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { mailchimpCommon } from '../common';
-import { MailChimpSubscribeWebhookRequest } from '../common/types';
-import { mailchimpAuth } from '../..';
+import { getAccessTokenOrThrow } from '@activepieces/pieces-common'
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { mailchimpAuth } from '../..'
+import { mailchimpCommon } from '../common'
+import { MailChimpSubscribeWebhookRequest } from '../common/types'
 
-const WEBHOOK_DATA_STORE_KEY = 'mail_chimp_webhook_data';
+const WEBHOOK_DATA_STORE_KEY = 'mail_chimp_webhook_data'
 
 type WebhookData = {
-  id: string;
-  listId: string;
-};
+  id: string
+  listId: string
+}
 
 export const mailChimpUnsubscriberTrigger = createTrigger({
   auth: mailchimpAuth,
@@ -40,11 +40,11 @@ export const mailChimpUnsubscriberTrigger = createTrigger({
   },
 
   async onEnable(context): Promise<void> {
-    const accessToken = getAccessTokenOrThrow(context.auth);
+    const accessToken = getAccessTokenOrThrow(context.auth)
 
-    const server = await mailchimpCommon.getMailChimpServerPrefix(accessToken);
+    const server = await mailchimpCommon.getMailChimpServerPrefix(accessToken)
 
-    console.log(context.webhookUrl);
+    console.log(context.webhookUrl)
 
     const enabledWebhookId = await mailchimpCommon.enableWebhookRequest({
       server,
@@ -52,41 +52,39 @@ export const mailChimpUnsubscriberTrigger = createTrigger({
       token: accessToken,
       webhookUrl: context.webhookUrl!,
       events: { subscribe: true },
-    });
+    })
 
     await context.store?.put<WebhookData>(WEBHOOK_DATA_STORE_KEY, {
       id: enabledWebhookId,
       listId: context.propsValue.list_id!,
-    });
+    })
   },
 
   async onDisable(context): Promise<void> {
-    const webhookData = await context.store?.get<WebhookData>(
-      WEBHOOK_DATA_STORE_KEY
-    );
+    const webhookData = await context.store?.get<WebhookData>(WEBHOOK_DATA_STORE_KEY)
 
     if (webhookData === undefined || webhookData === null) {
-      return;
+      return
     }
 
-    const token = getAccessTokenOrThrow(context.auth);
-    const server = await mailchimpCommon.getMailChimpServerPrefix(token);
+    const token = getAccessTokenOrThrow(context.auth)
+    const server = await mailchimpCommon.getMailChimpServerPrefix(token)
 
     await mailchimpCommon.disableWebhookRequest({
       server,
       token,
       listId: webhookData.listId,
       webhookId: webhookData.id,
-    });
+    })
   },
 
   async run(context): Promise<unknown[]> {
-    const request = context.payload.body as MailChimpSubscribeWebhookRequest;
+    const request = context.payload.body as MailChimpSubscribeWebhookRequest
 
     if (request === undefined) {
-      return [];
+      return []
     }
 
-    return [request];
+    return [request]
   },
-});
+})

@@ -1,8 +1,8 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { wedofAuth } from '../../..';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { wedofCommon } from '../../common/wedof';
-import dayjs from 'dayjs';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { wedofAuth } from '../../..'
+import { wedofCommon } from '../../common/wedof'
 
 export const declareRegistrationFolderIntraining = createAction({
   auth: wedofAuth,
@@ -13,8 +13,7 @@ export const declareRegistrationFolderIntraining = createAction({
   props: {
     externalId: Property.ShortText({
       displayName: 'N° du dossier de formation',
-      description:
-        'Sélectionner la propriété {externalId} du dossier de formation',
+      description: 'Sélectionner la propriété {externalId} du dossier de formation',
       required: true,
     }),
     date: Property.DateTime({
@@ -25,25 +24,19 @@ export const declareRegistrationFolderIntraining = createAction({
   },
   async run(context) {
     const message = {
-      date: context.propsValue.date
-        ? dayjs(context.propsValue.date).format('YYYY-MM-DD')
-        : null,
-    };
+      date: context.propsValue.date ? dayjs(context.propsValue.date).format('YYYY-MM-DD') : null,
+    }
 
     return (
       await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url:
-          wedofCommon.baseUrl +
-          '/registrationFolders/' +
-          context.propsValue.externalId +
-          '/inTraining',
+        url: wedofCommon.baseUrl + '/registrationFolders/' + context.propsValue.externalId + '/inTraining',
         body: message,
         headers: {
           'Content-Type': 'application/json',
           'X-Api-Key': context.auth as string,
         },
       })
-    ).body;
+    ).body
   },
-});
+})

@@ -1,8 +1,8 @@
-import { gristAuth } from '../..';
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { commonProps } from '../common/props';
-import { GristAPIClient } from '../common/helpers';
-import { GristWebhookPayload } from '../common/types';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { gristAuth } from '../..'
+import { GristAPIClient } from '../common/helpers'
+import { commonProps } from '../common/props'
+import { GristWebhookPayload } from '../common/types'
 
 export const gristNewRecordTrigger = createTrigger({
   auth: gristAuth,
@@ -18,14 +18,14 @@ export const gristNewRecordTrigger = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   sampleData: {},
   async onEnable(context) {
-    const documentId = context.propsValue.document_id;
-    const tableId = context.propsValue.table_id;
-    const readinessColumn = context.propsValue.readiness_column;
+    const documentId = context.propsValue.document_id
+    const tableId = context.propsValue.table_id
+    const readinessColumn = context.propsValue.readiness_column
 
     const client = new GristAPIClient({
       domainUrl: context.auth.domain,
       apiKey: context.auth.apiKey,
-    });
+    })
 
     const response = await client.createDocumentWebhook(documentId, {
       webhooks: [
@@ -39,47 +39,44 @@ export const gristNewRecordTrigger = createTrigger({
           },
         },
       ],
-    });
+    })
 
-    await context.store.put<number>(
-      'grist-new-record',
-      response.webhooks[0].id
-    );
+    await context.store.put<number>('grist-new-record', response.webhooks[0].id)
   },
   async onDisable(context) {
-    const documentId = context.propsValue.document_id;
-    const webhookId = await context.store.get<number>('grist-new-record');
+    const documentId = context.propsValue.document_id
+    const webhookId = await context.store.get<number>('grist-new-record')
 
     if (webhookId != null) {
       const client = new GristAPIClient({
         domainUrl: context.auth.domain,
         apiKey: context.auth.apiKey,
-      });
-      await client.deleteDocumentWebhook(documentId, webhookId);
+      })
+      await client.deleteDocumentWebhook(documentId, webhookId)
     }
   },
   async run(context) {
-    const payload = context.payload.body as GristWebhookPayload[];
-    return payload;
+    const payload = context.payload.body as GristWebhookPayload[]
+    return payload
   },
   async test(context) {
-    const documentId = context.propsValue.document_id;
-    const tableId = context.propsValue.table_id;
+    const documentId = context.propsValue.document_id
+    const tableId = context.propsValue.table_id
 
     const client = new GristAPIClient({
       domainUrl: context.auth.domain,
       apiKey: context.auth.apiKey,
-    });
+    })
 
     const response = await client.listRecordsFromTable(documentId, tableId, {
       limit: '10',
-    });
+    })
 
     return response.records.map((record) => {
       return {
         id: record.id,
         ...record.fields,
-      };
-    });
+      }
+    })
   },
-});
+})

@@ -1,6 +1,6 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { trueLayerCommon } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { trueLayerCommon } from '../../common'
 
 export const getPaymentProvider = createAction({
   auth: trueLayerCommon.auth,
@@ -30,7 +30,7 @@ export const getPaymentProvider = createAction({
     }),
   },
   run: async (ctx) => {
-    const response = await  httpClient.sendRequest({
+    const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${trueLayerCommon.baseUrl}/v3/payments-providers/${ctx.propsValue.id}`,
       queryParams: {
@@ -39,6 +39,6 @@ export const getPaymentProvider = createAction({
       },
     })
 
-    return response.body;
+    return response.body
   },
-});
+})

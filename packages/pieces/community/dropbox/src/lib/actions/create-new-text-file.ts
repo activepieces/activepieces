@@ -1,11 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { dropboxAuth } from '../../';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { dropboxAuth } from '../../'
 
 export const dropboxCreateNewTextFile = createAction({
   auth: dropboxAuth,
@@ -49,7 +44,7 @@ export const dropboxCreateNewTextFile = createAction({
       mode: 'add',
       mute: context.propsValue.mute,
       strict_conflict: context.propsValue.strict_conflict,
-    };
+    }
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -63,15 +58,15 @@ export const dropboxCreateNewTextFile = createAction({
         'Dropbox-API-Arg': JSON.stringify(params),
         'Content-Type': 'application/octet-stream',
       },
-    };
+    }
 
-    const result = await httpClient.sendRequest(request);
-    console.debug('Folder creation response', result);
+    const result = await httpClient.sendRequest(request)
+    console.debug('Folder creation response', result)
 
     if (result.status == 200) {
-      return result.body;
+      return result.body
     } else {
-      return result;
+      return result
     }
   },
-});
+})

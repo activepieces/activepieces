@@ -1,13 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  HttpRequest,
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
-  QueryParams,
-} from '@activepieces/pieces-common';
-import { googleContactsCommon } from '../common';
-import { googleContactsAuth } from '../../';
+import { AuthenticationType, HttpMethod, HttpRequest, QueryParams, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { googleContactsAuth } from '../../'
+import { googleContactsCommon } from '../common'
 
 export const googleContactsSearchContactsAction = createAction({
   auth: googleContactsAuth,
@@ -22,8 +16,7 @@ export const googleContactsSearchContactsAction = createAction({
     }),
     readMask: Property.StaticMultiSelectDropdown({
       displayName: 'Read Mask',
-      description:
-        'A field mask to restrict which fields on each person are returned.',
+      description: 'A field mask to restrict which fields on each person are returned.',
       required: true,
       options: {
         options: [
@@ -70,9 +63,9 @@ export const googleContactsSearchContactsAction = createAction({
     const qs: QueryParams = {
       query: context.propsValue['query'],
       readMask: context.propsValue['readMask'].join(','),
-    };
+    }
     if (context.propsValue['pageSize']) {
-      qs['pageSize'] = String(context.propsValue['pageSize']);
+      qs['pageSize'] = String(context.propsValue['pageSize'])
     }
     const request: HttpRequest<Record<string, unknown>> = {
       method: HttpMethod.GET,
@@ -82,7 +75,7 @@ export const googleContactsSearchContactsAction = createAction({
         token: context.auth.access_token,
       },
       queryParams: qs,
-    };
-    return (await httpClient.sendRequest(request)).body;
+    }
+    return (await httpClient.sendRequest(request)).body
   },
-});
+})

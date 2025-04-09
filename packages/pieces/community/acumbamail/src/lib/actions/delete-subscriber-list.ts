@@ -1,12 +1,8 @@
-import {
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
 
-import { acumbamailAuth } from '../../';
-import { acumbamailCommon } from '../common';
+import { acumbamailAuth } from '../../'
+import { acumbamailCommon } from '../common'
 
 export const deleteSubscriberListAction = createAction({
   auth: acumbamailAuth,
@@ -17,15 +13,15 @@ export const deleteSubscriberListAction = createAction({
     listId: acumbamailCommon.listId,
   },
   async run(context) {
-    const { listId } = context.propsValue;
+    const { listId } = context.propsValue
 
     const request: HttpRequest = {
       method: HttpMethod.DELETE,
       url: acumbamailCommon.baseUrl + '/deleteList/',
       queryParams: { auth_token: context.auth, list_id: listId.toString() },
-    };
+    }
 
-    const res = await httpClient.sendRequest(request);
-    return res.body;
+    const res = await httpClient.sendRequest(request)
+    return res.body
   },
-});
+})

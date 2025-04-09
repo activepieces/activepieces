@@ -1,6 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { shopifyAuth } from '../..';
-import { getFulfillment } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { shopifyAuth } from '../..'
+import { getFulfillment } from '../common'
 
 export const getFulfillmentAction = createAction({
   auth: shopifyAuth,
@@ -20,8 +20,8 @@ export const getFulfillmentAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { orderId, fulfillmentId } = propsValue;
+    const { orderId, fulfillmentId } = propsValue
 
-    return await getFulfillment(fulfillmentId, orderId, auth);
+    return await getFulfillment(fulfillmentId, orderId, auth)
   },
-});
+})

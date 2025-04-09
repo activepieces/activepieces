@@ -1,11 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { excelCommon } from '../common/common';
-import { excelAuth } from '../../index';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { excelAuth } from '../../index'
+import { excelCommon } from '../common/common'
 
 export const getWorksheetRowsAction = createAction({
   auth: excelAuth,
@@ -32,18 +28,18 @@ export const getWorksheetRowsAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const workbookId = propsValue['workbook_id'];
-    const worksheetId = propsValue['worksheet_id'];
-    const range = propsValue['range'];
-    const headerRow = propsValue['headerRow'];
-    const firstDataRow = propsValue['firstDataRow'];
+    const workbookId = propsValue['workbook_id']
+    const worksheetId = propsValue['worksheet_id']
+    const range = propsValue['range']
+    const headerRow = propsValue['headerRow']
+    const firstDataRow = propsValue['firstDataRow']
 
-    let url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/`;
+    let url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/`
 
     if (!range) {
-      url += 'usedRange(valuesOnly=true)';
+      url += 'usedRange(valuesOnly=true)'
     } else {
-      url += `range(address = '${range}')`;
+      url += `range(address = '${range}')`
     }
 
     const response = await httpClient.sendRequest({
@@ -53,21 +49,19 @@ export const getWorksheetRowsAction = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: auth['access_token'],
       },
-    });
+    })
 
-    const rows = response.body['values'];
+    const rows = response.body['values']
     if (headerRow && firstDataRow) {
       return rows.slice(firstDataRow - 1).map((row: any[]) => {
-        const obj: { [key: string]: any } = {};
-        rows[headerRow - 1].forEach(
-          (header: any, colIndex: string | number) => {
-            obj[String(header)] = row[Number(colIndex)];
-          }
-        );
-        return obj;
-      });
+        const obj: { [key: string]: any } = {}
+        rows[headerRow - 1].forEach((header: any, colIndex: string | number) => {
+          obj[String(header)] = row[Number(colIndex)]
+        })
+        return obj
+      })
     }
 
-    return rows;
+    return rows
   },
-});
+})

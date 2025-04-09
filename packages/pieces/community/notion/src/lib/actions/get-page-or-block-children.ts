@@ -1,13 +1,8 @@
-import {
-  createAction,
-  DynamicPropsValue,
-  OAuth2PropertyValue,
-  Property,
-} from '@activepieces/pieces-framework';
-import { NotionToMarkdown } from 'notion-to-md';
-import { notionAuth } from '../..';
-import { Client, collectPaginatedAPI, isFullBlock } from '@notionhq/client';
-import { PartialBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints';
+import { DynamicPropsValue, OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { Client, collectPaginatedAPI, isFullBlock } from '@notionhq/client'
+import { PartialBlockObjectResponse } from '@notionhq/client/build/src/api-endpoints'
+import { NotionToMarkdown } from 'notion-to-md'
+import { notionAuth } from '../..'
 
 export const getPageOrBlockChildren = createAction({
   auth: notionAuth,
@@ -31,7 +26,7 @@ export const getPageOrBlockChildren = createAction({
       required: true,
       props: async ({ markdown }) => {
         if (markdown) {
-          return {};
+          return {}
         }
         const fields: DynamicPropsValue = {
           depth: Property.Number({
@@ -40,8 +35,8 @@ export const getPageOrBlockChildren = createAction({
             required: true,
             defaultValue: 1,
           }),
-        };
-        return fields;
+        }
+        return fields
       },
     }),
   },
@@ -49,59 +44,42 @@ export const getPageOrBlockChildren = createAction({
     const notion = new Client({
       auth: (context.auth as OAuth2PropertyValue).access_token,
       notionVersion: '2022-02-22',
-    });
+    })
 
     if (context.propsValue.markdown) {
       const n2m = new NotionToMarkdown({
         notionClient: notion,
         config: { parseChildPages: false },
-      });
-      return n2m.toMarkdownString(
-        await n2m.pageToMarkdown(context.propsValue.parentId)
-      ).parent;
+      })
+      return n2m.toMarkdownString(await n2m.pageToMarkdown(context.propsValue.parentId)).parent
     } else {
-      return getBlockChildrenRecursively(
-        notion,
-        context.propsValue.parentId,
-        context.propsValue.dynamic['depth'],
-        0
-      );
+      return getBlockChildrenRecursively(notion, context.propsValue.parentId, context.propsValue.dynamic['depth'], 0)
     }
   },
-});
+})
 
-async function getBlockChildrenRecursively(
-  notion: Client,
-  blockId: string,
-  depth: number,
-  currentDepth = 0
-) {
+async function getBlockChildrenRecursively(notion: Client, blockId: string, depth: number, currentDepth = 0) {
   if (currentDepth >= depth) {
-    return [];
+    return []
   }
 
   // Retrieve the block's children
   const children = await collectPaginatedAPI(notion.blocks.children.list, {
     block_id: blockId,
-  });
+  })
 
   // Recursively retrieve children of each child block
   for (const child of children) {
     if (!isFullBlock(child) || !child.has_children) {
-      continue;
+      continue
     }
-    const childChildren = await getBlockChildrenRecursively(
-      notion,
-      child.id,
-      depth,
-      currentDepth + 1
-    );
-    (child as BlockObjectResponseWithChildren).children = childChildren;
+    const childChildren = await getBlockChildrenRecursively(notion, child.id, depth, currentDepth + 1)
+    ;(child as BlockObjectResponseWithChildren).children = childChildren
   }
 
-  return children;
+  return children
 }
 
 type BlockObjectResponseWithChildren = PartialBlockObjectResponse & {
-  children?: BlockObjectResponseWithChildren[];
-};
+  children?: BlockObjectResponseWithChildren[]
+}

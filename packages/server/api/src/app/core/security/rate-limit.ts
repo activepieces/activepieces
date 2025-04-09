@@ -6,32 +6,27 @@ import { Redis } from 'ioredis'
 import { createRedisClient } from '../../database/redis-connection'
 import { QueueMode, system } from '../../helper/system/system'
 
-const API_RATE_LIMIT_AUTHN_ENABLED = system.getBoolean(
-    AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED,
-)
+const API_RATE_LIMIT_AUTHN_ENABLED = system.getBoolean(AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED)
 
-export const rateLimitModule: FastifyPluginAsyncTypebox = FastifyPlugin(
-    async (app) => {
-        if (API_RATE_LIMIT_AUTHN_ENABLED) {
-            await app.register(RateLimitPlugin, {
-                global: false,
-                keyGenerator: (req) => networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-                redis: getRedisClient(),
-            })
-        }
-    },
-)
+export const rateLimitModule: FastifyPluginAsyncTypebox = FastifyPlugin(async (app) => {
+  if (API_RATE_LIMIT_AUTHN_ENABLED) {
+    await app.register(RateLimitPlugin, {
+      global: false,
+      keyGenerator: (req) => networkUtils.extractClientRealIp(req, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
+      redis: getRedisClient(),
+    })
+  }
+})
 
 const getRedisClient = (): Redis | undefined => {
-    const redisIsNotConfigured =
-    system.get<QueueMode>(AppSystemProp.QUEUE_MODE) !== QueueMode.REDIS
+  const redisIsNotConfigured = system.get<QueueMode>(AppSystemProp.QUEUE_MODE) !== QueueMode.REDIS
 
-    if (redisIsNotConfigured) {
-        return undefined
-    }
+  if (redisIsNotConfigured) {
+    return undefined
+  }
 
-    return createRedisClient({
-        connectTimeout: 500,
-        maxRetriesPerRequest: 1,
-    })
+  return createRedisClient({
+    connectTimeout: 500,
+    maxRetriesPerRequest: 1,
+  })
 }

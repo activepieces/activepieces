@@ -1,7 +1,7 @@
-import { notionAuth } from '../../';
-import { createAction } from '@activepieces/pieces-framework';
-import { notionCommon } from '../common';
-import { Client } from '@notionhq/client';
+import { createAction } from '@activepieces/pieces-framework'
+import { Client } from '@notionhq/client'
+import { notionAuth } from '../../'
+import { notionCommon } from '../common'
 
 export const findDatabaseItem = createAction({
   auth: notionAuth,
@@ -13,66 +13,66 @@ export const findDatabaseItem = createAction({
     filterDatabaseFields: notionCommon.filterDatabaseFields,
   },
   async run(context) {
-    const databaseId = context.propsValue.database_id;
-    const filterFields = context.propsValue.filterDatabaseFields;
+    const databaseId = context.propsValue.database_id
+    const filterFields = context.propsValue.filterDatabaseFields
 
     const notion = new Client({
       auth: context.auth.access_token,
       notionVersion: '2022-02-22',
-    });
+    })
 
     const { properties } = await notion.databases.retrieve({
       database_id: databaseId as string,
-    });
+    })
 
-    const filterArray = [];
+    const filterArray = []
 
     for (const fieldKey in filterFields) {
-      const fieldValue = filterFields[fieldKey];
-      const fieldType = properties[fieldKey].type;
+      const fieldValue = filterFields[fieldKey]
+      const fieldType = properties[fieldKey].type
       if (fieldValue === '' || fieldValue === undefined) {
-        continue;
+        continue
       }
       switch (fieldType) {
         case 'number':
           filterArray.push({
             property: fieldKey,
             number: { equals: Number(fieldValue) },
-          });
-          break;
+          })
+          break
         case 'rich_text':
           filterArray.push({
             property: fieldKey,
             rich_text: { equals: fieldValue },
-          });
-          break;
+          })
+          break
         case 'email':
           filterArray.push({
             property: fieldKey,
             email: { equals: fieldValue },
-          });
-          break;
+          })
+          break
         case 'select':
           filterArray.push({
             property: fieldKey,
             select: { equals: fieldValue },
-          });
-          break;
+          })
+          break
         case 'phone_number':
           filterArray.push({
             property: fieldKey,
             phone_number: { equals: fieldValue },
-          });
-          break;
+          })
+          break
         case 'url':
-          filterArray.push({ property: fieldKey, url: { equals: fieldValue } });
-          break;
+          filterArray.push({ property: fieldKey, url: { equals: fieldValue } })
+          break
         case 'title':
           filterArray.push({
             property: fieldKey,
             title: { equals: fieldValue },
-          });
-          break;
+          })
+          break
       }
     }
 
@@ -81,11 +81,11 @@ export const findDatabaseItem = createAction({
       filter: {
         and: filterArray,
       },
-    });
+    })
 
     return {
       success: results.length > 0,
       results,
-    };
+    }
   },
-});
+})

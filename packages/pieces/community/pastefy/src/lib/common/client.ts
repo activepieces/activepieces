@@ -5,7 +5,8 @@ import {
   HttpMethod,
   QueryParams,
   httpClient,
-} from '@activepieces/pieces-common';
+} from '@activepieces/pieces-common'
+import { ActionResponse, prepareQueryRequest } from './models/common'
 import {
   Folder,
   FolderCreateRequest,
@@ -13,8 +14,7 @@ import {
   FolderGetRequest,
   FolderHierarchy,
   FolderListRequest,
-} from './models/folder';
-import { ActionResponse, prepareQueryRequest } from './models/common';
+} from './models/folder'
 import {
   Paste,
   PasteCreateRequest,
@@ -22,65 +22,55 @@ import {
   PasteEditRequest,
   PasteListRequest,
   PasteShareRequest,
-} from './models/paste';
+} from './models/paste'
 
 function ensureSuccessfulResponse<T extends ActionResponse>(res: T): T {
   if (!res.success) {
-    throw 'Request failed';
+    throw 'Request failed'
   }
-  return res;
+  return res
 }
 
 export class PastefyClient {
   constructor(
     private apiKey?: string,
-    private instanceUrl = 'https://pastefy.app'
+    private instanceUrl = 'https://pastefy.app',
   ) {}
 
   async makeRequest<T extends HttpMessageBody>(
     method: HttpMethod,
     url: string,
     query?: QueryParams,
-    body?: object
+    body?: object,
   ): Promise<T> {
     const authentication: Authentication | undefined = this.apiKey
       ? {
           type: AuthenticationType.BEARER_TOKEN,
           token: this.apiKey,
         }
-      : undefined;
+      : undefined
     const res = await httpClient.sendRequest<T>({
       method,
       url: this.instanceUrl + '/api/v2' + url,
       queryParams: query,
       body,
       authentication,
-    });
-    return res.body;
+    })
+    return res.body
   }
 
-  async createFolder(
-    request: FolderCreateRequest
-  ): Promise<FolderCreateResponse> {
+  async createFolder(request: FolderCreateRequest): Promise<FolderCreateResponse> {
     return ensureSuccessfulResponse<FolderCreateResponse>(
-      await this.makeRequest(HttpMethod.POST, '/folder', undefined, request)
-    );
+      await this.makeRequest(HttpMethod.POST, '/folder', undefined, request),
+    )
   }
 
   async listFolders(request: FolderListRequest): Promise<Folder[]> {
-    return await this.makeRequest(
-      HttpMethod.GET,
-      '/folder',
-      prepareQueryRequest(request)
-    );
+    return await this.makeRequest(HttpMethod.GET, '/folder', prepareQueryRequest(request))
   }
 
   async getFolder(id: string, request?: FolderGetRequest): Promise<Folder> {
-    return await this.makeRequest(
-      HttpMethod.GET,
-      '/folder/' + id,
-      prepareQueryRequest(request)
-    );
+    return await this.makeRequest(HttpMethod.GET, '/folder/' + id, prepareQueryRequest(request))
   }
 
   async getFolderHierarchy(parentId?: string): Promise<FolderHierarchy[]> {
@@ -89,68 +79,47 @@ export class PastefyClient {
       filter: {
         parent: parentId || 'null',
       },
-    });
-    const hierarchies: FolderHierarchy[] = [];
+    })
+    const hierarchies: FolderHierarchy[] = []
     for (const folder of folders) {
       hierarchies.push({
         id: folder.id,
         name: folder.name,
         children: await this.getFolderHierarchy(folder.id),
-      });
+      })
     }
-    return hierarchies;
+    return hierarchies
   }
 
   async deleteFolder(id: string): Promise<ActionResponse> {
-    return ensureSuccessfulResponse(
-      await this.makeRequest(HttpMethod.DELETE, '/folder/' + id)
-    );
+    return ensureSuccessfulResponse(await this.makeRequest(HttpMethod.DELETE, '/folder/' + id))
   }
 
   async createPaste(request: PasteCreateRequest): Promise<PasteCreateResponse> {
     return ensureSuccessfulResponse<PasteCreateResponse>(
-      await this.makeRequest(HttpMethod.POST, '/paste', undefined, request)
-    );
+      await this.makeRequest(HttpMethod.POST, '/paste', undefined, request),
+    )
   }
 
   async listPastes(request: PasteListRequest): Promise<Paste[]> {
-    return await this.makeRequest(
-      HttpMethod.GET,
-      '/paste',
-      prepareQueryRequest(request)
-    );
+    return await this.makeRequest(HttpMethod.GET, '/paste', prepareQueryRequest(request))
   }
 
   async getPaste(id: string): Promise<Paste> {
-    return await this.makeRequest(HttpMethod.GET, '/paste/' + id);
+    return await this.makeRequest(HttpMethod.GET, '/paste/' + id)
   }
 
-  async editPaste(
-    id: string,
-    request: PasteEditRequest
-  ): Promise<ActionResponse> {
-    return ensureSuccessfulResponse(
-      await this.makeRequest(HttpMethod.PUT, '/paste/' + id, undefined, request)
-    );
+  async editPaste(id: string, request: PasteEditRequest): Promise<ActionResponse> {
+    return ensureSuccessfulResponse(await this.makeRequest(HttpMethod.PUT, '/paste/' + id, undefined, request))
   }
 
   async deletePaste(id: string): Promise<ActionResponse> {
-    return ensureSuccessfulResponse(
-      await this.makeRequest(HttpMethod.DELETE, '/paste/' + id)
-    );
+    return ensureSuccessfulResponse(await this.makeRequest(HttpMethod.DELETE, '/paste/' + id))
   }
 
-  async sharePaste(
-    id: string,
-    request: PasteShareRequest
-  ): Promise<ActionResponse> {
+  async sharePaste(id: string, request: PasteShareRequest): Promise<ActionResponse> {
     return ensureSuccessfulResponse(
-      await this.makeRequest(
-        HttpMethod.POST,
-        '/paste/' + id + '/friend',
-        undefined,
-        request
-      )
-    );
+      await this.makeRequest(HttpMethod.POST, '/paste/' + id + '/friend', undefined, request),
+    )
   }
 }

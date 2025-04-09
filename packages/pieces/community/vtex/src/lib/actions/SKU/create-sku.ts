@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { Sku } from '../../common/SKU';
-import { Replace } from '../../common/types';
-import { vtexAuth } from '../../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { vtexAuth } from '../../..'
+import { Sku } from '../../common/SKU'
+import { Replace } from '../../common/types'
 
 export const createSku = createAction({
   auth: vtexAuth,
@@ -50,8 +50,8 @@ export const createSku = createAction({
     }),
   },
   async run(context) {
-    const { hostUrl, appKey, appToken } = context.auth;
-    const sku = new Sku(hostUrl, appKey, appToken);
+    const { hostUrl, appKey, appToken } = context.auth
+    const sku = new Sku(hostUrl, appKey, appToken)
 
     return await sku.createSku({
       ProductId: context.propsValue.ProductId,
@@ -63,6 +63,6 @@ export const createSku = createAction({
       IsActive: context.propsValue.IsActive,
       IsKit: context.propsValue.IsKit,
       Id: context.propsValue.Id,
-    });
+    })
   },
-});
+})

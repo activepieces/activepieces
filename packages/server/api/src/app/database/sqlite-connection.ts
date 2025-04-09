@@ -94,149 +94,148 @@ import { AddMCPSqlite1743127177235 } from './migration/sqlite/1743127177235-AddM
 import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744104496262 } from './migration/sqlite/1744104496262-AddRecordIndexForTableIdAndProjectIdAndRecordId'
 
 const getSqliteDatabaseFilePath = (): string => {
-    const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
-    mkdirSync(apConfigDirectoryPath, { recursive: true })
-    return path.resolve(path.join(apConfigDirectoryPath, 'database.sqlite'))
+  const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
+  mkdirSync(apConfigDirectoryPath, { recursive: true })
+  return path.resolve(path.join(apConfigDirectoryPath, 'database.sqlite'))
 }
 
 const getSqliteDatabaseInMemory = (): string => {
-    return ':memory:'
+  return ':memory:'
 }
 
 const getSqliteDatabase = (): string => {
-    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
+  const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 
-    if (env === ApEnvironment.TESTING) {
-        return getSqliteDatabaseInMemory()
-    }
-    return getSqliteDatabaseFilePath()
+  if (env === ApEnvironment.TESTING) {
+    return getSqliteDatabaseInMemory()
+  }
+  return getSqliteDatabaseFilePath()
 }
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
-    const communityMigrations = [
-        InitialSql3Migration1690195839899,
-        AddAppConnectionTypeToTopLevel1691706020626,
-        AddTagsToRunSqlite1692056190942,
-        AddStepFileSqlite1692958076906,
-        AddStatusToConnectionsSqlite1693402376520,
-        AddImageUrlAndTitleToUser1693774053027,
-        AddChatBotSqlite1696029443045,
-        FileTypeCompression1694695212159,
-        AddPieceTypeAndPackageTypeToPieceMetadata1696016228398,
-        AddPieceTypeAndPackageTypeToFlowVersion1696245170061,
-        AddArchiveIdToPieceMetadata1696956123632,
-        StoreCodeInsideFlow1697969398200,
-        AddPlatformToProject1698078715730,
-        AddTerminationReasonSqlite1698323327318,
-        AddExternalIdSqlite1698857968495,
-        UpdateUserStatusRenameShadowToInvited1699818680567,
-        AddPlatformIdToUserSqlite1700147448410,
-        AddPlatformIdToPieceMetadataSqlite1700524446967,
-        AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822,
-        AddPlatformIdToFileSqlite1701808264444,
-        RemoveFlowInstanceSqlite1702412280963,
-        UpdateStatusInUserSqlite1703713027818,
-        RenameAppNameToPieceNameSqlite1703713475755,
-        AddVerifiedAndChangeStatusSqlite1703768553820,
-        AddTriggerTestStrategy1707087022764,
-        AddCategoriesToPieceMetadata1707229986819,
-        AddUniqueStoreConstraint1708527446535,
-        CreateDefaultPlaformSqlite1709051625110,
-        MigrateWebhook1709581196563,
-        AddPlatformForeignKeyToProjectSqlite1709566629593,
-        AddAuthorsToPieces1710098009544,
-        AddDeletedToProjectSqlite1710248182409,
-        AddMissingInputUiInfoSqlite1711412511624,
-        AddProjectUsageColumnToPieceSqlite1711768479150,
-        AddTagsToPiecesSqlite1712180673961,
-        RemoveUniqueEmailOnUser1713222892743,
-        AddPlatformRole1713271221154,
-        AddUniqueNameToFolderSqlite1713645171373,
-        AddFeatureFlagsToPlatform1714137103728,
-        AddIssueEntitySqlite1714900626443,
-        RemoveShowActivityLog1716105958530,
-        AddDurationForRuns1716725027424,
-        AddAlertsEntitySqlite1717239613259,
-        AddUserInvitationSqlite1717943564437,
-        AddPremiumPiecesColumnSqlite1717443603235,
-        AddWorkerMachineSqlite1720100928449,
-        ChangeEventRoutingConstraint1723549873495,
-        AddAnalyticsToPlatformSqlite1725151368300,
-        RemoveUniqueConstraintOnStepFile1725570317713,
-        LogFileRelationWithFlowRunSqlite1725637505836,
-        AddLogsFileIdIndexSqlite1725699920020,
-        AddAiProviderSqlite1726446345221,
-        SupportS3FilesSqlite1726363932745,
-        AddUserSessionId1727130193726,
-        RemovePremiumPiecesSqlite1727865697005,
-        AddLicenseKeyIntoPlatform1728827704109,
-        UpdatePlaformInSqlite1729330108485,
-        ChangeProjectUniqueConstraintToPartialIndex1729098769827,
-        MigrateSMTPInPlatformSqlite1729601402320,
-        AddPinnedPiecesSqlite1729774033945,
-        AddConnectionOwnerSqlite1730121414658,
-        AppConnectionsSetNullSqlite1730627777709,
-        AddFlowSchemaVersionSqlite1730760312426,
-        SwitchToRouter1731019013340,
-        StoreTriggerEventsInFileSqlite1731247180217,
-        CreateProjectRoleTableSqlite1732482844483,
-        MigrateConnectionNamesSqlite1731443310900,
-        AddGlobalConnectionsAndRbacForPlatformSqlite1731604290560,
-        AddIndiciesToTriggerEventSqlite1732324359348,
-        AddIndiciesToRunSqlite1732324481815,
-        AddProjectRelationInUserInvitationSqlite1732791068873,
-        TablesProductSqlite1734354249984,
-        RemoveWorkerTypeSqlite1734439194575,
-        FieldAndRecordAndCellProjectId1734967659746,
-        AddCellUniqueIndex1735057433052,
-        TableWebhooksSqlite1737550783153,
-        AddCopilotSettingsSqlite1734479435668,
-        AddExternalIdForFlowSqlite1735262810939,
-        AddUserIdentitySqlite1735602676499,
-        RestrictPiecesSqlite1739544872722,
-        TableWebhooksIsArraySqlite1741668828922,
-        AddDataColumnToFieldEntity1742390870702,
-        AddManualTaskTable1742304913465,
-        ChangeManualTasksToTodoSqlite1742432169253,
-        AddMCPSqlite1743127177235,
-        RenameApprovalUrlToResolveUrl1742991301509,
-        AddRecordIndexForTableIdAndProjectIdAndRecordId1744104496262,
-    ]
-    const edition = system.getEdition()
-    if (edition !== ApEdition.COMMUNITY) {
-        throw new Error(`Edition ${edition} not supported in sqlite3 mode`)
-    }
-    return communityMigrations
+  const communityMigrations = [
+    InitialSql3Migration1690195839899,
+    AddAppConnectionTypeToTopLevel1691706020626,
+    AddTagsToRunSqlite1692056190942,
+    AddStepFileSqlite1692958076906,
+    AddStatusToConnectionsSqlite1693402376520,
+    AddImageUrlAndTitleToUser1693774053027,
+    AddChatBotSqlite1696029443045,
+    FileTypeCompression1694695212159,
+    AddPieceTypeAndPackageTypeToPieceMetadata1696016228398,
+    AddPieceTypeAndPackageTypeToFlowVersion1696245170061,
+    AddArchiveIdToPieceMetadata1696956123632,
+    StoreCodeInsideFlow1697969398200,
+    AddPlatformToProject1698078715730,
+    AddTerminationReasonSqlite1698323327318,
+    AddExternalIdSqlite1698857968495,
+    UpdateUserStatusRenameShadowToInvited1699818680567,
+    AddPlatformIdToUserSqlite1700147448410,
+    AddPlatformIdToPieceMetadataSqlite1700524446967,
+    AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822,
+    AddPlatformIdToFileSqlite1701808264444,
+    RemoveFlowInstanceSqlite1702412280963,
+    UpdateStatusInUserSqlite1703713027818,
+    RenameAppNameToPieceNameSqlite1703713475755,
+    AddVerifiedAndChangeStatusSqlite1703768553820,
+    AddTriggerTestStrategy1707087022764,
+    AddCategoriesToPieceMetadata1707229986819,
+    AddUniqueStoreConstraint1708527446535,
+    CreateDefaultPlaformSqlite1709051625110,
+    MigrateWebhook1709581196563,
+    AddPlatformForeignKeyToProjectSqlite1709566629593,
+    AddAuthorsToPieces1710098009544,
+    AddDeletedToProjectSqlite1710248182409,
+    AddMissingInputUiInfoSqlite1711412511624,
+    AddProjectUsageColumnToPieceSqlite1711768479150,
+    AddTagsToPiecesSqlite1712180673961,
+    RemoveUniqueEmailOnUser1713222892743,
+    AddPlatformRole1713271221154,
+    AddUniqueNameToFolderSqlite1713645171373,
+    AddFeatureFlagsToPlatform1714137103728,
+    AddIssueEntitySqlite1714900626443,
+    RemoveShowActivityLog1716105958530,
+    AddDurationForRuns1716725027424,
+    AddAlertsEntitySqlite1717239613259,
+    AddUserInvitationSqlite1717943564437,
+    AddPremiumPiecesColumnSqlite1717443603235,
+    AddWorkerMachineSqlite1720100928449,
+    ChangeEventRoutingConstraint1723549873495,
+    AddAnalyticsToPlatformSqlite1725151368300,
+    RemoveUniqueConstraintOnStepFile1725570317713,
+    LogFileRelationWithFlowRunSqlite1725637505836,
+    AddLogsFileIdIndexSqlite1725699920020,
+    AddAiProviderSqlite1726446345221,
+    SupportS3FilesSqlite1726363932745,
+    AddUserSessionId1727130193726,
+    RemovePremiumPiecesSqlite1727865697005,
+    AddLicenseKeyIntoPlatform1728827704109,
+    UpdatePlaformInSqlite1729330108485,
+    ChangeProjectUniqueConstraintToPartialIndex1729098769827,
+    MigrateSMTPInPlatformSqlite1729601402320,
+    AddPinnedPiecesSqlite1729774033945,
+    AddConnectionOwnerSqlite1730121414658,
+    AppConnectionsSetNullSqlite1730627777709,
+    AddFlowSchemaVersionSqlite1730760312426,
+    SwitchToRouter1731019013340,
+    StoreTriggerEventsInFileSqlite1731247180217,
+    CreateProjectRoleTableSqlite1732482844483,
+    MigrateConnectionNamesSqlite1731443310900,
+    AddGlobalConnectionsAndRbacForPlatformSqlite1731604290560,
+    AddIndiciesToTriggerEventSqlite1732324359348,
+    AddIndiciesToRunSqlite1732324481815,
+    AddProjectRelationInUserInvitationSqlite1732791068873,
+    TablesProductSqlite1734354249984,
+    RemoveWorkerTypeSqlite1734439194575,
+    FieldAndRecordAndCellProjectId1734967659746,
+    AddCellUniqueIndex1735057433052,
+    TableWebhooksSqlite1737550783153,
+    AddCopilotSettingsSqlite1734479435668,
+    AddExternalIdForFlowSqlite1735262810939,
+    AddUserIdentitySqlite1735602676499,
+    RestrictPiecesSqlite1739544872722,
+    TableWebhooksIsArraySqlite1741668828922,
+    AddDataColumnToFieldEntity1742390870702,
+    AddManualTaskTable1742304913465,
+    ChangeManualTasksToTodoSqlite1742432169253,
+    AddMCPSqlite1743127177235,
+    RenameApprovalUrlToResolveUrl1742991301509,
+    AddRecordIndexForTableIdAndProjectIdAndRecordId1744104496262,
+  ]
+  const edition = system.getEdition()
+  if (edition !== ApEdition.COMMUNITY) {
+    throw new Error(`Edition ${edition} not supported in sqlite3 mode`)
+  }
+  return communityMigrations
 }
 
 const getMigrationConfig = (): MigrationConfig => {
-    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
+  const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 
-    if (env === ApEnvironment.TESTING) {
-        return {}
-    }
+  if (env === ApEnvironment.TESTING) {
+    return {}
+  }
 
-    return {
-        migrationsRun: true,
-        migrationsTransactionMode: 'each',
-        migrations: getMigrations(),
-    }
+  return {
+    migrationsRun: true,
+    migrationsTransactionMode: 'each',
+    migrations: getMigrations(),
+  }
 }
 
 export const createSqlLiteDataSource = (): DataSource => {
-    const migrationConfig = getMigrationConfig()
+  const migrationConfig = getMigrationConfig()
 
-    return new DataSource({
-        type: 'sqlite',
-        database: getSqliteDatabase(),
-        ...migrationConfig,
-        ...commonProperties,
-    })
+  return new DataSource({
+    type: 'sqlite',
+    database: getSqliteDatabase(),
+    ...migrationConfig,
+    ...commonProperties,
+  })
 }
 
 type MigrationConfig = {
-    migrationsRun?: boolean
-    migrationsTransactionMode?: 'all' | 'none' | 'each'
-    migrations?: (new () => MigrationInterface)[]
+  migrationsRun?: boolean
+  migrationsTransactionMode?: 'all' | 'none' | 'each'
+  migrations?: (new () => MigrationInterface)[]
 }
-

@@ -1,26 +1,26 @@
-import { endClient, sftpAuth } from '../../index';
-import { Property, createAction } from '@activepieces/pieces-framework';
-import Client from 'ssh2-sftp-client';
-import { Client as FTPClient } from 'basic-ftp';
-import { getClient, getProtocolBackwardCompatibility } from '../..';
-import { Writable } from 'stream';
+import { Writable } from 'stream'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { Client as FTPClient } from 'basic-ftp'
+import Client from 'ssh2-sftp-client'
+import { getClient, getProtocolBackwardCompatibility } from '../..'
+import { endClient, sftpAuth } from '../../index'
 
 async function readFTP(client: FTPClient, filePath: string) {
-  const chunks: Buffer[] = [];
+  const chunks: Buffer[] = []
   const writeStream = new Writable({
     write(chunk: Buffer, _encoding: string, callback: () => void) {
-      chunks.push(chunk);
-      callback();
-    }
-  });
-  await client.downloadTo(writeStream, filePath);
-  return Buffer.concat(chunks);
+      chunks.push(chunk)
+      callback()
+    },
+  })
+  await client.downloadTo(writeStream, filePath)
+  return Buffer.concat(chunks)
 }
 
 async function readSFTP(client: Client, filePath: string) {
-  const fileContent = await client.get(filePath);
-  await client.end();
-  return fileContent as Buffer;
+  const fileContent = await client.get(filePath)
+  await client.end()
+  return fileContent as Buffer
 }
 
 export const readFileContent = createAction({
@@ -35,21 +35,21 @@ export const readFileContent = createAction({
     }),
   },
   async run(context) {
-    const client = await getClient(context.auth);
-    const filePath = context.propsValue['filePath'];
-    const fileName = filePath.split('/').pop() ?? filePath;
-    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol);
+    const client = await getClient(context.auth)
+    const filePath = context.propsValue['filePath']
+    const fileName = filePath.split('/').pop() ?? filePath
+    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol)
     try {
-      let fileContent: Buffer;
+      let fileContent: Buffer
       switch (protocolBackwardCompatibility) {
         case 'ftps':
         case 'ftp':
-          fileContent = await readFTP(client as FTPClient, filePath);
-          break;
+          fileContent = await readFTP(client as FTPClient, filePath)
+          break
         default:
         case 'sftp':
-          fileContent = await readSFTP(client as Client, filePath);
-          break;
+          fileContent = await readSFTP(client as Client, filePath)
+          break
       }
 
       return {
@@ -57,14 +57,14 @@ export const readFileContent = createAction({
           fileName: fileName,
           data: fileContent,
         }),
-      };
+      }
     } catch (err) {
       return {
         success: false,
         error: err,
-      };
+      }
     } finally {
-      await endClient(client, context.auth.protocol);
+      await endClient(client, context.auth.protocol)
     }
   },
-});
+})

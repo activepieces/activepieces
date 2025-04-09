@@ -1,4 +1,4 @@
-import { createShopifyWebhookTrigger } from '../common/register-webhook';
+import { createShopifyWebhookTrigger } from '../common/register-webhook'
 
 export const newCustomer = createShopifyWebhookTrigger({
   name: 'new_customer',
@@ -78,4 +78,4 @@ export const newCustomer = createShopifyWebhookTrigger({
       default: true,
     },
   },
-});
+})

@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { saveDepot } from '../api';
-import { cmsAuth } from '../auth';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { saveDepot } from '../api'
+import { cmsAuth } from '../auth'
 
 export const saveDepotAction = createAction({
   name: 'save_depot',
@@ -20,11 +20,11 @@ export const saveDepotAction = createAction({
     }),
   },
   async run(context) {
-    const slug = context.propsValue.slug;
+    const slug = context.propsValue.slug
     const file = {
       filename: context.propsValue.file.filename,
       base64: context.propsValue.file.base64,
-    };
-    return await saveDepot(context.auth, slug, file);
+    }
+    return await saveDepot(context.auth, slug, file)
   },
-});
+})

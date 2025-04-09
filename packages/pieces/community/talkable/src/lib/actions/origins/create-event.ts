@@ -1,9 +1,6 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { talkableAuth } from '../../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { talkableAuth } from '../../..'
 
 export const createEvent = createAction({
   name: 'create_event', // Must be a unique across the piece, this shouldn't be changed.
@@ -114,7 +111,7 @@ export const createEvent = createAction({
     }),
     items: Property.Json({
       displayName: 'Items',
-      description: "You can pass items with event",
+      description: 'You can pass items with event',
       required: false,
       defaultValue: [
         { price: 10, quantity: 1, product_id: 'SKU1' },
@@ -123,21 +120,20 @@ export const createEvent = createAction({
     }),
   },
   async run(context) {
-    const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
-    const { site, api_key } = context.auth;
-    const createEventResponse = await httpClient
-      .sendRequest<string[]>({
-        method: HttpMethod.POST,
-        url: `${TALKABLE_API_URL}/origins/event`,
-        headers: {
-          Authorization: `Bearer ${api_key}`,
-          'Content-Type': 'application/json',
-        },
-        body: {
-          site_slug: site,
-          data: context.propsValue,
-        },
-      });
-    return createEventResponse.body;
+    const TALKABLE_API_URL = 'https://www.talkable.com/api/v2'
+    const { site, api_key } = context.auth
+    const createEventResponse = await httpClient.sendRequest<string[]>({
+      method: HttpMethod.POST,
+      url: `${TALKABLE_API_URL}/origins/event`,
+      headers: {
+        Authorization: `Bearer ${api_key}`,
+        'Content-Type': 'application/json',
+      },
+      body: {
+        site_slug: site,
+        data: context.propsValue,
+      },
+    })
+    return createEventResponse.body
   },
-});
+})

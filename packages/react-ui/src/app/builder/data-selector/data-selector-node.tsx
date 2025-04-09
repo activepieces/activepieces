@@ -1,40 +1,33 @@
-import { CollapsibleContent } from '@radix-ui/react-collapsible';
-import { useEffect, useState } from 'react';
+import { CollapsibleContent } from '@radix-ui/react-collapsible'
+import { useEffect, useState } from 'react'
 
-import {
-  Collapsible,
-  CollapsibleTrigger,
-} from '../../../components/ui/collapsible';
+import { Collapsible, CollapsibleTrigger } from '../../../components/ui/collapsible'
 
-import { DataSelectorNodeContent } from './data-selector-node-content';
-import { TestStepSection } from './test-step-section';
-import { DataSelectorTreeNode } from './type';
-import { dataSelectorUtils } from './utils';
+import { DataSelectorNodeContent } from './data-selector-node-content'
+import { TestStepSection } from './test-step-section'
+import { DataSelectorTreeNode } from './type'
+import { dataSelectorUtils } from './utils'
 
 type DataSelectoNodeProps = {
-  node: DataSelectorTreeNode;
-  depth: number;
-  searchTerm: string;
-};
+  node: DataSelectorTreeNode
+  depth: number
+  searchTerm: string
+}
 
-const DataSelectorNode = ({
-  node,
-  depth,
-  searchTerm,
-}: DataSelectoNodeProps) => {
-  const [expanded, setExpanded] = useState(false);
+const DataSelectorNode = ({ node, depth, searchTerm }: DataSelectoNodeProps) => {
+  const [expanded, setExpanded] = useState(false)
 
   useEffect(() => {
     if (searchTerm && depth <= 1) {
-      setExpanded(true);
+      setExpanded(true)
     } else if (!searchTerm) {
-      setExpanded(false);
+      setExpanded(false)
     }
-  }, [searchTerm, depth]);
+  }, [searchTerm, depth])
 
-  const isTestStepNode = dataSelectorUtils.isTestStepNode(node);
+  const isTestStepNode = dataSelectorUtils.isTestStepNode(node)
   if (isTestStepNode) {
-    return <TestStepSection stepName={node.data.stepName}></TestStepSection>;
+    return <TestStepSection stepName={node.data.stepName}></TestStepSection>
   }
 
   return (
@@ -64,7 +57,7 @@ const DataSelectorNode = ({
         </CollapsibleContent>
       </>
     </Collapsible>
-  );
-};
-DataSelectorNode.displayName = 'DataSelectorNode';
-export { DataSelectorNode };
+  )
+}
+DataSelectorNode.displayName = 'DataSelectorNode'
+export { DataSelectorNode }

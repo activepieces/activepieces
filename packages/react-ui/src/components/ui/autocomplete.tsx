@@ -1,28 +1,22 @@
-import { t } from 'i18next';
-import { Check } from 'lucide-react';
+import { t } from 'i18next'
+import { Check } from 'lucide-react'
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils'
 
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from './command';
-import { Popover, PopoverContent, PopoverTrigger } from './popover';
-import { ScrollArea } from './scroll-area';
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from './command'
+import { Popover, PopoverContent, PopoverTrigger } from './popover'
+import { ScrollArea } from './scroll-area'
 
 type Props<T extends string> = {
-  selectedValue: T;
-  onSelectedValueChange: (value: T) => void;
-  items: { value: T; label: string }[];
-  children: React.ReactNode;
-  className?: string;
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  listRef?: React.RefObject<HTMLDivElement>;
-};
+  selectedValue: T
+  onSelectedValueChange: (value: T) => void
+  items: { value: T; label: string }[]
+  children: React.ReactNode
+  className?: string
+  open: boolean
+  setOpen: (open: boolean) => void
+  listRef?: React.RefObject<HTMLDivElement>
+}
 
 export function AutoComplete<T extends string>({
   selectedValue,
@@ -35,16 +29,16 @@ export function AutoComplete<T extends string>({
   listRef,
 }: Props<T>) {
   const onSelectItem = (inputValue: string) => {
-    onSelectedValueChange(inputValue as T);
-    setOpen(false);
-  };
+    onSelectedValueChange(inputValue as T)
+    setOpen(false)
+  }
 
   return (
     <div className="flex items-center">
       <Popover
         open={open}
         onOpenChange={(open) => {
-          setOpen(open);
+          setOpen(open)
         }}
       >
         <PopoverTrigger asChild>{children}</PopoverTrigger>
@@ -53,11 +47,8 @@ export function AutoComplete<T extends string>({
           asChild
           onOpenAutoFocus={(e) => e.preventDefault()}
           onInteractOutside={(e) => {
-            if (
-              e.target instanceof Element &&
-              e.target.hasAttribute('cmdk-input')
-            ) {
-              e.preventDefault();
+            if (e.target instanceof Element && e.target.hasAttribute('cmdk-input')) {
+              e.preventDefault()
             }
           }}
           className="w-[--radix-popover-trigger-width] p-0"
@@ -83,12 +74,7 @@ export function AutoComplete<T extends string>({
                         onSelect={onSelectItem}
                       >
                         <Check
-                          className={cn(
-                            'h-4 w-4',
-                            selectedValue === option.value
-                              ? 'opacity-100'
-                              : 'opacity-0',
-                          )}
+                          className={cn('h-4 w-4', selectedValue === option.value ? 'opacity-100' : 'opacity-0')}
                         />
                         {option.label}
                       </CommandItem>
@@ -103,5 +89,5 @@ export function AutoComplete<T extends string>({
         </PopoverContent>
       </Popover>
     </div>
-  );
+  )
 }

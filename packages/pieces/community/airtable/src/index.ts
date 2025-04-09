@@ -1,18 +1,13 @@
-import {
-  AuthenticationType,
-  HttpMethod,
-  createCustomApiCallAction,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { airtableCreateRecordAction } from './lib/actions/create-record';
-import { airtableDeleteRecordAction } from './lib/actions/delete-record';
-import { airtableFindRecordAction } from './lib/actions/find-record';
-import { airtableUpdateRecordAction } from './lib/actions/update-record';
-import { airtableNewRecordTrigger } from './lib/trigger/new-record.trigger';
-import { airtableUpdatedRecordTrigger } from './lib/trigger/update-record.trigger';
-import { airtableUploadFileToColumnAction } from './lib/actions/upload-file-to-column';
+import { AuthenticationType, HttpMethod, createCustomApiCallAction, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { airtableCreateRecordAction } from './lib/actions/create-record'
+import { airtableDeleteRecordAction } from './lib/actions/delete-record'
+import { airtableFindRecordAction } from './lib/actions/find-record'
+import { airtableUpdateRecordAction } from './lib/actions/update-record'
+import { airtableUploadFileToColumnAction } from './lib/actions/upload-file-to-column'
+import { airtableNewRecordTrigger } from './lib/trigger/new-record.trigger'
+import { airtableUpdatedRecordTrigger } from './lib/trigger/update-record.trigger'
 
 export const airtableAuth = PieceAuth.SecretText({
   displayName: 'Personal Access Token',
@@ -35,18 +30,18 @@ export const airtableAuth = PieceAuth.SecretText({
           type: AuthenticationType.BEARER_TOKEN,
           token: auth.auth,
         },
-      });
+      })
       return {
         valid: true,
-      };
+      }
     } catch (e) {
       return {
         valid: false,
         error: 'Invalid personal access token',
-      };
+      }
     }
   },
-});
+})
 
 export const airtable = createPiece({
   displayName: 'Airtable',
@@ -74,7 +69,7 @@ export const airtable = createPiece({
     airtableUploadFileToColumnAction,
     createCustomApiCallAction({
       baseUrl: () => {
-        return 'https://api.airtable.com/v0';
+        return 'https://api.airtable.com/v0'
       },
       auth: airtableAuth,
       authMapping: async (auth) => ({
@@ -83,4 +78,4 @@ export const airtable = createPiece({
     }),
   ],
   triggers: [airtableNewRecordTrigger, airtableUpdatedRecordTrigger],
-});
+})

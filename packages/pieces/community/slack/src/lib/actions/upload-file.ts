@@ -1,9 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { slackAuth } from '../../index';
-import { WebClient } from '@slack/web-api';
-import {
-  slackChannel,
-} from '../common/props';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { WebClient } from '@slack/web-api'
+import { slackAuth } from '../../index'
+import { slackChannel } from '../common/props'
 
 export const uploadFile = createAction({
   auth: slackAuth,
@@ -26,13 +24,13 @@ export const uploadFile = createAction({
     channel: slackChannel(false),
   },
   async run(context) {
-    const token = context.auth.access_token;
-    const { file, title, filename, channel } = context.propsValue;
-    const client = new WebClient(token);
+    const token = context.auth.access_token
+    const { file, title, filename, channel } = context.propsValue
+    const client = new WebClient(token)
     return await client.files.uploadV2({
       file_uploads: [{ file: file.data, filename: filename || file.filename }],
       title: title,
       channel_id: channel,
-    });
+    })
   },
-});
+})

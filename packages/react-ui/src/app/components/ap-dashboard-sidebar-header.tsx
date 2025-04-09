@@ -1,33 +1,28 @@
-import { t } from 'i18next';
-import { Link } from 'react-router-dom';
+import { t } from 'i18next'
+import { Link } from 'react-router-dom'
 
-import { useEmbedding } from '@/components/embed-provider';
-import { Button } from '@/components/ui/button';
-import { SidebarHeader } from '@/components/ui/sidebar-shadcn';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { cn, determineDefaultRoute } from '@/lib/utils';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { useEmbedding } from '@/components/embed-provider'
+import { Button } from '@/components/ui/button'
+import { SidebarHeader } from '@/components/ui/sidebar-shadcn'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { ProjectSwitcher } from '@/features/projects/components/project-switcher'
+import { useAuthorization } from '@/hooks/authorization-hooks'
+import { flagsHooks } from '@/hooks/flags-hooks'
+import { cn, determineDefaultRoute } from '@/lib/utils'
+import { ApEdition, ApFlagId } from '@activepieces/shared'
 
-import { SidebarInviteUserButton } from './sidebar-invite-user';
+import { SidebarInviteUserButton } from './sidebar-invite-user'
 
 const ApDashboardSidebarHeader = ({
   isHomeDashboard,
 }: {
-  isHomeDashboard: boolean;
+  isHomeDashboard: boolean
 }) => {
-  const branding = flagsHooks.useWebsiteBranding();
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const { embedState } = useEmbedding();
-  const showProjectSwitcher =
-    edition !== ApEdition.COMMUNITY && !embedState.isEmbedded;
-  const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
+  const branding = flagsHooks.useWebsiteBranding()
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION)
+  const { embedState } = useEmbedding()
+  const showProjectSwitcher = edition !== ApEdition.COMMUNITY && !embedState.isEmbedded
+  const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess)
 
   return (
     <SidebarHeader className="pb-0 ">
@@ -39,10 +34,7 @@ const ApDashboardSidebarHeader = ({
         <div className="flex items-center justify-center gap-1">
           <div className="relative">
             <Button variant="ghost">
-              <Link
-                to={isHomeDashboard ? defaultRoute : '/platform'}
-                className="flex items-center justify-center"
-              >
+              <Link to={isHomeDashboard ? defaultRoute : '/platform'} className="flex items-center justify-center">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     {showProjectSwitcher ? (
@@ -84,9 +76,9 @@ const ApDashboardSidebarHeader = ({
         {showProjectSwitcher && <SidebarInviteUserButton />}
       </div>
     </SidebarHeader>
-  );
-};
+  )
+}
 
-ApDashboardSidebarHeader.displayName = 'ApDashboardSidebarHeader';
+ApDashboardSidebarHeader.displayName = 'ApDashboardSidebarHeader'
 
-export { ApDashboardSidebarHeader };
+export { ApDashboardSidebarHeader }

@@ -1,11 +1,7 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  OAuth2PropertyValue,
-  PieceAuth,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { asanaCreateTaskAction } from './lib/actions/create-task';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { asanaCreateTaskAction } from './lib/actions/create-task'
 
 export const asanaAuth = PieceAuth.OAuth2({
   description: '',
@@ -13,15 +9,15 @@ export const asanaAuth = PieceAuth.OAuth2({
   tokenUrl: 'https://app.asana.com/-/oauth_token',
   required: true,
   scope: ['default'],
-});
+})
 
 export const asana = createPiece({
   displayName: 'Asana',
-  description: "Work management platform designed to help teams organize, track, and manage their work.",
+  description: 'Work management platform designed to help teams organize, track, and manage their work.',
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/asana.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ["ShayPunter","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ['ShayPunter', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
   auth: asanaAuth,
   actions: [
     asanaCreateTaskAction,
@@ -34,4 +30,4 @@ export const asana = createPiece({
     }),
   ],
   triggers: [],
-});
+})

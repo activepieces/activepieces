@@ -1,11 +1,7 @@
-import {
-  AuthenticationType,
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
-import Airtable from 'airtable';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { DynamicPropsValue, Property } from '@activepieces/pieces-framework'
+import { isNil } from '@activepieces/shared'
+import Airtable from 'airtable'
 import {
   AirtableBase,
   AirtableEnterpriseFields,
@@ -14,8 +10,7 @@ import {
   AirtableRecord,
   AirtableTable,
   AirtableView,
-} from './models';
-import { isNil } from '@activepieces/shared';
+} from './models'
 
 export const airtableCommon = {
   base: Property.Dropdown({
@@ -28,12 +23,12 @@ export const airtableCommon = {
           disabled: true,
           options: [],
           placeholder: 'Please connect your account',
-        };
+        }
       }
 
       try {
         const response = await httpClient.sendRequest<{
-          bases: AirtableBase[];
+          bases: AirtableBase[]
         }>({
           method: HttpMethod.GET,
           url: 'https://api.airtable.com/v0/meta/bases',
@@ -41,28 +36,28 @@ export const airtableCommon = {
             type: AuthenticationType.BEARER_TOKEN,
             token: auth as string,
           },
-        });
+        })
         if (response.status === 200) {
           return {
             disabled: false,
             options: response.body.bases.map((base) => {
-              return { value: base.id, label: base.name };
+              return { value: base.id, label: base.name }
             }),
-          };
+          }
         }
       } catch (e) {
-        console.debug(e);
+        console.debug(e)
         return {
           disabled: true,
           options: [],
           placeholder: 'Please check your permission scope',
-        };
+        }
       }
 
       return {
         disabled: true,
         options: [],
-      };
+      }
     },
   }),
 
@@ -76,21 +71,21 @@ export const airtableCommon = {
           disabled: true,
           options: [],
           placeholder: 'Please connect your account',
-        };
+        }
       }
       if (!base) {
         return {
           disabled: true,
           options: [],
           placeholder: 'Please select a base first',
-        };
+        }
       }
 
       try {
         const tables: AirtableTable[] = await airtableCommon.fetchTableList({
           token: auth as string,
           baseId: base as string,
-        });
+        })
 
         if (tables) {
           return {
@@ -99,22 +94,22 @@ export const airtableCommon = {
               value: table.id,
               label: table.name,
             })),
-          };
+          }
         }
       } catch (e) {
-        console.debug(e);
+        console.debug(e)
 
         return {
           disabled: true,
           options: [],
           placeholder: 'Please check your permission scope',
-        };
+        }
       }
 
       return {
         disabled: true,
         options: [],
-      };
+      }
     },
   }),
 
@@ -128,28 +123,28 @@ export const airtableCommon = {
           disabled: true,
           options: [],
           placeholder: 'Please connect your account',
-        };
+        }
       }
       if (!base) {
         return {
           disabled: true,
           options: [],
           placeholder: 'Please select a base first',
-        };
+        }
       }
       if (!tableId) {
         return {
           disabled: true,
           options: [],
           placeholder: 'Please select a table first',
-        };
+        }
       }
 
       const views: AirtableView[] = await airtableCommon.fetchViews({
         token: auth as string,
         baseId: base as string,
         tableId: tableId as string,
-      });
+      })
 
       if (views) {
         return {
@@ -158,13 +153,13 @@ export const airtableCommon = {
             value: view.id,
             label: view.name,
           })),
-        };
+        }
       }
 
       return {
         disabled: true,
         options: [],
-      };
+      }
     },
   }),
 
@@ -181,57 +176,50 @@ export const airtableCommon = {
     refreshers: ['base', 'tableId'],
 
     props: async ({ auth, base, tableId }) => {
-      if (!auth) return {};
-      if (!base) return {};
-      if (!tableId) return {};
+      if (!auth) return {}
+      if (!base) return {}
+      if (!tableId) return {}
 
       const airtable: AirtableTable = await airtableCommon.fetchTable({
         token: auth as unknown as string,
         baseId: base as unknown as string,
         tableId: tableId as unknown as string,
-      });
+      })
       const fields = airtable.fields.reduce((acc, field) => {
         if (!AirtableEnterpriseFields.includes(field.type)) {
           const params = {
             displayName: field.name,
             description: ['date', 'dateTime'].includes(field.type)
-              ? `${
-                  field.description ? field.description : ''
-                }Expected format: mmmm d,yyyy`
+              ? `${field.description ? field.description : ''}Expected format: mmmm d,yyyy`
               : field.description,
             required: false,
-          };
+          }
 
           if (isNil(AirtableFieldMapping[field.type])) {
             acc[field.id] = Property.ShortText({
               ...params,
-            });
-          } else if (
-            field.type === 'singleSelect' ||
-            field.type === 'multipleSelects'
-          ) {
-            const options = field.options?.choices.map(
-              (option: { id: string; name: string }) => ({
-                value: option.id,
-                label: option.name,
-              })
-            );
+            })
+          } else if (field.type === 'singleSelect' || field.type === 'multipleSelects') {
+            const options = field.options?.choices.map((option: { id: string; name: string }) => ({
+              value: option.id,
+              label: option.name,
+            }))
 
             acc[field.id] = AirtableFieldMapping[field.type]({
               ...params,
               options: {
                 options: options ?? [],
               },
-            });
+            })
           } else {
-            acc[field.id] = AirtableFieldMapping[field.type](params);
+            acc[field.id] = AirtableFieldMapping[field.type](params)
           }
         }
 
-        return acc;
-      }, {} as DynamicPropsValue);
+        return acc
+      }, {} as DynamicPropsValue)
 
-      return fields;
+      return fields
     },
   }),
 
@@ -245,84 +233,77 @@ export const airtableCommon = {
           disabled: true,
           options: [],
           placeholder: 'Please connect your account',
-        };
+        }
       }
       if (!base) {
         return {
           disabled: true,
           options: [],
           placeholder: 'Please select a base first',
-        };
+        }
       }
       if (!tableId) {
         return {
           disabled: true,
           options: [],
           placeholder: 'Please select a table first',
-        };
+        }
       }
       const airtable: AirtableTable = await airtableCommon.fetchTable({
         token: auth as unknown as string,
         baseId: base as unknown as string,
         tableId: tableId as unknown as string,
-      });
+      })
       return {
         disabled: false,
         options: airtable.fields.map((field: AirtableField) => ({
           label: field.name,
           value: field.name,
         })),
-      };
+      }
     },
   }),
 
-  async createNewFields(
-    auth: string,
-    base: string,
-    tableId: string,
-    fields: Record<string, unknown>
-  ) {
-    if (!auth) return fields;
-    if (!base) return fields;
-    if (!tableId) return fields;
+  async createNewFields(auth: string, base: string, tableId: string, fields: Record<string, unknown>) {
+    if (!auth) return fields
+    if (!base) return fields
+    if (!tableId) return fields
 
-    const newFields: Record<string, unknown> = {};
+    const newFields: Record<string, unknown> = {}
 
     const airtable: AirtableTable = await airtableCommon.fetchTable({
       token: auth,
       baseId: base,
       tableId: tableId,
-    });
+    })
 
     airtable.fields.forEach((field) => {
       if (!AirtableEnterpriseFields.includes(field.type)) {
-        const key = field.id;
+        const key = field.id
 
         if (field.type === 'multipleAttachments' && fields[key]) {
           newFields[key] = [
             {
               url: fields[key] as string,
             },
-          ];
-        } else if (
-          ['multipleRecordLinks', 'multipleSelects'].includes(field.type)
-        ) {
+          ]
+        } else if (['multipleRecordLinks', 'multipleSelects'].includes(field.type)) {
           if (Array.isArray(fields[key]) && (fields[key] as any[]).length > 0) {
-            newFields[key] = fields[key];
+            newFields[key] = fields[key]
           }
         } else {
-          newFields[key] = fields[key];
+          newFields[key] = fields[key]
         }
       }
-    });
-    return newFields;
+    })
+    return newFields
   },
 
   async getTableSnapshot(params: Params) {
     Airtable.configure({
       apiKey: params.personalToken,
-    });
-    const airtable = new Airtable();
+    })
+    const airtable = new Airtable()
     const currentTableSnapshot = (
       await airtable
         .base(params.baseId)
@@ -331,19 +312,16 @@ export const airtableCommon = {
         .all()
     )
       .map((r) => r._rawJson)
-      .sort(
-        (x, y) =>
-          new Date(x.createdTime).getTime() - new Date(y.createdTime).getTime()
-      );
-    return currentTableSnapshot;
+      .sort((x, y) => new Date(x.createdTime).getTime() - new Date(y.createdTime).getTime())
+    return currentTableSnapshot
   },
 
   async fetchTableList({
     token,
     baseId,
   }: {
-    token: string;
-    baseId: string;
+    token: string
+    baseId: string
   }): Promise<AirtableTable[]> {
     const response = await httpClient.sendRequest<{ tables: AirtableTable[] }>({
       method: HttpMethod.GET,
@@ -352,13 +330,13 @@ export const airtableCommon = {
         type: AuthenticationType.BEARER_TOKEN,
         token,
       },
-    });
+    })
 
     if (response.status === 200) {
-      return response.body.tables;
+      return response.body.tables
     }
 
-    return [];
+    return []
   },
 
   async fetchTable({
@@ -366,12 +344,12 @@ export const airtableCommon = {
     baseId,
     tableId,
   }: {
-    token: string;
-    baseId: string;
-    tableId: string;
+    token: string
+    baseId: string
+    tableId: string
   }) {
-    const response = await airtableCommon.fetchTableList({ token, baseId });
-    return response.find((t) => t.id === tableId)!;
+    const response = await airtableCommon.fetchTableList({ token, baseId })
+    return response.find((t) => t.id === tableId)!
   },
 
   async fetchViews({
@@ -379,9 +357,9 @@ export const airtableCommon = {
     baseId,
     tableId,
   }: {
-    token: string;
-    baseId: string;
-    tableId: string;
+    token: string
+    baseId: string
+    tableId: string
   }) {
     const response = await httpClient.sendRequest<{ tables: AirtableTable[] }>({
       method: HttpMethod.GET,
@@ -390,21 +368,16 @@ export const airtableCommon = {
         type: AuthenticationType.BEARER_TOKEN,
         token,
       },
-    });
+    })
 
-    const table = response.body.tables.find((table) => table.id === tableId);
+    const table = response.body.tables.find((table) => table.id === tableId)
     if (table) {
-      return table.views;
+      return table.views
     }
-    return [];
+    return []
   },
 
-  async createRecord({
-    personalToken: token,
-    fields,
-    tableId,
-    baseId,
-  }: Params) {
+  async createRecord({ personalToken: token, fields, tableId, baseId }: Params) {
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `https://api.airtable.com/v0/${baseId}/${tableId}`,
@@ -416,25 +389,18 @@ export const airtableCommon = {
         fields,
         typecast: true,
       },
-    };
-
-    const response = await httpClient.sendRequest<AirtableRecord>(request);
-
-    if (response.status === 200) {
-      return response.body;
     }
 
-    return response;
+    const response = await httpClient.sendRequest<AirtableRecord>(request)
+
+    if (response.status === 200) {
+      return response.body
+    }
+
+    return response
   },
 
-  async findRecord({
-    personalToken: token,
-    searchField,
-    searchValue,
-    tableId,
-    baseId,
-    limitToView,
-  }: Params) {
+  async findRecord({ personalToken: token, searchField, searchValue, tableId, baseId, limitToView }: Params) {
     const request: HttpRequest = {
       method: HttpMethod.GET,
       url: `https://api.airtable.com/v0/${baseId}/${tableId}`,
@@ -446,25 +412,19 @@ export const airtableCommon = {
         filterByFormula: `FIND("${searchValue}",{${searchField}})`,
         view: limitToView ?? '',
       },
-    };
-
-    const response = await httpClient.sendRequest<{
-      records: AirtableRecord[];
-    }>(request);
-
-    if (response.status === 200) {
-      return response.body.records;
     }
 
-    return [];
+    const response = await httpClient.sendRequest<{
+      records: AirtableRecord[]
+    }>(request)
+
+    if (response.status === 200) {
+      return response.body.records
+    }
+
+    return []
   },
-  async updateRecord({
-    personalToken: token,
-    fields,
-    recordId,
-    tableId,
-    baseId,
-  }: Params) {
+  async updateRecord({ personalToken: token, fields, recordId, tableId, baseId }: Params) {
     const request: HttpRequest = {
       method: HttpMethod.PATCH,
       url: `https://api.airtable.com/v0/${baseId}/${tableId}/${recordId}`,
@@ -475,23 +435,18 @@ export const airtableCommon = {
       body: {
         fields,
       },
-    };
-
-    const response = await httpClient.sendRequest<AirtableRecord>(request);
-
-    if (response.status === 200) {
-      return response.body;
     }
 
-    return response;
+    const response = await httpClient.sendRequest<AirtableRecord>(request)
+
+    if (response.status === 200) {
+      return response.body
+    }
+
+    return response
   },
 
-  async deleteRecord({
-    personalToken: token,
-    recordId,
-    tableId,
-    baseId,
-  }: Params) {
+  async deleteRecord({ personalToken: token, recordId, tableId, baseId }: Params) {
     const request: HttpRequest = {
       method: HttpMethod.DELETE,
       url: `https://api.airtable.com/v0/${baseId}/${tableId}/${recordId}`,
@@ -499,27 +454,27 @@ export const airtableCommon = {
         type: AuthenticationType.BEARER_TOKEN,
         token,
       },
-    };
-
-    const response = await httpClient.sendRequest<AirtableRecord>(request);
-
-    if (response.status === 200) {
-      return response.body;
     }
 
-    return response;
+    const response = await httpClient.sendRequest<AirtableRecord>(request)
+
+    if (response.status === 200) {
+      return response.body
+    }
+
+    return response
   },
-};
+}
 
 interface Params {
-  personalToken: string;
-  baseId: string;
-  tableId: string;
-  fields?: Record<string, unknown>;
-  recordId?: string;
-  searchValue?: string;
-  searchField?: string;
-  fieldNames?: string[];
-  limitToView?: string;
-  sortField?: string;
+  personalToken: string
+  baseId: string
+  tableId: string
+  fields?: Record<string, unknown>
+  recordId?: string
+  searchValue?: string
+  searchField?: string
+  fieldNames?: string[]
+  limitToView?: string
+  sortField?: string
 }

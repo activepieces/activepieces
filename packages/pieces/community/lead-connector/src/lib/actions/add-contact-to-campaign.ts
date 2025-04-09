@@ -1,6 +1,6 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { addContactToCampaign, getCampaigns, getContacts } from '../common';
-import { leadConnectorAuth } from '../..';
+import { OAuth2PropertyValue, Property, createAction } from '@activepieces/pieces-framework'
+import { leadConnectorAuth } from '../..'
+import { addContactToCampaign, getCampaigns, getContacts } from '../common'
 
 export const addContactToCampaignAction = createAction({
   auth: leadConnectorAuth,
@@ -18,17 +18,17 @@ export const addContactToCampaignAction = createAction({
           return {
             disabled: true,
             options: [],
-          };
+          }
 
-        const contacts = await getContacts(auth as OAuth2PropertyValue);
+        const contacts = await getContacts(auth as OAuth2PropertyValue)
         return {
           options: contacts.map((contact) => {
             return {
               label: contact.contactName,
               value: contact.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     campaign: Property.Dropdown({
@@ -40,25 +40,25 @@ export const addContactToCampaignAction = createAction({
           return {
             disabled: true,
             options: [],
-          };
+          }
         }
 
-        const campaigns = await getCampaigns(auth as OAuth2PropertyValue);
+        const campaigns = await getCampaigns(auth as OAuth2PropertyValue)
         return {
           options: campaigns.map((campaign: any) => {
             return {
               label: campaign.name,
               value: campaign.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   },
 
   async run({ auth, propsValue }) {
-    const { contact, campaign } = propsValue;
+    const { contact, campaign } = propsValue
 
-    return await addContactToCampaign(auth.access_token, contact, campaign);
+    return await addContactToCampaign(auth.access_token, contact, campaign)
   },
-});
+})

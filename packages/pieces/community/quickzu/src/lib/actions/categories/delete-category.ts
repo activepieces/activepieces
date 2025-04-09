@@ -1,6 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { quickzuAuth } from '../../..';
-import { makeClient, quickzuCommon } from '../../common';
+import { createAction } from '@activepieces/pieces-framework'
+import { quickzuAuth } from '../../..'
+import { makeClient, quickzuCommon } from '../../common'
 
 export const deleteCategoryAction = createAction({
   auth: quickzuAuth,
@@ -11,9 +11,9 @@ export const deleteCategoryAction = createAction({
     categoryId: quickzuCommon.categoryId(true),
   },
   async run(context) {
-    const { categoryId } = context.propsValue;
+    const { categoryId } = context.propsValue
 
-    const client = makeClient(context.auth);
-    return await client.deleteCategory(categoryId!);
+    const client = makeClient(context.auth)
+    return await client.deleteCategory(categoryId!)
   },
-});
+})

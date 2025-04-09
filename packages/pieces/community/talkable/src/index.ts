@@ -1,10 +1,6 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
 import {
   anonymizePerson,
   createEvent,
@@ -18,7 +14,7 @@ import {
   unsubscribePerson,
   updatePerson,
   updateReferralStatus,
-} from './lib/actions';
+} from './lib/actions'
 
 const markdownDescription = `
 Follow these steps:
@@ -27,7 +23,7 @@ Follow these steps:
 
 2. **Enter the Talkable site slug and API key:** Go to **All site Settings** > **API Settings**, and copy Site ID and API key.
 
-`;
+`
 
 export const talkableAuth = PieceAuth.CustomAuth({
   description: markdownDescription,
@@ -42,7 +38,7 @@ export const talkableAuth = PieceAuth.CustomAuth({
     }),
   },
   required: true,
-});
+})
 
 export const talkable = createPiece({
   displayName: 'Talkable',
@@ -50,9 +46,8 @@ export const talkable = createPiece({
 
   auth: talkableAuth,
   minimumSupportedRelease: '0.30.0',
-  logoUrl:
-    'https://www.talkable.com/wp-content/uploads/2021/12/talkable-favicon.svg',
-  authors: ["Vitalini","kishanprmr","MoShizzle","abuaboud"],
+  logoUrl: 'https://www.talkable.com/wp-content/uploads/2021/12/talkable-favicon.svg',
+  authors: ['Vitalini', 'kishanprmr', 'MoShizzle', 'abuaboud'],
   categories: [PieceCategory.MARKETING],
   actions: [
     findPerson,
@@ -76,4 +71,4 @@ export const talkable = createPiece({
     }),
   ],
   triggers: [],
-});
+})

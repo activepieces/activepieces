@@ -1,6 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
-import { facebookPagesCommon, FacebookPageDropdown } from '../common/common';
-import { facebookPagesAuth } from '../..';
+import { createAction } from '@activepieces/pieces-framework'
+import { facebookPagesAuth } from '../..'
+import { FacebookPageDropdown, facebookPagesCommon } from '../common/common'
 
 export const createPost = createAction({
   auth: facebookPagesAuth,
@@ -13,14 +13,10 @@ export const createPost = createAction({
     link: facebookPagesCommon.link,
   },
   async run(context) {
-    const page: FacebookPageDropdown = context.propsValue.page!;
+    const page: FacebookPageDropdown = context.propsValue.page!
 
-    const result = await facebookPagesCommon.createPost(
-      page,
-      context.propsValue.message,
-      context.propsValue.link
-    );
+    const result = await facebookPagesCommon.createPost(page, context.propsValue.message, context.propsValue.link)
 
-    return result;
+    return result
   },
-});
+})

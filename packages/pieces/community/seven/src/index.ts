@@ -1,16 +1,15 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { sendSmsAction } from './action/sms-send';
-import { sendVoiceCallAction } from './action/send-voice-call';
-import { lookup } from './action/lookup';
-import { smsInbound } from './trigger/sms-inbound';
-import { PieceCategory } from '@activepieces/shared';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { lookup } from './action/lookup'
+import { sendVoiceCallAction } from './action/send-voice-call'
+import { sendSmsAction } from './action/sms-send'
+import { smsInbound } from './trigger/sms-inbound'
 
 export const sevenAuth = PieceAuth.SecretText({
-  description:
-    'You can find your API key in [Developer Menu](https://app.seven.io/developer).',
+  description: 'You can find your API key in [Developer Menu](https://app.seven.io/developer).',
   displayName: 'API key',
   required: true,
-});
+})
 
 export const seven = createPiece({
   displayName: 'seven',
@@ -22,4 +21,4 @@ export const seven = createPiece({
   authors: ['seven-io'],
   actions: [sendSmsAction, sendVoiceCallAction, lookup],
   triggers: [smsInbound],
-});
+})

@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import js2xml from 'json2xml';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import js2xml from 'json2xml'
 
 export const convertJsonToXml = createAction({
   name: 'convert-json-to-xml',
@@ -22,15 +22,11 @@ export const convertJsonToXml = createAction({
     }),
   },
   async run(context) {
-    const { json } = context.propsValue;
+    const { json } = context.propsValue
 
-    const attributes_key = context.propsValue.attributes_key
-      ? context.propsValue.attributes_key
-      : 'attr';
-    const header = context.propsValue.header
-      ? context.propsValue.header
-      : false;
+    const attributes_key = context.propsValue.attributes_key ? context.propsValue.attributes_key : 'attr'
+    const header = context.propsValue.header ? context.propsValue.header : false
 
-    return js2xml(JSON.parse(JSON.stringify(json)), { attributes_key, header });
+    return js2xml(JSON.parse(JSON.stringify(json)), { attributes_key, header })
   },
-});
+})

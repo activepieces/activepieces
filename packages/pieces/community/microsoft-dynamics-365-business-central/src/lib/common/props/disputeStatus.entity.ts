@@ -1,4 +1,4 @@
-import { EntityProp } from '../types';
+import { EntityProp } from '../types'
 
 export const disputeStatusEntityProps: EntityProp[] = [
   {
@@ -15,4 +15,4 @@ export const disputeStatusEntityProps: EntityProp[] = [
     type: 'text',
     isRequired: false,
   },
-];
+]

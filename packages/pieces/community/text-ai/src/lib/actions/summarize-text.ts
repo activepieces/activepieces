@@ -1,5 +1,5 @@
-import { AI, AIChatRole, aiProps } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { AI, AIChatRole, aiProps } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
 export const summarizeText = createAction({
   name: 'summarizeText',
@@ -25,9 +25,9 @@ export const summarizeText = createAction({
     }),
   },
   async run(context) {
-    const provider = context.propsValue.provider;
+    const provider = context.propsValue.provider
 
-    const ai = AI({ provider, server: context.server });
+    const ai = AI({ provider, server: context.server })
 
     const response = await ai.chat.text({
       model: context.propsValue.model,
@@ -38,8 +38,8 @@ export const summarizeText = createAction({
         },
       ],
       maxTokens: context.propsValue.maxTokens,
-    });
+    })
 
-    return response.choices[0].content;
+    return response.choices[0].content
   },
-});
+})

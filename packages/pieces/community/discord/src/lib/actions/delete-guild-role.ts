@@ -1,11 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { discordCommon } from '../common';
-import { discordAuth } from '../../index';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { discordAuth } from '../../index'
+import { discordCommon } from '../common'
 
 export const discordDeleteGuildRole = createAction({
   auth: discordAuth,
@@ -30,12 +26,12 @@ export const discordDeleteGuildRole = createAction({
         'Content-Type': 'application/json',
         'X-Audit-Log-Reason': `${configValue.propsValue.deletion_reason}`,
       },
-    };
+    }
 
-    const res = await httpClient.sendRequest(request);
+    const res = await httpClient.sendRequest(request)
 
     return {
       success: res.status === 204,
-    };
+    }
   },
-});
+})

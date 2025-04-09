@@ -1,16 +1,16 @@
-import dayjs from 'dayjs';
-import customParseFormat from "dayjs/plugin/customParseFormat";
+import dayjs from 'dayjs'
+import customParseFormat from 'dayjs/plugin/customParseFormat'
 
-dayjs.extend(customParseFormat);
+dayjs.extend(customParseFormat)
 
 export interface dateInformation {
-  year: number;
-  month: number;
-  day: number;
-  hour: number;
-  minute: number;
-  second: number;
-  unix_time: number;
+  year: number
+  month: number
+  day: number
+  hour: number
+  minute: number
+  second: number
+  unix_time: number
 }
 
 export enum timeFormat {
@@ -49,8 +49,6 @@ export enum timeFormatLabel {
   format14 = 'X (1694949838)',
 }
 
-
-
 export enum timeParts {
   year = 'year',
   month = 'month',
@@ -63,16 +61,16 @@ export enum timeParts {
   monthName = 'monthName',
 }
 
-export const getCorrectedFormat = (format:string) =>{
-  return format.replaceAll('DDDD','dddd').replaceAll('DDD','ddd');
+export const getCorrectedFormat = (format: string) => {
+  return format.replaceAll('DDDD', 'dddd').replaceAll('DDD', 'ddd')
 }
 export function parseDate(date: string, format: string): dayjs.Dayjs {
-  const correctedFormat = getCorrectedFormat(format);
-  const djs = dayjs(date, correctedFormat);
+  const correctedFormat = getCorrectedFormat(format)
+  const djs = dayjs(date, correctedFormat)
   if (!djs.isValid()) {
-    throw new Error(`Failed to parse the date: ${date} with format: ${correctedFormat}`);
+    throw new Error(`Failed to parse the date: ${date} with format: ${correctedFormat}`)
   }
-  return djs;
+  return djs
 }
 export const timeFormatDescription = `Here's what each part of the format (e.g., YYYY) represents:
 \nYYYY : Year (4 digits) - Example: 2023
@@ -86,7 +84,7 @@ export const timeFormatDescription = `Here's what each part of the format (e.g.,
 \nHH : Hour (2 digits) - Example: 11
 \nmm : Minute (2 digits) - Example: 23
 \nss : Second (2 digits) - Example: 58
-\nX : Time in Unix format - Example: 1694949838`;
+\nX : Time in Unix format - Example: 1694949838`
 
 export const optionalTimeFormats = [
   { label: timeFormatLabel.format00, value: timeFormat.format00 },
@@ -104,7 +102,7 @@ export const optionalTimeFormats = [
   { label: timeFormatLabel.format12, value: timeFormat.format12 },
   { label: timeFormatLabel.format13, value: timeFormat.format13 },
   { label: timeFormatLabel.format14, value: timeFormat.format14 },
-];
+]
 
 export const timeZoneOptions = [
   {
@@ -1783,4 +1781,4 @@ export const timeZoneOptions = [
     label: '(GMT+14:00) Pacific, Kiritimati',
     value: 'Pacific/Kiritimati',
   },
-];
+]

@@ -1,5 +1,5 @@
-import { Property } from '@activepieces/pieces-framework';
-import { flowluCommon } from '.';
+import { Property } from '@activepieces/pieces-framework'
+import { flowluCommon } from '.'
 
 export const flowluProps = {
   task: {
@@ -212,14 +212,10 @@ export const flowluProps = {
     customer_id: flowluCommon.account_id(
       false,
       'Customer ID',
-      `This is an id of the CRM company or contact which is needed to be linked with the opportunity. This allows you to link the client to the opportunity. If your client is a company, and you need to relate an opportunity to the person (contact) at this company, then enter his/her id in the contact_id field.`
+      `This is an id of the CRM company or contact which is needed to be linked with the opportunity. This allows you to link the client to the opportunity. If your client is a company, and you need to relate an opportunity to the person (contact) at this company, then enter his/her id in the contact_id field.`,
     ),
-    contact_id: flowluCommon.contact_id(
-      false,
-      'Contact ID',
-      `Id of the company-related contact (account_id).`
-    ),
+    contact_id: flowluCommon.contact_id(false, 'Contact ID', `Id of the company-related contact (account_id).`),
     pipeline_id: flowluCommon.pipeline_id(false),
     pipeline_stage_id: flowluCommon.pipeline_stage_id(false),
   },
-};
+}

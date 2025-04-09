@@ -1,20 +1,16 @@
-import { t } from 'i18next';
-import { Calendar as CalendarIcon } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import type { RenderEditCellProps } from 'react-data-grid';
+import { t } from 'i18next'
+import { Calendar as CalendarIcon } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import type { RenderEditCellProps } from 'react-data-grid'
 
-import { Calendar } from '@/components/ui/calendar';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { cn, formatUtils } from '@/lib/utils';
+import { Calendar } from '@/components/ui/calendar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { cn, formatUtils } from '@/lib/utils'
 
-import { Row } from '../lib/types';
+import { Row } from '../lib/types'
 
 function isValidDate(date: string) {
-  return !isNaN(new Date(date).getTime());
+  return !isNaN(new Date(date).getTime())
 }
 function DateEditor({
   row,
@@ -23,48 +19,42 @@ function DateEditor({
   onClose,
   value: initialValue,
 }: RenderEditCellProps<Row, { id: string }> & {
-  value: string;
+  value: string
 }) {
-  const [date, setDate] = useState<Date | undefined>(
-    isValidDate(initialValue) ? new Date(initialValue) : undefined,
-  );
-  const [month, setMonth] = useState<Date | undefined>(
-    isValidDate(initialValue) ? new Date(initialValue) : undefined,
-  );
-  const [isOpen, setIsOpen] = useState(true);
+  const [date, setDate] = useState<Date | undefined>(isValidDate(initialValue) ? new Date(initialValue) : undefined)
+  const [month, setMonth] = useState<Date | undefined>(isValidDate(initialValue) ? new Date(initialValue) : undefined)
+  const [isOpen, setIsOpen] = useState(true)
   const [inputValue, setInputValue] = useState(
-    isValidDate(initialValue)
-      ? formatUtils.formatDateOnly(new Date(initialValue))
-      : '',
-  );
+    isValidDate(initialValue) ? formatUtils.formatDateOnly(new Date(initialValue)) : '',
+  )
 
   const commitChanges = () => {
     if (date) {
-      onRowChange({ ...row, [column.key]: date.toISOString() }, true);
-      onClose();
+      onRowChange({ ...row, [column.key]: date.toISOString() }, true)
+      onClose()
     }
-  };
+  }
   const handleSelect = (newDate: Date | undefined) => {
-    setDate(newDate);
+    setDate(newDate)
     if (newDate) {
-      const isoString = newDate.toISOString();
-      onRowChange({ ...row, [column.key]: isoString }, true);
-      onClose();
+      const isoString = newDate.toISOString()
+      onRowChange({ ...row, [column.key]: isoString }, true)
+      onClose()
     }
-  };
+  }
 
   const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
+    setIsOpen(open)
     if (!open) {
-      onClose();
+      onClose()
     }
-  };
-  const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  }
+  const inputRef = useRef<HTMLInputElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     //clear selection frrom browser
-    inputRef.current?.focus();
-  }, []);
+    inputRef.current?.focus()
+  }, [])
   return (
     <div className="h-full" ref={containerRef}>
       <Popover open={isOpen} onOpenChange={handleOpenChange}>
@@ -77,42 +67,42 @@ function DateEditor({
               'focus:outline-none',
             )}
             onClick={(e) => {
-              e.stopPropagation();
-              setIsOpen(true);
+              e.stopPropagation()
+              setIsOpen(true)
             }}
           >
             <input
               ref={inputRef}
               onClick={(e) => {
-                e.stopPropagation();
-                setIsOpen(true);
+                e.stopPropagation()
+                setIsOpen(true)
               }}
               placeholder={t('mm/dd/yyy')}
               value={inputValue}
               type="text"
               onChange={(e) => {
-                setInputValue(e.target.value);
+                setInputValue(e.target.value)
                 if (isValidDate(e.target.value)) {
-                  setDate(new Date(e.target.value));
-                  setMonth(new Date(e.target.value));
+                  setDate(new Date(e.target.value))
+                  setMonth(new Date(e.target.value))
                 } else {
-                  setDate(undefined);
+                  setDate(undefined)
                 }
               }}
               onBlur={(e) => {
                 if (!containerRef.current?.contains(e.target as Node)) {
-                  commitChanges();
+                  commitChanges()
                 }
               }}
               onKeyDown={(e) => {
-                e.stopPropagation();
+                e.stopPropagation()
                 if (e.key === 'Enter') {
-                  commitChanges();
-                  e.preventDefault();
+                  commitChanges()
+                  e.preventDefault()
                 }
                 if (e.key === 'Escape') {
-                  onClose();
-                  e.preventDefault();
+                  onClose()
+                  e.preventDefault()
                 }
               }}
               className={cn(
@@ -141,7 +131,7 @@ function DateEditor({
         </PopoverContent>
       </Popover>
     </div>
-  );
+  )
 }
 
-export { DateEditor };
+export { DateEditor }

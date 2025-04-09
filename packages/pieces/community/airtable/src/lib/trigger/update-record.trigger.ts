@@ -1,19 +1,10 @@
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import {
-  Property,
-  StaticPropsValue,
-  TriggerStrategy,
-  createTrigger,
-} from '@activepieces/pieces-framework';
-import Airtable from 'airtable';
-import dayjs from 'dayjs';
-import { airtableAuth } from '../../';
-import { airtableCommon } from '../common';
-import { AirtableField, AirtableTable } from '../common/models';
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common'
+import { Property, StaticPropsValue, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import Airtable from 'airtable'
+import dayjs from 'dayjs'
+import { airtableAuth } from '../../'
+import { airtableCommon } from '../common'
+import { AirtableField, AirtableTable } from '../common/models'
 
 const props = {
   base: airtableCommon.base,
@@ -29,27 +20,27 @@ const props = {
           disabled: true,
           options: [],
           placeholder: 'Please connect your account',
-        };
+        }
       }
       if (!base) {
         return {
           disabled: true,
           options: [],
           placeholder: 'Please select a base first',
-        };
+        }
       }
       if (!tableId) {
         return {
           disabled: true,
           options: [],
           placeholder: 'Please select a table first',
-        };
+        }
       }
       const airtable: AirtableTable = await airtableCommon.fetchTable({
         token: auth as unknown as string,
         baseId: base as unknown as string,
         tableId: tableId as unknown as string,
-      });
+      })
 
       return {
         disabled: false,
@@ -59,23 +50,21 @@ const props = {
             label: field.name,
             value: field.name,
           })),
-      };
+      }
     },
   }),
   viewId: airtableCommon.views,
-};
+}
 const polling: Polling<string, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     Airtable.configure({
       apiKey: auth,
-    });
-    const airtable = new Airtable();
+    })
+    const airtable = new Airtable()
 
     const lastUpdateDate =
-      lastFetchEpochMS === 0
-        ? dayjs().subtract(1, 'day').toISOString()
-        : dayjs(lastFetchEpochMS).toISOString();
+      lastFetchEpochMS === 0 ? dayjs().subtract(1, 'day').toISOString() : dayjs(lastFetchEpochMS).toISOString()
 
     const records = await airtable
       .base(propsValue.base)
@@ -86,42 +75,39 @@ const polling: Polling<string, StaticPropsValue<typeof props>> = {
         }},DATETIME_PARSE("${lastUpdateDate}","YYYY-MM-DD HH:mm:ss.SSS"))`,
         view: propsValue.viewId ?? '',
       })
-      .all();
+      .all()
 
     return records.map((item) => {
       return {
-        epochMilliSeconds: dayjs(
-          item.fields[propsValue.sortFields] as string
-        ).valueOf(),
+        epochMilliSeconds: dayjs(item.fields[propsValue.sortFields] as string).valueOf(),
         data: item._rawJson,
-      };
-    });
+      }
+    })
   },
-};
+}
 
 export const airtableUpdatedRecordTrigger = createTrigger({
   auth: airtableAuth,
   name: 'updated_record',
   displayName: 'New or Updated Record',
-  description:
-    'Triggers when a record is created or updated in selected table.',
+  description: 'Triggers when a record is created or updated in selected table.',
   props,
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async test(context) {
-    return await pollingHelper.test(polling, context);
+    return await pollingHelper.test(polling, context)
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    const { store, auth, propsValue } = context
+    await pollingHelper.onEnable(polling, { store, auth, propsValue })
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    const { store, auth, propsValue } = context
+    await pollingHelper.onDisable(polling, { store, auth, propsValue })
   },
 
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    return await pollingHelper.poll(polling, context)
   },
-});
+})

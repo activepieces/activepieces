@@ -1,10 +1,10 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import mime from 'mime-types';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import mime from 'mime-types'
 
 export const filesOutput = {
   Text: 'text',
   Base64: 'base64',
-};
+}
 
 export const readFileAction = createAction({
   name: 'read_file',
@@ -36,22 +36,24 @@ export const readFileAction = createAction({
     }),
   },
   async run(context) {
-    const file = context.propsValue.file;
-    const readOptions = context.propsValue.readOptions;
+    const file = context.propsValue.file
+    const readOptions = context.propsValue.readOptions
     switch (readOptions) {
       case filesOutput.Base64: {
-        const mimeType = file.extension ? mime.lookup(file.extension) || 'application/octet-stream' : 'application/octet-stream';
+        const mimeType = file.extension
+          ? mime.lookup(file.extension) || 'application/octet-stream'
+          : 'application/octet-stream'
         return {
           base64WithMimeType: `data:${mimeType};base64,${file.data.toString('base64')}`,
           base64: file.data.toString('base64'),
-        };
+        }
       }
       case filesOutput.Text:
         return {
           text: file.data.toString('utf-8'),
-        };
+        }
       default:
-        throw new Error(`Invalid output format: ${readOptions}`);
+        throw new Error(`Invalid output format: ${readOptions}`)
     }
   },
-});
+})

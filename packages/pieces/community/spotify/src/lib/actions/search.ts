@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { spotifyCommon, makeClient } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { makeClient, spotifyCommon } from '../common'
 
 export default createAction({
   name: 'search',
@@ -34,19 +34,19 @@ export default createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient({ auth });
+    const client = makeClient({ auth })
     const res = await client.search({
       q: propsValue.search_text,
       type: propsValue.types.join(','),
       limit: propsValue.limit,
       offset: propsValue.offset,
-    });
+    })
     const result = {
       tracks: res.tracks?.items,
       artists: res.artists?.items,
       albums: res.albums?.items,
       playlists: res.playlists?.items,
-    };
-    return result;
+    }
+    return result
   },
-});
+})

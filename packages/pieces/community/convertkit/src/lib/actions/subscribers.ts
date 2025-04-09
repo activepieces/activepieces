@@ -1,34 +1,23 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { createAction } from '@activepieces/pieces-framework'
+import { convertkitAuth } from '../..'
+import { CONVERTKIT_API_URL, SUBSCRIBERS_API_ENDPOINT } from '../common/constants'
+import { allFields } from '../common/custom-fields'
+import { fetchSubscribedTags, fetchSubscriberByEmail, fetchSubscriperById } from '../common/service'
 import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { Subscriber } from '../common/types';
-import { convertkitAuth } from '../..';
-import {
-  subscriberId,
+  from,
+  sortField,
+  sortOrder,
   subscriberEmail,
   subscriberEmailOptional,
-  subscribersPageNumber,
   subscriberFirstName,
-  from,
+  subscriberId,
+  subscribersPageNumber,
   to,
   updatedFrom,
   updatedTo,
-  sortOrder,
-  sortField,
-} from '../common/subscribers';
-import { allFields } from '../common/custom-fields';
-import {
-  SUBSCRIBERS_API_ENDPOINT,
-  CONVERTKIT_API_URL,
-} from '../common/constants';
-import {
-  fetchSubscriperById,
-  fetchSubscriberByEmail,
-  fetchSubscribedTags,
-} from '../common/service';
+} from '../common/subscribers'
+import { Subscriber } from '../common/types'
 
 export const getSubscriberById = createAction({
   auth: convertkitAuth,
@@ -39,10 +28,10 @@ export const getSubscriberById = createAction({
     subscriberId,
   },
   run(context) {
-    const { subscriberId } = context.propsValue;
-    return fetchSubscriperById(context.auth, subscriberId);
+    const { subscriberId } = context.propsValue
+    return fetchSubscriperById(context.auth, subscriberId)
   },
-});
+})
 
 export const getSubscriberByEmail = createAction({
   auth: convertkitAuth,
@@ -53,10 +42,10 @@ export const getSubscriberByEmail = createAction({
     email_address: subscriberEmail,
   },
   async run(context) {
-    const { email_address } = context.propsValue;
-    return fetchSubscriberByEmail(context.auth, email_address);
+    const { email_address } = context.propsValue
+    return fetchSubscriberByEmail(context.auth, email_address)
   },
-});
+})
 
 export const listSubscribers = createAction({
   auth: convertkitAuth,
@@ -74,18 +63,9 @@ export const listSubscribers = createAction({
     emailAddress: subscriberEmail,
   },
   async run(context) {
-    const {
-      page,
-      from,
-      to,
-      updatedFrom,
-      updatedTo,
-      emailAddress,
-      sortOrder,
-      sortField,
-    } = context.propsValue;
+    const { page, from, to, updatedFrom, updatedTo, emailAddress, sortOrder, sortField } = context.propsValue
 
-    const url = SUBSCRIBERS_API_ENDPOINT;
+    const url = SUBSCRIBERS_API_ENDPOINT
 
     const body = {
       api_secret: context.auth,
@@ -97,25 +77,25 @@ export const listSubscribers = createAction({
       email_address: emailAddress,
       sort_order: sortOrder,
       sort_field: sortField,
-    };
+    }
 
     const request: HttpRequest = {
       url,
       method: HttpMethod.GET,
       body,
-    };
-
-    const response = await httpClient.sendRequest<{
-      subscribers: Subscriber[];
-    }>(request);
-
-    if (response.status !== 200) {
-      throw new Error(`Error fetching subscribers: ${response.status}`);
     }
 
-    return response.body.subscribers;
+    const response = await httpClient.sendRequest<{
+      subscribers: Subscriber[]
+    }>(request)
+
+    if (response.status !== 200) {
+      throw new Error(`Error fetching subscribers: ${response.status}`)
+    }
+
+    return response.body.subscribers
   },
-});
+})
 
 export const updateSubscriber = createAction({
   auth: convertkitAuth,
@@ -129,34 +109,31 @@ export const updateSubscriber = createAction({
     fields: allFields,
   },
   async run(context) {
-    const { subscriberId, emailAddress, firstName, fields } =
-      context.propsValue;
+    const { subscriberId, emailAddress, firstName, fields } = context.propsValue
 
-    const url = `${SUBSCRIBERS_API_ENDPOINT}/${subscriberId}`;
+    const url = `${SUBSCRIBERS_API_ENDPOINT}/${subscriberId}`
     const body = {
       api_secret: context.auth,
       email_address: emailAddress,
       first_name: firstName,
       fields,
-    };
+    }
 
     const request: HttpRequest = {
       url,
       method: HttpMethod.PUT,
       body,
-    };
-
-    const response = await httpClient.sendRequest<{ subscriber: Subscriber }>(
-      request
-    );
-
-    if (response.status !== 200) {
-      throw new Error(`Error updating subscriber: ${response.status}`);
     }
 
-    return response.body.subscriber;
+    const response = await httpClient.sendRequest<{ subscriber: Subscriber }>(request)
+
+    if (response.status !== 200) {
+      throw new Error(`Error updating subscriber: ${response.status}`)
+    }
+
+    return response.body.subscriber
   },
-});
+})
 
 export const unsubscribeSubscriber = createAction({
   auth: convertkitAuth,
@@ -167,28 +144,28 @@ export const unsubscribeSubscriber = createAction({
     email: subscriberEmail,
   },
   async run(context) {
-    const { email } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/unsubscribe`;
+    const { email } = context.propsValue
+    const url = `${CONVERTKIT_API_URL}/unsubscribe`
 
-    const body = { email, api_secret: context.auth };
+    const body = { email, api_secret: context.auth }
 
     const request: HttpRequest = {
       url,
       method: HttpMethod.PUT,
       body,
-    };
-
-    const response = await httpClient.sendRequest<{
-      subscriber: Subscriber;
-    }>(request);
-
-    if (response.status !== 200) {
-      throw new Error(`Error unsubscribing subscriber: ${response.status}`);
     }
 
-    return response.body.subscriber;
+    const response = await httpClient.sendRequest<{
+      subscriber: Subscriber
+    }>(request)
+
+    if (response.status !== 200) {
+      throw new Error(`Error unsubscribing subscriber: ${response.status}`)
+    }
+
+    return response.body.subscriber
   },
-});
+})
 
 export const listTagsBySubscriberId = createAction({
   auth: convertkitAuth,
@@ -199,10 +176,10 @@ export const listTagsBySubscriberId = createAction({
     subscriberId,
   },
   run(context) {
-    const { subscriberId } = context.propsValue;
-    return fetchSubscribedTags(context.auth, subscriberId);
+    const { subscriberId } = context.propsValue
+    return fetchSubscribedTags(context.auth, subscriberId)
   },
-});
+})
 
 export const listSubscriberTagsByEmail = createAction({
   auth: convertkitAuth,
@@ -213,11 +190,8 @@ export const listSubscriberTagsByEmail = createAction({
     email_address: subscriberEmail,
   },
   async run(context) {
-    const { email_address } = context.propsValue;
-    const subscriberId = await fetchSubscriberByEmail(
-      context.auth,
-      email_address
-    );
-    return fetchSubscribedTags(context.auth, subscriberId.id);
+    const { email_address } = context.propsValue
+    const subscriberId = await fetchSubscriberByEmail(context.auth, email_address)
+    return fetchSubscribedTags(context.auth, subscriberId.id)
   },
-});
+})

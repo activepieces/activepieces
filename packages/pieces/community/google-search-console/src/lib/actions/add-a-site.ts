@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleSearchConsoleAuth, createAuthClient } from '../../';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { createAuthClient, googleSearchConsoleAuth } from '../../'
 
 export const addSite = createAction({
   auth: googleSearchConsoleAuth,
@@ -13,10 +13,10 @@ export const addSite = createAction({
     }),
   },
   async run(context) {
-    const webmasters = createAuthClient(context.auth.access_token);
+    const webmasters = createAuthClient(context.auth.access_token)
     await webmasters.sites.add({
       siteUrl: context.propsValue.siteUrl,
-    });
-    return { success: true };
+    })
+    return { success: true }
   },
-});
+})

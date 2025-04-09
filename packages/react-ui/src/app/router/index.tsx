@@ -1,98 +1,85 @@
-import { useEffect, useMemo } from 'react';
-import {
-  Navigate,
-  RouterProvider,
-  createBrowserRouter,
-  createMemoryRouter,
-  useLocation,
-} from 'react-router-dom';
+import { useEffect, useMemo } from 'react'
+import { Navigate, RouterProvider, createBrowserRouter, createMemoryRouter, useLocation } from 'react-router-dom'
 
-import { PageTitle } from '@/app/components/page-title';
-import { ChatPage } from '@/app/routes/chat';
-import { EmbedPage } from '@/app/routes/embed';
-import AnalyticsPage from '@/app/routes/platform/analytics';
-import { ApiKeysPage } from '@/app/routes/platform/security/api-keys';
-import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
-import { SSOPage } from '@/app/routes/platform/security/sso';
-import AIProvidersPage from '@/app/routes/platform/setup/ai';
-import { BrandingPage } from '@/app/routes/platform/setup/branding';
-import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
-import { RedirectPage } from '@/app/routes/redirect';
-import { FlowRunsPage } from '@/app/routes/runs';
-import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
-import { useEmbedding } from '@/components/embed-provider';
-import { VerifyEmail } from '@/features/authentication/components/verify-email';
-import { AcceptInvitation } from '@/features/team/component/accept-invitation';
-import { authenticationSession } from '@/lib/authentication-session';
-import { combinePaths, parentWindow } from '@/lib/utils';
-import { Permission } from '@activepieces/shared';
-import {
-  ActivepiecesClientEventName,
-  ActivepiecesVendorEventName,
-  ActivepiecesVendorRouteChanged,
-} from 'ee-embed-sdk';
+import { PageTitle } from '@/app/components/page-title'
+import { ChatPage } from '@/app/routes/chat'
+import { EmbedPage } from '@/app/routes/embed'
+import AnalyticsPage from '@/app/routes/platform/analytics'
+import { ApiKeysPage } from '@/app/routes/platform/security/api-keys'
+import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys'
+import { SSOPage } from '@/app/routes/platform/security/sso'
+import AIProvidersPage from '@/app/routes/platform/setup/ai'
+import { BrandingPage } from '@/app/routes/platform/setup/branding'
+import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces'
+import { RedirectPage } from '@/app/routes/redirect'
+import { FlowRunsPage } from '@/app/routes/runs'
+import { ProjectPiecesPage } from '@/app/routes/settings/pieces'
+import { useEmbedding } from '@/components/embed-provider'
+import { VerifyEmail } from '@/features/authentication/components/verify-email'
+import { AcceptInvitation } from '@/features/team/component/accept-invitation'
+import { authenticationSession } from '@/lib/authentication-session'
+import { combinePaths, parentWindow } from '@/lib/utils'
+import { Permission } from '@activepieces/shared'
+import { ActivepiecesClientEventName, ActivepiecesVendorEventName, ActivepiecesVendorRouteChanged } from 'ee-embed-sdk'
 
-import { ApTableStateProvider } from '../../features/tables/components/ap-table-state-provider';
-import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
-import { DashboardContainer } from '../components/dashboard-container';
-import { PlatformAdminContainer } from '../components/platform-admin-container';
-import ProjectSettingsLayout from '../components/project-settings-layout';
-import NotFoundPage from '../routes/404-page';
-import { ApTablesPage } from '../routes/ap-tables';
-import { ApTableEditorPage } from '../routes/ap-tables/id';
-import AuthenticatePage from '../routes/authenticate';
-import { ChangePasswordPage } from '../routes/change-password';
-import { AppConnectionsPage } from '../routes/connections';
-import { EmbeddedConnectionDialog } from '../routes/embed/embedded-connection-dialog';
-import { FlowsPage } from '../routes/flows';
-import { FlowBuilderPage } from '../routes/flows/id';
-import { ResetPasswordPage } from '../routes/forget-password';
-import { FormPage } from '../routes/forms';
-import IssuesPage from '../routes/issues';
-import SettingsBilling from '../routes/platform/billing';
-import SettingsHealthPage from '../routes/platform/infra/health';
-import SettingsWorkersPage from '../routes/platform/infra/workers';
-import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
-import ProjectsPage from '../routes/platform/projects';
-import AuditLogsPage from '../routes/platform/security/audit-logs';
-import { ProjectRolePage } from '../routes/platform/security/project-role';
-import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/project-role-users-table';
-import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
-import { LicenseKeyPage } from '../routes/platform/setup/license-key';
-import TemplatesPage from '../routes/platform/setup/templates';
-import UsersPage from '../routes/platform/users';
-import { ProjectReleasesPage } from '../routes/project-release';
-import ViewRelease from '../routes/project-release/view-release';
-import { FlowRunPage } from '../routes/runs/id';
-import AlertsPage from '../routes/settings/alerts';
-import AppearancePage from '../routes/settings/appearance';
-import { EnvironmentPage } from '../routes/settings/environment';
-import GeneralPage from '../routes/settings/general';
-import MCPPage from '../routes/settings/mcp';
-import TeamPage from '../routes/settings/team';
-import { SignInPage } from '../routes/sign-in';
-import { SignUpPage } from '../routes/sign-up';
-import { ShareTemplatePage } from '../routes/templates/share-template';
-import { TodosPage } from '../routes/todos';
-import { TodoTestingPage } from '../routes/todos/id';
+import { ApTableStateProvider } from '../../features/tables/components/ap-table-state-provider'
+import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard'
+import { DashboardContainer } from '../components/dashboard-container'
+import { PlatformAdminContainer } from '../components/platform-admin-container'
+import ProjectSettingsLayout from '../components/project-settings-layout'
+import NotFoundPage from '../routes/404-page'
+import { ApTablesPage } from '../routes/ap-tables'
+import { ApTableEditorPage } from '../routes/ap-tables/id'
+import AuthenticatePage from '../routes/authenticate'
+import { ChangePasswordPage } from '../routes/change-password'
+import { AppConnectionsPage } from '../routes/connections'
+import { EmbeddedConnectionDialog } from '../routes/embed/embedded-connection-dialog'
+import { FlowsPage } from '../routes/flows'
+import { FlowBuilderPage } from '../routes/flows/id'
+import { ResetPasswordPage } from '../routes/forget-password'
+import { FormPage } from '../routes/forms'
+import IssuesPage from '../routes/issues'
+import SettingsBilling from '../routes/platform/billing'
+import SettingsHealthPage from '../routes/platform/infra/health'
+import SettingsWorkersPage from '../routes/platform/infra/workers'
+import { PlatformMessages } from '../routes/platform/notifications/platform-messages'
+import ProjectsPage from '../routes/platform/projects'
+import AuditLogsPage from '../routes/platform/security/audit-logs'
+import { ProjectRolePage } from '../routes/platform/security/project-role'
+import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/project-role-users-table'
+import { GlobalConnectionsTable } from '../routes/platform/setup/connections'
+import { LicenseKeyPage } from '../routes/platform/setup/license-key'
+import TemplatesPage from '../routes/platform/setup/templates'
+import UsersPage from '../routes/platform/users'
+import { ProjectReleasesPage } from '../routes/project-release'
+import ViewRelease from '../routes/project-release/view-release'
+import { FlowRunPage } from '../routes/runs/id'
+import AlertsPage from '../routes/settings/alerts'
+import AppearancePage from '../routes/settings/appearance'
+import { EnvironmentPage } from '../routes/settings/environment'
+import GeneralPage from '../routes/settings/general'
+import MCPPage from '../routes/settings/mcp'
+import TeamPage from '../routes/settings/team'
+import { SignInPage } from '../routes/sign-in'
+import { SignUpPage } from '../routes/sign-up'
+import { ShareTemplatePage } from '../routes/templates/share-template'
+import { TodosPage } from '../routes/todos'
+import { TodoTestingPage } from '../routes/todos/id'
 
-import { AfterImportFlowRedirect } from './after-import-flow-redirect';
-import { DefaultRoute } from './default-route';
-import { RoutePermissionGuard } from './permission-guard';
-import {
-  ProjectRouterWrapper,
-  TokenCheckerWrapper,
-} from './project-route-wrapper';
+import { AfterImportFlowRedirect } from './after-import-flow-redirect'
+import { DefaultRoute } from './default-route'
+import { RoutePermissionGuard } from './permission-guard'
+import { ProjectRouterWrapper, TokenCheckerWrapper } from './project-route-wrapper'
 
 const SettingsRerouter = () => {
-  const { hash } = useLocation();
-  const fragmentWithoutHash = hash.slice(1).toLowerCase();
+  const { hash } = useLocation()
+  const fragmentWithoutHash = hash.slice(1).toLowerCase()
   return fragmentWithoutHash ? (
     <Navigate to={`/settings/${fragmentWithoutHash}`} replace />
   ) : (
     <Navigate to="/settings/general" replace />
-  );
-};
+  )
+}
 
 const routes = [
   {
@@ -682,65 +669,55 @@ const routes = [
       </PageTitle>
     ),
   },
-];
+]
 
 const ApRouter = () => {
-  const { embedState } = useEmbedding();
-  const projectId = authenticationSession.getProjectId();
+  const { embedState } = useEmbedding()
+  const projectId = authenticationSession.getProjectId()
   const router = useMemo(() => {
     return embedState.isEmbedded
       ? createMemoryRouter(routes, {
           initialEntries: [window.location.pathname],
         })
-      : createBrowserRouter(routes);
-  }, [embedState.isEmbedded]);
+      : createBrowserRouter(routes)
+  }, [embedState.isEmbedded])
 
   useEffect(() => {
     if (!embedState.isEmbedded) {
-      return;
+      return
     }
 
-    const handleVendorRouteChange = (
-      event: MessageEvent<ActivepiecesVendorRouteChanged>,
-    ) => {
-      if (
-        event.source === parentWindow &&
-        event.data.type === ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED
-      ) {
-        const targetRoute = event.data.data.vendorRoute;
+    const handleVendorRouteChange = (event: MessageEvent<ActivepiecesVendorRouteChanged>) => {
+      if (event.source === parentWindow && event.data.type === ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED) {
+        const targetRoute = event.data.data.vendorRoute
         const targetRouteRequiresProjectId =
-          targetRoute.includes('/runs') ||
-          targetRoute.includes('/flows') ||
-          targetRoute.includes('/connections');
+          targetRoute.includes('/runs') || targetRoute.includes('/flows') || targetRoute.includes('/connections')
         if (!targetRouteRequiresProjectId) {
-          router.navigate(targetRoute);
+          router.navigate(targetRoute)
         } else {
           router.navigate(
             combinePaths({
               secondPath: targetRoute,
               firstPath: `/projects/${projectId}`,
             }),
-          );
+          )
         }
       }
-    };
+    }
 
-    window.addEventListener('message', handleVendorRouteChange);
+    window.addEventListener('message', handleVendorRouteChange)
 
     return () => {
-      window.removeEventListener('message', handleVendorRouteChange);
-    };
-  }, [embedState.isEmbedded, router.navigate]);
+      window.removeEventListener('message', handleVendorRouteChange)
+    }
+  }, [embedState.isEmbedded, router.navigate])
 
   useEffect(() => {
     if (!embedState.isEmbedded) {
-      return;
+      return
     }
     router.subscribe((state) => {
-      const pathNameWithoutProjectOrProjectId = state.location.pathname.replace(
-        /\/projects\/[^/]+/,
-        '',
-      );
+      const pathNameWithoutProjectOrProjectId = state.location.pathname.replace(/\/projects\/[^/]+/, '')
       parentWindow.postMessage(
         {
           type: ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED,
@@ -749,11 +726,11 @@ const ApRouter = () => {
           },
         },
         '*',
-      );
-    });
-  }, [router, embedState.isEmbedded]);
+      )
+    })
+  }, [router, embedState.isEmbedded])
 
-  return <RouterProvider router={router}></RouterProvider>;
-};
+  return <RouterProvider router={router}></RouterProvider>
+}
 
-export { ApRouter };
+export { ApRouter }

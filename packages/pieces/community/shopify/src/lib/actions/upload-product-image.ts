@@ -1,6 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { shopifyAuth } from '../..';
-import { createProductImage } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { shopifyAuth } from '../..'
+import { createProductImage } from '../common'
 
 export const uploadProductImageAction = createAction({
   auth: shopifyAuth,
@@ -25,12 +25,8 @@ export const uploadProductImageAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { id, image, position } = propsValue;
+    const { id, image, position } = propsValue
 
-    return await createProductImage(
-      +id,
-      { attachment: image.base64, position },
-      auth
-    );
+    return await createProductImage(+id, { attachment: image.base64, position }, auth)
   },
-});
+})

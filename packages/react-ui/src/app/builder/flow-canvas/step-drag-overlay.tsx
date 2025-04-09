@@ -1,28 +1,24 @@
-import { t } from 'i18next';
+import { t } from 'i18next'
 
-import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import { Action, Trigger } from '@activepieces/shared';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook'
+import { Action, Trigger } from '@activepieces/shared'
 
-import { flowUtilConsts } from './utils/consts';
+import { flowUtilConsts } from './utils/consts'
 
 const StepDragOverlay = ({
   step,
   lefSideBarContainerWidth,
   cursorPosition,
 }: {
-  step: Action | Trigger;
-  lefSideBarContainerWidth: number;
-  cursorPosition: { x: number; y: number };
+  step: Action | Trigger
+  lefSideBarContainerWidth: number
+  cursorPosition: { x: number; y: number }
 }) => {
-  const left = `${
-    cursorPosition.x -
-    flowUtilConsts.STEP_DRAG_OVERLAY_WIDTH / 2 -
-    lefSideBarContainerWidth
-  }px`;
-  const top = `${cursorPosition.y - flowUtilConsts.STEP_DRAG_OVERLAY_HEIGHT}px`;
+  const left = `${cursorPosition.x - flowUtilConsts.STEP_DRAG_OVERLAY_WIDTH / 2 - lefSideBarContainerWidth}px`
+  const top = `${cursorPosition.y - flowUtilConsts.STEP_DRAG_OVERLAY_HEIGHT}px`
   const { stepMetadata } = piecesHooks.useStepMetadata({
     step,
-  });
+  })
 
   return (
     <div
@@ -39,14 +35,11 @@ const StepDragOverlay = ({
       <img
         id={t('logo')}
         className={'object-contain left-0 right-0 static'}
-        src={
-          step.settings?.inputUiInfo?.customizedInputs?.logoUrl ??
-          stepMetadata?.logoUrl
-        }
+        src={step.settings?.inputUiInfo?.customizedInputs?.logoUrl ?? stepMetadata?.logoUrl}
         alt={t('Step Icon')}
       />
     </div>
-  );
-};
+  )
+}
 
-export default StepDragOverlay;
+export default StepDragOverlay

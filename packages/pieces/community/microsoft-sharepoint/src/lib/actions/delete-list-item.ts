@@ -1,7 +1,7 @@
-import { microsoftSharePointAuth } from '../../';
-import { createAction } from '@activepieces/pieces-framework';
-import { microsoftSharePointCommon } from '../common';
-import { Client } from '@microsoft/microsoft-graph-client';
+import { createAction } from '@activepieces/pieces-framework'
+import { Client } from '@microsoft/microsoft-graph-client'
+import { microsoftSharePointAuth } from '../../'
+import { microsoftSharePointCommon } from '../common'
 
 export const deleteListItemAction = createAction({
   auth: microsoftSharePointAuth,
@@ -14,16 +14,14 @@ export const deleteListItemAction = createAction({
     listItemId: microsoftSharePointCommon.listItemId,
   },
   async run(context) {
-    const { siteId, listId, listItemId } = context.propsValue;
+    const { siteId, listId, listItemId } = context.propsValue
 
     const client = Client.initWithMiddleware({
       authProvider: {
         getAccessToken: () => Promise.resolve(context.auth.access_token),
       },
-    });
+    })
 
-    return await client
-      .api(`/sites/${siteId}/lists/${listId}/items/${listItemId}`)
-      .delete();
+    return await client.api(`/sites/${siteId}/lists/${listId}/items/${listItemId}`).delete()
   },
-});
+})

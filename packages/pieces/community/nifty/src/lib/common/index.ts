@@ -1,11 +1,5 @@
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import {
-  HttpMethod,
-  HttpMessageBody,
-  HttpResponse,
-  httpClient,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
+import { AuthenticationType, HttpMessageBody, HttpMethod, HttpResponse, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework'
 
 export const nitfyCommon = {
   portfolio: Property.Dropdown({
@@ -13,26 +7,26 @@ export const nitfyCommon = {
     required: true,
     refreshers: [],
     options: async ({ auth }) => {
-      const authentication = auth as OAuth2PropertyValue;
+      const authentication = auth as OAuth2PropertyValue
       if (!authentication) {
         return {
           disabled: true,
           placeholder: 'connect your account first',
           options: [],
-        };
+        }
       }
-      const accessToken = authentication.access_token;
+      const accessToken = authentication.access_token
 
       const response = (
         await callNitfyApi<{
           subteams: {
-            id: string;
-            name: string;
-          }[];
-          items: boolean;
-          hasMore: boolean;
+            id: string
+            name: string
+          }[]
+          items: boolean
+          hasMore: boolean
         }>(HttpMethod.GET, 'subteams', accessToken, undefined)
-      ).body;
+      ).body
 
       return {
         disabled: false,
@@ -40,9 +34,9 @@ export const nitfyCommon = {
           return {
             label: team.name,
             value: team.id,
-          };
+          }
         }),
-      };
+      }
     },
   }),
   project: Property.Dropdown({
@@ -50,37 +44,37 @@ export const nitfyCommon = {
     required: true,
     refreshers: ['portfolio'],
     options: async ({ auth, portfolio }) => {
-      const authentication = auth as OAuth2PropertyValue;
+      const authentication = auth as OAuth2PropertyValue
       if (!authentication) {
         return {
           disabled: true,
           placeholder: 'connect your account first',
           options: [],
-        };
+        }
       }
       if (!portfolio) {
         return {
           disabled: true,
           placeholder: 'Select portfolio first',
           options: [],
-        };
+        }
       }
 
-      const accessToken = authentication.access_token;
+      const accessToken = authentication.access_token
       const response = (
         await callNitfyApi<{
           projects: {
-            id: string;
-            name: string;
-            subteam: string;
-          }[];
-          hasMore: boolean;
+            id: string
+            name: string
+            subteam: string
+          }[]
+          hasMore: boolean
         }>(HttpMethod.GET, `projects`, accessToken, undefined)
-      ).body;
+      ).body
 
       response.projects = response.projects.filter((project) => {
-        return project.subteam == portfolio;
-      });
+        return project.subteam == portfolio
+      })
 
       return {
         disabled: false,
@@ -88,9 +82,9 @@ export const nitfyCommon = {
           return {
             label: project.name,
             value: project.id,
-          };
+          }
         }),
-      };
+      }
     },
   }),
   status: Property.Dropdown({
@@ -98,38 +92,33 @@ export const nitfyCommon = {
     required: true,
     refreshers: ['project'],
     options: async ({ auth, project }) => {
-      const authentication = auth as OAuth2PropertyValue;
+      const authentication = auth as OAuth2PropertyValue
       if (!authentication) {
         return {
           disabled: true,
           placeholder: 'connect your account first',
           options: [],
-        };
+        }
       }
       if (!project) {
         return {
           disabled: true,
           placeholder: 'Select portfolio first',
           options: [],
-        };
+        }
       }
 
-      const accessToken = authentication.access_token;
+      const accessToken = authentication.access_token
 
       const response = (
         await callNitfyApi<{
           items: {
-            id: string;
-            name: string;
-          }[];
-          hasMore: boolean;
-        }>(
-          HttpMethod.GET,
-          `taskgroups?project_id=${project}&archived=false`,
-          accessToken,
-          undefined
-        )
-      ).body;
+            id: string
+            name: string
+          }[]
+          hasMore: boolean
+        }>(HttpMethod.GET, `taskgroups?project_id=${project}&archived=false`, accessToken, undefined)
+      ).body
 
       return {
         disabled: false,
@@ -137,9 +126,9 @@ export const nitfyCommon = {
           return {
             label: list.name,
             value: list.id,
-          };
+          }
         }),
-      };
+      }
     },
   }),
   milestone: Property.Dropdown({
@@ -147,39 +136,34 @@ export const nitfyCommon = {
     required: true,
     refreshers: ['project'],
     options: async ({ auth, project }) => {
-      const authentication = auth as OAuth2PropertyValue;
+      const authentication = auth as OAuth2PropertyValue
       if (!authentication) {
         return {
           disabled: true,
           placeholder: 'connect your account first',
           options: [],
-        };
+        }
       }
       if (!project) {
         return {
           disabled: true,
           placeholder: 'Select project first',
           options: [],
-        };
+        }
       }
 
-      const accessToken = authentication.access_token;
+      const accessToken = authentication.access_token
 
       const response = (
         await callNitfyApi<{
           items: {
-            id: string;
-            name: string;
-            task_group: string;
-          }[];
-          hasMore: boolean;
-        }>(
-          HttpMethod.GET,
-          `milestones?project_id=${project}&is_list=true`,
-          accessToken,
-          undefined
-        )
-      ).body;
+            id: string
+            name: string
+            task_group: string
+          }[]
+          hasMore: boolean
+        }>(HttpMethod.GET, `milestones?project_id=${project}&is_list=true`, accessToken, undefined)
+      ).body
 
       return {
         disabled: false,
@@ -187,18 +171,18 @@ export const nitfyCommon = {
           return {
             label: list.name,
             value: list.id,
-          };
+          }
         }),
-      };
+      }
     },
   }),
-};
+}
 
 export async function callNitfyApi<T extends HttpMessageBody>(
   method: HttpMethod,
   apiUrl: string,
   accessToken: string,
-  body: any | undefined
+  body: any | undefined,
 ): Promise<HttpResponse<T>> {
   return await httpClient.sendRequest<T>({
     method: method,
@@ -208,5 +192,5 @@ export async function callNitfyApi<T extends HttpMessageBody>(
       token: accessToken,
     },
     body: body,
-  });
+  })
 }

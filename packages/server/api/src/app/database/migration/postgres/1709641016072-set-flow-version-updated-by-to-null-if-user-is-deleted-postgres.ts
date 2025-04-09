@@ -4,32 +4,31 @@ import { system } from '../../../helper/system/system'
 const log = system.globalLogger()
 
 export class SetFlowVersionUpdatedByToNullIfUserIsDeletedPostgres1709641016072 implements MigrationInterface {
-    name = 'SetFlowVersionUpdatedByToNullIfUserIsDeletedPostgres1709641016072'
+  name = 'SetFlowVersionUpdatedByToNullIfUserIsDeletedPostgres1709641016072'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             ALTER TABLE "flow_version" DROP CONSTRAINT "fk_updated_by_user_flow"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "flow_version"
             ADD CONSTRAINT "fk_updated_by_user_flow" FOREIGN KEY ("updatedBy") REFERENCES "user"("id")
             ON DELETE SET NULL ON UPDATE NO ACTION
         `)
 
-        log.info({ name: this.name }, 'up')
-    }
+    log.info({ name: this.name }, 'up')
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             ALTER TABLE "flow_version" DROP CONSTRAINT "fk_updated_by_user_flow"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "flow_version"
             ADD CONSTRAINT "fk_updated_by_user_flow" FOREIGN KEY ("updatedBy") REFERENCES "user"("id")
             ON DELETE CASCADE ON UPDATE NO ACTION
         `)
 
-        log.info({ name: this.name }, 'down')
-    }
-
+    log.info({ name: this.name }, 'down')
+  }
 }

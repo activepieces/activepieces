@@ -10,18 +10,20 @@ import { stepFileMigration } from './step-file/step-file-migration'
 import { stepFileController } from './step-file/step-file.controller'
 
 export const fileModule: FastifyPluginAsyncTypebox = async (app) => {
-    rejectedPromiseHandler(stepFileMigration(app.log).migrate(), app.log)
-    app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-    systemJobHandlers.registerJobHandler(SystemJobName.FILE_CLEANUP_TRIGGER, async () => fileService(app.log).deleteStaleBulk([FileType.FLOW_RUN_LOG, FileType.TRIGGER_EVENT_FILE]))
-    await systemJobsSchedule(app.log).upsertJob({
-        job: {
-            name: SystemJobName.FILE_CLEANUP_TRIGGER,
-            data: {},
-        },
-        schedule: {
-            type: 'repeated',
-            cron: '0 */1 * * *',
-        },
-    })
-    await app.register(stepFileController, { prefix: '/v1/step-files' })
+  rejectedPromiseHandler(stepFileMigration(app.log).migrate(), app.log)
+  app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
+  systemJobHandlers.registerJobHandler(SystemJobName.FILE_CLEANUP_TRIGGER, async () =>
+    fileService(app.log).deleteStaleBulk([FileType.FLOW_RUN_LOG, FileType.TRIGGER_EVENT_FILE]),
+  )
+  await systemJobsSchedule(app.log).upsertJob({
+    job: {
+      name: SystemJobName.FILE_CLEANUP_TRIGGER,
+      data: {},
+    },
+    schedule: {
+      type: 'repeated',
+      cron: '0 */1 * * *',
+    },
+  })
+  await app.register(stepFileController, { prefix: '/v1/step-files' })
 }

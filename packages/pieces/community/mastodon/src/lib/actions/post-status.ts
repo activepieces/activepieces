@@ -1,15 +1,11 @@
-import FormData from 'form-data';
-import { Property, createAction, ApFile } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { mastodonAuth } from '../..';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { ApFile, Property, createAction } from '@activepieces/pieces-framework'
+import FormData from 'form-data'
+import { mastodonAuth } from '../..'
 
 const uploadMedia = async (media: ApFile, baseUrl: string, token: string) => {
-  const formData = new FormData();
-  formData.append('file', Buffer.from(media.base64, 'base64'), media.filename);
+  const formData = new FormData()
+  formData.append('file', Buffer.from(media.base64, 'base64'), media.filename)
 
   const postMediaResponse = await httpClient.sendRequest({
     url: `${baseUrl}/api/v2/media`,
@@ -22,10 +18,10 @@ const uploadMedia = async (media: ApFile, baseUrl: string, token: string) => {
       'Content-type': 'multipart/form-data',
     },
     body: formData,
-  });
+  })
 
-  return postMediaResponse.body.id;
-};
+  return postMediaResponse.body.id
+}
 
 export const postStatus = createAction({
   auth: mastodonAuth,
@@ -45,15 +41,15 @@ export const postStatus = createAction({
     }),
   },
   async run(context) {
-    const token = context.auth.access_token;
-    const status = context.propsValue.status;
-    const media = context.propsValue.media;
+    const token = context.auth.access_token
+    const status = context.propsValue.status
+    const media = context.propsValue.media
     // Remove trailing slash from base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.base_url.replace(/\/$/, '')
 
-    let mediaId: string | undefined = undefined;
+    let mediaId: string | undefined = undefined
     if (media) {
-      mediaId = await uploadMedia(media, baseUrl, token);
+      mediaId = await uploadMedia(media, baseUrl, token)
     }
 
     return await httpClient.sendRequest({
@@ -67,6 +63,6 @@ export const postStatus = createAction({
         status,
         ...(mediaId ? { media_ids: [mediaId] } : {}),
       },
-    });
+    })
   },
-});
+})

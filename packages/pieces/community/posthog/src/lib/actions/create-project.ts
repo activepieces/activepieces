@@ -1,12 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { ProjectCreateRequest, ProjectCreateResponse } from '../common/models';
-import { posthogAuth } from '../..';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { posthogAuth } from '../..'
+import { ProjectCreateRequest, ProjectCreateResponse } from '../common/models'
 
 export const posthogCreateProject = createAction({
   auth: posthogAuth,
@@ -38,7 +33,7 @@ export const posthogCreateProject = createAction({
   async run(context) {
     const body: ProjectCreateRequest = {
       ...context.propsValue,
-    };
+    }
 
     const request: HttpRequest<ProjectCreateRequest> = {
       method: HttpMethod.POST,
@@ -48,15 +43,15 @@ export const posthogCreateProject = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth,
       },
-    };
-
-    const result = await httpClient.sendRequest<ProjectCreateResponse>(request);
-    console.debug('Project creation response', result);
-
-    if (result.status === 200) {
-      return result.body;
     }
 
-    return result;
+    const result = await httpClient.sendRequest<ProjectCreateResponse>(request)
+    console.debug('Project creation response', result)
+
+    if (result.status === 200) {
+      return result.body
+    }
+
+    return result
   },
-});
+})

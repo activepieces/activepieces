@@ -1,12 +1,7 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import {
-  HttpMethod,
-  HttpResponse,
-  httpClient,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
-import { callTwilioApi, twilioCommon } from '../common';
-import { twilioAuth } from '../..';
+import { AuthenticationType, HttpMethod, HttpResponse, httpClient } from '@activepieces/pieces-common'
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { twilioAuth } from '../..'
+import { callTwilioApi, twilioCommon } from '../common'
 
 export const twilioNewIncomingSms = createTrigger({
   auth: twilioAuth,
@@ -46,75 +41,68 @@ export const twilioNewIncomingSms = createTrigger({
   // Twilio API only allows one webhook per phone number, so we need to poll
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
-    const { phone_number } = context.propsValue;
-    const account_sid = context.auth.username;
-    const auth_token = context.auth.password;
+    const { phone_number } = context.propsValue
+    const account_sid = context.auth.username
+    const auth_token = context.auth.password
     const response = await callTwilioApi<MessagePaginationResponse>(
       HttpMethod.GET,
       `Messages.json?PageSize=20&To=${phone_number}`,
       { account_sid, auth_token },
-      {}
-    );
+      {},
+    )
     await context.store.put<LastMessage>('_new_incoming_sms_trigger', {
-      lastMessageId:
-        response.body.messages.length === 0
-          ? null
-          : response.body.messages[0].sid,
-    });
+      lastMessageId: response.body.messages.length === 0 ? null : response.body.messages[0].sid,
+    })
   },
   async onDisable(context) {
-    await context.store.put('_new_incoming_sms_trigger', null);
+    await context.store.put('_new_incoming_sms_trigger', null)
   },
   async run(context) {
-    const account_sid = context.auth.username;
-    const auth_token = context.auth.password;
-    const newMessages: unknown[] = [];
-    const lastMessage = await context.store.get<LastMessage>(
-      '_new_incoming_sms_trigger'
-    );
-    let currentUri:
-      | string
-      | null = `2010-04-01/Accounts/${account_sid}/Messages.json?PageSize=20&To=${context.propsValue.phone_number}`;
-    let firstMessageId = undefined;
+    const account_sid = context.auth.username
+    const auth_token = context.auth.password
+    const newMessages: unknown[] = []
+    const lastMessage = await context.store.get<LastMessage>('_new_incoming_sms_trigger')
+    let currentUri: string | null =
+      `2010-04-01/Accounts/${account_sid}/Messages.json?PageSize=20&To=${context.propsValue.phone_number}`
+    let firstMessageId = undefined
     while (currentUri !== undefined && currentUri !== null) {
-      const res: HttpResponse<MessagePaginationResponse> =
-        await httpClient.sendRequest<MessagePaginationResponse>({
-          method: HttpMethod.GET,
-          url: `https://api.twilio.com/${currentUri}`,
-          authentication: {
-            type: AuthenticationType.BASIC,
-            username: account_sid,
-            password: auth_token,
-          },
-        });
-      const messages = res.body.messages;
+      const res: HttpResponse<MessagePaginationResponse> = await httpClient.sendRequest<MessagePaginationResponse>({
+        method: HttpMethod.GET,
+        url: `https://api.twilio.com/${currentUri}`,
+        authentication: {
+          type: AuthenticationType.BASIC,
+          username: account_sid,
+          password: auth_token,
+        },
+      })
+      const messages = res.body.messages
       if (!firstMessageId && messages.length > 0) {
-        firstMessageId = messages[0].sid;
+        firstMessageId = messages[0].sid
       }
-      currentUri = res.body.next_page_uri;
+      currentUri = res.body.next_page_uri
       for (let i = 0; i < messages.length; i++) {
-        const message = messages[i];
+        const message = messages[i]
         if (message.sid === lastMessage?.lastMessageId) {
-          currentUri = null;
-          break;
+          currentUri = null
+          break
         }
         if (message.direction === 'inbound') {
-          newMessages.push(message);
+          newMessages.push(message)
         }
       }
     }
     await context.store.put<LastMessage>('_new_incoming_sms_trigger', {
       lastMessageId: firstMessageId ?? lastMessage!.lastMessageId,
-    });
-    return newMessages;
+    })
+    return newMessages
   },
-});
+})
 
 interface LastMessage {
-  lastMessageId: string | null;
+  lastMessageId: string | null
 }
 
 interface MessagePaginationResponse {
-  messages: { sid: string; to: string; status: string; direction: string }[];
-  next_page_uri: string;
+  messages: { sid: string; to: string; status: string; direction: string }[]
+  next_page_uri: string
 }

@@ -1,46 +1,41 @@
-import { t } from 'i18next';
-import { Brain, ListTodo, Table2, Workflow } from 'lucide-react';
-import { createContext, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { t } from 'i18next'
+import { Brain, ListTodo, Table2, Workflow } from 'lucide-react'
+import { createContext, useState } from 'react'
+import { Navigate } from 'react-router-dom'
 
-import { useEmbedding } from '@/components/embed-provider';
-import { issueHooks } from '@/features/issues/hooks/issue-hooks';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
-import { isNil, Permission } from '@activepieces/shared';
+import { useEmbedding } from '@/components/embed-provider'
+import { issueHooks } from '@/features/issues/hooks/issue-hooks'
+import { useAuthorization } from '@/hooks/authorization-hooks'
+import { platformHooks } from '@/hooks/platform-hooks'
+import { projectHooks } from '@/hooks/project-hooks'
+import { Permission, isNil } from '@activepieces/shared'
 
-import { authenticationSession } from '../../lib/authentication-session';
+import { authenticationSession } from '../../lib/authentication-session'
 
-import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
-import {
-  SidebarComponent,
-  SidebarGroup,
-  SidebarItem,
-  SidebarLink,
-} from './sidebar';
+import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard'
+import { SidebarComponent, SidebarGroup, SidebarItem, SidebarLink } from './sidebar'
 
 type DashboardContainerProps = {
-  children: React.ReactNode;
-  hideHeader?: boolean;
-  removeGutters?: boolean;
-  removeBottomPadding?: boolean;
-};
+  children: React.ReactNode
+  hideHeader?: boolean
+  removeGutters?: boolean
+  removeBottomPadding?: boolean
+}
 
 const ProjectChangedRedirector = ({
   currentProjectId,
   children,
 }: {
-  currentProjectId: string;
-  children: React.ReactNode;
+  currentProjectId: string
+  children: React.ReactNode
 }) => {
-  projectHooks.useReloadPageIfProjectIdChanged(currentProjectId);
-  return children;
-};
+  projectHooks.useReloadPageIfProjectIdChanged(currentProjectId)
+  return children
+}
 export const CloseTaskLimitAlertContext = createContext({
   isAlertClosed: false,
   setIsAlertClosed: (isAlertClosed: boolean) => {},
-});
+})
 
 export function DashboardContainer({
   children,
@@ -48,32 +43,31 @@ export function DashboardContainer({
   hideHeader,
   removeBottomPadding,
 }: DashboardContainerProps) {
-  const [automationOpen, setAutomationOpen] = useState(true);
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
-  const { project } = projectHooks.useCurrentProject();
-  const { embedState } = useEmbedding();
-  const currentProjectId = authenticationSession.getProjectId();
-  const { checkAccess } = useAuthorization();
-  const [isAlertClosed, setIsAlertClosed] = useState(false);
+  const [automationOpen, setAutomationOpen] = useState(true)
+  const { platform } = platformHooks.useCurrentPlatform()
+  const { data: showIssuesNotification } = issueHooks.useIssuesNotification()
+  const { project } = projectHooks.useCurrentProject()
+  const { embedState } = useEmbedding()
+  const currentProjectId = authenticationSession.getProjectId()
+  const { checkAccess } = useAuthorization()
+  const [isAlertClosed, setIsAlertClosed] = useState(false)
   if (isNil(currentProjectId) || currentProjectId === '') {
-    return <Navigate to="/sign-in" replace />;
+    return <Navigate to="/sign-in" replace />
   }
   const embedFilter = (link: SidebarItem) => {
     if (link.type === 'link') {
-      return !embedState.isEmbedded || !!link.showInEmbed;
+      return !embedState.isEmbedded || !!link.showInEmbed
     }
-    return true;
-  };
+    return true
+  }
   const permissionFilter = (link: SidebarItem) => {
     if (link.type === 'link') {
-      return isNil(link.hasPermission) || link.hasPermission;
+      return isNil(link.hasPermission) || link.hasPermission
     }
-    return true;
-  };
+    return true
+  }
 
-  const filterAlerts = (item: SidebarItem) =>
-    platform.alertsEnabled || item.label !== t('Alerts');
+  const filterAlerts = (item: SidebarItem) => platform.alertsEnabled || item.label !== t('Alerts')
 
   const automationGroup: SidebarGroup = {
     type: 'group',
@@ -81,15 +75,8 @@ export function DashboardContainer({
     putEmptySpaceTop: true,
     icon: Workflow,
     isActive: (pathname: string) => {
-      const paths = [
-        '/flows',
-        '/issues',
-        '/runs',
-        '/connections',
-        '/releases',
-        '/tables',
-      ];
-      return paths.some((path) => pathname.includes(path));
+      const paths = ['/flows', '/issues', '/runs', '/connections', '/releases', '/tables']
+      return paths.some((path) => pathname.includes(path))
     },
     name: t('Products'),
     defaultOpen: true,
@@ -125,13 +112,11 @@ export function DashboardContainer({
         type: 'link',
         to: authenticationSession.appendProjectRoutePrefix('/releases'),
         label: t('Releases'),
-        hasPermission:
-          project.releasesEnabled &&
-          checkAccess(Permission.READ_PROJECT_RELEASE),
+        hasPermission: project.releasesEnabled && checkAccess(Permission.READ_PROJECT_RELEASE),
         isSubItem: true,
       },
     ],
-  };
+  }
 
   const mcpLink: SidebarLink = {
     type: 'link',
@@ -141,7 +126,7 @@ export function DashboardContainer({
     showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_MCP),
     isSubItem: false,
-  };
+  }
 
   const tablesLink: SidebarLink = {
     type: 'link',
@@ -151,7 +136,7 @@ export function DashboardContainer({
     showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_TABLE),
     isSubItem: false,
-  };
+  }
 
   const todosLink: SidebarLink = {
     type: 'link',
@@ -161,29 +146,26 @@ export function DashboardContainer({
     showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_TODOS),
     isSubItem: false,
-  };
+  }
 
   const items: SidebarItem[] = [automationGroup, mcpLink, tablesLink, todosLink]
     .filter(embedFilter)
     .filter(permissionFilter)
-    .filter(filterAlerts);
+    .filter(filterAlerts)
 
   for (const item of items) {
     if (item.type === 'group') {
-      const newItems = item.items
-        .filter(embedFilter)
-        .filter(permissionFilter)
-        .filter(filterAlerts);
-      item.items = newItems;
+      const newItems = item.items.filter(embedFilter).filter(permissionFilter).filter(filterAlerts)
+      item.items = newItems
     }
   }
 
   const filteredItems = items.filter((item) => {
     if (item.type === 'group') {
-      return item.items.length > 0;
+      return item.items.length > 0
     }
-    return true;
-  });
+    return true
+  })
 
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
@@ -207,5 +189,5 @@ export function DashboardContainer({
         </CloseTaskLimitAlertContext.Provider>
       </ProjectChangedRedirector>
     </AllowOnlyLoggedInUserOnlyGuard>
-  );
+  )
 }

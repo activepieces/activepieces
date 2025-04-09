@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { deeplAuth } from '../..';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { deeplAuth } from '../..'
 
 export const translateText = createAction({
   name: 'translate_text',
@@ -11,8 +11,7 @@ export const translateText = createAction({
     text: Property.LongText({
       displayName: 'Text',
       required: true,
-      description:
-        'Text to be translated. Only UTF-8-encoded plain text is supported.',
+      description: 'Text to be translated. Only UTF-8-encoded plain text is supported.',
     }),
     target_lang: Property.StaticDropdown({
       displayName: 'Target language',
@@ -101,8 +100,7 @@ export const translateText = createAction({
         options: [
           {
             value: '0',
-            label:
-              'No splitting at all, whole input is treated as one sentence',
+            label: 'No splitting at all, whole input is treated as one sentence',
           },
           { value: '1', label: 'Splits on punctuation and on newlines' },
           {
@@ -126,8 +124,7 @@ export const translateText = createAction({
     }),
     formality: Property.StaticDropdown({
       displayName: 'Formality',
-      description:
-        'Sets whether the translated text should lean towards formal or informal language.',
+      description: 'Sets whether the translated text should lean towards formal or informal language.',
       required: false,
       options: {
         options: [
@@ -136,13 +133,11 @@ export const translateText = createAction({
           { value: 'less', label: 'For a more informal language' },
           {
             value: 'prefer_more',
-            label:
-              'For a more formal language if available, otherwise fallback to default formality',
+            label: 'For a more formal language if available, otherwise fallback to default formality',
           },
           {
             value: 'prefer_less',
-            label:
-              'For a more informal language if available, otherwise fallback to default formality',
+            label: 'For a more informal language if available, otherwise fallback to default formality',
           },
         ],
       },
@@ -165,8 +160,7 @@ export const translateText = createAction({
     }),
     outline_detection: Property.StaticDropdown({
       displayName: 'Outline detection',
-      description:
-        "The automatic detection of the XML structure won't yield best results in all XML files.",
+      description: "The automatic detection of the XML structure won't yield best results in all XML files.",
       required: false,
       options: {
         options: [
@@ -192,8 +186,8 @@ export const translateText = createAction({
     }),
   },
   async run(context) {
-    const DEEPL_FREE_URL = 'https://api-free.deepl.com/v2/translate';
-    const DEEPL_PAID_URL = 'https://api.deepl.com/v2/translate';
+    const DEEPL_FREE_URL = 'https://api-free.deepl.com/v2/translate'
+    const DEEPL_PAID_URL = 'https://api.deepl.com/v2/translate'
     const {
       text,
       target_lang,
@@ -207,7 +201,7 @@ export const translateText = createAction({
       non_splitting_tags,
       splitting_tags,
       ignore_tags,
-    } = context.propsValue;
+    } = context.propsValue
     const request = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
       url: context.auth.type === 'free' ? DEEPL_FREE_URL : DEEPL_PAID_URL,
@@ -229,8 +223,8 @@ export const translateText = createAction({
         splitting_tags: splitting_tags?.split(','),
         ignore_tags: ignore_tags?.split(','),
       },
-    });
+    })
 
-    return request.body;
+    return request.body
   },
-});
+})

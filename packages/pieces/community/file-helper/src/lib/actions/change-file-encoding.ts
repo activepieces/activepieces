@@ -1,5 +1,5 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { encodings } from '../common/encodings';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { encodings } from '../common/encodings'
 
 export const changeFileEncoding = createAction({
   name: 'change_file_encoding',
@@ -30,19 +30,19 @@ export const changeFileEncoding = createAction({
     }),
   },
   async run(context) {
-    const inputFile = context.propsValue.inputFile.data;
-    const inputEncoding = context.propsValue.inputEncoding as BufferEncoding;
-    const outputFileName = context.propsValue.outputFileName;
-    const outputEncoding = context.propsValue.outputEncoding as BufferEncoding;
+    const inputFile = context.propsValue.inputFile.data
+    const inputEncoding = context.propsValue.inputEncoding as BufferEncoding
+    const outputFileName = context.propsValue.outputFileName
+    const outputEncoding = context.propsValue.outputEncoding as BufferEncoding
 
     // First decode the input buffer using the source encoding
-    const decodedString = inputFile.toString(inputEncoding);
+    const decodedString = inputFile.toString(inputEncoding)
     // Then encode to the target encoding
-    const encodedBuffer = Buffer.from(decodedString, outputEncoding);
+    const encodedBuffer = Buffer.from(decodedString, outputEncoding)
 
     return context.files.write({
       fileName: outputFileName,
       data: encodedBuffer,
-    });
+    })
   },
-});
+})

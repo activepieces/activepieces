@@ -1,19 +1,14 @@
-import {
-  AuthenticationType,
-  HttpMethod,
-  HttpRequest,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue } from '@activepieces/pieces-framework'
 
 export interface WebhookInformation {
-  id: string;
-  target: string;
-  type: string;
-  address: string;
-  created_at: string;
-  created_by: string;
-  triggers: string[];
+  id: string
+  target: string
+  type: string
+  address: string
+  created_at: string
+  created_by: string
+  triggers: string[]
 }
 
 export const common = {
@@ -22,13 +17,13 @@ export const common = {
   async subscribeWebhook(
     auth: OAuth2PropertyValue,
     data: {
-      event: string;
+      event: string
       target: {
-        id: number | string;
-        type: string;
-      };
-      webhookUrl: string;
-    }
+        id: number | string
+        type: string
+      }
+      webhookUrl: string
+    },
   ) {
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -42,10 +37,10 @@ export const common = {
         triggers: [data.event],
         target: data.target,
       },
-    };
+    }
 
-    const response = await httpClient.sendRequest<WebhookInformation>(request);
-    return response.body;
+    const response = await httpClient.sendRequest<WebhookInformation>(request)
+    return response.body
   },
 
   async unsubscribeWebhook(auth: OAuth2PropertyValue, webhookId: string) {
@@ -56,9 +51,9 @@ export const common = {
         type: AuthenticationType.BEARER_TOKEN,
         token: auth.access_token,
       },
-    };
+    }
 
-    const response = await httpClient.sendRequest(request);
-    return response;
+    const response = await httpClient.sendRequest(request)
+    return response
   },
-};
+}

@@ -1,5 +1,5 @@
-import { squareAuth } from '../../';
-import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework'
+import { squareAuth } from '../../'
 
 const triggerData = [
   {
@@ -234,11 +234,7 @@ const triggerData = [
               amount: 100,
               currency: 'USD',
             },
-            capabilities: [
-              'EDIT_TIP_AMOUNT',
-              'EDIT_TIP_AMOUNT_UP',
-              'EDIT_TIP_AMOUNT_DOWN',
-            ],
+            capabilities: ['EDIT_TIP_AMOUNT', 'EDIT_TIP_AMOUNT_UP', 'EDIT_TIP_AMOUNT_DOWN'],
             card_details: {
               avs_status: 'AVS_ACCEPTED',
               card: {
@@ -247,8 +243,7 @@ const triggerData = [
                 card_type: 'CREDIT',
                 exp_month: 11,
                 exp_year: 2022,
-                fingerprint:
-                  'sq-1-Tvruf3vPQxlvI6n0IcKYfBukrcv6IqWr8UyBdViWXU2yzGn5VMJvrsHMKpINMhPmVg',
+                fingerprint: 'sq-1-Tvruf3vPQxlvI6n0IcKYfBukrcv6IqWr8UyBdViWXU2yzGn5VMJvrsHMKpINMhPmVg',
                 last_4: '9029',
                 prepaid_type: 'NOT_PREPAID',
               },
@@ -371,7 +366,7 @@ const triggerData = [
       },
     },
   },
-];
+]
 
 export const triggers = triggerData.map((trigger) =>
   createTrigger({
@@ -386,16 +381,16 @@ export const triggers = triggerData.map((trigger) =>
       context.app.createListeners({
         events: [trigger.event],
         identifierValue: context.auth.data['merchant_id'],
-      });
+      })
     },
     onDisable: async () => {
       // Ignored
     },
     test: async () => {
-      return [trigger.sampleData];
+      return [trigger.sampleData]
     },
     run: async (context) => {
-      return [context.payload.body];
+      return [context.payload.body]
     },
-  })
-);
+  }),
+)

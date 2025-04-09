@@ -1,24 +1,24 @@
-import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
-import { EventType, EventOption } from '../types';
-import { fetchTags, fetchForms, fetchSequences } from '../service';
+import { DynamicPropsValue, Property } from '@activepieces/pieces-framework'
+import { fetchForms, fetchSequences, fetchTags } from '../service'
+import { EventOption, EventType } from '../types'
 
 export const initiatorValue = Property.ShortText({
   displayName: 'Initiator Value URL',
   description: 'The initiator value URL that will trigger the webhook',
   required: true,
-});
+})
 
 export const webhookId = Property.Number({
   displayName: 'Webhook Id',
   description: 'The webhook rule id',
   required: true,
-});
+})
 
 export const targetUrl = Property.ShortText({
   displayName: 'Target URL',
   description: 'The URL that will be called when the webhook is triggered',
   required: true,
-});
+})
 
 export const eventParameter = Property.DynamicProperties({
   displayName: 'Event Parameter',
@@ -31,33 +31,31 @@ export const eventParameter = Property.DynamicProperties({
         disabled: true,
         placeholder: 'Select event first',
         options: [],
-      };
+      }
     }
 
-    const fields: DynamicPropsValue = {};
+    const fields: DynamicPropsValue = {}
 
     const eventOption = createWebhookParameterOptions.find(
-      (option) =>
-        option.value === (event as unknown as string) &&
-        option.required_parameter
-    );
+      (option) => option.value === (event as unknown as string) && option.required_parameter,
+    )
 
     if (!eventOption) {
-      return fields;
+      return fields
     }
 
-    const required_parameter = eventOption.required_parameter || '';
-    const param_label = eventOption.param_label || '';
-    const fieldType = eventOption.type || '';
+    const required_parameter = eventOption.required_parameter || ''
+    const param_label = eventOption.param_label || ''
+    const fieldType = eventOption.type || ''
 
     if (required_parameter === 'tag_id') {
-      const tags = await fetchTags(auth.toString());
+      const tags = await fetchTags(auth.toString())
       const options = tags.map((tag) => {
         return {
           label: tag.name,
           value: tag.id,
-        };
-      });
+        }
+      })
       fields[required_parameter] = Property.StaticDropdown({
         displayName: 'Tag',
         description: 'Choose a Tag',
@@ -65,18 +63,18 @@ export const eventParameter = Property.DynamicProperties({
         options: {
           options,
         },
-      });
-      return fields;
+      })
+      return fields
     }
 
     if (required_parameter === 'form_id') {
-      const forms = await fetchForms(auth.toString());
+      const forms = await fetchForms(auth.toString())
       const options = forms.map((form) => {
         return {
           label: form.name,
           value: form.id,
-        };
-      });
+        }
+      })
       fields[required_parameter] = Property.StaticDropdown({
         displayName: 'Form',
         description: 'Choose a Form',
@@ -84,18 +82,18 @@ export const eventParameter = Property.DynamicProperties({
         options: {
           options,
         },
-      });
-      return fields;
+      })
+      return fields
     }
 
     if (required_parameter === 'sequence_id') {
-      const courses = await fetchSequences(auth.toString());
+      const courses = await fetchSequences(auth.toString())
       const options = courses.map((sequence) => {
         return {
           label: sequence.name,
           value: sequence.id,
-        };
-      });
+        }
+      })
       fields[required_parameter] = Property.StaticDropdown({
         displayName: 'Sequence',
         description: 'Choose a Sequence',
@@ -103,26 +101,26 @@ export const eventParameter = Property.DynamicProperties({
         options: {
           options,
         },
-      });
-      return fields;
+      })
+      return fields
     }
 
     const field = {
       displayName: param_label,
       description: `The ${param_label} parameter for the event`,
       required: true,
-    };
+    }
 
     if (fieldType === 'number') {
-      fields[required_parameter] = Property.Number(field);
+      fields[required_parameter] = Property.Number(field)
     }
     if (fieldType === 'string') {
-      fields[required_parameter] = Property.ShortText(field);
+      fields[required_parameter] = Property.ShortText(field)
     }
 
-    return fields;
+    return fields
   },
-});
+})
 
 export const createWebhookParameterOptions: EventOption[] = [
   {
@@ -209,7 +207,7 @@ export const createWebhookParameterOptions: EventOption[] = [
     param_label: null,
     type: null,
   },
-];
+]
 
 export const event = Property.StaticDropdown({
   displayName: 'Event',
@@ -218,4 +216,4 @@ export const event = Property.StaticDropdown({
   options: {
     options: createWebhookParameterOptions,
   },
-});
+})

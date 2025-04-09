@@ -1,7 +1,7 @@
-import { googleDocsAuth } from '../../index';
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { google } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { google } from 'googleapis'
+import { OAuth2Client } from 'googleapis-common'
+import { googleDocsAuth } from '../../index'
 
 export const readDocument = createAction({
   displayName: 'Read Document',
@@ -16,19 +16,19 @@ export const readDocument = createAction({
     }),
   },
   async run(context) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = new OAuth2Client()
+    authClient.setCredentials(context.auth)
 
-    const docs = google.docs({ version: 'v1', auth: authClient });
+    const docs = google.docs({ version: 'v1', auth: authClient })
     const response = await docs.documents.get({
       documentId: context.propsValue.documentId,
-    });
+    })
 
     if (response.status !== 200) {
-      console.error(response);
-      throw new Error('Error reading document');
+      console.error(response)
+      throw new Error('Error reading document')
     }
 
-    return response.data;
+    return response.data
   },
-});
+})

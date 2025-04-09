@@ -1,8 +1,8 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { textToSpeech } from './lib/actions/text-to-speech-action';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { ElevenLabsClient } from 'elevenlabs';
-import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { ElevenLabsClient } from 'elevenlabs'
+import { textToSpeech } from './lib/actions/text-to-speech-action'
 
 const markdownDescription = `
 Follow these instructions to get your API Key:
@@ -10,7 +10,7 @@ Follow these instructions to get your API Key:
 2. Once there, click on your account in the bottom left corner.
 3. Press Profile + API Key.
 4. Copy the API Key.
-`;
+`
 
 export const elevenlabsAuth = PieceAuth.SecretText({
   description: markdownDescription,
@@ -20,19 +20,19 @@ export const elevenlabsAuth = PieceAuth.SecretText({
     try {
       const elevenlabs = new ElevenLabsClient({
         apiKey: `${auth}`,
-      });
-      await elevenlabs.user.get();
+      })
+      await elevenlabs.user.get()
       return {
         valid: true,
-      };
+      }
     } catch (error) {
       return {
         valid: false,
         error: 'Invalid API Key.',
-      };
+      }
     }
   },
-});
+})
 
 export const elevenlabs = createPiece({
   displayName: 'ElevenLabs',
@@ -53,4 +53,4 @@ export const elevenlabs = createPiece({
     }),
   ],
   triggers: [],
-});
+})

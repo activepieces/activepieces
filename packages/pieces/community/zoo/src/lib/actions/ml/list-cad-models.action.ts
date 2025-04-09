@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
 import { zooAuth } from '../../../index'
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const listCadModelsAction = createAction({
   name: 'list_cad_models',
@@ -31,7 +31,7 @@ export const listCadModelsAction = createAction({
         ...(propsValue.limit && { limit: propsValue.limit.toString() }),
         ...(propsValue.offset && { offset: propsValue.offset.toString() }),
       },
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

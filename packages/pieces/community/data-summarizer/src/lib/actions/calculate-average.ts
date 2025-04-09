@@ -1,5 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { common } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { common } from '../common'
 
 export const calculateAverage = createAction({
   name: 'calculateAverage',
@@ -8,18 +8,18 @@ export const calculateAverage = createAction({
   props: {
     note: common.note,
     values: Property.Array({
-      displayName: "Values",
+      displayName: 'Values',
       required: true,
-    })
+    }),
   },
   async run({ propsValue }) {
-    const result = common.validateArray(propsValue.values);
+    const result = common.validateArray(propsValue.values)
     if (result.hasError) {
-      throw new Error(JSON.stringify(result.error));
+      throw new Error(JSON.stringify(result.error))
     }
-    const sum = result.values.reduce((acc, value) => acc + value, 0);
+    const sum = result.values.reduce((acc, value) => acc + value, 0)
     return {
-      average: sum / result.values.length
-    };
+      average: sum / result.values.length,
+    }
   },
-});
+})

@@ -1,16 +1,16 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class SupportS3FilesSqlite1726363932745 implements MigrationInterface {
-    name = 'SupportS3FilesSqlite1726363932745'
+  name = 'SupportS3FilesSqlite1726363932745'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_file_type_created_desc"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_file_project_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "temporary_file" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -28,7 +28,7 @@ export class SupportS3FilesSqlite1726363932745 implements MigrationInterface {
                 CONSTRAINT "fk_file_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "temporary_file"(
                     "id",
                     "created",
@@ -59,37 +59,37 @@ export class SupportS3FilesSqlite1726363932745 implements MigrationInterface {
                 NULL
             FROM "file"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "file"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "temporary_file"
                 RENAME TO "file"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_file_type_created_desc" ON "file" ("type", "created")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_file_project_id" ON "file" ("projectId")
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DELETE FROM "file"
             WHERE "type" = 'FLOW_STEP_FILE'
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_file_project_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_file_type_created_desc"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "file"
                 RENAME TO "temporary_file"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "file" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -107,7 +107,7 @@ export class SupportS3FilesSqlite1726363932745 implements MigrationInterface {
                 CONSTRAINT "fk_file_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "file"(
                     "id",
                     "created",
@@ -138,26 +138,26 @@ export class SupportS3FilesSqlite1726363932745 implements MigrationInterface {
                 "s3Key"
             FROM "temporary_file"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_file"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_file_project_id" ON "file" ("projectId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_file_type_created_desc" ON "file" ("type", "created")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_file_project_id"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP INDEX "idx_file_type_created_desc"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "file"
                 RENAME TO "temporary_file"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "file" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -170,7 +170,7 @@ export class SupportS3FilesSqlite1726363932745 implements MigrationInterface {
                 CONSTRAINT "fk_file_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "file"(
                     "id",
                     "created",
@@ -191,15 +191,14 @@ export class SupportS3FilesSqlite1726363932745 implements MigrationInterface {
                 "platformId"
             FROM "temporary_file"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_file"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_file_project_id" ON "file" ("projectId")
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE INDEX "idx_file_type_created_desc" ON "file" ("type", "created")
         `)
-    }
-
+  }
 }

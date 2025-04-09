@@ -1,5 +1,5 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import Crypto from 'crypto';
+import Crypto from 'crypto'
+import { Property, createAction } from '@activepieces/pieces-framework'
 
 export const hashText = createAction({
   name: 'hash-text',
@@ -26,14 +26,13 @@ export const hashText = createAction({
     }),
   },
   async run(context) {
+    const hashAlgorithm = Crypto.createHash(context.propsValue.method)
 
-    const hashAlgorithm = Crypto.createHash(context.propsValue.method);
+    const text = context.propsValue.text
+    hashAlgorithm.update(text)
 
-    const text = context.propsValue.text;
-    hashAlgorithm.update(text);
+    const hashedString = hashAlgorithm.digest('hex')
 
-    const hashedString = hashAlgorithm.digest('hex');
-
-    return hashedString;
+    return hashedString
   },
-});
+})

@@ -4,9 +4,12 @@ import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorizati
 import { projectMemberController } from './project-member.controller'
 
 export const projectMemberModule: FastifyPluginAsyncTypebox = async (app) => {
-    app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.projectRolesEnabled))
-    await app.register(projectMemberController, {
-        prefix: '/v1/project-members',
-    })
+  app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
+  app.addHook(
+    'preHandler',
+    platformMustHaveFeatureEnabled((platform) => platform.projectRolesEnabled),
+  )
+  await app.register(projectMemberController, {
+    prefix: '/v1/project-members',
+  })
 }

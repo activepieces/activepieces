@@ -1,19 +1,17 @@
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { GmailRequests } from './data';
-import { GmailLabel } from './models';
+import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework'
+import { GmailRequests } from './data'
+import { GmailLabel } from './models'
 
 export const GmailProps = {
   from: Property.ShortText({
     displayName: 'Email sender',
-    description:
-      'Optional filteration, leave empty to filter based on the email sender',
+    description: 'Optional filteration, leave empty to filter based on the email sender',
     required: false,
     defaultValue: '',
   }),
   to: Property.ShortText({
     displayName: 'Email recipient',
-    description:
-      'Optional filteration, leave empty to filter based on the email recipient',
+    description: 'Optional filteration, leave empty to filter based on the email recipient',
     required: false,
     defaultValue: '',
   }),
@@ -25,8 +23,7 @@ export const GmailProps = {
   }),
   category: Property.StaticDropdown({
     displayName: 'Category',
-    description:
-      'Optional filteration, leave unselected to filter based on the email category',
+    description: 'Optional filteration, leave unselected to filter based on the email category',
     required: false,
     options: {
       disabled: false,
@@ -43,8 +40,7 @@ export const GmailProps = {
   }),
   label: Property.Dropdown<GmailLabel>({
     displayName: 'Label',
-    description:
-      'Optional filteration, leave unselected to filter based on the email label',
+    description: 'Optional filteration, leave unselected to filter based on the email label',
     required: false,
     defaultValue: '',
     refreshers: [],
@@ -54,12 +50,10 @@ export const GmailProps = {
           disabled: true,
           options: [],
           placeholder: 'please authenticate first',
-        };
+        }
       }
 
-      const response = await GmailRequests.getLabels(
-        auth as OAuth2PropertyValue
-      );
+      const response = await GmailRequests.getLabels(auth as OAuth2PropertyValue)
 
       return {
         disabled: false,
@@ -67,7 +61,7 @@ export const GmailProps = {
           label: label.name,
           value: label,
         })),
-      };
+      }
     },
   }),
   unread: (required = false) =>
@@ -77,4 +71,4 @@ export const GmailProps = {
       required,
       defaultValue: false,
     }),
-};
+}

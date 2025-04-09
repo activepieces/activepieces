@@ -1,8 +1,4 @@
-import {
-  createAction,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
+import { PieceAuth, Property, createAction } from '@activepieces/pieces-framework'
 
 export const subtraction = createAction({
   name: 'subtraction_math',
@@ -30,8 +26,6 @@ export const subtraction = createAction({
     }),
   },
   async run(context) {
-    return (
-      context.propsValue['second_number'] - context.propsValue['first_number']
-    );
+    return context.propsValue['second_number'] - context.propsValue['first_number']
   },
-});
+})

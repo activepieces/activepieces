@@ -1,18 +1,14 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  OAuth2PropertyValue,
-  PieceAuth,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
-import { createOrUpdateContact } from './lib/actions/create-or-update-contact';
+import { createCustomApiCallAction } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { createOrUpdateContact } from './lib/actions/create-or-update-contact'
 
 export const constantContactAuth = PieceAuth.OAuth2({
   required: true,
   tokenUrl: 'https://authz.constantcontact.com/oauth2/default/v1/token',
   authUrl: 'https://authz.constantcontact.com/oauth2/default/v1/authorize',
   scope: ['contact_data'],
-});
+})
 
 export const constantContact = createPiece({
   displayName: 'Constant Contact',
@@ -21,7 +17,7 @@ export const constantContact = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/constant-contact.png',
   categories: [PieceCategory.MARKETING],
-  authors: ["kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ['kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
   auth: constantContactAuth,
   actions: [
     createOrUpdateContact,
@@ -34,4 +30,4 @@ export const constantContact = createPiece({
     }),
   ],
   triggers: [],
-});
+})

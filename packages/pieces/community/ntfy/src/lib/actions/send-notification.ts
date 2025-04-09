@@ -1,14 +1,10 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { ntfyAuth } from '../..';
+import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { ntfyAuth } from '../..'
 
 const encodeToRFC2047 = (text: string) => {
-  return `=?UTF-8?B?${Buffer.from(text, 'utf-8').toString('base64')}?=`;
-};
+  return `=?UTF-8?B?${Buffer.from(text, 'utf-8').toString('base64')}?=`
+}
 
 export const sendNotification = createAction({
   auth: ntfyAuth,
@@ -33,8 +29,7 @@ export const sendNotification = createAction({
     }),
     priority: Property.ShortText({
       displayName: 'Priority',
-      description:
-        'The priority of the notification (1-5). 1 is lowest priority.',
+      description: 'The priority of the notification (1-5). 1 is lowest priority.',
       required: false,
     }),
     tags: Property.Array({
@@ -44,14 +39,12 @@ export const sendNotification = createAction({
     }),
     icon: Property.ShortText({
       displayName: 'Icon',
-      description:
-        'The absolute URL to your icon, e.g. https://example.com/communityIcon_xnt6chtnr2j21.png',
+      description: 'The absolute URL to your icon, e.g. https://example.com/communityIcon_xnt6chtnr2j21.png',
       required: false,
     }),
     actions: Property.LongText({
       displayName: 'Actions',
-      description:
-        'Add Action buttons to notifications, see https://docs.ntfy.sh/publish/#action-buttons',
+      description: 'Add Action buttons to notifications, see https://docs.ntfy.sh/publish/#action-buttons',
       required: false,
     }),
     click: Property.ShortText({
@@ -68,20 +61,20 @@ export const sendNotification = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const baseUrl = auth.base_url.replace(/\/$/, '');
-    const accessToken = auth.access_token;
+    const baseUrl = auth.base_url.replace(/\/$/, '')
+    const accessToken = auth.access_token
 
-    const topic = propsValue.topic;
-    let title = propsValue.title;
-    let message = propsValue.message;
-    title = encodeToRFC2047(title as string);
-    message = encodeToRFC2047(message as string);
-    const priority = propsValue.priority;
-    const tags = propsValue.tags;
-    const icon = propsValue.icon;
-    const actions = propsValue.actions;
-    const click = propsValue.click;
-    const delay = propsValue.delay;
+    const topic = propsValue.topic
+    let title = propsValue.title
+    let message = propsValue.message
+    title = encodeToRFC2047(title as string)
+    message = encodeToRFC2047(message as string)
+    const priority = propsValue.priority
+    const tags = propsValue.tags
+    const icon = propsValue.icon
+    const actions = propsValue.actions
+    const click = propsValue.click
+    const delay = propsValue.delay
 
     return await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -102,6 +95,6 @@ export const sendNotification = createAction({
         'X-Click': click,
         'X-Delay': delay,
       },
-    });
+    })
   },
-});
+})

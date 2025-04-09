@@ -1,7 +1,7 @@
-import { QdrantClient } from '@qdrant/js-client-rest';
-import { qdrantAuth } from '../..';
-import { createAction } from '@activepieces/pieces-framework';
-import { collectionName } from '../common';
+import { createAction } from '@activepieces/pieces-framework'
+import { QdrantClient } from '@qdrant/js-client-rest'
+import { qdrantAuth } from '../..'
+import { collectionName } from '../common'
 
 export const collectionInfos = createAction({
   auth: qdrantAuth,
@@ -15,9 +15,9 @@ export const collectionInfos = createAction({
     const client = new QdrantClient({
       apiKey: auth.key,
       url: auth.serverAddress,
-    });
-    const collectionName = propsValue.collectionName as string;
-    const collectionInfos = await client.getCollection(collectionName);
-    return collectionInfos;
+    })
+    const collectionName = propsValue.collectionName as string
+    const collectionInfos = await client.getCollection(collectionName)
+    return collectionInfos
   },
-});
+})

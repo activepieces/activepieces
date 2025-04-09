@@ -1,13 +1,8 @@
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
-import { OAuth2Client } from 'googleapis-common';
-import { google } from 'googleapis';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework'
+import dayjs from 'dayjs'
+import { google } from 'googleapis'
+import { OAuth2Client } from 'googleapis-common'
 
 export const common = {
   properties: {
@@ -21,11 +16,11 @@ export const common = {
             disabled: true,
             options: [],
             placeholder: 'Please authenticate first',
-          };
+          }
         }
-        const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
-        let folders: { id: string; name: string }[] = [];
-        let pageToken = null;
+        const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue
+        let folders: { id: string; name: string }[] = []
+        let pageToken = null
         do {
           const request: HttpRequest = {
             method: HttpMethod.GET,
@@ -39,23 +34,23 @@ export const common = {
               type: AuthenticationType.BEARER_TOKEN,
               token: authProp!['access_token'],
             },
-          };
+          }
           if (pageToken) {
             if (request.queryParams !== undefined) {
-              request.queryParams['pageToken'] = pageToken;
+              request.queryParams['pageToken'] = pageToken
             }
           }
           try {
             const response = await httpClient.sendRequest<{
-              files: { id: string; name: string }[];
-              nextPageToken: string;
-            }>(request);
-            folders = folders.concat(response.body.files);
-            pageToken = response.body.nextPageToken;
+              files: { id: string; name: string }[]
+              nextPageToken: string
+            }>(request)
+            folders = folders.concat(response.body.files)
+            pageToken = response.body.nextPageToken
           } catch (e) {
-            throw new Error(`Failed to get folders\nError:${e}`);
+            throw new Error(`Failed to get folders\nError:${e}`)
           }
-        } while (pageToken);
+        } while (pageToken)
 
         return {
           disabled: false,
@@ -63,15 +58,14 @@ export const common = {
             return {
               label: folder.name,
               value: folder.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
     include_team_drives: Property.Checkbox({
       displayName: 'Include Team Drives',
-      description:
-        'Determines if folders from Team Drives should be included in the results.',
+      description: 'Determines if folders from Team Drives should be included in the results.',
       defaultValue: false,
       required: false,
     }),
@@ -80,59 +74,51 @@ export const common = {
   async getFiles(
     auth: OAuth2PropertyValue,
     search?: {
-      parent?: string;
-      createdTime?: string | number | Date;
-      createdTimeOp?: string;
-      includeTeamDrive?: boolean;
+      parent?: string
+      createdTime?: string | number | Date
+      createdTimeOp?: string
+      includeTeamDrive?: boolean
     },
-    order?: string
+    order?: string,
   ) {
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(auth);
+    const authClient = new OAuth2Client()
+    authClient.setCredentials(auth)
 
-    const drive = google.drive({ version: 'v3', auth: authClient });
+    const drive = google.drive({ version: 'v3', auth: authClient })
 
-    const q: string[] = [];
-    if (search?.parent) q.push(`'${search.parent}' in parents`);
+    const q: string[] = []
+    if (search?.parent) q.push(`'${search.parent}' in parents`)
     if (search?.createdTime)
-      q.push(
-        `createdTime ${search.createdTimeOp ?? '>'} '${dayjs(
-          search.createdTime
-        ).format()}'`
-      );
-    q.push(`trashed = false`);
+      q.push(`createdTime ${search.createdTimeOp ?? '>'} '${dayjs(search.createdTime).format()}'`)
+    q.push(`trashed = false`)
     const response = await drive.files.list({
       q: q.concat("mimeType!='application/vnd.google-apps.folder'").join(' and '),
       fields: 'files(id, name, mimeType, webViewLink, kind)',
       orderBy: order ?? 'createdTime desc',
       supportsAllDrives: true,
       includeItemsFromAllDrives: search?.includeTeamDrive,
-    });    
+    })
 
-    return response.data.files;
+    return response.data.files
   },
 
   async getFolders(
     auth: OAuth2PropertyValue,
     search?: {
-      parent?: string;
-      createdTime?: string | number | Date;
-      createdTimeOp?: string;
-      includeTeamDrive?: boolean;
+      parent?: string
+      createdTime?: string | number | Date
+      createdTimeOp?: string
+      includeTeamDrive?: boolean
     },
-    order?: string
+    order?: string,
   ) {
-    const q: string[] = [`mimeType='application/vnd.google-apps.folder'`];
-    if (search?.parent) q.push(`'${search.parent}' in parents`);
+    const q: string[] = [`mimeType='application/vnd.google-apps.folder'`]
+    if (search?.parent) q.push(`'${search.parent}' in parents`)
     if (search?.createdTime)
-      q.push(
-        `createdTime ${search.createdTimeOp ?? '>'} '${dayjs(
-          search.createdTime
-        ).format()}'`
-      );
-    q.push(`trashed = false`);
+      q.push(`createdTime ${search.createdTimeOp ?? '>'} '${dayjs(search.createdTime).format()}'`)
+    q.push(`trashed = false`)
     const response = await httpClient.sendRequest<{
-      files: { id: string; name: string }[];
+      files: { id: string; name: string }[]
     }>({
       method: HttpMethod.GET,
       url: `https://www.googleapis.com/drive/v3/files`,
@@ -140,14 +126,14 @@ export const common = {
         q: q.join(' and '),
         orderBy: order ?? 'createdTime desc',
         supportsAllDrives: 'true',
-        includeItemsFromAllDrives: search?.includeTeamDrive? 'true':'false',
+        includeItemsFromAllDrives: search?.includeTeamDrive ? 'true' : 'false',
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: auth.access_token,
       },
-    });
+    })
 
-    return response.body.files;
+    return response.body.files
   },
-};
+}

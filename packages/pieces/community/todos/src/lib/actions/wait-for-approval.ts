@@ -1,10 +1,10 @@
-import { httpClient } from '@activepieces/pieces-common';
-import { AuthenticationType } from '@activepieces/pieces-common';
-import { HttpRequest } from '@activepieces/pieces-common';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { PauseType } from '@activepieces/shared';
-import { ExecutionType } from '@activepieces/shared';
+import { httpClient } from '@activepieces/pieces-common'
+import { AuthenticationType } from '@activepieces/pieces-common'
+import { HttpRequest } from '@activepieces/pieces-common'
+import { HttpMethod } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { PauseType } from '@activepieces/shared'
+import { ExecutionType } from '@activepieces/shared'
 
 export const waitForApproval = createAction({
   name: 'wait_for_approval',
@@ -33,26 +33,26 @@ export const waitForApproval = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: ctx.server.token,
       },
-    };
-    const response = await httpClient.sendRequest(request);
+    }
+    const response = await httpClient.sendRequest(request)
     return {
       status: response.body.status.name,
-    };
+    }
   },
   async run(ctx) {
     if (ctx.executionType === ExecutionType.BEGIN) {
       ctx.run.pause({
         pauseMetadata: {
           type: PauseType.WEBHOOK,
-          response: {}
+          response: {},
         },
-      });
+      })
 
-      return undefined;
+      return undefined
     } else {
       return {
         status: ctx.resumePayload.queryParams['status'],
-      };
+      }
     }
   },
-});
+})

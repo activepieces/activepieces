@@ -1,11 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  httpClient,
-  HttpError,
-  HttpMethod,
-} from '@activepieces/pieces-common';
-import { mattermostAuth } from '../..';
+import { AuthenticationType, HttpError, HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { mattermostAuth } from '../..'
 
 export const sendMessage = createAction({
   auth: mattermostAuth,
@@ -15,8 +10,7 @@ export const sendMessage = createAction({
   props: {
     channel_id: Property.ShortText({
       displayName: 'Channel ID',
-      description:
-        'The channel to send the message to, get that ID by clicking on info near start call butto',
+      description: 'The channel to send the message to, get that ID by clicking on info near start call butto',
       required: true,
     }),
     text: Property.LongText({
@@ -27,7 +21,7 @@ export const sendMessage = createAction({
   },
   async run(context) {
     // Remove trailing slash from workspace URL
-    const baseUrl = context.auth.workspace_url.replace(/\/$/, '');
+    const baseUrl = context.auth.workspace_url.replace(/\/$/, '')
     try {
       return await httpClient.sendRequest({
         url: `${baseUrl}/api/v4/posts`,
@@ -40,18 +34,16 @@ export const sendMessage = createAction({
           channel_id: context.propsValue.channel_id,
           message: context.propsValue.text,
         },
-      });
-    } catch (e: HttpError | unknown) {
+      })
+    } catch (e: unknown) {
       if (e instanceof HttpError) {
-        const httpError = e as HttpError;
-        console.log(httpError);
+        const httpError = e as HttpError
+        console.log(httpError)
         if (httpError?.response.status === 403) {
-          throw new Error(
-            'Please make sure you have the correct bot token and channel ID.'
-          );
+          throw new Error('Please make sure you have the correct bot token and channel ID.')
         }
       }
-      throw e;
+      throw e
     }
   },
-});
+})

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.5.3/schema.json",
+  "extends": ["../api/biome.json"],
+  "organizeImports": {
+    "enabled": true
+  },
+  "linter": {
+    "enabled": true
+  },
+  "json": {
+    "parser": {
+      "allowComments": true
+    },
+    "formatter": {
+      "enabled": true,
+      "indentStyle": "space",
+      "indentWidth": 2
+    }
+  },
+  "files": {
+    "ignore": ["node_modules/**/*"],
+    "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.json"]
+  }
+}

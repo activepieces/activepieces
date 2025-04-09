@@ -1,17 +1,9 @@
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import {
-  createPiece,
-  PieceAuth,
-  Property,
-} from '@activepieces/pieces-framework';
-import { onEventChanged } from './lib/triggers/calendar-event';
-import { onChangedData } from './lib/triggers/on-changed-data';
-import { PieceCategory } from '@activepieces/shared';
-import { eventsById } from './lib/actions/get-events-by-id';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common'
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework'
+import { PieceCategory } from '@activepieces/shared'
+import { eventsById } from './lib/actions/get-events-by-id'
+import { onEventChanged } from './lib/triggers/calendar-event'
+import { onChangedData } from './lib/triggers/on-changed-data'
 
 export const weblingAuth = PieceAuth.CustomAuth({
   required: true,
@@ -34,19 +26,19 @@ export const weblingAuth = PieceAuth.CustomAuth({
         headers: {
           apikey: auth.apikey,
         },
-      };
-      await httpClient.sendRequest(request);
+      }
+      await httpClient.sendRequest(request)
       return {
         valid: true,
-      };
+      }
     } catch (e: any) {
       return {
         valid: false,
         error: e?.message,
-      };
+      }
     }
   },
-});
+})
 
 export const webling = createPiece({
   displayName: 'Webling',
@@ -57,4 +49,4 @@ export const webling = createPiece({
   authors: ['felifluid'],
   actions: [eventsById],
   triggers: [onEventChanged, onChangedData],
-});
+})

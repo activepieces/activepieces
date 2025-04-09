@@ -1,47 +1,45 @@
-import { useMutation } from '@tanstack/react-query';
-import { t } from 'i18next';
+import { useMutation } from '@tanstack/react-query'
+import { t } from 'i18next'
 
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { ConnectGitDialog } from '@/features/git-sync/components/connect-git-dialog';
-import { gitSyncApi } from '@/features/git-sync/lib/git-sync-api';
-import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
+import LockedFeatureGuard from '@/app/components/locked-feature-guard'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { LoadingSpinner } from '@/components/ui/spinner'
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast'
+import { ConnectGitDialog } from '@/features/git-sync/components/connect-git-dialog'
+import { gitSyncApi } from '@/features/git-sync/lib/git-sync-api'
+import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks'
+import { platformHooks } from '@/hooks/platform-hooks'
+import { authenticationSession } from '@/lib/authentication-session'
+import { assertNotNullOrUndefined } from '@activepieces/shared'
 
-import { ReleaseCard } from './release-card';
+import { ReleaseCard } from './release-card'
 
 const EnvironmentPage = () => {
-  const { platform } = platformHooks.useCurrentPlatform();
+  const { platform } = platformHooks.useCurrentPlatform()
 
   const { gitSync, isLoading, refetch } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
     platform.environmentsEnabled,
-  );
+  )
 
   const { mutate } = useMutation({
     mutationFn: () => {
-      assertNotNullOrUndefined(gitSync, 'gitSync');
-      return gitSyncApi.disconnect(gitSync.id);
+      assertNotNullOrUndefined(gitSync, 'gitSync')
+      return gitSyncApi.disconnect(gitSync.id)
     },
     onSuccess: () => {
-      refetch();
+      refetch()
       toast({
         title: t('Git Connection Removed'),
-        description: t(
-          'Your Git repository has been successfully disconnected',
-        ),
+        description: t('Your Git repository has been successfully disconnected'),
         duration: 3000,
-      });
+      })
     },
     onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
+      toast(INTERNAL_ERROR_TOAST)
     },
-  });
+  })
 
   return (
     <LockedFeatureGuard
@@ -56,9 +54,7 @@ const EnvironmentPage = () => {
         <div className="flex flex-col justify-start items-start w-full">
           <h1 className="text-2xl font-bold flex-grow">{t('Environments')}</h1>
           <span className="text-muted-foreground text-md">
-            {t(
-              'Connect to Git to enable version control, backup your flows, and manage multiple environments. ',
-            )}
+            {t('Connect to Git to enable version control, backup your flows, and manage multiple environments. ')}
             <a
               href="https://www.activepieces.com/docs/operations/git-sync"
               target="_blank"
@@ -75,8 +71,7 @@ const EnvironmentPage = () => {
               <>
                 <div className="flex flex-grow flex-col gap-2">
                   <p>
-                    {t('Repository URL')}:{' '}
-                    {gitSync?.remoteUrl ?? t('Not connected')}
+                    {t('Repository URL')}: {gitSync?.remoteUrl ?? t('Not connected')}
                   </p>
                   <p>
                     {t('Branch')}: {gitSync?.branch ?? t('Not connected')}
@@ -86,17 +81,10 @@ const EnvironmentPage = () => {
                   </p>
                 </div>
                 <div className="flex flex-col justify-center items-center gap-2">
-                  {!gitSync && (
-                    <ConnectGitDialog showButton={true}></ConnectGitDialog>
-                  )}
+                  {!gitSync && <ConnectGitDialog showButton={true}></ConnectGitDialog>}
                   {gitSync && (
                     <div className="flex flex-col gap-2">
-                      <Button
-                        size={'sm'}
-                        onClick={() => mutate()}
-                        className="w-32 text-destructive"
-                        variant={'basic'}
-                      >
+                      <Button size={'sm'} onClick={() => mutate()} className="w-32 text-destructive" variant={'basic'}>
                         {t('Disconnect')}
                       </Button>
                     </div>
@@ -114,7 +102,7 @@ const EnvironmentPage = () => {
         <ReleaseCard />
       </div>
     </LockedFeatureGuard>
-  );
-};
+  )
+}
 
-export { EnvironmentPage };
+export { EnvironmentPage }

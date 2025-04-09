@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { MEMPOOL_API_BASE_URL } from '../../common';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common'
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { MEMPOOL_API_BASE_URL } from '../../common'
 
 export const getTransactionOutspend = createAction({
   name: 'get_transaction_outspend',
@@ -23,7 +23,7 @@ export const getTransactionOutspend = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: `${MEMPOOL_API_BASE_URL}/api/tx/${propsValue.txid}/outspend/${propsValue.vout}`,
-    });
-    return response.body;
+    })
+    return response.body
   },
-});
+})

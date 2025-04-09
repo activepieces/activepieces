@@ -6,6 +6,6 @@ import { ProjectId } from '../project/project'
 export type WebhookSimulationId = ApId
 
 export type WebhookSimulation = BaseModel<WebhookSimulationId> & {
-    flowId: FlowId
-    projectId: ProjectId
+  flowId: FlowId
+  projectId: ProjectId
 }

@@ -1,6 +1,6 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import { makeClient } from '../common';
-import { moxieCRMAuth } from '../..';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { moxieCRMAuth } from '../..'
+import { makeClient } from '../common'
 
 export const moxieCreateClientAction = createAction({
   auth: moxieCRMAuth,
@@ -111,7 +111,7 @@ export const moxieCreateClientAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = await makeClient(auth);
-    return await client.createClient(propsValue);
+    const client = await makeClient(auth)
+    return await client.createClient(propsValue)
   },
-});
+})

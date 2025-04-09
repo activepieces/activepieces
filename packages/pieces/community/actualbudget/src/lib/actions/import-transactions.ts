@@ -1,7 +1,7 @@
-import { actualBudgetAuth } from '../..';
-import { Property, createAction } from '@activepieces/pieces-framework';
-import * as api from '@actual-app/api';
-import { initializeAndDownloadBudget } from '../common/common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import * as api from '@actual-app/api'
+import { actualBudgetAuth } from '../..'
+import { initializeAndDownloadBudget } from '../common/common'
 
 export const importTransactions = createAction({
   auth: actualBudgetAuth,
@@ -15,17 +15,17 @@ export const importTransactions = createAction({
       required: true,
     }),
     transactions: Property.Json({
-        displayName: 'Transactions',
-        description: 'A json array of the transaction object',
-        required: true,
-        defaultValue: [{"payee_name": "Kroger", "date": "2026-12-25", "amount": 1200 }]
-    })    
+      displayName: 'Transactions',
+      description: 'A json array of the transaction object',
+      required: true,
+      defaultValue: [{ payee_name: 'Kroger', date: '2026-12-25', amount: 1200 }],
+    }),
   },
 
-  async run({ auth, propsValue: { account_id, transactions } }) {  
-    await initializeAndDownloadBudget(api, auth)   
-    const res = await api.importTransactions(account_id, transactions);
-    await api.shutdown();
-    return res;
+  async run({ auth, propsValue: { account_id, transactions } }) {
+    await initializeAndDownloadBudget(api, auth)
+    const res = await api.importTransactions(account_id, transactions)
+    await api.shutdown()
+    return res
   },
-});
+})

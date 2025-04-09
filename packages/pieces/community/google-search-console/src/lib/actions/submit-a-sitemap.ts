@@ -1,6 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleSearchConsoleAuth, createAuthClient } from '../../';
-import { commonProps } from '../common';
+import { Property, createAction } from '@activepieces/pieces-framework'
+import { createAuthClient, googleSearchConsoleAuth } from '../../'
+import { commonProps } from '../common'
 
 export const submitSitemap = createAction({
   auth: googleSearchConsoleAuth,
@@ -15,11 +15,11 @@ export const submitSitemap = createAction({
     }),
   },
   async run(context) {
-    const webmasters = createAuthClient(context.auth.access_token);
+    const webmasters = createAuthClient(context.auth.access_token)
     await webmasters.sitemaps.submit({
       siteUrl: context.propsValue.siteUrl,
       feedpath: context.propsValue.feedpath,
-    });
-    return { success: true };
+    })
+    return { success: true }
   },
-});
+})

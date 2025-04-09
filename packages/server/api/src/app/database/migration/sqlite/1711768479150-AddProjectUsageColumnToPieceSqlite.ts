@@ -1,10 +1,10 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddProjectUsageColumnToPieceSqlite1711768479150 implements MigrationInterface {
-    name = 'AddProjectUsageColumnToPieceSqlite1711768479150'
+  name = 'AddProjectUsageColumnToPieceSqlite1711768479150'
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
         CREATE TABLE "temporary_piece_metadata" (
             "id" varchar(21) PRIMARY KEY NOT NULL,
             "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -32,7 +32,7 @@ export class AddProjectUsageColumnToPieceSqlite1711768479150 implements Migratio
             CONSTRAINT "fk_piece_metadata_file" FOREIGN KEY ("archiveId") REFERENCES "file" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
         )
     `)
-        await queryRunner.query(`
+    await queryRunner.query(`
         INSERT INTO "temporary_piece_metadata"(
                 "id",
                 "created",
@@ -77,27 +77,27 @@ export class AddProjectUsageColumnToPieceSqlite1711768479150 implements Migratio
             "authors"
         FROM "piece_metadata"
     `)
-        await queryRunner.query(`
+    await queryRunner.query(`
         DROP TABLE "piece_metadata"
     `)
-        await queryRunner.query(`
+    await queryRunner.query(`
         ALTER TABLE "temporary_piece_metadata"
             RENAME TO "piece_metadata"
     `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_piece_metadata_name_project_id_version" ON "piece_metadata" ("name", "version", "projectId")
         `)
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
             DROP INDEX "idx_piece_metadata_name_project_id_version"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             ALTER TABLE "piece_metadata"
                 RENAME TO "temporary_piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "piece_metadata" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
                 "created" datetime NOT NULL DEFAULT (datetime('now')),
@@ -124,7 +124,7 @@ export class AddProjectUsageColumnToPieceSqlite1711768479150 implements Migratio
                 CONSTRAINT "fk_piece_metadata_file" FOREIGN KEY ("archiveId") REFERENCES "file" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
             )
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             INSERT INTO "piece_metadata"(
                     "id",
                     "created",
@@ -169,9 +169,8 @@ export class AddProjectUsageColumnToPieceSqlite1711768479150 implements Migratio
                 "authors"
             FROM "temporary_piece_metadata"
         `)
-        await queryRunner.query(`
+    await queryRunner.query(`
             DROP TABLE "temporary_piece_metadata"
         `)
-    }
-
+  }
 }

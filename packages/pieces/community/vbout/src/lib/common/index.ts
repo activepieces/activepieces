@@ -1,12 +1,8 @@
-import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
-import { VboutClient } from './client';
-import {
-  ContactStatusValues,
-  SocialMediaChannelValues,
-  SocialMediaProfile,
-} from './models';
+import { DynamicPropsValue, Property } from '@activepieces/pieces-framework'
+import { VboutClient } from './client'
+import { ContactStatusValues, SocialMediaChannelValues, SocialMediaProfile } from './models'
 export function makeClient(apiKey: string): VboutClient {
-  return new VboutClient(apiKey);
+  return new VboutClient(apiKey)
 }
 
 export const vboutCommon = {
@@ -22,19 +18,19 @@ export const vboutCommon = {
             disabled: true,
             placeholder: 'Connect your account first',
             options: [],
-          };
+          }
         }
-        const client = makeClient(auth as string);
-        const res = await client.listEmailLists();
+        const client = makeClient(auth as string)
+        const res = await client.listEmailLists()
         return {
           disabled: false,
           options: res.lists.items.map((list) => {
             return {
               label: list.name,
               value: list.id,
-            };
+            }
           }),
-        };
+        }
       },
     }),
   listFields: Property.DynamicProperties({
@@ -47,21 +43,19 @@ export const vboutCommon = {
           disabled: true,
           options: [],
           placeholder: 'Please connect your account and select Email List.',
-        };
+        }
       }
-      const fields: DynamicPropsValue = {};
-      const client = makeClient(auth as unknown as string);
-      const contactList = await client.getEmailList(
-        listid as unknown as string
-      );
-      const contactListFields = contactList.response.data.list.fields;
+      const fields: DynamicPropsValue = {}
+      const client = makeClient(auth as unknown as string)
+      const contactList = await client.getEmailList(listid as unknown as string)
+      const contactListFields = contactList.response.data.list.fields
       Object.keys(contactListFields).forEach((key) => {
         fields[key] = Property.ShortText({
           displayName: contactListFields[key],
           required: false,
-        });
-      });
-      return fields;
+        })
+      })
+      return fields
     },
   }),
   contactStatus: (required = true) =>
@@ -120,52 +114,43 @@ export const vboutCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder:
-            'Please connect your account and select social media channel.',
-        };
+          placeholder: 'Please connect your account and select social media channel.',
+        }
       }
-      const client = makeClient(auth as string);
-      const { channels } = await client.listSocialMediaChannels();
-      let options: { label: string; value: string }[] = [];
+      const client = makeClient(auth as string)
+      const { channels } = await client.listSocialMediaChannels()
+      let options: { label: string; value: string }[] = []
       switch (channel as string) {
         case SocialMediaChannelValues.TWITTER: {
-          options = [
-            ...options,
-            ...mapSocialMediaProfile(channels.Twitter.profiles),
-          ];
-          break;
+          options = [...options, ...mapSocialMediaProfile(channels.Twitter.profiles)]
+          break
         }
         case SocialMediaChannelValues.FACEBOOK: {
-          options = [
-            ...options,
-            ...mapSocialMediaProfile(channels.Facebook.pages),
-          ];
-          break;
+          options = [...options, ...mapSocialMediaProfile(channels.Facebook.pages)]
+          break
         }
         case SocialMediaChannelValues.LINKEDIN: {
           options = [
             ...options,
             ...mapSocialMediaProfile(channels.Linkedin.companies),
             ...mapSocialMediaProfile(channels.Linkedin.profiles),
-          ];
-          break;
+          ]
+          break
         }
       }
       return {
         disabled: false,
         options: options,
-      };
+      }
     },
   }),
-};
+}
 
-function mapSocialMediaProfile(
-  profiles: SocialMediaProfile[]
-): { label: string; value: string }[] {
+function mapSocialMediaProfile(profiles: SocialMediaProfile[]): { label: string; value: string }[] {
   return profiles.map((profile) => {
     return {
       label: profile.name,
       value: profile.id,
-    };
-  });
+    }
+  })
 }
