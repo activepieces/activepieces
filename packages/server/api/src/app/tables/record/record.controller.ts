@@ -1,11 +1,13 @@
 import {
     CreateRecordsRequest,
     DeleteRecordsRequest,
+    ImportCsvRequestBody,
     ListRecordsRequest,
     Permission,
     PopulatedRecord,
     PrincipalType,
     SeekPage,
+    SERVICE_KEY_SECURITY_OPENAPI,
     TableWebhookEventType,
     UpdateRecordRequest,
 } from '@activepieces/shared'
@@ -13,6 +15,7 @@ import {
     FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
+import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { recordService } from './record.service'
@@ -28,16 +31,14 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
             projectId: request.principal.projectId,
         })
         await reply.status(StatusCodes.CREATED).send(records)
-        if (records.length > 0) {
-            await recordService.triggerWebhooks({
-                projectId: request.principal.projectId,
-                tableId: request.body.tableId,
-                eventType: TableWebhookEventType.RECORD_CREATED,
-                data: { records },
-                logger: request.log,
-                authorization: request.headers.authorization as string,
-            })
-        }
+        await sendRecordsWebhooks({
+            tableId: request.body.tableId,
+            projectId: request.principal.projectId,
+            records,
+            logger: request.log,
+            authorization: request.headers.authorization as string,
+            eventType: TableWebhookEventType.RECORD_CREATED,
+        })
     })
 
     fastify.get('/:id', GetRecordByIdRequest, async (request) => {
@@ -70,17 +71,14 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
             projectId: request.principal.projectId,
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
-        //TODO: Move this to a background job that can be re-run in case of failure
-        for (const deletedRecord of deletedRecords) {
-            await recordService.triggerWebhooks({
-                projectId: request.principal.projectId,
-                tableId: deletedRecord.tableId,
-                eventType: TableWebhookEventType.RECORD_DELETED,
-                data: { record: deletedRecord },
-                logger: request.log,
-                authorization: request.headers.authorization as string,
-            })
-        }
+        await sendRecordsWebhooks({
+            tableId: deletedRecords[0].tableId,
+            projectId: request.principal.projectId,
+            records: deletedRecords,
+            logger: request.log,
+            authorization: request.headers.authorization as string,
+            eventType: TableWebhookEventType.RECORD_DELETED,
+        })
     })
 
     fastify.post('/list', ListRequest, async (request) => {
@@ -90,6 +88,22 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
             cursorRequest: request.body.cursor ?? null,
             limit: request.body.limit ?? DEFAULT_PAGE_SIZE,
             filters: request.body.filters ?? null,
+        })
+    })
+    fastify.post('/import', ImportCsvRequest, async (request, reply) => {
+        const records = await recordService.importCsv({
+            tableId: request.body.tableId,
+            projectId: request.principal.projectId,
+            request: request.body,
+        })
+        await reply.status(StatusCodes.CREATED).send(records)
+        await sendRecordsWebhooks({
+            tableId: request.body.tableId,
+            projectId: request.principal.projectId,
+            records,
+            logger: request.log,
+            authorization: request.headers.authorization as string,
+            eventType: TableWebhookEventType.RECORD_CREATED,
         })
     })
 }
@@ -127,6 +141,9 @@ const UpdateRequest = {
         permission: Permission.WRITE_TABLE,
     },
     schema: {
+        tags: ['records'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Update a record',
         params: Type.Object({
             id: Type.String(),
         }),
@@ -134,6 +151,7 @@ const UpdateRequest = {
         response: {
             [StatusCodes.OK]: PopulatedRecord,
         },
+
     },
 }
 
@@ -143,6 +161,9 @@ const DeleteRecordRequest = {
         permission: Permission.WRITE_TABLE,
     },
     schema: {
+        tags: ['records'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Delete records',
         body: DeleteRecordsRequest,
         response: {
             [StatusCodes.OK]: Type.Array(PopulatedRecord),
@@ -157,8 +178,41 @@ const ListRequest = {
     },
     schema: {
         body: ListRecordsRequest,
+        tags: ['records'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'List records',
         response: {
             [StatusCodes.OK]: SeekPage(PopulatedRecord),
         },
     },
+}
+
+const ImportCsvRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        permission: Permission.WRITE_TABLE,
+    },
+    schema: {
+        tags: ['records'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Import a csv file to create new records',
+        body: ImportCsvRequestBody,
+        response: {
+            [StatusCodes.OK]: Type.Array(PopulatedRecord),
+        },
+    },
+}
+
+const sendRecordsWebhooks = async ({ tableId, projectId, records, logger, authorization, eventType }: { tableId: string, projectId: string, records: PopulatedRecord[], logger: FastifyBaseLogger, authorization: string, eventType: TableWebhookEventType })=>{
+    const promises =  records.map((record)=>{
+        return recordService.triggerWebhooks({
+            projectId,
+            tableId,
+            eventType,
+            data: { record },
+            logger,
+            authorization,
+        })
+    })
+    await Promise.all(promises)
 }

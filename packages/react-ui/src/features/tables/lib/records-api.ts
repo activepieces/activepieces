@@ -28,4 +28,18 @@ export const recordsApi = {
   delete(request: DeleteRecordsRequest): Promise<void> {
     return api.delete<void>(`/v1/records/`, undefined, request);
   },
+  async importCsv(request: {
+    file: File;
+    skipFirstRow: boolean;
+    tableId: string;
+  }): Promise<number> {
+    const formData = new FormData();
+    const buffer = await request.file.arrayBuffer();
+    formData.append('file', new Blob([buffer]));
+    formData.append('skipFirstRow', request.skipFirstRow.toString());
+    formData.append('tableId', request.tableId);
+    return api.post<number>(`/v1/records/import`, formData, undefined, {
+      'Content-Type': 'multipart/form-data',
+    });
+  },
 };

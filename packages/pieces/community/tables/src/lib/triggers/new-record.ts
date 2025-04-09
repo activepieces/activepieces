@@ -4,7 +4,7 @@ import { PopulatedRecord, TableWebhookEventType } from '@activepieces/shared';
 
 export const newRecordTrigger = createTrigger({
     name: 'newRecord',
-    displayName: 'New Record',
+    displayName: 'New Record Created',
     description: 'Triggers when a new record is added to the selected table.',
     auth: PieceAuth.None(),
     props: {

@@ -190,6 +190,7 @@ import { ChangeManualTasksCommentsToTodoComments1742433144687 } from './migratio
 import { RenameApprovalUrlToResolveUrl1742991137557 } from './migration/postgres/1742991137557-RenameApprovalUrlToResolveUrl'
 import { AddMCP1743128816786 } from './migration/postgres/1743128816786-AddMCP'
 import { AddMetadataFields1743780156664 } from './migration/postgres/1743780156664-AddMetadataFields'
+import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744187975994 } from './migration/postgres/1744187975994-AddRecordIndexForTableIdAndProjectIdAndRecordId'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -318,6 +319,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMCP1743128816786,
         RenameApprovalUrlToResolveUrl1742991137557,
         AddMetadataFields1743780156664,
+        AddRecordIndexForTableIdAndProjectIdAndRecordId1744187975994,
     ]
 
     const edition = system.getEdition()
@@ -373,7 +375,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 CascadeProjectDeleteToActivity1710720610670,
                 AddBranchTypeToGit1711073772867,
                 PiecesProjectLimits1712279318440,
-                
+
                 // Cloud Only Migrations, before unifing the migrations.
                 ChangeToJsonToKeepKeysOrder1685991260335,
                 AddPieceTypeAndPackageTypeToFlowTemplate1696245170062,
