@@ -6,7 +6,6 @@ import { FieldErrors, useForm } from 'react-hook-form';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { CopyButton } from '@/components/ui/copy-button';
 import {
   Dialog,
@@ -52,7 +51,7 @@ const ImportCsvDialog = () => {
     skipFirstRow: boolean;
   }>({
     defaultValues: {
-      skipFirstRow: false,
+      skipFirstRow: true,
     },
     resolver: (values) => {
       const errors: FieldErrors<{
@@ -124,11 +123,17 @@ const ImportCsvDialog = () => {
             className="space-y-4"
           >
             <ApMarkdown
-              markdown={`${t('Any extra fields in the csv will be ignored')} \n
-                       ${t(
-                         'Any records after the limit ({maxRecords} records) will be ignored',
-                         { maxRecords: maxRecords ?? 0 },
-                       )}
+              markdown={`
+                ${t(
+                  'Imported records will be added to the bottom of the table',
+                )} \n
+                ${t(
+                  'If the csv file has more fields than the table, the extra fields will be ignored',
+                )} \n
+                ${t(
+                  'Any records after the limit ({maxRecords} records) will be ignored',
+                  { maxRecords: maxRecords ?? 0 },
+                )}
                     `}
             />
             <FormField
@@ -144,22 +149,6 @@ const ImportCsvDialog = () => {
                       onChange={(e) => field.onChange(e.target.files?.[0])}
                     />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="skipFirstRow"
-              render={({ field }) => (
-                <FormItem className="flex gap-2 items-center">
-                  <FormControl>
-                    <Checkbox
-                      onCheckedChange={(e) => field.onChange(e)}
-                      checked={field.value}
-                    />
-                  </FormControl>
-                  <FormLabel>{t('Skip first row')}</FormLabel>
                   <FormMessage />
                 </FormItem>
               )}
