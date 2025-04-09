@@ -35,11 +35,22 @@ export const changelogModule: FastifyPluginAsyncTypebox = async (fastify) => {
 
 async function getChangelog(): Promise<Changelog> {
     const isCloudEdition = system.getOrThrow(AppSystemProp.EDITION) === ApEdition.CLOUD
-    if (isCloudEdition) {
-        return getChangelogFeaturebaseRequest()
-    }
-    else {
-        return getChangelogActivepiecesRequest()
+    try {
+        if (isCloudEdition) {
+            return getChangelogFeaturebaseRequest()
+        }
+        else {
+            return getChangelogActivepiecesRequest()
+        }
+    } catch (error) {
+        console.error('Error fetching changelog', error)
+        return {
+            results: [],
+            page: 1,
+            limit: 100,
+            totalPages: 1,
+            totalResults: 0,
+        }
     }
 }
 
