@@ -84,9 +84,9 @@ async function getChangelogFeaturebaseRequest(): Promise<Changelog> {
         })
         if (!response.ok) {
             throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
+                code: ErrorCode.VALIDATION,
                 params: {
-                    entityType: 'Changelog',
+                    message: 'Could not fetch changelog',
                 },
             })
         }
@@ -123,9 +123,9 @@ async function getChangelogActivepiecesRequest(): Promise<Changelog> {
     })
     if (!response.ok) {
         throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
+            code: ErrorCode.VALIDATION,
             params: {
-                entityType: 'Changelog',
+                message: 'Could not fetch changelog',
             },
         })
     }
