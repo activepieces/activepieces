@@ -13,6 +13,7 @@ import { Permission } from '@activepieces/shared';
 
 import ApTableName from './ap-table-name';
 import { useTableState } from './ap-table-state-provider';
+import { ExportCsvButton } from './export-csv-button';
 import { ImportCsvDialog } from './import-csv-dialog';
 
 type ApTableHeaderProps = {
@@ -73,6 +74,7 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ImportCsvDialog />
+            <ExportCsvButton />
             <div onClick={(e) => e.stopPropagation()}>
               <PermissionNeededTooltip
                 hasPermission={userHasTableWritePermission}

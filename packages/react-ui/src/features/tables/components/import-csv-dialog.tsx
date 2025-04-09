@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { DownloadIcon } from 'lucide-react';
+import { LogInIcon } from 'lucide-react';
 import { useState } from 'react';
 import { FieldErrors, useForm } from 'react-hook-form';
 
@@ -109,7 +109,7 @@ const ImportCsvDialog = () => {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger>
         <Button variant="outline" size="sm" className="flex gap-2 items-center">
-          <DownloadIcon className="w-4 h-4 shrink-0" />
+          <LogInIcon className="w-4 h-4 shrink-0" />
           {t('Import')}
         </Button>
       </DialogTrigger>
