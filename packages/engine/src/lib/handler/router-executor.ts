@@ -51,9 +51,7 @@ async function handleRouterExecution({ action, executionState, constants, censor
         return fallback
     })
 
-    const previousStepOutput = executionState.getRouterStepOutput({ stepName: action.name })
-
-    const routerOutput = previousStepOutput ?? RouterStepOutput.init({
+    const routerOutput = RouterStepOutput.init({
         input: censoredInput,
     }).setOutput({
         branches: resolvedInput.branches.map((branch, index) => ({

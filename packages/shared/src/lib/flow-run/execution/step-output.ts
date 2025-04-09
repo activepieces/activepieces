@@ -92,7 +92,7 @@ type BranchResult = {
     evaluation: boolean
 }
 
-export type RouterStepResult = {
+type RouterStepResult = {
     branches: BranchResult[]
 }
 
