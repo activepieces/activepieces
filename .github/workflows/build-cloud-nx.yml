@@ -27,6 +27,6 @@ jobs:
 
       - uses: nrwl/nx-set-shas@v4
 
-      - run: npx nx affected --target=lint --agents
+      - run: npx biome check
       - run: npx nx affected --target=build -c production --agents
       - run: npx nx run-many --target=test --projects=engine,shared,server-api --agents
