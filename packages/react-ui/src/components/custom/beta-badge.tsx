@@ -21,7 +21,7 @@ export function BetaBadge({
   const badge = (
     <span
       className={cn(
-        'bg-accent text-primary text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm font-semibold select-none',
+        'bg-accent text-primary text-xs font-medium  px-2.5 py-0.5 rounded-sm font-semibold select-none',
         className,
       )}
       {...props}
