@@ -11,7 +11,7 @@ import { TestStepSection } from './test-step-section';
 import { DataSelectorTreeNode } from './type';
 import { dataSelectorUtils } from './utils';
 
-type DataSelectoNodeProps = {
+type DataSelectorNodeProps = {
   node: DataSelectorTreeNode;
   depth: number;
   searchTerm: string;
@@ -21,7 +21,7 @@ const DataSelectorNode = ({
   node,
   depth,
   searchTerm,
-}: DataSelectoNodeProps) => {
+}: DataSelectorNodeProps) => {
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
