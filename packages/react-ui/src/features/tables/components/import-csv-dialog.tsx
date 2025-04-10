@@ -30,15 +30,22 @@ import { api } from '@/lib/api';
 import { ApFlagId } from '@activepieces/shared';
 
 import { recordsApi } from '../lib/records-api';
+import { FieldsMapping } from '../lib/utils';
 
 import { useTableState } from './ap-table-state-provider';
+import { FieldsMappingControl } from './fields-mapping';
 
 const ImportCsvDialog = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [tableId, setRecords] = useTableState((state) => [
-    state.table.id,
-    state.setRecords,
-  ]);
+  const [tableId, setRecords, serverFields, recordsCount] = useTableState(
+    (state) => [
+      state.table.id,
+      state.setRecords,
+      state.serverFields,
+      state.records.length,
+    ],
+  );
+  const [csvColumns, setCsvColumns] = useState<string[]>([]);
   const { data: maxFileSize } = flagsHooks.useFlag<number>(
     ApFlagId.MAX_FILE_SIZE_MB,
   );
@@ -48,15 +55,15 @@ const ImportCsvDialog = () => {
   const [serverError, setServerError] = useState<string | null>(null);
   const form = useForm<{
     file: File;
-    skipFirstRow: boolean;
+    fieldsMapping: FieldsMapping;
   }>({
     defaultValues: {
-      skipFirstRow: true,
+      fieldsMapping: [],
     },
     resolver: (values) => {
       const errors: FieldErrors<{
         file: File | null;
-        skipFirstRow: boolean;
+        fieldsMapping: FieldsMapping;
       }> = {};
       if (!values.file) {
         errors.file = {
@@ -80,11 +87,14 @@ const ImportCsvDialog = () => {
   });
 
   const { mutate: importCsv, isPending: isLoading } = useMutation({
-    mutationFn: async (data: { file: File; skipFirstRow: boolean }) => {
+    mutationFn: async (data: { file: File; fieldsMapping: FieldsMapping }) => {
       setServerError(null);
+      const csv = await data.file.text();
       await recordsApi.importCsv({
+        csv,
         tableId,
-        ...data,
+        fieldsMapping: data.fieldsMapping,
+        maxRecordsLimit: (maxRecords ?? 1000) - recordsCount,
       });
       const records = await recordsApi.list({
         tableId,
@@ -105,7 +115,14 @@ const ImportCsvDialog = () => {
   });
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(value) => {
+        setIsOpen(value);
+        setCsvColumns([]);
+        form.reset();
+      }}
+    >
       <DialogTrigger>
         <Button variant="outline" size="sm" className="flex gap-2 items-center">
           <LogInIcon className="w-4 h-4 shrink-0" />
@@ -126,10 +143,7 @@ const ImportCsvDialog = () => {
               markdown={`
                 ${t(
                   'Imported records will be added to the bottom of the table',
-                )} \n
-                ${t(
-                  'If the csv file has more fields than the table, the extra fields will be ignored',
-                )} \n
+                )} \n           
                 ${t(
                   'Any records after the limit ({maxRecords} records) will be ignored',
                   { maxRecords: maxRecords ?? 0 },
@@ -146,13 +160,36 @@ const ImportCsvDialog = () => {
                     <Input
                       type="file"
                       accept=".csv"
-                      onChange={(e) => field.onChange(e.target.files?.[0])}
+                      onChange={async (e) => {
+                        field.onChange(e.target.files?.[0]);
+                        const readCsvColumns = await e.target.files?.[0].text();
+                        const csvColumnsArray =
+                          readCsvColumns?.split('\n')[0].split(',') ?? [];
+                        setCsvColumns(csvColumnsArray);
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {csvColumns.length > 0 && (
+              <FormField
+                control={form.control}
+                name="fieldsMapping"
+                key={form.watch('file')?.name}
+                render={({ field }) => (
+                  <FormItem>
+                    <FieldsMappingControl
+                      fields={serverFields}
+                      csvColumns={csvColumns}
+                      onChange={field.onChange}
+                    />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {serverError && (
               <div className=" flex items-center justify-between">

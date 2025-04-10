@@ -1,4 +1,3 @@
-import { Readable } from 'stream'
 import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -12,14 +11,13 @@ import {
     Filter,
     FilterOperator,
     GetFlowVersionForWorkerRequestType,
-    ImportCsvRequestBody,
+
     isNil,
     PopulatedRecord,
     SeekPage,
     TableWebhookEventType,
     UpdateRecordRequest,
 } from '@activepieces/shared'
-import { parse } from 'csv-parse'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -52,49 +50,53 @@ export const recordService = {
                     existingFields.some((field) => field.id === cellData.fieldId),
                 ),
             )
-            const now = new Date()
-            const recordInsertions = validRecords.map((_, index) => {
-                const created = new Date(now.getTime() + index).toISOString()
-                return {
-                    tableId: request.tableId,
-                    projectId,
-                    created,
-                    id: apId(),
-                }
-            })
-
-            await entityManager.getRepository(RecordEntity).insert(recordInsertions)
-
-            // Prepare cells for insertion
-            const cellInsertions = validRecords.flatMap((recordData, index) =>
-                recordData.map((cellData) => {
+            const batches = chunk(validRecords, 50)
+            const records: RecordSchema[] = []
+            for (const batch of batches) {
+                const now = new Date(new Date().getTime() + records.length)
+                const recordInsertions = batch.map((_, index) => {
+                    const created = new Date(now.getTime() + index).toISOString()
                     return {
-                        recordId: recordInsertions[index].id,
-                        fieldId: cellData.fieldId,
-                        projectId,
-                        value: cellData.value,
-                        id: apId(),
-                    }
-                }),
-            )
-
-            await entityManager.getRepository(CellEntity).insert(cellInsertions)
-
-            // Fetch and return fully populated records
-            const insertedRecordIds = recordInsertions.map((r) => r.id)
-            const records = await entityManager
-                .getRepository(RecordEntity)
-                .find({
-                    where: {
-                        id: In(insertedRecordIds),
                         tableId: request.tableId,
                         projectId,
-                    },
-                    relations: ['cells'],
-                    order: {
-                        created: 'ASC',
-                    },
+                        created,
+                        id: apId(),
+                    }
                 })
+                await entityManager.getRepository(RecordEntity).insert(recordInsertions)
+
+                // Prepare cells for insertion
+                const cellInsertions = batch.flatMap((recordData, index) =>
+                    recordData.map((cellData) => {
+                        return {
+                            recordId: recordInsertions[index].id,
+                            fieldId: cellData.fieldId,
+                            projectId,
+                            value: cellData.value,
+                            id: apId(),
+                        }
+                    }),
+                )
+
+                await entityManager.getRepository(CellEntity).insert(cellInsertions)
+
+                // Fetch and return fully populated records
+                const insertedRecordIds = recordInsertions.map((r) => r.id)
+                const result = await entityManager
+                    .getRepository(RecordEntity)
+                    .find({
+                        where: {
+                            id: In(insertedRecordIds),
+                            tableId: request.tableId,
+                            projectId,
+                        },
+                        relations: ['cells'],
+                        order: {
+                            created: 'ASC',
+                        },
+                    })
+                records.push(...result)
+            }
             return formatRecordsAndFetchField({ records, tableId: request.tableId, projectId })
           
         
@@ -115,6 +117,9 @@ export const recordService = {
             where: {
                 projectId,
                 tableId,
+            },
+            order: {
+                created: 'ASC',
             },
         })
 
@@ -323,51 +328,6 @@ export const recordService = {
             })
         }
     },
-    async importCsv({
-        projectId,
-        tableId,
-        request,
-    }: ImportCsvParams): Promise<PopulatedRecord[]> {
-        // validate table existence 
-        const count = await this.count({ projectId, tableId })
-        await tableService.getById({ projectId, id: tableId })
-        const fields = await fieldService.getAll({ projectId, tableId })
-        const inputStream = Readable.from(request.file.data as Buffer).setEncoding('utf-8')
-        const parser = inputStream.pipe(parse({
-            skip_empty_lines: true,
-            from_line: request.skipFirstRow ? 2 : 1,
-        }))
-        const records: { value: string, fieldId: string }[][] = []
-        for await (const row of parser) {
-            const record: { value: string, fieldId: string }[] = fields.reduce((acc, field, idx) => {
-                //in case of empty cells (more fields in table than csv), we will use an empty string
-                acc.push({ value: row[idx] ?? '', fieldId: field.id })                
-                return acc
-            }, [] as { value: string, fieldId: string }[])
-            records.push(record)
-        }
-        //need to keep it small size to avoid query limit issues
-        const batches = chunk(records, 50)
-        const results: PopulatedRecord[] = []
-        let importedCount = 0
-        const maxRecordsPerTable = system.getNumberOrThrow(AppSystemProp.MAX_RECORDS_PER_TABLE)
-        for (const batch of batches) {
-            const batchToImport = batch.slice(0, maxRecordsPerTable - importedCount - count)
-            if (batchToImport.length > 0) {
-                const res = await this.create({
-                    projectId,
-                    request: {
-                        records: batchToImport,
-                        tableId,
-                    },
-                })
-                results.push(...res)
-                importedCount += batchToImport.length
-            }
-           
-        }
-        return results
-    },
 }
 
 type CreateParams = {
@@ -412,11 +372,6 @@ type CountParams = {
     tableId: string
 }
 
-type ImportCsvParams = {
-    projectId: string
-    tableId: string
-    request: ImportCsvRequestBody
-}
 
 
 
