@@ -128,43 +128,23 @@ export const flowService = (log: FastifyBaseLogger) => ({
         )
 
 
-        let populatedFlows = null
-
-        if (versionState === FlowVersionState.DRAFT) {
-            const populatedFlowPromises = paginationResult.data.map(async (flow) => {
-                const version = await flowVersionService(log).getFlowVersionOrThrow({
-                    flowId: flow.id,
-                    versionId: undefined,
-                })
-    
-                return {
-                    ...flow,
-                    version,
-                }
+        const populatedFlowPromises = paginationResult.data.map(async (flow) => {
+            if (isNil(flow.publishedVersionId) && versionState !== FlowVersionState.DRAFT) {
+                return null
+            }
+            
+            const version = await flowVersionService(log).getFlowVersionOrThrow({
+                flowId: flow.id,
+                versionId: (versionState === FlowVersionState.DRAFT) ? undefined : (flow.publishedVersionId ?? undefined),
             })
-    
-            populatedFlows = await Promise.all(populatedFlowPromises)
-        }
-        else {
-            const populatedFlowPromises = paginationResult.data.map(async (flow) => {
-                if (isNil(flow.publishedVersionId)) {
-                    return null
-                }
-                const version = await flowVersionService(log).getFlowVersionOrThrow({
-                    flowId: flow.id,
-                    versionId: flow.publishedVersionId,
-                })
-    
-                return {
-                    ...flow,
-                    version,
-                }
-            })
-    
-            populatedFlows = (await Promise.all(populatedFlowPromises)).filter((flow) => flow !== null)
-        }
 
-        
+            return {
+                ...flow,
+                version,
+            }
+        })
+
+        const populatedFlows = (await Promise.all(populatedFlowPromises)).filter((flow) => flow !== null)
         const filteredPopulatedFlows = name ? populatedFlows.filter((flow) => flow.version.displayName.match(new RegExp(`^.*${name}.*`, 'i'))) : populatedFlows
         return paginationHelper.createPage(filteredPopulatedFlows, paginationResult.cursor)
     },
