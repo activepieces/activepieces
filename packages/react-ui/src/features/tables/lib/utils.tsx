@@ -70,3 +70,6 @@ export const FieldHeaderContext = createContext<{
   field: ClientField & { index: number };
   userHasTableWritePermission: boolean;
 } | null>(null);
+
+// Map<CsvColumnIndex, FieldId>
+export type FieldsMapping = (string | null)[];
