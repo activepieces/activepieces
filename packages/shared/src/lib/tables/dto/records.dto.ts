@@ -1,5 +1,4 @@
 import { Static, Type } from '@sinclair/typebox'
-import { ApMultipartFile } from '../../common'
 import { Cursor } from '../../common/seek-page'
 
 export const CreateRecordsRequest = Type.Object({
