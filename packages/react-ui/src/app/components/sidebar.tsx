@@ -33,7 +33,7 @@ import {
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 import { ShowPoweredBy } from '../../components/show-powered-by';
 import { platformHooks } from '../../hooks/platform-hooks';
@@ -167,11 +167,10 @@ export function SidebarComponent({
   removeBottomPadding = false,
 }: SidebarProps) {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: showBilling } = flagsHooks.useFlag<boolean>(
-    ApFlagId.SHOW_BILLING,
-  );
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const location = useLocation();
-
+  const showProjectUsage =
+    location.pathname.startsWith('/project') && edition !== ApEdition.COMMUNITY;
   return (
     <div className="flex min-h-screen w-full">
       <div className="flex min-h-screen w-full">
@@ -303,13 +302,13 @@ export function SidebarComponent({
                 <SidebarMenu>
                   <HelpAndFeedback />
                 </SidebarMenu>
-                {showBilling && <Separator />}
-                {showBilling && (
+                {showProjectUsage && <Separator />}
+                {showProjectUsage && (
                   <SidebarMenu>
                     <UsageLimitsButton />
                   </SidebarMenu>
                 )}
-                {showBilling && <Separator />}
+                {showProjectUsage && <Separator />}
                 <SidebarUser />
               </SidebarFooter>
             </SidebarContent>
