@@ -13,8 +13,9 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
             request: request.body,
         })
     },
-    )
+    ),
 
+ 
     fastify.post('/:id', UpdateRequest, async (request) => {
         return tableService.update({
             projectId: request.principal.projectId,
@@ -206,3 +207,4 @@ const UpdateRequest = {
         body: UpdateTableRequest,
     },
 }
+

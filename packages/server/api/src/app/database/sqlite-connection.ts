@@ -15,6 +15,7 @@ import { AddDataColumnToFieldEntity1742390870702 } from './migration/sqlite/1742
 import { AddTodosSquashed1742874467240 } from './migration/sqlite/1742874467240-add-todos-squashed'
 import { RenameApprovalUrlToResolveUrl1742991301509 } from './migration/sqlite/1742991301509-RenameApprovalUrlToResolveUrl'
 import { AddMCPSqlite1743127177235 } from './migration/sqlite/1743127177235-AddMCPSqlite'
+import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744104496262 } from './migration/sqlite/1744104496262-AddRecordIndexForTableIdAndProjectIdAndRecordId'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -37,6 +38,7 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        AddRecordIndexForTableIdAndProjectIdAndRecordId1744104496262,
         AddMCPSqlite1743127177235,
         RenameApprovalUrlToResolveUrl1742991301509,
         AddTodosSquashed1742874467240,

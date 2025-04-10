@@ -3,8 +3,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
 
-import { LoadingScreen } from '@/app/components/loading-screen';
 import { useEmbedding } from '@/components/embed-provider';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 import { authenticationSession } from '@/lib/authentication-session';
 import { managedAuthApi } from '@/lib/managed-auth-api';
 import { parentWindow } from '@/lib/utils';
