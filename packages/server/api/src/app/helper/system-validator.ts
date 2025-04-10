@@ -132,7 +132,7 @@ const systemPropValidators: {
     [AppSystemProp.CLOUD_PLATFORM_ID]: stringValidator,
     [AppSystemProp.INTERNAL_URL]: stringValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
-
+    [AppSystemProp.FEATUREBASE_API_KEY]: stringValidator,
     // Copilot
     [AppSystemProp.PERPLEXITY_BASE_URL]: urlValidator,
 

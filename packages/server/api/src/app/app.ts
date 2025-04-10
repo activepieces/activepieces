@@ -13,6 +13,7 @@ import { appConnectionModule } from './app-connection/app-connection.module'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
 import { authenticationModule } from './authentication/authentication.module'
 import { accessTokenManager } from './authentication/lib/access-token-manager'
+import { changelogModule } from './changelog/changelog.module'
 import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
@@ -94,7 +95,6 @@ import { websocketService } from './websockets/websockets.service'
 import { flowConsumer } from './workers/consumer'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { workerModule } from './workers/worker-module'
-
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
     await app.register(swagger, {
@@ -233,6 +233,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(userModule)
     await app.register(todoModule)
     await app.register(adminPlatformModule)
+    await app.register(changelogModule)
+    
     app.get(
         '/redirect',
         async (
