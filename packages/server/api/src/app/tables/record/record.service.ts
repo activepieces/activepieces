@@ -50,6 +50,7 @@ export const recordService = {
                     existingFields.some((field) => field.id === cellData.fieldId),
                 ),
             )
+            // to avoid sql query text limit
             const batches = chunk(validRecords, 50)
             const records: RecordSchema[] = []
             for (const batch of batches) {
