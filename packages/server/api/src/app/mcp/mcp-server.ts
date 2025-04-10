@@ -1,13 +1,12 @@
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework'
 import { UserInteractionJobType } from '@activepieces/server-shared'
-import { EngineResponseStatus, ExecuteActionResponse, ExecuteTriggerResponse, FlowStatus, isNil, TriggerHookType, TriggerType } from '@activepieces/shared'
+import { EngineResponseStatus, ExecuteActionResponse, ExecuteTriggerResponse, FlowStatus, FlowVersionState, isNil, TriggerHookType, TriggerType } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { FastifyBaseLogger, FastifyReply } from 'fastify'
 import { EngineHelperResponse } from 'server-worker'
-import { z } from 'zod'
+import { z } from 'zod' 
 import { flowService } from '../flows/flow/flow.service'
-import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { pieceMetadataService } from '../pieces/piece-metadata-service'
 import { projectService } from '../project/project-service'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
@@ -108,6 +107,7 @@ export async function createMcpServer({
         folderId: undefined,
         status: [FlowStatus.ENABLED],
         name: undefined,
+        versionState: FlowVersionState.LOCKED,
     })
 
     logger.error('flows')
@@ -120,16 +120,10 @@ export async function createMcpServer({
         flow.version.trigger.settings.pieceName === '@activepieces/piece-mcp',
     )
 
-    logger.error('publishedFlows')
-    logger.error(publishedFlows)
+ 
 
     for (const flow of publishedFlows) {
-        const flowVersion = await flowVersionService(logger).getFlowVersionOrThrow({
-            flowId: flow.id,
-            versionId: flow.publishedVersionId as string,
-        })
-
-        const triggerSettings = flowVersion.trigger.settings as {
+        const triggerSettings = flow.version.trigger.settings as {
             pieceName: string
             triggerName: string
             input: {
@@ -155,7 +149,7 @@ export async function createMcpServer({
                 const result = await userInteractionWatcher(logger).submitAndWaitForResponse<EngineHelperResponse<ExecuteTriggerResponse<TriggerHookType.RUN>>>({
                     jobType: UserInteractionJobType.EXECUTE_TRIGGER_HOOK,
                     hookType: TriggerHookType.RUN,
-                    flowVersion,
+                    flowVersion: flow.version,
                     test: false,
                     projectId,
                 })
