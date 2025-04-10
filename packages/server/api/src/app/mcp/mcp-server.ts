@@ -1,11 +1,13 @@
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework'
 import { UserInteractionJobType } from '@activepieces/server-shared'
-import { EngineResponseStatus, ExecuteActionResponse, isNil } from '@activepieces/shared'
+import { EngineResponseStatus, ExecuteActionResponse, ExecuteTriggerResponse, FlowStatus, isNil, TriggerHookType, TriggerType } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { FastifyBaseLogger, FastifyReply } from 'fastify'
 import { EngineHelperResponse } from 'server-worker'
 import { z } from 'zod'
+import { flowService } from '../flows/flow/flow.service'
+import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { pieceMetadataService } from '../pieces/piece-metadata-service'
 import { projectService } from '../project/project-service'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
@@ -99,6 +101,85 @@ export async function createMcpServer({
         }),
     )
 
+    const flows = await flowService(logger).list({ 
+        projectId,
+        cursorRequest: null,
+        limit: 100,
+        folderId: undefined,
+        status: [FlowStatus.ENABLED],
+        name: undefined,
+    })
+
+    logger.error('flows')
+    logger.error(flows)
+
+    const publishedFlows = flows.data.filter((flow) => 
+        flow.status === FlowStatus.ENABLED && 
+        flow.publishedVersionId && 
+        flow.version.trigger.type === TriggerType.PIECE &&
+        flow.version.trigger.settings.pieceName === '@activepieces/piece-mcp',
+    )
+
+    logger.error('publishedFlows')
+    logger.error(publishedFlows)
+
+    for (const flow of publishedFlows) {
+        const flowVersion = await flowVersionService(logger).getFlowVersionOrThrow({
+            flowId: flow.id,
+            versionId: flow.publishedVersionId as string,
+        })
+
+        const triggerSettings = flowVersion.trigger.settings as {
+            pieceName: string
+            triggerName: string
+            input: {
+                toolName?: string
+                toolDescription?: string
+                inputSchema?: Record<string, PieceProperty>
+            }
+        }
+        const toolName = ('flow_' + triggerSettings.input?.toolName) || `flow_${flow.id}`
+        const toolDescription = triggerSettings.input?.toolDescription || flow.version.displayName
+        const inputSchema = triggerSettings.input?.inputSchema || {}
+
+        server.tool(
+            toolName,
+            toolDescription,
+            Object.fromEntries(
+                Object.entries(inputSchema).map(([key, prop]) =>
+                    [key, piecePropertyToZod(prop as PieceProperty)],
+                ),
+            ),
+            async (params) => {
+                // how to send params to the trigger?
+                const result = await userInteractionWatcher(logger).submitAndWaitForResponse<EngineHelperResponse<ExecuteTriggerResponse<TriggerHookType.RUN>>>({
+                    jobType: UserInteractionJobType.EXECUTE_TRIGGER_HOOK,
+                    hookType: TriggerHookType.RUN,
+                    flowVersion,
+                    test: false,
+                    projectId,
+                })
+
+                if (result.status === EngineResponseStatus.OK) {
+                    return {
+                        content: [{
+                            type: 'text',
+                            text: `✅ Successfully executed flow ${flow.version.displayName}\n\n\`\`\`json\n${JSON.stringify(result.result, null, 2)}\n\`\`\``,
+                        }],
+                    }
+                }
+                else {
+                    return {
+                        content: [{
+                            type: 'text',
+                            text: `❌ Error executing flow ${flow.version.displayName}\n\n\`\`\`\n${result.standardError || 'Unknown error occurred'}\n\`\`\``,
+                        }],
+                    }
+                }
+            },
+        )
+    }
+
     return { server, transport }
 }
 
@@ -150,8 +231,8 @@ export type CreateMcpServerRequest = {
     reply: FastifyReply
     logger: FastifyBaseLogger
 }
-
 export type CreateMcpServerResponse = {
     server: McpServer
     transport: SSEServerTransport
 }
+
