@@ -1,23 +1,36 @@
 version: '3.0'
+
 services:
+
+  caddy:
+    image: caddy:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - ${DATA_FOLDER}/caddy_config:/config
+      - ${DATA_FOLDER}/caddy_config/Caddyfile:/etc/caddy/Caddyfile
+
   activepieces:
-    image: ghcr.io/activepieces/activepieces:0.50.1
+    image: ghcr.io/activepieces/activepieces
     container_name: activepieces
     restart: unless-stopped
     ## Enable the following line if you already use AP_EXECUTION_MODE with SANDBOXED or old activepieces, checking the breaking change documentation for more info.
     ## privileged: true
     ports:
-      - '8080:80'
+      # - '8080:80'
+      - '4200:4200'
     depends_on:
       - postgres
       - redis
     env_file: .env
     volumes:
       - ./cache:/usr/src/app/cache
-    networks:
-      - activepieces
+
   postgres:
-    image: 'postgres:14.4'
+    image: 'postgres:latest'
     container_name: postgres
     restart: unless-stopped
     environment:
@@ -26,18 +39,18 @@ services:
       - 'POSTGRES_USER=${AP_POSTGRES_USERNAME}'
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - activepieces
+
   redis:
-    image: 'redis:7.0.7'
+    image: 'redis:latest'
     container_name: redis
     restart: unless-stopped
     volumes:
       - 'redis_data:/data'
-    networks:
-      - activepieces
+
 volumes:
+  caddy_data:
+    external: true
   postgres_data:
+    external: true
   redis_data:
-networks:
-  activepieces:
+    external: true

@@ -1,0 +1,1 @@
+{"apps":{"http":{"servers":{"srv0":{"listen":[":443"],"routes":[{"handle":[{"handler":"subroute","routes":[{"handle":[{"flush_interval":-1,"handler":"reverse_proxy","upstreams":[{"dial":"activepieces:4200"}]}]}]}],"match":[{"host":["activepieces.aigentic.audio"]}],"terminal":true}]}}}}}

@@ -8,7 +8,7 @@ tmp
 firebase-admin-sdk.json
 dev
 cache
-.env
+#.env
 
 # SDK Build
 builds
@@ -61,4 +61,4 @@ activepieces-engine.js
 scratch.md
 
 # environment variables
-.env
+#.env
