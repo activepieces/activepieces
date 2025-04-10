@@ -1,14 +1,17 @@
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework'
 import { UserInteractionJobType } from '@activepieces/server-shared'
-import { EngineResponseStatus, ExecuteActionResponse, ExecuteTriggerResponse, FlowStatus, FlowVersionState, isNil, TriggerHookType, TriggerType } from '@activepieces/shared'
+import { EngineResponseStatus, ExecuteActionResponse, FlowStatus, FlowVersionState, GetFlowVersionForWorkerRequestType, isNil, MCPProperty, MCPProperyType, TriggerType } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { FastifyBaseLogger, FastifyReply } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { EngineHelperResponse } from 'server-worker'
 import { z } from 'zod' 
 import { flowService } from '../flows/flow/flow.service'
 import { pieceMetadataService } from '../pieces/piece-metadata-service'
 import { projectService } from '../project/project-service'
+import { webhookSimulationService } from '../webhooks/webhook-simulation/webhook-simulation-service'
+import { webhookService } from '../webhooks/webhook.service'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 import { mcpService } from './mcp-service'
 
@@ -45,9 +48,10 @@ export async function createMcpServer({
                 return
             }
             const pieceConnectionExternalId = connections.find(connection => connection.pieceName === piece.name)?.externalId
-            uniqueActions.add(action.name)
+            const actionName = `${piece.name.split('piece-')[1]}-${action.name}`.slice(0, 47)
+            uniqueActions.add(actionName)
             server.tool(
-                action.name,
+                actionName,
                 action.description,
                 Object.fromEntries(
                     Object.entries(action.props).filter(([_key, prop]) => prop.type !== PropertyType.MARKDOWN).map(([key, prop]) =>
@@ -110,9 +114,6 @@ export async function createMcpServer({
         versionState: FlowVersionState.LOCKED,
     })
 
-    logger.error('flows')
-    logger.error(flows)
-
     const publishedFlows = flows.data.filter((flow) => 
         flow.status === FlowStatus.ENABLED && 
         flow.publishedVersionId && 
@@ -120,61 +121,96 @@ export async function createMcpServer({
         flow.version.trigger.settings.pieceName === '@activepieces/piece-mcp',
     )
 
- 
-
     for (const flow of publishedFlows) {
         const triggerSettings = flow.version.trigger.settings as {
             pieceName: string
             triggerName: string
             input: {
-                toolName?: string
-                toolDescription?: string
-                inputSchema?: Record<string, PieceProperty>
+                toolName: string
+                toolDescription: string
+                inputSchema: MCPProperty[]
+                returnsResponse: boolean
             }
         }
-        const toolName = ('flow_' + triggerSettings.input?.toolName) || `flow_${flow.id}`
-        const toolDescription = triggerSettings.input?.toolDescription || flow.version.displayName
-        const inputSchema = triggerSettings.input?.inputSchema || {}
+        const toolName = ('flow_' + triggerSettings.input?.toolName).slice(0, 47)
+        const toolDescription = triggerSettings.input?.toolDescription
+        const inputSchema = triggerSettings.input?.inputSchema
+        const returnsResponse = triggerSettings.input?.returnsResponse
+
+        const zodFromInputSchema = Object.fromEntries(
+            inputSchema.map((prop) => [prop.name, mcpPropertyToZod(prop)]),
+        )
 
         server.tool(
             toolName,
             toolDescription,
-            Object.fromEntries(
-                Object.entries(inputSchema).map(([key, prop]) =>
-                    [key, piecePropertyToZod(prop as PieceProperty)],
-                ),
-            ),
-            async (params) => {
-                // how to send params to the trigger?
-                const result = await userInteractionWatcher(logger).submitAndWaitForResponse<EngineHelperResponse<ExecuteTriggerResponse<TriggerHookType.RUN>>>({
-                    jobType: UserInteractionJobType.EXECUTE_TRIGGER_HOOK,
-                    hookType: TriggerHookType.RUN,
-                    flowVersion: flow.version,
-                    test: false,
-                    projectId,
+            zodFromInputSchema,
+            async (params) => { 
+                const response = await webhookService.handleWebhook({
+                    data: () => {
+                        return Promise.resolve({
+                            body: {},
+                            method: 'POST',
+                            headers: {},
+                            queryParams: {},
+                        })
+                    },
+                    logger,
+                    flowId: flow.id,
+                    async: !returnsResponse,
+                    flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
+                    saveSampleData: await webhookSimulationService(logger).exists(
+                        flow.id,
+                    ),
+                    payload: params,
                 })
-
-                if (result.status === EngineResponseStatus.OK) {
+                if (response.status !== StatusCodes.OK) {
                     return {
                         content: [{
                             type: 'text',
-                            text: `✅ Successfully executed flow ${flow.version.displayName}\n\n\`\`\`json\n${JSON.stringify(result.result, null, 2)}\n\`\`\``,
+                            text: `❌ Error executing flow ${flow.version.displayName}\n\n\`\`\`\n${response || 'Unknown error occurred'}\n\`\`\``,
                         }],
                     }
                 }
-                else {
-                    return {
-                        content: [{
-                            type: 'text',
-                            text: `❌ Error executing flow ${flow.version.displayName}\n\n\`\`\`\n${result.standardError || 'Unknown error occurred'}\n\`\`\``,
-                        }],
-                    }
+                return {
+                    content: [{
+                        type: 'text',
+                        text: `✅ Successfully executed flow ${flow.version.displayName}\n\n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\``,
+                    }],
                 }
             },
         )
     }
 
     return { server, transport }
+}
+
+
+function mcpPropertyToZod(property: MCPProperty): z.ZodTypeAny {
+    let schema: z.ZodTypeAny
+
+    switch (property.type) {
+        case MCPProperyType.TEXT:
+        case MCPProperyType.DATE:
+            schema = z.string()
+            break
+        case MCPProperyType.NUMBER:
+            schema = z.number()
+            break
+        case MCPProperyType.BOOLEAN:
+            schema = z.boolean()
+            break
+        case MCPProperyType.ARRAY:
+            schema = z.array(z.unknown())
+            break
+        case MCPProperyType.OBJECT:
+            schema = z.record(z.string(), z.unknown())
+            break
+        default:
+            schema = z.unknown()
+    }
+
+    return property.required ? schema : schema.optional()
 }
 
 function piecePropertyToZod(property: PieceProperty): z.ZodTypeAny {

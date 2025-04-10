@@ -3,42 +3,14 @@ import {
     Property,
     TriggerStrategy,
   } from '@activepieces/pieces-framework';
-import { MarkdownVariant } from '@activepieces/shared';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { MCPProperyType } from '@activepieces/shared';
 
-
-  
-  const liveMarkdown = `**Live URL:**
-  \`\`\`text
-  {{webhookUrl}}
-  \`\`\`
-  generate sample data & triggers published flow.
-  
-  `;
-  
-  
-  const syncMarkdown = `**Synchronous Requests:**
-  
-  If you expect a response from this webhook, add \`/sync\` to the end of the URL. 
-  If it takes more than 30 seconds, it will return a 408 Request Timeout response.
-  
-  To return data, add an Webhook step to your flow with the Return Response action.
-  `;
-  
 
   export const mcpTool = createTrigger({
     name: 'mcp_tool',
     displayName: 'MCP Tool',
     description: 'run a flow in MCP',
     props: {
-      liveMarkdown: Property.MarkDown({
-        value: liveMarkdown,
-        variant: MarkdownVariant.BORDERLESS,
-      }),
-      syncMarkdown: Property.MarkDown({
-        value: syncMarkdown,
-        variant: MarkdownVariant.INFO,
-      }),
       toolName: Property.ShortText({
         displayName: 'Tool Name',
         description: 'The name of the tool',
@@ -49,10 +21,32 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
         description: 'The description of the tool',
         required: true,
       }),
-      inputSchema: Property.Json({
-        displayName: 'Input Schema',
-        description: 'The schema for the tool input',
+      inputSchema: Property.Array({
+        displayName: 'Parameters',
+        description: 'The parameters for the tool',
         required: true,
+        properties: {
+          name: Property.ShortText({
+            displayName: 'Name',
+            required: true,
+          }),
+          type: Property.StaticDropdown({
+            displayName: 'Type',
+            required: true,
+            defaultValue: MCPProperyType.TEXT,
+            options: {
+              options: Object.values(MCPProperyType).map((type) => ({
+                value: type,
+                label: type,
+              })),
+            },
+          }),
+          required: Property.Checkbox({
+            displayName: 'Required',
+            required: true,
+            defaultValue: true,
+          }),
+        },
       }),
       returnsResponse: Property.Checkbox({
         displayName: 'Returns Response',
@@ -64,30 +58,12 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
     type: TriggerStrategy.WEBHOOK,
     sampleData: null,
     async onEnable() {
-      // rebuild mcp server (get enabled mcp flows on the backend so no need to do anything here)
-      // user just needs to restart the server
+      // ignore
     },
     async onDisable() {
-      // rebuild mcp server
+      // ignore
     },
     async run(context) {
-      const token = context.server.token;
-      const mcpId = context.payload.headers['mcpId'];
-
-      // need to query backend to get mcpId for this projectId using api request
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `${context.server.apiUrl}/v1/mcp`,
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      // if (response.body.id !== mcpId) {
-      //   throw new Error('Invalid mcpId');
-      // }
-
-      // run flow
       return [context.payload];
     },
   });
