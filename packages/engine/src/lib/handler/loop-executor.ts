@@ -44,9 +44,8 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
             const addEmptyIteration = !stepOutput.hasIteration(i)
             if (addEmptyIteration) {
                 stepOutput = stepOutput.addIteration()
-                newExecutionContext = newExecutionContext.upsertStep(action.name, stepOutput)
             }
-            newExecutionContext = newExecutionContext.setCurrentPath(newCurrentPath)
+            newExecutionContext = newExecutionContext.upsertStep(action.name, stepOutput).setCurrentPath(newCurrentPath)
             if (!isNil(firstLoopAction) && !constants.testSingleStepMode) {
                 newExecutionContext = await flowExecutor.execute({
                     action: firstLoopAction,

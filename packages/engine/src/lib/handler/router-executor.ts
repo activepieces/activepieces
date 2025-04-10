@@ -67,7 +67,8 @@ async function handleRouterExecution({ action, executionState, constants, censor
             if (constants.testSingleStepMode) {
                 break
             }
-            if (evaluatedConditions[i]) {
+            const condition = routerOutput.output?.branches[i].evaluation
+            if (condition) {
                 executionState = (await flowExecutor.execute({
                     action: action.children[i],
                     executionState,

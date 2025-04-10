@@ -1,3 +1,4 @@
+import { ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ChevronDownIcon,
@@ -8,8 +9,17 @@ import {
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
+import { ShowPoweredBy } from '../../components/show-powered-by';
+import { platformHooks } from '../../hooks/platform-hooks';
+
+import { ApDashboardSidebarHeader } from './ap-dashboard-sidebar-header';
+import { HelpAndFeedback } from './help-and-feedback';
+import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
+import { SidebarUser } from './sidebar-user';
+import UsageLimitsButton from './usage-limits-button';
+
 import { BetaBadge } from '@/components/custom/beta-badge';
-import { useEmbedding } from '@/components/embed-provider';
+import { FloatingChatButton } from '@/components/custom/FloatingChatButton';
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -23,7 +33,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupLabel,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuSubItem,
@@ -32,27 +41,9 @@ import {
   SidebarMenuAction,
   SidebarSeparator,
 } from '@/components/ui/sidebar-shadcn';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { ProjectSwitcher } from '@/features/projects/components/project-switcher';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { cn, determineDefaultRoute } from '@/lib/utils';
-import { ApFlagId, ApEdition } from '@activepieces/shared';
-
-import { ShowPoweredBy } from '../../components/show-powered-by';
-import { platformHooks } from '../../hooks/platform-hooks';
-
-import { HelpAndFeedback } from './help-and-feedback';
-import { SidebarInviteUserButton } from './sidebar-invite-user';
-import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
-import { SidebarUser } from './sidebar-user';
-import { FloatingChatButton } from '@/components/custom/FloatingChatButton';
-import UsageLimitsButton from './usage-limits-button';
+import { cn } from '@/lib/utils';
 
 type Link = {
   icon: React.ReactNode;
@@ -81,7 +72,6 @@ export const CustomTooltipLink = ({
   locked,
   newWindow,
   isActive,
-  isSubItem,
 }: CustomTooltipLinkProps) => {
   const location = useLocation();
 
@@ -101,7 +91,7 @@ export const CustomTooltipLink = ({
         )}
       >
         <div
-          className={`w-full flex items-center justify-between gap-2 p-2 ${
+          className={`w-full flex items-center justify-between gap-2 px-2 py-1.5 ${
             !Icon ? 'p-2' : ''
           }`}
         >
@@ -111,15 +101,15 @@ export const CustomTooltipLink = ({
               <span className={`text-sm`}>{label}</span>
             </div>
             {(label === 'Tables' || label === 'Todos' || label === 'MCP') && (
-              <span className="ml-2">
-                <BetaBadge showTooltip={false} />
-              </span>
+              <BetaBadge showTooltip={false} />
             )}
           </div>
-          {locked && <LockKeyhole className="size-3" color="grey" />}
+          {locked && (
+            <LockKeyhole className="size-4 stroke-[2px]" color="grey" />
+          )}
         </div>
         {notification && !locked && (
-          <span className="bg-destructive mr-1 size-2 rounded-full "></span>
+          <span className="bg-destructive absolute right-2 top-1/2 transform -translate-y-1/2 size-2 rounded-full "></span>
         )}
       </div>
     </Link>
@@ -177,15 +167,11 @@ export function SidebarComponent({
   removeGutters = false,
   removeBottomPadding = false,
 }: SidebarProps) {
-  const branding = flagsHooks.useWebsiteBranding();
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const { embedState } = useEmbedding();
   const { platform } = platformHooks.useCurrentPlatform();
   // const { data: showBilling } = flagsHooks.useFlag<boolean>(
   //   ApFlagId.SHOW_BILLING,
   // );
   const showBilling = false;
-  const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
   const location = useLocation();
 
   return (
@@ -194,46 +180,7 @@ export function SidebarComponent({
         {!hideSideNav && (
           <Sidebar>
             <SidebarContent>
-              <SidebarHeader className="pb-0">
-                <div className="flex items-center justify-between pr-1">
-                  <div className="flex items-center justify-center gap-1">
-                    <Link
-                      to={isHomeDashboard ? defaultRoute : '/platform'}
-                      className="h-[48px] flex items-center justify-center"
-                    >
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="ml-2 h-auto">
-                            {edition !== ApEdition.COMMUNITY &&
-                            !embedState.isEmbedded ? (
-                              <img
-                                src={branding.logos.logoIconUrl}
-                                alt={t('home')}
-                                width={28}
-                                height={28}
-                                className=" max-h-[28px] max-w-[28px] object-contain"
-                              />
-                            ) : (
-                              <img
-                                src={branding.logos.fullLogoUrl}
-                                alt={t('home')}
-                                width={160}
-                                height={51}
-                                className="max-h-[51px] max-w-[160px] object-contain"
-                              />
-                            )}
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom">
-                          {t('Home')}
-                        </TooltipContent>
-                      </Tooltip>
-                    </Link>
-                    <ProjectSwitcher />
-                  </div>
-                  {/* <SidebarInviteUserButton /> */}
-                </div>
-              </SidebarHeader>
+              <ApDashboardSidebarHeader isHomeDashboard={isHomeDashboard} />
               <SidebarSeparator />
               <SidebarContent className="gap-0">
                 {/* <SidebarPlatformAdminButton /> */}

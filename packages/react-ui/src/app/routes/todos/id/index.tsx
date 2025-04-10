@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 
-import { LoadingScreen } from '@/app/components/loading-screen';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';

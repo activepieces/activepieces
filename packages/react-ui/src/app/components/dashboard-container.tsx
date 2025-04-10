@@ -1,14 +1,8 @@
+import { isNil, Permission } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Brain, ListTodo, Table2, Workflow } from 'lucide-react';
 import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-
-import { useEmbedding } from '@/components/embed-provider';
-// import { issueHooks } from '@/features/issues/hooks/issue-hooks';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
-import { isNil, Permission } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
 
@@ -19,6 +13,12 @@ import {
   SidebarItem,
   SidebarLink,
 } from './sidebar';
+
+import { useEmbedding } from '@/components/embed-provider';
+// import { issueHooks } from '@/features/issues/hooks/issue-hooks';
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { projectHooks } from '@/hooks/project-hooks';
 
 type DashboardContainerProps = {
   children: React.ReactNode;
@@ -49,7 +49,6 @@ export function DashboardContainer({
   removeBottomPadding,
 }: DashboardContainerProps) {
   const [automationOpen, setAutomationOpen] = useState(true);
-  const [aiOpen, setAiOpen] = useState(true);
   const { platform } = platformHooks.useCurrentPlatform();
   // const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
   const showIssuesNotification = false;
@@ -135,27 +134,14 @@ export function DashboardContainer({
     ],
   };
 
-  const aiGroup: SidebarGroup = {
-    type: 'group',
-    label: t('AI'),
+  const mcpLink: SidebarLink = {
+    type: 'link',
+    to: authenticationSession.appendProjectRoutePrefix('/mcp'),
+    label: t('MCP'),
     icon: Brain,
-    isActive: (pathname: string) => {
-      const paths = ['/mcp'];
-      return paths.some((path) => pathname.includes(path));
-    },
-    defaultOpen: true,
-    open: aiOpen,
-    setOpen: setAiOpen,
-    items: [
-      {
-        type: 'link',
-        to: authenticationSession.appendProjectRoutePrefix('/mcp'),
-        label: t('MCP'),
-        showInEmbed: true,
-        hasPermission: checkAccess(Permission.READ_MCP),
-        isSubItem: true,
-      },
-    ],
+    showInEmbed: true,
+    hasPermission: checkAccess(Permission.READ_MCP),
+    isSubItem: false,
   };
 
   const tablesLink: SidebarLink = {
@@ -178,7 +164,7 @@ export function DashboardContainer({
     isSubItem: false,
   };
 
-  // const items: SidebarItem[] = [automationGroup, aiGroup, tablesLink, todosLink]
+  // const items: SidebarItem[] = [automationGroup, mcpLink, tablesLink, todosLink]
   const items: SidebarItem[] = [automationGroup, tablesLink, todosLink]
     .filter(embedFilter)
     .filter(permissionFilter)

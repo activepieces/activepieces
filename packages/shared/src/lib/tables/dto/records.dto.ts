@@ -1,4 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
+import { ApMultipartFile } from '../../common'
 import { Cursor } from '../../common/seek-page'
 
 export const CreateRecordsRequest = Type.Object({
@@ -55,3 +56,11 @@ export const DeleteRecordsRequest = Type.Object({
 
 export type DeleteRecordsRequest = Static<typeof DeleteRecordsRequest>
 
+
+export const ImportCsvRequestBody = Type.Object({
+    file: ApMultipartFile,
+    skipFirstRow: Type.Optional(Type.Boolean({})),
+    tableId: Type.String(),
+})
+
+export type ImportCsvRequestBody = Static<typeof ImportCsvRequestBody>

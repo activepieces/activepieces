@@ -6,8 +6,8 @@ import { projectHooks } from '@/hooks/project-hooks';
 import { determineDefaultRoute } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
+import { LoadingScreen } from '../../components/ui/loading-screen';
 import { authenticationSession } from '../../lib/authentication-session';
-import { LoadingScreen } from '../components/loading-screen';
 
 export const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
   children,

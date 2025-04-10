@@ -4,7 +4,7 @@ import { PopulatedRecord, TableWebhookEventType } from '@activepieces/shared';
 
 export const deletedRecordTrigger = createTrigger({
     name: 'deletedRecord',
-    displayName: 'Deleted Record',
+    displayName: 'Record Deleted',
     description: 'Triggers when a record is deleted from the selected table.',
     auth: PieceAuth.None(),
     props: {
