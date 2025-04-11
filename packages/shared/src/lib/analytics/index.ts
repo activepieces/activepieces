@@ -40,3 +40,35 @@ export const AnalyticsReportResponse = Type.Object({
     topProjects: AnalyticsProjectReport,
 })
 export type AnalyticsReportResponse = Static<typeof AnalyticsReportResponse>
+
+
+// Flow run analytics reports (custom)
+
+// Export GetAnalyticsParams
+export const GetAnalyticsParams = Type.Object({
+    startTimestamp: Type.String({ format: 'date-time' }),
+    endTimestamp: Type.String({ format: 'date-time' }),
+})
+export type GetAnalyticsParams = Static<typeof GetAnalyticsParams>
+
+// Export AnalyticsResult and AnalyticsResultMap
+export type AnalyticsResult = {
+    averageRuntime: number
+    flowRunCount: number
+    successRate: number
+    failureRate: number
+}
+
+export type AnalyticsResultMap = Record<string, AnalyticsResult>
+
+// Export AnalyticsResponseSchema
+export const AnalyticsResponseSchema = Type.Record(
+    Type.String(), // flowId as string key
+    Type.Object({
+        averageRuntime: Type.Number(),
+        flowRunCount: Type.Number(),
+        successRate: Type.Number(),
+        failureRate: Type.Number(),
+    }),
+)
+export type AnalyticsResponse = Static<typeof AnalyticsResponseSchema>
