@@ -59,11 +59,10 @@ export default function MCPPage() {
   const { checkAccess } = useAuthorization();
   const doesUserHavePermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
   const [activeTab, setActiveTab] = useState(TABS.CONNECTIONS);
-  const { metadata } =
-    piecesHooks.useAllStepsMetadata({
-      searchQuery: '',
-      type: 'trigger',
-    });
+  const { metadata } = piecesHooks.useAllStepsMetadata({
+    searchQuery: '',
+    type: 'trigger',
+  });
 
   const {
     data: mcp,

@@ -393,9 +393,6 @@ const PieceSelector = ({
       stepMetadata,
       flowVersion,
     );
-    console.log('newStepName', newStepName);
-    console.log('stepMetadata', stepMetadata);
-    console.log('actionOrTrigger', actionOrTrigger);
 
     const stepData = pieceSelectorUtils.getDefaultStep({
       stepName: newStepName,

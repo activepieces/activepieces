@@ -32,3 +32,16 @@ export type MCP = Static<typeof MCP>
 export type MCPSchema = MCP & {
     connections: AppConnectionWithoutSensitiveData[]
 }
+
+export const MCPTrigger = Type.Object({
+    pieceName: Type.String(),
+    triggerName: Type.String(),
+    input: Type.Object({
+        toolName: Type.String(),
+        toolDescription: Type.String(),
+        inputSchema: Type.Array(MCPProperty),
+        returnsResponse: Type.Boolean(),
+    }),
+})
+
+export type MCPTrigger = Static<typeof MCPTrigger>
