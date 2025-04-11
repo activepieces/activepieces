@@ -1,15 +1,17 @@
+import { Info, Zap } from 'lucide-react';
+
 import claude from '@/assets/img/custom/claude.svg';
 import cursor from '@/assets/img/custom/cursor.svg';
 import windsurf from '@/assets/img/custom/windsurf.svg';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-import { SimpleJsonViewer } from '../../../../components/simple-json-viewer';
+import { SimpleJsonViewer } from '../../../components/simple-json-viewer';
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '../../../../components/ui/tabs';
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '../../../components/ui/accordion';
 
 type McpInstructionProps = {
   mcpServerUrl: string;
@@ -17,44 +19,39 @@ type McpInstructionProps = {
 
 export const McpInstruction = ({ mcpServerUrl }: McpInstructionProps) => {
   return (
-    <div>
-      <div className="space-y-4 w-full max-w-[700px]">
-        <div>
-          <h3 className="font-semibold text-foreground text-base mb-1">
+    <div className="space-y-6 w-full">
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Zap className="h-5 w-5 text-primary" />
+          <h3 className="font-semibold text-foreground text-lg">
             Client Specific Instructions
           </h3>
-          <p className="text-muted-foreground text-sm">
-            Follow the instructions below for your specific MCP client
-          </p>
         </div>
+        <p className="text-muted-foreground text-sm pl-7">
+          Follow these instructions to set up MCP in your preferred client. Once
+          configured, your AI assistant will be able to access your Activepieces
+          tools.
+        </p>
+      </div>
 
-        <Tabs>
-          <TabsList className="gap-3" variant="outline">
-            <TabsTrigger value="claude" variant="outline">
-              <div className="flex items-center gap-2">
-                <img src={claude} alt="Claude icon" className="w-4 h-4" />
-                <span>Claude Desktop</span>
-              </div>
-            </TabsTrigger>
-            <TabsTrigger value="cursor" variant="outline">
-              <div className="flex items-center gap-2">
-                <img src={cursor} alt="Cursor icon" className="w-4 h-4" />
-                <span>Cursor</span>
-              </div>
-            </TabsTrigger>
-            <TabsTrigger value="windsurf" variant="outline">
-              <div className="flex items-center gap-2">
-                <img src={windsurf} alt="Windsurf icon" className="w-4 h-4" />
-                <span>Windsurf</span>
-              </div>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent
-            value="claude"
-            className="text-muted-foreground mt-3 pl-1 max-w-[700px]"
-          >
-            <Alert variant="warning" className="mt-4 mb-2">
+      <Accordion
+        type="single"
+        collapsible
+        className="w-full"
+        defaultValue="claude"
+      >
+        <AccordionItem
+          value="claude"
+          className="border border-border rounded-lg mb-3 px-4 "
+        >
+          <AccordionTrigger className="py-3">
+            <div className="flex items-center gap-2">
+              <img src={claude} alt="Claude icon" className="w-5 h-5" />
+              <span className="font-medium">Claude Desktop</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="text-muted-foreground px-1">
+            <Alert variant="warning" className="mb-4">
               <AlertDescription className="text-xs">
                 <p>
                   Note: MCPs currently only work with Claude Desktop, not the
@@ -63,7 +60,7 @@ export const McpInstruction = ({ mcpServerUrl }: McpInstructionProps) => {
                 <p>You can download it from: https://claude.ai/download</p>
               </AlertDescription>
             </Alert>
-            <ol className="list-decimal list-inside space-y-2 text-sm text-foreground">
+            <ol className="list-decimal list-inside space-y-3 text-sm text-foreground mb-4">
               <li>
                 <span className="font-semibold">Open</span>{' '}
                 <strong>Settings</strong> from the menu in the Claude Desktop
@@ -86,17 +83,21 @@ export const McpInstruction = ({ mcpServerUrl }: McpInstructionProps) => {
                 App
               </li>
             </ol>
-            <Alert variant="default" className="mt-4 mb-2">
-              <AlertDescription className="text-xs">
-                <p>
-                  <code>mcp-remote</code> connects the Claude Desktop App to our
-                  remote server since Claude only supports local connections.
-                </p>
-                <p className="mt-1">
-                  Note: This requires <code>npx</code> to be installed on your
-                  system.
-                </p>
-              </AlertDescription>
+            <Alert variant="default" className="mb-4 bg-muted/40">
+              <div className="flex items-start gap-2">
+                <Info className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                <AlertDescription className="text-xs">
+                  <p>
+                    <code>mcp-remote</code> connects the Claude Desktop App to
+                    our remote server since Claude only supports local
+                    connections.
+                  </p>
+                  <p className="mt-1">
+                    Note: This requires <code>npx</code> to be installed on your
+                    system.
+                  </p>
+                </AlertDescription>
+              </div>
             </Alert>
             <div className="rounded-md shadow-sm">
               <SimpleJsonViewer
@@ -111,10 +112,21 @@ export const McpInstruction = ({ mcpServerUrl }: McpInstructionProps) => {
                 title="MCP Server Configuration"
               />
             </div>
-          </TabsContent>
+          </AccordionContent>
+        </AccordionItem>
 
-          <TabsContent value="cursor" className="mt-4 pl-2 max-w-[700px]">
-            <ol className="list-decimal list-inside space-y-2 text-sm text-foreground">
+        <AccordionItem
+          value="cursor"
+          className="border border-border rounded-lg mb-3 px-4"
+        >
+          <AccordionTrigger className="py-3">
+            <div className="flex items-center gap-2">
+              <img src={cursor} alt="Cursor icon" className="w-5 h-5" />
+              <span className="font-medium">Cursor</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="text-muted-foreground px-1">
+            <ol className="list-decimal list-inside space-y-3 text-sm text-foreground mb-4">
               <li>
                 <span className="font-semibold">Navigate to</span>{' '}
                 <strong>Settings</strong>, then <strong>Cursor Settings</strong>
@@ -132,7 +144,7 @@ export const McpInstruction = ({ mcpServerUrl }: McpInstructionProps) => {
                 config to your existing file, then save
               </li>
             </ol>
-            <div className="mt-4 rounded-md shadow-sm">
+            <div className="rounded-md shadow-sm">
               <SimpleJsonViewer
                 data={{
                   mcpServers: {
@@ -144,16 +156,24 @@ export const McpInstruction = ({ mcpServerUrl }: McpInstructionProps) => {
                 title="MCP Server Configuration"
               />
             </div>
-          </TabsContent>
+          </AccordionContent>
+        </AccordionItem>
 
-          <TabsContent
-            value="windsurf"
-            className="text-muted-foreground mt-3 pl-1 max-w-[700px]"
-          >
-            <ol className="list-decimal list-inside space-y-2 text-sm text-foreground">
+        <AccordionItem
+          value="windsurf"
+          className="border border-border rounded-lg mb-3 px-4"
+        >
+          <AccordionTrigger className="py-3">
+            <div className="flex items-center gap-2">
+              <img src={windsurf} alt="Windsurf icon" className="w-5 h-5" />
+              <span className="font-medium">Windsurf</span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="text-muted-foreground px-1">
+            <ol className="list-decimal list-inside space-y-3 text-sm text-foreground mb-4">
               <li>
                 <span className="font-semibold">Open settings by either:</span>
-                <ul className="list-disc list-inside ml-6 mt-1">
+                <ul className="list-disc list-inside ml-6 mt-2">
                   <li>
                     Navigating to <strong>Windsurf - Settings</strong>, then{' '}
                     <strong>Advanced Settings</strong>
@@ -181,17 +201,20 @@ export const McpInstruction = ({ mcpServerUrl }: McpInstructionProps) => {
                 config to your existing file, then save
               </li>
             </ol>
-            <Alert variant="default" className="mt-4 mb-2">
-              <AlertDescription className="text-xs">
-                <p>
-                  <code>mcp-remote</code> connects Claude Desktop to our remote
-                  server since Claude only supports local connections.
-                </p>
-                <p className="mt-1">
-                  Note: This requires <code>npx</code> to be installed on your
-                  system.
-                </p>
-              </AlertDescription>
+            <Alert variant="default" className="mb-4 bg-muted/40">
+              <div className="flex items-start gap-2">
+                <Info className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                <AlertDescription className="text-xs">
+                  <p>
+                    <code>mcp-remote</code> connects Claude Desktop to our
+                    remote server since Claude only supports local connections.
+                  </p>
+                  <p className="mt-1">
+                    Note: This requires <code>npx</code> to be installed on your
+                    system.
+                  </p>
+                </AlertDescription>
+              </div>
             </Alert>
             <div className="rounded-md shadow-sm">
               <SimpleJsonViewer
@@ -206,9 +229,9 @@ export const McpInstruction = ({ mcpServerUrl }: McpInstructionProps) => {
                 title="MCP Server Configuration"
               />
             </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 };
