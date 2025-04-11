@@ -135,6 +135,9 @@ const PlatformPiecesPage = () => {
         },
         {
           id: 'actions',
+          header: ({ column }) => (
+            <DataTableColumnHeader column={column} title={t('Actions')} />
+          ),
           cell: ({ row }) => {
             return (
               <div className="flex justify-end">
