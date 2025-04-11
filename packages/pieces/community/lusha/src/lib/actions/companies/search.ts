@@ -7,8 +7,9 @@ export const searchCompanies = createAction({
   props: {
     resultLimit: Property.Number({
       displayName: 'Maximum Results',
-      description: 'Maximum number of companies to return. Leave empty to retrieve with a maximum of 10000 results.',
-      required: false,
+      description: 'Maximum number of companies to return. The maximum is 10000 results.',
+      required: true,
+      defaultValue: 10000
     }),
     requestBody: Property.Json({
       displayName: 'Request Body',
@@ -44,16 +45,15 @@ export const searchCompanies = createAction({
   async run(context) {
     const { resultLimit, requestBody } = context.propsValue;
     
-    if (resultLimit !== undefined && resultLimit > 10000)
+    if (resultLimit > 10000)
       throw new Error(`The maximum of result is 10000`);
 
     // the maximum number of result is 10000
-    const numberOfResult = resultLimit === undefined ? 10000: resultLimit
     let allResults: any[] = []
     let currentPage = 0
     let hasMorePages = true
     
-    while (hasMorePages && allResults.length < numberOfResult) {
+    while (hasMorePages && allResults.length < resultLimit) {
       const payload = {
         ...requestBody,
         pages: {
@@ -83,7 +83,7 @@ export const searchCompanies = createAction({
       if (!responseData.data || responseData.data.length === 0) {
         hasMorePages = false;
       } else {
-        const remainingNeeded = numberOfResult - allResults.length;
+        const remainingNeeded = resultLimit - allResults.length;
         if (remainingNeeded < 40) {
           allResults = allResults.concat(responseData.data.slice(0, remainingNeeded));
         } else {
