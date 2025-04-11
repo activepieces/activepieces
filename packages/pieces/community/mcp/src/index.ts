@@ -1,14 +1,15 @@
 
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
-import { returnResponse } from "./lib/actions/return-response";
+import { replyToMcpClient } from "./lib/actions/reply-to-mcp-client";
 import { mcpTool } from "./lib/triggers/mcp-tool";
 
 export const mcp = createPiece({
   displayName: "MCP",
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.51.0',
   logoUrl: "https://cdn.activepieces.com/pieces/mcp.svg",
-  authors: [],
-  actions: [returnResponse],
+  authors: ['Gamal72', 'hazemadelkhalel'],
+  description: 'Connect to your hosted MCP Server using any MCP client to communicate with tools',
+  actions: [replyToMcpClient],
   triggers: [mcpTool],
 });

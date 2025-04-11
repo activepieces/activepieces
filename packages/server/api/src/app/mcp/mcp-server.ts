@@ -116,7 +116,6 @@ export async function createMcpServer({
 
     const publishedFlows = flows.data.filter((flow) => 
         flow.status === FlowStatus.ENABLED && 
-        flow.publishedVersionId && 
         flow.version.trigger.type === TriggerType.PIECE &&
         flow.version.trigger.settings.pieceName === '@activepieces/piece-mcp',
     )
@@ -208,6 +207,10 @@ function mcpPropertyToZod(property: MCPProperty): z.ZodTypeAny {
             break
         default:
             schema = z.unknown()
+    }
+
+    if (property.description) {
+        schema = schema.describe(property.description)
     }
 
     return property.required ? schema : schema.optional()

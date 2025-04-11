@@ -34,12 +34,7 @@ export const McpInstruction = ({ mcpServerUrl }: McpInstructionProps) => {
         </p>
       </div>
 
-      <Accordion
-        type="single"
-        collapsible
-        className="w-full"
-        defaultValue="claude"
-      >
+      <Accordion type="single" collapsible className="w-full">
         <AccordionItem
           value="claude"
           className="border border-border rounded-lg mb-3 px-4 "

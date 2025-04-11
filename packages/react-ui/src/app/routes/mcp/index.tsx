@@ -1,35 +1,69 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  Plus,
-  Hammer,
-  Wrench,
-} from 'lucide-react';
+import { Plus, Hammer, Wrench, Workflow, Info } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
+import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import {
+  PieceStepMetadataWithSuggestions,
+  StepMetadata,
+} from '@/features/pieces/lib/types';
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
+import {
+  TriggerType,
+  FlowOperationType,
+  assertNotNullOrUndefined,
+  Trigger,
+  FlowOperationRequest,
+  PopulatedFlow,
+  Permission,
   ApFlagId,
   AppConnectionWithoutSensitiveData,
 } from '@activepieces/shared';
 
 import { Button } from '../../../components/ui/button';
-import { Card } from '../../../components/ui/card';
+import { Card, CardContent } from '../../../components/ui/card';
 import { Separator } from '../../../components/ui/separator';
 import { TableTitle } from '../../../components/ui/table-title';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '../../../components/ui/tabs';
 import { useToast } from '../../../components/ui/use-toast';
+import { flowsApi } from '../../../features/flows/lib/flows-api';
 import { mcpApi } from '../../../features/mcp/mcp-api';
 import { piecesHooks } from '../../../features/pieces/lib/pieces-hook';
 import { NewConnectionDialog } from '../../connections/new-connection-dialog';
 
 import { McpConnection } from './mcp-connection';
+import { McpFlowCard } from './mcp-flow-card';
 import { McpInstruction } from './mcp-instruction';
 import { McpUrl } from './mcp-url';
+
+const TABS = {
+  CONNECTIONS: 'connections',
+  FLOWS: 'flows',
+};
 
 export default function MCPPage() {
   const { data: publicUrl } = flagsHooks.useFlag(ApFlagId.PUBLIC_URL);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { checkAccess } = useAuthorization();
+  const doesUserHavePermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
+  const [activeTab, setActiveTab] = useState(TABS.CONNECTIONS);
+  const { metadata } =
+    piecesHooks.useAllStepsMetadata({
+      searchQuery: '',
+      type: 'trigger',
+    });
 
   const {
     data: mcp,
@@ -42,11 +76,34 @@ export default function MCPPage() {
     },
   });
 
+  const { data: flowsData, isLoading: isFlowsLoading } = useQuery({
+    queryKey: ['mcp-flows'],
+    queryFn: () => {
+      return flowsApi
+        .list({
+          projectId: authenticationSession.getProjectId()!,
+          limit: 100,
+          cursor: undefined,
+        })
+        .then((flows) => {
+          const flowsData = flows.data.filter(
+            (flow) =>
+              flow.version.trigger.type === TriggerType.PIECE &&
+              flow.version.trigger.settings.pieceName ===
+                '@activepieces/piece-mcp',
+          );
+          return {
+            ...flows,
+            data: flowsData,
+          };
+        });
+    },
+  });
+
   const serverUrl = publicUrl + 'api/v1/mcp/' + (mcp?.token || '') + '/sse';
 
   const { pieces } = piecesHooks.usePieces({});
 
-  // Derive state from mcp data directly instead of using useEffect
   const usedConnectionIds = new Set(
     mcp?.connections?.map((connection) => connection.id) || [],
   );
@@ -123,6 +180,70 @@ export default function MCPPage() {
     },
   });
 
+  const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation({
+    mutationFn: async () => {
+      const flow = await flowsApi.create({
+        projectId: authenticationSession.getProjectId()!,
+        displayName: t('Untitled'),
+      });
+      return flow;
+    },
+    onSuccess: async (flow) => {
+      const triggerMetadata = metadata?.find(
+        (m) =>
+          (m as PieceStepMetadataWithSuggestions).pieceName ===
+          '@activepieces/piece-mcp',
+      );
+      const trigger = (
+        triggerMetadata as PieceStepMetadataWithSuggestions
+      )?.suggestedTriggers?.find((t: any) => t.name === 'mcp_tool');
+      assertNotNullOrUndefined(trigger, 'Trigger not found');
+      const stepData = pieceSelectorUtils.getDefaultStep({
+        stepName: 'trigger',
+        stepMetadata: triggerMetadata as StepMetadata,
+        actionOrTrigger: trigger,
+      });
+      await applyOperation(flow, {
+        type: FlowOperationType.UPDATE_TRIGGER,
+        request: stepData as Trigger,
+      });
+      toast({
+        description: t('Flow created successfully'),
+        duration: 3000,
+      });
+      navigate(`/flows/${flow.id}`);
+    },
+    onError: () => {
+      toast({
+        variant: 'destructive',
+        title: t('Error'),
+        description: t('Failed to create flow'),
+        duration: 5000,
+      });
+    },
+  });
+  const applyOperation = async (
+    flow: PopulatedFlow,
+    operation: FlowOperationRequest,
+  ) => {
+    try {
+      const updatedFlowVersion = await flowsApi.update(
+        flow.id,
+        operation,
+        true,
+      );
+      return {
+        flowVersion: {
+          ...flow.version,
+          id: updatedFlowVersion.version.id,
+          state: updatedFlowVersion.version.state,
+        },
+      };
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const removeConnection = async (
     connection: AppConnectionWithoutSensitiveData,
   ) => {
@@ -160,10 +281,12 @@ export default function MCPPage() {
       <div className="rounded-full bg-muted/50 p-3 mb-3">
         <Wrench className="h-8 w-8 text-muted-foreground/60" />
       </div>
-      <p className="font-medium text-foreground">{t('No MCP Tools Added')}</p>
+      <p className="font-medium text-foreground">
+        {t('No MCP Connections Added')}
+      </p>
       <p className="text-sm mt-1 max-w-md text-center">
         {t(
-          "Add tools to enhance your AI assistant's capabilities. Your assistant will be able to interact with your Activepieces data and perform actions on your behalf.",
+          "Add connections to enhance your AI assistant's capabilities. Your assistant will be able to interact with your Activepieces data and perform actions on your behalf.",
         )}
       </p>
       <NewConnectionDialog
@@ -178,9 +301,33 @@ export default function MCPPage() {
           className="flex items-center gap-1 mt-4"
         >
           <Plus className="h-4 w-4" />
-          {t('Add Your First Tool')}
+          {t('Add Your First MCP Connection')}
         </Button>
       </NewConnectionDialog>
+    </div>
+  );
+
+  const emptyFlowsMessage = (
+    <div className="col-span-full flex flex-col items-center justify-center py-12 text-muted-foreground bg-muted/20 rounded-lg border border-dashed border-border">
+      <div className="rounded-full bg-muted/50 p-3 mb-3">
+        <Workflow className="h-8 w-8 text-muted-foreground/60" />
+      </div>
+      <p className="font-medium text-foreground">{t('No Flows Added')}</p>
+      <p className="text-sm mt-1 max-w-md text-center">
+        {t(
+          'Add flows to let your AI assistant trigger automations. Your assistant will be able to run flows on your behalf.',
+        )}
+      </p>
+      <Button
+        variant="default"
+        size="sm"
+        className="flex items-center gap-1 mt-4"
+        disabled={!doesUserHavePermissionToWriteFlow || isCreateFlowPending}
+        onClick={() => createFlow()}
+      >
+        <Plus className="h-4 w-4" />
+        {t('Create Your First MCP Flow')}
+      </Button>
     </div>
   );
 
@@ -201,6 +348,29 @@ export default function MCPPage() {
     </>
   );
 
+  const flowSkeletons = (
+    <>
+      {Array(3)
+        .fill(0)
+        .map((_, index) => (
+          <Card
+            key={`flow-skeleton-${index}`}
+            className="overflow-hidden transition-all duration-200 relative hover:shadow-sm group border-border"
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-3">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+    </>
+  );
+
   return (
     <div className="w-full flex flex-col items-center justify-center gap-8 pb-12">
       <div className="w-full space-y-8">
@@ -208,7 +378,7 @@ export default function MCPPage() {
           <TableTitle
             beta={true}
             description={t(
-              'Connect to your hosted MCP Server using any MCP client to communicate with pieces',
+              'Connect to your hosted MCP Server using any MCP client to communicate with tools',
             )}
           >
             {t('MCP Server')}
@@ -216,50 +386,110 @@ export default function MCPPage() {
         </div>
 
         <div className="space-y-8">
-          <div className="space-y-5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Hammer className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-medium">{t('My Tools')}</h3>
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
+            <TabsList>
+              <TabsTrigger value={TABS.CONNECTIONS}>
+                {t('Connections')}
+              </TabsTrigger>
+              <TabsTrigger value={TABS.FLOWS}>{t('Flows')}</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value={TABS.CONNECTIONS} className="space-y-5 mt-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Hammer className="h-5 w-5 text-primary" />
+                  <h3 className="text-lg font-medium">{t('My Tools')}</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <NewConnectionDialog
+                    onConnectionCreated={(connection) => {
+                      addConnection(connection);
+                    }}
+                    isGlobalConnection={false}
+                  >
+                    <Button
+                      id="add-tool-button"
+                      variant="default"
+                      size="sm"
+                      className="flex items-center gap-1"
+                    >
+                      <Plus className="h-4 w-4" />
+                      {t('Add Connection')}
+                    </Button>
+                  </NewConnectionDialog>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <NewConnectionDialog
-                  onConnectionCreated={(connection) => {
-                    addConnection(connection);
-                  }}
-                  isGlobalConnection={false}
-                >
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                {isLoading
+                  ? connectionSkeletons
+                  : !mcp?.connections || mcp.connections.length === 0
+                  ? emptyToolsMessage
+                  : mcp.connections.map((connection) => {
+                      const pieceInfo = getPieceInfo(connection);
+                      return (
+                        <McpConnection
+                          key={connection.id}
+                          connection={connection}
+                          isUpdating={removeConnectionMutation.isPending}
+                          pieceInfo={pieceInfo}
+                          onDelete={removeConnection}
+                        />
+                      );
+                    })}
+              </div>
+            </TabsContent>
+
+            <TabsContent value={TABS.FLOWS} className="space-y-5 mt-2">
+              <div className="flex items-center gap-2 mb-4">
+                <Info className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  {t(
+                    'Only enabled flows with an MCP trigger can be used as a tool.',
+                  )}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Hammer className="h-5 w-5 text-primary" />
+                  <h3 className="text-lg font-medium">{t('My Tools')}</h3>
+                </div>
+                <div className="flex items-center gap-2">
                   <Button
-                    id="add-tool-button"
+                    id="add-flow-button"
                     variant="default"
                     size="sm"
                     className="flex items-center gap-1"
+                    disabled={
+                      !doesUserHavePermissionToWriteFlow || isCreateFlowPending
+                    }
+                    onClick={() => createFlow()}
                   >
                     <Plus className="h-4 w-4" />
-                    {t('Add Tool')}
+                    {t('Create Flow')}
                   </Button>
-                </NewConnectionDialog>
+                </div>
               </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {isLoading
-                ? connectionSkeletons
-                : !mcp?.connections || mcp.connections.length === 0
-                ? emptyToolsMessage
-                : mcp.connections.map((connection) => {
-                    const pieceInfo = getPieceInfo(connection);
-                    return (
-                      <McpConnection
-                        key={connection.id}
-                        connection={connection}
-                        isUpdating={removeConnectionMutation.isPending}
-                        pieceInfo={pieceInfo}
-                        onDelete={removeConnection}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                {isFlowsLoading
+                  ? flowSkeletons
+                  : !flowsData?.data || flowsData.data.length === 0
+                  ? emptyFlowsMessage
+                  : flowsData.data.map((flow) => (
+                      <McpFlowCard
+                        key={flow.id}
+                        flow={flow}
+                        onClick={() => navigate(`/flows/${flow.id}`)}
                       />
-                    );
-                  })}
-            </div>
-          </div>
+                    ))}
+              </div>
+            </TabsContent>
+          </Tabs>
 
           <Separator className="my-6" />
 

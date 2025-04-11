@@ -1,8 +1,17 @@
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { Copy, Eye, EyeOff, KeyRound, Link } from 'lucide-react';
+import {
+  Copy,
+  Eye,
+  EyeOff,
+  Info,
+  KeyRound,
+  Link,
+  RefreshCw,
+} from 'lucide-react';
 import { useState } from 'react';
 
+import { Alert, AlertDescription } from '../../../components/ui/alert';
 import { Button } from '../../../components/ui/button';
 import { Label } from '../../../components/ui/label';
 import {
@@ -127,26 +136,21 @@ export const McpUrl = ({
           </div>
         </div>
         <div className="flex items-start gap-2 text-xs text-muted-foreground mt-1">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-4 w-4 mt-0.5 flex-shrink-0"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 16v-4" />
-            <path d="M12 8h.01" />
-          </svg>
+          <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
           <p>
             {t(
               'This URL contains a sensitive security token. Only share it with trusted applications and services. Rotate the token if you suspect it has been compromised.',
             )}
           </p>
         </div>
+        <Alert variant="warning" className="mt-2">
+          <RefreshCw className="h-4 w-4" />
+          <AlertDescription>
+            {t(
+              'After making any changes to connections or flows, you will need to reconnect your MCP server for the changes to take effect.',
+            )}
+          </AlertDescription>
+        </Alert>
       </div>
     </div>
   );

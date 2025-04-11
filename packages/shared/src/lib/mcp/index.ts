@@ -14,6 +14,7 @@ export enum MCPProperyType {
 
 export const MCPProperty = Type.Object({
     name: Type.String(),
+    description: Type.Optional(Type.String()),
     type: Type.String(),
     required: Type.Boolean(),
 })

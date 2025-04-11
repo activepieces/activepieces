@@ -9,26 +9,37 @@ import { MCPProperyType } from '@activepieces/shared';
   export const mcpTool = createTrigger({
     name: 'mcp_tool',
     displayName: 'MCP Tool',
-    description: 'run a flow in MCP',
+    description: 'Creates a tool that MCP clients can call to execute this flow',
     props: {
       toolName: Property.ShortText({
-        displayName: 'Tool Name',
-        description: 'The name of the tool',
+        displayName: 'Name',
+        description: 'Used to call this tool from MCP clients like Claude Desktop, Cursor, or Windsurf',
         required: true,
       }),
       toolDescription: Property.LongText({
-        displayName: 'Tool Description',
-        description: 'The description of the tool',
+        displayName: 'Description', 
+        description: 'Used to describe what this tool does and when to use it',
         required: true,
       }),
       inputSchema: Property.Array({
         displayName: 'Parameters',
-        description: 'The parameters for the tool',
+        description: 'Define the input parameters that this tool accepts. Parameters will be shown to users when calling the tool.',
         required: true,
+        defaultValue: [
+          {
+            name: '',
+            type: MCPProperyType.TEXT,
+            required: true,
+          },
+        ],
         properties: {
           name: Property.ShortText({
             displayName: 'Name',
             required: true,
+          }),
+          description: Property.LongText({
+            displayName: 'Description',
+            required: false,
           }),
           type: Property.StaticDropdown({
             displayName: 'Type',
@@ -49,8 +60,8 @@ import { MCPProperyType } from '@activepieces/shared';
         },
       }),
       returnsResponse: Property.Checkbox({
-        displayName: 'Returns Response',
-        description: 'Whether the tool returns a response',
+        displayName: 'Reply to MCP Client',
+        description: 'Enable this if you want to wait for results and reply to the MCP client that called the tool.',
         defaultValue: true,
         required: true,
       }),
