@@ -57,7 +57,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
             await Promise.all(promises)
         }
         catch (error) {
-            log.error({ error }, 'Error syncing pieces')
+            log.error(error, 'Error syncing pieces')
         }
     },
 })
