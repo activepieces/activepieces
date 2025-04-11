@@ -260,7 +260,7 @@ function createPropertyDefinition(property: HubspotProperty, propertyDisplayName
 	}
 }
 
-async function retriveObjectProperties(
+async function retrieveObjectProperties(
 	auth: PiecePropValueSchema<typeof hubspotAuth>,
 	objectType: string,
 	excludedProperties: string[] = [],
@@ -367,7 +367,7 @@ export const standardObjectDynamicProperties = (objectType: string, excludedProp
 			// 	return {};
 			// }
 			const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-			return await retriveObjectProperties(authValue, objectType, excludedProperties);
+			return await retrieveObjectProperties(authValue, objectType, excludedProperties);
 		},
 	});
 
@@ -380,7 +380,7 @@ export const customObjectDynamicProperties = Property.DynamicProperties({
 			return {};
 		}
 		const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-		return await retriveObjectProperties(authValue, customObjectType as unknown as string);
+		return await retrieveObjectProperties(authValue, customObjectType as unknown as string);
 	},
 });
 

@@ -6,7 +6,7 @@ import { createDocument } from './lib/actions/create-document';
 import { createDocumentBasedOnTemplate } from './lib/actions/create-document-based-on-template.action';
 import { readDocument } from './lib/actions/read-document.action';
 import { appendText } from './lib/actions/append-text';
-import { findDocumentAction } from './lib/actions/find-documnet';
+import { findDocumentAction } from './lib/actions/find-document';
 import { newDocumentTrigger } from './lib/triggers/new-document';
 
 export const googleDocsAuth = PieceAuth.OAuth2({

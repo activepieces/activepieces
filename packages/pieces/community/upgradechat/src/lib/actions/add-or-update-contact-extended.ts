@@ -652,7 +652,7 @@ export const addOrUpdateContactExtended = createAction({
       required: false,
     }),
     companyPhoneExt: Property.ShortText({
-      displayName: 'Company Phone Extention',
+      displayName: 'Company Phone Extension',
       required: false,
     }),
     companyFaxNumber: Property.LongText({

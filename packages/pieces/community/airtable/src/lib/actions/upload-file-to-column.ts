@@ -18,7 +18,7 @@ export const airtableUploadFileToColumnAction = createAction({
     base: airtableCommon.base,
     tableId: airtableCommon.tableId,
     attachment_column: Property.Dropdown({
-      displayName: 'Attchment Column',
+      displayName: 'Attachment Column',
       required: true,
       refreshers: ['base', 'tableId'],
       options: async ({ auth, base, tableId }) => {

@@ -7,7 +7,7 @@ export const gmailGetListOfAgents = createAction({
   name: 'gmailGetListOfAgents',
   auth: aiAnswerAuth,
   displayName: 'Gmail get list of Agents',
-  description: 'get the lists of agents eith Gmail',
+  description: 'get the lists of agents with Gmail',
   props: {},
   async run(context) {
     const res = await httpClient.sendRequest<string[]>({

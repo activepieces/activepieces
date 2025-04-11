@@ -15,7 +15,7 @@ export const findCompanyAction = createAction({
                 disabled: false,
                 options: [
                     { label: 'Name', value: 'name' },
-                    { label: 'Comapny ID', value: 'company_id' },
+                    { label: 'Company ID', value: 'company_id' },
                 ],
             },
         }),
