@@ -1,6 +1,7 @@
 import { UserPlus } from 'lucide-react';
 
 import { useEmbedding } from '@/components/embed-provider';
+import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
@@ -21,7 +22,9 @@ export function SidebarInviteUserButton() {
       triggerButton={
         <Tooltip>
           <TooltipTrigger asChild>
-            <UserPlus className="size-4 text-muted-foreground hover:text-primary" />
+            <Button variant="transparent" size="icon">
+              <UserPlus className="size-4  stroke-[2px]" />
+            </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom">Invite User</TooltipContent>
         </Tooltip>

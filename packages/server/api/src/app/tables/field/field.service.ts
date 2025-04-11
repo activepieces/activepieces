@@ -68,7 +68,7 @@ export const fieldService = {
     },
     async validateCount(params: CountParams): Promise<void> {
         const countRes = await this.count(params)
-        if (countRes > system.getNumberOrThrow(AppSystemProp.MAX_FIELDS_PER_TABLE)) {
+        if (countRes + 1 > system.getNumberOrThrow(AppSystemProp.MAX_FIELDS_PER_TABLE)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: `Max fields per table reached: ${system.getNumberOrThrow(AppSystemProp.MAX_FIELDS_PER_TABLE)}`,

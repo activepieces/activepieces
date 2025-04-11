@@ -59,9 +59,9 @@ const ApTableEditorPage = () => {
     Permission.WRITE_TABLE,
   );
   const isAllowedToCreateRecord =
-    userHasTableWritePermission && maxRecords && records.length <= maxRecords;
+    userHasTableWritePermission && maxRecords && records.length < maxRecords;
   const isAllowedToCreateField =
-    userHasTableWritePermission && maxFields && fields.length <= maxFields;
+    userHasTableWritePermission && maxFields && fields.length < maxFields;
 
   const createEmptyRecord = () => {
     createRecord({
@@ -191,7 +191,7 @@ const ApTableEditorPage = () => {
           selectedRows={selectedRecords}
           onSelectedRowsChange={setSelectedRecords}
           className={cn(
-            'scroll-smooth  w-[calc(100vw-256px)] h-[calc(100vh-7rem-92px-20px)] bg-muted/30',
+            'scroll-smooth  w-[calc(100vw-256px)] h-[calc(100vh-92px-20px-20px)] bg-muted/30',
             theme === 'dark' ? 'rdg-dark' : 'rdg-light',
           )}
           bottomSummaryRows={

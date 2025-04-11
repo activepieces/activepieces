@@ -1650,6 +1650,15 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "perrine-pullicino-alan",
+      "name": "perrine-pullicino-alan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/143406842?v=4",
+      "profile": "https://github.com/perrine-pullicino-alan",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
