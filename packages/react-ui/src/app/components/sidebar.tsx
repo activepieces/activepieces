@@ -1,4 +1,3 @@
-import { ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ChevronDownIcon,
@@ -8,15 +7,6 @@ import {
 } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-
-import { ShowPoweredBy } from '../../components/show-powered-by';
-import { platformHooks } from '../../hooks/platform-hooks';
-
-import { ApDashboardSidebarHeader } from './ap-dashboard-sidebar-header';
-import { HelpAndFeedback } from './help-and-feedback';
-import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
-import { SidebarUser } from './sidebar-user';
-import UsageLimitsButton from './usage-limits-button';
 
 import { BetaBadge } from '@/components/custom/beta-badge';
 import { FloatingChatButton } from '@/components/custom/FloatingChatButton';
@@ -44,6 +34,16 @@ import {
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
+
+import { ShowPoweredBy } from '../../components/show-powered-by';
+import { platformHooks } from '../../hooks/platform-hooks';
+
+import { ApDashboardSidebarHeader } from './ap-dashboard-sidebar-header';
+import { HelpAndFeedback } from './help-and-feedback';
+import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
+import { SidebarUser } from './sidebar-user';
+import UsageLimitsButton from './usage-limits-button';
 
 type Link = {
   icon: React.ReactNode;
@@ -172,8 +172,10 @@ export function SidebarComponent({
   //   ApFlagId.SHOW_BILLING,
   // );
   const showBilling = false;
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const location = useLocation();
-
+  const showProjectUsage =
+    location.pathname.startsWith('/project') && edition !== ApEdition.COMMUNITY;
   return (
     <div className="flex min-h-screen w-full">
       <div className="flex min-h-screen w-full">
@@ -305,13 +307,13 @@ export function SidebarComponent({
                 {/* <SidebarMenu>
                   <HelpAndFeedback />
                 </SidebarMenu> */}
-                {showBilling && <Separator />}
-                {showBilling && (
+                {showProjectUsage && <Separator />}
+                {showProjectUsage && (
                   <SidebarMenu>
                     <UsageLimitsButton />
                   </SidebarMenu>
                 )}
-                {showBilling && <Separator />}
+                {showProjectUsage && <Separator />}
                 <SidebarUser />
               </SidebarFooter>
             </SidebarContent>
