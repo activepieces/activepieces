@@ -49,7 +49,7 @@ export function SidebarPlatformAdminButton() {
         {messages.length > 0 &&
           !isInPlatformAdmin &&
           platformRole === PlatformRole.ADMIN && (
-            <span className="bg-destructive absolute right-2 top-1/2 transform -translate-y-1/2 size-2 rounded-full"></span>
+            <span className="bg-primary absolute right-3 top-1/2 transform -translate-y-1/2 size-2 rounded-full"></span>
           )}
       </div>
     </Link>

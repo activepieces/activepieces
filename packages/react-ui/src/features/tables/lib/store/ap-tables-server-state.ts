@@ -30,7 +30,6 @@ export const createServerState = (
       updateSavingStatus(queue.size() === 1);
     });
   }
-
   return {
     deleteField: (fieldIndex: number) => {
       addPromiseToQueue(async () => {
@@ -115,5 +114,9 @@ export const createServerState = (
         });
       });
     },
+    setRecords: (records: PopulatedRecord[]) => {
+      clonedRecords = JSON.parse(JSON.stringify(records));
+    },
+    fields: clonedFields,
   };
 };

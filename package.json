@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.50.1",
-  "rcVersion": "0.50.1-rc.0",
+  "version": "0.50.2",
+  "rcVersion": "0.51.0-rc.0",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve react-ui",
@@ -149,6 +149,7 @@
     "cross-spawn": "7.0.6",
     "crypto-js": "4.2.0",
     "csv-parse": "5.6.0",
+    "csv-reader": "1.0.12",
     "csv-stringify": "6.5.2",
     "date-fns": "3.6.0",
     "dayjs": "1.11.9",

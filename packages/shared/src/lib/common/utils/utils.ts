@@ -117,3 +117,12 @@ export function pickBy<T extends Record<string, unknown>>(
         return result
     }, {})
 }
+
+
+export function chunk<T>(records: T[], size: number) {
+    const chunks: T[][] = []
+    for (let i = 0; i < records.length; i += size) {
+        chunks.push(records.slice(i, i + size))
+    }
+    return chunks
+}
