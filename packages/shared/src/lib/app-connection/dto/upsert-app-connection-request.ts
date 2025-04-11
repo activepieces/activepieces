@@ -1,12 +1,14 @@
 import { Static, Type } from '@sinclair/typebox'
 import { AppConnectionScope, AppConnectionType } from '../app-connection'
 import { OAuth2AuthorizationMethod } from '../oauth2-authorization-method'
+import { Metadata } from '../../common/metadata'
 
 const commonAuthProps = {
     externalId: Type.String({}),
     displayName: Type.String({}),
     pieceName: Type.String({}),
     projectId: Type.String({}),
+    metadata: Type.Optional(Metadata),
 }
 
 export enum OAuth2GrantType {
@@ -143,6 +145,7 @@ export const UpdateConnectionValueRequestBody = Type.Object({
     displayName: Type.String({
         minLength: 1,
     }),
+    metadata: Type.Optional(Metadata),
 })
 
 export const UpdateGlobalConnectionValueRequestBody = Type.Object({
@@ -150,6 +153,7 @@ export const UpdateGlobalConnectionValueRequestBody = Type.Object({
         minLength: 1,
     }),
     projectIds: Type.Optional(Type.Array(Type.String())),
+    metadata: Type.Optional(Metadata),
 })
 
 export type UpdateConnectionValueRequestBody = Static<typeof UpdateConnectionValueRequestBody>
@@ -158,6 +162,7 @@ const GlobalConnectionExtras =  Type.Object({
     scope: Type.Literal(AppConnectionScope.PLATFORM),
     projectIds: Type.Array(Type.String()),
     externalId: Type.Optional(Type.String()),
+    metadata: Type.Optional(Metadata),
 })
 export const UpsertGlobalConnectionRequestBody = 
     Type.Union([

@@ -58,11 +58,13 @@ describe('Project API', () => {
             })
 
             const displayName = faker.animal.bird()
+            const metadata = { foo: 'bar' }
             const response = await app?.inject({
                 method: 'POST',
                 url: '/v1/projects',
                 body: {
                     displayName,
+                    metadata,
                 },
                 headers: {
                     authorization: `Bearer ${testToken}`,
@@ -76,6 +78,7 @@ describe('Project API', () => {
             expect(responseBody.displayName).toBe(displayName)
             expect(responseBody.ownerId).toBe(mockOwner.id)
             expect(responseBody.platformId).toBe(mockPlatform.id)
+            expect(responseBody.metadata).toEqual(metadata)
         })
 
         it('it should create project by api key', async () => {
@@ -360,6 +363,56 @@ describe('Project API', () => {
             expect(responseBody?.code).toBe('ENTITY_NOT_FOUND')
             expect(responseBody?.params?.entityId).toBe(mockProject.id)
             expect(responseBody?.params?.entityType).toBe('project')
+        })
+
+        it('it should update project with metadata', async () => {
+            const { mockOwner: mockUser, mockPlatform } = await mockAndSaveBasicSetup()
+
+            mockUser.platformId = mockPlatform.id
+            mockUser.platformRole = PlatformRole.ADMIN
+
+            await databaseConnection().getRepository('user').save(mockUser)
+
+            const mockProject = createMockProject({
+                ownerId: mockUser.id,
+                platformId: mockPlatform.id,
+            })
+            await databaseConnection().getRepository('project').save([mockProject])
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUser.id,
+                projectId: mockProject.id,
+            })
+
+            const tasks = faker.number.int({ min: 1, max: 100000 })
+            const metadata = { foo: 'bar' }
+
+            const request: UpdateProjectPlatformRequest = {
+                displayName: faker.animal.bird(),
+                notifyStatus: NotificationStatus.NEVER,
+                metadata,
+                plan: {
+                    tasks,
+                },
+            }
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/projects/' + mockProject.id,
+                body: request,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody.id).toBe(mockProject.id)
+            expect(responseBody.displayName).toBe(request.displayName)
+            expect(responseBody.notifyStatus).toBe(request.notifyStatus)
+            expect(responseBody.metadata).toEqual(metadata)
         })
     })
 
