@@ -64,6 +64,11 @@ export const sandboxProvisioner = (log: FastifyBaseLogger) => ({
 
         await sandboxManager(log).release(sandbox.boxId)
     },
+
+    async shutdown(): Promise<void> {
+        log.debug({}, '[SandboxProvisioner#shutdown]')
+        await sandboxManager(log).shutdown()
+    },
 })
 
 type ProvisionParams = {
