@@ -19,6 +19,7 @@ type HandleWebhookParams = {
     flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED | undefined
     data: (projectId: string) => Promise<EventPayload>
     logger: FastifyBaseLogger
+    payload?: Record<string, unknown>
 }
 
 
@@ -30,6 +31,7 @@ export const webhookService = {
         async,
         saveSampleData,
         flowVersionToRun,
+        payload,
     }: HandleWebhookParams): Promise<EngineHttpResponse> {
         const webhookHeader = 'x-webhook-id'
         const webhookRequestId = apId()
@@ -79,7 +81,7 @@ export const webhookService = {
                 schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                 requestId: webhookRequestId,
                 synchronousHandlerId,
-                payload: await data(flow.projectId),
+                payload: payload ?? await data(flow.projectId),
                 flowId: flow.id,
                 saveSampleData,
                 flowVersionToRun,

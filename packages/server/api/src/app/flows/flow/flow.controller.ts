@@ -89,6 +89,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
             status: request.query.status,
             name: request.query.name,
+            versionState: request.query.versionState,
         })
     })
 

@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Brain, ListTodo, Table2, Workflow } from 'lucide-react';
+import { ListTodo, Server, Table2, Workflow } from 'lucide-react';
 import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
@@ -137,7 +137,7 @@ export function DashboardContainer({
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/mcp'),
     label: t('MCP'),
-    icon: Brain,
+    icon: Server,
     showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_MCP),
     isSubItem: false,

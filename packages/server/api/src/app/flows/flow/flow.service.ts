@@ -100,6 +100,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         folderId,
         status,
         name,
+        versionState = FlowVersionState.DRAFT,
     }: ListParams): Promise<SeekPage<PopulatedFlow>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
 
@@ -126,10 +127,15 @@ export const flowService = (log: FastifyBaseLogger) => ({
             flowRepo().createQueryBuilder('flow').where(queryWhere),
         )
 
+
         const populatedFlowPromises = paginationResult.data.map(async (flow) => {
+            if (isNil(flow.publishedVersionId) && versionState !== FlowVersionState.DRAFT) {
+                return null
+            }
+            
             const version = await flowVersionService(log).getFlowVersionOrThrow({
                 flowId: flow.id,
-                versionId: undefined,
+                versionId: (versionState === FlowVersionState.DRAFT) ? undefined : (flow.publishedVersionId ?? undefined),
             })
 
             return {
@@ -138,7 +144,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             }
         })
 
-        const populatedFlows = await Promise.all(populatedFlowPromises)
+        const populatedFlows = (await Promise.all(populatedFlowPromises)).filter((flow) => flow !== null)
         const filteredPopulatedFlows = name ? populatedFlows.filter((flow) => flow.version.displayName.match(new RegExp(`^.*${name}.*`, 'i'))) : populatedFlows
         return paginationHelper.createPage(filteredPopulatedFlows, paginationResult.cursor)
     },
@@ -552,6 +558,7 @@ type ListParams = {
     folderId: string | undefined
     status: FlowStatus[] | undefined
     name: string | undefined
+    versionState?: FlowVersionState
 }
 
 type GetOneParams = {

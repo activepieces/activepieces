@@ -1,5 +1,5 @@
 import { api } from '@/lib/api';
-import { MCPSchema } from '@activepieces/ee-shared';
+import { MCPSchema } from '@activepieces/shared';
 
 interface UpdateMCPParams {
   id: string;

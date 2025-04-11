@@ -81,6 +81,7 @@ export * from './lib/authentication/user-identity'
 export * from './lib/flows/operations/paste-operations'
 export * from './lib/todos'
 export * from './lib/todos/todos-request'
+export * from './lib/mcp'
 // Look at https://github.com/sinclairzx81/typebox/issues/350
 import { TypeSystemPolicy } from '@sinclair/typebox/system'
 export * from './lib/license-keys'
