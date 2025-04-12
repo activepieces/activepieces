@@ -129,10 +129,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
 
         const populatedFlowPromises = paginationResult.data.map(async (flow) => {
-            if (isNil(flow.publishedVersionId) && versionState !== FlowVersionState.DRAFT) {
-                return null
-            }
-            
             const version = await flowVersionService(log).getFlowVersionOrThrow({
                 flowId: flow.id,
                 versionId: (versionState === FlowVersionState.DRAFT) ? undefined : (flow.publishedVersionId ?? undefined),
@@ -144,7 +140,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             }
         })
 
-        const populatedFlows = (await Promise.all(populatedFlowPromises)).filter((flow) => flow !== null)
+        const populatedFlows = (await Promise.all(populatedFlowPromises))
         const filteredPopulatedFlows = name ? populatedFlows.filter((flow) => flow.version.displayName.match(new RegExp(`^.*${name}.*`, 'i'))) : populatedFlows
         return paginationHelper.createPage(filteredPopulatedFlows, paginationResult.cursor)
     },
