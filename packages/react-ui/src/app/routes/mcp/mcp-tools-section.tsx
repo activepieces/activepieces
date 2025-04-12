@@ -131,11 +131,11 @@ export const McpToolsSection = ({
             <Hammer className="h-8 w-8 text-muted-foreground/60" />
           </div>
           <p className="font-medium text-foreground">
-            {t('No MCP Connections Added')}
+            {t('No MCP Apps Added')}
           </p>
           <p className="text-sm mt-1 max-w-md text-center">
             {t(
-              "Add connections to enhance your AI assistant's capabilities. Your assistant will be able to interact with your Activepieces data and perform actions on your behalf.",
+              "Add apps to enhance your AI assistant's capabilities. Your assistant will be able to interact with your Activepieces data and perform actions on your behalf.",
             )}
           </p>
           <NewConnectionDialog
@@ -148,7 +148,7 @@ export const McpToolsSection = ({
               className="flex items-center gap-1 mt-4"
             >
               <Plus className="h-4 w-4" />
-              {t('Add Your First MCP Connection')}
+              {t('Add Your First MCP App')}
             </Button>
           </NewConnectionDialog>
         </div>
