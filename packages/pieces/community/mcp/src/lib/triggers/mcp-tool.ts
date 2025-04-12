@@ -60,9 +60,9 @@ import { MCPProperyType } from '@activepieces/shared';
         },
       }),
       returnsResponse: Property.Checkbox({
-        displayName: 'Reply to MCP Client',
-        description: 'Enable this if you want to wait for results and reply to the MCP client that called the tool.',
-        defaultValue: true,
+        displayName: 'Wait for Response',
+        description: 'Keep the MCP client waiting until it receives a response via the Reply to MCP Client action',
+        defaultValue: false,
         required: true,
       }),
     },
