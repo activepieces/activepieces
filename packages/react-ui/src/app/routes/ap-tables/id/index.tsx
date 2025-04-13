@@ -19,7 +19,7 @@ import { Row, ROW_HEIGHT_MAP, RowHeight } from '@/features/tables/lib/types';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
-import { ApFlagId, Permission } from '@activepieces/shared';
+import { ApFlagId, isNil, Permission } from '@activepieces/shared';
 
 import './react-data-grid.css';
 import { useTableState } from '../../../../features/tables/components/ap-table-state-provider';
@@ -178,7 +178,8 @@ const ApTableEditorPage = () => {
       return row;
     });
   }
-
+ const rows = mapRecordsToRows(records)
+ const showAddRecordButton = !isNil(maxRecords) && maxRecords > rows.length
   return (
     <div className="w-full h-full">
       <ApTableHeader isFetchingNextPage={false}></ApTableHeader>
@@ -186,12 +187,12 @@ const ApTableEditorPage = () => {
         <DataGrid
           ref={gridRef}
           columns={columns}
-          rows={mapRecordsToRows(records)}
+          rows={rows}
           rowKeyGetter={(row: Row) => row.id}
           selectedRows={selectedRecords}
           onSelectedRowsChange={setSelectedRecords}
           className={cn(
-            'scroll-smooth  w-[calc(100vw-256px)] h-[calc(100vh-92px-20px-20px)] bg-muted/30',
+            'scroll-smooth  w-[calc(100vw-256px)] h-[calc(100vh-92px-20px-22px)] bg-muted/30',
             theme === 'dark' ? 'rdg-dark' : 'rdg-light',
           )}
           bottomSummaryRows={
@@ -199,7 +200,7 @@ const ApTableEditorPage = () => {
           }
           rowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
           headerRowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
-          summaryRowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
+          summaryRowHeight={showAddRecordButton ? ROW_HEIGHT_MAP[RowHeight.DEFAULT] : 0}
         />
       </div>
       <ApTableFooter
