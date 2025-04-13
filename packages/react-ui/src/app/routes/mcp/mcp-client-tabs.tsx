@@ -4,7 +4,7 @@ import {
   ChevronDown,
   ChevronUp,
   Info,
-  Link,
+  Link as LinkIcon,
   Server,
   Zap,
   AlertTriangle,
@@ -14,10 +14,12 @@ import {
   KeyRound,
 } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import claude from '@/assets/img/custom/claude.svg';
 import cursor from '@/assets/img/custom/cursor.svg';
 import windsurf from '@/assets/img/custom/windsurf.svg';
+import { useTheme } from '@/components/theme-provider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -39,6 +41,8 @@ type McpClientTabsProps = {
   hasValidMcp?: boolean;
 };
 
+const NODE_JS_DOWNLOAD_URL = 'https://nodejs.org/en/download';
+
 export const McpClientTabs = ({
   mcpServerUrl,
   hasTools = false,
@@ -46,6 +50,7 @@ export const McpClientTabs = ({
   isRotating = false,
   hasValidMcp = false,
 }: McpClientTabsProps) => {
+  const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState('claude');
   const [isExpanded, setIsExpanded] = useState(!hasTools);
   const [showToken, setShowToken] = useState(false);
@@ -53,6 +58,10 @@ export const McpClientTabs = ({
 
   const toggleTokenVisibility = () => {
     setShowToken(!showToken);
+  };
+
+  const toggleExpanded = () => {
+    setIsExpanded(!isExpanded);
   };
 
   const maskedServerUrl = showToken
@@ -92,12 +101,18 @@ export const McpClientTabs = ({
         return (
           <div className="space-y-4">
             <Alert variant="warning" className="mb-4">
-              <AlertDescription className="text-xs">
+              <AlertDescription className="text-sm">
                 <p>
-                  Note: MCPs currently only work with Claude Desktop, not the
-                  web version.
+                  Note: MCPs currently only work with{' '}
+                  <Link
+                    to="https://claude.ai/download"
+                    className="underline"
+                    target="_blank"
+                  >
+                    Claude Desktop
+                  </Link>
+                  , not the web version.
                 </p>
-                <p>You can download it from: https://claude.ai/download</p>
               </AlertDescription>
             </Alert>
             <ol className="list-decimal list-inside space-y-3 text-sm text-foreground mb-4">
@@ -119,26 +134,22 @@ export const McpClientTabs = ({
                 config to your claude_desktop_config, then save
               </li>
               <li>
+                <span className="font-semibold">Ensure</span>{' '}
+                <strong>npx</strong> is installed on your system (comes with{' '}
+                <Link
+                  to={NODE_JS_DOWNLOAD_URL}
+                  className="underline"
+                  target="_blank"
+                >
+                  Node.js
+                </Link>
+                )
+              </li>
+              <li>
                 <span className="font-semibold">Restart</span> Claude Desktop
                 App
               </li>
             </ol>
-            <Alert variant="default" className="mb-4 bg-muted/40">
-              <div className="flex items-start gap-2">
-                <Info className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                <AlertDescription className="text-xs">
-                  <p>
-                    <code>mcp-remote</code> connects the Claude Desktop App to
-                    our remote server since Claude only supports local
-                    connections.
-                  </p>
-                  <p className="mt-1">
-                    Note: This requires <code>npx</code> to be installed on your
-                    system.
-                  </p>
-                </AlertDescription>
-              </div>
-            </Alert>
             <div className="rounded-md shadow-sm">
               <SimpleJsonViewer
                 data={{
@@ -222,22 +233,19 @@ export const McpClientTabs = ({
                 <span className="font-semibold">Copy and paste</span> the server
                 config to your existing file, then save
               </li>
+              <li>
+                <span className="font-semibold">Ensure</span>{' '}
+                <strong>npx</strong> is installed on your system (comes with{' '}
+                <Link
+                  to={NODE_JS_DOWNLOAD_URL}
+                  className="underline"
+                  target="_blank"
+                >
+                  Node.js
+                </Link>
+                )
+              </li>
             </ol>
-            <Alert variant="default" className="mb-4 bg-muted/40">
-              <div className="flex items-start gap-2">
-                <Info className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                <AlertDescription className="text-xs">
-                  <p>
-                    <code>mcp-remote</code> connects Claude Desktop to our
-                    remote server since Claude only supports local connections.
-                  </p>
-                  <p className="mt-1">
-                    Note: This requires <code>npx</code> to be installed on your
-                    system.
-                  </p>
-                </AlertDescription>
-              </div>
-            </Alert>
             <div className="rounded-md shadow-sm">
               <SimpleJsonViewer
                 data={{
@@ -258,13 +266,19 @@ export const McpClientTabs = ({
           <div className="space-y-4">
             <div className="space-y-3 w-full">
               <div className="flex items-center gap-2 mb-1">
-                <Link className="h-5 w-5 text-primary" />
+                <LinkIcon className="h-5 w-5 text-primary" />
                 <h3 className="text-lg font-medium">Server URL</h3>
               </div>
 
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-3">
-                  <div className="font-mono bg-muted/30 text-foreground/90 cursor-text w-full border rounded-md px-3 py-2.5 text-sm overflow-x-auto">
+                  <div
+                    className={`font-mono ${
+                      theme === 'dark'
+                        ? 'bg-muted text-foreground'
+                        : 'bg-muted/30 text-foreground/90'
+                    } cursor-text w-full border rounded-md px-3 py-2.5 text-sm overflow-x-auto`}
+                  >
                     {maskedServerUrl}
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
@@ -344,21 +358,14 @@ export const McpClientTabs = ({
                     </TooltipProvider>
                   </div>
                 </div>
-                <div className="flex items-start gap-2 text-xs text-muted-foreground mt-1">
-                  <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                  <Info className="h-4 w-4 flex-shrink-0" />
                   <p>
                     This URL contains a sensitive security token. Only share it
                     with trusted applications and services. You can rotate the
                     token if you suspect it has been compromised.
                   </p>
                 </div>
-                <Alert variant="warning" className="mt-2">
-                  <AlertDescription>
-                    After making any changes to connections or flows, you will
-                    need to reconnect your MCP server for the changes to take
-                    effect.
-                  </AlertDescription>
-                </Alert>
               </div>
             </div>
           </div>
@@ -369,10 +376,17 @@ export const McpClientTabs = ({
   };
 
   return (
-    <Card className="mb-8 border-border">
+    <Card
+      className={`mb-8 ${
+        theme === 'dark' ? 'bg-card border-border' : 'bg-[#f7f6f4] border-none'
+      }`}
+    >
       <CardContent className="p-5 pt-5">
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div
+            className="flex items-center justify-between cursor-pointer"
+            onClick={toggleExpanded}
+          >
             <div className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-primary" />
               <h3 className="font-semibold text-foreground text-lg">
@@ -384,11 +398,11 @@ export const McpClientTabs = ({
                     <AlertTriangle className="h-4 w-4 text-amber-500 cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent className="w-64">
-                    <p className="text-xs">
+                    <span className="text-sm">
                       After making any changes to connections or flows, you will
                       need to reconnect your MCP server for the changes to take
                       effect.
-                    </p>
+                    </span>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -397,37 +411,45 @@ export const McpClientTabs = ({
               variant="ghost"
               size="sm"
               className="flex items-center gap-1"
-              onClick={() => setIsExpanded(!isExpanded)}
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent card click event from firing
+                toggleExpanded();
+              }}
             >
               {isExpanded ? (
-                <>
-                  <ChevronUp className="h-4 w-4" />
-                  Collapse
-                </>
+                <ChevronUp className="h-4 w-4" />
               ) : (
-                <>
-                  <ChevronDown className="h-4 w-4" />
-                  Expand
-                </>
+                <ChevronDown className="h-4 w-4" />
               )}
             </Button>
           </div>
 
-          <p className="text-muted-foreground text-sm ml-7">
-            Follow these instructions to set up MCP in your preferred client.
-            Once configured, your AI assistant will be able to access your
-            Activepieces tools.
-          </p>
-
           {isExpanded && (
             <>
+              <p className="text-muted-foreground text-sm ml-7">
+                Follow these instructions to set up MCP in your preferred
+                client. Once configured, your AI assistant will be able to
+                access your Activepieces tools.
+              </p>
+
               <div className="flex flex-wrap gap-2 mb-4 mt-4">
                 {tabs.map((tab) => (
                   <Button
                     key={tab.id}
-                    variant={activeTab === tab.id ? 'default' : 'outline'}
-                    className="flex items-center gap-2"
-                    onClick={() => setActiveTab(tab.id)}
+                    variant={'outline'}
+                    className={`flex items-center gap-2 ${
+                      activeTab === tab.id
+                        ? theme === 'dark'
+                          ? 'bg-muted'
+                          : 'bg-white'
+                        : theme === 'dark'
+                        ? 'bg-card/50'
+                        : 'bg-[#f7f6f4]'
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent card click event from firing
+                      setActiveTab(tab.id);
+                    }}
                   >
                     {tab.isImage ? (
                       <img
@@ -443,7 +465,9 @@ export const McpClientTabs = ({
                 ))}
               </div>
 
-              <div className="p-1">{renderTabContent()}</div>
+              <div className="p-1" onClick={(e) => e.stopPropagation()}>
+                {renderTabContent()}
+              </div>
             </>
           )}
         </div>

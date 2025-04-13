@@ -1,8 +1,9 @@
 import { t } from 'i18next';
-import { Hammer, Info, Plus, ArrowDown, ArrowUp } from 'lucide-react';
+import { Plus, ArrowDown, ArrowUp } from 'lucide-react';
 import { useState } from 'react';
 
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
+import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -15,7 +16,6 @@ import { McpFlowCard } from './mcp-flow-card';
 
 interface McpToolsProps {
   title: string;
-  description?: string;
   tools: AppConnectionWithoutSensitiveData[] | PopulatedFlow[];
   emptyMessage: React.ReactNode;
   isLoading: boolean;
@@ -32,7 +32,6 @@ interface McpToolsProps {
 
 export const McpToolsSection = ({
   title,
-  description,
   tools,
   emptyMessage,
   isLoading,
@@ -46,13 +45,18 @@ export const McpToolsSection = ({
   isPending,
   onConnectionCreated,
 }: McpToolsProps) => {
+  const { theme } = useTheme();
   const [isExpanded, setIsExpanded] = useState(false);
-
   // We always want to show at least one row (4 items)
   const visibleTools = isExpanded ? tools : tools.slice(0, 4);
   const hasMoreTools = tools.length > 4;
 
   const renderAddButton = () => {
+    // Only render the button if there's at least one tool
+    if (tools.length === 0) {
+      return null;
+    }
+
     if (type === 'connections' && onConnectionCreated) {
       return (
         <NewConnectionDialog
@@ -94,7 +98,6 @@ export const McpToolsSection = ({
           <McpConnection
             key={`skeleton-${index}`}
             connection={{} as AppConnectionWithoutSensitiveData}
-            isUpdating={false}
             pieceInfo={{ displayName: '', logoUrl: '' }}
             onDelete={() => {}}
             isLoading={true}
@@ -126,32 +129,46 @@ export const McpToolsSection = ({
     if (type === 'connections' && onConnectionCreated) {
       // For connections, we need to replace the button in the empty message with our dialog
       return (
-        <div className="col-span-full flex flex-col items-center justify-center py-12 text-muted-foreground bg-muted/20 rounded-lg border border-dashed border-border">
-          <div className="rounded-full bg-muted/50 p-3 mb-3">
-            <Hammer className="h-8 w-8 text-muted-foreground/60" />
-          </div>
-          <p className="font-medium text-foreground">
-            {t('No MCP Apps Added')}
-          </p>
-          <p className="text-sm mt-1 max-w-md text-center">
-            {t(
-              "Add apps to enhance your AI assistant's capabilities. Your assistant will be able to interact with your Activepieces data and perform actions on your behalf.",
-            )}
-          </p>
-          <NewConnectionDialog
-            onConnectionCreated={onConnectionCreated}
-            isGlobalConnection={false}
-          >
-            <Button
-              variant="default"
-              size="sm"
-              className="flex items-center gap-1 mt-4"
+        <NewConnectionDialog
+          onConnectionCreated={onConnectionCreated}
+          isGlobalConnection={false}
+        >
+          <div className="flex">
+            <div
+              className={`w-64 flex flex-col items-center justify-center py-6 px-5 text-muted-foreground ${
+                theme === 'dark' ? 'bg-card border-border' : 'bg-white'
+              } rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer`}
             >
-              <Plus className="h-4 w-4" />
-              {t('Add Your First MCP App')}
-            </Button>
-          </NewConnectionDialog>
-        </div>
+              <div className="flex flex-col items-center gap-2">
+                <div
+                  className={`rounded-full ${
+                    theme === 'dark' ? 'bg-slate-800' : 'bg-slate-100'
+                  } p-2.5 mb-1`}
+                >
+                  <Plus
+                    className={`h-5 w-5 ${
+                      theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
+                    }`}
+                  />
+                </div>
+                <p
+                  className={`font-medium ${
+                    theme === 'dark' ? 'text-slate-200' : 'text-slate-800'
+                  }`}
+                >
+                  {t(addButtonLabel)}
+                </p>
+                <p
+                  className={`text-xs mt-0.5 text-center ${
+                    theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  {t('Connect your AI assistant to external services')}
+                </p>
+              </div>
+            </div>
+          </div>
+        </NewConnectionDialog>
       );
     } else {
       return emptyMessage || null;
@@ -159,23 +176,12 @@ export const McpToolsSection = ({
   };
 
   return (
-    <div className="space-y-5 mb-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <Hammer className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-medium">{title}</h3>
-          </div>
-          {description && (
-            <div className="flex items-center gap-2 mt-1">
-              <Info className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">
-                {description}
-              </span>
-            </div>
-          )}
+    <div className="space-y-5">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <h3 className="font-semibold text-foreground text-lg">{title}</h3>
         </div>
-        <div className="flex items-center gap-2">{renderAddButton()}</div>
+        {renderAddButton()}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -196,7 +202,6 @@ export const McpToolsSection = ({
                   <McpConnection
                     key={connection.id}
                     connection={connection}
-                    isUpdating={false}
                     pieceInfo={pieceInfo}
                     onDelete={() => onToolDelete && onToolDelete(connection)}
                   />
