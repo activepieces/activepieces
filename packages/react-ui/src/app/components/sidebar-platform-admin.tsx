@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { PlatformRole } from '@activepieces/shared';
 
 import { notificationHooks } from '../routes/platform/notifications/hooks/notifictions-hooks';
+import { Dot } from '@/components/ui/dot';
 
 export function SidebarPlatformAdminButton() {
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
@@ -49,7 +50,7 @@ export function SidebarPlatformAdminButton() {
         {messages.length > 0 &&
           !isInPlatformAdmin &&
           platformRole === PlatformRole.ADMIN && (
-            <span className="bg-primary absolute right-3 top-1/2 transform -translate-y-1/2 size-2 rounded-full"></span>
+            <Dot variant='primary'  className='absolute right-3 top-1/2 transform -translate-y-1/2 size-2 rounded-full'/>
           )}
       </div>
     </Link>
