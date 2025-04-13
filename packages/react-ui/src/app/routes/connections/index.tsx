@@ -46,6 +46,7 @@ import {
   Permission,
   PlatformRole,
 } from '@activepieces/shared';
+import { CopyTextTooltip } from '@/components/ui/copy-text-tooltip';
 function AppConnectionsPage() {
   const [refresh, setRefresh] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -272,21 +273,10 @@ function AppConnectionsPage() {
                 </TooltipContent>
               </Tooltip>
             )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="text-left">{row.original.displayName}</div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <div className="flex gap-2 items-center">
-                  {t('External ID')}: {row.original.externalId || '-'}{' '}
-                  <CopyButton
-                    withoutTooltip={true}
-                    variant="ghost"
-                    textToCopy={row.original.externalId || ''}
-                  ></CopyButton>
-                </div>
-              </TooltipContent>
-            </Tooltip>
+
+            <CopyTextTooltip title={t('External ID')} text={row.original.externalId || ''}>
+                   <div className="text-left">{row.original.displayName}</div>
+            </CopyTextTooltip>
           </div>
         );
       },
