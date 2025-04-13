@@ -109,8 +109,7 @@ const ApTableEditorPage = () => {
   const columns: Column<Row, { id: string }>[] = [
     {
       ...SelectColumn,
-      renderSummaryCell: isAllowedToCreateRecord
-        ? () => (
+      renderSummaryCell: () => (
             <div
               className="w-full h-full border-t border-border  flex items-center justify-start cursor-pointer pl-4"
               onClick={createEmptyRecord}
@@ -118,7 +117,7 @@ const ApTableEditorPage = () => {
               <Plus className="h-4 w-4" />
             </div>
           )
-        : undefined,
+      ,
     },
     ...(fields.map((field, index) => ({
       key: field.uuid,
@@ -151,14 +150,13 @@ const ApTableEditorPage = () => {
           }}
         />
       ),
-      renderSummaryCell: isAllowedToCreateRecord
-        ? () => (
+      renderSummaryCell: 
+         () => (
             <div
               className="w-full h-full flex border-t border-border  items-center justify-start cursor-pointer pl-4"
               onClick={createEmptyRecord}
             ></div>
           )
-        : undefined,
     })) ?? []),
   ];
   if (isAllowedToCreateField) {
@@ -179,7 +177,6 @@ const ApTableEditorPage = () => {
     });
   }
  const rows = mapRecordsToRows(records)
- const showAddRecordButton = !isNil(maxRecords) && maxRecords > rows.length
   return (
     <div className="w-full h-full">
       <ApTableHeader isFetchingNextPage={false}></ApTableHeader>
@@ -200,7 +197,7 @@ const ApTableEditorPage = () => {
           }
           rowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
           headerRowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
-          summaryRowHeight={showAddRecordButton ? ROW_HEIGHT_MAP[RowHeight.DEFAULT] : 0}
+          summaryRowHeight={isAllowedToCreateRecord ? ROW_HEIGHT_MAP[RowHeight.DEFAULT] : 0}
         />
       </div>
       <ApTableFooter

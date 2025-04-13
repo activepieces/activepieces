@@ -87,15 +87,12 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
           <div className="flex items-center gap-2">
             <ImportCsvDialog />
             <div onClick={(e) => e.stopPropagation()}>
-              <PermissionNeededTooltip
-                hasPermission={userHasTableWritePermission}
-              >
+           
                <DropdownMenu  open={isMenuOpen} onOpenChange={setIsMenuOpen}>
                 <DropdownMenuTrigger asChild>
                   <Button
                       size="sm"
                       className='flex gap-2 items-center'
-                      disabled={!userHasTableWritePermission}
                     >
                       {`${t('Actions')}`}
                       <ChevronDown className="w-4" />
@@ -114,6 +111,7 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
                         <DownloadIcon className='size-4'></DownloadIcon>
                         {t('Export Records')} {selectedRecords.size > 0 ? `(${selectedRecords.size})` : ''}
                       </DropdownMenuItem>
+                      <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
                     <ConfirmationDeleteDialog
                     title={t('Delete Records')}
                     message={t(
@@ -132,14 +130,18 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
 
                     }}
                     >
+                     
                       <DropdownMenuItem className='text-destructive flex gap-2 items-center' onSelect={(e)=> {
                         e.preventDefault();
                         e.stopPropagation();
-                      }} disabled={selectedRecords.size === 0}> 
+                      }} disabled={selectedRecords.size === 0 ||!userHasTableWritePermission}> 
                         <Trash2 className='size-4'></Trash2>
                         {t('Delete Records')} {selectedRecords.size > 0 ? `(${selectedRecords.size})` : ''}
                       </DropdownMenuItem>
+                    
                     </ConfirmationDeleteDialog>
+                    </PermissionNeededTooltip>
+
                       </>
                  
 
@@ -147,7 +149,6 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
                </DropdownMenu>
                
                 
-              </PermissionNeededTooltip>
             </div>
           </div>
         </div>
