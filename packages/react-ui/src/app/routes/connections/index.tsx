@@ -10,7 +10,7 @@ import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CopyButton } from '@/components/ui/copy-button';
+import { CopyTextTooltip } from '@/components/ui/copy-text-tooltip';
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
@@ -46,7 +46,6 @@ import {
   Permission,
   PlatformRole,
 } from '@activepieces/shared';
-import { CopyTextTooltip } from '@/components/ui/copy-text-tooltip';
 function AppConnectionsPage() {
   const [refresh, setRefresh] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -274,8 +273,11 @@ function AppConnectionsPage() {
               </Tooltip>
             )}
 
-            <CopyTextTooltip title={t('External ID')} text={row.original.externalId || ''}>
-                   <div className="text-left">{row.original.displayName}</div>
+            <CopyTextTooltip
+              title={t('External ID')}
+              text={row.original.externalId || ''}
+            >
+              <div className="text-left">{row.original.displayName}</div>
             </CopyTextTooltip>
           </div>
         );

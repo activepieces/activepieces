@@ -5,17 +5,24 @@ import { useSearchParams } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { HomeButton } from '@/components/ui/home-button';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
 
+import { tablesUtils } from '../lib/utils';
+
 import ApTableName from './ap-table-name';
 import { useTableState } from './ap-table-state-provider';
 import { ImportCsvDialog } from './import-csv-dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { tablesUtils } from '../lib/utils';
+import { tablesApi } from '../lib/tables-api';
 
 type ApTableHeaderProps = {
   isFetchingNextPage: boolean;
@@ -28,7 +35,7 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
     deleteRecords,
     records,
     table,
-    fields
+    fields,
   ] = useTableState((state) => [
     state.isSaving,
     state.selectedRecords,
@@ -36,7 +43,7 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
     state.deleteRecords,
     state.records,
     state.table,
-    state.fields
+    state.fields,
   ]);
   const [searchParams] = useSearchParams();
   const userHasTableWritePermission = useAuthorization().checkAccess(
@@ -48,14 +55,11 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
     setIsEditingTableName(searchParams.get(NEW_TABLE_QUERY_PARAM) === 'true');
   }, []);
 
- const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const exportRecords = () => {
-    tablesUtils.exportRecords({
-      tableName: table.name,
-      records: records,
-      fields: fields,
-    })
-  }
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const exportTable = async () => {
+    const exportedTable = await tablesApi.export(table.id);
+    tablesUtils.exportTables([exportedTable]);
+  };
   return (
     <div className="flex flex-col gap-4 flex-none px-4">
       <div className="flex items-center justify-between">
@@ -87,68 +91,71 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
           <div className="flex items-center gap-2">
             <ImportCsvDialog />
             <div onClick={(e) => e.stopPropagation()}>
-           
-               <DropdownMenu  open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+              <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                      size="sm"
-                      className='flex gap-2 items-center'
-                    >
-                      {`${t('Actions')}`}
-                      <ChevronDown className="w-4" />
-                    </Button>
-                    
-
+                  <Button size="sm" className="flex gap-2 items-center">
+                    {`${t('Actions')}`}
+                    <ChevronDown className="w-4" />
+                  </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align='end'>
-                      <>
-                      <DropdownMenuItem onSelect={()=> {
-                        exportRecords()
+                <DropdownMenuContent align="end">
+                  <>
+                    <DropdownMenuItem
+                      onSelect={async () => {
+                        await exportTable();
                       }}
                       disabled={selectedRecords.size === 0}
-                      className='flex gap-2 items-center'
-                      >
-                        <DownloadIcon className='size-4'></DownloadIcon>
-                        {t('Export Records')} {selectedRecords.size > 0 ? `(${selectedRecords.size})` : ''}
-                      </DropdownMenuItem>
-                      <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
-                    <ConfirmationDeleteDialog
-                    title={t('Delete Records')}
-                    message={t(
-                      'Are you sure you want to delete the selected records? This action cannot be undone.',
-                    )}
-                    entityName={
-                      selectedRecords.size === 1 ? t('record') : t('records')
-                    }
-                    mutationFn={async () => {
-                      const indices = Array.from(selectedRecords).map((row) =>
-                        records.findIndex((r) => r.uuid === row),
-                      );
-                      deleteRecords(indices.map((index) => index.toString()));
-                      setSelectedRecords(new Set());
-                      setIsMenuOpen(false)
-
-                    }}
+                      className="flex gap-2 items-center"
                     >
-                     
-                      <DropdownMenuItem className='text-destructive flex gap-2 items-center' onSelect={(e)=> {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }} disabled={selectedRecords.size === 0 ||!userHasTableWritePermission}> 
-                        <Trash2 className='size-4'></Trash2>
-                        {t('Delete Records')} {selectedRecords.size > 0 ? `(${selectedRecords.size})` : ''}
-                      </DropdownMenuItem>
-                    
-                    </ConfirmationDeleteDialog>
+                      <DownloadIcon className="size-4"></DownloadIcon>
+                      {t('Export Table')}
+                    </DropdownMenuItem>
+                    <PermissionNeededTooltip
+                      hasPermission={userHasTableWritePermission}
+                    >
+                      <ConfirmationDeleteDialog
+                        title={t('Delete Records')}
+                        message={t(
+                          'Are you sure you want to delete the selected records? This action cannot be undone.',
+                        )}
+                        entityName={
+                          selectedRecords.size === 1
+                            ? t('record')
+                            : t('records')
+                        }
+                        mutationFn={async () => {
+                          const indices = Array.from(selectedRecords).map(
+                            (row) => records.findIndex((r) => r.uuid === row),
+                          );
+                          deleteRecords(
+                            indices.map((index) => index.toString()),
+                          );
+                          setSelectedRecords(new Set());
+                          setIsMenuOpen(false);
+                        }}
+                      >
+                        <DropdownMenuItem
+                          className="text-destructive flex gap-2 items-center"
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          disabled={
+                            selectedRecords.size === 0 ||
+                            !userHasTableWritePermission
+                          }
+                        >
+                          <Trash2 className="size-4"></Trash2>
+                          {t('Delete Records')}{' '}
+                          {selectedRecords.size > 0
+                            ? `(${selectedRecords.size})`
+                            : ''}
+                        </DropdownMenuItem>
+                      </ConfirmationDeleteDialog>
                     </PermissionNeededTooltip>
-
-                      </>
-                 
-
-                    </DropdownMenuContent>
-               </DropdownMenu>
-               
-                
+                  </>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -160,6 +167,3 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
 ApTableHeader.displayName = 'ApTableHeader';
 
 export default ApTableHeader;
-
-
-

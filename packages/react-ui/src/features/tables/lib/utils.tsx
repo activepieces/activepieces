@@ -59,30 +59,38 @@ function exportTables(tables: ExportTableResponse[]) {
   });
 }
 
-function exportRecords({tableName,records,fields}:{ tableName:string , records: ClientRecordData[], fields: ClientField[]}) {
-     const csvContent = getCsvContent({
-      name:tableName,
-      fields: fields.map((field)=>({
-        id: field.uuid,
-        name: field.name
-      })),
-      rows: records.map(record=> {
-        return record.values.reduce<Record<string,string>>((acc,cell)=>{
-          acc[fields[cell.fieldIndex].name] = cell.value as string
-          return acc
-        },{})
-      })
-     })
-     downloadFile({
-      obj: csvContent,
-      fileName: `${tableName}`,
-      extension: 'csv',
-    });
+function exportRecords({
+  tableName,
+  records,
+  fields,
+}: {
+  tableName: string;
+  records: ClientRecordData[];
+  fields: ClientField[];
+}) {
+  const csvContent = getCsvContent({
+    name: tableName,
+    fields: fields.map((field) => ({
+      id: field.uuid,
+      name: field.name,
+    })),
+    rows: records.map((record) => {
+      return record.values.reduce<Record<string, string>>((acc, cell) => {
+        acc[fields[cell.fieldIndex].name] = cell.value as string;
+        return acc;
+      }, {});
+    }),
+  });
+  downloadFile({
+    obj: csvContent,
+    fileName: `${tableName}`,
+    extension: 'csv',
+  });
 }
 export const tablesUtils = {
   exportTables,
   getColumnIcon,
-  exportRecords
+  exportRecords,
 };
 
 export const FieldHeaderContext = createContext<{

@@ -19,7 +19,7 @@ import { Row, ROW_HEIGHT_MAP, RowHeight } from '@/features/tables/lib/types';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
-import { ApFlagId, isNil, Permission } from '@activepieces/shared';
+import { ApFlagId, Permission } from '@activepieces/shared';
 
 import './react-data-grid.css';
 import { useTableState } from '../../../../features/tables/components/ap-table-state-provider';
@@ -110,14 +110,13 @@ const ApTableEditorPage = () => {
     {
       ...SelectColumn,
       renderSummaryCell: () => (
-            <div
-              className="w-full h-full border-t border-border  flex items-center justify-start cursor-pointer pl-4"
-              onClick={createEmptyRecord}
-            >
-              <Plus className="h-4 w-4" />
-            </div>
-          )
-      ,
+        <div
+          className="w-full h-full border-t border-border  flex items-center justify-start cursor-pointer pl-4"
+          onClick={createEmptyRecord}
+        >
+          <Plus className="h-4 w-4" />
+        </div>
+      ),
     },
     ...(fields.map((field, index) => ({
       key: field.uuid,
@@ -150,13 +149,12 @@ const ApTableEditorPage = () => {
           }}
         />
       ),
-      renderSummaryCell: 
-         () => (
-            <div
-              className="w-full h-full flex border-t border-border  items-center justify-start cursor-pointer pl-4"
-              onClick={createEmptyRecord}
-            ></div>
-          )
+      renderSummaryCell: () => (
+        <div
+          className="w-full h-full flex border-t border-border  items-center justify-start cursor-pointer pl-4"
+          onClick={createEmptyRecord}
+        ></div>
+      ),
     })) ?? []),
   ];
   if (isAllowedToCreateField) {
@@ -176,7 +174,7 @@ const ApTableEditorPage = () => {
       return row;
     });
   }
- const rows = mapRecordsToRows(records)
+  const rows = mapRecordsToRows(records);
   return (
     <div className="w-full h-full">
       <ApTableHeader isFetchingNextPage={false}></ApTableHeader>
@@ -197,7 +195,9 @@ const ApTableEditorPage = () => {
           }
           rowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
           headerRowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
-          summaryRowHeight={isAllowedToCreateRecord ? ROW_HEIGHT_MAP[RowHeight.DEFAULT] : 0}
+          summaryRowHeight={
+            isAllowedToCreateRecord ? ROW_HEIGHT_MAP[RowHeight.DEFAULT] : 0
+          }
         />
       </div>
       <ApTableFooter
