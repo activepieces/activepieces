@@ -426,7 +426,7 @@ export const McpClientTabs = ({
 
           {isExpanded && (
             <>
-              <p className="text-muted-foreground text-sm ml-7">
+              <p className="text-muted-foreground text-sm">
                 Follow these instructions to set up MCP in your preferred
                 client. Once configured, your AI assistant will be able to
                 access your Activepieces tools.
