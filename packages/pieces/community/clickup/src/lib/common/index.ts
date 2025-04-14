@@ -12,7 +12,7 @@ import { ClickupTask, ClickupWorkspace } from './models';
 export const clickupCommon = {
   workspace_id: (required = true) =>
     Property.Dropdown({
-      description: 'The ID of the ClickUp workspace to create the task in',
+      description: 'The ID of the ClickUp workspace',
       displayName: 'Workspace',
       required,
       refreshers: [],
@@ -274,7 +274,7 @@ export const clickupCommon = {
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'conncet your account first',
+            placeholder: 'connect your account first',
             options: [],
           };
         }
@@ -315,7 +315,7 @@ export const clickupCommon = {
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'conncet your account first',
+            placeholder: 'connect your account first',
             options: [],
           };
         }
@@ -352,7 +352,7 @@ export const clickupCommon = {
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'conncet your account first',
+            placeholder: 'connect your account first',
             options: [],
           };
         }
@@ -376,6 +376,45 @@ export const clickupCommon = {
               value: template.id,
             };
           }),
+        };
+      },
+    }),
+  channel_id: (required = false) =>
+    Property.Dropdown({
+      displayName: 'Channel Id',
+      required,
+      description: 'The ID of Clickup Channel',
+      refreshers: ['workspace_id'],
+      options: async ({ auth, workspace_id }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'connect your account first',
+            options: [],
+          };
+        }
+        if (!workspace_id) {
+          return {
+            disabled: true,
+            placeholder: 'select workspace',
+            options: [],
+          };
+        }
+        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
+        const response = await retrieveChannels(
+          accessToken,
+          workspace_id as string
+        );
+        return {
+          disabled: false,
+          options: response.data
+            .filter((channel) => channel.name && channel.name !== '')
+            .map((channel) => {
+              return {
+                label: channel.name,
+                value: channel.id,
+              };
+            }),
         };
       },
     }),
@@ -534,6 +573,25 @@ export async function listTasks(accessToken: string, listId: string) {
   ).body;
 }
 
+export async function retrieveChannels(
+  accessToken: string,
+  workspaceId: string
+) {
+  return (
+    await callClickUpApi3<{
+      data: {
+        id: string;
+        name: string;
+      }[];
+    }>(
+      HttpMethod.GET,
+      `workspaces/${workspaceId}/chat/channels`,
+      accessToken,
+      undefined
+    )
+  ).body;
+}
+
 export async function callClickupGetTask(accessToken: string, taskId: string) {
   return (
     await callClickUpApi<ClickupTask>(
@@ -556,6 +614,34 @@ export async function callClickUpApi<T extends HttpMessageBody = any>(
   return await httpClient.sendRequest<T>({
     method: method,
     url: `https://api.clickup.com/api/v2/${apiUrl}`,
+    authentication: {
+      type: AuthenticationType.BEARER_TOKEN,
+      token: accessToken,
+    },
+    headers,
+    body,
+    queryParams,
+  });
+}
+
+export async function callClickUpApi3<T extends HttpMessageBody = any>(
+  method: HttpMethod,
+  apiUrl: string,
+  accessToken: string,
+  body: any | undefined,
+  queryParams: any | undefined = undefined,
+  headers: any | undefined = {}
+): Promise<HttpResponse<T>> {
+  console.log(accessToken);
+
+  headers = {
+    accept: 'application/json',
+    ...headers,
+  };
+
+  return await httpClient.sendRequest<T>({
+    method: method,
+    url: `https://api.clickup.com/api/v3/${apiUrl}`,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token: accessToken,
