@@ -8,8 +8,8 @@ import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 import { PlatformRole } from '@activepieces/shared';
+import { notificationHooks } from '../routes/platform/notifications/hooks/notifications-hooks';
 
-import { notificationHooks } from '../routes/platform/notifications/hooks/notifictions-hooks';
 
 export function SidebarPlatformAdminButton() {
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
