@@ -35,10 +35,10 @@ export const webhookService = {
     }: HandleWebhookParams): Promise<EngineHttpResponse> {
         const webhookHeader = 'x-webhook-id'
         const webhookRequestId = apId()
-        const pinoLoger = pinoLogging.createWebhookContextLog({ log: logger, webhookId: webhookRequestId, flowId })
-        const flow = await flowService(pinoLoger).getOneById(flowId)
+        const pinoLogger = pinoLogging.createWebhookContextLog({ log: logger, webhookId: webhookRequestId, flowId })
+        const flow = await flowService(pinoLogger).getOneById(flowId)
         if (isNil(flow)) {
-            pinoLoger.info('Flow not found, returning GONE')
+            pinoLogger.info('Flow not found, returning GONE')
             return {
                 status: StatusCodes.GONE,
                 body: {},
@@ -47,7 +47,7 @@ export const webhookService = {
         }
         const projectExists = await projectService.exists(flow.projectId)
         if (!projectExists) {
-            pinoLoger.info('Project is soft deleted, returning GONE')
+            pinoLogger.info('Project is soft deleted, returning GONE')
             return {
                 status: StatusCodes.GONE,
                 body: {},
@@ -55,7 +55,7 @@ export const webhookService = {
             }
         }
 
-        await assertExceedsLimit(flow, pinoLoger)
+        await assertExceedsLimit(flow, pinoLogger)
         if (
             flow.status !== FlowStatus.ENABLED &&
             !saveSampleData &&
@@ -70,9 +70,9 @@ export const webhookService = {
             }
         }
 
-        pinoLoger.info('Adding webhook job to queue')
+        pinoLogger.info('Adding webhook job to queue')
 
-        const synchronousHandlerId = async ? null : engineResponseWatcher(pinoLoger).getServerId()
+        const synchronousHandlerId = async ? null : engineResponseWatcher(pinoLogger).getServerId()
         await jobQueue(logger).add({
             id: webhookRequestId,
             type: JobType.WEBHOOK,
@@ -90,7 +90,7 @@ export const webhookService = {
         })
 
         if (async) {
-            pinoLoger.info('Async webhook request completed')
+            pinoLogger.info('Async webhook request completed')
             return {
                 status: StatusCodes.OK,
                 body: {},
@@ -99,7 +99,7 @@ export const webhookService = {
                 },
             }
         }
-        const flowHttpResponse = await engineResponseWatcher(pinoLoger).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, WEBHOOK_TIMEOUT_MS, {
+        const flowHttpResponse = await engineResponseWatcher(pinoLogger).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, WEBHOOK_TIMEOUT_MS, {
             status: StatusCodes.NO_CONTENT,
             body: {},
             headers: {},

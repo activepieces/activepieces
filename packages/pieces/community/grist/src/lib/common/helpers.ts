@@ -144,10 +144,10 @@ export class GristAPIClient {
     );
   }
 
-  async getDocumentAttachmentMetadata(docId: string, attachmetId: number) {
+  async getDocumentAttachmentMetadata(docId: string, attachmentId: number) {
     return await this.makeRequest<GristListRecordsResponse>(
       HttpMethod.GET,
-      `/docs/${docId}/attachments/${attachmetId}`
+      `/docs/${docId}/attachments/${attachmentId}`
     );
   }
 
