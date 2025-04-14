@@ -22,6 +22,19 @@ import { filterClickupWorkspaceTimeEntries } from './lib/actions/tasks/filter-wo
 import { getClickupTask } from './lib/actions/tasks/get-task';
 import { updateClickupTask } from './lib/actions/tasks/update-task';
 import { clickupTriggers as triggers } from './lib/triggers';
+import { getClickupChannels } from './lib/actions/chat/get-channels';
+import { getClickupChannelMessages } from './lib/actions/chat/get-channel-messages';
+import { createClickupChannel } from './lib/actions/chat/create-channel';
+import { createClickupChannelInSpaceFolderOrList } from './lib/actions/chat/create-channel-in-space-folder-list';
+import { getClickupChannel } from './lib/actions/chat/get-channel';
+import { createClickupMessage } from './lib/actions/chat/create-message';
+import { createClickupMessageReply } from './lib/actions/chat/create-message-reply';
+import { createClickupMessageReaction } from './lib/actions/chat/create-message-reaction';
+import { getClickupMessageReactions } from './lib/actions/chat/get-message-reactions';
+import { getClickupMessageReplies } from './lib/actions/chat/get-message-replies';
+import { updateClickupMessage } from './lib/actions/chat/update-message';
+import { deleteClickupMessage } from './lib/actions/chat/delete-message';
+import { deleteClickupMessageReaction } from './lib/actions/chat/delete-message-reaction';
 
 export const clickupAuth = PieceAuth.OAuth2({
   description: '',
@@ -44,14 +57,26 @@ export const clickup = createPiece({
     createClickupFolderlessList,
     createClickupTaskComment,
     createClickupSubtask,
+    createClickupChannel,
+    createClickupChannelInSpaceFolderOrList,
+    createClickupMessage,
+    createClickupMessageReaction,
+    createClickupMessageReply,
     getClickupList,
     getClickupTask,
     getClickupSpace,
     getClickupSpaces,
     getClickupTaskComments,
+    getClickupChannel,
+    getClickupChannels,
+    getClickupChannelMessages,
+    getClickupMessageReactions,
+    getClickupMessageReplies,
     filterClickupWorkspaceTasks,
     filterClickupWorkspaceTimeEntries,
     updateClickupTask,
+    updateClickupMessage,
+    deleteClickupMessage,
     deleteClickupTask,
     getClickupAccessibleCustomFields,
     setClickupCustomFieldValue,
