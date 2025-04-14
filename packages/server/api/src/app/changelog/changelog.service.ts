@@ -1,6 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ErrorCode } from '@activepieces/shared'
-import { ListChangelogsResponse } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, Changelog, ErrorCode, ListChangelogsResponse } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../helper/keyvalue'
@@ -89,11 +88,15 @@ async function getChangelogFeaturebaseRequest(): Promise<ListChangelogsResponse>
         }
         
         // Map the results to match the Changelog type
-        const mappedResults = parsedData.results.map((item: any) => ({
-            title: item.title,
-            featuredImage: item.featuredImage || '',
-            date: item.date,
-        }))
+        const mappedResults = parsedData.results.map((item: Changelog) => {
+            const changelog: Changelog = {
+                title: item.title,
+                featuredImage: item.featuredImage || '',
+                markdownContent: item.markdownContent,
+                date: item.date,
+            }
+            return changelog
+        })
         
         results.push(...mappedResults)
         page++
@@ -104,7 +107,7 @@ async function getChangelogFeaturebaseRequest(): Promise<ListChangelogsResponse>
 }
 
 async function getChangelogActivepiecesRequest(): Promise<ListChangelogsResponse> {
-    const url = new URL('http://cloud.activepieces.com/api/v1/changelogs')
+    const url = new URL('https://cloud.activepieces.com/api/v1/changelogs')
 
     const response = await fetch(url.toString(), {
         method: 'GET',

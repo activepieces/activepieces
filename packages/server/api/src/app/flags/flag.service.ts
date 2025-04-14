@@ -54,6 +54,7 @@ export const flagService = {
                 ApFlagId.MAX_TABLES_PER_PROJECT,
                 ApFlagId.MAX_RECORDS_PER_TABLE,
                 ApFlagId.MAX_FILE_SIZE_MB,
+                ApFlagId.SHOW_CHANGELOG,
             ]),
         })
         const now = new Date().toISOString()
@@ -241,6 +242,12 @@ export const flagService = {
             {
                 id: ApFlagId.MAX_FILE_SIZE_MB,
                 value: system.getNumber(AppSystemProp.MAX_FILE_SIZE_MB),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_CHANGELOG,
+                value: system.getBoolean(AppSystemProp.SHOW_CHANGELOG),
                 created,
                 updated,
             },

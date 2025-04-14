@@ -4,14 +4,14 @@ import { X } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { toast as sonnerToast } from 'sonner';
 
+import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { SonnerToaster } from '@/components/ui/sonner';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { changelogApi } from '@/lib/changelog-api';
 import { platformUserApi } from '@/lib/platform-user-api';
-import { isNil, Changelog } from '@activepieces/shared';
-import { flagsHooks } from '../../hooks/flags-hooks';
-import { ApFlagId } from '@activepieces/shared';
+import { isNil, Changelog, ApFlagId } from '@activepieces/shared';
 
 interface ChangelogToastProps {
   id: string | number;
@@ -88,6 +88,7 @@ function showChangelogToast(props: Omit<ChangelogToastProps, 'id'>) {
 }
 
 export const ChangelogProvider = () => {
+  const isEmbedding = useEmbedding().embedState.isEmbedded;
   const { data: user } = userHooks.useCurrentUser();
   const { data: showChangelog } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_CHANGELOG,
@@ -149,7 +150,7 @@ export const ChangelogProvider = () => {
     }
   };
 
-  if (isNil(user) || isError || !showChangelog) {
+  if (isNil(user) || isError || !showChangelog || isEmbedding) {
     return null;
   }
 
