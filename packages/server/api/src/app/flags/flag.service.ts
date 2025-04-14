@@ -141,6 +141,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.SHOW_CHANGELOG,
+                value: true,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.PRIVATE_PIECES_ENABLED,
                 value: system.getEdition() !== ApEdition.COMMUNITY,
                 created,

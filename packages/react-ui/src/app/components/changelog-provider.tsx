@@ -10,6 +10,8 @@ import { userHooks } from '@/hooks/user-hooks';
 import { changelogApi } from '@/lib/changelog-api';
 import { platformUserApi } from '@/lib/platform-user-api';
 import { isNil, Changelog } from '@activepieces/shared';
+import { flagsHooks } from '../../hooks/flags-hooks';
+import { ApFlagId } from '@activepieces/shared';
 
 interface ChangelogToastProps {
   id: string | number;
@@ -87,10 +89,13 @@ function showChangelogToast(props: Omit<ChangelogToastProps, 'id'>) {
 
 export const ChangelogProvider = () => {
   const { data: user } = userHooks.useCurrentUser();
+  const { data: showChangelog } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_CHANGELOG,
+  );
   const { data: changelogs, isError } = useQuery({
     queryKey: ['changelogs'],
     queryFn: () => changelogApi.list(),
-    enabled: !!user,
+    enabled: !!user && showChangelog === true,
   });
   const hasShownToasts = useRef(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -144,7 +149,7 @@ export const ChangelogProvider = () => {
     }
   };
 
-  if (isNil(user) || isError) {
+  if (isNil(user) || isError || !showChangelog) {
     return null;
   }
 
