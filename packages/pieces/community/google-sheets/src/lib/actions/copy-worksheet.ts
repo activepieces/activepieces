@@ -13,7 +13,7 @@ export const copyWorksheetAction = createAction({
 		includeTeamDrives: includeTeamDrivesProp(),
 		spreadsheetId: spreadsheetIdProp('Spreadsheet Containing the Worksheet to Copy', ''),
 		sheetId: sheetIdProp('Worksheet to Copy', ''),
-		destinationSpreadsheetId: spreadsheetIdProp('Spreadsheet to paste in', ''),
+		desinationSpeadsheetId: spreadsheetIdProp('Spreadsheet to paste in', ''),
 	},
 	async run(context) {
 		const authClient = new OAuth2Client();
@@ -25,7 +25,7 @@ export const copyWorksheetAction = createAction({
 			spreadsheetId: context.propsValue.spreadsheetId,
 			sheetId: context.propsValue.sheetId,
 			requestBody: {
-				destinationSpreadsheetId: context.propsValue.destinationSpreadsheetId,
+				destinationSpreadsheetId: context.propsValue.desinationSpeadsheetId,
 			},
 		});
 
