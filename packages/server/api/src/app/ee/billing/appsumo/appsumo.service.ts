@@ -1,10 +1,10 @@
 import { DEFAULT_FREE_PLAN_LIMIT } from '@activepieces/ee-shared'
-import { isNil } from '@activepieces/shared'
+import { isNil, PlatformRole } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { projectService } from '../../../project/project-service'
-import { userService } from '../../../user/user-service'
+import { userRepo, userService } from '../../../user/user-service'
 import { platformBillingService } from '../../platform-billing/platform-billing.service'
 import { projectLimitsService } from '../../project-plan/project-plan.service'
 import { AppSumoEntity, AppSumoPlan } from './appsumo.entity'
@@ -98,8 +98,9 @@ export const appsumoService = (log: FastifyBaseLogger) => ({
         const appSumoPlan = appsumoService(log).getPlanInformation(plan_id)
         const identity = await userIdentityService(log).getIdentityByEmail(activation_email)
         if (!isNil(identity)) {
-            const user = await userService.getOneByIdentityIdOnly({
+            const user = await userRepo().findOneBy({
                 identityId: identity.id,
+                platformRole: PlatformRole.ADMIN,
             })
             if (!isNil(user)) {
                 const project = await projectService.getUserProjectOrThrow(user.id)

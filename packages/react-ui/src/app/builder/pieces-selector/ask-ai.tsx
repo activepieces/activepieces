@@ -18,7 +18,7 @@ const AskAiButton = ({
 }) => {
   const isCopilotEnabled = platformHooks.isCopilotEnabled();
 
-  const setAskiAiButtonProps = useBuilderStateContext(
+  const setAskAiButtonProps = useBuilderStateContext(
     (state) => state.setAskAiButtonProps,
   );
   if (!isCopilotEnabled) {
@@ -30,7 +30,7 @@ const AskAiButton = ({
       size="sm"
       onClick={() => {
         console.log(operation);
-        setAskiAiButtonProps(operation);
+        setAskAiButtonProps(operation);
         onClick();
       }}
     >

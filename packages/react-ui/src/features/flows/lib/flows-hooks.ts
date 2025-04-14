@@ -4,7 +4,12 @@ import { t } from 'i18next';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { authenticationSession } from '@/lib/authentication-session';
 import { downloadFile } from '@/lib/utils';
-import { ListFlowsRequest, PopulatedFlow } from '@activepieces/shared';
+import {
+  FlowOperationType,
+  FlowVersion,
+  ListFlowsRequest,
+  PopulatedFlow,
+} from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
 import { flowsUtils } from './flows-utils';
@@ -20,6 +25,40 @@ export const flowsHooks = {
         });
       },
       staleTime: 5 * 1000,
+    });
+  },
+  usePublishFlow: ({
+    flowId,
+    setFlow,
+    setVersion,
+    setIsPublishing,
+  }: {
+    flowId: string;
+    setFlow: (flow: PopulatedFlow) => void;
+    setVersion: (version: FlowVersion) => void;
+    setIsPublishing: (isPublishing: boolean) => void;
+  }) => {
+    return useMutation({
+      mutationFn: async () => {
+        setIsPublishing(true);
+        return flowsApi.update(flowId, {
+          type: FlowOperationType.LOCK_AND_PUBLISH,
+          request: {},
+        });
+      },
+      onSuccess: (flow) => {
+        toast({
+          title: t('Success'),
+          description: t('Flow has been published.'),
+        });
+        setFlow(flow);
+        setVersion(flow.version);
+        setIsPublishing(false);
+      },
+      onError: () => {
+        toast(INTERNAL_ERROR_TOAST);
+        setIsPublishing(false);
+      },
     });
   },
   useExportFlows: () => {
