@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import {
@@ -7,10 +7,9 @@ import {
   BuilderStore,
   createBuilderStore,
 } from '@/app/builder/builder-hooks';
-import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { NEW_FLOW_QUERY_PARAM, PUBLISH_FLOW_QUERY_PARAM } from '@/lib/utils';
+import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
 
 type BuilderStateProviderProps = React.PropsWithChildren<BuilderInitialState>;
