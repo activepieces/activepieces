@@ -1,8 +1,9 @@
-import { Changelog } from '@activepieces/shared';
+import { ListChangelogsResponse } from '@activepieces/shared';
 
 import { api } from './api';
+
 export const changelogApi = {
-  getChangelogs(): Promise<Changelog> {
-    return api.get<Changelog>('/v1/changelogs');
+  list(): Promise<ListChangelogsResponse> {
+    return api.get<ListChangelogsResponse>('/v1/changelogs');
   },
 };

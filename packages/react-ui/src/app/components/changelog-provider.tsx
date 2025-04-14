@@ -9,8 +9,7 @@ import { SonnerToaster } from '@/components/ui/sonner';
 import { userHooks } from '@/hooks/user-hooks';
 import { changelogApi } from '@/lib/changelog-api';
 import { platformUserApi } from '@/lib/platform-user-api';
-import { isNil } from '@activepieces/shared';
-import { Changelog } from '@activepieces/shared';
+import { isNil, Changelog } from '@activepieces/shared';
 
 interface ChangelogToastProps {
   id: string | number;
@@ -90,7 +89,7 @@ export const ChangelogProvider = () => {
   const { data: user } = userHooks.useCurrentUser();
   const { data: changelogs, isError } = useQuery({
     queryKey: ['changelogs'],
-    queryFn: () => changelogApi.getChangelogs(),
+    queryFn: () => changelogApi.list(),
     enabled: !!user,
   });
   const hasShownToasts = useRef(false);
@@ -106,7 +105,7 @@ export const ChangelogProvider = () => {
 
   useEffect(() => {
     if (isMounted && !isNil(changelogs) && user && !hasShownToasts.current) {
-      const filteredChangelogs = [...changelogs.results].filter(
+      const filteredChangelogs = [...changelogs.data].filter(
         (changelog: Changelog) =>
           isNil(user.lastChangelogDismissed) ||
           dayjs(user.lastChangelogDismissed).isBefore(dayjs(changelog.date)),
