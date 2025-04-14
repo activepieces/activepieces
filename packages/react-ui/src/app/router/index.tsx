@@ -82,6 +82,7 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
+import CreateFlowPage from '../routes/flows/create-flow';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -130,6 +131,31 @@ const routes = [
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
   }),
+  ...ProjectRouterWrapper({
+    path: '/flows/:flowId/versions/:versionId',
+    element: (
+      <AllowOnlyLoggedInUserOnlyGuard>
+        <RoutePermissionGuard permission={Permission.READ_FLOW}>
+          <PageTitle title="Builder">
+            <FlowBuilderPage checkVersionIdInRoute={true} />
+          </PageTitle>
+        </RoutePermissionGuard>
+      </AllowOnlyLoggedInUserOnlyGuard>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/create-flow',
+    element: (
+      <AllowOnlyLoggedInUserOnlyGuard>
+        <RoutePermissionGuard permission={Permission.WRITE_FLOW}>
+          <PageTitle title="Builder">
+            <CreateFlowPage />
+          </PageTitle>
+        </RoutePermissionGuard>
+      </AllowOnlyLoggedInUserOnlyGuard>
+    ),
+  }),
+
   ...ProjectRouterWrapper({
     path: '/flow-import-redirect/:flowId',
     element: (

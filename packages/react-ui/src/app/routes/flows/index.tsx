@@ -35,17 +35,16 @@ import {
   FolderFilterList,
   folderIdParamName,
 } from '@/features/folders/component/folder-filter-list';
-import { foldersApi } from '@/features/folders/lib/folders-api';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { formatUtils, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
+import { formatUtils, NEW_FLOW_FOLDER_NAME_QUERY_PARAM, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 
 import FlowActionMenu from '../../../app/components/flow-actions-menu';
 import { TableTitle } from '../../../components/ui/table-title';
 
-import TaskLimitAlert from './task-limit-alert';
+import TaskLimitAlert from '../../../features/flows/components/task-limit-alert';
 
 const filters = [
   {
@@ -102,29 +101,10 @@ const FlowsPage = () => {
     },
   });
 
-  const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation<
-    PopulatedFlow,
-    Error,
-    void
-  >({
-    mutationFn: async () => {
-      const folderId = searchParams.get(folderIdParamName);
-      const folder =
-        folderId && folderId !== 'NULL'
-          ? await foldersApi.get(folderId)
-          : undefined;
-      const flow = await flowsApi.create({
-        projectId: authenticationSession.getProjectId()!,
-        displayName: t('Untitled'),
-        folderName: folder?.displayName,
-      });
-      return flow;
-    },
-    onSuccess: (flow) => {
-      navigate(`/flows/${flow.id}?${NEW_FLOW_QUERY_PARAM}=true`);
-    },
-    onError: () => toast(INTERNAL_ERROR_TOAST),
-  });
+  const createFlow = () => {
+    const folderId = searchParams.get(folderIdParamName)?? '';
+    navigate(`/create-flow?${NEW_FLOW_FOLDER_NAME_QUERY_PARAM}=${folderId}`);
+  }
 
   const [selectedRows, setSelectedRows] = useState<Array<PopulatedFlow>>([]);
 
@@ -367,7 +347,6 @@ const FlowsPage = () => {
                     disabled={!doesUserHavePermissionToWriteFlow}
                     variant="default"
                     className="flex gap-2 items-center"
-                    loading={isCreateFlowPending}
                   >
                     <span>{t('New Flow')}</span>
                     <ChevronDown className="h-4 w-4 " />
@@ -379,7 +358,6 @@ const FlowsPage = () => {
                       e.preventDefault();
                       createFlow();
                     }}
-                    disabled={isCreateFlowPending}
                   >
                     <Plus className="h-4 w-4 me-2" />
                     <span>{t('From scratch')}</span>
@@ -387,7 +365,6 @@ const FlowsPage = () => {
                   <SelectFlowTemplateDialog>
                     <DropdownMenuItem
                       onSelect={(e) => e.preventDefault()}
-                      disabled={isCreateFlowPending}
                     >
                       <Workflow className="h-4 w-4 me-2" />
                       <span>{t('Use a template')}</span>

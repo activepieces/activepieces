@@ -10,8 +10,12 @@ import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { PopulatedFlow } from '@activepieces/shared';
 
-const FlowBuilderPage = () => {
-  const { flowId } = useParams();
+const FlowBuilderPage = ({
+  checkVersionIdInRoute = false,
+}: {
+  checkVersionIdInRoute?: boolean;
+}) => {
+  const { flowId, versionId } = useParams();
 
   const {
     data: flow,
@@ -19,7 +23,8 @@ const FlowBuilderPage = () => {
     isError,
   } = useQuery<PopulatedFlow, Error>({
     queryKey: ['flow', flowId, authenticationSession.getProjectId()],
-    queryFn: () => flowsApi.get(flowId!),
+    queryFn: () =>
+      flowsApi.get(flowId!, checkVersionIdInRoute ? { versionId } : undefined),
     gcTime: 0,
     retry: false,
     refetchOnWindowFocus: false,
@@ -50,7 +55,7 @@ const FlowBuilderPage = () => {
         flow={flow!}
         canExitRun={true}
         flowVersion={flow!.version}
-        readonly={false}
+        readonly={checkVersionIdInRoute}
         run={null}
         sampleData={sampleData ?? {}}
         sampleDataInput={sampleDataInput ?? {}}
