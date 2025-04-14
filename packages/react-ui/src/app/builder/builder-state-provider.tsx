@@ -37,19 +37,7 @@ export function BuilderStateProvider({
       queryParams.get(NEW_FLOW_QUERY_PARAM) === 'true',
     );
   }
-  useEffect(() => {
-    if (
-      queryParams.get(PUBLISH_FLOW_QUERY_PARAM) === 'true' &&
-      storeRef.current
-    ) {
-      flowsHooks.usePublishFlow({
-        flowId: props.flow.id,
-        setFlow: storeRef.current?.getState().setFlow,
-        setVersion: storeRef.current?.getState().setVersion,
-        setIsPublishing: storeRef.current?.getState().setIsPublishing,
-      });
-    }
-  }, []);
+
   return (
     <BuilderStateContext.Provider value={storeRef.current}>
       {children}
