@@ -567,8 +567,8 @@
       "@activepieces/piece-robolly": [
         "packages/pieces/community/robolly/src/index.ts"
       ],
-      "@activepieces/piece-rounded-studio": [
-        "packages/pieces/community/rounded-studio/src/index.ts"
+      "@activepieces/piece-call-rounded": [
+        "packages/pieces/community/call-rounded/src/index.ts"
       ],
       "@activepieces/piece-rss": ["packages/pieces/community/rss/src/index.ts"],
       "@activepieces/piece-saastic": [
