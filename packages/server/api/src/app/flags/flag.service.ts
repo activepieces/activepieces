@@ -245,12 +245,6 @@ export const flagService = {
                 created,
                 updated,
             },
-            {
-                id: ApFlagId.SHOW_CHANGELOG,
-                value: system.getBoolean(AppSystemProp.SHOW_CHANGELOG),
-                created,
-                updated,
-            },
         )
 
         if (system.isApp()) {
