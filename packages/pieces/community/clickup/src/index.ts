@@ -77,6 +77,7 @@ export const clickup = createPiece({
     updateClickupTask,
     updateClickupMessage,
     deleteClickupMessage,
+    deleteClickupMessageReaction,
     deleteClickupTask,
     getClickupAccessibleCustomFields,
     setClickupCustomFieldValue,
