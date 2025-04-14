@@ -59,9 +59,9 @@ const ApTableEditorPage = () => {
     Permission.WRITE_TABLE,
   );
   const isAllowedToCreateRecord =
-    userHasTableWritePermission && maxRecords && records.length <= maxRecords;
+    userHasTableWritePermission && maxRecords && records.length < maxRecords;
   const isAllowedToCreateField =
-    userHasTableWritePermission && maxFields && fields.length <= maxFields;
+    userHasTableWritePermission && maxFields && fields.length < maxFields;
 
   const createEmptyRecord = () => {
     createRecord({
@@ -109,16 +109,14 @@ const ApTableEditorPage = () => {
   const columns: Column<Row, { id: string }>[] = [
     {
       ...SelectColumn,
-      renderSummaryCell: isAllowedToCreateRecord
-        ? () => (
-            <div
-              className="w-full h-full border-t border-border  flex items-center justify-start cursor-pointer pl-4"
-              onClick={createEmptyRecord}
-            >
-              <Plus className="h-4 w-4" />
-            </div>
-          )
-        : undefined,
+      renderSummaryCell: () => (
+        <div
+          className="w-full h-full border-t border-border  flex items-center justify-start cursor-pointer pl-4"
+          onClick={createEmptyRecord}
+        >
+          <Plus className="h-4 w-4" />
+        </div>
+      ),
     },
     ...(fields.map((field, index) => ({
       key: field.uuid,
@@ -151,20 +149,17 @@ const ApTableEditorPage = () => {
           }}
         />
       ),
-      renderSummaryCell: isAllowedToCreateRecord
-        ? () => (
-            <div
-              className="w-full h-full flex border-t border-border  items-center justify-start cursor-pointer pl-4"
-              onClick={createEmptyRecord}
-            ></div>
-          )
-        : undefined,
+      renderSummaryCell: () => (
+        <div
+          className="w-full h-full flex border-t border-border  items-center justify-start cursor-pointer pl-4"
+          onClick={createEmptyRecord}
+        ></div>
+      ),
     })) ?? []),
   ];
   if (isAllowedToCreateField) {
     columns.push(newFieldColumn);
   }
-
 
   function mapRecordsToRows(records: ClientRecordData[]): Row[] {
     if (!records || records.length === 0) return [];
@@ -179,7 +174,7 @@ const ApTableEditorPage = () => {
       return row;
     });
   }
-
+  const rows = mapRecordsToRows(records);
   return (
     <div className="w-full h-full">
       <ApTableHeader isFetchingNextPage={false}></ApTableHeader>
@@ -187,12 +182,12 @@ const ApTableEditorPage = () => {
         <DataGrid
           ref={gridRef}
           columns={columns}
-          rows={mapRecordsToRows(records)}
+          rows={rows}
           rowKeyGetter={(row: Row) => row.id}
           selectedRows={selectedRecords}
           onSelectedRowsChange={setSelectedRecords}
           className={cn(
-            'scroll-smooth  w-[calc(100vw-256px)] h-[calc(100vh-7rem-92px-20px)] bg-muted/30',
+            'scroll-smooth  w-[calc(100vw-256px)] h-[calc(100vh-92px-20px-22px)] bg-muted/30',
             theme === 'dark' ? 'rdg-dark' : 'rdg-light',
           )}
           bottomSummaryRows={
@@ -200,7 +195,9 @@ const ApTableEditorPage = () => {
           }
           rowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
           headerRowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
-          summaryRowHeight={ROW_HEIGHT_MAP[RowHeight.DEFAULT]}
+          summaryRowHeight={
+            isAllowedToCreateRecord ? ROW_HEIGHT_MAP[RowHeight.DEFAULT] : 0
+          }
         />
       </div>
       <ApTableFooter

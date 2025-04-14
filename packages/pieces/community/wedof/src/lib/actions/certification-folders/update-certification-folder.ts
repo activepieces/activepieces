@@ -40,7 +40,7 @@ export const updateCertificationFolder = createAction({
         tiersTemps: Property.StaticDropdown({
             displayName: "Tiers temps",
             description: "Indique si le candidat a besoin d'un tiers temps",
-            required: true,
+            required: false,
             options: {
                 disabled: false,
                 options: [

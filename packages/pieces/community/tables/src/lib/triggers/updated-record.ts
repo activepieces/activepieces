@@ -5,7 +5,7 @@ import { PopulatedRecord, TableWebhookEventType } from '@activepieces/shared';
 export const updatedRecordTrigger = createTrigger({
     // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
     name: 'updatedRecord',
-    displayName: 'Updated Record',
+    displayName: 'Record Updated',
     description: 'Triggers when a record is updated in the selected table.',
     auth: PieceAuth.None(),
     props: {

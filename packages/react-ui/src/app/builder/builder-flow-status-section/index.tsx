@@ -13,14 +13,17 @@ const BuilderFlowStatusSection = React.memo(() => {
   const userHasPermissionToUpdateFlowStatus = checkAccess(
     Permission.UPDATE_FLOW_STATUS,
   );
-  const [flowVersion, flow, run] = useBuilderStateContext((state) => [
+  const [flowVersion, flow, readonly] = useBuilderStateContext((state) => [
     state.flowVersion,
     state.flow,
-    state.run,
+    state.readonly,
   ]);
+  const showFlowStatusSection =
+    (!readonly || flow.publishedVersionId === flowVersion.id) &&
+    userHasPermissionToUpdateFlowStatus;
   return (
     <>
-      {!run && userHasPermissionToUpdateFlowStatus && (
+      {showFlowStatusSection && (
         <>
           {flow.publishedVersionId && (
             <div className="flex items-center space-x-2">

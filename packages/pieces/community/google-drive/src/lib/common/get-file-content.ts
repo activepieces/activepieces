@@ -52,14 +52,13 @@ const googledlCall = async (
       )
     );
 
-  const extension = '.' + extension(mimeType);
-  const srcFileName = fileName ?? fileId + extension;
+  const fileExtension = '.' + extension(mimeType);
+  const srcFileName = fileName ?? fileId + fileExtension;
   // const name =
   //   (srcFileName
-  //     ? srcFileName.replace(new RegExp(extension + '$'), '')
-  //     : fileId) + extension;
+  //     ? srcFileName.replace(new RegExp(fileExtension + '$'), '')
+  //     : fileId) + fileExtension;
 
-  // console.log(extension, srcFileName, name);
   return files.write({
     fileName: srcFileName,
     data: Buffer.from(await download.arrayBuffer()),

@@ -15,6 +15,7 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { TableTitle } from '@/components/ui/table-title';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -240,6 +241,9 @@ const ApTablesPage = () => {
     ],
     [bulkDeleteMutation, selectedRows],
   );
+  if (isCreatingTable) {
+    return <LoadingScreen mode="container" />;
+  }
 
   return (
     <div className="flex-col w-full gap-4">
@@ -257,7 +261,6 @@ const ApTablesPage = () => {
             size="sm"
             onClick={() => createTable({ name: t('New Table') })}
             className="flex items-center gap-2"
-            loading={isCreatingTable}
             disabled={!userHasTableWritePermission}
           >
             <Plus className="h-4 w-4" />

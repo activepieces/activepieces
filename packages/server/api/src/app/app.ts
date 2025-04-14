@@ -38,7 +38,6 @@ import { platformRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
 import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
 import { emailService } from './ee/helper/email/email-service'
-import { issuesModule } from './ee/issues/issues-module'
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
@@ -66,6 +65,7 @@ import { flowRunHooks } from './flows/flow-run/flow-run-hooks'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
+import { issuesModule } from './flows/issues/issues-module'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { eventsHooks } from './helper/application-events'
 import { openapiModule } from './helper/openapi/openapi.module'
@@ -74,6 +74,7 @@ import { systemJobsSchedule } from './helper/system-jobs'
 import { SystemJobName } from './helper/system-jobs/common'
 import { systemJobHandlers } from './helper/system-jobs/job-handlers'
 import { validateEnvPropsOnStartup } from './helper/system-validator'
+import { mcpModule } from './mcp/mcp-module'
 import { pieceModule } from './pieces/base-piece-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks'
@@ -219,6 +220,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(platformModule)
     await app.register(humanInputModule)
     await app.register(tagsModule)
+    await app.register(mcpModule)
     await pieceSyncService(app.log).setup()
     await app.register(platformUserModule)
     await app.register(issuesModule)
@@ -372,7 +374,7 @@ export async function appPostBoot(app: FastifyInstance): Promise<void> {
  / ____ \\  | |____     | |     _| |_     \\  /    | |____  | |       _| |_  | |____  | |____  | |____   ____) |
 /_/    \\_\\  \\_____|    |_|    |_____|     \\/     |______| |_|      |_____| |______|  \\_____| |______| |_____/
 
-The application started on ${domainHelper.getPublicApiUrl({ path: '' })}, as specified by the AP_FRONTEND_URL variables.`)
+The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, as specified by the AP_FRONTEND_URL variables.`)
 
     const environment = system.get(AppSystemProp.ENVIRONMENT)
     const piecesSource = system.getOrThrow(AppSystemProp.PIECES_SOURCE)

@@ -48,7 +48,8 @@ src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4
 
 # 🤯 Welcome to Activepieces
 
-Your friendliest open source all-in-one automation tool, designed to be **extensible** through a **type-safe** pieces framework written in **Typescript**.
+All-in-one AI automation designed to be **extensible** through a **type-safe** pieces framework written in **TypeScript**.
+When you contribute pieces to Activepieces they become automatically available as MCP servers that you can use with LLMs through Claude Desktop, Cursor or Windsurf!
 
 <br>
 <br>
@@ -61,12 +62,13 @@ Your friendliest open source all-in-one automation tool, designed to be **extens
 
 - **🌐 Open Ecosystem:** All pieces are open source and available on npmjs.com, **60% of the pieces are contributed by the community**.
 
+- **🛠️ Largest open source MCP toolkit**: All our pieces (280+) are available as MCP that you can use with LLMs on Claude Desktop, Cursor or Windsurf.
+
 - **🛠️  Pieces are written in Typescript**: Pieces are npm packages in TypeScript, offering full customization with the best developer experience, including **hot reloading** for **local** piece development on your machine. 😎
 
 ![](/resources/create-action.png)
 
-
-- **🤖 AI-Ready**: Native AI pieces let you experiment with various providers, or create your own agents using our AI SDK, and there is Copilot to help you build flows inside the builder.
+- **🤖 AI-First**: Native AI pieces let you experiment with various providers, or create your own agents using our AI SDK, and there is Copilot to help you build flows inside the builder.
 
 - **🏢 Enterprise-Ready**: Developers set up the tools, and anyone in the organization can use the no-code builder. Full customization from branding to control.
 
@@ -385,6 +387,8 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/reemayoush"><img src="https://avatars.githubusercontent.com/u/168414383?v=4?s=100" width="100px;" alt="reemayoush"/><br /><sub><b>reemayoush</b></sub></a><br /><a href="#plugin-reemayoush" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/briceflaceliere"><img src="https://avatars.githubusercontent.com/u/5811531?v=4?s=100" width="100px;" alt="Brice"/><br /><sub><b>Brice</b></sub></a><br /><a href="#security-briceflaceliere" title="Security">🛡️</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://mg-wunna.github.io/mg-wunna/"><img src="https://avatars.githubusercontent.com/u/63114419?v=4?s=100" width="100px;" alt="Mg Wunna"/><br /><sub><b>Mg Wunna</b></sub></a><br /><a href="#plugin-mg-wunna" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/harikrishnanum/"><img src="https://avatars.githubusercontent.com/u/61736905?v=4?s=100" width="100px;" alt="Harikrishnan U M"/><br /><sub><b>Harikrishnan U M</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Ahakrsh" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/perrine-pullicino-alan"><img src="https://avatars.githubusercontent.com/u/143406842?v=4?s=100" width="100px;" alt="perrine-pullicino-alan"/><br /><sub><b>perrine-pullicino-alan</b></sub></a><br /><a href="#plugin-perrine-pullicino-alan" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

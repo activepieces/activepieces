@@ -10,7 +10,7 @@ export const TableTitle = ({
   beta?: boolean;
 }) => {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between mb-4">
       <div>
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-semibold">{children}</h1>

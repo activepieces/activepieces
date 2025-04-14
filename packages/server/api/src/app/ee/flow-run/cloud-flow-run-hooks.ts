@@ -2,10 +2,10 @@ import { ApEdition, FlowRun, isFailedState, isFlowUserTerminalState, isNil, RunE
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { FlowRunHooks } from '../../flows/flow-run/flow-run-hooks'
+import { issuesService } from '../../flows/issues/issues-service'
 import { system } from '../../helper/system/system'
 import { alertsService } from '../alerts/alerts-service'
 import { emailService } from '../helper/email/email-service'
-import { issuesService } from '../issues/issues-service'
 import { BillingUsageType, usageService } from '../platform-billing/usage/usage-service'
 import { projectLimitsService } from '../project-plan/project-plan.service'
 

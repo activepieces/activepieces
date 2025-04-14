@@ -9,6 +9,9 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 
+import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { FlowRunsTabs } from '@/app/routes/runs';
+import { useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -20,25 +23,31 @@ import {
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { toast } from '@/components/ui/use-toast';
+import { issuesApi } from '@/features/issues/api/issues-api';
+import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import { PopulatedIssue } from '@activepieces/ee-shared';
-import { FlowRunStatus, Permission } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  FlowRunStatus,
+  Permission,
+} from '@activepieces/shared';
 
-import { useNewWindow } from '../../../components/embed-provider';
-import { TableTitle } from '../../../components/ui/table-title';
-import { issuesApi } from '../api/issues-api';
-import { issueHooks } from '../hooks/issue-hooks';
+type IssuesTableProps = {
+  setActiveTab: (tab: FlowRunsTabs) => void;
+};
 
-export default function IssuesTable() {
+export default function IssuesTable({ setActiveTab }: IssuesTableProps) {
   const navigate = useNavigate();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { refetch } = issueHooks.useIssuesNotification(
-    platform.flowIssuesEnabled,
+  const { refetch } = issueHooks.useIssuesNotification();
+  const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
+  const isEditionSupported = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(
+    edition as ApEdition,
   );
-
   const [searchParams] = useSearchParams();
   const projectId = authenticationSession.getProjectId()!;
   const { data, isLoading } = useQuery({
@@ -169,6 +178,7 @@ export default function IssuesTable() {
       ],
     }).toString();
     const pathname = authenticationSession.appendProjectRoutePrefix('/runs');
+    setActiveTab(FlowRunsTabs.HISTORY);
     if (newWindow) {
       openNewWindow(pathname, searchParams);
     } else {
@@ -179,69 +189,68 @@ export default function IssuesTable() {
     }
   };
   return (
-    <div className="flex-col w-full">
-      <div className=" flex">
-        <TableTitle
-          description={t(
-            'Track failed runs grouped by flow name, and mark them as resolved when fixed.',
+    <LockedFeatureGuard
+      featureKey="ISSUES"
+      locked={!isEditionSupported}
+      lockTitle={t('Unlock Issues')}
+      lockDescription={t(
+        'Track issues in your workflows and troubleshoot them.',
+      )}
+    >
+      <div className="flex-col w-full">
+        <DataTable
+          emptyStateTextTitle={t('No issues found')}
+          emptyStateTextDescription={t(
+            'All your workflows are running smoothly.',
           )}
-        >
-          {t('Issues')}
-        </TableTitle>
-        <div className="ml-auto"></div>
-      </div>
-      <DataTable
-        emptyStateTextTitle={t('No issues found')}
-        emptyStateTextDescription={t(
-          'All your workflows are running smoothly.',
-        )}
-        emptyStateIcon={<CheckCircle className="size-14" />}
-        page={data}
-        isLoading={isLoading}
-        columns={columns}
-        bulkActions={[
-          {
-            render: (selectedRows, resetSelection) => {
-              return (
-                <div className="flex items-center gap-2">
-                  <PermissionNeededTooltip
-                    hasPermission={userHasPermissionToMarkAsResolved}
-                  >
-                    <Button
-                      disabled={!userHasPermissionToMarkAsResolved}
-                      className="gap-2"
-                      size={'sm'}
-                      onClick={(e) => {
-                        selectedRows.forEach((row) => {
-                          handleMarkAsResolved(row.flowDisplayName, row.id);
-                          row.delete();
-                        });
-                        resetSelection();
-                      }}
+          emptyStateIcon={<CheckCircle className="size-14" />}
+          page={data}
+          isLoading={isLoading}
+          columns={columns}
+          bulkActions={[
+            {
+              render: (selectedRows, resetSelection) => {
+                return (
+                  <div className="flex items-center gap-2">
+                    <PermissionNeededTooltip
+                      hasPermission={userHasPermissionToMarkAsResolved}
                     >
-                      <Check className="size-3" />
-                      {t('Mark as Resolved')}{' '}
-                      {selectedRows.length === 0
-                        ? ''
-                        : `(${selectedRows.length})`}
-                    </Button>
-                  </PermissionNeededTooltip>
-                </div>
-              );
+                      <Button
+                        disabled={!userHasPermissionToMarkAsResolved}
+                        className="gap-2"
+                        size={'sm'}
+                        onClick={(e) => {
+                          selectedRows.forEach((row) => {
+                            handleMarkAsResolved(row.flowDisplayName, row.id);
+                            row.delete();
+                          });
+                          resetSelection();
+                        }}
+                      >
+                        <Check className="size-3" />
+                        {t('Mark as Resolved')}{' '}
+                        {selectedRows.length === 0
+                          ? ''
+                          : `(${selectedRows.length})`}
+                      </Button>
+                    </PermissionNeededTooltip>
+                  </div>
+                );
+              },
             },
-          },
-        ]}
-        onRowClick={
-          userHasPermissionToSeeRuns
-            ? (row, newWindow) =>
-                handleRowClick({
-                  newWindow,
-                  flowId: row.flowId,
-                  created: row.created,
-                })
-            : undefined
-        }
-      />
-    </div>
+          ]}
+          onRowClick={
+            userHasPermissionToSeeRuns
+              ? (row, newWindow) =>
+                  handleRowClick({
+                    newWindow,
+                    flowId: row.flowId,
+                    created: row.created,
+                  })
+              : undefined
+          }
+        />
+      </div>
+    </LockedFeatureGuard>
   );
 }

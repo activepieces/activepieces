@@ -1641,6 +1641,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "hakrsh",
+      "name": "Harikrishnan U M",
+      "avatar_url": "https://avatars.githubusercontent.com/u/61736905?v=4",
+      "profile": "https://www.linkedin.com/in/harikrishnanum/",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "perrine-pullicino-alan",
+      "name": "perrine-pullicino-alan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/143406842?v=4",
+      "profile": "https://github.com/perrine-pullicino-alan",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

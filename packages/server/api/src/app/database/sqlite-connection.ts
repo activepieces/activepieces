@@ -90,6 +90,8 @@ import { AddManualTaskTable1742304913465 } from './migration/sqlite/174230491346
 import { AddDataColumnToFieldEntity1742390870702 } from './migration/sqlite/1742390870702-AddDataColumnToFieldEntity'
 import { ChangeManualTasksToTodoSqlite1742432169253 } from './migration/sqlite/1742432169253-ChangeManualTasksToTodoSqlite'
 import { RenameApprovalUrlToResolveUrl1742991301509 } from './migration/sqlite/1742991301509-RenameApprovalUrlToResolveUrl'
+import { AddMCPSqlite1743127177235 } from './migration/sqlite/1743127177235-AddMCPSqlite'
+import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744104496262 } from './migration/sqlite/1744104496262-AddRecordIndexForTableIdAndProjectIdAndRecordId'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -196,7 +198,9 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddDataColumnToFieldEntity1742390870702,
         AddManualTaskTable1742304913465,
         ChangeManualTasksToTodoSqlite1742432169253,
+        AddMCPSqlite1743127177235,
         RenameApprovalUrlToResolveUrl1742991301509,
+        AddRecordIndexForTableIdAndProjectIdAndRecordId1744104496262,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
@@ -235,3 +239,4 @@ type MigrationConfig = {
     migrationsTransactionMode?: 'all' | 'none' | 'each'
     migrations?: (new () => MigrationInterface)[]
 }
+

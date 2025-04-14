@@ -36,6 +36,7 @@ export function BuilderStateProvider({
       queryParams.get(NEW_FLOW_QUERY_PARAM) === 'true',
     );
   }
+
   return (
     <BuilderStateContext.Provider value={storeRef.current}>
       {children}
