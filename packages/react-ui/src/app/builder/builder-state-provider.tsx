@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import {
@@ -7,9 +7,10 @@ import {
   BuilderStore,
   createBuilderStore,
 } from '@/app/builder/builder-hooks';
+import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
+import { NEW_FLOW_QUERY_PARAM, PUBLISH_FLOW_QUERY_PARAM } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
 
 type BuilderStateProviderProps = React.PropsWithChildren<BuilderInitialState>;
@@ -36,6 +37,19 @@ export function BuilderStateProvider({
       queryParams.get(NEW_FLOW_QUERY_PARAM) === 'true',
     );
   }
+  useEffect(() => {
+    if (
+      queryParams.get(PUBLISH_FLOW_QUERY_PARAM) === 'true' &&
+      storeRef.current
+    ) {
+      flowsHooks.usePublishFlow({
+        flowId: props.flow.id,
+        setFlow: storeRef.current?.getState().setFlow,
+        setVersion: storeRef.current?.getState().setVersion,
+        setIsPublishing: storeRef.current?.getState().setIsPublishing,
+      });
+    }
+  }, []);
   return (
     <BuilderStateContext.Provider value={storeRef.current}>
       {children}

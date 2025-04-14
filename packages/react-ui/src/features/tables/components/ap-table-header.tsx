@@ -17,12 +17,12 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
 
+import { tablesApi } from '../lib/tables-api';
 import { tablesUtils } from '../lib/utils';
 
 import ApTableName from './ap-table-name';
 import { useTableState } from './ap-table-state-provider';
 import { ImportCsvDialog } from './import-csv-dialog';
-import { tablesApi } from '../lib/tables-api';
 
 type ApTableHeaderProps = {
   isFetchingNextPage: boolean;
@@ -35,7 +35,6 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
     deleteRecords,
     records,
     table,
-    fields,
   ] = useTableState((state) => [
     state.isSaving,
     state.selectedRecords,
@@ -43,7 +42,6 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
     state.deleteRecords,
     state.records,
     state.table,
-    state.fields,
   ]);
   const [searchParams] = useSearchParams();
   const userHasTableWritePermission = useAuthorization().checkAccess(
