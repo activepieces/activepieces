@@ -1,11 +1,15 @@
 import { Static, Type } from '@sinclair/typebox'
 
 export const Changelog = Type.Object({
-    results: Type.Array(Type.Unknown()),
-    page: Type.Number(),
-    limit: Type.Number(),
-    totalPages: Type.Number(),
-    totalResults: Type.Number(),
+    title: Type.String(),
+    featuredImage: Type.String(),
+    date: Type.String(),
 })
 
 export type Changelog = Static<typeof Changelog>
+
+export const ListChangelogsResponse = Type.Object({
+    data: Type.Array(Changelog),
+})
+
+export type ListChangelogsResponse = Static<typeof ListChangelogsResponse>

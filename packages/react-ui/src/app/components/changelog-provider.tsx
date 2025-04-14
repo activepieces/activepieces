@@ -10,6 +10,7 @@ import { userHooks } from '@/hooks/user-hooks';
 import { changelogApi } from '@/lib/changelog-api';
 import { platformUserApi } from '@/lib/platform-user-api';
 import { isNil } from '@activepieces/shared';
+import { Changelog } from '@activepieces/shared';
 
 interface ChangelogToastProps {
   id: string | number;
@@ -106,7 +107,7 @@ export const ChangelogProvider = () => {
   useEffect(() => {
     if (isMounted && !isNil(changelogs) && user && !hasShownToasts.current) {
       const filteredChangelogs = [...changelogs.results].filter(
-        (changelog: any) =>
+        (changelog: Changelog) =>
           isNil(user.lastChangelogDismissed) ||
           dayjs(user.lastChangelogDismissed).isBefore(dayjs(changelog.date)),
       );
@@ -114,7 +115,7 @@ export const ChangelogProvider = () => {
       if (filteredChangelogs.length > 0) {
         hasShownToasts.current = true;
 
-        filteredChangelogs.forEach((changelog: any) => {
+        filteredChangelogs.forEach((changelog: Changelog) => {
           const contentWithLearnMoreLink =
             changelog.markdownContent.split('LearnMoreLink:');
           const content = contentWithLearnMoreLink[0]?.trim();

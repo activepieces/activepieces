@@ -1,5 +1,6 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, Changelog, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ErrorCode } from '@activepieces/shared'
+import { ListChangelogsResponse } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedStore } from '../helper/keyvalue'
@@ -9,19 +10,15 @@ const CHANGELOG_KEY = 'changelogs'
 
 type ChangelogStore = {
     lastFetched: string
-    data: Changelog
+    data: ListChangelogsResponse
 }
 
-const emptyChangelog: Changelog = {
-    results: [],
-    page: 1,
-    limit: 100,
-    totalPages: 1,
-    totalResults: 0,
+const emptyChangelog: ListChangelogsResponse = {
+    data: [],
 }
 
 export const changelogService = (logger: FastifyBaseLogger) => ({
-    async list(): Promise<Changelog> {
+    async list(): Promise<ListChangelogsResponse> {
         const changelogs: ChangelogStore = await distributedStore().get(CHANGELOG_KEY) ?? {
             lastFetched: dayjs().subtract(1, 'day').toISOString(),
             data: emptyChangelog,
@@ -38,7 +35,7 @@ export const changelogService = (logger: FastifyBaseLogger) => ({
         return changelogs.data
     },
 })
-async function getChangelog(logger: FastifyBaseLogger): Promise<Changelog> {
+async function getChangelog(logger: FastifyBaseLogger): Promise<ListChangelogsResponse> {
     const isCloudEdition = system.getOrThrow(AppSystemProp.EDITION) === ApEdition.CLOUD
     try {
         if (isCloudEdition) {
@@ -51,22 +48,17 @@ async function getChangelog(logger: FastifyBaseLogger): Promise<Changelog> {
     catch (error) {
         logger.error('Error fetching changelog', error)
         return {
-            results: [],
-            page: 1,
-            limit: 100,
-            totalPages: 1,
-            totalResults: 0,
+            data: [],
         }
     }
 }
 
-async function getChangelogFeaturebaseRequest(): Promise<Changelog> {
+async function getChangelogFeaturebaseRequest(): Promise<ListChangelogsResponse> {
     const featurebaseApiKey = system.getOrThrow(AppSystemProp.FEATUREBASE_API_KEY)
-    const results: unknown[] = []
+    const results = []
     let page = 1
     const limit = 100
     let totalPages = 1
-    let totalResults = 0
     
     do {
         const queryparams = new URLSearchParams()
@@ -95,24 +87,23 @@ async function getChangelogFeaturebaseRequest(): Promise<Changelog> {
         if (parsedData.totalPages) {
             totalPages = parsedData.totalPages
         }
-        if (parsedData.totalResults) {
-            totalResults = parsedData.totalResults
-        }
         
-        results.push(...parsedData.results)
+        // Map the results to match the Changelog type
+        const mappedResults = parsedData.results.map((item: any) => ({
+            title: item.title,
+            featuredImage: item.featuredImage || '',
+            date: item.date,
+        }))
+        
+        results.push(...mappedResults)
         page++
     } while (page <= totalPages)
-
     return {
-        results,
-        page: 1,
-        limit,
-        totalPages,
-        totalResults,
+        data: results,
     }
 }
 
-async function getChangelogActivepiecesRequest(): Promise<Changelog> {
+async function getChangelogActivepiecesRequest(): Promise<ListChangelogsResponse> {
     const url = new URL('http://cloud.activepieces.com/api/v1/changelogs')
 
     const response = await fetch(url.toString(), {
@@ -129,8 +120,6 @@ async function getChangelogActivepiecesRequest(): Promise<Changelog> {
             },
         })
     }
-    const data = await response.text()
-    const parsedData = JSON.parse(data)
-    
-    return parsedData
+    const data = await response.json()
+    return data
 }
