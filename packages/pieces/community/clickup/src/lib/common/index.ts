@@ -611,6 +611,11 @@ export async function callClickUpApi<T extends HttpMessageBody = any>(
   queryParams: any | undefined = undefined,
   headers: any | undefined = undefined
 ): Promise<HttpResponse<T>> {
+  headers = {
+    accept: 'application/json',
+    ...headers,
+  };
+
   return await httpClient.sendRequest<T>({
     method: method,
     url: `https://api.clickup.com/api/v2/${apiUrl}`,
@@ -619,7 +624,7 @@ export async function callClickUpApi<T extends HttpMessageBody = any>(
       token: accessToken,
     },
     headers,
-    body,
+    body: method === 'GET' ? undefined : body,
     queryParams,
   });
 }
@@ -632,8 +637,6 @@ export async function callClickUpApi3<T extends HttpMessageBody = any>(
   queryParams: any | undefined = undefined,
   headers: any | undefined = {}
 ): Promise<HttpResponse<T>> {
-  console.log(accessToken);
-
   headers = {
     accept: 'application/json',
     ...headers,
@@ -647,7 +650,7 @@ export async function callClickUpApi3<T extends HttpMessageBody = any>(
       token: accessToken,
     },
     headers,
-    body,
+    body: method === 'GET' ? undefined : body,
     queryParams,
   });
 }
