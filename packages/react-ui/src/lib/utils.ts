@@ -249,7 +249,7 @@ export const determineDefaultRoute = (
 
 export const NEW_FLOW_QUERY_PARAM = 'newFlow';
 export const FLOW_TEMPLATE_JSON_QUERY_PARAM = 'flowTemplateJson';
-export const NEW_FLOW_FOLDER_NAME_QUERY_PARAM = 'newFlowFolderName';
+export const FOLDER_ID_QUERY_PARAM = 'folderId';
 export const NEW_TABLE_QUERY_PARAM = 'newTable';
 export const parentWindow = window.opener ?? window.parent;
 export const cleanLeadingSlash = (url: string) => {

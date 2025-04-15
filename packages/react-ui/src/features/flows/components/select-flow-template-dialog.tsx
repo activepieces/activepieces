@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ArrowLeft, Info, Search, SearchX } from 'lucide-react';
 import React, { useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/tooltip';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { templatesApi } from '@/features/templates/lib/templates-api';
-import { FLOW_TEMPLATE_JSON_QUERY_PARAM } from '@/lib/utils';
+import { FLOW_TEMPLATE_JSON_QUERY_PARAM, FOLDER_ID_QUERY_PARAM } from '@/lib/utils';
 import { MarkdownVariant, FlowTemplate } from '@activepieces/shared';
 
 type TemplateCardProps = {
@@ -43,13 +43,14 @@ const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
   };
 
   const navigate = useNavigate();
-
+  const[queryParams] = useSearchParams();
   const createFlow = () => {
     const uriEncodedFlowTemplateJson = encodeURIComponent(
       JSON.stringify(template),
     );
+    const folderId = queryParams.get("folderId")
     navigate(
-      `/create-flow?${FLOW_TEMPLATE_JSON_QUERY_PARAM}=${uriEncodedFlowTemplateJson}`,
+      `/create-flow?${FLOW_TEMPLATE_JSON_QUERY_PARAM}=${uriEncodedFlowTemplateJson}&${FOLDER_ID_QUERY_PARAM}=${folderId}`,
     );
   };
   return (

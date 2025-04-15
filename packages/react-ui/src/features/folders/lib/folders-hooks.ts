@@ -9,6 +9,7 @@ export const foldersHooks = {
     const folderQuery = useQuery({
       queryKey: ['folders', authenticationSession.getProjectId()],
       queryFn: () => foldersApi.list(),
+      refetchOnMount:true
     });
 
     return {

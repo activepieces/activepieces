@@ -31,13 +31,12 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useFlowsBulkActions } from '@/features/flows/lib/use-flows-bulk-actions';
 import { FolderBadge } from '@/features/folders/component/folder-badge';
 import {
-  FolderFilterList,
-  folderIdParamName,
+  FolderFilterList
 } from '@/features/folders/component/folder-filter-list';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { formatUtils, NEW_FLOW_FOLDER_NAME_QUERY_PARAM } from '@/lib/utils';
+import { formatUtils, FOLDER_ID_QUERY_PARAM } from '@/lib/utils';
 import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 
 import FlowActionMenu from '../../../app/components/flow-actions-menu';
@@ -99,9 +98,12 @@ const FlowsPage = () => {
     },
   });
 
-  const createFlow = () => {
-    const folderId = searchParams.get(folderIdParamName) ?? '';
-    navigate(`/create-flow?${NEW_FLOW_FOLDER_NAME_QUERY_PARAM}=${folderId}`);
+  const createFlow =async () => {
+    const folderIdParam = searchParams.get(FOLDER_ID_QUERY_PARAM);
+    const folderId = folderIdParam && folderIdParam !== 'NULL' ? folderIdParam : '';
+    navigate(
+      `/create-flow?${FOLDER_ID_QUERY_PARAM}=${folderId}`,
+    );
   };
 
   const [selectedRows, setSelectedRows] = useState<Array<PopulatedFlow>>([]);
