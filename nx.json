@@ -125,13 +125,8 @@
   ],
   "tasksRunnerOptions": {
     "default": {
-      "runner": "nx/tasks-runners/default",
       "options": {
-        "cacheableOperations": ["lint", "test", "e2e"],
-        "parallel": 3,
-        "useDaemonProcess": false,
-        "cacheDirectory": ".nx/cache",
-        "runtimeCacheInputs": ["node -v"]
+        "useDaemonProcess": false
       }
     }
   },
