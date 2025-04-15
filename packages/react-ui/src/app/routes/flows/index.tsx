@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -24,7 +24,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { SelectFlowTemplateDialog } from '@/features/flows/components/select-flow-template-dialog';
@@ -32,20 +31,17 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useFlowsBulkActions } from '@/features/flows/lib/use-flows-bulk-actions';
 import { FolderBadge } from '@/features/folders/component/folder-badge';
 import {
-  FolderFilterList,
-  folderIdParamName,
+  FolderFilterList
 } from '@/features/folders/component/folder-filter-list';
-import { foldersApi } from '@/features/folders/lib/folders-api';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { formatUtils, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
+import { formatUtils, FOLDER_ID_QUERY_PARAM } from '@/lib/utils';
 import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 
 import FlowActionMenu from '../../../app/components/flow-actions-menu';
 import { TableTitle } from '../../../components/ui/table-title';
-
-import TaskLimitAlert from './task-limit-alert';
+import TaskLimitAlert from '../../../features/flows/components/task-limit-alert';
 
 const filters = [
   {
@@ -102,29 +98,13 @@ const FlowsPage = () => {
     },
   });
 
-  const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation<
-    PopulatedFlow,
-    Error,
-    void
-  >({
-    mutationFn: async () => {
-      const folderId = searchParams.get(folderIdParamName);
-      const folder =
-        folderId && folderId !== 'NULL'
-          ? await foldersApi.get(folderId)
-          : undefined;
-      const flow = await flowsApi.create({
-        projectId: authenticationSession.getProjectId()!,
-        displayName: t('Untitled'),
-        folderName: folder?.displayName,
-      });
-      return flow;
-    },
-    onSuccess: (flow) => {
-      navigate(`/flows/${flow.id}?${NEW_FLOW_QUERY_PARAM}=true`);
-    },
-    onError: () => toast(INTERNAL_ERROR_TOAST),
-  });
+  const createFlow =async () => {
+    const folderIdParam = searchParams.get(FOLDER_ID_QUERY_PARAM);
+    const folderId = folderIdParam && folderIdParam !== 'NULL' ? folderIdParam : '';
+    navigate(
+      `/create-flow?${FOLDER_ID_QUERY_PARAM}=${folderId}`,
+    );
+  };
 
   const [selectedRows, setSelectedRows] = useState<Array<PopulatedFlow>>([]);
 
@@ -367,7 +347,6 @@ const FlowsPage = () => {
                     disabled={!doesUserHavePermissionToWriteFlow}
                     variant="default"
                     className="flex gap-2 items-center"
-                    loading={isCreateFlowPending}
                   >
                     <span>{t('New Flow')}</span>
                     <ChevronDown className="h-4 w-4 " />
@@ -379,16 +358,12 @@ const FlowsPage = () => {
                       e.preventDefault();
                       createFlow();
                     }}
-                    disabled={isCreateFlowPending}
                   >
                     <Plus className="h-4 w-4 me-2" />
                     <span>{t('From scratch')}</span>
                   </DropdownMenuItem>
                   <SelectFlowTemplateDialog>
-                    <DropdownMenuItem
-                      onSelect={(e) => e.preventDefault()}
-                      disabled={isCreateFlowPending}
-                    >
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                       <Workflow className="h-4 w-4 me-2" />
                       <span>{t('Use a template')}</span>
                     </DropdownMenuItem>

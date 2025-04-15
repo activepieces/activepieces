@@ -47,7 +47,7 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
-import { cn } from '@/lib/utils';
+import { cn, FOLDER_ID_QUERY_PARAM } from '@/lib/utils';
 import { FolderDto, isNil, Permission } from '@activepieces/shared';
 
 import { foldersApi } from '../lib/folders-api';
@@ -203,7 +203,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
   const { checkAccess } = useAuthorization();
   const userHasPermissionToUpdateFolders = checkAccess(Permission.WRITE_FOLDER);
   const [searchParams, setSearchParams] = useSearchParams(location.search);
-  const selectedFolderId = searchParams.get(folderIdParamName);
+  const selectedFolderId = searchParams.get(FOLDER_ID_QUERY_PARAM);
   const [
     sortedAlphabeticallyIncreasingly,
     setSortedAlphabeticallyIncreasingly,
@@ -219,9 +219,9 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
       searchParams,
     );
     if (folderId) {
-      newQueryParameters.set(folderIdParamName, folderId);
+      newQueryParameters.set(FOLDER_ID_QUERY_PARAM, folderId);
     } else {
-      newQueryParameters.delete(folderIdParamName);
+      newQueryParameters.delete(FOLDER_ID_QUERY_PARAM);
     }
     newQueryParameters.delete('cursor');
 
@@ -231,7 +231,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
   const {
     folders,
     isLoading,
-    refetch: refetchFolders,
+    refetch: refetchFolders
   } = foldersHooks.useFolders();
 
   const { data: allFlowsCount, refetch: refetchAllFlowsCount } = useQuery({
@@ -461,7 +461,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                     userHasPermissionToUpdateFolders={
                       userHasPermissionToUpdateFolders
                     }
-                    key={folder.id}
+                    key={folder.id+folder.numberOfFlows}
                     folder={folder}
                     refetch={refetchFolders}
                     selectedFolderId={selectedFolderId}
@@ -476,5 +476,4 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
   );
 };
 
-const folderIdParamName = 'folderId';
-export { FolderFilterList, folderIdParamName };
+export { FolderFilterList, };

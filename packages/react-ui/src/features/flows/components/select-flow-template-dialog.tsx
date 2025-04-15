@@ -1,9 +1,9 @@
 import { DialogDescription } from '@radix-ui/react-dialog';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ArrowLeft, Info, Search, SearchX } from 'lucide-react';
 import React, { useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Button } from '@/components/ui/button';
@@ -28,18 +28,10 @@ import {
   TooltipTrigger,
   Tooltip,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { templatesApi } from '@/features/templates/lib/templates-api';
-import { authenticationSession } from '@/lib/authentication-session';
-import {
-  MarkdownVariant,
-  FlowOperationType,
-  FlowTemplate,
-  PopulatedFlow,
-} from '@activepieces/shared';
-
-import { flowsApi } from '../lib/flows-api';
+import { FLOW_TEMPLATE_JSON_QUERY_PARAM, FOLDER_ID_QUERY_PARAM } from '@/lib/utils';
+import { MarkdownVariant, FlowTemplate } from '@activepieces/shared';
 
 type TemplateCardProps = {
   template: FlowTemplate;
@@ -51,33 +43,16 @@ const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
   };
 
   const navigate = useNavigate();
-
-  const { mutate: createFlow, isPending } = useMutation<
-    PopulatedFlow,
-    Error,
-    FlowTemplate
-  >({
-    mutationFn: async (template: FlowTemplate) => {
-      const newFlow = await flowsApi.create({
-        displayName: template.name,
-        projectId: authenticationSession.getProjectId()!,
-      });
-      return await flowsApi.update(newFlow.id, {
-        type: FlowOperationType.IMPORT_FLOW,
-        request: {
-          displayName: template.name,
-          trigger: template.template.trigger,
-          schemaVersion: template.template.schemaVersion,
-        },
-      });
-    },
-    onSuccess: (flow) => {
-      navigate(`/flows/${flow.id}`);
-    },
-    onError: () => {
-      toast(INTERNAL_ERROR_TOAST);
-    },
-  });
+  const[queryParams] = useSearchParams();
+  const createFlow = () => {
+    const uriEncodedFlowTemplateJson = encodeURIComponent(
+      JSON.stringify(template),
+    );
+    const folderId = queryParams.get("folderId")
+    navigate(
+      `/create-flow?${FLOW_TEMPLATE_JSON_QUERY_PARAM}=${uriEncodedFlowTemplateJson}&${FOLDER_ID_QUERY_PARAM}=${folderId}`,
+    );
+  };
   return (
     <div
       key={template.id}
@@ -93,9 +68,8 @@ const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
       <div className="py-2 px-4 gap-1 flex items-center">
         <Button
           variant="default"
-          loading={isPending}
           className="px-2 h-8"
-          onClick={() => createFlow(template)}
+          onClick={() => createFlow()}
         >
           {t('Use Template')}
         </Button>

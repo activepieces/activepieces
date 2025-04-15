@@ -45,6 +45,7 @@ import { ChangePasswordPage } from '../routes/change-password';
 import { AppConnectionsPage } from '../routes/connections';
 import { EmbeddedConnectionDialog } from '../routes/embed/embedded-connection-dialog';
 import { FlowsPage } from '../routes/flows';
+import CreateFlowPage from '../routes/flows/create-flow';
 import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
@@ -82,7 +83,7 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
-
+const CREATE_FLOW_ROUTE = '/create-flow';
 const SettingsRerouter = () => {
   const { hash } = useLocation();
   const fragmentWithoutHash = hash.slice(1).toLowerCase();
@@ -130,6 +131,31 @@ const routes = [
       </AllowOnlyLoggedInUserOnlyGuard>
     ),
   }),
+  ...ProjectRouterWrapper({
+    path: '/flows/:flowId/versions/:versionId',
+    element: (
+      <AllowOnlyLoggedInUserOnlyGuard>
+        <RoutePermissionGuard permission={Permission.READ_FLOW}>
+          <PageTitle title="Builder">
+            <FlowBuilderPage checkVersionIdInRoute={true} />
+          </PageTitle>
+        </RoutePermissionGuard>
+      </AllowOnlyLoggedInUserOnlyGuard>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: CREATE_FLOW_ROUTE,
+    element: (
+      <AllowOnlyLoggedInUserOnlyGuard>
+        <RoutePermissionGuard permission={Permission.WRITE_FLOW}>
+          <PageTitle title="Builder">
+            <CreateFlowPage />
+          </PageTitle>
+        </RoutePermissionGuard>
+      </AllowOnlyLoggedInUserOnlyGuard>
+    ),
+  }),
+
   ...ProjectRouterWrapper({
     path: '/flow-import-redirect/:flowId',
     element: (
@@ -728,6 +754,9 @@ const ApRouter = () => {
         /\/projects\/[^/]+/,
         '',
       );
+      if (pathNameWithoutProjectOrProjectId === CREATE_FLOW_ROUTE) {
+        return;
+      }
       parentWindow.postMessage(
         {
           type: ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED,

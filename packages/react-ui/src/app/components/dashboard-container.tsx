@@ -1,9 +1,10 @@
 import { t } from 'i18next';
 import { ListTodo, Server, Table2, Workflow } from 'lucide-react';
-import { createContext, useState } from 'react';
+import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
+import { CloseTaskLimitAlertContext } from '@/features/flows/components/task-limit-alert';
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -37,10 +38,6 @@ const ProjectChangedRedirector = ({
   projectHooks.useReloadPageIfProjectIdChanged(currentProjectId);
   return children;
 };
-export const CloseTaskLimitAlertContext = createContext({
-  isAlertClosed: false,
-  setIsAlertClosed: (isAlertClosed: boolean) => {},
-});
 
 export function DashboardContainer({
   children,

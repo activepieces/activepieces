@@ -1,9 +1,8 @@
 import { t } from 'i18next';
 import { AlertCircle } from 'lucide-react';
-import { useContext } from 'react';
+import { createContext, useContext } from 'react';
 import { Link } from 'react-router-dom';
 
-import { CloseTaskLimitAlertContext } from '@/app/components/dashboard-container';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -13,6 +12,11 @@ import { ApFlagId, isNil, Permission } from '@activepieces/shared';
 
 const WARNING_PERCENTAGE = 0.65;
 const DESTRUCTIVE_PERCENTAGE = 0.85;
+export const CloseTaskLimitAlertContext = createContext({
+  isAlertClosed: false,
+  setIsAlertClosed: (isAlertClosed: boolean) => {},
+});
+
 export const TaskLimitAlert = () => {
   const { project } = projectHooks.useCurrentProject();
   const { data: showBilling } = flagsHooks.useFlag<boolean>(

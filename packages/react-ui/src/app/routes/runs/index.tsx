@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RunsTable } from '@/features/flow-runs/components/runs-table';
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 
-import TaskLimitAlert from '../flows/task-limit-alert';
+import TaskLimitAlert from '../../../features/flows/components/task-limit-alert';
 
 import IssuesPage from './issues/issues-table';
 
