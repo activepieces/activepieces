@@ -102,7 +102,6 @@ const ApTableHeader = ({ isFetchingNextPage }: ApTableHeaderProps) => {
                       onSelect={async () => {
                         await exportTable();
                       }}
-                      disabled={selectedRecords.size === 0}
                       className="flex gap-2 items-center"
                     >
                       <DownloadIcon className="size-4"></DownloadIcon>
