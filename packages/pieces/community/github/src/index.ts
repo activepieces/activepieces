@@ -12,7 +12,6 @@ import { githubGetIssueInformation } from './lib/actions/get-issue-information';
 import { githubCreateCommentOnAIssue } from './lib/actions/create-comment-on-a-issue';
 import { githubLockIssueAction } from './lib/actions/lock-issue';
 import { githubRawGraphqlQuery } from './lib/actions/raw-graphql-query';
-import { githubCreateIssueCommentAction } from './lib/actions/create-issue-comment';
 import { githubCreatePullRequestReviewCommentAction } from './lib/actions/create-pull-request-review-comment';
 import { githubCreateCommitCommentAction } from './lib/actions/create-commit-comment';
 import { githubCreateDiscussionCommentAction } from './lib/actions/create-discussion-comment';
@@ -40,7 +39,6 @@ export const github = createPiece({
     githubLockIssueAction,
     githubUnlockIssueAction,
     githubRawGraphqlQuery,
-    githubCreateIssueCommentAction,
     githubCreatePullRequestReviewCommentAction,
     githubCreateCommitCommentAction,
     githubCreateDiscussionCommentAction,
