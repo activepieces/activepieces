@@ -14,7 +14,7 @@ import {
 import { userHooks } from '@/hooks/user-hooks';
 import { PlatformRole } from '@activepieces/shared';
 
-import { Message } from './hooks/notifictions-hooks';
+import { Message } from './hooks/notifications-hooks';
 
 const platformDialogKey = 'platformAlertsLastDismissed';
 

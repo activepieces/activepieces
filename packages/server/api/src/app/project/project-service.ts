@@ -116,7 +116,7 @@ export const projectService = {
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
                     entityId: userId,
-                    entityType: 'project',
+                    entityType: 'user',
                 },
             })
         }

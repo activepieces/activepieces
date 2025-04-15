@@ -388,6 +388,10 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/briceflaceliere"><img src="https://avatars.githubusercontent.com/u/5811531?v=4?s=100" width="100px;" alt="Brice"/><br /><sub><b>Brice</b></sub></a><br /><a href="#security-briceflaceliere" title="Security">🛡️</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://mg-wunna.github.io/mg-wunna/"><img src="https://avatars.githubusercontent.com/u/63114419?v=4?s=100" width="100px;" alt="Mg Wunna"/><br /><sub><b>Mg Wunna</b></sub></a><br /><a href="#plugin-mg-wunna" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/harikrishnanum/"><img src="https://avatars.githubusercontent.com/u/61736905?v=4?s=100" width="100px;" alt="Harikrishnan U M"/><br /><sub><b>Harikrishnan U M</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Ahakrsh" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/perrine-pullicino-alan"><img src="https://avatars.githubusercontent.com/u/143406842?v=4?s=100" width="100px;" alt="perrine-pullicino-alan"/><br /><sub><b>perrine-pullicino-alan</b></sub></a><br /><a href="#plugin-perrine-pullicino-alan" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="http://kaovilai.pw"><img src="https://avatars.githubusercontent.com/u/11228024?v=4?s=100" width="100px;" alt="Tiger Kaovilai"/><br /><sub><b>Tiger Kaovilai</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=kaovilai" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

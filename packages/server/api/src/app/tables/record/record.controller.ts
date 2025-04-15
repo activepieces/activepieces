@@ -1,7 +1,6 @@
 import {
     CreateRecordsRequest,
     DeleteRecordsRequest,
-    ImportCsvRequestBody,
     ListRecordsRequest,
     Permission,
     PopulatedRecord,
@@ -90,22 +89,6 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
             filters: request.body.filters ?? null,
         })
     })
-    fastify.post('/import', ImportCsvRequest, async (request, reply) => {
-        const records = await recordService.importCsv({
-            tableId: request.body.tableId,
-            projectId: request.principal.projectId,
-            request: request.body,
-        })
-        await reply.status(StatusCodes.CREATED).send(records)
-        await sendRecordsWebhooks({
-            tableId: request.body.tableId,
-            projectId: request.principal.projectId,
-            records,
-            logger: request.log,
-            authorization: request.headers.authorization as string,
-            eventType: TableWebhookEventType.RECORD_CREATED,
-        })
-    })
 }
 
 const CreateRequest = {
@@ -187,21 +170,6 @@ const ListRequest = {
     },
 }
 
-const ImportCsvRequest = {
-    config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
-        permission: Permission.WRITE_TABLE,
-    },
-    schema: {
-        tags: ['records'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        description: 'Import a csv file to create new records',
-        body: ImportCsvRequestBody,
-        response: {
-            [StatusCodes.OK]: Type.Array(PopulatedRecord),
-        },
-    },
-}
 
 const sendRecordsWebhooks = async ({ tableId, projectId, records, logger, authorization, eventType }: { tableId: string, projectId: string, records: PopulatedRecord[], logger: FastifyBaseLogger, authorization: string, eventType: TableWebhookEventType })=>{
     const promises =  records.map((record)=>{

@@ -31,6 +31,7 @@ const getTimeUntilNextReset = (nextResetDate: string) => {
 
 const UsageLimitsButton = React.memo(() => {
   const { project, refetch } = projectHooks.useCurrentProject();
+
   useEffect(() => {
     return () => {
       refetch();

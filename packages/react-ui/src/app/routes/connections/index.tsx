@@ -10,7 +10,7 @@ import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CopyButton } from '@/components/ui/copy-button';
+import { CopyTextTooltip } from '@/components/ui/copy-text-tooltip';
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
@@ -272,21 +272,13 @@ function AppConnectionsPage() {
                 </TooltipContent>
               </Tooltip>
             )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="text-left">{row.original.displayName}</div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <div className="flex gap-2 items-center">
-                  {t('External ID')}: {row.original.externalId || '-'}{' '}
-                  <CopyButton
-                    withoutTooltip={true}
-                    variant="ghost"
-                    textToCopy={row.original.externalId || ''}
-                  ></CopyButton>
-                </div>
-              </TooltipContent>
-            </Tooltip>
+
+            <CopyTextTooltip
+              title={t('External ID')}
+              text={row.original.externalId || ''}
+            >
+              <div className="text-left">{row.original.displayName}</div>
+            </CopyTextTooltip>
           </div>
         );
       },
