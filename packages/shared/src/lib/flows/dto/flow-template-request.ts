@@ -1,7 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../../common'
-import { FlowVersion } from '../flow-version'
 import { Metadata } from '../../common/metadata'
+import { FlowVersion } from '../flow-version'
 
 export const FlowVersionTemplate = Type.Omit(
     FlowVersion,

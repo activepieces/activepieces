@@ -107,8 +107,8 @@ describe('Flow Templates', () => {
                 type: TemplateType.PLATFORM,
                 tags: mockTemplate.tags,
                 metadata: {
-                    foo: 'bar'
-                }
+                    foo: 'bar',
+                },
             }
 
             // act

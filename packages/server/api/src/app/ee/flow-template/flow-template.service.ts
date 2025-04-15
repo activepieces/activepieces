@@ -36,6 +36,7 @@ export const flowTemplateService = {
         const flowTemplate: FlowVersionTemplate = sanitizeObjectForPostgresql(template)
         const newTags = tags ?? []
         const newId = id ?? apId()
+
         await templateRepo().upsert(
             {
                 id: newId,
@@ -51,7 +52,7 @@ export const flowTemplateService = {
                 updated: new Date().toISOString(),
                 platformId,
                 projectId: type === TemplateType.PLATFORM ? undefined : projectId,
-                metadata: metadata as any || null,
+                metadata: (metadata as unknown) ?? null,
             },
             ['id'],
         )

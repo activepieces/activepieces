@@ -42,8 +42,8 @@ describe('Flow API', () => {
                 displayName: 'test flow',
                 projectId: mockProject.id,
                 metadata: {
-                    foo: 'bar'
-                }
+                    foo: 'bar',
+                },
             }
 
             // act

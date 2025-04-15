@@ -1,7 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
+import { Metadata } from '../../common/metadata'
 import { AppConnectionScope, AppConnectionType } from '../app-connection'
 import { OAuth2AuthorizationMethod } from '../oauth2-authorization-method'
-import { Metadata } from '../../common/metadata'
 
 const commonAuthProps = {
     externalId: Type.String({}),

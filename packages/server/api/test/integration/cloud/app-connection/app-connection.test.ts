@@ -74,8 +74,8 @@ describe('AppConnection API', () => {
                     secret_text: 'test-secret-text',
                 },
                 metadata: {
-                    foo: 'bar'
-                }
+                    foo: 'bar',
+                },
             }
 
             // act
@@ -103,15 +103,15 @@ describe('AppConnection API', () => {
                 body: {
                     displayName: 'Updated Connection Name',
                     metadata: {
-                        foo: 'baz'
-                    }
-                }
+                        foo: 'baz',
+                    },
+                },
             })
 
             expect(updateResponse?.statusCode).toBe(StatusCodes.OK)
             const updatedResponseBody = updateResponse?.json()
             expect(updatedResponseBody.metadata).toEqual({
-                foo: 'baz'
+                foo: 'baz',
             })
         })
 
