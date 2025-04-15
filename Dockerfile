@@ -21,7 +21,6 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 ENV NX_DAEMON=false
-ENV NX_SKIP_NX_CACHE=true
 
 
 RUN apt-get update \
@@ -49,8 +48,8 @@ COPY . .
 COPY .npmrc package.json package-lock.json ./
 RUN npm ci
 
-RUN npx nx run-many --target=build --projects=server-api --configuration production --skip-nx-cache
-RUN npx nx run-many --target=build --projects=react-ui --skip-nx-cache
+RUN npx nx run-many --target=build --projects=server-api --configuration production
+RUN npx nx run-many --target=build --projects=react-ui
 
 # Install backend production dependencies
 RUN cd dist/packages/server/api && npm install --production --force
