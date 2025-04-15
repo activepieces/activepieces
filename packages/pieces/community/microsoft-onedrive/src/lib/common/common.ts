@@ -97,7 +97,7 @@ async function getFoldersRecursively(
   parentPath = '',
   result: { label: string; id: string }[] = [])
   {
-    const url =  `${oneDriveCommon.baseUrl}/items/${folderId}/children?$select=id,name,folder&$filter=folder ne null`;
+    const url =  `${oneDriveCommon.baseUrl}/items/${folderId}/children?$select=id,name,folder`;
 
     try
     {
