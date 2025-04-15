@@ -35,7 +35,31 @@ interface GetMailProps {
 }
 
 export const GmailRequests = {
-  getMail: async ({ access_token, format, message_id }: GetMailProps) => {
+  modifyEmailLabels: async function(params: {
+    access_token: string;
+    message_id: string;
+    add_label_ids?: string[];
+    remove_label_ids?: string[];
+  }) {
+    const { access_token, message_id, add_label_ids, remove_label_ids } = params;
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: `https://gmail.googleapis.com/gmail/v1/users/me/messages/${message_id}/modify`,
+      body: {
+        addLabelIds: add_label_ids || [],
+        removeLabelIds: remove_label_ids || []
+      },
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: access_token
+      }
+    });
+    
+    return response.body;
+  },
+  
+  getMail: async function(params: GetMailProps) {
+    const { access_token, format, message_id } = params;
     const response = await httpClient.sendRequest<GmailMessage>({
       method: HttpMethod.GET,
       url: `https://gmail.googleapis.com/gmail/v1/users/me/messages/${message_id}`,
@@ -52,15 +76,15 @@ export const GmailRequests = {
     const payload = response.body.payload;
     let bodyParts = payload.parts || [];
     const headers = payload.headers.reduce(
-      (obj: { [key: string]: string }, header) => {
+      function(obj: { [key: string]: string }, header) {
         obj[header.name.toLowerCase()] = header.value;
         return obj;
       },
       {}
     );
-    const alternateBodyPart = bodyParts.find((part) =>
-      part.mimeType.startsWith('multipart/alternative')
-    );
+    const alternateBodyPart = bodyParts.find(function(part) {
+      return part.mimeType.startsWith('multipart/alternative');
+    });
     if (alternateBodyPart && alternateBodyPart?.parts) {
       bodyParts = alternateBodyPart.parts;
     }
@@ -71,8 +95,8 @@ export const GmailRequests = {
 
     if (isMultipart) {
       // If the message is multipart, extract the plain text and HTML parts
-      const textPart = bodyParts.find((part) => part.mimeType === 'text/plain');
-      const htmlPart = bodyParts.find((part) => part.mimeType === 'text/html');
+      const textPart = bodyParts.find(function(part) { return part.mimeType === 'text/plain'; });
+      const htmlPart = bodyParts.find(function(part) { return part.mimeType === 'text/html'; });
 
       // If the message is an "alternative" multipart, use the plain text part if it exists
       const preferredPart = textPart || htmlPart;
@@ -91,7 +115,8 @@ export const GmailRequests = {
       ...response.body,
     };
   },
-  getThread: async ({ access_token, format, thread_id }: GetMailProps) => {
+  getThread: async function(params: GetMailProps) {
+    const { access_token, format, thread_id } = params;
     const response = await httpClient.sendRequest<GmailThread>({
       method: HttpMethod.GET,
       url: `https://gmail.googleapis.com/gmail/v1/users/me/threads/${thread_id}`,
@@ -106,7 +131,7 @@ export const GmailRequests = {
 
     return response.body;
   },
-  getLabels: async (authentication: OAuth2PropertyValue) => {
+  getLabels: async function(authentication: OAuth2PropertyValue) {
     return await httpClient.sendRequest<{ labels: GmailLabel[] }>({
       method: HttpMethod.GET,
       url: `https://gmail.googleapis.com/gmail/v1/users/me/labels`,
@@ -116,12 +141,8 @@ export const GmailRequests = {
       },
     });
   },
-  searchMail: async ({
-    access_token,
-    max_results = 1,
-    page_token: pageToken,
-    ...mail
-  }: SearchMailProps) => {
+  searchMail: async function(params: SearchMailProps) {
+    const { access_token, max_results = 1, page_token: pageToken, ...mail } = params;
     const query = [];
 
     if (mail.from) query.push(`from:(${mail.from})`);
@@ -149,7 +170,7 @@ export const GmailRequests = {
     if (response.body.messages) {
       const messages = await Promise.all(
         response.body.messages.map(
-          async (message: { id: string; threadId: string }) => {
+          async function(message: { id: string; threadId: string }) {
             const mail = await GmailRequests.getMail({
               access_token,
               message_id: message.id,
@@ -186,9 +207,12 @@ function decodeBase64(data: any) {
   return Buffer.from(data, 'base64').toString();
 }
 
+// Import Node.js Buffer type
+/// <reference types="node" />
+
 export async function parseStream(stream: any) {
-  return new Promise<ParsedMail>((resolve, reject) => {
-    simpleParser(stream, (err, parsed) => {
+  return new Promise<ParsedMail>(function(resolve, reject) {
+    simpleParser(stream, function(err: Error | null, parsed: ParsedMail) {
       if (err) {
         reject(err);
       } else {
@@ -202,7 +226,7 @@ export async function convertAttachment(
   attachments: Attachment[],
   files: FilesService
 ) {
-  const promises = attachments.map(async (attachment) => {
+  const promises = attachments.map(async function(attachment) {
     try {
       const fileName = attachment.filename ?? `attachment-${Date.now()}`;
       return {
@@ -223,5 +247,5 @@ export async function convertAttachment(
     }
   });
   const results = await Promise.all(promises);
-  return results.filter((result) => result !== null);
+  return results.filter(function(result) { return result !== null; });
 }

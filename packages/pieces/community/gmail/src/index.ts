@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { gmailSendEmailAction } from './lib/actions/send-email-action';
+import { gmailLabelEmail } from './lib/actions/label-email-action';
 import { gmailNewEmailTrigger } from './lib/triggers/new-email';
 import { gmailNewLabeledEmailTrigger } from './lib/triggers/new-labeled-email';
 
@@ -19,6 +20,7 @@ export const gmailAuth = PieceAuth.OAuth2({
     'email',
     'https://www.googleapis.com/auth/gmail.readonly',
     'https://www.googleapis.com/auth/gmail.compose',
+    'https://www.googleapis.com/auth/gmail.modify',
   ],
 });
 
@@ -31,6 +33,7 @@ export const gmail = createPiece({
   ],
   actions: [
     gmailSendEmailAction,
+    gmailLabelEmail,
     createCustomApiCallAction({
       baseUrl: () => 'https://gmail.googleapis.com/gmail/v1',
       auth: gmailAuth,
