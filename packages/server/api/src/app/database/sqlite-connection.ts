@@ -91,6 +91,7 @@ import { AddDataColumnToFieldEntity1742390870702 } from './migration/sqlite/1742
 import { ChangeManualTasksToTodoSqlite1742432169253 } from './migration/sqlite/1742432169253-ChangeManualTasksToTodoSqlite'
 import { RenameApprovalUrlToResolveUrl1742991301509 } from './migration/sqlite/1742991301509-RenameApprovalUrlToResolveUrl'
 import { AddMCPSqlite1743127177235 } from './migration/sqlite/1743127177235-AddMCPSqlite'
+import { AddMetadataFields1743780156664 } from './migration/sqlite/1743780156664-AddMetadataFields'
 import { AddLastChangelogDismissedSQLITE1744053922591 } from './migration/sqlite/1744053922591-AddLastChangelogDismissedSQLITE'
 import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744104496262 } from './migration/sqlite/1744104496262-AddRecordIndexForTableIdAndProjectIdAndRecordId'
 
@@ -201,6 +202,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeManualTasksToTodoSqlite1742432169253,
         AddMCPSqlite1743127177235,
         RenameApprovalUrlToResolveUrl1742991301509,
+        AddMetadataFields1743780156664,
         AddRecordIndexForTableIdAndProjectIdAndRecordId1744104496262,
         AddLastChangelogDismissedSQLITE1744053922591,
     ]

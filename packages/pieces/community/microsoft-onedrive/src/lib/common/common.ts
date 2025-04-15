@@ -97,7 +97,7 @@ async function getFoldersRecursively(
   parentPath = '',
   result: { label: string; id: string }[] = [])
   {
-    const url =  `${oneDriveCommon.baseUrl}/items/${folderId}/children?$select=id,name,folder&$filter=folder ne null`;
+    const url =  `${oneDriveCommon.baseUrl}/items/${folderId}/children?$select=id,name,folder`;
 
     try
     {
@@ -112,7 +112,9 @@ async function getFoldersRecursively(
         }
       );
 
-      const folders = response.body.value;
+      const items = response.body.value;
+
+      const folders = items.filter(item => item.folder);
 
       for (const folder of folders) 
         {
@@ -134,5 +136,5 @@ async function getFoldersRecursively(
 interface getFoldersResponse {
   "@odata.nextLink"?: string;
     "@odata.deltaLink"?: string;
-    value:{id: string; name: string}[];
+    value:{id: string; name: string,folder?:{childCount:number}}[];
 }
