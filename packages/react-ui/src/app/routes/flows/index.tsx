@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -24,7 +24,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { SelectFlowTemplateDialog } from '@/features/flows/components/select-flow-template-dialog';
@@ -38,12 +37,11 @@ import {
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { formatUtils, NEW_FLOW_FOLDER_NAME_QUERY_PARAM, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
+import { formatUtils, NEW_FLOW_FOLDER_NAME_QUERY_PARAM } from '@/lib/utils';
 import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 
 import FlowActionMenu from '../../../app/components/flow-actions-menu';
 import { TableTitle } from '../../../components/ui/table-title';
-
 import TaskLimitAlert from '../../../features/flows/components/task-limit-alert';
 
 const filters = [
@@ -102,9 +100,9 @@ const FlowsPage = () => {
   });
 
   const createFlow = () => {
-    const folderId = searchParams.get(folderIdParamName)?? '';
+    const folderId = searchParams.get(folderIdParamName) ?? '';
     navigate(`/create-flow?${NEW_FLOW_FOLDER_NAME_QUERY_PARAM}=${folderId}`);
-  }
+  };
 
   const [selectedRows, setSelectedRows] = useState<Array<PopulatedFlow>>([]);
 
@@ -363,9 +361,7 @@ const FlowsPage = () => {
                     <span>{t('From scratch')}</span>
                   </DropdownMenuItem>
                   <SelectFlowTemplateDialog>
-                    <DropdownMenuItem
-                      onSelect={(e) => e.preventDefault()}
-                    >
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                       <Workflow className="h-4 w-4 me-2" />
                       <span>{t('Use a template')}</span>
                     </DropdownMenuItem>

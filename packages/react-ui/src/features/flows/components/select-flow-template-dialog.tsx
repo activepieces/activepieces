@@ -30,12 +30,8 @@ import {
 } from '@/components/ui/tooltip';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { templatesApi } from '@/features/templates/lib/templates-api';
-import {
-  MarkdownVariant,
-  FlowTemplate,
-} from '@activepieces/shared';
-
 import { FLOW_TEMPLATE_JSON_QUERY_PARAM } from '@/lib/utils';
+import { MarkdownVariant, FlowTemplate } from '@activepieces/shared';
 
 type TemplateCardProps = {
   template: FlowTemplate;
@@ -49,9 +45,13 @@ const TemplateCard = ({ template, onSelectTemplate }: TemplateCardProps) => {
   const navigate = useNavigate();
 
   const createFlow = () => {
-    const uriEncodedFlowTemplateJson = encodeURIComponent(JSON.stringify(template));
-    navigate(`/create-flow?${FLOW_TEMPLATE_JSON_QUERY_PARAM}=${uriEncodedFlowTemplateJson}`);
-  }
+    const uriEncodedFlowTemplateJson = encodeURIComponent(
+      JSON.stringify(template),
+    );
+    navigate(
+      `/create-flow?${FLOW_TEMPLATE_JSON_QUERY_PARAM}=${uriEncodedFlowTemplateJson}`,
+    );
+  };
   return (
     <div
       key={template.id}

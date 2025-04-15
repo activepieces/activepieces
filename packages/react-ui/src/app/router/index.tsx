@@ -45,6 +45,7 @@ import { ChangePasswordPage } from '../routes/change-password';
 import { AppConnectionsPage } from '../routes/connections';
 import { EmbeddedConnectionDialog } from '../routes/embed/embedded-connection-dialog';
 import { FlowsPage } from '../routes/flows';
+import CreateFlowPage from '../routes/flows/create-flow';
 import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
@@ -82,8 +83,7 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
-import CreateFlowPage from '../routes/flows/create-flow';
-
+const CREATE_FLOW_ROUTE = '/create-flow';
 const SettingsRerouter = () => {
   const { hash } = useLocation();
   const fragmentWithoutHash = hash.slice(1).toLowerCase();
@@ -144,7 +144,7 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/create-flow',
+    path: CREATE_FLOW_ROUTE,
     element: (
       <AllowOnlyLoggedInUserOnlyGuard>
         <RoutePermissionGuard permission={Permission.WRITE_FLOW}>
@@ -754,6 +754,9 @@ const ApRouter = () => {
         /\/projects\/[^/]+/,
         '',
       );
+      if (pathNameWithoutProjectOrProjectId === CREATE_FLOW_ROUTE) {
+        return;
+      }
       parentWindow.postMessage(
         {
           type: ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED,
