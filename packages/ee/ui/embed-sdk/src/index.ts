@@ -103,15 +103,17 @@ type newWindowFeatures = {
   top?: number,
   left?: number,
 }
+type RequestMethod = Required<Parameters<typeof fetch>>[1]['method'];
 export const _AP_MANAGED_TOKEN_LOCAL_STORAGE_KEY = "ap_managed_token"
 class ActivepiecesEmbedded {
-  readonly _sdkVersion = "0.3.5";
+  readonly _sdkVersion = "0.3.6";
   _prefix = '';
   _instanceUrl = '';
   _hideSidebar = false;
   _hideFolders = false;
   _hideLogoInBuilder = false;
   _hideFlowNameInBuilder = false;
+  //this is used to authenticate embedding for the first time
   _jwtToken = '';
   _disableNavigationInBuilder = true;
   _fontUrl?: string;
@@ -125,6 +127,12 @@ class ActivepiecesEmbedded {
   _parentOrigin = window.location.origin;
   readonly _MAX_CONTAINER_CHECK_COUNT = 100;
   readonly _HUNDRED_MILLISECONDS = 100;
+  _embeddingAuth?: {
+    //this is used to do authentication with the backend
+    userJwtToken:string,
+    platformId:string,
+    projectId:string
+  };
   configure({
     prefix,
     jwtToken,
@@ -166,6 +174,7 @@ class ActivepiecesEmbedded {
     this._fontUrl = embedding?.styling?.fontUrl;
     this._fontFamily = embedding?.styling?.fontFamily;
     this._navigationHandler = embedding?.navigation?.handler;
+    this.getEmbeddingAuth({jwtToken});
     if (embedding?.containerId) {
       return this._initializeBuilderAndDashboardIframe({
         containerSelector: `#${embedding.containerId}`
@@ -174,6 +183,7 @@ class ActivepiecesEmbedded {
     return new Promise((resolve) => { resolve({ status: "success" }) });
   }
 
+  
   private _initializeBuilderAndDashboardIframe = ({
     containerSelector
   }: {
@@ -243,7 +253,6 @@ class ActivepiecesEmbedded {
         }
       }
     };
-
     window.addEventListener('message', initialMessageHandler);
   }
   private connectToEmbed({ iframeContainer, initialRoute, callbackAfterConfigurationFinished }: {
@@ -473,6 +482,9 @@ class ActivepiecesEmbedded {
   private _removeTrailingSlashes(str: string) {
     return str.endsWith('/') ? str.slice(0, -1) : str;
   }
+  private _removeStartingSlashes(str: string) {
+    return str.startsWith('/') ? str.slice(1) : str;
+  }
   /**Adds a grace period before executing the method depending on the condition */
   private _addGracePeriodBeforeMethod({
     method,
@@ -511,6 +523,7 @@ class ActivepiecesEmbedded {
       ? this._parentOrigin + this._prefix
       : `${this._parentOrigin}/${this._prefix}`);
   }
+  
   private _errorCreator(message: string,...args:any[]): never {
     this._logger().error(message,...args)
     throw new Error(`Activepieces: ${message}`,);
@@ -539,6 +552,38 @@ class ActivepiecesEmbedded {
         console.warn(`Activepieces: ${message}`, ...args)
       }
     }
+  }
+  private async getEmbeddingAuth(params:{jwtToken:string} | undefined) {
+    if(this._embeddingAuth) {
+      return this._embeddingAuth;
+    }
+    const jwtToken = params?.jwtToken?? this._jwtToken;
+    if(!jwtToken) {
+      this._errorCreator('jwt token not found');
+    }
+    const response = await this.request({path: '/managed-authn/external-token', method: 'POST', body: {
+      externalAccessToken: jwtToken,
+    }})
+    this._embeddingAuth = {
+      userJwtToken: response.token,
+      platformId: response.platformId,
+      projectId: response.projectId,
+    }
+    return this._embeddingAuth;
+  }
+  request({path, method, body, queryParams}:{path:string, method: RequestMethod, body?:Record<string, unknown>, queryParams?:Record<string, string>}) {
+    const headers:Record<string, string> = {
+      'Content-Type': 'application/json'
+    }
+    if(this._embeddingAuth) {
+      headers['Authorization'] = `Bearer ${this._embeddingAuth.userJwtToken}`
+    }
+    const queryParamsString = queryParams ? `?${new URLSearchParams(queryParams).toString()}` : '';
+     return fetch(`${this._removeTrailingSlashes(this._instanceUrl)}/api/v1/${this._removeStartingSlashes(path)}${queryParamsString}`, {
+      method,
+      body: body ? JSON.stringify(body) : undefined,
+      headers,
+     }).then(res => res.json())
   }
 
 }
