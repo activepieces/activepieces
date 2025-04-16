@@ -1,4 +1,4 @@
-import { ALL_PRINCIPAL_TYPES, ApId, apId, MCP, Permission, PrincipalType } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, ApId, apId, MCP, Permission, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
@@ -52,6 +52,9 @@ export const UpdateMCPRequest = {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
+        tags: ['mcp'],
+        description: 'Update a MCP',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: Type.Object({
             id: ApId,
         }),
