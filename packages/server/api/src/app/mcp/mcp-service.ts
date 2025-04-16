@@ -1,15 +1,15 @@
-import { ActivepiecesError, apId, ApId, AppConnectionWithoutSensitiveData, ErrorCode, isNil, MCPSchema, spreadIfDefined } from '@activepieces/shared'
+import { ActivepiecesError, apId, ApId, Cursor, ErrorCode, isNil, MCPWithPieces, SeekPage, spreadIfDefined } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { In } from 'typeorm'
-import { appConnectionService, appConnectionsRepo } from '../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../core/db/repo-factory'
+import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { MCPEntity } from './mcp-entity'
+import { mcpPieceService } from './mcp-piece-service'
 
 const repo = repoFactory(MCPEntity)
 
 export const mcpService = (_log: FastifyBaseLogger) => ({
-    async getOrCreate({ projectId }: { projectId: ApId }): Promise<MCPSchema> {
+    async getOrCreate({ projectId }: { projectId: ApId }): Promise<MCPWithPieces> {
         const existingMCP = await repo().findOneBy({ projectId })
         if (!isNil(existingMCP)) {
             return this.getOrThrow({ mcpId: existingMCP.id, log: _log })
@@ -24,7 +24,20 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         return this.getOrThrow({ mcpId: mcp.id, log: _log })
     },
 
-    async getOrThrow({ mcpId }: GetOrThrowParams): Promise<MCPSchema> {
+    async list({ projectId, cursorRequest, limit = 10 }: ListParams): Promise<SeekPage<MCPWithPieces>> {
+        const existingMCP = await repo().findOneBy({ projectId })
+        
+        if (isNil(existingMCP)) {
+            const newMCP = await this.getOrCreate({ projectId })
+            return paginationHelper.createPage<MCPWithPieces>([newMCP], null)
+        }
+        
+        const mcpWithPieces = await this.getOrThrow({ mcpId: existingMCP.id })
+        
+        return paginationHelper.createPage<MCPWithPieces>([mcpWithPieces], null)
+    },
+
+    async getOrThrow({ mcpId }: { mcpId: string }): Promise<MCPWithPieces> {
         const mcp = await repo().findOneBy({ id: mcpId })
 
         if (isNil(mcp)) {
@@ -35,72 +48,42 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         }
         return {
             ...mcp,
-            connections: await listConnections({ mcpId: mcp.id, log: _log }),
+            pieces: await mcpPieceService(_log).list(mcp.id),
         }
     },
 
-    async getByToken({ token }: { token: string }): Promise<MCPSchema> {
-        const mcp = await repo().findOne({
-            where: { token },
-        })
+    async getByToken({ token }: { token: string }): Promise<MCPWithPieces> {
+        const mcp = await repo().findOne({ where: { token } })
         if (isNil(mcp)) {
             throw new ActivepiecesError({
                 code: ErrorCode.MCP_NOT_FOUND,
                 params: { id: token },
             })
         }
-        return this.getOrThrow({ mcpId: mcp.id, log: _log })
+        return this.getOrThrow({ mcpId: mcp.id })
     },
 
-
-    async update({ mcpId, token, connectionsIds }: UpdateParams): Promise<MCPSchema> {
-        const mcp = await this.getOrThrow({ mcpId, log: _log })
-
-        if (!isNil(connectionsIds)) {
-            await appConnectionsRepo().update({
-                id: In(connectionsIds),
-            }, {
-                mcpId: mcp.id,
-            })
-        }
+    async update({ mcpId, token }: UpdateParams): Promise<MCPWithPieces> {
 
         await repo().update(mcpId, {
             ...spreadIfDefined('token', token),
             updated: dayjs().toISOString(),
         })
 
-        return this.getOrThrow({ mcpId, log: _log })
+        return this.getOrThrow({ mcpId })
     },
 
-    async delete({ mcpId }: { mcpId: ApId }): Promise<void> {
-        const mcp = await this.getOrThrow({ mcpId, log: _log })
-
-        await repo().delete({ id: mcp.id })
-    },
 
 })
 
-async function listConnections({ mcpId, log }: GetOrThrowParams): Promise<AppConnectionWithoutSensitiveData[]> {
-    const connections = await appConnectionsRepo().find({
-        where: {
-            mcpId,
-        },
-    })
-
-    return Promise.all(connections.map(connection => appConnectionService(log).getOneOrThrowWithoutValue({
-        id: connection.id,
-        platformId: connection.platformId,
-        projectId: connection.projectIds?.[0],
-    })))
+type ListParams = {
+    projectId: ApId
+    cursorRequest?: Cursor | null
+    limit?: number
 }
 
 type UpdateParams = {
     mcpId: ApId
     token?: string
-    connectionsIds?: string[]
 }
 
-type GetOrThrowParams = {
-    mcpId: ApId
-    log: FastifyBaseLogger
-}

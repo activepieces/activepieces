@@ -5,7 +5,6 @@ import {
 } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
-    ApIdSchema,
     ARRAY_COLUMN_TYPE,
     BaseColumnSchemaPart,
     isPostgres,
@@ -16,7 +15,6 @@ import { EncryptedObject } from '../helper/encryption'
 export type AppConnectionSchema = Omit<AppConnection, 'value'> & {
     value: EncryptedObject
     owner: User
-    mcpId?: string
 }
 
 export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
@@ -45,10 +43,6 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
         },
         ownerId: {
             type: String,
-            nullable: true,
-        },
-        mcpId: {
-            ...ApIdSchema,
             nullable: true,
         },
         projectIds: {
@@ -80,10 +74,7 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
             name: 'idx_app_connection_owner_id',
             columns: ['ownerId'],
         },
-        {
-            name: 'idx_app_connection_mcp_id',
-            columns: ['mcpId'],
-        },
+
     ],
     relations: {
         owner: {
