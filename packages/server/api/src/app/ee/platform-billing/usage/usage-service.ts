@@ -34,9 +34,10 @@ export const usageService = (log: FastifyBaseLogger) => ({
 
     async resetRedisUsageTasks({projectId, platformId}: {projectId: string, platformId: string}): Promise<void> { 
         const redisConnection = getRedisConnection()
-        const key = redisKeyGenerator(projectId, BillingEntityType.PROJECT, getCurrentBillingPeriodStart(), BillingUsageType.TASKS)
+        const projectRedisKey = redisKeyGenerator(projectId, BillingEntityType.PROJECT, getCurrentBillingPeriodStart(), BillingUsageType.TASKS)
         const platformRedisKey = redisKeyGenerator(platformId, BillingEntityType.PLATFORM,getCurrentBillingPeriodStart(), BillingUsageType.TASKS)
-        await redisConnection.set(key,0)
+        await redisConnection.set(projectRedisKey,0)
+        await redisConnection.set(platformRedisKey,0)
     },
     async getUsageForBillingPeriod(entityId: string, entityType: BillingEntityType): Promise<ProjectUsage> {
         const startBillingPeriod = getCurrentBillingPeriodStart()
