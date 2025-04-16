@@ -12,11 +12,20 @@ const USE_SIGNED_URL = (process.env.AP_S3_USE_SIGNED_URLS === 'true') && FILE_ST
 let lastScheduledUpdateId: NodeJS.Timeout | null = null
 let lastActionExecutionTime: number | undefined = undefined
 let lastRequestHash: string | undefined = undefined
+let isGraceShutdownSignalReceived = false
 const MAXIMUM_UPDATE_THRESHOLD = 15000
 const DEBOUNCE_THRESHOLD = 5000
 const lock = new Mutex()
 const updateLock = new Mutex()
 const fetchWithRetry = fetchRetry(global.fetch)
+
+process.on('SIGTERM', () => {
+    isGraceShutdownSignalReceived = true
+})
+
+process.on('SIGINT', () => {
+    isGraceShutdownSignalReceived = true
+})
 
 export const progressService = {
     sendUpdate: async (params: UpdateStepProgressParams): Promise<void> => {
@@ -26,7 +35,8 @@ export const progressService = {
             }
 
             const shouldUpdateNow = isNil(lastActionExecutionTime) || (Date.now() - lastActionExecutionTime > MAXIMUM_UPDATE_THRESHOLD)
-            if (shouldUpdateNow || params.updateImmediate) {
+
+            if (shouldUpdateNow || params.updateImmediate || isGraceShutdownSignalReceived) {
                 await sendUpdateRunRequest(params)
                 return
             }
