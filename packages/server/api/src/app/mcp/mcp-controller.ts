@@ -44,11 +44,12 @@ export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
 const GetMCPRequest = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
+    
+    },
+    schema: {
         tags: ['mcp'],
         description: 'Get the project MCP server configuration',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-    },
-    schema: {
         response: {
             [StatusCodes.OK]: MCP,
         },
