@@ -1,17 +1,27 @@
 import { t } from 'i18next';
 import { History, AlertCircle } from 'lucide-react';
+import { useState } from 'react';
 
 import { TableTitle } from '@/components/ui/table-title';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RunsTable } from '@/features/flow-runs/components/runs-table';
-// import IssuesTable from '@/features/issues/components/issues-table';
-// import { issueHooks } from '@/features/issues/hooks/issue-hooks';
+import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 
 import TaskLimitAlert from '../flows/task-limit-alert';
+
+import IssuesPage from './issues/issues-table';
+
+export enum FlowRunsTabs {
+  HISTORY = 'history',
+  ISSUES = 'issues',
+}
 
 const FlowRunsPage = () => {
   // const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
   const showIssuesNotification = false;
+  const [activeTab, setActiveTab] = useState<FlowRunsTabs>(
+    FlowRunsTabs.HISTORY,
+  );
 
   return (
     <div className="flex flex-col gap-4 grow">
@@ -24,13 +34,17 @@ const FlowRunsPage = () => {
         >
           {t('Flow Runs')}
         </TableTitle>
-        <Tabs defaultValue="history" className="w-full">
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as FlowRunsTabs)}
+          className="w-full"
+        >
           <TabsList variant="outline">
-            <TabsTrigger value="history" variant="outline">
+            <TabsTrigger value={FlowRunsTabs.HISTORY} variant="outline">
               <History className="mr-2 h-4 w-4" />
               {t('History')}
             </TabsTrigger>
-            {/* <TabsTrigger value="issues" variant="outline">
+            {/* <TabsTrigger value={FlowRunsTabs.ISSUES} variant="outline">
               <span className="flex items-center gap-2">
                 <AlertCircle className="mr-2 h-4 w-4" />
                 {t('Issues')}
@@ -40,11 +54,11 @@ const FlowRunsPage = () => {
               </span>
             </TabsTrigger> */}
           </TabsList>
-          <TabsContent value="history">
+          <TabsContent value={FlowRunsTabs.HISTORY}>
             <RunsTable />
           </TabsContent>
-          {/* <TabsContent value="issues">
-            <IssuesTable />
+          {/* <TabsContent value={FlowRunsTabs.ISSUES}>
+            <IssuesPage setActiveTab={setActiveTab} />
           </TabsContent> */}
         </Tabs>
       </div>
