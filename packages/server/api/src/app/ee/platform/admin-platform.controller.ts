@@ -20,7 +20,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
         })
         app.post('/reset-redis-usage-tasks', AdminResetRedisUsageTasksRequest, async (req)=>{
             await usageService(req.log).resetRedisUsageTasks({
-                projectId: req.body.projectId,
+                projectId: req.body.projectId_for_customer,
                 platformId: req.body.platformId,
             })
         })
@@ -54,7 +54,7 @@ const AdminRetryRunsRequest = {
 
 
 const AdminResetRedisUsageTasksRequestBody = Type.Object({
-    projectId: Type.String(),
+    projectId_for_customer: Type.String(),
     platformId: Type.String(),
 })
 
