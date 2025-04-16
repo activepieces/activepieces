@@ -3,7 +3,7 @@ import { createAction } from '@activepieces/pieces-framework';
 export const getRunId = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'getRunId',
-  displayName: 'Get Run ID',
+  displayName: 'Get Run Info',
   description: '',
   props: {},
   async run(context) {
