@@ -264,18 +264,8 @@
             "endpoints/flow-templates/get",
             "endpoints/flow-templates/list"
           ]
-        },
-        {
-          "group": "MCP",
-          "icon": "globe",
-          "pages": [
-            "endpoints/mcp/schema",
-            "endpoints/mcp/get",
-            "endpoints/mcp/update",
-            "endpoints/mcp/rotate",
-            "endpoints/mcp/delete"
-          ]
         }
+      
       ]
     },
     {
