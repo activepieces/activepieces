@@ -44,6 +44,14 @@ export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
 const GetMCPRequest = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        tags: ['mcp'],
+        description: 'Get the project MCP server configuration',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+    },
+    schema: {
+        response: {
+            [StatusCodes.OK]: MCP,
+        },
     },
 }
 
@@ -53,7 +61,7 @@ export const UpdateMCPRequest = {
     },
     schema: {
         tags: ['mcp'],
-        description: 'Update a MCP',
+        description: 'Update the project MCP server configuration',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: Type.Object({
             id: ApId,
@@ -73,6 +81,9 @@ const RotateTokenRequest = {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
+        tags: ['mcp'],
+        description: 'Rotate the MCP token',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: Type.Object({
             id: ApId,
         }),
@@ -88,6 +99,9 @@ const DeleteMCPRequest = {
         allowedPrincipals: [PrincipalType.USER],
     },
     schema: {
+        tags: ['mcp'],
+        description: 'Delete the project MCP server configuration',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: Type.Object({
             id: ApId,
         }),

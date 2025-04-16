@@ -264,6 +264,17 @@
             "endpoints/flow-templates/get",
             "endpoints/flow-templates/list"
           ]
+        },
+        {
+          "group": "MCP",
+          "icon": "globe",
+          "pages": [
+            "endpoints/mcp/schema",
+            "endpoints/mcp/get",
+            "endpoints/mcp/update",
+            "endpoints/mcp/rotate",
+            "endpoints/mcp/delete"
+          ]
         }
       ]
     },
@@ -406,6 +417,7 @@
         "embedding/navigation",
         "embedding/customize-pieces",
         "embedding/embed-connections",
+        "embedding/sdk-server-requests",
         "embedding/sdk-changelog"
       ]
     },
