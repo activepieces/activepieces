@@ -1,8 +1,6 @@
+import { MCPSchema } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
-import { MCPSchema } from '@activepieces/shared'
-
-
 
 
 export const MCPEntity = new EntitySchema<MCPSchema>({

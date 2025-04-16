@@ -48,8 +48,8 @@ import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
 // import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
-// import IssuesPage from '../routes/issues';
-// import SettingsBilling from '../routes/platform/billing';
+import MCPPage from '../routes/mcp';
+import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
 import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
@@ -68,8 +68,7 @@ import { FlowRunPage } from '../routes/runs/id';
 import AppearancePage from '../routes/settings/appearance';
 // import { EnvironmentPage } from '../routes/settings/environment';
 import GeneralPage from '../routes/settings/general';
-// import MCPPage from '../routes/settings/mcp';
-// import TeamPage from '../routes/settings/team';
+import TeamPage from '../routes/settings/team';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
 import { ShareTemplatePage } from '../routes/templates/share-template';
@@ -225,18 +224,6 @@ const routes = [
       </RoutePermissionGuard>
     ),
   }),
-  // ...ProjectRouterWrapper({
-  //   path: '/issues',
-  //   element: (
-  //     <DashboardContainer>
-  //       <RoutePermissionGuard permission={Permission.READ_ISSUES}>
-  //         <PageTitle title="Issues">
-  //           <IssuesPage />
-  //         </PageTitle>
-  //       </RoutePermissionGuard>
-  //     </DashboardContainer>
-  //   ),
-  // }),
   ...ProjectRouterWrapper({
     path: '/connections',
     element: (
@@ -409,18 +396,18 @@ const routes = [
   //   ),
   // }),
 
-  // ...ProjectRouterWrapper({
-  //   path: '/mcp',
-  //   element: (
-  //     <DashboardContainer>
-  //       <RoutePermissionGuard permission={Permission.READ_MCP}>
-  //         <PageTitle title="MCP">
-  //           <MCPPage />
-  //         </PageTitle>
-  //       </RoutePermissionGuard>
-  //     </DashboardContainer>
-  //   ),
-  // }),
+  ...ProjectRouterWrapper({
+    path: '/mcp',
+    element: (
+      <DashboardContainer>
+        <RoutePermissionGuard permission={Permission.READ_MCP}>
+          <PageTitle title="MCP">
+            <MCPPage />
+          </PageTitle>
+        </RoutePermissionGuard>
+      </DashboardContainer>
+    ),
+  }),
 
   {
     path: '/invitation',

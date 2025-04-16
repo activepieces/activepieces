@@ -1,15 +1,19 @@
-import { PieceProperty, PropertyType } from '@activepieces/pieces-framework'
+import { PropertyType } from '@activepieces/pieces-framework'
 import { UserInteractionJobType } from '@activepieces/server-shared'
-import { EngineResponseStatus, ExecuteActionResponse, isNil } from '@activepieces/shared'
+import { EngineResponseStatus, ExecuteActionResponse, FlowStatus, FlowVersionState, GetFlowVersionForWorkerRequestType, isNil, MCPTrigger, TriggerType } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { FastifyBaseLogger, FastifyReply } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { EngineHelperResponse } from 'server-worker'
-import { z } from 'zod'
+import { flowService } from '../flows/flow/flow.service'
 import { pieceMetadataService } from '../pieces/piece-metadata-service'
 import { projectService } from '../project/project-service'
+import { webhookSimulationService } from '../webhooks/webhook-simulation/webhook-simulation-service'
+import { webhookService } from '../webhooks/webhook.service'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 import { mcpService } from './mcp-service'
+import { MAX_TOOL_NAME_LENGTH, mcpPropertyToZod, piecePropertyToZod } from './mcp-utils'
 
 export async function createMcpServer({
     mcpId,
@@ -44,9 +48,10 @@ export async function createMcpServer({
                 return
             }
             const pieceConnectionExternalId = connections.find(connection => connection.pieceName === piece.name)?.externalId
-            uniqueActions.add(action.name)
+            const actionName = `${piece.name.split('piece-')[1]}-${action.name}`.slice(0, MAX_TOOL_NAME_LENGTH)
+            uniqueActions.add(actionName)
             server.tool(
-                action.name,
+                actionName,
                 action.description,
                 Object.fromEntries(
                     Object.entries(action.props).filter(([_key, prop]) => prop.type !== PropertyType.MARKDOWN).map(([key, prop]) =>
@@ -99,50 +104,74 @@ export async function createMcpServer({
         }),
     )
 
+    const flows = await flowService(logger).list({ 
+        projectId,
+        cursorRequest: null,
+        limit: 100,
+        folderId: undefined,
+        status: [FlowStatus.ENABLED],
+        name: undefined,
+        versionState: FlowVersionState.LOCKED,
+    })
+
+    const mcpFlows = flows.data.filter((flow) => 
+        flow.version.trigger.type === TriggerType.PIECE &&
+        flow.version.trigger.settings.pieceName === '@activepieces/piece-mcp',
+    )
+
+    for (const flow of mcpFlows) {
+        const triggerSettings = flow.version.trigger.settings as MCPTrigger
+        const toolName = ('flow_' + triggerSettings.input?.toolName).slice(0, MAX_TOOL_NAME_LENGTH)
+        const toolDescription = triggerSettings.input?.toolDescription
+        const inputSchema = triggerSettings.input?.inputSchema
+        const returnsResponse = triggerSettings.input?.returnsResponse
+
+        const zodFromInputSchema = Object.fromEntries(
+            inputSchema.map((prop) => [prop.name, mcpPropertyToZod(prop)]),
+        )
+
+        server.tool(
+            toolName,
+            toolDescription,
+            zodFromInputSchema,
+            async (params) => { 
+                const response = await webhookService.handleWebhook({
+                    data: () => {
+                        return Promise.resolve({
+                            body: {},
+                            method: 'POST',
+                            headers: {},
+                            queryParams: {},
+                        })
+                    },
+                    logger,
+                    flowId: flow.id,
+                    async: !returnsResponse,
+                    flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
+                    saveSampleData: await webhookSimulationService(logger).exists(
+                        flow.id,
+                    ),
+                    payload: params,
+                })
+                if (response.status !== StatusCodes.OK) {
+                    return {
+                        content: [{
+                            type: 'text',
+                            text: `❌ Error executing flow ${flow.version.displayName}\n\n\`\`\`\n${response || 'Unknown error occurred'}\n\`\`\``,
+                        }],
+                    }
+                }
+                return {
+                    content: [{
+                        type: 'text',
+                        text: `✅ Successfully executed flow ${flow.version.displayName}\n\n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\``,
+                    }],
+                }
+            },
+        )
+    }
+
     return { server, transport }
-}
-
-function piecePropertyToZod(property: PieceProperty): z.ZodTypeAny {
-    let schema: z.ZodTypeAny
-
-    switch (property.type) {
-        case PropertyType.SHORT_TEXT:
-        case PropertyType.LONG_TEXT:
-        case PropertyType.DATE_TIME:
-            schema = z.string()
-            break
-        case PropertyType.NUMBER:
-            schema = z.number()
-            break
-        case PropertyType.CHECKBOX:
-            schema = z.boolean()
-            break
-        case PropertyType.ARRAY:
-            schema = z.array(z.unknown())
-            break
-        case PropertyType.OBJECT:
-        case PropertyType.JSON:
-            schema = z.record(z.string(), z.unknown())
-            break
-        case PropertyType.MULTI_SELECT_DROPDOWN:
-            schema = z.array(z.string())
-            break
-        case PropertyType.DROPDOWN:
-            schema = z.string()
-            break
-        default:
-            schema = z.unknown()
-    }
-
-    if (property.defaultValue) {
-        schema = schema.default(property.defaultValue)
-    }
-
-    if (property.description) {
-        schema = schema.describe(property.description)
-    }
-
-    return property.required ? schema : schema.optional()
 }
 
 export type CreateMcpServerRequest = {
@@ -150,8 +179,8 @@ export type CreateMcpServerRequest = {
     reply: FastifyReply
     logger: FastifyBaseLogger
 }
-
 export type CreateMcpServerResponse = {
     server: McpServer
     transport: SSEServerTransport
 }
+
