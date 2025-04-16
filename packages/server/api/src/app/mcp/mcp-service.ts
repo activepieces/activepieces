@@ -12,7 +12,7 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
     async getOrCreate({ projectId }: { projectId: ApId }): Promise<MCPWithPieces> {
         const existingMCP = await repo().findOneBy({ projectId })
         if (!isNil(existingMCP)) {
-            return this.getOrThrow({ mcpId: existingMCP.id, log: _log })
+            return this.getOrThrow({ mcpId: existingMCP.id })
         }
         const mcp = await repo().save({
             id: apId(),
@@ -21,10 +21,10 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
             created: dayjs().toISOString(),
             updated: dayjs().toISOString(),
         })
-        return this.getOrThrow({ mcpId: mcp.id, log: _log })
+        return this.getOrThrow({ mcpId: mcp.id })
     },
 
-    async list({ projectId, cursorRequest, limit = 10 }: ListParams): Promise<SeekPage<MCPWithPieces>> {
+    async list({ projectId }: ListParams): Promise<SeekPage<MCPWithPieces>> {
         const existingMCP = await repo().findOneBy({ projectId })
         
         if (isNil(existingMCP)) {
