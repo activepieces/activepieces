@@ -20,7 +20,7 @@ export async function createMcpServer({
     reply,
     logger,
 }: CreateMcpServerRequest): Promise<CreateMcpServerResponse> {
-    const mcp = await mcpService(logger).getOrThrow({ mcpId, log: logger })
+    const mcp = await mcpService(logger).getOrThrow({ mcpId })
     const projectId = mcp.projectId
     const platformId = await projectService.getPlatformId(projectId)
 
