@@ -1,15 +1,15 @@
-import { PopulatedFlow, McpPieceWithConnection } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus, ArrowDown, ArrowUp } from 'lucide-react';
 import { useState } from 'react';
 
-import { McpFlowCard } from './mcp-flow-card';
-import { McpPiece } from './mcp-piece';
-import { McpPieceDialog } from './mcp-piece-dialog';
-
 import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { PopulatedFlow, McpPieceWithConnection } from '@activepieces/shared';
+
+import { McpFlowCard } from './mcp-flow-card';
+import { McpPiece } from './mcp-piece';
+import { McpPieceDialog } from './mcp-piece-dialog';
 
 // Define a union type for tool items
 type ToolItem = McpPieceWithConnection | PopulatedFlow;
@@ -124,7 +124,7 @@ export const McpToolsSection = ({
     if (type === 'pieces') {
       // For connections, we need to replace the button in the empty message with our dialog
       return (
-        <McpPieceDialog >
+        <McpPieceDialog>
           <div className="flex">
             <div
               className={`w-64 flex flex-col items-center justify-center py-6 px-5 text-muted-foreground ${

@@ -149,7 +149,9 @@ export const SearchableSelect = <T extends React.Key>({
           >
             <span className="flex w-full truncate select-none">
               {selectedIndex > -1 && options[selectedIndex]
-                ? valuesRendering ? valuesRendering(options[selectedIndex].value) : options[selectedIndex].label
+                ? valuesRendering
+                  ? valuesRendering(options[selectedIndex].value)
+                  : options[selectedIndex].label
                 : placeholder}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -226,8 +228,10 @@ export const SearchableSelect = <T extends React.Key>({
                         <div className="flex gap-2 items-center justify-between w-full">
                           {option.label === '' ? (
                             <span className="">&nbsp;</span>
+                          ) : valuesRendering ? (
+                            valuesRendering(option.value)
                           ) : (
-                            valuesRendering ? valuesRendering(option.value) : option.label
+                            option.label
                           )}
                           <Check
                             className={cn('flex-shrink-0 w-4 h-4', {

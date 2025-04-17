@@ -1,14 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
-import { mcpApi } from "./mcp-api";
+import { useQuery } from '@tanstack/react-query';
 
+import { mcpApi } from './mcp-api';
 
 export const mcpHooks = {
-    useMcp: () => {
+  useMcp: () => {
     return useQuery({
-            queryKey: ['mcp'],
-            queryFn: () => {
-              return mcpApi.get();
-            },
-          });
-    }
-}
+      queryKey: ['mcp'],
+      queryFn: () => {
+        return mcpApi.get();
+      },
+    });
+  },
+};

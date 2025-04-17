@@ -1,22 +1,7 @@
-import {
-  TriggerType,
-  FlowOperationType,
-  assertNotNullOrUndefined,
-  Trigger,
-  FlowOperationRequest,
-  PopulatedFlow,
-  Permission,
-  ApFlagId,
-  McpPieceStatus,
-  McpPieceWithConnection,
-} from '@activepieces/shared';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Hammer, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
-import { McpClientTabs } from './mcp-client-tabs';
-import { McpToolsSection } from '../../../features/mcp/components/mcp-tools-section';
 
 import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
 import { useTheme } from '@/components/theme-provider';
@@ -26,6 +11,7 @@ import { TableTitle } from '@/components/ui/table-title';
 import { useToast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { mcpApi } from '@/features/mcp/lib/mcp-api';
+import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import {
   PieceStepMetadataWithSuggestions,
@@ -34,7 +20,21 @@ import {
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
+import {
+  TriggerType,
+  FlowOperationType,
+  assertNotNullOrUndefined,
+  Trigger,
+  FlowOperationRequest,
+  PopulatedFlow,
+  Permission,
+  ApFlagId,
+  McpPieceWithConnection,
+} from '@activepieces/shared';
+
+import { McpToolsSection } from '../../mcp/mcp-tools-section';
+
+import { McpClientTabs } from './mcp-client-tabs';
 
 export default function MCPPage() {
   const { theme } = useTheme();
@@ -48,7 +48,7 @@ export default function MCPPage() {
     type: 'trigger',
   });
 
-  const { data: mcp, isLoading: isLoading, refetch: refetchMcp } = mcpHooks.useMcp();
+  const { data: mcp, isLoading, refetch: refetchMcp } = mcpHooks.useMcp();
 
   const { data: flowsData, isLoading: isFlowsLoading } = useQuery({
     queryKey: ['mcp-flows'],
@@ -74,12 +74,9 @@ export default function MCPPage() {
     },
   });
 
-  const serverUrl =
-    publicUrl + 'api/v1/mcp/' + (mcp?.token || '') + '/sse';
+  const serverUrl = publicUrl + 'api/v1/mcp/' + (mcp?.token || '') + '/sse';
 
   const { pieces } = piecesHooks.usePieces({});
-
- 
 
   const rotateMutation = useMutation({
     mutationFn: async (mcpId: string) => {
@@ -208,8 +205,6 @@ export default function MCPPage() {
     };
   };
 
-
-
   const pieceInfoMap: Record<
     string,
     { displayName: string; logoUrl?: string }
@@ -310,9 +305,7 @@ export default function MCPPage() {
             pieceInfoMap={pieceInfoMap}
             canAddTool={true}
             addButtonLabel={t('Add Piece')}
-            isPending={
-              removePieceMutation.isPending
-            }
+            isPending={removePieceMutation.isPending}
           />
 
           {/* Flows Section */}
