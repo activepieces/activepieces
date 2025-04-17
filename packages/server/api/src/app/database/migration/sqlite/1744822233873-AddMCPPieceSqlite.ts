@@ -5,24 +5,7 @@ export class AddMCPPieceSqlite1744822233873 implements MigrationInterface {
     name = 'AddMCPPieceSqlite1744822233873'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        // First, for each mcpId and pieceName combination, keep only one connection and delete the rest
-        await queryRunner.query(`
-            WITH RankedConnections AS (
-                SELECT 
-                    id,
-                    mcpId,
-                    pieceName,
-                    ROW_NUMBER() OVER (PARTITION BY mcpId, pieceName ORDER BY created ASC) as rn
-                FROM "app_connection"
-                WHERE "mcpId" IS NOT NULL
-            )
-            DELETE FROM "app_connection"
-            WHERE id IN (
-                SELECT id 
-                FROM RankedConnections 
-                WHERE rn > 1
-            )
-        `)
+
 
         // Drop the old index
         await queryRunner.query(`
@@ -58,9 +41,22 @@ export class AddMCPPieceSqlite1744822233873 implements MigrationInterface {
 
         // Get all app connections with mcpId
         const connections = await queryRunner.query(`
+              WITH RankedConnections AS (
+                SELECT 
+                    id,
+                    "mcpId",
+                    "pieceName",
+                    ROW_NUMBER() OVER (PARTITION BY "mcpId", "pieceName" ORDER BY created DESC) as rn
+                FROM "app_connection"
+                WHERE "mcpId" IS NOT NULL
+            )
             SELECT id, created, updated, pieceName, mcpId
             FROM "app_connection"
-            WHERE "mcpId" IS NOT NULL
+            WHERE "mcpId" IS NOT NULL AND id IN (
+                SELECT id 
+                FROM RankedConnections 
+                WHERE rn = 1
+            )
         `)
         
         // Insert mcp_piece entries for each connection
