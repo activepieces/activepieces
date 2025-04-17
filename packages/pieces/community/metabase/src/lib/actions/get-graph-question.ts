@@ -94,7 +94,7 @@ export const getGraphQuestion = createAction({
       };
     } catch (error) {
       console.error(
-        'Please verify that either your embedding key, question id are valid or if the question is embed and published.'
+        'Please verify that either your embedding key and question id are valid or that the question is embedded and published.'
       );
       console.error('Error capturing Metabase chart:', error);
       throw error;
