@@ -10,9 +10,9 @@ export class AddMCPPiece1744822233873 implements MigrationInterface {
              WITH RankedConnections AS (
                  SELECT 
                      id,
-                     mcpId,
-                     pieceName,
-                     ROW_NUMBER() OVER (PARTITION BY mcpId, pieceName ORDER BY created ASC) as rn
+                     "mcpId",
+                     "pieceName",
+                     ROW_NUMBER() OVER (PARTITION BY "mcpId", "pieceName" ORDER BY created ASC) as rn
                  FROM "app_connection"
                  WHERE "mcpId" IS NOT NULL
              )
@@ -60,7 +60,7 @@ export class AddMCPPiece1744822233873 implements MigrationInterface {
  
         // Get all app connections with mcpId
         const connections = await queryRunner.query(`
-             SELECT id, created, updated, pieceName, mcpId
+             SELECT id, created, updated, "pieceName", "mcpId"
              FROM "app_connection"
              WHERE "mcpId" IS NOT NULL
          `)
