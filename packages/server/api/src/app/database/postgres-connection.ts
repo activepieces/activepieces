@@ -192,6 +192,7 @@ import { AddMCP1743128816786 } from './migration/postgres/1743128816786-AddMCP'
 import { AddMetadataFields1743780156664 } from './migration/postgres/1743780156664-AddMetadataFields'
 import { AddLastChangelogDismissed1744053592923 } from './migration/postgres/1744053592923-AddLastChangelogDismissed'
 import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744187975994 } from './migration/postgres/1744187975994-AddRecordIndexForTableIdAndProjectIdAndRecordId'
+import { AddMetadataFieldToFlowTemplates1744780800000 } from './migration/postgres/1744780800000-AddMetadataFieldToFlowTemplates'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -322,6 +323,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMetadataFields1743780156664,
         AddRecordIndexForTableIdAndProjectIdAndRecordId1744187975994,
         AddLastChangelogDismissed1744053592923,
+        AddMetadataFieldToFlowTemplates1744780800000,
     ]
 
     const edition = system.getEdition()
