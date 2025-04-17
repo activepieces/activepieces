@@ -35,6 +35,7 @@ import { newDirectMessageTrigger } from './lib/triggers/new-direct-message';
 import { retrieveThreadMessages } from './lib/actions/retrieve-thread-messages';
 import { newMentionInDirectMessageTrigger } from './lib/triggers/new-mention-in-direct-message';
 import { newCommandInDirectMessageTrigger } from './lib/triggers/new-command-in-direct-message';
+import { deleteMessageAction } from './lib/actions/delete-message';
 
 export const slackAuth = PieceAuth.OAuth2({
 	description: '',
@@ -125,6 +126,7 @@ export const slack = createPiece({
 		findUserByEmailAction,
 		findUserByHandleAction,
 		updateMessage,
+		deleteMessageAction,
 		createChannelAction,
 		updateProfileAction,
 		getChannelHistory,
