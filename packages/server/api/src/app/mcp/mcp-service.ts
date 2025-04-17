@@ -73,6 +73,13 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         return this.getOrThrow({ mcpId })
     },
 
+    async getByProjectId({ projectId }: { projectId: ApId }): Promise<MCPWithPieces> {
+        const mcp = await repo().findOneBy({ projectId })
+        if (isNil(mcp)) {
+            return this.getOrCreate({ projectId })
+        }
+        return this.getOrThrow({ mcpId: mcp.id })
+    }
 
 })
 
