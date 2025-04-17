@@ -4,10 +4,10 @@ import { singleSelectChannelInfo, slackChannel } from '../common/props';
 import { processMessageTimestamp } from '../common/utils';
 import { WebClient } from '@slack/web-api';
 
-export const deleteMessageAction = createAction({
-	name: 'delete-message',
-	displayName: 'Delete Message',
-	description: 'Deletes an existing message in a specific channel.',
+export const getMessageAction = createAction({
+	name: 'get-message',
+	displayName: 'Get Message by Timestamp',
+	description: `Retrieves a specific message from a channel history using the message's timestamp.`,
 	auth: slackAuth,
 	props: {
 		info: singleSelectChannelInfo,
@@ -15,7 +15,7 @@ export const deleteMessageAction = createAction({
 		ts: Property.ShortText({
 			displayName: 'Message Timestamp',
 			description:
-				'Please provide the timestamp of the message you wish to delete, such as `1710304378.475129`. Alternatively, you can easily obtain the message link by clicking on the three dots next to the message and selecting the `Copy link` option.',
+				'Please provide the timestamp of the message you wish to retrieve, such as `1710304378.475129`. Alternatively, you can easily obtain the message link by clicking on the three dots next to the message and selecting the `Copy link` option.',
 			required: true,
 		}),
 	},
@@ -26,9 +26,11 @@ export const deleteMessageAction = createAction({
 		}
 		const client = new WebClient(auth.access_token);
 
-		return await client.chat.delete({
+		return await client.conversations.history({
 			channel: propsValue.channel,
-			ts: messageTimestamp,
+			latest: messageTimestamp,
+			limit: 1,
+			inclusive: true,
 		});
 	},
 });
