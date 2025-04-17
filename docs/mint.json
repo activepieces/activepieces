@@ -265,6 +265,7 @@
             "endpoints/flow-templates/list"
           ]
         }
+      
       ]
     },
     {
@@ -406,6 +407,7 @@
         "embedding/navigation",
         "embedding/customize-pieces",
         "embedding/embed-connections",
+        "embedding/sdk-server-requests",
         "embedding/sdk-changelog"
       ]
     },
