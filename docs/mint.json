@@ -427,6 +427,7 @@
         "embedding/overview",
         "embedding/provision-users",
         "embedding/embed-builder",
+        "embedding/mcps",
         "embedding/navigation",
         "embedding/customize-pieces",
         "embedding/embed-connections",
