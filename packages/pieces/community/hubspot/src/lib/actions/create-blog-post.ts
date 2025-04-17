@@ -82,12 +82,12 @@ export const createBlogPostAction = createAction({
 			});
 		}
 
-		const postDeatils = await httpClient.sendRequest({
+		const postDetails = await httpClient.sendRequest({
 			method: HttpMethod.GET,
 			url: `https://api.hubapi.com/content/api/v2/blog-posts/${createdPost.body['id']}`,
 			authentication: { type: AuthenticationType.BEARER_TOKEN, token: context.auth.access_token },
 		});
 
-        return postDeatils.body
+        return postDetails.body
 	},
 });

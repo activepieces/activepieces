@@ -1,7 +1,7 @@
 // import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectReleaseEvent, ProjectRoleEvent, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { AppSystemProp, exceptionHandler, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, FlowTemplate, Folder, isNil, ProjectRelease, ProjectWithLimits, spreadIfDefined, UserInvitation } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, FlowTemplate, Folder, isNil, MCP, ProjectRelease, ProjectWithLimits, spreadIfDefined, UserInvitation } from '@activepieces/shared'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
@@ -16,6 +16,7 @@ import { appConnectionModule } from './app-connection/app-connection.module'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
 import { authenticationModule } from './authentication/authentication.module'
 import { accessTokenManager } from './authentication/lib/access-token-manager'
+import { changelogModule } from './changelog/changelog.module'
 import { copilotModule } from './copilot/copilot.module'
 import { rateLimitModule } from './core/security/rate-limit'
 import { securityHandlerChain } from './core/security/security-handler-chain'
@@ -153,6 +154,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                     // 'git-repo': GitRepoWithoutSensitiveData,
                     'project-release': ProjectRelease,
                     'global-connection': AppConnectionWithoutSensitiveData,
+                    'mcp': MCP,
                 },
             },
             info: {
@@ -248,6 +250,9 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(analyticsModule)
     setPlatformOAuthService(userOAuth2Service(app.log))
 
+    // await app.register(adminPlatformModule)
+    await app.register(changelogModule)
+    
     app.get(
         '/redirect',
         async (

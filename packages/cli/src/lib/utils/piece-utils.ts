@@ -51,7 +51,8 @@ export async function buildPiece(pieceFolder: string): Promise<{ outputFolder: s
     const projectJson = await readProjectJson(pieceFolder);
 
     await exec(`npx nx build ${projectJson.name} --skip-cache`);
-    const compiledPath = path.resolve('dist/packages', pieceFolder.split(path.sep + 'packages')[1]);
+     
+    const compiledPath = `dist/packages/${removeStartingSlashes(pieceFolder).split(path.sep + 'packages')[1]}`;
 
     const { stdout } = await exec('npm pack --json', { cwd: compiledPath });
     const tarFileName = JSON.parse(stdout)[0].filename;
@@ -161,3 +162,8 @@ export const assertPieceExists = async (pieceName: string | null) => {
       process.exit(1);
     }
   };
+
+
+  export const removeStartingSlashes = (str: string) => {
+    return str.startsWith('/') ? str.slice(1) : str;
+  }

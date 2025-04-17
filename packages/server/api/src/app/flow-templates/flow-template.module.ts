@@ -79,17 +79,18 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
         return flowTemplateService.list(platform.id, request.query)
     })
 
-    fastify.post('/', CreateParams, async (request) => {
+    fastify.post('/', CreateParams, async (request, reply) => {
         const { type } = request.body
         const platformId = request.principal.platform.id
         if (type === TemplateType.PLATFORM) {
             await checkUserPlatformAdminOrThrow(request.principal.id, platformId)
         }
-        return flowTemplateService.upsert(
+        const result = await flowTemplateService.upsert(
             request.principal.platform.id,
             request.principal.projectId,
             request.body,
         )
+        return reply.status(StatusCodes.CREATED).send(result)
     })
 
     fastify.delete('/:id', DeleteParams, async (request, reply) => {

@@ -14,6 +14,15 @@ icon: "code-commit"
  Between Acitvepieces image version 0.32.1 and 0.46.4 the navigation handler was including the project id in the path, this might have broken implementation logic for people using the navigation handler, this has been fixed from 0.46.5 and onwards, the handler won't show the project id prepended to routes.
 </Warning>
 
+### 12/04/2024 (3.0)
+
+<Warning>
+**Breaking Change**: Automatic URL sync has been removed. Instead, Activepieces now provides a callback handler method. Please read [Embedding Navigation](./navigation) for more information.
+</Warning>
+
+- add custom navigation handler ([#4500](https://github.com/activepieces/activepieces/pull/4500))
+- allow passing a predefined name for connection in connect method ([#4485](https://github.com/activepieces/activepieces/pull/4485))
+- add changelog ([#4503](https://github.com/activepieces/activepieces/pull/4503))
 
 ### 02/24/2025 (3.0.5)
 - Added a new parameter to the connect method to make the connection dialog a popup instead of an iframe taking the full page.
@@ -31,12 +40,4 @@ icon: "code-commit"
 - activepieces.configure method was being resolved before the user was authenticated, this is fixed now, so you can use activepieces.navigate method to navigate to your desired initial route.
 
 
-### 12/04/2024 (3.0)
 
-<Warning>
-**Breaking Change**: Automatic URL sync has been removed. Instead, Activepieces now provides a callback handler method. Please read [Embedding Navigation](./navigation) for more information.
-</Warning>
-
-- add custom navigation handler ([#4500](https://github.com/activepieces/activepieces/pull/4500))
-- allow passing a predefined name for connection in connect method ([#4485](https://github.com/activepieces/activepieces/pull/4485))
-- add changelog ([#4503](https://github.com/activepieces/activepieces/pull/4503))

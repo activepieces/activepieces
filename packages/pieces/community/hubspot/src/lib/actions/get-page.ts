@@ -7,7 +7,7 @@ export const getPageAction = createAction({
 	auth: hubspotAuth,
 	name: 'get-page',
 	displayName: 'Get Page',
-	description: 'Gets landing/site page deatils.',
+	description: 'Gets landing/site page Details.',
 	props: {
 		pageType: pageType,
 		pageId: Property.ShortText({

@@ -1,6 +1,8 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../../common'
+import { Metadata } from '../../common/metadata'
 import { FlowVersion } from '../flow-version'
+
 export const FlowVersionTemplate = Type.Omit(
     FlowVersion,
     ['id', 'created', 'updated', 'flowId', 'state', 'updatedBy'],
@@ -26,6 +28,7 @@ export const FlowTemplate = Type.Object({
     template: FlowVersionTemplate,
     projectId: Type.Optional(Type.String()),
     platformId: Type.String(),
+    metadata: Nullable(Metadata),
 })
 
 export type FlowTemplate = Static<typeof FlowTemplate>
@@ -48,13 +51,14 @@ export const GetFlowTemplateRequestQuery = Type.Object({
 export type GetFlowTemplateRequestQuery = Static<typeof GetFlowTemplateRequestQuery>
 
 export const CreateFlowTemplateRequest = Type.Object({
-    description: Type.Optional(Type.String()),
+    description:  Type.Optional(Type.String()),
     template: FlowVersionTemplate,
     blogUrl: Type.Optional(Type.String()),
     type: Type.Enum(TemplateType),
-    tags: Type.Optional(Type.Array(Type.String())),
+    tags:  Type.Optional(Type.Array(Type.String())),
     id: Type.Optional(Type.String()),
-})
+    metadata: Nullable(Metadata)
+ })
 
 export type CreateFlowTemplateRequest = Static<typeof CreateFlowTemplateRequest>
 

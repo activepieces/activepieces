@@ -27,11 +27,11 @@ export async function tryHandshake(
     const pieceMetadata = await engineApiService(engineToken, log).getPiece(settings.pieceName, {
         version: settings.pieceVersion,
     })
-    const tirggerName = settings.triggerName
-    if (isNil(tirggerName)) {
+    const triggerName = settings.triggerName
+    if (isNil(triggerName)) {
         return null
     }
-    const handshakeConfig = pieceMetadata.triggers?.[tirggerName]?.handshakeConfiguration
+    const handshakeConfig = pieceMetadata.triggers?.[triggerName]?.handshakeConfiguration
     if (isNil(handshakeConfig)) {
         return null
     }

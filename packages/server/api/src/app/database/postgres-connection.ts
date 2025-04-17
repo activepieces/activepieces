@@ -15,7 +15,10 @@ import { AddDataColumnToFieldEntity1742395892304 } from './migration/postgres/17
 import { AddTodosSquashed1742874382959 } from './migration/postgres/1742874382959-add-todos-squashed'
 import { RenameApprovalUrlToResolveUrl1742991137557 } from './migration/postgres/1742991137557-RenameApprovalUrlToResolveUrl'
 import { AddMCP1743128816786 } from './migration/postgres/1743128816786-AddMCP'
+import { AddMetadataFields1743780156664 } from './migration/postgres/1743780156664-AddMetadataFields'
+import { AddLastChangelogDismissed1744053592923 } from './migration/postgres/1744053592923-AddLastChangelogDismissed'
 import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744187975994 } from './migration/postgres/1744187975994-AddRecordIndexForTableIdAndProjectIdAndRecordId'
+import { AddMetadataFlowTemplate1744898816545 } from './migration/postgres/1744898816545-add-metadata-flow-template'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -29,6 +32,9 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+        AddMetadataFlowTemplate1744898816545,
+        AddLastChangelogDismissed1744053592923,
+        AddMetadataFields1743780156664,
         AddRecordIndexForTableIdAndProjectIdAndRecordId1744187975994,
         AddMCP1743128816786,
         RenameApprovalUrlToResolveUrl1742991137557,

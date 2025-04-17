@@ -10,7 +10,6 @@ import { PieceIcon } from '../../../features/pieces/components/piece-icon';
 
 type McpConnectionProps = {
   connection: AppConnectionWithoutSensitiveData;
-  isUpdating: boolean;
   pieceInfo: {
     displayName: string;
     logoUrl?: string;
@@ -21,7 +20,6 @@ type McpConnectionProps = {
 
 export const McpConnection = ({
   connection,
-  isUpdating,
   pieceInfo,
   onDelete,
   isLoading = false,

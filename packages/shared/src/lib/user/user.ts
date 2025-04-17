@@ -32,6 +32,7 @@ export const User = Type.Object({
     identityId: Type.String(),
     externalId: Nullable(Type.String()),
     platformId: Nullable(Type.String()),
+    lastChangelogDismissed: Nullable(Type.String()),
 })
 
 export type User = Static<typeof User>
@@ -43,6 +44,7 @@ export const UserWithMetaInformation = Type.Object({
     status: Type.Enum(UserStatus),
     identityId: Nullable(Type.String()),
     externalId: Nullable(Type.String()),
+    lastChangelogDismissed: Nullable(Type.String()),
     platformId: Nullable(Type.String()),
     platformRole: Type.Enum(PlatformRole),
     lastName: Type.String(),
@@ -60,6 +62,7 @@ export const UserWithMetaInformationAndProject = Type.Object({
     status: Type.Enum(UserStatus),
     externalId: Nullable(Type.String()),
     platformId: Nullable(Type.String()),
+    lastChangelogDismissed: Nullable(Type.String()),
     platformRole: Type.Enum(PlatformRole),
     lastName: Type.String(),
     created: Type.String(),

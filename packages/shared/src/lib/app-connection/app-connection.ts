@@ -1,6 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModel, BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
+import { Metadata } from '../common/metadata'
 import { UserWithMetaInformation } from '../user'
 import { OAuth2GrantType } from './dto/upsert-app-connection-request'
 import { OAuth2AuthorizationMethod } from './oauth2-authorization-method'
@@ -93,6 +94,7 @@ export type AppConnection<Type extends AppConnectionType = AppConnectionType> = 
     ownerId: string
     owner: UserWithMetaInformation | null
     value: AppConnectionValue<Type>
+    metadata: Metadata | null
 }
 
 export type OAuth2AppConnection = AppConnection<AppConnectionType.OAUTH2>
@@ -114,6 +116,7 @@ export const AppConnectionWithoutSensitiveData = Type.Object({
     status: Type.Enum(AppConnectionStatus),
     ownerId: Nullable(Type.String()),
     owner: Nullable(UserWithMetaInformation),
+    metadata: Nullable(Metadata),
 }, {
     description: 'App connection is a connection to an external app.',
 })

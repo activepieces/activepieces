@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
+import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   CardList,
@@ -67,10 +68,11 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
   closePieceSelector,
   hiddenActionsOrTriggers,
 }) => {
-  const { data: showRequestPieceButton } = flagsHooks.useFlag<boolean>(
+  const { data: showCommunityLinks } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
-
+  const isEmbedding = useEmbedding().embedState.isEmbedded;
+  const showRequestPieceButton = showCommunityLinks && !isEmbedding;
   const selectedItemRef = useRef<HTMLDivElement | null>(null);
   const isCopilotEnabled = platformHooks.isCopilotEnabled();
   useEffect(() => {
@@ -155,7 +157,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
                   rel="noopener noreferrer"
                 >
                   <Button variant="ghost" size="sm">
-                    Request Piece
+                    {t('Request Piece')}
                   </Button>
                 </Link>
               </>
@@ -176,7 +178,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <Button className="h-8 px-2 ">Request Piece</Button>
+                <Button className="h-8 px-2 ">{t('Request Piece')}</Button>
               </Link>
             )}
           </div>
