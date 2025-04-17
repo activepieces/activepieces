@@ -13,6 +13,8 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService, appConnectionsRepo } from '../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../core/db/repo-factory'
+import { pieceMetadataService } from '../pieces/piece-metadata-service'
+import { projectService } from '../project/project-service'
 import { MCPEntity } from './mcp-entity'
 import { MCPPieceEntity } from './mcp-piece-entity'
 
@@ -37,8 +39,9 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
     },
 
     async add({ mcpId, pieceName, status, connectionId }: AddParams): Promise<MCPPieceWithConnection> {
-        await this.validateMcp(mcpId)
-        
+        const mcp = await this.validateMcp(mcpId)
+        const project = await projectService.getOneOrThrow(mcp.projectId)
+        await validateMcpPieceConnection({ pieceName, connectionId, projectId: mcp.projectId, log: _log, platformId: project.platformId })
         const existingPiece = await mcpPieceRepo().findOne({
             where: { mcpId, pieceName },
         })
@@ -105,7 +108,9 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
     
     async update({ pieceId, status, connectionId }: UpdateParams): Promise<MCPPieceWithConnection> {
         const piece = await this.getOneOrThrow(pieceId)
-        
+        const mcp = await this.validateMcp(piece.mcpId)
+        const project = await projectService.getOneOrThrow(mcp.projectId)
+        await validateMcpPieceConnection({ pieceName: piece.pieceName, connectionId, projectId: mcp.projectId, log: _log, platformId: project.platformId })
         if (!isNil(status)) {
             await mcpPieceRepo().update(
                 { id: piece.id },
@@ -131,8 +136,8 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
 
         if (isNil(mcp)) {
             throw new ActivepiecesError({
-                code: ErrorCode.MCP_NOT_FOUND,
-                params: { id: mcpId },
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: mcpId, entityType: 'MCP' },
             })
         }
 
@@ -179,6 +184,37 @@ async function enrichPieceWithConnection(piece: MCPPiece, log: FastifyBaseLogger
     }
 }
 
+
+
+const validateMcpPieceConnection = async ({ pieceName, connectionId, projectId, log, platformId }: { pieceName: string, connectionId?: string, log: FastifyBaseLogger, projectId: string, platformId: string })  => {
+    const piece = await pieceMetadataService(log).getOrThrow({
+        name: pieceName,
+        platformId,
+        version: undefined,
+        projectId,
+    })
+    if (piece.auth && !connectionId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.MCP_PIECE_REQUIRES_CONNECTION,
+            params: { pieceName },
+        })
+    }
+    if (connectionId) {
+        const connection = await appConnectionService(log).getOneOrThrowWithoutValue({
+            id: connectionId,
+            platformId,
+            projectId,
+        })
+        if (connection.pieceName !== pieceName) {
+            throw new ActivepiecesError({
+                code: ErrorCode.MCP_PIECE_CONNECTION_MISMATCH,
+                params: { pieceName, connectionPieceName: connection.pieceName, connectionId },
+            })
+        }
+    }
+  
+   
+}
 type AddParams = {
     mcpId: string
     pieceName: string

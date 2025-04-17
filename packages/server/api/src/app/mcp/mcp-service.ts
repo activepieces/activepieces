@@ -42,8 +42,8 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
 
         if (isNil(mcp)) {
             throw new ActivepiecesError({
-                code: ErrorCode.MCP_NOT_FOUND,
-                params: { id: mcpId },
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: mcpId, entityType: 'MCP' },
             })
         }
         return {
@@ -56,8 +56,8 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         const mcp = await repo().findOne({ where: { token } })
         if (isNil(mcp)) {
             throw new ActivepiecesError({
-                code: ErrorCode.MCP_NOT_FOUND,
-                params: { id: token },
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: token, entityType: 'MCP' },
             })
         }
         return this.getOrThrow({ mcpId: mcp.id })
