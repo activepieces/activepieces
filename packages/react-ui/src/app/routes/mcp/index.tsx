@@ -7,8 +7,8 @@ import {
   PopulatedFlow,
   Permission,
   ApFlagId,
-  MCPPieceStatus,
-  MCPPieceWithConnection,
+  McpPieceStatus,
+  McpPieceWithConnection,
 } from '@activepieces/shared';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -75,7 +75,7 @@ export default function MCPPage() {
   });
 
   const serverUrl =
-    publicUrl + 'api/v1/mcp-servers/' + (mcp?.token || '') + '/sse';
+    publicUrl + 'api/v1/mcp/' + (mcp?.token || '') + '/sse';
 
   const { pieces } = piecesHooks.usePieces({});
 
@@ -189,7 +189,7 @@ export default function MCPPage() {
     }
   };
 
-  const removePiece = async (piece: MCPPieceWithConnection) => {
+  const removePiece = async (piece: McpPieceWithConnection) => {
     if (!mcp?.id || removePieceMutation.isPending) return;
     removePieceMutation.mutate(piece.id);
   };
@@ -199,7 +199,7 @@ export default function MCPPage() {
     rotateMutation.mutate(mcp.id);
   };
 
-  const getPieceInfo = (piece: MCPPieceWithConnection) => {
+  const getPieceInfo = (piece: McpPieceWithConnection) => {
     const pieceMetadata = pieces?.find((p) => p.name === piece.pieceName);
 
     return {

@@ -1,13 +1,13 @@
-import { MCP, MCPPieceWithConnection } from '@activepieces/shared'
+import { Mcp, McpPieceWithConnection } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
 
-type MCPSchema = MCP & {
-    pieces: MCPPieceWithConnection[]
+type McpSchema = Mcp & {
+    pieces: McpPieceWithConnection[]
 }
 
-export const MCPEntity = new EntitySchema<MCPSchema>({
+export const McpEntity = new EntitySchema<McpSchema>({
     name: 'mcp',
     columns: {
         ...BaseColumnSchemaPart,

@@ -74,8 +74,8 @@ export type ApErrorParams =
     | ProjectExternalIdAlreadyExistsParams
     | MemoryIssueParams
     | InvalidCustomDomainErrorParams
-    | MCPPieceRequiresConnectionParams
-    | MCPPieceConnectionMismatchParams
+    | McpPieceRequiresConnectionParams
+    | McpPieceConnectionMismatchParams
 
 export type BaseErrorParams<T, V> = {
     code: T
@@ -435,11 +435,11 @@ export type ProjectExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.PRO
 
 
 
-export type MCPPieceRequiresConnectionParams = BaseErrorParams<ErrorCode.MCP_PIECE_REQUIRES_CONNECTION, {
+export type McpPieceRequiresConnectionParams = BaseErrorParams<ErrorCode.MCP_PIECE_REQUIRES_CONNECTION, {
     pieceName: string
 }>
 
-export type MCPPieceConnectionMismatchParams = BaseErrorParams<ErrorCode.MCP_PIECE_CONNECTION_MISMATCH, {
+export type McpPieceConnectionMismatchParams = BaseErrorParams<ErrorCode.MCP_PIECE_CONNECTION_MISMATCH, {
     pieceName: string
     connectionPieceName: string
     connectionId: string

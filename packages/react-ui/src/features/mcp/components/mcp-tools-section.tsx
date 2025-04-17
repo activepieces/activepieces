@@ -1,4 +1,4 @@
-import { PopulatedFlow, MCPPieceWithConnection } from '@activepieces/shared';
+import { PopulatedFlow, McpPieceWithConnection } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus, ArrowDown, ArrowUp } from 'lucide-react';
 import { useState } from 'react';
@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
 // Define a union type for tool items
-type ToolItem = MCPPieceWithConnection | PopulatedFlow;
+type ToolItem = McpPieceWithConnection | PopulatedFlow;
 
 interface McpToolsProps {
   title: string;
@@ -22,7 +22,7 @@ interface McpToolsProps {
   type: 'pieces' | 'flows';
   onAddClick: () => void;
   onToolClick?: (tool: PopulatedFlow) => void;
-  onToolDelete?: (tool: MCPPieceWithConnection) => void;
+  onToolDelete?: (tool: McpPieceWithConnection) => void;
   pieceInfoMap?: Record<string, { displayName: string; logoUrl?: string }>;
   canAddTool: boolean;
   addButtonLabel: string;
@@ -92,7 +92,7 @@ export const McpToolsSection = ({
         .map((_, index) => (
           <McpPiece
             key={`skeleton-${index}`}
-            piece={{} as MCPPieceWithConnection}
+            piece={{} as McpPieceWithConnection}
             pieceInfo={{ displayName: '', logoUrl: '' }}
             onDelete={() => {}}
             isLoading={true}
@@ -185,7 +185,7 @@ export const McpToolsSection = ({
           <>
             {visibleTools.map((tool) => {
               if (type === 'pieces') {
-                const piece = tool as MCPPieceWithConnection;
+                const piece = tool as McpPieceWithConnection;
                 const pieceInfo = pieceInfoMap[piece.id] || {
                   displayName: piece.pieceName,
                   logoUrl: '',

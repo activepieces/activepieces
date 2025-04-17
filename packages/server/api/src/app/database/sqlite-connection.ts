@@ -94,7 +94,7 @@ import { AddMCPSqlite1743127177235 } from './migration/sqlite/1743127177235-AddM
 import { AddMetadataFields1743780156664 } from './migration/sqlite/1743780156664-AddMetadataFields'
 import { AddLastChangelogDismissedSQLITE1744053922591 } from './migration/sqlite/1744053922591-AddLastChangelogDismissedSQLITE'
 import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744104496262 } from './migration/sqlite/1744104496262-AddRecordIndexForTableIdAndProjectIdAndRecordId'
-import { AddMCPPieceSqlite1744822233873 } from './migration/sqlite/1744822233873-AddMCPPieceSqlite'
+import { AddMcpPieceSqlite1744822233873 } from './migration/sqlite/1744822233873-AddMcpPieceSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -206,7 +206,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMetadataFields1743780156664,
         AddRecordIndexForTableIdAndProjectIdAndRecordId1744104496262,
         AddLastChangelogDismissedSQLITE1744053922591,
-        AddMCPPieceSqlite1744822233873,
+        AddMcpPieceSqlite1744822233873,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

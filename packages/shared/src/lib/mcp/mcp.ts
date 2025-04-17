@@ -3,7 +3,7 @@ import { AppConnectionWithoutSensitiveData } from '../app-connection/app-connect
 import { BaseModelSchema } from '../common'
 import { ApId } from '../common/id-generator'
 
-export enum MCPProperyType {
+export enum McpPropertyType {
     TEXT = 'Text',
     BOOLEAN = 'Boolean',
     DATE = 'Date',
@@ -12,69 +12,69 @@ export enum MCPProperyType {
     OBJECT = 'Object',
 }
 
-export enum MCPPieceStatus {
+export enum McpPieceStatus {
     ENABLED = 'ENABLED',
     DISABLED = 'DISABLED',
 }
 
-export const MCPProperty = Type.Object({
+export const McpProperty = Type.Object({
     name: Type.String(),
     description: Type.Optional(Type.String()),
     type: Type.String(),
     required: Type.Boolean(),
 })
 
-export type MCPProperty = Static<typeof MCPProperty>
+export type McpProperty = Static<typeof McpProperty>
 
 
-export const MCPPiece = Type.Object({
+export const McpPiece = Type.Object({
     ...BaseModelSchema,
     pieceName: Type.String(),
     connectionId: Type.Optional(ApId),
     mcpId: ApId,
-    status: Type.Optional(Type.Enum(MCPPieceStatus)),
+    status: Type.Optional(Type.Enum(McpPieceStatus)),
 })
 
-export type MCPPiece = Static<typeof MCPPiece>
+export type McpPiece = Static<typeof McpPiece>
 
-export const MCPPieceWithConnection = Type.Composite([
-    MCPPiece,
+export const McpPieceWithConnection = Type.Composite([
+    McpPiece,
     Type.Object({
         connection: Type.Optional(AppConnectionWithoutSensitiveData),
     }),
 ])
 
-export type MCPPieceWithConnection = Static<typeof MCPPieceWithConnection>
+export type McpPieceWithConnection = Static<typeof McpPieceWithConnection>
 
 
 
-export const MCP = Type.Object({
+export const Mcp = Type.Object({
     ...BaseModelSchema,
     projectId: ApId,
     token: ApId,
 })
 
-export type MCP = Static<typeof MCP> 
+export type Mcp = Static<typeof Mcp> 
 
-export const MCPWithPieces = Type.Composite([
-    MCP,
+export const McpWithPieces = Type.Composite([
+    Mcp,
     Type.Object({
-        pieces: Type.Array(MCPPieceWithConnection),
+        pieces: Type.Array(McpPieceWithConnection),
     }),
 ])
 
-export type MCPWithPieces = Static<typeof MCPWithPieces>
+export type McpWithPieces = Static<typeof McpWithPieces>
 
 
-export const MCPTrigger = Type.Object({
+export const McpTrigger = Type.Object({
     pieceName: Type.String(),
     triggerName: Type.String(),
     input: Type.Object({
         toolName: Type.String(),
         toolDescription: Type.String(),
-        inputSchema: Type.Array(MCPProperty),
+        inputSchema: Type.Array(McpProperty),
         returnsResponse: Type.Boolean(),
     }),
 })
 
-export type MCPTrigger = Static<typeof MCPTrigger>
+export type McpTrigger = Static<typeof McpTrigger>

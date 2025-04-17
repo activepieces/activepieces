@@ -1,6 +1,6 @@
 import { PropertyType } from '@activepieces/pieces-framework'
 import { UserInteractionJobType } from '@activepieces/server-shared'
-import { EngineResponseStatus, ExecuteActionResponse, FlowStatus, FlowVersionState, GetFlowVersionForWorkerRequestType, isNil, MCPPieceStatus, MCPPieceWithConnection, MCPTrigger, TriggerType } from '@activepieces/shared'
+import { EngineResponseStatus, ExecuteActionResponse, FlowStatus, FlowVersionState, GetFlowVersionForWorkerRequestType, isNil, McpPieceStatus, McpPieceWithConnection, McpTrigger, TriggerType } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { FastifyBaseLogger, FastifyReply } from 'fastify'
@@ -25,10 +25,10 @@ export async function createMcpServer({
     const platformId = await projectService.getPlatformId(projectId)
 
     // filter out pieces that are not enabled
-    const enabledPieces = mcp.pieces.filter((piece) => piece.status === MCPPieceStatus.ENABLED)
+    const enabledPieces = mcp.pieces.filter((piece) => piece.status === McpPieceStatus.ENABLED)
 
     // Get all pieces with their connections
-    const pieces = await Promise.all(enabledPieces.map(async (piece: MCPPieceWithConnection) => {
+    const pieces = await Promise.all(enabledPieces.map(async (piece: McpPieceWithConnection) => {
         return pieceMetadataService(logger).getOrThrow({
             name: piece.pieceName,
             version: undefined,
@@ -130,7 +130,7 @@ export async function createMcpServer({
     )
 
     for (const flow of mcpFlows) {
-        const triggerSettings = flow.version.trigger.settings as MCPTrigger
+        const triggerSettings = flow.version.trigger.settings as McpTrigger
         const toolName = ('flow_' + triggerSettings.input?.toolName).slice(0, MAX_TOOL_NAME_LENGTH)
         const toolDescription = triggerSettings.input?.toolDescription
         const inputSchema = triggerSettings.input?.inputSchema

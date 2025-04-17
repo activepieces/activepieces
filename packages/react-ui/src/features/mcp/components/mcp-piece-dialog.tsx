@@ -1,7 +1,7 @@
 import {
   isNil,
-  MCPPieceStatus,
-  MCPPieceWithConnection,
+  McpPieceStatus,
+  McpPieceWithConnection,
 } from '@activepieces/shared';
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import { t } from 'i18next';
@@ -29,7 +29,7 @@ import { Form, FormField, FormMessage } from '@/components/ui/form';
 
 type McpPieceDialogProps = {
   children: React.ReactNode;
-  mcpPieceToUpdate?: MCPPieceWithConnection
+  mcpPieceToUpdate?: McpPieceWithConnection
 };
 
 export const McpPieceDialog = React.memo(
@@ -58,7 +58,7 @@ export const McpPieceDialog = React.memo(
           mcpId,
           pieceName,
           connectionId,
-          status: MCPPieceStatus.ENABLED,
+          status: McpPieceStatus.ENABLED,
         });
       },
       onSuccess: () => {
@@ -95,7 +95,7 @@ export const McpPieceDialog = React.memo(
         const errors: FieldErrors<{
             pieceName: string,
             connectionId: string|null,
-            status: MCPPieceStatus
+            status: McpPieceStatus
         }> = {};
         if (!values.pieceName) {
           errors.pieceName = {

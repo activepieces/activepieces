@@ -1,4 +1,4 @@
-import { AddMCPPieceRequestBody, ALL_PRINCIPAL_TYPES, ApId, MCPPieceStatus, MCPPieceWithConnection, MCPWithPieces, SERVICE_KEY_SECURITY_OPENAPI, UpdateMCPPieceRequestBody } from '@activepieces/shared'
+import { AddMcpPieceRequestBody, ALL_PRINCIPAL_TYPES, ApId, McpPieceStatus, McpPieceWithConnection, McpWithPieces, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpPieceRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
@@ -9,19 +9,19 @@ export const mcpPieceController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
-    app.get('/', GetMCPPiecesRequest, async (req) => {
+    app.get('/', GetMcpPiecesRequest, async (req) => {
         const projectId = req.principal.projectId
         const mcp = await mcpService(req.log).getOrCreate({ projectId })
         return { pieces: mcp.pieces || [] }
     })
     
-    app.post('/', AddMCPPieceRequest, async (req) => {
+    app.post('/', AddMcpPieceRequest, async (req) => {
         const { mcpId, pieceName, connectionId, status } = req.body
         
         await mcpPieceService(req.log).add({
             mcpId,
             pieceName,
-            status: status ?? MCPPieceStatus.ENABLED,
+            status: status ?? McpPieceStatus.ENABLED,
             connectionId: connectionId ?? undefined,
         })
                 
@@ -30,7 +30,7 @@ export const mcpPieceController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
     
-    app.post('/:id', UpdateMCPPieceRequest, async (req) => {
+    app.post('/:id', UpdateMcpPieceRequest, async (req) => {
         const { id } = req.params
         const { connectionId, status } = req.body
         
@@ -55,7 +55,7 @@ export const mcpPieceController: FastifyPluginAsyncTypebox = async (app) => {
 
 }
 
-const GetMCPPiecesRequest = {
+const GetMcpPiecesRequest = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
@@ -65,13 +65,13 @@ const GetMCPPiecesRequest = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {
             [StatusCodes.OK]: Type.Object({
-                pieces: Type.Array(MCPPieceWithConnection),
+                pieces: Type.Array(McpPieceWithConnection),
             }),
         },
     },
 }
 
-const AddMCPPieceRequest = {
+const AddMcpPieceRequest = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
@@ -79,14 +79,14 @@ const AddMCPPieceRequest = {
         tags: ['mcp-pieces'],
         description: 'Add a new project MCP tool',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        body: AddMCPPieceRequestBody,
+        body: AddMcpPieceRequestBody,
         response: {
-            [StatusCodes.OK]: MCPWithPieces,
+            [StatusCodes.OK]: McpWithPieces,
         },
     },
 }
 
-const UpdateMCPPieceRequest = {
+const UpdateMcpPieceRequest = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
@@ -97,9 +97,9 @@ const UpdateMCPPieceRequest = {
         params: Type.Object({
             id: ApId,
         }),
-        body: UpdateMCPPieceRequestBody,
+        body: UpdateMcpPieceRequestBody,
         response: {
-            [StatusCodes.OK]: MCPWithPieces,
+            [StatusCodes.OK]: McpWithPieces,
         },
     },
 }
@@ -117,7 +117,7 @@ const DeletePieceRequest = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.OK]: MCPWithPieces,
+            [StatusCodes.OK]: McpWithPieces,
         },
     },
 } 

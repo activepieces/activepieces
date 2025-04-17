@@ -1,8 +1,8 @@
 import { apId } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddMCPPiece1744822233873 implements MigrationInterface {
-    name = 'AddMCPPiece1744822233873'
+export class AddMcpPiece1744822233873 implements MigrationInterface {
+    name = 'AddMcpPiece1744822233873'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         

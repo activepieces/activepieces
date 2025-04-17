@@ -1,7 +1,7 @@
 import {
-  MCPWithPieces,
-  MCPPieceStatus,
-  MCPPieceWithConnection,
+  McpPieceStatus,
+  McpPieceWithConnection,
+  McpWithPieces,
   SeekPage,
 } from '@activepieces/shared';
 
@@ -16,29 +16,29 @@ interface AddPieceParams {
   mcpId: string;
   pieceName: string;
   connectionId?: string;
-  status: MCPPieceStatus;
+  status: McpPieceStatus;
 }
 
 interface UpdatePieceParams {
   pieceId: string;
   connectionId?: string;
-  status?: MCPPieceStatus;
+  status?: McpPieceStatus;
 }
 
 export const mcpApi = {
   async get() {
-    return await api.get<SeekPage<MCPWithPieces>>(`/v1/mcp-servers`).then(res=>res.data[0]);
+    return await api.get<SeekPage<McpWithPieces>>(`/v1/mcp-servers`).then(res=>res.data[0]);
   },
   async update({ id, token }: UpdateMCPParams) {
-    return await api.post<MCPWithPieces>(`/v1/mcp-servers/${id}`, {
+    return await api.post<McpWithPieces>(`/v1/mcp-servers/${id}`, {
       token,
     });
   },
   async rotateToken(id: string) {
-    return await api.post<MCPWithPieces>(`/v1/mcp-servers/${id}/rotate`);
+    return await api.post<McpWithPieces>(`/v1/mcp-servers/${id}/rotate`);
   },
   async getPieces() {
-    return await api.get<{ pieces: MCPPieceWithConnection[] }>(
+    return await api.get<{ pieces: McpPieceWithConnection[] }>(
       `/v1/mcp-pieces`,
     );
   },
@@ -47,7 +47,7 @@ export const mcpApi = {
     pieceName,
     connectionId,
     status,
-  }: AddPieceParams): Promise<MCPWithPieces> {
+  }: AddPieceParams): Promise<McpWithPieces> {
     return await api.post(`/v1/mcp-pieces`, {
       mcpId,
       pieceName,
@@ -59,13 +59,13 @@ export const mcpApi = {
     pieceId,
     connectionId,
     status,
-  }: UpdatePieceParams): Promise<MCPWithPieces> {
+  }: UpdatePieceParams): Promise<McpWithPieces> {
     return await api.post(`/v1/mcp-pieces/${pieceId}`, {
       connectionId,
       status,
     });
   },
-  async deletePiece(pieceId: string): Promise<MCPWithPieces> {
+  async deletePiece(pieceId: string): Promise<McpWithPieces> {
     return await api.delete(`/v1/mcp-pieces/${pieceId}`);
   },
 };

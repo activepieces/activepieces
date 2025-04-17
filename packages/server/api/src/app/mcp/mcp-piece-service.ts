@@ -4,10 +4,10 @@ import {
     ApId, 
     ErrorCode, 
     isNil, 
-    MCP,
-    MCPPiece,
-    MCPPieceStatus,
-    MCPPieceWithConnection,
+    Mcp,
+    McpPiece,
+    McpPieceStatus,
+    McpPieceWithConnection,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -15,14 +15,14 @@ import { appConnectionService, appConnectionsRepo } from '../app-connection/app-
 import { repoFactory } from '../core/db/repo-factory'
 import { pieceMetadataService } from '../pieces/piece-metadata-service'
 import { projectService } from '../project/project-service'
-import { MCPEntity } from './mcp-entity'
-import { MCPPieceEntity } from './mcp-piece-entity'
+import { McpEntity } from './mcp-entity'
+import { McpPieceEntity } from './mcp-piece-entity'
 
-const mcpRepo = repoFactory(MCPEntity)
-const mcpPieceRepo = repoFactory(MCPPieceEntity)
+const mcpRepo = repoFactory(McpEntity)
+const mcpPieceRepo = repoFactory(McpPieceEntity)
 
 export const mcpPieceService = (_log: FastifyBaseLogger) => ({
-    async list(mcpId: ApId): Promise<MCPPieceWithConnection[]> {
+    async list(mcpId: ApId): Promise<McpPieceWithConnection[]> {
         await this.validateMcp(mcpId)
         
         const pieces = await mcpPieceRepo().find({ 
@@ -38,7 +38,7 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
         return piecesWithConnection
     },
 
-    async add({ mcpId, pieceName, status, connectionId }: AddParams): Promise<MCPPieceWithConnection> {
+    async add({ mcpId, pieceName, status, connectionId }: AddParams): Promise<McpPieceWithConnection> {
         const mcp = await this.validateMcp(mcpId)
         const project = await projectService.getOneOrThrow(mcp.projectId)
         await validateMcpPieceConnection({ pieceName, connectionId, projectId: mcp.projectId, log: _log, platformId: project.platformId })
@@ -63,7 +63,7 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
         return enrichPieceWithConnection(piece, _log)
     },
 
-    async getOne(pieceId: string): Promise<MCPPieceWithConnection | null    > {      
+    async getOne(pieceId: string): Promise<McpPieceWithConnection | null    > {      
         const piece = await mcpPieceRepo().findOne({
             where: { id: pieceId },
         })
@@ -75,7 +75,7 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
         return enrichPieceWithConnection(piece, _log)
     },
 
-    async getOneOrThrow(pieceId: string): Promise<MCPPieceWithConnection> {
+    async getOneOrThrow(pieceId: string): Promise<McpPieceWithConnection> {
         const piece = await this.getOne(pieceId)
         
         if (isNil(piece)) {
@@ -83,7 +83,7 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
                     entityId: pieceId,
-                    entityType: 'MCPPiece',
+                    entityType: 'McpPiece',
                 },
             })
         }
@@ -96,7 +96,7 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
         if (isNil(piece)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityId: pieceId, entityType: 'MCPPiece' },
+                params: { entityId: pieceId, entityType: 'McpPiece' },
             })
         }
         return piece.mcpId
@@ -106,7 +106,7 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
         await mcpPieceRepo().delete({ id: pieceId })
     },
     
-    async update({ pieceId, status, connectionId }: UpdateParams): Promise<MCPPieceWithConnection> {
+    async update({ pieceId, status, connectionId }: UpdateParams): Promise<McpPieceWithConnection> {
         const piece = await this.getOneOrThrow(pieceId)
         const mcp = await this.validateMcp(piece.mcpId)
         const project = await projectService.getOneOrThrow(mcp.projectId)
@@ -132,7 +132,7 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
         return this.getOneOrThrow(pieceId)
     },
 
-    async validateMcp(mcpId: ApId): Promise<MCP> {
+    async validateMcp(mcpId: ApId): Promise<Mcp> {
         const mcp = await mcpRepo().findOneBy({ id: mcpId })
 
         if (isNil(mcp)) {
@@ -146,7 +146,7 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
     },
 })
 
-async function enrichPieceWithConnection(piece: MCPPiece, log: FastifyBaseLogger): Promise<MCPPieceWithConnection> {
+async function enrichPieceWithConnection(piece: McpPiece, log: FastifyBaseLogger): Promise<McpPieceWithConnection> {
     if (!piece.connectionId) {
         return {
             ...piece,
@@ -219,12 +219,12 @@ const validateMcpPieceConnection = async ({ pieceName, connectionId, projectId, 
 type AddParams = {
     mcpId: string
     pieceName: string
-    status: MCPPieceStatus
+    status: McpPieceStatus
     connectionId?: string
 }
 
 type UpdateParams = {
     pieceId: string
-    status?: MCPPieceStatus
+    status?: McpPieceStatus
     connectionId?: string
 }

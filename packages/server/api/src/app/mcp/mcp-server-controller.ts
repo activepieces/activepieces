@@ -1,14 +1,14 @@
-import { ALL_PRINCIPAL_TYPES, ApId, apId, ListMCPsRequest, MCPWithPieces, PrincipalType, ProjectId, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, ApId, apId, ListMcpsRequest, McpWithPieces, PrincipalType, ProjectId, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
 import { mcpService } from './mcp-service'
 
-export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
+export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     
-    app.get('/', GetMCPsRequest, async (req) => {
+    app.get('/', GetMcpsRequest, async (req) => {
         let projectId: ProjectId
         
         if (req.principal.type === PrincipalType.SERVICE) {
@@ -33,7 +33,7 @@ export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
         return result
     })
 
-    app.post('/:id', UpdateMCPRequest, async (req) => {
+    app.post('/:id', UpdateMcpRequest, async (req) => {
         const mcpId = req.params.id
         const { token } = req.body
 
@@ -52,7 +52,7 @@ export const mcpController: FastifyPluginAsyncTypebox = async (app) => {
     })
 }
 
-const GetMCPsRequest = {
+const GetMcpsRequest = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
@@ -60,14 +60,14 @@ const GetMCPsRequest = {
         tags: ['mcp'],
         description: 'List MCP servers',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
-        querystring: ListMCPsRequest,
+        querystring: ListMcpsRequest,
         response: {
-            [StatusCodes.OK]: SeekPage(MCPWithPieces),
+            [StatusCodes.OK]: SeekPage(McpWithPieces),
         },
     },
 }
 
-export const UpdateMCPRequest = {
+export const UpdateMcpRequest = {
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
@@ -82,7 +82,7 @@ export const UpdateMCPRequest = {
             token: Type.Optional(Type.String()),
         }),
         response: {
-            [StatusCodes.OK]: MCPWithPieces,
+            [StatusCodes.OK]: McpWithPieces,
         },
     },
 }
@@ -99,7 +99,7 @@ const RotateTokenRequest = {
             id: ApId,
         }),
         response: {
-            [StatusCodes.OK]: MCPWithPieces,
+            [StatusCodes.OK]: McpWithPieces,
         },
     },
 }

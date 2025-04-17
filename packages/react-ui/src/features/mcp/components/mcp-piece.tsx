@@ -1,4 +1,4 @@
-import { MCPPieceStatus, MCPPieceWithConnection } from '@activepieces/shared';
+import { McpPieceStatus, McpPieceWithConnection } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Pencil, PlugIcon, Trash2 } from 'lucide-react';
 
@@ -20,12 +20,12 @@ import { mcpHooks } from '../lib/mcp-hooks';
 import { useState } from 'react';
 
 type McpPieceProps = {
-  piece: MCPPieceWithConnection;
+  piece: McpPieceWithConnection;
   pieceInfo: {
     displayName: string;
     logoUrl?: string;
   };
-  onDelete: (piece: MCPPieceWithConnection) => void;
+  onDelete: (piece: McpPieceWithConnection) => void;
   isLoading?: boolean;
 };
 
@@ -41,8 +41,8 @@ export const McpPiece = ({
 
   const {refetch: refetchMcp} = mcpHooks.useMcp();
   const {mutate: updatePieceStatus} = useMutation({
-    mutationFn: async (status: MCPPieceStatus) => {
-      setStatus(status === MCPPieceStatus.ENABLED);
+    mutationFn: async (status: McpPieceStatus) => {
+      setStatus(status === McpPieceStatus.ENABLED);
       await mcpApi.updatePiece({
         pieceId: piece.id,
         status,
@@ -52,7 +52,7 @@ export const McpPiece = ({
     onSuccess: (status) => {
       toast({
         title: `${t('MCP tool')} (${pieceModel?.displayName})`,
-        description: t(`${status === MCPPieceStatus.ENABLED ? 'Enabled' : 'Disabled'} successfully`),
+        description: t(`${status === McpPieceStatus.ENABLED ? 'Enabled' : 'Disabled'} successfully`),
       });
       refetchMcp();
     },
@@ -64,7 +64,7 @@ export const McpPiece = ({
       });
     }
   });
-  const [status, setStatus] = useState(piece.status === MCPPieceStatus.ENABLED);
+  const [status, setStatus] = useState(piece.status === McpPieceStatus.ENABLED);
   if (isLoading || isPieceLoading) {
     return (
       <Card className="overflow-hidden transition-all duration-200 relative hover:shadow-sm group border-border">
@@ -131,7 +131,7 @@ export const McpPiece = ({
         <Switch
       checked={status}
       onCheckedChange={(checked) => {
-        updatePieceStatus(checked ? MCPPieceStatus.ENABLED : MCPPieceStatus.DISABLED);
+        updatePieceStatus(checked ? McpPieceStatus.ENABLED : McpPieceStatus.DISABLED);
       }}
       
       >

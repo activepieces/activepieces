@@ -1,28 +1,28 @@
 import { Static, Type } from '@sinclair/typebox'
 import { ApId } from '../../common/id-generator'
-import { MCPPieceStatus } from '../mcp'
+import { McpPieceStatus } from '../mcp'
 
-export const ListMCPsRequest = Type.Object({
+export const ListMcpsRequest = Type.Object({
     limit: Type.Optional(Type.Number({})),
     cursor: Type.Optional(Type.String({})),
     projectId: Type.Optional(Type.String({})),
 })
 
-export type ListMCPsRequest = Static<typeof ListMCPsRequest>
-export const AddMCPPieceRequestBody = Type.Object({
+export type ListMcpsRequest = Static<typeof ListMcpsRequest>
+export const AddMcpPieceRequestBody = Type.Object({
     mcpId: ApId,
     pieceName: Type.String(),
-    status: Type.Optional(Type.Enum(MCPPieceStatus)),
+    status: Type.Optional(Type.Enum(McpPieceStatus)),
     connectionId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
 })
 
-export type AddMCPPieceRequestBody = Static<typeof AddMCPPieceRequestBody>
+export type AddMcpPieceRequestBody = Static<typeof AddMcpPieceRequestBody>
 
-export const UpdateMCPPieceRequestBody = Type.Object({
-    status: Type.Optional(Type.Enum(MCPPieceStatus)),
+export const UpdateMcpPieceRequestBody = Type.Object({
+    status: Type.Optional(Type.Enum(McpPieceStatus)),
     connectionId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
 })
 
-export type UpdateMCPPieceRequestBody = Static<typeof UpdateMCPPieceRequestBody>
+export type UpdateMcpPieceRequestBody = Static<typeof UpdateMcpPieceRequestBody>
 
 

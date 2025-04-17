@@ -1,12 +1,12 @@
-import { AppConnectionWithoutSensitiveData, MCPPiece, MCPPieceStatus } from '@activepieces/shared'
+import { AppConnectionWithoutSensitiveData, McpPiece, McpPieceStatus } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
-type MCPPieceSchema = MCPPiece & {
+type McpPieceSchema = McpPiece & {
     connection: AppConnectionWithoutSensitiveData | null
 }
 
-export const MCPPieceEntity = new EntitySchema<MCPPieceSchema>({
+export const McpPieceEntity = new EntitySchema<McpPieceSchema>({
     name: 'mcp_piece',
     columns: {
         ...BaseColumnSchemaPart,
@@ -24,8 +24,8 @@ export const MCPPieceEntity = new EntitySchema<MCPPieceSchema>({
         },
         status: {
             type: String,
-            enum: Object.values(MCPPieceStatus),
-            default: MCPPieceStatus.ENABLED,
+            enum: Object.values(McpPieceStatus),
+            default: McpPieceStatus.ENABLED,
             nullable: false,
         },
     },
