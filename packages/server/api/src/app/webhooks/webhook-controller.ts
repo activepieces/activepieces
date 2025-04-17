@@ -95,7 +95,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             flowId: request.params.flowId,
             async: true,
             saveSampleData: true,
-            flowVersionToRun: undefined,
+            flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST,
         })
         await reply
             .status(response.status)
