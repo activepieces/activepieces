@@ -110,7 +110,7 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
         const piece = await this.getOneOrThrow(pieceId)
         const mcp = await this.validateMcp(piece.mcpId)
         const project = await projectService.getOneOrThrow(mcp.projectId)
-        await validateMcpPieceConnection({ pieceName: piece.pieceName, connectionId, projectId: mcp.projectId, log: _log, platformId: project.platformId })
+       
         if (!isNil(status)) {
             await mcpPieceRepo().update(
                 { id: piece.id },
@@ -122,6 +122,7 @@ export const mcpPieceService = (_log: FastifyBaseLogger) => ({
         }
 
         if (!isNil(connectionId)) {
+            await validateMcpPieceConnection({ pieceName: piece.pieceName, connectionId, projectId: mcp.projectId, log: _log, platformId: project.platformId })
             await mcpPieceRepo().update(
                 { id: piece.id },
                 { connectionId },
