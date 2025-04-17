@@ -15,6 +15,9 @@ import {
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
+    FlowWorker,
+    GetFlowVersionForWorkerRequest,
+    GetFlowVersionForWorkerRequestType,
     isNil,
     PlatformId,
     PopulatedFlow,
@@ -30,6 +33,7 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
+import { projectService } from '../../project/project-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
 import { flowSideEffects } from './flow-service-side-effects'
@@ -501,6 +505,82 @@ export const flowService = (log: FastifyBaseLogger) => ({
             projectId,
             status,
         })
+    },
+
+    async getFlow(projectId: string, request: GetFlowVersionForWorkerRequest, log: FastifyBaseLogger): Promise<FlowWorker | null> {
+        const { type } = request
+        const projectExists = await projectService.exists(projectId)
+        if (!projectExists) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: projectId, entityType: 'project' },
+            })
+        }
+        let flow: PopulatedFlow | null = null
+        let flowId: FlowId | null = null
+        let flowVersionToRun: GetFlowVersionForWorkerRequestType = request.type
+        switch (type) {
+            case GetFlowVersionForWorkerRequestType.LATEST: {
+                flowId = request.flowId
+                flow = await this.getOnePopulated({
+                    id: request.flowId,
+                    projectId,
+                })
+                break
+            }
+            case GetFlowVersionForWorkerRequestType.EXACT: {
+                const flowVersion = await flowVersionService(log).getOne(request.versionId)
+                if (isNil(flowVersion)) {
+                    return null
+                }
+                flowId = flowVersion.flowId
+                flow = await this.getOnePopulated({
+                    id: flowVersion.flowId,
+                    projectId,
+                    versionId: request.versionId,
+                })
+                break
+            }
+            case GetFlowVersionForWorkerRequestType.LOCKED: {
+                flowId = request.flowId
+                const rawFlow = await this.getOne({
+                    id: request.flowId,
+                    projectId,
+                })
+                if (isNil(rawFlow)) {
+                    return null
+                }
+                if (isNil(rawFlow.publishedVersionId)) {
+                    break
+                }
+                flow = await this.getOnePopulated({
+                    id: rawFlow.id,
+                    projectId,
+                    versionId: rawFlow.publishedVersionId,
+                })
+                break
+            }
+        }   
+        if (isNil(flow) && type !== GetFlowVersionForWorkerRequestType.LATEST) {
+            flow = await this.getOnePopulated({
+                id: flowId,
+                projectId,
+            })
+            flowVersionToRun = GetFlowVersionForWorkerRequestType.LATEST
+        }
+        if (isNil(flow)) {
+            return null
+        }
+        return {
+            flow: {
+                ...flow,
+                version: await flowVersionService(log).lockPieceVersions({
+                    flowVersion: flow.version,
+                    projectId,
+                }),
+            },
+            flowVersionToRun,
+        }
     },
 })
 

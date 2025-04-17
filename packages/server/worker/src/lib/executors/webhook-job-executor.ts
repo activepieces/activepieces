@@ -2,6 +2,7 @@ import { pinoLogging, WebhookJobData } from '@activepieces/server-shared'
 import {
     EngineHttpResponse,
     FlowStatus,
+    FlowWorker,
     GetFlowVersionForWorkerRequestType,
     isNil,
     PopulatedFlow,
@@ -10,7 +11,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { engineApiService, workerApiService } from '../api/server-api.service'
+import { workerApiService } from '../api/server-api.service'
 import { webhookUtils } from '../utils/webhook-utils'
 
 export const webhookExecutor = (log: FastifyBaseLogger) => ({
@@ -25,7 +26,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
             flowId: data.flowId,
         })
         webhookLogger.info('Webhook job executor started')
-        const { payload, saveSampleData, flowVersionToRun } = data
+        const { payload, saveSampleData, flowVersionToRun, flowToRun } = data
 
         if (saveSampleData) {
             await handleSampleData(data, engineToken, workerToken, webhookLogger)
@@ -41,7 +42,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
             return
         }
 
-        const populatedFlowToRun = await getFlowToRun(workerToken, engineToken, flowVersionToRun, data, log)
+        const populatedFlowToRun = await getFlowToRun(workerToken, flowToRun, data)
         if (isNil(populatedFlowToRun)) {
             return
         }
@@ -103,34 +104,15 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
         }
     },
 })
-async function getFlowToRun(workerToken: string, engineToken: string, flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED, data: WebhookJobData, log: FastifyBaseLogger): Promise<PopulatedFlow | null> {
-    const flowToRun = await engineApiService(engineToken, log).getFlowWithExactPieces({
-        flowId: data.flowId,
-        type: flowVersionToRun,
-    })
-
-    if (!isNil(flowToRun)) {
-        return flowToRun
+async function getFlowToRun(workerToken: string, flowToRun: FlowWorker | null | undefined, data: WebhookJobData): Promise<PopulatedFlow | null> {
+    if (!isNil(flowToRun) && !isNil(flowToRun.flow)) {
+        return flowToRun.flow
     }
-
-    if (flowVersionToRun === GetFlowVersionForWorkerRequestType.LATEST) {
-        await stopAndReply(workerToken, data, {
-            body: {},
-            headers: {},
-            status: StatusCodes.GONE,
-        })
-        return null
-    }
-
-    const latestFlowVersion = await engineApiService(engineToken, log).getFlowWithExactPieces({
-        flowId: data.flowId,
-        type: GetFlowVersionForWorkerRequestType.LATEST,
-    })
 
     await stopAndReply(workerToken, data, {
         body: {},
         headers: {},
-        status: isNil(latestFlowVersion) ? StatusCodes.GONE : StatusCodes.NOT_FOUND,
+        status: flowToRun?.flowVersionToRun === GetFlowVersionForWorkerRequestType.LATEST ? StatusCodes.GONE : StatusCodes.NOT_FOUND,
     })
     return null
 }
@@ -141,14 +123,8 @@ async function handleSampleData(
     workerToken: string,
     log: FastifyBaseLogger,
 ): Promise<void> {
-    const { flowId, payload } = data
-    const latestFlowVersion = await engineApiService(
-        engineToken,
-        log,
-    ).getFlowWithExactPieces({
-        flowId,
-        type: GetFlowVersionForWorkerRequestType.LATEST,
-    })
+    const { payload, flowToRun } = data
+    const latestFlowVersion = flowToRun?.flow
 
     if (isNil(latestFlowVersion)) {
         await stopAndReply(workerToken, data, {

@@ -16,7 +16,7 @@ type HandleWebhookParams = {
     flowId: string
     async: boolean
     saveSampleData: boolean
-    flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED | undefined
+    flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED
     data: (projectId: string) => Promise<EventPayload>
     logger: FastifyBaseLogger
     payload?: Record<string, unknown>
@@ -73,6 +73,11 @@ export const webhookService = {
         pinoLogger.info('Adding webhook job to queue')
 
         const synchronousHandlerId = async ? null : engineResponseWatcher(pinoLogger).getServerId()
+        const flowToRun = await flowService(pinoLogger).getFlow(flow.projectId, {
+            flowId: flow.id,
+            type: flowVersionToRun,
+        }, pinoLogger)
+
         await jobQueue(logger).add({
             id: webhookRequestId,
             type: JobType.WEBHOOK,
@@ -85,6 +90,7 @@ export const webhookService = {
                 flowId: flow.id,
                 saveSampleData,
                 flowVersionToRun,
+                flowToRun,
             },
             priority: await getJobPriority(synchronousHandlerId),
         })
