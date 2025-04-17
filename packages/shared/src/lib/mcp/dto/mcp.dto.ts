@@ -5,7 +5,7 @@ import { MCPPieceStatus } from '../mcp'
 export const ListMCPsRequest = Type.Object({
     limit: Type.Optional(Type.Number({})),
     cursor: Type.Optional(Type.String({})),
-    projectId: Type.String({}),
+    projectId: Type.Optional(Type.String({})),
 })
 
 export type ListMCPsRequest = Static<typeof ListMCPsRequest>
