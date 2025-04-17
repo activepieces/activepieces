@@ -97,6 +97,21 @@ export interface ActivepiecesVendorInit {
 }
 // We used to send JWT in query params, now we send it in local storage
 export const _AP_JWT_TOKEN_QUERY_PARAM_NAME = "jwtToken"
+
+enum MCPPieceStatus {
+  ENABLED = 'ENABLED',
+  DISABLED = 'DISABLED',
+}
+
+type MCPPiece = {
+  pieceName:string,
+  connectionId?:string,
+  mcpId:string,
+  status:MCPPieceStatus
+  id:string
+}
+
+
 type newWindowFeatures = {
   height?: number,
   width?: number,
@@ -571,6 +586,54 @@ class ActivepiecesEmbedded {
     }
     return this._embeddingAuth;
   }
+
+
+
+  async getMcpInfo() {
+    return this.request({path: '/mcp', method: 'GET'}).then(res => res.data[0]);
+   
+  }
+
+  async getMcpTools():Promise<{pieces:MCPPiece[]}> {
+    return this.request({path: '/mcp-pieces', method: 'GET'})
+  }
+
+  async addMcpTool(params:{pieceName:string, connectionId?:string, status?:MCPPieceStatus}) {
+    const status = params.status ?? MCPPieceStatus.ENABLED;
+    const mcp = await this.getMcpInfo();
+    return this.request({path: '/mcp-pieces', method: 'POST', body: {
+      pieceName: params.pieceName,
+      connectionId: params.connectionId,
+      status,
+      mcpId: mcp.id,
+    }})
+  }
+
+  async updateMcpTool({pieceName, status, connectionId}:{pieceName:string, status?:MCPPieceStatus, connectionId?:string}) {
+    const pieces = await this.getMcpTools();
+    const pieceToUpdate = pieces.pieces.find((piece:MCPPiece) => piece.pieceName === pieceName);
+    if(!pieceToUpdate)
+    {
+      return this.getMcpInfo();
+    }
+    return this.request({path: `/mcp-pieces/${pieceToUpdate.id}`, method: 'POST', body: {
+      pieceName,
+      status: status ?? pieceToUpdate.status,
+      connectionId: connectionId ?? pieceToUpdate.connectionId,
+    }})
+  }
+
+
+  async removeMcpTool({pieceName}:{pieceName:string}) {
+    const pieces = await this.getMcpTools();
+    const pieceToRemove = pieces.pieces.find((piece:MCPPiece) => piece.pieceName === pieceName);
+    if(!pieceToRemove) {
+      return this.getMcpInfo();
+    }
+    return this.request({path: `/mcp-pieces/${pieceToRemove.id}`, method: 'DELETE'})
+  }
+
+
   request({path, method, body, queryParams}:{path:string, method: RequestMethod, body?:Record<string, unknown>, queryParams?:Record<string, string>}) {
     const headers:Record<string, string> = {
       'Content-Type': 'application/json'
