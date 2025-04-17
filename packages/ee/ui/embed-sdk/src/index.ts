@@ -590,8 +590,7 @@ class ActivepiecesEmbedded {
 
 
   async getMcpInfo() {
-    return this.request({path: '/mcp', method: 'GET'}).then(res => res.data[0]);
-   
+    return this.request({path: '/mcp-servers', method: 'GET'}).then(res => res.data[0]);
   }
 
   async getMcpTools():Promise<{pieces:MCPPiece[]}> {
@@ -636,7 +635,9 @@ class ActivepiecesEmbedded {
 
   request({path, method, body, queryParams}:{path:string, method: RequestMethod, body?:Record<string, unknown>, queryParams?:Record<string, string>}) {
     const headers:Record<string, string> = {
-      'Content-Type': 'application/json'
+    }
+    if(body) {
+      headers['Content-Type'] = 'application/json'
     }
     if(this._embeddingAuth) {
       headers['Authorization'] = `Bearer ${this._embeddingAuth.userJwtToken}`
