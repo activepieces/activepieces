@@ -79,7 +79,7 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
             return this.getOrCreate({ projectId })
         }
         return this.getOrThrow({ mcpId: mcp.id })
-    }
+    },
 
 })
 

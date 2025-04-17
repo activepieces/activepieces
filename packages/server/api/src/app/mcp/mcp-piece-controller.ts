@@ -50,7 +50,7 @@ export const mcpPieceController: FastifyPluginAsyncTypebox = async (app) => {
     app.delete('/:id', DeletePieceRequest, async (req) => {
         const { id } = req.params
         await mcpPieceService(req.log).delete(id)
-        return await mcpService(req.log).getByProjectId({ projectId: req.principal.projectId })    
+        return mcpService(req.log).getByProjectId({ projectId: req.principal.projectId })    
     })
 
 }

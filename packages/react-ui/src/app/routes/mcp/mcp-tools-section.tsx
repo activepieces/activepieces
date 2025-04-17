@@ -1,33 +1,33 @@
+import { PopulatedFlow, MCPPieceWithConnection } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus, ArrowDown, ArrowUp } from 'lucide-react';
 import { useState } from 'react';
 
-import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
+import { McpFlowCard } from './mcp-flow-card';
+import { McpPiece } from './mcp-piece';
+import { McpPieceDialog } from './mcp-piece-dialog';
+
 import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import {
-  AppConnectionWithoutSensitiveData,
-  PopulatedFlow,
-} from '@activepieces/shared';
 
-import { McpConnection } from './mcp-connection';
-import { McpFlowCard } from './mcp-flow-card';
+// Define a union type for tool items
+type ToolItem = MCPPieceWithConnection | PopulatedFlow;
 
 interface McpToolsProps {
   title: string;
-  tools: AppConnectionWithoutSensitiveData[] | PopulatedFlow[];
+  tools: ToolItem[];
   emptyMessage: React.ReactNode;
   isLoading: boolean;
-  type: 'connections' | 'flows';
+  type: 'pieces' | 'flows';
   onAddClick: () => void;
   onToolClick?: (tool: PopulatedFlow) => void;
-  onToolDelete?: (tool: AppConnectionWithoutSensitiveData) => void;
+  onToolDelete?: (tool: MCPPieceWithConnection) => void;
   pieceInfoMap?: Record<string, { displayName: string; logoUrl?: string }>;
   canAddTool: boolean;
   addButtonLabel: string;
   isPending?: boolean;
-  onConnectionCreated?: (connection: AppConnectionWithoutSensitiveData) => void;
+  onPieceSelected?: (pieceName: string, connectionId?: string) => void;
 }
 
 export const McpToolsSection = ({
@@ -43,7 +43,7 @@ export const McpToolsSection = ({
   canAddTool,
   addButtonLabel,
   isPending,
-  onConnectionCreated,
+  onPieceSelected,
 }: McpToolsProps) => {
   const { theme } = useTheme();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -57,12 +57,9 @@ export const McpToolsSection = ({
       return null;
     }
 
-    if (type === 'connections' && onConnectionCreated) {
+    if (type === 'pieces' && onPieceSelected) {
       return (
-        <NewConnectionDialog
-          onConnectionCreated={onConnectionCreated}
-          isGlobalConnection={false}
-        >
+        <McpPieceDialog onPieceSelected={onPieceSelected}>
           <Button
             variant="default"
             size="sm"
@@ -72,7 +69,7 @@ export const McpToolsSection = ({
             <Plus className="h-4 w-4" />
             {addButtonLabel}
           </Button>
-        </NewConnectionDialog>
+        </McpPieceDialog>
       );
     } else {
       return (
@@ -91,13 +88,13 @@ export const McpToolsSection = ({
   };
 
   const renderSkeletons = () => {
-    if (type === 'connections') {
+    if (type === 'pieces') {
       return Array(4)
         .fill(0)
         .map((_, index) => (
-          <McpConnection
+          <McpPiece
             key={`skeleton-${index}`}
-            connection={{} as AppConnectionWithoutSensitiveData}
+            piece={{} as MCPPieceWithConnection}
             pieceInfo={{ displayName: '', logoUrl: '' }}
             onDelete={() => {}}
             isLoading={true}
@@ -126,13 +123,10 @@ export const McpToolsSection = ({
   };
 
   const renderEmptyState = () => {
-    if (type === 'connections' && onConnectionCreated) {
+    if (type === 'pieces' && onPieceSelected) {
       // For connections, we need to replace the button in the empty message with our dialog
       return (
-        <NewConnectionDialog
-          onConnectionCreated={onConnectionCreated}
-          isGlobalConnection={false}
-        >
+        <McpPieceDialog onPieceSelected={onPieceSelected}>
           <div className="flex">
             <div
               className={`w-64 flex flex-col items-center justify-center py-6 px-5 text-muted-foreground ${
@@ -168,7 +162,7 @@ export const McpToolsSection = ({
               </div>
             </div>
           </div>
-        </NewConnectionDialog>
+        </McpPieceDialog>
       );
     } else {
       return emptyMessage || null;
@@ -192,18 +186,19 @@ export const McpToolsSection = ({
         ) : (
           <>
             {visibleTools.map((tool) => {
-              if (type === 'connections') {
-                const connection = tool as AppConnectionWithoutSensitiveData;
-                const pieceInfo = pieceInfoMap[connection.id] || {
-                  displayName: connection.pieceName,
+              if (type === 'pieces') {
+                const piece = tool as MCPPieceWithConnection;
+                const pieceInfo = pieceInfoMap[piece.id] || {
+                  displayName: piece.pieceName,
                   logoUrl: '',
                 };
+
                 return (
-                  <McpConnection
-                    key={connection.id}
-                    connection={connection}
+                  <McpPiece
+                    key={piece.id}
+                    piece={piece}
                     pieceInfo={pieceInfo}
-                    onDelete={() => onToolDelete && onToolDelete(connection)}
+                    onDelete={() => onToolDelete && onToolDelete(piece)}
                   />
                 );
               } else {

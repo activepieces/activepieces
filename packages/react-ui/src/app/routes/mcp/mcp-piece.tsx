@@ -1,29 +1,29 @@
+import { MCPPieceWithConnection } from '@activepieces/shared';
 import { t } from 'i18next';
 import { PlugIcon, Trash2 } from 'lucide-react';
-
-import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { Skeleton } from '@/components/ui/skeleton';
-import { AppConnectionWithoutSensitiveData, MCPPieceWithConnection } from '@activepieces/shared';
 
 import { Card, CardContent } from '../../../components/ui/card';
 import { PieceIcon } from '../../../features/pieces/components/piece-icon';
 
-type McpConnectionProps = {
-  tool: MCPPieceWithConnection;
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
+
+type McpPieceProps = {
+  piece: MCPPieceWithConnection;
   pieceInfo: {
     displayName: string;
     logoUrl?: string;
   };
-  onDelete: (tool: MCPPieceWithConnection) => void;
+  onDelete: (piece: MCPPieceWithConnection) => void;
   isLoading?: boolean;
 };
 
-export const McpConnection = ({
-  tool,
+export const McpPiece = ({
+  piece,
   pieceInfo,
   onDelete,
   isLoading = false,
-}: McpConnectionProps) => {
+}: McpPieceProps) => {
   if (isLoading) {
     return (
       <Card className="overflow-hidden transition-all duration-200 relative hover:shadow-sm group border-border">
@@ -43,21 +43,17 @@ export const McpConnection = ({
     );
   }
 
-  // Get display name - either from connection or directly from piece
-  const displayName = tool.connection ? tool.connection.displayName : pieceInfo.displayName;
-  
-  // Get status indicator class based on piece status
-  const statusIndicator = tool.status === 'ENABLED' ? 'bg-primary' : 'bg-gray-400';
+  const displayName = piece.connection
+    ? piece.connection.displayName
+    : pieceInfo.displayName;
 
   return (
     <Card className="overflow-hidden transition-all duration-200 relative hover:shadow-sm group border-border">
       <ConfirmationDeleteDialog
         title={`${t('Delete')} ${displayName}`}
-        message={
-          <div>{t('Are you sure you want to delete this piece?')}</div>
-        }
+        message={<div>{t('Are you sure you want to delete this piece?')}</div>}
         mutationFn={async () => {
-          onDelete(tool);
+          onDelete(piece);
         }}
         entityName={t('piece')}
       >
@@ -77,9 +73,11 @@ export const McpConnection = ({
               circle={true}
               border={true}
             />
-            <div className={`absolute -bottom-1 -right-1 ${statusIndicator} text-white rounded-full p-0.5`}>
-              <PlugIcon className="h-3 w-3" />
-            </div>
+            {piece.connection && (
+              <div className="absolute -bottom-1 -right-1 bg-primary text-white rounded-full p-0.5">
+                <PlugIcon className="h-3 w-3" />
+              </div>
+            )}
           </div>
           <div className="min-w-0">
             <h4 className="font-medium text-foreground truncate flex items-center gap-1">
