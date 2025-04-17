@@ -35,6 +35,7 @@ import { getClickupMessageReplies } from './lib/actions/chat/get-message-replies
 import { updateClickupMessage } from './lib/actions/chat/update-message';
 import { deleteClickupMessage } from './lib/actions/chat/delete-message';
 import { deleteClickupMessageReaction } from './lib/actions/chat/delete-message-reaction';
+import { getClickupTaskByName } from './lib/actions/tasks/get-task-by-name';
 
 export const clickupAuth = PieceAuth.OAuth2({
   description: '',
@@ -64,6 +65,7 @@ export const clickup = createPiece({
     createClickupMessageReply,
     getClickupList,
     getClickupTask,
+    getClickupTaskByName,
     getClickupSpace,
     getClickupSpaces,
     getClickupTaskComments,
