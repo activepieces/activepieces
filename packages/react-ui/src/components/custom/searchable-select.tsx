@@ -40,6 +40,7 @@ type SearchableSelectProps<T> = {
   showRefresh?: boolean;
   onClose?: () => void;
   triggerClassName?: string;
+  valuesRendering?: (value: T) => React.ReactNode;
 };
 
 export const SearchableSelect = <T extends React.Key>({
@@ -54,6 +55,7 @@ export const SearchableSelect = <T extends React.Key>({
   showRefresh,
   onClose,
   triggerClassName,
+  valuesRendering,
 }: SearchableSelectProps<T>) => {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -147,7 +149,7 @@ export const SearchableSelect = <T extends React.Key>({
           >
             <span className="flex w-full truncate select-none">
               {selectedIndex > -1 && options[selectedIndex]
-                ? options[selectedIndex].label
+                ? valuesRendering ? valuesRendering(options[selectedIndex].value) : options[selectedIndex].label
                 : placeholder}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -225,7 +227,7 @@ export const SearchableSelect = <T extends React.Key>({
                           {option.label === '' ? (
                             <span className="">&nbsp;</span>
                           ) : (
-                            option.label
+                            valuesRendering ? valuesRendering(option.value) : option.label
                           )}
                           <Check
                             className={cn('flex-shrink-0 w-4 h-4', {

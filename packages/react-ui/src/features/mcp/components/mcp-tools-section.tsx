@@ -27,7 +27,6 @@ interface McpToolsProps {
   canAddTool: boolean;
   addButtonLabel: string;
   isPending?: boolean;
-  onPieceSelected?: (pieceName: string, connectionId?: string) => void;
 }
 
 export const McpToolsSection = ({
@@ -43,7 +42,6 @@ export const McpToolsSection = ({
   canAddTool,
   addButtonLabel,
   isPending,
-  onPieceSelected,
 }: McpToolsProps) => {
   const { theme } = useTheme();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -57,9 +55,9 @@ export const McpToolsSection = ({
       return null;
     }
 
-    if (type === 'pieces' && onPieceSelected) {
+    if (type === 'pieces') {
       return (
-        <McpPieceDialog onPieceSelected={onPieceSelected}>
+        <McpPieceDialog>
           <Button
             variant="default"
             size="sm"
@@ -123,10 +121,10 @@ export const McpToolsSection = ({
   };
 
   const renderEmptyState = () => {
-    if (type === 'pieces' && onPieceSelected) {
+    if (type === 'pieces') {
       // For connections, we need to replace the button in the empty message with our dialog
       return (
-        <McpPieceDialog onPieceSelected={onPieceSelected}>
+        <McpPieceDialog >
           <div className="flex">
             <div
               className={`w-64 flex flex-col items-center justify-center py-6 px-5 text-muted-foreground ${
@@ -178,7 +176,7 @@ export const McpToolsSection = ({
         {renderAddButton()}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="gap-4 flex flex-wrap">
         {isLoading ? (
           renderSkeletons()
         ) : tools.length === 0 ? (

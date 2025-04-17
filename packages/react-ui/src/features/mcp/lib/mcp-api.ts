@@ -2,6 +2,7 @@ import {
   MCPWithPieces,
   MCPPieceStatus,
   MCPPieceWithConnection,
+  SeekPage,
 } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
@@ -26,7 +27,7 @@ interface UpdatePieceParams {
 
 export const mcpApi = {
   async get() {
-    return await api.get<MCPWithPieces>(`/v1/mcp-servers`);
+    return await api.get<SeekPage<MCPWithPieces>>(`/v1/mcp-servers`).then(res=>res.data[0]);
   },
   async update({ id, token }: UpdateMCPParams) {
     return await api.post<MCPWithPieces>(`/v1/mcp-servers/${id}`, {

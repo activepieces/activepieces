@@ -16,7 +16,7 @@ import { Hammer, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import { McpClientTabs } from './mcp-client-tabs';
-import { McpToolsSection } from './mcp-tools-section';
+import { McpToolsSection } from '../../../features/mcp/components/mcp-tools-section';
 
 import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
 import { useTheme } from '@/components/theme-provider';
@@ -25,7 +25,7 @@ import { Separator } from '@/components/ui/separator';
 import { TableTitle } from '@/components/ui/table-title';
 import { useToast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { mcpApi } from '@/features/mcp/mcp-api';
+import { mcpApi } from '@/features/mcp/lib/mcp-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import {
   PieceStepMetadataWithSuggestions,
@@ -34,6 +34,7 @@ import {
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 
 export default function MCPPage() {
   const { theme } = useTheme();
@@ -47,16 +48,7 @@ export default function MCPPage() {
     type: 'trigger',
   });
 
-  const {
-    data: mcp,
-    refetch: refetchMcp,
-    isLoading,
-  } = useQuery({
-    queryKey: ['mcp'],
-    queryFn: () => {
-      return mcpApi.get();
-    },
-  });
+  const { data: mcp, isLoading: isLoading, refetch: refetchMcp } = mcpHooks.useMcp();
 
   const { data: flowsData, isLoading: isFlowsLoading } = useQuery({
     queryKey: ['mcp-flows'],
@@ -87,39 +79,7 @@ export default function MCPPage() {
 
   const { pieces } = piecesHooks.usePieces({});
 
-  const addPieceMutation = useMutation({
-    mutationFn: async ({
-      mcpId,
-      pieceName,
-      connectionId,
-    }: {
-      mcpId: string;
-      pieceName: string;
-      connectionId?: string;
-    }) => {
-      return mcpApi.addPiece({
-        mcpId,
-        pieceName,
-        connectionId,
-        status: MCPPieceStatus.ENABLED,
-      });
-    },
-    onSuccess: () => {
-      toast({
-        description: t('Piece is added successfully'),
-        duration: 3000,
-      });
-      refetchMcp();
-    },
-    onError: () => {
-      toast({
-        variant: 'destructive',
-        title: t('Error'),
-        description: t('Failed to add piece'),
-        duration: 5000,
-      });
-    },
-  });
+ 
 
   const rotateMutation = useMutation({
     mutationFn: async (mcpId: string) => {
@@ -153,7 +113,8 @@ export default function MCPPage() {
       });
       refetchMcp();
     },
-    onError: () => {
+    onError: (err) => {
+      console.error(err);
       toast({
         variant: 'destructive',
         title: t('Error'),
@@ -247,15 +208,7 @@ export default function MCPPage() {
     };
   };
 
-  const addPiece = (pieceName: string, connectionId?: string) => {
-    if (!mcp?.id) return;
 
-    addPieceMutation.mutate({
-      mcpId: mcp.id,
-      pieceName,
-      connectionId,
-    });
-  };
 
   const pieceInfoMap: Record<
     string,
@@ -358,9 +311,8 @@ export default function MCPPage() {
             canAddTool={true}
             addButtonLabel={t('Add Piece')}
             isPending={
-              removePieceMutation.isPending || addPieceMutation.isPending
+              removePieceMutation.isPending
             }
-            onPieceSelected={addPiece}
           />
 
           {/* Flows Section */}
