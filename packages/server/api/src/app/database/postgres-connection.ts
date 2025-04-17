@@ -21,6 +21,7 @@ import { ModifyBilling1694902537045 } from '../ee/database/migrations/postgres/1
 import { AddDatasourcesLimit1695916063833 } from '../ee/database/migrations/postgres/1695916063833-AddDatasourcesLimit'
 import { AddPlatform1697717995884 } from '../ee/database/migrations/postgres/1697717995884-add-platform'
 import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
+import { AddMetadataFieldToFlowTemplates1744780800000 } from '../ee/database/migrations/postgres/1744780800000-AddMetadataFieldToFlowTemplates'
 import { system } from '../helper/system/system'
 import { commonProperties } from './database-connection'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
@@ -322,6 +323,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMetadataFields1743780156664,
         AddRecordIndexForTableIdAndProjectIdAndRecordId1744187975994,
         AddLastChangelogDismissed1744053592923,
+        AddMetadataFieldToFlowTemplates1744780800000,
     ]
 
     const edition = system.getEdition()
