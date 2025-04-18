@@ -8,9 +8,10 @@ import { getQuestionPngPreview } from './lib/actions/get-png-rendering';
 import { getDashboardQuestions } from './lib/actions/get-dashboard';
 import { queryMetabaseApi } from './lib/common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { getGraphQuestion } from './lib/actions/get-graph-question';
 
 export const metabaseAuth = PieceAuth.CustomAuth({
-  description: 'Metabase authentication requires a username and password.',
+  description: 'Metabase authentication requires a baseUrl and a password.',
   required: true,
   props: {
     baseUrl: Property.ShortText({
@@ -22,6 +23,12 @@ export const metabaseAuth = PieceAuth.CustomAuth({
       description:
         'Generate one on your Metabase instance (settings -> authentication -> API keys)',
       required: true,
+    }),
+    embeddingKey: Property.ShortText({
+      displayName: 'Embedding key',
+      description:
+        'Needed if you want to generate a graph of a question (settings -> embedding -> static embedding).',
+      required: false,
     }),
   },
 
@@ -52,7 +59,12 @@ export const metabase = createPiece({
   auth: metabaseAuth,
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/metabase.png',
-  authors: ['AdamSelene', 'abuaboud', 'valentin-mourtialon'],
-  actions: [getQuestion, getQuestionPngPreview, getDashboardQuestions],
+  authors: ['AdamSelene', 'abuaboud', 'valentin-mourtialon', 'Kevinyu-alan'],
+  actions: [
+    getQuestion,
+    getQuestionPngPreview,
+    getDashboardQuestions,
+    getGraphQuestion,
+  ],
   triggers: [],
 });
