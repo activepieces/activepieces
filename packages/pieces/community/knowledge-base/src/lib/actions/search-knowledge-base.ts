@@ -15,7 +15,7 @@ export const getMasterData = async () => {
       masterData.CENTER_AUTH_LOGIN_URL = "https://mocha.centerapp.io/center/auth/login";
       masterData.CENTER_API_USERS_ME_URL = "https://mocha.centerapp.io/center/api/v1/users/me";
       masterData.KNOWLEDGE_BASE_RUN_URL = "https://mlsandbox.oneweb.tech/px/retrieval";
-      masterData.KNOWLEDGE_BASE_COLLECTIONS_URL = "https://mlsandbox.oneweb.tech/px/collections";
+      masterData.KNOWLEDGE_BASE_COLLECTIONS_URL = "https://test.oneweb.tech/KnowledgeBaseFileService/collections";
     }
     return masterData;
   } catch (error) {
@@ -23,7 +23,7 @@ export const getMasterData = async () => {
     masterData.CENTER_AUTH_LOGIN_URL = "https://mocha.centerapp.io/center/auth/login";
     masterData.CENTER_API_USERS_ME_URL = "https://mocha.centerapp.io/center/api/v1/users/me";
     masterData.KNOWLEDGE_BASE_RUN_URL = "https://mlsandbox.oneweb.tech/px/retrieval";
-    masterData.KNOWLEDGE_BASE_COLLECTIONS_URL = "https://mlsandbox.oneweb.tech/px/collections";
+    masterData.KNOWLEDGE_BASE_COLLECTIONS_URL = "https://test.oneweb.tech/KnowledgeBaseFileService/collections";
     return masterData;
   }
 };
@@ -97,10 +97,10 @@ export const searchKnowledgeBase = createAction({
 
           return {
             disabled: false,
-            options: response.data.map((knowledgebaseResult: any) => {
+            options: response.data.data.map((knowledgebaseResult: any) => {
               return {
                 label: knowledgebaseResult.collection_name,
-                value: knowledgebaseResult.collection_name,
+                value: knowledgebaseResult.collection_id,
               };
             }),
           };
