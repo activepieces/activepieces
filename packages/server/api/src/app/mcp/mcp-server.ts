@@ -1,6 +1,6 @@
 import { PropertyType } from '@activepieces/pieces-framework'
 import { UserInteractionJobType } from '@activepieces/server-shared'
-import { EngineResponseStatus, ExecuteActionResponse, FlowStatus, FlowVersionState, GetFlowVersionForWorkerRequestType, isNil, MCPTrigger, TriggerType } from '@activepieces/shared'
+import { EngineResponseStatus, ExecuteActionResponse, FlowStatus, FlowVersionState, GetFlowVersionForWorkerRequestType, isNil, McpPieceStatus, McpPieceWithConnection, McpTrigger, TriggerType } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { FastifyBaseLogger, FastifyReply } from 'fastify'
@@ -20,15 +20,17 @@ export async function createMcpServer({
     reply,
     logger,
 }: CreateMcpServerRequest): Promise<CreateMcpServerResponse> {
-    const mcp = await mcpService(logger).getOrThrow({ mcpId, log: logger })
+    const mcp = await mcpService(logger).getOrThrow({ mcpId })
     const projectId = mcp.projectId
     const platformId = await projectService.getPlatformId(projectId)
-    const connections = mcp.connections
 
-    const pieceNames = connections.map((connection) => connection.pieceName)
-    const pieces = await Promise.all(pieceNames.map(async (pieceName) => {
+    // filter out pieces that are not enabled
+    const enabledPieces = mcp.pieces.filter((piece) => piece.status === McpPieceStatus.ENABLED)
+
+    // Get all pieces with their connections
+    const pieces = await Promise.all(enabledPieces.map(async (piece: McpPieceWithConnection) => {
         return pieceMetadataService(logger).getOrThrow({
-            name: pieceName,
+            name: piece.pieceName,
             version: undefined,
             projectId,
             platformId,
@@ -41,20 +43,27 @@ export async function createMcpServer({
         version: '1.0.0',
     })
 
-    const uniqueActions = new Set()
-    pieces.flatMap(piece =>
-        Object.values(piece.actions).map(action => {
+    const uniqueActions = new Set<string>()
+    pieces.flatMap(piece => {
+        return Object.values(piece.actions).map(action => {
             if (uniqueActions.has(action.name)) {
                 return
             }
-            const pieceConnectionExternalId = connections.find(connection => connection.pieceName === piece.name)?.externalId
+            
+            // Find matching piece in mcp pieces
+            const mcpPiece = mcp.pieces.find(p => p.pieceName === piece.name)
+            const pieceConnectionExternalId = mcpPiece?.connection?.externalId
+            
             const actionName = `${piece.name.split('piece-')[1]}-${action.name}`.slice(0, MAX_TOOL_NAME_LENGTH)
             uniqueActions.add(actionName)
+            
             server.tool(
                 actionName,
                 action.description,
                 Object.fromEntries(
-                    Object.entries(action.props).filter(([_key, prop]) => prop.type !== PropertyType.MARKDOWN).map(([key, prop]) =>
+                    Object.entries(action.props).filter(([_key, prop]) => 
+                        prop.type !== PropertyType.MARKDOWN,
+                    ).map(([key, prop]) =>
                         [key, piecePropertyToZod(prop)],
                     ),
                 ),
@@ -66,8 +75,9 @@ export async function createMcpServer({
                                 .filter(([key, prop]) => !isNil(prop.defaultValue) && isNil(params[key]))
                                 .map(([key, prop]) => [key, prop.defaultValue]),
                         ),
-                        'auth': `{{connections['${pieceConnectionExternalId}']}}`,
+                        ...(pieceConnectionExternalId ? { auth: `{{connections['${pieceConnectionExternalId}']}}` } : {}),
                     }
+                    
                     const result = await userInteractionWatcher(logger).submitAndWaitForResponse<EngineHelperResponse<ExecuteActionResponse>>({
                         jobType: UserInteractionJobType.EXECUTE_TOOL,
                         actionName: action.name,
@@ -101,8 +111,8 @@ export async function createMcpServer({
                     }
                 },
             )
-        }),
-    )
+        })
+    })
 
     const flows = await flowService(logger).list({ 
         projectId,
@@ -120,7 +130,7 @@ export async function createMcpServer({
     )
 
     for (const flow of mcpFlows) {
-        const triggerSettings = flow.version.trigger.settings as MCPTrigger
+        const triggerSettings = flow.version.trigger.settings as McpTrigger
         const toolName = ('flow_' + triggerSettings.input?.toolName).slice(0, MAX_TOOL_NAME_LENGTH)
         const toolDescription = triggerSettings.input?.toolDescription
         const inputSchema = triggerSettings.input?.inputSchema

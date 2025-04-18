@@ -39,6 +39,8 @@ export const errorHandler = async (
             [ErrorCode.AUTHENTICATION]: StatusCodes.UNAUTHORIZED,
             [ErrorCode.INVALID_LICENSE_KEY]: StatusCodes.BAD_REQUEST,
             [ErrorCode.EMAIL_ALREADY_HAS_ACTIVATION_KEY]: StatusCodes.CONFLICT,
+            [ErrorCode.MCP_PIECE_REQUIRES_CONNECTION]: StatusCodes.BAD_REQUEST,
+            [ErrorCode.MCP_PIECE_CONNECTION_MISMATCH]: StatusCodes.BAD_REQUEST,
         }
         const statusCode =
       statusCodeMap[error.error.code] ?? StatusCodes.BAD_REQUEST

@@ -3,7 +3,7 @@ import {
     Property,
     TriggerStrategy,
   } from '@activepieces/pieces-framework';
-import { MCPProperyType } from '@activepieces/shared';
+import { McpPropertyType } from '@activepieces/shared';
 
 
   export const mcpTool = createTrigger({
@@ -28,7 +28,7 @@ import { MCPProperyType } from '@activepieces/shared';
         defaultValue: [
           {
             name: '',
-            type: MCPProperyType.TEXT,
+            type: McpPropertyType.TEXT,
             required: true,
           },
         ],
@@ -44,9 +44,9 @@ import { MCPProperyType } from '@activepieces/shared';
           type: Property.StaticDropdown({
             displayName: 'Type',
             required: true,
-            defaultValue: MCPProperyType.TEXT,
+            defaultValue: McpPropertyType.TEXT,
             options: {
-              options: Object.values(MCPProperyType).map((type) => ({
+              options: Object.values(McpPropertyType).map((type) => ({
                 value: type,
                 label: type,
               })),
