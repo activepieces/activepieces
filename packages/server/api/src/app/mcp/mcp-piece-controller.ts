@@ -60,7 +60,7 @@ const GetMcpPiecesRequest = {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
-        tags: ['mcp-pieces'],
+        tags: ['mcp-piece'],
         description: 'Get current project MCP pieces',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {
@@ -76,7 +76,7 @@ const AddMcpPieceRequest = {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
-        tags: ['mcp-pieces'],
+        tags: ['mcp-piece'],
         description: 'Add a new project MCP tool',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         body: AddMcpPieceRequestBody,
@@ -91,7 +91,7 @@ const UpdateMcpPieceRequest = {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
-        tags: ['mcp-pieces'],
+        tags: ['mcp-piece'],
         description: 'Update MCP tool status',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: Type.Object({
@@ -110,7 +110,7 @@ const DeletePieceRequest = {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
-        tags: ['mcp-pieces'],
+        tags: ['mcp-piece'],
         description: 'Delete a piece from MCP configuration',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: Type.Object({
