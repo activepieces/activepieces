@@ -117,7 +117,11 @@ export const McpPieceDialog = React.memo(
             };
           }
         }
-        if (mcp?.pieces.find((piece) => piece.pieceName === values.pieceName)) {
+
+        if (
+          mcp?.pieces.find((piece) => piece.pieceName === values.pieceName) &&
+          isNil(mcpPieceToUpdate)
+        ) {
           errors.pieceName = {
             message: t('Your MCP server already has this tool'),
             type: 'required',
