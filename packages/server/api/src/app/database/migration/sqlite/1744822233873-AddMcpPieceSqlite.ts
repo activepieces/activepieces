@@ -112,7 +112,8 @@ export class AddMcpPieceSqlite1744822233873 implements MigrationInterface {
                 "externalId",
                 "platformId",
                 "projectIds",
-                "scope"
+                "scope",
+                "metadata"
             )
             SELECT 
                 "id",
@@ -127,7 +128,8 @@ export class AddMcpPieceSqlite1744822233873 implements MigrationInterface {
                 "externalId",
                 "platformId",
                 "projectIds",
-                "scope"
+                "scope",
+                "metadata"
             FROM "app_connection"
         `)
 
