@@ -92,6 +92,7 @@ export class AddMcpPieceSqlite1744822233873 implements MigrationInterface {
                 "platformId" varchar NOT NULL,
                 "projectIds" text NOT NULL,
                 "scope" varchar NOT NULL,
+                "metadata" text,
                 CONSTRAINT "fk_app_connection_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE SET NULL ON UPDATE NO ACTION
             )
         `)
