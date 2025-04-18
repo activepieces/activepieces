@@ -132,7 +132,7 @@ const systemPropValidators: {
     [AppSystemProp.CLOUD_PLATFORM_ID]: stringValidator,
     [AppSystemProp.INTERNAL_URL]: stringValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
-
+    [AppSystemProp.FEATUREBASE_API_KEY]: stringValidator,
     // Copilot
     [AppSystemProp.PERPLEXITY_BASE_URL]: urlValidator,
 
@@ -159,6 +159,7 @@ const systemPropValidators: {
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: numberValidator,
     [AppSystemProp.MAX_TABLES_PER_PROJECT]: numberValidator,
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: numberValidator,
+    [AppSystemProp.SHOW_CHANGELOG]: booleanValidator,
 }
 
 

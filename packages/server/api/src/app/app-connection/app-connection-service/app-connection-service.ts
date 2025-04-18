@@ -18,6 +18,7 @@ import {
     EngineResponseStatus,
     ErrorCode,
     isNil,
+    Metadata,
     OAuth2GrantType,
     PlatformId,
     PlatformOAuth2ConnectionValue,
@@ -57,7 +58,7 @@ export const appConnectionsRepo = repoFactory(AppConnectionEntity)
 
 export const appConnectionService = (log: FastifyBaseLogger) => ({
     async upsert(params: UpsertParams): Promise<AppConnectionWithoutSensitiveData> {
-        const { projectIds, externalId, value, displayName, pieceName, ownerId, platformId, scope, type, status } = params
+        const { projectIds, externalId, value, displayName, pieceName, ownerId, platformId, scope, type, status, metadata } = params
 
         await assertProjectIds(projectIds, platformId)
         const validatedConnectionValue = await validateConnectionValue({
@@ -92,6 +93,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             scope,
             projectIds,
             platformId,
+            ...spreadIfDefined('metadata', metadata),
         }
 
         await appConnectionsRepo().upsert(connection, ['id'])
@@ -121,6 +123,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         await appConnectionsRepo().update(filter, {
             displayName: request.displayName,
             ...spreadIfDefined('projectIds', request.projectIds),
+            ...spreadIfDefined('metadata', request.metadata),
         })
 
         const updatedConnection = await appConnectionsRepo().findOneByOrFail(filter)
@@ -605,6 +608,7 @@ type UpsertParams = {
     type: AppConnectionType
     status?: AppConnectionStatus
     pieceName: string
+    metadata?: Metadata
 }
 
 
@@ -657,6 +661,7 @@ type UpdateParams = {
     request: {
         displayName: string
         projectIds: ProjectId[] | null
+        metadata?: Metadata
     }
 }
 

@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { Copy, Check } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { useTheme } from './theme-provider';
 import { Button } from './ui/button';
 import { toast } from './ui/use-toast';
 
@@ -19,6 +20,7 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
   title,
 }) => {
   const [copied, setCopied] = useState(false);
+  const { theme } = useTheme();
 
   // Format the JSON for display
   const formattedJson = JSON.stringify(data, null, 2);
@@ -43,12 +45,16 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
           variant="transparent"
           size="sm"
           onClick={handleCopy}
-          className="p-0"
+          className="p-0 "
         >
           {copied ? (
             <Check className="w-4 h-4 text-green-500" />
           ) : (
-            <Copy className="w-4 h-4 text-white" />
+            <Copy
+              className={`w-4 h-4 ${
+                theme === 'dark' ? 'text-white' : 'text-black'
+              }`}
+            />
           )}
         </Button>
       </div>
@@ -58,13 +64,14 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
           value={formattedJson}
           extensions={[json()]}
           editable={!readOnly}
-          theme="dark"
+          theme={theme === 'dark' ? 'dark' : 'light'}
           height="auto"
           maxHeight="400px"
           style={{
             fontSize: '14px',
             overflow: 'auto',
             width: '100%',
+            backgroundColor: '#f5f4ed',
           }}
           className="text-foreground"
           basicSetup={{

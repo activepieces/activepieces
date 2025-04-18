@@ -1,9 +1,10 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Plus, Workflow } from 'lucide-react';
+import { Hammer, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
+import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { TableTitle } from '@/components/ui/table-title';
@@ -35,6 +36,7 @@ import { McpClientTabs } from './mcp-client-tabs';
 import { McpToolsSection } from './mcp-tools-section';
 
 export default function MCPPage() {
+  const { theme } = useTheme();
   const { data: publicUrl } = flagsHooks.useFlag(ApFlagId.PUBLIC_URL);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -266,24 +268,48 @@ export default function MCPPage() {
   });
 
   const emptyFlowsMessage = (
-    <div className="col-span-full flex flex-col items-center justify-center py-12 text-muted-foreground bg-muted/20 rounded-lg border border-dashed border-border">
-      <div className="rounded-full bg-muted/50 p-3 mb-3">
-        <Workflow className="h-8 w-8 text-muted-foreground/60" />
-      </div>
-      <p className="font-medium text-foreground">{t('No Flows Added')}</p>
-      <p className="text-sm mt-1 max-w-md text-center">
-        {t(
-          'Add flows to let your AI assistant trigger automations. Your assistant will be able to run flows on your behalf.',
-        )}
-      </p>
-      <Button
-        className="px-4 py-2 mt-4 gap-1"
-        disabled={!doesUserHavePermissionToWriteFlow || isCreateFlowPending}
+    <div className="flex">
+      <div
+        className={`w-64 flex flex-col items-center justify-center py-6 px-5 text-muted-foreground ${
+          theme === 'dark' ? 'bg-card border-border' : 'bg-white'
+        } rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer`}
         onClick={() => createFlow()}
       >
-        <Plus className="h-4 w-4" />
-        {t('Create Your First MCP Flow')}
-      </Button>
+        <div className="flex flex-col items-center gap-2">
+          <div
+            className={`rounded-full ${
+              theme === 'dark' ? 'bg-slate-800' : 'bg-slate-100'
+            } p-2.5 mb-1`}
+          >
+            <Plus
+              className={`h-5 w-5 ${
+                theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
+              }`}
+            />
+          </div>
+          <p
+            className={`font-medium ${
+              theme === 'dark' ? 'text-slate-200' : 'text-slate-800'
+            }`}
+          >
+            {t('Add Flow')}
+          </p>
+          <p
+            className={`text-xs mt-0.5 text-center ${
+              theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+            }`}
+          >
+            {t('Let your AI assistant trigger automations')}
+          </p>
+        </div>
+        <Button
+          className="sr-only"
+          disabled={!doesUserHavePermissionToWriteFlow || isCreateFlowPending}
+          onClick={() => createFlow()}
+        >
+          {t('Create Your First MCP Flow')}
+        </Button>
+      </div>
     </div>
   );
 
@@ -302,51 +328,57 @@ export default function MCPPage() {
         </div>
 
         {/* Client Setup Instructions at the top */}
-        <McpClientTabs
-          mcpServerUrl={serverUrl}
-          hasTools={
-            (mcp?.connections?.length || 0) > 0 ||
-            (flowsData?.data?.length || 0) > 0
-          }
-          onRotateToken={handleRotateToken}
-          isRotating={rotateMutation.isPending}
-          hasValidMcp={!!mcp?.id}
-        />
+        {!isFlowsLoading && !isLoading && (
+          <McpClientTabs
+            mcpServerUrl={serverUrl}
+            hasTools={
+              (mcp?.connections?.length || 0) > 0 ||
+              (flowsData?.data?.length || 0) > 0
+            }
+            onRotateToken={handleRotateToken}
+            isRotating={rotateMutation.isPending}
+            hasValidMcp={!!mcp?.id}
+          />
+        )}
 
-        {/* Connections Section */}
-        <McpToolsSection
-          title={t('App Tools')}
-          tools={mcp?.connections || []}
-          emptyMessage={null}
-          isLoading={isLoading}
-          type="connections"
-          onAddClick={() => {}}
-          onToolDelete={removeConnection}
-          pieceInfoMap={pieceInfoMap}
-          canAddTool={true}
-          addButtonLabel={t('Add Connection')}
-          isPending={removeConnectionMutation.isPending}
-          onConnectionCreated={addConnection}
-        />
+        <div className="flex flex-col gap-4 mb-8">
+          <div className="flex items-center gap-2">
+            <Hammer className="h-5 w-5 text-primary" />
+            <span className="text-xl font-bold">{t('My Tools')}</span>
+          </div>
 
-        {/* Flows Section */}
-        <Separator className="w-full" />
+          {/* Connections Section */}
+          <McpToolsSection
+            title={t('Apps')}
+            tools={mcp?.connections || []}
+            emptyMessage={null}
+            isLoading={isLoading}
+            type="connections"
+            onAddClick={() => {}}
+            onToolDelete={removeConnection}
+            pieceInfoMap={pieceInfoMap}
+            canAddTool={true}
+            addButtonLabel={t('Add App')}
+            isPending={removeConnectionMutation.isPending}
+            onConnectionCreated={addConnection}
+          />
 
-        <McpToolsSection
-          title={t('Flow Tools')}
-          description={t(
-            'Only enabled flows with an MCP trigger can be used as a tool.',
-          )}
-          tools={flowsData?.data || []}
-          emptyMessage={emptyFlowsMessage}
-          isLoading={isFlowsLoading}
-          type="flows"
-          onAddClick={() => createFlow()}
-          onToolClick={(flow) => navigate(`/flows/${flow.id}`)}
-          canAddTool={doesUserHavePermissionToWriteFlow}
-          addButtonLabel={t('Create Flow')}
-          isPending={isCreateFlowPending}
-        />
+          {/* Flows Section */}
+          <Separator className="w-full my-4" />
+
+          <McpToolsSection
+            title={t('Flows')}
+            tools={flowsData?.data || []}
+            emptyMessage={emptyFlowsMessage}
+            isLoading={isFlowsLoading}
+            type="flows"
+            onAddClick={() => createFlow()}
+            onToolClick={(flow) => navigate(`/flows/${flow.id}`)}
+            canAddTool={doesUserHavePermissionToWriteFlow}
+            addButtonLabel={t('Create Flow')}
+            isPending={isCreateFlowPending}
+          />
+        </div>
       </div>
     </div>
   );

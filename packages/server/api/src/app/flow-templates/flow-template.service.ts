@@ -20,11 +20,24 @@ import { FlowTemplateEntity } from './flow-template.entity'
 const templateRepo = repoFactory<FlowTemplate>(FlowTemplateEntity)
 
 export const flowTemplateService = {
-    upsert: async (platformId: string | undefined, projectId: string | undefined, { description, type, template, blogUrl, tags, id }: CreateFlowTemplateRequest): Promise<FlowTemplate> => {
+    upsert: async (
+        platformId: string | undefined,
+        projectId: string | undefined,
+        {
+            description,
+            type,
+            template,
+            blogUrl,
+            tags,
+            id,
+            metadata,
+        }: CreateFlowTemplateRequest,
+    ): Promise<FlowTemplate> => {
         const flowTemplate: FlowVersionTemplate = sanitizeObjectForPostgresql(template)
         const newTags = tags ?? []
         const newId = id ?? apId()
-        await templateRepo().insert(
+
+        await templateRepo().upsert(
             {
                 id: newId,
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -39,7 +52,9 @@ export const flowTemplateService = {
                 updated: new Date().toISOString(),
                 platformId,
                 projectId: type === TemplateType.PLATFORM ? undefined : projectId,
+                metadata: (metadata as unknown) ?? null,
             },
+            ['id'],
         )
         return templateRepo().findOneByOrFail({ id: newId })
     },

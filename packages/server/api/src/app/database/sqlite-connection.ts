@@ -15,7 +15,10 @@ import { AddDataColumnToFieldEntity1742390870702 } from './migration/sqlite/1742
 import { AddTodosSquashed1742874467240 } from './migration/sqlite/1742874467240-add-todos-squashed'
 import { RenameApprovalUrlToResolveUrl1742991301509 } from './migration/sqlite/1742991301509-RenameApprovalUrlToResolveUrl'
 import { AddMCPSqlite1743127177235 } from './migration/sqlite/1743127177235-AddMCPSqlite'
+import { AddMetadataFields1743780156664 } from './migration/sqlite/1743780156664-AddMetadataFields'
+import { AddLastChangelogDismissedSQLITE1744053922591 } from './migration/sqlite/1744053922591-AddLastChangelogDismissedSQLITE'
 import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744104496262 } from './migration/sqlite/1744104496262-AddRecordIndexForTableIdAndProjectIdAndRecordId'
+import { AddMetadataFlowTemplate1744898945629 } from './migration/sqlite/1744898945629-add-metadata-flow-template'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -38,6 +41,9 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        AddMetadataFlowTemplate1744898945629,
+        AddLastChangelogDismissedSQLITE1744053922591,
+        AddMetadataFields1743780156664,
         AddRecordIndexForTableIdAndProjectIdAndRecordId1744104496262,
         AddMCPSqlite1743127177235,
         RenameApprovalUrlToResolveUrl1742991301509,

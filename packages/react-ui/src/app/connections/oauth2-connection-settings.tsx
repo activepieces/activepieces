@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -82,6 +83,7 @@ const OAuth2ConnectionSettings = ({
       ? reconnectConnection?.type
       : undefined,
   );
+  const isEmbedded = useEmbedding().embedState.isEmbedded;
   const { data: thirdPartyUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
@@ -316,6 +318,7 @@ const OAuth2ConnectionSettings = ({
         )}
 
         {isNil(reconnectConnection) &&
+          !isEmbedded &&
           currentOAuth2Type !== AppConnectionType.OAUTH2 && (
             <div>
               <Button
@@ -330,6 +333,7 @@ const OAuth2ConnectionSettings = ({
           )}
         {currentOAuth2Type === AppConnectionType.OAUTH2 &&
           isNil(reconnectConnection) &&
+          !isEmbedded &&
           predefinedClientId && (
             <div>
               <Button

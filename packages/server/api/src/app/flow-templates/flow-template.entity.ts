@@ -47,6 +47,10 @@ export const FlowTemplateEntity = new EntitySchema<FlowTemplateSchema>({
             type: String,
             nullable: true,
         },
+        metadata: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: true,
+        },
     },
     indices: [
         {

@@ -15,6 +15,7 @@ import {
   CollapsibleTrigger,
   CollapsibleContent,
 } from '@/components/ui/collapsible';
+import { Dot } from '@/components/ui/dot';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -109,7 +110,10 @@ export const CustomTooltipLink = ({
           )}
         </div>
         {notification && !locked && (
-          <span className="bg-destructive absolute right-2 top-1/2 transform -translate-y-1/2 size-2 rounded-full "></span>
+          <Dot
+            variant="destructive"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 size-2 rounded-full "
+          />
         )}
       </div>
     </Link>

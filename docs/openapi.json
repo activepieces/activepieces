@@ -1838,6 +1838,10 @@
                         "type": "string",
                         "nullable": true
                       },
+                      "lastChangelogDismissed": {
+                        "type": "string",
+                        "nullable": true
+                      },
                       "platformId": {
                         "type": "string",
                         "nullable": true
@@ -2123,6 +2127,11 @@
           },
           "platformId": {
             "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {}
           }
         },
         "required": [
@@ -2372,6 +2381,11 @@
           "releasesEnabled": {
             "type": "boolean"
           },
+          "metadata": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {}
+          },
           "usage": {
             "type": "object",
             "properties": {
@@ -2560,6 +2574,11 @@
           "publishedVersionId": {
             "type": "string",
             "nullable": true
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {}
           }
         },
         "required": [
@@ -2965,6 +2984,10 @@
                 "type": "string",
                 "nullable": true
               },
+              "lastChangelogDismissed": {
+                "type": "string",
+                "nullable": true
+              },
               "platformId": {
                 "type": "string",
                 "nullable": true
@@ -3006,6 +3029,11 @@
               "updated"
             ],
             "nullable": true
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {}
           }
         },
         "required": [
@@ -6575,6 +6603,10 @@
                 "type": "string",
                 "nullable": true
               },
+              "lastChangelogDismissed": {
+                "type": "string",
+                "nullable": true
+              },
               "platformId": {
                 "type": "string",
                 "nullable": true
@@ -6774,6 +6806,10 @@
                 "type": "string",
                 "nullable": true
               },
+              "lastChangelogDismissed": {
+                "type": "string",
+                "nullable": true
+              },
               "platformId": {
                 "type": "string",
                 "nullable": true
@@ -6815,6 +6851,11 @@
               "updated"
             ],
             "nullable": true
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {}
           }
         },
         "required": [
@@ -6828,6 +6869,35 @@
           "projectIds",
           "scope",
           "status"
+        ]
+      },
+      "mcp": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string"
+          },
+          "updated": {
+            "type": "string"
+          },
+          "projectId": {
+            "pattern": "^[0-9a-zA-Z]{21}$",
+            "type": "string"
+          },
+          "token": {
+            "pattern": "^[0-9a-zA-Z]{21}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "created",
+          "updated",
+          "projectId",
+          "token"
         ]
       }
     }
@@ -7036,6 +7106,10 @@
                   },
                   "projectId": {
                     "type": "string"
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "additionalProperties": {}
                   }
                 },
                 "required": [
@@ -7125,6 +7199,11 @@
                     "publishedVersionId": {
                       "type": "string",
                       "nullable": true
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "nullable": true,
+                      "additionalProperties": {}
                     },
                     "version": {
                       "type": "object",
@@ -7411,6 +7490,27 @@
             "in": "query",
             "name": "name",
             "required": false
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "LOCKED"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "DRAFT"
+                  ]
+                }
+              ]
+            },
+            "in": "query",
+            "name": "versionState",
+            "required": false
           }
         ],
         "security": [
@@ -7496,6 +7596,11 @@
                           "publishedVersionId": {
                             "type": "string",
                             "nullable": true
+                          },
+                          "metadata": {
+                            "type": "object",
+                            "nullable": true,
+                            "additionalProperties": {}
                           },
                           "version": {
                             "type": "object",
@@ -10240,6 +10345,11 @@
                       "type": "string",
                       "nullable": true
                     },
+                    "metadata": {
+                      "type": "object",
+                      "nullable": true,
+                      "additionalProperties": {}
+                    },
                     "version": {
                       "type": "object",
                       "properties": {
@@ -10726,6 +10836,11 @@
                         "trigger",
                         "valid"
                       ]
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "nullable": true,
+                      "additionalProperties": {}
                     }
                   },
                   "required": [
@@ -11527,6 +11642,10 @@
                       "projectId": {
                         "type": "string"
                       },
+                      "metadata": {
+                        "type": "object",
+                        "additionalProperties": {}
+                      },
                       "type": {
                         "type": "string",
                         "enum": [
@@ -11578,6 +11697,10 @@
                       },
                       "projectId": {
                         "type": "string"
+                      },
+                      "metadata": {
+                        "type": "object",
+                        "additionalProperties": {}
                       },
                       "type": {
                         "type": "string",
@@ -11689,6 +11812,10 @@
                       "projectId": {
                         "type": "string"
                       },
+                      "metadata": {
+                        "type": "object",
+                        "additionalProperties": {}
+                      },
                       "type": {
                         "type": "string",
                         "enum": [
@@ -11774,6 +11901,10 @@
                       },
                       "projectId": {
                         "type": "string"
+                      },
+                      "metadata": {
+                        "type": "object",
+                        "additionalProperties": {}
                       },
                       "type": {
                         "type": "string",
@@ -11866,6 +11997,10 @@
                       "projectId": {
                         "type": "string"
                       },
+                      "metadata": {
+                        "type": "object",
+                        "additionalProperties": {}
+                      },
                       "type": {
                         "type": "string",
                         "enum": [
@@ -11922,6 +12057,10 @@
                       },
                       "projectId": {
                         "type": "string"
+                      },
+                      "metadata": {
+                        "type": "object",
+                        "additionalProperties": {}
                       },
                       "type": {
                         "type": "string",
@@ -12234,6 +12373,10 @@
                                 "type": "string",
                                 "nullable": true
                               },
+                              "lastChangelogDismissed": {
+                                "type": "string",
+                                "nullable": true
+                              },
                               "platformId": {
                                 "type": "string",
                                 "nullable": true
@@ -12275,6 +12418,11 @@
                               "updated"
                             ],
                             "nullable": true
+                          },
+                          "metadata": {
+                            "type": "object",
+                            "nullable": true,
+                            "additionalProperties": {}
                           }
                         },
                         "required": [
@@ -12327,6 +12475,10 @@
                   "displayName": {
                     "minLength": 1,
                     "type": "string"
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "additionalProperties": {}
                   }
                 },
                 "required": [
@@ -12727,6 +12879,229 @@
                     "allowedAuthDomains",
                     "emailAuthEnabled",
                     "pinnedPieces"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/mcp": {
+      "get": {
+        "tags": [
+          "mcp"
+        ],
+        "description": "Get the project MCP server configuration",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "created": {
+                      "type": "string"
+                    },
+                    "updated": {
+                      "type": "string"
+                    },
+                    "projectId": {
+                      "pattern": "^[0-9a-zA-Z]{21}$",
+                      "type": "string"
+                    },
+                    "token": {
+                      "pattern": "^[0-9a-zA-Z]{21}$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "created",
+                    "updated",
+                    "projectId",
+                    "token"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/mcp/{id}": {
+      "post": {
+        "tags": [
+          "mcp"
+        ],
+        "description": "Update the project MCP server configuration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  },
+                  "connectionsIds": {
+                    "type": "array",
+                    "items": {
+                      "pattern": "^[0-9a-zA-Z]{21}$",
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-zA-Z]{21}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "created": {
+                      "type": "string"
+                    },
+                    "updated": {
+                      "type": "string"
+                    },
+                    "projectId": {
+                      "pattern": "^[0-9a-zA-Z]{21}$",
+                      "type": "string"
+                    },
+                    "token": {
+                      "pattern": "^[0-9a-zA-Z]{21}$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "created",
+                    "updated",
+                    "projectId",
+                    "token"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "mcp"
+        ],
+        "description": "Delete the project MCP server configuration",
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-zA-Z]{21}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/mcp/{id}/rotate": {
+      "post": {
+        "tags": [
+          "mcp"
+        ],
+        "description": "Rotate the MCP token",
+        "parameters": [
+          {
+            "schema": {
+              "pattern": "^[0-9a-zA-Z]{21}$",
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "created": {
+                      "type": "string"
+                    },
+                    "updated": {
+                      "type": "string"
+                    },
+                    "projectId": {
+                      "pattern": "^[0-9a-zA-Z]{21}$",
+                      "type": "string"
+                    },
+                    "token": {
+                      "pattern": "^[0-9a-zA-Z]{21}$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "created",
+                    "updated",
+                    "projectId",
+                    "token"
                   ]
                 }
               }
@@ -13634,6 +14009,407 @@
         }
       }
     },
+    "/v1/records/{id}": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "description": "Update a record",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cells": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "fieldId": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "fieldId",
+                        "value"
+                      ]
+                    }
+                  },
+                  "tableId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tableId"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "created": {
+                      "type": "string"
+                    },
+                    "updated": {
+                      "type": "string"
+                    },
+                    "tableId": {
+                      "type": "string"
+                    },
+                    "projectId": {
+                      "type": "string"
+                    },
+                    "cells": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "updated": {
+                            "type": "string"
+                          },
+                          "created": {
+                            "type": "string"
+                          },
+                          "value": {},
+                          "fieldName": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "updated",
+                          "created",
+                          "value",
+                          "fieldName"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "created",
+                    "updated",
+                    "tableId",
+                    "projectId",
+                    "cells"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/records": {
+      "delete": {
+        "tags": [
+          "records"
+        ],
+        "description": "Delete records",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "ids"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "created": {
+                        "type": "string"
+                      },
+                      "updated": {
+                        "type": "string"
+                      },
+                      "tableId": {
+                        "type": "string"
+                      },
+                      "projectId": {
+                        "type": "string"
+                      },
+                      "cells": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "object",
+                          "properties": {
+                            "updated": {
+                              "type": "string"
+                            },
+                            "created": {
+                              "type": "string"
+                            },
+                            "value": {},
+                            "fieldName": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "updated",
+                            "created",
+                            "value",
+                            "fieldName"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "created",
+                      "updated",
+                      "tableId",
+                      "projectId",
+                      "cells"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/records/list": {
+      "post": {
+        "tags": [
+          "records"
+        ],
+        "description": "List records",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tableId": {
+                    "type": "string"
+                  },
+                  "limit": {
+                    "type": "number"
+                  },
+                  "cursor": {
+                    "type": "string"
+                  },
+                  "filters": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "fieldId": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "string"
+                        },
+                        "operator": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "eq"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "neq"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "gt"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "gte"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "lt"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "lte"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "co"
+                              ]
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "fieldId",
+                        "value"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "tableId"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "created": {
+                            "type": "string"
+                          },
+                          "updated": {
+                            "type": "string"
+                          },
+                          "tableId": {
+                            "type": "string"
+                          },
+                          "projectId": {
+                            "type": "string"
+                          },
+                          "cells": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "object",
+                              "properties": {
+                                "updated": {
+                                  "type": "string"
+                                },
+                                "created": {
+                                  "type": "string"
+                                },
+                                "value": {},
+                                "fieldName": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "updated",
+                                "created",
+                                "value",
+                                "fieldName"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "created",
+                          "updated",
+                          "tableId",
+                          "projectId",
+                          "cells"
+                        ]
+                      }
+                    },
+                    "next": {
+                      "description": "Cursor to the next page",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "previous": {
+                      "description": "Cursor to the previous page",
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/projects": {
       "post": {
         "tags": [
@@ -13652,6 +14428,11 @@
                   "externalId": {
                     "type": "string",
                     "nullable": true
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": {}
                   }
                 },
                 "required": [
@@ -13721,6 +14502,11 @@
                     },
                     "releasesEnabled": {
                       "type": "boolean"
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "nullable": true,
+                      "additionalProperties": {}
                     },
                     "usage": {
                       "type": "object",
@@ -13942,6 +14728,11 @@
                           "releasesEnabled": {
                             "type": "boolean"
                           },
+                          "metadata": {
+                            "type": "object",
+                            "nullable": true,
+                            "additionalProperties": {}
+                          },
                           "usage": {
                             "type": "object",
                             "properties": {
@@ -14127,6 +14918,10 @@
                   "externalId": {
                     "type": "string"
                   },
+                  "metadata": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  },
                   "plan": {
                     "type": "object",
                     "properties": {
@@ -14234,6 +15029,11 @@
                     },
                     "releasesEnabled": {
                       "type": "boolean"
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "nullable": true,
+                      "additionalProperties": {}
                     },
                     "usage": {
                       "type": "object",
@@ -14496,6 +15296,10 @@
                                 ]
                               },
                               "externalId": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "lastChangelogDismissed": {
                                 "type": "string",
                                 "nullable": true
                               },
@@ -15098,6 +15902,11 @@
                   },
                   "id": {
                     "type": "string"
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "nullable": true,
+                    "additionalProperties": {}
                   }
                 },
                 "required": [
@@ -15349,6 +16158,10 @@
                                 ]
                               },
                               "externalId": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "lastChangelogDismissed": {
                                 "type": "string",
                                 "nullable": true
                               },
@@ -15702,6 +16515,10 @@
                           "type": "string",
                           "nullable": true
                         },
+                        "lastChangelogDismissed": {
+                          "type": "string",
+                          "nullable": true
+                        },
                         "platformId": {
                           "type": "string",
                           "nullable": true
@@ -15779,6 +16596,18 @@
                       "pieceName": {
                         "type": "string"
                       },
+                      "metadata": {
+                        "allOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": {}
+                          }
+                        ]
+                      },
                       "type": {
                         "type": "string",
                         "enum": [
@@ -15837,6 +16666,18 @@
                       },
                       "pieceName": {
                         "type": "string"
+                      },
+                      "metadata": {
+                        "allOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": {}
+                          }
+                        ]
                       },
                       "type": {
                         "type": "string",
@@ -15955,6 +16796,18 @@
                       "pieceName": {
                         "type": "string"
                       },
+                      "metadata": {
+                        "allOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": {}
+                          }
+                        ]
+                      },
                       "type": {
                         "type": "string",
                         "enum": [
@@ -16047,6 +16900,18 @@
                       },
                       "pieceName": {
                         "type": "string"
+                      },
+                      "metadata": {
+                        "allOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": {}
+                          }
+                        ]
                       },
                       "type": {
                         "type": "string",
@@ -16146,6 +17011,18 @@
                       "pieceName": {
                         "type": "string"
                       },
+                      "metadata": {
+                        "allOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": {}
+                          }
+                        ]
+                      },
                       "type": {
                         "type": "string",
                         "enum": [
@@ -16209,6 +17086,18 @@
                       },
                       "pieceName": {
                         "type": "string"
+                      },
+                      "metadata": {
+                        "allOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": {}
+                          }
+                        ]
                       },
                       "type": {
                         "type": "string",
@@ -16422,6 +17311,10 @@
                           "type": "string",
                           "nullable": true
                         },
+                        "lastChangelogDismissed": {
+                          "type": "string",
+                          "nullable": true
+                        },
                         "platformId": {
                           "type": "string",
                           "nullable": true
@@ -16463,6 +17356,11 @@
                         "updated"
                       ],
                       "nullable": true
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "nullable": true,
+                      "additionalProperties": {}
                     }
                   },
                   "required": [
@@ -16734,6 +17632,10 @@
                                 "type": "string",
                                 "nullable": true
                               },
+                              "lastChangelogDismissed": {
+                                "type": "string",
+                                "nullable": true
+                              },
                               "platformId": {
                                 "type": "string",
                                 "nullable": true
@@ -16775,6 +17677,11 @@
                               "updated"
                             ],
                             "nullable": true
+                          },
+                          "metadata": {
+                            "type": "object",
+                            "nullable": true,
+                            "additionalProperties": {}
                           }
                         },
                         "required": [
@@ -16832,6 +17739,10 @@
                     "items": {
                       "type": "string"
                     }
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "additionalProperties": {}
                   }
                 },
                 "required": [

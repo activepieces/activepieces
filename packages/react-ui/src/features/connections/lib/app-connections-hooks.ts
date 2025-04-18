@@ -1,9 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { useEmbedding } from '@/components/embed-provider';
+import { projectMembersApi } from '@/features/team/lib/project-members-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   AppConnectionOwners,
   AppConnectionWithoutSensitiveData,
+  isNil,
   ListAppConnectionsRequestQuery,
 } from '@activepieces/shared';
 
@@ -33,6 +36,7 @@ export const appConnectionsHooks = {
   },
   useConnectionsOwners: () => {
     const projectId = authenticationSession.getProjectId() ?? '';
+    const isEmbedding = useEmbedding().embedState.isEmbedded;
     if (projectId === '') {
       console.error(
         'trying to use projectId when the authentication session is not set',
@@ -44,6 +48,20 @@ export const appConnectionsHooks = {
         const { data: owners } = await appConnectionsApi.getOwners({
           projectId,
         });
+        const { data: projectMembers } = await projectMembersApi.list({
+          projectId,
+        });
+        if (isEmbedding) {
+          return owners.filter(
+            (owner) =>
+              !isNil(
+                projectMembers.find(
+                  (member) => member.user.email === owner.email,
+                ),
+              ),
+          );
+        }
+
         return [...owners];
       },
     });

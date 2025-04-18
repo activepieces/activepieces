@@ -14,7 +14,7 @@ import { getContactAction } from './lib/actions/get-contact';
 import { getDealAction } from './lib/actions/get-deal';
 import { getTicketAction } from './lib/actions/get-ticket';
 import { getCompanyAction } from './lib/actions/get-company';
-import { getPipelineStageDeatilsAction } from './lib/actions/get-pipeline-stage-details';
+import { getPipelineStageDetailsAction } from './lib/actions/get-pipeline-stage-details';
 import { getProductAction } from './lib/actions/get-product';
 import { addContactToWorkflowAction } from './lib/actions/add-contact-to-workflow';
 import { createTicketAction } from './lib/actions/create-ticket';
@@ -53,7 +53,7 @@ import { newOrUpdatedProductTrigger } from './lib/triggers/new-or-updated-produc
 import { newOrUpdatedLineItemTrigger } from './lib/triggers/new-or-updated-line-item';
 import { newContactPropertyChangeTrigger } from './lib/triggers/new-contact-property-change';
 import { newTicketPropertyChangeTrigger } from './lib/triggers/new-ticket-property-change';
-import { newCompanyPropertyChangeTrigger } from './lib/triggers/new-company-propety-change';
+import { newCompanyPropertyChangeTrigger } from './lib/triggers/new-company-property-change';
 import { newDealPropertyChangeTrigger } from './lib/triggers/new-deal-property-change';
 import { newCustomObjectPropertyChangeTrigger } from './lib/triggers/new-custom-object-property-change';
 import { newLineItemTrigger } from './lib/triggers/new-line-item';
@@ -157,7 +157,7 @@ export const hubspot = createPiece({
 		findTicketAction,
 		getOwnerByEmailAction,
 		getOwnerByIdAction,
-		getPipelineStageDeatilsAction,
+		getPipelineStageDetailsAction,
 		createCustomApiCallAction({
 			baseUrl: () => 'https://api.hubapi.com',
 			auth: hubspotAuth,
