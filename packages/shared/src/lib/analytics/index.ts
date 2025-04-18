@@ -44,31 +44,40 @@ export type AnalyticsReportResponse = Static<typeof AnalyticsReportResponse>
 
 // Flow run analytics reports (custom)
 
-// Export GetAnalyticsParams
 export const GetAnalyticsParams = Type.Object({
-    startTimestamp: Type.String({ format: 'date-time' }),
-    endTimestamp: Type.String({ format: 'date-time' }),
+    startDate: Type.String({ format: 'date' }),
+    endDate: Type.String({ format: 'date' }),
 })
 export type GetAnalyticsParams = Static<typeof GetAnalyticsParams>
 
-// Export AnalyticsResult and AnalyticsResultMap
 export type AnalyticsResult = {
-    averageRuntime: number
-    flowRunCount: number
-    successRate: number
-    failureRate: number
+    date: string
+    successfulFlowRuns: number
+    failedFlowRuns: number
+    successfulFlowRunsDuration: number
+    failedFlowRunsDuration: number
 }
 
-export type AnalyticsResultMap = Record<string, AnalyticsResult>
-
-// Export AnalyticsResponseSchema
-export const AnalyticsResponseSchema = Type.Record(
-    Type.String(), // flowId as string key
+export const AnalyticsResponseSchema = Type.Array(
     Type.Object({
-        averageRuntime: Type.Number(),
-        flowRunCount: Type.Number(),
-        successRate: Type.Number(),
-        failureRate: Type.Number(),
+        date: Type.String(),
+        successfulFlowRuns: Type.Number(),
+        failedFlowRuns: Type.Number(),
+        successfulFlowRunsDuration: Type.Number(),
+        failedFlowRunsDuration: Type.Number(),
     }),
 )
 export type AnalyticsResponse = Static<typeof AnalyticsResponseSchema>
+
+export type OverviewResult = {
+    workflowCount: number
+    activeWorkflowCount: number
+    flowRunCount: number
+}
+
+export const  OverviewResponseSchema = Type.Object({
+    workflowCount: Type.Number(),
+    activeWorkflowCount: Type.Number(),
+    flowRunCount: Type.Number(),
+})
+export type OverviewResponse = Static<typeof OverviewResponseSchema>
