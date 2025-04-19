@@ -53,7 +53,7 @@ export const mongodbAuth = PieceAuth.CustomAuth({
     password: PieceAuth.SecretText({
       displayName: 'Password',
       description: 'The password to use to identify at the MongoDB server',
-      required: false,
+      required: true,
     }),
     authSource: Property.ShortText({
       displayName: 'Auth Source',
