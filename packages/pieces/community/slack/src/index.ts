@@ -35,6 +35,11 @@ import { newDirectMessageTrigger } from './lib/triggers/new-direct-message';
 import { retrieveThreadMessages } from './lib/actions/retrieve-thread-messages';
 import { newMentionInDirectMessageTrigger } from './lib/triggers/new-mention-in-direct-message';
 import { newCommandInDirectMessageTrigger } from './lib/triggers/new-command-in-direct-message';
+import { deleteMessageAction } from './lib/actions/delete-message';
+import { removeUserFromChannelAction } from './lib/actions/remove-user-from-channel';
+import { setChannelTopicAction } from './lib/actions/set-channel-topic';
+import { getMessageAction } from './lib/actions/get-message';
+import { findUserByIdAction } from './lib/actions/find-user-by-id';
 
 export const slackAuth = PieceAuth.OAuth2({
 	description: '',
@@ -122,9 +127,14 @@ export const slack = createPiece({
 		uploadFile,
 		getFileAction,
 		searchMessages,
+		setChannelTopicAction,
 		findUserByEmailAction,
+		findUserByIdAction,
 		findUserByHandleAction,
+		removeUserFromChannelAction,
+		getMessageAction,
 		updateMessage,
+		deleteMessageAction,
 		createChannelAction,
 		updateProfileAction,
 		getChannelHistory,
