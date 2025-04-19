@@ -20,6 +20,7 @@ import {
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { flowService } from '../flows/flow/flow.service'
 import { webhookSimulationService } from '../webhooks/webhook-simulation/webhook-simulation-service'
 import { jobQueue } from '../workers/queue'
 import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
@@ -116,6 +117,11 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
             })
             const eventsQueue = listeners.map(async (listener) => {
                 const requestId = apId()
+                const flowVersionIdToRun = await flowService(request.log).getFlowVersionIdToRun(listener.projectId, {
+                    flowId: listener.flowId,
+                    type: GetFlowVersionForWorkerRequestType.LOCKED,
+                }, request.log)
+
                 return jobQueue(request.log).add({
                     id: requestId,
                     type: JobType.WEBHOOK,
@@ -128,6 +134,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                         flowId: listener.flowId,
                         saveSampleData: await webhookSimulationService(request.log).exists(listener.flowId),
                         flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
+                        flowVersionIdToRun,
                     },
                     priority: DEFAULT_PRIORITY,
                 })
