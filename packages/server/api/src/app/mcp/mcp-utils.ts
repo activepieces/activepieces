@@ -1,29 +1,29 @@
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework'
 
-import { MCPProperty, MCPProperyType } from '@activepieces/shared'
+import { McpProperty, McpPropertyType } from '@activepieces/shared'
 import { z } from 'zod' 
 
 
 export const MAX_TOOL_NAME_LENGTH = 47
 
-export function mcpPropertyToZod(property: MCPProperty): z.ZodTypeAny {
+export function mcpPropertyToZod(property: McpProperty): z.ZodTypeAny {
     let schema: z.ZodTypeAny
 
     switch (property.type) {
-        case MCPProperyType.TEXT:
-        case MCPProperyType.DATE:
+        case McpPropertyType.TEXT:
+        case McpPropertyType.DATE:
             schema = z.string()
             break
-        case MCPProperyType.NUMBER:
+        case McpPropertyType.NUMBER:
             schema = z.number()
             break
-        case MCPProperyType.BOOLEAN:
+        case McpPropertyType.BOOLEAN:
             schema = z.boolean()
             break
-        case MCPProperyType.ARRAY:
+        case McpPropertyType.ARRAY:
             schema = z.array(z.unknown())
             break
-        case MCPProperyType.OBJECT:
+        case McpPropertyType.OBJECT:
             schema = z.record(z.string(), z.unknown())
             break
         default:
