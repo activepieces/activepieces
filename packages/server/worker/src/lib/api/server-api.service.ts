@@ -116,12 +116,6 @@ async function readFlowFromCache(flowVersionIdToRun: FlowVersionId | null | unde
     }
 }
 
-async function cacheFlow(flow: PopulatedFlow): Promise<void> {
-    if (flow.version.state === FlowVersionState.LOCKED) {
-        await flowCache.setCache(flow.version.id, JSON.stringify(flow))
-    }
-}
-
 export const engineApiService = (engineToken: string, log: FastifyBaseLogger) => {
     const apiUrl = removeTrailingSlash(workerMachine.getInternalApiUrl())
     const client = new ApAxiosClient(apiUrl, engineToken)
@@ -183,8 +177,9 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
                     params: request,
                 })
 
-                if (!isNil(flow)) {
-                    await cacheFlow(flow)
+                const isCachableFlow = !isNil(flow) && flow.version.state === FlowVersionState.LOCKED
+                if (isCachableFlow) {
+                    await flowCache.setCache(flow.version.id, JSON.stringify(flow))
                 }
 
                 return flow
