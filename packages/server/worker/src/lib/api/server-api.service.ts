@@ -1,4 +1,3 @@
-import fs from 'fs/promises'
 import path from 'path'
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { ApQueueJob, exceptionHandler, GetRunForWorkerRequest, PollJobRequest, QueueName, ResumeRunRequest, SavePayloadRequest, SendEngineUpdateRequest, SubmitPayloadsRequest, UpdateFailureCountRequest, UpdateJobRequest } from '@activepieces/server-shared'
@@ -6,6 +5,7 @@ import { ActivepiecesError, ErrorCode, FlowRun, FlowVersionId, FlowVersionState,
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import pLimit from 'p-limit'
+import { cacheHandler } from '../utils/cache-handler'
 import { workerMachine } from '../utils/machine'
 import { ApAxiosClient } from './ap-axios'
 
@@ -101,21 +101,13 @@ function splitPayloadsIntoOneMegabyteBatches(payloads: unknown[]): unknown[][] {
 }
 
 const globalCacheFlowPath = path.resolve('cache', 'flows')
-
-async function readFile(filePath: string): Promise<string> {
-    return fs.readFile(filePath, 'utf-8')
-}
-
-async function writeFile(filePath: string, content: string): Promise<void> {
-    await fs.mkdir(path.dirname(filePath), { recursive: true })
-    await fs.writeFile(filePath, content)
-}
+const flowCache = cacheHandler(globalCacheFlowPath)
 
 async function readFlowFromCache(flowVersionIdToRun: FlowVersionId | null | undefined): Promise<PopulatedFlow | null> {
     try {
         if (flowVersionIdToRun) {
-            const cachedFlow = await readFile(path.resolve(globalCacheFlowPath, flowVersionIdToRun))
-            return JSON.parse(cachedFlow) as PopulatedFlow
+            const cachedFlow = await flowCache.cacheCheckState(flowVersionIdToRun)
+            return cachedFlow ? JSON.parse(cachedFlow) as PopulatedFlow : null
         }
         return null
     }
@@ -126,7 +118,7 @@ async function readFlowFromCache(flowVersionIdToRun: FlowVersionId | null | unde
 
 async function cacheFlow(flow: PopulatedFlow): Promise<void> {
     if (flow.version.state === FlowVersionState.LOCKED) {
-        await writeFile(path.resolve(globalCacheFlowPath, flow.version.id), JSON.stringify(flow))
+        await flowCache.setCache(flow.version.id, JSON.stringify(flow))
     }
 }
 
