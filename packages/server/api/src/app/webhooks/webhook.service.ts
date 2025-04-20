@@ -1,5 +1,5 @@
 import { AppSystemProp, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, EngineHttpResponse, ErrorCode, EventPayload, Flow, FlowStatus, GetFlowVersionForWorkerRequestType, isNil } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, EngineHttpResponse, ErrorCode, EventPayload, ExecutionType, Flow, FlowStatus, GetFlowVersionForWorkerRequestType, isNil, ProgressUpdateType, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { usageService } from '../ee/platform-billing/usage/usage-service'
@@ -9,6 +9,7 @@ import { projectService } from '../project/project-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue } from '../workers/queue'
 import { getJobPriority } from '../workers/queue/queue-manager'
+import { flowRunService } from '../flows/flow-run/flow-run-service'
 
 const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 
@@ -78,24 +79,23 @@ export const webhookService = {
             type: flowVersionToRun,
         }, pinoLogger)
 
-        await jobQueue(logger).add({
-            id: webhookRequestId,
-            type: JobType.WEBHOOK,
-            data: {
-                projectId: flow.projectId,
-                schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                requestId: webhookRequestId,
-                synchronousHandlerId,
-                payload: payload ?? await data(flow.projectId),
-                flowId: flow.id,
-                saveSampleData,
-                flowVersionToRun,
-                flowVersionIdToRun,
-            },
-            priority: await getJobPriority(synchronousHandlerId),
-        })
-
         if (async) {
+            await jobQueue(logger).add({
+                id: webhookRequestId,
+                type: JobType.WEBHOOK,
+                data: {
+                    projectId: flow.projectId,
+                    schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+                    requestId: webhookRequestId,
+                    synchronousHandlerId,
+                    payload: payload ?? await data(flow.projectId),
+                    flowId: flow.id,
+                    saveSampleData,
+                    flowVersionToRun,
+                    flowVersionIdToRun,
+                },
+                priority: await getJobPriority(synchronousHandlerId),
+            })
             pinoLogger.info('Async webhook request completed')
             return {
                 status: StatusCodes.OK,
@@ -105,6 +105,21 @@ export const webhookService = {
                 },
             }
         }
+
+        assertNotNullOrUndefined(flowVersionIdToRun, 'flowVersionIdToRun is required')
+        assertNotNullOrUndefined(synchronousHandlerId, 'synchronousHandlerId is required')
+
+        await flowRunService(pinoLogger).start({
+                environment: flowVersionToRun === GetFlowVersionForWorkerRequestType.LOCKED ? RunEnvironment.PRODUCTION : RunEnvironment.TESTING,
+                flowVersionId: flowVersionIdToRun,
+                payload: payload ?? await data(flow.projectId),
+                synchronousHandlerId,
+                projectId: flow.projectId,
+                httpRequestId: webhookRequestId,
+                executionType: ExecutionType.BEGIN,
+                progressUpdateType: ProgressUpdateType.WEBHOOK_RESPONSE
+            })
+
         const flowHttpResponse = await engineResponseWatcher(pinoLogger).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, WEBHOOK_TIMEOUT_MS, {
             status: StatusCodes.NO_CONTENT,
             body: {},
