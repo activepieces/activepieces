@@ -9,9 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { TableTitle } from '@/components/ui/table-title';
 import { useToast } from '@/components/ui/use-toast';
-import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { mcpApi } from '@/features/mcp/mcp-api';
+import { mcpApi } from '@/features/mcp/lib/mcp-api';
+import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import {
   PieceStepMetadataWithSuggestions,
@@ -29,11 +29,12 @@ import {
   PopulatedFlow,
   Permission,
   ApFlagId,
-  AppConnectionWithoutSensitiveData,
+  McpPieceWithConnection,
 } from '@activepieces/shared';
 
+import { McpToolsSection } from '../../mcp/mcp-tools-section';
+
 import { McpClientTabs } from './mcp-client-tabs';
-import { McpToolsSection } from './mcp-tools-section';
 
 export default function MCPPage() {
   const { theme } = useTheme();
@@ -47,16 +48,7 @@ export default function MCPPage() {
     type: 'trigger',
   });
 
-  const {
-    data: mcp,
-    refetch: refetchMcp,
-    isLoading,
-  } = useQuery({
-    queryKey: ['mcp'],
-    queryFn: () => {
-      return mcpApi.get();
-    },
-  });
+  const { data: mcp, isLoading, refetch: refetchMcp } = mcpHooks.useMcp();
 
   const { data: flowsData, isLoading: isFlowsLoading } = useQuery({
     queryKey: ['mcp-flows'],
@@ -86,40 +78,6 @@ export default function MCPPage() {
 
   const { pieces } = piecesHooks.usePieces({});
 
-  const usedConnectionIds = new Set(
-    mcp?.connections?.map((connection) => connection.id) || [],
-  );
-
-  const updateMcp = useMutation({
-    mutationFn: async ({
-      mcpId,
-      connectionIds,
-    }: {
-      mcpId: string;
-      connectionIds: string[];
-    }) => {
-      return mcpApi.update({
-        id: mcpId,
-        connectionsIds: connectionIds,
-      });
-    },
-    onSuccess: () => {
-      toast({
-        description: t('Tool is added successfully'),
-        duration: 3000,
-      });
-      refetchMcp();
-    },
-    onError: () => {
-      toast({
-        variant: 'destructive',
-        title: t('Error'),
-        description: t('Failed to update connection'),
-        duration: 5000,
-      });
-    },
-  });
-
   const rotateMutation = useMutation({
     mutationFn: async (mcpId: string) => {
       return mcpApi.rotateToken(mcpId);
@@ -141,22 +99,23 @@ export default function MCPPage() {
     },
   });
 
-  const removeConnectionMutation = useMutation({
-    mutationFn: async (connectionId: string) => {
-      return appConnectionsApi.delete(connectionId);
+  const removePieceMutation = useMutation({
+    mutationFn: async (pieceId: string) => {
+      return mcpApi.deletePiece(pieceId);
     },
     onSuccess: () => {
       toast({
-        description: t('Connection removed successfully'),
+        description: t('Piece removed successfully'),
         duration: 3000,
       });
       refetchMcp();
     },
-    onError: () => {
+    onError: (err) => {
+      console.error(err);
       toast({
         variant: 'destructive',
         title: t('Error'),
-        description: t('Failed to remove connection'),
+        description: t('Failed to remove piece'),
         duration: 5000,
       });
     },
@@ -204,6 +163,7 @@ export default function MCPPage() {
       });
     },
   });
+
   const applyOperation = async (
     flow: PopulatedFlow,
     operation: FlowOperationRequest,
@@ -226,12 +186,9 @@ export default function MCPPage() {
     }
   };
 
-  const removeConnection = async (
-    connection: AppConnectionWithoutSensitiveData,
-  ) => {
-    if (!mcp?.id || removeConnectionMutation.isPending) return;
-
-    removeConnectionMutation.mutate(connection.id);
+  const removePiece = async (piece: McpPieceWithConnection) => {
+    if (!mcp?.id || removePieceMutation.isPending) return;
+    removePieceMutation.mutate(piece.id);
   };
 
   const handleRotateToken = () => {
@@ -239,32 +196,21 @@ export default function MCPPage() {
     rotateMutation.mutate(mcp.id);
   };
 
-  const getPieceInfo = (connection: AppConnectionWithoutSensitiveData) => {
-    const piece = pieces?.find((p) => p.name === connection.pieceName);
+  const getPieceInfo = (piece: McpPieceWithConnection) => {
+    const pieceMetadata = pieces?.find((p) => p.name === piece.pieceName);
+
     return {
-      displayName: piece?.displayName || connection.pieceName,
-      logoUrl: piece?.logoUrl,
+      displayName: pieceMetadata?.displayName || piece.pieceName,
+      logoUrl: pieceMetadata?.logoUrl,
     };
   };
 
-  const addConnection = (connection: AppConnectionWithoutSensitiveData) => {
-    if (mcp?.id) {
-      const newConnectionIds = new Set(usedConnectionIds);
-      newConnectionIds.add(connection.id);
-      updateMcp.mutate({
-        mcpId: mcp.id,
-        connectionIds: Array.from(newConnectionIds),
-      });
-    }
-  };
-
-  // Create a pieceInfoMap for all connections
   const pieceInfoMap: Record<
     string,
     { displayName: string; logoUrl?: string }
   > = {};
-  mcp?.connections?.forEach((connection) => {
-    pieceInfoMap[connection.id] = getPieceInfo(connection);
+  mcp?.pieces?.forEach((piece) => {
+    pieceInfoMap[piece.id] = getPieceInfo(piece);
   });
 
   const emptyFlowsMessage = (
@@ -332,7 +278,7 @@ export default function MCPPage() {
           <McpClientTabs
             mcpServerUrl={serverUrl}
             hasTools={
-              (mcp?.connections?.length || 0) > 0 ||
+              (mcp?.pieces?.length || 0) > 0 ||
               (flowsData?.data?.length || 0) > 0
             }
             onRotateToken={handleRotateToken}
@@ -347,20 +293,19 @@ export default function MCPPage() {
             <span className="text-xl font-bold">{t('My Tools')}</span>
           </div>
 
-          {/* Connections Section */}
+          {/* Pieces Section */}
           <McpToolsSection
-            title={t('Apps')}
-            tools={mcp?.connections || []}
+            title={t('Pieces')}
+            tools={mcp?.pieces || []}
             emptyMessage={null}
             isLoading={isLoading}
-            type="connections"
+            type="pieces"
             onAddClick={() => {}}
-            onToolDelete={removeConnection}
+            onToolDelete={removePiece}
             pieceInfoMap={pieceInfoMap}
             canAddTool={true}
-            addButtonLabel={t('Add App')}
-            isPending={removeConnectionMutation.isPending}
-            onConnectionCreated={addConnection}
+            addButtonLabel={t('Add Piece')}
+            isPending={removePieceMutation.isPending}
           />
 
           {/* Flows Section */}

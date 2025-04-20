@@ -1,9 +1,13 @@
-import { MCPSchema } from '@activepieces/shared'
+import { Mcp, McpPieceWithConnection } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
 
-export const MCPEntity = new EntitySchema<MCPSchema>({
+type McpSchema = Mcp & {
+    pieces: McpPieceWithConnection[]
+}
+
+export const McpEntity = new EntitySchema<McpSchema>({
     name: 'mcp',
     columns: {
         ...BaseColumnSchemaPart,
@@ -18,9 +22,9 @@ export const MCPEntity = new EntitySchema<MCPSchema>({
         },
     ],
     relations: {
-        connections: {
+        pieces: {
             type: 'one-to-many',
-            target: 'app_connection',
+            target: 'mcp_piece',
             cascade: true,
             onDelete: 'CASCADE',
         },
