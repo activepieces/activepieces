@@ -151,7 +151,7 @@ async function addFlowsToServer(
 
     for (const flow of mcpFlows) {
         const triggerSettings = flow.version.trigger.settings as McpTrigger
-        const toolName = ('flow_' + triggerSettings.input?.toolName).slice(0, MAX_TOOL_NAME_LENGTH)
+        const toolName = ('flow_' + triggerSettings.input?.toolName).slice(0, MAX_TOOL_NAME_LENGTH).replace(/\s+/g, '-')
         const toolDescription = triggerSettings.input?.toolDescription
         const inputSchema = triggerSettings.input?.inputSchema
         const returnsResponse = triggerSettings.input?.returnsResponse
