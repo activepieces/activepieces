@@ -26,7 +26,7 @@ export const newSavedMessageTrigger = createTrigger({
 
 		// check if it's saved message
 		if (payloadBody.event.type === 'star_added' && payloadBody.event.item.type ==='message') {
-			return [payloadBody.event];
+			return [payloadBody.event.item];
 		}
 
 		return [];

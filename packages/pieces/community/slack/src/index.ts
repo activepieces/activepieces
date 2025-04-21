@@ -35,7 +35,6 @@ import { newDirectMessageTrigger } from './lib/triggers/new-direct-message';
 import { retrieveThreadMessages } from './lib/actions/retrieve-thread-messages';
 import { newMentionInDirectMessageTrigger } from './lib/triggers/new-mention-in-direct-message';
 import { newCommandInDirectMessageTrigger } from './lib/triggers/new-command-in-direct-message';
-import { removeUserFromChannelAction } from './lib/actions/remove-user-from-channel';
 import { setChannelTopicAction } from './lib/actions/set-channel-topic';
 import { getMessageAction } from './lib/actions/get-message';
 import { findUserByIdAction } from './lib/actions/find-user-by-id';
@@ -73,6 +72,7 @@ export const slackAuth = PieceAuth.OAuth2({
 		'usergroups:read',
 		'chat:write.customize',
 		'emoji:read',
+		'users.profile:read'
 	],
 });
 
@@ -136,7 +136,6 @@ export const slack = createPiece({
 		findUserByIdAction,
 		findUserByHandleAction,
 		inviteUserToChannelAction,
-		removeUserFromChannelAction,
 		getMessageAction,
 		updateMessage,
 		createChannelAction,
