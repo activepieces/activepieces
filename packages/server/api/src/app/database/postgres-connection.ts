@@ -194,6 +194,7 @@ import { AddMetadataFields1743780156664 } from './migration/postgres/17437801566
 import { AddLastChangelogDismissed1744053592923 } from './migration/postgres/1744053592923-AddLastChangelogDismissed'
 import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744187975994 } from './migration/postgres/1744187975994-AddRecordIndexForTableIdAndProjectIdAndRecordId'
 import { AddMcpPiece1744822233873 } from './migration/postgres/1744822233873-AddMcpPiece'
+import { RenameTodoPostiveVariantName1745272231418 } from './migration/postgres/1745272231418-RenameTodoPostiveVariantName'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -325,6 +326,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddRecordIndexForTableIdAndProjectIdAndRecordId1744187975994,
         AddLastChangelogDismissed1744053592923,
         AddMcpPiece1744822233873,
+        RenameTodoPostiveVariantName1745272231418,
     ]
 
     const edition = system.getEdition()
