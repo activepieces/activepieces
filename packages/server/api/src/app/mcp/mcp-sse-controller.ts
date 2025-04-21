@@ -4,7 +4,10 @@ import { createMcpServer } from './mcp-server'
 import { mcpService } from './mcp-service'
 import { mcpSessionManager } from './mcp-session-manager'
 
+const HEARTBEAT_INTERVAL = 30 * 1000 // 30 seconds
+
 export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
+
     app.get('/:id/sse', SSERequest, async (req, reply) => {
         const token = req.params.id
         const mcp = await mcpService(req.log).getByToken({
@@ -21,7 +24,14 @@ export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
 
         await server.connect(transport)
 
+        const heartbeatInterval = setInterval(() => {
+            reply.raw.write(': heartbeat\n\n')
+            req.log.info(`Heartbeat sent for session ${transport.sessionId}`)
+        }, HEARTBEAT_INTERVAL)
+
         reply.raw.on('close', async () => {
+            clearInterval(heartbeatInterval)
+            req.log.info(`Connection closed for session ${transport.sessionId}`)
             await mcpSessionManager(req.log).publish(transport.sessionId, {}, 'remove')
         })
     })

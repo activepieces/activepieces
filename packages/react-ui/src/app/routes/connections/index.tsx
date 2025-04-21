@@ -378,7 +378,7 @@ function AppConnectionsPage() {
                 <ConfirmationDeleteDialog
                   title={t('Confirm Deletion')}
                   message={t(
-                    'Are you sure you want to delete the selected connections? This action cannot be undone.',
+                    'Are you sure you want to delete the selected connections? This action cannot be undone, any connected flow or mcp tool will fail after this.',
                   )}
                   entityName="connections"
                   mutationFn={async () => {

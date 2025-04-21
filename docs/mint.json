@@ -264,7 +264,30 @@
             "endpoints/flow-templates/get",
             "endpoints/flow-templates/list"
           ]
+        },
+        {
+          "group": "MCP Servers",
+          "icon": "server",
+          "pages": [
+            "endpoints/mcp-servers/schema",
+            "endpoints/mcp-servers/list",
+            "endpoints/mcp-servers/rotate",
+            "endpoints/mcp-servers/update"
+          ]
+        },
+        {
+          "group": "MCP pieces",
+          "icon": "plug",
+          "pages": [
+            "endpoints/mcp-pieces/schema",
+            "endpoints/mcp-pieces/add",
+            "endpoints/mcp-pieces/delete",
+            "endpoints/mcp-pieces/update",
+            "endpoints/mcp-pieces/list"
+          ]
         }
+
+        
       
       ]
     },
@@ -307,7 +330,7 @@
       "pages": [
         "install/configuration/overview",
         "install/configuration/environment-variables",
-        "install/configuration/seperate-workers",
+        "install/configuration/separate-workers",
         "install/configuration/setup-app-webhooks",
         "install/configuration/hardware",
         "install/configuration/setup-ssl",
@@ -404,6 +427,7 @@
         "embedding/overview",
         "embedding/provision-users",
         "embedding/embed-builder",
+        "embedding/mcps",
         "embedding/navigation",
         "embedding/customize-pieces",
         "embedding/embed-connections",
