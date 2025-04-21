@@ -86,3 +86,11 @@ Read more about the feature comparison here https://www.activepieces.com/docs/ab
 ## Practices
 - Repository uses commitlint to comply with proper commit message structures
 - Ensure commit-able code is linted and formatted based on the respective config files (eslint, prettier)
+
+## Utility Scripts
+
+### Export to Markdown
+- Export locally synced pieces as a markdown file named `pieces-extended.md`
+- This file helps power the RAG pipeline for BotX (Support Documentation Chat)
+- `node tools/piece-to-markdown.js`
+- Ensure `frontend` and `backend` is running for AutomationX
