@@ -19,6 +19,7 @@ import { AddMetadataFields1743780156664 } from './migration/postgres/17437801566
 import { AddLastChangelogDismissed1744053592923 } from './migration/postgres/1744053592923-AddLastChangelogDismissed'
 import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744187975994 } from './migration/postgres/1744187975994-AddRecordIndexForTableIdAndProjectIdAndRecordId'
 import { AddMetadataFlowTemplate1744898816545 } from './migration/postgres/1744898816545-add-metadata-flow-template'
+import { AddMcpPiece1744822233873 } from './migration/postgres/1744822233873-AddMcpPiece'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -32,6 +33,7 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration: (new () => MigrationInterface)[] = [
+        AddMcpPiece1744822233873,
         AddMetadataFlowTemplate1744898816545,
         AddLastChangelogDismissed1744053592923,
         AddMetadataFields1743780156664,

@@ -11,16 +11,16 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { Alert, AlertDescription } from '../../../components/ui/alert';
-import { Button } from '../../../components/ui/button';
-import { Label } from '../../../components/ui/label';
+import { Alert, AlertDescription } from '../../components/ui/alert';
+import { Button } from '../../components/ui/button';
+import { Label } from '../../components/ui/label';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '../../../components/ui/tooltip';
-import { useToast } from '../../../components/ui/use-toast';
+} from '../../components/ui/tooltip';
+import { useToast } from '../../components/ui/use-toast';
 
 interface McpUrlProps {
   serverUrl: string;

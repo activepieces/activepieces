@@ -42,45 +42,5 @@ You can use the embedded SDK to send requests to your instance and retrieve data
 
   </Step>
 
-   <Step title="Example">
-        
-       This example configures the embedding sdk, creates a connections and adds it as an mcp connection.
-
-        ```html
-        <script> 
-
-        await activepieces.configure({
-            prefix: "/",
-            instanceUrl: 'INSTANCE_URL',
-            jwtToken: "GENERATED_JWT_TOKEN",
-            });
-
-        activepieces
-        .connect({
-            pieceName: '@activepieces/piece-google-sheets',
-            connectionName: 'gsheets',
-        })
-        .then(async (res) => {
-            const mcp = await activepieces.request({
-            path: '/mcp',
-            method: 'GET',
-            });
-            const mcpConnections = mcp.connections ?? [];
-            await activepieces.request({
-            path: `/mcp/${mcp.id}`,
-            method: 'POST',
-            body: {
-                connectionsIds: [...mcpConnections, res.connection.id],
-            },
-            });
-        });
-
-        </script>
-        ```
-
-     
-    
-
-    </Step>
 
 </Steps>
