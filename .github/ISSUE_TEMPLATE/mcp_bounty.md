@@ -1,3 +1,4 @@
+---
 name: MCP Bounty
 about: Request a new Piece for Activepieces
 title: '[Piece Request] <Your Product Name>'
