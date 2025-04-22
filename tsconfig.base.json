@@ -474,6 +474,9 @@
       "@activepieces/piece-monday": [
         "packages/pieces/community/monday/src/index.ts"
       ],
+      "@activepieces/piece-mongodb": [
+        "packages/pieces/community/mongodb/src/index.ts"
+      ],
       "@activepieces/piece-moxie-crm": [
         "packages/pieces/community/moxie-crm/src/index.ts"
       ],
