@@ -392,6 +392,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="http://kaovilai.pw"><img src="https://avatars.githubusercontent.com/u/11228024?v=4?s=100" width="100px;" alt="Tiger Kaovilai"/><br /><sub><b>Tiger Kaovilai</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=kaovilai" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/CarefulGuru"><img src="https://avatars.githubusercontent.com/u/141072854?v=4?s=100" width="100px;" alt="CarefulGuru"/><br /><sub><b>CarefulGuru</b></sub></a><br /><a href="#plugin-CarefulGuru" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
