@@ -45,7 +45,7 @@ export const createClickupChannel = createAction({
   },
 
   async run(configValue) {
-    const { workspace_id, name, description, visibility } =
+    const { workspace_id, name, description, visibility,topic } =
       configValue.propsValue;
     const response = await callClickUpApi3(
       HttpMethod.POST,
@@ -53,6 +53,7 @@ export const createClickupChannel = createAction({
       getAccessTokenOrThrow(configValue.auth),
       {
         name,
+        topic,
         description,
         visibility,
       },
