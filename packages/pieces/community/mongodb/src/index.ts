@@ -85,7 +85,7 @@ const validateAuth = async (auth: PiecePropValueSchema<typeof mongodbAuth>) => {
 };
 
 export const mongodb = createPiece({
-  displayName: 'Mongodb',
+  displayName: 'MongoDB',
   auth: mongodbAuth,
   minimumSupportedRelease: '0.36.1',
   categories: [PieceCategory.DEVELOPER_TOOLS],
