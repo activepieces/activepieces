@@ -74,8 +74,8 @@ export const McpPiece = ({
   });
   const [status, setStatus] = useState(piece.status === McpPieceStatus.ENABLED);
 
-  // Check if the piece requires a connection but doesn't have one
-  const connectionRequired = pieceModel?.auth !== undefined;
+  const connectionRequired =
+    pieceModel?.auth !== undefined && pieceModel?.auth !== null;
   const connectionMissing = connectionRequired && !piece.connection;
 
   if (isLoading || isPieceLoading) {
