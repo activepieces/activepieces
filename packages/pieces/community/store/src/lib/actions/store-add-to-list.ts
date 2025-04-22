@@ -44,10 +44,10 @@ export const storageAddtoList = createAction({
 		try {
 			parsedInputItems = typeof inputItems === 'string' ? JSON.parse(inputItems) : inputItems;
 			if (!Array.isArray(parsedInputItems)) {
-				throw new Error(`Provided value is not an array.`);
+				throw new Error(`Provided value is not a list.`);
 			}
 		} catch (err) {
-			throw new Error(`Provided value is not an array.`);
+			throw new Error(`An unexpected error occurred: ${(err as Error).message}`);
 		}
 		// Get existing items from store
 		let items = (await context.store.get<unknown[]>(key, scope)) ?? [];
@@ -56,10 +56,10 @@ export const storageAddtoList = createAction({
 				items = JSON.parse(items);
 			}
 			if (!Array.isArray(items)) {
-				throw new Error(`Key ${context.propsValue['key']} is not an array`);
+				throw new Error(`Key ${context.propsValue['key']} is not a list.`);
 			}
 		} catch (err) {
-			throw new Error(`Key ${context.propsValue['key']} is not an array`);
+			throw new Error(`An unexpected error occurred: ${(err as Error).message}`);
 		}
 		if (context.propsValue['ignore_if_exists']) {
 			for (const newItem of parsedInputItems) {
