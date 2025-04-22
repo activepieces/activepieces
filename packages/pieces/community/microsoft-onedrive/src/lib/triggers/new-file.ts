@@ -59,6 +59,7 @@ export const newFile = createTrigger({
 	displayName: 'New File',
 	description: 'Trigger when a new file is uploaded.',
 	props: {
+		markdown:oneDriveCommon.parentFolderInfo,
 		parentFolder: oneDriveCommon.parentFolder,
 	},
 	type: TriggerStrategy.POLLING,
