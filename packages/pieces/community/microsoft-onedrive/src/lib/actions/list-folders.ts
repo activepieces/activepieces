@@ -13,6 +13,7 @@ export const listFolders = createAction({
   description: 'List folders in a OneDrive folder',
   displayName: 'List Folders',
   props: {
+    markdown:oneDriveCommon.parentFolderInfo,
     parentFolder: oneDriveCommon.parentFolder,
   },
   async run(context) {
