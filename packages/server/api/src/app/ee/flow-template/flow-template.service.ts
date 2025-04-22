@@ -30,11 +30,13 @@ export const flowTemplateService = {
             blogUrl,
             tags,
             id,
+            metadata,
         }: CreateFlowTemplateRequest,
     ): Promise<FlowTemplate> => {
         const flowTemplate: FlowVersionTemplate = sanitizeObjectForPostgresql(template)
         const newTags = tags ?? []
         const newId = id ?? apId()
+
         await templateRepo().upsert(
             {
                 id: newId,
@@ -50,6 +52,7 @@ export const flowTemplateService = {
                 updated: new Date().toISOString(),
                 platformId,
                 projectId: type === TemplateType.PLATFORM ? undefined : projectId,
+                metadata: (metadata as unknown) ?? null,
             },
             ['id'],
         )

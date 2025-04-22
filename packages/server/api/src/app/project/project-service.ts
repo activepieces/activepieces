@@ -1,10 +1,11 @@
 import {
     ActivepiecesError,
-    apId,
     ApId,
+    apId,
     assertNotNullOrUndefined,
     ErrorCode,
     isNil,
+    Metadata,
     NotificationStatus,
     PlatformRole,
     Project,
@@ -66,6 +67,7 @@ export const projectService = {
                 ...spreadIfDefined('displayName', request.displayName),
                 ...spreadIfDefined('notifyStatus', request.notifyStatus),
                 ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
+                ...spreadIfDefined('metadata', request.metadata),
             },
         )
         return this.getOneOrThrow(projectId)
@@ -114,7 +116,7 @@ export const projectService = {
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
                     entityId: userId,
-                    entityType: 'project',
+                    entityType: 'user',
                 },
             })
         }
@@ -217,6 +219,7 @@ type UpdateParams = {
     externalId?: string
     notifyStatus?: NotificationStatus
     releasesEnabled?: boolean
+    metadata?: Metadata
 }
 
 type CreateParams = {
@@ -225,6 +228,7 @@ type CreateParams = {
     platformId: string
     externalId?: string
     notifyStatus?: NotificationStatus
+    metadata?: Metadata
 }
 
 type GetByPlatformIdAndExternalIdParams = {

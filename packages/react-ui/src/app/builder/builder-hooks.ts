@@ -106,7 +106,6 @@ export type BuilderState = {
   applyOperation: (operation: FlowOperationRequest) => void;
   removeStepSelection: () => void;
   selectStepByName: (stepName: string) => void;
-  startSaving: () => void;
   setActiveDraggingStep: (stepName: string | null) => void;
   setFlow: (flow: PopulatedFlow) => void;
   setSampleData: (stepName: string, payload: unknown) => void;
@@ -144,6 +143,8 @@ export type BuilderState = {
   setIsFocusInsideListMapperModeInput: (
     isFocusInsideListMapperModeInput: boolean,
   ) => void;
+  isPublishing: boolean;
+  setIsPublishing: (isPublishing: boolean) => void;
 };
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
@@ -354,7 +355,19 @@ export const createBuilderStore = (
             readonly: true,
           };
         }),
-      startSaving: () => set({ saving: true }),
+      setIsPublishing: (isPublishing: boolean) =>
+        set((state) => {
+          if (isPublishing) {
+            state.removeStepSelection();
+            state.setReadOnly(true);
+          } else {
+            state.setReadOnly(false);
+          }
+          return {
+            isPublishing,
+          };
+        }),
+      isPublishing: false,
       setLoopIndex: (stepName: string, index: number) => {
         set((state) => {
           return {

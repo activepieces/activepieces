@@ -105,6 +105,9 @@
       "@activepieces/piece-binance": [
         "packages/pieces/community/binance/src/index.ts"
       ],
+      "@activepieces/piece-blockscout": [
+        "packages/pieces/community/blockscout/src/index.ts"
+      ],
       "@activepieces/piece-bonjoro": [
         "packages/pieces/community/bonjoro/src/index.ts"
       ],
@@ -215,6 +218,9 @@
       "@activepieces/piece-elevenlabs": [
         "packages/pieces/community/elevenlabs/src/index.ts"
       ],
+      "@activepieces/piece-eth-name-service": [
+        "packages/pieces/community/eth-name-service/src/index.ts"
+      ],
       "@activepieces/piece-facebook-leads": [
         "packages/pieces/community/facebook-leads/src/index.ts"
       ],
@@ -232,6 +238,9 @@
       ],
       "@activepieces/piece-fliqr-ai": [
         "packages/pieces/community/fliqr-ai/src/index.ts"
+      ],
+      "@activepieces/piece-flow-helper": [
+        "packages/pieces/community/flow-helper/src/index.ts"
       ],
       "@activepieces/piece-flowise": [
         "packages/pieces/community/flowise/src/index.ts"
@@ -437,6 +446,10 @@
       "@activepieces/piece-mautic": [
         "packages/pieces/community/mautic/src/index.ts"
       ],
+      "@activepieces/piece-mcp": ["packages/pieces/community/mcp/src/index.ts"],
+      "@activepieces/piece-mempool-space": [
+        "packages/pieces/community/mempool-space/src/index.ts"
+      ],
       "@activepieces/piece-messagebird": [
         "packages/pieces/community/messagebird/src/index.ts"
       ],
@@ -460,6 +473,9 @@
       ],
       "@activepieces/piece-monday": [
         "packages/pieces/community/monday/src/index.ts"
+      ],
+      "@activepieces/piece-mongodb": [
+        "packages/pieces/community/mongodb/src/index.ts"
       ],
       "@activepieces/piece-moxie-crm": [
         "packages/pieces/community/moxie-crm/src/index.ts"
@@ -500,6 +516,9 @@
       "@activepieces/piece-pdf": ["packages/pieces/community/pdf/src/index.ts"],
       "@activepieces/piece-perplexity-ai": [
         "packages/pieces/community/perplexity-ai/src/index.ts"
+      ],
+      "@activepieces/piece-personal-ai": [
+        "packages/pieces/community/personal-ai/src/index.ts"
       ],
       "@activepieces/piece-photoroom": [
         "packages/pieces/community/photoroom/src/index.ts"
@@ -694,9 +713,6 @@
       "@activepieces/piece-text-helper": [
         "packages/pieces/community/text-helper/src/index.ts"
       ],
-      "@activepieces/piece-zoo": [
-        "packages/pieces/community/zoo/src/index.ts"
-      ],
       "@activepieces/piece-thankster": [
         "packages/pieces/community/thankster/src/index.ts"
       ],
@@ -797,6 +813,7 @@
       "@activepieces/piece-zoho-invoice": [
         "packages/pieces/community/zoho-invoice/src/index.ts"
       ],
+      "@activepieces/piece-zoo": ["packages/pieces/community/zoo/src/index.ts"],
       "@activepieces/piece-zoom": [
         "packages/pieces/community/zoom/src/index.ts"
       ],
@@ -824,18 +841,6 @@
       ],
       "activepieces/piece-zuora": [
         "packages/pieces/community/zuora/src/index.ts"
-      ],
-      "@activepieces/piece-personal-ai": [
-        "packages/pieces/community/personal-ai/src/index.ts"
-      ],
-      "@activepieces/piece-eth-name-service": [
-        "packages/pieces/community/eth-name-service/src/index.ts"
-      ],
-      "@activepieces/piece-mempool-space": [
-        "packages/pieces/community/mempool-space/src/index.ts"
-      ],
-      "@activepieces/piece-blockscout": [
-        "packages/pieces/community/blockscout/src/index.ts"
       ],
       "ee-embed-sdk": ["packages/ee/ui/embed-sdk/src/index.ts"],
       "server-worker": ["packages/server/worker/src/index.ts"],

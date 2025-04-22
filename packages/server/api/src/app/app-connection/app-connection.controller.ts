@@ -34,6 +34,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             pieceName: request.body.pieceName,
             ownerId: await securityHelper.getUserIdFromRequest(request),
             scope: AppConnectionScope.PROJECT,
+            metadata: request.body.metadata,
         })
         eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.CONNECTION_UPSERTED,
@@ -55,6 +56,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             request: {
                 displayName: request.body.displayName,
                 projectIds: null,
+                metadata: request.body.metadata,
             },
         })
         return appConnection

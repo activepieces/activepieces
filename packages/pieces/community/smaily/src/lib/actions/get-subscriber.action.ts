@@ -11,27 +11,27 @@ export const getSubscriberAction = createAction({
   name: 'get-subscriber',
   displayName: 'Get Subscriber',
   description:
-    'Retrives detailed subscriber information for a given email address.',
+    'retrieves detailed subscriber information for a given email address.',
   props: {
     email: Property.ShortText({
       displayName: 'Email',
       required: true,
     }),
   },
-  async run(contex) {
+  async run(context) {
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `https://${contex.auth.domain}.sendsmaily.net/api/contact.php`,
+      url: `https://${context.auth.domain}.sendsmaily.net/api/contact.php`,
       queryParams: {
-        email: contex.propsValue.email,
+        email: context.propsValue.email,
       },
       headers: {
         'Content-Type': 'application/json',
       },
       authentication: {
         type: AuthenticationType.BASIC,
-        username: contex.auth.username,
-        password: contex.auth.password,
+        username: context.auth.username,
+        password: context.auth.password,
       },
     });
 

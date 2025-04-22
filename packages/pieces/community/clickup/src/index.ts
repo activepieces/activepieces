@@ -40,7 +40,7 @@ import { getClickupTaskByName } from './lib/actions/tasks/get-task-by-name';
 export const clickupAuth = PieceAuth.OAuth2({
   description: '',
   authUrl: 'https://app.clickup.com/api',
-  tokenUrl: 'https://app.clickup.com/api/v2/oauth/token',
+  tokenUrl: 'https://api.clickup.com/api/v2/oauth/token',
   required: true,
   scope: [],
 });
@@ -95,6 +95,6 @@ export const clickup = createPiece({
       },
     }),
   ],
-  authors: ["kanarelo","kishanprmr","MoShizzle","khaledmashaly","abuaboud"],
+  authors: ["kanarelo","kishanprmr","MoShizzle","khaledmashaly","abuaboud","AbdulTheActivePiecer"],
   triggers,
 });
