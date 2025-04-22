@@ -1,7 +1,19 @@
+import {
+  isNil,
+  McpPieceStatus,
+  McpPieceWithConnection,
+} from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { PlugIcon, Trash2, Unplug, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
+
+import { Card, CardContent } from '../../components/ui/card';
+import { mcpApi } from '../../features/mcp/lib/mcp-api';
+import { mcpHooks } from '../../features/mcp/lib/mcp-hooks';
+import { PieceIcon } from '../../features/pieces/components/piece-icon';
+
+import { McpPieceDialog } from './mcp-piece-dialog';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -14,14 +26,6 @@ import {
 } from '@/components/ui/tooltip';
 import { toast } from '@/components/ui/use-toast';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import { McpPieceStatus, McpPieceWithConnection } from '@activepieces/shared';
-
-import { Card, CardContent } from '../../components/ui/card';
-import { mcpApi } from '../../features/mcp/lib/mcp-api';
-import { mcpHooks } from '../../features/mcp/lib/mcp-hooks';
-import { PieceIcon } from '../../features/pieces/components/piece-icon';
-
-import { McpPieceDialog } from './mcp-piece-dialog';
 
 type McpPieceProps = {
   piece: McpPieceWithConnection;
@@ -74,8 +78,7 @@ export const McpPiece = ({
   });
   const [status, setStatus] = useState(piece.status === McpPieceStatus.ENABLED);
 
-  const connectionRequired =
-    pieceModel?.auth !== undefined && pieceModel?.auth !== null;
+  const connectionRequired = !isNil(pieceModel?.auth);
   const connectionMissing = connectionRequired && !piece.connection;
 
   if (isLoading || isPieceLoading) {
