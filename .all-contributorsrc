@@ -1668,6 +1668,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "CarefulGuru",
+      "name": "CarefulGuru",
+      "avatar_url": "https://avatars.githubusercontent.com/u/141072854?v=4",
+      "profile": "https://github.com/CarefulGuru",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
