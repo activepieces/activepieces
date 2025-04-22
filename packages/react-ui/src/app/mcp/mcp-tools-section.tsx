@@ -176,7 +176,7 @@ export const McpToolsSection = ({
         {renderAddButton()}
       </div>
 
-      <div className="gap-4 flex flex-wrap">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {isLoading ? (
           renderSkeletons()
         ) : tools.length === 0 ? (
