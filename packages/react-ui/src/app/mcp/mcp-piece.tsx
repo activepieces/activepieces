@@ -14,7 +14,11 @@ import {
 } from '@/components/ui/tooltip';
 import { toast } from '@/components/ui/use-toast';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import { McpPieceStatus, McpPieceWithConnection } from '@activepieces/shared';
+import {
+  isNil,
+  McpPieceStatus,
+  McpPieceWithConnection,
+} from '@activepieces/shared';
 
 import { Card, CardContent } from '../../components/ui/card';
 import { mcpApi } from '../../features/mcp/lib/mcp-api';
@@ -74,8 +78,7 @@ export const McpPiece = ({
   });
   const [status, setStatus] = useState(piece.status === McpPieceStatus.ENABLED);
 
-  // Check if the piece requires a connection but doesn't have one
-  const connectionRequired = pieceModel?.auth !== undefined;
+  const connectionRequired = !isNil(pieceModel?.auth);
   const connectionMissing = connectionRequired && !piece.connection;
 
   if (isLoading || isPieceLoading) {
