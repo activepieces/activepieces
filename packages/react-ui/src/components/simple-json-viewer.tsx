@@ -12,12 +12,14 @@ interface SimpleJsonViewerProps {
   data: any;
   readOnly?: boolean;
   title?: string;
+  hideCopyButton?: boolean;
 }
 
 export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
   data,
   readOnly = true,
   title,
+  hideCopyButton = false,
 }) => {
   const [copied, setCopied] = useState(false);
   const { theme } = useTheme();
@@ -40,25 +42,26 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
 
   return (
     <div className="rounded-lg overflow-hidden text-foreground w-full relative">
-      <div className="absolute top-2 right-5 z-10">
-        <Button
-          variant="transparent"
-          size="sm"
-          onClick={handleCopy}
-          className="p-0 "
-        >
-          {copied ? (
-            <Check className="w-4 h-4 text-green-500" />
-          ) : (
-            <Copy
-              className={`w-4 h-4 ${
-                theme === 'dark' ? 'text-white' : 'text-black'
-              }`}
-            />
-          )}
-        </Button>
-      </div>
-
+      {!hideCopyButton && (
+        <div className="absolute top-2 right-5 z-10">
+          <Button
+            variant="transparent"
+            size="sm"
+            onClick={handleCopy}
+            className="p-0 "
+          >
+            {copied ? (
+              <Check className="w-4 h-4 text-green-500" />
+            ) : (
+              <Copy
+                className={`w-4 h-4 ${
+                  theme === 'dark' ? 'text-white' : 'text-black'
+                }`}
+              />
+            )}
+          </Button>
+        </div>
+      )}
       <div className="p-2">
         <CodeMirror
           value={formattedJson}
