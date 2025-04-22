@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { AlertCircle, Pencil, PlugIcon, Trash2, Unplug } from 'lucide-react';
+import { PlugIcon, Trash2, Unplug, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -11,7 +11,6 @@ import {
   TooltipContent,
   TooltipTrigger,
   Tooltip,
-  TooltipProvider,
 } from '@/components/ui/tooltip';
 import { toast } from '@/components/ui/use-toast';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
@@ -56,7 +55,7 @@ export const McpPiece = ({
     },
     onSuccess: (status) => {
       toast({
-        title: `${t('MCP tool')} (${pieceModel?.displayName})`,
+        title: `${t('MCP piece')} (${pieceModel?.displayName})`,
         description: t(
           `${
             status === McpPieceStatus.ENABLED ? 'Enabled' : 'Disabled'
@@ -67,7 +66,7 @@ export const McpPiece = ({
     },
     onError: () => {
       toast({
-        title: `${t('MCP tool')} (${pieceModel?.displayName})`,
+        title: `${t('MCP piece')} (${pieceModel?.displayName})`,
         description: t('Failed to update piece status'),
         variant: 'destructive',
       });
@@ -105,8 +104,8 @@ export const McpPiece = ({
   return (
     <Card className="overflow-hidden transition-all duration-200 relative hover:shadow-sm group border-border">
       <CardContent className="flex flex-row items-center p-4 justify-between">
-        <div className="flex items-center space-x-3 min-w-0 py-1.5">
-          <div className="relative">
+        <div className="flex items-center space-x-3 min-w-0 py-1.5 flex-1">
+          <div className="relative flex-shrink-0">
             <PieceIcon
               displayName={pieceInfo.displayName}
               logoUrl={pieceInfo.logoUrl}
@@ -126,28 +125,14 @@ export const McpPiece = ({
               </div>
             )}
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h4 className="font-medium text-foreground truncate flex items-center gap-1.5">
               {pieceInfo.displayName}
-              {connectionMissing && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-sm">
-                        {t('This piece requires a connection to work')}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
             </h4>
             {piece.connection ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[200px]">
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-full">
                     {displayName}
                   </p>
                 </TooltipTrigger>
@@ -164,7 +149,7 @@ export const McpPiece = ({
             ) : null}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
           <Switch
             checked={status}
             onCheckedChange={(checked) => {
@@ -172,14 +157,15 @@ export const McpPiece = ({
                 checked ? McpPieceStatus.ENABLED : McpPieceStatus.DISABLED,
               );
             }}
-          ></Switch>
+            className="scale-75"
+          />
 
           {pieceModel?.auth && (
             <Tooltip>
               <McpPieceDialog mcpPieceToUpdate={piece}>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="icon">
-                    <Pencil className="h-4 w-4" />
+                    <RotateCcw className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
               </McpPieceDialog>
