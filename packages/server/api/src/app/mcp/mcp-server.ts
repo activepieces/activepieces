@@ -20,6 +20,23 @@ export async function createMcpServer({
     reply,
     logger,
 }: CreateMcpServerRequest): Promise<CreateMcpServerResponse> {
+    const transport = new SSEServerTransport('/api/v1/mcp/messages', reply.raw)
+    const server = new McpServer({
+        name: 'Activepieces',
+        version: '1.0.0',
+    })
+
+    await addPiecesToServer(server, mcpId, logger)
+    await addFlowsToServer(server, mcpId, logger)
+
+    return { server, transport }
+}
+
+async function addPiecesToServer(
+    server: McpServer,
+    mcpId: string,
+    logger: FastifyBaseLogger,
+): Promise<void> {
     const mcp = await mcpService(logger).getOrThrow({ mcpId })
     const projectId = mcp.projectId
     const platformId = await projectService.getPlatformId(projectId)
@@ -37,12 +54,6 @@ export async function createMcpServer({
         })
     }))
 
-    const transport = new SSEServerTransport('/api/v1/mcp/messages', reply.raw)
-    const server = new McpServer({
-        name: 'Activepieces',
-        version: '1.0.0',
-    })
-
     const uniqueActions = new Set<string>()
     pieces.flatMap(piece => {
         return Object.values(piece.actions).map(action => {
@@ -54,7 +65,7 @@ export async function createMcpServer({
             const mcpPiece = mcp.pieces.find(p => p.pieceName === piece.name)
             const pieceConnectionExternalId = mcpPiece?.connection?.externalId
             
-            const actionName = `${piece.name.split('piece-')[1]}-${action.name}`.slice(0, MAX_TOOL_NAME_LENGTH)
+            const actionName = `${piece.name.split('piece-')[1]}-${action.name}`.slice(0, MAX_TOOL_NAME_LENGTH).replace(/\s+/g, '-')
             uniqueActions.add(actionName)
             
             server.tool(
@@ -113,6 +124,15 @@ export async function createMcpServer({
             )
         })
     })
+}
+
+async function addFlowsToServer(
+    server: McpServer,
+    mcpId: string,
+    logger: FastifyBaseLogger,
+): Promise<void> {
+    const mcp = await mcpService(logger).getOrThrow({ mcpId })
+    const projectId = mcp.projectId
 
     const flows = await flowService(logger).list({ 
         projectId,
@@ -131,7 +151,7 @@ export async function createMcpServer({
 
     for (const flow of mcpFlows) {
         const triggerSettings = flow.version.trigger.settings as McpTrigger
-        const toolName = ('flow_' + triggerSettings.input?.toolName).slice(0, MAX_TOOL_NAME_LENGTH)
+        const toolName = ('flow-' + triggerSettings.input?.toolName).slice(0, MAX_TOOL_NAME_LENGTH).replace(/\s+/g, '-')
         const toolDescription = triggerSettings.input?.toolDescription
         const inputSchema = triggerSettings.input?.inputSchema
         const returnsResponse = triggerSettings.input?.returnsResponse
@@ -180,8 +200,6 @@ export async function createMcpServer({
             },
         )
     }
-
-    return { server, transport }
 }
 
 export type CreateMcpServerRequest = {
@@ -193,4 +211,3 @@ export type CreateMcpServerResponse = {
     server: McpServer
     transport: SSEServerTransport
 }
-

@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.50.5",
+  "version": "0.50.6",
   "rcVersion": "0.51.0-rc.0",
   "scripts": {
     "prepare": "husky install",
@@ -214,6 +214,7 @@
     "mintlify": "4.0.395",
     "monaco-editor": "0.44.0",
     "monday-sdk-js": "0.5.2",
+    "mongodb": "6.15.0",
     "mustache": "4.2.0",
     "nanoid": "3.3.8",
     "next-themes": "0.4.6",

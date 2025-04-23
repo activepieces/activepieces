@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Pencil, PlugIcon, Trash2 } from 'lucide-react';
+import { PlugIcon, Trash2, Unplug, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -14,7 +14,11 @@ import {
 } from '@/components/ui/tooltip';
 import { toast } from '@/components/ui/use-toast';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import { McpPieceStatus, McpPieceWithConnection } from '@activepieces/shared';
+import {
+  isNil,
+  McpPieceStatus,
+  McpPieceWithConnection,
+} from '@activepieces/shared';
 
 import { Card, CardContent } from '../../components/ui/card';
 import { mcpApi } from '../../features/mcp/lib/mcp-api';
@@ -55,7 +59,7 @@ export const McpPiece = ({
     },
     onSuccess: (status) => {
       toast({
-        title: `${t('MCP tool')} (${pieceModel?.displayName})`,
+        title: `${t('MCP piece')} (${pieceModel?.displayName})`,
         description: t(
           `${
             status === McpPieceStatus.ENABLED ? 'Enabled' : 'Disabled'
@@ -66,13 +70,17 @@ export const McpPiece = ({
     },
     onError: () => {
       toast({
-        title: `${t('MCP tool')} (${pieceModel?.displayName})`,
+        title: `${t('MCP piece')} (${pieceModel?.displayName})`,
         description: t('Failed to update piece status'),
         variant: 'destructive',
       });
     },
   });
   const [status, setStatus] = useState(piece.status === McpPieceStatus.ENABLED);
+
+  const connectionRequired = !isNil(pieceModel?.auth);
+  const connectionMissing = connectionRequired && !piece.connection;
+
   if (isLoading || isPieceLoading) {
     return (
       <Card className="overflow-hidden transition-all duration-200 relative hover:shadow-sm group border-border">
@@ -97,10 +105,10 @@ export const McpPiece = ({
     : pieceInfo.displayName;
 
   return (
-    <Card className="overflow-hidden transition-all duration-200 relative hover:shadow-sm group border-border min-w-[420px]">
-      <CardContent className="flex flex-row items-center p-4 justify-between ">
-        <div className="flex items-center space-x-3 min-w-0 py-1.5">
-          <div className="relative">
+    <Card className="overflow-hidden transition-all duration-200 relative hover:shadow-sm group border-border">
+      <CardContent className="flex flex-row items-center p-4 justify-between">
+        <div className="flex items-center space-x-3 min-w-0 py-1.5 flex-1">
+          <div className="relative flex-shrink-0">
             <PieceIcon
               displayName={pieceInfo.displayName}
               logoUrl={pieceInfo.logoUrl}
@@ -114,19 +122,37 @@ export const McpPiece = ({
                 <PlugIcon className="h-3 w-3" />
               </div>
             )}
-          </div>
-          <div className="min-w-0">
-            <h4 className="font-medium text-foreground truncate flex items-center gap-1">
-              {pieceInfo.displayName}
-            </h4>
-            {piece.connection && (
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {displayName}
-              </p>
+            {connectionMissing && (
+              <div className="absolute -bottom-1 -right-1 bg-amber-500 text-white rounded-full p-0.5">
+                <Unplug className="h-3 w-3" />
+              </div>
             )}
           </div>
+          <div className="min-w-0 flex-1">
+            <h4 className="font-medium text-foreground truncate flex items-center gap-1.5">
+              {pieceInfo.displayName}
+            </h4>
+            {piece.connection ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-full">
+                    {displayName}
+                  </p>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-[300px] break-all">
+                  <p className="text-sm">{displayName}</p>
+                </TooltipContent>
+              </Tooltip>
+            ) : connectionMissing ? (
+              <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                <span className="text-amber-500">
+                  {t('Connection required')}
+                </span>
+              </p>
+            ) : null}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
           <Switch
             checked={status}
             onCheckedChange={(checked) => {
@@ -134,18 +160,21 @@ export const McpPiece = ({
                 checked ? McpPieceStatus.ENABLED : McpPieceStatus.DISABLED,
               );
             }}
-          ></Switch>
+            className="scale-75"
+          />
 
           {pieceModel?.auth && (
             <Tooltip>
               <McpPieceDialog mcpPieceToUpdate={piece}>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="icon">
-                    <Pencil className="h-4 w-4  " />
+                    <RotateCcw className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
               </McpPieceDialog>
-              <TooltipContent>{t('Edit Connection')}</TooltipContent>
+              <TooltipContent>
+                {t(connectionMissing ? 'Add Connection' : 'Edit Connection')}
+              </TooltipContent>
             </Tooltip>
           )}
 

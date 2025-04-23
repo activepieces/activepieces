@@ -46,8 +46,8 @@ export const McpToolsSection = ({
   const { theme } = useTheme();
   const [isExpanded, setIsExpanded] = useState(false);
   // We always want to show at least one row (4 items)
-  const visibleTools = isExpanded ? tools : tools.slice(0, 4);
-  const hasMoreTools = tools.length > 4;
+  const visibleTools = isExpanded ? tools : tools.slice(0, 3);
+  const hasMoreTools = tools.length > 3;
 
   const renderAddButton = () => {
     // Only render the button if there's at least one tool
@@ -87,7 +87,7 @@ export const McpToolsSection = ({
 
   const renderSkeletons = () => {
     if (type === 'pieces') {
-      return Array(4)
+      return Array(3)
         .fill(0)
         .map((_, index) => (
           <McpPiece
@@ -99,7 +99,7 @@ export const McpToolsSection = ({
           />
         ));
     } else {
-      return Array(4)
+      return Array(3)
         .fill(0)
         .map((_, index) => (
           <Card
@@ -176,7 +176,7 @@ export const McpToolsSection = ({
         {renderAddButton()}
       </div>
 
-      <div className="gap-4 flex flex-wrap">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {isLoading ? (
           renderSkeletons()
         ) : tools.length === 0 ? (

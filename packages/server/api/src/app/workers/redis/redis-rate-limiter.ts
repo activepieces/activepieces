@@ -6,6 +6,7 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { Redis } from 'ioredis'
 import { createRedisClient, getRedisConnection } from '../../database/redis-connection'
+import { apDayjsDuration } from '../../helper/dayjs-helper'
 import { system } from '../../helper/system/system'
 import { AddParams } from '../queue/queue-manager'
 import { redisQueue } from './redis-queue'
@@ -15,6 +16,7 @@ const RATE_LIMIT_QUEUE_NAME = 'rateLimitJobs'
 const MAX_CONCURRENT_JOBS_PER_PROJECT = system.getNumberOrThrow(AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT)
 const PROJECT_RATE_LIMITER_ENABLED = system.getBoolean(AppSystemProp.PROJECT_RATE_LIMITER_ENABLED)
 const SUPPORTED_QUEUES = [QueueName.ONE_TIME, QueueName.WEBHOOK]
+const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 
 let redis: Redis
 let worker: Worker | null = null
@@ -37,7 +39,7 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
                     attempts: 5,
                     backoff: {
                         type: 'exponential',
-                        delay: 8 * 60 * 1000,
+                        delay: EIGHT_MINUTES_IN_MILLISECONDS,
                     },
                     removeOnComplete: true,
                 },
