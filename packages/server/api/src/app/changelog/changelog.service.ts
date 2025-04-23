@@ -19,10 +19,10 @@ const emptyChangelog: ListChangelogsResponse = {
 export const changelogService = (logger: FastifyBaseLogger) => ({
     async list(): Promise<ListChangelogsResponse> {
         const changelogs: ChangelogStore = await distributedStore().get(CHANGELOG_KEY) ?? {
-            lastFetched: dayjs().subtract(1, 'day').toISOString(),
+            lastFetched: dayjs().subtract(5, 'minutes').toISOString(),
             data: emptyChangelog,
         }
-        if (dayjs(changelogs.lastFetched).isBefore(dayjs().subtract(1, 'day'))) {
+        if (dayjs(changelogs.lastFetched).isBefore(dayjs().subtract(5, 'minutes'))) {
             const newChangelogs = await getChangelog(logger)
             const changelogStore: ChangelogStore = {
                 lastFetched: dayjs().toISOString(),
@@ -35,6 +35,8 @@ export const changelogService = (logger: FastifyBaseLogger) => ({
     },
 })
 async function getChangelog(logger: FastifyBaseLogger): Promise<ListChangelogsResponse> {
+    // todo(Rupal): Nice feature, maybe we can leverage this. Disabling for now
+    return {data: []}
     const isCloudEdition = system.getOrThrow(AppSystemProp.EDITION) === ApEdition.CLOUD
     try {
         if (isCloudEdition) {

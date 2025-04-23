@@ -1,7 +1,7 @@
 {
-  "name": "pieces-rounded-studio",
+  "name": "pieces-mongodb",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/rounded-studio/src",
+  "sourceRoot": "packages/pieces/community/mongodb/src",
   "projectType": "library",
   "release": {
     "version": {
@@ -19,12 +19,12 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/community/rounded-studio",
-        "tsConfig": "packages/pieces/community/rounded-studio/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/rounded-studio/package.json",
-        "main": "packages/pieces/community/rounded-studio/src/index.ts",
+        "outputPath": "dist/packages/pieces/community/mongodb",
+        "tsConfig": "packages/pieces/community/mongodb/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/mongodb/package.json",
+        "main": "packages/pieces/community/mongodb/src/index.ts",
         "assets": [
-          "packages/pieces/community/rounded-studio/*.md"
+          "packages/pieces/community/mongodb/*.md"
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true

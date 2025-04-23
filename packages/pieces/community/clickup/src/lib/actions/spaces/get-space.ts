@@ -1,7 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 
-import { callClickUpApi } from '../../common';
+import { callClickUpApi, clickupCommon } from '../../common';
 import { clickupAuth } from '../../../';
 
 export const getClickupSpace = createAction({
@@ -10,11 +10,7 @@ export const getClickupSpace = createAction({
   description: 'Gets a space in a ClickUp',
   displayName: 'Get Space',
   props: {
-    space_id: Property.ShortText({
-      description: 'The id of the space to get',
-      displayName: 'Space ID',
-      required: true,
-    }),
+    space_id: clickupCommon.space_id(),
   },
   async run(configValue) {
     const { space_id } = configValue.propsValue;

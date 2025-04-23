@@ -471,6 +471,9 @@
       "@activepieces/piece-monday": [
         "packages/pieces/community/monday/src/index.ts"
       ],
+      "@activepieces/piece-mongodb": [
+        "packages/pieces/community/mongodb/src/index.ts"
+      ],
       "@activepieces/piece-moxie-crm": [
         "packages/pieces/community/moxie-crm/src/index.ts"
       ],
@@ -580,8 +583,8 @@
       "@activepieces/piece-robolly": [
         "packages/pieces/community/robolly/src/index.ts"
       ],
-      "@activepieces/piece-rounded-studio": [
-        "packages/pieces/community/rounded-studio/src/index.ts"
+      "@activepieces/piece-call-rounded": [
+        "packages/pieces/community/call-rounded/src/index.ts"
       ],
       "@activepieces/piece-rss": ["packages/pieces/community/rss/src/index.ts"],
       "@activepieces/piece-saastic": [

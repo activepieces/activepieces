@@ -24,7 +24,7 @@ import { McpPropertyType } from '@activepieces/shared';
       inputSchema: Property.Array({
         displayName: 'Parameters',
         description: 'Define the input parameters that this tool accepts. Parameters will be shown to users when calling the tool.',
-        required: true,
+        required: false,
         defaultValue: [
           {
             name: '',

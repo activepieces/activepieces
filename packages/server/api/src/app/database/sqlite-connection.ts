@@ -20,6 +20,7 @@ import { AddLastChangelogDismissedSQLITE1744053922591 } from './migration/sqlite
 import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744104496262 } from './migration/sqlite/1744104496262-AddRecordIndexForTableIdAndProjectIdAndRecordId'
 import { AddMetadataFlowTemplate1744898945629 } from './migration/sqlite/1744898945629-add-metadata-flow-template'
 import { AddMcpPieceSqlite1744822233873 } from './migration/sqlite/1744822233873-AddMcpPieceSqlite'
+import { RenameTodoVariantName1745269828603 } from './migration/sqlite/1745269828603-RenameTodoVariantName'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -42,6 +43,7 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        RenameTodoVariantName1745269828603,
         AddMcpPieceSqlite1744822233873,
         AddMetadataFlowTemplate1744898945629,
         AddLastChangelogDismissedSQLITE1744053922591,
