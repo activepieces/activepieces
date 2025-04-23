@@ -35,6 +35,8 @@ export const changelogService = (logger: FastifyBaseLogger) => ({
     },
 })
 async function getChangelog(logger: FastifyBaseLogger): Promise<ListChangelogsResponse> {
+    // todo(Rupal): Nice feature, maybe we can leverage this. Disabling for now
+    return {data: []}
     const isCloudEdition = system.getOrThrow(AppSystemProp.EDITION) === ApEdition.CLOUD
     try {
         if (isCloudEdition) {
