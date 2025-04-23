@@ -1,4 +1,3 @@
-
 import { ApplicationEventName } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
@@ -14,6 +13,7 @@ import {
     GetFlowTemplateRequestQuery,
     isNil,
     ListFlowsRequest,
+    Metadata,
     Permission,
     PopulatedFlow,
     PrincipalType,
@@ -77,6 +77,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             platformId: request.principal.platform.id,
             projectId: request.principal.projectId,
             operation: cleanOperation(request.body),
+            metadata: request.body.metadata as Metadata,
         })
         return updatedFlow
     })

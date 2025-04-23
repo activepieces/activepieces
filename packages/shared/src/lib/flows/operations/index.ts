@@ -1,5 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../../common'
+import { Metadata } from '../../common/metadata'
 import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema } from '../actions/action'
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
@@ -157,11 +158,17 @@ export type ChangePublishedVersionIdRequest = Static<
     typeof ChangePublishedVersionIdRequest
 >
 
+// Define a base operation object type with metadata
+const FlowOperationBase = {
+    metadata: Type.Optional(Metadata),
+}
+
 export const FlowOperationRequest = Type.Union([
     Type.Object(
         {
             type: Type.Literal(FlowOperationType.MOVE_ACTION),
             request: MoveActionRequest,
+            ...FlowOperationBase,
         },
         {
             title: 'Move Action',
@@ -171,6 +178,7 @@ export const FlowOperationRequest = Type.Union([
         {
             type: Type.Literal(FlowOperationType.CHANGE_STATUS),
             request: UpdateFlowStatusRequest,
+            ...FlowOperationBase,
         },
         {
             title: 'Change Status',
@@ -180,6 +188,7 @@ export const FlowOperationRequest = Type.Union([
         {
             type: Type.Literal(FlowOperationType.LOCK_AND_PUBLISH),
             request: ChangePublishedVersionIdRequest,
+            ...FlowOperationBase,
         },
         {
             title: 'Lock and Publish',
@@ -189,6 +198,7 @@ export const FlowOperationRequest = Type.Union([
         {
             type: Type.Literal(FlowOperationType.USE_AS_DRAFT),
             request: UseAsDraftRequest,
+            ...FlowOperationBase,
         },
         {
             title: 'Copy as Draft',
@@ -198,6 +208,7 @@ export const FlowOperationRequest = Type.Union([
         {
             type: Type.Literal(FlowOperationType.LOCK_FLOW),
             request: LockFlowRequest,
+            ...FlowOperationBase,
         },
         {
             title: 'Lock Flow',
@@ -207,6 +218,7 @@ export const FlowOperationRequest = Type.Union([
         {
             type: Type.Literal(FlowOperationType.IMPORT_FLOW),
             request: ImportFlowRequest,
+            ...FlowOperationBase,
         },
         {
             title: 'Import Flow',
@@ -216,6 +228,7 @@ export const FlowOperationRequest = Type.Union([
         {
             type: Type.Literal(FlowOperationType.CHANGE_NAME),
             request: ChangeNameRequest,
+            ...FlowOperationBase,
         },
         {
             title: 'Change Name',
@@ -225,6 +238,7 @@ export const FlowOperationRequest = Type.Union([
         {
             type: Type.Literal(FlowOperationType.DELETE_ACTION),
             request: DeleteActionRequest,
+            ...FlowOperationBase,
         },
         {
             title: 'Delete Action',
@@ -234,6 +248,7 @@ export const FlowOperationRequest = Type.Union([
         {
             type: Type.Literal(FlowOperationType.UPDATE_ACTION),
             request: UpdateActionRequest,
+            ...FlowOperationBase,
         },
         {
             title: 'Update Action',
@@ -243,6 +258,7 @@ export const FlowOperationRequest = Type.Union([
         {
             type: Type.Literal(FlowOperationType.ADD_ACTION),
             request: AddActionRequest,
+            ...FlowOperationBase,
         },
         {
             title: 'Add Action',
@@ -252,6 +268,7 @@ export const FlowOperationRequest = Type.Union([
         {
             type: Type.Literal(FlowOperationType.UPDATE_TRIGGER),
             request: UpdateTriggerRequest,
+            ...FlowOperationBase,
         },
         {
             title: 'Update Trigger',
@@ -261,6 +278,7 @@ export const FlowOperationRequest = Type.Union([
         {
             type: Type.Literal(FlowOperationType.CHANGE_FOLDER),
             request: ChangeFolderRequest,
+            ...FlowOperationBase,
         },
         {
             title: 'Change Folder',
@@ -270,6 +288,7 @@ export const FlowOperationRequest = Type.Union([
         {
             type: Type.Literal(FlowOperationType.DUPLICATE_ACTION),
             request: DuplicateStepRequest,
+            ...FlowOperationBase,
         },
         {
             title: 'Duplicate Action',
@@ -279,6 +298,7 @@ export const FlowOperationRequest = Type.Union([
         {
             type: Type.Literal(FlowOperationType.DELETE_BRANCH),
             request: DeleteBranchRequest,
+            ...FlowOperationBase,
         },
         {
             title: 'Delete Branch',
@@ -288,6 +308,7 @@ export const FlowOperationRequest = Type.Union([
         {
             type: Type.Literal(FlowOperationType.ADD_BRANCH),
             request: AddBranchRequest,
+            ...FlowOperationBase,
         },
         {
             title: 'Add Branch',
@@ -297,6 +318,7 @@ export const FlowOperationRequest = Type.Union([
         {
             type: Type.Literal(FlowOperationType.DUPLICATE_BRANCH),
             request: DuplicateBranchRequest,
+            ...FlowOperationBase,
         },
         {
             title: 'Duplicate Branch',
@@ -306,6 +328,7 @@ export const FlowOperationRequest = Type.Union([
         {
             type: Type.Literal(FlowOperationType.SET_SKIP_ACTION),
             request: SkipActionRequest,
+            ...FlowOperationBase,
         },
         {
             title: 'Skip Action',

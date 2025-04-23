@@ -16,6 +16,7 @@ import {
     FlowVersionId,
     FlowVersionState,
     isNil,
+    Metadata,
     PlatformId,
     PopulatedFlow,
     ProjectId,
@@ -35,7 +36,6 @@ import { flowFolderService } from '../folder/folder.service'
 import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
-
 
 const TRIGGER_FAILURES_THRESHOLD = system.getNumberOrThrow(AppSystemProp.TRIGGER_FAILURES_THRESHOLD)
 
@@ -222,6 +222,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         platformId,
         operation,
         lock = true,
+        metadata,
     }: UpdateParams): Promise<PopulatedFlow> {
         const flowLock = lock
             ? await distributedLock.acquireLock({
@@ -232,6 +233,14 @@ export const flowService = (log: FastifyBaseLogger) => ({
             : null
 
         try {
+            if (metadata) {
+                await this.updateMetadata({
+                    id,
+                    projectId,
+                    metadata,
+                })
+            }
+
             switch (operation.type) {
                 case FlowOperationType.LOCK_AND_PUBLISH:
                 {  await this.updatedPublishedVersionId({
@@ -304,6 +313,18 @@ export const flowService = (log: FastifyBaseLogger) => ({
             id,
             projectId,
         })
+    },
+
+    async updateMetadata({
+        id,
+        projectId,
+        metadata,
+    }: UpdateMetadataParams): Promise<Flow> {
+        const flowToUpdate = await this.getOneOrThrow({ id, projectId })
+
+        flowToUpdate.metadata = metadata
+
+        return flowRepo().save(flowToUpdate)
     },
 
     async updateStatus({
@@ -589,6 +610,13 @@ type UpdateParams = {
     operation: FlowOperationRequest
     lock?: boolean
     platformId: PlatformId
+    metadata?: Metadata
+}
+
+type UpdateMetadataParams = {
+    id: FlowId
+    projectId: ProjectId
+    metadata: Metadata
 }
 
 type UpdateStatusParams = {
