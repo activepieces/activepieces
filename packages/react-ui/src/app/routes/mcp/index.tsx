@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
 import { useTheme } from '@/components/theme-provider';
-import { Button } from '@/components/ui/button';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { Separator } from '@/components/ui/separator';
 import { TableTitle } from '@/components/ui/table-title';
 import { useToast } from '@/components/ui/use-toast';
@@ -42,7 +42,10 @@ export default function MCPPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { checkAccess } = useAuthorization();
-  const doesUserHavePermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
+  const doesUserHavePermissionToWriteMcp = checkAccess(Permission.WRITE_MCP);
+  const doesUserHavePermissionToWriteMcpFlow =
+    checkAccess(Permission.WRITE_FLOW) && checkAccess(Permission.WRITE_MCP);
+
   const { metadata } = piecesHooks.useAllStepsMetadata({
     searchQuery: '',
     type: 'trigger',
@@ -213,13 +216,17 @@ export default function MCPPage() {
     pieceInfoMap[piece.id] = getPieceInfo(piece);
   });
 
-  const emptyFlowsMessage = (
+  const emptyFlowsCard = (
     <div className="flex">
       <div
         className={`w-64 flex flex-col items-center justify-center py-6 px-5 text-muted-foreground ${
           theme === 'dark' ? 'bg-card border-border' : 'bg-white'
-        } rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer`}
-        onClick={() => createFlow()}
+        } rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow ${
+          !doesUserHavePermissionToWriteMcpFlow
+            ? 'opacity-60 cursor-not-allowed'
+            : 'cursor-pointer'
+        }`}
+        onClick={() => doesUserHavePermissionToWriteMcpFlow && createFlow()}
       >
         <div className="flex flex-col items-center gap-2">
           <div
@@ -248,15 +255,16 @@ export default function MCPPage() {
             {t('Let your AI assistant trigger automations')}
           </p>
         </div>
-        <Button
-          className="sr-only"
-          disabled={!doesUserHavePermissionToWriteFlow || isCreateFlowPending}
-          onClick={() => createFlow()}
-        >
-          {t('Create Your First MCP Flow')}
-        </Button>
       </div>
     </div>
+  );
+
+  const emptyFlowsMessage = (
+    <PermissionNeededTooltip
+      hasPermission={doesUserHavePermissionToWriteMcpFlow}
+    >
+      {emptyFlowsCard}
+    </PermissionNeededTooltip>
   );
 
   return (
@@ -284,6 +292,7 @@ export default function MCPPage() {
             onRotateToken={handleRotateToken}
             isRotating={rotateMutation.isPending}
             hasValidMcp={!!mcp?.id}
+            hasPermissionToWriteMcp={doesUserHavePermissionToWriteMcp}
           />
         )}
 
@@ -303,7 +312,7 @@ export default function MCPPage() {
             onAddClick={() => {}}
             onToolDelete={removePiece}
             pieceInfoMap={pieceInfoMap}
-            canAddTool={true}
+            canAddTool={doesUserHavePermissionToWriteMcp}
             addButtonLabel={t('Add Piece')}
             isPending={removePieceMutation.isPending}
           />
@@ -319,7 +328,7 @@ export default function MCPPage() {
             type="flows"
             onAddClick={() => createFlow()}
             onToolClick={(flow) => navigate(`/flows/${flow.id}`)}
-            canAddTool={doesUserHavePermissionToWriteFlow}
+            canAddTool={doesUserHavePermissionToWriteMcpFlow}
             addButtonLabel={t('Create Flow')}
             isPending={isCreateFlowPending}
           />

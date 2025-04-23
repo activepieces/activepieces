@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -35,6 +36,7 @@ type McpPieceProps = {
   };
   onDelete: (piece: McpPieceWithConnection) => void;
   isLoading?: boolean;
+  hasPermissionToEdit?: boolean;
 };
 
 export const McpPiece = ({
@@ -42,13 +44,14 @@ export const McpPiece = ({
   pieceInfo,
   onDelete,
   isLoading = false,
+  hasPermissionToEdit = true,
 }: McpPieceProps) => {
   const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
     name: piece.pieceName,
   });
 
   const { refetch: refetchMcp } = mcpHooks.useMcp();
-  const { mutate: updatePieceStatus } = useMutation({
+  const { mutate: updatePieceStatus, isPending: isStatusUpdatePending } = useMutation({
     mutationFn: async (status: McpPieceStatus) => {
       setStatus(status === McpPieceStatus.ENABLED);
       await mcpApi.updatePiece({
@@ -104,6 +107,15 @@ export const McpPiece = ({
     ? piece.connection.displayName
     : pieceInfo.displayName;
 
+  // Toggle status helper function
+  const toggleStatus = (checked: boolean) => {
+    if (hasPermissionToEdit) {
+      updatePieceStatus(
+        checked ? McpPieceStatus.ENABLED : McpPieceStatus.DISABLED
+      );
+    }
+  };
+
   return (
     <Card className="overflow-hidden transition-all duration-200 relative hover:shadow-sm group border-border">
       <CardContent className="flex flex-row items-center p-4 justify-between">
@@ -153,25 +165,30 @@ export const McpPiece = ({
           </div>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-          <Switch
-            checked={status}
-            onCheckedChange={(checked) => {
-              updatePieceStatus(
-                checked ? McpPieceStatus.ENABLED : McpPieceStatus.DISABLED,
-              );
-            }}
-            className="scale-75"
-          />
+          <PermissionNeededTooltip hasPermission={hasPermissionToEdit}>
+            <Switch
+              checked={status}
+              onCheckedChange={toggleStatus}
+              disabled={!hasPermissionToEdit || isStatusUpdatePending}
+              className="scale-75"
+            />
+          </PermissionNeededTooltip>
 
           {pieceModel?.auth && (
             <Tooltip>
-              <McpPieceDialog mcpPieceToUpdate={piece}>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <RotateCcw className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-              </McpPieceDialog>
+              <PermissionNeededTooltip hasPermission={hasPermissionToEdit}>
+                <McpPieceDialog mcpPieceToUpdate={piece}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      disabled={!hasPermissionToEdit}
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                </McpPieceDialog>
+              </PermissionNeededTooltip>
               <TooltipContent>
                 {t(connectionMissing ? 'Add Connection' : 'Edit Connection')}
               </TooltipContent>
@@ -179,27 +196,32 @@ export const McpPiece = ({
           )}
 
           <Tooltip>
-            <ConfirmationDeleteDialog
-              title={`${t('Delete')} ${displayName}`}
-              message={
-                <div>
-                  {t(
-                    "Are you sure you want to delete this tool from your MCP? if you delete it you won't be able to use it in your MCP client.",
-                  )}
-                </div>
-              }
-              mutationFn={async () => {
-                onDelete(piece);
-              }}
-              entityName={t('piece')}
-            >
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Trash2 className="h-4 w-4 text-destructive transition-colors duration-200 group-hover:text-destructive/90" />
-                </Button>
-              </TooltipTrigger>
-            </ConfirmationDeleteDialog>
-
+            <PermissionNeededTooltip hasPermission={hasPermissionToEdit}>
+              <ConfirmationDeleteDialog
+                title={`${t('Delete')} ${displayName}`}
+                message={
+                  <div>
+                    {t(
+                      "Are you sure you want to delete this tool from your MCP? if you delete it you won't be able to use it in your MCP client.",
+                    )}
+                  </div>
+                }
+                mutationFn={async () => {
+                  onDelete(piece);
+                }}
+                entityName={t('piece')}
+              >
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={!hasPermissionToEdit}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive transition-colors duration-200 group-hover:text-destructive/90" />
+                  </Button>
+                </TooltipTrigger>
+              </ConfirmationDeleteDialog>
+            </PermissionNeededTooltip>
             <TooltipContent>{t('Delete')}</TooltipContent>
           </Tooltip>
         </div>
