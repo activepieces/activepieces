@@ -6,6 +6,8 @@ import {
 import {
   PieceAuthProperty,
   PiecePropValueSchema,
+  Store,
+  StoreScope,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
@@ -225,68 +227,63 @@ export const rssNewItemListTrigger = createTrigger({
   },
 });
 
+async function getRssItemsFromMultipleUrls(urls: { url: string }[]): Promise<any[]> {
+  const allItems: any[] = [];
+  await Promise.all(
+    urls.map(async ({ url }) => {
+      try {
+        const items = await getRssItems(url);
+        allItems.push(...items);
+      } catch (error) {
+        console.error(`Error fetching RSS feed from ${url}:`, error);
+      }
+    })
+  );
+  return allItems;
+}
+
 const polling: Polling<PiecePropValueSchema<PieceAuthProperty>, PollingProps> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ propsValue }) => {
-    const urls = propsValue.rss_feed_urls.map(item => item.url);
-    const items = await getRssItems(urls);
-    console.log(items)
-    return items.map((item) => {
-      const pubDate = item.pubdate || item.pubDate;
-      return {
-        epochMilliSeconds: pubDate ? dayjs(pubDate).valueOf() : Date.now(),
-        data: {
-          ...item,
-          sourceFeedUrl: item.sourceFeedUrl
-        }
-      };
-    });
+  strategy: DedupeStrategy.LAST_ITEM,
+  items: async ({ store, propsValue }) => {
+    const items = await getRssItemsFromMultipleUrls(propsValue.rss_feed_urls);
+    return items.map((item) => ({
+      id: getId(item),
+      data: item,
+    }));
   },
 };
 
-function getRssItems(urls: string[]): Promise<any[]> {
-  const promises = urls.map(url => 
-    new Promise<any[]>((resolve, reject) => {
-      axios
-        .get(url, {
-          responseType: 'stream',
-        })
-        .then((response) => {
-          const feedparser = new FeedParser({
-            addmeta: true,
-          });
-          response.data.pipe(feedparser);
-          const items: any[] = [];
-
-          feedparser.on('readable', () => {
-            let item = feedparser.read();
-            while (item) {
-              items.push({
-                ...item,
-                sourceFeedUrl: url
-              });
-              item = feedparser.read();
-            }
-          });
-
-          feedparser.on('end', () => {
-            resolve(items);
-          });
-
-          feedparser.on('error', (error: any) => {
-            reject(error);
-          });
-        })
-        .catch(() => {
-          resolve([]);
+function getRssItems(url: string): Promise<any[]> {
+  return new Promise((resolve, reject) => {
+    axios
+      .get(url, {
+        responseType: 'stream',
+      })
+      .then((response) => {
+        const feedparser = new FeedParser({
+          addmeta: true,
         });
-    })
-  );
+        response.data.pipe(feedparser);
+        const items: any[] = [];
 
-  return Promise.all(promises).then(results => 
-    results.flat()
-  ).catch(error => {
-    console.error('Error processing feeds:', error);
-    return [];
+        feedparser.on('readable', () => {
+          let item = feedparser.read();
+          while (item) {
+            items.push(item);
+            item = feedparser.read();
+          }
+        });
+
+        feedparser.on('end', () => {
+          resolve(items);
+        });
+
+        feedparser.on('error', (error: any) => {
+          reject(error);
+        });
+      })
+      .catch((error) => {
+        reject(error);
+      });
   });
 }
