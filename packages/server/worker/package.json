@@ -1,6 +1,6 @@
 {
   "name": "server-worker",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "type": "commonjs",
   "main": "./src/index.js",
   "typings": "./src/index.d.ts",
