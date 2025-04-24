@@ -70,6 +70,12 @@ async function run<T extends QueueName>(queueName: T, log: FastifyBaseLogger): P
         let engineToken: string | undefined
         try {
             const job = await jobPoller.poll(workerToken, queueName)
+            log.debug({
+                job: {
+                    queueName,
+                    jobId: job?.id,
+                },
+            }, 'Job polled')
             if (isNil(job)) {
                 continue
             }
@@ -77,6 +83,12 @@ async function run<T extends QueueName>(queueName: T, log: FastifyBaseLogger): P
             engineToken = jobEngineToken
             await consumeJob(queueName, data, engineToken, log)
             await markJobAsCompleted(queueName, engineToken, log)
+            log.debug({
+                job: {
+                    queueName,
+                    jobId: job?.id,
+                },
+            }, 'Job completed')
         }
         catch (e) {
             exceptionHandler.handle(e, log)
