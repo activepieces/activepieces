@@ -84,7 +84,7 @@ export class EngineWorker {
                 worker.on('message', (m: { type: string, message: unknown }) => {
                     switch (m.type) {
                         case 'result':
-                            cleanUp(worker, timeoutWorker, this.workers, workerIndex)
+                            cleanUp(worker, timeoutWorker)
                             resolve({
                                 engine: m.message as EngineResponse<unknown>,
                                 stdOut,
@@ -98,14 +98,14 @@ export class EngineWorker {
                             stdError += m.message as string
                             break
                         case 'error':
-                            cleanUp(worker, timeoutWorker, this.workers, workerIndex)
+                            cleanUp(worker, timeoutWorker)
                             reject({ status: EngineResponseStatus.ERROR, response: m.message })
                             break
                     }
                 })
 
                 worker.on('error', (error) => {
-                    cleanUp(worker, timeoutWorker, this.workers, workerIndex)
+                    cleanUp(worker, timeoutWorker)
                     this.log.info({
                         error,
                     }, 'Worker returned something in stderr')
@@ -124,7 +124,8 @@ export class EngineWorker {
                         signal,
                     }, 'Worker exited')
 
-                    cleanUp(worker, timeoutWorker, this.workers, workerIndex)
+                    cleanUp(worker, timeoutWorker)
+                    this.workers[workerIndex] = undefined
 
                     if (isRamIssue) {
                         resolve({
@@ -204,10 +205,9 @@ export class EngineWorker {
 
 }
 
-function cleanUp(worker: ChildProcess, timeout: NodeJS.Timeout, workers: (ChildProcess | undefined)[], workerIndex: number): void {
+function cleanUp(worker: ChildProcess, timeout: NodeJS.Timeout): void {
     worker.removeAllListeners('exit')
     worker.removeAllListeners('error')
     worker.removeAllListeners('message')
     clearTimeout(timeout)
-    workers[workerIndex] = undefined
 }
