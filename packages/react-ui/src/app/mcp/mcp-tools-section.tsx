@@ -5,12 +5,15 @@ import { useState } from 'react';
 import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { PopulatedFlow, McpPieceWithConnection, Permission } from '@activepieces/shared';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import {
+  PopulatedFlow,
+  McpPieceWithConnection,
+} from '@activepieces/shared';
 
 import { McpFlowCard } from './mcp-flow-card';
 import { McpPiece } from './mcp-piece';
 import { McpPieceDialog } from './mcp-piece-dialog';
-import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 
 // Define a union type for tool items
 type ToolItem = McpPieceWithConnection | PopulatedFlow;
@@ -57,18 +60,18 @@ export const McpToolsSection = ({
 
     if (type === 'pieces') {
       return (
-      <PermissionNeededTooltip hasPermission={canAddTool}>
-        <McpPieceDialog>
-          <Button
-            variant="default"
-            size="sm"
-            className="flex items-center gap-1"
-            disabled={!canAddTool || isPending}
-          >
-            <Plus className="h-4 w-4" />
-            {addButtonLabel}
-          </Button>
-        </McpPieceDialog>
+        <PermissionNeededTooltip hasPermission={canAddTool}>
+          <McpPieceDialog>
+            <Button
+              variant="default"
+              size="sm"
+              className="flex items-center gap-1"
+              disabled={!canAddTool || isPending}
+            >
+              <Plus className="h-4 w-4" />
+              {addButtonLabel}
+            </Button>
+          </McpPieceDialog>
         </PermissionNeededTooltip>
       );
     } else {
@@ -80,8 +83,8 @@ export const McpToolsSection = ({
             className="flex items-center gap-1"
             onClick={onAddClick}
             disabled={!canAddTool || isPending}
-        >
-          <Plus className="h-4 w-4" />
+          >
+            <Plus className="h-4 w-4" />
             {addButtonLabel}
           </Button>
         </PermissionNeededTooltip>
@@ -100,6 +103,7 @@ export const McpToolsSection = ({
             pieceInfo={{ displayName: '', logoUrl: '' }}
             onDelete={() => {}}
             isLoading={true}
+            hasPermissionToEdit={canAddTool}
           />
         ));
     } else {
@@ -128,14 +132,16 @@ export const McpToolsSection = ({
     if (type === 'pieces') {
       return (
         <PermissionNeededTooltip hasPermission={canAddTool}>
-          {canAddTool ? (
-            <McpPieceDialog>
-              <div className="flex">
-                <div
-                className={`w-64 flex flex-col items-center justify-center py-6 px-5 text-muted-foreground ${
-                  theme === 'dark' ? 'bg-card border-border' : 'bg-white'
-                } rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer`}
-                >
+          <McpPieceDialog>
+            <Button
+              className="w-64 p-0 h-auto hover:bg-transparent"
+              variant="ghost"
+              disabled={!canAddTool}
+            >
+              <div
+                className={`w-full flex flex-col items-center justify-center py-6 px-5 rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow bg-white`}
+                style={{ minHeight: '160px' }}
+              >
                 <div className="flex flex-col items-center gap-2">
                   <div
                     className={`rounded-full ${
@@ -149,7 +155,7 @@ export const McpToolsSection = ({
                     />
                   </div>
                   <p
-                    className={`font-medium ${
+                    className={`font-medium text-base ${
                       theme === 'dark' ? 'text-slate-200' : 'text-slate-800'
                     }`}
                   >
@@ -159,50 +165,18 @@ export const McpToolsSection = ({
                     className={`text-xs mt-0.5 text-center ${
                       theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
                     }`}
+                    style={{
+                      maxWidth: '200px',
+                      whiteSpace: 'normal',
+                      wordWrap: 'break-word',
+                    }}
                   >
                     {t('Connect your AI assistant to external services')}
                   </p>
                 </div>
               </div>
-              </div>
-            </McpPieceDialog>
-          ) : (
-            <div className="flex">
-              <div
-              className={`w-64 flex flex-col items-center justify-center py-6 px-5 text-muted-foreground ${
-                theme === 'dark' ? 'bg-card border-border' : 'bg-white'
-              } rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow opacity-60 cursor-not-allowed`}
-              >
-              <div className="flex flex-col items-center gap-2">
-                <div
-                  className={`rounded-full ${
-                    theme === 'dark' ? 'bg-slate-800' : 'bg-slate-100'
-                  } p-2.5 mb-1`}
-                >
-                  <Plus
-                    className={`h-5 w-5 ${
-                      theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
-                    }`}
-                  />
-                </div>
-                <p
-                  className={`font-medium ${
-                    theme === 'dark' ? 'text-slate-200' : 'text-slate-800'
-                  }`}
-                >
-                  {t(addButtonLabel)}
-                </p>
-                <p
-                  className={`text-xs mt-0.5 text-center ${
-                    theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
-                  }`}
-                >
-                  {t('Connect your AI assistant to external services')}
-                </p>
-              </div>
-            </div>
-            </div>
-          )}
+            </Button>
+          </McpPieceDialog>
         </PermissionNeededTooltip>
       );
     } else {

@@ -76,10 +76,10 @@ const ButtonWithTooltip = ({
   disabled = false,
   hasPermission = true,
 }: ButtonWithTooltipProps) => (
-  <TooltipProvider>
-    <Tooltip>
+  <PermissionNeededTooltip hasPermission={hasPermission}>
+    <TooltipProvider>
+      <Tooltip>
       <TooltipTrigger asChild>
-        <PermissionNeededTooltip hasPermission={hasPermission}>
           <Button
             variant={variant}
             size="icon"
@@ -89,13 +89,13 @@ const ButtonWithTooltip = ({
           >
             {icon}
           </Button>
-        </PermissionNeededTooltip>
       </TooltipTrigger>
       <TooltipContent>
         <p>{tooltip}</p>
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  </PermissionNeededTooltip>
 );
 
 const ConfigDisplay = ({

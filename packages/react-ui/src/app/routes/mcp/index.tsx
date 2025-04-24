@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { pieceSelectorUtils } from '@/app/builder/pieces-selector/piece-selector-utils';
 import { useTheme } from '@/components/theme-provider';
+import { Button } from '@/components/ui/button';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { Separator } from '@/components/ui/separator';
 import { TableTitle } from '@/components/ui/table-title';
@@ -218,44 +219,50 @@ export default function MCPPage() {
 
   const emptyFlowsCard = (
     <div className="flex">
-      <div
-        className={`w-64 flex flex-col items-center justify-center py-6 px-5 text-muted-foreground ${
-          theme === 'dark' ? 'bg-card border-border' : 'bg-white'
-        } rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow ${
-          !doesUserHavePermissionToWriteMcpFlow
-            ? 'opacity-60 cursor-not-allowed'
-            : 'cursor-pointer'
-        }`}
+      <Button
+        className="w-64 p-0 h-auto hover:bg-transparent"
+        variant="ghost"
+        disabled={!doesUserHavePermissionToWriteMcpFlow}
         onClick={() => doesUserHavePermissionToWriteMcpFlow && createFlow()}
       >
-        <div className="flex flex-col items-center gap-2">
-          <div
-            className={`rounded-full ${
-              theme === 'dark' ? 'bg-slate-800' : 'bg-slate-100'
-            } p-2.5 mb-1`}
-          >
-            <Plus
-              className={`h-5 w-5 ${
-                theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
+        <div
+          className="w-full flex flex-col items-center justify-center py-6 px-5 rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow bg-white"
+          style={{ minHeight: '160px' }}
+        >
+          <div className="flex flex-col items-center gap-2">
+            <div
+              className={`rounded-full ${
+                theme === 'dark' ? 'bg-slate-800' : 'bg-slate-100'
+              } p-2.5 mb-1`}
+            >
+              <Plus
+                className={`h-5 w-5 ${
+                  theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
+                }`}
+              />
+            </div>
+            <p
+              className={`font-medium text-base ${
+                theme === 'dark' ? 'text-slate-200' : 'text-slate-800'
               }`}
-            />
+            >
+              {t('Add Flow')}
+            </p>
+            <p
+              className={`text-xs mt-0.5 text-center ${
+                theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+              }`}
+              style={{
+                maxWidth: '200px',
+                whiteSpace: 'normal',
+                wordWrap: 'break-word',
+              }}
+            >
+              {t('Let your AI assistant trigger automations')}
+            </p>
           </div>
-          <p
-            className={`font-medium ${
-              theme === 'dark' ? 'text-slate-200' : 'text-slate-800'
-            }`}
-          >
-            {t('Add Flow')}
-          </p>
-          <p
-            className={`text-xs mt-0.5 text-center ${
-              theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
-            }`}
-          >
-            {t('Let your AI assistant trigger automations')}
-          </p>
         </div>
-      </div>
+      </Button>
     </div>
   );
 

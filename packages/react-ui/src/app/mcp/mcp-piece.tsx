@@ -36,7 +36,7 @@ type McpPieceProps = {
   };
   onDelete: (piece: McpPieceWithConnection) => void;
   isLoading?: boolean;
-  hasPermissionToEdit?: boolean;
+  hasPermissionToEdit: boolean;
 };
 
 export const McpPiece = ({
@@ -44,41 +44,42 @@ export const McpPiece = ({
   pieceInfo,
   onDelete,
   isLoading = false,
-  hasPermissionToEdit = true,
+  hasPermissionToEdit,
 }: McpPieceProps) => {
   const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
     name: piece.pieceName,
   });
 
   const { refetch: refetchMcp } = mcpHooks.useMcp();
-  const { mutate: updatePieceStatus, isPending: isStatusUpdatePending } = useMutation({
-    mutationFn: async (status: McpPieceStatus) => {
-      setStatus(status === McpPieceStatus.ENABLED);
-      await mcpApi.updatePiece({
-        pieceId: piece.id,
-        status,
-      });
-      return status;
-    },
-    onSuccess: (status) => {
-      toast({
-        title: `${t('MCP piece')} (${pieceModel?.displayName})`,
-        description: t(
-          `${
-            status === McpPieceStatus.ENABLED ? 'Enabled' : 'Disabled'
-          } successfully`,
-        ),
-      });
-      refetchMcp();
-    },
-    onError: () => {
-      toast({
-        title: `${t('MCP piece')} (${pieceModel?.displayName})`,
-        description: t('Failed to update piece status'),
-        variant: 'destructive',
-      });
-    },
-  });
+  const { mutate: updatePieceStatus, isPending: isStatusUpdatePending } =
+    useMutation({
+      mutationFn: async (status: McpPieceStatus) => {
+        setStatus(status === McpPieceStatus.ENABLED);
+        await mcpApi.updatePiece({
+          pieceId: piece.id,
+          status,
+        });
+        return status;
+      },
+      onSuccess: (status) => {
+        toast({
+          title: `${t('MCP piece')} (${pieceModel?.displayName})`,
+          description: t(
+            `${
+              status === McpPieceStatus.ENABLED ? 'Enabled' : 'Disabled'
+            } successfully`,
+          ),
+        });
+        refetchMcp();
+      },
+      onError: () => {
+        toast({
+          title: `${t('MCP piece')} (${pieceModel?.displayName})`,
+          description: t('Failed to update piece status'),
+          variant: 'destructive',
+        });
+      },
+    });
   const [status, setStatus] = useState(piece.status === McpPieceStatus.ENABLED);
 
   const connectionRequired = !isNil(pieceModel?.auth);
@@ -111,7 +112,7 @@ export const McpPiece = ({
   const toggleStatus = (checked: boolean) => {
     if (hasPermissionToEdit) {
       updatePieceStatus(
-        checked ? McpPieceStatus.ENABLED : McpPieceStatus.DISABLED
+        checked ? McpPieceStatus.ENABLED : McpPieceStatus.DISABLED,
       );
     }
   };
