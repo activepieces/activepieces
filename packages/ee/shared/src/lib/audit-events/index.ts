@@ -359,7 +359,8 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
         const request = event.data.request.request
         const names = request.names
         return `Updated actions "${names.join(', ')}" in "${event.data.flowVersion.displayName}" Flow to skip.`;
-
       }
+    case FlowOperationType.UPDATE_METADATA:
+      return `Updated metadata for flow "${event.data.flowVersion.displayName}".`;
   }
 }
