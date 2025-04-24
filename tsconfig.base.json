@@ -124,6 +124,9 @@
       "@activepieces/piece-calendly": [
         "packages/pieces/community/calendly/src/index.ts"
       ],
+      "@activepieces/piece-call-rounded": [
+        "packages/pieces/community/call-rounded/src/index.ts"
+      ],
       "@activepieces/piece-captain-data": [
         "packages/pieces/community/captain-data/src/index.ts"
       ],
@@ -447,6 +450,9 @@
         "packages/pieces/community/mautic/src/index.ts"
       ],
       "@activepieces/piece-mcp": ["packages/pieces/community/mcp/src/index.ts"],
+      "@activepieces/piece-medullar": [
+        "packages/pieces/community/medullar/src/index.ts"
+      ],
       "@activepieces/piece-mempool-space": [
         "packages/pieces/community/mempool-space/src/index.ts"
       ],
@@ -585,9 +591,6 @@
       ],
       "@activepieces/piece-robolly": [
         "packages/pieces/community/robolly/src/index.ts"
-      ],
-      "@activepieces/piece-call-rounded": [
-        "packages/pieces/community/call-rounded/src/index.ts"
       ],
       "@activepieces/piece-rss": ["packages/pieces/community/rss/src/index.ts"],
       "@activepieces/piece-saastic": [
