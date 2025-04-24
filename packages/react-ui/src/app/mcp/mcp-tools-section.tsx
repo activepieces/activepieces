@@ -6,10 +6,7 @@ import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
-import {
-  PopulatedFlow,
-  McpPieceWithConnection,
-} from '@activepieces/shared';
+import { PopulatedFlow, McpPieceWithConnection } from '@activepieces/shared';
 
 import { McpFlowCard } from './mcp-flow-card';
 import { McpPiece } from './mcp-piece';

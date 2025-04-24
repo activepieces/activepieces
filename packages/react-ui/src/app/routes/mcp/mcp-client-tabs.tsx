@@ -79,7 +79,7 @@ const ButtonWithTooltip = ({
   <PermissionNeededTooltip hasPermission={hasPermission}>
     <TooltipProvider>
       <Tooltip>
-      <TooltipTrigger asChild>
+        <TooltipTrigger asChild>
           <Button
             variant={variant}
             size="icon"
@@ -89,9 +89,9 @@ const ButtonWithTooltip = ({
           >
             {icon}
           </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>{tooltip}</p>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{tooltip}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
