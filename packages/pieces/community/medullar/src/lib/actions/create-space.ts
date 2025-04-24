@@ -17,6 +17,7 @@ export const createSpace = createAction({
     const res = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
       url: 'http://my.medullar.com/api/v1.0/spaces/',
+      body: {name: context.propsValue['space_name']},
       headers: {
         Authorization: `Bearer ${context.auth}`,
       },
