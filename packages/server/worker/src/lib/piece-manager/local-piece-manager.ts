@@ -5,9 +5,9 @@ import { assertEqual, assertNotNullOrUndefined, PackageType, PiecePackage } from
 import { FastifyBaseLogger } from 'fastify'
 import { cacheHandler } from '../utils/cache-handler'
 import { workerMachine } from '../utils/machine'
+import { packageManager } from '../utils/package-manager'
 import { PIECES_BUILDER_MUTEX_KEY } from './development/pieces-builder'
 import { PieceManager } from './piece-manager'
-import { packageManager } from '../utils/package-manager'
 enum CacheState {
     READY = 'READY',
     PENDING = 'PENDING',

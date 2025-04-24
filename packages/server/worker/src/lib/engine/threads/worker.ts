@@ -160,7 +160,7 @@ export class EngineWorker {
                         error: e,
                     }, 'Error terminating worker')
                 }
-                this.workers[workerIndex] = undefined;  
+                this.workers[workerIndex] = undefined  
             }
             this.log.debug({
                 workerIndex,

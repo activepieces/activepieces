@@ -6,7 +6,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../engine/engine-runner'
 import { cacheHandler } from '../utils/cache-handler'
 import { workerMachine } from './machine'
-import { packageManager, PackageInfo } from './package-manager'
+import { PackageInfo, packageManager } from './package-manager'
 
 const TS_CONFIG_CONTENT = `
 
