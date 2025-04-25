@@ -43,66 +43,66 @@ const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
       return <div className="text-left">{row.original.displayName}</div>;
     },
   },
-  {
-    accessorKey: 'tasks',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Used Tasks')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {formatUtils.formatNumber(row.original.usage.tasks)} /{' '}
-          {row.original.plan.tasks
-            ? formatUtils.formatNumber(row.original.plan.tasks)
-            : t('Unlimited')}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'ai-tokens',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Used AI Credits')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {formatUtils.formatNumber(row.original.usage.aiTokens)} /{' '}
-          {row.original.plan.aiTokens
-            ? formatUtils.formatNumber(row.original.plan.aiTokens)
-            : '-'}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'users',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Active Users')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {row.original.analytics.activeUsers} /{' '}
-          {row.original.analytics.totalUsers}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'flows',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Active Flows')} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {row.original.analytics.activeFlows} /{' '}
-          {row.original.analytics.totalFlows}
-        </div>
-      );
-    },
-  },
+  // {
+  //   accessorKey: 'tasks',
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title={t('Used Tasks')} />
+  //   ),
+  //   cell: ({ row }) => {
+  //     return (
+  //       <div className="text-left">
+  //         {formatUtils.formatNumber(row.original.usage.tasks)} /{' '}
+  //         {row.original.plan.tasks
+  //           ? formatUtils.formatNumber(row.original.plan.tasks)
+  //           : t('Unlimited')}
+  //       </div>
+  //     );
+  //   },
+  // },
+  // {
+  //   accessorKey: 'ai-tokens',
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title={t('Used AI Credits')} />
+  //   ),
+  //   cell: ({ row }) => {
+  //     return (
+  //       <div className="text-left">
+  //         {formatUtils.formatNumber(row.original.usage.aiTokens)} /{' '}
+  //         {row.original.plan.aiTokens
+  //           ? formatUtils.formatNumber(row.original.plan.aiTokens)
+  //           : '-'}
+  //       </div>
+  //     );
+  //   },
+  // },
+  // {
+  //   accessorKey: 'users',
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title={t('Active Users')} />
+  //   ),
+  //   cell: ({ row }) => {
+  //     return (
+  //       <div className="text-left">
+  //         {row.original.analytics.activeUsers} /{' '}
+  //         {row.original.analytics.totalUsers}
+  //       </div>
+  //     );
+  //   },
+  // },
+  // {
+  //   accessorKey: 'flows',
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title={t('Active Flows')} />
+  //   ),
+  //   cell: ({ row }) => {
+  //     return (
+  //       <div className="text-left">
+  //         {row.original.analytics.activeFlows} /{' '}
+  //         {row.original.analytics.totalFlows}
+  //       </div>
+  //     );
+  //   },
+  // },
   {
     accessorKey: 'createdAt',
     header: ({ column }) => (
@@ -134,7 +134,7 @@ export default function ProjectsPage() {
   const queryClient = useQueryClient();
   const { setCurrentProject } = projectHooks.useCurrentProject();
   const navigate = useNavigate();
-  const isEnabled = platform.manageProjectsEnabled;
+  const isEnabled = platform.manageProjectsEnabled || true;
   const { data: currentProject } = projectHooks.useCurrentProject();
 
   const [searchParams] = useSearchParams();

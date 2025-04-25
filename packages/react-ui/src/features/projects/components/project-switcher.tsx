@@ -56,9 +56,9 @@ function ProjectSwitcher() {
     },
     [allProjects],
   );
-  if (embedState.isEmbedded || edition === ApEdition.COMMUNITY) {
-    return null;
-  }
+  // if (embedState.isEmbedded || edition === ApEdition.COMMUNITY) {
+  //   return null;
+  // }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

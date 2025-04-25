@@ -10,11 +10,11 @@ import {
 import { PageTitle } from '@/app/components/page-title';
 import { ChatPage } from '@/app/routes/chat';
 // import { EmbedPage } from '@/app/routes/embed';
-import AnalyticsPage from '@/app/routes/platform/analytics';
+// import AnalyticsPage from '@/app/routes/platform/analytics';
 // import { ApiKeysPage } from '@/app/routes/platform/security/api-keys';
 // import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
 // import { SSOPage } from '@/app/routes/platform/security/sso';
-import AIProvidersPage from '@/app/routes/platform/setup/ai';
+// import AIProvidersPage from '@/app/routes/platform/setup/ai';
 // import { BrandingPage } from '@/app/routes/platform/setup/branding';
 import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
 import { RedirectPage } from '@/app/routes/redirect';
@@ -49,10 +49,10 @@ import { FlowBuilderPage } from '../routes/flows/id';
 // import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
 import MCPPage from '../routes/mcp';
-import SettingsBilling from '../routes/platform/billing';
+// import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
-import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
+// import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
 // import ProjectsPage from '../routes/platform/projects';
 // import AuditLogsPage from '../routes/platform/security/audit-logs';
 // import { ProjectRolePage } from '../routes/platform/security/project-role';
@@ -68,7 +68,7 @@ import { FlowRunPage } from '../routes/runs/id';
 import AppearancePage from '../routes/settings/appearance';
 // import { EnvironmentPage } from '../routes/settings/environment';
 import GeneralPage from '../routes/settings/general';
-import TeamPage from '../routes/settings/team';
+// import TeamPage from '../routes/settings/team';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
 import { ShareTemplatePage } from '../routes/templates/share-template';
@@ -82,6 +82,7 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
+import ProjectsPage from '../routes/platform/projects';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -426,16 +427,16 @@ const routes = [
       </PageTitle>
     ),
   },
-  // {
-  //   path: '/platform/projects',
-  //   element: (
-  //     <PlatformAdminContainer>
-  //       <PageTitle title="Projects">
-  //         <ProjectsPage />
-  //       </PageTitle>
-  //     </PlatformAdminContainer>
-  //   ),
-  // },
+  {
+    path: '/platform/projects',
+    element: (
+      <PlatformAdminContainer>
+        <PageTitle title="Projects">
+          <ProjectsPage />
+        </PageTitle>
+      </PlatformAdminContainer>
+    ),
+  },
   {
     path: '/platform/setup/pieces',
     element: (
@@ -446,25 +447,25 @@ const routes = [
       </PlatformAdminContainer>
     ),
   },
-  {
-    path: '/platform/analytics',
-    element: (
-      <PlatformAdminContainer>
-        <PageTitle title="Analytics">
-          <div className="flex flex-col gap-4 w-full">
-            <PlatformMessages />
-            <AnalyticsPage />
-          </div>
-        </PageTitle>
-      </PlatformAdminContainer>
-    ),
-  },
+  // {
+  //   path: '/platform/analytics',
+  //   element: (
+  //     <PlatformAdminContainer>
+  //       <PageTitle title="Analytics">
+  //         <div className="flex flex-col gap-4 w-full">
+  //           <PlatformMessages />
+  //           <AnalyticsPage />
+  //         </div>
+  //       </PageTitle>
+  //     </PlatformAdminContainer>
+  //   ),
+  // },
   {
     path: '/platform',
     element: (
       <PlatformAdminContainer>
         <PageTitle title="Platform">
-          <Navigate to="/platform/analytics" />
+          <Navigate to="/platform/projects" />
         </PageTitle>
       </PlatformAdminContainer>
     ),
@@ -509,16 +510,16 @@ const routes = [
       </PlatformAdminContainer>
     ),
   },
-  {
-    path: '/platform/setup/ai',
-    element: (
-      <PlatformAdminContainer>
-        <PageTitle title="AI">
-          <AIProvidersPage />
-        </PageTitle>
-      </PlatformAdminContainer>
-    ),
-  },
+  // {
+  //   path: '/platform/setup/ai',
+  //   element: (
+  //     <PlatformAdminContainer>
+  //       <PageTitle title="AI">
+  //         <AIProvidersPage />
+  //       </PageTitle>
+  //     </PlatformAdminContainer>
+  //   ),
+  // },
   // {
   //   path: '/platform/security/api-keys',
   //   element: (

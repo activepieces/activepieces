@@ -11,15 +11,16 @@ export const platformUtils = {
         if (req.principal.type !== PrincipalType.UNKNOWN) {
             return req.principal.platform.id
         }
-        const platformIdFromHostName = await getPlatformIdForHostname(req.headers.host as string)
-        if (!isNil(platformIdFromHostName)) {
-            return platformIdFromHostName
-        }
-        if (system.getEdition() === ApEdition.CLOUD) {
-            return null
-        }
-        const oldestPlatform = await platformService.getOldestPlatform()
-        return oldestPlatform?.id ?? null
+        // const platformIdFromHostName = await getPlatformIdForHostname(req.headers.host as string)
+        // if (!isNil(platformIdFromHostName)) {
+        //     return platformIdFromHostName
+        // }
+        // if (system.getEdition() === ApEdition.CLOUD) {
+        //     return null
+        // }
+        // const oldestPlatform = await platformService.getOldestPlatform()
+        // return oldestPlatform?.id ?? null
+        return null
     },
     // TODO (@amrabuaza) this is a temporary function to check if the platform is an enterprise customer on cloud
     isEnterpriseCustomerOnCloud(platform: Platform | PlatformWithoutSensitiveData): boolean {

@@ -630,5 +630,5 @@ type LockFlowVersionIfNotLockedParams = {
 type ExistsByProjectAndStatusParams = {
     projectId: ProjectId
     status: FlowStatus
-    entityManager: EntityManager
+    entityManager?: EntityManager
 }

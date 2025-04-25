@@ -111,3 +111,20 @@ export const ProjectWithLimitsWithPlatform = Type.Object({
 })
 
 export type ProjectWithLimitsWithPlatform = Static<typeof ProjectWithLimitsWithPlatform>
+
+// Custom project types for our use-cases
+
+export const CreatePlatformProjectRequest = Type.Object({
+    displayName: Type.String(),
+    externalId: Type.Optional(Type.String()),
+    metadata: Type.Optional(Metadata),
+})
+
+export type CreatePlatformProjectRequest = Static<typeof CreatePlatformProjectRequest>
+
+export const ProjectsWithPlatform = Type.Object({
+    platformName: Type.String(),
+    projects: Type.Array(Project),
+})
+
+export type ProjectsWithPlatform = Static<typeof ProjectsWithPlatform>
