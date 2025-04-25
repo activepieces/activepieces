@@ -99,8 +99,7 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
                 return pieceCache[folderPath]
             }
 
-            const lockKey = `piece_cache_${folderPath}`
-            lock = await memoryLock.acquire(lockKey)
+            lock = await memoryLock.acquire(`piece_cache_${folderPath}`, 60000)
             if (folderPath in pieceCache && pieceCache[folderPath]) {
                 return pieceCache[folderPath]
             }
