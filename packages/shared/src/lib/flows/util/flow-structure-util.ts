@@ -199,6 +199,40 @@ function getAllNextActionsWithoutChildren(start: Step): Step[] {
     return actions
 }
 
+function extractConnectionIds(
+    flowVersion: FlowVersion,
+): string[] {
+    const uniqueConnectionIds = new Set<string>()
+
+    function extractIdFromConnectionString(authString: string): string[] {
+        const match = authString.match(/{{connections\['([^']*(?:'\s*,\s*'[^']*)*)'\]}}/)
+        if (!match) return []
+        return match[1].split(/'\s*,\s*'/).map(id => id.trim())
+    }
+
+    function processAuth(auth: string) {
+        const connectionIds = extractIdFromConnectionString(auth)
+        for (const id of connectionIds) {
+            uniqueConnectionIds.add(id)
+        }
+    }
+
+    // Extract from trigger settings
+    if (flowVersion.trigger.settings?.input?.auth) {
+        processAuth(flowVersion.trigger.settings.input.auth)
+    }
+
+    // Extract from all steps
+    const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
+    for (const step of steps) {
+        if (step.settings?.input?.auth) {
+            processAuth(step.settings.input.auth)
+        }
+    }
+
+    return Array.from(uniqueConnectionIds)
+}
+
 export const flowStructureUtil = {
     isTrigger,
     isAction,
@@ -216,4 +250,5 @@ export const flowStructureUtil = {
     findUnusedNames,
     getAllNextActionsWithoutChildren,
     getAllChildSteps,
+    extractConnectionIds,
 }

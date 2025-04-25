@@ -174,3 +174,16 @@ export const UpsertGlobalConnectionRequestBody =
         Type.Composite([Type.Omit(UpsertCustomAuthRequest, ['projectId', 'externalId']), GlobalConnectionExtras]),
     ])
 export type UpsertGlobalConnectionRequestBody = Static<typeof UpsertGlobalConnectionRequestBody>
+
+export const ReplaceAppConnectionsRequestBody = Type.Object({
+    sourceAppConnectionId: Type.String(),
+    targetAppConnectionId: Type.String(),
+    projectId: Type.String(),
+})
+export type ReplaceAppConnectionsRequestBody = Static<typeof ReplaceAppConnectionsRequestBody>
+
+export const ListFlowsFromAppConnectionRequestQuery = Type.Object({
+    sourceAppConnectionIds: Type.Array(Type.String()),
+    projectId: Type.String(),
+})
+export type ListFlowsFromAppConnectionRequestQuery = Static<typeof ListFlowsFromAppConnectionRequestQuery>

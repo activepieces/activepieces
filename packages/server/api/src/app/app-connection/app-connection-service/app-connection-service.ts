@@ -16,11 +16,13 @@ import {
     Cursor,
     EngineResponseStatus,
     ErrorCode,
+    flowStructureUtil,
     isNil,
     Metadata,
     OAuth2GrantType,
     PlatformId,
     PlatformRole,
+    PopulatedFlow,
     ProjectId,
     SeekPage,
     spreadIfDefined,
@@ -33,6 +35,8 @@ import { Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
 import { projectMemberService } from '../../ee/project-members/project-member.service'
+import { flowService } from '../../flows/flow/flow.service'
+import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { encryptUtils } from '../../helper/encryption'
 import { distributedLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -187,6 +191,80 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             pieceName: connection.pieceName,
             displayName: connection.displayName,
         }))
+    },
+
+    async applyOperation(params: ApplyOperationParams): Promise<PopulatedFlow[]> {
+        const { request, projectId, log } = params
+    
+        const flows = await getFlowsFromAppConnection({
+            type: OperationType.GET_FLOWS,
+            appConnection: request.appConnection,
+        }, projectId, log)
+    
+        switch (request.type) {
+            case OperationType.GET_FLOWS:
+                return flows
+            case OperationType.UPDATE_CONNECTION:
+                return updateFlowsWithAppConnection(flows, request)
+        }
+    },
+
+    async listFlowsFromAppConnection(params: ListFlowsFromAppConnectionParams): Promise<PopulatedFlow[]> {
+        const { id, projectId, platformId } = params
+        const appConnection = await this.getOneOrThrowWithoutValue({
+            id,
+            projectId,
+            platformId,
+        })
+        return this.applyOperation({
+            request: {
+                type: OperationType.GET_FLOWS,
+                appConnection,
+            },
+            projectId,
+            log,
+        })
+    },
+
+    async replace(params: ReplaceParams): Promise<void> {
+        const { sourceAppConnectionId, targetAppConnectionId, projectId, platformId } = params
+        const sourceAppConnection = await this.getOneOrThrowWithoutValue({
+            id: sourceAppConnectionId,
+            projectId,
+            platformId,
+        })
+        
+        const targetAppConnection = await this.getOneOrThrowWithoutValue({
+            id: targetAppConnectionId,
+            projectId,
+            platformId,
+        })
+        
+        if (sourceAppConnection.pieceName !== targetAppConnection.pieceName) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Connections must be from the same app',
+                },
+            })
+        }
+
+        await this.applyOperation({
+            request: {
+                type: OperationType.UPDATE_CONNECTION,
+                appConnection: sourceAppConnection,
+                newAppConnection: targetAppConnection,
+            },
+            projectId,
+            log,
+        })
+
+        await this.delete({
+            id: sourceAppConnection.id,
+            platformId,
+            scope: sourceAppConnection.scope,
+            projectId,
+        })
     },
 
     async delete(params: DeleteParams): Promise<void> {
@@ -422,6 +500,60 @@ const validateConnectionValue = async (
     }
 
     return value
+}
+
+async function getFlowsFromAppConnection(params: GetFlowsFromAppConnectionParams, projectId: ProjectId, log: FastifyBaseLogger): Promise<PopulatedFlow[]> {
+    const { appConnection } = params
+
+    const flowVersions = await flowVersionRepo()
+        .createQueryBuilder('flowVersion')
+        .select('DISTINCT flowVersion.flowId', 'flowId')
+        .where('flowVersion.connectionIds && :ids', { ids: [appConnection.externalId] })
+        .getRawMany()
+
+    const flows = await Promise.all(flowVersions.map(async (version) => {
+        const populatedFlow = await flowService(log).getOnePopulatedOrThrow({
+            id: version.flowId,
+            projectId,
+        })
+        return populatedFlow
+    })).then(flows => flows.filter((flow): flow is NonNullable<typeof flow> => flow !== null))
+    
+    return flows
+}
+
+async function updateFlowsWithAppConnection(flows: PopulatedFlow[], params: UpdateFlowsWithAppConnectionParams): Promise<PopulatedFlow[]> {
+    const { appConnection, newAppConnection } = params
+
+    const updatedFlowVersions = flows.map(flow => flowStructureUtil.transferFlow(flow.version, (step) => {
+        if (step.settings?.input?.auth?.includes(appConnection.externalId)) {
+            return {
+                ...step,
+                settings: {
+                    ...step.settings,
+                    input: {
+                        ...step.settings?.input,
+                        auth: step.settings.input.auth.replaceAll(appConnection.externalId, newAppConnection.externalId),
+                    },
+                },
+            }
+        }
+        return step
+    }))
+    
+    await Promise.all(updatedFlowVersions.map(async (flowVersion) => {
+        await flowVersionRepo().update(flowVersion.id, {
+            trigger: JSON.parse(JSON.stringify(flowVersion.trigger)),
+            connectionIds: flowStructureUtil.extractConnectionIds(flowVersion),
+        })
+    }))
+
+    const updatedFlows = await Promise.all(flows.map(async (flow) => {
+        const updatedVersion = updatedFlowVersions.find(v => v.id === flow.version.id)
+        return updatedVersion ? { ...flow, version: updatedVersion } : null
+    })).then(flows => flows.filter((flow): flow is NonNullable<typeof flow> => flow !== null))
+
+    return updatedFlows
 }
 
 function decryptConnection(
@@ -667,4 +799,39 @@ type EngineValidateAuthParams = {
     projectId: ProjectId | undefined
     platformId: string
     auth: AppConnectionValue
+}
+
+type ReplaceParams = {
+    sourceAppConnectionId: AppConnectionId
+    targetAppConnectionId: AppConnectionId
+    projectId: ProjectId
+    platformId: string
+}
+
+type ListFlowsFromAppConnectionParams = {
+    id: AppConnectionId
+    projectId: ProjectId
+    platformId: string
+}
+
+type ApplyOperationParams = {
+    request: UpdateFlowsWithAppConnectionParams | GetFlowsFromAppConnectionParams
+    projectId: ProjectId
+    log: FastifyBaseLogger
+}
+
+enum OperationType {
+    GET_FLOWS = 'GET_FLOWS',
+    UPDATE_CONNECTION = 'UPDATE_CONNECTION',
+}
+
+type UpdateFlowsWithAppConnectionParams = {
+    type: OperationType.UPDATE_CONNECTION
+    appConnection: AppConnectionWithoutSensitiveData
+    newAppConnection: AppConnectionWithoutSensitiveData
+}
+
+type GetFlowsFromAppConnectionParams = {
+    type: OperationType.GET_FLOWS
+    appConnection: AppConnectionWithoutSensitiveData
 }
