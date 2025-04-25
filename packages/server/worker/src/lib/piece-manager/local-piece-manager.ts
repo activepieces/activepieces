@@ -1,13 +1,13 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
-import { ApLock, filePiecesUtils, memoryLock, packageManager } from '@activepieces/server-shared'
+import { ApLock, filePiecesUtils, memoryLock } from '@activepieces/server-shared'
 import { assertEqual, assertNotNullOrUndefined, PackageType, PiecePackage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { cacheHandler } from '../utils/cache-handler'
 import { workerMachine } from '../utils/machine'
+import { packageManager } from '../utils/package-manager'
 import { PIECES_BUILDER_MUTEX_KEY } from './development/pieces-builder'
 import { PieceManager } from './piece-manager'
-
 enum CacheState {
     READY = 'READY',
     PENDING = 'PENDING',
@@ -39,7 +39,7 @@ export class LocalPieceManager extends PieceManager {
             }
             await linkPackages(projectPath, join(baseLinkPath, 'framework'), '@activepieces/pieces-framework', frameworkPackages, params.log)
             await linkPackages(projectPath, join(baseLinkPath, 'common'), '@activepieces/pieces-common', frameworkPackages, params.log)
-            
+
             for (const piece of pieces) {
                 assertEqual(piece.packageType, PackageType.REGISTRY, 'packageType', `Piece ${piece.pieceName} is not of type REGISTRY`)
                 const directoryPath = await filePiecesUtils(packages, params.log).findDirectoryByPackageName(piece.pieceName)

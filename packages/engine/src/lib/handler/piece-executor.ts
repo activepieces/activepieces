@@ -1,36 +1,21 @@
 import { URL } from 'url'
-import { ActionContext, ConnectionsManager, InputPropertyMap, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
+import { ActionContext, InputPropertyMap, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
 import { ActionType, assertNotNullOrUndefined, AUTHENTICATION_PROPERTY_NAME, ExecutionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, handleExecutionError, runWithExponentialBackoff } from '../helper/error-handling'
 import { PausedFlowTimeoutError } from '../helper/execution-errors'
 import { pieceLoader } from '../helper/piece-loader'
-import { createConnectionService } from '../services/connections.service'
 import { createFlowsContext } from '../services/flows.service'
 import { progressService } from '../services/progress.service'
 import { createFilesService } from '../services/step-files.service'
 import { createContextStore } from '../services/storage.service'
+import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { ActionHandler, BaseExecutor } from './base-executor'
 import { ExecutionVerdict } from './context/flow-execution-context'
 
 
-type HookResponse = {
-    type: 'paused'
-    tags: string[]
-    response: PauseHookParams
-} | {
-    type: 'stopped'
-    tags: string[]
-    response: StopHookParams
-} | {
-    type: 'respond'
-    tags: string[]
-    response: RespondHookParams
-} | {
-    type: 'none'
-    tags: string[]
-}
+
 
 const AP_PAUSED_FLOW_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS)
 
@@ -114,10 +99,11 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             },
             propsValue: processedInput,
             tags: createTagsManager(params),
-            connections: createConnectionManager({
+            connections: utils.createConnectionManager({
                 apiUrl: constants.internalApiUrl,
                 projectId: constants.projectId,
                 engineToken: constants.engineToken,
+                target: 'actions',
                 hookResponse: params.hookResponse,
             }),
             /*
@@ -222,22 +208,6 @@ type addTagsParams = {
 type createTagsManagerParams = {
     hookResponse: HookResponse
 }
-
-const createConnectionManager = ({ engineToken, projectId, hookResponse, apiUrl }: { projectId: string, engineToken: string, hookResponse: HookResponse, apiUrl: string }): ConnectionsManager => {
-    return {
-        get: async (key: string) => {
-            try {
-                const connection = await createConnectionService({ projectId, engineToken, apiUrl }).obtain(key)
-                hookResponse.tags.push(`connection:${key}`)
-                return connection
-            }
-            catch (e) {
-                return null
-            }
-        },
-    }
-}
-
 
 
 function createStopHook(params: CreateStopHookParams): StopHook {
