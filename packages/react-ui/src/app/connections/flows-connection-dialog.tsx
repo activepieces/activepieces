@@ -21,11 +21,11 @@ import {
 } from '@/components/ui/tooltip';
 import { useToast } from '@/components/ui/use-toast';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
+import { cn } from '@/lib/utils';
 import {
   AppConnectionWithoutSensitiveData,
   PopulatedFlow,
 } from '@activepieces/shared';
-import { cn } from '@/lib/utils';
 
 type FlowsDialogProps = {
   connection: AppConnectionWithoutSensitiveData;
@@ -88,7 +88,12 @@ const FlowsDialog = React.memo(({ connection }: FlowsDialogProps) => {
             </DialogDescription>
           </DialogHeader>
 
-          <ScrollArea className={cn("h-[275px]", (isLoading || flows.length === 0 ) && "h-[80px]")}>
+          <ScrollArea
+            className={cn(
+              'h-[275px]',
+              (isLoading || flows.length === 0) && 'h-[80px]',
+            )}
+          >
             {isLoading ? (
               <div className="flex justify-center items-center w-full h-[80px]">
                 <LoadingSpinner className="h-6 w-6 justify-center items-center" />
