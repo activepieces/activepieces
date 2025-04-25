@@ -57,8 +57,8 @@ When you contribute pieces to Activepieces they become automatically available a
 ## 🔥 Why Activepieces is Different:
 
 - **💖 Loved by Everyone**: Intuitive interface and great experience for both technical and non-technical users with a quick learning curve.
-  
-![](/resources/templates.gif)
+
+<img src="/docs/resources/templates.gif">
 
 - **🌐 Open Ecosystem:** All pieces are open source and available on npmjs.com, **60% of the pieces are contributed by the community**.
 
@@ -66,7 +66,7 @@ When you contribute pieces to Activepieces they become automatically available a
 
 - **🛠️  Pieces are written in Typescript**: Pieces are npm packages in TypeScript, offering full customization with the best developer experience, including **hot reloading** for **local** piece development on your machine. 😎
 
-![](/resources/create-action.png)
+<img src="/docs/resources/create-action.png" alt="">
 
 - **🤖 AI-First**: Native AI pieces let you experiment with various providers, or create your own agents using our AI SDK, and there is Copilot to help you build flows inside the builder.
 
