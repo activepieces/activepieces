@@ -1,4 +1,4 @@
-import { AnalyticsResponseSchema, GetAnalyticsParams, OverviewResponseSchema } from '@activepieces/shared'
+import { AnalyticsResponse, GetAnalyticsParams, OverviewResponse } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { analyticsService } from './analytics-service'
@@ -17,7 +17,7 @@ const AnalyticsRequest = {
         description: 'Get analytics data for flow-runs',
         querystring: GetAnalyticsParams,
         response: {
-            [StatusCodes.OK]: AnalyticsResponseSchema,
+            [StatusCodes.OK]: AnalyticsResponse,
             [StatusCodes.BAD_REQUEST]: ErrorResponse,
             [StatusCodes.INTERNAL_SERVER_ERROR]: ErrorResponse,
         },
@@ -30,7 +30,7 @@ const OverviewRequest = {
         tags: ['analytics'],
         description: 'Get workflow overview statistics',
         response: {
-            [StatusCodes.OK]: OverviewResponseSchema,
+            [StatusCodes.OK]: OverviewResponse,
             [StatusCodes.INTERNAL_SERVER_ERROR]: ErrorResponse,
         },
     },
@@ -39,6 +39,7 @@ const OverviewRequest = {
 export const analyticsController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/flow-performance', AnalyticsRequest, async (request, reply) => {
         try {
+            const projectId = request.principal.projectId
             const { startDate, endDate } = request.query
 
             // Convert timestamps to Date objects for comparison
@@ -70,6 +71,7 @@ export const analyticsController: FastifyPluginAsyncTypebox = async (app) => {
             const analyticsData = await analyticsService.getAnalyticsData({
                 startDate,
                 endDate,
+                projectId,
             })
 
             return await reply.send(analyticsData)
@@ -84,13 +86,14 @@ export const analyticsController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/overview', OverviewRequest, async (request, reply) => {
         try {
-            const overviewData = await analyticsService.getWorkflowOverview()
+            const projectId: string = request.principal.projectId
+            const overviewData = await analyticsService.getOverview(projectId)
             return await reply.send(overviewData)
         }
         catch (error) {
             app.log.error('Error fetching workflow overview:', error)
             return reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
-                message: 'An error occurred while fetching workflow overview',
+                message: 'An error occurred while fetching analytics data',
             })
         }
     })

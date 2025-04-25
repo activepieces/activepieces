@@ -1,13 +1,19 @@
-import { AnalyticsResult, FlowRunStatus, FlowStatus, GetAnalyticsParams, OverviewResult } from '@activepieces/shared'
+import { AnalyticsResponse, FlowRunStatus, FlowStatus, OverviewResponse } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { flowRepo } from '../flows/flow/flow.repo'
 import { flowRunRepo } from '../flows/flow-run/flow-run-service'
 
+
+type GetAnalyticsDataParams = {
+    startDate: string
+    endDate: string
+    projectId: string
+}
+
 export const analyticsService = {
-    async getAnalyticsData({
-        startDate,
-        endDate,
-    }: GetAnalyticsParams): Promise<AnalyticsResult[]> {
+    async getAnalyticsData(params: GetAnalyticsDataParams): Promise<AnalyticsResponse> {
+        const { startDate, endDate, projectId } = params
+
         const query = flowRunRepo()
             .createQueryBuilder('flowRun')
             .select('DATE(flowRun.finishTime)', 'date')
@@ -32,6 +38,7 @@ export const analyticsService = {
                 start: startDate,
                 end: endDate,
             })
+            .andWhere('flowRun.projectId = :projectId', { projectId })
             .setParameters({
                 successStatus: FlowRunStatus.SUCCEEDED,
                 failureStatus: FlowRunStatus.FAILED,
@@ -41,36 +48,43 @@ export const analyticsService = {
 
         const rawResults = await query.getRawMany()
 
-        const results: AnalyticsResult[] = rawResults.map(result => ({
-            date: result.date,
-            successfulFlowRuns: parseInt(result.successfulFlowRuns) || 0,
-            failedFlowRuns: parseInt(result.failedFlowRuns) || 0,
-            successfulFlowRunsDuration: parseInt(result.successfulFlowRunsDuration) || 0,
-            failedFlowRunsDuration: parseInt(result.failedFlowRunsDuration) || 0,
+        const results: AnalyticsResponse = rawResults.map(result => ({
+            date: result.date.toISOString(),
+            successfulFlowRuns: Number(result.successfulFlowRuns),
+            failedFlowRuns: Number(result.failedFlowRuns),
+            successfulFlowRunsDuration: Number(result.successfulFlowRunsDuration),
+            failedFlowRunsDuration: Number(result.failedFlowRunsDuration),
         }))
 
         return results
     },
-    async getWorkflowOverview(): Promise<OverviewResult> {
-        const workflowCount = await flowRepo().count()
+    async getOverview(projectId: string): Promise<OverviewResponse> {
+        const { start, end } = {
+            start: dayjs().startOf('month').toISOString(),
+            end: dayjs().endOf('month').toISOString(),
+        }
 
-        const activeWorkflowCount = await flowRepo().count({
-            where: {
-                status: FlowStatus.ENABLED,
-            },
-        })
-
-        const flowRunCount = await flowRunRepo().createQueryBuilder('flowRun')
-            .where('flowRun.finishTime BETWEEN :start AND :end', {
-                start: dayjs().startOf('month').toISOString(),
-                end: dayjs().endOf('month').toISOString(),
-            })
-            .getCount()
+        const result = await flowRepo()
+            .createQueryBuilder('f')
+            .select([
+                'COUNT(f.id) AS "workflowCount"',
+                `SUM(CASE 
+                        WHEN f.status = :flowStatus AND f."projectId" = :projectId 
+                        THEN 1 ELSE 0 
+                    END) AS "activeWorkflowCount"`,
+                `(SELECT COUNT(*) FROM flow_run fr 
+                        WHERE fr."projectId" = :projectId 
+                        AND fr."finishTime" BETWEEN :start AND :end
+                    ) AS "flowRunCount"`,
+            ])
+            .where('f.projectId = :projectId', { projectId })
+            .setParameters({ flowStatus: FlowStatus.ENABLED, start, end })
+            .getRawOne()
 
         return {
-            workflowCount,
-            activeWorkflowCount,
-            flowRunCount,
+            workflowCount: Number(result.workflowCount),
+            activeWorkflowCount: Number(result.activeWorkflowCount),
+            flowRunCount: Number(result.flowRunCount),
         }
     },
 }

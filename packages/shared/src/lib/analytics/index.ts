@@ -2,7 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 
 
 export const AnalyticsPieceReportItem = Type.Object({
-    name: Type.String(),        
+    name: Type.String(),
     displayName: Type.String(),
     logoUrl: Type.String(),
     usageCount: Type.Number(),
@@ -50,15 +50,7 @@ export const GetAnalyticsParams = Type.Object({
 })
 export type GetAnalyticsParams = Static<typeof GetAnalyticsParams>
 
-export type AnalyticsResult = {
-    date: string
-    successfulFlowRuns: number
-    failedFlowRuns: number
-    successfulFlowRunsDuration: number
-    failedFlowRunsDuration: number
-}
-
-export const AnalyticsResponseSchema = Type.Array(
+export const AnalyticsResponse = Type.Array(
     Type.Object({
         date: Type.String(),
         successfulFlowRuns: Type.Number(),
@@ -67,17 +59,11 @@ export const AnalyticsResponseSchema = Type.Array(
         failedFlowRunsDuration: Type.Number(),
     }),
 )
-export type AnalyticsResponse = Static<typeof AnalyticsResponseSchema>
+export type AnalyticsResponse = Static<typeof AnalyticsResponse>
 
-export type OverviewResult = {
-    workflowCount: number
-    activeWorkflowCount: number
-    flowRunCount: number
-}
-
-export const  OverviewResponseSchema = Type.Object({
+export const OverviewResponse = Type.Object({
     workflowCount: Type.Number(),
     activeWorkflowCount: Type.Number(),
     flowRunCount: Type.Number(),
 })
-export type OverviewResponse = Static<typeof OverviewResponseSchema>
+export type OverviewResponse = Static<typeof OverviewResponse>
