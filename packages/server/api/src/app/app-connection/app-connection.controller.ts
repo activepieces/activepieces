@@ -114,6 +114,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             targetAppConnectionId,
             projectId: request.principal.projectId,
             platformId: request.principal.platform.id,
+            userId: request.principal.id,
         })
         await reply.status(StatusCodes.OK).send()
     })

@@ -17,7 +17,9 @@ import {
     EngineResponseStatus,
     ErrorCode,
     flowStructureUtil,
+    FlowVersionState,
     isNil,
+    LATEST_SCHEMA_VERSION,
     Metadata,
     OAuth2GrantType,
     PlatformId,
@@ -27,6 +29,7 @@ import {
     SeekPage,
     spreadIfDefined,
     UpsertAppConnectionRequestBody,
+    UserId,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -36,7 +39,7 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { APArrayContains } from '../../database/database-connection'
 import { projectMemberService } from '../../ee/project-members/project-member.service'
 import { flowService } from '../../flows/flow/flow.service'
-import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
+import { flowVersionRepo, flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { encryptUtils } from '../../helper/encryption'
 import { distributedLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -205,7 +208,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             case OperationType.GET_FLOWS:
                 return flows
             case OperationType.UPDATE_CONNECTION:
-                return updateFlowsWithAppConnection(flows, request)
+                return updateFlowsWithAppConnection(flows, log, request)
         }
     },
 
@@ -227,7 +230,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
     },
 
     async replace(params: ReplaceParams): Promise<void> {
-        const { sourceAppConnectionId, targetAppConnectionId, projectId, platformId } = params
+        const { sourceAppConnectionId, targetAppConnectionId, projectId, platformId, userId } = params
         const sourceAppConnection = await this.getOneOrThrowWithoutValue({
             id: sourceAppConnectionId,
             projectId,
@@ -254,6 +257,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
                 type: OperationType.UPDATE_CONNECTION,
                 appConnection: sourceAppConnection,
                 newAppConnection: targetAppConnection,
+                userId,
             },
             projectId,
             log,
@@ -522,8 +526,8 @@ async function getFlowsFromAppConnection(params: GetFlowsFromAppConnectionParams
     return flows
 }
 
-async function updateFlowsWithAppConnection(flows: PopulatedFlow[], params: UpdateFlowsWithAppConnectionParams): Promise<PopulatedFlow[]> {
-    const { appConnection, newAppConnection } = params
+async function updateFlowsWithAppConnection(flows: PopulatedFlow[], log: FastifyBaseLogger, params: UpdateFlowsWithAppConnectionParams): Promise<PopulatedFlow[]> {
+    const { appConnection, newAppConnection, userId } = params
 
     const updatedFlowVersions = flows.map(flow => flowStructureUtil.transferFlow(flow.version, (step) => {
         if (step.settings?.input?.auth?.includes(appConnection.externalId)) {
@@ -542,7 +546,25 @@ async function updateFlowsWithAppConnection(flows: PopulatedFlow[], params: Upda
     }))
     
     await Promise.all(updatedFlowVersions.map(async (flowVersion) => {
-        await flowVersionRepo().update(flowVersion.id, {
+        const lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
+            flowId: flowVersion.flowId,
+            versionId: undefined,
+        })
+        if (lastVersion.state === FlowVersionState.LOCKED) {
+            const newVersion = {
+                id: apId(),
+                displayName: flowVersion.displayName,
+                flowId: flowVersion.flowId,
+                trigger: flowVersion.trigger,
+                schemaVersion: isNil(flowVersion.schemaVersion) ? LATEST_SCHEMA_VERSION : flowVersion.schemaVersion + 1,
+                connectionIds: flowStructureUtil.extractConnectionIds(flowVersion),
+                updatedBy: userId,
+                valid: false,
+                state: FlowVersionState.DRAFT,
+            }
+            return flowVersionRepo().save(newVersion)
+        }
+        return flowVersionRepo().update(lastVersion.id, {
             trigger: JSON.parse(JSON.stringify(flowVersion.trigger)),
             connectionIds: flowStructureUtil.extractConnectionIds(flowVersion),
         })
@@ -806,6 +828,7 @@ type ReplaceParams = {
     targetAppConnectionId: AppConnectionId
     projectId: ProjectId
     platformId: string
+    userId: UserId
 }
 
 type ListFlowsFromAppConnectionParams = {
@@ -829,6 +852,7 @@ type UpdateFlowsWithAppConnectionParams = {
     type: OperationType.UPDATE_CONNECTION
     appConnection: AppConnectionWithoutSensitiveData
     newAppConnection: AppConnectionWithoutSensitiveData
+    userId: UserId
 }
 
 type GetFlowsFromAppConnectionParams = {
