@@ -199,38 +199,27 @@ function getAllNextActionsWithoutChildren(start: Step): Step[] {
     return actions
 }
 
-function extractConnectionIds(
-    flowVersion: FlowVersion,
-): string[] {
-    const uniqueConnectionIds = new Set<string>()
 
-    function extractIdFromConnectionString(authString: string): string[] {
-        const match = authString.match(/{{connections\['([^']*(?:'\s*,\s*'[^']*)*)'\]}}/)
-        if (!match) return []
-        return match[1].split(/'\s*,\s*'/).map(id => id.trim())
-    }
+const extractConnectionIdsFromAuth = (auth: string): string[] =>
+    auth.match(/{{connections\['([^']*(?:'\s*,\s*'[^']*)*)'\]}}/)
+        ?.[1]
+        .split(/'\s*,\s*'/)
+        .map(id => id.trim()) ?? []
 
-    function processAuth(auth: string) {
-        const connectionIds = extractIdFromConnectionString(auth)
-        for (const id of connectionIds) {
-            uniqueConnectionIds.add(id)
-        }
-    }
+const extractConnectionIds = (flowVersion: FlowVersion): string[] => {
+    const triggerAuthIds = flowVersion.trigger.settings?.input?.auth
+        ? extractConnectionIdsFromAuth(flowVersion.trigger.settings.input.auth)
+        : []
 
-    // Extract from trigger settings
-    if (flowVersion.trigger.settings?.input?.auth) {
-        processAuth(flowVersion.trigger.settings.input.auth)
-    }
+    const stepAuthIds = flowStructureUtil
+        .getAllSteps(flowVersion.trigger)
+        .flatMap(step =>
+            step.settings?.input?.auth
+                ? extractConnectionIdsFromAuth(step.settings.input.auth)
+                : []
+        )
 
-    // Extract from all steps
-    const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)
-    for (const step of steps) {
-        if (step.settings?.input?.auth) {
-            processAuth(step.settings.input.auth)
-        }
-    }
-
-    return Array.from(uniqueConnectionIds)
+    return Array.from(new Set([...triggerAuthIds, ...stepAuthIds]))
 }
 
 export const flowStructureUtil = {

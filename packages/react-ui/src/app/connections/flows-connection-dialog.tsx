@@ -2,6 +2,7 @@ import { DialogTrigger } from '@radix-ui/react-dialog';
 import { t } from 'i18next';
 import { Workflow } from 'lucide-react';
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -19,7 +20,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useToast } from '@/components/ui/use-toast';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { cn } from '@/lib/utils';
 import {
@@ -33,25 +33,16 @@ type FlowsDialogProps = {
 
 const FlowsDialog = React.memo(({ connection }: FlowsDialogProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [flows, setFlows] = useState<Array<PopulatedFlow>>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
-  const loadFlows = async () => {
-    try {
-      setIsLoading(true);
-      const affectedFlows = await appConnectionsApi.flows(connection.id);
-      setFlows(affectedFlows);
-    } catch (error) {
-      toast({
-        title: t('Error'),
-        description: t('Failed to get flows'),
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    data: flows = [],
+    isLoading,
+  } = useQuery<Array<PopulatedFlow>>({
+    queryKey: ['connection-flows', connection.id],
+    queryFn: () => appConnectionsApi.flows(connection.id),
+    enabled: dialogOpen,
+    retry: false,
+  });
 
   return (
     <Tooltip>
@@ -66,7 +57,7 @@ const FlowsDialog = React.memo(({ connection }: FlowsDialogProps) => {
                   e.stopPropagation();
                   e.preventDefault();
                   setDialogOpen(true);
-                  loadFlows();
+                  // No need to call refetch here, react-query will fetch automatically when enabled: dialogOpen
                 }}
               >
                 <Workflow className="h-4 w-4" />
@@ -104,7 +95,7 @@ const FlowsDialog = React.memo(({ connection }: FlowsDialogProps) => {
               </div>
             ) : (
               <ul className="list-disc pl-6 gap-2">
-                {flows.map((flow, index) => (
+                {flows.map((flow: PopulatedFlow, index: number) => (
                   <li key={index}>{flow.version.displayName}</li>
                 ))}
               </ul>
