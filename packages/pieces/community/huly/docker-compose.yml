@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  huly-mcp-server:
+    build:
+      context: .
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - HULY_WS_URL=wss://api.huly.io
+    restart: unless-stopped

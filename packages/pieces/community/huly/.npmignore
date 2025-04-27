@@ -1,0 +1,44 @@
+# Source files
+src/
+
+# Test files
+__tests__/
+*.test.ts
+jest.config.js
+coverage/
+
+# Git files
+.git/
+.github/
+.gitignore
+
+# CI/CD
+.travis.yml
+.gitlab-ci.yml
+.circleci/
+
+# Environment variables
+.env
+.env.*
+
+# Editor configs
+.vscode/
+.idea/
+*.sublime-*
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Docker files
+Dockerfile
+docker-compose.yml
+
+# Scripts
+scripts/
+
+# Other
+.DS_Store
