@@ -136,6 +136,8 @@ export class EngineWorker {
                             stdError,
                             stdOut,
                         })
+                    } else {
+                        reject({ status: EngineResponseStatus.ERROR, response: 'Worker exited with code ' + code + ' and signal ' + signal })
                     }
                 })
                 worker.send({ operation, operationType })
@@ -161,7 +163,7 @@ export class EngineWorker {
                         error: e,
                     }, 'Error terminating worker')
                 }
-                this.workers[workerIndex] = undefined  
+                this.workers[workerIndex] = undefined
             }
             this.log.debug({
                 workerIndex,
