@@ -1,4 +1,4 @@
-import { ActionType, assertNotNullOrUndefined, ConnectionOperation, ConnectionOperationType, ConnectionState, DEFAULT_SAMPLE_DATA_SETTINGS, DiffState, flowPieceUtil, flowStructureUtil, FlowVersion, isNil, PopulatedFlow, ProjectOperation, ProjectOperationType, ProjectState, Step, TriggerType } from '@activepieces/shared'
+import { ActionType, assertNotNullOrUndefined, ConnectionOperation, ConnectionOperationType, ConnectionState, DEFAULT_SAMPLE_DATA_SETTINGS, DiffState, flowPieceUtil, flowStructureUtil, FlowVersion, isNil, PopulatedFlow, ProjectOperation, ProjectOperationType, ProjectState, Step, TableOperation, TableOperationType, TableState, TriggerType } from '@activepieces/shared'
 
 export const projectDiffService = {
     diff({ newState, currentState }: DiffParams): DiffState {
@@ -7,9 +7,11 @@ export const projectDiffService = {
         const updateFlowOperations = findFlowsToUpdate({ newState, currentState })
         const operations = [...deleteFlowOperation, ...createFlowOperation, ...updateFlowOperations]
         const connections = getFlowConnections(currentState, newState)
+        const tables = getTables(currentState, newState)
         return {
             operations,
             connections,
+            tables,
         }
     },
 }
@@ -55,6 +57,18 @@ function isConnectionChanged(stateOne: ConnectionState, stateTwo: ConnectionStat
     return stateOne.displayName !== stateTwo.displayName || stateOne.pieceName !== stateTwo.pieceName
 }
 
+function isTableChanged(stateOne: TableState, stateTwo: TableState): boolean {
+    const fieldsWithoutIdsOne = stateOne.fields.map((field) => ({
+        ...field,
+        id: undefined,
+    }))
+    const fieldsWithoutIdsTwo = stateTwo.fields.map((field) => ({
+        ...field,
+        id: undefined,
+    }))
+    return stateOne.name !== stateTwo.name || JSON.stringify(fieldsWithoutIdsOne) !== JSON.stringify(fieldsWithoutIdsTwo)
+}
+
 function getFlowConnections(currentState: ProjectState, newState: ProjectState): ConnectionOperation[] {
 
     const connectionOperations: ConnectionOperation[] = []
@@ -81,6 +95,33 @@ function getFlowConnections(currentState: ProjectState, newState: ProjectState):
     })
 
     return connectionOperations
+}
+
+function getTables(currentState: ProjectState, newState: ProjectState): TableOperation[] {
+    const tableOperations: TableOperation[] = []
+
+    currentState.tables?.forEach(table => {
+        const tableState = newState.tables?.find((t) => t.externalId === table.externalId)
+        if (!isNil(tableState) && isTableChanged(tableState, table)) {
+            tableOperations.push({
+                type: TableOperationType.UPDATE_TABLE,
+                tableState: table,
+                newTableState: tableState,
+            })
+        }
+    })
+
+    newState.tables?.forEach(table => {
+        const isExistingTable = currentState.tables?.find((t) => t.externalId === table.externalId)
+        if (isNil(isExistingTable)) {
+            tableOperations.push({
+                type: TableOperationType.CREATE_TABLE,
+                tableState: table,
+            })
+        }
+    })
+
+    return tableOperations
 }
 
 function searchInFlowForFlowByIdOrExternalId(flows: PopulatedFlow[], id: string): PopulatedFlow | undefined {

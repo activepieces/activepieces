@@ -1,14 +1,16 @@
-import { AppConnectionScope, AppConnectionStatus, AppConnectionType, ConnectionOperationType, DiffState, FileCompression, FileId, FileType, FlowStatus, isNil, ProjectId, ProjectOperationType, ProjectState, ProjectSyncError } from '@activepieces/shared'
+import { AppConnectionScope, AppConnectionStatus, AppConnectionType, ConnectionOperationType, DiffState, FileCompression, FileId, FileType, FlowStatus, isNil, ProjectId, ProjectOperationType, ProjectState, ProjectSyncError, TableOperationType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../file/file.service'
 import { flowRepo } from '../../../flows/flow/flow.repo'
 import { flowService } from '../../../flows/flow/flow.service'
 import { projectStateHelper } from './project-state-helper'
+import { tableService } from '../../../tables/table/table.service'
+import { fieldService } from '../../../tables/field/field.service'
 
 export const projectStateService = (log: FastifyBaseLogger) => ({
     async apply({ projectId, diffs, selectedFlowsIds, platformId }: ApplyProjectStateRequest): Promise<void> {
-        const { operations, connections } = diffs
+        const { operations, connections, tables } = diffs
         const publishJobs: Promise<ProjectSyncError | null>[] = []
         for (const state of connections) {
             switch (state.type) {
@@ -48,6 +50,63 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                             },
                         })
                     }
+                    break
+                }
+            }
+        }
+
+        for (const operation of tables) {
+            switch (operation.type) {
+                case TableOperationType.CREATE_TABLE: {
+                    const table = await tableService.create({
+                        projectId,
+                        request: {
+                            name: operation.tableState.name,
+                            externalId: operation.tableState.externalId ?? operation.tableState.id,
+                        },
+                    })
+
+                    Promise.all(operation.tableState.fields.map(async (field) => {
+                        await fieldService.create({
+                            projectId,
+                            request: {
+                                ...field,
+                                tableId: table.id,
+                                externalId: field.externalId ?? field.id,
+                            },
+                        })
+                    }))
+                    break
+                }
+                case TableOperationType.UPDATE_TABLE: {
+                    const table = await tableService.update({
+                        projectId,
+                        id: operation.tableState.id,
+                        request: {
+                            name: operation.newTableState.name,
+                        },
+                    })
+
+                    const fileds = await fieldService.getAll({
+                        projectId,
+                        tableId: table.id,
+                    })
+
+                    Promise.all(operation.newTableState.fields.map(async (field) => {
+                        const existingField = fileds.find((f) => f.externalId === field.externalId) 
+                        if (!isNil(existingField)) {
+                            await fieldService.update({
+                                projectId,
+                                id: existingField.id,
+                                request: field,
+                            })
+                        } else {
+                            await fieldService.create({
+                                projectId,
+                                request: field,
+                            })
+                        }
+                    }))
                     break
                 }
             }
