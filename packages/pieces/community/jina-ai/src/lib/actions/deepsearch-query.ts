@@ -17,13 +17,6 @@ export const deepSearchQuery = createAction({
         options: [{ label: 'jina-deepsearch-v1', value: 'jina-deepsearch-v1' }],
       },
     }),
-    streaming: Property.Checkbox({
-      displayName: 'Streaming',
-      description:
-        "Delivers events as they occur through server-sent events, including reasoning steps and final answers. Strongly recommended to keep this enabled since DeepSearch requests can take significant time to complete. Disabling streaming may result in '524 timeout' errors.",
-      required: false,
-      defaultValue: false,
-    }),
     reasoning_effort: Property.StaticDropdown({
       displayName: 'Reasoning Effort',
       description:
@@ -100,7 +93,6 @@ export const deepSearchQuery = createAction({
   async run(context) {
     const {
       model,
-      streaming,
       reasoning_effort,
       budget_tokens,
       max_attempts,
@@ -123,11 +115,6 @@ export const deepSearchQuery = createAction({
     requestBody['messages'] = [
       { role: 'user', content: 'What can you tell me about this?' },
     ];
-
-    // Add optional parameters if they are specified
-    if (streaming) {
-      requestBody['stream'] = true;
-    }
 
     if (reasoning_effort) {
       requestBody['reasoning_effort'] = reasoning_effort;
