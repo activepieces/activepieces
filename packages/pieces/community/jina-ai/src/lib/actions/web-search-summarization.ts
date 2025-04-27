@@ -147,7 +147,7 @@ export const webSearchSummarization = createAction({
     const { auth: apiKey } = context;
 
     const queryParams = new URLSearchParams();
-    queryParams.append('q', query);
+    queryParams.append('q', encodeURIComponent(query));
 
     if (pagination && pagination > 1) {
       queryParams.append('page', pagination.toString());
@@ -194,19 +194,13 @@ export const webSearchSummarization = createAction({
       headers['X-Site'] = in_site_search;
     }
 
-    const response = await JinaAICommon.makeRequest({
+    const responseBody = await JinaAICommon.makeRequest({
       url: finalUrl,
       method: HttpMethod.GET,
       auth: apiKey as string,
       headers,
     });
 
-    if (response.status !== 200) {
-      throw new Error(
-        `Error from Jina AI Reader API: ${response.status} ${response.body}`
-      );
-    }
-
-    return response.body;
+    return responseBody;
   },
 });
