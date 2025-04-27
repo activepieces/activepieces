@@ -7,7 +7,7 @@ export const JinaAICommon = {
   euReaderUrl: 'https://eu-r-beta.jina.ai',
   euReaderSearchUrl: 'https://eu-s-beta.jina.ai',
   deepsearchUrl: 'https://deepsearch.jina.ai/v1/chat/completions',
-  classifierUrl: 'https://api.jina.ai/v1/classifier',
+  classifierUrl: 'https://api.jina.ai/v1/classify',
   classifierTrainUrl: 'https://api.jina.ai/v1/train',
 
   async makeRequest({
@@ -27,7 +27,7 @@ export const JinaAICommon = {
       method,
       url,
       headers: {
-        'Authorization': `Bearer ${auth}`,
+        Authorization: `Bearer ${auth}`,
         'Content-Type': 'application/json',
         ...headers,
       },
@@ -35,9 +35,11 @@ export const JinaAICommon = {
     });
 
     if (response.status < 200 || response.status >= 300) {
-      throw new Error(`Jina AI API returned an error: ${response.status} ${response.body}`);
+      throw new Error(
+        `Jina AI API returned an error: ${response.status} ${response.body}`
+      );
     }
 
     return response.body;
-  }
+  },
 };
