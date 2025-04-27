@@ -154,10 +154,7 @@ export const extractWebpageContent = createAction({
     const baseReaderUrl = eu_compliance
       ? JinaAICommon.euReaderUrl
       : JinaAICommon.readerUrl;
-    const readerUrl = `${baseReaderUrl}/${url}`;
-
-    const finalUrl = readerUrl;
-
+    const finalUrl = `${baseReaderUrl}/${encodeURIComponent(url)}`;
     const headers: Record<string, string> = {};
     if (format && format !== 'default') {
       headers['X-Return-Format'] = format;
