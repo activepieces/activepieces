@@ -1,4 +1,3 @@
-
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { replyToMcpClient } from "./lib/actions/reply-to-mcp-client";
 import { mcpTool } from "./lib/triggers/mcp-tool";
