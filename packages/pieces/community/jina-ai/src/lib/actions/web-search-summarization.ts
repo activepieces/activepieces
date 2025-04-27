@@ -147,8 +147,7 @@ export const webSearchSummarization = createAction({
     const { auth: apiKey } = context;
 
     const queryParams = new URLSearchParams();
-    queryParams.append('q', encodeURIComponent(query));
-
+    queryParams.append('q', query);
     if (pagination && pagination > 1) {
       queryParams.append('page', pagination.toString());
     }
