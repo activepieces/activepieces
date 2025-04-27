@@ -36,7 +36,7 @@ export const deepSearchQuery = createAction({
       description:
         'This determines the maximum number of tokens allowed for DeepSearch process. Larger budgets can improve response quality by enabling more exhaustive search for complex queries.',
       required: false,
-      defaultValue: 1,
+      defaultValue: 0,
     }),
     max_attempts: Property.Number({
       displayName: 'Max Attempts',
@@ -190,6 +190,6 @@ export const deepSearchQuery = createAction({
       body: requestBody,
     });
 
-    return response.body;
+    return response;
   },
 });

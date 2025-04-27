@@ -6,7 +6,7 @@ export const JinaAICommon = {
   readerSearchUrl: 'https://s.jina.ai',
   euReaderUrl: 'https://eu-r-beta.jina.ai',
   euReaderSearchUrl: 'https://eu-s-beta.jina.ai',
-  deepsearchUrl: 'https://api.jina.ai/v1/deepsearch',
+  deepsearchUrl: 'https://deepsearch.jina.ai/v1/chat/completions',
   classifierUrl: 'https://api.jina.ai/v1/classifier',
   classifierTrainUrl: 'https://api.jina.ai/v1/train',
 
