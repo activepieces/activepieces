@@ -1,22 +1,44 @@
 import { AppSystemProp, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { EngineHttpResponse, ExecutionType, Flow, FlowId, FlowStatus, FlowVersionId, GetFlowVersionForWorkerRequestType, isNil, ProgressUpdateType, ProjectId, RunEnvironment } from '@activepieces/shared'
+import { ActivepiecesError, EngineHttpResponse, ErrorCode, ExecutionType, Flow, FlowId, FlowStatus, FlowVersionId, GetFlowVersionForWorkerRequestType, isNil, ProgressUpdateType, ProjectId, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { flowService } from '../flows/flow/flow.service'
+import { flowRepo } from '../flows/flow/flow.repo'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
+import { flowVersionRepo } from '../flows/flow-version/flow-version.service'
 import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
 import { system } from '../helper/system/system'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue } from '../workers/queue'
 import { getJobPriority } from '../workers/queue/queue-manager'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
-
 const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 
 export const webhookHandler = {
+    async getFlowVersionIdToRun(type: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED, flowId: string): Promise<FlowVersionId | null> {
+        if (type === GetFlowVersionForWorkerRequestType.LOCKED) {
+            const flowSchema = await flowRepo()
+                .createQueryBuilder('flow')
+                .select('flow.publishedVersionId')
+                .where('flow.id = :flowId', { flowId })
+                .getOne()
+
+            if (!isNil(flowSchema?.publishedVersionId)) {
+                return flowSchema.publishedVersionId
+            }
+        }
+
+        const flowVersionSchema = await flowVersionRepo()
+            .createQueryBuilder('flowVersion')
+            .select('flowVersion.id')
+            .where('flowVersion.flowId = :flowId', { flowId })
+            .orderBy('flowVersion.created', 'DESC')
+            .getOne()
+
+        return flowVersionSchema?.id ?? null
+    },
 
     async handleAsync(params: AsyncWebhookParams): Promise<EngineHttpResponse> {
-        const { flow, logger, webhookRequestId, synchronousHandlerId, payload, flowVersionToRun, flowVersionIdToRun, webhookHeader, saveSampleData } = params
+        const { flow, logger, webhookRequestId, synchronousHandlerId, payload, flowVersionToRun, flowVersionIdToRun, webhookHeader, saveSampleData, execute } = params
 
         await jobQueue(logger).add({
             id: webhookRequestId,
@@ -31,6 +53,7 @@ export const webhookHandler = {
                 saveSampleData,
                 flowVersionToRun,
                 flowVersionIdToRun,
+                execute,
             },
             priority: await getJobPriority(synchronousHandlerId),
         })
@@ -45,13 +68,13 @@ export const webhookHandler = {
     },
 
     async handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse> {
-        const { savingSampleData, flowVersionToRun, payload, projectId, flowId, logger, webhookRequestId, synchronousHandlerId, flowVersionIdToRun } = params
+        const { savingSampleData, flowVersionToRun, payload, projectId, flowId, logger, webhookRequestId, synchronousHandlerId, flowVersionIdToRun, execute } = params
 
         if (savingSampleData) {
             await saveSampleData({ flowId, payload, projectId, log: logger })
         }
 
-        const onlySaveSampleData = isNil(flowVersionIdToRun)
+        const onlySaveSampleData = isNil(flowVersionIdToRun) || !execute
         if (onlySaveSampleData) {
             return {
                 status: StatusCodes.OK,
@@ -60,13 +83,20 @@ export const webhookHandler = {
             }
         }
 
-        const populatedFlowToRun = await flowService(logger).getOnePopulatedOrThrow({
-            id: flowId,
-            projectId,
-            versionId: flowVersionIdToRun,
-        })
+        const flowSchema = await flowRepo()
+            .createQueryBuilder('flow')
+            .select('flow.status')
+            .where('flow.id = :flowId', { flowId })
+            .getOne()
 
-        const disabledFlow = flowVersionToRun === GetFlowVersionForWorkerRequestType.LOCKED && populatedFlowToRun.status !== FlowStatus.ENABLED
+        if (isNil(flowSchema?.status)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: flowId, entityType: 'flow' },
+            })
+        }
+
+        const disabledFlow = flowVersionToRun === GetFlowVersionForWorkerRequestType.LOCKED && flowSchema.status !== FlowStatus.ENABLED
 
         if (disabledFlow) {
             return {
@@ -115,6 +145,7 @@ type AsyncWebhookParams = {
     flowVersionIdToRun: FlowVersionId | null
     webhookHeader: string
     saveSampleData: boolean
+    execute: boolean
 }
 
 type SyncWebhookParams = {
@@ -127,6 +158,7 @@ type SyncWebhookParams = {
     webhookRequestId: string
     synchronousHandlerId: string
     flowVersionIdToRun: FlowVersionId | null
+    execute: boolean
 }
 
 type SaveSampleDataParams = {

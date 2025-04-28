@@ -29,6 +29,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                 saveSampleData: await webhookSimulationService(request.log).exists(
                     request.params.flowId,
                 ),
+                execute: true,
             })
             await reply
                 .status(response.status)
@@ -50,6 +51,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                     request.params.flowId,
                 ),
                 flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
+                execute: true,
             })
             await reply
                 .status(response.status)
@@ -66,6 +68,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             async: false,
             saveSampleData: true,
             flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST,
+            execute: true,
         })
         await reply
             .status(response.status)
@@ -81,6 +84,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             async: true,
             saveSampleData: true,
             flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST,
+            execute: true,
         })
         await reply
             .status(response.status)
@@ -95,7 +99,8 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
             flowId: request.params.flowId,
             async: true,
             saveSampleData: true,
-            flowVersionToRun: undefined,
+            flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST,
+            execute: false,
         })
         await reply
             .status(response.status)

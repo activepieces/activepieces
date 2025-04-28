@@ -91,6 +91,7 @@ export const WebhookJobData = Type.Object({
         Type.Literal(GetFlowVersionForWorkerRequestType.LATEST),
     ])),
     flowVersionIdToRun: Nullable(Type.String()),
+    execute: Type.Boolean(),
 })
 export type WebhookJobData = Static<typeof WebhookJobData>
 

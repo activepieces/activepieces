@@ -15,8 +15,6 @@ import {
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
-    GetFlowVersionForWorkerRequest,
-    GetFlowVersionForWorkerRequestType,
     isNil,
     PlatformId,
     PopulatedFlow,
@@ -32,7 +30,6 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
 import { telemetry } from '../../helper/telemetry.utils'
-import { projectService } from '../../project/project-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
 import { flowSideEffects } from './flow-service-side-effects'
@@ -60,7 +57,6 @@ const getFolderIdFromRequest = async ({ projectId, folderId, folderName, log }: 
 
 export const flowService = (log: FastifyBaseLogger) => ({
     async create({ projectId, request, externalId }: CreateParams): Promise<PopulatedFlow> {
-     
         const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId, folderName: request.folderName, log })
         const newFlow: NewFlow = {
             id: apId(),
@@ -504,70 +500,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
             projectId,
             status,
         })
-    },
-
-    async  getFlowVersionIdToRun(projectId: string, request: GetFlowVersionForWorkerRequest, log: FastifyBaseLogger): Promise<FlowVersionId | null> {
-        const { type } = request
-        const projectExists = await projectService.exists(projectId)
-        if (!projectExists) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityId: projectId, entityType: 'project' },
-            })
-        }
-        let flowVersionIdToRun: FlowVersionId | null = null
-        let flowId: FlowId | null = null
-        switch (type) {
-            case GetFlowVersionForWorkerRequestType.LATEST: {
-                flowId = request.flowId
-                const flow = await flowService(log).getOnePopulated({
-                    id: request.flowId,
-                    projectId,
-                })
-                if (!isNil(flow)) {
-                    flowVersionIdToRun = flow?.version.id
-                }
-                break
-            }
-            case GetFlowVersionForWorkerRequestType.EXACT: {
-                const flowVersion = await flowVersionService(log).getOne(request.versionId)
-                if (isNil(flowVersion)) {
-                    return null
-                }
-                flowVersionIdToRun = flowVersion.id
-                flowId = flowVersion.flowId
-                break
-            }
-            case GetFlowVersionForWorkerRequestType.LOCKED: {
-                flowId = request.flowId
-                const rawFlow = await flowService(log).getOne({
-                    id: request.flowId,
-                    projectId,
-                })
-                if (isNil(rawFlow)) {
-                    return null
-                }
-                if (isNil(rawFlow.publishedVersionId)) {
-                    break
-                }
-                flowVersionIdToRun = rawFlow.publishedVersionId
-                break
-            }
-        }   
-        if (isNil(flowVersionIdToRun) && type !== GetFlowVersionForWorkerRequestType.LATEST) {
-            const flow = await flowService(log).getOnePopulated({
-                id: flowId,
-                projectId,
-            })
-            if (isNil(flow)) {
-                return null
-            }
-            flowVersionIdToRun = flow.version.id
-        }
-        if (isNil(flowVersionIdToRun)) {
-            return null
-        }
-        return flowVersionIdToRun
     },
 })
 

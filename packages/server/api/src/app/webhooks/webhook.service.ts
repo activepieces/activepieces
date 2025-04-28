@@ -12,10 +12,11 @@ type HandleWebhookParams = {
     flowId: string
     async: boolean
     saveSampleData: boolean
-    flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED | undefined
+    flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED
     data: (projectId: string) => Promise<EventPayload>
     logger: FastifyBaseLogger
     payload?: Record<string, unknown>
+    execute: boolean
 }
 
 
@@ -28,11 +29,13 @@ export const webhookService = {
         saveSampleData,
         flowVersionToRun,
         payload,
+        execute,
     }: HandleWebhookParams): Promise<EngineHttpResponse> {
         const webhookHeader = 'x-webhook-id'
         const webhookRequestId = apId()
         const pinoLogger = pinoLogging.createWebhookContextLog({ log: logger, webhookId: webhookRequestId, flowId })
         const flow = await flowService(pinoLogger).getOneById(flowId)
+        const onlySaveSampleData = isNil(flowVersionToRun) || !execute
 
         if (isNil(flow)) {
             pinoLogger.info('Flow not found, returning GONE')
@@ -58,10 +61,7 @@ export const webhookService = {
 
         pinoLogger.info('Adding webhook job to queue')
         const synchronousHandlerId = async ? null : engineResponseWatcher(pinoLogger).getServerId()
-        const flowVersionIdToRun = isNil(flowVersionToRun) ? null : await flowService(pinoLogger).getFlowVersionIdToRun(flow.projectId, {
-            flowId: flow.id,
-            type: flowVersionToRun,
-        }, pinoLogger)
+        const flowVersionIdToRun = onlySaveSampleData ? null : await webhookHandler.getFlowVersionIdToRun(flowVersionToRun, flow.id)
 
         if (async) {
             return webhookHandler.handleAsync({
@@ -74,6 +74,7 @@ export const webhookService = {
                 synchronousHandlerId,
                 flowVersionIdToRun,
                 webhookHeader,
+                execute: !onlySaveSampleData,
             })
         }
 
@@ -89,6 +90,7 @@ export const webhookService = {
             webhookRequestId,
             synchronousHandlerId,
             flowVersionIdToRun,
+            execute: !onlySaveSampleData,
         })
         return {
             status: flowHttpResponse.status,
