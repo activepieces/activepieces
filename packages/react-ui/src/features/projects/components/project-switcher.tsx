@@ -69,12 +69,14 @@ function ProjectSwitcher() {
           size={'sm'}
           aria-expanded={open}
           aria-label="Select a project"
-          className="gap-2 max-w-[200px] justify-between gap-10"
+          className="gap-2 max-w-[200px] px-2 enabled:hover:bg-gray-200"
         >
           <div className="flex flex-col justify-start items-start">
-            <span className="truncate">{currentProject?.displayName}</span>
+            <span className="max-w-[110px] flex-grow truncate overflow-hidden text-sm">
+              {currentProject?.displayName}
+            </span>
           </div>
-          <CaretSortIcon className="ml-auto size-4 shrink-0 opacity-50" />
+          <CaretSortIcon className="size-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="max-w-[200px] p-0">

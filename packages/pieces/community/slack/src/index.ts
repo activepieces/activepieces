@@ -33,6 +33,8 @@ import { newMessageTrigger } from './lib/triggers/new-message';
 import { newMessageInChannelTrigger } from './lib/triggers/new-message-in-channel';
 import { newDirectMessageTrigger } from './lib/triggers/new-direct-message';
 import { retrieveThreadMessages } from './lib/actions/retrieve-thread-messages';
+import { newMentionInDirectMessageTrigger } from './lib/triggers/new-mention-in-direct-message';
+import { newCommandInDirectMessageTrigger } from './lib/triggers/new-command-in-direct-message';
 
 export const slackAuth = PieceAuth.OAuth2({
 	description: '',
@@ -162,8 +164,11 @@ export const slack = createPiece({
 		newMessageInChannelTrigger,
 		newDirectMessageTrigger,
 		newMention,
+		newMentionInDirectMessageTrigger,
 		newReactionAdded,
 		channelCreated, newCommand,
+		newCommandInDirectMessageTrigger
+		
 	],
 });
 

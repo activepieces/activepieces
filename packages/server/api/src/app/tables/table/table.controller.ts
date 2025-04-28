@@ -13,8 +13,9 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
             request: request.body,
         })
     },
-    )
+    ),
 
+ 
     fastify.post('/:id', UpdateRequest, async (request) => {
         return tableService.update({
             projectId: request.principal.projectId,
@@ -25,14 +26,12 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
     })
 
     fastify.get('/', GetTablesRequest, async (request) => {
-
         return tableService.list({
             projectId: request.principal.projectId,
             cursor: request.query.cursor,
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
             name: request.query.name,
         })
-   
     },
     )
 
@@ -208,3 +207,4 @@ const UpdateRequest = {
         body: UpdateTableRequest,
     },
 }
+

@@ -5,6 +5,7 @@ import { StatusCodes } from 'http-status-codes'
 import { usageService } from '../ee/platform-billing/usage/usage-service'
 import { flowService } from '../flows/flow/flow.service'
 import { system } from '../helper/system/system'
+import { projectService } from '../project/project-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue } from '../workers/queue'
 import { getJobPriority } from '../workers/queue/queue-manager'
@@ -18,7 +19,8 @@ type HandleWebhookParams = {
     flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED | undefined
     data: (projectId: string) => Promise<EventPayload>
     logger: FastifyBaseLogger
-} 
+    payload?: Record<string, unknown>
+}
 
 
 export const webhookService = {
@@ -29,20 +31,31 @@ export const webhookService = {
         async,
         saveSampleData,
         flowVersionToRun,
+        payload,
     }: HandleWebhookParams): Promise<EngineHttpResponse> {
         const webhookHeader = 'x-webhook-id'
         const webhookRequestId = apId()
-        const pinoLoger = pinoLogging.createWebhookContextLog({ log: logger, webhookId: webhookRequestId, flowId })
-        const flow = await flowService(pinoLoger).getOneById(flowId)
+        const pinoLogger = pinoLogging.createWebhookContextLog({ log: logger, webhookId: webhookRequestId, flowId })
+        const flow = await flowService(pinoLogger).getOneById(flowId)
         if (isNil(flow)) {
-            pinoLoger.info('Flow not found, returning GONE')
+            pinoLogger.info('Flow not found, returning GONE')
             return {
                 status: StatusCodes.GONE,
                 body: {},
                 headers: {},
             }
         }
-        await assertExceedsLimit(flow, pinoLoger)
+        const projectExists = await projectService.exists(flow.projectId)
+        if (!projectExists) {
+            pinoLogger.info('Project is soft deleted, returning GONE')
+            return {
+                status: StatusCodes.GONE,
+                body: {},
+                headers: {},
+            }
+        }
+
+        await assertExceedsLimit(flow, pinoLogger)
         if (
             flow.status !== FlowStatus.ENABLED &&
             !saveSampleData &&
@@ -56,10 +69,10 @@ export const webhookService = {
                 },
             }
         }
-    
-        pinoLoger.info('Adding webhook job to queue')
-    
-        const synchronousHandlerId = async ? null : engineResponseWatcher(pinoLoger).getServerId()
+
+        pinoLogger.info('Adding webhook job to queue')
+
+        const synchronousHandlerId = async ? null : engineResponseWatcher(pinoLogger).getServerId()
         await jobQueue(logger).add({
             id: webhookRequestId,
             type: JobType.WEBHOOK,
@@ -68,16 +81,16 @@ export const webhookService = {
                 schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                 requestId: webhookRequestId,
                 synchronousHandlerId,
-                payload: await data(flow.projectId),
+                payload: payload ?? await data(flow.projectId),
                 flowId: flow.id,
                 saveSampleData,
                 flowVersionToRun,
             },
             priority: await getJobPriority(synchronousHandlerId),
         })
-    
+
         if (async) {
-            pinoLoger.info('Async webhook request completed')
+            pinoLogger.info('Async webhook request completed')
             return {
                 status: StatusCodes.OK,
                 body: {},
@@ -86,7 +99,7 @@ export const webhookService = {
                 },
             }
         }
-        const flowHttpResponse = await engineResponseWatcher(pinoLoger).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, WEBHOOK_TIMEOUT_MS, {
+        const flowHttpResponse = await engineResponseWatcher(pinoLogger).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, WEBHOOK_TIMEOUT_MS, {
             status: StatusCodes.NO_CONTENT,
             body: {},
             headers: {},

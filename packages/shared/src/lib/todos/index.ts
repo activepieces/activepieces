@@ -3,7 +3,7 @@ import { BaseModelSchema, Nullable } from '../common'
 import { UserWithMetaInformation } from '../user'
 
 export enum STATUS_VARIANT {
-    POSITIVE = 'Postive (Green)',
+    POSITIVE = 'Positive (Green)',
     NEGATIVE = 'Negative (Red)',
     NEUTRAL = 'Neutral (Gray)',
 }
@@ -44,6 +44,7 @@ export const StatusOption = Type.Object({
     name: Type.String(),
     description: Nullable(Type.String()),
     variant: Type.Union([Type.Literal(STATUS_VARIANT.POSITIVE), Type.Literal(STATUS_VARIANT.NEGATIVE), Type.Literal(STATUS_VARIANT.NEUTRAL)]),
+    continueFlow: Type.Boolean(),
 })
 
 export type StatusOption = Static<typeof StatusOption>
@@ -59,7 +60,7 @@ export const Todo = Type.Object({
     flowId: Type.String(),
     runId: Type.String(),
     assigneeId: Nullable(Type.String()),
-    approvalUrl: Nullable(Type.String()),
+    resolveUrl: Nullable(Type.String()),
 })
 
 export type Todo = Static<typeof Todo>
@@ -69,3 +70,8 @@ export const TodoWithAssignee = Type.Composite([Todo, Type.Object({
 })])
 
 export type TodoWithAssignee = Static<typeof TodoWithAssignee>
+
+export enum TodoType {
+    INTERNAL = 'internal',
+    EXTERNAL = 'external',
+}

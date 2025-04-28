@@ -6,15 +6,11 @@ import {
 } from '@activepieces/pieces-framework';
 import { getChannels, multiSelectChannelInfo, userId } from '../common/props';
 import { slackAuth } from '../../';
-import { WebClient } from '@slack/web-api';
-import { isNil } from '@activepieces/shared';
-import { getFirstFiveOrAll } from '../common/utils';
-
 
 export const newMention = createTrigger({
   auth: slackAuth,
   name: 'new_mention',
-  displayName: 'New Mention',
+  displayName: 'New Mention in Channel',
   description: 'Triggers when a username is mentioned.',
   props: {
     info: multiSelectChannelInfo,
@@ -66,7 +62,13 @@ export const newMention = createTrigger({
 
   run: async (context) => {
     const payloadBody = context.payload.body as PayloadBody;
-    const channels = context.propsValue.channels as string[];
+    const channels = (context.propsValue.channels as string[]) ?? [];
+
+    // check if it's channel message
+		if (payloadBody.event.channel_type !== 'channel') {
+			return [];
+		}
+
 
     if (channels.length === 0 || channels.includes(payloadBody.event.channel)) {
       // check for bot messages
@@ -91,5 +93,6 @@ type PayloadBody = {
     channel: string;
     bot_id?: string;
     text?: string;
+    channel_type:string
   };
 };

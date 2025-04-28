@@ -127,6 +127,7 @@ export const createMockTemplate = (
         id: template?.id ?? apId(),
         created: template?.created ?? faker.date.recent().toISOString(),
         updated: template?.updated ?? faker.date.recent().toISOString(),
+        metadata: template?.metadata ?? null,
     }
 }
 
@@ -172,6 +173,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         platformId: project?.platformId ?? apId(),
         externalId: project?.externalId ?? apId(),
         releasesEnabled: project?.releasesEnabled ?? false,
+        metadata: project?.metadata ?? null,
     }
 }
 

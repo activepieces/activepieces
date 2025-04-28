@@ -58,7 +58,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
   } = appConnectionsHooks.useConnections({
     pieceName: params.piece.name,
     cursor: undefined,
-    limit: 100,
+    limit: 1000,
   });
 
   const selectedConnection = connectionsPage?.find(

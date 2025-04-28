@@ -1,6 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Cursor } from '../../common/seek-page'
 import { FlowStatus } from '../flow'
+import { FlowVersionState } from '../flow-version'
 
 export const ListFlowsRequest = Type.Object({
     folderId: Type.Optional(Type.String()),
@@ -9,6 +10,7 @@ export const ListFlowsRequest = Type.Object({
     status: Type.Optional(Type.Array(Type.Enum(FlowStatus))),
     projectId: Type.String({}),
     name: Type.Optional(Type.String({})),
+    versionState: Type.Optional(Type.Enum(FlowVersionState)),
 })
 
 export type ListFlowsRequest = Omit<Static<typeof ListFlowsRequest>, 'cursor'> & { cursor: Cursor | undefined }

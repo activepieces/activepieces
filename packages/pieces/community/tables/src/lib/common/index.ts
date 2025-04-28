@@ -29,7 +29,6 @@ const getFieldTypeText = (fieldType: FieldType) => {
 export const tablesCommon = {
   table_id: Property.Dropdown({
     displayName: 'Table Name',
-    description: 'The name of the table to insert records into.',
     required: true,
     refreshers: [],
     refreshOnSearch: true,
@@ -175,7 +174,7 @@ export const tablesCommon = {
               displayName: field.name,
               description,
               required: false,
-              defaultValue: 'asdasd',
+              defaultValue: '',
             });
             break;
         }

@@ -29,14 +29,26 @@ export type ClientField = {
       };
     }
 );
+const mapRecorddToClientRecordsData = (
+  records: PopulatedRecord[],
+  fields: Field[],
+): ClientRecordData[] => {
+  return records.map((record) => ({
+    uuid: nanoid(),
+    values: Object.entries(record.cells).map(([fieldId, cell]) => ({
+      fieldIndex: fields.findIndex((field) => field.id === fieldId),
+      value: cell.value,
+    })),
+  }));
+};
 
 export type TableState = {
   isSaving: boolean;
-  selectedRows: ReadonlySet<string>;
+  selectedRecords: ReadonlySet<string>;
   fields: ClientField[];
   records: ClientRecordData[];
   table: Table;
-  setSelectedRows: (selectedRows: ReadonlySet<string>) => void;
+  setSelectedRecords: (selectedRecords: ReadonlySet<string>) => void;
   selectedCell: {
     rowIdx: number;
     columnIdx: number;
@@ -54,6 +66,8 @@ export type TableState = {
   deleteField: (fieldIndex: number) => void;
   renameTable: (newName: string) => void;
   renameField: (fieldIndex: number, newName: string) => void;
+  setRecords: (records: PopulatedRecord[]) => void;
+  serverFields: Field[];
 };
 
 export const createApTableStore = (
@@ -71,10 +85,10 @@ export const createApTableStore = (
 
     return {
       isSaving: false,
-      selectedRows: new Set(),
+      selectedRecords: new Set(),
       table,
-      setSelectedRows: (selectedRows: ReadonlySet<string>) =>
-        set({ selectedRows }),
+      setSelectedRecords: (selectedRecords: ReadonlySet<string>) =>
+        set({ selectedRecords }),
       selectedCell: null,
       renameTable: (newName: string) =>
         set((state) => {
@@ -103,13 +117,7 @@ export const createApTableStore = (
           type: field.type,
         };
       }),
-      records: records.map((record) => ({
-        uuid: nanoid(),
-        values: Object.entries(record.cells).map(([fieldId, cell]) => ({
-          fieldIndex: fields.findIndex((field) => field.id === fieldId),
-          value: cell.value,
-        })),
-      })),
+      records: mapRecorddToClientRecordsData(records, fields),
       createRecord: (recordData: ClientRecordData) => {
         serverState.createRecord(recordData);
         return set((state) => {
@@ -182,6 +190,15 @@ export const createApTableStore = (
           };
         });
       },
+      setRecords: (records: PopulatedRecord[]) => {
+        serverState.setRecords(records);
+        return set((state) => {
+          return {
+            records: mapRecorddToClientRecordsData(records, serverState.fields),
+          };
+        });
+      },
+      serverFields: serverState.fields,
     };
   });
 };

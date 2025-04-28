@@ -48,10 +48,10 @@ export const platformBillingModule: FastifyPluginAsyncTypebox = async (app) => {
 
             const { tasks, aiTokens } = await usageService(log).getUsageForBillingPeriod(platformId, BillingEntityType.PLATFORM)
 
-            log.info({ platformId, tasks, aiTokens, includedTasks: platformBilling.tasksLimit }, 'Sending usage record to stripe')
+            log.info({ platformId, tasks, aiTokens, includedTasks: platformBilling.includedTasks }, 'Sending usage record to stripe')
 
             await stripe.subscriptionItems.createUsageRecord(item.id, {
-                quantity: Math.max(tasks - (platformBilling.tasksLimit || 0), 0),
+                quantity: Math.max(tasks - (platformBilling.includedTasks || 0), 0),
                 timestamp: currentTimestamp,
                 action: 'set',
             })

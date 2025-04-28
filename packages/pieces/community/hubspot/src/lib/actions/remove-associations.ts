@@ -13,7 +13,7 @@ export const removeAssociationsAction = createAction({
     auth: hubspotAuth,
     name: 'remove-associations',
     displayName: 'Remove Associations',
-    description: 'Removes assosiations between objects',
+    description: 'Removes associations between objects',
     props: {
         fromObjectId: Property.ShortText({
             displayName: 'From Object ID',

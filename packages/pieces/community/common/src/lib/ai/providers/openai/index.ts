@@ -225,4 +225,7 @@ export const openaiModels = [
 		value: 'omni-moderation-latest',
 		supported: ['moderation'],
 	}),
+	model({label:'gpt-4.1',value:'gpt-4.1',supported:['text','function']}),
+	model({label:'gpt-4.1-mini',value:'gpt-4.1-mini',supported:['text','function']}),
+	model({label:'gpt-4.1-nano',value:'gpt-4.1-nano',supported:['text','function']})
 ];

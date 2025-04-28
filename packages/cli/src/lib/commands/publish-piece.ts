@@ -69,9 +69,8 @@ export const publishPieceCommand = new Command('publish')
         assertNullOrUndefinedOrEmpty(answers.name, 'Piece name is required');
         assertNullOrUndefinedOrEmpty(answers.apiUrl, 'API URL is required');
         assertNullOrUndefinedOrEmpty(apiKey, 'API Key is required');
-
         const apiUrlWithoutTrailSlash = answers.apiUrl.replace(/\/$/, '');
-        const { failOnError } = command.opts();
+        const { failOnError } = command;
 
         await publishPiece({
             apiUrl: apiUrlWithoutTrailSlash,

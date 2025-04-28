@@ -1504,7 +1504,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/63353528?v=4",
       "profile": "https://github.com/s31w4n",
       "contributions": [
-        "doc"
+        "doc",
+        "code",
+        "plugin"
       ]
     },
     {
@@ -1580,15 +1582,6 @@
       ]
     },
     {
-      "login": "you",
-      "name": "you",
-      "avatar_url": "https://avatars.githubusercontent.com/u/57100752?v=4",
-      "profile": "https://github.com/you",
-      "contributions": [
-        "code"
-      ]
-    },
-    {
       "login": "danielpoonwj",
       "name": "Daniel Poon",
       "avatar_url": "https://avatars.githubusercontent.com/u/17039704?v=4",
@@ -1631,6 +1624,51 @@
       "profile": "https://github.com/briceflaceliere",
       "contributions": [
         "security"
+      ]
+    },
+    {
+      "login": "mg-wunna",
+      "name": "Mg Wunna",
+      "avatar_url": "https://avatars.githubusercontent.com/u/63114419?v=4",
+      "profile": "https://mg-wunna.github.io/mg-wunna/",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "hakrsh",
+      "name": "Harikrishnan U M",
+      "avatar_url": "https://avatars.githubusercontent.com/u/61736905?v=4",
+      "profile": "https://www.linkedin.com/in/harikrishnanum/",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "perrine-pullicino-alan",
+      "name": "perrine-pullicino-alan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/143406842?v=4",
+      "profile": "https://github.com/perrine-pullicino-alan",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "kaovilai",
+      "name": "Tiger Kaovilai",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11228024?v=4",
+      "profile": "http://kaovilai.pw",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "CarefulGuru",
+      "name": "CarefulGuru",
+      "avatar_url": "https://avatars.githubusercontent.com/u/141072854?v=4",
+      "profile": "https://github.com/CarefulGuru",
+      "contributions": [
+        "plugin"
       ]
     }
   ],

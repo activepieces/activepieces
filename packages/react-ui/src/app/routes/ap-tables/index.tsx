@@ -15,6 +15,7 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { TableTitle } from '@/components/ui/table-title';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -23,15 +24,19 @@ import { fieldsApi } from '@/features/tables/lib/fields-api';
 import { recordsApi } from '@/features/tables/lib/records-api';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
+import { api } from '@/lib/api';
 import { formatUtils, NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
-import { FieldType, Permission, Table } from '@activepieces/shared';
+import { ApFlagId, FieldType, Permission, Table } from '@activepieces/shared';
 
 const ApTablesPage = () => {
   const openNewWindow = useNewWindow();
   const navigate = useNavigate();
   const [selectedRows, setSelectedRows] = useState<Array<{ id: string }>>([]);
-
+  const { data: maxTables } = flagsHooks.useFlag(
+    ApFlagId.MAX_TABLES_PER_PROJECT,
+  );
   const { data: project } = projectHooks.useCurrentProject();
   const [searchParams] = useSearchParams();
   const { data, isLoading, refetch } = useQuery({
@@ -74,6 +79,22 @@ const ApTablesPage = () => {
       navigate(
         `/projects/${project.id}/tables/${table.id}?${NEW_TABLE_QUERY_PARAM}=true`,
       );
+    },
+    onError: (err: Error) => {
+      if (
+        api.isError(err) &&
+        err.response?.status === api.httpStatus.Conflict
+      ) {
+        toast({
+          title: t('Max tables reached'),
+          description: t(`You can't create more than {maxTables} tables`, {
+            maxTables,
+          }),
+          variant: 'destructive',
+        });
+      } else {
+        toast(INTERNAL_ERROR_TOAST);
+      }
     },
   });
 
@@ -220,6 +241,9 @@ const ApTablesPage = () => {
     ],
     [bulkDeleteMutation, selectedRows],
   );
+  if (isCreatingTable) {
+    return <LoadingScreen mode="container" />;
+  }
 
   return (
     <div className="flex-col w-full gap-4">
@@ -237,7 +261,6 @@ const ApTablesPage = () => {
             size="sm"
             onClick={() => createTable({ name: t('New Table') })}
             className="flex items-center gap-2"
-            loading={isCreatingTable}
             disabled={!userHasTableWritePermission}
           >
             <Plus className="h-4 w-4" />

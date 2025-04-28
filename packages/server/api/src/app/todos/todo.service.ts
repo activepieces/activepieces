@@ -1,7 +1,6 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, PlatformId, ProjectId, SeekPage, spreadIfDefined, StatusOption, Todo, TodoWithAssignee, UNRESOLVED_STATUS, UserId } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, FlowId, isNil, PlatformId, ProjectId, SeekPage, spreadIfDefined, StatusOption, Todo, TodoWithAssignee, UNRESOLVED_STATUS, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull, Like, Not } from 'typeorm'
-import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -20,11 +19,11 @@ export const todoService = (_log: FastifyBaseLogger) => ({
         })
     },
     async getOne(params: GetParams): Promise<Todo | null> {
-        return repo().findOneBy({ id: params.id, platformId: params.platformId, projectId: params.projectId })
+        return repo().findOneBy({ id: params.id, ...spreadIfDefined('platformId', params.platformId), ...spreadIfDefined('projectId', params.projectId) })
     },
     async getOneOrThrow(params: GetParams): Promise<Todo> {
         const todo = await this.getOne(params)
-        if (!todo) {
+        if (isNil(todo)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: { entityType: 'todo', entityId: params.id, message: 'Todo by id not found' },
@@ -40,13 +39,13 @@ export const todoService = (_log: FastifyBaseLogger) => ({
                 params: { entityType: 'todo', entityId: params.id, message: 'Todo by id not found' },
             })
         }
-        const enrichedTask = await enrichTodoWithAssignee(todo, _log)
+        const enrichedTask = await enrichTodoWithAssignee(todo)
         return enrichedTask
     },
     async update(params: UpdateParams): Promise<Todo | null> {
         const todo = await this.getOneOrThrow(params)
-        if (params.status && todo.approvalUrl) {
-            await sendApprovalRequest(todo.approvalUrl, params.status)
+        if (params.status && todo.resolveUrl && params.status.continueFlow !== false) {
+            await sendResolveRequest(todo.resolveUrl, params.status)
         }
         await repo().update({
             id: params.id,
@@ -58,9 +57,37 @@ export const todoService = (_log: FastifyBaseLogger) => ({
             ...spreadIfDefined('status', params.status),
             ...spreadIfDefined('statusOptions', params.statusOptions),
             ...spreadIfDefined('assigneeId', params.assigneeId),
-            ...(params.status ? { approvalUrl: null } : {}),
+            ...(params.status && params.status.continueFlow !== false && !params.isTest ? { resolveUrl: null } : {}),
         })
         return this.getOneOrThrow(params)
+    },
+    async resolve(params: ResolveParams) {
+        const todo = await this.getOneOrThrow({ id: params.id })
+        assertNotNullOrUndefined(todo.resolveUrl, 'Todo does not have an resolve url')
+        const status = todo.statusOptions.find((option) => option.name === params.status)
+        if (isNil(status)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'Status not found' },
+            })
+        }
+        if (status.continueFlow === false) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: `Todo cannot be resolved because the continueFlow is set to false for the status: ${status.name}` },
+            })
+        }
+        await sendResolveRequest(todo.resolveUrl, status)
+        await this.update({
+            id: params.id,
+            platformId: todo.platformId,
+            projectId: todo.projectId,
+            status,
+            isTest: params.isTest,
+        })
+        return {
+            status: params.status,
+        }
     },
     async list(params: ListParams): Promise<SeekPage<TodoWithAssignee>> {
         const decodedCursor = paginationHelper.decodeCursor(params.cursor)
@@ -87,13 +114,15 @@ export const todoService = (_log: FastifyBaseLogger) => ({
         }
         if (params.statusOptions) {
             if (params.statusOptions[0] === UNRESOLVED_STATUS.name) {
-                query = query.andWhere('status->>\'name\' = :statusName', {
+                query = query.andWhere('(status->>\'name\' = :statusName OR status->>\'continueFlow\' = :continueFlow)', {
                     statusName: UNRESOLVED_STATUS.name,
+                    continueFlow: 'false',
                 })
             }
             else {
-                query = query.andWhere('status->>\'name\' != :statusName', {
+                query = query.andWhere('status->>\'name\' != :statusName AND (status->>\'continueFlow\' IS NULL OR status->>\'continueFlow\' != :continueFlow)', {
                     statusName: UNRESOLVED_STATUS.name,
+                    continueFlow: 'false',
                 })
             }
         }
@@ -109,13 +138,13 @@ export const todoService = (_log: FastifyBaseLogger) => ({
         })
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
-        const enrichedData = await Promise.all(data.map((task) => enrichTodoWithAssignee(task, _log)))
+        const enrichedData = await Promise.all(data.map((task) => enrichTodoWithAssignee(task)))
         return paginationHelper.createPage<TodoWithAssignee>(enrichedData, newCursor)
     },
 })
 
-async function sendApprovalRequest(approvalUrl: string, status: StatusOption) {
-    const url = new URL(approvalUrl)
+async function sendResolveRequest(resolveUrl: string, status: StatusOption) {
+    const url = new URL(resolveUrl)
     url.searchParams.append('status', status.name)
     await fetch(url.toString(), {
         method: 'POST',
@@ -124,39 +153,32 @@ async function sendApprovalRequest(approvalUrl: string, status: StatusOption) {
 
 async function enrichTodoWithAssignee(
     todo: Todo,
-    log: FastifyBaseLogger,
 ): Promise<TodoWithAssignee> {
-    if (!todo.assigneeId) {
+    if (isNil(todo.assigneeId)) {
         return {
             ...todo,
             assignee: null,
         }
     }
-    const user = await userService.getOneOrFail({
+    const assignee = await userService.getMetaInformation({
         id: todo.assigneeId,
     })
-    const identity = await userIdentityService(log).getBasicInformation(user.identityId)
     return {
         ...todo,
-        assignee: {
-            platformId: user.platformId,
-            platformRole: user.platformRole,
-            status: user.status,
-            externalId: user.externalId,
-            email: identity.email,
-            id: user.id,
-            firstName: identity.firstName,
-            lastName: identity.lastName,
-            created: user.created,
-            updated: user.updated,
-        },
+        assignee,
     }
+}
+
+type ResolveParams = {
+    id: string
+    status: string
+    isTest?: boolean
 }
 
 type GetParams = {
     id: string
-    platformId: PlatformId
-    projectId: ProjectId
+    platformId?: PlatformId
+    projectId?: ProjectId
 }
 
 type ListParams = {
@@ -179,7 +201,7 @@ type CreateParams = {
     flowId: string
     runId?: string
     assigneeId?: string
-    approvalUrl?: string
+    resolveUrl?: string
 }
 
 type UpdateParams = {
@@ -191,4 +213,5 @@ type UpdateParams = {
     status?: StatusOption
     statusOptions?: StatusOption[]
     assigneeId?: string
+    isTest?: boolean
 }

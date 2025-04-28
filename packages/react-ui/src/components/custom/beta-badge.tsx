@@ -21,12 +21,12 @@ export function BetaBadge({
   const badge = (
     <span
       className={cn(
-        'bg-gray-100 text-gray-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm font-semibold select-none',
+        'bg-accent text-primary text-xs font-medium  px-2.5 py-0.5 rounded-sm font-semibold select-none',
         className,
       )}
       {...props}
     >
-      {t('BETA')}
+      {t('Beta')}
     </span>
   );
 

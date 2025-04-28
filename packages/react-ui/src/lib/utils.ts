@@ -29,6 +29,7 @@ export const formatUtils = {
   formatNumber(number: number) {
     return new Intl.NumberFormat('en-US').format(number);
   },
+
   formatDateOnlyOrFail(date: Date, fallback: string) {
     try {
       return this.formatDateOnly(date);
@@ -300,7 +301,8 @@ export const downloadFile = async ({
   const blob =
     extension === 'zip'
       ? await obj.generateAsync({ type: 'blob' })
-      : new Blob([obj], {
+      : //utf-8 with bom
+        new Blob([new Uint8Array([0xef, 0xbb, 0xbf]), obj], {
           type: getBlobType(extension),
         });
   const url = URL.createObjectURL(blob);

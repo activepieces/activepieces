@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 
-import { LoadingScreen } from '@/app/components/loading-screen';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
@@ -113,7 +113,8 @@ function TodoTestingPage() {
           <span className="text-sm"> / </span>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">{t('Status')}</span>
-            {task.status.name === UNRESOLVED_STATUS.name && (
+            {(task.status.name === UNRESOLVED_STATUS.name ||
+              task.status.continueFlow === false) && (
               <DropdownMenu>
                 <DropdownMenuTrigger>
                   <Button
@@ -144,22 +145,23 @@ function TodoTestingPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-            {task.status.name !== UNRESOLVED_STATUS.name && (
-              <StatusIconWithText
-                icon={CheckIcon}
-                text={task.status.name}
-                color={
-                  STATUS_COLORS[
-                    task.status.variant as keyof typeof STATUS_COLORS
-                  ].color
-                }
-                textColor={
-                  STATUS_COLORS[
-                    task.status.variant as keyof typeof STATUS_COLORS
-                  ].textColor
-                }
-              />
-            )}
+            {task.status.name !== UNRESOLVED_STATUS.name &&
+              task.status.continueFlow !== false && (
+                <StatusIconWithText
+                  icon={CheckIcon}
+                  text={task.status.name}
+                  color={
+                    STATUS_COLORS[
+                      task.status.variant as keyof typeof STATUS_COLORS
+                    ].color
+                  }
+                  textColor={
+                    STATUS_COLORS[
+                      task.status.variant as keyof typeof STATUS_COLORS
+                    ].textColor
+                  }
+                />
+              )}
           </div>
         </div>
         <Separator className="mt-4 mb-6" />
