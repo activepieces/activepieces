@@ -61,7 +61,7 @@ export const webhookService = {
 
         pinoLogger.info('Adding webhook job to queue')
         const synchronousHandlerId = async ? null : engineResponseWatcher(pinoLogger).getServerId()
-        const flowVersionIdToRun = onlySaveSampleData ? null : await webhookHandler.getFlowVersionIdToRun(flowVersionToRun, flow.id)
+        const flowVersionIdToRun = onlySaveSampleData ? null : await webhookHandler.getFlowVersionIdToRun(flowVersionToRun, flow)
 
         if (async) {
             return webhookHandler.handleAsync({

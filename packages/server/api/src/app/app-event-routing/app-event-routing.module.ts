@@ -25,6 +25,7 @@ import { webhookSimulationService } from '../webhooks/webhook-simulation/webhook
 import { jobQueue } from '../workers/queue'
 import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
 import { appEventRoutingService } from './app-event-routing.service'
+import { flowService } from '../flows/flow/flow.service'
 
 const appWebhooks: Record<string, Piece> = {
     slack,
@@ -117,7 +118,8 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
             })
             const eventsQueue = listeners.map(async (listener) => {
                 const requestId = apId()
-                const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(GetFlowVersionForWorkerRequestType.LOCKED, listener.flowId)
+                const flow = await flowService(request.log).getOneOrThrow({ id: listener.flowId, projectId: listener.projectId })
+                const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(GetFlowVersionForWorkerRequestType.LOCKED, flow)
 
                 return jobQueue(request.log).add({
                     id: requestId,

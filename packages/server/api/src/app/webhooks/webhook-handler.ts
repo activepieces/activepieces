@@ -14,23 +14,15 @@ import { webhookSimulationService } from './webhook-simulation/webhook-simulatio
 const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 
 export const webhookHandler = {
-    async getFlowVersionIdToRun(type: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED, flowId: string): Promise<FlowVersionId | null> {
-        if (type === GetFlowVersionForWorkerRequestType.LOCKED) {
-            const flowSchema = await flowRepo()
-                .createQueryBuilder('flow')
-                .select('flow.publishedVersionId')
-                .where('flow.id = :flowId', { flowId })
-                .getOne()
-
-            if (!isNil(flowSchema?.publishedVersionId)) {
-                return flowSchema.publishedVersionId
-            }
+    async getFlowVersionIdToRun(type: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED, flow: Flow): Promise<FlowVersionId | null> {
+        if (type === GetFlowVersionForWorkerRequestType.LOCKED && !isNil(flow.publishedVersionId)) {
+            return flow.publishedVersionId
         }
 
         const flowVersionSchema = await flowVersionRepo()
             .createQueryBuilder('flowVersion')
             .select('flowVersion.id')
-            .where('flowVersion.flowId = :flowId', { flowId })
+            .where('flowVersion."flowId" = :flowId', { flowId: flow.id })
             .orderBy('flowVersion.created', 'DESC')
             .getOne()
 
