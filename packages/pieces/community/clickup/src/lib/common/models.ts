@@ -27,6 +27,7 @@ export const enum ClickupEventType {
   KEY_RESULT_CREATED = 'keyResultCreated',
   KEY_RESULT_UPDATED = 'keyResultUpdated',
   KEY_RESULT_DELETED = 'keyResultDeleted',
+  AUTOMATION_CREATED = 'automationCreated',
 }
 
 export interface ClickupTask {

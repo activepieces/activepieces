@@ -7,7 +7,7 @@ import { JobSchedule, SystemJobData, SystemJobName, SystemJobSchedule } from './
 import { systemJobHandlers } from './job-handlers'
 
 const FIFTEEN_MINUTES = apDayjsDuration(15, 'minute').asMilliseconds()
-const ONE_MONTH = apDayjsDuration(1, 'month').asMilliseconds()
+const ONE_MONTH = apDayjsDuration(1, 'month').asSeconds()
 const SYSTEM_JOB_QUEUE = 'system-job-queue'
 
 export let systemJobsQueue: Queue<SystemJobData, unknown, SystemJobName>

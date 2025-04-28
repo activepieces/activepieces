@@ -221,7 +221,7 @@ async function execute<Result extends EngineHelperResult>(log: FastifyBaseLogger
 
     const startTime = Date.now()
     if (isNil(engineWorkers)) {
-        engineWorkers = new EngineWorker(log, Math.max(workerMachine.getSettings().FLOW_WORKER_CONCURRENCY, workerMachine.getSettings().SCHEDULED_WORKER_CONCURRENCY), enginePath, {
+        engineWorkers = new EngineWorker(log, workerMachine.getSettings().FLOW_WORKER_CONCURRENCY + workerMachine.getSettings().SCHEDULED_WORKER_CONCURRENCY, enginePath, {
             env: getEnvironmentVariables(),
             resourceLimits: {
                 maxOldGenerationSizeMb: memoryLimit,

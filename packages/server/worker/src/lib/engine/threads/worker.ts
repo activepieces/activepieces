@@ -11,7 +11,7 @@ export type WorkerResult = {
 }
 
 export class EngineWorker {
-    workers: ChildProcess[]
+    workers: (ChildProcess | undefined)[]
     availableWorkerIndexes: number[]
     lock: ApSemaphore
     enginePath: string
@@ -24,9 +24,11 @@ export class EngineWorker {
             stackSizeMb: number
         }
     }
-    constructor(log: FastifyBaseLogger, maxWorkers: number, enginePath: string, options: { env: Record<string, string | undefined>
+    constructor(log: FastifyBaseLogger, maxWorkers: number, enginePath: string, options: {
+        env: Record<string, string | undefined>
         execArgv: string[]
-        resourceLimits: { maxOldGenerationSizeMb: number, maxYoungGenerationSizeMb: number, stackSizeMb: number } }) {
+        resourceLimits: { maxOldGenerationSizeMb: number, maxYoungGenerationSizeMb: number, stackSizeMb: number }
+    }) {
         this.log = log
         this.enginePath = enginePath
         this.options = options
@@ -41,18 +43,23 @@ export class EngineWorker {
         }
     }
 
-    async executeTask(operationType: EngineOperationType, operation: EngineOperation): Promise<WorkerResult> {
-        this.log.trace({
-            operationType,
-            operation,
-        }, 'Executing operation')
-        await this.lock.acquire()
-        const workerIndex = this.availableWorkerIndexes.pop()
-        this.log.debug({
-            workerIndex,
-        }, 'Acquired worker')
-        assertNotNullOrUndefined(workerIndex, 'Worker index should not be undefined')
+    private createWorkerIfNeeded(workerIndex: number): void {
+        try {
+            if (!this.workers[workerIndex]) {
+                this.workers[workerIndex] = fork(this.enginePath, [], this.options)
+            }
+        }
+        catch (error) {
+            this.log.error({
+                error,
+            }, 'Error creating worker')
+            throw error
+        }
+    }
+
+    private async processTask(workerIndex: number, operationType: EngineOperationType, operation: EngineOperation): Promise<WorkerResult> {
         const worker = this.workers[workerIndex]
+        assertNotNullOrUndefined(worker, 'Worker should not be undefined')
         const environment = workerMachine.getSettings().ENVIRONMENT
         const timeout = getEngineTimeout(operationType, workerMachine.getSettings().FLOW_TIMEOUT_SECONDS, workerMachine.getSettings().TRIGGER_TIMEOUT_SECONDS)
         try {
@@ -92,7 +99,6 @@ export class EngineWorker {
                             break
                         case 'error':
                             cleanUp(worker, timeoutWorker)
-                            this.workers[workerIndex] = fork(this.enginePath, [], this.options)
                             reject({ status: EngineResponseStatus.ERROR, response: m.message })
                             break
                     }
@@ -100,7 +106,6 @@ export class EngineWorker {
 
                 worker.on('error', (error) => {
                     cleanUp(worker, timeoutWorker)
-                    this.workers[workerIndex] = fork(this.enginePath, [], this.options)
                     this.log.info({
                         error,
                     }, 'Worker returned something in stderr')
@@ -120,7 +125,7 @@ export class EngineWorker {
                     }, 'Worker exited')
 
                     cleanUp(worker, timeoutWorker)
-                    this.workers[workerIndex] = fork(this.enginePath, [], this.options)
+                    this.workers[workerIndex] = undefined
 
                     if (isRamIssue) {
                         resolve({
@@ -131,11 +136,19 @@ export class EngineWorker {
                             stdError,
                             stdOut,
                         })
+                    } else {
+                        reject({ status: EngineResponseStatus.ERROR, response: 'Worker exited with code ' + code + ' and signal ' + signal })
                     }
                 })
                 worker.send({ operation, operationType })
             })
             return result
+        }
+        catch (error) {
+            this.log.error({
+                error,
+            }, 'Worker throw unespected error')
+            throw error
         }
         finally {
             if (environment === ApEnvironment.DEVELOPMENT) {
@@ -150,15 +163,48 @@ export class EngineWorker {
                         error: e,
                     }, 'Error terminating worker')
                 }
-                this.workers[workerIndex] = fork(this.enginePath, [], this.options)
+                this.workers[workerIndex] = undefined
             }
             this.log.debug({
                 workerIndex,
             }, 'Releasing worker')
+        }
+    }
+
+    async executeTask(operationType: EngineOperationType, operation: EngineOperation): Promise<WorkerResult> {
+        this.log.trace({
+            operationType,
+            operation,
+        }, 'Executing operation')
+        await this.lock.acquire()
+        const workerIndex = this.availableWorkerIndexes.pop()
+        assertNotNullOrUndefined(workerIndex, 'Worker index should not be undefined')
+
+        try {
+            this.log.debug({
+                workerIndex,
+            }, 'Acquired worker')
+            assertNotNullOrUndefined(workerIndex, 'Worker index should not be undefined')
+
+
+            this.createWorkerIfNeeded(workerIndex)
+
+            const result = await this.processTask(workerIndex, operationType, operation)
+            // Keep an await so finally does not run before the task is finished
+            return result
+        }
+        catch (error) {
+            this.log.error({
+                error,
+            }, 'Error executing task')
+            throw error
+        }
+        finally {
             this.availableWorkerIndexes.push(workerIndex)
             this.lock.release()
         }
     }
+
 }
 
 function cleanUp(worker: ChildProcess, timeout: NodeJS.Timeout): void {
