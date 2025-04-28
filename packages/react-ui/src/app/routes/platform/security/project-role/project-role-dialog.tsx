@@ -99,6 +99,12 @@ const initialPermissions = [
     write: [Permission.READ_TODOS, Permission.WRITE_TODOS],
     disableNone: true,
   },
+  {
+    name: 'MCP',
+    description: 'Read and write MCP',
+    read: [Permission.READ_MCP],
+    write: [Permission.READ_MCP, Permission.WRITE_MCP],
+  },
 ];
 interface ProjectRoleDialogProps {
   mode: 'create' | 'edit';
