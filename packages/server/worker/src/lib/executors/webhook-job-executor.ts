@@ -26,13 +26,13 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
             flowId: data.flowId,
         })
         webhookLogger.info('Webhook job executor started')
-        const { payload, saveSampleData, flowVersionToRun, flowVersionIdToRun } = data
+        const { payload, saveSampleData, flowVersionToRun, flowVersionIdToRun, execute } = data
 
         if (saveSampleData) {
             await handleSampleData(data, engineToken, workerToken, webhookLogger)
         }
 
-        const onlySaveSampleData = isNil(flowVersionToRun)
+        const onlySaveSampleData = isNil(flowVersionToRun) || !execute
         if (onlySaveSampleData) {
             await stopAndReply(workerToken, data, {
                 status: StatusCodes.OK,

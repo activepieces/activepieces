@@ -162,6 +162,7 @@ export async function createMcpServer({
                         flow.id,
                     ),
                     payload: params,
+                    execute: true,
                 })
                 if (response.status !== StatusCodes.OK) {
                     return {
