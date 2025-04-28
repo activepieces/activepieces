@@ -20,10 +20,12 @@ import {
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { webhookHandler } from '../webhooks/webhook-handler'
 import { webhookSimulationService } from '../webhooks/webhook-simulation/webhook-simulation-service'
 import { jobQueue } from '../workers/queue'
 import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
 import { appEventRoutingService } from './app-event-routing.service'
+import { flowService } from '../flows/flow/flow.service'
 
 const appWebhooks: Record<string, Piece> = {
     slack,
@@ -116,6 +118,9 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
             })
             const eventsQueue = listeners.map(async (listener) => {
                 const requestId = apId()
+                const flow = await flowService(request.log).getOneOrThrow({ id: listener.flowId, projectId: listener.projectId })
+                const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(GetFlowVersionForWorkerRequestType.LOCKED, flow)
+
                 return jobQueue(request.log).add({
                     id: requestId,
                     type: JobType.WEBHOOK,
@@ -128,6 +133,8 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
                         flowId: listener.flowId,
                         saveSampleData: await webhookSimulationService(request.log).exists(listener.flowId),
                         flowVersionToRun: GetFlowVersionForWorkerRequestType.LOCKED,
+                        flowVersionIdToRun,
+                        execute: true,
                     },
                     priority: DEFAULT_PRIORITY,
                 })
