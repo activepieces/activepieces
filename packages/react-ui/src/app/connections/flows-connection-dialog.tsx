@@ -1,8 +1,8 @@
 import { DialogTrigger } from '@radix-ui/react-dialog';
+import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Workflow } from 'lucide-react';
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +20,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
+import { flowsApi } from '@/features/flows/lib/flows-api';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import {
   AppConnectionWithoutSensitiveData,
@@ -33,13 +34,19 @@ type FlowsDialogProps = {
 
 const FlowsDialog = React.memo(({ connection }: FlowsDialogProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const projectId = authenticationSession.getProjectId()!;
 
-  const {
-    data: flows = [],
-    isLoading,
-  } = useQuery<Array<PopulatedFlow>>({
+  const { data: flows = [], isLoading } = useQuery<Array<PopulatedFlow>>({
     queryKey: ['connection-flows', connection.id],
-    queryFn: () => appConnectionsApi.flows(connection.id),
+    queryFn: () =>
+      flowsApi
+        .list({
+          projectId: projectId,
+          connectionExternalIds: [connection.externalId],
+          cursor: undefined,
+          limit: 1000,
+        })
+        .then((res) => res.data),
     enabled: dialogOpen,
     retry: false,
   });

@@ -21,6 +21,7 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/components/ui/use-toast';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
+import { flowsApi } from '@/features/flows/lib/flows-api';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import {
@@ -37,8 +38,8 @@ type ReplaceConnectionsDialogProps = {
 
 type FormData = {
   pieceName: string;
-  sourceConnections: string;
-  replacedWithConnection: string;
+  sourceConnections: { id: string; externalId: string };
+  replacedWithConnection: { id: string; externalId: string };
 };
 
 const ReplaceConnectionsDialog = React.memo(
@@ -59,8 +60,8 @@ const ReplaceConnectionsDialog = React.memo(
     const form = useForm<FormData>({
       defaultValues: {
         pieceName: '',
-        sourceConnections: '',
-        replacedWithConnection: '',
+        sourceConnections: { id: '', externalId: '' },
+        replacedWithConnection: { id: '', externalId: '' },
       },
       resolver: (values) => {
         const errors: FieldErrors<FormData> = {};
@@ -123,7 +124,7 @@ const ReplaceConnectionsDialog = React.memo(
     );
 
     const replacedWithOptions = filteredConnections
-      .filter((conn) => conn.id !== form.watch('sourceConnections'))
+      .filter((conn) => conn !== form.watch('sourceConnections'))
       .map((conn) => ({
         label: conn.displayName,
         value: conn.id,
@@ -131,11 +132,14 @@ const ReplaceConnectionsDialog = React.memo(
 
     const handleSubmit = async (values: FormData) => {
       try {
-        const affected = await appConnectionsApi.flows(
-          values.sourceConnections,
-        );
+        const affected = await flowsApi.list({
+          projectId: projectId,
+          connectionExternalIds: [values.sourceConnections.externalId],
+          cursor: undefined,
+          limit: 1000,
+        });
 
-        if (affected.length === 0) {
+        if (affected.data.length === 0) {
           await handleConfirmedSubmit(values);
           toast({
             title: t('Info'),
@@ -144,7 +148,7 @@ const ReplaceConnectionsDialog = React.memo(
           return;
         }
 
-        setAffectedFlows(affected);
+        setAffectedFlows(affected.data);
         setConfirmationDialogOpen(true);
       } catch (error) {
         toast({
@@ -158,8 +162,8 @@ const ReplaceConnectionsDialog = React.memo(
     const handleConfirmedSubmit = async (values: FormData) => {
       try {
         await appConnectionsApi.replace({
-          sourceAppConnectionId: values.sourceConnections,
-          targetAppConnectionId: values.replacedWithConnection,
+          sourceAppConnectionId: values.sourceConnections.id,
+          targetAppConnectionId: values.replacedWithConnection.id,
           projectId: projectId,
         });
         toast({
@@ -214,8 +218,14 @@ const ReplaceConnectionsDialog = React.memo(
                         value={field.value}
                         onChange={(value) => {
                           field.onChange(value);
-                          form.setValue('sourceConnections', '');
-                          form.setValue('replacedWithConnection', '');
+                          form.setValue('sourceConnections', {
+                            id: '',
+                            externalId: '',
+                          });
+                          form.setValue('replacedWithConnection', {
+                            id: '',
+                            externalId: '',
+                          });
                         }}
                         options={piecesOptions}
                         placeholder={t('Select a piece')}
@@ -248,10 +258,19 @@ const ReplaceConnectionsDialog = React.memo(
                         <div className="flex flex-col gap-2">
                           <Label>{t('Connection to Replace')}</Label>
                           <SearchableSelect
-                            value={field.value}
+                            value={field.value?.id}
                             onChange={(value) => {
-                              field.onChange(value);
-                              form.setValue('replacedWithConnection', '');
+                              const selectedConnection =
+                                filteredConnections.find((c) => c.id === value);
+                              field.onChange({
+                                id: selectedConnection?.id || '',
+                                externalId:
+                                  selectedConnection?.externalId || '',
+                              });
+                              form.setValue('replacedWithConnection', {
+                                id: '',
+                                externalId: '',
+                              });
                             }}
                             options={filteredConnections.map((conn) => ({
                               label: conn.displayName,
@@ -288,8 +307,18 @@ const ReplaceConnectionsDialog = React.memo(
                           <div className="flex flex-col gap-2">
                             <Label>{t('Replaced With')}</Label>
                             <SearchableSelect
-                              value={field.value}
-                              onChange={field.onChange}
+                              value={field.value?.id}
+                              onChange={(value) => {
+                                const selectedConnection =
+                                  filteredConnections.find(
+                                    (c) => c.id === value,
+                                  );
+                                field.onChange({
+                                  id: selectedConnection?.id || '',
+                                  externalId:
+                                    selectedConnection?.externalId || '',
+                                });
+                              }}
                               options={replacedWithOptions}
                               placeholder={t(
                                 'Choose connection to replace with',

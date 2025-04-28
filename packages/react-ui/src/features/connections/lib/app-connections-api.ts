@@ -4,7 +4,6 @@ import {
   AppConnectionWithoutSensitiveData,
   ListAppConnectionOwnersRequestQuery,
   ListAppConnectionsRequestQuery,
-  PopulatedFlow,
   ReplaceAppConnectionsRequestBody,
   SeekPage,
   UpdateConnectionValueRequestBody,
@@ -39,9 +38,6 @@ export const appConnectionsApi = {
       `/v1/app-connections/${id}`,
       request,
     );
-  },
-  flows(id: string): Promise<PopulatedFlow[]> {
-    return api.get<PopulatedFlow[]>(`/v1/app-connections/${id}/flows`);
   },
   replace(request: ReplaceAppConnectionsRequestBody): Promise<void> {
     return api.post<void>(`/v1/app-connections/replace`, request);

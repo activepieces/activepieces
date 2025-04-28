@@ -7,7 +7,6 @@ import {
     ListAppConnectionOwnersRequestQuery,
     ListAppConnectionsRequestQuery,
     Permission,
-    PopulatedFlow,
     PrincipalType,
     ReplaceAppConnectionsRequestBody,
     SeekPage,
@@ -98,15 +97,6 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
     },
     )
 
-    app.get('/:id/flows', ListFlowsFromAppConnectionRequest, async (request, reply) => {
-        const flows = await appConnectionService(request.log).listFlowsFromAppConnection({
-            id: request.params.id,
-            projectId: request.principal.projectId,
-            platformId: request.principal.platform.id,
-        })
-        return reply.status(StatusCodes.OK).send(flows)
-    })
-    
     app.post('/replace', ReplaceAppConnectionsRequest, async (request, reply) => {
         const { sourceAppConnectionId, targetAppConnectionId } = request.body
         await appConnectionService(request.log).replace({
@@ -224,25 +214,6 @@ const ListAppConnectionOwnersRequest = {
         },
     },
 }
-
-const ListFlowsFromAppConnectionRequest = {
-    config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.READ_APP_CONNECTION,
-    },
-    schema: {
-        tags: ['app-connections'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        description: 'List flows from app connection',
-        params: Type.Object({
-            id: ApId,
-        }),
-        response: {
-            [StatusCodes.OK]: Type.Array(PopulatedFlow),
-        },
-    },
-}
-
 
 const DeleteAppConnectionRequest = {
     config: {

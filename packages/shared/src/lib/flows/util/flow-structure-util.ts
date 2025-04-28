@@ -216,7 +216,7 @@ const extractConnectionIds = (flowVersion: FlowVersion): string[] => {
         .flatMap(step =>
             step.settings?.input?.auth
                 ? extractConnectionIdsFromAuth(step.settings.input.auth)
-                : []
+                : [],
         )
 
     return Array.from(new Set([...triggerAuthIds, ...stepAuthIds]))
