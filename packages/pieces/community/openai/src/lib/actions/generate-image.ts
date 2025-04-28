@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, DropdownOption, Property } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import { openaiAuth } from '../..';
 
@@ -17,6 +17,10 @@ export const generateImage = createAction({
       options: async () => {
         return {
           options: [
+            {
+              label:'gpt-image-1',
+              value:'gpt-image-1'
+            },
             {
               label: 'dall-e-3',
               value: 'dall-e-3',
@@ -40,35 +44,27 @@ export const generateImage = createAction({
       refreshers: ['model'],
       defaultValue: '1024x1024',
       options: async ({ model }) => {
-        let options = [
-          {
-            label: '1024x1024',
-            value: '1024x1024',
-          },
-          {
-            label: '512x512',
-            value: '512x512',
-          },
-          {
-            label: '256x256',
-            value: '256x256',
-          },
-        ];
-        if (model == 'dall-e-3')
+        let options;
+        if (model === 'dall-e-3') {
           options = [
-            {
-              label: '1024x1024',
-              value: '1024x1024',
-            },
-            {
-              label: '1024x1792',
-              value: '1024x1792',
-            },
-            {
-              label: '1792x1024',
-              value: '1792x1024',
-            },
+            { label: '1024x1024', value: '1024x1024' },
+            { label: '1024x1792', value: '1024x1792' },
+            { label: '1792x1024', value: '1792x1024' },
           ];
+        } else if (model === 'gpt-image-1') {
+          options = [
+            { label: 'auto', value: 'auto' },
+            { label: '1024x1024', value: '1024x1024' },
+            { label: '1536x1024', value: '1536x1024' },
+            { label: '1024x1536', value: '1024x1536' },
+          ];
+        } else {
+          options = [
+            { label: '1024x1024', value: '1024x1024' },
+            { label: '512x512', value: '512x512' },
+            { label: '256x256', value: '256x256' },
+          ];
+        }
 
         return {
           options: options,
@@ -80,10 +76,28 @@ export const generateImage = createAction({
       required: false,
       description: 'Standard is faster, HD has better details.',
       defaultValue: 'standard',
-      refreshers: [],
-      options: async () => {
-        return {
-          options: [
+      refreshers: ['model'],
+      options: async ({model}) => {
+
+        const options:DropdownOption<string>[] = [];
+
+        if(model === 'gpt-image-1')
+        {
+          options.push(...[
+            {
+              label:'high',value:'high'
+            },
+            {
+              label:'medium',value:'medium'
+            },
+            {
+              label:'low',value:'low'
+            }
+          ])
+        }
+        else
+        {
+          options.push(...[
             {
               label: 'standard',
               value: 'standard',
@@ -92,8 +106,12 @@ export const generateImage = createAction({
               label: 'hd',
               value: 'hd',
             },
-          ],
-        };
+          ])
+        }
+
+        return {
+          options
+        }
       },
     }),
   },

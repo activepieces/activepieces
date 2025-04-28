@@ -20,35 +20,27 @@ export const generateImage = createAction({
       refreshers: ['model'],
       defaultValue: '1024x1024',
       options: async ({ model }) => {
-        let options = [
-          {
-            label: '1024x1024',
-            value: '1024x1024',
-          },
-          {
-            label: '512x512',
-            value: '512x512',
-          },
-          {
-            label: '256x256',
-            value: '256x256',
-          },
-        ];
-        if (model == 'dall-e-3')
+        let options;
+        if (model === 'dall-e-3') {
           options = [
-            {
-              label: '1024x1024',
-              value: '1024x1024',
-            },
-            {
-              label: '1024x1792',
-              value: '1024x1792',
-            },
-            {
-              label: '1792x1024',
-              value: '1792x1024',
-            },
+            { label: '1024x1024', value: '1024x1024' },
+            { label: '1024x1792', value: '1024x1792' },
+            { label: '1792x1024', value: '1792x1024' },
           ];
+        } else if (model === 'gpt-image-1') {
+          options = [
+            { label: 'auto', value: 'auto' },
+            { label: '1024x1024', value: '1024x1024' },
+            { label: '1536x1024', value: '1536x1024' },
+            { label: '1024x1536', value: '1024x1536' },
+          ];
+        } else {
+          options = [
+            { label: '1024x1024', value: '1024x1024' },
+            { label: '512x512', value: '512x512' },
+            { label: '256x256', value: '256x256' },
+          ];
+        }
 
         return {
           options: options,
