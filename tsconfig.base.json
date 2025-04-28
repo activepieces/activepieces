@@ -160,6 +160,9 @@
       "@activepieces/piece-confluence": [
         "packages/pieces/community/confluence/src/index.ts"
       ],
+      "@activepieces/piece-copy-ai": [
+        "packages/pieces/community/copy-ai/src/index.ts"
+      ],
       "@activepieces/piece-connections": [
         "packages/pieces/community/connections/src/index.ts"
       ],
