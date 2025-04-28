@@ -10,6 +10,7 @@ import { anthropic } from './anthropic';
 import { openai, openaiModels } from './openai';
 import { replicate, replicateModels } from './replicate';
 import { authHeader, hasMapper, model } from './utils';
+import { gemini, geminiModels } from './gemini';
 
 export const AI_PROVIDERS_MAKRDOWN = {
   openai: `Follow these instructions to get your OpenAI API Key:
@@ -29,9 +30,24 @@ It is strongly recommended that you add your credit card information to your Ope
 1. Visit the following website: https://replicate.com/account/api-tokens.
 2. Once on the website, locate and click on the option to obtain your Replicate API Key.
 `,
+gemini:`Follow these instructions to get your Replicate API Key:
+
+1. Visit the following website: https://makersuite.google.com/app/apikey.
+2. Once on the website, locate and click on the option to obtain your Gemini API Key.
+`
 };
 
 export const AI_PROVIDERS = [
+  {
+    logoUrl:'https://cdn.activepieces.com/pieces/google-gemini.png',
+    defaultBaseUrl:'https://generativelanguage.googleapis.com',
+    label:'Gemini' as const,
+    value:'gemini' as const,
+    models:geminiModels,
+    auth:undefined,
+    factory:gemini,
+    instructionsMarkdown: AI_PROVIDERS_MAKRDOWN.gemini,
+  },
   {
     logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
     defaultBaseUrl: 'https://api.openai.com',
