@@ -39,16 +39,6 @@ gemini:`Follow these instructions to get your Replicate API Key:
 
 export const AI_PROVIDERS = [
   {
-    logoUrl:'https://cdn.activepieces.com/pieces/google-gemini.png',
-    defaultBaseUrl:'https://generativelanguage.googleapis.com',
-    label:'Gemini' as const,
-    value:'gemini' as const,
-    models:geminiModels,
-    auth:undefined,
-    factory:gemini,
-    instructionsMarkdown: AI_PROVIDERS_MAKRDOWN.gemini,
-  },
-  {
     logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
     defaultBaseUrl: 'https://api.openai.com',
     label: 'OpenAI' as const,
@@ -108,6 +98,16 @@ export const AI_PROVIDERS = [
     auth: authHeader({ bearer: true }),
     factory: replicate,
     instructionsMarkdown: AI_PROVIDERS_MAKRDOWN.replicate,
+  },
+  {
+    logoUrl:'https://cdn.activepieces.com/pieces/google-gemini.png',
+    defaultBaseUrl:'https://generativelanguage.googleapis.com',
+    label:'Gemini' as const,
+    value:'gemini' as const,
+    models:geminiModels,
+    auth: authHeader({ bearer: true }),
+    factory:gemini,
+    instructionsMarkdown: AI_PROVIDERS_MAKRDOWN.gemini,
   },
 ];
 
