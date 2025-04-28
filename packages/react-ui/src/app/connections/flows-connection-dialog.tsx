@@ -75,12 +75,14 @@ const FlowsDialog = React.memo(({ connection }: FlowsDialogProps) => {
             </TooltipContent>
           </>
         </DialogTrigger>
-        <DialogContent className="flex flex-col">
-          <DialogHeader>
-            <DialogTitle>{t('Flows Using This Connection')}</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="flex flex-col sm:max-w-[525px] p-6 gap-6">
+          <DialogHeader className="space-y-3">
+            <DialogTitle className="text-xl">
+              {t('Flows Using This Connection')}
+            </DialogTitle>
+            <DialogDescription className="text-base text-muted-foreground leading-normal">
               {t('List of flows that are using the connection:')}{' '}
-              <span className="font-bold text-black">
+              <span className="font-medium text-foreground">
                 {connection.displayName}
               </span>
             </DialogDescription>
@@ -88,29 +90,36 @@ const FlowsDialog = React.memo(({ connection }: FlowsDialogProps) => {
 
           <ScrollArea
             className={cn(
+              'border rounded-lg p-4',
               'h-[275px]',
               (isLoading || flows.length === 0) && 'h-[80px]',
             )}
           >
             {isLoading ? (
               <div className="flex justify-center items-center w-full h-[80px]">
-                <LoadingSpinner className="h-6 w-6 justify-center items-center" />
+                <LoadingSpinner className="h-6 w-6 text-primary" />
               </div>
             ) : flows.length === 0 ? (
-              <div className="flex justify-center items-center h-[80px]">
+              <div className="flex justify-center items-center h-[80px] text-muted-foreground">
                 {t('No flows are using this connection')}
               </div>
             ) : (
-              <ul className="list-disc pl-6 gap-2">
+              <ul className="list-disc pl-6 space-y-2">
                 {flows.map((flow: PopulatedFlow, index: number) => (
-                  <li key={index}>{flow.version.displayName}</li>
+                  <li key={index} className="text-base text-foreground ">
+                    {flow.version.displayName}
+                  </li>
                 ))}
               </ul>
             )}
           </ScrollArea>
 
           <DialogFooter>
-            <Button type="button" onClick={() => setDialogOpen(false)}>
+            <Button
+              type="button"
+              onClick={() => setDialogOpen(false)}
+              className="min-w-[100px]"
+            >
               {t('Close')}
             </Button>
           </DialogFooter>
