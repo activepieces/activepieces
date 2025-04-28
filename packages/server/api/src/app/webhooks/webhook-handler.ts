@@ -20,10 +20,10 @@ export const webhookHandler = {
         }
 
         const flowVersionSchema = await flowVersionRepo()
-            .createQueryBuilder('flowVersion')
-            .select('flowVersion.id')
-            .where('flowVersion."flowId" = :flowId', { flowId: flow.id })
-            .orderBy('flowVersion.created', 'DESC')
+            .createQueryBuilder()
+            .select('id')
+            .where('"flowId" = :flowId', { flowId: flow.id })
+            .orderBy('created', 'DESC')
             .getOne()
 
         return flowVersionSchema?.id ?? null
@@ -60,10 +60,10 @@ export const webhookHandler = {
     },
 
     async handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse> {
-        const { savingSampleData, flowVersionToRun, payload, projectId, flowId, logger, webhookRequestId, synchronousHandlerId, flowVersionIdToRun, execute } = params
+        const { savingSampleData, flowVersionToRun, payload, projectId, flow, logger, webhookRequestId, synchronousHandlerId, flowVersionIdToRun, execute } = params
 
         if (savingSampleData) {
-            await saveSampleData({ flowId, payload, projectId, log: logger })
+            await saveSampleData({ flowId: flow.id, payload, projectId, log: logger })
         }
 
         const onlySaveSampleData = isNil(flowVersionIdToRun) || !execute
@@ -75,20 +75,16 @@ export const webhookHandler = {
             }
         }
 
-        const flowSchema = await flowRepo()
-            .createQueryBuilder('flow')
-            .select('flow.status')
-            .where('flow.id = :flowId', { flowId })
-            .getOne()
 
-        if (isNil(flowSchema?.status)) {
+
+        if (isNil(flow.status)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityId: flowId, entityType: 'flow' },
+                params: { entityId: flow.id, entityType: 'flow' },
             })
         }
 
-        const disabledFlow = flowVersionToRun === GetFlowVersionForWorkerRequestType.LOCKED && flowSchema.status !== FlowStatus.ENABLED
+        const disabledFlow = flowVersionToRun === GetFlowVersionForWorkerRequestType.LOCKED && flow.status !== FlowStatus.ENABLED
 
         if (disabledFlow) {
             return {
@@ -145,7 +141,7 @@ type SyncWebhookParams = {
     flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED | undefined
     payload: unknown
     projectId: ProjectId
-    flowId: FlowId
+    flow: Flow
     logger: FastifyBaseLogger
     webhookRequestId: string
     synchronousHandlerId: string

@@ -85,7 +85,7 @@ export const webhookService = {
             flowVersionToRun,
             payload: payload ?? await data(flow.projectId),
             projectId: flow.projectId,
-            flowId,
+            flow,
             logger: pinoLogger,
             webhookRequestId,
             synchronousHandlerId,
