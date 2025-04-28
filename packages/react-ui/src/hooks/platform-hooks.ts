@@ -30,4 +30,13 @@ export const platformHooks = {
       },
     };
   },
+  useIsCloudPlatform: () => {
+    const currentPlatformId = authenticationSession.getPlatformId();
+    const query = useSuspenseQuery({
+      queryKey: ['is-cloud-platform', currentPlatformId],
+      queryFn: platformApi.isCloudPlatform,
+      staleTime: Infinity,
+    });
+    return query.data;
+  },
 };

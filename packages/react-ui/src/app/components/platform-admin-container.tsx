@@ -28,13 +28,14 @@ export function PlatformAdminContainer({
   const [setupOpen, setSetupOpen] = useState(false);
   const [securityOpen, setSecurityOpen] = useState(false);
   const [infrastructureOpen, setInfrastructureOpen] = useState(false);
-  const { platform } = platformHooks.useCurrentPlatform();
+  // const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   const { data: showPlatformDemo } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_PLATFORM_DEMO,
   );
 
+  const isCloudPlatform = platformHooks.useIsCloudPlatform();
   const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
   const isLocked = (locked: boolean) => locked || (showPlatformDemo ?? false);
   const items: SidebarItem[] = [
@@ -172,30 +173,36 @@ export function PlatformAdminContainer({
     //     },
     //   ],
     // },
-    // {
-    //   type: 'group',
-    //   label: t('Infrastructure'),
-    //   icon: Server,
-    //   defaultOpen: false,
-    //   open: infrastructureOpen,
-    //   setOpen: setInfrastructureOpen,
-    //   isActive: (pathname: string) => pathname.includes('/infrastructure'),
-    //   items: [
-    //     {
-    //       type: 'link',
-    //       to: '/platform/infrastructure/workers',
-    //       label: t('Workers'),
-    //       isSubItem: true,
-    //     },
-    //     {
-    //       type: 'link',
-    //       to: '/platform/infrastructure/health',
-    //       label: t('Health'),
-    //       isSubItem: true,
-    //     },
-    //   ],
-    // },
+    {
+      type: 'group',
+      label: t('Infrastructure'),
+      icon: Server,
+      defaultOpen: false,
+      open: infrastructureOpen,
+      setOpen: setInfrastructureOpen,
+      isActive: (pathname: string) => pathname.includes('/infrastructure'),
+      items: [
+        {
+          type: 'link',
+          to: '/platform/infrastructure/workers',
+          label: t('Workers'),
+          isSubItem: true,
+        },
+        {
+          type: 'link',
+          to: '/platform/infrastructure/health',
+          label: t('Health'),
+          isSubItem: true,
+        },
+      ],
+    },
   ];
+
+  // Only show Infrastructure group for cloud platform
+  if (!isCloudPlatform) {
+    items.pop();
+  }
+
   if (edition === ApEdition.CLOUD && !showPlatformDemo) {
     const setupGroup = items.find(
       (item) => item.type === 'group' && item.label === t('Setup'),

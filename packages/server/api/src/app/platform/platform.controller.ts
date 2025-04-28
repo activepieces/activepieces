@@ -15,6 +15,7 @@ import { StatusCodes } from 'http-status-codes'
 // import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 // import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 // import { licenseKeysService } from '../ee/license-keys/license-keys-service'
+import { flagService } from '../flags/flag.service'
 import { platformService } from './platform.service'
 
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
@@ -48,6 +49,11 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
         // platformWithoutSensitiveData.hasLicenseKey = licenseKey !== null
         return platformWithoutSensitiveData
     })
+
+    app.get('/is-cloud-platform/:id', IsCloudPlatformRequest, async (req) => {
+        const platformId = req.principal.platform.id
+        return flagService.isCloudPlatform(platformId)
+    })
 }
 
 const UpdatePlatformRequest = {
@@ -76,6 +82,24 @@ const GetPlatformRequest = {
         }),
         response: {
             [StatusCodes.OK]: PlatformWithoutSensitiveData,
+        },
+    },
+}
+
+const IsCloudPlatformRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        scope: EndpointScope.PLATFORM,
+    },
+    schema: {
+        tags: ['platforms'],
+        security: [],
+        description: 'Check if on a cloud platform',
+        params: Type.Object({
+            id: ApId,
+        }),
+        response: {
+            [StatusCodes.OK]: Type.Boolean(),
         },
     },
 }

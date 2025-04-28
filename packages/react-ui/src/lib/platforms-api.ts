@@ -15,6 +15,14 @@ export const platformApi = {
     return api.get<PlatformWithoutSensitiveData>(`/v1/platforms/${platformId}`);
   },
 
+  isCloudPlatform() {
+    const platformId = authenticationSession.getPlatformId();
+    if (!platformId) {
+      return Promise.resolve(false);
+    }
+    return api.get<boolean>(`/v1/platforms/is-cloud-platform/${platformId}`);
+  },
+
   verifyLicenseKey(licenseKey: string) {
     const platformId = authenticationSession.getPlatformId();
     if (!platformId) {

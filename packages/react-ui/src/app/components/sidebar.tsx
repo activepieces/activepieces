@@ -172,6 +172,7 @@ export function SidebarComponent({
   removeBottomPadding = false,
 }: SidebarProps) {
   const { platform } = platformHooks.useCurrentPlatform();
+  const isCloudPlatform = platformHooks.useIsCloudPlatform();
   // const { data: showBilling } = flagsHooks.useFlag<boolean>(
   //   ApFlagId.SHOW_BILLING,
   // );
@@ -284,11 +285,13 @@ export function SidebarComponent({
                   <SidebarGroup>
                     <SidebarGroupLabel>{t('Misc')}</SidebarGroupLabel>
                     <SidebarMenu>
-                      {/* <SidebarMenuItem>
-                        <SidebarMenuButton asChild>
-                          <SidebarPlatformAdminButton />
-                        </SidebarMenuButton>
-                      </SidebarMenuItem> */}
+                      {isCloudPlatform && (
+                        <SidebarMenuItem>
+                          <SidebarMenuButton asChild>
+                            <SidebarPlatformAdminButton />
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )}
                       {!location.pathname.startsWith('/platform') && (
                         <SidebarMenuItem>
                           <SidebarMenuButton asChild>
