@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.50.9",
+  "version": "0.50.10",
   "rcVersion": "0.51.0-rc.0",
   "scripts": {
     "prepare": "husky install",
@@ -410,7 +410,7 @@
     "lint-staged": "15.2.9",
     "nx": "20.0.1",
     "pino-pretty": "9.4.1",
-    "pnpm": "9.15.0",
+    "pnpm": "10.0.0",
     "postcss": "8.4.38",
     "postcss-import": "14.1.0",
     "postcss-preset-env": "7.5.0",
