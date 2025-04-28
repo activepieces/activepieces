@@ -1,4 +1,4 @@
-import { ALL_PRINCIPAL_TYPES, ApId, apId, ListMcpsRequest, McpWithPieces, PrincipalType, ProjectId, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
+import { ApId, apId, ListMcpsRequest, McpWithPieces, Permission, PrincipalType, ProjectId, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
@@ -54,7 +54,8 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetMcpsRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.USER],
+        permissions: [Permission.READ_MCP],
     },
     schema: {
         tags: ['mcp'],
@@ -69,7 +70,8 @@ const GetMcpsRequest = {
 
 export const UpdateMcpRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.USER],
+        permissions: [Permission.WRITE_MCP],
     },
     schema: {
         tags: ['mcp'],
@@ -89,7 +91,8 @@ export const UpdateMcpRequest = {
 
 const RotateTokenRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.USER],
+        permissions: [Permission.WRITE_MCP],
     },
     schema: {
         tags: ['mcp'],
