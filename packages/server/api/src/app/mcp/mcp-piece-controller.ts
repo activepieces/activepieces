@@ -1,4 +1,4 @@
-import { AddMcpPieceRequestBody, ALL_PRINCIPAL_TYPES, ApId, McpPieceStatus, McpPieceWithConnection, McpWithPieces, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpPieceRequestBody } from '@activepieces/shared'
+import { AddMcpPieceRequestBody, ApId, McpPieceStatus, McpPieceWithConnection, McpWithPieces, Permission, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpPieceRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
@@ -8,6 +8,7 @@ import { mcpService } from './mcp-service'
 export const mcpPieceController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
+    
 
     app.get('/', GetMcpPiecesRequest, async (req) => {
         const projectId = req.principal.projectId
@@ -57,7 +58,8 @@ export const mcpPieceController: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetMcpPiecesRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.USER],
+        permissions: [Permission.READ_MCP],
     },
     schema: {
         tags: ['mcp-piece'],
@@ -73,7 +75,8 @@ const GetMcpPiecesRequest = {
 
 const AddMcpPieceRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.USER],
+        permissions: [Permission.WRITE_MCP],
     },
     schema: {
         tags: ['mcp-piece'],
@@ -88,7 +91,8 @@ const AddMcpPieceRequest = {
 
 const UpdateMcpPieceRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.USER],
+        permissions: [Permission.WRITE_MCP],
     },
     schema: {
         tags: ['mcp-piece'],
@@ -107,7 +111,8 @@ const UpdateMcpPieceRequest = {
 
 const DeletePieceRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        allowedPrincipals: [PrincipalType.USER],
+        permissions: [Permission.WRITE_MCP],
     },
     schema: {
         tags: ['mcp-piece'],

@@ -22,6 +22,7 @@ import { useTheme } from '@/components/theme-provider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import {
   Tooltip,
   TooltipContent,
@@ -38,6 +39,7 @@ type McpClientTabsProps = {
   onRotateToken?: () => void;
   isRotating?: boolean;
   hasValidMcp?: boolean;
+  hasPermissionToWriteMcp?: boolean;
 };
 
 const NODE_JS_DOWNLOAD_URL = 'https://nodejs.org/en/download';
@@ -61,6 +63,7 @@ type ButtonWithTooltipProps = {
   icon: React.ReactNode;
   className?: string;
   disabled?: boolean;
+  hasPermission?: boolean;
 };
 
 // Reusable ButtonWithTooltip component
@@ -71,25 +74,28 @@ const ButtonWithTooltip = ({
   icon,
   className = 'h-7 w-7',
   disabled = false,
+  hasPermission = true,
 }: ButtonWithTooltipProps) => (
-  <TooltipProvider>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant={variant}
-          size="icon"
-          className={className}
-          onClick={onClick}
-          disabled={disabled}
-        >
-          {icon}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>{tooltip}</p>
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
+  <PermissionNeededTooltip hasPermission={hasPermission}>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant={variant}
+            size="icon"
+            className={className}
+            onClick={onClick}
+            disabled={disabled || !hasPermission}
+          >
+            {icon}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{tooltip}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  </PermissionNeededTooltip>
 );
 
 const ConfigDisplay = ({
@@ -98,12 +104,14 @@ const ConfigDisplay = ({
   onRotateToken,
   isRotating = false,
   hasValidMcp = false,
+  hasPermissionToWriteMcp = true,
 }: {
   mcpServerUrl: string;
   type: 'npx' | 'url';
   onRotateToken?: () => void;
   isRotating?: boolean;
   hasValidMcp?: boolean;
+  hasPermissionToWriteMcp?: boolean;
 }) => {
   const { toast } = useToast();
   const [showToken, setShowToken] = useState(false);
@@ -166,6 +174,7 @@ const ConfigDisplay = ({
                 onClick={onRotateToken}
                 variant="outline"
                 disabled={isRotating || !hasValidMcp}
+                hasPermission={hasPermissionToWriteMcp}
                 icon={
                   isRotating ? (
                     <ReloadIcon className="h-4 w-4 animate-spin" />
@@ -233,6 +242,7 @@ export const McpClientTabs = ({
   onRotateToken,
   isRotating = false,
   hasValidMcp = false,
+  hasPermissionToWriteMcp = true,
 }: McpClientTabsProps) => {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState('claude');
@@ -333,6 +343,7 @@ export const McpClientTabs = ({
               onRotateToken={onRotateToken}
               isRotating={isRotating}
               hasValidMcp={hasValidMcp}
+              hasPermissionToWriteMcp={hasPermissionToWriteMcp}
             />
           </div>
         );
@@ -361,6 +372,7 @@ export const McpClientTabs = ({
               onRotateToken={onRotateToken}
               isRotating={isRotating}
               hasValidMcp={hasValidMcp}
+              hasPermissionToWriteMcp={hasPermissionToWriteMcp}
             />
           </div>
         );
@@ -406,6 +418,7 @@ export const McpClientTabs = ({
               onRotateToken={onRotateToken}
               isRotating={isRotating}
               hasValidMcp={hasValidMcp}
+              hasPermissionToWriteMcp={hasPermissionToWriteMcp}
             />
           </div>
         );
@@ -476,6 +489,7 @@ export const McpClientTabs = ({
                       variant="outline"
                       className="h-9 w-9"
                       disabled={isRotating || !hasValidMcp}
+                      hasPermission={hasPermissionToWriteMcp}
                       icon={
                         isRotating ? (
                           <ReloadIcon className="h-4 w-4 animate-spin" />
