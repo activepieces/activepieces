@@ -14,7 +14,7 @@ export const gemini: AIFactory = ({ proxyUrl, engineToken }): AI => {
     });
 
     return{
-        provider:'GEMINI',
+        provider:'gemini',
         chat:{
             text: async (params)=>{
                 const userMessage = params.messages.find(message => message.role === 'user');
