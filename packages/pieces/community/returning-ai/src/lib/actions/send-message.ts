@@ -1,6 +1,7 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getApiEndpoint } from '../common';
+import { returningAiAuth } from '../../index';
 
 /**
  * This action allows you to send messages to any accessible channel as a specific user.
@@ -25,6 +26,7 @@ import { getApiEndpoint } from '../common';
  * @link https://dev.returning.ai/api-15023884
  */
 export const sendMessage = createAction({
+  auth:returningAiAuth,
   name: 'sendMessage',
   displayName: 'Send Channel Message',
   description: 'Posts a message to a specified channel as a chosen user',

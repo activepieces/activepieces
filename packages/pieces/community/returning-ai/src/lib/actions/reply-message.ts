@@ -1,6 +1,7 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getApiEndpoint } from '../common';
+import { returningAiAuth } from '../../index';
 
 /**
  * This action allows you to reply to a specific message as a chosen user in a channel.
@@ -25,6 +26,7 @@ import { getApiEndpoint } from '../common';
  * @link https://dev.returning.ai/api-16179164
  */
 export const replyMessage = createAction({
+  auth:returningAiAuth,
   name: 'replyMessage',
   displayName: 'Reply Message',
   description: 'Reply to a specific message as a chosen user in a channel.',
