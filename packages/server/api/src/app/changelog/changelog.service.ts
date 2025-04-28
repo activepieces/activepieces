@@ -18,6 +18,8 @@ const emptyChangelog: ListChangelogsResponse = {
 
 export const changelogService = (logger: FastifyBaseLogger) => ({
     async list(): Promise<ListChangelogsResponse> {
+        // todo(Rupal): Nice feature, maybe we can leverage this. Disabling for now
+        return { data: [] }
         const changelogs: ChangelogStore = await distributedStore().get(CHANGELOG_KEY) ?? {
             lastFetched: dayjs().subtract(5, 'minutes').toISOString(),
             data: emptyChangelog,
@@ -36,7 +38,7 @@ export const changelogService = (logger: FastifyBaseLogger) => ({
 })
 async function getChangelog(logger: FastifyBaseLogger): Promise<ListChangelogsResponse> {
     // todo(Rupal): Nice feature, maybe we can leverage this. Disabling for now
-    return {data: []}
+    return { data: [] }
     const isCloudEdition = system.getOrThrow(AppSystemProp.EDITION) === ApEdition.CLOUD
     try {
         if (isCloudEdition) {
@@ -60,13 +62,13 @@ async function getChangelogFeaturebaseRequest(): Promise<ListChangelogsResponse>
     let page = 1
     const limit = 100
     let totalPages = 1
-    
+
     do {
         const queryparams = new URLSearchParams()
         queryparams.append('state', 'live')
         queryparams.append('limit', limit.toString())
         queryparams.append('page', page.toString())
-        
+
         const url = new URL(`https://do.featurebase.app/v2/changelog?${queryparams.toString()}`)
         const headers = new Headers()
         headers.append('X-API-Key', featurebaseApiKey)
@@ -88,7 +90,7 @@ async function getChangelogFeaturebaseRequest(): Promise<ListChangelogsResponse>
         if (parsedData.totalPages) {
             totalPages = parsedData.totalPages
         }
-        
+
         // Map the results to match the Changelog type
         const mappedResults = parsedData.results.map((item: Changelog) => {
             const changelog: Changelog = {
@@ -99,7 +101,7 @@ async function getChangelogFeaturebaseRequest(): Promise<ListChangelogsResponse>
             }
             return changelog
         })
-        
+
         results.push(...mappedResults)
         page++
     } while (page <= totalPages)
