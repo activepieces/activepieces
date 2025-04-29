@@ -28,6 +28,8 @@ import {
   PopulatedFlow,
 } from '@activepieces/shared';
 
+import { ConnectionFlowCard } from './connection-flow-card';
+
 type FlowsDialogProps = {
   connection: AppConnectionWithoutSensitiveData;
 };
@@ -64,7 +66,6 @@ const FlowsDialog = React.memo(({ connection }: FlowsDialogProps) => {
                   e.stopPropagation();
                   e.preventDefault();
                   setDialogOpen(true);
-                  // No need to call refetch here, react-query will fetch automatically when enabled: dialogOpen
                 }}
               >
                 <Workflow className="h-4 w-4" />
@@ -77,9 +78,7 @@ const FlowsDialog = React.memo(({ connection }: FlowsDialogProps) => {
         </DialogTrigger>
         <DialogContent className="flex flex-col sm:max-w-[525px] p-6 gap-6">
           <DialogHeader className="space-y-3">
-            <DialogTitle className="text-xl">
-              {t('Flows Using This Connection')}
-            </DialogTitle>
+            <DialogTitle>{t('Flows Using This Connection')}</DialogTitle>
             <DialogDescription className="text-base text-muted-foreground leading-normal">
               {t('List of flows that are using the connection:')}{' '}
               <span className="font-medium text-foreground">
@@ -90,7 +89,6 @@ const FlowsDialog = React.memo(({ connection }: FlowsDialogProps) => {
 
           <ScrollArea
             className={cn(
-              'border rounded-lg p-4',
               'h-[275px]',
               (isLoading || flows.length === 0) && 'h-[80px]',
             )}
@@ -104,21 +102,19 @@ const FlowsDialog = React.memo(({ connection }: FlowsDialogProps) => {
                 {t('No flows are using this connection')}
               </div>
             ) : (
-              <ul className="list-disc pl-6 space-y-2">
+              <div className="flex flex-col gap-2">
                 {flows.map((flow: PopulatedFlow, index: number) => (
-                  <li key={index} className="text-base text-foreground ">
-                    {flow.version.displayName}
-                  </li>
+                  <ConnectionFlowCard key={index} flow={flow} />
                 ))}
-              </ul>
+              </div>
             )}
           </ScrollArea>
 
           <DialogFooter>
             <Button
               type="button"
+              variant="ghost"
               onClick={() => setDialogOpen(false)}
-              className="min-w-[100px]"
             >
               {t('Close')}
             </Button>

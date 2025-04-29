@@ -1,9 +1,8 @@
 import { DialogTrigger } from '@radix-ui/react-dialog';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Replace } from 'lucide-react';
-import React, { useState } from 'react';
-import { FieldErrors, useForm } from 'react-hook-form';
+import React, { useState, useMemo } from 'react';
+import { FieldErrors, useForm, useWatch } from 'react-hook-form';
 
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -25,10 +24,13 @@ import { appConnectionsApi } from '@/features/connections/lib/app-connections-ap
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { cn } from '@/lib/utils';
 import {
   AppConnectionWithoutSensitiveData,
   PopulatedFlow,
 } from '@activepieces/shared';
+
+import { ConnectionFlowCard } from './connection-flow-card';
 
 type ReplaceConnectionsDialogProps = {
   onConnectionMerged: () => void;
@@ -43,6 +45,11 @@ type FormData = {
   replacedWithConnection: { id: string; externalId: string };
 };
 
+enum STEP {
+  SELECT = 'SELECT',
+  CONFIRM = 'CONFIRM',
+}
+
 const ReplaceConnectionsDialog = ({
   onConnectionMerged,
   children,
@@ -50,7 +57,7 @@ const ReplaceConnectionsDialog = ({
   projectId,
 }: ReplaceConnectionsDialogProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
+  const [step, setStep] = useState<STEP>(STEP.SELECT);
   const [affectedFlows, setAffectedFlows] = useState<Array<PopulatedFlow>>([]);
   const { toast } = useToast();
   const { pieces, isLoading: piecesLoading } = piecesHooks.usePieces({});
@@ -69,7 +76,6 @@ const ReplaceConnectionsDialog = ({
         description: t('Connections replaced successfully'),
       });
       setDialogOpen(false);
-      setConfirmationDialogOpen(false);
       onConnectionMerged();
     },
     onError: () => {
@@ -93,12 +99,8 @@ const ReplaceConnectionsDialog = ({
         return response;
       },
       onSuccess: (data) => {
-        if (data.data.length === 0) {
-          handleConfirmedSubmit(form.getValues());
-          return;
-        }
         setAffectedFlows(data.data);
-        setConfirmationDialogOpen(true);
+        setStep(STEP.CONFIRM);
       },
       onError: () => {
         toast({
@@ -115,6 +117,7 @@ const ReplaceConnectionsDialog = ({
       sourceConnections: { id: '', externalId: '' },
       replacedWithConnection: { id: '', externalId: '' },
     },
+    mode: 'onSubmit',
     resolver: (values) => {
       const errors: FieldErrors<FormData> = {};
 
@@ -125,14 +128,14 @@ const ReplaceConnectionsDialog = ({
         };
       }
 
-      if (values.pieceName && !values.sourceConnections) {
+      if (!values.sourceConnections?.id) {
         errors.sourceConnections = {
           type: 'required',
           message: t('Please select a connection to replace'),
         };
       }
 
-      if (values.sourceConnections && !values.replacedWithConnection) {
+      if (!values.replacedWithConnection?.id) {
         errors.replacedWithConnection = {
           type: 'required',
           message: t('Please select a connection to replace with'),
@@ -169,18 +172,36 @@ const ReplaceConnectionsDialog = ({
     (conn) => conn.pieceName === selectedPiece,
   );
 
-  const replacedWithOptions = filteredConnections
-    .filter((conn) => conn.id !== form.watch('sourceConnections.id'))
-    .map((conn) => ({
-      label: conn.displayName,
-      value: conn.id,
-    }));
+  const sourceConnectionId = useWatch({
+    control: form.control,
+    name: 'sourceConnections.id',
+  });
 
-  const handleSubmit = async (values: FormData) => {
-    fetchAffectedFlows(values.sourceConnections.externalId);
+  const replacedWithOptions = useMemo(() => {
+    return filteredConnections
+      .filter((conn) => conn.id !== sourceConnectionId)
+      .map((conn) => ({
+        label: conn.displayName,
+        value: conn.id,
+      }));
+  }, [filteredConnections, sourceConnectionId]);
+
+  const handleBack = () => {
+    setStep(STEP.SELECT);
+    setAffectedFlows([]);
   };
 
   const handleConfirmedSubmit = async (values: FormData) => {
+    const isValid = await form.trigger();
+    if (!isValid) {
+      form.trigger([
+        'pieceName',
+        'sourceConnections',
+        'replacedWithConnection',
+      ]);
+      return;
+    }
+
     replaceConnections(values);
   };
 
@@ -188,26 +209,46 @@ const ReplaceConnectionsDialog = ({
     setDialogOpen(open);
     if (!open) {
       form.reset();
-      setConfirmationDialogOpen(false);
+      setStep(STEP.SELECT);
       setAffectedFlows([]);
     }
   };
 
   return (
-    <>
-      <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
-        <DialogTrigger asChild>{children}</DialogTrigger>
-        <DialogContent className="flex flex-col">
-          <DialogHeader>
-            <DialogTitle>{t('Replace Connections')}</DialogTitle>
-            <DialogDescription>
-              {t('Replace one connection with another.')}
-            </DialogDescription>
-          </DialogHeader>
+    <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className="flex flex-col">
+        <DialogHeader>
+          <DialogTitle>
+            {step === STEP.SELECT
+              ? t('Replace Connections')
+              : t('Confirm Replacement')}
+          </DialogTitle>
+          <DialogDescription>
+            {step === STEP.SELECT ? (
+              t('Replace one connection with another.')
+            ) : (
+              <>
+                {t('This action requires ')}
+                <span className="font-bold text-black">
+                  {t('republishing')}
+                </span>
+                {t(' affected flows and ')}
+                <span className="font-bold text-black">
+                  {t('reconnecting')}
+                </span>
+                {t(' any associated MCP pieces.')}
+              </>
+            )}
+          </DialogDescription>
+        </DialogHeader>
 
+        {step === STEP.SELECT ? (
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit(handleSubmit)}
+              onSubmit={form.handleSubmit((data) =>
+                fetchAffectedFlows(data.sourceConnections.externalId),
+              )}
               className="flex flex-col gap-4"
             >
               <FormField
@@ -356,68 +397,53 @@ const ReplaceConnectionsDialog = ({
 
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button type="button" variant="secondary">
+                  <Button type="button" variant="ghost">
                     {t('Cancel')}
                   </Button>
                 </DialogClose>
-                <Button
-                  type="submit"
-                  loading={isReplacing || isFetchingAffectedFlows}
-                >
-                  <Replace className="h-4 w-4 mr-2" />
-                  {t('Replace')}
+                <Button type="submit" loading={isFetchingAffectedFlows}>
+                  {t('Next')}
                 </Button>
               </DialogFooter>
             </form>
           </Form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={confirmationDialogOpen}
-        onOpenChange={(open) => {
-          setConfirmationDialogOpen(open);
-          if (!open) {
-            setAffectedFlows([]);
-          }
-        }}
-      >
-        <DialogContent className="flex flex-col">
-          <DialogHeader>
-            <DialogTitle>{t('Confirm Connection Replacement')}</DialogTitle>
-            <DialogDescription>
-              {t('After replacement, you will need to ')}{' '}
-              <span className="font-bold text-black">{t('republish')}</span>{' '}
-              {t(' the following flows that will be affected by this change.')}
-            </DialogDescription>
-          </DialogHeader>
-
-          <ScrollArea className="h-[275px]">
-            <ul className="list-disc pl-6 gap-2">
-              {affectedFlows.map((flow, index) => (
-                <li key={index}>{flow.version.displayName}</li>
-              ))}
-            </ul>
-          </ScrollArea>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setConfirmationDialogOpen(false)}
+        ) : (
+          <div className="flex flex-col gap-4">
+            <ScrollArea
+              className={cn(
+                'h-[275px]',
+                affectedFlows.length === 0 && 'h-[80px]',
+              )}
             >
-              {t('Cancel')}
-            </Button>
-            <Button
-              type="button"
-              onClick={() => handleConfirmedSubmit(form.getValues())}
-            >
-              {t('Confirm')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+              <div className="flex flex-col gap-2">
+                {affectedFlows.length === 0 ? (
+                  <span className="text-center text-muted-foreground p-4">
+                    {t('No flows will be affected by this change')}
+                  </span>
+                ) : (
+                  affectedFlows.map((flow, index) => (
+                    <ConnectionFlowCard key={index} flow={flow} />
+                  ))
+                )}
+              </div>
+            </ScrollArea>
+
+            <DialogFooter>
+              <Button type="button" variant="secondary" onClick={handleBack}>
+                {t('Back')}
+              </Button>
+              <Button
+                type="button"
+                onClick={() => handleConfirmedSubmit(form.getValues())}
+                loading={isReplacing}
+              >
+                {t('Replace')}
+              </Button>
+            </DialogFooter>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 };
 
