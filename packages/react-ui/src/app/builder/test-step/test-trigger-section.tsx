@@ -38,6 +38,7 @@ import { useBuilderStateContext } from '../builder-hooks';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
 import { testStepUtils } from './test-step-utils';
+import { McpToolTestingDialog } from './custom-test-step/mcp-tool-testing-dialog';
 
 const waitFor2Seconds = () =>
   new Promise((resolve) => setTimeout(resolve, 2000));
@@ -73,6 +74,8 @@ const TestTriggerSection = React.memo(
       formValues.settings.inputUiInfo?.lastTestDate,
     );
 
+    const [isMcpToolTestingDialogOpen, setIsMcpToolTestingDialogOpen] = useState(false);
+
     const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
       name: formValues.settings.pieceName,
       version: formValues.settings.pieceVersion,
@@ -83,6 +86,8 @@ const TestTriggerSection = React.memo(
       TriggerTestStrategy.SIMULATION;
     const mockData =
       pieceModel?.triggers?.[formValues.settings.triggerName]?.sampleData;
+    const isMcpTool = formValues.settings.triggerName === 'mcp_tool';
+
 
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
       undefined,
@@ -277,11 +282,15 @@ const TestTriggerSection = React.memo(
       return null;
     }
 
+    const handleMcpToolTesting = () => {
+      setIsMcpToolTestingDialogOpen(true);
+    };
+
     return (
-      <div>
+      <div>x``
         {sampleDataSelected && !isSimulating && !isSavingMockdata && (
           <TestSampleDataViewer
-            onRetest={isSimulation ? simulateTrigger : pollTrigger}
+            onRetest={isSimulation ? simulateTrigger : (isMcpTool ? handleMcpToolTesting : pollTrigger)}
             isValid={isValid}
             isSaving={isSaving}
             isTesting={isPollingTesting}
@@ -408,10 +417,16 @@ const TestTriggerSection = React.memo(
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => pollTrigger()}
+                onClick={() => {
+                  if (isMcpTool) {
+                    handleMcpToolTesting();
+                  } else {
+                    pollTrigger();
+                  }
+                }}
                 keyboardShortcut="G"
                 onKeyboardShortcut={pollTrigger}
-                loading={isPollingTesting}
+                loading={isPollingTesting || isMcpToolTestingDialogOpen}
                 disabled={!isValid}
               >
                 <Dot animation={true} variant={'primary'}></Dot>
@@ -419,6 +434,17 @@ const TestTriggerSection = React.memo(
               </Button>
             </TestButtonTooltip>
           </div>
+        )}
+        {isMcpToolTestingDialogOpen && (
+          <McpToolTestingDialog
+            open={isMcpToolTestingDialogOpen}
+            onOpenChange={setIsMcpToolTestingDialogOpen}
+            setErrorMessage={setErrorMessage}
+            setLastTestDate={setLastTestDate}
+            flowId={flowId}
+            flowVersionId={flowVersionId}
+            projectId={projectId}
+          />
         )}
       </div>
     );
