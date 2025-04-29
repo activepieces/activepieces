@@ -2,6 +2,7 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link, Navigate } from 'react-router-dom';
 
@@ -15,6 +16,7 @@ import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import { formatUtils } from '@/lib/utils';
+import { OtpType } from '@activepieces/ee-shared';
 import {
   ApEdition,
   ApFlagId,
@@ -23,6 +25,8 @@ import {
   isNil,
   SignInRequest,
 } from '@activepieces/shared';
+
+import { CheckEmailNote } from './check-email-note';
 
 const SignInSchema = Type.Object({
   email: Type.String({
@@ -38,6 +42,7 @@ const SignInSchema = Type.Object({
 type SignInSchema = Static<typeof SignInSchema>;
 
 const SignInForm: React.FC = () => {
+  const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
   const form = useForm<SignInSchema>({
     resolver: typeboxResolver(SignInSchema),
     defaultValues: {
@@ -87,9 +92,7 @@ const SignInForm: React.FC = () => {
             break;
           }
           case ErrorCode.EMAIL_IS_NOT_VERIFIED: {
-            form.setError('root.serverError', {
-              message: t(`Email hasn't been verified, check your inbox`),
-            });
+            setShowCheckYourEmailNote(true);
             break;
           }
           case ErrorCode.DOMAIN_NOT_ALLOWED: {
@@ -126,70 +129,85 @@ const SignInForm: React.FC = () => {
   }
 
   return (
-    <Form {...form}>
-      <form className="grid space-y-4">
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem className="grid space-y-2">
-              <Label htmlFor="email">{t('Email')}</Label>
-              <Input
-                {...field}
-                required
-                id="email"
-                type="text"
-                placeholder={'email@example.com'}
-                className="rounded-sm"
-                tabIndex={1}
-              />
-              <FormMessage />
-            </FormItem>
+    <>
+      <Form {...form}>
+        <form className="grid space-y-4">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem className="grid space-y-2">
+                <Label htmlFor="email">{t('Email')}</Label>
+                <Input
+                  {...field}
+                  required
+                  id="email"
+                  type="text"
+                  placeholder={'email@example.com'}
+                  className="rounded-sm"
+                  tabIndex={1}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    setShowCheckYourEmailNote(false);
+                  }}
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem className="grid space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">{t('Password')}</Label>
+                  {edition !== ApEdition.COMMUNITY && (
+                    <Link
+                      to="/forget-password"
+                      className="text-muted-foreground text-sm hover:text-primary transition-all duration-200"
+                    >
+                      {t('Forgot your password?')}
+                    </Link>
+                  )}
+                </div>
+                <Input
+                  {...field}
+                  required
+                  id="password"
+                  type="password"
+                  placeholder={'********'}
+                  className="rounded-sm"
+                  tabIndex={2}
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {form?.formState?.errors?.root?.serverError && (
+            <FormMessage>
+              {form.formState.errors.root.serverError.message}
+            </FormMessage>
           )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem className="grid space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">{t('Password')}</Label>
-                {edition !== ApEdition.COMMUNITY && (
-                  <Link
-                    to="/forget-password"
-                    className="text-muted-foreground text-sm hover:text-primary transition-all duration-200"
-                  >
-                    {t('Forgot your password?')}
-                  </Link>
-                )}
-              </div>
-              <Input
-                {...field}
-                required
-                id="password"
-                type="password"
-                placeholder={'********'}
-                className="rounded-sm"
-                tabIndex={2}
-              />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {form?.formState?.errors?.root?.serverError && (
-          <FormMessage>
-            {form.formState.errors.root.serverError.message}
-          </FormMessage>
-        )}
-        <Button
-          loading={isPending}
-          onClick={(e) => form.handleSubmit(onSubmit)(e)}
-          tabIndex={3}
-        >
-          {t('Sign in')}
-        </Button>
-      </form>
-    </Form>
+          <Button
+            loading={isPending}
+            onClick={(e) => form.handleSubmit(onSubmit)(e)}
+            tabIndex={3}
+          >
+            {t('Sign in')}
+          </Button>
+        </form>
+      </Form>
+
+      {showCheckYourEmailNote && (
+        <div className="mt-4">
+          <CheckEmailNote
+            email={form.getValues().email}
+            type={OtpType.EMAIL_VERIFICATION}
+          />
+        </div>
+      )}
+    </>
   );
 };
 
