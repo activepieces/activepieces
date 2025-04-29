@@ -28,7 +28,7 @@ const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
   const searchQuery = searchParams.toString();
 
   return isSignup ? (
-    <div className="my-4 text-center text-sm">
+    <div className="mb-4 text-center text-sm">
       {t('Already have an account?')}
       <Link
         to={`/sign-in?${searchQuery}`}
@@ -38,7 +38,7 @@ const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
       </Link>
     </div>
   ) : (
-    <div className="my-4 text-center text-sm">
+    <div className="mb-4 text-center text-sm">
       {t("Don't have an account?")}
       <Link
         to={`/sign-up?${searchQuery}`}
