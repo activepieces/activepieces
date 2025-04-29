@@ -99,7 +99,6 @@ export const googleTasksCommon = {
     displayName: 'Due Date',
     description: 'Due date of the task (YYYY-MM-DD)',
     required: false,
-    defaultValue: new Date().toISOString(),
   }),
   completed: Property.Checkbox({
     displayName: 'Completed',
