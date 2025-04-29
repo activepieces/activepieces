@@ -85,6 +85,7 @@ export const askClaude = createAction({
           props['budgetTokens'] = Property.Number({
               displayName:'Budget Tokens',
               required:true,
+              defaultValue:1024,
               description:'This parameter determines the maximum number of tokens Claude is allowed to use for its internal reasoning process.Your budget tokens must always be less than the max tokens specified.',
 
           })
@@ -185,10 +186,6 @@ export const askClaude = createAction({
             },
             messages: roles,
           });
-
-          // const allThinkingBlocks = req.content.filter(
-          //   (block) => block.type === 'thinking'
-          // ).map(content => content.thinking);
   
           response = req.content.filter((block) => block.type === 'text')[0].text.trim()
         }
