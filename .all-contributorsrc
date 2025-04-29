@@ -1688,6 +1688,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "TimPetricola",
+      "name": "Tim Petricola",
+      "avatar_url": "https://avatars.githubusercontent.com/u/674084?v=4",
+      "profile": "http://timpetricola.com",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
