@@ -62,6 +62,7 @@ export class EngineWorker {
         assertNotNullOrUndefined(worker, 'Worker should not be undefined')
         const environment = workerMachine.getSettings().ENVIRONMENT
         const timeout = getEngineTimeout(operationType, workerMachine.getSettings().FLOW_TIMEOUT_SECONDS, workerMachine.getSettings().TRIGGER_TIMEOUT_SECONDS)
+        let didTimeout = false;
         try {
 
             const result = await new Promise<WorkerResult>((resolve, reject) => {
@@ -70,14 +71,7 @@ export class EngineWorker {
 
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 const timeoutWorker = setTimeout(() => {
-                    resolve({
-                        engine: {
-                            status: EngineResponseStatus.TIMEOUT,
-                            response: {},
-                        },
-                        stdError: '',
-                        stdOut: '',
-                    })
+                    didTimeout = true;
                     worker.kill()
                 }, timeout * 1000)
 
@@ -127,7 +121,16 @@ export class EngineWorker {
                     cleanUp(worker, timeoutWorker)
                     this.workers[workerIndex] = undefined
 
-                    if (isRamIssue) {
+                    if (didTimeout) {
+                        resolve({
+                            engine: {
+                                status: EngineResponseStatus.TIMEOUT,
+                                response: {},
+                            },
+                            stdError: '',
+                            stdOut: '',
+                        })
+                    } else if (isRamIssue) {
                         resolve({
                             engine: {
                                 status: EngineResponseStatus.MEMORY_ISSUE,
