@@ -393,6 +393,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/CarefulGuru"><img src="https://avatars.githubusercontent.com/u/141072854?v=4?s=100" width="100px;" alt="CarefulGuru"/><br /><sub><b>CarefulGuru</b></sub></a><br /><a href="#plugin-CarefulGuru" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/AnkitSharmaOnGithub"><img src="https://avatars.githubusercontent.com/u/53289186?v=4?s=100" width="100px;" alt="Ankit Kumar Sharma"/><br /><sub><b>Ankit Kumar Sharma</b></sub></a><br /><a href="#plugin-AnkitSharmaOnGithub" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/nhnansari"><img src="https://avatars.githubusercontent.com/u/116841234?v=4?s=100" width="100px;" alt="Naeem Hassan"/><br /><sub><b>Naeem Hassan</b></sub></a><br /><a href="#plugin-nhnansari" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
