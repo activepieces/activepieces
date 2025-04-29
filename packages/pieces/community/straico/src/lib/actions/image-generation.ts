@@ -34,7 +34,7 @@ export const imageGeneration = createAction({
       displayName: 'Model',
       required: true,
       description: 'Select the image generation model.',
-      defaultValue: 'dall-e-3',
+      defaultValue: 'openai/dall-e-3',
       options: {
         disabled: false,
         options: [

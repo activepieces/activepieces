@@ -18,7 +18,7 @@ export const fileUpload = createAction({
   auth: straicoAuth,
   name: 'file_upload',
   displayName: 'Upload File',
-  description: 'Upload a file to Straico API for processing. Supported file types: pdf, docx, pptx, txt, xlsx, mp3, mp4, html, csv, json, py, php, js, css, cs, swift, kt, xml, ts, png, jpg, jpeg, webp, gif',
+  description: 'Upload a file to Straico API for processing.',
   props: {
     file: Property.File({
       displayName: 'File',
