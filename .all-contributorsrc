@@ -1670,6 +1670,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "AnkitSharmaOnGithub",
+      "name": "Ankit Kumar Sharma",
+      "avatar_url": "https://avatars.githubusercontent.com/u/53289186?v=4",
+      "profile": "https://github.com/AnkitSharmaOnGithub",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
