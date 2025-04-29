@@ -1,13 +1,12 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { S3 } from '@aws-sdk/client-s3';
-import { blackBlazeS3Auth } from '../..';
-import { createBlackBlazeS3 } from '../common';
+import { backBlazeS3Auth } from '../..';
+import { createBackBlazeS3 } from '../common';
 
-export const readBlackBlazeFile = createAction({
-  auth: blackBlazeS3Auth,
-  name: 'read-blackblaze-file',
+export const readBackBlazeFileAction = createAction({
+  auth: backBlazeS3Auth,
+  name: 'read-backblaze-file',
   displayName: 'Read File',
-  description: 'Read a file from black blaze bucket to use it in other steps',
+  description: 'Read a file from Backblaze bucket to use it in other steps.',
   props: {
     key: Property.ShortText({
       displayName: 'Key',
@@ -18,7 +17,7 @@ export const readBlackBlazeFile = createAction({
   async run(context) {
     const { bucket } = context.auth;
     const { key } = context.propsValue;
-    const s3 = createBlackBlazeS3(context.auth);
+    const s3 = createBackBlazeS3(context.auth);
 
     const file = await s3.getObject({
       Bucket: bucket,

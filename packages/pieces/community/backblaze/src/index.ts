@@ -4,20 +4,20 @@ import {
   createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import { readBlackBlazeFile } from './lib/actions/read-file';
-import { blackBlazes3UploadFile } from './lib/actions/upload-file';
-import { createBlackBlazeS3 } from './lib/common';
-import { newBlackBlazeFile } from './lib/triggers/new-file';
+import { readBackBlazeFileAction } from './lib/actions/read-file';
+import { backBlazes3UploadFileAction } from './lib/actions/upload-file';
+import { createBackBlazeS3 } from './lib/common';
+import { newBackBlazeFileTrigger } from './lib/triggers/new-file';
 
 const description = `
-This piece allows you to upload files to BlackBlaze Bucket compatible services.
+This piece allows you to upload files to BackBlaze Bucket compatible services.
 
-BlackBlaze Settings:
+BackBlaze Settings:
 Regions: https://www.backblaze.com/apidocs/introduction-to-the-s3-compatible-api
 Endpoint: leave blank
 `;
 
-export const blackBlazeS3Auth = PieceAuth.CustomAuth({
+export const backBlazeS3Auth = PieceAuth.CustomAuth({
   description: description,
   props: {
     accessKeyId: Property.ShortText({
@@ -166,7 +166,7 @@ export const blackBlazeS3Auth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
-    const s3 = createBlackBlazeS3(auth);
+    const s3 = createBackBlazeS3(auth);
     try {
       await s3.listObjectsV2({
         Bucket: auth.bucket,
@@ -185,15 +185,14 @@ export const blackBlazeS3Auth = PieceAuth.CustomAuth({
   required: true,
 });
 
-export const blackblaze = createPiece({
-  displayName: 'Black Blaze',
+export const backblaze = createPiece({
+  displayName: 'Backblaze',
   description: 'Scalable storage in the cloud',
-
-  logoUrl: 'https://companieslogo.com/img/orig/BLZE-59480c3d.png?t=1720244491',
+  logoUrl: 'https://cdn.activepieces.com/pieces/backblaze.png',
   minimumSupportedRelease: '0.30.0',
-  authors: ["nhnansari","Willianwg","kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
+  authors: ["nhnansari","kishanprmr"],
   categories: [PieceCategory.DEVELOPER_TOOLS],
-  auth: blackBlazeS3Auth,
-  actions: [blackBlazes3UploadFile, readBlackBlazeFile],
-  triggers: [newBlackBlazeFile],
+  auth: backBlazeS3Auth,
+  actions: [backBlazes3UploadFileAction, readBackBlazeFileAction],
+  triggers: [newBackBlazeFileTrigger],
 });

@@ -1,13 +1,13 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { blackBlazeS3Auth } from '../..';
-import { createBlackBlazeS3 } from '../common';
+import { backBlazeS3Auth } from '../..';
+import { createBackBlazeS3 } from '../common';
 import { ObjectCannedACL } from '@aws-sdk/client-s3';
 
-export const blackBlazes3UploadFile = createAction({
-  auth: blackBlazeS3Auth,
-  name: 'upload-blackblaze-file',
+export const backBlazes3UploadFileAction = createAction({
+  auth: backBlazeS3Auth,
+  name: 'upload-backblaze-file',
   displayName: 'Upload File',
-  description: 'Upload an File to bucket',
+  description: 'Upload an File to bucket.',
   props: {
     file: Property.File({
       displayName: 'File',
@@ -107,7 +107,7 @@ export const blackBlazes3UploadFile = createAction({
     const { bucket } = context.auth;
     const { file, fileName, acl, type } = context.propsValue;
 
-    const s3 = createBlackBlazeS3(context.auth);
+    const s3 = createBackBlazeS3(context.auth);
 
     const contentType = type;
     const [_, ext] = contentType.split('/');

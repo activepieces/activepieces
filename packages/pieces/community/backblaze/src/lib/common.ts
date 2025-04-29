@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/shared';
 import { S3 } from '@aws-sdk/client-s3';
 
-export function createBlackBlazeS3(auth: {
+export function createBackBlazeS3(auth: {
   accessKeyId: string;
   secretAccessKey: string;
   region: string | undefined;

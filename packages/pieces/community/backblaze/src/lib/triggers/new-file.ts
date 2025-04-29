@@ -10,16 +10,16 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 
-import { blackBlazeS3Auth } from '../..';
-import { createBlackBlazeS3 } from '../common';
+import { backBlazeS3Auth } from '../..';
+import { createBackBlazeS3 } from '../common';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof blackBlazeS3Auth>,
+  PiecePropValueSchema<typeof backBlazeS3Auth>,
   { folderPath?: string }
 > = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, lastItemId, propsValue }) => {
-    const s3 = createBlackBlazeS3(auth);
+    const s3 = createBackBlazeS3(auth);
     const params: any = {
       Bucket: auth.bucket,
       MaxKeys: 100,
@@ -41,9 +41,9 @@ const polling: Polling<
   },
 };
 
-export const newBlackBlazeFile = createTrigger({
-  auth: blackBlazeS3Auth,
-  name: 'new_blackblaze_file',
+export const newBackBlazeFileTrigger = createTrigger({
+  auth: backBlazeS3Auth,
+  name: 'new_backblaze_file',
   displayName: 'New File',
   description: 'Trigger when a new file is uploaded.',
   props: {
