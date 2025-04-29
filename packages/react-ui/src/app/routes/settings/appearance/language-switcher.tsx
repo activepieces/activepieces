@@ -25,7 +25,7 @@ import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { ApFlagId } from '@activepieces/shared';
 
-import { useNewWindow } from '@/lib/nvaigation-utils';
+import { useNewWindow } from '@/lib/navigation-utils';
 import { flagsHooks } from '../../../../hooks/flags-hooks';
 
 export enum LocalesEnum {

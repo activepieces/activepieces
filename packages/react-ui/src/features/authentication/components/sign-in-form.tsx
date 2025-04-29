@@ -22,7 +22,7 @@ import {
   isNil,
   SignInRequest,
 } from '@activepieces/shared';
-import { useRedirectAfterLogin } from '@/lib/nvaigation-utils';
+import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
 const SignInSchema = Type.Object({
   email: Type.String({

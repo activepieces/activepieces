@@ -14,7 +14,7 @@ import {
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
 import { useEmbedding } from '@/components/embed-provider';
-import { useNewWindow } from '@/lib/nvaigation-utils';
+import { useNewWindow } from '@/lib/navigation-utils';
 import { Button } from '@/components/ui/button';
 import EditableText from '@/components/ui/editable-text';
 import { HomeButton } from '@/components/ui/home-button';

@@ -11,7 +11,7 @@ import {
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { FlowRunsTabs } from '@/app/routes/runs';
-import { useNewWindow } from '@/lib/nvaigation-utils';
+import { useNewWindow } from '@/lib/navigation-utils';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {

@@ -20,7 +20,9 @@ export const useNewWindow = () => {
 
 export const FROM_QUERY_PARAM = 'from';
 export const DEFAULT_REDIRECT_PATH = '/flows';
-
+export const STATE_QUERY_PARAM = 'state';
+export const LOGIN_QUERY_PARAM = 'activepiecesLogin';
+export const PROVIDER_NAME_QUERY_PARAM = 'providerName';
 export const useRedirectAfterLogin = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();

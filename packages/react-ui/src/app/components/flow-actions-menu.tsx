@@ -14,7 +14,7 @@ import React, { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useEmbedding } from '@/components/embed-provider';
-import { useNewWindow } from '@/lib/nvaigation-utils';
+import { useNewWindow } from '@/lib/navigation-utils';
 import {
   DropdownMenu,
   DropdownMenuContent,

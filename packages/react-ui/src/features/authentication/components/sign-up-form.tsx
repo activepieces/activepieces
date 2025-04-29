@@ -38,7 +38,7 @@ import {
 } from '@activepieces/shared';
 
 import { passwordValidation } from '../lib/password-validation-utils';
-import { useRedirectAfterLogin } from '@/lib/nvaigation-utils';
+import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
 type SignUpSchema = {
   email: string;

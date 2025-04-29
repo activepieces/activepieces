@@ -21,7 +21,7 @@ import { flagsHooks } from '../../../hooks/flags-hooks';
 import { SignInForm } from './sign-in-form';
 import { SignUpForm } from './sign-up-form';
 import { ThirdPartyLogin } from './third-party-logins';
-import { useRedirectAfterLogin } from '@/lib/nvaigation-utils';
+import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
 const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
   const [searchParams] = useSearchParams();

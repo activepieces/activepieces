@@ -21,7 +21,7 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { FlowTemplate, TemplateType } from '@activepieces/shared';
 
-import { useNewWindow } from '@/lib/nvaigation-utils';
+import { useNewWindow } from '@/lib/navigation-utils';
 
 const ShareTemplateSchema = Type.Object({
   description: Type.String(),
