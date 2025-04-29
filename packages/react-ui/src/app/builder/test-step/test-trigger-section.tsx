@@ -35,10 +35,10 @@ import {
 
 import { useBuilderStateContext } from '../builder-hooks';
 
+import { McpToolTestingDialog } from './custom-test-step/mcp-tool-testing-dialog';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
 import { testStepUtils } from './test-step-utils';
-import { McpToolTestingDialog } from './custom-test-step/mcp-tool-testing-dialog';
 
 const waitFor2Seconds = () =>
   new Promise((resolve) => setTimeout(resolve, 2000));
@@ -74,7 +74,8 @@ const TestTriggerSection = React.memo(
       formValues.settings.inputUiInfo?.lastTestDate,
     );
 
-    const [isMcpToolTestingDialogOpen, setIsMcpToolTestingDialogOpen] = useState(false);
+    const [isMcpToolTestingDialogOpen, setIsMcpToolTestingDialogOpen] =
+      useState(false);
 
     const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
       name: formValues.settings.pieceName,
@@ -87,7 +88,6 @@ const TestTriggerSection = React.memo(
     const mockData =
       pieceModel?.triggers?.[formValues.settings.triggerName]?.sampleData;
     const isMcpTool = formValues.settings.triggerName === 'mcp_tool';
-
 
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
       undefined,
@@ -287,10 +287,16 @@ const TestTriggerSection = React.memo(
     };
 
     return (
-      <div>x``
+      <div>
         {sampleDataSelected && !isSimulating && !isSavingMockdata && (
           <TestSampleDataViewer
-            onRetest={isSimulation ? simulateTrigger : (isMcpTool ? handleMcpToolTesting : pollTrigger)}
+            onRetest={
+              isSimulation
+                ? simulateTrigger
+                : isMcpTool
+                ? handleMcpToolTesting
+                : pollTrigger
+            }
             isValid={isValid}
             isSaving={isSaving}
             isTesting={isPollingTesting}
@@ -425,12 +431,14 @@ const TestTriggerSection = React.memo(
                   }
                 }}
                 keyboardShortcut="G"
-                onKeyboardShortcut={pollTrigger}
+                onKeyboardShortcut={
+                  isMcpTool ? handleMcpToolTesting : pollTrigger
+                }
                 loading={isPollingTesting || isMcpToolTestingDialogOpen}
                 disabled={!isValid}
               >
                 <Dot animation={true} variant={'primary'}></Dot>
-                {t('Load Sample Data')}
+                {t(isMcpTool ? 'Test Tool' : 'Load Sample Data')}
               </Button>
             </TestButtonTooltip>
           </div>
