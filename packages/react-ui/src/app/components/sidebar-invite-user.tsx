@@ -8,6 +8,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
+import { t } from 'i18next';
 
 export function SidebarInviteUserButton() {
   const { embedState } = useEmbedding();
@@ -17,18 +18,17 @@ export function SidebarInviteUserButton() {
   }
 
   return (
-    <InviteUserDialog
-      showTooltip={true}
-      triggerButton={
-        <Tooltip>
-          <TooltipTrigger asChild>
+    <Tooltip>
+          
+    <InviteUserDialog>
+    <TooltipTrigger asChild>
             <Button variant="transparent" size="icon">
               <UserPlus className="size-4  stroke-[2px]" />
             </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Invite User</TooltipContent>
+      </TooltipTrigger>
+          
+      </InviteUserDialog>
+          <TooltipContent side="bottom">{t('Invite User')}</TooltipContent>
         </Tooltip>
-      }
-    />
   );
 }

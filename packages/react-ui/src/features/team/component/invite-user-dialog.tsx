@@ -75,15 +75,10 @@ const FormSchema = Type.Object({
 
 type FormSchema = Static<typeof FormSchema>;
 
-interface InviteUserDialogProps {
-  triggerButton?: ReactNode;
-  showTooltip?: boolean;
-}
 
-export function InviteUserDialog({
-  triggerButton,
-  showTooltip,
-}: InviteUserDialogProps) {
+export const InviteUserDialog = ({
+  children,
+}: {  children?: ReactNode;}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [invitationLink, setInvitationLink] = useState('');
   const { platform } = platformHooks.useCurrentPlatform();
@@ -185,9 +180,9 @@ export function InviteUserDialog({
           }
         }}
       >
-        <DialogTrigger>
-          {triggerButton ? (
-            triggerButton
+        <DialogTrigger  asChild>
+          {children ? (
+            children
           ) : (
             <Button
               variant={'outline'}
