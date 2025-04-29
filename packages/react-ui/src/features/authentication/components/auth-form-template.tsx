@@ -74,7 +74,7 @@ const AuthFormTemplate = React.memo(
     const [searchParams] = useSearchParams();
     const from = searchParams.get('from');
     const tokenFromUrl = searchParams.get('token');
-    const token = authenticationSession.getToken();
+    const token = tokenFromUrl ?? authenticationSession.getToken();
 
     // To redirect to PromptX login page
     const { data: loginUrl } = flagsHooks.useFlag<string>(ApFlagId.LOGIN_URL);
