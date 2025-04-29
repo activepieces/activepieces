@@ -75,10 +75,7 @@ const FormSchema = Type.Object({
 
 type FormSchema = Static<typeof FormSchema>;
 
-
-export const InviteUserDialog = ({
-  children,
-}: {  children?: ReactNode;}) => {
+export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [invitationLink, setInvitationLink] = useState('');
   const { platform } = platformHooks.useCurrentPlatform();
@@ -180,7 +177,7 @@ export const InviteUserDialog = ({
           }
         }}
       >
-        <DialogTrigger  asChild>
+        <DialogTrigger asChild>
           {children ? (
             children
           ) : (
@@ -354,4 +351,4 @@ export const InviteUserDialog = ({
       </Dialog>
     )
   );
-}
+};

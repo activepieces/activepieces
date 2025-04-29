@@ -20,7 +20,6 @@ const ThirdPartyIcon = ({ icon }: { icon: string }) => {
 };
 
 const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
-
   const { data: thirdPartyAuthProviders } =
     flagsHooks.useFlag<ThirdPartyAuthnProvidersToShowMap>(
       ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
@@ -29,7 +28,6 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
   const thirdPartyLogin = oauth2Utils.useThirdPartyLogin();
-
 
   const handleProviderClick = async (
     event: React.MouseEvent<HTMLButtonElement, MouseEvent>,

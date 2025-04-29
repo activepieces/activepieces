@@ -14,7 +14,6 @@ import {
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
 import { useEmbedding } from '@/components/embed-provider';
-import { useNewWindow } from '@/lib/navigation-utils';
 import { Button } from '@/components/ui/button';
 import EditableText from '@/components/ui/editable-text';
 import { HomeButton } from '@/components/ui/home-button';
@@ -29,6 +28,7 @@ import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { useNewWindow } from '@/lib/navigation-utils';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import {
   ApFlagId,

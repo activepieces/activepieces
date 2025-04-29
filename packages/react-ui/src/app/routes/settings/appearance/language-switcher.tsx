@@ -22,10 +22,10 @@ import {
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
 import { ApFlagId } from '@activepieces/shared';
 
-import { useNewWindow } from '@/lib/navigation-utils';
 import { flagsHooks } from '../../../../hooks/flags-hooks';
 
 export enum LocalesEnum {

@@ -26,6 +26,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import { cn, formatUtils } from '@/lib/utils';
 import { OtpType } from '@activepieces/ee-shared';
 import {
@@ -38,7 +39,6 @@ import {
 } from '@activepieces/shared';
 
 import { passwordValidation } from '../lib/password-validation-utils';
-import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
 type SignUpSchema = {
   email: string;

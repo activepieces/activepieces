@@ -11,7 +11,6 @@ import {
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { FlowRunsTabs } from '@/app/routes/runs';
-import { useNewWindow } from '@/lib/navigation-utils';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -28,6 +27,7 @@ import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { useNewWindow } from '@/lib/navigation-utils';
 import { formatUtils } from '@/lib/utils';
 import { PopulatedIssue } from '@activepieces/ee-shared';
 import {

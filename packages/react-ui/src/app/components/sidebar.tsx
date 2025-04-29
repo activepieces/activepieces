@@ -185,16 +185,15 @@ export function SidebarComponent({
               <SidebarSeparator />
               <SidebarContent className="gap-0">
                 <ScrollArea className="h-[calc(100vh-100px)]">
-                  {items.map((item, index) =>
-                  <React.Fragment key={item.label}>
-                    {item.separatorBefore && <SidebarSeparator />}
-                    {item.type === 'group' ? (
-                      ApSidebarMenuGroup(item)
-                    ) : (ApSidebarMenuItem(item, index)) }
-                    {item.separatorAfter && <SidebarSeparator />}
+                  {items.map((item, index) => (
+                    <React.Fragment key={item.label}>
+                      {item.separatorBefore && <SidebarSeparator />}
+                      {item.type === 'group'
+                        ? ApSidebarMenuGroup(item)
+                        : ApSidebarMenuItem(item, index)}
+                      {item.separatorAfter && <SidebarSeparator />}
                     </React.Fragment>
-                   
-                  )}
+                  ))}
 
                   <SidebarGroup>
                     <SidebarGroupLabel>{t('Misc')}</SidebarGroupLabel>
@@ -256,86 +255,79 @@ export function SidebarComponent({
   );
 }
 function ApSidebarMenuItem(item: SidebarLink, index: number) {
-  return  <React.Fragment key={item.label}>
-  <SidebarGroup key={item.label} className="py-1">
-    {item.name && (
-      <SidebarGroupLabel>{item.name}</SidebarGroupLabel>
-    )}
-    <SidebarMenu className="gap-0 p-0">
-      <SidebarMenuItem key={item.label}>
-        <SidebarMenuButton asChild>
-          <CustomTooltipLink
-            to={item.to}
-            label={item.label}
-            Icon={item.icon}
-            key={index}
-            notification={item.notification}
-            locked={item.locked}
-            isActive={item.isActive}
-            isSubItem={item.isSubItem} />
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    </SidebarMenu>
-  </SidebarGroup>
-  </React.Fragment>;
-  
+  return (
+    <React.Fragment key={item.label}>
+      <SidebarGroup key={item.label} className="py-1">
+        {item.name && <SidebarGroupLabel>{item.name}</SidebarGroupLabel>}
+        <SidebarMenu className="gap-0 p-0">
+          <SidebarMenuItem key={item.label}>
+            <SidebarMenuButton asChild>
+              <CustomTooltipLink
+                to={item.to}
+                label={item.label}
+                Icon={item.icon}
+                key={index}
+                notification={item.notification}
+                locked={item.locked}
+                isActive={item.isActive}
+                isSubItem={item.isSubItem}
+              />
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarGroup>
+    </React.Fragment>
+  );
 }
 
 function ApSidebarMenuGroup(item: SidebarGroup) {
   const location = useLocation();
-  return <React.Fragment key={item.label}>
-    <SidebarGroup key={item.name} className="py-2">
-      {item.name && (
-        <SidebarGroupLabel>{item.name}</SidebarGroupLabel>
-      )}
-      <SidebarMenu className="py-0">
-        <Collapsible
-          defaultOpen={item.defaultOpen ||
-            item.isActive?.(location.pathname)}
-          className="group/collapsible"
-          onOpenChange={(open) => {
-            item.setOpen(open);
-          } }
-        >
-          <SidebarMenuItem>
-            <CollapsibleTrigger asChild>
-              <SidebarMenuButton className="py-0 gap-2 hover:bg-gray-200 rounded-lg transition-colors">
-                {item.icon && (
-                  <item.icon className="size-4" />
-                )}
-                <span>{item.label}</span>
-                <SidebarMenuAction asChild>
-                  {item.open ? (
-                    <ChevronUpIcon />
-                  ) : (
-                    <ChevronDownIcon />
-                  )}
-                </SidebarMenuAction>
-              </SidebarMenuButton>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <SidebarMenuSub>
-                {item.items.map((link, index) => (
-                  <SidebarMenuSubItem key={link.label}>
-                    <SidebarMenuButton asChild>
-                      <CustomTooltipLink
-                        to={link.to}
-                        label={link.label}
-                        Icon={link.icon}
-                        key={index}
-                        notification={link.notification}
-                        locked={link.locked}
-                        isActive={link.isActive}
-                        isSubItem={link.isSubItem} />
-                    </SidebarMenuButton>
-                  </SidebarMenuSubItem>
-                ))}
-              </SidebarMenuSub>
-            </CollapsibleContent>
-          </SidebarMenuItem>
-        </Collapsible>
-      </SidebarMenu>
-    </SidebarGroup>
-  </React.Fragment>;
+  return (
+    <React.Fragment key={item.label}>
+      <SidebarGroup key={item.name} className="py-2">
+        {item.name && <SidebarGroupLabel>{item.name}</SidebarGroupLabel>}
+        <SidebarMenu className="py-0">
+          <Collapsible
+            defaultOpen={item.defaultOpen || item.isActive?.(location.pathname)}
+            className="group/collapsible"
+            onOpenChange={(open) => {
+              item.setOpen(open);
+            }}
+          >
+            <SidebarMenuItem>
+              <CollapsibleTrigger asChild>
+                <SidebarMenuButton className="py-0 gap-2 hover:bg-gray-200 rounded-lg transition-colors">
+                  {item.icon && <item.icon className="size-4" />}
+                  <span>{item.label}</span>
+                  <SidebarMenuAction asChild>
+                    {item.open ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                  </SidebarMenuAction>
+                </SidebarMenuButton>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <SidebarMenuSub>
+                  {item.items.map((link, index) => (
+                    <SidebarMenuSubItem key={link.label}>
+                      <SidebarMenuButton asChild>
+                        <CustomTooltipLink
+                          to={link.to}
+                          label={link.label}
+                          Icon={link.icon}
+                          key={index}
+                          notification={link.notification}
+                          locked={link.locked}
+                          isActive={link.isActive}
+                          isSubItem={link.isSubItem}
+                        />
+                      </SidebarMenuButton>
+                    </SidebarMenuSubItem>
+                  ))}
+                </SidebarMenuSub>
+              </CollapsibleContent>
+            </SidebarMenuItem>
+          </Collapsible>
+        </SidebarMenu>
+      </SidebarGroup>
+    </React.Fragment>
+  );
 }
-

@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import React, { useState } from 'react';
-import { Link, Navigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import {
   Card,
@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { authenticationSession } from '@/lib/authentication-session';
+import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import {
   ApFlagId,
   ThirdPartyAuthnProvidersToShowMap,
@@ -21,7 +22,6 @@ import { flagsHooks } from '../../../hooks/flags-hooks';
 import { SignInForm } from './sign-in-form';
 import { SignUpForm } from './sign-up-form';
 import { ThirdPartyLogin } from './third-party-logins';
-import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
 const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
   const [searchParams] = useSearchParams();

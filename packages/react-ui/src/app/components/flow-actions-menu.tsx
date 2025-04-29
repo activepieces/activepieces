@@ -14,7 +14,6 @@ import React, { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useEmbedding } from '@/components/embed-provider';
-import { useNewWindow } from '@/lib/navigation-utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +35,7 @@ import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { useNewWindow } from '@/lib/navigation-utils';
 import { GitBranchType } from '@activepieces/ee-shared';
 import {
   FlowOperationType,

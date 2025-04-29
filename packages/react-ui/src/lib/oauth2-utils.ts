@@ -1,7 +1,14 @@
-import { ThirdPartyAuthnProviderEnum } from '@activepieces/shared';
 import { nanoid } from 'nanoid';
 import { useSearchParams } from 'react-router-dom';
-import { FROM_QUERY_PARAM, LOGIN_QUERY_PARAM, PROVIDER_NAME_QUERY_PARAM, STATE_QUERY_PARAM } from './navigation-utils';
+
+import { ThirdPartyAuthnProviderEnum } from '@activepieces/shared';
+
+import {
+  FROM_QUERY_PARAM,
+  LOGIN_QUERY_PARAM,
+  PROVIDER_NAME_QUERY_PARAM,
+  STATE_QUERY_PARAM,
+} from './navigation-utils';
 
 let currentPopup: Window | null = null;
 
@@ -12,16 +19,19 @@ export const oauth2Utils = {
 
 function useThirdPartyLogin() {
   const [searchParams] = useSearchParams();
-  
+
   return (loginUrl: string, providerName: ThirdPartyAuthnProviderEnum) => {
     const from = searchParams.get(FROM_QUERY_PARAM) || '/flows';
     const state = {
       [PROVIDER_NAME_QUERY_PARAM]: providerName,
       [FROM_QUERY_PARAM]: from,
-      [LOGIN_QUERY_PARAM]: "true"
-    }
+      [LOGIN_QUERY_PARAM]: 'true',
+    };
     const loginUrlWithState = new URL(loginUrl);
-    loginUrlWithState.searchParams.set(STATE_QUERY_PARAM, JSON.stringify(state));
+    loginUrlWithState.searchParams.set(
+      STATE_QUERY_PARAM,
+      JSON.stringify(state),
+    );
     window.location.href = loginUrlWithState.toString();
   };
 }

@@ -13,6 +13,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import { formatUtils } from '@/lib/utils';
 import {
   ApEdition,
@@ -22,7 +23,6 @@ import {
   isNil,
   SignInRequest,
 } from '@activepieces/shared';
-import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
 const SignInSchema = Type.Object({
   email: Type.String({
