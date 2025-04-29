@@ -10,7 +10,7 @@ import { TextBlock } from '@anthropic-ai/sdk/resources';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 import { billingIssueMessage, unauthorizedMessage } from '../common/common';
-
+const DEFAULT_TOKENS_FOR_THINKING_MODE=1024;
 export const askClaude = createAction({
   auth: claudeAuth,
   name: 'ask_claude',
@@ -85,7 +85,7 @@ export const askClaude = createAction({
           props['budgetTokens'] = Property.Number({
               displayName:'Budget Tokens',
               required:true,
-              defaultValue:1024,
+              defaultValue:DEFAULT_TOKENS_FOR_THINKING_MODE,
               description:'This parameter determines the maximum number of tokens Claude is allowed to use for its internal reasoning process.Your budget tokens must always be less than the max tokens specified.',
 
           })
@@ -182,7 +182,7 @@ export const askClaude = createAction({
             system: systemPrompt,
             thinking: {
               type: 'enabled',
-              budget_tokens: budgetTokens ?? 1024,
+              budget_tokens: budgetTokens ?? DEFAULT_TOKENS_FOR_THINKING_MODE,
             },
             messages: roles,
           });
