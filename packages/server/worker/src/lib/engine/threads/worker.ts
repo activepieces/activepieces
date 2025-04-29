@@ -139,7 +139,8 @@ export class EngineWorker {
                             stdError,
                             stdOut,
                         })
-                    } else {
+                    }
+                    else {
                         reject({ status: EngineResponseStatus.ERROR, response: 'Worker exited with code ' + code + ' and signal ' + signal })
                     }
                 })

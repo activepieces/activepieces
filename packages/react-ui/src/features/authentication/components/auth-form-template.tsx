@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import React, { useState } from 'react';
-import { Link, Navigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import {
   Card,
@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { authenticationSession } from '@/lib/authentication-session';
+import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import {
   ApFlagId,
   ThirdPartyAuthnProvidersToShowMap,
@@ -70,10 +71,8 @@ const AuthSeparator = ({
 const AuthFormTemplate = React.memo(
   ({ form }: { form: 'signin' | 'signup' }) => {
     const isSignUp = form === 'signup';
-    const [searchParams] = useSearchParams();
-    const from = searchParams.get('from');
     const token = authenticationSession.getToken();
-
+    const redirectAfterLogin = useRedirectAfterLogin();
     const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
     const { data: isEmailAuthEnabled } = flagsHooks.useFlag<boolean>(
       ApFlagId.EMAIL_AUTH_ENABLED,
@@ -91,8 +90,8 @@ const AuthFormTemplate = React.memo(
       },
     }[form];
 
-    if (token && from) {
-      return <Navigate to={from} />;
+    if (token) {
+      redirectAfterLogin();
     }
 
     return (

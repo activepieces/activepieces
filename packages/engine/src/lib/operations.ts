@@ -124,7 +124,7 @@ function cleanSampleData(stepOutput: StepOutput) {
 
 async function runOrReturnPayload(input: BeginExecuteFlowOperation): Promise<TriggerPayload> {
     if (!input.formatPayload) {
-        return input.triggerPayload as TriggerPayload;
+        return input.triggerPayload as TriggerPayload
     }
     const newPayload = await triggerHelper.executeTrigger({
         params: {
@@ -136,7 +136,7 @@ async function runOrReturnPayload(input: BeginExecuteFlowOperation): Promise<Tri
         },
         constants: EngineConstants.fromExecuteFlowInput(input),
     }) as ExecuteTriggerResponse<TriggerHookType.RUN>
-    return newPayload.output[0] as TriggerPayload;
+    return newPayload.output[0] as TriggerPayload
 }
 
 async function getFlowExecutionState(input: ExecuteFlowOperation): Promise<FlowExecutorContext> {
