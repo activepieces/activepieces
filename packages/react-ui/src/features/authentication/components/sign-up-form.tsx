@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useMemo, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -26,6 +26,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { HttpError, api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 import { cn, formatUtils } from '@/lib/utils';
 import { OtpType } from '@activepieces/ee-shared';
 import {
@@ -94,8 +95,8 @@ const SignUpForm = ({
       }
     }
   }, [edition, websiteName]);
-  const navigate = useNavigate();
-  const from = searchParams.get('from');
+
+  const redirectAfterLogin = useRedirectAfterLogin();
 
   const { mutate, isPending } = useMutation<
     AuthenticationResponse,
@@ -106,7 +107,7 @@ const SignUpForm = ({
     onSuccess: (data) => {
       if (data.verified) {
         authenticationSession.saveResponse(data);
-        navigate(from || '/flows');
+        redirectAfterLogin();
       } else {
         setShowCheckYourEmailNote(true);
       }
