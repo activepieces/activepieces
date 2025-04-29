@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { useNewWindow } from '@/components/embed-provider';
+import { useNewWindow } from '@/lib/nvaigation-utils';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {

@@ -13,7 +13,8 @@ import {
   LeftSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { useEmbedding, useNewWindow } from '@/components/embed-provider';
+import { useEmbedding } from '@/components/embed-provider';
+import { useNewWindow } from '@/lib/nvaigation-utils';
 import { Button } from '@/components/ui/button';
 import EditableText from '@/components/ui/editable-text';
 import { HomeButton } from '@/components/ui/home-button';

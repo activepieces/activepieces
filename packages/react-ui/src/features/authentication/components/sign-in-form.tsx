@@ -3,7 +3,7 @@ import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -22,6 +22,7 @@ import {
   isNil,
   SignInRequest,
 } from '@activepieces/shared';
+import { useRedirectAfterLogin } from '@/lib/nvaigation-utils';
 
 const SignInSchema = Type.Object({
   email: Type.String({
@@ -49,8 +50,7 @@ const SignInForm: React.FC = () => {
   const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
 
   const { data: userCreated } = flagsHooks.useFlag(ApFlagId.USER_CREATED);
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const redirectAfterLogin = useRedirectAfterLogin();
 
   const { mutate, isPending } = useMutation<
     AuthenticationResponse,
@@ -60,8 +60,7 @@ const SignInForm: React.FC = () => {
     mutationFn: authenticationApi.signIn,
     onSuccess: (data) => {
       authenticationSession.saveResponse(data);
-      const from = searchParams.get('from');
-      navigate(from || '/');
+      redirectAfterLogin();
     },
     onError: (error) => {
       if (api.isError(error)) {

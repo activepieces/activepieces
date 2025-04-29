@@ -21,6 +21,7 @@ import { flagsHooks } from '../../../hooks/flags-hooks';
 import { SignInForm } from './sign-in-form';
 import { SignUpForm } from './sign-up-form';
 import { ThirdPartyLogin } from './third-party-logins';
+import { useRedirectAfterLogin } from '@/lib/nvaigation-utils';
 
 const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
   const [searchParams] = useSearchParams();
@@ -70,10 +71,8 @@ const AuthSeparator = ({
 const AuthFormTemplate = React.memo(
   ({ form }: { form: 'signin' | 'signup' }) => {
     const isSignUp = form === 'signup';
-    const [searchParams] = useSearchParams();
-    const from = searchParams.get('from');
     const token = authenticationSession.getToken();
-
+    const redirectAfterLogin = useRedirectAfterLogin();
     const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
     const { data: isEmailAuthEnabled } = flagsHooks.useFlag<boolean>(
       ApFlagId.EMAIL_AUTH_ENABLED,
@@ -91,8 +90,8 @@ const AuthFormTemplate = React.memo(
       },
     }[form];
 
-    if (token && from) {
-      return <Navigate to={from} />;
+    if (token) {
+      redirectAfterLogin();
     }
 
     return (

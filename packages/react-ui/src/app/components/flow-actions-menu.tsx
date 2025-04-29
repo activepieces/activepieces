@@ -13,7 +13,8 @@ import {
 import React, { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { useEmbedding, useNewWindow } from '@/components/embed-provider';
+import { useEmbedding } from '@/components/embed-provider';
+import { useNewWindow } from '@/lib/nvaigation-utils';
 import {
   DropdownMenu,
   DropdownMenuContent,

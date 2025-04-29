@@ -4,7 +4,7 @@ import { t } from 'i18next';
 import { ClipboardCheck, CircleHelp, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 
-import { useNewWindow } from '@/components/embed-provider';
+import { useNewWindow } from '@/lib/nvaigation-utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress-bar';

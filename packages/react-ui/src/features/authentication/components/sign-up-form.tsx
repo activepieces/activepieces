@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useMemo, useRef, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -38,6 +38,7 @@ import {
 } from '@activepieces/shared';
 
 import { passwordValidation } from '../lib/password-validation-utils';
+import { useRedirectAfterLogin } from '@/lib/nvaigation-utils';
 
 type SignUpSchema = {
   email: string;
@@ -94,8 +95,8 @@ const SignUpForm = ({
       }
     }
   }, [edition, websiteName]);
-  const navigate = useNavigate();
-  const from = searchParams.get('from');
+
+  const redirectAfterLogin = useRedirectAfterLogin();
 
   const { mutate, isPending } = useMutation<
     AuthenticationResponse,
@@ -106,7 +107,7 @@ const SignUpForm = ({
     onSuccess: (data) => {
       if (data.verified) {
         authenticationSession.saveResponse(data);
-        navigate(from || '/flows');
+        redirectAfterLogin();
       } else {
         setShowCheckYourEmailNote(true);
       }
