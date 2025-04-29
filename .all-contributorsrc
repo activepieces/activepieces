@@ -1679,6 +1679,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "nhnansari",
+      "name": "Naeem Hassan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/116841234?v=4",
+      "profile": "https://github.com/nhnansari",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
