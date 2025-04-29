@@ -208,7 +208,7 @@ export function SidebarComponent({
                           <SidebarMenuButton asChild>
                             <CustomTooltipLink
                               to={authenticationSession.appendProjectRoutePrefix(
-                                '/settings',
+                                '/settings/general',
                               )}
                               label={t('Project Settings')}
                               Icon={Settings}
