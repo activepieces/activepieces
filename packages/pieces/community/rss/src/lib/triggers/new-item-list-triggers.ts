@@ -6,12 +6,10 @@ import {
 import {
   PieceAuthProperty,
   PiecePropValueSchema,
-  Store,
-  StoreScope,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
-import { rssFeedUrl } from '../common/props';
+import { rssFeedUrls } from '../common/props';
 import FeedParser from 'feedparser';
 import axios from 'axios';
 import { isNil } from '@activepieces/shared';
@@ -19,20 +17,24 @@ import dayjs from 'dayjs';
 import { getId } from '../common/getId';
 import { sampleData } from '../common/sampleData';
 
-export const rssNewItemTrigger = createTrigger({
-  name: 'new-item',
-  displayName: 'New Item In Feed',
-  description: 'Runs when a new item is added in the RSS feed',
+type PollingProps = {
+  rss_feed_urls: string[];
+};
+
+export const rssNewItemListTrigger = createTrigger({
+  name: 'new-item-list',
+  displayName: 'New Items in Multiple Feeds',
+  description: 'Runs when a new item is added in one of the RSS feed',
   type: TriggerStrategy.POLLING,
   sampleData: sampleData,
   props: {
-    rss_feed_url: rssFeedUrl,
+    rss_feed_urls: rssFeedUrls,
   },
   async test({ auth, propsValue, store, files }): Promise<unknown[]> {
     return await pollingHelper.test(polling, {
       auth,
       store: store,
-      propsValue: propsValue,
+      propsValue: propsValue as PollingProps,
       files: files,
     });
   },
@@ -40,7 +42,7 @@ export const rssNewItemTrigger = createTrigger({
     await pollingHelper.onEnable(polling, {
       auth,
       store: store,
-      propsValue: propsValue,
+      propsValue: propsValue as PollingProps,
     });
   },
 
@@ -52,7 +54,7 @@ export const rssNewItemTrigger = createTrigger({
     await pollingHelper.onDisable(polling, {
       auth,
       store: store,
-      propsValue: propsValue,
+      propsValue: propsValue as PollingProps,
     });
   },
 
@@ -62,7 +64,7 @@ export const rssNewItemTrigger = createTrigger({
       await pollingHelper.poll(polling, {
         auth,
         store: store,
-        propsValue: propsValue, 
+        propsValue: propsValue as PollingProps, 
         files: files,
       })
     ).filter((f) => {
@@ -112,18 +114,25 @@ export const rssNewItemTrigger = createTrigger({
   },
 });
 
-const polling: Polling<
-  PiecePropValueSchema<PieceAuthProperty>,
-  { rss_feed_url: string }
-> = {
+async function getRssItemsFromMultipleUrls(urls: string[]): Promise<any[]> {
+  const allItems: any[] = [];
+  await Promise.all(
+    urls.map(async ( url ) => {
+      try {
+        const items = await getRssItems(url);
+        allItems.push(...items);
+      } catch (error) {
+        console.error(`Error fetching RSS feed from ${url}:`, error);
+      }
+    })
+  );
+  return allItems;
+}
+
+const polling: Polling<PiecePropValueSchema<PieceAuthProperty>, PollingProps> = {
   strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({
-    propsValue,
-  }: {
-    store: Store;
-    propsValue: { rss_feed_url: string };
-  }) => {
-    const items = await getRssItems(propsValue.rss_feed_url);
+  items: async ({ store, propsValue }) => {
+    const items = await getRssItemsFromMultipleUrls(propsValue.rss_feed_urls);
     return items.map((item) => ({
       id: getId(item),
       data: item,
