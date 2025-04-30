@@ -310,10 +310,10 @@ export function SidebarComponent({
                   </SidebarGroup>
                 </ScrollArea>
               </SidebarContent>
-              <SidebarFooter className="pb-4 gap-4">
-                {/* <SidebarMenu>
+              {/* <SidebarFooter className="pb-4 gap-4">
+                <SidebarMenu>
                   <HelpAndFeedback />
-                </SidebarMenu> */}
+                </SidebarMenu>
                 {showProjectUsage && <Separator />}
                 {showProjectUsage && (
                   <SidebarMenu>
@@ -322,7 +322,7 @@ export function SidebarComponent({
                 )}
                 {showProjectUsage && <Separator />}
                 <SidebarUser />
-              </SidebarFooter>
+              </SidebarFooter> */}
             </SidebarContent>
           </Sidebar>
         )}
