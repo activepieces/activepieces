@@ -7,7 +7,7 @@ import { getQuestion } from './lib/actions/get-question';
 import { getQuestionPngPreview } from './lib/actions/get-png-rendering';
 import { getDashboardQuestions } from './lib/actions/get-dashboard';
 import { queryMetabaseApi } from './lib/common';
-import { HttpMethod,  is_chromium_installed } from '@activepieces/pieces-common';
+import { HttpMethod, is_chromium_installed } from '@activepieces/pieces-common';
 import { getGraphQuestion } from './lib/actions/get-graph-question';
 
 const baseProps = {
