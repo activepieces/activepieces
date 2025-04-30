@@ -119,13 +119,14 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
 
     addConnectionsToFlowVersions: async (): Promise<void> => {
         const flowVersions = await flowVersionRepo().find()
-        for (const flowVersion of flowVersions) {
+
+        await Promise.all(flowVersions.map(async (flowVersion) => {
             const connectionIds = flowStructureUtil.extractConnectionIds(flowVersion)
 
             await flowVersionRepo().update(flowVersion.id, {
                 connectionIds,
             })
-        }
+        }))
     },
 })
 
