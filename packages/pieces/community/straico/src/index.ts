@@ -9,6 +9,12 @@ import { baseUrlv1 } from './lib/common/common';
 import { promptCompletion } from './lib/actions/prompt-completion';
 import { imageGeneration } from './lib/actions/image-generation';
 import { fileUpload } from './lib/actions/file-upload';
+import { createRag } from './lib/actions/rag-create';
+import { listRags } from './lib/actions/rag-list';
+import { getRagById } from './lib/actions/rag-get-by-id';
+import { updateRag } from './lib/actions/rag-update';
+import { deleteRag } from './lib/actions/rag-delete';
+import { ragPromptCompletion } from './lib/actions/rag-prompt-completion';
 import { PieceCategory } from '@activepieces/shared';
 
 const markdownDescription = `
@@ -58,6 +64,12 @@ export const straico = createPiece({
     promptCompletion,
     imageGeneration,
     fileUpload,
+    createRag,
+    listRags,
+    getRagById,
+    updateRag,
+    deleteRag,
+    ragPromptCompletion,
     createCustomApiCallAction({
       auth: straicoAuth,
       baseUrl: () => baseUrlv1,
