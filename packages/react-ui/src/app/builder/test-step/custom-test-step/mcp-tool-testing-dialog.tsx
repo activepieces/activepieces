@@ -40,7 +40,6 @@ type McpToolTestingDialogProps = {
   setLastTestDate: (lastTestDate: string) => void;
 };
 
-
 interface McpFormField {
   name: string;
   description?: string;
@@ -87,14 +86,13 @@ function McpToolTestingDialog({
   }
 
   const testingForm = useForm<Record<string, any>>({
-    shouldFocusError:true,
+    shouldFocusError: true,
     defaultValues: formProps.reduce((acc, field: McpFormField) => {
       acc[field.name] = field.type === McpPropertyType.BOOLEAN ? false : '';
       return acc;
     },{} as Record<string, any>),
     resolver: (values) => {
-      const errors = 
-      formProps.reduce((acc, field: McpFormField) => {
+      const errors = formProps.reduce((acc, field: McpFormField) => {
         if (
           field.required &&
           field.type !== McpPropertyType.BOOLEAN &&
@@ -106,19 +104,16 @@ function McpToolTestingDialog({
           };
         }
         return acc;
-      },{} as Record<string, { type: string; message: string }>);
-
+      }, {} as Record<string, { type: string; message: string }>);
 
       return {
         values: Object.keys(errors).length === 0 ? values : {},
         errors,
       };
     },
-    mode:'onChange'
+    mode: 'onChange',
   }
-
 );
-
 
 
   const { mutate: saveMockAsSampleData, isPending: isSavingMockdata } =

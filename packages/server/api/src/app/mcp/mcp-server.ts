@@ -156,8 +156,19 @@ async function addFlowsToServer(
         const inputSchema = triggerSettings.input?.inputSchema
         const returnsResponse = triggerSettings.input?.returnsResponse
 
+        // Create a mapping of transformed parameter names to original names
+        const paramNameMapping = Object.fromEntries(
+            inputSchema.map((prop) => [
+                prop.name.replace(/\s+/g, '-'),
+                prop.name,
+            ]),
+        )
+
         const zodFromInputSchema = Object.fromEntries(
-            inputSchema.map((prop) => [prop.name, mcpPropertyToZod(prop)]),
+            inputSchema.map((prop) => [
+                prop.name.replace(/\s+/g, '-'),
+                mcpPropertyToZod(prop),
+            ]),
         )
 
         server.tool(
@@ -165,6 +176,14 @@ async function addFlowsToServer(
             toolDescription,
             zodFromInputSchema,
             async (params) => { 
+                // Transform parameter names back to original names for the payload
+                const originalParams = Object.fromEntries(
+                    Object.entries(params).map(([key, value]) => [
+                        paramNameMapping[key] || key,
+                        value,
+                    ]),
+                )
+
                 const response = await webhookService.handleWebhook({
                     data: () => {
                         return Promise.resolve({
@@ -181,14 +200,13 @@ async function addFlowsToServer(
                     saveSampleData: await webhookSimulationService(logger).exists(
                         flow.id,
                     ),
-                    payload: params,
+                    payload: originalParams,
                 })
                 if (response.status !== StatusCodes.OK) {
                     return {
                         content: [{
                             type: 'text',
-                            text: `❌ Error executing flow ${flow.version.displayName}\n\n\`\`\`\n${response || 'Unknown error occurred'}\n\`\`\``,
-                        }],
+                            text: `❌ Error executing flow ${flow.version.displayName}\n\n\`\`\`\n${JSON.stringify(response, null, 2) || 'Unknown error occurred'}\n\`\`\``                        }],
                     }
                 }
                 return {

@@ -444,14 +444,16 @@ const TestTriggerSection = React.memo(
           </div>
         )}
        
-          <McpToolTestingDialog
-            open={isMcpToolTestingDialogOpen}
-            onOpenChange={setIsMcpToolTestingDialogOpen}
-            setLastTestDate={setLastTestDate}
-            flowId={flowId}
-            flowVersionId={flowVersionId}
-            projectId={projectId}
-          />
+          {isMcpTool && (
+            <McpToolTestingDialog
+              open={isMcpToolTestingDialogOpen}
+              onOpenChange={setIsMcpToolTestingDialogOpen}
+              setLastTestDate={setLastTestDate}
+              flowId={flowId}
+              flowVersionId={flowVersionId}
+              projectId={projectId}
+            />
+          )}
      
       </div>
     );
