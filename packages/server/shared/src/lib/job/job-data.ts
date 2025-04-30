@@ -2,6 +2,7 @@ import {
     ExecutionType,
     FlowVersion,
     GetFlowVersionForWorkerRequestType,
+    Nullable,
     PackageType,
     PiecePackage,
     PieceType,
@@ -89,6 +90,8 @@ export const WebhookJobData = Type.Object({
         Type.Literal(GetFlowVersionForWorkerRequestType.LOCKED),
         Type.Literal(GetFlowVersionForWorkerRequestType.LATEST),
     ])),
+    flowVersionIdToRun: Nullable(Type.String()),
+    execute: Type.Boolean(),
 })
 export type WebhookJobData = Static<typeof WebhookJobData>
 

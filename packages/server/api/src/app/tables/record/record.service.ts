@@ -309,6 +309,7 @@ export const recordService = {
                     body: data,
                     queryParams: {},
                 }),
+                execute: true,
                 logger,
             })
         }))

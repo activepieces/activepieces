@@ -200,13 +200,15 @@ async function addFlowsToServer(
                     saveSampleData: await webhookSimulationService(logger).exists(
                         flow.id,
                     ),
-                    payload: originalParams,
+                    payload: params,
+                    execute: true,
                 })
                 if (response.status !== StatusCodes.OK) {
                     return {
                         content: [{
                             type: 'text',
-                            text: `❌ Error executing flow ${flow.version.displayName}\n\n\`\`\`\n${JSON.stringify(response, null, 2) || 'Unknown error occurred'}\n\`\`\``                        }],
+                            text: `❌ Error executing flow ${flow.version.displayName}\n\n\`\`\`\n${JSON.stringify(response, null, 2) || 'Unknown error occurred'}\n\`\`\``,
+                        }],
                     }
                 }
                 return {

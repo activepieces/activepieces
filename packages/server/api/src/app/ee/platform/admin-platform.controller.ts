@@ -22,6 +22,10 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
         await adminPlatformService(req.log).retryRuns(req.body)
         return res.status(StatusCodes.OK).send()
     })
+    app.post('/flows/versions/connections', AdminAddConnectionsToFlowVersionsRequest, async (req, res) => {
+        await adminPlatformService(req.log).addConnectionsToFlowVersions()
+        return res.status(StatusCodes.OK).send()
+    })
 }
 
 const AdminAddPlatformRequest = {
@@ -34,11 +38,16 @@ const AdminAddPlatformRequest = {
 }
 
 
-
 const AdminRetryRunsRequest = {
     schema: {
         body: AdminRetryRunsRequestBody,
     },
+    config: {
+        allowedPrincipals: [PrincipalType.SUPER_USER],
+    },
+}
+
+const AdminAddConnectionsToFlowVersionsRequest = {
     config: {
         allowedPrincipals: [PrincipalType.SUPER_USER],
     },

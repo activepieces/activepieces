@@ -1504,7 +1504,9 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/63353528?v=4",
       "profile": "https://github.com/s31w4n",
       "contributions": [
-        "doc"
+        "doc",
+        "code",
+        "plugin"
       ]
     },
     {
@@ -1577,15 +1579,6 @@
       "profile": "https://github.com/ahmad-swanblocks",
       "contributions": [
         "plugin"
-      ]
-    },
-    {
-      "login": "you",
-      "name": "you",
-      "avatar_url": "https://avatars.githubusercontent.com/u/57100752?v=4",
-      "profile": "https://github.com/you",
-      "contributions": [
-        "code"
       ]
     },
     {
@@ -1676,6 +1669,33 @@
       "profile": "https://github.com/CarefulGuru",
       "contributions": [
         "plugin"
+      ]
+    },
+    {
+      "login": "AnkitSharmaOnGithub",
+      "name": "Ankit Kumar Sharma",
+      "avatar_url": "https://avatars.githubusercontent.com/u/53289186?v=4",
+      "profile": "https://github.com/AnkitSharmaOnGithub",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "nhnansari",
+      "name": "Naeem Hassan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/116841234?v=4",
+      "profile": "https://github.com/nhnansari",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "TimPetricola",
+      "name": "Tim Petricola",
+      "avatar_url": "https://avatars.githubusercontent.com/u/674084?v=4",
+      "profile": "http://timpetricola.com",
+      "contributions": [
+        "code"
       ]
     }
   ],
