@@ -259,12 +259,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 break }
 
                 case FlowOperationType.UPDATE_METADATA:
-                    return this.updateMetadata({
-                        id,
-                        projectId,
-                        metadata: operation.request.metadata,
-                    })
-
+                { await this.updateMetadata({
+                    id,
+                    projectId,
+                    metadata: operation.request.metadata,
+                })
+                break
+                }
                 default: {
                     let lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
                         flowId: id,
@@ -664,5 +665,5 @@ type ExistsByProjectAndStatusParams = {
 type UpdateMetadataParams = {
     id: FlowId
     projectId: ProjectId
-    metadata: Metadata
+    metadata: Metadata | null | undefined
 }

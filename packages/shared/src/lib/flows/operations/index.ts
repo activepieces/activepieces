@@ -160,7 +160,7 @@ export type ChangePublishedVersionIdRequest = Static<
 >
 
 export const UpdateMetadataRequest = Type.Object({
-    metadata: Metadata,
+    metadata: Nullable(Metadata),
 })
 export type UpdateMetadataRequest = Static<typeof UpdateMetadataRequest>
 
