@@ -1,23 +1,7 @@
-import {
-  PropertyType,
-  PiecePropertyMap,
-  PieceProperty,
-} from '@activepieces/pieces-framework';
-import {
-  FileType,
-  Trigger,
-  TriggerEventWithPayload,
-  isNil,
-  SeekPage,
-  McpPropertyType,
-} from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { useForm, useFormContext } from 'react-hook-form';
-
-import { useBuilderStateContext } from '../../builder-hooks';
-import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -32,6 +16,22 @@ import { Form } from '@/components/ui/form';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
+import {
+  PropertyType,
+  PiecePropertyMap,
+  PieceProperty,
+} from '@activepieces/pieces-framework';
+import {
+  FileType,
+  Trigger,
+  TriggerEventWithPayload,
+  isNil,
+  SeekPage,
+  McpPropertyType,
+} from '@activepieces/shared';
+
+import { useBuilderStateContext } from '../../builder-hooks';
+import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
 
 type McpToolTestingDialogProps = {
   open: boolean;
