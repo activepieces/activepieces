@@ -19,12 +19,12 @@ import dayjs from 'dayjs';
 import { getId } from '../common/getId';
 
 type PollingProps = {
-  rss_feed_urls: { url: string }[];
+  rss_feed_urls: string[];
 };
 
 export const rssNewItemListTrigger = createTrigger({
   name: 'new-item-list',
-  displayName: 'New Item In Feed List',
+  displayName: 'New Items in Multiple Feeds',
   description: 'Runs when a new item is added in one of the RSS feed',
   type: TriggerStrategy.POLLING,
   sampleData: {
@@ -227,10 +227,10 @@ export const rssNewItemListTrigger = createTrigger({
   },
 });
 
-async function getRssItemsFromMultipleUrls(urls: { url: string }[]): Promise<any[]> {
+async function getRssItemsFromMultipleUrls(urls: string[]): Promise<any[]> {
   const allItems: any[] = [];
   await Promise.all(
-    urls.map(async ({ url }) => {
+    urls.map(async ( url ) => {
       try {
         const items = await getRssItems(url);
         allItems.push(...items);

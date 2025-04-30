@@ -11,11 +11,4 @@ export const rssFeedUrls = Property.Array({
   description: 'List of RSS feed URLs',
   required: true,
   defaultValue: [],
-  properties: {
-    url: Property.ShortText({
-      displayName: 'URL',
-      description: 'RSS feed URL',
-      required: true,
-    }),
-  },
 });
