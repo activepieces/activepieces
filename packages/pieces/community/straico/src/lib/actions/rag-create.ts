@@ -12,7 +12,7 @@ export const createRag = createAction({
   auth: straicoAuth,
   name: 'create_rag',
   displayName: 'Create RAG',
-  description: 'Create a new RAG (Retrieval-Augmented Generation) base in the database',
+  description: 'Create a new RAG (Retrieval-Augmented Generation) base in the database.',
   props: {
     name: Property.ShortText({
       displayName: 'Name',
@@ -71,21 +71,19 @@ export const createRag = createAction({
       required: false,
       description: 'The separators to use for recursive chunking method'
     }),
-    breakpointThresholdType: Property.Dropdown({
+    breakpointThresholdType: Property.StaticDropdown({
       displayName: 'Breakpoint Threshold Type',
       required: false,
       description: 'The breakpoint threshold type for semantic chunking method',
-      refreshers: [],
-      options: async () => {
-        return {
+      options: {
+        disabled: false,
           options: [
             { label: 'Percentile', value: 'percentile' },
             { label: 'Interquartile', value: 'interquartile' },
             { label: 'Standard Deviation', value: 'standard_deviation' },
             { label: 'Gradient', value: 'gradient' },
           ],
-          disabled: false
-        };
+        
       },
     }),
     bufferSize: Property.Number({

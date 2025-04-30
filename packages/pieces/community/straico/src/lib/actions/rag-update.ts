@@ -12,18 +12,18 @@ export const updateRag = createAction({
   auth: straicoAuth,
   name: 'update_rag',
   displayName: 'Update RAG',
-  description: 'Update an existing RAG (Retrieval-Augmented Generation) base with additional files',
+  description: 'Update an existing RAG (Retrieval-Augmented Generation) base with additional files.',
   props: {
     ragId: Property.ShortText({
       displayName: 'RAG ID',
       required: true,
-      description: 'The ID of the RAG base to update',
+      description: 'The ID of the RAG base to update.',
     }),
     file: Property.File({
 			displayName: 'File',
 			required: true,
 			description:
-				'Represents the file to be attached. Accepted file extensions are: pdf, docx, csv, txt, xlsx, py',
+				'Represents the file to be attached. Accepted file extensions are: pdf, docx, csv, txt, xlsx, py.',
 		}),
   },
   async run({ auth, propsValue }) {

@@ -11,7 +11,7 @@ export const deleteRag = createAction({
   auth: straicoAuth,
   name: 'delete_rag',
   displayName: 'Delete RAG',
-  description: 'Delete a specific RAG (Retrieval-Augmented Generation) base by its ID',
+  description: 'Delete a specific RAG (Retrieval-Augmented Generation) base by its ID.',
   props: {
     ragId: Property.ShortText({
       displayName: 'RAG ID',

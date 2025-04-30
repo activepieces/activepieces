@@ -11,7 +11,7 @@ export const ragPromptCompletion = createAction({
   auth: straicoAuth,
   name: 'rag_prompt_completion',
   displayName: 'RAG Prompt Completion',
-  description: 'Send a prompt to a specific RAG (Retrieval-Augmented Generation) model',
+  description: 'Send a prompt to a specific RAG (Retrieval-Augmented Generation) model.',
   props: {
     ragId: Property.ShortText({
       displayName: 'RAG ID',

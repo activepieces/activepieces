@@ -11,12 +11,12 @@ export const getRagById = createAction({
   auth: straicoAuth,
   name: 'get_rag_by_id',
   displayName: 'Get RAG by ID',
-  description: 'Retrieve a specific RAG (Retrieval-Augmented Generation) base by its ID',
+  description: 'Retrieve a specific RAG (Retrieval-Augmented Generation) base by its ID.',
   props: {
     ragId: Property.ShortText({
       displayName: 'RAG ID',
       required: true,
-      description: 'The ID of the RAG base to retrieve',
+      description: 'The ID of the RAG base to retrieve.',
     }),
   },
   async run({ auth, propsValue }) {

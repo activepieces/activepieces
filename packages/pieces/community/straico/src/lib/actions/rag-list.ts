@@ -11,7 +11,7 @@ export const listRags = createAction({
   auth: straicoAuth,
   name: 'list_rags',
   displayName: 'List RAGs',
-  description: 'List all RAG (Retrieval-Augmented Generation) bases for a user',
+  description: 'List all RAG (Retrieval-Augmented Generation) bases for a user.',
   props: {},
   async run({ auth }) {
     const response = await httpClient.sendRequest<{
