@@ -1,8 +1,30 @@
 import { googleSlidesAuth } from '../../index';
 import { createAction, DynamicPropsValue, Property } from "@activepieces/pieces-framework";
-import { getSlide, PageElement, batchUpdate } from '../commons/common';
+import { getSlide, PageElement, batchUpdate, TableCell, TextElement } from '../commons/common';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
+
+function extractPlaceholders(content: string, fields: Record<string, any>, placeholder_format: string) {
+    const regex = placeholder_format === '[[]]' 
+        ? /\[\[([^\]]+)\]\]/g 
+        : /\{\{([^}]+)\}\}/g;
+        
+    const matches = content.match(regex);
+    if (matches) {
+        matches.forEach((match: string) => {
+            const matchValue = placeholder_format === '[[]]'
+                ? match.replace(/[[\]]/g, '')
+                : match.replace(/[{}]/g, '');
+                
+            const varName = matchValue.trim();
+            fields[matchValue] = Property.ShortText({
+                displayName: varName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                description: `Value for "${placeholder_format === '[[]]' ? `[[${varName}]]` : `{{${varName}}}`}"`,
+                required: false,
+            });
+        });
+    }
+}
 
 export const generateFromTemplate = createAction({
     name: 'generate_from_template',
@@ -15,11 +37,24 @@ export const generateFromTemplate = createAction({
             description: 'The ID of the templated presentation',
             required: true,
         }),
+        placeholder_format: Property.StaticDropdown({
+            displayName: 'Placeholder Format',
+            description: 'Choose the format of placeholders in your template',
+            required: true,
+            defaultValue: '{{}}',
+            options: {
+                disabled: false,
+                options: [
+                    { label: 'Curly Braces {{}}', value: '{{}}' },
+                    { label: 'Square Brackets [[]]', value: '[[]]' }
+                ],
+              },
+        }),
         table_data: Property.DynamicProperties({
             displayName: 'Table Data',
             required: true,
-            refreshers: ['template_presentation_id'],
-            props: async ({auth, template_presentation_id}) => {
+            refreshers: ['template_presentation_id', 'placeholder_format'],
+            props: async ({auth, template_presentation_id, placeholder_format}) => {
                 if (!template_presentation_id || !auth)
                     return {};
         
@@ -40,21 +75,25 @@ export const generateFromTemplate = createAction({
                     slide.pageElements?.forEach((element: PageElement) => {
                         if (element.shape?.text?.textElements) {
                             element.shape.text.textElements.forEach(textElement => {
-                                const content = textElement?.textRun?.content
+                                const content = textElement?.textRun?.content;
                                 if (content) {
-                                    const matches = content.match(/\{\{([^}]+)\}\}/g);
-                                    if (matches) {
-                                        matches.forEach((match: string) => {
-                                            const matchValue = match.replace(/[{}]/g, '');
-                                            const varName = matchValue.trim();
-                                            fields[matchValue] = Property.ShortText({
-                                                displayName: varName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-                                                description: `Value for "${matchValue}"`,
-                                                required: false,
-                                            });
+                                    extractPlaceholders(content, fields, placeholder_format as unknown as string);
+                                }
+                            });
+                        }
+                        
+                        if (element.table) {
+                            element.table.tableRows?.forEach(row => {
+                                row.tableCells?.forEach((cell: TableCell) => {
+                                    if (cell.text?.textElements) {
+                                        cell.text.textElements.forEach((textElement: TextElement) => {
+                                            const content = textElement?.textRun?.content;
+                                            if (content) {
+                                                extractPlaceholders(content, fields, placeholder_format as unknown as string);
+                                            }
                                         });
                                     }
-                                }
+                                });
                             });
                         }
                     });
@@ -66,7 +105,7 @@ export const generateFromTemplate = createAction({
     },
     async run(context) {
         const { access_token } = context.auth;
-        const { template_presentation_id, table_data } = context.propsValue;
+        const { template_presentation_id, placeholder_format, table_data } = context.propsValue;
 
         try {
             const authClient = new OAuth2Client();
@@ -88,10 +127,14 @@ export const generateFromTemplate = createAction({
 
             const requests = Object.entries(table_data)
                 .map(([key, value]): { replaceAllText: unknown } => {
+                    const placeholder = placeholder_format === '[[]]' 
+                        ? `[[${key}]]` 
+                        : `{{${key}}}`;
+
                     return {
                         replaceAllText: {
                             containsText: {
-                                text: `{{${key}}}`,
+                                text: placeholder,
                                 matchCase: true
                             },
                             replaceText: value as string

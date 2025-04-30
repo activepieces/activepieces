@@ -1670,6 +1670,33 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "AnkitSharmaOnGithub",
+      "name": "Ankit Kumar Sharma",
+      "avatar_url": "https://avatars.githubusercontent.com/u/53289186?v=4",
+      "profile": "https://github.com/AnkitSharmaOnGithub",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "nhnansari",
+      "name": "Naeem Hassan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/116841234?v=4",
+      "profile": "https://github.com/nhnansari",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "TimPetricola",
+      "name": "Tim Petricola",
+      "avatar_url": "https://avatars.githubusercontent.com/u/674084?v=4",
+      "profile": "http://timpetricola.com",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
