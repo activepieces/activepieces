@@ -130,6 +130,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         if (userId) {
             mutatedFlowVersion.updatedBy = userId
         }
+        mutatedFlowVersion.connectionIds = flowStructureUtil.extractConnectionIds(mutatedFlowVersion)
         return flowVersionRepo(entityManager).save(
             sanitizeObjectForPostgresql(mutatedFlowVersion),
         )
@@ -259,6 +260,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 displayName: 'Select Trigger',
             },
             schemaVersion: LATEST_SCHEMA_VERSION,
+            connectionIds: [],
             valid: false,
             state: FlowVersionState.DRAFT,
         }

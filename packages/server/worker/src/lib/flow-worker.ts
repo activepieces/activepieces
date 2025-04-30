@@ -70,7 +70,7 @@ async function run<T extends QueueName>(queueName: T, log: FastifyBaseLogger): P
         let engineToken: string | undefined
         try {
             const job = await jobPoller.poll(workerToken, queueName)
-            log.debug({
+            log.trace({
                 job: {
                     queueName,
                     jobId: job?.id,

@@ -1,12 +1,22 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Trash, Globe, AppWindow, Tag, User } from 'lucide-react';
+import {
+  CheckIcon,
+  Trash,
+  Globe,
+  AppWindow,
+  Tag,
+  User,
+  Replace,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { FlowsDialog } from '@/app/connections/flows-connection-dialog';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
+import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-dialog';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -46,6 +56,7 @@ import {
   Permission,
   PlatformRole,
 } from '@activepieces/shared';
+
 function AppConnectionsPage() {
   const [refresh, setRefresh] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -360,6 +371,7 @@ function AppConnectionsPage() {
                 refetch();
               }}
             />
+            <FlowsDialog connection={row.original} />
           </div>
         );
       },
@@ -413,25 +425,48 @@ function AppConnectionsPage() {
       {
         render: () => {
           return (
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToWriteAppConnection}
-            >
-              <NewConnectionDialog
-                isGlobalConnection={false}
-                onConnectionCreated={() => {
-                  setRefresh(refresh + 1);
-                  refetch();
-                }}
+            <div className="flex items-center gap-2">
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToWriteAppConnection}
               >
-                <Button
-                  variant="default"
-                  size="sm"
-                  disabled={!userHasPermissionToWriteAppConnection}
+                <ReplaceConnectionsDialog
+                  projectId={projectId}
+                  connections={data?.data || []}
+                  onConnectionMerged={() => {
+                    setRefresh(refresh + 1);
+                    refetch();
+                  }}
                 >
-                  {t('New Connection')}
-                </Button>
-              </NewConnectionDialog>
-            </PermissionNeededTooltip>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!userHasPermissionToWriteAppConnection}
+                  >
+                    <Replace className="h-4 w-4" />
+                    <span className="ml-2">{t('Replace')}</span>
+                  </Button>
+                </ReplaceConnectionsDialog>
+              </PermissionNeededTooltip>
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToWriteAppConnection}
+              >
+                <NewConnectionDialog
+                  isGlobalConnection={false}
+                  onConnectionCreated={() => {
+                    setRefresh(refresh + 1);
+                    refetch();
+                  }}
+                >
+                  <Button
+                    variant="default"
+                    size="sm"
+                    disabled={!userHasPermissionToWriteAppConnection}
+                  >
+                    {t('New Connection')}
+                  </Button>
+                </NewConnectionDialog>
+              </PermissionNeededTooltip>
+            </div>
           );
         },
       },
