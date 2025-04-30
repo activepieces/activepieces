@@ -1,19 +1,3 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
-import dayjs from 'dayjs';
-import { t } from 'i18next';
-import { useForm, useFormContext } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
-import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import {
   PropertyType,
   PiecePropertyMap,
@@ -27,9 +11,27 @@ import {
   SeekPage,
   McpPropertyType,
 } from '@activepieces/shared';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import dayjs from 'dayjs';
+import { t } from 'i18next';
+import { useForm, useFormContext } from 'react-hook-form';
+
 import { useBuilderStateContext } from '../../builder-hooks';
 import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
+
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
+import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 
 type McpToolTestingDialogProps = {
   open: boolean;
@@ -87,10 +89,12 @@ function McpToolTestingDialog({
 
   const testingForm = useForm<Record<string, any>>({
     shouldFocusError: true,
-    defaultValues: formProps.reduce((acc, field: McpFormField) => {
-      acc[field.name] = field.type === McpPropertyType.BOOLEAN ? false : '';
-      return acc;
-    },{} as Record<string, any>),
+    defaultValues: formProps
+      .filter((field: McpFormField) => field.name.trim() !== '')
+      .reduce((acc, field: McpFormField) => {
+        acc[field.name] = field.type === McpPropertyType.BOOLEAN ? false : '';
+        return acc;
+      }, {} as Record<string, any>),
     resolver: (values) => {
       const errors = formProps.reduce((acc, field: McpFormField) => {
         if (
@@ -112,16 +116,12 @@ function McpToolTestingDialog({
       };
     },
     mode: 'onChange',
-  }
-);
-
+  });
 
   const { mutate: saveMockAsSampleData, isPending: isSavingMockdata } =
     useMutation({
       mutationFn: async (data: Record<string, any>) => {
-        const mockData = {
-          parameters: data,
-        };
+        const mockData = data;
 
         const response = await triggerEventsApi.saveTriggerMockdata(
           flowId,
@@ -195,29 +195,29 @@ function McpToolTestingDialog({
 
     acc[field.name] = pieceProperty;
     return acc;
-  },{} as PiecePropertyMap);
+  }, {} as PiecePropertyMap);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-xl flex flex-col max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle className='px-0.5'>{t('Tool Sample Data')}</DialogTitle>
-          <DialogDescription className='px-0.5'>
-            {t('Fill in the following fields to use them as sample data for the trigger.')}
+          <DialogTitle className="px-0.5">{t('Tool Sample Data')}</DialogTitle>
+          <DialogDescription className="px-0.5">
+            {t(
+              'Fill in the following fields to use them as sample data for the trigger.',
+            )}
           </DialogDescription>
         </DialogHeader>
 
-      
-            <Form {...testingForm}>
-            
-              <form
-                className="grid space-y-4"
-                onSubmit={testingForm.handleSubmit((data) =>
-                  saveMockAsSampleData(data),
-                )}
-              >
-                <ScrollArea className="flex-1 max-h-[50vh]">
-                <div className="py-4">
+        <Form {...testingForm}>
+          <form
+            className="grid space-y-4"
+            onSubmit={testingForm.handleSubmit((data) =>
+              saveMockAsSampleData(data),
+            )}
+          >
+            <ScrollArea className="flex-1 max-h-[50vh]">
+              <div className="py-4">
                 {Object.keys(pieceProps).length > 0 ? (
                   <div className="space-y-4">
                     {Object.entries(pieceProps).map(
@@ -226,7 +226,10 @@ function McpToolTestingDialog({
                           testingForm.formState.errors[fieldName];
 
                         return (
-                          <div key={fieldName} className="grid space-y-2 px-0.5">
+                          <div
+                            key={fieldName}
+                            className="grid space-y-2 px-0.5"
+                          >
                             <AutoPropertiesFormComponent
                               props={{ [fieldName]: fieldProps }}
                               allowDynamicValues={false}
@@ -252,35 +255,29 @@ function McpToolTestingDialog({
                     </p>
                   </div>
                 )}
-                     </div>
-                     </ScrollArea>
-                 <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isSavingMockdata}
-          >
-            {t('Cancel')}
-          </Button>
-          <Button
-            type="submit"
-            loading={isSavingMockdata}
-            onClick={testingForm.handleSubmit(
-              (data) => saveMockAsSampleData(data)
-            )}
-          >
-            {t('Save')}
-          </Button>
-        </DialogFooter>
-             
-
-     
-        </form>
-              
-              </Form>
-
-       
+              </div>
+            </ScrollArea>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSavingMockdata}
+              >
+                {t('Cancel')}
+              </Button>
+              <Button
+                type="submit"
+                loading={isSavingMockdata}
+                onClick={testingForm.handleSubmit((data) =>
+                  saveMockAsSampleData(data),
+                )}
+              >
+                {t('Save')}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

@@ -156,12 +156,12 @@ async function addFlowsToServer(
         const inputSchema = triggerSettings.input?.inputSchema
         const returnsResponse = triggerSettings.input?.returnsResponse
 
-        // Create a mapping of transformed parameter names to original names
+
         const paramNameMapping = Object.fromEntries(
-            inputSchema.map((prop) => [
-                prop.name.replace(/\s+/g, '-'),
-                prop.name,
-            ]),
+            inputSchema.map((prop) => {
+                const transformedName = prop.name.replace(/\s+/g, '-')
+                return [transformedName, prop.name]
+            }),
         )
 
         const zodFromInputSchema = Object.fromEntries(
@@ -178,10 +178,10 @@ async function addFlowsToServer(
             async (params) => { 
                 // Transform parameter names back to original names for the payload
                 const originalParams = Object.fromEntries(
-                    Object.entries(params).map(([key, value]) => [
-                        paramNameMapping[key] || key,
-                        value,
-                    ]),
+                    Object.entries(params).map(([key, value]) => {
+                        const originalName = paramNameMapping[key]
+                        return [originalName || key, value]
+                    }),
                 )
 
                 const response = await webhookService.handleWebhook({
@@ -200,7 +200,7 @@ async function addFlowsToServer(
                     saveSampleData: await webhookSimulationService(logger).exists(
                         flow.id,
                     ),
-                    payload: params,
+                    payload: originalParams,
                     execute: true,
                 })
                 if (response.status !== StatusCodes.OK) {
