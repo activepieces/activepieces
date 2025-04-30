@@ -1,9 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import React, { useEffect } from 'react';
-import { FormProvider, useForm, useFormContext } from 'react-hook-form';
-
+import { useForm, useFormContext } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,7 +12,6 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { toast } from '@/components/ui/use-toast';
 import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import {
@@ -30,9 +27,9 @@ import {
   SeekPage,
   McpPropertyType,
 } from '@activepieces/shared';
-
 import { useBuilderStateContext } from '../../builder-hooks';
 import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
+import { Form } from '@/components/ui/form';
 
 type McpToolTestingDialogProps = {
   open: boolean;
@@ -40,9 +37,9 @@ type McpToolTestingDialogProps = {
   flowId: string;
   flowVersionId: string;
   projectId: string;
-  setErrorMessage: (errorMessage: string | undefined) => void;
   setLastTestDate: (lastTestDate: string) => void;
 };
+
 
 interface McpFormField {
   name: string;
@@ -58,15 +55,11 @@ function McpToolTestingDialog({
   flowId,
   flowVersionId,
   projectId,
-  setErrorMessage,
   setLastTestDate,
 }: McpToolTestingDialogProps) {
   const form = useFormContext<Trigger>();
   const formValues = form.getValues();
-  const formProps = React.useMemo(
-    () => formValues.settings.input.inputSchema || [],
-    [formValues.settings.input.inputSchema],
-  );
+  const formProps = formValues.settings.input.inputSchema as McpFormField[];
 
   const { setSampleData, setSampleDataInput } = useBuilderStateContext(
     (state) => ({
@@ -94,35 +87,39 @@ function McpToolTestingDialog({
   }
 
   const testingForm = useForm<Record<string, any>>({
-    defaultValues: {},
+    shouldFocusError:true,
+    defaultValues: formProps.reduce((acc, field: McpFormField) => {
+      acc[field.name] = field.type === McpPropertyType.BOOLEAN ? false : '';
+      return acc;
+    },{} as Record<string, any>),
     resolver: (values) => {
-      const errors: Record<string, { type: string; message: string }> = {};
-
-      formProps.forEach((field: McpFormField) => {
+      const errors = 
+      formProps.reduce((acc, field: McpFormField) => {
         if (
           field.required &&
           field.type !== McpPropertyType.BOOLEAN &&
           !values[field.name]
         ) {
-          errors[field.name] = {
+          acc[field.name] = {
             type: 'required',
             message: t('{field} is required', { field: field.name }),
           };
         }
-      });
+        return acc;
+      },{} as Record<string, { type: string; message: string }>);
+
 
       return {
         values: Object.keys(errors).length === 0 ? values : {},
         errors,
       };
     },
-  });
+    mode:'onChange'
+  }
 
-  useEffect(() => {
-    if (open) {
-      testingForm.reset();
-    }
-  }, [open, testingForm]);
+);
+
+
 
   const { mutate: saveMockAsSampleData, isPending: isSavingMockdata } =
     useMutation({
@@ -192,43 +189,40 @@ function McpToolTestingDialog({
     staleTime: 0,
   });
 
-  const pieceProps = React.useMemo(() => {
-    const piecePropsMap: PiecePropertyMap = {};
+  const pieceProps = formProps.reduce((acc, field: McpFormField) => {
+    const pieceProperty = {
+      displayName: field.name,
+      description: field.description || '',
+      required: field.required,
+      type: mapMcpTypeToPropertyType(field.type),
+      defaultValue: field.defaultValue,
+    } as PieceProperty;
 
-    formProps.forEach((field: McpFormField) => {
-      const pieceProperty = {
-        displayName: field.name,
-        description: field.description || '',
-        required: field.required,
-        type: mapMcpTypeToPropertyType(field.type),
-        defaultValue: field.defaultValue,
-      } as PieceProperty;
-
-      piecePropsMap[field.name] = pieceProperty;
-    });
-
-    return piecePropsMap;
-  }, [formProps]);
+    acc[field.name] = pieceProperty;
+    return acc;
+  },{} as PiecePropertyMap);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-xl flex flex-col max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle>{t('Test Tool')}</DialogTitle>
-          <DialogDescription>
-            {t('Enter sample values to test your tool.')}
+          <DialogTitle className='px-0.5'>{t('Tool Sample Data')}</DialogTitle>
+          <DialogDescription className='px-0.5'>
+            {t('Fill in the following fields to use them as sample data for the trigger.')}
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 overflow-y-auto">
-          <div className="py-4">
-            <FormProvider {...testingForm}>
+      
+            <Form {...testingForm}>
+            
               <form
                 className="grid space-y-4"
                 onSubmit={testingForm.handleSubmit((data) =>
                   saveMockAsSampleData(data),
                 )}
               >
+                <ScrollArea className="flex-1 max-h-[50vh]">
+                <div className="py-4">
                 {Object.keys(pieceProps).length > 0 ? (
                   <div className="space-y-4">
                     {Object.entries(pieceProps).map(
@@ -237,7 +231,7 @@ function McpToolTestingDialog({
                           testingForm.formState.errors[fieldName];
 
                         return (
-                          <div key={fieldName} className="grid space-y-2">
+                          <div key={fieldName} className="grid space-y-2 px-0.5">
                             <AutoPropertiesFormComponent
                               props={{ [fieldName]: fieldProps }}
                               allowDynamicValues={false}
@@ -257,18 +251,15 @@ function McpToolTestingDialog({
                     )}
                   </div>
                 ) : (
-                  <div className="p-4 rounded-lg bg-muted text-center">
+                  <div className="p-4 rounded-lg text-center">
                     <p className="text-sm text-muted-foreground">
                       {t('No input fields defined in the schema')}
                     </p>
                   </div>
                 )}
-              </form>
-            </FormProvider>
-          </div>
-        </ScrollArea>
-
-        <DialogFooter>
+                     </div>
+                     </ScrollArea>
+                 <DialogFooter>
           <Button
             type="button"
             variant="outline"
@@ -281,21 +272,20 @@ function McpToolTestingDialog({
             type="submit"
             loading={isSavingMockdata}
             onClick={testingForm.handleSubmit(
-              (data) => saveMockAsSampleData(data),
-              (errors) => {
-                console.error('Validation errors:', errors);
-                toast({
-                  title: t('Validation Error'),
-                  description: t('Please fill in all required fields.'),
-                  variant: 'destructive',
-                  duration: 5000,
-                });
-              },
+              (data) => saveMockAsSampleData(data)
             )}
           >
-            {isSavingMockdata ? t('Testing...') : t('Test')}
+            {t('Save')}
           </Button>
         </DialogFooter>
+             
+
+     
+        </form>
+              
+              </Form>
+
+       
       </DialogContent>
     </Dialog>
   );

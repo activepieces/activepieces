@@ -82,13 +82,13 @@ const TestTriggerSection = React.memo(
       version: formValues.settings.pieceVersion,
     });
 
-    const isSimulation =
-      pieceModel?.triggers?.[formValues.settings.triggerName]?.testStrategy ===
-      TriggerTestStrategy.SIMULATION;
+
     const mockData =
       pieceModel?.triggers?.[formValues.settings.triggerName]?.sampleData;
     const isMcpTool = formValues.settings.triggerName === 'mcp_tool';
-
+    const isSimulation =
+      pieceModel?.triggers?.[formValues.settings.triggerName]?.testStrategy ===
+      TriggerTestStrategy.SIMULATION && !isMcpTool;
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
       undefined,
     );
@@ -443,17 +443,16 @@ const TestTriggerSection = React.memo(
             </TestButtonTooltip>
           </div>
         )}
-        {isMcpToolTestingDialogOpen && (
+       
           <McpToolTestingDialog
             open={isMcpToolTestingDialogOpen}
             onOpenChange={setIsMcpToolTestingDialogOpen}
-            setErrorMessage={setErrorMessage}
             setLastTestDate={setLastTestDate}
             flowId={flowId}
             flowVersionId={flowVersionId}
             projectId={projectId}
           />
-        )}
+     
       </div>
     );
   },
