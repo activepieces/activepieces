@@ -13,7 +13,7 @@ export class AddConnectionIdsToFlowVersion1745530653784 implements MigrationInte
             await queryRunner.query('UPDATE "flow_version" SET "connectionIds" = $1', [[]])
             return
         }
-        else{
+        else {
             // First add the column as nullable
             await queryRunner.query(`
                 ALTER TABLE "flow_version"
