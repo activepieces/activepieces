@@ -486,6 +486,9 @@
       "@activepieces/piece-mysql": [
         "packages/pieces/community/mysql/src/index.ts"
       ],
+      "@activepieces/piece-netsuite": [
+        "packages/pieces/community/netsuite/src/index.ts"
+      ],
       "@activepieces/piece-nifty": [
         "packages/pieces/community/nifty/src/index.ts"
       ],
