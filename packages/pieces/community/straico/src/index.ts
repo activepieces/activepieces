@@ -5,9 +5,10 @@ import {
   createCustomApiCallAction,
   httpClient,
 } from '@activepieces/pieces-common';
-import { baseUrl } from './lib/common/common';
+import { baseUrlv1 } from './lib/common/common';
 import { promptCompletion } from './lib/actions/prompt-completion';
 import { imageGeneration } from './lib/actions/image-generation';
+import { fileUpload } from './lib/actions/file-upload';
 import { PieceCategory } from '@activepieces/shared';
 
 const markdownDescription = `
@@ -26,7 +27,7 @@ export const straicoAuth = PieceAuth.SecretText({
       await httpClient.sendRequest<{
         data: { model: string }[];
       }>({
-        url: `${baseUrl}/models`,
+        url: `${baseUrlv1}/models`,
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
@@ -56,9 +57,10 @@ export const straico = createPiece({
   actions: [
     promptCompletion,
     imageGeneration,
+    fileUpload,
     createCustomApiCallAction({
       auth: straicoAuth,
-      baseUrl: () => baseUrl,
+      baseUrl: () => baseUrlv1,
       authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${auth}`,
