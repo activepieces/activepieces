@@ -8,18 +8,25 @@ export class AddConnectionIdsToFlowVersion1745530653784 implements MigrationInte
     public async up(queryRunner: QueryRunner): Promise<void> {
         const edition = system.getEdition()
 
-        // First add the column as nullable
-        await queryRunner.query(`
-            ALTER TABLE "flow_version"
-            ADD "connectionIds" character varying array
-        `)
+        if (edition === ApEdition.CLOUD) {
+            // update the connection with empty array
+            await queryRunner.query('UPDATE "flow_version" SET "connectionIds" = $1', [[]])
+            return
+        }
+        else{
+            // First add the column as nullable
+            await queryRunner.query(`
+                ALTER TABLE "flow_version"
+                ADD "connectionIds" character varying array
+            `)
 
-        // Update existing rows
-        const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
-        for (const flowVersion of flowVersions) {
-            const connectionIds = edition !== ApEdition.CLOUD ? flowStructureUtil.extractConnectionIds(flowVersion) : []
+            // Update existing rows
+            const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
+            for (const flowVersion of flowVersions) {
+                const connectionIds = flowStructureUtil.extractConnectionIds(flowVersion)
 
-            await queryRunner.query('UPDATE flow_version SET "connectionIds" = $1 WHERE id = $2', [connectionIds, flowVersion.id])
+                await queryRunner.query('UPDATE flow_version SET "connectionIds" = $1 WHERE id = $2', [connectionIds, flowVersion.id])
+            }
         }
 
         // Now make the column NOT NULL
