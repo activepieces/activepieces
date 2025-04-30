@@ -410,6 +410,8 @@ const validateConnectionValue = async (
             }, log)
             return auth
         }
+        case AppConnectionType.NO_AUTH:
+            break
         case AppConnectionType.CUSTOM_AUTH:
         case AppConnectionType.BASIC_AUTH:
         case AppConnectionType.SECRET_TEXT:
