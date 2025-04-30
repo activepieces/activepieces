@@ -4,6 +4,7 @@ import {
   AppConnectionWithoutSensitiveData,
   ListAppConnectionOwnersRequestQuery,
   ListAppConnectionsRequestQuery,
+  ReplaceAppConnectionsRequestBody,
   SeekPage,
   UpdateConnectionValueRequestBody,
   UpsertAppConnectionRequestBody,
@@ -37,6 +38,9 @@ export const appConnectionsApi = {
       `/v1/app-connections/${id}`,
       request,
     );
+  },
+  replace(request: ReplaceAppConnectionsRequestBody): Promise<void> {
+    return api.post<void>(`/v1/app-connections/replace`, request);
   },
   getOwners(
     request: ListAppConnectionOwnersRequestQuery,

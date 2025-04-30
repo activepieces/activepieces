@@ -8,6 +8,7 @@ import {
     ListAppConnectionsRequestQuery,
     Permission,
     PrincipalType,
+    ReplaceAppConnectionsRequestBody,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
     UpdateConnectionValueRequestBody,
@@ -95,6 +96,19 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
         }
     },
     )
+
+    app.post('/replace', ReplaceAppConnectionsRequest, async (request, reply) => {
+        const { sourceAppConnectionId, targetAppConnectionId } = request.body
+        await appConnectionService(request.log).replace({
+            sourceAppConnectionId,
+            targetAppConnectionId,
+            projectId: request.principal.projectId,
+            platformId: request.principal.platform.id,
+            userId: request.principal.id,
+        })
+        await reply.status(StatusCodes.OK).send()
+    })
+
     app.delete('/:id', DeleteAppConnectionRequest, async (request, reply): Promise<void> => {
         const connection = await appConnectionService(request.log).getOneOrThrowWithoutValue({
             id: request.params.id,
@@ -154,6 +168,22 @@ const UpdateConnectionValueRequest = {
     },
 }
 
+const ReplaceAppConnectionsRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        permission: Permission.WRITE_APP_CONNECTION,
+    },
+    schema: {
+        tags: ['app-connections'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Replace app connections',
+        body: ReplaceAppConnectionsRequestBody,
+        response: {
+            [StatusCodes.NO_CONTENT]: Type.Never(),
+        },
+    },
+}
+
 const ListAppConnectionsRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
@@ -184,8 +214,6 @@ const ListAppConnectionOwnersRequest = {
         },
     },
 }
-
-
 
 const DeleteAppConnectionRequest = {
     config: {
