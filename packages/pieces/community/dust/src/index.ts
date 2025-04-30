@@ -8,7 +8,7 @@ import { replyToConversation } from './lib/actions/reply-to-conversation';
 import { upsertDocument } from './lib/actions/upsert-document';
 import { addFragmentToConversation } from './lib/actions/add-fragment-to-conversation';
 import { getConversation } from './lib/actions/get-conversation';
-
+import { uploadFile } from './lib/actions/upload-file';
 export const dustAuth = PieceAuth.CustomAuth({
   description: 'Dust authentication requires an API key.',
   required: true,
@@ -43,6 +43,7 @@ export const dust = createPiece({
     replyToConversation,
     addFragmentToConversation,
     upsertDocument,
+    uploadFile,
   ],
   triggers: [],
 });

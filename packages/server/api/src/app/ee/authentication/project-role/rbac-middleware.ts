@@ -53,14 +53,13 @@ export async function assertUserHasPermissionToFlow(
         case FlowOperationType.USE_AS_DRAFT:
         case FlowOperationType.ADD_BRANCH:
         case FlowOperationType.DELETE_BRANCH:
-        case FlowOperationType.DUPLICATE_BRANCH: {
-            await assertRoleHasPermission(principal, Permission.WRITE_FLOW, log)
-            break
-        }
+        case FlowOperationType.DUPLICATE_BRANCH:
+        case FlowOperationType.UPDATE_METADATA:
         case FlowOperationType.SET_SKIP_ACTION: {
             await assertRoleHasPermission(principal, Permission.WRITE_FLOW, log)
             break
         }
+      
     }
 }
 
