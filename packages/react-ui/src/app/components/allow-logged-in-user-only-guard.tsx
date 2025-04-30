@@ -16,7 +16,6 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
 }: AllowOnlyLoggedInUserOnlyGuardProps) => {
   const { reset } = useTelemetry();
   const location = useLocation();
-
   if (!authenticationSession.isLoggedIn()) {
     const searchParams = new URLSearchParams();
     searchParams.set('from', location.pathname + location.search);

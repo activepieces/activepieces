@@ -5,9 +5,16 @@ import {
   createCustomApiCallAction,
   httpClient,
 } from '@activepieces/pieces-common';
-import { baseUrl } from './lib/common/common';
+import { baseUrlv1 } from './lib/common/common';
 import { promptCompletion } from './lib/actions/prompt-completion';
 import { imageGeneration } from './lib/actions/image-generation';
+import { fileUpload } from './lib/actions/file-upload';
+import { createRag } from './lib/actions/rag-create';
+import { listRags } from './lib/actions/rag-list';
+import { getRagById } from './lib/actions/rag-get-by-id';
+import { updateRag } from './lib/actions/rag-update';
+import { deleteRag } from './lib/actions/rag-delete';
+import { ragPromptCompletion } from './lib/actions/rag-prompt-completion';
 import { PieceCategory } from '@activepieces/shared';
 
 const markdownDescription = `
@@ -26,7 +33,7 @@ export const straicoAuth = PieceAuth.SecretText({
       await httpClient.sendRequest<{
         data: { model: string }[];
       }>({
-        url: `${baseUrl}/models`,
+        url: `${baseUrlv1}/models`,
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
@@ -56,9 +63,16 @@ export const straico = createPiece({
   actions: [
     promptCompletion,
     imageGeneration,
+    fileUpload,
+    createRag,
+    listRags,
+    getRagById,
+    updateRag,
+    deleteRag,
+    ragPromptCompletion,
     createCustomApiCallAction({
       auth: straicoAuth,
-      baseUrl: () => baseUrl,
+      baseUrl: () => baseUrlv1,
       authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${auth}`,

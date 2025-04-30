@@ -62,6 +62,7 @@ export class EngineWorker {
         assertNotNullOrUndefined(worker, 'Worker should not be undefined')
         const environment = workerMachine.getSettings().ENVIRONMENT
         const timeout = getEngineTimeout(operationType, workerMachine.getSettings().FLOW_TIMEOUT_SECONDS, workerMachine.getSettings().TRIGGER_TIMEOUT_SECONDS)
+        let didTimeout = false
         try {
 
             const result = await new Promise<WorkerResult>((resolve, reject) => {
@@ -70,21 +71,14 @@ export class EngineWorker {
 
                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
                 const timeoutWorker = setTimeout(() => {
-                    resolve({
-                        engine: {
-                            status: EngineResponseStatus.TIMEOUT,
-                            response: {},
-                        },
-                        stdError: '',
-                        stdOut: '',
-                    })
+                    didTimeout = true
                     worker.kill()
                 }, timeout * 1000)
 
                 worker.on('message', (m: { type: string, message: unknown }) => {
                     switch (m.type) {
                         case 'result':
-                            cleanUp(worker, timeoutWorker, this.workers, workerIndex)
+                            cleanUp(worker, timeoutWorker)
                             resolve({
                                 engine: m.message as EngineResponse<unknown>,
                                 stdOut,
@@ -98,14 +92,14 @@ export class EngineWorker {
                             stdError += m.message as string
                             break
                         case 'error':
-                            cleanUp(worker, timeoutWorker, this.workers, workerIndex)
+                            cleanUp(worker, timeoutWorker)
                             reject({ status: EngineResponseStatus.ERROR, response: m.message })
                             break
                     }
                 })
 
                 worker.on('error', (error) => {
-                    cleanUp(worker, timeoutWorker, this.workers, workerIndex)
+                    cleanUp(worker, timeoutWorker)
                     this.log.info({
                         error,
                     }, 'Worker returned something in stderr')
@@ -124,9 +118,20 @@ export class EngineWorker {
                         signal,
                     }, 'Worker exited')
 
-                    cleanUp(worker, timeoutWorker, this.workers, workerIndex)
+                    cleanUp(worker, timeoutWorker)
+                    this.workers[workerIndex] = undefined
 
-                    if (isRamIssue) {
+                    if (didTimeout) {
+                        resolve({
+                            engine: {
+                                status: EngineResponseStatus.TIMEOUT,
+                                response: {},
+                            },
+                            stdError: '',
+                            stdOut: '',
+                        })
+                    }
+                    else if (isRamIssue) {
                         resolve({
                             engine: {
                                 status: EngineResponseStatus.MEMORY_ISSUE,
@@ -135,6 +140,9 @@ export class EngineWorker {
                             stdError,
                             stdOut,
                         })
+                    }
+                    else {
+                        reject({ status: EngineResponseStatus.ERROR, response: 'Worker exited with code ' + code + ' and signal ' + signal })
                     }
                 })
                 worker.send({ operation, operationType })
@@ -160,7 +168,7 @@ export class EngineWorker {
                         error: e,
                     }, 'Error terminating worker')
                 }
-                this.workers[workerIndex] = undefined  
+                this.workers[workerIndex] = undefined
             }
             this.log.debug({
                 workerIndex,
@@ -204,10 +212,9 @@ export class EngineWorker {
 
 }
 
-function cleanUp(worker: ChildProcess, timeout: NodeJS.Timeout, workers: (ChildProcess | undefined)[], workerIndex: number): void {
+function cleanUp(worker: ChildProcess, timeout: NodeJS.Timeout): void {
     worker.removeAllListeners('exit')
     worker.removeAllListeners('error')
     worker.removeAllListeners('message')
     clearTimeout(timeout)
-    workers[workerIndex] = undefined
 }

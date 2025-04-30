@@ -182,6 +182,7 @@ async function addFlowsToServer(
                         flow.id,
                     ),
                     payload: params,
+                    execute: true,
                 })
                 if (response.status !== StatusCodes.OK) {
                     return {
