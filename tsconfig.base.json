@@ -87,6 +87,9 @@
       "@activepieces/piece-azure-openai": [
         "packages/pieces/community/azure-openai/src/index.ts"
       ],
+      "@activepieces/piece-backblaze": [
+        "packages/pieces/community/backblaze/src/index.ts"
+      ],
       "@activepieces/piece-bamboohr": [
         "packages/pieces/community/bamboohr/src/index.ts"
       ],
@@ -586,8 +589,8 @@
       "@activepieces/piece-robolly": [
         "packages/pieces/community/robolly/src/index.ts"
       ],
-      "@activepieces/piece-rounded-studio": [
-        "packages/pieces/community/rounded-studio/src/index.ts"
+      "@activepieces/piece-call-rounded": [
+        "packages/pieces/community/call-rounded/src/index.ts"
       ],
       "@activepieces/piece-rss": ["packages/pieces/community/rss/src/index.ts"],
       "@activepieces/piece-saastic": [

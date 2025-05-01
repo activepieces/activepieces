@@ -65,7 +65,9 @@ export const McpPieceDialog = React.memo(
       },
       onSuccess: () => {
         toast({
-          description: t('Piece is added successfully'),
+          description: mcpPieceToUpdate
+            ? t('Piece is updated successfully')
+            : t('Piece is added successfully'),
           duration: 3000,
         });
         refetchMcp();
@@ -76,18 +78,25 @@ export const McpPieceDialog = React.memo(
         toast({
           variant: 'destructive',
           title: t('Error'),
-          description: t('Failed to add piece'),
+          description: mcpPieceToUpdate
+            ? t('Failed to update piece')
+            : t('Failed to add piece'),
           duration: 5000,
         });
       },
     });
-
     const { pieces, isLoading: piecesLoading } = piecesHooks.usePieces({});
     const piecesOptions =
-      pieces?.map((piece) => ({
-        label: piece.displayName,
-        value: piece.name,
-      })) ?? [];
+      pieces
+        ?.filter(
+          (piece) =>
+            piece.name !== '@activepieces/piece-mcp' &&
+            piece.name !== '@activepieces/piece-webhook',
+        )
+        .map((piece) => ({
+          label: piece.displayName,
+          value: piece.name,
+        })) ?? [];
 
     const form = useForm<{ pieceName: string; connectionId: string | null }>({
       defaultValues: {
@@ -123,7 +132,7 @@ export const McpPieceDialog = React.memo(
           isNil(mcpPieceToUpdate)
         ) {
           errors.pieceName = {
-            message: t('Your MCP server already has this tool'),
+            message: t('Your MCP server already has this piece'),
             type: 'required',
           };
         }
@@ -195,12 +204,12 @@ export const McpPieceDialog = React.memo(
             <DialogHeader>
               <DialogTitle>
                 {mcpPieceToUpdate
-                  ? `${t('Edit Tool')} (${
+                  ? `${t('Edit Piece')} (${
                       pieces?.find(
                         (piece) => piece.name === mcpPieceToUpdate.pieceName,
                       )?.displayName
                     })`
-                  : t('Add Tool')}
+                  : t('Add Piece')}
               </DialogTitle>
             </DialogHeader>
 

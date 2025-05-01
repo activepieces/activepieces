@@ -77,7 +77,7 @@ export const newCommand = createTrigger({
 
     
     // check if it's channel message
-		if (payloadBody.event.channel_type !== 'channel') {
+		if (!['channel','group'].includes(payloadBody.event.channel_type)) {
 			return [];
 		}
 

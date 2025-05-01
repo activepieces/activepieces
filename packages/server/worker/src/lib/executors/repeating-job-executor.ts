@@ -12,7 +12,7 @@ export const repeatingJobExecutor = (log: FastifyBaseLogger) => ({
         const populatedFlow = await engineApiService(engineToken, log).getFlowWithExactPieces({
             versionId: flowVersionId,
             type: GetFlowVersionForWorkerRequestType.EXACT,
-        })
+        }, flowVersionId)
         const flowVersion = populatedFlow?.version ?? null
         const isStale = await isStaleFlowVersion(populatedFlow, jobType)
         if (isStale) {

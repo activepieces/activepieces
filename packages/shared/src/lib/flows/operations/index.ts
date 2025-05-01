@@ -1,5 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../../common'
+import { Metadata } from '../../common/metadata'
 import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema } from '../actions/action'
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
@@ -39,6 +40,7 @@ export enum FlowOperationType {
     ADD_BRANCH = 'ADD_BRANCH',
     DUPLICATE_BRANCH = 'DUPLICATE_BRANCH',
     SET_SKIP_ACTION = 'SET_SKIP_ACTION',
+    UPDATE_METADATA = 'UPDATE_METADATA',
 }
 
 export const DeleteBranchRequest = Type.Object({
@@ -156,6 +158,11 @@ export const ChangePublishedVersionIdRequest = Type.Object({})
 export type ChangePublishedVersionIdRequest = Static<
     typeof ChangePublishedVersionIdRequest
 >
+
+export const UpdateMetadataRequest = Type.Object({
+    metadata: Nullable(Metadata),
+})
+export type UpdateMetadataRequest = Static<typeof UpdateMetadataRequest>
 
 export const FlowOperationRequest = Type.Union([
     Type.Object(
@@ -309,6 +316,15 @@ export const FlowOperationRequest = Type.Union([
         },
         {
             title: 'Skip Action',
+        },
+    ),
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.UPDATE_METADATA),
+            request: UpdateMetadataRequest,
+        },
+        {
+            title: 'Update Metadata',
         },
     ),
 ])

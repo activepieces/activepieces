@@ -6,6 +6,7 @@ import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createFlowsContext } from '../services/flows.service'
 import { createFilesService } from '../services/step-files.service'
 import { createContextStore } from '../services/storage.service'
+import { utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { createPropsResolver } from '../variables/props-resolver'
 import { pieceLoader } from './piece-loader'
@@ -52,6 +53,12 @@ export const triggerHelper = {
                 id: constants.projectId,
                 externalId: constants.externalProjectId,
             },
+            connections: utils.createConnectionManager({
+                apiUrl: constants.internalApiUrl,
+                projectId: constants.projectId,
+                engineToken: constants.engineToken,
+                target: 'triggers',
+            }),
         }
 
         await pieceTrigger.onStart(context)
@@ -117,6 +124,12 @@ export const triggerHelper = {
                 apiUrl: constants.internalApiUrl,
                 publicUrl: params.publicApiUrl,
             },
+            connections: utils.createConnectionManager({
+                apiUrl: constants.internalApiUrl,
+                projectId: constants.projectId,
+                engineToken: constants.engineToken,
+                target: 'triggers',
+            }),
         }
         switch (params.hookType) {
             case TriggerHookType.ON_DISABLE:

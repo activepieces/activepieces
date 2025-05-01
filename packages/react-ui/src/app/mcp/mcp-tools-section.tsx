@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { PopulatedFlow, McpPieceWithConnection } from '@activepieces/shared';
 
 import { McpFlowCard } from './mcp-flow-card';
@@ -45,9 +46,8 @@ export const McpToolsSection = ({
 }: McpToolsProps) => {
   const { theme } = useTheme();
   const [isExpanded, setIsExpanded] = useState(false);
-  // We always want to show at least one row (4 items)
-  const visibleTools = isExpanded ? tools : tools.slice(0, 4);
-  const hasMoreTools = tools.length > 4;
+  const visibleTools = isExpanded ? tools : tools.slice(0, 3);
+  const hasMoreTools = tools.length > 3;
 
   const renderAddButton = () => {
     // Only render the button if there's at least one tool
@@ -57,37 +57,41 @@ export const McpToolsSection = ({
 
     if (type === 'pieces') {
       return (
-        <McpPieceDialog>
+        <PermissionNeededTooltip hasPermission={canAddTool}>
+          <McpPieceDialog>
+            <Button
+              variant="default"
+              size="sm"
+              className="flex items-center gap-1"
+              disabled={!canAddTool || isPending}
+            >
+              <Plus className="h-4 w-4" />
+              {addButtonLabel}
+            </Button>
+          </McpPieceDialog>
+        </PermissionNeededTooltip>
+      );
+    } else {
+      return (
+        <PermissionNeededTooltip hasPermission={canAddTool}>
           <Button
             variant="default"
             size="sm"
             className="flex items-center gap-1"
+            onClick={onAddClick}
             disabled={!canAddTool || isPending}
           >
             <Plus className="h-4 w-4" />
             {addButtonLabel}
           </Button>
-        </McpPieceDialog>
-      );
-    } else {
-      return (
-        <Button
-          variant="default"
-          size="sm"
-          className="flex items-center gap-1"
-          onClick={onAddClick}
-          disabled={!canAddTool || isPending}
-        >
-          <Plus className="h-4 w-4" />
-          {addButtonLabel}
-        </Button>
+        </PermissionNeededTooltip>
       );
     }
   };
 
   const renderSkeletons = () => {
     if (type === 'pieces') {
-      return Array(4)
+      return Array(3)
         .fill(0)
         .map((_, index) => (
           <McpPiece
@@ -96,10 +100,11 @@ export const McpToolsSection = ({
             pieceInfo={{ displayName: '', logoUrl: '' }}
             onDelete={() => {}}
             isLoading={true}
+            hasPermissionToEdit={canAddTool}
           />
         ));
     } else {
-      return Array(4)
+      return Array(3)
         .fill(0)
         .map((_, index) => (
           <Card
@@ -122,45 +127,54 @@ export const McpToolsSection = ({
 
   const renderEmptyState = () => {
     if (type === 'pieces') {
-      // For connections, we need to replace the button in the empty message with our dialog
       return (
-        <McpPieceDialog>
-          <div className="flex">
-            <div
-              className={`w-64 flex flex-col items-center justify-center py-6 px-5 text-muted-foreground ${
-                theme === 'dark' ? 'bg-card border-border' : 'bg-white'
-              } rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow cursor-pointer`}
+        <PermissionNeededTooltip hasPermission={canAddTool}>
+          <McpPieceDialog>
+            <Button
+              className="w-64 p-0 h-auto hover:bg-transparent"
+              variant="ghost"
+              disabled={!canAddTool}
             >
-              <div className="flex flex-col items-center gap-2">
-                <div
-                  className={`rounded-full ${
-                    theme === 'dark' ? 'bg-slate-800' : 'bg-slate-100'
-                  } p-2.5 mb-1`}
-                >
-                  <Plus
-                    className={`h-5 w-5 ${
-                      theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
+              <div
+                className={`w-full flex flex-col items-center justify-center py-6 px-5 rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow bg-white`}
+                style={{ minHeight: '160px' }}
+              >
+                <div className="flex flex-col items-center gap-2">
+                  <div
+                    className={`rounded-full ${
+                      theme === 'dark' ? 'bg-slate-800' : 'bg-slate-100'
+                    } p-2.5 mb-1`}
+                  >
+                    <Plus
+                      className={`h-5 w-5 ${
+                        theme === 'dark' ? 'text-slate-300' : 'text-slate-600'
+                      }`}
+                    />
+                  </div>
+                  <p
+                    className={`font-medium text-base ${
+                      theme === 'dark' ? 'text-slate-200' : 'text-slate-800'
                     }`}
-                  />
+                  >
+                    {t(addButtonLabel)}
+                  </p>
+                  <p
+                    className={`text-xs mt-0.5 text-center ${
+                      theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+                    }`}
+                    style={{
+                      maxWidth: '200px',
+                      whiteSpace: 'normal',
+                      wordWrap: 'break-word',
+                    }}
+                  >
+                    {t('Connect your AI assistant to external services')}
+                  </p>
                 </div>
-                <p
-                  className={`font-medium ${
-                    theme === 'dark' ? 'text-slate-200' : 'text-slate-800'
-                  }`}
-                >
-                  {t(addButtonLabel)}
-                </p>
-                <p
-                  className={`text-xs mt-0.5 text-center ${
-                    theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
-                  }`}
-                >
-                  {t('Connect your AI assistant to external services')}
-                </p>
               </div>
-            </div>
-          </div>
-        </McpPieceDialog>
+            </Button>
+          </McpPieceDialog>
+        </PermissionNeededTooltip>
       );
     } else {
       return emptyMessage || null;
@@ -176,7 +190,7 @@ export const McpToolsSection = ({
         {renderAddButton()}
       </div>
 
-      <div className="gap-4 flex flex-wrap">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {isLoading ? (
           renderSkeletons()
         ) : tools.length === 0 ? (
@@ -197,6 +211,7 @@ export const McpToolsSection = ({
                     piece={piece}
                     pieceInfo={pieceInfo}
                     onDelete={() => onToolDelete && onToolDelete(piece)}
+                    hasPermissionToEdit={canAddTool}
                   />
                 );
               } else {

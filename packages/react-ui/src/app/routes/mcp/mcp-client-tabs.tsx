@@ -3,7 +3,6 @@ import { t } from 'i18next';
 import {
   ChevronDown,
   ChevronUp,
-  Info,
   Link as LinkIcon,
   Server,
   Zap,
@@ -11,7 +10,7 @@ import {
   Eye,
   EyeOff,
   Copy,
-  KeyRound,
+  RefreshCw,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -23,6 +22,7 @@ import { useTheme } from '@/components/theme-provider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import {
   Tooltip,
   TooltipContent,
@@ -39,9 +39,202 @@ type McpClientTabsProps = {
   onRotateToken?: () => void;
   isRotating?: boolean;
   hasValidMcp?: boolean;
+  hasPermissionToWriteMcp?: boolean;
 };
 
 const NODE_JS_DOWNLOAD_URL = 'https://nodejs.org/en/download';
+
+// Utility function to mask token in URL
+const maskToken = (url: string) => {
+  return url.replace(/\/([^/]+)\/sse$/, '/•••••••••••••••••••••/sse');
+};
+
+// Define type for ButtonWithTooltip props
+type ButtonWithTooltipProps = {
+  tooltip: string;
+  onClick: (e?: React.MouseEvent) => void;
+  variant?:
+    | 'ghost'
+    | 'outline'
+    | 'default'
+    | 'destructive'
+    | 'secondary'
+    | 'link';
+  icon: React.ReactNode;
+  className?: string;
+  disabled?: boolean;
+  hasPermission?: boolean;
+};
+
+// Reusable ButtonWithTooltip component
+const ButtonWithTooltip = ({
+  tooltip,
+  onClick,
+  variant = 'ghost',
+  icon,
+  className = 'h-7 w-7',
+  disabled = false,
+  hasPermission = true,
+}: ButtonWithTooltipProps) => (
+  <PermissionNeededTooltip hasPermission={hasPermission}>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant={variant}
+            size="icon"
+            className={className}
+            onClick={onClick}
+            disabled={disabled || !hasPermission}
+          >
+            {icon}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{tooltip}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  </PermissionNeededTooltip>
+);
+
+const ConfigDisplay = ({
+  mcpServerUrl,
+  type,
+  onRotateToken,
+  isRotating = false,
+  hasValidMcp = false,
+  hasPermissionToWriteMcp = true,
+}: {
+  mcpServerUrl: string;
+  type: 'npx' | 'url';
+  onRotateToken?: () => void;
+  isRotating?: boolean;
+  hasValidMcp?: boolean;
+  hasPermissionToWriteMcp?: boolean;
+}) => {
+  const { toast } = useToast();
+  const [showToken, setShowToken] = useState(false);
+
+  const toggleTokenVisibility = () => setShowToken(!showToken);
+  const maskedUrl = showToken ? mcpServerUrl : maskToken(mcpServerUrl);
+
+  return (
+    <div className="space-y-2">
+      <div className="rounded-md border overflow-hidden">
+        <div className="flex items-center justify-between p-3 border-b bg-background">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">
+              {t('Server Configuration')}
+            </span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="cursor-pointer">
+                    <div className="flex items-center gap-1 text-xs border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800/50 px-1.5 py-0.5 rounded-sm">
+                      <AlertTriangle className="h-3 w-3 text-red-600 dark:text-red-400" />
+                      <span className="text-red-600 dark:text-red-400 font-medium">
+                        {t('Security')}
+                      </span>
+                    </div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-xs">
+                    {t(
+                      'This URL grants access to your tools and data. Only share with trusted applications.',
+                    )}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+
+          <div className="flex gap-2">
+            <ButtonWithTooltip
+              tooltip={
+                showToken ? t('Hide sensitive data') : t('Show sensitive data')
+              }
+              onClick={toggleTokenVisibility}
+              variant="outline"
+              icon={
+                showToken ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )
+              }
+            />
+
+            {onRotateToken && (
+              <ButtonWithTooltip
+                tooltip={t(
+                  'Create a new URL. The current one will stop working.',
+                )}
+                onClick={onRotateToken}
+                variant="outline"
+                disabled={isRotating || !hasValidMcp}
+                hasPermission={hasPermissionToWriteMcp}
+                icon={
+                  isRotating ? (
+                    <ReloadIcon className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )
+                }
+              />
+            )}
+
+            <ButtonWithTooltip
+              tooltip={t('Copy configuration')}
+              onClick={(e) => {
+                e?.stopPropagation();
+                const config = {
+                  mcpServers: {
+                    Activepieces:
+                      type === 'npx'
+                        ? {
+                            command: 'npx',
+                            args: ['-y', 'mcp-remote', mcpServerUrl],
+                          }
+                        : {
+                            url: mcpServerUrl,
+                          },
+                  },
+                };
+                navigator.clipboard.writeText(JSON.stringify(config, null, 2));
+                toast({
+                  description: t('Configuration copied to clipboard'),
+                  duration: 3000,
+                });
+              }}
+              variant="outline"
+              icon={<Copy className="h-4 w-4" />}
+            />
+          </div>
+        </div>
+        <div className="bg-background">
+          <SimpleJsonViewer
+            hideCopyButton={true}
+            data={{
+              mcpServers: {
+                Activepieces:
+                  type === 'npx'
+                    ? {
+                        command: 'npx',
+                        args: ['-y', 'mcp-remote', maskedUrl],
+                      }
+                    : {
+                        url: maskedUrl,
+                      },
+              },
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const McpClientTabs = ({
   mcpServerUrl,
@@ -49,6 +242,7 @@ export const McpClientTabs = ({
   onRotateToken,
   isRotating = false,
   hasValidMcp = false,
+  hasPermissionToWriteMcp = true,
 }: McpClientTabsProps) => {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState('claude');
@@ -56,40 +250,32 @@ export const McpClientTabs = ({
   const [showToken, setShowToken] = useState(false);
   const { toast } = useToast();
 
-  const toggleTokenVisibility = () => {
-    setShowToken(!showToken);
-  };
-
-  const toggleExpanded = () => {
-    setIsExpanded(!isExpanded);
-  };
-
-  const maskedServerUrl = showToken
-    ? mcpServerUrl
-    : mcpServerUrl.replace(/\/([^/]+)\/sse$/, '/••••••••••••••••••••••/sse');
+  const toggleTokenVisibility = () => setShowToken(!showToken);
+  const toggleExpanded = () => setIsExpanded(!isExpanded);
+  const maskedServerUrl = showToken ? mcpServerUrl : maskToken(mcpServerUrl);
 
   const tabs = [
     {
       id: 'claude',
-      label: 'Claude',
+      label: t('Claude'),
       icon: claude,
       isImage: true,
     },
     {
       id: 'cursor',
-      label: 'Cursor',
+      label: t('Cursor'),
       icon: cursor,
       isImage: true,
     },
     {
       id: 'windsurf',
-      label: 'Windsurf',
+      label: t('Windsurf'),
       icon: windsurf,
       isImage: true,
     },
     {
       id: 'server',
-      label: 'Server/Other',
+      label: t('Server/Other'),
       icon: Server,
       isImage: false,
     },
@@ -103,66 +289,62 @@ export const McpClientTabs = ({
             <Alert variant="warning" className="mb-4">
               <AlertDescription className="text-sm">
                 <p>
-                  Note: MCPs currently only work with{' '}
+                  {t('Note: MCPs only work with')}{' '}
                   <Link
                     to="https://claude.ai/download"
                     className="underline"
                     target="_blank"
                   >
-                    Claude Desktop
+                    {t('Claude Desktop')}
                   </Link>
-                  , not the web version.
+                  {t(', not the web version.')}
                 </p>
               </AlertDescription>
             </Alert>
             <ol className="list-decimal list-inside space-y-3 text-sm text-foreground mb-4">
               <li>
-                <span className="font-semibold">Open</span>{' '}
-                <strong>Settings</strong> from the menu in the Claude Desktop
-                App
-              </li>
-              <li>
-                <span className="font-semibold">Select</span>{' '}
-                <strong>Developer</strong>
-              </li>
-              <li>
-                <span className="font-semibold">Click</span>{' '}
-                <strong>Edit Config</strong>
-              </li>
-              <li>
-                <span className="font-semibold">Copy and paste</span> the server
-                config to your claude_desktop_config, then save
-              </li>
-              <li>
-                <span className="font-semibold">Ensure</span>{' '}
-                <strong>npx</strong> is installed on your system (comes with{' '}
+                <span className="font-semibold">{t('Prerequisites:')}</span>{' '}
+                {t('Install')}{' '}
                 <Link
                   to={NODE_JS_DOWNLOAD_URL}
                   className="underline"
                   target="_blank"
                 >
-                  Node.js
+                  {t('Node.js')}
+                </Link>{' '}
+                {t('and')}{' '}
+                <Link
+                  to="https://claude.ai/download"
+                  className="underline"
+                  target="_blank"
+                >
+                  {t('Claude Desktop')}
                 </Link>
-                )
               </li>
               <li>
-                <span className="font-semibold">Restart</span> Claude Desktop
-                App
+                <span className="font-semibold">{t('Open Settings:')}</span>{' '}
+                {t('Click the menu and select')}{' '}
+                <strong>{t('Settings')}</strong> →{' '}
+                <strong>{t('Developer')}</strong>
+              </li>
+              <li>
+                <span className="font-semibold">{t('Configure MCP:')}</span>{' '}
+                {t('Click')} <strong>{t('Edit Config')}</strong>{' '}
+                {t('and paste the configuration below')}
+              </li>
+              <li>
+                <span className="font-semibold">{t('Save and Restart:')}</span>{' '}
+                {t('Save the config and restart Claude Desktop')}
               </li>
             </ol>
-            <div className="rounded-md shadow-sm">
-              <SimpleJsonViewer
-                data={{
-                  mcpServers: {
-                    Activepieces: {
-                      command: 'npx',
-                      args: ['-y', 'mcp-remote', mcpServerUrl],
-                    },
-                  },
-                }}
-                title="MCP Server Configuration"
-              />
-            </div>
+            <ConfigDisplay
+              mcpServerUrl={mcpServerUrl}
+              type="npx"
+              onRotateToken={onRotateToken}
+              isRotating={isRotating}
+              hasValidMcp={hasValidMcp}
+              hasPermissionToWriteMcp={hasPermissionToWriteMcp}
+            />
           </div>
         );
       case 'cursor':
@@ -170,34 +352,28 @@ export const McpClientTabs = ({
           <div className="space-y-4">
             <ol className="list-decimal list-inside space-y-3 text-sm text-foreground mb-4">
               <li>
-                <span className="font-semibold">Navigate to</span>{' '}
-                <strong>Settings</strong>, then <strong>Cursor Settings</strong>
+                <span className="font-semibold">{t('Open Settings:')}</span>{' '}
+                {t('Navigate to')} <strong>{t('Settings')}</strong> →{' '}
+                <strong>{t('Cursor Settings')}</strong> →{' '}
+                <strong>{t('MCP')}</strong>
               </li>
               <li>
-                <span className="font-semibold">Select</span>{' '}
-                <strong>MCP</strong> on the left
+                <span className="font-semibold">{t('Add Server:')}</span>{' '}
+                {t('Click')} <strong>{t('Add new global MCP server')}</strong>
               </li>
               <li>
-                <span className="font-semibold">Click</span>{' '}
-                <strong>Add new global MCP server</strong> at the top right
-              </li>
-              <li>
-                <span className="font-semibold">Copy and paste</span> the server
-                config to your existing file, then save
+                <span className="font-semibold">{t('Configure:')}</span>{' '}
+                {t('Paste the configuration below and save')}
               </li>
             </ol>
-            <div className="rounded-md shadow-sm">
-              <SimpleJsonViewer
-                data={{
-                  mcpServers: {
-                    Activepieces: {
-                      url: mcpServerUrl,
-                    },
-                  },
-                }}
-                title="MCP Server Configuration"
-              />
-            </div>
+            <ConfigDisplay
+              mcpServerUrl={mcpServerUrl}
+              type="url"
+              onRotateToken={onRotateToken}
+              isRotating={isRotating}
+              hasValidMcp={hasValidMcp}
+              hasPermissionToWriteMcp={hasPermissionToWriteMcp}
+            />
           </div>
         );
       case 'windsurf':
@@ -205,60 +381,45 @@ export const McpClientTabs = ({
           <div className="space-y-4">
             <ol className="list-decimal list-inside space-y-3 text-sm text-foreground mb-4">
               <li>
-                <span className="font-semibold">Open settings by either:</span>
-                <ul className="list-disc list-inside ml-6 mt-2">
+                <span className="font-semibold">{t('Open Settings:')}</span>{' '}
+                {t('Use either method:')}
+                <ul className="list-disc list-inside ml-6 mt-2 space-y-1">
                   <li>
-                    Navigating to <strong>Windsurf - Settings</strong>, then{' '}
-                    <strong>Advanced Settings</strong>
+                    {t('Go to')} <strong>{t('Windsurf')}</strong> →{' '}
+                    <strong>{t('Settings')}</strong> →{' '}
+                    <strong>{t('Advanced Settings')}</strong>
                   </li>
                   <li>
-                    Opening the <strong>Command Palette</strong> and selecting{' '}
-                    <strong>Windsurf Settings Page</strong>
+                    {t('Open Command Palette and select')}{' '}
+                    <strong>{t('Windsurf Settings Page')}</strong>
                   </li>
                 </ul>
               </li>
               <li>
-                <span className="font-semibold">Select</span>{' '}
-                <strong>Cascade</strong> on the left
+                <span className="font-semibold">
+                  {t('Navigate to Cascade:')}
+                </span>{' '}
+                {t('Select')} <strong>{t('Cascade')}</strong>{' '}
+                {t('in the sidebar')}
               </li>
               <li>
-                <span className="font-semibold">Click</span>{' '}
-                <strong>Add Server</strong> at the top right
+                <span className="font-semibold">{t('Add Server:')}</span>{' '}
+                {t('Click')} <strong>{t('Add Server')}</strong> →{' '}
+                <strong>{t('Add custom server +')}</strong>
               </li>
               <li>
-                <span className="font-semibold">Click</span>{' '}
-                <strong>Add custom server +</strong> at the top right
-              </li>
-              <li>
-                <span className="font-semibold">Copy and paste</span> the server
-                config to your existing file, then save
-              </li>
-              <li>
-                <span className="font-semibold">Ensure</span>{' '}
-                <strong>npx</strong> is installed on your system (comes with{' '}
-                <Link
-                  to={NODE_JS_DOWNLOAD_URL}
-                  className="underline"
-                  target="_blank"
-                >
-                  Node.js
-                </Link>
-                )
+                <span className="font-semibold">{t('Configure:')}</span>{' '}
+                {t('Paste the configuration below and save')}
               </li>
             </ol>
-            <div className="rounded-md shadow-sm">
-              <SimpleJsonViewer
-                data={{
-                  mcpServers: {
-                    Activepieces: {
-                      command: 'npx',
-                      args: ['-y', 'mcp-remote', mcpServerUrl],
-                    },
-                  },
-                }}
-                title="MCP Server Configuration"
-              />
-            </div>
+            <ConfigDisplay
+              mcpServerUrl={mcpServerUrl}
+              type="url"
+              onRotateToken={onRotateToken}
+              isRotating={isRotating}
+              hasValidMcp={hasValidMcp}
+              hasPermissionToWriteMcp={hasPermissionToWriteMcp}
+            />
           </div>
         );
       case 'server':
@@ -267,7 +428,28 @@ export const McpClientTabs = ({
             <div className="space-y-3 w-full">
               <div className="flex items-center gap-2 mb-1">
                 <LinkIcon className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-medium">Server URL</h3>
+                <h3 className="text-lg font-medium">{t('Server URL')}</h3>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="cursor-pointer">
+                        <div className="flex items-center gap-1 text-xs border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800/50 px-1.5 py-0.5 rounded-sm">
+                          <AlertTriangle className="h-3 w-3 text-red-600 dark:text-red-400" />
+                          <span className="text-red-600 dark:text-red-400 font-medium">
+                            {t('Security')}
+                          </span>
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p className="text-xs">
+                        {t(
+                          'This URL grants access to your tools and data. Only share with trusted applications.',
+                        )}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
 
               <div className="flex flex-col gap-2">
@@ -282,89 +464,54 @@ export const McpClientTabs = ({
                     {maskedServerUrl}
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-9 w-9"
-                            onClick={toggleTokenVisibility}
-                          >
-                            {showToken ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>
-                            {showToken
-                              ? t('Hide the token for security')
-                              : t('Show the token')}
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-9 w-9 text-amber-500"
-                            onClick={onRotateToken}
-                            disabled={isRotating || !hasValidMcp}
-                          >
-                            {isRotating ? (
-                              <ReloadIcon className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <KeyRound className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>
-                            {t(
-                              'Generate a new token for security. This will invalidate the current URL.',
-                            )}
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-9 w-9 text-blue-500"
-                            onClick={() => {
-                              navigator.clipboard.writeText(mcpServerUrl);
-                              toast({
-                                description: t('URL copied to clipboard'),
-                                duration: 3000,
-                              });
-                            }}
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{t('Copy URL to clipboard')}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <ButtonWithTooltip
+                      tooltip={
+                        showToken
+                          ? t('Hide sensitive data')
+                          : t('Show sensitive data')
+                      }
+                      onClick={toggleTokenVisibility}
+                      variant="outline"
+                      className="h-9 w-9"
+                      icon={
+                        showToken ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )
+                      }
+                    />
+                    <ButtonWithTooltip
+                      tooltip={t(
+                        'Create a new URL. The current one will stop working.',
+                      )}
+                      onClick={onRotateToken ? onRotateToken : () => {}}
+                      variant="outline"
+                      className="h-9 w-9"
+                      disabled={isRotating || !hasValidMcp}
+                      hasPermission={hasPermissionToWriteMcp}
+                      icon={
+                        isRotating ? (
+                          <ReloadIcon className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-4 w-4" />
+                        )
+                      }
+                    />
+                    <ButtonWithTooltip
+                      tooltip={t('Copy URL')}
+                      onClick={() => {
+                        navigator.clipboard.writeText(mcpServerUrl);
+                        toast({
+                          description: t('URL copied to clipboard'),
+                          duration: 3000,
+                        });
+                      }}
+                      variant="outline"
+                      className="h-9 w-9"
+                      icon={<Copy className="h-4 w-4" />}
+                    />
                   </div>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                  <Info className="h-4 w-4 flex-shrink-0" />
-                  <p>
-                    This URL contains a sensitive security token. Only share it
-                    with trusted applications and services. You can rotate the
-                    token if you suspect it has been compromised.
-                  </p>
                 </div>
               </div>
             </div>
@@ -390,7 +537,7 @@ export const McpClientTabs = ({
             <div className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-primary" />
               <h3 className="font-semibold text-foreground text-lg">
-                Client Setup Instructions
+                {t('Client Setup Instructions')}
               </h3>
               <TooltipProvider delayDuration={100}>
                 <Tooltip>
@@ -399,9 +546,9 @@ export const McpClientTabs = ({
                   </TooltipTrigger>
                   <TooltipContent className="w-64">
                     <span className="text-sm">
-                      After making any changes to connections or flows, you will
-                      need to reconnect your MCP server for the changes to take
-                      effect.
+                      {t(
+                        'After changing connections or flows, reconnect your MCP server for changes to take effect.',
+                      )}
                     </span>
                   </TooltipContent>
                 </Tooltip>
@@ -427,9 +574,9 @@ export const McpClientTabs = ({
           {isExpanded && (
             <>
               <p className="text-muted-foreground text-sm">
-                Follow these instructions to set up MCP in your preferred
-                client. Once configured, your AI assistant will be able to
-                access your Activepieces tools.
+                {t(
+                  'Follow these steps to set up MCP in your preferred client. This enables your AI assistant to access your tools.',
+                )}
               </p>
 
               <div className="flex flex-wrap gap-2 mb-4 mt-4">
@@ -454,7 +601,7 @@ export const McpClientTabs = ({
                     {tab.isImage ? (
                       <img
                         src={tab.icon as string}
-                        alt={`${tab.label} icon`}
+                        alt={`${t(tab.label)} ${t('icon')}`}
                         className="w-4 h-4"
                       />
                     ) : (

@@ -182,12 +182,13 @@ async function addFlowsToServer(
                         flow.id,
                     ),
                     payload: params,
+                    execute: true,
                 })
                 if (response.status !== StatusCodes.OK) {
                     return {
                         content: [{
                             type: 'text',
-                            text: `❌ Error executing flow ${flow.version.displayName}\n\n\`\`\`\n${response || 'Unknown error occurred'}\n\`\`\``,
+                            text: `❌ Error executing flow ${flow.version.displayName}\n\n\`\`\`\n${JSON.stringify(response, null, 2) || 'Unknown error occurred'}\n\`\`\``,
                         }],
                     }
                 }

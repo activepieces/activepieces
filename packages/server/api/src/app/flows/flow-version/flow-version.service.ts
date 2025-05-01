@@ -34,7 +34,7 @@ import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
 import { flowVersionValidationUtil } from './flow-version-validator-util'
 
-const flowVersionRepo = repoFactory(FlowVersionEntity)
+export const flowVersionRepo = repoFactory(FlowVersionEntity)
 
 export const flowVersionService = (log: FastifyBaseLogger) => ({
     async lockPieceVersions({
@@ -130,6 +130,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         if (userId) {
             mutatedFlowVersion.updatedBy = userId
         }
+        mutatedFlowVersion.connectionIds = flowStructureUtil.extractConnectionIds(mutatedFlowVersion)
         return flowVersionRepo(entityManager).save(
             sanitizeObjectForPostgresql(mutatedFlowVersion),
         )
@@ -259,6 +260,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 displayName: 'Select Trigger',
             },
             schemaVersion: LATEST_SCHEMA_VERSION,
+            connectionIds: [],
             valid: false,
             state: FlowVersionState.DRAFT,
         }

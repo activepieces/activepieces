@@ -42,3 +42,11 @@ export const AdminRetryRunsRequestBody = Type.Object({
 })
 
 export type AdminRetryRunsRequestBody = Static<typeof AdminRetryRunsRequestBody>
+
+
+export const AdminAddConnectionsToFlowVersionsRequestBody = Type.Object({
+    flowVersionIds: Type.Array(Type.String()),
+})
+
+export type AdminAddConnectionsToFlowVersionsRequestBody = Static<typeof AdminAddConnectionsToFlowVersionsRequestBody>
+
