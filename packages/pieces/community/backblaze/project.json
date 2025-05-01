@@ -1,0 +1,26 @@
+{
+  "name": "pieces-backblaze",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/backblaze/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/backblaze",
+        "tsConfig": "packages/pieces/community/backblaze/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/backblaze/package.json",
+        "main": "packages/pieces/community/backblaze/src/index.ts",
+        "assets": ["packages/pieces/community/backblaze/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    }
+  },
+  "tags": []
+}

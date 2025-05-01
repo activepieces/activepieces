@@ -5,6 +5,8 @@ import {
     FlowRetryStrategy,
     FlowRun,
     FlowRunStatus,
+    flowStructureUtil,
+    FlowVersionId,
     isNil,
     Platform,
     Project,
@@ -15,6 +17,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { In, IsNull } from 'typeorm'
 import { flowRunRepo, flowRunService } from '../../flows/flow-run/flow-run-service'
+import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { customDomainService } from '../custom-domains/custom-domain.service'
@@ -113,6 +116,22 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
 
       
 
+    },
+
+    addConnectionsToFlowVersions: async (flowVersionIds: FlowVersionId[]): Promise<void> => {
+        const flowVersions = await flowVersionRepo().find({
+            where: {
+                id: In(flowVersionIds),
+            },
+        })
+
+        await Promise.all(flowVersions.map(async (flowVersion) => {
+            const connectionIds = flowStructureUtil.extractConnectionIds(flowVersion)
+
+            await flowVersionRepo().update(flowVersion.id, {
+                connectionIds,
+            })
+        }))
     },
 })
 
