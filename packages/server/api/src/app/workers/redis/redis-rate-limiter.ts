@@ -76,7 +76,7 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
         const id = apId()
         await queue.add(id, params, {
             jobId: id,
-            delay: dayjs.duration(3, 'seconds').asMilliseconds(),
+            delay: dayjs.duration(15, 'seconds').asMilliseconds(),
         })
     },
 
