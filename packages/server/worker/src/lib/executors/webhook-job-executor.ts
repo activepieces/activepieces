@@ -2,6 +2,7 @@ import { pinoLogging, WebhookJobData } from '@activepieces/server-shared'
 import {
     EngineHttpResponse,
     FlowStatus,
+    FlowVersionId,
     GetFlowVersionForWorkerRequestType,
     isNil,
     PopulatedFlow,
@@ -25,13 +26,13 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
             flowId: data.flowId,
         })
         webhookLogger.info('Webhook job executor started')
-        const { payload, saveSampleData, flowVersionToRun } = data
+        const { payload, saveSampleData, flowVersionToRun, flowVersionIdToRun, execute } = data
 
         if (saveSampleData) {
             await handleSampleData(data, engineToken, workerToken, webhookLogger)
         }
 
-        const onlySaveSampleData = isNil(flowVersionToRun)
+        const onlySaveSampleData = isNil(flowVersionToRun) || !execute
         if (onlySaveSampleData) {
             await stopAndReply(workerToken, data, {
                 status: StatusCodes.OK,
@@ -41,7 +42,7 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
             return
         }
 
-        const populatedFlowToRun = await getFlowToRun(workerToken, engineToken, flowVersionToRun, data, log)
+        const populatedFlowToRun = await getFlowToRun(workerToken, engineToken, flowVersionToRun, flowVersionIdToRun, data, log)
         if (isNil(populatedFlowToRun)) {
             return
         }
@@ -103,11 +104,11 @@ export const webhookExecutor = (log: FastifyBaseLogger) => ({
         }
     },
 })
-async function getFlowToRun(workerToken: string, engineToken: string, flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED, data: WebhookJobData, log: FastifyBaseLogger): Promise<PopulatedFlow | null> {
+async function getFlowToRun(workerToken: string, engineToken: string, flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED, flowVersionIdToRun: FlowVersionId | null | undefined, data: WebhookJobData, log: FastifyBaseLogger): Promise<PopulatedFlow | null> {
     const flowToRun = await engineApiService(engineToken, log).getFlowWithExactPieces({
         flowId: data.flowId,
         type: flowVersionToRun,
-    })
+    }, flowVersionIdToRun)
 
     if (!isNil(flowToRun)) {
         return flowToRun
@@ -125,7 +126,7 @@ async function getFlowToRun(workerToken: string, engineToken: string, flowVersio
     const latestFlowVersion = await engineApiService(engineToken, log).getFlowWithExactPieces({
         flowId: data.flowId,
         type: GetFlowVersionForWorkerRequestType.LATEST,
-    })
+    }, flowVersionIdToRun)
 
     await stopAndReply(workerToken, data, {
         body: {},
@@ -141,14 +142,14 @@ async function handleSampleData(
     workerToken: string,
     log: FastifyBaseLogger,
 ): Promise<void> {
-    const { flowId, payload } = data
+    const { flowId, payload, flowVersionIdToRun } = data
     const latestFlowVersion = await engineApiService(
         engineToken,
         log,
     ).getFlowWithExactPieces({
         flowId,
         type: GetFlowVersionForWorkerRequestType.LATEST,
-    })
+    }, flowVersionIdToRun)
 
     if (isNil(latestFlowVersion)) {
         await stopAndReply(workerToken, data, {
