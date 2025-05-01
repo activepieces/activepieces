@@ -37,7 +37,7 @@ export const netsuite = createPiece({
   displayName: 'Netsuite',
   logoUrl: 'https://cdn.activepieces.com/pieces/netsuite.png',
   auth: netsuiteAuth,
-  authors: [],
+  authors: ["geekyme"],
   actions: [getVendor, getCustomer],
   triggers: [],
 });
