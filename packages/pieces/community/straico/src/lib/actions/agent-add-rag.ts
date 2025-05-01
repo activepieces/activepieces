@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 
 import { baseUrlv0 } from '../common/common';
+import { agentIdDropdown } from '../common/props';
 
 interface AgentAddRagResponse {
   success: boolean;
@@ -32,54 +33,7 @@ export const agentAddRag = createAction({
   displayName: 'Add RAG to Agent',
   description: 'Adds a new RAG to an agent in the database for the user.',
   props: {
-    agent_id: Property.Dropdown({
-      displayName: 'Agent',
-      required: true,
-      description: 'The agent to add the RAG to',
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Enter your API key first',
-            options: [],
-          };
-        }
-        try {
-          const agents = await httpClient.sendRequest<{
-            success: boolean;
-            data: Array<{
-              _id: string;
-              name: string;
-              description: string;
-            }>;
-          }>({
-            url: `${baseUrlv0}/agent`,
-            method: HttpMethod.GET,
-            authentication: {
-              type: AuthenticationType.BEARER_TOKEN,
-              token: auth as string,
-            },
-          });
-          return {
-            disabled: false,
-            options:
-              agents.body?.data?.map((agent) => {
-                return {
-                  label: agent.name,
-                  value: agent._id,
-                };
-              }) || [],
-          };
-        } catch (error) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: "Couldn't load agents, API key is invalid",
-          };
-        }
-      },
-    }),
+    agent_id: agentIdDropdown('Agent','The agent to add the RAG to.'),
     rag_id: Property.Dropdown({
       displayName: 'RAG ID',
       required: true,

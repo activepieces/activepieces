@@ -154,32 +154,30 @@ export const agentUpdate = createAction({
         }
       },
     }),
-    status: Property.Dropdown({
+    status: Property.StaticDropdown({
       displayName: 'Status',
       required: false,
       description: 'New status for the agent',
-      refreshers: [],
-      options: async () => {
-        return {
+      options:  {
+        disabled:false,
           options: [
             { label: 'Active', value: 'active' },
             { label: 'Inactive', value: 'inactive' },
           ],
-        };
+        
       },
     }),
-    visibility: Property.Dropdown({
+    visibility: Property.StaticDropdown({
       displayName: 'Visibility',
       required: false,
       description: 'New visibility setting for the agent',
-      refreshers: [],
-      options: async () => {
-        return {
+      options:  {
+        disabled:false,
           options: [
             { label: 'Private', value: 'private' },
             { label: 'Public', value: 'public' },
           ],
-        };
+        
       },
     }),
   },

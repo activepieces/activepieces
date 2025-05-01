@@ -6,6 +6,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { baseUrlv0 } from '../common/common';
+import { agentIdDropdown } from '../common/props';
 
 export const agentPromptCompletion = createAction({
   auth: straicoAuth,
@@ -13,71 +14,24 @@ export const agentPromptCompletion = createAction({
   displayName: 'Agent Prompt Completion',
   description: 'Prompt an agent with a message and get a response',
   props: {
-    agentId: Property.Dropdown({
-      displayName: 'Agent',
-      required: true,
-      description: 'Select the agent to prompt',
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please authenticate first',
-            options: [],
-          };
-        }
-
-        const response = await httpClient.sendRequest<{
-          success: boolean;
-          data: Array<{
-            _id: string;
-            name: string;
-          }>;
-        }>({
-          url: `${baseUrlv0}/agent`,
-          method: HttpMethod.GET,
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: auth as string,
-          },
-        });
-
-        if (response.body.success && response.body.data) {
-          return {
-            options: response.body.data.map((agent) => {
-              return {
-                label: agent.name,
-                value: agent._id,
-              };
-            }),
-          };
-        }
-
-        return {
-          disabled: true,
-          placeholder: 'No agents found',
-          options: [],
-        };
-      },
-    }),
+    agentId: agentIdDropdown('Agent','Select the agent to prompt.'),
     prompt: Property.LongText({
       displayName: 'Prompt',
       required: true,
       description: 'The text prompt for the agent',
     }),
-    searchType: Property.Dropdown({
+    searchType: Property.StaticDropdown({
       displayName: 'Search Type',
       required: false,
       description: 'The search type to use for RAG model',
-      refreshers: [],
-      options: async () => {
-        return {
+      options:  {
+        disabled:false,
           options: [
             { label: 'Similarity', value: 'similarity' },
             { label: 'MMR', value: 'mmr' },
             { label: 'Similarity Score Threshold', value: 'similarity_score_threshold' },
           ],
-        };
+      
       },
     }),
     k: Property.Number({
