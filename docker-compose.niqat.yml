@@ -1,0 +1,48 @@
+version: '3.0'
+services:
+  activepieces:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: activepieces
+    restart: unless-stopped
+    ports:
+      - '8080:80'
+    depends_on:
+      - postgres
+      - redis
+    env_file: .env
+    volumes:
+      - ./cache:/usr/src/app/cache
+    networks:
+      - activepieces
+
+  postgres:
+    image: 'postgres:14.4'
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      - 'POSTGRES_DB=${AP_POSTGRES_DATABASE}'
+      - 'POSTGRES_PASSWORD=${AP_POSTGRES_PASSWORD}'
+      - 'POSTGRES_USER=${AP_POSTGRES_USERNAME}'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - activepieces
+
+  redis:
+    image: 'redis:7.0.7'
+    container_name: redis
+    restart: unless-stopped
+    volumes:
+      - 'redis_data:/data'
+    networks:
+      - activepieces
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  activepieces:
+

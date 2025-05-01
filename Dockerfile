@@ -49,6 +49,7 @@ COPY .npmrc package.json package-lock.json ./
 RUN npm ci
 
 RUN npx nx run-many --target=build --projects=server-api --configuration production
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN npx nx run-many --target=build --projects=react-ui
 
 # Install backend production dependencies

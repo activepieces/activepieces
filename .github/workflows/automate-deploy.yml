@@ -1,69 +1,32 @@
-name: Automate Deploy
+name: Deploy to Server
 
 on:
-  workflow_dispatch:
   pull_request:
-    types: [merged]
+    types:
+      - closed
     branches:
       - main
-    merged: true
 
 jobs:
-  Release:
-    if: contains(github.event.pull_request.labels.*.name, 'auto-deploy') || github.event_name == 'workflow_dispatch'
+  deploy:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository code
+      - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Set RELEASE env var from package.json
-        run: echo RELEASE=$(node --print "require('./package.json').version") >> $GITHUB_ENV
+      - name: Install expect
+        run: sudo apt-get update && sudo apt-get install -y expect
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Depot CLI
-        uses: depot/setup-action@v1
-
-      - name: Build and push
-        uses: depot/build-push-action@v1
-        with:
-          project: du7O4b0e8P
-          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
-          context: .
-          file: ./Dockerfile
-          platforms: |
-            linux/amd64
-          push: true
-          tags: |
-            ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ github.sha }}.beta
-
-      - name: Configure SSH
+      - name: SSH and run docker command
         run: |
-          mkdir -p ~/.ssh/
-          echo "$SSH_KEY" > ~/.ssh/ops.key
-          chmod 600 ~/.ssh/ops.key
-          cat >>~/.ssh/config <<END
-          Host ops
-            HostName $SSH_HOST
-            User $SSH_USER
-            IdentityFile ~/.ssh/ops.key
-            StrictHostKeyChecking no
-          END
-        env:
-          SSH_USER: ${{ secrets.DEV_OPS_USERNAME }}
-          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_HOST: ${{ secrets.DEV_OPS_HOST }}
-
-      - name: Deploy React
-        run: |
-          ssh ops -t -t 'bash -ic "cd mrsk && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }}.beta --config-file=config/react.yml --skip-push; exit"'
-
-      - name: Deploy Workers
-        run: |
-          ssh ops -t -t 'bash -ic "cd mrsk && kamal deploy --version ${{ env.RELEASE }}.${{ github.sha }}.beta --config-file=config/workers.yml --skip-push; exit"'
-
+          expect <<EOF
+          spawn ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
+          expect "assword:"
+          send "${{ secrets.SSH_PASSWORD }}\r"
+          expect "$ "
+          send "cd activepieces && docker compose -f docker-compose.niqat.yml -p activepieces down && git pull && docker compose -f docker-compose.niqat.yml -p activepieces up -d --build
+          expect "$ "
+          send "exit\r"
+          expect eof
+          EOF
