@@ -25,6 +25,17 @@ let queue: Queue | null = null
 const projectKey = (projectId: string): string => `active_job_count:${projectId}`
 const projectKeyWithJobId = (projectId: string, jobId: string): string => `${projectKey(projectId)}:${jobId}`
 
+async function countKeysBySingleScan(redis: Redis, pattern: string): Promise<number> {
+    let cursor = '0'
+    let count = 0
+    do {
+        const [nextCursor, keys] = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100)
+        count += keys.length
+        cursor = nextCursor
+    } while (cursor !== '0')
+    return count
+}
+
 export const redisRateLimiter = (log: FastifyBaseLogger) => ({
 
     async init(): Promise<void> {
@@ -91,7 +102,9 @@ export const redisRateLimiter = (log: FastifyBaseLogger) => ({
             }
         }
 
-        const newActiveRuns = (await redis.keys(`${projectKey(projectId)}*`)).length
+        // Use a single SCAN to count active runs (expecting <= 40 keys)
+        const pattern = `${projectKey(projectId)}*`
+        const newActiveRuns = await countKeysBySingleScan(redis, pattern)
         if (newActiveRuns >= MAX_CONCURRENT_JOBS_PER_PROJECT) {
             return {
                 shouldRateLimit: true,
