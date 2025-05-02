@@ -6,7 +6,6 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
-import { useNewWindow } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -27,6 +26,7 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { api } from '@/lib/api';
+import { useNewWindow } from '@/lib/navigation-utils';
 import { formatUtils, NEW_TABLE_QUERY_PARAM } from '@/lib/utils';
 import { ApFlagId, FieldType, Permission, Table } from '@activepieces/shared';
 

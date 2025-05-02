@@ -38,7 +38,7 @@ const ApDashboardSidebarHeader = ({
           'justify-center': false,
         })}
       >
-        <div className="flex items-center justify-center gap-1">
+        <div className="flex items-center justify-center gap-1 grow">
           <div className="relative">
             <Button variant="ghost">
               <Link
@@ -78,7 +78,7 @@ const ApDashboardSidebarHeader = ({
           </div>
 
           {showProjectSwitcher && (
-            <div className="grow">
+            <div className="grow ">
               <ProjectSwitcher />
             </div>
           )}

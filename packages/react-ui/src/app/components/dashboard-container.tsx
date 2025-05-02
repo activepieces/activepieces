@@ -6,7 +6,6 @@ import { Navigate } from 'react-router-dom';
 
 import { authenticationSession } from '../../lib/authentication-session';
 
-import { AllowOnlyLoggedInUserOnlyGuard } from './allow-logged-in-user-only-guard';
 import {
   SidebarComponent,
   SidebarGroup,
@@ -188,26 +187,24 @@ export function DashboardContainer({
   });
 
   return (
-    <AllowOnlyLoggedInUserOnlyGuard>
-      <ProjectChangedRedirector currentProjectId={currentProjectId}>
-        <CloseTaskLimitAlertContext.Provider
-          value={{
-            isAlertClosed,
-            setIsAlertClosed,
-          }}
+    <ProjectChangedRedirector currentProjectId={currentProjectId}>
+      <CloseTaskLimitAlertContext.Provider
+        value={{
+          isAlertClosed,
+          setIsAlertClosed,
+        }}
+      >
+        <SidebarComponent
+          removeGutters={removeGutters}
+          isHomeDashboard={true}
+          hideHeader={hideHeader}
+          items={filteredItems}
+          hideSideNav={embedState.hideSideNav}
+          removeBottomPadding={removeBottomPadding}
         >
-          <SidebarComponent
-            removeGutters={removeGutters}
-            isHomeDashboard={true}
-            hideHeader={hideHeader}
-            items={filteredItems}
-            hideSideNav={embedState.hideSideNav}
-            removeBottomPadding={removeBottomPadding}
-          >
-            {children}
-          </SidebarComponent>
-        </CloseTaskLimitAlertContext.Provider>
-      </ProjectChangedRedirector>
-    </AllowOnlyLoggedInUserOnlyGuard>
+          {children}
+        </SidebarComponent>
+      </CloseTaskLimitAlertContext.Provider>
+    </ProjectChangedRedirector>
   );
 }

@@ -74,7 +74,7 @@ describe('Flow API', () => {
             expect(responseBody?.schedule).toBeNull()
             expect(responseBody?.metadata).toMatchObject({ foo: 'bar' })
 
-            expect(Object.keys(responseBody?.version)).toHaveLength(10)
+            expect(Object.keys(responseBody?.version)).toHaveLength(11)
             expect(responseBody?.version?.id).toHaveLength(21)
             expect(responseBody?.version?.created).toBeDefined()
             expect(responseBody?.version?.updated).toBeDefined()
@@ -153,7 +153,7 @@ describe('Flow API', () => {
             expect(responseBody?.schedule).toBeNull()
             expect(responseBody?.metadata).toBeNull()
 
-            expect(Object.keys(responseBody?.version)).toHaveLength(10)
+            expect(Object.keys(responseBody?.version)).toHaveLength(11)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
         })
 
@@ -217,7 +217,7 @@ describe('Flow API', () => {
             expect(responseBody?.schedule).toBeNull()
             expect(responseBody?.metadata).toBeNull()
 
-            expect(Object.keys(responseBody?.version)).toHaveLength(10)
+            expect(Object.keys(responseBody?.version)).toHaveLength(11)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
         })
     })
@@ -276,7 +276,7 @@ describe('Flow API', () => {
             expect(responseBody?.schedule).toBeNull()
             expect(responseBody?.metadata).toBeNull()
 
-            expect(Object.keys(responseBody?.version)).toHaveLength(10)
+            expect(Object.keys(responseBody?.version)).toHaveLength(11)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
             expect(responseBody?.version?.state).toBe('LOCKED')
         })
@@ -407,6 +407,59 @@ describe('Flow API', () => {
             expect(responseBody?.code).toBe('ENTITY_NOT_FOUND')
             expect(responseBody?.params?.entityType).toBe('FlowVersion')
             expect(responseBody?.params?.message).toBe(`flowId=${mockFlow.id}`)
+        })
+    })
+
+    describe('Update Metadata endpoint', () => {
+        it('Updates flow metadata', async () => {
+            // arrange
+            const { mockProject, mockOwner } = await mockAndSaveBasicSetup()
+
+            // create a flow with no metadata
+            const mockFlow = createMockFlow({ projectId: mockProject.id })
+            await databaseConnection().getRepository('flow').save([mockFlow])
+
+            const mockFlowVersion = createMockFlowVersion({ flowId: mockFlow.id })
+            await databaseConnection()
+                .getRepository('flow_version')
+                .save([mockFlowVersion])
+
+            const mockToken = await generateMockToken({
+                type: PrincipalType.USER,
+                projectId: mockProject.id,
+                id: mockOwner.id,
+            })
+
+            const updatedMetadata = { foo: 'bar' }
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/v1/flows/${mockFlow.id}`,
+                headers: {
+                    authorization: `Bearer ${mockToken}`,
+                },
+                body: {
+                    type: FlowOperationType.UPDATE_METADATA,
+                    request: {
+                        metadata: updatedMetadata,
+                    },
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+
+            expect(responseBody.id).toBe(mockFlow.id)
+            expect(responseBody.metadata).toEqual(updatedMetadata)
+
+            // Verify metadata was actually persisted in the database
+            const updatedFlow = await databaseConnection()
+                .getRepository('flow')
+                .findOneBy({ id: mockFlow.id })
+
+            expect(updatedFlow?.metadata).toEqual(updatedMetadata)
         })
     })
 

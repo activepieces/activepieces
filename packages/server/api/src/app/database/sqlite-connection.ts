@@ -21,6 +21,7 @@ import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744104496262 } from './
 import { AddMetadataFlowTemplate1744898945629 } from './migration/sqlite/1744898945629-add-metadata-flow-template'
 import { AddMcpPieceSqlite1744822233873 } from './migration/sqlite/1744822233873-AddMcpPieceSqlite'
 import { RenameTodoVariantName1745269828603 } from './migration/sqlite/1745269828603-RenameTodoVariantName'
+import { AddConnectionIdsToFlowVersion1745531870426 } from './migration/sqlite/1745531870426-AddConnectionIdsToFlowVersion'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -43,6 +44,7 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        AddConnectionIdsToFlowVersion1745531870426,
         RenameTodoVariantName1745269828603,
         AddMcpPieceSqlite1744822233873,
         AddMetadataFlowTemplate1744898945629,

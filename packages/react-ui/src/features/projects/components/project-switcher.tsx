@@ -69,17 +69,17 @@ function ProjectSwitcher() {
           size={'sm'}
           aria-expanded={open}
           aria-label="Select a project"
-          className="gap-2 max-w-[200px] px-2 enabled:hover:bg-gray-200"
+          className="gap-2 w-full justify-start px-2 enabled:hover:bg-gray-200"
         >
-          <div className="flex flex-col justify-start items-start">
-            <span className="max-w-[110px] flex-grow truncate overflow-hidden text-sm">
+          <div className="flex grow flex-col justify-start items-start">
+            <span className="flex-grow truncate overflow-hidden text-sm">
               {currentProject?.displayName}
             </span>
           </div>
           <CaretSortIcon className="size-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="max-w-[200px] p-0">
+      <PopoverContent className="w-full max-w-full p-0">
         <Command filter={filterProjects}>
           <CommandList>
             <CommandInput placeholder="Search project..." />

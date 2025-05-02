@@ -22,6 +22,7 @@ export const FlowVersion = Type.Object({
     valid: Type.Boolean(),
     schemaVersion: Nullable(Type.String()),
     state: Type.Enum(FlowVersionState),
+    connectionIds: Type.Array(Type.String()),
 })
 
 export type FlowVersion = Static<typeof FlowVersion>
