@@ -14,7 +14,7 @@ export class AddExternalIdForTablesAndFieldsSQLITE1746367601605 implements Migra
                 "updated" datetime NOT NULL DEFAULT (datetime('now')),
                 "name" varchar NOT NULL,
                 "projectId" varchar(21) NOT NULL,
-                "externalId" varchar,
+                "externalId" varchar NOT NULL,
                 CONSTRAINT "fk_table_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
         `)
@@ -52,7 +52,7 @@ export class AddExternalIdForTablesAndFieldsSQLITE1746367601605 implements Migra
                 "tableId" varchar(21) NOT NULL,
                 "projectId" varchar(21) NOT NULL,
                 "data" text,
-                "externalId" varchar,
+                "externalId" varchar NOT NULL,
                 CONSTRAINT "fk_field_project_id" FOREIGN KEY ("projectId") REFERENCES "project" ("id") ON DELETE CASCADE ON UPDATE NO ACTION,
                 CONSTRAINT "fk_field_table_id" FOREIGN KEY ("tableId") REFERENCES "table" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
             )
