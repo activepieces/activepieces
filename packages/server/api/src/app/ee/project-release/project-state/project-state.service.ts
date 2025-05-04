@@ -1,12 +1,12 @@
-import { AppConnectionScope, AppConnectionStatus, AppConnectionType, ConnectionOperationType, DiffState, FileCompression, FileId, FileType, FlowStatus, isNil, ProjectId, ProjectOperationType, ProjectState, ProjectSyncError, TableOperationType } from '@activepieces/shared'
+import { AppConnectionScope, AppConnectionStatus, AppConnectionType, assertNotNullOrUndefined, ConnectionOperationType, DiffState, FieldState, FieldType, FileCompression, FileId, FileType, FlowStatus, isNil, ProjectId, ProjectOperationType, ProjectState, ProjectSyncError, TableOperationType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../file/file.service'
 import { flowRepo } from '../../../flows/flow/flow.repo'
 import { flowService } from '../../../flows/flow/flow.service'
-import { projectStateHelper } from './project-state-helper'
-import { tableService } from '../../../tables/table/table.service'
 import { fieldService } from '../../../tables/field/field.service'
+import { tableService } from '../../../tables/table/table.service'
+import { projectStateHelper } from './project-state-helper'
 
 export const projectStateService = (log: FastifyBaseLogger) => ({
     async apply({ projectId, diffs, selectedFlowsIds, platformId }: ApplyProjectStateRequest): Promise<void> {
@@ -61,19 +61,12 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         projectId,
                         request: {
                             name: operation.tableState.name,
-                            externalId: operation.tableState.externalId ?? operation.tableState.id,
+                            externalId: operation.tableState.externalId,
                         },
                     })
 
-                    Promise.all(operation.tableState.fields.map(async (field) => {
-                        await fieldService.create({
-                            projectId,
-                            request: {
-                                ...field,
-                                tableId: table.id,
-                                externalId: field.externalId ?? field.id,
-                            },
-                        })
+                    await Promise.all(operation.tableState.fields.map(async (field) => {
+                        await handleCreateField(projectId, field, table.id)
                     }))
                     break
                 }
@@ -91,7 +84,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         tableId: table.id,
                     })
 
-                    Promise.all(operation.newTableState.fields.map(async (field) => {
+                    await Promise.all(operation.newTableState.fields.map(async (field) => {
                         const existingField = fileds.find((f) => f.externalId === field.externalId) 
                         if (!isNil(existingField)) {
                             await fieldService.update({
@@ -99,12 +92,19 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                                 id: existingField.id,
                                 request: field,
                             })
-                        } else {
-                            await fieldService.create({
-                                projectId,
-                                request: field,
-                            })
                         }
+                        else {
+                            await handleCreateField(projectId, field, table.id)
+                        }
+                    }))
+
+                    const fieldsToDelete = fileds.filter((f) => !operation.newTableState.fields.some((nf) => nf.externalId === f.externalId))
+
+                    await Promise.all(fieldsToDelete.map(async (field) => {
+                        await fieldService.delete({
+                            id: field.id,
+                            projectId,
+                        })
                     }))
                     break
                 }
@@ -177,12 +177,64 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
         const connections = await appConnectionService(log).getManyConnectionStates({
             projectId,
         })
+
+        const tables = await tableService.list({
+            projectId,
+            cursor: undefined,
+            limit: 1000,
+            name: undefined,
+        })
+        const allPopulatedTables = await Promise.all(tables.data.map(async (table) => {
+            const fields = await fieldService.getAll({
+                projectId,
+                tableId: table.id,
+            })
+            return {
+                ...table,
+                fields,
+            }
+        }))
+        
         return {
             flows: allPopulatedFlows,
             connections,
+            tables: allPopulatedTables,
         }
     },
 })
+
+async function handleCreateField(projectId: ProjectId, field: FieldState, tableId: string) {
+    switch (field.type) {   
+        case FieldType.STATIC_DROPDOWN: {
+            assertNotNullOrUndefined(field.data, 'Data is required for static dropdown field')
+            await fieldService.create({
+                projectId,
+                request: {
+                    name: field.name,
+                    type: field.type,
+                    tableId,
+                    data: field.data,
+                    externalId: field.externalId,
+                },
+            })
+            break
+        }
+        case FieldType.DATE:
+        case FieldType.NUMBER:
+        case FieldType.TEXT: {
+            await fieldService.create({
+                projectId,
+                request: {
+                    name: field.name,
+                    type: field.type,
+                    tableId,
+                    externalId: field.externalId,
+                },
+            })
+            break
+        }
+    }
+}
 
 type ApplyProjectStateRequest = {
     projectId: string

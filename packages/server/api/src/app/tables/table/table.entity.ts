@@ -18,7 +18,6 @@ export const TableEntity = new EntitySchema<TableSchema>({
         },
         externalId: {
             type: String,
-            nullable: true,
         },
         projectId: {
             ...ApIdSchema,

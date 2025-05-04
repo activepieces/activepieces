@@ -27,11 +27,23 @@ export const ConnectionState = Type.Object({
 })
 export type ConnectionState = Static<typeof ConnectionState>
 
+export const FieldState = Type.Object({
+    name: Type.String(),
+    type: Type.String(),
+    data: Type.Optional(Type.Object({
+        options: Type.Array(Type.Object({
+            value: Type.String(),
+        })),
+    })),
+    externalId: Type.String(),
+})
+export type FieldState = Static<typeof FieldState>
+
 export const TableState = Type.Object({
     id: Type.String(),
     name: Type.String(),
-    externalId: Type.Optional(Type.String()),
-    fields: Type.Array(Field),
+    externalId: Type.String(),
+    fields: Type.Array(FieldState),
 })
 export type TableState = Static<typeof TableState>
 

@@ -1,4 +1,4 @@
-import { ActionType, assertNotNullOrUndefined, ConnectionOperation, ConnectionOperationType, ConnectionState, DEFAULT_SAMPLE_DATA_SETTINGS, DiffState, flowPieceUtil, flowStructureUtil, FlowVersion, isNil, PopulatedFlow, ProjectOperation, ProjectOperationType, ProjectState, Step, TableOperation, TableOperationType, TableState, TriggerType } from '@activepieces/shared'
+import { ActionType, assertNotNullOrUndefined, ConnectionOperation, ConnectionOperationType, ConnectionState, DEFAULT_SAMPLE_DATA_SETTINGS, DiffState, FieldType, flowPieceUtil, flowStructureUtil, FlowVersion, isNil, PopulatedFlow, ProjectOperation, ProjectOperationType, ProjectState, Step, TableOperation, TableOperationType, TableState, TriggerType } from '@activepieces/shared'
 
 export const projectDiffService = {
     diff({ newState, currentState }: DiffParams): DiffState {
@@ -58,15 +58,19 @@ function isConnectionChanged(stateOne: ConnectionState, stateTwo: ConnectionStat
 }
 
 function isTableChanged(stateOne: TableState, stateTwo: TableState): boolean {
-    const fieldsWithoutIdsOne = stateOne.fields.map((field) => ({
-        ...field,
-        id: undefined,
+    const fieldsMetadataOne = stateOne.fields.map((field) => ({
+        name: field.name,
+        type: field.type,
+        data: field.type === FieldType.STATIC_DROPDOWN ? field.data : undefined,
     }))
-    const fieldsWithoutIdsTwo = stateTwo.fields.map((field) => ({
-        ...field,
-        id: undefined,
+    const fieldsMetadataTwo = stateTwo.fields.map((field) => ({
+        name: field.name,
+        type: field.type,
+        data: field.type === FieldType.STATIC_DROPDOWN ? field.data : undefined,
     }))
-    return stateOne.name !== stateTwo.name || JSON.stringify(fieldsWithoutIdsOne) !== JSON.stringify(fieldsWithoutIdsTwo)
+    console.log('HAHAHAHAH fieldsMetadataOne', fieldsMetadataOne)
+    console.log('HAHAHAHAH fieldsMetadataTwo', fieldsMetadataTwo)
+    return stateOne.name !== stateTwo.name || JSON.stringify(fieldsMetadataOne) !== JSON.stringify(fieldsMetadataTwo)
 }
 
 function getFlowConnections(currentState: ProjectState, newState: ProjectState): ConnectionOperation[] {
