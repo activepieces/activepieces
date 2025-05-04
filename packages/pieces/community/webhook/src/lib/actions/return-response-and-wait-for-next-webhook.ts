@@ -132,7 +132,9 @@ import {
             response
           },
         });
-        return undefined;
+        return {
+          nextWebhookUrl: headers[RESUME_WEBHOOK_HEADER],
+        };
       }
       else {
         return {
