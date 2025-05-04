@@ -2,6 +2,7 @@ import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { catchWebhook } from './lib/triggers/catch-hook';
 import { PieceCategory } from '@activepieces/shared';
 import { returnResponse } from './lib/actions/return-response';
+import { returnResponseAndWaitForNextWebhook } from './lib/actions/return-response-and-wait-for-next-webhook';
 
 export const webhook = createPiece({
   displayName: 'Webhook',
@@ -10,7 +11,7 @@ export const webhook = createPiece({
   categories: [PieceCategory.CORE],
   minimumSupportedRelease: '0.46.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/webhook.svg',
-  authors: ['abuaboud', 'pfernandez98', 'kishanprmr'],
-  actions: [returnResponse],
+  authors: ['abuaboud', 'pfernandez98', 'kishanprmr','AbdulTheActivePiecer'],
+  actions: [returnResponse,returnResponseAndWaitForNextWebhook],
   triggers: [catchWebhook],
 });
