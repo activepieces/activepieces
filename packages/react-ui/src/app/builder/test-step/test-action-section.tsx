@@ -22,6 +22,7 @@ import { TodoTestingDialog } from './custom-test-step/test-todo-dialog';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
 import testStepHooks from './test-step-hooks';
+import TestReturnResponseAndWaitForWebhookDialog from './test-return-response-and-wait-for-webhook-dialog';
 
 type TestActionComponentProps = {
   isSaving: boolean;
@@ -29,11 +30,19 @@ type TestActionComponentProps = {
   projectId: string;
 };
 
-function isTodoCreateTask(step: Action): boolean {
+const isTodoCreateTask=(step: Action)=>{
   return (
     step.type === ActionType.PIECE &&
     step.settings.pieceName === '@activepieces/piece-todos' &&
     step.settings.actionName === 'createTodoAndWait'
+  );
+}
+
+const isReturnResponseAndWaitForWebhook=(step: Action)=>{
+  return (
+    step.type === ActionType.PIECE &&
+    step.settings.pieceName === '@activepieces/piece-webhook' &&
+    step.settings.actionName === 'return_response_and_wait_for_next_webhook'
   );
 }
 
@@ -52,6 +61,7 @@ const TestStepSectionImplementation = React.memo(
     const [isTodoCreateTaskDialogOpen, setIsTodoCreateTaskDialogOpen] =
       useState(false);
     const [todo, setTodo] = useState<TodoWithAssignee | null>(null);
+    const [isReturnResponseAndWaitForWebhookDialogOpen, setIsReturnResponseAndWaitForWebhookDialogOpen] = useState(false);
     const {
       sampleData,
       sampleDataInput,
@@ -61,7 +71,7 @@ const TestStepSectionImplementation = React.memo(
         sampleDataInput: state.sampleDataInput[currentStep.name]
       };
     });
-    const { mutate, isPending: isTesting } = testStepHooks.useTestAction({currentStep, setErrorMessage, setConsoleLogs})
+    const { mutate, isPending: isTesting } = testStepHooks.useTestAction({currentStep, setErrorMessage, setConsoleLogs, onSuccess:undefined})
 
     const lastTestDate = currentStep.settings.inputUiInfo?.lastTestDate
 
@@ -80,6 +90,16 @@ const TestStepSectionImplementation = React.memo(
       }
     };
 
+    const onTestButtonClick = async () => {
+      if (isTodoCreateTask(currentStep)) {
+        handleTodoCreateTask();
+      } else if (isReturnResponseAndWaitForWebhook(currentStep)) {
+        debugger;
+        setIsReturnResponseAndWaitForWebhookDialogOpen(true);
+      } else {
+        mutate(undefined);
+      }
+    }
     return (
       <>
         {!sampleDataExists && (
@@ -88,15 +108,11 @@ const TestStepSectionImplementation = React.memo(
               <Button
                 variant="outline"
                 size="sm"
-                onClick={async () => {
-                  if (isTodoCreateTask(currentStep)) {
-                    handleTodoCreateTask();
-                  } else {
-                    mutate();
-                  }
-                }}
+                onClick={onTestButtonClick}
                 keyboardShortcut="G"
-                onKeyboardShortcut={mutate}
+                onKeyboardShortcut={()=>{
+                  mutate(undefined)
+                }}
                 loading={isTesting || isTodoCreateTaskDialogOpen}
                 disabled={!currentStep.valid}
               >
@@ -108,13 +124,7 @@ const TestStepSectionImplementation = React.memo(
         )}
         {sampleDataExists && (
           <TestSampleDataViewer
-            onRetest={() => {
-              if (isTodoCreateTask(currentStep)) {
-                handleTodoCreateTask();
-              } else {
-                mutate();
-              }
-            }}
+            onRetest={onTestButtonClick}
             isValid={currentStep.valid}
             isSaving={isSaving}
             isTesting={isTesting || isTodoCreateTaskDialogOpen}
@@ -143,6 +153,15 @@ const TestStepSectionImplementation = React.memo(
             }
           />
         )}
+        {
+          isReturnResponseAndWaitForWebhookDialogOpen && (
+            <TestReturnResponseAndWaitForWebhookDialog
+              open={isReturnResponseAndWaitForWebhookDialogOpen}
+              onOpenChange={setIsReturnResponseAndWaitForWebhookDialogOpen}
+              currentStep={currentStep}
+            />
+          )
+        }
       </>
     );
   },

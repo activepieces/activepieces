@@ -30,13 +30,16 @@ import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { useSocket } from '@/components/socket-provider';
 
-const useRequiredStateToTestTriggers = () => {
+const useRequiredStateToTestSteps = () => {
   const form = useFormContext<Trigger>();
   const builderState = useBuilderStateContext((state) => ({
     flow: state.flow,
     flowVersion: state.flowVersion,
     setSampleData: state.setSampleData,
     setSampleDataInput: state.setSampleDataInput,
+    applyOperation: state.applyOperation,
+    flowVersionId: state.flowVersion.id,
+    projectId: state.flow.projectId,
   }));
   return { form, builderState };
 };
@@ -48,7 +51,7 @@ const testStepHooks = {
     setErrorMessage: (msg: string | undefined) => void;
     onSuccess: () => void;
   }) => {
-    const { form, builderState } = useRequiredStateToTestTriggers();
+    const { form, builderState } = useRequiredStateToTestSteps();
     const flowId = builderState.flow.id;
     return useMutation<TriggerEventWithPayload[], Error, void>({
       mutationFn: async () => {
@@ -105,7 +108,7 @@ const testStepHooks = {
     mockData: unknown;
     onSuccess: () => void;
   }) => {
-    const { form, builderState } = useRequiredStateToTestTriggers();
+    const { form, builderState } = useRequiredStateToTestSteps();
     const flowId = builderState.flow.id;
     return useMutation({
       mutationFn: async () => {
@@ -126,7 +129,7 @@ const testStepHooks = {
     setErrorMessage: (msg: string | undefined) => void;
     onSuccess: () => void;
   }) => {
-    const { form, builderState } = useRequiredStateToTestTriggers();
+    const { form, builderState } = useRequiredStateToTestSteps();
     const flowId = builderState.flow.id;
     return useMutation<TriggerEventWithPayload[], Error, void>({
       mutationFn: async () => {
@@ -176,14 +179,18 @@ const testStepHooks = {
     });
   },
   useUpdateTriggerSampleData: () => {
-    const { form, builderState } = useRequiredStateToTestTriggers();
+    const { form, builderState } = useRequiredStateToTestSteps();
     return useMutation({
       mutationFn: async (data: TriggerEventWithPayload) => {
         await updateTriggerSampleData({ data, form, builderState });
       },
     });
   },
-  useTestAction: ({currentStep, setErrorMessage, setConsoleLogs}:{currentStep: Action, setErrorMessage: (msg: string | undefined) => void, setConsoleLogs: (logs: string | null) => void})=> {
+  useTestAction: ({currentStep, setErrorMessage, setConsoleLogs, onSuccess}:{currentStep: Action, 
+     setErrorMessage: ((msg: string | undefined) => void) | undefined,
+     setConsoleLogs: ((logs: string | null) => void) | undefined,
+     onSuccess: (()=>void) | undefined}, 
+    )=> {
     const socket = useSocket();
     const {
       flowVersionId,
@@ -191,25 +198,10 @@ const testStepHooks = {
       setSampleData,
       setSampleDataInput,
       applyOperation,
-    } = useBuilderStateContext((state)=>{
-      return {
-        flowVersionId: state.flowVersion.id,
-        projectId: state.flow.id,
-        setSampleData: state.setSampleData,
-        setSampleDataInput: state.setSampleDataInput,
-        applyOperation: state.applyOperation,
-      }
-     })
-    return useMutation<
-    StepRunResponse & {
-      sampleDataFileId?: string;
-      sampleDataInputFileId?: string;
-    },
-    Error,
-    void
-  >({
-    mutationFn: async () => {
-      const testStepResponse = await flowRunsApi.testStep(socket, {
+    } = useRequiredStateToTestSteps().builderState;
+    return useMutation<StepRunResponse, Error, StepRunResponse | undefined>({
+    mutationFn: async (preExistingSampleData?: StepRunResponse) => {
+      const testStepResponse =preExistingSampleData ?? await flowRunsApi.testStep(socket, {
         flowVersionId,
         stepName: currentStep.name,
       });
@@ -247,8 +239,7 @@ const testStepHooks = {
       standardError,
     }) => {
       if (success) {
-        setErrorMessage(undefined);
-
+        setErrorMessage?.(undefined);
         const newInputUiInfo: Action['settings']['inputUiInfo'] = {
           ...currentStep.settings.inputUiInfo,
           sampleDataFileId,
@@ -263,7 +254,7 @@ const testStepHooks = {
             request: currentStepCopy,
           });
       } else {
-        setErrorMessage(
+        setErrorMessage?.(
           testStepUtils.formatErrorMessage(
             JSON.stringify(output) ||
               t('Failed to run test step and no error message was returned'),
@@ -272,15 +263,15 @@ const testStepHooks = {
       }
       setSampleData(currentStep.name, output);
       setSampleDataInput(currentStep.name, input);
-      setConsoleLogs(standardOutput || standardError);
+      setConsoleLogs?.(standardOutput || standardError);
+      onSuccess?.();
     },
     onError: (error) => {
       console.error(error);
       toast(INTERNAL_ERROR_TOAST);
     },
   });
-
-  }
+  },
 };
 
 async function updateTriggerSampleData({

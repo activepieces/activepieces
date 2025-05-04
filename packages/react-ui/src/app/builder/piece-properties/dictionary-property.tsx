@@ -19,6 +19,7 @@ type DictionaryInputProps = {
   onChange: (values: Record<string, string>) => void;
   disabled?: boolean;
   useMentionTextInput?: boolean;
+  skipEmptyKeys?: boolean;
 };
 
 export const DictionaryProperty = ({
@@ -26,6 +27,7 @@ export const DictionaryProperty = ({
   onChange,
   disabled,
   useMentionTextInput,
+  skipEmptyKeys,
 }: DictionaryInputProps) => {
   const id = useRef(1);
   const valuesArray = Object.entries(values ?? {}).map((el) => {
@@ -90,12 +92,17 @@ export const DictionaryProperty = ({
   };
 
   const updateValue = (items: DictionaryInputItem[]) => {
-    onChange(
-      items.reduce(
-        (acc, current) => ({ ...acc, [current.key]: current.value }),
-        {},
-      ),
-    );
+      onChange(
+        items.reduce(
+          (acc, current) => {
+            if (skipEmptyKeys && current.key === '') {
+              return acc;
+            }
+            return { ...acc, [current.key]: current.value };
+          },
+          {},
+        ),
+      );
   };
   return (
     <div className="flex w-full flex-col gap-4">
@@ -121,6 +128,7 @@ export const DictionaryProperty = ({
               <Input
                 value={value}
                 disabled={disabled}
+                className="h-full"
                 onChange={(e) =>
                   onChangeValue(index, e.target.value, undefined)
                 }
