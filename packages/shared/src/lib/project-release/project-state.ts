@@ -1,6 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
 import { PopulatedFlow } from '../flows/flow'
-import { Field } from '../tables/field'
 
 export enum ProjectOperationType {
     UPDATE_FLOW = 'UPDATE_FLOW',
