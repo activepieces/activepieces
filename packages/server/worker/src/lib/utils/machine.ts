@@ -3,11 +3,13 @@ import fs from 'fs'
 import os from 'os'
 import { promisify } from 'util'
 import { apVersionUtil, environmentVariables, exceptionHandler, fileExists, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, isNil, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
+import { apId, assertNotNullOrUndefined, isNil, MachineInformation, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerMachineHealthcheckResponse } from '@activepieces/shared'
 
 const execAsync = promisify(exec)
 
 let settings: WorkerMachineHealthcheckResponse | undefined
+
+const workerId = apId()
 
 export const workerMachine = {
     async getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
@@ -48,6 +50,7 @@ export const workerMachine = {
                 ...spreadIfDefined('S3_USE_SIGNED_URLS', settings?.S3_USE_SIGNED_URLS),
                 version: await apVersionUtil.getCurrentRelease(),
             },
+            workerId,
         }
     },
     init: async (_settings: WorkerMachineHealthcheckResponse) => {
