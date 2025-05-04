@@ -3,7 +3,7 @@ import {
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
-import { StopResponse } from '@activepieces/shared';
+import { ExecutionType, PauseType, StopResponse } from '@activepieces/shared';
 import { StatusCodes } from 'http-status-codes';
 
 enum ResponseType {
@@ -12,6 +12,12 @@ enum ResponseType {
   REDIRECT = 'redirect',
 }
 
+enum FlowExecution {
+  STOP = 'stop',
+  RESPOND = 'respond',
+  RESPOND_AND_AWAIT_NEXT_WEBHOOK = 'respondAndAwaitNextWebhook',
+}
+const RESUME_WEBHOOK_HEADER = 'x-activepieces-resume-webhook-url';
 export const returnResponse = createAction({
   name: 'return_response',
   displayName: 'Return Response',
@@ -85,15 +91,41 @@ export const returnResponse = createAction({
         return fields;
       },
     }),
+   notes: Property.DynamicProperties({
+    displayName: 'Notes',
+    required: false,
+    props: async (req)=>{
+      switch(req['respond'] as unknown as  (FlowExecution| undefined))
+      {
+        case FlowExecution.RESPOND_AND_AWAIT_NEXT_WEBHOOK:{
+           return {
+            markdown: Property.MarkDown({
+              value: `**Respond and Wait for Next Webhook**<br> 
+              Check the response header (${RESUME_WEBHOOK_HEADER}) for the next webhook URL and call it to resume the flow. <br>
+              `,
+            })
+           } as DynamicPropsValue;
+        }
+        case FlowExecution.STOP:
+        case FlowExecution.RESPOND:
+        case undefined:
+          return {};
+      }  
+    },
+    refreshers: ['respond'],
+  },
+    
+  ),
     respond: Property.StaticDropdown({
       displayName: 'Flow Execution',
       required: false,
-      defaultValue: 'stop',
+      defaultValue: FlowExecution.STOP,
       options: {
         disabled: false,
         options: [
-          { label: 'Stop', value: 'stop' },
-          { label: 'Respond and Continue', value: 'respond' },
+          { label: 'Stop', value: FlowExecution.STOP },
+          { label: 'Respond and Continue', value: FlowExecution.RESPOND },
+          { label: 'Respond and Wait for Next Webhook', value: FlowExecution.RESPOND_AND_AWAIT_NEXT_WEBHOOK },
         ],
       },
     }),
@@ -102,12 +134,13 @@ export const returnResponse = createAction({
   async run(context) {
     const { fields, responseType, respond } = context.propsValue;
     const bodyInput = fields ['body'];
-    const headers = fields['headers'];
+    const headers = initializeHeaders({headers:fields['headers'],respond,context});
     const status = fields['status'];
     
+ 
     const response: StopResponse = {
       status: status ?? StatusCodes.OK,
-      headers: (headers as Record<string, string>) ?? {},
+      headers,
     };
 
     switch (responseType) {
@@ -123,15 +156,46 @@ export const returnResponse = createAction({
         break;
     }
     
-    if (respond === 'respond') {
-      context.run.respond({
-        response: response,
-      });
-    } else {
-      context.run.stop({
-        response: response,
-      });
+    switch(respond){
+      case FlowExecution.STOP:
+        {
+          context.run.stop({
+            response,
+          });
+          break;
+        }
+      case FlowExecution.RESPOND:
+        {
+          context.run.respond({
+            response,
+          });
+          break;
+        }
+      case FlowExecution.RESPOND_AND_AWAIT_NEXT_WEBHOOK:
+        {
+          if(context.executionType === ExecutionType.BEGIN){
+            context.run.pause({
+              pauseMetadata: {
+                type: PauseType.WEBHOOK,
+                response
+              },
+            });
+            return undefined;
+          }
+          else {
+            return {
+              body: context.resumePayload.body,
+              headers: context.resumePayload.headers,
+              queryParams: context.resumePayload.queryParams,
+            }
+          }
+          break;
+        }
+        case undefined:
+          break;
     }
+ 
+
     return response;
   },
 });
@@ -148,4 +212,17 @@ function ensureProtocol(url: string): string {
     return `https://${url}`;
   }
   return url;
+}
+
+function initializeHeaders({headers,respond,context}:{headers?: Record<string, string>, respond?: FlowExecution,context:Parameters<Parameters<typeof createAction>['0']['run']>[0]}) { 
+    const initializedHeaders = headers ?? {};
+    if(respond === FlowExecution.RESPOND_AND_AWAIT_NEXT_WEBHOOK) {
+      initializedHeaders[RESUME_WEBHOOK_HEADER] = context.generateResumeUrl({
+        queryParams: {
+          created: new Date().toISOString(),
+          runId: context.run.id,
+        },
+      });
+    }
+    return initializedHeaders;
 }
