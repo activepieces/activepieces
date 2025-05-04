@@ -81,7 +81,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
                 queryParams,
             },
             requestId: req.params.requestId,
-        });
+        })
         await reply.status(response.status).headers(response.headers).send(response.body)
     })
     app.post('/:id/retry', RetryFlowRequest, async (req) => {

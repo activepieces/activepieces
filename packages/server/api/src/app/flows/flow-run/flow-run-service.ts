@@ -16,7 +16,6 @@ import {
     FlowRunId,
     FlowRunStatus,
     FlowVersionId,
-    FlowVersionState,
     isNil,
     PauseMetadata,
     PauseType,
@@ -27,6 +26,7 @@ import {
     spreadIfDefined,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { In, Not } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import {
@@ -45,7 +45,6 @@ import { flowService } from '../flow/flow.service'
 import { sampleDataService } from '../step-run/sample-data.service'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
-import { StatusCodes } from 'http-status-codes'
 export const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 export const flowRunRepo = repoFactory<FlowRun>(FlowRunEntity)
 const maxFileSizeInBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
@@ -359,19 +358,27 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         }
         return getUploadUrl(file.s3Key, executionState, executionStateContentLength, log)
     },
-    async handleSyncResumeFlow({runId,payload,requestId}:{runId: string, payload:unknown, requestId:string}) {
+    async handleSyncResumeFlow({ runId, payload, requestId }: { runId: string, payload: unknown, requestId: string }) {
         const flowRun = await flowRunService(log).getOnePopulatedOrThrow({
             id: runId,
             projectId: undefined,
         })
         const synchronousHandlerId = engineResponseWatcher(log).getServerId()
+        const matchRequestId = isNil(flowRun.pauseMetadata) || (flowRun.pauseMetadata.type === PauseType.WEBHOOK && requestId === flowRun.pauseMetadata.requestId)
         assertNotNullOrUndefined(synchronousHandlerId, 'synchronousHandlerId is required for sync resume request is required')
+        if(!matchRequestId){
+            return {
+                status: StatusCodes.NOT_FOUND,
+                body: {},
+                headers: {},
+            }
+        }
         await flowRunService(log).start({
             payload,
             flowRunId: flowRun.id,
             projectId: flowRun.projectId,
             flowVersionId: flowRun.flowVersionId,
-            synchronousHandlerId: synchronousHandlerId,
+            synchronousHandlerId,
             httpRequestId: requestId,
             progressUpdateType: ProgressUpdateType.TEST_FLOW,
             executionType: ExecutionType.RESUME,
@@ -382,7 +389,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             body: {},
             headers: {},
         })
-    }
+    },
 })
 
 async function filterFlowRunsAndApplyFilters(
