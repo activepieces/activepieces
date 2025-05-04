@@ -22,7 +22,7 @@ import { TodoTestingDialog } from './custom-test-step/test-todo-dialog';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
 import testStepHooks from './test-step-hooks';
-import TestReturnResponseAndWaitForWebhookDialog from './test-return-response-and-wait-for-webhook-dialog';
+import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
 
 type TestActionComponentProps = {
   isSaving: boolean;
@@ -155,7 +155,8 @@ const TestStepSectionImplementation = React.memo(
         )}
         {
           isReturnResponseAndWaitForWebhookDialogOpen && (
-            <TestReturnResponseAndWaitForWebhookDialog
+            <TestWebhookDialog
+              testingMode='returnResponseAndWaitForNextWebhook'
               open={isReturnResponseAndWaitForWebhookDialogOpen}
               onOpenChange={setIsReturnResponseAndWaitForWebhookDialogOpen}
               currentStep={currentStep}
