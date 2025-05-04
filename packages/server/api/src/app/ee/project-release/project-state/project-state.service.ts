@@ -79,13 +79,13 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         },
                     })
 
-                    const fileds = await fieldService.getAll({
+                    const fields = await fieldService.getAll({
                         projectId,
                         tableId: table.id,
                     })
 
                     await Promise.all(operation.newTableState.fields.map(async (field) => {
-                        const existingField = fileds.find((f) => f.externalId === field.externalId) 
+                        const existingField = fields.find((f) => f.externalId === field.externalId) 
                         if (!isNil(existingField)) {
                             await fieldService.update({
                                 projectId,
@@ -98,7 +98,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         }
                     }))
 
-                    const fieldsToDelete = fileds.filter((f) => !operation.newTableState.fields.some((nf) => nf.externalId === f.externalId))
+                    const fieldsToDelete = fields.filter((f) => !operation.newTableState.fields.some((nf) => nf.externalId === f.externalId))
 
                     await Promise.all(fieldsToDelete.map(async (field) => {
                         await fieldService.delete({

@@ -68,8 +68,6 @@ function isTableChanged(stateOne: TableState, stateTwo: TableState): boolean {
         type: field.type,
         data: field.type === FieldType.STATIC_DROPDOWN ? field.data : undefined,
     }))
-    console.log('HAHAHAHAH fieldsMetadataOne', fieldsMetadataOne)
-    console.log('HAHAHAHAH fieldsMetadataTwo', fieldsMetadataTwo)
     return stateOne.name !== stateTwo.name || JSON.stringify(fieldsMetadataOne) !== JSON.stringify(fieldsMetadataTwo)
 }
 
