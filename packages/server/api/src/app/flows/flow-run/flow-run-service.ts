@@ -373,6 +373,13 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 headers: {},
             }
         }
+        if(flowRun.status !== FlowRunStatus.PAUSED){
+            return {
+                status: StatusCodes.CONFLICT,
+                body: {"message": "Flow run is not paused", "flowRunStatus": flowRun.status},
+                headers: {},
+            }
+        }
         await flowRunService(log).start({
             payload,
             flowRunId: flowRun.id,
