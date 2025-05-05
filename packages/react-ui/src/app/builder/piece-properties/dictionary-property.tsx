@@ -19,7 +19,6 @@ type DictionaryInputProps = {
   onChange: (values: Record<string, string>) => void;
   disabled?: boolean;
   useMentionTextInput?: boolean;
-  skipEmptyKeys?: boolean;
 };
 
 export const DictionaryProperty = ({
@@ -27,7 +26,6 @@ export const DictionaryProperty = ({
   onChange,
   disabled,
   useMentionTextInput,
-  skipEmptyKeys,
 }: DictionaryInputProps) => {
   const id = useRef(1);
   const valuesArray = Object.entries(values ?? {}).map((el) => {
@@ -95,9 +93,7 @@ export const DictionaryProperty = ({
       onChange(
         items.reduce(
           (acc, current) => {
-            if (skipEmptyKeys && current.key === '') {
-              return acc;
-            }
+         
             return { ...acc, [current.key]: current.value };
           },
           {},

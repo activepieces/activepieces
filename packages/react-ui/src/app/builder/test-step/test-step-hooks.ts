@@ -48,14 +48,14 @@ const testStepHooks = {
     setErrorMessage,
     onSuccess,
   }: {
-    setErrorMessage: (msg: string | undefined) => void;
+    setErrorMessage: ((msg: string | undefined) => void) | undefined;
     onSuccess: () => void;
   }) => {
     const { form, builderState } = useRequiredStateToTestSteps();
     const flowId = builderState.flow.id;
     return useMutation<TriggerEventWithPayload[], Error, void>({
       mutationFn: async () => {
-        setErrorMessage(undefined);
+        setErrorMessage?.(undefined);
         const ids = (
           await triggerEventsApi.list({ flowId, cursor: undefined, limit: 5 })
         ).data.map((triggerEvent) => triggerEvent.id);
@@ -79,7 +79,7 @@ const testStepHooks = {
             }
             return newData.data;
           }
-          await waitFor2Seconds();
+          await waitFor1Second();
           attempt++;
         }
         return [];
@@ -93,7 +93,7 @@ const testStepHooks = {
       onError: async (error) => {
         console.error(error);
         await triggerEventsApi.deleteWebhookSimulation(flowId);
-        setErrorMessage(
+        setErrorMessage?.(
           testStepUtils.formatErrorMessage(
             t('There is no sample data available found for this trigger.'),
           ),
@@ -102,16 +102,14 @@ const testStepHooks = {
     });
   },
   useSaveMockData: ({
-    mockData,
     onSuccess,
   }: {
-    mockData: unknown;
     onSuccess: () => void;
   }) => {
     const { form, builderState } = useRequiredStateToTestSteps();
     const flowId = builderState.flow.id;
     return useMutation({
-      mutationFn: async () => {
+      mutationFn: async (mockData: unknown) => {
         const data = await triggerEventsApi.saveTriggerMockdata(
           flowId,
           mockData,
@@ -325,7 +323,7 @@ async function updateTriggerSampleData({
   setSampleDataInput(formValues.name, formValues.settings?.input ?? {});
 }
 
-const waitFor2Seconds = () =>
-  new Promise((resolve) => setTimeout(resolve, 2000));
+const waitFor1Second = () =>
+  new Promise((resolve) => setTimeout(resolve, 10000));
 
 export default testStepHooks;

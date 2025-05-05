@@ -19,7 +19,7 @@ import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
 import { useBuilderStateContext } from '../builder-hooks';
 
 import { TodoTestingDialog } from './custom-test-step/test-todo-dialog';
-import { TestSampleDataViewer } from './test-sample-data-viewer';
+import { DefaultTestingButton, TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
 import testStepHooks from './test-step-hooks';
 import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
@@ -124,9 +124,7 @@ const TestStepSectionImplementation = React.memo(
         )}
         {sampleDataExists && (
           <TestSampleDataViewer
-            onRetest={onTestButtonClick}
             isValid={currentStep.valid}
-            isSaving={isSaving}
             isTesting={isTesting || isTodoCreateTaskDialogOpen}
             sampleData={sampleData}
             sampleDataInput={sampleDataInput ?? null}
@@ -135,6 +133,12 @@ const TestStepSectionImplementation = React.memo(
             consoleLogs={
               currentStep.type === ActionType.CODE ? consoleLogs : null
             }
+            retestButton={<DefaultTestingButton
+              isValid={currentStep.valid}
+              isSaving={isSaving}
+              isTesting={isTesting || isTodoCreateTaskDialogOpen}
+              onRetest={onTestButtonClick}
+            />}
           ></TestSampleDataViewer>
         )}
         {isTodoCreateTaskDialogOpen && currentStep.type === ActionType.PIECE && todo && (

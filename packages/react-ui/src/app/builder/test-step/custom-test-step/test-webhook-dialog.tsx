@@ -16,6 +16,7 @@ import { flagsHooks } from "@/hooks/flags-hooks"
 import { useBuilderStateContext } from "../../builder-hooks"
 import { useMutation } from "@tanstack/react-query"
 import { api } from "@/lib/api"
+import { triggerEventsApi } from "@/features/flows/lib/trigger-events-api"
 
 enum BodyType {
     JSON = 'json',
@@ -67,37 +68,47 @@ type TestTriggerWebhookDialogProps = {
     open: boolean
     onOpenChange: (open: boolean) => void
     testingMode: 'trigger'
-    url: string
+    onTestFinished: () => void
 }
 type TestWebhookDialogProps = TestWaitForNextWebhookDialogProps | TestTriggerWebhookDialogProps
  
-const TestTriggerWebhookDialog = ({open, onOpenChange, testingMode, url}: TestTriggerWebhookDialogProps ) => {
+const TestTriggerWebhookDialog = ({open, onOpenChange, testingMode, onTestFinished}: TestTriggerWebhookDialogProps ) => {
+   
+    const {
+        mutate: simulateTrigger,
+        isPending: isSimulating,
+      } = testStepHooks.useSimulateTrigger({
+        setErrorMessage: undefined,
+        onSuccess: () => {
+          onTestFinished()
+          onOpenChange(false)
+        },
+      });
 
     const {mutate: onSubmit, isPending} = useMutation<unknown, Error, z.infer<typeof WebhookRequest>>({
         mutationFn: async(data: z.infer<typeof WebhookRequest>) => {
+              await triggerEventsApi.startWebhookSimulation(flowId);
+              simulateTrigger();
               await  api.any(url, {
                 method: data.method,
                 data: data.body,
                 headers: data.headers,
                 params: data.queryParams,
-             })
-             return new Promise((resolve)=>{
-                setTimeout(()=>{
-                    resolve(null)
-                }, 2000)
-             })
-        },
-        onSuccess: () => {
-            onOpenChange(false)
+             })            
         }
     })
+    const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
+        ApFlagId.WEBHOOK_URL_PREFIX,
+      );
+    const flowId = useBuilderStateContext(state=>state.flow.id)
+    const url = `${webhookPrefixUrl}/${flowId}`
 
     return <TestWebhookFunctionalityDialog
         testingMode={testingMode}
         onSubmit={onSubmit}
         open={open}
         onOpenChange={onOpenChange}
-        isLoading={isPending}
+        isLoading={isPending || isSimulating}
         url={url}
     />
 }
@@ -209,7 +220,6 @@ const TestWebhookFunctionalityDialog = ( req:
                                 onChange={field.onChange}
                                 disabled={false}
                                 useMentionTextInput={false}
-                                skipEmptyKeys={true}
                             ></DictionaryProperty>
                         </FormItem>
                     }}>
@@ -227,7 +237,6 @@ const TestWebhookFunctionalityDialog = ( req:
                                 onChange={field.onChange}
                                 disabled={false}
                                 useMentionTextInput={false}
-                                skipEmptyKeys={true}
                             ></DictionaryProperty>
                         </FormItem>
                     }}>
@@ -308,13 +317,9 @@ const TestWebhookFunctionalityDialog = ( req:
 
 TestWebhookFunctionalityDialog.displayName = 'TestWebhookFunctionalityDialog'
 
-const TestWebhookDialog = ({testingMode, currentStep, open, onOpenChange}: TestWebhookDialogProps)=>{
-    const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
-        ApFlagId.WEBHOOK_URL_PREFIX,
-      );
-    const flowId = useBuilderStateContext(state=>state.flow.id)
-    const url = `${webhookPrefixUrl}/${flowId}`
-    
+const TestWebhookDialog = (props: TestWebhookDialogProps)=>{
+    const {testingMode, currentStep, open, onOpenChange} = props
+
     if(testingMode === 'returnResponseAndWaitForNextWebhook'){
         return <TestWaitForNextWebhookDialog
             currentStep={currentStep}
@@ -329,7 +334,7 @@ const TestWebhookDialog = ({testingMode, currentStep, open, onOpenChange}: TestW
             open={open}
             onOpenChange={onOpenChange}
             testingMode={testingMode}
-            url={url}
+            onTestFinished={props.onTestFinished}
         />
     }
 }
