@@ -28,6 +28,7 @@ import {
   isNil,
   SeekPage,
   McpPropertyType,
+  fixSchemaNaming,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
@@ -122,7 +123,6 @@ function McpToolTestingDialog({
     useMutation({
       mutationFn: async (data: Record<string, any>) => {
         const mockData = data;
-
         const response = await triggerEventsApi.saveTriggerMockdata(
           flowId,
           mockData,
@@ -212,8 +212,13 @@ function McpToolTestingDialog({
         <Form {...testingForm}>
           <form
             className="grid space-y-4"
-            onSubmit={testingForm.handleSubmit((data) =>
-              saveMockAsSampleData(data),
+            onSubmit={testingForm.handleSubmit((data) =>{
+              debugger;
+              const cleanedData = Object.fromEntries(
+                Object.entries(data).filter(([key, _]) => key.trim() !== '').map(([key, value]) => [fixSchemaNaming(key), value])
+              );
+              saveMockAsSampleData(cleanedData)
+            }
             )}
           >
             <ScrollArea className="flex-1 max-h-[50vh]">
@@ -269,9 +274,7 @@ function McpToolTestingDialog({
               <Button
                 type="submit"
                 loading={isSavingMockdata}
-                onClick={testingForm.handleSubmit((data) =>
-                  saveMockAsSampleData(data),
-                )}
+               
               >
                 {t('Save')}
               </Button>
