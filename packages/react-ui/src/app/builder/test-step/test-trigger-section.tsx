@@ -1,14 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
-import { AlertCircle, ChevronDown } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
-
 import {
   Select,
   SelectContent,
@@ -19,9 +18,7 @@ import {
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import {
-  ApFlagId,
   SeekPage,
   Trigger,
   TriggerEventWithPayload,
@@ -31,10 +28,10 @@ import {
 
 import { useBuilderStateContext } from '../builder-hooks';
 
-import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
-import testStepHooks from './test-step-hooks';
 import { McpToolTestingDialog } from './custom-test-step/mcp-tool-testing-dialog';
+import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
+import testStepHooks from './test-step-hooks';
 import { TestButtonTooltip } from './test-step-tooltip';
 
 type TestTriggerSectionProps = {
@@ -44,35 +41,36 @@ type TestTriggerSectionProps = {
   projectId: string;
 };
 
-
 const ManualWebhookPieceTriggerTestButton = ({
   refetch,
-}: {refetch: () => void;}) => {
+}: {
+  refetch: () => void;
+}) => {
   const [id, setId] = useState<number>(0);
-  const [isWebhookTestingDialogOpen, setIsWebhookTestingDialogOpen] =  useState(false);
+  const [isWebhookTestingDialogOpen, setIsWebhookTestingDialogOpen] =
+    useState(false);
   const formValues = useFormContext<Trigger>().getValues();
 
   return (
     <>
       <Button
-            variant="default"
-            size="sm"
-            className="flex items-center gap-2"
-            onClick={()=>{
-              setIsWebhookTestingDialogOpen(true);
-            }}
-          >
-              {t('Generate Sample Data')}
-          
-          </Button>
+        variant="default"
+        size="sm"
+        className="flex items-center gap-2"
+        onClick={() => {
+          setIsWebhookTestingDialogOpen(true);
+        }}
+      >
+        {t('Generate Sample Data')}
+      </Button>
 
       <TestWebhookDialog
         key={`test-webhook-dialog-${id}`}
         open={isWebhookTestingDialogOpen}
-        onOpenChange={(val)=>{
-          if(!val){
-            setTimeout(()=>{
-              setId(id+1);
+        onOpenChange={(val) => {
+          if (!val) {
+            setTimeout(() => {
+              setId(id + 1);
             }, 200);
           }
           setIsWebhookTestingDialogOpen(val);
@@ -182,11 +180,6 @@ const TestTriggerSection = React.memo(
       [sampleData, pollResults],
     );
 
-
-    const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
-      ApFlagId.WEBHOOK_URL_PREFIX,
-    );
-
     if (isPieceLoading) {
       return null;
     }
@@ -196,8 +189,13 @@ const TestTriggerSection = React.memo(
     const showFirstTimeTestingSectionForSimulation =
       !isTestedBefore && !sampleDataSelected && isSimulation && !isSimulating;
     const showFirstTimeTestingSectionForPolling =
-      !isTestedBefore && !sampleDataSelected && !isSimulation && !isSimulating && !isMcpTool;
-    const showFirstTimeMcpToolTestingSection =   !isTestedBefore && !sampleDataSelected && isMcpTool;
+      !isTestedBefore &&
+      !sampleDataSelected &&
+      !isSimulation &&
+      !isSimulating &&
+      !isMcpTool;
+    const showFirstTimeMcpToolTestingSection =
+      !isTestedBefore && !sampleDataSelected && isMcpTool;
     const isWebhookPieceTrigger =
       pieceModel?.name === '@activepieces/piece-webhook' &&
       formValues.settings.triggerName === 'catch_webhook';
@@ -276,7 +274,7 @@ const TestTriggerSection = React.memo(
               <LoadingSpinner className="w-4 h-4"></LoadingSpinner>
               <div>{t('Testing Trigger')}</div>
               <div className="flex-grow"></div>
-        
+
               <Button
                 variant="outline"
                 size="sm"
@@ -286,9 +284,8 @@ const TestTriggerSection = React.memo(
               >
                 {t('Cancel')}
               </Button>
-             
             </div>
-            
+
             <Alert className="bg-warning/5 border-warning/5 ">
               <AlertCircle className="h-4 w-4 text-warning" />
               <div className="flex flex-col gap-1">
@@ -303,42 +300,35 @@ const TestTriggerSection = React.memo(
                     })}
 
                   {isWebhookPieceTrigger && (
-                    <>
-                      <div className="break-wrods">
-                        {t('Send Data to the webhook URL to generate sample data to use in the next steps')}
-                      </div>
-                    </>
+                    <div className="break-wrods">
+                      {t(
+                        'Send Data to the webhook URL to generate sample data to use in the next steps',
+                      )}
+                    </div>
                   )}
                 </AlertDescription>
-                
               </div>
             </Alert>
-            {
-                isWebhookPieceTrigger && (
-                  <ManualWebhookPieceTriggerTestButton
-                    refetch={refetch}
-                  />
-                )
-              }
+            {isWebhookPieceTrigger && (
+              <ManualWebhookPieceTriggerTestButton refetch={refetch} />
+            )}
           </div>
         )}
         {showFirstTimeTestingSectionForSimulation && (
           <div className="flex justify-center flex-col gap-2 items-center">
-           
-              <TestButtonTooltip disabled={!isValid}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => simulateTrigger()}
-                  keyboardShortcut="G"
-                  onKeyboardShortcut={simulateTrigger}
-                  disabled={!isValid}
-                >
-                  <Dot animation={true} variant={'primary'}></Dot>
-                  {t('Test Trigger')}
-                </Button>
-              </TestButtonTooltip>
-        
+            <TestButtonTooltip disabled={!isValid}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => simulateTrigger()}
+                keyboardShortcut="G"
+                onKeyboardShortcut={simulateTrigger}
+                disabled={!isValid}
+              >
+                <Dot animation={true} variant={'primary'}></Dot>
+                {t('Test Trigger')}
+              </Button>
+            </TestButtonTooltip>
 
             {!isNil(mockData) && (
               <>
@@ -362,45 +352,39 @@ const TestTriggerSection = React.memo(
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                    pollTrigger();
+                  pollTrigger();
                 }}
                 keyboardShortcut="G"
-                onKeyboardShortcut={
-                pollTrigger
-                }
+                onKeyboardShortcut={pollTrigger}
                 loading={isPollingTesting || isMcpToolTestingDialogOpen}
                 disabled={!isValid}
               >
                 <Dot animation={true} variant={'primary'}></Dot>
-                {t('Load Sample Data' )}
+                {t('Load Sample Data')}
               </Button>
             </TestButtonTooltip>
           </div>
         )}
-        {
-          showFirstTimeMcpToolTestingSection && (
-            <div className="flex justify-center">
+        {showFirstTimeMcpToolTestingSection && (
+          <div className="flex justify-center">
             <TestButtonTooltip disabled={!isValid}>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
                   handleMcpToolTesting();
-              }}
-              keyboardShortcut="G"
-              onKeyboardShortcut={
-              handleMcpToolTesting
-              }
-              loading={isPollingTesting || isMcpToolTestingDialogOpen}
-              disabled={!isValid}
-            >
-              <Dot animation={true} variant={'primary'}></Dot>
-              {t('Test Tool' )}
-            </Button>
-          </TestButtonTooltip>
+                }}
+                keyboardShortcut="G"
+                onKeyboardShortcut={handleMcpToolTesting}
+                loading={isPollingTesting || isMcpToolTestingDialogOpen}
+                disabled={!isValid}
+              >
+                <Dot animation={true} variant={'primary'}></Dot>
+                {t('Test Tool')}
+              </Button>
+            </TestButtonTooltip>
           </div>
-          )
-        }
+        )}
 
         {isMcpTool && (
           <McpToolTestingDialog

@@ -1,5 +1,3 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
-import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { useForm, useFormContext } from 'react-hook-form';
 
@@ -62,19 +60,18 @@ function mapMcpTypeToPropertyType(mcpType: McpPropertyType): PropertyType {
 function McpToolTestingDialog({
   open,
   onOpenChange,
-  onTestingSuccess
+  onTestingSuccess,
 }: McpToolTestingDialogProps) {
   const form = useFormContext<Trigger>();
   const formValues = form.getValues();
   const formProps = formValues.settings.input.inputSchema as McpFormField[];
   const { mutate: saveMockAsSampleData, isPending: isSavingMockdata } =
-  testStepHooks.useSaveMockData({
-    onSuccess: () => {
-      onTestingSuccess();
-      onOpenChange(false)
-    },
-  });
-
+    testStepHooks.useSaveMockData({
+      onSuccess: () => {
+        onTestingSuccess();
+        onOpenChange(false);
+      },
+    });
 
   const testingForm = useForm<Record<string, any>>({
     shouldFocusError: true,
@@ -106,7 +103,6 @@ function McpToolTestingDialog({
     },
     mode: 'onChange',
   });
-
 
   const pieceProps = formProps.reduce((acc, field: McpFormField) => {
     const pieceProperty = {

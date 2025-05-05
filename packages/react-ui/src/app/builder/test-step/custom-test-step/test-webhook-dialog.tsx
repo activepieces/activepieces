@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ControllerRenderProps, useForm } from 'react-hook-form';
 import { z } from 'zod';
+
 import { JsonEditor } from '@/components/custom/json-editor';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
@@ -15,15 +16,16 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Action, ApFlagId, apId, Trigger } from '@activepieces/shared';
+
 import { useBuilderStateContext } from '../../builder-hooks';
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
 import testStepHooks from '../test-step-hooks';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 enum BodyType {
   JSON = 'json',
@@ -110,7 +112,6 @@ const TestTriggerWebhookDialog = ({
         params: data.queryParams,
       });
     },
-   
   });
   const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
     ApFlagId.WEBHOOK_URL_PREFIX,
@@ -119,24 +120,19 @@ const TestTriggerWebhookDialog = ({
   const url = `${webhookPrefixUrl}/${flowId}`;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>
-        {t('Send Sample Data to Webhook')}
-        </DialogTitle>
-      </DialogHeader>
-      <TestWebhookFunctionalityForm
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('Send Sample Data to Webhook')}</DialogTitle>
+        </DialogHeader>
+        <TestWebhookFunctionalityForm
           testingMode={testingMode}
           onSubmit={onSubmit}
-          isLoading={isPending || isSimulating}     
+          isLoading={isPending || isSimulating}
         />
-    </DialogContent>
-  </Dialog>
-
-   
+      </DialogContent>
+    </Dialog>
   );
 };
-
 
 const TestWaitForNextWebhookDialog = ({
   currentStep,
@@ -154,46 +150,38 @@ const TestWaitForNextWebhookDialog = ({
       },
     });
   return (
-
-    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>
-        {t('Send Sample Data to Webhook')}
-        </DialogTitle>
-      </DialogHeader>
-      <TestWebhookFunctionalityForm
-      testingMode={testingMode}
-      onSubmit={(data) => {
-        onSubmit({
-          id: apId(),
-          success: true,
-          output: {
-            body: data.body,
-            headers: data.headers,
-            queryParams: data.queryParams,
-          },
-          standardError: '',
-          standardOutput: '',
-          input: {},
-        });
-      }}
-
-      isLoading={isLoading}
-    />
-    </DialogContent>
-  </Dialog>
-
-    </>
-  
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('Send Sample Data to Webhook')}</DialogTitle>
+        </DialogHeader>
+        <TestWebhookFunctionalityForm
+          testingMode={testingMode}
+          onSubmit={(data) => {
+            onSubmit({
+              id: apId(),
+              success: true,
+              output: {
+                body: data.body,
+                headers: data.headers,
+                queryParams: data.queryParams,
+              },
+              standardError: '',
+              standardOutput: '',
+              input: {},
+            });
+          }}
+          isLoading={isLoading}
+        />
+      </DialogContent>
+    </Dialog>
   );
 };
 
 type TestingWebhookFunctionalityFormProps = {
   onSubmit: (data: z.infer<typeof WebhookRequest>) => void;
   isLoading: boolean;
-  testingMode: 'returnResponseAndWaitForNextWebhook' |   'trigger';
+  testingMode: 'returnResponseAndWaitForNextWebhook' | 'trigger';
 };
 
 const TestWebhookFunctionalityForm = (
@@ -214,47 +202,37 @@ const TestWebhookFunctionalityForm = (
     <Form {...form}>
       <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
         {testingMode === 'trigger' && (
-          <>
-            <FormField
-              control={form.control}
-              name="method"
-              render={({ field }) => {
-                return (
-                  <FormItem>
-                    <FormLabel>{t('Method')}</FormLabel>
-                    <SearchableSelect
-                      options={Object.values(HttpMethod).map((method) => ({
-                        value: method,
-                        label: method,
-                      }))}
-                      onChange={(val) => {
-                        field.onChange(val);
-                      }}
-                      value={field.value}
-                      disabled={false}
-                      placeholder={t('Select an option')}
-                    />
-                  </FormItem>
-                );
-              }}
-            />
-          </>
+          <FormField
+            control={form.control}
+            name="method"
+            render={({ field }) => {
+              return (
+                <FormItem>
+                  <FormLabel>{t('Method')}</FormLabel>
+                  <SearchableSelect
+                    options={Object.values(HttpMethod).map((method) => ({
+                      value: method,
+                      label: method,
+                    }))}
+                    onChange={(val) => {
+                      field.onChange(val);
+                    }}
+                    value={field.value}
+                    disabled={false}
+                    placeholder={t('Select an option')}
+                  />
+                </FormItem>
+              );
+            }}
+          />
         )}
-        <Tabs defaultValue="queryParams" >
+        <Tabs defaultValue="queryParams">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="queryParams">
-              {t('Query Params')}
-            </TabsTrigger>
+            <TabsTrigger value="queryParams">{t('Query Params')}</TabsTrigger>
 
-            <TabsTrigger value="headers">
-              {t('Headers')}
+            <TabsTrigger value="headers">{t('Headers')}</TabsTrigger>
 
-            </TabsTrigger>
-
-            <TabsTrigger value="body">
-              {t('Body')}
-            </TabsTrigger>
-
+            <TabsTrigger value="body">{t('Body')}</TabsTrigger>
           </TabsList>
           <TabsContent value="queryParams">
             <FormField
@@ -342,7 +320,7 @@ const TestWebhookFunctionalityForm = (
                 name="body"
                 render={({ field }) => {
                   return (
-                    <FormItem className='mt-4'>
+                    <FormItem className="mt-4">
                       <FormLabel>{t('Body')}</FormLabel>
                       <BodyFormInput
                         bodyType={form.getValues('bodyType')}
@@ -351,11 +329,11 @@ const TestWebhookFunctionalityForm = (
                     </FormItem>
                   );
                 }}
-              ></FormField></>
+              ></FormField>
+            </>
           </TabsContent>
         </Tabs>
 
-    
         <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="outline">

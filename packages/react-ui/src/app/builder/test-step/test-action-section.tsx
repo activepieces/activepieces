@@ -20,10 +20,7 @@ import { useBuilderStateContext } from '../builder-hooks';
 
 import { TodoTestingDialog } from './custom-test-step/test-todo-dialog';
 import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
-import {
-  DefaultTestingButton,
-  TestSampleDataViewer,
-} from './test-sample-data-viewer';
+import { TestSampleDataViewer } from './test-sample-data-viewer';
 import testStepHooks from './test-step-hooks';
 import { TestButtonTooltip } from './test-step-tooltip';
 
