@@ -1,5 +1,3 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
-import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { useForm, useFormContext } from 'react-hook-form';
 
@@ -14,33 +12,24 @@ import {
 } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
-import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import {
   PropertyType,
   PiecePropertyMap,
   PieceProperty,
 } from '@activepieces/pieces-framework';
 import {
-  FileType,
   Trigger,
-  TriggerEventWithPayload,
-  isNil,
-  SeekPage,
   McpPropertyType,
   fixSchemaNaming,
 } from '@activepieces/shared';
 
-import { useBuilderStateContext } from '../../builder-hooks';
 import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
+import testStepHooks from '../test-step-hooks';
 
 type McpToolTestingDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  flowId: string;
-  flowVersionId: string;
-  projectId: string;
-  setLastTestDate: (lastTestDate: string) => void;
+  onTestingSuccess: () => void;
 };
 
 interface McpFormField {
@@ -50,43 +39,39 @@ interface McpFormField {
   type: McpPropertyType;
   defaultValue?: any;
 }
+function mapMcpTypeToPropertyType(mcpType: McpPropertyType): PropertyType {
+  switch (mcpType) {
+    case McpPropertyType.NUMBER:
+      return PropertyType.NUMBER;
+    case McpPropertyType.BOOLEAN:
+      return PropertyType.CHECKBOX;
+    case McpPropertyType.OBJECT:
+      return PropertyType.OBJECT;
+    case McpPropertyType.DATE:
+      return PropertyType.DATE_TIME;
+    case McpPropertyType.ARRAY:
+      return PropertyType.ARRAY;
+    case McpPropertyType.TEXT:
+    default:
+      return PropertyType.SHORT_TEXT;
+  }
+}
 
 function McpToolTestingDialog({
   open,
   onOpenChange,
-  flowId,
-  flowVersionId,
-  projectId,
-  setLastTestDate,
+  onTestingSuccess,
 }: McpToolTestingDialogProps) {
   const form = useFormContext<Trigger>();
   const formValues = form.getValues();
   const formProps = formValues.settings.input.inputSchema as McpFormField[];
-
-  const { setSampleData, setSampleDataInput } = useBuilderStateContext(
-    (state) => ({
-      setSampleData: state.setSampleData,
-      setSampleDataInput: state.setSampleDataInput,
-    }),
-  );
-
-  function mapMcpTypeToPropertyType(mcpType: McpPropertyType): PropertyType {
-    switch (mcpType) {
-      case McpPropertyType.NUMBER:
-        return PropertyType.NUMBER;
-      case McpPropertyType.BOOLEAN:
-        return PropertyType.CHECKBOX;
-      case McpPropertyType.OBJECT:
-        return PropertyType.OBJECT;
-      case McpPropertyType.DATE:
-        return PropertyType.DATE_TIME;
-      case McpPropertyType.ARRAY:
-        return PropertyType.ARRAY;
-      case McpPropertyType.TEXT:
-      default:
-        return PropertyType.SHORT_TEXT;
-    }
-  }
+  const { mutate: saveMockAsSampleData, isPending: isSavingMockdata } =
+    testStepHooks.useSaveMockData({
+      onSuccess: () => {
+        onTestingSuccess();
+        onOpenChange(false);
+      },
+    });
 
   const testingForm = useForm<Record<string, any>>({
     shouldFocusError: true,
@@ -117,71 +102,6 @@ function McpToolTestingDialog({
       };
     },
     mode: 'onChange',
-  });
-
-  const { mutate: saveMockAsSampleData, isPending: isSavingMockdata } =
-    useMutation({
-      mutationFn: async (data: Record<string, any>) => {
-        const mockData = data;
-        const response = await triggerEventsApi.saveTriggerMockdata(
-          flowId,
-          mockData,
-        );
-        await updateSampleData(response);
-        return response;
-      },
-      onSuccess: async () => {
-        refetch();
-        onOpenChange(false);
-      },
-    });
-
-  async function updateSampleData(data: TriggerEventWithPayload) {
-    let sampleDataFileId: string | undefined = undefined;
-    const sampleDataInputFile = await sampleDataApi.save({
-      flowVersionId,
-      stepName: formValues.name,
-      payload: formValues.settings?.input ?? {},
-      projectId: projectId,
-      fileType: FileType.SAMPLE_DATA_INPUT,
-    });
-
-    if (!isNil(data.payload)) {
-      const sampleFile = await sampleDataApi.save({
-        flowVersionId,
-        stepName: formValues.name,
-        payload: data.payload,
-        projectId: projectId,
-        fileType: FileType.SAMPLE_DATA,
-      });
-      sampleDataFileId = sampleFile.id;
-    }
-
-    form.setValue(
-      'settings.inputUiInfo',
-      {
-        ...formValues.settings.inputUiInfo,
-        sampleDataFileId,
-        sampleDataInputFileId: sampleDataInputFile.id,
-        currentSelectedData: undefined,
-        lastTestDate: dayjs().toISOString(),
-      },
-      { shouldValidate: true },
-    );
-    setLastTestDate(dayjs().toISOString());
-    setSampleData(formValues.name, data.payload);
-    setSampleDataInput(formValues.name, formValues.settings?.input ?? {});
-  }
-
-  const { refetch } = useQuery<SeekPage<TriggerEventWithPayload>>({
-    queryKey: ['triggerEvents', flowVersionId],
-    queryFn: () =>
-      triggerEventsApi.list({
-        flowId: flowId,
-        limit: 5,
-        cursor: undefined,
-      }),
-    staleTime: 0,
   });
 
   const pieceProps = formProps.reduce((acc, field: McpFormField) => {

@@ -1,9 +1,8 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
-import dayjs from 'dayjs';
+import { useQuery } from '@tanstack/react-query';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
 import { AlertCircle } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -17,36 +16,73 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
-import { api } from '@/lib/api';
 import {
-  ApErrorParams,
-  ErrorCode,
   SeekPage,
   Trigger,
   TriggerEventWithPayload,
   TriggerTestStrategy,
   isNil,
-  parseToJsonIfPossible,
-  FileType,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
 import { McpToolTestingDialog } from './custom-test-step/mcp-tool-testing-dialog';
+import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
+import testStepHooks from './test-step-hooks';
 import { TestButtonTooltip } from './test-step-tooltip';
-import { testStepUtils } from './test-step-utils';
 
-const waitFor2Seconds = () =>
-  new Promise((resolve) => setTimeout(resolve, 2000));
 type TestTriggerSectionProps = {
   isSaving: boolean;
   flowVersionId: string;
   flowId: string;
   projectId: string;
+};
+
+const ManualWebhookPieceTriggerTestButton = ({
+  refetch,
+}: {
+  refetch: () => void;
+}) => {
+  const [id, setId] = useState<number>(0);
+  const [isWebhookTestingDialogOpen, setIsWebhookTestingDialogOpen] =
+    useState(false);
+  const formValues = useFormContext<Trigger>().getValues();
+
+  return (
+    <>
+      <Button
+        variant="default"
+        size="sm"
+        className="flex items-center gap-2"
+        onClick={() => {
+          setIsWebhookTestingDialogOpen(true);
+        }}
+      >
+        {t('Generate Sample Data')}
+      </Button>
+
+      <TestWebhookDialog
+        key={`test-webhook-dialog-${id}`}
+        open={isWebhookTestingDialogOpen}
+        onOpenChange={(val) => {
+          if (!val) {
+            setTimeout(() => {
+              setId(id + 1);
+            }, 200);
+          }
+          setIsWebhookTestingDialogOpen(val);
+        }}
+        testingMode="trigger"
+        currentStep={formValues}
+        onTestFinished={() => {
+          refetch();
+        }}
+      />
+    </>
+  );
 };
 
 function getSelectedId(
@@ -56,23 +92,17 @@ function getSelectedId(
   if (sampleData === undefined) {
     return undefined;
   }
-  for (let i = 0; i < pollResults.length; i++) {
-    if (deepEqual(sampleData, pollResults[i].payload)) {
-      return pollResults[i].id;
-    }
-  }
-  return undefined;
+  return pollResults.find((result) => deepEqual(sampleData, result.payload))
+    ?.id;
 }
 
 const TestTriggerSection = React.memo(
-  ({ isSaving, flowVersionId, flowId, projectId }: TestTriggerSectionProps) => {
+  ({ isSaving, flowVersionId, flowId }: TestTriggerSectionProps) => {
     const form = useFormContext<Trigger>();
     const formValues = form.getValues();
     const isValid = form.formState.isValid;
 
-    const [lastTestDate, setLastTestDate] = useState(
-      formValues.settings.inputUiInfo?.lastTestDate,
-    );
+    const lastTestDate = formValues.settings.inputUiInfo?.lastTestDate;
 
     const [isMcpToolTestingDialogOpen, setIsMcpToolTestingDialogOpen] =
       useState(false);
@@ -92,31 +122,16 @@ const TestTriggerSection = React.memo(
       undefined,
     );
 
-    const { sampleData, setSampleData, sampleDataInput, setSampleDataInput } =
-      useBuilderStateContext((state) => {
-        return {
-          sampleData: state.sampleData[formValues.name],
-          setSampleData: state.setSampleData,
-          sampleDataInput: state.sampleDataInput[formValues.name],
-          setSampleDataInput: state.setSampleDataInput,
-        };
-      });
-
-    const [currentSelectedId, setCurrentSelectedId] = useState<
-      string | undefined
-    >(undefined);
+    const { sampleData, sampleDataInput } = useBuilderStateContext((state) => {
+      return {
+        sampleData: state.sampleData[formValues.name],
+        sampleDataInput: state.sampleDataInput[formValues.name],
+      };
+    });
 
     const { mutate: saveMockAsSampleData, isPending: isSavingMockdata } =
-      useMutation({
-        mutationFn: async () => {
-          const data = await triggerEventsApi.saveTriggerMockdata(
-            flowId,
-            mockData,
-          );
-          await updateSampleData(data);
-          return data;
-        },
-        onSuccess: async () => {
+      testStepHooks.useSaveMockData({
+        onSuccess: () => {
           refetch();
         },
       });
@@ -125,134 +140,23 @@ const TestTriggerSection = React.memo(
       mutate: simulateTrigger,
       isPending: isSimulating,
       reset: resetSimulation,
-    } = useMutation<TriggerEventWithPayload[], Error, void>({
-      mutationFn: async () => {
-        setErrorMessage(undefined);
-        const ids = (
-          await triggerEventsApi.list({ flowId, cursor: undefined, limit: 5 })
-        ).data.map((triggerEvent) => triggerEvent.id);
-        await triggerEventsApi.startWebhookSimulation(flowId);
-        // TODO REFACTOR: replace this with a websocket
-        let attempt = 0;
-        while (attempt < 1000) {
-          const newData = await triggerEventsApi.list({
-            flowId,
-            cursor: undefined,
-            limit: 5,
-          });
-          const newIds = newData.data.map((triggerEvent) => triggerEvent.id);
-          if (!deepEqual(ids, newIds)) {
-            if (newData.data.length > 0) {
-              await updateSampleData(newData.data[0]);
-            }
-            return newData.data;
-          }
-          await waitFor2Seconds();
-          attempt++;
-        }
-        return [];
-      },
-      onSuccess: async (results) => {
-        if (results.length > 0) {
-          refetch();
-          await triggerEventsApi.deleteWebhookSimulation(flowId);
-        }
-      },
-      onError: async (error) => {
-        console.error(error);
-        await triggerEventsApi.deleteWebhookSimulation(flowId);
-        setErrorMessage(
-          testStepUtils.formatErrorMessage(
-            t('There is no sample data available found for this trigger.'),
-          ),
-        );
+    } = testStepHooks.useSimulateTrigger({
+      setErrorMessage,
+      onSuccess: () => {
+        refetch();
       },
     });
 
-    const { mutate: pollTrigger, isPending: isPollingTesting } = useMutation<
-      TriggerEventWithPayload[],
-      Error,
-      void
-    >({
-      mutationFn: async () => {
-        setErrorMessage(undefined);
-        const { data } = await triggerEventsApi.pollTrigger({
-          flowId,
-        });
-        if (data.length > 0) {
-          await updateSampleData(data[0]);
-        }
-        return data;
-      },
-      onSuccess: async (data) => {
-        if (data.length > 0) {
+    const { mutate: pollTrigger, isPending: isPollingTesting } =
+      testStepHooks.usePollTrigger({
+        setErrorMessage,
+        onSuccess: () => {
           refetch();
-        }
-      },
-      onError: (error) => {
-        if (api.isError(error)) {
-          const apError = error.response?.data as ApErrorParams;
-          let message =
-            'Failed to run test step, please ensure settings are correct.';
-          if (apError.code === ErrorCode.TEST_TRIGGER_FAILED) {
-            message = JSON.stringify(
-              {
-                message:
-                  'Failed to run test step, please ensure settings are correct.',
-                error: parseToJsonIfPossible(apError.params.message),
-              },
-              null,
-              2,
-            );
-          }
-          setErrorMessage(message);
-        } else {
-          setErrorMessage(
-            testStepUtils.formatErrorMessage(
-              t('Internal error, please try again later.'),
-            ),
-          );
-        }
-      },
-    });
-
-    async function updateSampleData(data: TriggerEventWithPayload) {
-      let sampleDataFileId: string | undefined = undefined;
-      const sampleDataInputFile = await sampleDataApi.save({
-        flowVersionId,
-        stepName: formValues.name,
-        payload: formValues.settings?.input ?? {},
-        projectId: projectId,
-        fileType: FileType.SAMPLE_DATA_INPUT,
+        },
       });
 
-      if (!isNil(data.payload)) {
-        const sampleFile = await sampleDataApi.save({
-          flowVersionId,
-          stepName: formValues.name,
-          payload: data.payload,
-          projectId: projectId,
-          fileType: FileType.SAMPLE_DATA,
-        });
-        sampleDataFileId = sampleFile.id;
-      }
-
-      form.setValue(
-        'settings.inputUiInfo',
-        {
-          ...formValues.settings.inputUiInfo,
-          sampleDataFileId,
-          sampleDataInputFileId: sampleDataInputFile.id,
-          currentSelectedData: undefined,
-          lastTestDate: dayjs().toISOString(),
-        },
-        { shouldValidate: true },
-      );
-      setLastTestDate(dayjs().toISOString());
-      setSampleData(formValues.name, data.payload);
-      setSampleDataInput(formValues.name, formValues.settings?.input ?? {});
-    }
-
+    const { mutate: updateTriggerSampleData } =
+      testStepHooks.useUpdateTriggerSampleData();
     const { data: pollResults, refetch } = useQuery<
       SeekPage<TriggerEventWithPayload>
     >({
@@ -271,15 +175,30 @@ const TestTriggerSection = React.memo(
     const isTestedBefore = !isNil(
       form.getValues().settings.inputUiInfo?.lastTestDate,
     );
-
-    useEffect(() => {
-      const selectedId = getSelectedId(sampleData, pollResults?.data ?? []);
-      setCurrentSelectedId(selectedId);
-    }, [sampleData, pollResults]);
+    const selectedId = useMemo(
+      () => getSelectedId(sampleData, pollResults?.data ?? []),
+      [sampleData, pollResults],
+    );
 
     if (isPieceLoading) {
       return null;
     }
+    const showSampleDataViewer =
+      sampleDataSelected && !isSimulating && !isSavingMockdata;
+    const showSimulationSection = isSimulation && isSimulating;
+    const showFirstTimeTestingSectionForSimulation =
+      !isTestedBefore && !sampleDataSelected && isSimulation && !isSimulating;
+    const showFirstTimeTestingSectionForPolling =
+      !isTestedBefore &&
+      !sampleDataSelected &&
+      !isSimulation &&
+      !isSimulating &&
+      !isMcpTool;
+    const showFirstTimeMcpToolTestingSection =
+      !isTestedBefore && !sampleDataSelected && isMcpTool;
+    const isWebhookPieceTrigger =
+      pieceModel?.name === '@activepieces/piece-webhook' &&
+      formValues.settings.triggerName === 'catch_webhook';
 
     const handleMcpToolTesting = () => {
       setIsMcpToolTestingDialogOpen(true);
@@ -287,7 +206,7 @@ const TestTriggerSection = React.memo(
 
     return (
       <div>
-        {sampleDataSelected && !isSimulating && !isSavingMockdata && (
+        {showSampleDataViewer && (
           <TestSampleDataViewer
             onRetest={
               isSimulation
@@ -297,23 +216,23 @@ const TestTriggerSection = React.memo(
                 : pollTrigger
             }
             isValid={isValid}
-            isSaving={isSaving}
             isTesting={isPollingTesting}
             sampleData={sampleData}
             sampleDataInput={sampleDataInput ?? null}
             errorMessage={errorMessage}
             lastTestDate={lastTestDate}
+            isSaving={isSaving}
           >
             {pollResults?.data && (
               <div className="mb-3">
                 <Select
-                  value={currentSelectedId}
+                  value={selectedId}
                   onValueChange={(value) => {
                     const triggerEvent = pollResults?.data.find(
                       (triggerEvent) => triggerEvent.id === value,
                     );
                     if (triggerEvent) {
-                      updateSampleData(triggerEvent);
+                      updateTriggerSampleData(triggerEvent);
                     }
                   }}
                 >
@@ -349,12 +268,13 @@ const TestTriggerSection = React.memo(
           </TestSampleDataViewer>
         )}
 
-        {isSimulation && isSimulating && (
+        {showSimulationSection && (
           <div className="flex flex-col gap-4 w-full">
             <div className="flex gap-2 items-center justify-center w-full">
               <LoadingSpinner className="w-4 h-4"></LoadingSpinner>
               <div>{t('Testing Trigger')}</div>
               <div className="flex-grow"></div>
+
               <Button
                 variant="outline"
                 size="sm"
@@ -362,82 +282,105 @@ const TestTriggerSection = React.memo(
                   resetSimulation();
                 }}
               >
-                {' '}
-                {t('Cancel')}{' '}
+                {t('Cancel')}
               </Button>
             </div>
+
             <Alert className="bg-warning/5 border-warning/5 ">
               <AlertCircle className="h-4 w-4 text-warning" />
               <div className="flex flex-col gap-1">
                 <AlertTitle>{t('Action Required')}:</AlertTitle>
                 <AlertDescription>
-                  {t('testPieceWebhookTriggerNote', {
-                    pieceName: pieceModel.displayName,
-                    triggerName:
-                      pieceModel.triggers[formValues.settings.triggerName]
-                        .displayName,
-                  })}
+                  {!isWebhookPieceTrigger &&
+                    t('testPieceWebhookTriggerNote', {
+                      pieceName: pieceModel.displayName,
+                      triggerName:
+                        pieceModel.triggers[formValues.settings.triggerName]
+                          .displayName,
+                    })}
+
+                  {isWebhookPieceTrigger && (
+                    <div className="break-wrods">
+                      {t(
+                        'Send Data to the webhook URL to generate sample data to use in the next steps',
+                      )}
+                    </div>
+                  )}
                 </AlertDescription>
               </div>
             </Alert>
+            {isWebhookPieceTrigger && (
+              <ManualWebhookPieceTriggerTestButton refetch={refetch} />
+            )}
           </div>
         )}
-        {!isTestedBefore &&
-          !sampleDataSelected &&
-          isSimulation &&
-          !isSimulating && (
-            <div className="flex justify-center flex-col gap-2 items-center">
-              <TestButtonTooltip disabled={!isValid}>
+        {showFirstTimeTestingSectionForSimulation && (
+          <div className="flex justify-center flex-col gap-2 items-center">
+            <TestButtonTooltip disabled={!isValid}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => simulateTrigger()}
+                keyboardShortcut="G"
+                onKeyboardShortcut={simulateTrigger}
+                disabled={!isValid}
+              >
+                <Dot animation={true} variant={'primary'}></Dot>
+                {t('Test Trigger')}
+              </Button>
+            </TestButtonTooltip>
+
+            {!isNil(mockData) && (
+              <>
+                {t('Or')}
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => simulateTrigger()}
-                  keyboardShortcut="G"
-                  onKeyboardShortcut={simulateTrigger}
-                  disabled={!isValid}
+                  onClick={() => saveMockAsSampleData(mockData)}
+                  loading={isSavingMockdata}
                 >
-                  <Dot animation={true} variant={'primary'}></Dot>
-                  {t('Test Trigger')}
+                  {t('Use Mock Data')}
                 </Button>
-              </TestButtonTooltip>
-
-              {!isNil(mockData) && (
-                <>
-                  {t('Or')}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => saveMockAsSampleData()}
-                    loading={isSavingMockdata}
-                  >
-                    {t('Use Mock Data')}
-                  </Button>
-                </>
-              )}
-            </div>
-          )}
-        {!isTestedBefore && !sampleDataSelected && !isSimulation && (
+              </>
+            )}
+          </div>
+        )}
+        {showFirstTimeTestingSectionForPolling && (
           <div className="flex justify-center">
             <TestButtonTooltip disabled={!isValid}>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  if (isMcpTool) {
-                    handleMcpToolTesting();
-                  } else {
-                    pollTrigger();
-                  }
+                  pollTrigger();
                 }}
                 keyboardShortcut="G"
-                onKeyboardShortcut={
-                  isMcpTool ? handleMcpToolTesting : pollTrigger
-                }
+                onKeyboardShortcut={pollTrigger}
                 loading={isPollingTesting || isMcpToolTestingDialogOpen}
                 disabled={!isValid}
               >
                 <Dot animation={true} variant={'primary'}></Dot>
-                {t(isMcpTool ? 'Test Tool' : 'Load Sample Data')}
+                {t('Load Sample Data')}
+              </Button>
+            </TestButtonTooltip>
+          </div>
+        )}
+        {showFirstTimeMcpToolTestingSection && (
+          <div className="flex justify-center">
+            <TestButtonTooltip disabled={!isValid}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  handleMcpToolTesting();
+                }}
+                keyboardShortcut="G"
+                onKeyboardShortcut={handleMcpToolTesting}
+                loading={isPollingTesting || isMcpToolTestingDialogOpen}
+                disabled={!isValid}
+              >
+                <Dot animation={true} variant={'primary'}></Dot>
+                {t('Test Tool')}
               </Button>
             </TestButtonTooltip>
           </div>
@@ -447,10 +390,9 @@ const TestTriggerSection = React.memo(
           <McpToolTestingDialog
             open={isMcpToolTestingDialogOpen}
             onOpenChange={setIsMcpToolTestingDialogOpen}
-            setLastTestDate={setLastTestDate}
-            flowId={flowId}
-            flowVersionId={flowVersionId}
-            projectId={projectId}
+            onTestingSuccess={() => {
+              refetch();
+            }}
           />
         )}
       </div>
