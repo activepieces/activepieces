@@ -43,15 +43,15 @@ import { gitSyncHooks } from '../lib/git-sync-hooks';
 
 type PushToGitDialogProps =
   | {
-      type: 'flow';
-      flows: PopulatedFlow[];
-      children?: React.ReactNode;
-    }
+    type: 'flow';
+    flows: PopulatedFlow[];
+    children?: React.ReactNode;
+  }
   | {
-      type: 'table';
-      tables: Table[];
-      children?: React.ReactNode;
-    };
+    type: 'table';
+    tables: Table[];
+    children?: React.ReactNode;
+  };
 
 const PushToGitDialog = (props: PushToGitDialogProps) => {
   const [open, setOpen] = React.useState(false);

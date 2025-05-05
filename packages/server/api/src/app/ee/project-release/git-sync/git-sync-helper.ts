@@ -3,7 +3,7 @@ import path from 'path'
 import { fileExists } from '@activepieces/server-shared'
 import { ConnectionState, Flow, flowMigrations, FlowState, PopulatedFlow, ProjectState, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-    
+
 export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
     async getStateFromGit({ flowPath, connectionsFolderPath, tablesFolderPath }: GetStateFromGitParams): Promise<ProjectState> {
         try {
@@ -69,17 +69,10 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
     },
 
     async upsertTableToGit({ fileName, table, tablesFolderPath }: UpsertTableIntoProjectParams): Promise<void> {
-        try {
-            const tableJsonPath = path.join(tablesFolderPath, `${fileName}.json`)
-            await fs.mkdir(path.dirname(tableJsonPath), { recursive: true })
-            await fs.writeFile(tableJsonPath, JSON.stringify(table, null, 2))
-        }
-        catch (error) {
-            _log.error(`Failed to write table file ${fileName}: ${error}`)
-            throw error
-        }
+        const tableJsonPath = path.join(tablesFolderPath, `${fileName}.json`)
+        await fs.mkdir(path.dirname(tableJsonPath), { recursive: true })
+        await fs.writeFile(tableJsonPath, JSON.stringify(table, null, 2))
     },
-
     async deleteFromGit({ fileName, folderPath }: DeleteFromProjectParams): Promise<boolean> {
         const jsonPath = path.join(folderPath, `${fileName}.json`)
         const exists = await fileExists(jsonPath)
