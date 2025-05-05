@@ -140,14 +140,8 @@ const TestStepSectionImplementation = React.memo(
             consoleLogs={
               currentStep.type === ActionType.CODE ? consoleLogs : null
             }
-            retestButton={
-              <DefaultTestingButton
-                isValid={currentStep.valid}
-                isSaving={isSaving}
-                isTesting={isTesting || isTodoCreateTaskDialogOpen}
-                onRetest={onTestButtonClick}
-              />
-            }
+            isSaving={isSaving}
+            onRetest={onTestButtonClick}
           ></TestSampleDataViewer>
         )}
         {isTodoCreateTaskDialogOpen &&

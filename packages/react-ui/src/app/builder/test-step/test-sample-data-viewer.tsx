@@ -19,8 +19,7 @@ type TestSampleDataViewerProps = {
   lastTestDate: string | undefined;
   children?: React.ReactNode;
   consoleLogs?: string | null;
-  retestButton: React.ReactNode;
-};
+} & DefaultTestingButtonProps;
 
 type DefaultTestingButtonProps = {
   isValid: boolean;
@@ -68,7 +67,8 @@ const TestSampleDataViewer = React.memo(
     lastTestDate,
     children,
     consoleLogs,
-    retestButton,
+    isSaving,
+    onRetest,
   }: TestSampleDataViewerProps) => {
     return (
       <>
@@ -102,7 +102,12 @@ const TestSampleDataViewer = React.memo(
               </div>
             </div>
             <TestButtonTooltip disabled={!isValid}>
-              {retestButton}
+              <DefaultTestingButton
+                isValid={isValid}
+                isSaving={isSaving}
+                isTesting={isTesting}
+                onRetest={onRetest}
+              />
             </TestButtonTooltip>
           </div>
 
