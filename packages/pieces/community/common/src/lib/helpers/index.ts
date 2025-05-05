@@ -6,6 +6,7 @@ import {
   createAction,
   StaticPropsValue,
   InputPropertyMap,
+  ServerContext,
 } from '@activepieces/pieces-framework';
 import {
   HttpError,
@@ -30,27 +31,39 @@ export const getAccessTokenOrThrow = (
 
   return accessToken;
 };
-const joinBaseUrlWithRelativePath = ({ baseUrl, relativePath }: { baseUrl: string, relativePath: string }) => {
-  const baseUrlWithSlash = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
-  const relativePathWithoutSlash = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath
-  return `${baseUrlWithSlash}${relativePathWithoutSlash}`
- }
- 
+const joinBaseUrlWithRelativePath = ({
+  baseUrl,
+  relativePath,
+}: {
+  baseUrl: string;
+  relativePath: string;
+}) => {
+  const baseUrlWithSlash = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const relativePathWithoutSlash = relativePath.startsWith('/')
+    ? relativePath.slice(1)
+    : relativePath;
+  return `${baseUrlWithSlash}${relativePathWithoutSlash}`;
+};
 
-const getBaseUrlForDescription = (baseUrl: (auth?: unknown) => string,auth?: unknown) => {
-  const exampleBaseUrl = `https://api.example.com`
+const getBaseUrlForDescription = (
+  baseUrl: (auth?: unknown) => string,
+  auth?: unknown
+) => {
+  const exampleBaseUrl = `https://api.example.com`;
   try {
     const baseUrlValue = auth ? baseUrl(auth) : undefined;
-    const baseUrlValueWithoutTrailingSlash = baseUrlValue?.endsWith('/') ? baseUrlValue.slice(0, -1) : baseUrlValue
-    return baseUrlValueWithoutTrailingSlash ?? exampleBaseUrl
+    const baseUrlValueWithoutTrailingSlash = baseUrlValue?.endsWith('/')
+      ? baseUrlValue.slice(0, -1)
+      : baseUrlValue;
+    return baseUrlValueWithoutTrailingSlash ?? exampleBaseUrl;
+  } catch (error) {
+    //If baseUrl fails we stil want to return a valid baseUrl for description
+    {
+      return exampleBaseUrl;
+    }
   }
-  //If baseUrl fails we stil want to return a valid baseUrl for description
-  catch (error) {
-  {
-    return exampleBaseUrl
-  }
-}
-}
+};
+
 export function createCustomApiCallAction({
   auth,
   baseUrl,
@@ -65,7 +78,8 @@ export function createCustomApiCallAction({
   baseUrl: (auth?: unknown) => string;
   authMapping?: (
     auth: unknown,
-    propsValue: StaticPropsValue<any>
+    propsValue: StaticPropsValue<any>,
+    server: ServerContext
   ) => Promise<HttpHeaders>;
   //   add description as a parameter that can be null
   description?: string | null;
@@ -82,7 +96,6 @@ export function createCustomApiCallAction({
   };
   extraProps?: InputPropertyMap;
 }) {
- 
   return createAction({
     name: name ? name : 'custom_api_call',
     displayName: displayName ? displayName : 'Custom API Call',
@@ -100,8 +113,8 @@ export function createCustomApiCallAction({
           return {
             url: Property.ShortText({
               displayName: 'URL',
-              description: `You can either use the full URL or the relative path to the base URL 
-i.e ${getBaseUrlForDescription(baseUrl,auth)}/resource or /resource`,
+              description: `You can either use the full URL or the relative path to the base URL
+i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
               required: true,
               defaultValue: baseUrl(auth),
               ...(props?.url ?? {}),
@@ -161,7 +174,11 @@ i.e ${getBaseUrlForDescription(baseUrl,auth)}/resource or /resource`,
 
       let headersValue = headers as HttpHeaders;
       if (authMapping) {
-        const headers = await authMapping(context.auth, context.propsValue);
+        const headers = await authMapping(
+          context.auth,
+          context.propsValue,
+          context.server
+        );
         if (headers) {
           headersValue = {
             ...headersValue,
@@ -170,8 +187,13 @@ i.e ${getBaseUrlForDescription(baseUrl,auth)}/resource or /resource`,
         }
       }
       const urlValue = url['url'] as string;
-      const fullUrl = urlValue.startsWith('http://') || urlValue.startsWith('https://') ? urlValue :
-                     joinBaseUrlWithRelativePath({ baseUrl: baseUrl(context.auth), relativePath: urlValue})
+      const fullUrl =
+        urlValue.startsWith('http://') || urlValue.startsWith('https://')
+          ? urlValue
+          : joinBaseUrlWithRelativePath({
+              baseUrl: baseUrl(context.auth),
+              relativePath: urlValue,
+            });
       const request: HttpRequest<Record<string, unknown>> = {
         method,
         url: fullUrl,
