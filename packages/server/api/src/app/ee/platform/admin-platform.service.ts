@@ -6,6 +6,7 @@ import {
     FlowRun,
     FlowRunStatus,
     flowStructureUtil,
+    FlowVersionId,
     isNil,
     Platform,
     Project,
@@ -117,8 +118,12 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
 
     },
 
-    addConnectionsToFlowVersions: async (): Promise<void> => {
-        const flowVersions = await flowVersionRepo().find()
+    addConnectionsToFlowVersions: async (flowVersionIds: FlowVersionId[]): Promise<void> => {
+        const flowVersions = await flowVersionRepo().find({
+            where: {
+                id: In(flowVersionIds),
+            },
+        })
 
         await Promise.all(flowVersions.map(async (flowVersion) => {
             const connectionIds = flowStructureUtil.extractConnectionIds(flowVersion)

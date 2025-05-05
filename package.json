@@ -422,7 +422,7 @@
     "ts-node": "10.9.1",
     "typescript": "5.5.4",
     "verdaccio": "6.0.5",
-    "vite": "6.2.6",
+    "vite": "6.3.4",
     "vite-plugin-checker": "0.7.2",
     "vitest": "3.0.8",
     "wait-on": "7.2.0",
