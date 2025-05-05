@@ -288,7 +288,7 @@ export const McpPieceDialog = React.memo(
 
                 <DialogFooter>
                   <DialogClose asChild>
-                    <Button type="button" variant="ghost">
+                    <Button type="button" variant="outline">
                       {t('Cancel')}
                     </Button>
                   </DialogClose>
