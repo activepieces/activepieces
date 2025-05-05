@@ -8,12 +8,7 @@ import { useFormContext } from 'react-hook-form';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+
 import {
   Select,
   SelectContent,
@@ -37,11 +32,9 @@ import {
 import { useBuilderStateContext } from '../builder-hooks';
 
 import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
-import {
-  DefaultTestingButton,
-  TestSampleDataViewer,
-} from './test-sample-data-viewer';
 import testStepHooks from './test-step-hooks';
+import { McpToolTestingDialog } from './custom-test-step/mcp-tool-testing-dialog';
+import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
 
 type TestTriggerSectionProps = {
@@ -113,17 +106,20 @@ const TestTriggerSection = React.memo(
 
     const lastTestDate = formValues.settings.inputUiInfo?.lastTestDate;
 
+    const [isMcpToolTestingDialogOpen, setIsMcpToolTestingDialogOpen] =
+      useState(false);
+
     const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
       name: formValues.settings.pieceName,
       version: formValues.settings.pieceVersion,
     });
 
-    const isSimulation =
-      pieceModel?.triggers?.[formValues.settings.triggerName]?.testStrategy ===
-      TriggerTestStrategy.SIMULATION;
     const mockData =
       pieceModel?.triggers?.[formValues.settings.triggerName]?.sampleData;
-
+    const isMcpTool = formValues.settings.triggerName === 'mcp_tool';
+    const isSimulation =
+      pieceModel?.triggers?.[formValues.settings.triggerName]?.testStrategy ===
+        TriggerTestStrategy.SIMULATION && !isMcpTool;
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
       undefined,
     );
@@ -200,15 +196,27 @@ const TestTriggerSection = React.memo(
     const showFirstTimeTestingSectionForSimulation =
       !isTestedBefore && !sampleDataSelected && isSimulation && !isSimulating;
     const showFirstTimeTestingSectionForPolling =
-      !isTestedBefore && !sampleDataSelected && !isSimulation && !isSimulating;
+      !isTestedBefore && !sampleDataSelected && !isSimulation && !isSimulating && !isMcpTool;
+    const showFirstTimeMcpToolTestingSection =   !isTestedBefore && !sampleDataSelected && isMcpTool;
     const isWebhookPieceTrigger =
       pieceModel?.name === '@activepieces/piece-webhook' &&
       formValues.settings.triggerName === 'catch_webhook';
+
+    const handleMcpToolTesting = () => {
+      setIsMcpToolTestingDialogOpen(true);
+    };
 
     return (
       <div>
         {showSampleDataViewer && (
           <TestSampleDataViewer
+            onRetest={
+              isSimulation
+                ? simulateTrigger
+                : isMcpTool
+                ? handleMcpToolTesting
+                : pollTrigger
+            }
             isValid={isValid}
             isTesting={isPollingTesting}
             sampleData={sampleData}
@@ -216,7 +224,6 @@ const TestTriggerSection = React.memo(
             errorMessage={errorMessage}
             lastTestDate={lastTestDate}
             isSaving={isSaving}
-            onRetest={isSimulation ? simulateTrigger : pollTrigger}
           >
             {pollResults?.data && (
               <div className="mb-3">
@@ -354,17 +361,53 @@ const TestTriggerSection = React.memo(
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => pollTrigger()}
+                onClick={() => {
+                    pollTrigger();
+                }}
                 keyboardShortcut="G"
-                onKeyboardShortcut={pollTrigger}
-                loading={isPollingTesting}
+                onKeyboardShortcut={
+                pollTrigger
+                }
+                loading={isPollingTesting || isMcpToolTestingDialogOpen}
                 disabled={!isValid}
               >
                 <Dot animation={true} variant={'primary'}></Dot>
-                {t('Load Sample Data')}
+                {t('Load Sample Data' )}
               </Button>
             </TestButtonTooltip>
           </div>
+        )}
+        {
+          showFirstTimeMcpToolTestingSection && (
+            <TestButtonTooltip disabled={!isValid}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                  handleMcpToolTesting();
+              }}
+              keyboardShortcut="G"
+              onKeyboardShortcut={
+              handleMcpToolTesting
+              }
+              loading={isPollingTesting || isMcpToolTestingDialogOpen}
+              disabled={!isValid}
+            >
+              <Dot animation={true} variant={'primary'}></Dot>
+              {t('Test Tool' )}
+            </Button>
+          </TestButtonTooltip>
+          )
+        }
+
+        {isMcpTool && (
+          <McpToolTestingDialog
+            open={isMcpToolTestingDialogOpen}
+            onOpenChange={setIsMcpToolTestingDialogOpen}
+            onTestingSuccess={() => {
+              refetch();
+            }}
+          />
         )}
       </div>
     );
