@@ -212,14 +212,14 @@ function McpToolTestingDialog({
         <Form {...testingForm}>
           <form
             className="grid space-y-4"
-            onSubmit={testingForm.handleSubmit((data) =>{
-              debugger;
+            onSubmit={testingForm.handleSubmit((data) => {
               const cleanedData = Object.fromEntries(
-                Object.entries(data).filter(([key, _]) => key.trim() !== '').map(([key, value]) => [fixSchemaNaming(key), value])
+                Object.entries(data)
+                  .filter(([key, _]) => key.trim() !== '')
+                  .map(([key, value]) => [fixSchemaNaming(key), value]),
               );
-              saveMockAsSampleData(cleanedData)
-            }
-            )}
+              saveMockAsSampleData(cleanedData);
+            })}
           >
             <ScrollArea className="flex-1 max-h-[50vh]">
               <div className="py-4">
@@ -271,11 +271,7 @@ function McpToolTestingDialog({
               >
                 {t('Cancel')}
               </Button>
-              <Button
-                type="submit"
-                loading={isSavingMockdata}
-               
-              >
+              <Button type="submit" loading={isSavingMockdata}>
                 {t('Save')}
               </Button>
             </DialogFooter>
