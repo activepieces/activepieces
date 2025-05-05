@@ -294,9 +294,23 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             const owner = isNil(apConnection.ownerId) ? null : await userService.getMetaInformation({
                 id: apConnection.ownerId,
             })
+            const countOfFlows = await Promise.all(apConnection.projectIds.map(async (projectId) => {
+                const flows = await flowService(log).list({
+                    projectId,
+                    cursorRequest: null,
+                    limit: 1000,
+                    folderId: undefined,
+                    name: undefined,
+                    status: undefined,
+                    connectionExternalIds: [apConnection.externalId],
+                })
+                return flows.data.length
+            }))
+            const sumOfFlows = countOfFlows.reduce((acc, curr) => acc + curr, 0)
             return {
                 ...apConnection,
                 owner,
+                countOfFlows: sumOfFlows,
             }
         })
         const refreshConnections = await Promise.all(promises)

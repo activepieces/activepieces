@@ -207,11 +207,9 @@ const ReplaceConnectionsDialog = ({
 
   const handleDialogOpenChange = (open: boolean) => {
     setDialogOpen(open);
-    if (!open) {
-      form.reset();
-      setStep(STEP.SELECT);
-      setAffectedFlows([]);
-    }
+    form.reset();
+    setStep(STEP.SELECT);
+    setAffectedFlows([]);
   };
 
   return (

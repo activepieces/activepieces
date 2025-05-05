@@ -9,6 +9,7 @@ import {
   Tag,
   User,
   Replace,
+  InfoIcon,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -18,6 +19,7 @@ import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-dialog';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CopyTextTooltip } from '@/components/ui/copy-text-tooltip';
@@ -348,6 +350,15 @@ function AppConnectionsPage() {
       },
     },
     {
+      accessorKey: 'flowCount',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('Used In')} />
+      ),
+      cell: ({ row }) => {
+        return <div className="text-left">{row.original.countOfFlows}</div>;
+      },
+    },
+    {
       id: 'actions',
       cell: ({ row }) => {
         const isPlatformConnection = row.original.scope === 'PLATFORM';
@@ -389,9 +400,29 @@ function AppConnectionsPage() {
               >
                 <ConfirmationDeleteDialog
                   title={t('Confirm Deletion')}
-                  message={t(
-                    'Are you sure you want to delete the selected connections? This action cannot be undone, any connected flow or mcp tool will fail after this.',
-                  )}
+                  message={
+                    <span>
+                      {t(
+                        'Are you sure you want to delete the selected connections? This action cannot be undone.',
+                      )}
+                      <span className="text-black font-bold ml-1">
+                        {t(
+                          `${selectedRows.reduce(
+                            (acc, row) => acc + (row.countOfFlows || 0),
+                            0,
+                          )} flows will be affected`,
+                        )}
+                      </span>
+                      <Alert className="mt-4 flex flex-col gap-2">
+                        <InfoIcon className="h-5 w-5" />
+                        <span className="font-bold">
+                          {t(
+                            'Deleting connections may cause your Flows or MCP tools to break.',
+                          )}
+                        </span>
+                      </Alert>
+                    </span>
+                  }
                   entityName="connections"
                   mutationFn={async () => {
                     try {

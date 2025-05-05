@@ -124,6 +124,7 @@ export const AppConnectionWithoutSensitiveData = Type.Object({
     ownerId: Nullable(Type.String()),
     owner: Nullable(UserWithMetaInformation),
     metadata: Nullable(Metadata),
+    countOfFlows: Nullable(Type.Number()),
 }, {
     description: 'App connection is a connection to an external app.',
 })
