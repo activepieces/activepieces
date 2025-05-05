@@ -29,19 +29,26 @@ type DefaultTestingButtonProps = {
   onRetest: () => void;
 };
 
- const DefaultTestingButton = ({ isValid, isSaving, isTesting, onRetest }: DefaultTestingButtonProps) => {
-  return <Button
-    variant="outline"
-    size="sm"
-    disabled={!isValid || isSaving}
-    keyboardShortcut="G"
-    onKeyboardShortcut={onRetest}
-    onClick={onRetest}
-    loading={isTesting}
-  >
-    {t('Retest')}
-  </Button>
-}
+const DefaultTestingButton = ({
+  isValid,
+  isSaving,
+  isTesting,
+  onRetest,
+}: DefaultTestingButtonProps) => {
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={!isValid || isSaving}
+      keyboardShortcut="G"
+      onKeyboardShortcut={onRetest}
+      onClick={onRetest}
+      loading={isTesting}
+    >
+      {t('Retest')}
+    </Button>
+  );
+};
 DefaultTestingButton.displayName = 'DefaultTestingButton';
 
 const isConsoleLogsValid = (value: unknown) => {
@@ -61,7 +68,7 @@ const TestSampleDataViewer = React.memo(
     lastTestDate,
     children,
     consoleLogs,
-    retestButton
+    retestButton,
   }: TestSampleDataViewerProps) => {
     return (
       <>

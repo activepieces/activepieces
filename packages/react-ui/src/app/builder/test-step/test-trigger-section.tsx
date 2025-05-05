@@ -10,6 +10,12 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -19,6 +25,7 @@ import {
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import {
   ApFlagId,
   SeekPage,
@@ -30,12 +37,13 @@ import {
 
 import { useBuilderStateContext } from '../builder-hooks';
 
-import { DefaultTestingButton, TestSampleDataViewer } from './test-sample-data-viewer';
+import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
+import {
+  DefaultTestingButton,
+  TestSampleDataViewer,
+} from './test-sample-data-viewer';
 import testStepHooks from './test-step-hooks';
 import { TestButtonTooltip } from './test-step-tooltip';
-import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { flagsHooks } from '@/hooks/flags-hooks';
 
 type TestTriggerSectionProps = {
   isSaving: boolean;
@@ -43,9 +51,6 @@ type TestTriggerSectionProps = {
   flowId: string;
   projectId: string;
 };
-
-
-
 
 type WebhookPieceTestingButtonProps = {
   simulateTrigger: () => void;
@@ -55,48 +60,59 @@ type WebhookPieceTestingButtonProps = {
   refetch: () => void;
   isForRetest: boolean;
 };
-const WebhookPieceTestingButton = ({ simulateTrigger, setIsWebhookTestingDialogOpen, isWebhookTestingDialogOpen, formValues, refetch, isForRetest }: WebhookPieceTestingButtonProps) => {
-  return <>
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className='flex items-center gap-2'
-        >
-          {!isForRetest && <Dot animation={true} variant={'primary'}></Dot>}
-          {isForRetest ? t('Retest') : t('Test Webhook')}
-          <ChevronDown className='w-4 h-4' />
-        </Button>
+const WebhookPieceTestingButton = ({
+  simulateTrigger,
+  setIsWebhookTestingDialogOpen,
+  isWebhookTestingDialogOpen,
+  formValues,
+  refetch,
+  isForRetest,
+}: WebhookPieceTestingButtonProps) => {
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            {!isForRetest && <Dot animation={true} variant={'primary'}></Dot>}
+            {isForRetest ? t('Retest') : t('Test Webhook')}
+            <ChevronDown className="w-4 h-4" />
+          </Button>
+        </DropdownMenuTrigger>
 
-      </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem
+            onClick={() => {
+              simulateTrigger();
+            }}
+          >
+            {t('Send Data from an outside source')}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              setIsWebhookTestingDialogOpen(true);
+            }}
+          >
+            {t('Generate Sample Data')}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-      <DropdownMenuContent>
-        <DropdownMenuItem onClick={() => {
-          simulateTrigger()
-        }}>
-          {t('Send Data from an outside source')}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => {
-          setIsWebhookTestingDialogOpen(true)
-        }}>
-          {t('Generate Sample Data')}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-
-
-    <TestWebhookDialog
-      open={isWebhookTestingDialogOpen}
-      onOpenChange={setIsWebhookTestingDialogOpen}
-      testingMode='trigger'
-      currentStep={formValues}
-      onTestFinished={() => {
-        refetch()
-      }}
-    />
-  </>
-}
+      <TestWebhookDialog
+        open={isWebhookTestingDialogOpen}
+        onOpenChange={setIsWebhookTestingDialogOpen}
+        testingMode="trigger"
+        currentStep={formValues}
+        onTestFinished={() => {
+          refetch();
+        }}
+      />
+    </>
+  );
+};
 
 function getSelectedId(
   sampleData: unknown,
@@ -115,7 +131,7 @@ const TestTriggerSection = React.memo(
     const formValues = form.getValues();
     const isValid = form.formState.isValid;
 
-    const lastTestDate = formValues.settings.inputUiInfo?.lastTestDate
+    const lastTestDate = formValues.settings.inputUiInfo?.lastTestDate;
 
     const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
       name: formValues.settings.pieceName,
@@ -200,8 +216,11 @@ const TestTriggerSection = React.memo(
       !isTestedBefore && !sampleDataSelected && isSimulation && !isSimulating;
     const showFirstTimeTestingSectionForPolling =
       !isTestedBefore && !sampleDataSelected && !isSimulation && !isSimulating;
-    const isWebhookPieceTrigger = pieceModel?.name === '@activepieces/piece-webhook' && formValues.settings.triggerName === 'catch_webhook';
-    const [isWebhookTestingDialogOpen, setIsWebhookTestingDialogOpen] = useState(false);
+    const isWebhookPieceTrigger =
+      pieceModel?.name === '@activepieces/piece-webhook' &&
+      formValues.settings.triggerName === 'catch_webhook';
+    const [isWebhookTestingDialogOpen, setIsWebhookTestingDialogOpen] =
+      useState(false);
     const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
       ApFlagId.WEBHOOK_URL_PREFIX,
     );
@@ -228,12 +247,12 @@ const TestTriggerSection = React.memo(
                 />
               ) : (
                 <DefaultTestingButton
-                isValid={isValid}
-                isSaving={isSaving}
-                isTesting={isPollingTesting}
-                onRetest={isSimulation ? simulateTrigger : pollTrigger}
-              />)
-            
+                  isValid={isValid}
+                  isSaving={isSaving}
+                  isTesting={isPollingTesting}
+                  onRetest={isSimulation ? simulateTrigger : pollTrigger}
+                />
+              )
             }
           >
             {pollResults?.data && (
@@ -302,27 +321,26 @@ const TestTriggerSection = React.memo(
               <div className="flex flex-col gap-1">
                 <AlertTitle>{t('Action Required')}:</AlertTitle>
                 <AlertDescription>
-                  {!isWebhookPieceTrigger && (t('testPieceWebhookTriggerNote', {
-                    pieceName: pieceModel.displayName,
-                    triggerName:
-                      pieceModel.triggers[formValues.settings.triggerName]
-                        .displayName,
-                  }))}
+                  {!isWebhookPieceTrigger &&
+                    t('testPieceWebhookTriggerNote', {
+                      pieceName: pieceModel.displayName,
+                      triggerName:
+                        pieceModel.triggers[formValues.settings.triggerName]
+                          .displayName,
+                    })}
 
-                  {
-                    isWebhookPieceTrigger && (<>
-                      <div className='break-wrods'>
-                        {t('Please send data to the webhook url to test the trigger:')}
+                  {isWebhookPieceTrigger && (
+                    <>
+                      <div className="break-wrods">
+                        {t(
+                          'Please send data to the webhook url to test the trigger:',
+                        )}
                       </div>
-                      <div className='break-all'>
+                      <div className="break-all">
                         {`${webhookPrefixUrl}/${flowId}`}
                       </div>
                     </>
-                    )
-                  }
-
-
-
+                  )}
                 </AlertDescription>
               </div>
             </Alert>
@@ -344,8 +362,7 @@ const TestTriggerSection = React.memo(
                   {t('Test Trigger')}
                 </Button>
               </TestButtonTooltip>
-            )
-            }
+            )}
 
             {!isNil(mockData) && (
               <>
@@ -356,24 +373,21 @@ const TestTriggerSection = React.memo(
                   onClick={() => saveMockAsSampleData(mockData)}
                   loading={isSavingMockdata}
                 >
-
                   {t('Use Mock Data')}
                 </Button>
               </>
             )}
 
-            {
-              isWebhookPieceTrigger && (
-                <WebhookPieceTestingButton
-                  simulateTrigger={simulateTrigger}
-                  setIsWebhookTestingDialogOpen={setIsWebhookTestingDialogOpen}
-                  isWebhookTestingDialogOpen={isWebhookTestingDialogOpen}
-                  formValues={formValues}
-                  refetch={refetch}
-                  isForRetest={false}
-                />
-              )
-            }
+            {isWebhookPieceTrigger && (
+              <WebhookPieceTestingButton
+                simulateTrigger={simulateTrigger}
+                setIsWebhookTestingDialogOpen={setIsWebhookTestingDialogOpen}
+                isWebhookTestingDialogOpen={isWebhookTestingDialogOpen}
+                formValues={formValues}
+                refetch={refetch}
+                isForRetest={false}
+              />
+            )}
           </div>
         )}
         {showFirstTimeTestingSectionForPolling && (

@@ -73,7 +73,7 @@ function TodoTestingDialog({
   const { data: currentUser } = userHooks.useCurrentUser();
   const [status, setStatus] = useState<StatusOption>(todo.status);
   const [dialogOpenTime, setDialogOpenTime] = useState<Date | null>(null);
-  const [,setForceUpdate] = useState(0);
+  const [, setForceUpdate] = useState(0);
   const [showMustResolveError, setShowMustResolveError] = useState(false);
   const { setSampleData, setSampleDataInput, applyOperation } =
     useBuilderStateContext((state) => {
@@ -151,32 +151,33 @@ function TodoTestingDialog({
           type: FlowOperationType.UPDATE_ACTION,
           request: currentStepCopy,
         });
-      const response = output as TodoWithAssignee;
-      const statusName = response['status'].name;
-      const statusOptions = response['statusOptions'];
-      const publicUrl = response['resolveUrl']?.split('/flow-runs/')[0];
-      const links = statusOptions.map((option) => ({
-        status: option.name,
-        url:
-          publicUrl +
-          `/todos/${response.id}/resolve?status=${option.name}&isTest=true`,
-      }));
-      switch (type) {
-        case TodoType.INTERNAL:
-          setSampleData(currentStep.name, {
-            status: statusName,
-          });
-          break;
-        case TodoType.EXTERNAL:
-          setSampleData(currentStep.name, {
-            id: response.id,
-            links,
-          });
-          break;
+        const response = output as TodoWithAssignee;
+        const statusName = response['status'].name;
+        const statusOptions = response['statusOptions'];
+        const publicUrl = response['resolveUrl']?.split('/flow-runs/')[0];
+        const links = statusOptions.map((option) => ({
+          status: option.name,
+          url:
+            publicUrl +
+            `/todos/${response.id}/resolve?status=${option.name}&isTest=true`,
+        }));
+        switch (type) {
+          case TodoType.INTERNAL:
+            setSampleData(currentStep.name, {
+              status: statusName,
+            });
+            break;
+          case TodoType.EXTERNAL:
+            setSampleData(currentStep.name, {
+              id: response.id,
+              links,
+            });
+            break;
+        }
+        setSampleDataInput(currentStep.name, input);
+        onOpenChange(false);
       }
-      setSampleDataInput(currentStep.name, input);
-      onOpenChange(false);
-    }},
+    },
     onError: (error) => {
       console.error(error);
       toast(INTERNAL_ERROR_TOAST);
@@ -194,7 +195,7 @@ function TodoTestingDialog({
       return () => clearInterval(intervalId);
     }
   }, [open]);
- const isResolvedStatusSelected = status.name !== UNRESOLVED_STATUS.name;
+  const isResolvedStatusSelected = status.name !== UNRESOLVED_STATUS.name;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-3xl">
@@ -317,11 +318,10 @@ function TodoTestingDialog({
               <TooltipTrigger asChild>
                 <Button
                   loading={isResolvingTodo}
-               onClick={() => {
-                    if(isResolvedStatusSelected) {
+                  onClick={() => {
+                    if (isResolvedStatusSelected) {
                       resolveTodo();
-                    }
-                    else {
+                    } else {
                       setShowMustResolveError(true);
                     }
                   }}

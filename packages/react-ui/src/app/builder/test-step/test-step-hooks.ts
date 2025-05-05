@@ -4,6 +4,9 @@ import deepEqual from 'deep-equal';
 import { t } from 'i18next';
 import { useFormContext, UseFormReturn } from 'react-hook-form';
 
+import { useSocket } from '@/components/socket-provider';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { sampleDataApi } from '@/features/flows/lib/sample-data-api';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { api } from '@/lib/api';
@@ -26,9 +29,6 @@ import {
 import { useBuilderStateContext } from '../builder-hooks';
 
 import { testStepUtils } from './test-step-utils';
-import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { useSocket } from '@/components/socket-provider';
 
 const useRequiredStateToTestSteps = () => {
   const form = useFormContext<Trigger>();
@@ -101,11 +101,7 @@ const testStepHooks = {
       },
     });
   },
-  useSaveMockData: ({
-    onSuccess,
-  }: {
-    onSuccess: () => void;
-  }) => {
+  useSaveMockData: ({ onSuccess }: { onSuccess: () => void }) => {
     const { form, builderState } = useRequiredStateToTestSteps();
     const flowId = builderState.flow.id;
     return useMutation({
@@ -184,11 +180,17 @@ const testStepHooks = {
       },
     });
   },
-  useTestAction: ({currentStep, setErrorMessage, setConsoleLogs, onSuccess}:{currentStep: Action, 
-     setErrorMessage: ((msg: string | undefined) => void) | undefined,
-     setConsoleLogs: ((logs: string | null) => void) | undefined,
-     onSuccess: (()=>void) | undefined}, 
-    )=> {
+  useTestAction: ({
+    currentStep,
+    setErrorMessage,
+    setConsoleLogs,
+    onSuccess,
+  }: {
+    currentStep: Action;
+    setErrorMessage: ((msg: string | undefined) => void) | undefined;
+    setConsoleLogs: ((logs: string | null) => void) | undefined;
+    onSuccess: (() => void) | undefined;
+  }) => {
     const socket = useSocket();
     const {
       flowVersionId,
@@ -198,77 +200,81 @@ const testStepHooks = {
       applyOperation,
     } = useRequiredStateToTestSteps().builderState;
     return useMutation<StepRunResponse, Error, StepRunResponse | undefined>({
-    mutationFn: async (preExistingSampleData?: StepRunResponse) => {
-      const testStepResponse =preExistingSampleData ?? await flowRunsApi.testStep(socket, {
-        flowVersionId,
-        stepName: currentStep.name,
-      });
-      let sampleDataFileId: string | undefined = undefined;
-      if (testStepResponse.success && !isNil(testStepResponse.output)) {
-        const sampleFile = await sampleDataApi.save({
+      mutationFn: async (preExistingSampleData?: StepRunResponse) => {
+        const testStepResponse =
+          preExistingSampleData ??
+          (await flowRunsApi.testStep(socket, {
+            flowVersionId,
+            stepName: currentStep.name,
+          }));
+        let sampleDataFileId: string | undefined = undefined;
+        if (testStepResponse.success && !isNil(testStepResponse.output)) {
+          const sampleFile = await sampleDataApi.save({
+            flowVersionId,
+            stepName: currentStep.name,
+            payload: testStepResponse.output,
+            projectId,
+            fileType: FileType.SAMPLE_DATA,
+          });
+          sampleDataFileId = sampleFile.id;
+        }
+        const sampleDataInputFile = await sampleDataApi.save({
           flowVersionId,
           stepName: currentStep.name,
-          payload: testStepResponse.output,
+          payload: currentStep.settings,
           projectId,
-          fileType: FileType.SAMPLE_DATA,
+          fileType: FileType.SAMPLE_DATA_INPUT,
         });
-        sampleDataFileId = sampleFile.id;
-      }
-      const sampleDataInputFile = await sampleDataApi.save({
-        flowVersionId,
-        stepName: currentStep.name,
-        payload: currentStep.settings,
-        projectId,
-        fileType: FileType.SAMPLE_DATA_INPUT,
-      });
-      return {
-        ...testStepResponse,
-        sampleDataFileId,
-        sampleDataInputFileId: sampleDataInputFile.id,
-      };
-    },
-    onSuccess: ({
-      success,
-      input,
-      output,
-      sampleDataFileId,
-      sampleDataInputFileId,
-      standardOutput,
-      standardError,
-    }) => {
-      if (success) {
-        setErrorMessage?.(undefined);
-        const newInputUiInfo: Action['settings']['inputUiInfo'] = {
-          ...currentStep.settings.inputUiInfo,
+        return {
+          ...testStepResponse,
           sampleDataFileId,
-          sampleDataInputFileId,
-          currentSelectedData: undefined,
-          lastTestDate: dayjs().toISOString(),
+          sampleDataInputFileId: sampleDataInputFile.id,
         };
-        const currentStepCopy: Action = JSON.parse(JSON.stringify(currentStep));
-        currentStepCopy.settings.inputUiInfo=newInputUiInfo;
+      },
+      onSuccess: ({
+        success,
+        input,
+        output,
+        sampleDataFileId,
+        sampleDataInputFileId,
+        standardOutput,
+        standardError,
+      }) => {
+        if (success) {
+          setErrorMessage?.(undefined);
+          const newInputUiInfo: Action['settings']['inputUiInfo'] = {
+            ...currentStep.settings.inputUiInfo,
+            sampleDataFileId,
+            sampleDataInputFileId,
+            currentSelectedData: undefined,
+            lastTestDate: dayjs().toISOString(),
+          };
+          const currentStepCopy: Action = JSON.parse(
+            JSON.stringify(currentStep),
+          );
+          currentStepCopy.settings.inputUiInfo = newInputUiInfo;
           applyOperation({
             type: FlowOperationType.UPDATE_ACTION,
             request: currentStepCopy,
           });
-      } else {
-        setErrorMessage?.(
-          testStepUtils.formatErrorMessage(
-            JSON.stringify(output) ||
-              t('Failed to run test step and no error message was returned'),
-          ),
-        );
-      }
-      setSampleData(currentStep.name, output);
-      setSampleDataInput(currentStep.name, input);
-      setConsoleLogs?.(standardOutput || standardError);
-      onSuccess?.();
-    },
-    onError: (error) => {
-      console.error(error);
-      toast(INTERNAL_ERROR_TOAST);
-    },
-  });
+        } else {
+          setErrorMessage?.(
+            testStepUtils.formatErrorMessage(
+              JSON.stringify(output) ||
+                t('Failed to run test step and no error message was returned'),
+            ),
+          );
+        }
+        setSampleData(currentStep.name, output);
+        setSampleDataInput(currentStep.name, input);
+        setConsoleLogs?.(standardOutput || standardError);
+        onSuccess?.();
+      },
+      onError: (error) => {
+        console.error(error);
+        toast(INTERNAL_ERROR_TOAST);
+      },
+    });
   },
 };
 

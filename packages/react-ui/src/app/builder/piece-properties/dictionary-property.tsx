@@ -90,15 +90,11 @@ export const DictionaryProperty = ({
   };
 
   const updateValue = (items: DictionaryInputItem[]) => {
-      onChange(
-        items.reduce(
-          (acc, current) => {
-         
-            return { ...acc, [current.key]: current.value };
-          },
-          {},
-        ),
-      );
+    onChange(
+      items.reduce((acc, current) => {
+        return { ...acc, [current.key]: current.value };
+      }, {}),
+    );
   };
   return (
     <div className="flex w-full flex-col gap-4">
