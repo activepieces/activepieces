@@ -16,19 +16,15 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { api } from '@/lib/api';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { Action, ApFlagId, apId, Trigger } from '@activepieces/shared';
-
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { DictionaryProperty } from '../../piece-properties/dictionary-property';
-
-
 import testStepHooks from '../test-step-hooks';
-
-import { HttpMethod } from '@activepieces/pieces-common';
-import { flagsHooks } from '@/hooks/flags-hooks';
-import { api } from '@/lib/api';
-import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 
 enum BodyType {
   JSON = 'json',
@@ -209,7 +205,7 @@ const TestWebhookFunctionalityDialog = (
           <DialogTitle>
             {testingMode === 'returnResponseAndWaitForNextWebhook'
               ? t('Resume Webhook Request')
-              : t('Trigger Webhook')}
+              : t('Send Sample Data to Webhook')}
           </DialogTitle>
         </DialogHeader>
         <Form {...form}>

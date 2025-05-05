@@ -102,7 +102,6 @@ const TestStepSectionImplementation = React.memo(
       if (isTodoCreateTask(currentStep)) {
         handleTodoCreateTask();
       } else if (isReturnResponseAndWaitForWebhook(currentStep)) {
-        debugger;
         setIsReturnResponseAndWaitForWebhookDialogOpen(true);
       } else {
         mutate(undefined);

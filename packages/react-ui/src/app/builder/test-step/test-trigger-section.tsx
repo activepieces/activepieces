@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import dayjs from 'dayjs';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
 import { AlertCircle, ChevronDown } from 'lucide-react';
@@ -89,14 +88,14 @@ const WebhookPieceTestingButton = ({
               simulateTrigger();
             }}
           >
-            {t('Send Data from an outside source')}
+            {t('Trigger from External Source')}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
               setIsWebhookTestingDialogOpen(true);
             }}
           >
-            {t('Generate Sample Data')}
+            {t('Send Sample Data')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -206,6 +205,12 @@ const TestTriggerSection = React.memo(
       [sampleData, pollResults],
     );
 
+    const [isWebhookTestingDialogOpen, setIsWebhookTestingDialogOpen] =
+      useState(false);
+    const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
+      ApFlagId.WEBHOOK_URL_PREFIX,
+    );
+
     if (isPieceLoading) {
       return null;
     }
@@ -219,11 +224,6 @@ const TestTriggerSection = React.memo(
     const isWebhookPieceTrigger =
       pieceModel?.name === '@activepieces/piece-webhook' &&
       formValues.settings.triggerName === 'catch_webhook';
-    const [isWebhookTestingDialogOpen, setIsWebhookTestingDialogOpen] =
-      useState(false);
-    const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
-      ApFlagId.WEBHOOK_URL_PREFIX,
-    );
 
     return (
       <div>
@@ -332,11 +332,9 @@ const TestTriggerSection = React.memo(
                   {isWebhookPieceTrigger && (
                     <>
                       <div className="break-wrods">
-                        {t(
-                          'Please send data to the webhook url to test the trigger:',
-                        )}
+                        {t('Please send data to the following URL:')}
                       </div>
-                      <div className="break-all">
+                      <div className="break-all mt-1">
                         {`${webhookPrefixUrl}/${flowId}`}
                       </div>
                     </>

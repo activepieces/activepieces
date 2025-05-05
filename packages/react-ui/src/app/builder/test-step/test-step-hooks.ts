@@ -16,7 +16,6 @@ import {
   ErrorCode,
   FileType,
   FlowOperationType,
-  flowStructureUtil,
   FlowVersion,
   isNil,
   parseToJsonIfPossible,

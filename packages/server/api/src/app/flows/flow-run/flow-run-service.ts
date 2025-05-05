@@ -366,17 +366,17 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         const synchronousHandlerId = engineResponseWatcher(log).getServerId()
         const matchRequestId = isNil(flowRun.pauseMetadata) || (flowRun.pauseMetadata.type === PauseType.WEBHOOK && requestId === flowRun.pauseMetadata.requestId)
         assertNotNullOrUndefined(synchronousHandlerId, 'synchronousHandlerId is required for sync resume request is required')
-        if(!matchRequestId){
+        if (!matchRequestId) {
             return {
                 status: StatusCodes.NOT_FOUND,
                 body: {},
                 headers: {},
             }
         }
-        if(flowRun.status !== FlowRunStatus.PAUSED){
+        if (flowRun.status !== FlowRunStatus.PAUSED) {
             return {
                 status: StatusCodes.CONFLICT,
-                body: {"message": "Flow run is not paused", "flowRunStatus": flowRun.status},
+                body: { 'message': 'Flow run is not paused', 'flowRunStatus': flowRun.status },
                 headers: {},
             }
         }
