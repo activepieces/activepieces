@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { PlugIcon, Trash2, Unplug, RotateCcw } from 'lucide-react';
+import { PlugIcon, Trash2, Unplug, Link2Icon } from 'lucide-react';
 import { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -146,16 +146,9 @@ export const McpPiece = ({
               {pieceInfo.displayName}
             </h4>
             {piece.connection ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
                   <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-full">
                     {displayName}
                   </p>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-[300px] break-all">
-                  <p className="text-sm">{displayName}</p>
-                </TooltipContent>
-              </Tooltip>
             ) : connectionMissing ? (
               <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
                 <span className="text-amber-500">
@@ -176,28 +169,32 @@ export const McpPiece = ({
           </PermissionNeededTooltip>
 
           {pieceModel?.auth && (
-            <Tooltip>
               <PermissionNeededTooltip hasPermission={hasPermissionToEdit}>
+
+            <Tooltip>
                 <McpPieceDialog mcpPieceToUpdate={piece}>
-                  <TooltipTrigger asChild>
+                <TooltipTrigger asChild>
+                 
                     <Button
                       variant="ghost"
                       size="icon"
                       disabled={!hasPermissionToEdit}
                     >
-                      <RotateCcw className="h-4 w-4" />
+                      <Link2Icon className="h-4 w-4" />
                     </Button>
-                  </TooltipTrigger>
+                    </TooltipTrigger>
                 </McpPieceDialog>
-              </PermissionNeededTooltip>
+               
               <TooltipContent>
                 {t(connectionMissing ? 'Add Connection' : 'Edit Connection')}
               </TooltipContent>
             </Tooltip>
-          )}
+            </PermissionNeededTooltip>
 
+          )}
+ <PermissionNeededTooltip hasPermission={hasPermissionToEdit}>
           <Tooltip>
-            <PermissionNeededTooltip hasPermission={hasPermissionToEdit}>
+           
               <ConfirmationDeleteDialog
                 title={`${t('Delete')} ${displayName}`}
                 message={
@@ -212,7 +209,8 @@ export const McpPiece = ({
                 }}
                 entityName={t('piece')}
               >
-                <TooltipTrigger asChild>
+            <TooltipTrigger asChild>
+             
                   <Button
                     variant="ghost"
                     size="icon"
@@ -220,11 +218,13 @@ export const McpPiece = ({
                   >
                     <Trash2 className="h-4 w-4 text-destructive transition-colors duration-200 group-hover:text-destructive/90" />
                   </Button>
-                </TooltipTrigger>
+                  </TooltipTrigger>
+            
               </ConfirmationDeleteDialog>
-            </PermissionNeededTooltip>
             <TooltipContent>{t('Delete')}</TooltipContent>
           </Tooltip>
+          </PermissionNeededTooltip>
+
         </div>
       </CardContent>
     </Card>
