@@ -633,6 +633,9 @@
       "@activepieces/piece-saastic": [
         "packages/pieces/community/saastic/src/index.ts"
       ],
+      "@activepieces/piece-saleor": [
+        "packages/pieces/community/saleor/src/index.ts"
+      ],
       "@activepieces/piece-salesforce": [
         "packages/pieces/community/salesforce/src/index.ts"
       ],
