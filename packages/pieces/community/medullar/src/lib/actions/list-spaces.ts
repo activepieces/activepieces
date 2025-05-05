@@ -1,18 +1,13 @@
 import { medullarAuth } from '../../index';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
-export const createSpace = createAction({
+export const listSpaces = createAction({
   auth: medullarAuth,
-  name: 'createSpace',
-  displayName: 'Create new Space',
-  description: 'Create a new Space.',
-  props: {
-    space_name: Property.ShortText({
-      displayName: 'Space Name',
-      required: true,
-    }),
-  },
+  name: 'listSpaces',
+  displayName: 'List Spaces',
+  description: 'List all user Spaces',
+  props: {},
   async run(context) {
     const userResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,
@@ -24,7 +19,6 @@ export const createSpace = createAction({
 
     const userData = userResponse.body;
 
-    
     if (!userData) {
       throw new Error('User data not found.');
     }
@@ -33,20 +27,14 @@ export const createSpace = createAction({
       throw new Error('User does not belong to any company.');
     }
 
-    const spaceResponse = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: 'https://api.medullar.com/explorator/v1/spaces/',
-      body: {
-        name: context.propsValue['space_name'],
-        company: {
-          uuid: userData.company.uuid,
-        },
-      },
+    const spaceListResponse = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: `https://api.medullar.com/explorator/v1/spaces/?user=${userData.uuid}&limit=1000&offset=0`,
       headers: {
         Authorization: `Bearer ${context.auth}`,
       },
     });
 
-    return spaceResponse.body;
+    return spaceListResponse.body.results;
   },
 });
