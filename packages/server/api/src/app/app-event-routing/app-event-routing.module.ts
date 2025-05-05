@@ -20,12 +20,12 @@ import {
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { flowService } from '../flows/flow/flow.service'
 import { webhookHandler } from '../webhooks/webhook-handler'
 import { webhookSimulationService } from '../webhooks/webhook-simulation/webhook-simulation-service'
 import { jobQueue } from '../workers/queue'
 import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
 import { appEventRoutingService } from './app-event-routing.service'
-import { flowService } from '../flows/flow/flow.service'
 
 const appWebhooks: Record<string, Piece> = {
     slack,

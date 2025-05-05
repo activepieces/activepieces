@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { UserPlus } from 'lucide-react';
 
 import { useEmbedding } from '@/components/embed-provider';
@@ -17,18 +18,15 @@ export function SidebarInviteUserButton() {
   }
 
   return (
-    <InviteUserDialog
-      showTooltip={true}
-      triggerButton={
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="transparent" size="icon">
-              <UserPlus className="size-4  stroke-[2px]" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Invite User</TooltipContent>
-        </Tooltip>
-      }
-    />
+    <Tooltip>
+      <InviteUserDialog>
+        <TooltipTrigger asChild>
+          <Button variant="transparent" size="icon">
+            <UserPlus className="size-4  stroke-[2px]" />
+          </Button>
+        </TooltipTrigger>
+      </InviteUserDialog>
+      <TooltipContent side="bottom">{t('Invite User')}</TooltipContent>
+    </Tooltip>
   );
 }

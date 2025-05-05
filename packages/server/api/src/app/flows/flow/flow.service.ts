@@ -16,6 +16,7 @@ import {
     FlowVersionId,
     FlowVersionState,
     isNil,
+    Metadata,
     PlatformId,
     PopulatedFlow,
     ProjectId,
@@ -100,6 +101,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         folderId,
         status,
         name,
+        connectionExternalIds,
         versionState = FlowVersionState.DRAFT,
     }: ListParams): Promise<SeekPage<PopulatedFlow>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
@@ -134,13 +136,19 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 versionId: (versionState === FlowVersionState.DRAFT) ? undefined : (flow.publishedVersionId ?? undefined),
             })
 
+            const isExistAnyConnection = connectionExternalIds ? version.connectionIds.some((connectionId) => connectionExternalIds.includes(connectionId)) : true
+
+            if (!isExistAnyConnection) {
+                return null
+            }
+
             return {
                 ...flow,
                 version,
             }
         })
 
-        const populatedFlows = (await Promise.all(populatedFlowPromises))
+        const populatedFlows = (await Promise.all(populatedFlowPromises)).filter((flow) => flow !== null)
         const filteredPopulatedFlows = name ? populatedFlows.filter((flow) => flow.version.displayName.match(new RegExp(`^.*${name}.*`, 'i'))) : populatedFlows
         return paginationHelper.createPage(filteredPopulatedFlows, paginationResult.cursor)
     },
@@ -256,6 +264,14 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 })
                 break }
 
+                case FlowOperationType.UPDATE_METADATA:
+                { await this.updateMetadata({
+                    id,
+                    projectId,
+                    metadata: operation.request.metadata,
+                })
+                break
+                }
                 default: {
                     let lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
                         flowId: id,
@@ -501,6 +517,26 @@ export const flowService = (log: FastifyBaseLogger) => ({
             status,
         })
     },
+
+    async updateMetadata({
+        id,
+        projectId,
+        metadata,
+    }: UpdateMetadataParams): Promise<PopulatedFlow> {
+        const flowToUpdate = await this.getOneOrThrow({
+            id,
+            projectId,
+        })
+
+        flowToUpdate.metadata = metadata
+
+        await flowRepo().save(flowToUpdate)
+
+        return this.getOnePopulatedOrThrow({
+            id,
+            projectId,
+        })
+    },
 })
 
 const lockFlowVersionIfNotLocked = async ({
@@ -555,6 +591,7 @@ type ListParams = {
     status: FlowStatus[] | undefined
     name: string | undefined
     versionState?: FlowVersionState
+    connectionExternalIds?: string[]
 }
 
 type GetOneParams = {
@@ -630,4 +667,10 @@ type ExistsByProjectAndStatusParams = {
     projectId: ProjectId
     status: FlowStatus
     entityManager: EntityManager
+}
+
+type UpdateMetadataParams = {
+    id: FlowId
+    projectId: ProjectId
+    metadata: Metadata | null | undefined
 }
