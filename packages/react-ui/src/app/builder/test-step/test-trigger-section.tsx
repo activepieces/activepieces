@@ -379,6 +379,7 @@ const TestTriggerSection = React.memo(
         )}
         {
           showFirstTimeMcpToolTestingSection && (
+            <div className="flex justify-center">
             <TestButtonTooltip disabled={!isValid}>
             <Button
               variant="outline"
@@ -397,6 +398,7 @@ const TestTriggerSection = React.memo(
               {t('Test Tool' )}
             </Button>
           </TestButtonTooltip>
+          </div>
           )
         }
 
