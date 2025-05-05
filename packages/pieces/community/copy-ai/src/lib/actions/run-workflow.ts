@@ -22,9 +22,9 @@ export const runWorkflow = createAction({
         return await copyAiClient.makeRequest(
             context.auth as string,
             HttpMethod.POST,
-            `/workflows/${context.propsValue.workflowId}/run`,
+            `/workflow/${context.propsValue.workflowId}run`,
             {
-                inputs: context.propsValue.inputs
+                startVariables: context.propsValue.inputs
             }
         );
     },
