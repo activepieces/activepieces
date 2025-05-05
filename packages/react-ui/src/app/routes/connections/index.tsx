@@ -355,7 +355,7 @@ function AppConnectionsPage() {
         <DataTableColumnHeader column={column} title={t('Used In')} />
       ),
       cell: ({ row }) => {
-        return <div className="text-left">{row.original.countOfFlows}</div>;
+        return <div className="text-left">{row.original.flowIds?.length}</div>;
       },
     },
     {
@@ -407,10 +407,15 @@ function AppConnectionsPage() {
                       )}
                       <span className="text-black font-bold ml-1">
                         {t(
-                          `${selectedRows.reduce(
-                            (acc, row) => acc + (row.countOfFlows || 0),
-                            0,
-                          )} flows will be affected`,
+                          `${
+                            Array.from(
+                              new Set(
+                                selectedRows.flatMap(
+                                  (row) => row.flowIds || [],
+                                ),
+                              ),
+                            ).length
+                          } flows will be affected`,
                         )}
                       </span>
                       <Alert className="mt-4 flex flex-col gap-2">
