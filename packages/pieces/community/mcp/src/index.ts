@@ -1,6 +1,7 @@
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { replyToMcpClient } from "./lib/actions/reply-to-mcp-client";
 import { mcpTool } from "./lib/triggers/mcp-tool";
+import { PieceCategory } from "@activepieces/shared";
 
 export const mcp = createPiece({
   displayName: "MCP",
@@ -11,4 +12,5 @@ export const mcp = createPiece({
   description: 'Connect to your hosted MCP Server using any MCP client to communicate with tools',
   actions: [replyToMcpClient],
   triggers: [mcpTool],
+  categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE]
 });
