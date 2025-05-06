@@ -1,7 +1,4 @@
-import { typeboxResolver } from '@hookform/resolvers/typebox';
-import { Static, Type } from '@sinclair/typebox';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { HttpStatusCode } from 'axios';
+import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   ArrowDownZA,
@@ -10,42 +7,28 @@ import {
   Folder,
   FolderOpen,
   Pencil,
-  PlusIcon,
   Shapes,
   TableProperties,
   Trash2,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { FolderDto, isNil, Permission } from '@activepieces/shared';
@@ -54,15 +37,8 @@ import { foldersApi } from '../lib/folders-api';
 import { foldersHooks } from '../lib/folders-hooks';
 import { foldersUtils } from '../lib/folders-utils';
 
+import { CreateFolderDialog } from './create-folder-dialog';
 import { RenameFolderDialog } from './rename-folder-dialog';
-
-const CreateFolderFormSchema = Type.Object({
-  displayName: Type.String({
-    errorMessage: t('Please enter folder name'),
-  }),
-});
-
-type CreateFolderFormSchema = Static<typeof CreateFolderFormSchema>;
 
 const FolderIcon = ({ isFolderOpen }: { isFolderOpen: boolean }) => {
   return isFolderOpen ? (
@@ -78,6 +54,7 @@ const FolderIcon = ({ isFolderOpen }: { isFolderOpen: boolean }) => {
     <Folder className=" flex-shrink-0 w-4 h-4" />
   );
 };
+
 type FolderItemProps = {
   folder: FolderDto;
   refetch: () => void;
@@ -85,6 +62,7 @@ type FolderItemProps = {
   selectedFolderId: string | null;
   userHasPermissionToUpdateFolders: boolean;
 };
+
 const FolderItem = ({
   folder,
   refetch,
@@ -209,10 +187,6 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
     setSortedAlphabeticallyIncreasingly,
   ] = useState(true);
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const form = useForm<CreateFolderFormSchema>({
-    resolver: typeboxResolver(CreateFolderFormSchema),
-  });
 
   const updateSearchParams = (folderId: string | undefined) => {
     const newQueryParameters: URLSearchParams = new URLSearchParams(
@@ -252,43 +226,6 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
     sortedAlphabeticallyIncreasingly,
   ]);
 
-  const { mutate, isPending } = useMutation<
-    FolderDto,
-    Error,
-    CreateFolderFormSchema
-  >({
-    mutationFn: async (data) => {
-      return await foldersApi.create({
-        displayName: data.displayName,
-        projectId: authenticationSession.getProjectId()!,
-      });
-    },
-    onSuccess: (folder) => {
-      form.reset();
-      setIsDialogOpen(false);
-      updateSearchParams(folder.id);
-      refetchFolders();
-      toast({
-        title: t('Added folder successfully'),
-      });
-    },
-    onError: (error) => {
-      if (api.isError(error)) {
-        switch (error.response?.status) {
-          case HttpStatusCode.Conflict: {
-            form.setError('root.serverError', {
-              message: t('The folder name already exists.'),
-            });
-            break;
-          }
-          default: {
-            toast(INTERNAL_ERROR_TOAST);
-            break;
-          }
-        }
-      }
-    },
-  });
 
   useEffect(() => {
     refetchFolders();
@@ -320,60 +257,11 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToUpdateFolders}
           >
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  disabled={!userHasPermissionToUpdateFolders}
-                  size="icon"
-                  className="mr-1"
-                >
-                  <PlusIcon size={18} />
-                </Button>
-              </DialogTrigger>
-
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>{t('New Folder')}</DialogTitle>
-                </DialogHeader>
-                <FormProvider {...form}>
-                  <form onSubmit={form.handleSubmit((data) => mutate(data))}>
-                    <FormField
-                      control={form.control}
-                      name="displayName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <Input
-                            {...field}
-                            required
-                            id="folder"
-                            placeholder={t('Folder Name')}
-                            className="rounded-sm"
-                          />
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    {form?.formState?.errors?.root?.serverError && (
-                      <FormMessage>
-                        {form.formState.errors.root.serverError.message}
-                      </FormMessage>
-                    )}
-                    <DialogFooter>
-                      <Button
-                        variant={'outline'}
-                        onClick={() => setIsDialogOpen(false)}
-                      >
-                        {t('Cancel')}
-                      </Button>
-                      <Button type="submit" loading={isPending}>
-                        {t('Confirm')}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </FormProvider>
-              </DialogContent>
-            </Dialog>
+            <CreateFolderDialog
+              hasPermissionsToUpdateFolder={userHasPermissionToUpdateFolders}
+              refetchFolders={refetchFolders}
+              updateSearchParams={updateSearchParams}
+            />
           </PermissionNeededTooltip>
         </div>
       </div>
