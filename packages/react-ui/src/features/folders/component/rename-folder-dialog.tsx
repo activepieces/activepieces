@@ -47,10 +47,11 @@ const RenameFolderDialog = ({
   });
 
   const { mutate, isPending } = useMutation<Folder, Error, RenameFolderSchema>({
-    mutationFn: async (data) =>
-      await foldersApi.renameFolder(folderId, {
+    mutationFn: async (data) => {
+      return await foldersApi.renameFolder(folderId, {
         displayName: data.displayName,
-      }),
+      })
+    },
     onSuccess: () => {
       setIsOpen(false);
       onRename();
@@ -105,6 +106,7 @@ const RenameFolderDialog = ({
             <DialogFooter>
               <Button
                 variant={'outline'}
+                type='button'
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
