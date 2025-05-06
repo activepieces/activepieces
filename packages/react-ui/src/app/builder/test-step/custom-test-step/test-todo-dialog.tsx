@@ -38,32 +38,29 @@ import {
   UNRESOLVED_STATUS,
   StatusOption,
   MarkdownVariant,
-  Step,
   StepRunResponse,
   isNil,
   FileType,
   FlowOperationType,
-  TriggerType,
   TodoWithAssignee,
   TodoType,
+  Action,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
-import { testStepUtils } from '../test-step-utils';
 
-type ManualTaskTestingDialogProps = {
+type TodoTestingDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   todo: TodoWithAssignee;
   flowVersionId: string;
   projectId: string;
-  currentStep: Step;
+  currentStep: Action;
   type: TodoType;
   setErrorMessage: (errorMessage: string | undefined) => void;
-  setLastTestDate: (lastTestDate: string) => void;
 };
 
-function ManualTaskTestingDialog({
+function TodoTestingDialog({
   open,
   onOpenChange,
   todo,
@@ -72,13 +69,12 @@ function ManualTaskTestingDialog({
   currentStep,
   type,
   setErrorMessage,
-  setLastTestDate,
-}: ManualTaskTestingDialogProps) {
+}: TodoTestingDialogProps) {
   const { data: currentUser } = userHooks.useCurrentUser();
   const [status, setStatus] = useState<StatusOption>(todo.status);
   const [dialogOpenTime, setDialogOpenTime] = useState<Date | null>(null);
   const [, setForceUpdate] = useState(0);
-
+  const [showMustResolveError, setShowMustResolveError] = useState(false);
   const { setSampleData, setSampleDataInput, applyOperation } =
     useBuilderStateContext((state) => {
       return {
@@ -142,68 +138,45 @@ function ManualTaskTestingDialog({
       if (success) {
         setErrorMessage(undefined);
 
-        const newInputUiInfo: Step['settings']['inputUiInfo'] = {
+        const newInputUiInfo: Action['settings']['inputUiInfo'] = {
           ...currentStep.settings.inputUiInfo,
           sampleDataFileId,
           sampleDataInputFileId,
           currentSelectedData: undefined,
           lastTestDate: dayjs().toISOString(),
         };
-        const currentStepCopy = {
-          ...currentStep,
-          settings: {
-            ...currentStep.settings,
-            inputUiInfo: newInputUiInfo,
-          },
-        };
-        if (
-          currentStepCopy.type === TriggerType.EMPTY ||
-          currentStepCopy.type === TriggerType.PIECE
-        ) {
-          applyOperation({
-            type: FlowOperationType.UPDATE_TRIGGER,
-            request: currentStepCopy,
-          });
-        } else {
-          applyOperation({
-            type: FlowOperationType.UPDATE_ACTION,
-            request: currentStepCopy,
-          });
+        const currentStepCopy: Action = JSON.parse(JSON.stringify(currentStep));
+        currentStepCopy.settings.inputUiInfo = newInputUiInfo;
+        applyOperation({
+          type: FlowOperationType.UPDATE_ACTION,
+          request: currentStepCopy,
+        });
+        const response = output as TodoWithAssignee;
+        const statusName = response['status'].name;
+        const statusOptions = response['statusOptions'];
+        const publicUrl = response['resolveUrl']?.split('/flow-runs/')[0];
+        const links = statusOptions.map((option) => ({
+          status: option.name,
+          url:
+            publicUrl +
+            `/todos/${response.id}/resolve?status=${option.name}&isTest=true`,
+        }));
+        switch (type) {
+          case TodoType.INTERNAL:
+            setSampleData(currentStep.name, {
+              status: statusName,
+            });
+            break;
+          case TodoType.EXTERNAL:
+            setSampleData(currentStep.name, {
+              id: response.id,
+              links,
+            });
+            break;
         }
-      } else {
-        setErrorMessage(
-          testStepUtils.formatErrorMessage(
-            JSON.stringify(output) ||
-              t('Failed to run test step and no error message was returned'),
-          ),
-        );
+        setSampleDataInput(currentStep.name, input);
+        onOpenChange(false);
       }
-      const response = output as TodoWithAssignee;
-      const statusName = response['status'].name;
-      const statusOptions = response['statusOptions'];
-      const publicUrl = response['resolveUrl']?.split('/flow-runs/')[0];
-      const links = statusOptions.map((option) => ({
-        status: option.name,
-        url:
-          publicUrl +
-          `/todos/${response.id}/resolve?status=${option.name}&isTest=true`,
-      }));
-      switch (type) {
-        case TodoType.INTERNAL:
-          setSampleData(currentStep.name, {
-            status: statusName,
-          });
-          break;
-        case TodoType.EXTERNAL:
-          setSampleData(currentStep.name, {
-            id: response.id,
-            links,
-          });
-          break;
-      }
-      setSampleDataInput(currentStep.name, input);
-      setLastTestDate(dayjs().toISOString());
-      onOpenChange(false);
     },
     onError: (error) => {
       console.error(error);
@@ -222,17 +195,17 @@ function ManualTaskTestingDialog({
       return () => clearInterval(intervalId);
     }
   }, [open]);
-
+  const isResolvedStatusSelected = status.name !== UNRESOLVED_STATUS.name;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-3xl">
         <DialogTitle className="flex items-center gap-2 mb-4">
           <span>Todo</span>
           <Badge variant="outline" className="text-xs">
-            Test Environment
+            {t('Test Environment')}
           </Badge>
         </DialogTitle>
-        <div className="flex flex-col w-full h-[calc(100vh-250px)]">
+        <div className="flex flex-col w-full max-h-[calc(100vh-250px)] min-h-[20px]">
           <div className="flex flex-col gap-2">
             <span>{todo.title}</span>
           </div>
@@ -241,7 +214,7 @@ function ManualTaskTestingDialog({
               <div className="flex items-center gap-2">
                 <UserRoundPen className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">
-                  Assigned to
+                  {t('Assigned to')}
                 </span>
                 <span className="text-sm">
                   {todo.assignee && (
@@ -249,7 +222,7 @@ function ManualTaskTestingDialog({
                       <TooltipTrigger asChild>
                         <span className="text-sm font-medium">
                           {todo.assignee.firstName} {todo.assignee.lastName}{' '}
-                          {todo.assigneeId === currentUser?.id ? '(Me)' : ''}
+                          {todo.assigneeId === currentUser?.id ? t('(Me)') : ''}
                         </span>
                       </TooltipTrigger>
                       <TooltipContent>
@@ -322,6 +295,11 @@ function ManualTaskTestingDialog({
               </span>
             </div>
           </div>
+          {showMustResolveError && !isResolvedStatusSelected && (
+            <div className="text-red-500 text-sm  mt-2">
+              {t('Please select status to resolve the todo')}
+            </div>
+          )}
           <Separator className="mt-4 mb-6" />
 
           <ScrollArea className="flex-grow pr-4">
@@ -340,11 +318,12 @@ function ManualTaskTestingDialog({
               <TooltipTrigger asChild>
                 <Button
                   loading={isResolvingTodo}
-                  disabled={
-                    status.name === UNRESOLVED_STATUS.name || isResolvingTodo
-                  }
                   onClick={() => {
-                    resolveTodo();
+                    if (isResolvedStatusSelected) {
+                      resolveTodo();
+                    } else {
+                      setShowMustResolveError(true);
+                    }
                   }}
                 >
                   {t('Resolve')}
@@ -359,4 +338,4 @@ function ManualTaskTestingDialog({
   );
 }
 
-export { ManualTaskTestingDialog };
+export { TodoTestingDialog };

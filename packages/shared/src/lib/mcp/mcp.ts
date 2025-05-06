@@ -78,3 +78,7 @@ export const McpTrigger = Type.Object({
 })
 
 export type McpTrigger = Static<typeof McpTrigger>
+
+export const fixSchemaNaming = (schemaName: string) => {
+    return schemaName.replace(/\s+/g, '-')
+}

@@ -161,7 +161,8 @@ export type BaseActionContext<
   serverUrl: string;
   run: RunContext;
   generateResumeUrl: (params: {
-    queryParams: Record<string, string>
+    queryParams: Record<string, string>,
+    sync?: boolean
   }) => string;
 };
 
