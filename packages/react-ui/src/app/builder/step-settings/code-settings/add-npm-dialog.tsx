@@ -123,8 +123,8 @@ const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
         </Form>
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="secondary">
-              {t('Close')}
+            <Button type="button" variant="outline">
+              {t('Cancel')}
             </Button>
           </DialogClose>
           <Button type="submit" loading={isPending} onClick={() => mutate()}>

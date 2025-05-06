@@ -78,7 +78,7 @@ export const webhookService = {
             })
         }
 
-        assertNotNullOrUndefined(synchronousHandlerId, 'synchronousHandlerId is required for Async webhook')
+        assertNotNullOrUndefined(synchronousHandlerId, 'synchronousHandlerId is required for sync webhook')
 
         const flowHttpResponse = await webhookHandler.handleSync({
             savingSampleData: saveSampleData,
