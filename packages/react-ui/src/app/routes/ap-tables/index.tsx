@@ -18,7 +18,7 @@ import { LoadingScreen } from '@/components/ui/loading-screen';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { TableTitle } from '@/components/ui/table-title';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
-import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
+// import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { ApTableActionsMenu } from '@/features/tables/components/ap-table-actions-menu';
 import { fieldsApi } from '@/features/tables/lib/fields-api';
 import { recordsApi } from '@/features/tables/lib/records-api';
@@ -248,14 +248,14 @@ const ApTablesPage = () => {
             <PermissionNeededTooltip
               hasPermission={userHasPermissionToPushToGit}
             >
-              <PushToGitDialog type="table" tables={selectedRows}>
+              {/* <PushToGitDialog type="table" tables={selectedRows}>
                 {selectedRows.length > 0 && (
                   <Button className="w-full mr-2" size="sm" variant="outline">
                     <UploadCloud className="mr-2 w-4" />
                     {`${t('Push to Git')} (${selectedRows.length})`}
                   </Button>
                 )}
-              </PushToGitDialog>
+              </PushToGitDialog> */}
             </PermissionNeededTooltip>
           </div>
         ),

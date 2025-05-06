@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
-import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
+// import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Permission, Table } from '@activepieces/shared';
 
@@ -86,7 +86,7 @@ const ApTableActionsMenu = ({
           </div>
         </DropdownMenuItem>
 
-        <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
+        {/* <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
           <PushToGitDialog type="table" tables={[table]}>
             <DropdownMenuItem
               disabled={!userHasPermissionToPushToGit}
@@ -98,7 +98,7 @@ const ApTableActionsMenu = ({
               </div>
             </DropdownMenuItem>
           </PushToGitDialog>
-        </PermissionNeededTooltip>
+        </PermissionNeededTooltip> */}
 
         <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateTable}>
           <DropdownMenuItem
