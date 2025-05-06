@@ -97,6 +97,7 @@ import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744104496262 } from './
 import { AddMcpPieceSqlite1744822233873 } from './migration/sqlite/1744822233873-AddMcpPieceSqlite'
 import { RenameTodoVariantName1745269828603 } from './migration/sqlite/1745269828603-RenameTodoVariantName'
 import { AddConnectionIdsToFlowVersion1745531870426 } from './migration/sqlite/1745531870426-AddConnectionIdsToFlowVersion'
+import { AddExternalIdForTablesAndFieldsSQLITE1746367601605 } from './migration/sqlite/1746367601605-AddExternalIdForTablesAndFieldsSQLITE'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -211,6 +212,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMcpPieceSqlite1744822233873,
         RenameTodoVariantName1745269828603,
         AddConnectionIdsToFlowVersion1745531870426,
+        AddExternalIdForTablesAndFieldsSQLITE1746367601605,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

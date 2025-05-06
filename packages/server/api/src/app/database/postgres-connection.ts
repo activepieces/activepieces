@@ -196,6 +196,7 @@ import { AddRecordIndexForTableIdAndProjectIdAndRecordId1744187975994 } from './
 import { AddMcpPiece1744822233873 } from './migration/postgres/1744822233873-AddMcpPiece'
 import { RenameTodoPostiveVariantName1745272231418 } from './migration/postgres/1745272231418-RenameTodoPostiveVariantName'
 import { AddConnectionIdsToFlowVersion1745530653784 } from './migration/postgres/1745530653784-AddConnectionIdsToFlowVersion'
+import { AddExternalIdForTablesAndFields1746356907629 } from './migration/postgres/1746356907629-AddExternalIdForTablesAndFields'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -329,6 +330,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMcpPiece1744822233873,
         RenameTodoPostiveVariantName1745272231418,
         AddConnectionIdsToFlowVersion1745530653784,
+        AddExternalIdForTablesAndFields1746356907629,
     ]
 
     const edition = system.getEdition()

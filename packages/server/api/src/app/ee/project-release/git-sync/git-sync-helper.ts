@@ -1,11 +1,11 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { fileExists } from '@activepieces/server-shared'
-import { ConnectionState, Flow, flowMigrations, FlowState, PopulatedFlow, ProjectState } from '@activepieces/shared'
+import { ConnectionState, Flow, flowMigrations, FlowState, PopulatedFlow, ProjectState, TableState } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-    
+
 export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
-    async getStateFromGit({ flowPath, connectionsFolderPath }: GetStateFromGitParams): Promise<ProjectState> {
+    async getStateFromGit({ flowPath, connectionsFolderPath, tablesFolderPath }: GetStateFromGitParams): Promise<ProjectState> {
         try {
             const flowFiles = await fs.readdir(flowPath)
             const flows: FlowState[] = []
@@ -28,9 +28,20 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
                 )
                 connectionStates.push(connectionState)
             }
+
+            const tables = await fs.readdir(tablesFolderPath)
+            const tableStates: TableState[] = []
+            for (const table of tables) {
+                const tableState = JSON.parse(
+                    await fs.readFile(path.join(tablesFolderPath, table), 'utf-8'),
+                )
+                tableStates.push(tableState)
+            }
+
             return {
                 flows,
                 connections: connectionStates,
+                tables: tableStates,
             }
         }
         catch (error) {
@@ -57,11 +68,16 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
         }
     },
 
-    async deleteFlowFromGit({ flowId, flowFolderPath }: DeleteFlowFromProjectParams): Promise<boolean> {
-        const flowJsonPath = path.join(flowFolderPath, `${flowId}.json`)
-        const exists = await fileExists(flowJsonPath)
+    async upsertTableToGit({ fileName, table, tablesFolderPath }: UpsertTableIntoProjectParams): Promise<void> {
+        const tableJsonPath = path.join(tablesFolderPath, `${fileName}.json`)
+        await fs.mkdir(path.dirname(tableJsonPath), { recursive: true })
+        await fs.writeFile(tableJsonPath, JSON.stringify(table, null, 2))
+    },
+    async deleteFromGit({ fileName, folderPath }: DeleteFromProjectParams): Promise<boolean> {
+        const jsonPath = path.join(folderPath, `${fileName}.json`)
+        const exists = await fileExists(jsonPath)
         if (exists) {
-            await fs.unlink(flowJsonPath)
+            await fs.unlink(jsonPath)
         }
         return exists
     },
@@ -70,6 +86,7 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
 type GetStateFromGitParams = {
     flowPath: string
     connectionsFolderPath: string
+    tablesFolderPath: string
 }
 
 type UpsertFlowIntoProjectParams = {
@@ -80,14 +97,20 @@ type UpsertFlowIntoProjectParams = {
     connectionsFolderPath: string
 }
 
-type DeleteFlowFromProjectParams = {
-    flowId: string
-    flowFolderPath: string
+type UpsertTableIntoProjectParams = {
+    fileName: string
+    table: TableState
+    tablesFolderPath: string
+}
+
+type DeleteFromProjectParams = {
+    fileName: string
+    folderPath: string
 }
 
 type DeleteFlowFromProjectOperation = {
     type: 'delete_flow_from_project'
-    flowId: string
+    fileName: string
 }
 
 type UpsertFlowIntoProjectOperation = {
