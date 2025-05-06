@@ -14,7 +14,6 @@ import { authenticationSession } from '../../lib/authentication-session';
 
 import {
   SidebarComponent,
-  SidebarGroup,
   SidebarItem,
   SidebarLink,
 } from './sidebar';
@@ -47,9 +46,7 @@ export function DashboardContainer({
   hideHeader,
   removeBottomPadding,
 }: DashboardContainerProps) {
-  const [automationOpen, setAutomationOpen] = useState(true);
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
   const { project } = projectHooks.useCurrentProject();
   const { embedState } = useEmbedding();
   const currentProjectId = authenticationSession.getProjectId();
@@ -74,42 +71,28 @@ export function DashboardContainer({
   const filterAlerts = (item: SidebarItem) =>
     platform.alertsEnabled || item.label !== t('Alerts');
 
-  const automationGroup: SidebarGroup = {
-    type: 'group',
-    label: t('Automation'),
-    putEmptySpaceTop: true,
+  const releasesLink: SidebarLink = {
+    type: 'link',
+    to: authenticationSession.appendProjectRoutePrefix('/releases'),
+    icon: Server,
+    label: t('Releases'),
+    hasPermission:
+      project.releasesEnabled &&
+      checkAccess(Permission.READ_PROJECT_RELEASE),
+
+    showInEmbed: true,
+    isSubItem: false,
+  };
+
+  const flowsLink: SidebarLink = {
+    type: 'link',
+    to: authenticationSession.appendProjectRoutePrefix('/flows'),
     icon: Workflow,
-    isActive: (pathname: string) => {
-      const paths = [
-        '/flows',
-        '/releases',
-        '/tables',
-      ];
-      return paths.some((path) => pathname.includes(path));
-    },
+    label: t('Flows'),
     name: t('Products'),
-    defaultOpen: true,
-    open: automationOpen,
-    setOpen: setAutomationOpen,
-    items: [
-      {
-        type: 'link',
-        to: authenticationSession.appendProjectRoutePrefix('/flows'),
-        label: t('Flows'),
-        showInEmbed: true,
-        hasPermission: checkAccess(Permission.READ_FLOW),
-        isSubItem: true,
-      },
-      {
-        type: 'link',
-        to: authenticationSession.appendProjectRoutePrefix('/releases'),
-        label: t('Releases'),
-        hasPermission:
-          project.releasesEnabled &&
-          checkAccess(Permission.READ_PROJECT_RELEASE),
-        isSubItem: true,
-      },
-    ],
+    showInEmbed: true,
+    hasPermission: checkAccess(Permission.READ_FLOW),
+    isSubItem: false,
   };
 
   const mcpLink: SidebarLink = {
@@ -142,27 +125,10 @@ export function DashboardContainer({
     isSubItem: false,
   };
 
-  const items: SidebarItem[] = [automationGroup, mcpLink, tablesLink, todosLink]
+  const items: SidebarItem[] = [flowsLink, releasesLink, mcpLink, tablesLink, todosLink]
     .filter(embedFilter)
     .filter(permissionFilter)
     .filter(filterAlerts);
-
-  for (const item of items) {
-    if (item.type === 'group') {
-      const newItems = item.items
-        .filter(embedFilter)
-        .filter(permissionFilter)
-        .filter(filterAlerts);
-      item.items = newItems;
-    }
-  }
-
-  const filteredItems = items.filter((item) => {
-    if (item.type === 'group') {
-      return item.items.length > 0;
-    }
-    return true;
-  });
 
   return (
     <ProjectChangedRedirector currentProjectId={currentProjectId}>
@@ -176,7 +142,7 @@ export function DashboardContainer({
           removeGutters={removeGutters}
           isHomeDashboard={true}
           hideHeader={hideHeader}
-          items={filteredItems}
+          items={items}
           hideSideNav={embedState.hideSideNav}
           removeBottomPadding={removeBottomPadding}
         >
