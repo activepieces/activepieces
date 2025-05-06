@@ -20,7 +20,7 @@ export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
             logger: req.log,
         })
 
-        await mcpSessionManager(req.log).add(transport.sessionId, server, transport)
+        await mcpSessionManager(req.log).add(transport.sessionId, server, transport, mcp.id)
 
         await server.connect(transport)
 
@@ -42,6 +42,15 @@ export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
         if (!sessionId) {
             await reply.code(400).send({ message: 'Missing session ID' })
             return
+        }
+
+        const body = req.body as { method: string, params: Record<string, unknown>}
+        const mcpId = mcpSessionManager(req.log).getMcpId(sessionId)
+        if(body.method === 'tools/call') {
+            await mcpService(req.log).trackToolCall({
+                mcpId: mcpId as ApId,
+                toolName: body.params.name as string,
+            })
         }
 
         await mcpSessionManager(req.log).publish(sessionId, req.body, 'message')

@@ -1,4 +1,4 @@
-import { apId, isNil } from '@activepieces/shared'
+import { ApId, apId, isNil } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { FastifyBaseLogger } from 'fastify'
@@ -8,6 +8,7 @@ import { pubsub } from '../helper/pubsub'
 type SessionData = {
     server: McpServer
     transport: SSEServerTransport
+    mcpId: ApId
 }
 
 const sessions: Map<string, SessionData> = new Map()
@@ -53,11 +54,11 @@ export const mcpSessionManager = (logger: FastifyBaseLogger) => {
                 logger.error({ error }, 'Failed to subscribe to pubsub')
             })
         },
-        add: async (sessionId: string, server: McpServer, transport: SSEServerTransport): Promise<void> => {
+        add: async (sessionId: string, server: McpServer, transport: SSEServerTransport, mcpId: ApId): Promise<void> => {
             if (sessions.has(sessionId)) {
                 throw new Error('Session already exists')
             }
-            sessions.set(sessionId, { server, transport })
+            sessions.set(sessionId, { server, transport, mcpId })
             logger.info({ sessionId }, 'MCP session added')
 
             // Store session information in distributed store
@@ -71,6 +72,11 @@ export const mcpSessionManager = (logger: FastifyBaseLogger) => {
                 await pubsub().publish(`server:${serverId}`, JSON.stringify({ sessionId, body, operation }))
             }
 
+        },
+
+        getMcpId: (sessionId: string): ApId | undefined => {
+            const sessionData = get(sessionId)
+            return sessionData?.mcpId
         },
     }
 }
