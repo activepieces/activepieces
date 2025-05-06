@@ -127,6 +127,9 @@
       "@activepieces/piece-calendly": [
         "packages/pieces/community/calendly/src/index.ts"
       ],
+      "@activepieces/piece-call-rounded": [
+        "packages/pieces/community/call-rounded/src/index.ts"
+      ],
       "@activepieces/piece-captain-data": [
         "packages/pieces/community/captain-data/src/index.ts"
       ],
@@ -217,6 +220,9 @@
       ],
       "@activepieces/piece-dropbox": [
         "packages/pieces/community/dropbox/src/index.ts"
+      ],
+      "@activepieces/piece-dumpling-ai": [
+        "packages/pieces/community/dumpling-ai/src/index.ts"
       ],
       "@activepieces/piece-elevenlabs": [
         "packages/pieces/community/elevenlabs/src/index.ts"
@@ -588,9 +594,6 @@
       ],
       "@activepieces/piece-robolly": [
         "packages/pieces/community/robolly/src/index.ts"
-      ],
-      "@activepieces/piece-call-rounded": [
-        "packages/pieces/community/call-rounded/src/index.ts"
       ],
       "@activepieces/piece-rss": ["packages/pieces/community/rss/src/index.ts"],
       "@activepieces/piece-saastic": [
