@@ -1,0 +1,1 @@
+export const DUMPLING_API_URL = 'https://app.dumplingai.com/api/v1'; 

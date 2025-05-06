@@ -1,20 +1,12 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import {
-  AuthenticationType,
   HttpMethod,
   createCustomApiCallAction,
   httpClient,
 } from '@activepieces/pieces-common';
-
-// Actions
-import { searchWeb } from './lib/actions/search-web';
-import { searchNews } from './lib/actions/search-news';
-import { generateImage } from './lib/actions/generate-image';
-import { scrapeWebsite } from './lib/actions/scrape-website';
-import { crawlWebsite } from './lib/actions/crawl-website';
-import { extractDocumentData } from './lib/actions/extract-document-data';
-import { BASE_URL, apiHeaders } from './lib/common/common';
+import { searchWeb, searchNews, generateImage, scrapeWebsite, crawlWebsite, extractDocumentData } from './lib/actions';
+import { DUMPLING_API_URL } from './lib/common/constants';
 
 const markdownDescription = `
 Follow these steps to obtain your Dumpling AI API Key:
@@ -24,16 +16,23 @@ Follow these steps to obtain your Dumpling AI API Key:
 3. Copy your API key for development and testing purposes
 `;
 
-export const dumplingaiAuth = PieceAuth.SecretText({
+export const dumplingAuth = PieceAuth.SecretText({
   description: markdownDescription,
   displayName: 'API Key',
   required: true,
   validate: async ({ auth }) => {
     try {
+      // We'll use the search endpoint for validation as it should be a simple call
       await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `${BASE_URL}/me`,
-        headers: apiHeaders(auth),
+        method: HttpMethod.POST,
+        url: `${DUMPLING_API_URL}/search`,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${auth}`,
+        },
+        body: {
+          query: 'test query'
+        },
       });
       return {
         valid: true,
@@ -47,14 +46,14 @@ export const dumplingaiAuth = PieceAuth.SecretText({
   },
 });
 
-export const dumplingai = createPiece({
+export const dumplingAi = createPiece({
   displayName: 'Dumpling AI',
   description: 'AI agent platform for data extraction, content generation, and workflow automation',
-  minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/dumplingai.png', // Need to add logo to CDN
+  minimumSupportedRelease: '0.36.1',
+  logoUrl: 'https://cdn.activepieces.com/pieces/dumpling-ai.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['kishanprmr'],
-  auth: dumplingaiAuth,
+  auth: dumplingAuth,
   actions: [
     searchWeb,
     searchNews,
@@ -63,8 +62,8 @@ export const dumplingai = createPiece({
     crawlWebsite,
     extractDocumentData,
     createCustomApiCallAction({
-      auth: dumplingaiAuth,
-      baseUrl: () => BASE_URL,
+      auth: dumplingAuth,
+      baseUrl: () => DUMPLING_API_URL,
       authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${auth}`,

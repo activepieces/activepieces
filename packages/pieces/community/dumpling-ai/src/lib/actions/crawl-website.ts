@@ -1,0 +1,66 @@
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { dumplingAuth } from '../../index';
+import { DUMPLING_API_URL } from '../common/constants';
+
+export const crawlWebsite = createAction({
+  name: 'crawl_website',
+  auth: dumplingAuth,
+  displayName: 'Crawl Website',
+  description: 'Traverse a website to collect structured content across multiple linked pages',
+  props: {
+    url: Property.ShortText({
+      displayName: 'Start URL',
+      required: true,
+      description: 'The starting URL for the crawler',
+    }),
+    maxPages: Property.Number({
+      displayName: 'Maximum Pages',
+      required: false,
+      description: 'Maximum number of pages to crawl (1-50)',
+      defaultValue: 10,
+    }),
+    maxDepth: Property.Number({
+      displayName: 'Maximum Depth',
+      required: false,
+      description: 'Maximum depth of links to follow from the start URL (1-5)',
+      defaultValue: 2,
+    }),
+    stayWithinDomain: Property.Checkbox({
+      displayName: 'Stay Within Domain',
+      required: false,
+      description: 'Only crawl pages from the same domain as the start URL',
+      defaultValue: true,
+    }),
+    extractionPrompt: Property.LongText({
+      displayName: 'Extraction Prompt',
+      required: false,
+      description: 'Specific instructions about what data to extract from each page',
+    }),
+  },
+  async run({ auth, propsValue }) {
+    const { url, maxPages, maxDepth, stayWithinDomain, extractionPrompt } = propsValue;
+
+    const requestBody: Record<string, any> = {
+      url
+    };
+
+    // Add optional parameters if provided
+    if (maxPages) requestBody['maxPages'] = maxPages;
+    if (maxDepth) requestBody['maxDepth'] = maxDepth;
+    if (stayWithinDomain !== undefined) requestBody['stayWithinDomain'] = stayWithinDomain;
+    if (extractionPrompt) requestBody['extractionPrompt'] = extractionPrompt;
+
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: `${DUMPLING_API_URL}/crawl`,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${auth}`,
+      },
+      body: requestBody,
+    });
+
+    return response.body;
+  },
+}); 

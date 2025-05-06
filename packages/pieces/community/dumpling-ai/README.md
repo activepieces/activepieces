@@ -1,7 +1,19 @@
 # Dumpling AI
 
-## Description
-Dumpling AI is an AI agent platform that allows users to extract data, generate content, and automate workflows using multimodal capabilities (text, audio, image, web, etc.).
+This is a piece for [Dumpling AI](https://www.dumplingai.com/), an AI agent platform that enables data extraction, content generation, and workflow automation with multimodal capabilities.
+
+## Features
+
+- **Web Search**: Search the web and retrieve results
+- **News Search**: Find current news articles
+- **Image Generation**: Create images from text prompts
+- **Website Scraping**: Extract specific data from websites
+- **Website Crawling**: Traverse entire domains to collect structured content
+- **Document Data Extraction**: Analyze files for key information
+
+## Authentication
+
+This piece uses API Key authentication. You can obtain your API key from the Dumpling AI dashboard.
 
 ## Actions
 1. **Search Web**: Perform a Google search for a topic and extract top results
@@ -28,12 +40,6 @@ Dumpling AI is an AI agent platform that allows users to extract data, generate 
    - Support for PDF, DOCX, and other document formats
    - Custom extraction prompts
    - Multiple output format options
-
-## Authentication
-This piece requires an API key from Dumpling AI. To obtain your API key:
-1. Create a free account at [Dumpling AI](https://www.dumplingai.com/)
-2. Navigate to Dashboard > Settings section
-3. Copy your API key for use in Activepieces
 
 ## Requirements
 - Dumpling AI API Key 
