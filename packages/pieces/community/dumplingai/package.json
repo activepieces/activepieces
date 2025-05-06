@@ -1,0 +1,7 @@
+{
+  "name": "@activepieces/piece-dumplingai",
+  "version": "0.1.0",
+  "dependencies": {
+    "tslib": "^2.6.2"
+  }
+} 
