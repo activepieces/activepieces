@@ -34,12 +34,12 @@ function findFlowsToDelete({ newState, currentState }: DiffParams): ProjectOpera
 }
 function findFlowsToUpdate({ newState, currentState }: DiffParams): ProjectOperation[] {
     const newStateFiles = newState.flows.filter((state) => {
-        const flow = searchInFlowForFlowByIdOrExternalId(currentState.flows, state.id)
+        const flow = searchInFlowForFlowByIdOrExternalId(currentState.flows, state.externalId)
         return !isNil(flow)
     })
     return newStateFiles.map((flowFromNewState) => {
-        const os = searchInFlowForFlowByIdOrExternalId(currentState.flows, flowFromNewState.id)
-        assertNotNullOrUndefined(os, `Could not find target flow for source flow ${flowFromNewState.id}`)
+        const os = searchInFlowForFlowByIdOrExternalId(currentState.flows, flowFromNewState.externalId)
+        assertNotNullOrUndefined(os, `Could not find target flow for source flow ${flowFromNewState.externalId}`)
         if (isFlowChanged(os, flowFromNewState)) {
             return {
                 type: ProjectOperationType.UPDATE_FLOW,
@@ -83,8 +83,8 @@ function getFlowConnections(currentState: ProjectState, newState: ProjectState):
     return connectionOperations
 }
 
-function searchInFlowForFlowByIdOrExternalId(flows: PopulatedFlow[], id: string): PopulatedFlow | undefined {
-    return flows.find((flow) => flow.id === id || flow.externalId === id)
+function searchInFlowForFlowByIdOrExternalId(flows: PopulatedFlow[], externalId: string): PopulatedFlow | undefined {
+    return flows.find((flow) => flow.externalId === externalId)
 }
 
 function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow): boolean {

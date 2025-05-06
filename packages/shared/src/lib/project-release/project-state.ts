@@ -11,7 +11,7 @@ export enum ConnectionOperationType {
     CREATE_CONNECTION = 'CREATE_CONNECTION',
 }
 
-export const FlowState = Type.Omit(PopulatedFlow, ['externalId'])
+export const FlowState = PopulatedFlow
 export type FlowState = Static<typeof FlowState>
 
 export const ConnectionState = Type.Object({

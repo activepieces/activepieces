@@ -125,7 +125,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                     })
                 }
                 for (const flow of flows) {
-                    const flowName = flow.externalId || flow.id
+                    const flowName = flow.externalId
                     const connections = await appConnectionService(log).getManyConnectionStates({
                         projectId: gitRepo.projectId,
                     })
@@ -145,7 +145,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                     id: request.flowIds[0],
                     projectId: gitRepo.projectId,
                 })
-                const externalId = flow.externalId || flow.id
+                const externalId = flow.externalId
                 const deleted = await gitSyncHelper(log).deleteFlowFromGit({
                     flowId: externalId,
                     flowFolderPath,
