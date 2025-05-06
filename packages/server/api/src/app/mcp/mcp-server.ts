@@ -211,7 +211,7 @@ async function addFlowsToServer(
 
                 await mcpService(logger).trackToolCall({
                     mcpId,
-                    toolName: toolName,
+                    toolName,
                 })
 
                 if (response.status !== StatusCodes.OK) {

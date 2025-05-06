@@ -1,4 +1,4 @@
-import { ApId, apId, isNil } from '@activepieces/shared'
+import { apId, isNil } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { FastifyBaseLogger } from 'fastify'
@@ -53,7 +53,7 @@ export const mcpSessionManager = (logger: FastifyBaseLogger) => {
                 logger.error({ error }, 'Failed to subscribe to pubsub')
             })
         },
-        add: async (sessionId: string, server: McpServer, transport: SSEServerTransport, mcpId: ApId): Promise<void> => {
+        add: async (sessionId: string, server: McpServer, transport: SSEServerTransport): Promise<void> => {
             if (sessions.has(sessionId)) {
                 throw new Error('Session already exists')
             }
