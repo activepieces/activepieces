@@ -1,6 +1,7 @@
 import { medullarAuth } from '../../index';
 import { createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { medullarCommon, getUser } from '../common';
 
 export const listSpaces = createAction({
   auth: medullarAuth,
@@ -9,15 +10,7 @@ export const listSpaces = createAction({
   description: 'List all user Spaces',
   props: {},
   async run(context) {
-    const userResponse = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: 'https://api.medullar.com/auth/v1/users/me/',
-      headers: {
-        Authorization: `Bearer ${context.auth}`,
-      },
-    });
-
-    const userData = userResponse.body;
+    const userData = await getUser(context.auth)
 
     if (!userData) {
       throw new Error('User data not found.');
@@ -29,7 +22,7 @@ export const listSpaces = createAction({
 
     const spaceListResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `https://api.medullar.com/explorator/v1/spaces/?user=${userData.uuid}&limit=1000&offset=0`,
+      url: `${medullarCommon.exploratorUrl}/spaces/?user=${userData.uuid}&limit=1000&offset=0`,
       headers: {
         Authorization: `Bearer ${context.auth}`,
       },

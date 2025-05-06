@@ -1,6 +1,7 @@
 import { medullarAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { medullarCommon, getUser } from '../common';
 
 export const createSpace = createAction({
   auth: medullarAuth,
@@ -14,16 +15,7 @@ export const createSpace = createAction({
     }),
   },
   async run(context) {
-    const userResponse = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: 'https://api.medullar.com/auth/v1/users/me/',
-      headers: {
-        Authorization: `Bearer ${context.auth}`,
-      },
-    });
-
-    const userData = userResponse.body;
-
+    const userData = await getUser(context.auth)
     
     if (!userData) {
       throw new Error('User data not found.');
@@ -35,7 +27,7 @@ export const createSpace = createAction({
 
     const spaceResponse = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: 'https://api.medullar.com/explorator/v1/spaces/',
+      url: `${medullarCommon.exploratorUrl}/spaces/`,
       body: {
         name: context.propsValue['space_name'],
         company: {

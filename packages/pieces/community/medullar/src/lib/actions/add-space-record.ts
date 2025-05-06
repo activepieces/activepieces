@@ -1,6 +1,7 @@
 import { medullarAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { getUser, medullarCommon } from '../common';
 
 export const addSpaceRecord = createAction({
   auth: medullarAuth,
@@ -24,19 +25,11 @@ export const addSpaceRecord = createAction({
           };
         }
         
-        const userResponse = await httpClient.sendRequest({
-          method: HttpMethod.GET,
-          url: 'https://api.medullar.com/auth/v1/users/me/',
-          headers: {
-            Authorization: `Bearer ${authentication}`,
-          },
-        });
-
-        const userData = userResponse.body;
+        const userData = await getUser(authentication)
 
         const spaceListResponse = await httpClient.sendRequest({
           method: HttpMethod.GET,
-          url: `https://api.medullar.com/explorator/v1/spaces/?user=${userData.uuid}&limit=1000&offset=0`,
+          url: `${medullarCommon.exploratorUrl}/spaces/?user=${userData.uuid}&limit=1000&offset=0`,
           headers: {
             Authorization: `Bearer ${authentication}`,
           },
@@ -44,12 +37,14 @@ export const addSpaceRecord = createAction({
 
         return {
           disabled: false,
-          options: spaceListResponse.body.results.flat().map((list: { name: string; uuid: string }) => {
-            return {
-              label: list.name,
-              value: list.uuid,
-            };
-          }),
+          options: spaceListResponse.body.results
+            .flat()
+            .map((list: { name: string; uuid: string }) => {
+              return {
+                label: list.name,
+                value: list.uuid,
+              };
+            }),
         };
       },
     }),
@@ -90,15 +85,8 @@ export const addSpaceRecord = createAction({
     }),
   },
   async run(context) {
-    const userResponse = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: 'https://api.medullar.com/auth/v1/users/me/',
-      headers: {
-        Authorization: `Bearer ${context.auth}`,
-      },
-    });
 
-    const userData = userResponse.body;
+    const userData = await getUser(context.auth)
 
     if (!userData) {
       throw new Error('User data not found.');
@@ -108,14 +96,15 @@ export const addSpaceRecord = createAction({
       throw new Error('User does not belong to any company.');
     }
 
-    let url = ' '
-    let content = ' '
-    if (context.propsValue['url'] != null) url = context.propsValue['url']
-    if (context.propsValue['content'] != null) content = context.propsValue['content']
+    let url = ' ';
+    let content = ' ';
+    if (context.propsValue['url'] != null) url = context.propsValue['url'];
+    if (context.propsValue['content'] != null)
+      content = context.propsValue['content'];
 
     const spaceResponse = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: 'https://api.medullar.com/explorator/v1/records/',
+      url: `${medullarCommon.exploratorUrl}/records/`,
       body: {
         spaces: [
           {
@@ -132,7 +121,7 @@ export const addSpaceRecord = createAction({
         data: {
           content: content,
           url: url,
-        }
+        },
       },
       headers: {
         Authorization: `Bearer ${context.auth}`,
