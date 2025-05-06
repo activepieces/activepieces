@@ -21,10 +21,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import {
   AppConnectionWithoutSensitiveData,
+  FlowVersionState,
   PopulatedFlow,
 } from '@activepieces/shared';
 
@@ -37,6 +39,8 @@ type FlowsDialogProps = {
 const FlowsDialog = React.memo(({ connection }: FlowsDialogProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const projectId = authenticationSession.getProjectId()!;
+  const { project } = projectHooks.useCurrentProject();
+  const isInPlatformAdmin = window.location.pathname.includes('/platform/');
 
   const { data: flows = [], isLoading } = useQuery<Array<PopulatedFlow>>({
     queryKey: ['connection-flows', connection.id],
@@ -47,6 +51,7 @@ const FlowsDialog = React.memo(({ connection }: FlowsDialogProps) => {
           connectionExternalIds: [connection.externalId],
           cursor: undefined,
           limit: 1000,
+          versionState: FlowVersionState.LOCKED,
         })
         .then((res) => res.data),
     enabled: dialogOpen,
@@ -80,10 +85,22 @@ const FlowsDialog = React.memo(({ connection }: FlowsDialogProps) => {
           <DialogHeader className="space-y-3">
             <DialogTitle>{t('Flows Using This Connection')}</DialogTitle>
             <DialogDescription className="text-base text-muted-foreground leading-normal">
-              {t('List of flows that are using the connection:')}{' '}
-              <span className="font-medium text-foreground">
-                {connection.displayName}
-              </span>
+              <>
+                {t('List of flows that are using')}{' '}
+                <span className="font-bold text-foreground">
+                  {connection.displayName}
+                </span>{' '}
+                {t('in')}{' '}
+                {isInPlatformAdmin ? (
+                  <span className="font-bold text-foreground">
+                    {t('all projects')}
+                  </span>
+                ) : (
+                  <span className="font-bold text-foreground">
+                    {project.displayName}
+                  </span>
+                )}
+              </>
             </DialogDescription>
           </DialogHeader>
 
