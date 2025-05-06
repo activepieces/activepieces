@@ -52,6 +52,7 @@ export type GetAnalyticsParams = Static<typeof GetAnalyticsParams>
 
 export const AnalyticsResponse = Type.Array(
     Type.Object({
+        projectId: Type.String(),
         date: Type.String(),
         successfulFlowRuns: Type.Number(),
         failedFlowRuns: Type.Number(),

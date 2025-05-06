@@ -2,54 +2,64 @@ import { AnalyticsResponse, FlowRunStatus, FlowStatus, OverviewResponse } from '
 import dayjs from 'dayjs'
 import { flowRepo } from '../flows/flow/flow.repo'
 import { flowRunRepo } from '../flows/flow-run/flow-run-service'
-
+import { projectService } from '../project/project-service'
 
 type GetAnalyticsDataParams = {
     startDate: string
     endDate: string
-    projectId: string
+    platformId: string
+    userId: string
+}
+
+type GetOverviewParams = {
+    platformId: string
+    userId: string
 }
 
 export const analyticsService = {
     async getAnalyticsData(params: GetAnalyticsDataParams): Promise<AnalyticsResponse> {
-        const { startDate, endDate, projectId } = params
-
+        const { startDate, endDate, platformId, userId } = params
+        const projectIds = await getProjectIds(platformId, userId)
+        // Removed unused variable projectIds
         const query = flowRunRepo()
             .createQueryBuilder('flowRun')
-            .select('DATE(flowRun.finishTime)', 'date')
-            .addSelect('COUNT(*)', 'totalFlowRuns')
-            .addSelect(
-                'SUM(CASE WHEN flowRun.status = :successStatus THEN 1 ELSE 0 END)',
-                'successfulFlowRuns',
-            )
-            .addSelect(
-                'SUM(CASE WHEN flowRun.status = :failureStatus THEN 1 ELSE 0 END)',
-                'failedFlowRuns',
-            )
-            .addSelect(
-                'SUM(CASE WHEN flowRun.status = :successStatus THEN flowRun.duration ELSE 0 END)',
-                'successfulFlowRunsDuration',
-            )
-            .addSelect(
-                'SUM(CASE WHEN flowRun.status = :failureStatus THEN flowRun.duration ELSE 0 END)',
-                'failedFlowRunsDuration',
-            )
+            .where('flowRun.projectId IN (:...projectIds)')
             .where('DATE(flowRun.finishTime) BETWEEN :start AND :end', {
                 start: startDate,
                 end: endDate,
             })
-            .andWhere('flowRun.projectId = :projectId', { projectId })
+            .select('flowRun.projectId', 'projectId')
+            .addSelect('DATE(flowRun.finishTime)', 'date')
+            .addSelect('COUNT(*)', 'totalFlowRuns')
+            .addSelect(
+                'SUM(CASE WHEN flowRun.status = :successStatus THEN 1 END)',
+                'successfulFlowRuns',
+            )
+            .addSelect(
+                'SUM(CASE WHEN flowRun.status = :failureStatus THEN 1 END)',
+                'failedFlowRuns',
+            )
+            .addSelect(
+                'SUM(CASE WHEN flowRun.status = :successStatus THEN flowRun.duration END)',
+                'successfulFlowRunsDuration',
+            )
+            .addSelect(
+                'SUM(CASE WHEN flowRun.status = :failureStatus THEN flowRun.duration END)',
+                'failedFlowRunsDuration',
+            )
             .setParameters({
                 successStatus: FlowRunStatus.SUCCEEDED,
                 failureStatus: FlowRunStatus.FAILED,
+                projectIds,
             })
-            .groupBy('DATE(flowRun.finishTime)')
+            .groupBy('"projectId", "date"')
             .orderBy('date', 'ASC')
 
         const rawResults = await query.getRawMany()
 
         const results: AnalyticsResponse = rawResults.map(result => ({
-            date: result.date.toISOString(),
+            projectId: result.projectId,
+            date: new Date(result.date).toISOString(),
             successfulFlowRuns: Number(result.successfulFlowRuns),
             failedFlowRuns: Number(result.failedFlowRuns),
             successfulFlowRunsDuration: Number(result.successfulFlowRunsDuration),
@@ -58,27 +68,29 @@ export const analyticsService = {
 
         return results
     },
-    async getOverview(projectId: string): Promise<OverviewResponse> {
+    async getOverview(params: GetOverviewParams): Promise<OverviewResponse> {
         const { start, end } = {
             start: dayjs().startOf('month').toISOString(),
             end: dayjs().endOf('month').toISOString(),
         }
+        const { platformId, userId } = params
+        const projectIds = await getProjectIds(platformId, userId)
 
         const result = await flowRepo()
-            .createQueryBuilder('f')
-            .select([
-                'COUNT(f.id) AS "workflowCount"',
-                `SUM(CASE 
-                        WHEN f.status = :flowStatus AND f."projectId" = :projectId 
-                        THEN 1 ELSE 0 
-                    END) AS "activeWorkflowCount"`,
-                `(SELECT COUNT(*) FROM flow_run fr 
-                        WHERE fr."projectId" = :projectId 
-                        AND fr."finishTime" BETWEEN :start AND :end
-                    ) AS "flowRunCount"`,
-            ])
-            .where('f.projectId = :projectId', { projectId })
-            .setParameters({ flowStatus: FlowStatus.ENABLED, start, end })
+            .createQueryBuilder('flow')
+            .select('COUNT(flow.id)', 'workflowCount')
+            .addSelect(
+                'SUM(CASE WHEN flow.status = :enabledStatus THEN 1 END)',
+                'activeWorkflowCount',
+            )
+            .addSelect(
+                `(SELECT COUNT(*) FROM flow_run "flowRun"
+                WHERE "flowRun"."projectId" IN (:...projectIds)
+                AND DATE("flowRun"."finishTime") BETWEEN :start AND :end)`,
+                'flowRunCount',
+            )
+            .where('flow.projectId IN (:...projectIds)', { projectIds })
+            .setParameters({ enabledStatus: FlowStatus.ENABLED, start, end })
             .getRawOne()
 
         return {
@@ -87,4 +99,14 @@ export const analyticsService = {
             flowRunCount: Number(result.flowRunCount),
         }
     },
+}
+
+async function getProjectIds(platformId: string, userId: string ): Promise<string[]> {
+    const result = await projectService.getAllForUser({
+        platformId,
+        userId,
+    })
+    const projectIds = result
+        .map(project => project.id)
+    return projectIds
 }

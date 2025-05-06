@@ -39,9 +39,7 @@ const OverviewRequest = {
 export const analyticsController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/flow-performance', AnalyticsRequest, async (request, reply) => {
         try {
-            const projectId = request.principal.projectId
             const { startDate, endDate } = request.query
-
             // Convert timestamps to Date objects for comparison
             const start = new Date(startDate)
             const end = new Date(endDate)
@@ -71,7 +69,8 @@ export const analyticsController: FastifyPluginAsyncTypebox = async (app) => {
             const analyticsData = await analyticsService.getAnalyticsData({
                 startDate,
                 endDate,
-                projectId,
+                platformId: request.principal.platform.id,
+                userId: request.principal.id,
             })
 
             return await reply.send(analyticsData)
@@ -79,21 +78,22 @@ export const analyticsController: FastifyPluginAsyncTypebox = async (app) => {
         catch (error) {
             app.log.error('Error fetching analytics data:', error)
             return reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
-                message: 'An error occurred while fetching analytics data',
+                message: 'An error occurred while fetching analytics data\n' + error,
             })
         }
     })
-
     app.get('/overview', OverviewRequest, async (request, reply) => {
         try {
-            const projectId: string = request.principal.projectId
-            const overviewData = await analyticsService.getOverview(projectId)
-            return await reply.send(overviewData)
+            const response = await analyticsService.getOverview({
+                platformId: request.principal.platform.id,
+                userId: request.principal.id,
+            })
+            return await reply.send(response)
         }
         catch (error) {
             app.log.error('Error fetching workflow overview:', error)
             return reply.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
-                message: 'An error occurred while fetching analytics data',
+                message: 'An error occurred while fetching analytics data\n' + error,
             })
         }
     })
