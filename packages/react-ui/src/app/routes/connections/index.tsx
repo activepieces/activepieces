@@ -481,7 +481,6 @@ function AppConnectionsPage() {
               >
                 <ReplaceConnectionsDialog
                   projectId={projectId}
-                  connections={data?.data || []}
                   onConnectionMerged={() => {
                     setRefresh(refresh + 1);
                     refetch();
