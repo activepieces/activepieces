@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { DataTable } from '@/components/ui/data-table';
 import { authenticationSession } from '@/lib/authentication-session';
-import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
+import { FlowStatus, PopulatedFlow, SeekPage } from '@activepieces/shared';
 import { formatUtils } from '@/lib/utils';
 import { flowsTableColumns } from './columns';
 import { useEmbedding } from '@/components/embed-provider';
@@ -40,7 +40,7 @@ const filters = [
 
 
 type FlowsTableProps = {
-  data: any;
+  data: SeekPage<PopulatedFlow> | undefined;
   isLoading: boolean;
   refetch: () => void;
 }

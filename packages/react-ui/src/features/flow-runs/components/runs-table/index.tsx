@@ -50,14 +50,11 @@ type SelectedRow = {
 
 export const RunsTable = () => {
   const [searchParams] = useSearchParams();
-
   const [selectedRows, setSelectedRows] = useState<Array<SelectedRow>>([]);
   const [selectedAll, setSelectedAll] = useState(false);
   const [excludedRows, setExcludedRows] = useState<Set<string>>(new Set());
 
   const projectId = authenticationSession.getProjectId()!;
-
-
 
   const { data, isLoading } = useQuery({
     queryKey: ['flow-run-table', searchParams.toString(), projectId],
@@ -84,8 +81,6 @@ export const RunsTable = () => {
       });
     },
   });
-
-
 
   const columns = runsTableColumns({ data, selectedRows, setSelectedRows, selectedAll, setSelectedAll, excludedRows, setExcludedRows })
 
