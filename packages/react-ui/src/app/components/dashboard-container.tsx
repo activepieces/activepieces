@@ -82,8 +82,6 @@ export function DashboardContainer({
     isActive: (pathname: string) => {
       const paths = [
         '/flows',
-        '/issues',
-        '/runs',
         '/releases',
         '/tables',
       ];
@@ -100,15 +98,6 @@ export function DashboardContainer({
         label: t('Flows'),
         showInEmbed: true,
         hasPermission: checkAccess(Permission.READ_FLOW),
-        isSubItem: true,
-      },
-      {
-        type: 'link',
-        to: authenticationSession.appendProjectRoutePrefix('/runs'),
-        label: t('Runs'),
-        showInEmbed: true,
-        notification: showIssuesNotification,
-        hasPermission: checkAccess(Permission.READ_RUN),
         isSubItem: true,
       },
       {
