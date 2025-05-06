@@ -37,6 +37,7 @@ export const tableService = {
         await this.validateCount({ projectId })
         const table = await tableRepo().save({
             id: apId(),
+            externalId: request.externalId ?? apId(),
             name: request.name,
             projectId,
         })

@@ -3,6 +3,7 @@ import { TableWebhookEventType } from '../table-webhook'
 
 export const CreateTableRequest = Type.Object({
     name: Type.String(),
+    externalId: Type.Optional(Type.String()),
 })
 
 export type CreateTableRequest = Static<typeof CreateTableRequest>

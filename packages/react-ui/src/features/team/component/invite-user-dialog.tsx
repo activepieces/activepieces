@@ -9,6 +9,7 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -305,6 +306,11 @@ export const InviteUserDialog = ({ children }: { children?: ReactNode }) => {
                   </FormMessage>
                 )}
                 <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant={'outline'}>
+                      {t('Cancel')}
+                    </Button>
+                  </DialogClose>
                   <Button type="submit" loading={isPending}>
                     {t('Invite')}
                   </Button>

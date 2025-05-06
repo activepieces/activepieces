@@ -284,13 +284,17 @@ const StepSettingsContainer = () => {
                 ) && (
                   <ActionErrorHandlingForm
                     hideContinueOnFailure={
-                      modifiedStep.settings.errorHandlingOptions
-                        ?.continueOnFailure?.hide
+                      stepMetadata?.type === ActionType.PIECE
+                        ? stepMetadata?.errorHandlingOptions?.continueOnFailure
+                            ?.hide
+                        : false
                     }
                     disabled={readonly}
                     hideRetryOnFailure={
-                      modifiedStep.settings.errorHandlingOptions?.retryOnFailure
-                        ?.hide
+                      stepMetadata?.type === ActionType.PIECE
+                        ? stepMetadata?.errorHandlingOptions?.retryOnFailure
+                            ?.hide
+                        : false
                     }
                   ></ActionErrorHandlingForm>
                 )}
