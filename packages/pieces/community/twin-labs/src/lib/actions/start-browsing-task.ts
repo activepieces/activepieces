@@ -2,6 +2,9 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { twinLabsAuth } from '../..';
 
+// API BASE URL
+const API_BASE_URL = 'https://paris.prod.api.twin.so';
+
 export const startBrowsingTask = createAction({
   name: 'startBrowsingTask',
   auth: twinLabsAuth,
@@ -26,17 +29,26 @@ export const startBrowsingTask = createAction({
   },
 
   async run(context) {
-    interface ApiResponse {
-      output: any;
-      status: string;
-      taskId: string;
-      [key: string]: any;
+    // Interface for the initial /browse
+    interface BrowseStartResponse  {
+      url: string;
+      universeId: string;
+      worldId: number;
+      unitId: number;
+    }
+
+    // Interface for the GET polling
+    interface BrowseStatusResponse {
+      completed : boolean;
+      pending?: boolean;
+      output?: string;
+      
     }
 
     // Start the browsing task
-    const res = await httpClient.sendRequest<ApiResponse>({
+    const startRes  = await httpClient.sendRequest<BrowseStartResponse>({
       method: HttpMethod.POST,
-      url: 'https://api.twin.so/browse',
+      url: `${API_BASE_URL}/browse`,
       headers: {
         'x-api-key': context.auth,
         'Content-Type': 'application/json',
@@ -49,30 +61,29 @@ export const startBrowsingTask = createAction({
       },
     });
 
-    const taskId = res.body.taskId;
-    let taskStatus = res.body.status;
+    const pollingUrl = startRes.body.url;
+    let statusResponse: BrowseStatusResponse  = { 
+      completed: false,
+      pending: true,
+     };
+    const timeoutAt = Date.now() + 15 * 60 * 1000; // 15 minutes
 
-    const maxTime = Date.now() + 15 * 60 * 1000; // 15 minutes timeout
-
-
-    // Initialize statusResponse to store the last response
-    let statusResponse: ApiResponse = res.body;
 
     // Poll for task completion every 5 seconds until timeout
-    while (taskStatus !== 'COMPLETED' && Date.now() < maxTime) {
-      await new Promise((resolve) => setTimeout(resolve, 5000)); // wait 5 seconds
+    while (!statusResponse.completed && Date.now() < timeoutAt) {
+      await new Promise((resolve) => setTimeout(resolve, 5_000)); // wait 5 seconds
 
-      const response = await httpClient.sendRequest<ApiResponse>({
+      const pollRes  = await httpClient.sendRequest<BrowseStatusResponse>({
         method: HttpMethod.GET,
-        url: `https://api.twin.so/task/${taskId}`,
+        url: pollingUrl,
         headers: {
           'x-api-key': context.auth,
           'Content-Type': 'application/json',
         },
       });
 
-      statusResponse = response.body; // update statusResponse with the latest response
-      taskStatus = statusResponse.status;
+      statusResponse = pollRes.body; // update statusResponse with the latest response
+      
     }
 
 
