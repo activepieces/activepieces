@@ -182,6 +182,9 @@
         "packages/pieces/community/crypto/src/index.ts"
       ],
       "@activepieces/piece-csv": ["packages/pieces/community/csv/src/index.ts"],
+      "@activepieces/piece-dappier": [
+        "packages/pieces/community/dappier/src/index.ts"
+      ],
       "@activepieces/piece-data-mapper": [
         "packages/pieces/community/data-mapper/src/index.ts"
       ],
