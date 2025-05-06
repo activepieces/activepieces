@@ -1,6 +1,7 @@
 import { DialogTrigger } from '@radix-ui/react-dialog';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { GlobeIcon } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { FieldErrors, useForm, useWatch } from 'react-hook-form';
 
@@ -25,17 +26,13 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
-import {
-  AppConnectionWithoutSensitiveData,
-  PopulatedFlow,
-} from '@activepieces/shared';
+import { AppConnectionScope, PopulatedFlow } from '@activepieces/shared';
 
 import { ConnectionFlowCard } from './connection-flow-card';
 
 type ReplaceConnectionsDialogProps = {
   onConnectionMerged: () => void;
   children: React.ReactNode;
-  connections: AppConnectionWithoutSensitiveData[];
   projectId: string;
 };
 
@@ -53,7 +50,6 @@ enum STEP {
 const ReplaceConnectionsDialog = ({
   onConnectionMerged,
   children,
-  connections,
   projectId,
 }: ReplaceConnectionsDialogProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -61,6 +57,18 @@ const ReplaceConnectionsDialog = ({
   const [affectedFlows, setAffectedFlows] = useState<Array<PopulatedFlow>>([]);
   const { toast } = useToast();
   const { pieces, isLoading: piecesLoading } = piecesHooks.usePieces({});
+
+  const { data: connections, isLoading: connectionsLoading } = useQuery({
+    queryKey: ['appConnections', projectId, dialogOpen],
+    queryFn: () => {
+      return appConnectionsApi.list({
+        projectId,
+        cursor: undefined,
+        limit: 1000,
+      });
+    },
+    enabled: dialogOpen,
+  });
 
   const { mutate: replaceConnections, isPending: isReplacing } = useMutation({
     mutationFn: async (values: FormData) => {
@@ -152,7 +160,7 @@ const ReplaceConnectionsDialog = ({
   const selectedPiece = form.watch('pieceName');
 
   const connectionPieceNames = new Set(
-    connections.map((conn) => conn.pieceName),
+    connections?.data.map((conn) => conn.pieceName),
   );
 
   const piecesOptions =
@@ -168,9 +176,8 @@ const ReplaceConnectionsDialog = ({
         value: piece.name,
       })) ?? [];
 
-  const filteredConnections = connections.filter(
-    (conn) => conn.pieceName === selectedPiece,
-  );
+  const filteredConnections =
+    connections?.data.filter((conn) => conn.pieceName === selectedPiece) ?? [];
 
   const sourceConnectionId = useWatch({
     control: form.control,
@@ -207,11 +214,9 @@ const ReplaceConnectionsDialog = ({
 
   const handleDialogOpenChange = (open: boolean) => {
     setDialogOpen(open);
-    if (!open) {
-      form.reset();
-      setStep(STEP.SELECT);
-      setAffectedFlows([]);
-    }
+    form.reset();
+    setStep(STEP.SELECT);
+    setAffectedFlows([]);
   };
 
   return (
@@ -302,6 +307,7 @@ const ReplaceConnectionsDialog = ({
                         <Label>{t('Connection to Replace')}</Label>
                         <SearchableSelect
                           value={field.value?.id}
+                          loading={connectionsLoading}
                           onChange={(value) => {
                             const selectedConnection = filteredConnections.find(
                               (c) => c.id === value,
@@ -315,10 +321,15 @@ const ReplaceConnectionsDialog = ({
                               externalId: '',
                             });
                           }}
-                          options={filteredConnections.map((conn) => ({
-                            label: conn.displayName,
-                            value: conn.id,
-                          }))}
+                          options={filteredConnections
+                            .filter(
+                              (conn) =>
+                                conn.scope === AppConnectionScope.PROJECT,
+                            )
+                            .map((conn) => ({
+                              label: conn.displayName,
+                              value: conn.id,
+                            }))}
                           placeholder={t('Choose connection to replace')}
                           valuesRendering={(value) => {
                             const conn = filteredConnections.find(
@@ -351,6 +362,7 @@ const ReplaceConnectionsDialog = ({
                           <Label>{t('Replaced With')}</Label>
                           <SearchableSelect
                             value={field.value?.id}
+                            loading={connectionsLoading}
                             onChange={(value) => {
                               const selectedConnection =
                                 filteredConnections.find((c) => c.id === value);
@@ -374,6 +386,10 @@ const ReplaceConnectionsDialog = ({
                                     border={false}
                                     circle={false}
                                   />
+                                  {conn?.scope ===
+                                    AppConnectionScope.PLATFORM && (
+                                    <GlobeIcon className="w-4 h-4" />
+                                  )}
                                   <span>{conn!.displayName}</span>
                                 </div>
                               );
