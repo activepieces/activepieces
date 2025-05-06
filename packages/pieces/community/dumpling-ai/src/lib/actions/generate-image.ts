@@ -91,7 +91,7 @@ export const generateImage = createAction({
       }
     }),
   },
-  async run({ auth, propsValue }) {
+  async run(context) {
     const { 
       prompt, 
       model, 
@@ -101,7 +101,7 @@ export const generateImage = createAction({
       num_images,
       quality, 
       style 
-    } = propsValue;
+    } = context.propsValue;
 
     const requestBody: Record<string, any> = {
       prompt
@@ -128,7 +128,7 @@ export const generateImage = createAction({
       url: `${DUMPLING_API_URL}/generate-image`,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${auth}`,
+        'Authorization': `Bearer ${context.auth}`,
       },
       body: requestBody,
     });

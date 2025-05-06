@@ -22,7 +22,7 @@ export const dumplingAuth = PieceAuth.SecretText({
   description: markdownDescription,
   displayName: 'API Key',
   required: true,
-  validate: async ({ auth }) => {
+  validate: async (context) => {
     try {
       // We'll use the search endpoint for validation as it should be a simple call
       await httpClient.sendRequest({
@@ -30,7 +30,7 @@ export const dumplingAuth = PieceAuth.SecretText({
         url: `${DUMPLING_API_URL}/search`,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${auth}`,
+          'Authorization': `Bearer ${context.auth}`,
         },
         body: {
           query: 'test query'

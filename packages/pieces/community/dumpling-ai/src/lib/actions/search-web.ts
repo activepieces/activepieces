@@ -85,7 +85,7 @@ export const searchWeb = createAction({
       defaultExpanded: false,
     }),
   },
-  async run({ auth, propsValue }) {
+  async run(context) {
     const {
       query,
       country,
@@ -97,7 +97,7 @@ export const searchWeb = createAction({
       numResultsToScrape,
       scrapeFormat,
       cleanedOutput
-    } = propsValue;
+    } = context.propsValue;
 
     const requestBody: Record<string, any> = {
       query
@@ -124,7 +124,7 @@ export const searchWeb = createAction({
       url: `${DUMPLING_API_URL}/search`,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${auth}`,
+        'Authorization': `Bearer ${context.auth}`,
       },
       body: requestBody,
     });

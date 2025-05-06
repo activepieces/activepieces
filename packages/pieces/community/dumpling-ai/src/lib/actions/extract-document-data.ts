@@ -54,7 +54,7 @@ export const extractDocumentData = createAction({
       description: 'Whether to return the result in structured JSON format',
     }),
   },
-  async run({ auth, propsValue }) {
+  async run(context) {
     const { 
       inputMethod, 
       file, 
@@ -62,7 +62,7 @@ export const extractDocumentData = createAction({
       base64Files, 
       extractionPrompt, 
       jsonMode 
-    } = propsValue;
+    } = context.propsValue;
 
     const requestBody: Record<string, any> = {
       prompt: extractionPrompt
@@ -89,7 +89,7 @@ export const extractDocumentData = createAction({
       url: `${DUMPLING_API_URL}/extract-document`,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${auth}`,
+        'Authorization': `Bearer ${context.auth}`,
       },
       body: requestBody,
     });

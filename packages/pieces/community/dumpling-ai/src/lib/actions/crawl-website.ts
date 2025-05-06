@@ -51,7 +51,7 @@ export const crawlWebsite = createAction({
       description: 'Specific instructions about what data to extract from each page',
     }),
   },
-  async run({ auth, propsValue }) {
+  async run(context) {
     const { 
       url, 
       limit, 
@@ -59,7 +59,7 @@ export const crawlWebsite = createAction({
       stayWithinDomain, 
       format,
       extractionPrompt 
-    } = propsValue;
+    } = context.propsValue;
 
     const requestBody: Record<string, any> = {
       url
@@ -77,7 +77,7 @@ export const crawlWebsite = createAction({
       url: `${DUMPLING_API_URL}/crawl`,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${auth}`,
+        'Authorization': `Bearer ${context.auth}`,
       },
       body: requestBody,
     });

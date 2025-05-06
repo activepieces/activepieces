@@ -52,7 +52,7 @@ export const scrapeWebsite = createAction({
       description: 'Whether to render JavaScript before scraping (useful for dynamic content)',
     }),
   },
-  async run({ auth, propsValue }) {
+  async run(context) {
     const { 
       url, 
       selector, 
@@ -60,7 +60,7 @@ export const scrapeWebsite = createAction({
       format,
       cleaned,
       renderJs
-    } = propsValue;
+    } = context.propsValue;
 
     const requestBody: Record<string, any> = {
       url
@@ -78,7 +78,7 @@ export const scrapeWebsite = createAction({
       url: `${DUMPLING_API_URL}/scrape`,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${auth}`,
+        'Authorization': `Bearer ${context.auth}`,
       },
       body: requestBody,
     });
