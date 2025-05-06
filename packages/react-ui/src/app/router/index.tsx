@@ -18,7 +18,6 @@ import AIProvidersPage from '@/app/routes/platform/setup/ai';
 import { BrandingPage } from '@/app/routes/platform/setup/branding';
 import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
 import { RedirectPage } from '@/app/routes/redirect';
-import { FlowRunsPage } from '@/app/routes/runs';
 import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
@@ -172,18 +171,6 @@ const routes = [
         <PageTitle title="Releases">
           <ViewRelease />
         </PageTitle>
-      </DashboardContainer>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: '/runs',
-    element: (
-      <DashboardContainer>
-        <RoutePermissionGuard permission={Permission.READ_RUN}>
-          <PageTitle title="Runs">
-            <FlowRunsPage />
-          </PageTitle>
-        </RoutePermissionGuard>
       </DashboardContainer>
     ),
   }),
@@ -666,8 +653,8 @@ const ApRouter = () => {
   const router = useMemo(() => {
     return embedState.isEmbedded
       ? createMemoryRouter(routes, {
-          initialEntries: [window.location.pathname],
-        })
+        initialEntries: [window.location.pathname],
+      })
       : createBrowserRouter(routes);
   }, [embedState.isEmbedded]);
 
