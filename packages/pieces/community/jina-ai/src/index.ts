@@ -1,39 +1,37 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import {
-  extractWebpageContent,
-  webSearchSummarization,
-  deepSearchQuery,
-  classifyContent,
-  trainCustomClassifier
+  extractWebpageContentAction,
+  webSearchSummarizationAction,
+  deepSearchQueryAction,
+  classifyContentAction,
+  trainCustomClassifierAction
 } from './lib/actions';
 
 const markdownDescription = `
-To use Jina AI, you need to get an API key:
-1. Sign up for an account at https://jina.ai
-2. Navigate to your account settings
-3. Generate a new API key
-4. Copy the API key and paste it below
+You can get your API key from [Jina AI](https://jina.ai).
 `;
+
+export const jinaAiAuth = PieceAuth.SecretText({
+  displayName: 'API Key',
+  description: markdownDescription,
+  required: true,
+})
 
 export const jinaAi = createPiece({
   displayName: 'Jina AI',
   description: 'AI-powered web content extraction, search, and classification',
-  auth: PieceAuth.SecretText({
-    displayName: 'API Key',
-    description: markdownDescription,
-    required: true,
-  }),
+  auth: jinaAiAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/jina-ai.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/jinaai.jpeg',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['denieler'],
   actions: [
-    extractWebpageContent,
-    webSearchSummarization,
-    deepSearchQuery,
-    classifyContent,
-    trainCustomClassifier,
+    extractWebpageContentAction,
+    webSearchSummarizationAction,
+    deepSearchQueryAction,
+    classifyContentAction,
+    trainCustomClassifierAction,
   ],
   triggers: [],
 });

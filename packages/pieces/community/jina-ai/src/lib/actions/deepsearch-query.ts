@@ -1,21 +1,26 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { JinaAICommon } from '../common';
+import { jinaAiAuth } from '../../index';
 
-export const deepSearchQuery = createAction({
+export const deepSearchQueryAction = createAction({
+  auth:jinaAiAuth,
   name: 'deepsearch_query',
   displayName: 'DeepSearch Query',
   description:
-    'Answer complex questions through iterative search, reading, and reasoning with the DeepSearch API',
+    'Answer complex questions through iterative search, reading, and reasoning with the DeepSearch API.',
   props: {
     model: Property.StaticDropdown({
       displayName: 'Model',
-      description: 'ID of the model to use',
       required: true,
       defaultValue: 'jina-deepsearch-v1',
       options: {
         options: [{ label: 'jina-deepsearch-v1', value: 'jina-deepsearch-v1' }],
       },
+    }),
+    prompt:Property.LongText({
+      displayName:'Prompt',
+      required:true
     }),
     reasoning_effort: Property.StaticDropdown({
       displayName: 'Reasoning Effort',
@@ -83,12 +88,6 @@ export const deepSearchQuery = createAction({
         'A list of domains to be exclusively included in content retrieval. All other domains will be ignored. Useful for domain-specific searches.',
       required: false,
     }),
-    messages: Property.LongText({
-      displayName: 'Messages',
-      description:
-        'A list of messages between the user and the assistant comprising the conversation so far. You can add images (webp, png, jpeg) or files (txt, pdf) to the message.',
-      required: false,
-    }),
   },
   async run(context) {
     const {
@@ -102,7 +101,7 @@ export const deepSearchQuery = createAction({
       boost_hostnames,
       bad_hostnames,
       only_hostnames,
-      messages,
+      prompt
     } = context.propsValue;
     const { auth: apiKey } = context;
 
@@ -113,9 +112,19 @@ export const deepSearchQuery = createAction({
 
     // Default message if none provided
     requestBody['messages'] = [
-      { role: 'user', content: 'What can you tell me about this?' },
-    ];
-
+      {
+          "role": "user",
+          "content": "Hi!"
+      },
+      {
+          "role": "assistant",
+          "content": "Hi, how can I help you?"
+      },
+      {
+          "role": "user",
+          "content": prompt
+      }
+  ]
     if (reasoning_effort) {
       requestBody['reasoning_effort'] = reasoning_effort;
     }
@@ -170,19 +179,6 @@ export const deepSearchQuery = createAction({
         .filter((domain) => domain);
     }
 
-    // Add messages if specified (this would override the default messages array)
-    if (messages) {
-      try {
-        const parsedMessages = JSON.parse(messages);
-        if (Array.isArray(parsedMessages)) {
-          requestBody['messages'] = parsedMessages;
-        }
-      } catch (error) {
-        // If not valid JSON, assume it's a single message from the user
-        requestBody['messages'] = [{ role: 'user', content: messages }];
-      }
-    }
-
     const response = await JinaAICommon.makeRequest({
       url: JinaAICommon.deepsearchUrl,
       method: HttpMethod.POST,
@@ -190,6 +186,20 @@ export const deepSearchQuery = createAction({
       body: requestBody,
     });
 
-    return response;
+    const result = (response as DeepSearchResponse).choices[0].message.content;
+
+    return result;
   },
 });
+
+
+type DeepSearchResponse = {
+  id:number,
+  choices:Array<{
+    index:number,
+    message:{
+      role:string,
+      content:string
+    }
+  }>
+}

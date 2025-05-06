@@ -1,16 +1,18 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { JinaAICommon } from '../common';
+import { jinaAiAuth } from '../../index';
 
-export const classifyContent = createAction({
+export const classifyContentAction = createAction({
+  auth:jinaAiAuth,
   name: 'classify_content',
   displayName: 'Classify Text or Image',
   description:
-    'Assign categories to text or images using the Classifier API (zero-shot/few-shot)',
+    'Assign categories to text or images using the Classifier API (zero-shot/few-shot).',
   props: {
     model: Property.StaticDropdown({
       displayName: 'Model',
-      description: 'The model to use for classification',
+      description: 'The model to use for classification.',
       required: true,
       defaultValue: 'jina-clip-v2',
       options: {
@@ -33,46 +35,40 @@ export const classifyContent = createAction({
         ],
       },
     }),
-    inputs: Property.Array({
-      displayName: 'Inputs',
+    input: Property.LongText({
+      displayName: 'Text',
       description:
-        'Array of text strings or image URLs to classify. URLs will be treated as images, other strings as text.',
+        'Text or image URL to classify. URLs will be treated as images, other strings as text.',
       required: true,
     }),
     labels: Property.Array({
       displayName: 'Labels',
-      description: 'The labels to classify the content into',
+      description: 'The labels to classify the content into.',
       required: true,
     }),
   },
   async run(context) {
-    const { model, inputs, labels } = context.propsValue;
+    const { model, input, labels } = context.propsValue;
     const { auth: apiKey } = context;
 
-    if (!inputs || !Array.isArray(inputs) || inputs.length === 0) {
-      throw new Error('At least one input is required');
+    if (!input || input==='') {
+      throw new Error('Text input is required.');
     }
 
     if (!labels || !Array.isArray(labels) || labels.length === 0) {
-      throw new Error('At least one label must be provided');
+      throw new Error('At least one label must be provided.');
     }
 
-    const inputArray = inputs
-      .map((input) => {
-        if (!input || typeof input !== 'string') return null;
+    const isUrl = !!input.trim().match(/^(https?|ftp|file|data):\/\/.+/i);
 
-        const isUrl = !!input.trim().match(/^(https?|ftp|file|data):\/\/.+/i);
 
-        if (isUrl) {
-          return { image: input };
-        } else {
-          return { text: input };
-        }
-      })
-      .filter((item) => item !== null); // Remove any null items
+    const inputArray = [
+      isUrl?{image: input} :{ text: input }
+    ]
+
 
     if (inputArray.length === 0) {
-      throw new Error('No valid inputs provided');
+      throw new Error('No valid inputs provided.');
     }
 
     const requestBody = {
@@ -88,6 +84,17 @@ export const classifyContent = createAction({
       body: requestBody,
     });
 
-    return response;
+    const result = (response as ClassifyTextResponse).data[0].prediction
+
+    return {
+      label:result
+    };
   },
 });
+
+type ClassifyTextResponse = {
+  data:Array<{
+    prediction:string,
+    score:number
+  }>
+}

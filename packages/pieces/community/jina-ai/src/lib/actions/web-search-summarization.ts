@@ -1,43 +1,45 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { JinaAICommon } from '../common';
+import { jinaAiAuth } from '../../index';
 
-export const webSearchSummarization = createAction({
+export const webSearchSummarizationAction = createAction({
+  auth:jinaAiAuth,
   name: 'web_search_summarization',
   displayName: 'Web Search Summarization',
   description:
-    'Perform a web search and retrieve summarized results using the Reader API',
+    'Perform a web search and retrieve summarized results using the Reader API.',
   props: {
     query: Property.ShortText({
       displayName: 'Query',
-      description: 'The search query to perform',
+      description: 'The search query to perform.',
       required: true,
     }),
     read_full_content: Property.Checkbox({
       displayName: 'Read Full Content of SERP',
       description:
-        'Visit every URL in the search result and return the full content using Reader. Toggle on to enable more Reader-specific options',
+        'Visit every URL in the search result and return the full content using Reader. Toggle on to enable more Reader-specific options.',
       required: false,
       defaultValue: false,
     }),
     json_response: Property.Checkbox({
       displayName: 'JSON Response',
       description:
-        'The response will be in JSON format, containing the URL, title, content, and timestamp (if available). In Search mode, it returns a list of five entries, each following the described JSON structure',
+        'The response will be in JSON format, containing the URL, title, content, and timestamp (if available). In Search mode, it returns a list of five entries, each following the described JSON structure.',
       required: false,
       defaultValue: false,
     }),
     fetch_favicons: Property.Checkbox({
       displayName: 'Fetch Favicons',
       description:
-        'This will fetch the favicon of each URL in the SERP and include them in the response as image URI, useful for UI rendering',
+        'This will fetch the favicon of each URL in the SERP and include them in the response as image URI, useful for UI rendering.',
       required: false,
       defaultValue: false,
     }),
     preferred_country: Property.StaticDropdown({
       displayName: 'Preferred Country',
       description:
-        "The country to use for the search. It's a two-letter country code",
+        "The country to use for the search. It's a two-letter country code.",
       required: false,
       defaultValue: 'Default',
       options: {
@@ -72,13 +74,13 @@ export const webSearchSummarization = createAction({
     preferred_location: Property.ShortText({
       displayName: 'Preferred Location',
       description:
-        "From where you want the search query to originate. It is recommended to specify location at the city level in order to simulate a real user's search",
+        "From where you want the search query to originate. It is recommended to specify location at the city level in order to simulate a real user's search.",
       required: false,
     }),
     preferred_language: Property.StaticDropdown({
       displayName: 'Preferred Language',
       description:
-        "The language to use for the search. It's a two-letter language code",
+        "The language to use for the search. It's a two-letter language code.",
       required: false,
       defaultValue: 'Default',
       options: {
@@ -105,27 +107,27 @@ export const webSearchSummarization = createAction({
     pagination: Property.Number({
       displayName: 'Pagination',
       description:
-        "The result offset. It skips the given number of results. It's used for pagination",
+        "The result offset. It skips the given number of results. It's used for pagination.",
       required: false,
       defaultValue: 1,
     }),
     in_site_search: Property.ShortText({
       displayName: 'In-site Search',
       description:
-        'Returns the search results only from the specified website or domain. By default it searches the entire web',
+        'Returns the search results only from the specified website or domain. By default it searches the entire web.',
       required: false,
     }),
     bypass_cached_content: Property.Checkbox({
       displayName: 'Bypass Cached Content',
       description:
-        'Our API caches URL contents for a certain amount of time. Set it to true to ignore the cached result and fetch the content from the URL directly',
+        'Our API caches URL contents for a certain amount of time. Set it to true to ignore the cached result and fetch the content from the URL directly.',
       required: false,
       defaultValue: false,
     }),
     eu_compliance: Property.Checkbox({
       displayName: 'EU Compliance',
       description:
-        'All infrastructure and data processing operations reside entirely within EU jurisdiction',
+        'All infrastructure and data processing operations reside entirely within EU jurisdiction.',
       required: false,
       defaultValue: false,
     }),
@@ -186,7 +188,7 @@ export const webSearchSummarization = createAction({
     }
 
     if (bypass_cached_content) {
-      headers['X-Bypass-Cache'] = 'true';
+      headers['X-No-Cache'] = 'true';
     }
 
     if (in_site_search) {
