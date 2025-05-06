@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { copyAiClient } from '../common/client';
+import { makeRequest } from '../common/client';
 
 export const runWorkflow = createAction({
     name: 'run_workflow',
@@ -18,13 +18,13 @@ export const runWorkflow = createAction({
             required: true,
         }),
     },
-    async run(context) {
-        return await copyAiClient.makeRequest(
-            context.auth as string,
+    async run({ propsValue, auth }) {
+        return await makeRequest(
+            auth as string,
             HttpMethod.POST,
-            `/workflow/${context.propsValue.workflowId}run`,
+            `/workflow/${propsValue.workflowId}/run`,
             {
-                startVariables: context.propsValue.inputs
+                startVariables: propsValue.inputs
             }
         );
     },

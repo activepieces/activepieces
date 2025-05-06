@@ -18,7 +18,7 @@ To use Copy AI, you need to get an API key:
 export const copyAi = createPiece({
     displayName: 'Copy AI',
     description: 'AI-powered content generation and copywriting platform',
-    logoUrl: 'https://cdn.copy.ai/brand/logo.png',
+    logoUrl: 'https://cdn.prod.website-files.com/628288c5cd3e8411b90a36a4/6797ee68ae7908e605a9a4d0_copy_logo-all-dark.svg',
     authors: ['AnkitSharmaOnGithub'],
     auth: PieceAuth.SecretText({
         displayName: 'API Key',
