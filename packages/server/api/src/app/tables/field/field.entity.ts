@@ -30,7 +30,7 @@ export const FieldEntity = new EntitySchema<FieldSchema>({
         },
         externalId: {
             type: String,
-            nullable: true,
+            nullable: false,
         },
         data: {
             type: JSONB_COLUMN_TYPE,
