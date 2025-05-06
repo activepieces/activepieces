@@ -14,9 +14,7 @@ export const saleorRawGraphqlQuery = createAction({
 	},
 	async run({auth, propsValue}) {
         const { query, variables } = propsValue;
-        const { username, password, apiUrl } = auth;
-
-        const token = Buffer.from(`${username}:${password}`).toString("base64");
+        const { token, apiUrl } = auth;
 
 		const response = await httpClient.sendRequest({
 			url: apiUrl,

@@ -10,16 +10,11 @@ export const saleorAuth = PieceAuth.CustomAuth({
       required: true,
       description: 'Your Saleor GraphQL API endpoint'
     }),
-    username: Property.ShortText({
-      displayName: 'Saleor basic auth username',
+    token: Property.ShortText({
+      displayName: 'Saleor token',
       required: true,
-      description: 'Your username'
+      description: 'Your token'
     }),
-    password: Property.ShortText({
-      displayName: 'Saleor basic auth password',
-      required: true,
-      description: 'Your password'
-    })
   }
 })
 
