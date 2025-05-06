@@ -118,9 +118,7 @@ const RenameConnectionDialog = forwardRef<
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              {!userHasPermissionToRename
-                ? t('Permission needed')
-                : t('Rename')}
+              {!userHasPermissionToRename ? t('Permission needed') : t('Edit')}
             </TooltipContent>
           </>
         </DialogTrigger>

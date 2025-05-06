@@ -26,6 +26,7 @@ import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from
 import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
 import { cn } from '@/lib/utils';
 import {
+  AppConnectionScope,
   AppConnectionWithoutSensitiveData,
   PopulatedFlow,
 } from '@activepieces/shared';
@@ -169,7 +170,9 @@ const ReplaceConnectionsDialog = ({
       })) ?? [];
 
   const filteredConnections = connections.filter(
-    (conn) => conn.pieceName === selectedPiece,
+    (conn) =>
+      conn.pieceName === selectedPiece &&
+      conn.scope === AppConnectionScope.PROJECT,
   );
 
   const sourceConnectionId = useWatch({
@@ -179,7 +182,11 @@ const ReplaceConnectionsDialog = ({
 
   const replacedWithOptions = useMemo(() => {
     return filteredConnections
-      .filter((conn) => conn.id !== sourceConnectionId)
+      .filter(
+        (conn) =>
+          conn.id !== sourceConnectionId &&
+          conn.scope === AppConnectionScope.PROJECT,
+      )
       .map((conn) => ({
         label: conn.displayName,
         value: conn.id,

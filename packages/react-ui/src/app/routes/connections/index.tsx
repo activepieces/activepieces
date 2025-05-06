@@ -41,6 +41,7 @@ import {
 } from '@/components/ui/tooltip';
 import { useToast } from '@/components/ui/use-toast';
 import { UserFullName } from '@/components/ui/user-fullname';
+import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
 import { RenameConnectionDialog } from '@/features/connections/components/rename-connection-dialog';
 import { appConnectionsApi } from '@/features/connections/lib/app-connections-api';
 import { appConnectionsHooks } from '@/features/connections/lib/app-connections-hooks';
@@ -361,20 +362,33 @@ function AppConnectionsPage() {
     {
       id: 'actions',
       cell: ({ row }) => {
-        const isPlatformConnection = row.original.scope === 'PLATFORM';
+        const isPlatformConnection =
+          row.original.scope === AppConnectionScope.PLATFORM;
         const userHasPermissionToRename = isPlatformConnection
           ? userPlatformRole === PlatformRole.ADMIN
           : userHasPermissionToWriteAppConnection;
         return (
           <div className="flex items-center gap-2 justify-end">
-            <RenameConnectionDialog
-              connectionId={row.original.id}
-              currentName={row.original.displayName}
-              onRename={() => {
-                refetch();
-              }}
-              userHasPermissionToRename={userHasPermissionToRename}
-            />
+            {row.original.scope === AppConnectionScope.PROJECT ? (
+              <RenameConnectionDialog
+                connectionId={row.original.id}
+                currentName={row.original.displayName}
+                onRename={() => {
+                  refetch();
+                }}
+                userHasPermissionToRename={userHasPermissionToRename}
+              />
+            ) : (
+              <EditGlobalConnectionDialog
+                connectionId={row.original.id}
+                currentName={row.original.displayName}
+                projectIds={row.original.projectIds}
+                userHasPermissionToEdit={userHasPermissionToRename}
+                onEdit={() => {
+                  refetch();
+                }}
+              />
+            )}
             <ReconnectButtonDialog
               hasPermission={userHasPermissionToRename}
               connection={row.original}
