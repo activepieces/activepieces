@@ -8,7 +8,6 @@ import { pubsub } from '../helper/pubsub'
 type SessionData = {
     server: McpServer
     transport: SSEServerTransport
-    mcpId: ApId
 }
 
 const sessions: Map<string, SessionData> = new Map()
@@ -58,7 +57,7 @@ export const mcpSessionManager = (logger: FastifyBaseLogger) => {
             if (sessions.has(sessionId)) {
                 throw new Error('Session already exists')
             }
-            sessions.set(sessionId, { server, transport, mcpId })
+            sessions.set(sessionId, { server, transport })
             logger.info({ sessionId }, 'MCP session added')
 
             // Store session information in distributed store
@@ -72,11 +71,6 @@ export const mcpSessionManager = (logger: FastifyBaseLogger) => {
                 await pubsub().publish(`server:${serverId}`, JSON.stringify({ sessionId, body, operation }))
             }
 
-        },
-
-        getMcpId: (sessionId: string): ApId | undefined => {
-            const sessionData = get(sessionId)
-            return sessionData?.mcpId
         },
     }
 }

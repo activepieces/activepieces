@@ -100,6 +100,11 @@ async function addPiecesToServer(
                         projectId,
                     })
 
+                    await mcpService(logger).trackToolCall({
+                        mcpId,
+                        toolName: action.name,
+                    })
+
                     if (result.status === EngineResponseStatus.OK) {
                         return {
                             content: [{
@@ -203,6 +208,12 @@ async function addFlowsToServer(
                     payload: originalParams,
                     execute: true,
                 })
+
+                await mcpService(logger).trackToolCall({
+                    mcpId,
+                    toolName: toolName,
+                })
+
                 if (response.status !== StatusCodes.OK) {
                     return {
                         content: [{
