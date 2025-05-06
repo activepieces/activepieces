@@ -1,5 +1,5 @@
 
-import { ApplicationEventName } from '@activepieces/ee-shared'
+import { ApplicationEventName, GitPushOperationType } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApId,
@@ -129,8 +129,9 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
                 flowVersion: flow.version,
             },
         })
-        await gitRepoService(request.log).onFlowDeleted({
-            flowId: request.params.id,
+        await gitRepoService(request.log).onDeleted({
+            type: GitPushOperationType.DELETE_FLOW,
+            id: request.params.id,
             userId: request.principal.id,
             projectId: request.principal.projectId,
             log: request.log,

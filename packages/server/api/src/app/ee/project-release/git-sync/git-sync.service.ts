@@ -81,7 +81,52 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
         const repos = await repo().findBy({ projectId })
         return paginationHelper.createPage<GitRepo>(repos, null)
     },
-    async onFlowDeleted({ flowId, userId, projectId, log }: { flowId: string, userId: string, projectId: string, log: FastifyBaseLogger }): Promise<void> {
+    async onDeleted({ type, id, userId, projectId, log }: { type: GitPushOperationType, id: string, userId: string, projectId: string, log: FastifyBaseLogger }): Promise<void> {
+        const edition = system.getEdition()
+        if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
+            return
+        }
+        const gitRepo = await repo().findOneBy({ projectId })
+        if (isNil(gitRepo) || gitRepo.branchType === GitBranchType.PRODUCTION) {
+            return
+        }
+        switch (type) {
+            case GitPushOperationType.DELETE_FLOW: {
+                await gitRepoService(log).push({
+                    id: gitRepo.id,
+                    userId,
+                    request: {
+                        type: GitPushOperationType.DELETE_FLOW,
+                        commitMessage: `chore: deleted flow ${id}`,
+                        flowIds: [id],
+                    },
+                    log,
+                })
+                break
+            }
+            case GitPushOperationType.DELETE_TABLE: {
+                await gitRepoService(log).push({
+                    id: gitRepo.id,
+                    userId,
+                    request: {
+                        type: GitPushOperationType.DELETE_TABLE,
+                        commitMessage: `chore: deleted table ${id}`,
+                        tableIds: [id],
+                    },
+                    log,
+                })
+                break
+            }
+            default:
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: `Only supported operations are ${GitPushOperationType.DELETE_FLOW} and ${GitPushOperationType.DELETE_TABLE}`,
+                    },
+                })
+        }
+    },
+    async onTableDeleted({ tableId, userId, projectId, log }: { tableId: string, userId: string, projectId: string, log: FastifyBaseLogger }): Promise<void> {
         const edition = system.getEdition()
         if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
             return
@@ -94,9 +139,9 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
             id: gitRepo.id,
             userId,
             request: {
-                type: GitPushOperationType.DELETE_FLOW,
-                commitMessage: `chore: deleted flow ${flowId}`,
-                flowIds: [flowId],
+                type: GitPushOperationType.DELETE_TABLE,
+                commitMessage: `chore: deleted table ${tableId}`,
+                tableIds: [tableId],
             },
             log,
         })
