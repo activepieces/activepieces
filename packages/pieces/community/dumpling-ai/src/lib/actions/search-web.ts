@@ -44,6 +44,11 @@ export const searchWeb = createAction({
       },
       description: 'Filter results by date',
     }),
+    page: Property.Number({
+      displayName: 'Page Number',
+      required: false,
+      description: 'Page number for paginated results',
+    }),
     scrapeResults: Property.Checkbox({
       displayName: 'Scrape Results',
       required: false,
@@ -56,6 +61,29 @@ export const searchWeb = createAction({
       defaultValue: 3,
       description: 'Number of top results to scrape (max: 10)',
     }),
+    scrapeFormat: Property.StaticDropdown({
+      displayName: 'Scrape Format',
+      required: false,
+      defaultValue: 'markdown',
+      options: {
+        options: [
+          { label: 'Markdown', value: 'markdown' },
+          { label: 'HTML', value: 'html' },
+          { label: 'Screenshot', value: 'screenshot' },
+        ],
+      },
+      description: 'Format of scraped content',
+      refreshers: ['scrapeResults'],
+      defaultExpanded: false,
+    }),
+    cleanedOutput: Property.Checkbox({
+      displayName: 'Clean Output',
+      required: false,
+      defaultValue: true,
+      description: 'Whether the scraped output should be cleaned',
+      refreshers: ['scrapeResults'],
+      defaultExpanded: false,
+    }),
   },
   async run({ auth, propsValue }) {
     const {
@@ -64,8 +92,11 @@ export const searchWeb = createAction({
       location,
       language,
       dateRange,
+      page,
       scrapeResults,
-      numResultsToScrape
+      numResultsToScrape,
+      scrapeFormat,
+      cleanedOutput
     } = propsValue;
 
     const requestBody: Record<string, any> = {
@@ -77,8 +108,16 @@ export const searchWeb = createAction({
     if (location) requestBody['location'] = location;
     if (language) requestBody['language'] = language;
     if (dateRange) requestBody['dateRange'] = dateRange;
+    if (page) requestBody['page'] = page;
     if (scrapeResults !== undefined) requestBody['scrapeResults'] = scrapeResults;
     if (numResultsToScrape) requestBody['numResultsToScrape'] = numResultsToScrape;
+
+    // Add scrape options if scraping is enabled
+    if (scrapeResults) {
+      requestBody['scrapeOptions'] = {};
+      if (scrapeFormat) requestBody['scrapeOptions']['format'] = scrapeFormat;
+      if (cleanedOutput !== undefined) requestBody['scrapeOptions']['cleaned'] = cleanedOutput;
+    }
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,

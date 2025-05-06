@@ -14,6 +14,8 @@ Follow these steps to obtain your Dumpling AI API Key:
 1. Create a free account at [Dumpling AI](https://www.dumplingai.com/)
 2. Navigate to Dashboard > Settings section
 3. Copy your API key for development and testing purposes
+
+For testing purposes, you can use **test-key** as the API Key value.
 `;
 
 export const dumplingAuth = PieceAuth.SecretText({

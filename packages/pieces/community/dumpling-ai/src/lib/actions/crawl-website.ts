@@ -14,14 +14,14 @@ export const crawlWebsite = createAction({
       required: true,
       description: 'The starting URL for the crawler',
     }),
-    maxPages: Property.Number({
-      displayName: 'Maximum Pages',
+    limit: Property.Number({
+      displayName: 'Page Limit',
       required: false,
       description: 'Maximum number of pages to crawl (1-50)',
       defaultValue: 10,
     }),
-    maxDepth: Property.Number({
-      displayName: 'Maximum Depth',
+    depth: Property.Number({
+      displayName: 'Crawl Depth',
       required: false,
       description: 'Maximum depth of links to follow from the start URL (1-5)',
       defaultValue: 2,
@@ -32,6 +32,19 @@ export const crawlWebsite = createAction({
       description: 'Only crawl pages from the same domain as the start URL',
       defaultValue: true,
     }),
+    format: Property.StaticDropdown({
+      displayName: 'Output Format',
+      required: false,
+      defaultValue: 'markdown',
+      options: {
+        options: [
+          { label: 'Markdown', value: 'markdown' },
+          { label: 'Text', value: 'text' },
+          { label: 'Raw', value: 'raw' },
+        ],
+      },
+      description: 'Format of the output content',
+    }),
     extractionPrompt: Property.LongText({
       displayName: 'Extraction Prompt',
       required: false,
@@ -39,16 +52,24 @@ export const crawlWebsite = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { url, maxPages, maxDepth, stayWithinDomain, extractionPrompt } = propsValue;
+    const { 
+      url, 
+      limit, 
+      depth, 
+      stayWithinDomain, 
+      format,
+      extractionPrompt 
+    } = propsValue;
 
     const requestBody: Record<string, any> = {
       url
     };
 
     // Add optional parameters if provided
-    if (maxPages) requestBody['maxPages'] = maxPages;
-    if (maxDepth) requestBody['maxDepth'] = maxDepth;
+    if (limit) requestBody['limit'] = limit;
+    if (depth) requestBody['depth'] = depth;
     if (stayWithinDomain !== undefined) requestBody['stayWithinDomain'] = stayWithinDomain;
+    if (format) requestBody['format'] = format;
     if (extractionPrompt) requestBody['extractionPrompt'] = extractionPrompt;
 
     const response = await httpClient.sendRequest({
