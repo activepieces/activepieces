@@ -46,6 +46,8 @@ export enum FlowsPageTabs {
 }
 
 const FlowsPage = () => {
+
+  const { checkAccess } = useAuthorization();
   const [searchParams, setSearchParams] = useSearchParams();
   const projectId = authenticationSession.getProjectId()!;
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
@@ -112,17 +114,25 @@ const FlowsPage = () => {
             <TabsTrigger value={FlowsPageTabs.FLOWS} variant="outline">
               {t('Flows')}
             </TabsTrigger>
-            <TabsTrigger value={FlowsPageTabs.HISTORY} variant="outline">
-              {t('History')}
-            </TabsTrigger>
-            <TabsTrigger value={FlowsPageTabs.ISSUES} variant="outline">
-              <span className="flex items-center gap-2">
-                {t('Issues')}
-                {showIssuesNotification && (
-                  <span className="ml-1 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
-                )}
-              </span>
-            </TabsTrigger>
+            {
+              checkAccess(Permission.READ_RUN) && (
+                <TabsTrigger value={FlowsPageTabs.HISTORY} variant="outline">
+                  {t('History')}
+                </TabsTrigger>
+              )
+            }
+            {
+              checkAccess(Permission.READ_ISSUES) && (
+                <TabsTrigger value={FlowsPageTabs.ISSUES} variant="outline">
+                  <span className="flex items-center gap-2">
+                    {t('Issues')}
+                    {showIssuesNotification && (
+                      <span className="ml-1 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
+                    )}
+                  </span>
+                </TabsTrigger>
+              )
+            }
           </TabsList>
           <TabsContent value={FlowsPageTabs.FLOWS}>
             <FlowsTable data={data} isLoading={isLoading} refetch={refetch} />
