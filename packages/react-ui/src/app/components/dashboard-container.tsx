@@ -38,7 +38,7 @@ const ProjectChangedRedirector = ({
 };
 export const CloseTaskLimitAlertContext = createContext({
   isAlertClosed: false,
-  setIsAlertClosed: (isAlertClosed: boolean) => {},
+  setIsAlertClosed: (isAlertClosed: boolean) => { },
 });
 
 export function DashboardContainer({
@@ -84,7 +84,6 @@ export function DashboardContainer({
         '/flows',
         '/issues',
         '/runs',
-        '/connections',
         '/releases',
         '/tables',
       ];
@@ -110,14 +109,6 @@ export function DashboardContainer({
         showInEmbed: true,
         notification: showIssuesNotification,
         hasPermission: checkAccess(Permission.READ_RUN),
-        isSubItem: true,
-      },
-      {
-        type: 'link',
-        to: authenticationSession.appendProjectRoutePrefix('/connections'),
-        label: t('Connections'),
-        showInEmbed: true,
-        hasPermission: checkAccess(Permission.READ_APP_CONNECTION),
         isSubItem: true,
       },
       {
