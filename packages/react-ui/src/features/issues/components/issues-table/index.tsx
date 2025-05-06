@@ -28,14 +28,9 @@ import {
   FlowRunStatus,
   Permission,
 } from '@activepieces/shared';
-import { FlowsPageTabs } from '..';
 import { issuesTableColumns } from './columns'
 
-type IssuesTableProps = {
-  setActiveTab: (tab: FlowsPageTabs) => void;
-};
-
-export function IssuesTable({ setActiveTab }: IssuesTableProps) {
+export function IssuesTable() {
   const navigate = useNavigate();
   const { refetch } = issueHooks.useIssuesNotification();
   const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
@@ -102,7 +97,6 @@ export function IssuesTable({ setActiveTab }: IssuesTableProps) {
       ],
     }).toString();
     const pathname = authenticationSession.appendProjectRoutePrefix('/runs');
-    setActiveTab(FlowsPageTabs.HISTORY);
     if (newWindow) {
       openNewWindow(pathname, searchParams);
     } else {

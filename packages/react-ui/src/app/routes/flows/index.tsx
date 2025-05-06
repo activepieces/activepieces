@@ -2,13 +2,12 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   ChevronDown,
-  Import,
   Plus,
   Upload,
   Workflow,
 } from 'lucide-react';
 import { useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -35,10 +34,10 @@ import { TableTitle } from '../../../components/ui/table-title';
 import TaskLimitAlert from './task-limit-alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RunsTable } from '@/features/flow-runs/components/runs-table';
-import { IssuesTable } from './issues-table';
-
 import { issueHooks } from '@/features/issues/hooks/issue-hooks';
-import { FlowsTable } from './flows-table';
+
+import { IssuesTable } from '@/features/issues/components/issues-table';
+import { FlowsTable } from '@/features/flows/components/flows-table';
 
 export enum FlowsPageTabs {
   HISTORY = 'history',
@@ -132,7 +131,7 @@ const FlowsPage = () => {
             <RunsTable />
           </TabsContent>
           <TabsContent value={FlowsPageTabs.ISSUES}>
-            <IssuesTable setActiveTab={setActiveTab} />
+            <IssuesTable />
           </TabsContent>
         </Tabs>
       </div>
