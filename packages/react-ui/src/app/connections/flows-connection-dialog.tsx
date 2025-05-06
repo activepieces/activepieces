@@ -51,7 +51,7 @@ const FlowsDialog = React.memo(({ connection }: FlowsDialogProps) => {
           connectionExternalIds: [connection.externalId],
           cursor: undefined,
           limit: 1000,
-          versionState: FlowVersionState.LOCKED
+          versionState: FlowVersionState.LOCKED,
         })
         .then((res) => res.data),
     enabled: dialogOpen,
