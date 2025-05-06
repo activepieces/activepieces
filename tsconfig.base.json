@@ -87,6 +87,9 @@
       "@activepieces/piece-azure-openai": [
         "packages/pieces/community/azure-openai/src/index.ts"
       ],
+      "@activepieces/piece-backblaze": [
+        "packages/pieces/community/backblaze/src/index.ts"
+      ],
       "@activepieces/piece-bamboohr": [
         "packages/pieces/community/bamboohr/src/index.ts"
       ],

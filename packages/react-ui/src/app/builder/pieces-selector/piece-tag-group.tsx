@@ -10,6 +10,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hook';
+import { PieceCategory } from '@activepieces/shared';
 export enum PieceTagEnum {
   CORE = 'CORE',
   AI = 'AI',
@@ -57,10 +59,18 @@ const PieceTagGroup = ({
   onSelectTag,
   type,
 }: PieceTagGroupProps) => {
+  const { pieces } = piecesHooks.usePieces({});
+  const hasAiTriggers =
+    pieces?.some(
+      (piece) =>
+        piece.categories?.includes(PieceCategory.ARTIFICIAL_INTELLIGENCE) &&
+        piece.triggers > 0,
+    ) ?? false;
   return (
     <div className="flex py-2 px-2 gap-2 items-center">
       {Object.entries(tags).map(([tag, tagData]) => {
-        const isDisabled = type === 'trigger' && tag === PieceTagEnum.AI;
+        const isDisabled =
+          type === 'trigger' && tag === PieceTagEnum.AI && !hasAiTriggers;
         const tagComponent = (
           <PieceTag
             key={tag}
