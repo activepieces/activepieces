@@ -44,9 +44,9 @@ export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
             return
         }
 
-        const body = req.body as { method: string, params: Record<string, unknown>}
+        const body = req.body as { method: string, params: Record<string, unknown> }
         const mcpId = mcpSessionManager(req.log).getMcpId(sessionId)
-        if(body.method === 'tools/call') {
+        if (body.method === 'tools/call') {
             await mcpService(req.log).trackToolCall({
                 mcpId: mcpId as ApId,
                 toolName: body.params.name as string,
