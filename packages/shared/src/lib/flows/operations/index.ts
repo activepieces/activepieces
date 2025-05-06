@@ -20,6 +20,7 @@ import { _getOperationsForPaste } from './paste-operations'
 import { _skipAction } from './skip-action'
 import { _updateAction } from './update-action'
 import { _updateTrigger } from './update-trigger'
+import { _swapBranch } from './swap-branch'
 
 
 export enum FlowOperationType {
@@ -41,6 +42,7 @@ export enum FlowOperationType {
     DUPLICATE_BRANCH = 'DUPLICATE_BRANCH',
     SET_SKIP_ACTION = 'SET_SKIP_ACTION',
     UPDATE_METADATA = 'UPDATE_METADATA',
+    SWAP_BRANCH = 'SWAP_BRANCH',
 }
 
 export const DeleteBranchRequest = Type.Object({
@@ -53,6 +55,12 @@ export const AddBranchRequest = Type.Object({
     conditions: Type.Optional(Type.Array(Type.Array(BranchCondition))),
     branchName: Type.String(),
 })
+export const SwapBranchRequest = Type.Object({
+    sourceBranchIndex: Type.Number(),
+    targetBranchIndex: Type.Number(),
+    stepName: Type.String(),
+})
+export type SwapBranchRequest = Static<typeof SwapBranchRequest>
 
 export const SkipActionRequest = Type.Object({
     names: Type.Array(Type.String()),
@@ -327,6 +335,12 @@ export const FlowOperationRequest = Type.Union([
             title: 'Update Metadata',
         },
     ),
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.SWAP_BRANCH),
+            request: SwapBranchRequest,
+        },
+    ),
 ])
 
 export type FlowOperationRequest = Static<typeof FlowOperationRequest>
@@ -410,6 +424,11 @@ export const flowOperations = {
             }
             case FlowOperationType.SET_SKIP_ACTION: {
                 clonedVersion = _skipAction(clonedVersion, operation.request)
+                clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
+                break
+            }
+            case FlowOperationType.SWAP_BRANCH: {
+                clonedVersion = _swapBranch(clonedVersion, operation.request)
                 clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
