@@ -26,6 +26,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import {
   AppConnectionWithoutSensitiveData,
+  FlowVersionState,
   PopulatedFlow,
 } from '@activepieces/shared';
 
@@ -50,6 +51,7 @@ const FlowsDialog = React.memo(({ connection }: FlowsDialogProps) => {
           connectionExternalIds: [connection.externalId],
           cursor: undefined,
           limit: 1000,
+          versionState: FlowVersionState.LOCKED
         })
         .then((res) => res.data),
     enabled: dialogOpen,
