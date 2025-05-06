@@ -127,6 +127,9 @@
       "@activepieces/piece-calendly": [
         "packages/pieces/community/calendly/src/index.ts"
       ],
+      "@activepieces/piece-call-rounded": [
+        "packages/pieces/community/call-rounded/src/index.ts"
+      ],
       "@activepieces/piece-captain-data": [
         "packages/pieces/community/captain-data/src/index.ts"
       ],
@@ -468,6 +471,9 @@
       "@activepieces/piece-microsoft-teams": [
         "packages/pieces/community/microsoft-teams/src/index.ts"
       ],
+      "@activepieces/piece-microsoft-todo": [
+        "packages/pieces/community/microsoft-todo/src/index.ts"
+      ],
       "@activepieces/piece-mindee": [
         "packages/pieces/community/mindee/src/index.ts"
       ],
@@ -588,9 +594,6 @@
       ],
       "@activepieces/piece-robolly": [
         "packages/pieces/community/robolly/src/index.ts"
-      ],
-      "@activepieces/piece-call-rounded": [
-        "packages/pieces/community/call-rounded/src/index.ts"
       ],
       "@activepieces/piece-rss": ["packages/pieces/community/rss/src/index.ts"],
       "@activepieces/piece-saastic": [
