@@ -8,7 +8,7 @@ import {
   Workflow,
 } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -47,12 +47,14 @@ export enum FlowsPageTabs {
 }
 
 const FlowsPage = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const projectId = authenticationSession.getProjectId()!;
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
+
   const [activeTab, setActiveTab] = useState<FlowsPageTabs>(
-    FlowsPageTabs.FLOWS,
+    (searchParams.get('activeTab') ?? 'flows') as FlowsPageTabs
   );
+
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['flow-table', searchParams.toString(), projectId],
@@ -78,6 +80,14 @@ const FlowsPage = () => {
   });
 
 
+  const handleTabChange = (value: FlowsPageTabs) => {
+    setActiveTab(value)
+    const newQueryParameters: URLSearchParams = new URLSearchParams()
+    newQueryParameters.set('activeTab', value)
+    setSearchParams(newQueryParameters)
+  }
+
+
   return (
     <div className="flex flex-col gap-4 grow">
       <TaskLimitAlert />
@@ -96,7 +106,7 @@ const FlowsPage = () => {
         </div>
         <Tabs
           value={activeTab}
-          onValueChange={(value) => setActiveTab(value as FlowsPageTabs)}
+          onValueChange={(v) => handleTabChange(v as FlowsPageTabs)}
           className="w-full"
         >
           <TabsList variant="outline">

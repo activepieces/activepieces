@@ -69,7 +69,6 @@ export const FlowsTable = ({ data, isLoading, refetch }: FlowsTableProps) => {
     refetch,
   });
 
-
   return (
     <div className="flex flex-row gap-4">
       {!embedState.hideFolders && <FolderFilterList refresh={refresh} />}
