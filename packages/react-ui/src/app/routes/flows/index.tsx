@@ -2,6 +2,8 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   ChevronDown,
+  History,
+  CircleAlert,
   Plus,
   Upload,
   Workflow,
@@ -112,18 +114,21 @@ const FlowsPage = () => {
         >
           <TabsList variant="outline">
             <TabsTrigger value={FlowsPageTabs.FLOWS} variant="outline">
+              <Workflow className='h-4 w-4 mr-2' />
               {t('Flows')}
             </TabsTrigger>
             {
               checkAccess(Permission.READ_RUN) && (
                 <TabsTrigger value={FlowsPageTabs.HISTORY} variant="outline">
-                  {t('History')}
+                  <History className='h-4 w-4 mr-2' />
+                  {t('Runs')}
                 </TabsTrigger>
               )
             }
             {
               checkAccess(Permission.READ_ISSUES) && (
                 <TabsTrigger value={FlowsPageTabs.ISSUES} variant="outline">
+                  <CircleAlert className='h-4 w-4 mr-2' />
                   <span className="flex items-center gap-2">
                     {t('Issues')}
                     {showIssuesNotification && (
