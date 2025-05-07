@@ -1,0 +1,29 @@
+{
+  "name": "piece-fireflies-ai",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/fireflies-ai/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/fireflies-ai",
+        "tsConfig": "packages/pieces/community/fireflies-ai/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/fireflies-ai/package.json",
+        "main": "packages/pieces/community/fireflies-ai/src/index.ts",
+        "assets": ["packages/pieces/community/fireflies-ai/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/community/fireflies-ai/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
