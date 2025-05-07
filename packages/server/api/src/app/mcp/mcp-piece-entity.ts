@@ -31,15 +31,15 @@ export const McpPieceEntity = new EntitySchema<McpPieceSchema>({
     },
     indices: [
         {
-            name: 'mcp_piece_mcp_id',
+            name: 'idx_mcp_piece_mcp_id',
             columns: ['mcpId'],
         },
         {
-            name: 'mcp_piece_connection_id',
+            name: 'idx_mcp_piece_connection_id',
             columns: ['connectionId'],
         },
         {
-            name: 'mcp_piece_unique_piece_per_mcp',
+            name: 'idx_mcp_piece_mcp_id_piece_name',
             columns: ['mcpId', 'pieceName'],
             unique: true,
         },
@@ -51,6 +51,7 @@ export const McpPieceEntity = new EntitySchema<McpPieceSchema>({
             joinColumn: {
                 name: 'connectionId',
                 referencedColumnName: 'id',
+                foreignKeyConstraintName: 'fk_mcp_piece_connection_id',
             },
             onDelete: 'SET NULL',
             nullable: true,

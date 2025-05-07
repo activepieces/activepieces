@@ -1,6 +1,6 @@
 import { ChildProcess, fork } from 'child_process'
 import { ApSemaphore, getEngineTimeout } from '@activepieces/server-shared'
-import { ApEnvironment, assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus } from '@activepieces/shared'
+import { ApEnvironment, assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineResponseStatus, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { workerMachine } from '../../utils/machine'
 
@@ -45,7 +45,15 @@ export class EngineWorker {
 
     private createWorkerIfNeeded(workerIndex: number): void {
         try {
-            if (!this.workers[workerIndex]) {
+            const workerIsDead = isNil(this.workers[workerIndex]) || !this.workers[workerIndex]?.connected
+            if (workerIsDead) {
+                this.log.info({
+                    workerIndex,
+                }, 'Worker is not available, creating a new one')
+                if (!isNil(this.workers[workerIndex])) {
+                    this.workers[workerIndex]?.kill()
+                    cleanUp(this.workers[workerIndex], undefined)
+                }
                 this.workers[workerIndex] = fork(this.enginePath, [], this.options)
             }
         }
@@ -152,7 +160,7 @@ export class EngineWorker {
         catch (error) {
             this.log.error({
                 error,
-            }, 'Worker throw unespected error')
+            }, 'Worker throw unexpected error')
             throw error
         }
         finally {
@@ -212,9 +220,11 @@ export class EngineWorker {
 
 }
 
-function cleanUp(worker: ChildProcess, timeout: NodeJS.Timeout): void {
+function cleanUp(worker: ChildProcess, timeout: NodeJS.Timeout | undefined): void {
     worker.removeAllListeners('exit')
     worker.removeAllListeners('error')
     worker.removeAllListeners('message')
-    clearTimeout(timeout)
+    if (!isNil(timeout)) {
+        clearTimeout(timeout)
+    }
 }

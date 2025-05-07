@@ -30,6 +30,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useToast } from '@/components/ui/use-toast';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { ApFlagId } from '@activepieces/shared';
 
 import { SimpleJsonViewer } from '../../../components/simple-json-viewer';
 
@@ -49,6 +51,54 @@ const maskToken = (url: string) => {
   return url.replace(/\/([^/]+)\/sse$/, '/•••••••••••••••••••••/sse');
 };
 
+export const replaceIpWithLocalhost = (url: string): string => {
+  try {
+    const parsed = new URL(url);
+    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(parsed.hostname)) {
+      parsed.hostname = 'localhost';
+    }
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+};
+
+const ExposeMcpNote = () => {
+  const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
+  const hasBeenReplacedWithLocalhost =
+    replaceIpWithLocalhost(publicUrl ?? '') !== publicUrl;
+  if (!hasBeenReplacedWithLocalhost) {
+    return null;
+  }
+
+  return (
+    <div>
+      <b>{t('Note')}: </b>
+      {t(
+        'If you would like to expose your MCP server to the internet, please set the AP_FRONTEND_URL environment variable to the public URL of your Activepieces instance.',
+      )}
+    </div>
+  );
+};
+const SecurityNote = () => {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="flex cursor-default items-center gap-1 text-xs border  border-warning/50 text-warning-300 dark:border-warning  px-1.5 py-0.5 rounded-sm">
+          <AlertTriangle className="h-3 w-3" />
+          <span className="font-medium">{t('Security')}</span>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs">
+        <p className="text-xs">
+          {t(
+            'This URL grants access to your tools and data. Only share with trusted applications.',
+          )}
+        </p>
+      </TooltipContent>
+    </Tooltip>
+  );
+};
 // Define type for ButtonWithTooltip props
 type ButtonWithTooltipProps = {
   tooltip: string;
@@ -121,33 +171,14 @@ const ConfigDisplay = ({
 
   return (
     <div className="space-y-2">
+      <ExposeMcpNote />
       <div className="rounded-md border overflow-hidden">
         <div className="flex items-center justify-between p-3 border-b bg-background">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">
               {t('Server Configuration')}
             </span>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="cursor-pointer">
-                    <div className="flex items-center gap-1 text-xs border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800/50 px-1.5 py-0.5 rounded-sm">
-                      <AlertTriangle className="h-3 w-3 text-red-600 dark:text-red-400" />
-                      <span className="text-red-600 dark:text-red-400 font-medium">
-                        {t('Security')}
-                      </span>
-                    </div>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p className="text-xs">
-                    {t(
-                      'This URL grants access to your tools and data. Only share with trusted applications.',
-                    )}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <SecurityNote></SecurityNote>
           </div>
 
           <div className="flex gap-2">
@@ -425,31 +456,12 @@ export const McpClientTabs = ({
       case 'server':
         return (
           <div className="space-y-4">
+            <ExposeMcpNote />
             <div className="space-y-3 w-full">
               <div className="flex items-center gap-2 mb-1">
                 <LinkIcon className="h-5 w-5 text-primary" />
                 <h3 className="text-lg font-medium">{t('Server URL')}</h3>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="cursor-pointer">
-                        <div className="flex items-center gap-1 text-xs border border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800/50 px-1.5 py-0.5 rounded-sm">
-                          <AlertTriangle className="h-3 w-3 text-red-600 dark:text-red-400" />
-                          <span className="text-red-600 dark:text-red-400 font-medium">
-                            {t('Security')}
-                          </span>
-                        </div>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p className="text-xs">
-                        {t(
-                          'This URL grants access to your tools and data. Only share with trusted applications.',
-                        )}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <SecurityNote></SecurityNote>
               </div>
 
               <div className="flex flex-col gap-2">
