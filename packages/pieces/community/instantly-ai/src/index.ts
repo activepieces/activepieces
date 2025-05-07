@@ -1,34 +1,31 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
-import {
-  createCampaignAction,
-  replyToEmailAction,
-  createLeadListAction,
-  addLeadToCampaignAction,
-  searchCampaignsAction,
-  searchLeadsAction
-} from './lib/actions';
-import {
-  campaignStatusChangedTrigger,
-  newLeadAddedTrigger
-} from './lib/triggers';
+
+import { createCampaignAction } from './lib/actions/create-campaign';
+import { replyToEmailAction } from './lib/actions/reply-to-email';
+import { createLeadListAction } from './lib/actions/create-lead-list';
+import { addLeadToCampaignAction } from './lib/actions/add-lead-to-campaign';
+import { searchCampaignsAction } from './lib/actions/search-campaigns';
+import { searchLeadsAction } from './lib/actions/search-leads';
+import { campaignStatusChangedTrigger } from './lib/triggers/campaign-status-changed';
+import { newLeadAddedTrigger } from './lib/triggers/new-lead-added';
 
 const markdownDescription = `
 To use this piece, you need to obtain an API key from [Instantly](https://developer.instantly.ai/api/v2).
 `;
 
-export const instantlyAuth = PieceAuth.SecretText({
+export const instantlyAiAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   description: markdownDescription,
   required: true,
 })
 
-export const instantly = createPiece({
-  displayName: 'Instantly',
+export const instantlyAi = createPiece({
+  displayName: 'Instantly.ai',
   description: 'Powerful cold email outreach and lead engagement platform',
-  auth: instantlyAuth,
+  auth: instantlyAiAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/instantly.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/instantly-ai.png',
   categories: [PieceCategory.MARKETING, PieceCategory.SALES],
   authors: [],
   actions: [

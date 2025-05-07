@@ -1,10 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { InstantlyCommon } from '../common';
-import { instantlyAuth } from '../../index';
+import { makeRequest } from '../common/client';
+import { instantlyAiAuth } from '../../index';
 
 export const searchLeadsAction = createAction({
-  auth: instantlyAuth,
+  auth: instantlyAiAuth,
   name: 'search_leads',
   displayName: 'Search Leads',
   description: 'Search for leads in Instantly by email, name, or attributes',
@@ -118,13 +118,11 @@ export const searchLeadsAction = createAction({
       queryParams.offset = Math.max(0, offset);
     }
 
-    const response = await InstantlyCommon.makeRequest({
+    return await makeRequest({
       endpoint,
       method: HttpMethod.GET,
       apiKey: apiKey as string,
       queryParams,
     });
-
-    return response;
   },
 });

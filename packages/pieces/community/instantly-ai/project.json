@@ -1,7 +1,7 @@
 {
-  "name": "pieces-instantly",
+  "name": "pieces-instantly-ai",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/instantly/src",
+  "sourceRoot": "packages/pieces/community/instantly-ai/src",
   "projectType": "library",
   "release": {
       "version": {
@@ -17,11 +17,11 @@
           "executor": "@nx/js:tsc",
           "outputs": ["{options.outputPath}"],
           "options": {
-              "outputPath": "dist/packages/pieces/community/instantly",
-              "tsConfig": "packages/pieces/community/instantly/tsconfig.lib.json",
-              "packageJson": "packages/pieces/community/instantly/package.json",
-              "main": "packages/pieces/community/instantly/src/index.ts",
-              "assets": ["packages/pieces/community/instantly/*.md"],
+              "outputPath": "dist/packages/pieces/community/instantly-ai",
+              "tsConfig": "packages/pieces/community/instantly-ai/tsconfig.lib.json",
+              "packageJson": "packages/pieces/community/instantly-ai/package.json",
+              "main": "packages/pieces/community/instantly-ai/src/index.ts",
+              "assets": ["packages/pieces/community/instantly-ai/*.md"],
               "buildableProjectDepsInPackageJsonType": "dependencies",
               "updateBuildableProjectDepsInPackageJson": true
           }

@@ -1,10 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { InstantlyCommon } from '../common';
-import { instantlyAuth } from '../../index';
+import { makeRequest } from '../common/client';
+import { instantlyAiAuth } from '../../index';
 
 export const replyToEmailAction = createAction({
-  auth: instantlyAuth,
+  auth: instantlyAiAuth,
   name: 'reply_to_email',
   displayName: 'Reply to Email',
   description: 'Send a reply to a Unibox email in Instantly',
@@ -71,13 +71,11 @@ export const replyToEmailAction = createAction({
       payload.attachments = attachments;
     }
 
-    const response = await InstantlyCommon.makeRequest({
+    return await makeRequest({
       endpoint: `unibox/emails/${email_id}/reply`,
       method: HttpMethod.POST,
       apiKey: apiKey as string,
       body: payload,
     });
-
-    return response;
   },
 });

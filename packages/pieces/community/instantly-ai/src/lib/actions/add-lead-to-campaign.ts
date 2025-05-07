@@ -1,10 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { InstantlyCommon } from '../common';
-import { instantlyAuth } from '../../index';
+import { makeRequest } from '../common/client';
+import { instantlyAiAuth } from '../../index';
 
 export const addLeadToCampaignAction = createAction({
-  auth: instantlyAuth,
+  auth: instantlyAiAuth,
   name: 'add_lead_to_campaign',
   displayName: 'Add Lead to Campaign',
   description: 'Add a specific lead to a campaign or lead list in Instantly',
@@ -95,13 +95,11 @@ export const addLeadToCampaignAction = createAction({
       ? `campaigns/${campaign_id}/leads`
       : `lead-lists/${list_id}/leads`;
 
-    const response = await InstantlyCommon.makeRequest({
+    return await makeRequest({
       endpoint,
       method: HttpMethod.POST,
       apiKey: apiKey as string,
       body: { leads: [lead] },
     });
-
-    return response;
   },
 });

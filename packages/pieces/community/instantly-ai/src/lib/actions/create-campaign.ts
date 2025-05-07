@@ -1,10 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { InstantlyCommon } from '../common';
-import { instantlyAuth } from '../../index';
+import { makeRequest } from '../common/client';
+import { instantlyAiAuth } from '../../index';
 
 export const createCampaignAction = createAction({
-  auth: instantlyAuth,
+  auth: instantlyAiAuth,
   name: 'create_campaign',
   displayName: 'Create Campaign',
   description: 'Create a new cold email campaign in Instantly',
@@ -77,13 +77,11 @@ export const createCampaignAction = createAction({
       payload.list_id = list_id;
     }
 
-    const response = await InstantlyCommon.makeRequest({
+    return await makeRequest({
       endpoint: 'campaigns',
       method: HttpMethod.POST,
       apiKey: apiKey as string,
       body: payload,
     });
-
-    return response;
   },
 });

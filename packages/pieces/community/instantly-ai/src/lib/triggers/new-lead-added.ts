@@ -1,10 +1,10 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { instantlyAuth } from '../../index';
+import { instantlyAiAuth } from '../../index';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { InstantlyCommon } from '../common';
+import { makeRequest } from '../common/client';
 
 export const newLeadAddedTrigger = createTrigger({
-  auth: instantlyAuth,
+  auth: instantlyAiAuth,
   name: 'new_lead_added',
   displayName: 'New Lead Added',
   description: 'Triggers when a lead is added to a campaign or list',
@@ -60,7 +60,7 @@ export const newLeadAddedTrigger = createTrigger({
 
     let endpoint: string;
     let sourceType: 'campaign' | 'list';
-    let sourceName: string = '';
+    let sourceName = '';
 
     if (campaign_id) {
       endpoint = `campaigns/${campaign_id}/leads`;
@@ -68,7 +68,7 @@ export const newLeadAddedTrigger = createTrigger({
 
       // Fetch campaign name
       try {
-        const campaignResponse = await InstantlyCommon.makeRequest({
+        const campaignResponse = await makeRequest({
           endpoint: `campaigns/${campaign_id}`,
           method: HttpMethod.GET,
           apiKey: apiKey as string,
@@ -86,7 +86,7 @@ export const newLeadAddedTrigger = createTrigger({
 
       // Fetch list name
       try {
-        const listResponse = await InstantlyCommon.makeRequest({
+        const listResponse = await makeRequest({
           endpoint: `lead-lists/${list_id}`,
           method: HttpMethod.GET,
           apiKey: apiKey as string,
@@ -104,7 +104,7 @@ export const newLeadAddedTrigger = createTrigger({
     }
 
     // Fetch leads created since last check
-    const response = await InstantlyCommon.makeRequest({
+    const response = await makeRequest({
       endpoint,
       method: HttpMethod.GET,
       apiKey: apiKey as string,

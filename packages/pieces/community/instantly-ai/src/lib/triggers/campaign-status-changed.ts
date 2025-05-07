@@ -1,10 +1,10 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { instantlyAuth } from '../../index';
+import { instantlyAiAuth } from '../../index';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { InstantlyCommon } from '../common';
+import { makeRequest } from '../common/client';
 
 export const campaignStatusChangedTrigger = createTrigger({
-  auth: instantlyAuth,
+  auth: instantlyAiAuth,
   name: 'campaign_status_changed',
   displayName: 'Campaign Status Changed',
   description: 'Triggers when a campaign changes status (e.g., from paused to active)',
@@ -66,7 +66,7 @@ export const campaignStatusChangedTrigger = createTrigger({
     const endpoint = 'campaigns';
 
     // Fetch campaigns updated since last check
-    const response = await InstantlyCommon.makeRequest({
+    const response = await makeRequest({
       endpoint,
       method: HttpMethod.GET,
       apiKey: apiKey as string,
