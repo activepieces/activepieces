@@ -234,16 +234,15 @@ export const BranchListItem = ({
           <TooltipContent side="bottom">{t('Duplicate')}</TooltipContent>
         </Tooltip>
         <Tooltip>
-        <TooltipTrigger asChild>
-
-        <SortableDragHandle
-          variant="ghost"
-          size="icon"
-          disabled={readonly}
-          className={'shrink-0 size-7'}
-        >
-          <DragHandleDots2Icon className="size-4" aria-hidden="true" />
-          </SortableDragHandle>
+          <TooltipTrigger asChild>
+            <SortableDragHandle
+              variant="ghost"
+              size="icon"
+              disabled={readonly}
+              className={'shrink-0 size-7'}
+            >
+              <DragHandleDots2Icon className="size-4" aria-hidden="true" />
+            </SortableDragHandle>
           </TooltipTrigger>
           <TooltipContent side="bottom">{t('Move')}</TooltipContent>
         </Tooltip>
