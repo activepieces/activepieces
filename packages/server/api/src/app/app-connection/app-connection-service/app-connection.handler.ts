@@ -1,10 +1,10 @@
 import { exceptionHandler } from '@activepieces/server-shared'
-import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, assertNotNullOrUndefined, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, isNil, PlatformId, PopulatedFlow, ProjectId, UserId } from '@activepieces/shared'
+import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, assertNotNullOrUndefined, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, isNil, PlatformId, PopulatedFlow, ProjectId, UserId } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { APArrayContains } from '../../database/database-connection'
 import { flowService } from '../../flows/flow/flow.service'
-import { flowVersionRepo, flowVersionService } from '../../flows/flow-version/flow-version.service'
+import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { encryptUtils } from '../../helper/encryption'
 import { distributedLock } from '../../helper/lock'
 import { projectService } from '../../project/project-service'
@@ -25,7 +25,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
             })
             // Don't Change the order of the following two functions
             await handleLockedVersion(flow, userId, flow.projectId, project.platformId, appConnection, newAppConnection, log)
-            await handleDraftVersion(lastVersion, userId, flow.projectId, project.platformId, appConnection, newAppConnection, log)
+            await handleDraftVersion(flow, lastVersion, userId, flow.projectId, project.platformId, appConnection, newAppConnection, log)
         }))
     },
 
@@ -151,12 +151,13 @@ async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectI
     const lastPublishedVersion = await flowVersionService(log).getLatestVersion(flow.id, FlowVersionState.LOCKED)
     assertNotNullOrUndefined(lastPublishedVersion, `Last published version not found for flow ${flow.id}`)
 
-    await flowVersionService(log).applyOperation({
-        userId,
+    await flowService(log).update({
+        id: flow.id,
         projectId,
         platformId,
-        flowVersion: lastPublishedVersion,
-        userOperation: {
+        lock: true,
+        userId,
+        operation: {
             type: FlowOperationType.IMPORT_FLOW,
             request: replaceConnectionInFlowVersion(lastPublishedVersion, appConnection, newAppConnection),
         },
@@ -175,20 +176,23 @@ async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectI
     })
 }
 
-async function handleDraftVersion(lastVersion: FlowVersion, userId: UserId, projectId: ProjectId, platformId: PlatformId, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData, log: FastifyBaseLogger) {
+async function handleDraftVersion(flow: Flow, lastVersion: FlowVersion, userId: UserId, projectId: ProjectId, platformId: PlatformId, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData, log: FastifyBaseLogger) {
     if (lastVersion.state !== FlowVersionState.DRAFT) {
         return
     }
-    await flowVersionService(log).applyOperation({
-        userId,
+
+    await flowService(log).update({
+        id: flow.id,
         projectId,
         platformId,
-        flowVersion: lastVersion,
-        userOperation: {
+        lock: true,
+        userId,
+        operation: {
             type: FlowOperationType.IMPORT_FLOW,
             request: replaceConnectionInFlowVersion(lastVersion, appConnection, newAppConnection),
         },
     })
+
 }
 
 function replaceConnectionInFlowVersion(flowVersion: FlowVersion, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData) {
