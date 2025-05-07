@@ -35,7 +35,7 @@ export const replyToConversation = createAction({
     const dustAuth = auth as DustAuthType;
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${DUST_BASE_URL[dustAuth.region || "us"]}/${
+      url: `${DUST_BASE_URL[dustAuth.region || 'us']}/${
         dustAuth.workspaceId
       }/assistant/conversations/${propsValue.conversationId}/messages`,
       headers: {
