@@ -1,11 +1,11 @@
-import { SwapBranchRequest } from ".";
+import { MoveBranchRequest } from ".";
 import { ActionType, BranchExecutionType } from "../actions/action";
 import { FlowVersion } from "../flow-version";
 import { flowStructureUtil } from "../util/flow-structure-util";
 
 
 const isIndexWithinBounds = (index: number, arrayLength:number) => index >= 0 && index < arrayLength;
-export function _swapBranch(flowVersion: FlowVersion, request: SwapBranchRequest): FlowVersion {
+export function _moveBranch(flowVersion: FlowVersion, request: MoveBranchRequest): FlowVersion {
     return flowStructureUtil.transferFlow(flowVersion, (stepToUpdate) => {
         if (stepToUpdate.name !== request.stepName || stepToUpdate.type !== ActionType.ROUTER) {
             return stepToUpdate
@@ -17,14 +17,12 @@ export function _swapBranch(flowVersion: FlowVersion, request: SwapBranchRequest
         if(routerStep.settings.branches[request.sourceBranchIndex].branchType === BranchExecutionType.FALLBACK || routerStep.settings.branches[request.targetBranchIndex].branchType === BranchExecutionType.FALLBACK) {
             return stepToUpdate
         }
-        const sourceBranch = routerStep.settings.branches[request.sourceBranchIndex];
-        const targetBranch = routerStep.settings.branches[request.targetBranchIndex];
-        routerStep.settings.branches[request.sourceBranchIndex] = targetBranch;
-        routerStep.settings.branches[request.targetBranchIndex] = sourceBranch;
-        const sourceBranchChildren = routerStep.children[request.sourceBranchIndex];
-        const targetBranchChildren = routerStep.children[request.targetBranchIndex];
-        routerStep.children[request.sourceBranchIndex] = targetBranchChildren;
-        routerStep.children[request.targetBranchIndex] = sourceBranchChildren;
+       const sourceBranch = routerStep.settings.branches[request.sourceBranchIndex];
+       routerStep.settings.branches.splice(request.sourceBranchIndex, 1);
+       routerStep.settings.branches.splice(request.targetBranchIndex, 0, sourceBranch);
+       const sourceBranchChildren = routerStep.children[request.sourceBranchIndex];
+       routerStep.children.splice(request.sourceBranchIndex, 1);
+       routerStep.children.splice(request.targetBranchIndex, 0, sourceBranchChildren);
         return routerStep;
     })
 

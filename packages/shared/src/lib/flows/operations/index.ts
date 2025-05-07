@@ -20,7 +20,7 @@ import { _getOperationsForPaste } from './paste-operations'
 import { _skipAction } from './skip-action'
 import { _updateAction } from './update-action'
 import { _updateTrigger } from './update-trigger'
-import { _swapBranch } from './swap-branch'
+import { _moveBranch } from './move-branch'
 
 
 export enum FlowOperationType {
@@ -42,7 +42,7 @@ export enum FlowOperationType {
     DUPLICATE_BRANCH = 'DUPLICATE_BRANCH',
     SET_SKIP_ACTION = 'SET_SKIP_ACTION',
     UPDATE_METADATA = 'UPDATE_METADATA',
-    SWAP_BRANCH = 'SWAP_BRANCH',
+    MOVE_BRANCH = 'MOVE_BRANCH',
 }
 
 export const DeleteBranchRequest = Type.Object({
@@ -55,12 +55,12 @@ export const AddBranchRequest = Type.Object({
     conditions: Type.Optional(Type.Array(Type.Array(BranchCondition))),
     branchName: Type.String(),
 })
-export const SwapBranchRequest = Type.Object({
+export const MoveBranchRequest = Type.Object({
     sourceBranchIndex: Type.Number(),
     targetBranchIndex: Type.Number(),
     stepName: Type.String(),
 })
-export type SwapBranchRequest = Static<typeof SwapBranchRequest>
+export type MoveBranchRequest = Static<typeof MoveBranchRequest>
 
 export const SkipActionRequest = Type.Object({
     names: Type.Array(Type.String()),
@@ -337,8 +337,8 @@ export const FlowOperationRequest = Type.Union([
     ),
     Type.Object(
         {
-            type: Type.Literal(FlowOperationType.SWAP_BRANCH),
-            request: SwapBranchRequest,
+            type: Type.Literal(FlowOperationType.MOVE_BRANCH),
+            request: MoveBranchRequest,
         },
     ),
 ])
@@ -427,8 +427,8 @@ export const flowOperations = {
                 clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }
-            case FlowOperationType.SWAP_BRANCH: {
-                clonedVersion = _swapBranch(clonedVersion, operation.request)
+            case FlowOperationType.MOVE_BRANCH: {
+                clonedVersion = _moveBranch(clonedVersion, operation.request)
                 clonedVersion = flowPieceUtil.makeFlowAutoUpgradable(clonedVersion)
                 break
             }

@@ -362,10 +362,10 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
       }
     case FlowOperationType.UPDATE_METADATA:
       return `Updated metadata for flow "${event.data.flowVersion.displayName}".`;
-    case FlowOperationType.SWAP_BRANCH:
-      return `Swapped branch number ${
+    case FlowOperationType.MOVE_BRANCH:
+      return `Moved branch number ${
         event.data.request.request.sourceBranchIndex + 1
-      } and ${
+      } to ${
         event.data.request.request.targetBranchIndex + 1
       } in flow "${event.data.flowVersion.displayName}" for the step "${
         event.data.request.request.stepName

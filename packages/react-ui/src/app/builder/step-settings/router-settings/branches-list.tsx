@@ -35,7 +35,7 @@ type BranchListProps = {
   errors: unknown[];
   readonly: boolean;
   branchNameChanged: (index: number, name: string) => void;
-  swapBranches: ({
+  moveBranch: ({
     sourceIndex,
     targetIndex,
   }: {
@@ -51,7 +51,7 @@ export const BranchesList = ({
   deleteBranch,
   readonly,
   branchNameChanged,
-  swapBranches,
+  moveBranch,
 }: BranchListProps) => {
   const [branchNameEditingIndex, setBranchNameEditingIndex] = useState<
     number | null
@@ -64,7 +64,7 @@ export const BranchesList = ({
         branch,
       }))}
       onMove={({ activeIndex, overIndex }) => {
-        swapBranches({ sourceIndex: activeIndex, targetIndex: overIndex });
+        moveBranch({ sourceIndex: activeIndex, targetIndex: overIndex });
       }}
     >
       {step.settings.branches.map((branch, index) =>
@@ -173,7 +173,7 @@ export const BranchListItem = ({
               ></InvalidStepIcon>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              {t('Incomplete branch settings')}
+              {t('Incomplete settings')}
             </TooltipContent>
           </Tooltip>
         </div>
@@ -199,7 +199,7 @@ export const BranchListItem = ({
                 <Trash className="w-4 h-4 stroke-destructive"></Trash>
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">{t('Delete Branch')}</TooltipContent>
+            <TooltipContent side="bottom">{t('Delete')}</TooltipContent>
           </Tooltip>
         )}
         <Tooltip>
@@ -215,7 +215,7 @@ export const BranchListItem = ({
               <Pencil className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">{t('Rename Branch')}</TooltipContent>
+          <TooltipContent side="bottom">{t('Rename')}</TooltipContent>
         </Tooltip>
 
         <Tooltip>
@@ -231,8 +231,11 @@ export const BranchListItem = ({
               <CopyPlus className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">{t('Duplicate Branch')}</TooltipContent>
+          <TooltipContent side="bottom">{t('Duplicate')}</TooltipContent>
         </Tooltip>
+        <Tooltip>
+        <TooltipTrigger asChild>
+
         <SortableDragHandle
           variant="ghost"
           size="icon"
@@ -240,7 +243,10 @@ export const BranchListItem = ({
           className={'shrink-0 size-7'}
         >
           <DragHandleDots2Icon className="size-4" aria-hidden="true" />
-        </SortableDragHandle>
+          </SortableDragHandle>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{t('Move')}</TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );

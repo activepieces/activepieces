@@ -56,7 +56,7 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
     useFormContext<Omit<RouterAction, 'children' | 'nextAction'>>();
 
   //To validate array items we need to use form.trigger()
-  const { insert, remove, swap } = useFieldArray({
+  const { insert, remove, move } = useFieldArray({
     control,
     name: 'settings.branches',
   });
@@ -119,9 +119,9 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
           form.trigger();
           break;
         }
-        case FlowOperationType.SWAP_BRANCH: {
+        case FlowOperationType.MOVE_BRANCH: {
           if (operation.request.stepName !== step.name) return;
-          swap(
+          move(
             operation.request.sourceBranchIndex,
             operation.request.targetBranchIndex,
           );
@@ -187,9 +187,9 @@ export const RouterSettings = memo(({ readonly }: { readonly: boolean }) => {
               });
             }}
             deleteBranch={deleteBranch}
-            swapBranches={({ sourceIndex, targetIndex }) => {
+            moveBranch={({ sourceIndex, targetIndex }) => {
               applyOperation({
-                type: FlowOperationType.SWAP_BRANCH,
+                type: FlowOperationType.MOVE_BRANCH,
                 request: {
                   stepName: step.name,
                   sourceBranchIndex: sourceIndex,
