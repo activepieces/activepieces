@@ -86,7 +86,7 @@ interface DataTableProps<
   ) => void;
   isLoading: boolean;
   filters?: F[];
-  FolderFilterComponenet?: React.ReactElement;
+  customFilters?: React.ReactNode[];
   onSelectedRowsChange?: (rows: RowDataWithActions<TData>[]) => void;
   actions?: DataTableAction<TData>[];
   hidePagination?: boolean;
@@ -121,7 +121,7 @@ export function DataTable<
   emptyStateTextTitle,
   emptyStateTextDescription,
   emptyStateIcon,
-  FolderFilterComponenet
+  customFilters
 }: DataTableProps<TData, TValue, Keys, F>) {
   const columns =
     actions.length > 0
@@ -258,7 +258,9 @@ export function DataTable<
                     options={filter.options}
                   />
                 ))}
-              {FolderFilterComponenet && FolderFilterComponenet}
+              {customFilters && customFilters.map((filter, idx) => (
+                <React.Fragment key={idx}>{filter}</React.Fragment>
+              ))}
             </div>
             {bulkActions.length > 0 && (
               <DataTableBulkActions

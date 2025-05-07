@@ -183,7 +183,6 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
 
   return (
     <div className="flex items-center space-x-2">
-
       <Separator orientation='vertical' className='h-6' />
       <Button
         variant={isInAllFlows ? "secondary" : "ghost"}
