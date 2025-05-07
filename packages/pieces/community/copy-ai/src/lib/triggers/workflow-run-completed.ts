@@ -1,50 +1,81 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { makeRequest } from '../common/client';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { isNil } from '@activepieces/shared';
+import { copyAiAuth } from '../../index';
 
-const markdown = `
-To set up the Copy.ai webhook trigger, follow these steps:
 
-1. You can register webhook endpoints via the Copy.ai API to be notified about workflow events that happen in your workspace.
-2. Send a POST request to https://api.copy.ai/api/webhook.
-3. Payload will be a JSON object with the following properties:
-    - url: Activepieces webhook endpoint.
-    - event: Sends an event anytime a workflow run is completed.
-4. You can find the Activepieces webhook endpoint in the Activepieces dashboard.
-`;
-
-export const workflowRunCompleted = createTrigger({
+export const workflowRunCompletedTrigger = createTrigger({
+    auth:copyAiAuth,
     name: 'workflow_run_completed',
     displayName: 'Workflow Run Completed',
-    description: 'Triggered when a workflow run is completed in Copy.ai',
+    description: 'Triggered when a workflow run is completed.',
     props: {
-        md: Property.MarkDown({
-            value: markdown,
-        }),
+        workflowId: Property.ShortText({
+			displayName: 'Workflow ID',
+			required: true,
+		}),
     },
     type: TriggerStrategy.WEBHOOK,
     sampleData: {
-        method:"POST",
-        headers: {
-            "Content-Type": "application/json",
+        "status": "COMPLETE",
+        "input": {
+          "should_run": "Test"
         },
-        body: {
-            status: "COMPLETE",
-            input: {
-                "text": "Sample text from Copy.ai"
-            },
-            output: {
-                "final_output": "Some text from Copy.ai",
-                "send_api_request": "Another text from Copy.ai"
-            },
-            type:"workflowRun.completed"
+        "toolKey": null,
+        "metadata": {
+          "webapp": true
         },
-    },
+        "error": null,
+        "createdAt": "2025-05-07T09:31:40.545Z",
+        "id": "WRUN-7515d814-3890-4ba0-ae32-fa6abcf76432",
+        "workflowRunId": "WRUN-7515d814-3890-4ba0-ae32-fa6abcf76432",
+        "workflowId": "WCFG-506c46fb-6459-4e23-979b-875444170626",
+        "credits": 1,
+        "output": {
+          "final_output": "",
+          "send_api_request": "{}",
+        },
+        "type": "workflowRun.completed"
+      },
     async onEnable(context) {
-        // The webhook URL will be displayed in the UI via Markdown
+        const response = await makeRequest(
+            context.auth as string,
+            HttpMethod.POST,
+            '/webhook',
+            {
+                "url": context.webhookUrl,
+                "eventType": "workflowRun.completed",
+                "workflowId": context.propsValue.workflowId
+              }
+
+        ) as CreateWebhookResponse;
+
+        await context.store.put<{webhookId:string}>('workflow_run_completed',{webhookId:response.data.id})
+       
     },
     async onDisable(context) {
-        // No action needed, the webhook can be manually removed from Copy.ai's dashboard
+        const response = await context.store.get<{webhookId:string}>('workflow_run_completed');
+        if(!isNil(response) && !isNil(response.webhookId))
+        {
+             await makeRequest(
+                context.auth as string,
+                HttpMethod.DELETE,
+                `/webhook/${response.webhookId}`,
+                {}
+            )
+
+        }
     },
     async run(context) {
-        return [context.payload];
+        return [context.payload.body];
     },
 });
+
+
+type CreateWebhookResponse = {
+    status:string;
+    data:{
+        id:string
+    }
+}
