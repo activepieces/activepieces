@@ -35,7 +35,7 @@ export const netsuiteAuth = PieceAuth.CustomAuth({
 });
 
 export const netsuite = createPiece({
-  displayName: 'Netsuite',
+  displayName: 'NetSuite',
   logoUrl: 'https://cdn.activepieces.com/pieces/netsuite.png',
   categories:[PieceCategory.SALES_AND_CRM],
   auth: netsuiteAuth,
