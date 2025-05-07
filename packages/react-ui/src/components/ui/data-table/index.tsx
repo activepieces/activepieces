@@ -61,6 +61,7 @@ export type DataTableFilter<Keys extends string> = {
   }[];
 };
 
+
 type DataTableAction<TData extends DataWithId> = (
   row: RowDataWithActions<TData>,
 ) => JSX.Element;
@@ -85,6 +86,7 @@ interface DataTableProps<
   ) => void;
   isLoading: boolean;
   filters?: F[];
+  customFilters?: React.ReactNode[];
   onSelectedRowsChange?: (rows: RowDataWithActions<TData>[]) => void;
   actions?: DataTableAction<TData>[];
   hidePagination?: boolean;
@@ -119,30 +121,31 @@ export function DataTable<
   emptyStateTextTitle,
   emptyStateTextDescription,
   emptyStateIcon,
+  customFilters
 }: DataTableProps<TData, TValue, Keys, F>) {
   const columns =
     actions.length > 0
       ? columnsInitial.concat([
-          {
-            accessorKey: '__actions',
-            header: ({ column }) => (
-              <DataTableColumnHeader column={column} title="" />
-            ),
-            cell: ({ row }) => {
-              return (
-                <div className="flex justify-end gap-4">
-                  {actions.map((action, index) => {
-                    return (
-                      <React.Fragment key={index}>
-                        {action(row.original)}
-                      </React.Fragment>
-                    );
-                  })}
-                </div>
-              );
-            },
+        {
+          accessorKey: '__actions',
+          header: ({ column }) => (
+            <DataTableColumnHeader column={column} title="" />
+          ),
+          cell: ({ row }) => {
+            return (
+              <div className="flex justify-end gap-4">
+                {actions.map((action, index) => {
+                  return (
+                    <React.Fragment key={index}>
+                      {action(row.original)}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            );
           },
-        ])
+        },
+      ])
       : columnsInitial;
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -255,6 +258,9 @@ export function DataTable<
                     options={filter.options}
                   />
                 ))}
+              {customFilters && customFilters.map((filter, idx) => (
+                <React.Fragment key={idx}>{filter}</React.Fragment>
+              ))}
             </div>
             {bulkActions.length > 0 && (
               <DataTableBulkActions
@@ -282,9 +288,9 @@ export function DataTable<
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   );
                 })}
