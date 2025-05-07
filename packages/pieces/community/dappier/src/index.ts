@@ -26,7 +26,6 @@ export const dappier = createPiece({
   triggers: [],
   categories: [
     PieceCategory.ARTIFICIAL_INTELLIGENCE,
-    PieceCategory.BUSINESS_INTELLIGENCE,
-    PieceCategory.UNIVERSAL_AI
+    PieceCategory.BUSINESS_INTELLIGENCE
   ]
 });
