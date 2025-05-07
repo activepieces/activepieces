@@ -166,9 +166,6 @@
       "@activepieces/piece-confluence": [
         "packages/pieces/community/confluence/src/index.ts"
       ],
-      "@activepieces/piece-copy-ai": [
-        "packages/pieces/community/copy-ai/src/index.ts"
-      ],
       "@activepieces/piece-connections": [
         "packages/pieces/community/connections/src/index.ts"
       ],
@@ -183,6 +180,9 @@
       ],
       "@activepieces/piece-convertkit": [
         "packages/pieces/community/convertkit/src/index.ts"
+      ],
+      "@activepieces/piece-copy-ai": [
+        "packages/pieces/community/copy-ai/src/index.ts"
       ],
       "@activepieces/piece-crypto": [
         "packages/pieces/community/crypto/src/index.ts"
@@ -244,6 +244,9 @@
       ],
       "@activepieces/piece-firecrawl": [
         "packages/pieces/community/firecrawl/src/index.ts"
+      ],
+      "@activepieces/piece-fireflies-ai": [
+        "packages/pieces/community/fireflies-ai/src/index.ts"
       ],
       "@activepieces/piece-fliqr-ai": [
         "packages/pieces/community/fliqr-ai/src/index.ts"
