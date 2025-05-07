@@ -1,68 +1,34 @@
 import { exceptionHandler } from '@activepieces/server-shared'
-import { apId, AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, flowStructureUtil, FlowVersionState, isNil, LATEST_SCHEMA_VERSION, PopulatedFlow, ProjectId, UserId } from '@activepieces/shared'
+import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, assertNotNullOrUndefined, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, isNil, PlatformId, PopulatedFlow, ProjectId, UserId } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { APArrayContains } from '../../database/database-connection'
+import { flowService } from '../../flows/flow/flow.service'
 import { flowVersionRepo, flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { encryptUtils } from '../../helper/encryption'
 import { distributedLock } from '../../helper/lock'
+import { projectService } from '../../project/project-service'
 import { AppConnectionSchema } from '../app-connection.entity'
 import { appConnectionsRepo } from './app-connection-service'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
 
-
 export const appConnectionHandler = (log: FastifyBaseLogger) => ({
-    async updateFlowsWithAppConnection(flows: PopulatedFlow[], params: UpdateFlowsWithAppConnectionParams): Promise<PopulatedFlow[]> {
+    async updateFlowsWithAppConnection(flows: PopulatedFlow[], params: UpdateFlowsWithAppConnectionParams): Promise<void> {
         const { appConnection, newAppConnection, userId } = params
 
-        const updatedFlowVersions = flows.map(flow => flowStructureUtil.transferFlow(flow.version, (step) => {
-            if (step.settings?.input?.auth?.includes(appConnection.externalId)) {
-                return {
-                    ...step,
-                    settings: {
-                        ...step.settings,
-                        input: {
-                            ...step.settings?.input,
-                            auth: step.settings.input.auth.replaceAll(appConnection.externalId, newAppConnection.externalId),
-                        },
-                    },
-                }
-            }
-            return step
-        }))
-    
-        await Promise.all(updatedFlowVersions.map(async (flowVersion) => {
+        await Promise.all(flows.map(async (flow) => {
+            const project = await projectService.getOneOrThrow(flow.projectId)
             const lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
-                flowId: flowVersion.flowId,
+                flowId: flow.id,
                 versionId: undefined,
             })
-            if (lastVersion.state === FlowVersionState.LOCKED) {
-                const newVersion = {
-                    id: apId(),
-                    displayName: flowVersion.displayName,
-                    flowId: flowVersion.flowId,
-                    trigger: flowVersion.trigger,
-                    schemaVersion: isNil(flowVersion.schemaVersion) ? LATEST_SCHEMA_VERSION : flowVersion.schemaVersion + 1,
-                    connectionIds: flowStructureUtil.extractConnectionIds(flowVersion),
-                    updatedBy: userId,
-                    valid: false,
-                    state: FlowVersionState.DRAFT,
-                }
-                return flowVersionRepo().save(newVersion)
-            }
-            return flowVersionRepo().update(lastVersion.id, {
-                trigger: JSON.parse(JSON.stringify(flowVersion.trigger)),
-                connectionIds: flowStructureUtil.extractConnectionIds(flowVersion),
-            })
+            const lastDraftVersion = await flowVersionService(log).getLatestVersion(flow.id, FlowVersionState.DRAFT)
+
+            // Don't Change the order of the following two functions
+            await handleLockedVersion(flow, lastVersion, userId, flow.projectId, project.platformId, appConnection, newAppConnection, log)
+            await handleDraftVersion(flow, lastVersion, lastDraftVersion, userId, flow.projectId, project.platformId, appConnection, newAppConnection, log)
         }))
-
-        const updatedFlows = await Promise.all(flows.map(async (flow) => {
-            const updatedVersion = updatedFlowVersions.find(v => v.id === flow.version.id)
-            return updatedVersion ? { ...flow, version: updatedVersion } : null
-        })).then(flows => flows.filter((flow): flow is NonNullable<typeof flow> => flow !== null))
-
-        return updatedFlows
     },
 
     async refresh(connection: AppConnection, projectId: ProjectId, log: FastifyBaseLogger): Promise<AppConnection> {
@@ -178,6 +144,109 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
     },
 })
 
+
+async function handleLockedVersion(flow: PopulatedFlow, lastVersion: FlowVersion, userId: UserId, projectId: ProjectId, platformId: PlatformId, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData, log: FastifyBaseLogger) {
+    if (isNil(flow.publishedVersionId)) {
+        return
+    }
+
+    let newLastVersion = lastVersion
+    if (lastVersion.state === FlowVersionState.LOCKED) {
+        newLastVersion = await flowVersionService(log).createEmptyVersion(flow.id, {
+            displayName: lastVersion.displayName,
+        })
+    }
+
+    const lastPublishedVersion = lastVersion.state === FlowVersionState.LOCKED ? 
+        lastVersion :
+        await flowVersionService(log).getLatestVersion(flow.id, FlowVersionState.LOCKED)
+    assertNotNullOrUndefined(lastPublishedVersion, `Last published version not found for flow ${flow.id}`)
+
+    const updatedFlowVersion = getUpdatedTriggerFlowVersion(lastPublishedVersion, appConnection, newAppConnection)
+    const updatedConnectionIds = flowStructureUtil.extractConnectionIds(updatedFlowVersion)
+
+    const lastVersionWithArtifacts = {
+        ...lastPublishedVersion,
+        trigger: updatedFlowVersion.trigger,
+        connectionIds: updatedConnectionIds,
+    }
+    await flowVersionService(log).applyOperation({
+        userId,
+        projectId,
+        platformId,
+        flowVersion: newLastVersion,
+        userOperation: {
+            type: FlowOperationType.IMPORT_FLOW,
+            request: lastVersionWithArtifacts,
+        },
+    })
+
+    await flowService(log).update({
+        id: flow.id,
+        projectId,
+        platformId,
+        lock: true,
+        userId,
+        operation: {
+            type: FlowOperationType.LOCK_AND_PUBLISH,
+            request: {},
+        },
+    })
+}
+
+async function handleDraftVersion(flow: PopulatedFlow, oldLastVersion: FlowVersion, lastDraftVersion: FlowVersion | null, userId: UserId, projectId: ProjectId, platformId: PlatformId, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData, log: FastifyBaseLogger) {
+    if (isNil(lastDraftVersion)) {
+        return
+    }
+
+    if (oldLastVersion.state === FlowVersionState.LOCKED) {
+        await flowVersionRepo().update(lastDraftVersion.id, {
+            trigger: JSON.parse(JSON.stringify(oldLastVersion.trigger)),
+            connectionIds: flowStructureUtil.extractConnectionIds(oldLastVersion),
+        })
+        return
+    }
+    const newLastVersion = await flowVersionService(log).createEmptyVersion(flow.id, {
+        displayName: lastDraftVersion.displayName,
+    })
+    
+    const updatedFlowVersion = getUpdatedTriggerFlowVersion(lastDraftVersion, appConnection, newAppConnection)
+    const updatedConnectionIds = flowStructureUtil.extractConnectionIds(updatedFlowVersion)
+
+    const lastDraftVersionWithArtifacts = {
+        ...lastDraftVersion,
+        trigger: updatedFlowVersion.trigger,
+        connectionIds: updatedConnectionIds,
+    }
+    await flowVersionService(log).applyOperation({
+        userId,
+        projectId,
+        platformId,
+        flowVersion: newLastVersion,
+        userOperation: {
+            type: FlowOperationType.IMPORT_FLOW,
+            request: lastDraftVersionWithArtifacts,
+        },
+    })
+}
+
+function getUpdatedTriggerFlowVersion(flowVersion: FlowVersion, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData) {
+    return flowStructureUtil.transferFlow(flowVersion, (step) => {
+        if (step.settings?.input?.auth?.includes(appConnection.externalId)) {
+            return {
+                ...step,
+                settings: {
+                    ...step.settings,
+                    input: {
+                        ...step.settings?.input,
+                        auth: step.settings.input.auth.replaceAll(appConnection.externalId, newAppConnection.externalId),
+                    },
+                },
+            }
+        }
+        return step
+    })
+}
 
 type UpdateFlowsWithAppConnectionParams = {
     appConnection: AppConnectionWithoutSensitiveData
