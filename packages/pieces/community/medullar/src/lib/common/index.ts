@@ -2,9 +2,9 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
 
 export const medullarCommon = {
-  baseUrl: 'https://api.medullar.dev',
-  authUrl: 'https://api.medullar.dev/auth/v1',
-  exploratorUrl: 'https://api.medullar.dev/explorator/v1',
+  baseUrl: 'https://api.medullar.com',
+  authUrl: 'https://api.medullar.com/auth/v1',
+  exploratorUrl: 'https://api.medullar.com/explorator/v1',
 };
 
 export async function getUser(authentication: string) {
