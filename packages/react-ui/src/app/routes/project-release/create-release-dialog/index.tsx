@@ -30,6 +30,7 @@ import {
   DiffReleaseRequest,
   ProjectReleaseType,
   ProjectSyncPlan,
+  TableOperationType,
 } from '@activepieces/shared';
 
 import { OperationChange } from './operation-change';
@@ -68,7 +69,9 @@ const CreateReleaseDialogContent = ({
   setOpen,
   refetch,
 }: CreateReleaseDialogContentProps) => {
-  const isThereAnyChanges = plan?.operations && plan?.operations.length > 0;
+  const isThereAnyChanges =
+    (plan?.operations && plan?.operations.length > 0) ||
+    (plan?.tables && plan?.tables.length > 0);
   const { platform } = platformHooks.useCurrentPlatform();
   const { gitSync } = gitSyncHooks.useGitSync(
     authenticationSession.getProjectId()!,
@@ -181,40 +184,41 @@ const CreateReleaseDialogContent = ({
               </p>
             )}
           </div>
-
-          <div className="space-y-2 ">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2 py-2 border-b">
-                <Checkbox
-                  checked={selectedChanges.size === plan?.operations.length}
-                  onCheckedChange={handleSelectAll}
-                />
-                <Label className="text-sm font-medium">
-                  {t('Flows Changes')} ({selectedChanges.size}/
-                  {plan?.operations.length || 0})
-                </Label>
+          {plan?.operations && plan?.operations.length > 0 && (
+            <div className="space-y-2 ">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 py-2 border-b">
+                  <Checkbox
+                    checked={selectedChanges.size === plan?.operations.length}
+                    onCheckedChange={handleSelectAll}
+                  />
+                  <Label className="text-sm font-medium">
+                    {t('Flows Changes')} ({selectedChanges.size}/
+                    {plan?.operations.length || 0})
+                  </Label>
+                </div>
               </div>
+              <ScrollArea viewPortClassName="max-h-[15vh]">
+                {plan?.operations.map((operation) => (
+                  <OperationChange
+                    key={operation.flow.id}
+                    change={operation}
+                    selected={selectedChanges.has(operation.flow.id)}
+                    onSelect={(checked) => {
+                      const newSelectedChanges = new Set(selectedChanges);
+                      if (checked) {
+                        newSelectedChanges.add(operation.flow.id);
+                      } else {
+                        newSelectedChanges.delete(operation.flow.id);
+                      }
+                      setErrorMessage('');
+                      setSelectedChanges(newSelectedChanges);
+                    }}
+                  />
+                ))}
+              </ScrollArea>
             </div>
-            <ScrollArea viewPortClassName="max-h-[15vh]">
-              {plan?.operations.map((operation) => (
-                <OperationChange
-                  key={operation.flow.id}
-                  change={operation}
-                  selected={selectedChanges.has(operation.flow.id)}
-                  onSelect={(checked) => {
-                    const newSelectedChanges = new Set(selectedChanges);
-                    if (checked) {
-                      newSelectedChanges.add(operation.flow.id);
-                    } else {
-                      newSelectedChanges.delete(operation.flow.id);
-                    }
-                    setErrorMessage('');
-                    setSelectedChanges(newSelectedChanges);
-                  }}
-                />
-              ))}
-            </ScrollArea>
-          </div>
+          )}
           {plan?.connections && plan?.connections.length > 0 && (
             <div className="space-y-2">
               <div className="flex flex-col gap-2">
@@ -267,6 +271,43 @@ const CreateReleaseDialogContent = ({
               </div>
             </div>
           )}
+
+          {plan?.tables && plan?.tables.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-col justify -center gap-1 py-2 border-b">
+                  <Label className="text-sm font-medium">
+                    {t('Tables Changes')} ({plan?.tables?.length || 0})
+                  </Label>
+                </div>
+                <ScrollArea viewPortClassName="max-h-[16vh]">
+                  {plan?.tables.map((table, index) => (
+                    <div
+                      key={table.tableState.id}
+                      className="flex items-center gap-2 text-sm py-1"
+                    >
+                      {table.type === TableOperationType.UPDATE_TABLE && (
+                        <div className="flex items-center gap-2">
+                          <PencilIcon className="w-4 h-4 shrink-0" />
+                          <div className="flex items-center gap-1">
+                            <span>{table.tableState.name}</span>
+                          </div>
+                        </div>
+                      )}
+                      {table.type === TableOperationType.CREATE_TABLE && (
+                        <div className="flex items-center gap-2">
+                          <Plus className="w-4 h-4 shrink-0 text-success" />
+                          <span className="text-success">
+                            {table.tableState.name}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </ScrollArea>
+              </div>
+            </div>
+          )}
           {errorMessage && (
             <p className="text-sm text-destructive">{errorMessage}</p>
           )}
@@ -297,7 +338,7 @@ const CreateReleaseDialogContent = ({
                 form.setError('name', { message: 'Release name is required' });
                 error = true;
               }
-              if (selectedChanges.size === 0) {
+              if (selectedChanges.size === 0 && plan.tables.length === 0) {
                 setErrorMessage(
                   'Please select at least one change to include in the release',
                 );
