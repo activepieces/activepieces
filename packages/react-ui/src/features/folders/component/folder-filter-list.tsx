@@ -6,7 +6,9 @@ import {
   EllipsisVertical,
   Folder,
   FolderOpen,
+  Layers,
   Pencil,
+  Shapes,
   Trash2,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -44,10 +46,7 @@ const FolderIcon = ({ isFolderOpen }: { isFolderOpen: boolean }) => {
   return isFolderOpen ? (
     <FolderOpen
       className={cn(
-        'border-0 text-muted-foreground flex-shrink-0 w-4 h-4',
-        {
-          'text-primary': isFolderOpen,
-        },
+        'border-0 flex-shrink-0 w-4 h-4',
       )}
     />
   ) : (
@@ -190,6 +189,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
         onClick={() => updateSearchParams(undefined)}
         className="group h-8 border-dashed border"
       >
+        <Layers className="h-4 w-4 mr-2" />
         {t(`All`)}
         <span className='text-xs font-semibold ml-1'>({allFlowsCount})</span>
       </Button>
@@ -200,6 +200,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
         onClick={() => updateSearchParams('NULL')}
         className="group h-8 border-dashed border"
       >
+        <Shapes className="h-4 w-4 mr-2" />
         {t('Uncategorized')}
 
         <span className='text-xs font-semibold ml-1'>({foldersUtils.extractUncategorizedFlows(allFlowsCount, folders)})</span>
@@ -214,7 +215,8 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
           onClick={() => updateSearchParams(folder.id)}
           className="group whitespace-nowrap flex overflow-hidden items-center pl-3 pr-1 h-8 border border-dashed"
         >
-          <span className="mr-1">{folder.displayName}
+          <FolderIcon isFolderOpen={selectedFolderId === folder.id} />
+          <span className="mr-1 ml-2">{folder.displayName}
             <span className='text-xs font-semibold ml-1'>({folder.numberOfFlows})</span>
           </span>
           <FolderAction
