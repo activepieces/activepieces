@@ -1,0 +1,29 @@
+{
+  "name": "piece-instantly",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/instantly/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/instantly",
+        "tsConfig": "packages/pieces/community/instantly/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/instantly/package.json",
+        "main": "packages/pieces/community/instantly/src/index.ts",
+        "assets": ["packages/pieces/community/instantly/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/community/instantly/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
