@@ -1,0 +1,19 @@
+{
+  "name": "@activepieces/piece-copy-ai",
+  "version": "0.1.0",
+  "dependencies": {
+    "@activepieces/pieces-common": "^0.4.5",
+    "@activepieces/pieces-framework": "^0.8.1",
+    "@activepieces/shared": "^0.10.178",
+    "tslib": "^2.6.2"
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "author": "activepieces-community",
+  "license": "MIT",
+  "private": false,
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
