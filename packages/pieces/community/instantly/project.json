@@ -1,6 +1,6 @@
 {
   "name": "piece-instantly",
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/pieces/community/instantly/src",
   "projectType": "library",
   "targets": {
