@@ -42,7 +42,7 @@ export const findOpportunity = createAction({
   },
   async run(context) {
     const { search_by, search_value, status_type } = context.propsValue;
-    const api_key = context.auth.username;
+    const apiKey = context.auth;
 
     const queryParams: QueryParams = {
         _fields: 'id,lead_id,lead_name,status_id,status_label,status_type,pipeline_id,pipeline_name,user_id,user_name,contact_id,value,value_period,value_formatted,expected_value,annualized_value,annualized_expected_value,confidence,note,date_created,date_updated,date_won'
@@ -63,7 +63,7 @@ export const findOpportunity = createAction({
       method: HttpMethod.GET,
       url: `${CLOSE_API_URL}/opportunity/`,
       headers: {
-        'Authorization': 'Basic ' + Buffer.from(`${api_key}:`).toString('base64'),
+        'Authorization': 'Basic ' + Buffer.from(`${apiKey}:`).toString('base64'),
         'Accept': 'application/json',
       },
       queryParams: queryParams,

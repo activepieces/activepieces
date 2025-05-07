@@ -64,7 +64,7 @@ export const createOpportunity = createAction({
   },
   async run(context) {
     const { lead_id, note, confidence, status_id, value, value_period, user_id, contact_id, date_won } = context.propsValue;
-    const api_key = context.auth.username;
+    const apiKey = context.auth;
 
     const payload: any = {
       lead_id: lead_id,
@@ -90,7 +90,7 @@ export const createOpportunity = createAction({
       method: HttpMethod.POST,
       url: `${CLOSE_API_URL}/opportunity/`,
       headers: {
-        'Authorization': 'Basic ' + Buffer.from(`${api_key}:`).toString('base64'),
+        'Authorization': 'Basic ' + Buffer.from(`${apiKey}:`).toString('base64'),
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },

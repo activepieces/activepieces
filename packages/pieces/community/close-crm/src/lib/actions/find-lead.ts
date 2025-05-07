@@ -52,7 +52,7 @@ export const findLead = createAction({
   },
   async run(context) {
     const { search_field, search_term, lead_name_match_type, contact_email_match_type } = context.propsValue;
-    const api_key = context.auth.username; // BasicAuth username is the API key
+    const apiKey = context.auth; // Changed from context.auth.username
 
     let query_payload: any;
     const baseQuery = {
@@ -127,7 +127,7 @@ export const findLead = createAction({
       method: HttpMethod.POST,
       url: `${CLOSE_API_URL}/data/search/`,
       headers: {
-        'Authorization': 'Basic ' + Buffer.from(`${api_key}:`).toString('base64'),
+        'Authorization': 'Basic ' + Buffer.from(`${apiKey}:`).toString('base64'), // Changed api_key to apiKey
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },

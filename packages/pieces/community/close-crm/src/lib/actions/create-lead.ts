@@ -39,7 +39,7 @@ export const createLead = createAction({
   },
   async run(context) {
     const { name, url, description, status_id, contacts } = context.propsValue;
-    const api_key = context.auth.username;
+    const apiKey = context.auth;
 
     const payload: any = {
       name: name,
@@ -56,7 +56,7 @@ export const createLead = createAction({
       method: HttpMethod.POST,
       url: `${CLOSE_API_URL}/lead/`,
       headers: {
-        'Authorization': 'Basic ' + Buffer.from(`${api_key}:`).toString('base64'),
+        'Authorization': 'Basic ' + Buffer.from(`${apiKey}:`).toString('base64'),
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },

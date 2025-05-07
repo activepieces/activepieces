@@ -59,7 +59,7 @@ export const sendEmail = createAction({
   },
   async run(context) {
     const { lead_id, to_emails, subject, body_html, contact_id, sender, cc_emails, bcc_emails, user_id } = context.propsValue;
-    const api_key = context.auth.username;
+    const apiKey = context.auth;
 
     const payload: any = {
       lead_id: lead_id,
@@ -80,7 +80,7 @@ export const sendEmail = createAction({
       method: HttpMethod.POST,
       url: `${CLOSE_API_URL}/activity/email/`,
       headers: {
-        'Authorization': 'Basic ' + Buffer.from(`${api_key}:`).toString('base64'),
+        'Authorization': 'Basic ' + Buffer.from(`${apiKey}:`).toString('base64'),
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },

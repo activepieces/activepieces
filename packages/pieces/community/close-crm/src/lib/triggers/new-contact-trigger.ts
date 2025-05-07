@@ -23,11 +23,12 @@ export const newContactAdded = createTrigger({
   props: {},
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
+    const apiKey = context.auth;
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${CLOSE_API_URL}/webhook/`,
       headers: {
-        'Authorization': 'Basic ' + Buffer.from(`${context.auth.username}:`).toString('base64'),
+        'Authorization': 'Basic ' + Buffer.from(`${apiKey}:`).toString('base64'),
         'Content-Type': 'application/json',
       },
       body: {
@@ -47,13 +48,14 @@ export const newContactAdded = createTrigger({
     }
   },
   async onDisable(context) {
+    const apiKey = context.auth;
     const triggerData = await context.store.get<{ webhookId: string, signatureKey: string }>(TRIGGER_DATA_STORE_KEY);
     if (triggerData && triggerData.webhookId) {
       const request: HttpRequest = {
         method: HttpMethod.DELETE,
         url: `${CLOSE_API_URL}/webhook/${triggerData.webhookId}`,
         headers: {
-          'Authorization': 'Basic ' + Buffer.from(`${context.auth.username}:`).toString('base64'),
+          'Authorization': 'Basic ' + Buffer.from(`${apiKey}:`).toString('base64'),
         },
       };
       await httpClient.sendRequest(request); // Error handling can be added as in newLeadCreated
