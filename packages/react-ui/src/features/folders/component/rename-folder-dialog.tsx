@@ -93,6 +93,12 @@ const RenameFolderDialog = ({
                     id="displayName"
                     placeholder={t('New Folder Name')}
                     className="rounded-sm"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        form.handleSubmit((data) => mutate(data))();
+                      }
+                    }}
                   />
                   <FormMessage />
                 </FormItem>
@@ -108,7 +114,6 @@ const RenameFolderDialog = ({
                 variant={'outline'}
                 type='button'
                 onClick={(e) => {
-                  e.stopPropagation();
                   e.preventDefault();
                   setIsOpen(false);
                 }}
