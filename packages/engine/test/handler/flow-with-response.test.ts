@@ -17,7 +17,7 @@ describe('flow with response', () => {
                     'hello': 'world',
                 },
             },
-             respond: 'stop'
+            respond: 'stop',
         }
         const response = {
             status: 200,
