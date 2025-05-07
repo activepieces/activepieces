@@ -20,6 +20,7 @@ type CreateFolderDialogProps = {
   hasPermissionsToUpdateFolder: boolean;
   updateSearchParams: (_folderId?: string) => void;
   refetchFolders: (options?: RefetchOptions) => Promise<QueryObserverResult<FolderDto[], Error>>;
+  children: React.ReactNode;
 }
 
 const CreateFolderFormSchema = Type.Object({
@@ -30,7 +31,7 @@ const CreateFolderFormSchema = Type.Object({
 
 type CreateFolderFormSchema = Static<typeof CreateFolderFormSchema>;
 
-export const CreateFolderDialog = ({ hasPermissionsToUpdateFolder, updateSearchParams, refetchFolders }: CreateFolderDialogProps) => {
+export const CreateFolderDialog = ({ hasPermissionsToUpdateFolder, updateSearchParams, refetchFolders, children }: CreateFolderDialogProps) => {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const form = useForm<CreateFolderFormSchema>({
@@ -79,14 +80,7 @@ export const CreateFolderDialog = ({ hasPermissionsToUpdateFolder, updateSearchP
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          disabled={!hasPermissionsToUpdateFolder}
-          size="icon"
-          className="mr-1"
-        >
-          <PlusIcon size={18} />
-        </Button>
+        {children}
       </DialogTrigger>
 
       <DialogContent>
