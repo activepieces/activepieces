@@ -7,12 +7,12 @@ export const getVendor = createAction({
   name: 'getVendor',
   auth: netsuiteAuth,
   displayName: 'Get Vendor',
-  description: 'Get vendor details from NetSuite',
+  description: 'Gets vendor details from NetSuite.',
   props: {
     vendorId: Property.ShortText({
       displayName: 'Vendor ID',
       required: true,
-      description: 'The ID of the vendor to retrieve',
+      description: 'The ID of the vendor to retrieve.',
     }),
   },
   async run(context) {

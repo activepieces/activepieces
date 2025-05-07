@@ -7,12 +7,12 @@ export const getCustomer = createAction({
   name: 'getCustomer',
   auth: netsuiteAuth,
   displayName: 'Get Customer',
-  description: 'Get customer details from NetSuite',
+  description: 'Gets customer details from NetSuite.',
   props: {
     customerId: Property.ShortText({
       displayName: 'Customer ID',
       required: true,
-      description: 'The ID of the customer to retrieve',
+      description: 'The ID of the customer to retrieve.',
     }),
   },
   async run(context) {
