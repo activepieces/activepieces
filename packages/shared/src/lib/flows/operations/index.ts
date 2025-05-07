@@ -16,11 +16,11 @@ import { _duplicateBranch, _duplicateStep } from './duplicate-step'
 import { _importFlow } from './import-flow'
 import { flowMigrations } from './migrations'
 import { _moveAction } from './move-action'
+import { _moveBranch } from './move-branch'
 import { _getOperationsForPaste } from './paste-operations'
 import { _skipAction } from './skip-action'
 import { _updateAction } from './update-action'
 import { _updateTrigger } from './update-trigger'
-import { _moveBranch } from './move-branch'
 
 
 export enum FlowOperationType {
