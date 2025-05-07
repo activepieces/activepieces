@@ -23,11 +23,9 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
                 flowId: flow.id,
                 versionId: undefined,
             })
-            const lastDraftVersion = await flowVersionService(log).getLatestVersion(flow.id, FlowVersionState.DRAFT)
-
             // Don't Change the order of the following two functions
-            await handleLockedVersion(flow, lastVersion, userId, flow.projectId, project.platformId, appConnection, newAppConnection, log)
-            await handleDraftVersion(flow, lastVersion, lastDraftVersion, userId, flow.projectId, project.platformId, appConnection, newAppConnection, log)
+            await handleLockedVersion(flow, userId, flow.projectId, project.platformId, appConnection, newAppConnection, log)
+            await handleDraftVersion(lastVersion, userId, flow.projectId, project.platformId, appConnection, newAppConnection, log)
         }))
     },
 
@@ -67,7 +65,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
  * We should make sure this is accessed only once, as a race condition could occur where the token needs to be
  * refreshed and it gets accessed at the same time, which could result in the wrong request saving incorrect data.
  */
-    async  lockAndRefreshConnection({
+    async lockAndRefreshConnection({
         projectId,
         externalId,
         log,
@@ -145,39 +143,22 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
 })
 
 
-async function handleLockedVersion(flow: PopulatedFlow, lastVersion: FlowVersion, userId: UserId, projectId: ProjectId, platformId: PlatformId, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData, log: FastifyBaseLogger) {
+async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectId: ProjectId, platformId: PlatformId, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData, log: FastifyBaseLogger) {
     if (isNil(flow.publishedVersionId)) {
         return
     }
 
-    let newLastVersion = lastVersion
-    if (lastVersion.state === FlowVersionState.LOCKED) {
-        newLastVersion = await flowVersionService(log).createEmptyVersion(flow.id, {
-            displayName: lastVersion.displayName,
-        })
-    }
-
-    const lastPublishedVersion = lastVersion.state === FlowVersionState.LOCKED ? 
-        lastVersion :
-        await flowVersionService(log).getLatestVersion(flow.id, FlowVersionState.LOCKED)
+    const lastPublishedVersion = await flowVersionService(log).getLatestVersion(flow.id, FlowVersionState.LOCKED)
     assertNotNullOrUndefined(lastPublishedVersion, `Last published version not found for flow ${flow.id}`)
 
-    const updatedFlowVersion = getUpdatedTriggerFlowVersion(lastPublishedVersion, appConnection, newAppConnection)
-    const updatedConnectionIds = flowStructureUtil.extractConnectionIds(updatedFlowVersion)
-
-    const lastVersionWithArtifacts = {
-        ...lastPublishedVersion,
-        trigger: updatedFlowVersion.trigger,
-        connectionIds: updatedConnectionIds,
-    }
     await flowVersionService(log).applyOperation({
         userId,
         projectId,
         platformId,
-        flowVersion: newLastVersion,
+        flowVersion: lastPublishedVersion,
         userOperation: {
             type: FlowOperationType.IMPORT_FLOW,
-            request: lastVersionWithArtifacts,
+            request: replaceConnectionInFlowVersion(lastPublishedVersion, appConnection, newAppConnection),
         },
     })
 
@@ -194,43 +175,23 @@ async function handleLockedVersion(flow: PopulatedFlow, lastVersion: FlowVersion
     })
 }
 
-async function handleDraftVersion(flow: PopulatedFlow, oldLastVersion: FlowVersion, lastDraftVersion: FlowVersion | null, userId: UserId, projectId: ProjectId, platformId: PlatformId, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData, log: FastifyBaseLogger) {
-    if (isNil(lastDraftVersion)) {
+async function handleDraftVersion(lastVersion: FlowVersion, userId: UserId, projectId: ProjectId, platformId: PlatformId, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData, log: FastifyBaseLogger) {
+    if (lastVersion.state !== FlowVersionState.DRAFT) {
         return
-    }
-
-    if (oldLastVersion.state === FlowVersionState.LOCKED) {
-        await flowVersionRepo().update(lastDraftVersion.id, {
-            trigger: JSON.parse(JSON.stringify(oldLastVersion.trigger)),
-            connectionIds: flowStructureUtil.extractConnectionIds(oldLastVersion),
-        })
-        return
-    }
-    const newLastVersion = await flowVersionService(log).createEmptyVersion(flow.id, {
-        displayName: lastDraftVersion.displayName,
-    })
-    
-    const updatedFlowVersion = getUpdatedTriggerFlowVersion(lastDraftVersion, appConnection, newAppConnection)
-    const updatedConnectionIds = flowStructureUtil.extractConnectionIds(updatedFlowVersion)
-
-    const lastDraftVersionWithArtifacts = {
-        ...lastDraftVersion,
-        trigger: updatedFlowVersion.trigger,
-        connectionIds: updatedConnectionIds,
     }
     await flowVersionService(log).applyOperation({
         userId,
         projectId,
         platformId,
-        flowVersion: newLastVersion,
+        flowVersion: lastVersion,
         userOperation: {
             type: FlowOperationType.IMPORT_FLOW,
-            request: lastDraftVersionWithArtifacts,
+            request: replaceConnectionInFlowVersion(lastVersion, appConnection, newAppConnection),
         },
     })
 }
 
-function getUpdatedTriggerFlowVersion(flowVersion: FlowVersion, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData) {
+function replaceConnectionInFlowVersion(flowVersion: FlowVersion, appConnection: AppConnectionWithoutSensitiveData, newAppConnection: AppConnectionWithoutSensitiveData) {
     return flowStructureUtil.transferFlow(flowVersion, (step) => {
         if (step.settings?.input?.auth?.includes(appConnection.externalId)) {
             return {
