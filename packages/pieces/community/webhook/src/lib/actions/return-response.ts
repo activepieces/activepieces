@@ -12,6 +12,11 @@ enum ResponseType {
   REDIRECT = 'redirect',
 }
 
+enum FlowExecution {
+  STOP = 'stop',
+  RESPOND = 'respond',
+}
+
 export const returnResponse = createAction({
   name: 'return_response',
   displayName: 'Return Response',
@@ -88,12 +93,12 @@ export const returnResponse = createAction({
     respond: Property.StaticDropdown({
       displayName: 'Flow Execution',
       required: false,
-      defaultValue: 'stop',
+      defaultValue: FlowExecution.STOP,
       options: {
         disabled: false,
         options: [
-          { label: 'Stop', value: 'stop' },
-          { label: 'Respond and Continue', value: 'respond' },
+          { label: 'Stop', value: FlowExecution.STOP },
+          { label: 'Respond and Continue', value: FlowExecution.RESPOND },
         ],
       },
     }),
@@ -102,12 +107,13 @@ export const returnResponse = createAction({
   async run(context) {
     const { fields, responseType, respond } = context.propsValue;
     const bodyInput = fields ['body'];
-    const headers = fields['headers'];
+    const headers = fields['headers']?? {};
     const status = fields['status'];
     
+ 
     const response: StopResponse = {
       status: status ?? StatusCodes.OK,
-      headers: (headers as Record<string, string>) ?? {},
+      headers,
     };
 
     switch (responseType) {
@@ -123,15 +129,26 @@ export const returnResponse = createAction({
         break;
     }
     
-    if (respond === 'respond') {
-      context.run.respond({
-        response: response,
-      });
-    } else {
-      context.run.stop({
-        response: response,
-      });
+    switch(respond){
+      case FlowExecution.STOP:
+        {
+          context.run.stop({
+            response,
+          });
+          break;
+        }
+      case FlowExecution.RESPOND:
+        {
+          context.run.respond({
+            response,
+          });
+          break;
+        }
+        case undefined:
+          break;
     }
+ 
+
     return response;
   },
 });

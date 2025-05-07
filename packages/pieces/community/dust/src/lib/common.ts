@@ -7,11 +7,14 @@ import {
 import { DustAuthType } from '..';
 import { DustAPI } from '@dust-tt/client';
 
-export const DUST_BASE_URL = 'https://dust.tt/api/v1/w';
+export const DUST_BASE_URL = {
+  us: 'https://dust.tt/api/v1/w',
+  eu: 'https://eu.dust.tt/api/v1/w',
+};
 
 export const createClient = (auth: DustAuthType) => {
   return new DustAPI(
-    { url: 'https://dust.tt' },
+    { url: auth.region === 'eu' ? 'https://eu.dust.tt' : 'https://dust.tt' },
     {
       workspaceId: auth.workspaceId,
       apiKey: auth.apiKey,
@@ -79,7 +82,9 @@ export async function getConversationContent(
   const getConversation = async (conversationId: string) => {
     return httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `${DUST_BASE_URL}/${auth.workspaceId}/assistant/conversations/${conversationId}`,
+      url: `${DUST_BASE_URL[auth.region || 'us']}/${
+        auth.workspaceId
+      }/assistant/conversations/${conversationId}`,
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${auth.apiKey}`,

@@ -11,9 +11,7 @@ import { isNil, StepOutputStatus } from '@activepieces/shared';
 import { TestButtonTooltip } from './test-step-tooltip';
 
 type TestSampleDataViewerProps = {
-  onRetest: () => void;
   isValid: boolean;
-  isSaving: boolean;
   isTesting: boolean;
   sampleData: unknown;
   sampleDataInput: unknown | null;
@@ -21,7 +19,36 @@ type TestSampleDataViewerProps = {
   lastTestDate: string | undefined;
   children?: React.ReactNode;
   consoleLogs?: string | null;
+} & DefaultTestingButtonProps;
+
+type DefaultTestingButtonProps = {
+  isValid: boolean;
+  isSaving: boolean;
+  isTesting: boolean;
+  onRetest: () => void;
 };
+
+const DefaultTestingButton = ({
+  isValid,
+  isSaving,
+  isTesting,
+  onRetest,
+}: DefaultTestingButtonProps) => {
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={!isValid || isSaving}
+      keyboardShortcut="G"
+      onKeyboardShortcut={onRetest}
+      onClick={onRetest}
+      loading={isTesting}
+    >
+      {t('Retest')}
+    </Button>
+  );
+};
+DefaultTestingButton.displayName = 'DefaultTestingButton';
 
 const isConsoleLogsValid = (value: unknown) => {
   if (isNil(value)) {
@@ -32,9 +59,7 @@ const isConsoleLogsValid = (value: unknown) => {
 
 const TestSampleDataViewer = React.memo(
   ({
-    onRetest,
     isValid,
-    isSaving,
     isTesting,
     sampleData,
     sampleDataInput,
@@ -42,6 +67,8 @@ const TestSampleDataViewer = React.memo(
     lastTestDate,
     children,
     consoleLogs,
+    isSaving,
+    onRetest,
   }: TestSampleDataViewerProps) => {
     return (
       <>
@@ -75,17 +102,12 @@ const TestSampleDataViewer = React.memo(
               </div>
             </div>
             <TestButtonTooltip disabled={!isValid}>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={!isValid || isSaving}
-                keyboardShortcut="G"
-                onKeyboardShortcut={onRetest}
-                onClick={onRetest}
-                loading={isTesting}
-              >
-                {t('Retest')}
-              </Button>
+              <DefaultTestingButton
+                isValid={isValid}
+                isSaving={isSaving}
+                isTesting={isTesting}
+                onRetest={onRetest}
+              />
             </TestButtonTooltip>
           </div>
 
@@ -139,4 +161,5 @@ const TestSampleDataViewer = React.memo(
 );
 
 TestSampleDataViewer.displayName = 'TestSampleDataViewer';
-export { TestSampleDataViewer };
+
+export { TestSampleDataViewer, DefaultTestingButton };

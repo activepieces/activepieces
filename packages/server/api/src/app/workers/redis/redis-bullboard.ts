@@ -39,6 +39,7 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
 
     const allQueues = [...Object.values(bullMqGroups).map((queue) => new BullMQAdapter(queue)),
         new BullMQAdapter(systemJobsQueue),
+        new BullMQAdapter(await redisRateLimiter(app.log).getCleanUpQueue()),
         new BullMQAdapter(await redisRateLimiter(app.log).getQueue())]
 
     const serverAdapter = new FastifyAdapter()

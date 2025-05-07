@@ -1,6 +1,6 @@
 import { PropertyType } from '@activepieces/pieces-framework'
 import { UserInteractionJobType } from '@activepieces/server-shared'
-import { EngineResponseStatus, ExecuteActionResponse, FlowStatus, FlowVersionState, GetFlowVersionForWorkerRequestType, isNil, McpPieceStatus, McpPieceWithConnection, McpTrigger, TriggerType } from '@activepieces/shared'
+import { EngineResponseStatus, ExecuteActionResponse, fixSchemaNaming, FlowStatus, FlowVersionState, GetFlowVersionForWorkerRequestType, isNil, McpPieceStatus, McpPieceWithConnection, McpTrigger, TriggerType } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { FastifyBaseLogger, FastifyReply } from 'fastify'
@@ -65,7 +65,7 @@ async function addPiecesToServer(
             const mcpPiece = mcp.pieces.find(p => p.pieceName === piece.name)
             const pieceConnectionExternalId = mcpPiece?.connection?.externalId
             
-            const actionName = `${piece.name.split('piece-')[1]}-${action.name}`.slice(0, MAX_TOOL_NAME_LENGTH).replace(/\s+/g, '-')
+            const actionName = fixSchemaNaming(`${piece.name.split('piece-')[1]}-${action.name}`).slice(0, MAX_TOOL_NAME_LENGTH)
             uniqueActions.add(actionName)
             
             server.tool(
@@ -151,13 +151,24 @@ async function addFlowsToServer(
 
     for (const flow of mcpFlows) {
         const triggerSettings = flow.version.trigger.settings as McpTrigger
-        const toolName = ('flow-' + triggerSettings.input?.toolName).slice(0, MAX_TOOL_NAME_LENGTH).replace(/\s+/g, '-')
+        const toolName = fixSchemaNaming('flow-' + triggerSettings.input?.toolName).slice(0, MAX_TOOL_NAME_LENGTH)
         const toolDescription = triggerSettings.input?.toolDescription
         const inputSchema = triggerSettings.input?.inputSchema
         const returnsResponse = triggerSettings.input?.returnsResponse
 
+
+        const paramNameMapping = Object.fromEntries(
+            inputSchema.map((prop) => {
+                const transformedName = fixSchemaNaming(prop.name)
+                return [transformedName, prop.name]
+            }),
+        )
+
         const zodFromInputSchema = Object.fromEntries(
-            inputSchema.map((prop) => [prop.name, mcpPropertyToZod(prop)]),
+            inputSchema.map((prop) => [
+                fixSchemaNaming(prop.name),
+                mcpPropertyToZod(prop),
+            ]),
         )
 
         server.tool(
@@ -165,6 +176,14 @@ async function addFlowsToServer(
             toolDescription,
             zodFromInputSchema,
             async (params) => { 
+                // Transform parameter names back to original names for the payload
+                const originalParams = Object.fromEntries(
+                    Object.entries(params).map(([key, value]) => {
+                        const originalName = paramNameMapping[key]
+                        return [originalName || key, value]
+                    }),
+                )
+
                 const response = await webhookService.handleWebhook({
                     data: () => {
                         return Promise.resolve({
@@ -181,14 +200,14 @@ async function addFlowsToServer(
                     saveSampleData: await webhookSimulationService(logger).exists(
                         flow.id,
                     ),
-                    payload: params,
+                    payload: originalParams,
                     execute: true,
                 })
                 if (response.status !== StatusCodes.OK) {
                     return {
                         content: [{
                             type: 'text',
-                            text: `❌ Error executing flow ${flow.version.displayName}\n\n\`\`\`\n${response || 'Unknown error occurred'}\n\`\`\``,
+                            text: `❌ Error executing flow ${flow.version.displayName}\n\n\`\`\`\n${JSON.stringify(response, null, 2) || 'Unknown error occurred'}\n\`\`\``,
                         }],
                     }
                 }

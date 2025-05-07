@@ -74,7 +74,7 @@ describe('Flow API', () => {
             expect(responseBody?.schedule).toBeNull()
             expect(responseBody?.metadata).toMatchObject({ foo: 'bar' })
 
-            expect(Object.keys(responseBody?.version)).toHaveLength(10)
+            expect(Object.keys(responseBody?.version)).toHaveLength(11)
             expect(responseBody?.version?.id).toHaveLength(21)
             expect(responseBody?.version?.created).toBeDefined()
             expect(responseBody?.version?.updated).toBeDefined()
@@ -153,7 +153,7 @@ describe('Flow API', () => {
             expect(responseBody?.schedule).toBeNull()
             expect(responseBody?.metadata).toBeNull()
 
-            expect(Object.keys(responseBody?.version)).toHaveLength(10)
+            expect(Object.keys(responseBody?.version)).toHaveLength(11)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
         })
 
@@ -217,7 +217,7 @@ describe('Flow API', () => {
             expect(responseBody?.schedule).toBeNull()
             expect(responseBody?.metadata).toBeNull()
 
-            expect(Object.keys(responseBody?.version)).toHaveLength(10)
+            expect(Object.keys(responseBody?.version)).toHaveLength(11)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
         })
     })
@@ -276,7 +276,7 @@ describe('Flow API', () => {
             expect(responseBody?.schedule).toBeNull()
             expect(responseBody?.metadata).toBeNull()
 
-            expect(Object.keys(responseBody?.version)).toHaveLength(10)
+            expect(Object.keys(responseBody?.version)).toHaveLength(11)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
             expect(responseBody?.version?.state).toBe('LOCKED')
         })
