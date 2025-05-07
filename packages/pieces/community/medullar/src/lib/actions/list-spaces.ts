@@ -10,15 +10,7 @@ export const listSpaces = createAction({
   description: 'List all user Spaces',
   props: {},
   async run(context) {
-    const userData = await getUser(context.auth)
-
-    if (!userData) {
-      throw new Error('User data not found.');
-    }
-
-    if (!userData.company) {
-      throw new Error('User does not belong to any company.');
-    }
+    const userData = await getUser(context.auth);
 
     const spaceListResponse = await httpClient.sendRequest({
       method: HttpMethod.GET,

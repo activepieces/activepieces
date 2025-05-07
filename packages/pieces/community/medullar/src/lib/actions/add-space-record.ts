@@ -1,7 +1,7 @@
 import { medullarAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { getUser, medullarCommon } from '../common';
+import { getUser, medullarCommon, medullarPropsCommon } from '../common';
 
 export const addSpaceRecord = createAction({
   auth: medullarAuth,
@@ -9,46 +9,8 @@ export const addSpaceRecord = createAction({
   displayName: 'Add Space Record',
   description: 'Adds a Record into a Space',
   props: {
-    space_uuid: Property.Dropdown({
-      displayName: 'Space',
-      description: 'Select an Space',
-      required: true,
-      refreshers: ['auth'],
-      refreshOnSearch: false,
-      options: async ({ auth }) => {
-        const authentication = auth as string;
-        if (!authentication) {
-          return {
-            disabled: true,
-            placeholder: 'connect your account first',
-            options: [],
-          };
-        }
-        
-        const userData = await getUser(authentication)
-
-        const spaceListResponse = await httpClient.sendRequest({
-          method: HttpMethod.GET,
-          url: `${medullarCommon.exploratorUrl}/spaces/?user=${userData.uuid}&limit=1000&offset=0`,
-          headers: {
-            Authorization: `Bearer ${authentication}`,
-          },
-        });
-
-        return {
-          disabled: false,
-          options: spaceListResponse.body.results
-            .flat()
-            .map((list: { name: string; uuid: string }) => {
-              return {
-                label: list.name,
-                value: list.uuid,
-              };
-            }),
-        };
-      },
-    }),
-    source_type: Property.StaticDropdown({
+    spaceId: medullarPropsCommon.spaceId,
+    sourceType: Property.StaticDropdown({
       displayName: 'Source Type',
       description: 'Select source type',
       required: true,
@@ -85,16 +47,7 @@ export const addSpaceRecord = createAction({
     }),
   },
   async run(context) {
-
-    const userData = await getUser(context.auth)
-
-    if (!userData) {
-      throw new Error('User data not found.');
-    }
-
-    if (!userData.company) {
-      throw new Error('User does not belong to any company.');
-    }
+    const userData = await getUser(context.auth);
 
     let url = ' ';
     let content = ' ';
@@ -108,7 +61,7 @@ export const addSpaceRecord = createAction({
       body: {
         spaces: [
           {
-            uuid: context.propsValue['space_uuid'],
+            uuid: context.propsValue['spaceId'],
           },
         ],
         company: {
@@ -117,7 +70,7 @@ export const addSpaceRecord = createAction({
         user: {
           uuid: userData.uuid,
         },
-        source: context.propsValue['source_type'],
+        source: context.propsValue['sourceType'],
         data: {
           content: content,
           url: url,
