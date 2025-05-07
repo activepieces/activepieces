@@ -165,7 +165,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
       }
     });
   }, [
-    folders?.map((folder) => folder.displayName).join(','),
+    folders,
     sortedAlphabeticallyIncreasingly,
   ]);
 
@@ -260,7 +260,9 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                       >
                         <div className="flex items-center">
                           <FolderIcon isFolderOpen={selectedFolderId === folder.id} />
-                          <span className="ml-2">{folder.displayName}</span>
+                          <span className="ml-2 mr-1">{folder.displayName}
+                            <span className='text-xs font-semibold ml-1'>({folder.numberOfFlows})</span>
+                          </span>
                         </div>
                         <FolderAction
                           folder={folder}
