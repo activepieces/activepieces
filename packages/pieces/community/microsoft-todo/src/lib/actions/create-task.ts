@@ -11,7 +11,7 @@ export const createTask = createAction({
             displayName: 'Task List',
             description: 'The task list to create the task in.',
             required: true,
-            refreshers: [], // No refreshers needed for now, auth changes will trigger refresh
+            refreshers: [],
             options: async ({ auth }) => {
                 if (!(auth as OAuth2PropertyValue)?.access_token) {
                     return {
@@ -120,12 +120,12 @@ export const createTask = createAction({
         if (body_content) requestBody.body = { content: body_content, contentType: 'text' };
         if (importance) requestBody.importance = importance;
         if (status) requestBody.status = status;
-        if (due_date_time) requestBody.dueDateTime = { dateTime: due_date_time, timeZone: 'UTC' }; // Assuming UTC for now
+        if (due_date_time) requestBody.dueDateTime = { dateTime: due_date_time, timeZone: 'UTC' };
         if (reminder_date_time) {
-            requestBody.reminderDateTime = { dateTime: reminder_date_time, timeZone: 'UTC' }; // Assuming UTC
+            requestBody.reminderDateTime = { dateTime: reminder_date_time, timeZone: 'UTC' };
             requestBody.isReminderOn = true;
         }
-        if (start_date_time) requestBody.startDateTime = { dateTime: start_date_time, timeZone: 'UTC' }; // Assuming UTC
+        if (start_date_time) requestBody.startDateTime = { dateTime: start_date_time, timeZone: 'UTC' };
         if (categories) requestBody.categories = categories.split(',').map(c => c.trim()).filter(c => c.length > 0);
 
         const linkedResources = [];
@@ -141,7 +141,6 @@ export const createTask = createAction({
         const response = await httpClient.sendRequest<{
             id: string;
             title: string;
-            // ... other expected properties from the response
         }>({
             method: HttpMethod.POST,
             url: `https://graph.microsoft.com/v1.0/me/todo/lists/${task_list_id}/tasks`,

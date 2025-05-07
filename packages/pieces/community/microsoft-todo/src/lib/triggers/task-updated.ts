@@ -9,7 +9,6 @@ interface MSGraphTodoTaskForUpdate extends MSGraphBaseTask {
     status?: string;
     dueDateTime?: { dateTime: string; timeZone: string };
     lastModifiedDateTime?: string;
-    // Add any other fields that signify an update or are useful in the payload
 }
 
 interface MSGraphTasksDeltaResponse {
@@ -20,7 +19,7 @@ interface MSGraphTasksDeltaResponse {
 }
 
 const polling: Polling<OAuth2PropertyValue, { task_list_id: string }> = {
-    strategy: DedupeStrategy.LAST_ITEM, // Deduplicates based on the task.id
+    strategy: DedupeStrategy.LAST_ITEM,
     items: async ({ auth, propsValue, store }) => {
         const taskListId = propsValue.task_list_id;
         const deltaLinkStoreKey = `task_updated_deltaLink_${taskListId}`;

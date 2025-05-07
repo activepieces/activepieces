@@ -1,6 +1,6 @@
-import { Property, createAction, OAuth2PropertyValue, DropdownOption } from "@activepieces/pieces-framework";
+import { Property, createAction, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, AuthenticationType, QueryParams } from "@activepieces/pieces-common";
-import { getTaskListsDropdown, MSGraphTaskList, MSGraphBaseTask } from "../common"; // Assuming interfaces are exported from common
+import { getTaskListsDropdown, MSGraphTaskList, MSGraphBaseTask } from "../common";
 
 // Interface for the response when fetching tasks from a list
 interface FindTasksResponse {
@@ -93,7 +93,6 @@ export const findTaskByTitleAction = createAction({
                     type: AuthenticationType.BEARER_TOKEN,
                     token: oauthAuth.access_token,
                 },
-                // We don't need to filter lists here, just get all of them
             });
 
             if (listsResponse.body && listsResponse.body.value) {

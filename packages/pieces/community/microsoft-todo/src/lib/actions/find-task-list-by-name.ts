@@ -1,12 +1,10 @@
 import { Property, createAction, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, AuthenticationType, QueryParams } from "@activepieces/pieces-common";
 
-// We can reuse the MSGraphTaskList interface from common if it's already defined there
-// For now, let's assume a basic structure for the response items
+
 interface TaskList {
     id: string;
     displayName: string;
-    // other properties as needed
 }
 
 interface FindTaskListResponse {
@@ -32,7 +30,7 @@ export const findTaskListByNameAction = createAction({
                 options: [
                     { label: 'Contains', value: 'contains' },
                     { label: 'Starts With', value: 'startsWith' },
-                    { label: 'Exact Match', value: 'exact' }, // Using 'exact' for our internal logic
+                    { label: 'Exact Match', value: 'exact' },
                 ]
             }
         })
@@ -68,6 +66,6 @@ export const findTaskListByNameAction = createAction({
             queryParams: queryParams,
         });
 
-        return response.body.value; // Returns an array of matching task lists
+        return response.body.value;
     }
 });

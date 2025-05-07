@@ -1,11 +1,10 @@
-import { OAuth2PropertyValue, Property, PiecePropValueSchema, Store, StoreScope } from "@activepieces/pieces-framework";
+import { OAuth2PropertyValue, Property, StoreScope } from "@activepieces/pieces-framework";
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
 import { getTaskListsDropdown, MSGraphBaseTask } from "../common";
-import { microsoftToDoAuth } from "../../index"; // Corrected import name
+import { microsoftToDoAuth } from "../../index";
 
 // Interface for the delta response for tasks
-// This might need adjustment based on actual MS Graph delta response structure
 interface MSGraphTasksDeltaResponse {
     '@odata.context'?: string;
     '@odata.nextLink'?: string;
@@ -14,7 +13,7 @@ interface MSGraphTasksDeltaResponse {
 }
 
 const polling: Polling<OAuth2PropertyValue, { task_list_id: string }> = {
-    strategy: DedupeStrategy.LAST_ITEM, // We'll use task ID as the last item ID
+    strategy: DedupeStrategy.LAST_ITEM,
     items: async ({ auth, propsValue, store, lastItemId }) => {
         const taskListId = propsValue.task_list_id;
         const deltaLink = await store.get<string>(`deltaLink_${taskListId}`, StoreScope.FLOW);
@@ -65,7 +64,7 @@ export const newTaskCreatedTrigger = createTrigger({
     name: 'new_task_created',
     displayName: 'New Task Created',
     description: 'Triggers when a new task is created in a selected Microsoft To Do list.',
-    auth: microsoftToDoAuth, // Use the correctly named imported auth object
+    auth: microsoftToDoAuth,
     props: {
         task_list_id: Property.Dropdown({
             displayName: 'Task List',
@@ -105,6 +104,5 @@ export const newTaskCreatedTrigger = createTrigger({
         "id": "AAMkAGUzYmZmAAA=",
         "title": "Sample New Task",
         "status": "notStarted",
-        // ... other relevant task properties
     }
 });

@@ -3,8 +3,7 @@ import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces
 
 export interface MSGraphBaseTask {
     id: string;
-    title?: string; // Title is often present in task lists
-    // Add other common task properties if needed for display or filtering
+    title?: string;
 }
 
 export interface MSGraphTaskList {
@@ -103,13 +102,11 @@ export async function getTasksInListDropdown(auth: OAuth2PropertyValue, taskList
                 type: AuthenticationType.BEARER_TOKEN,
                 token: auth.access_token,
             },
-            // To optimize, we can select only id and title if that's all we need for the dropdown
-            // queryParams: { "$select": "id,title" }
         });
 
         if (response.status === 200 && response.body && response.body.value) {
             const options = response.body.value.map((task) => ({
-                label: task.title || task.id, // Fallback to ID if title is missing
+                label: task.title || task.id,
                 value: task.id,
             }));
 
@@ -130,5 +127,4 @@ export async function getTasksInListDropdown(auth: OAuth2PropertyValue, taskList
 export const microsoftTodoCommon = {
     getTaskListsDropdown,
     getTasksInListDropdown,
-    // other common functions can be added here
 };

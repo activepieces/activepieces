@@ -19,7 +19,6 @@ export const createTaskListAction = createAction({
         const response = await httpClient.sendRequest<{
             id: string;
             displayName: string;
-            // other task list properties from response
         }>({
             method: HttpMethod.POST,
             url: `https://graph.microsoft.com/v1.0/me/todo/lists`,

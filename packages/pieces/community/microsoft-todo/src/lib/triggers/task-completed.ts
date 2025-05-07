@@ -9,7 +9,6 @@ interface MSGraphTasksDeltaResponse {
     '@odata.context'?: string;
     '@odata.nextLink'?: string;
     '@odata.deltaLink'?: string;
-    // Ensure MSGraphBaseTask includes 'status' or we extend it here
     value: (MSGraphBaseTask & { status?: string; completedDateTime?: string; '@removed'?: { reason: string } })[];
 }
 
@@ -22,7 +21,7 @@ const polling: Polling<OAuth2PropertyValue, { task_list_id: string }> = {
         const deltaLink = await store.get<string>(deltaLinkStoreKey, StoreScope.FLOW);
 
         // For the initial delta query, include $select for relevant fields
-        const selectFields = "id,title,status,completedDateTime"; // Add other fields if needed for output
+        const selectFields = "id,title,status,completedDateTime";
         const initialUrl = `https://graph.microsoft.com/v1.0/me/todo/lists/${taskListId}/tasks/delta?$select=${selectFields}`;
         const requestUrl = deltaLink || initialUrl;
 
@@ -96,6 +95,5 @@ export const taskCompletedTrigger = createTrigger({
         "title": "Sample Completed Task",
         "status": "completed",
         "completedDateTime": "2023-10-27T10:00:00Z",
-        // ... other relevant task properties
     }
 });
