@@ -6,6 +6,7 @@ import { syncPieceCommand } from './lib/commands/sync-pieces';
 import { publishPieceCommand } from './lib/commands/publish-piece';
 import { buildPieceCommand } from './lib/commands/build-piece';
 import { generateWorkerTokenCommand } from './lib/commands/generate-worker-token';
+import { generateI18nForPieceCommand } from './lib/commands/generate-i18n-for-piece';
 
 const pieceCommand = new Command('pieces')
   .description('Manage pieces');
@@ -14,7 +15,7 @@ pieceCommand.addCommand(createPieceCommand);
 pieceCommand.addCommand(syncPieceCommand);
 pieceCommand.addCommand(publishPieceCommand);
 pieceCommand.addCommand(buildPieceCommand);
-
+pieceCommand.addCommand(generateI18nForPieceCommand);
 const actionCommand = new Command('actions')
   .description('Manage actions');
 
