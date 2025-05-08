@@ -345,7 +345,6 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
           hasPermission={userHasPermissionToUpdateFolders}
         >
           <CreateFolderDialog
-            hasPermissionsToUpdateFolder={userHasPermissionToUpdateFolders}
             refetchFolders={refetchFolders}
             updateSearchParams={updateSearchParams}
           >

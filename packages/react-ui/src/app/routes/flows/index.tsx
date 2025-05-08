@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -18,14 +19,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { RunsTable } from '@/features/flow-runs/components/runs-table';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { SelectFlowTemplateDialog } from '@/features/flows/components/select-flow-template-dialog';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import {
-  folderIdParamName,
-} from '@/features/folders/component/folder-filter-list';
+import { folderIdParamName } from '@/features/folders/component/folder-filter-list';
 import { foldersApi } from '@/features/folders/lib/folders-api';
+import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
@@ -34,12 +36,9 @@ import { FlowStatus, Permission, PopulatedFlow } from '@activepieces/shared';
 import { TableTitle } from '../../../components/ui/table-title';
 
 import TaskLimitAlert from './task-limit-alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RunsTable } from '@/features/flow-runs/components/runs-table';
-import { issueHooks } from '@/features/issues/hooks/issue-hooks';
+import { FlowsTable } from './flows-table';
+import { IssuesTable } from './issues-table';
 
-import { IssuesTable } from '@/features/issues/components/issues-table';
-import { FlowsTable } from '@/features/flows/components/flows-table';
 
 export enum FlowsPageTabs {
   HISTORY = 'history',
@@ -48,16 +47,14 @@ export enum FlowsPageTabs {
 }
 
 const FlowsPage = () => {
-
   const { checkAccess } = useAuthorization();
   const [searchParams, setSearchParams] = useSearchParams();
   const projectId = authenticationSession.getProjectId()!;
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
 
   const [activeTab, setActiveTab] = useState<FlowsPageTabs>(
-    (searchParams.get('activeTab') ?? 'flows') as FlowsPageTabs
+    (searchParams.get('activeTab') ?? 'flows') as FlowsPageTabs,
   );
-
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['flow-table', searchParams.toString(), projectId],
@@ -82,14 +79,12 @@ const FlowsPage = () => {
     },
   });
 
-
   const handleTabChange = (value: FlowsPageTabs) => {
-    setActiveTab(value)
-    const newQueryParameters: URLSearchParams = new URLSearchParams()
-    newQueryParameters.set('activeTab', value)
-    setSearchParams(newQueryParameters)
-  }
-
+    setActiveTab(value);
+    const newQueryParameters: URLSearchParams = new URLSearchParams();
+    newQueryParameters.set('activeTab', value);
+    setSearchParams(newQueryParameters);
+  };
 
   return (
     <div className="flex flex-col gap-4 grow">
@@ -97,15 +92,15 @@ const FlowsPage = () => {
       <div className="flex flex-col gap-4 w-full grow">
         <div className="flex justify-between">
           <TableTitle
-            description={t('Create and manage your flows, run history and run issues')}
+            description={t(
+              'Create and manage your flows, run history and run issues',
+            )}
           >
             {t('Flows')}
           </TableTitle>
-          {
-            activeTab === FlowsPageTabs.FLOWS && (
-              <CreateFlowDropdown refetch={refetch} />
-            )
-          }
+          {activeTab === FlowsPageTabs.FLOWS && (
+            <CreateFlowDropdown refetch={refetch} />
+          )}
         </div>
         <Tabs
           value={activeTab}
@@ -114,30 +109,26 @@ const FlowsPage = () => {
         >
           <TabsList variant="outline">
             <TabsTrigger value={FlowsPageTabs.FLOWS} variant="outline">
-              <Workflow className='h-4 w-4 mr-2' />
+              <Workflow className="h-4 w-4 mr-2" />
               {t('Flows')}
             </TabsTrigger>
-            {
-              checkAccess(Permission.READ_RUN) && (
-                <TabsTrigger value={FlowsPageTabs.HISTORY} variant="outline">
-                  <History className='h-4 w-4 mr-2' />
-                  {t('Runs')}
-                </TabsTrigger>
-              )
-            }
-            {
-              checkAccess(Permission.READ_ISSUES) && (
-                <TabsTrigger value={FlowsPageTabs.ISSUES} variant="outline">
-                  <CircleAlert className='h-4 w-4 mr-2' />
-                  <span className="flex items-center gap-2">
-                    {t('Issues')}
-                    {showIssuesNotification && (
-                      <span className="ml-1 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
-                    )}
-                  </span>
-                </TabsTrigger>
-              )
-            }
+            {checkAccess(Permission.READ_RUN) && (
+              <TabsTrigger value={FlowsPageTabs.HISTORY} variant="outline">
+                <History className="h-4 w-4 mr-2" />
+                {t('Runs')}
+              </TabsTrigger>
+            )}
+            {checkAccess(Permission.READ_ISSUES) && (
+              <TabsTrigger value={FlowsPageTabs.ISSUES} variant="outline">
+                <CircleAlert className="h-4 w-4 mr-2" />
+                <span className="flex items-center gap-2">
+                  {t('Issues')}
+                  {showIssuesNotification && (
+                    <span className="ml-1 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
+                  )}
+                </span>
+              </TabsTrigger>
+            )}
           </TabsList>
           <TabsContent value={FlowsPageTabs.FLOWS}>
             <FlowsTable data={data} isLoading={isLoading} refetch={refetch} />
@@ -155,7 +146,6 @@ const FlowsPage = () => {
 };
 
 export { FlowsPage };
-
 
 type CreateFlowDropdownProps = {
   refetch: () => void;
@@ -193,9 +183,7 @@ const CreateFlowDropdown = ({ refetch }: CreateFlowDropdownProps) => {
   });
 
   return (
-    <PermissionNeededTooltip
-      hasPermission={doesUserHavePermissionToWriteFlow}
-    >
+    <PermissionNeededTooltip hasPermission={doesUserHavePermissionToWriteFlow}>
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger
           disabled={!doesUserHavePermissionToWriteFlow}
@@ -211,7 +199,7 @@ const CreateFlowDropdown = ({ refetch }: CreateFlowDropdownProps) => {
             <ChevronDown className="h-4 w-4 " />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className='min-w-36'>
+        <DropdownMenuContent className="min-w-36">
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault();
@@ -247,10 +235,8 @@ const CreateFlowDropdown = ({ refetch }: CreateFlowDropdownProps) => {
               {t('From local file')}
             </DropdownMenuItem>
           </ImportFlowDialog>
-
         </DropdownMenuContent>
       </DropdownMenu>
     </PermissionNeededTooltip>
-
-  )
-}
+  );
+};

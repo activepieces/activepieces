@@ -25,6 +25,7 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull, Raw } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
+import { AddAPArrayContainsToQueryBuilder, APArrayContains, getDatabaseType } from '../../database/database-connection'
 import { emailService } from '../../ee/helper/email/email-service'
 import { distributedLock } from '../../helper/lock'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -36,7 +37,6 @@ import { flowFolderService } from '../folder/folder.service'
 import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
-import { APArrayContains, AddAPArrayContainsToQueryBuilder, getDatabaseType } from '../../database/database-connection'
 
 
 const TRIGGER_FAILURES_THRESHOLD = system.getNumberOrThrow(AppSystemProp.TRIGGER_FAILURES_THRESHOLD)
@@ -130,16 +130,16 @@ export const flowService = (log: FastifyBaseLogger) => ({
             .leftJoin(
                 'flow_version',
                 'latest_version',
-                'latest_version."flowId" = ff.id AND latest_version.id = (SELECT id FROM flow_version WHERE "flowId" = ff.id ORDER BY created DESC LIMIT 1)'
+                'latest_version."flowId" = ff.id AND latest_version.id = (SELECT id FROM flow_version WHERE "flowId" = ff.id ORDER BY created DESC LIMIT 1)',
             )
-            .where(queryWhere);
+            .where(queryWhere)
 
         if (name !== undefined) {
             queryBuilder.andWhere('latest_version."displayName" LIKE :name', { name: `%${name}%` })
         }
 
         if (connectionExternalIds !== undefined) {
-             AddAPArrayContainsToQueryBuilder(queryBuilder, 'latest_version."connectionIds"', connectionExternalIds)
+            AddAPArrayContainsToQueryBuilder(queryBuilder, 'latest_version."connectionIds"', connectionExternalIds)
         }
 
         const paginationResult = await paginator.paginate(queryBuilder)
@@ -247,43 +247,43 @@ export const flowService = (log: FastifyBaseLogger) => ({
         try {
             switch (operation.type) {
                 case FlowOperationType.LOCK_AND_PUBLISH:
-                    {
-                        await this.updatedPublishedVersionId({
-                            id,
-                            userId,
-                            projectId,
-                            platformId,
-                        })
-                        break
-                    }
+                {
+                    await this.updatedPublishedVersionId({
+                        id,
+                        userId,
+                        projectId,
+                        platformId,
+                    })
+                    break
+                }
 
                 case FlowOperationType.CHANGE_STATUS:
-                    {
-                        await this.updateStatus({
-                            id,
-                            projectId,
-                            newStatus: operation.request.status,
-                        })
-                        break
-                    }
+                {
+                    await this.updateStatus({
+                        id,
+                        projectId,
+                        newStatus: operation.request.status,
+                    })
+                    break
+                }
 
                 case FlowOperationType.CHANGE_FOLDER:
-                    {
-                        await flowRepo().update(id, {
-                            folderId: operation.request.folderId,
-                        })
-                        break
-                    }
+                {
+                    await flowRepo().update(id, {
+                        folderId: operation.request.folderId,
+                    })
+                    break
+                }
 
                 case FlowOperationType.UPDATE_METADATA:
-                    {
-                        await this.updateMetadata({
-                            id,
-                            projectId,
-                            metadata: operation.request.metadata,
-                        })
-                        break
-                    }
+                {
+                    await this.updateMetadata({
+                        id,
+                        projectId,
+                        metadata: operation.request.metadata,
+                    })
+                    break
+                }
                 default: {
                     let lastVersion = await flowVersionService(log).getFlowVersionOrThrow({
                         flowId: id,
