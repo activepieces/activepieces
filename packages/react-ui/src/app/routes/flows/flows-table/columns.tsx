@@ -14,7 +14,6 @@ import { formatUtils } from '@/lib/utils';
 import { PopulatedFlow } from '@activepieces/shared';
 
 type FlowsTableColumnsProps = {
-  refetch: () => void;
   refresh: number;
   setRefresh: Dispatch<SetStateAction<number>>;
   selectedRows: PopulatedFlow[];
@@ -22,7 +21,6 @@ type FlowsTableColumnsProps = {
 };
 
 export const flowsTableColumns = ({
-  refetch,
   refresh,
   setRefresh,
   selectedRows,
@@ -187,19 +185,15 @@ export const flowsTableColumns = ({
             flowVersion={flow.version}
             onRename={() => {
               setRefresh(refresh + 1);
-              refetch();
             }}
             onMoveTo={() => {
               setRefresh(refresh + 1);
-              refetch();
             }}
             onDuplicate={() => {
               setRefresh(refresh + 1);
-              refetch();
             }}
             onDelete={() => {
               setRefresh(refresh + 1);
-              refetch();
             }}
           >
             <EllipsisVertical className="h-10 w-10" />
