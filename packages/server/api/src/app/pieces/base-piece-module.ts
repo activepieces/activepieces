@@ -73,7 +73,9 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 sortBy: req.query.sortBy,
                 orderBy: req.query.orderBy,
                 suggestionType: req.query.suggestionType,
+                locale: req.query.locale,
             })
+            
             return pieceMetadataSummary
         },
     )
@@ -94,6 +96,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 platformId,
                 name: `${decodeScope}/${decodedName}`,
                 version,
+                locale: req.query.locale,
             })
         },
     )
@@ -113,6 +116,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 platformId,
                 name: decodedName,
                 version,
+                locale: req.query.locale,
             })
         },
     )
