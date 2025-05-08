@@ -1697,6 +1697,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "amaan-ai20",
+      "name": "Amaan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/188329978?v=4",
+      "profile": "https://github.com/amaan-ai20",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
