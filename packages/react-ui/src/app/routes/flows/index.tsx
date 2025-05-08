@@ -89,7 +89,7 @@ const FlowsPage = () => {
     <div className="flex flex-col gap-4 grow">
       <TaskLimitAlert />
       <div className="flex flex-col gap-4 w-full grow">
-        <div className="flex justify-between">
+        <div className="flex items-center justify-between">
           <TableTitle
             description={t(
               'Create and manage your flows, run history and run issues',
@@ -191,14 +191,13 @@ const CreateFlowDropdown = ({ refetch }: CreateFlowDropdownProps) => {
           <Button
             disabled={!doesUserHavePermissionToWriteFlow}
             variant="default"
-            className="flex gap-2 min-w-36 items-center"
             loading={isCreateFlowPending}
           >
             <span>{t('Create flow')}</span>
-            <ChevronDown className="h-4 w-4 " />
+            <ChevronDown className="h-4 w-4 ml-2 " />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="min-w-36">
+        <DropdownMenuContent>
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault();

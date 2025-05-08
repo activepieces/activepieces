@@ -53,6 +53,7 @@ export const FlowsTable = ({ data, isLoading, refetch }: FlowsTableProps) => {
 
   const columns = useMemo(() => {
     return flowsTableColumns({
+      refetch,
       refresh,
       setRefresh,
       selectedRows,
