@@ -1,102 +1,111 @@
-import { OAuth2PropertyValue, Property, StoreScope } from "@activepieces/pieces-framework";
+import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { DedupeStrategy, Polling, pollingHelper, httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
-import { getTaskListsDropdown, MSGraphBaseTask } from "../common";
-import { microsoftToDoAuth } from "../../index";
-
-// Extend MSGraphBaseTask to include fields relevant for an "updated" task
-interface MSGraphTodoTaskForUpdate extends MSGraphBaseTask {
-    status?: string;
-    dueDateTime?: { dateTime: string; timeZone: string };
-    lastModifiedDateTime?: string;
-}
-
-interface MSGraphTasksDeltaResponse {
-    '@odata.context'?: string;
-    '@odata.nextLink'?: string;
-    '@odata.deltaLink'?: string;
-    value: (MSGraphTodoTaskForUpdate & { '@removed'?: { reason: string } })[];
-}
+import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { getTaskListsDropdown } from '../common';
+import { microsoftToDoAuth } from '../../index';
+import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
+import dayjs from 'dayjs';
+import { TodoTask } from '@microsoft/microsoft-graph-types';
 
 const polling: Polling<OAuth2PropertyValue, { task_list_id: string }> = {
-    strategy: DedupeStrategy.LAST_ITEM,
-    items: async ({ auth, propsValue, store }) => {
-        const taskListId = propsValue.task_list_id;
-        const deltaLinkStoreKey = `task_updated_deltaLink_${taskListId}`;
-        const deltaLink = await store.get<string>(deltaLinkStoreKey, StoreScope.FLOW);
+	strategy: DedupeStrategy.TIMEBASED,
+	async items({ auth, propsValue, store, lastFetchEpochMS }) {
+		const taskListId = propsValue.task_list_id;
+		const client = Client.initWithMiddleware({
+			authProvider: {
+				getAccessToken: () => Promise.resolve(auth.access_token),
+			},
+		});
 
-        // For the initial delta query, select fields relevant to an update
-        const selectFields = "id,title,status,dueDateTime,lastModifiedDateTime,createdDateTime,body"; // Add other fields as needed
-        const initialUrl = `https://graph.microsoft.com/v1.0/me/todo/lists/${taskListId}/tasks/delta?$select=${selectFields}`;
-        const requestUrl = deltaLink || initialUrl;
+		const tasks = [];
 
-        const response = await httpClient.sendRequest<MSGraphTasksDeltaResponse>({
-            method: HttpMethod.GET,
-            url: requestUrl,
-            authentication: {
-                type: AuthenticationType.BEARER_TOKEN,
-                token: auth.access_token,
-            },
-        });
+		const filter =
+			lastFetchEpochMS === 0
+				? '$top=10'
+				: `$filter=lastModifiedDateTime gt ${dayjs(lastFetchEpochMS).toISOString()}`;
 
-        if (response.status !== 200 || !response.body) {
-            console.error("Error fetching delta for updated tasks or empty body:", response);
-            if (response.status === 410 && deltaLink) {
-                await store.delete(deltaLinkStoreKey, StoreScope.FLOW);
-            }
-            return [];
-        }
+		let response: PageCollection = await client
+			.api(`/me/todo/lists/${taskListId}/tasks?${filter}`)
+			.get();
 
-        const newDeltaLink = response.body["@odata.deltaLink"] || response.body["@odata.nextLink"];
-        if (newDeltaLink) {
-            await store.put<string>(deltaLinkStoreKey, newDeltaLink, StoreScope.FLOW);
-        }
+		if (lastFetchEpochMS === 0) {
+			for (const task of response.value as TodoTask[]) {
+				tasks.push(task);
+			}
+		} else {
+			while (response.value.length > 0) {
+				for (const task of response.value as TodoTask[]) {
+					tasks.push(task);
+				}
 
-        // All non-removed items from delta are considered "updated" states (either new or modified)
-        const updatedTasks = response.body.value.filter(task => !task["@removed"]);
+				if (response['@odata.nextLink']) {
+					response = await client.api(response['@odata.nextLink']).get();
+				} else {
+					break;
+				}
+			}
+		}
 
-        // If we wanted to be more strict and only get "updates" not "creations":
-        // One way (simplified) could be to check if createdDateTime is significantly older than lastModifiedDateTime
-        // or if the item was seen in a previous (non-initial) deltaLink state.
-        // However, for delta, any item appearing means its state has changed relative to the last sync point.
-        // The LAST_ITEM deduplication on task.id ensures that we process each distinct task change once.
-
-        return updatedTasks.map(task => ({
-            id: task.id,
-            data: task,
-        }));
-    }
+		return tasks.map((task) => ({
+			epochMilliSeconds: dayjs(task.lastModifiedDateTime).valueOf(),
+			data: task,
+		}));
+	},
 };
 
-export const taskUpdatedTrigger = createTrigger({
-    name: 'task_updated',
-    displayName: 'Task Updated',
-    description: 'Triggers when a task is created or updated in a selected Microsoft To Do list.',
-    auth: microsoftToDoAuth,
-    props: {
-        task_list_id: Property.Dropdown({
-            displayName: 'Task List',
-            description: 'The task list to monitor for updated tasks.',
-            required: true,
-            refreshers: [],
-            options: async ({ auth }) => {
-                if (!(auth as OAuth2PropertyValue)?.access_token) {
-                    return { disabled: true, placeholder: 'Connect your account first', options: [] };
-                }
-                return await getTaskListsDropdown(auth as OAuth2PropertyValue);
-            }
-        }),
-    },
-    type: TriggerStrategy.POLLING,
-    async onEnable(context) { await pollingHelper.onEnable(polling, context); },
-    async onDisable(context) { await pollingHelper.onDisable(polling, context); },
-    async run(context) { return await pollingHelper.poll(polling, context); },
-    async test(context) { return await pollingHelper.test(polling, context); },
-    sampleData: {
-        "id": "AAMkAGUzYmZmDDD=",
-        "title": "Updated Task Title",
-        "status": "inProgress",
-        "dueDateTime": { "dateTime": "2023-11-15T10:00:00Z", "timeZone": "UTC" },
-        "lastModifiedDateTime": "2023-10-28T12:00:00Z"
-    }
+export const newOrUpdatedTaskTrigger = createTrigger({
+	name: 'new_or_updated_task',
+	displayName: 'New or Updated Task',
+	description: 'Triggers when a new task is created or an existing task is updated.',
+	auth: microsoftToDoAuth,
+	props: {
+		task_list_id: Property.Dropdown({
+			displayName: 'Task List',
+			required: true,
+			refreshers: [],
+			options: async ({ auth }) => {
+				if (!(auth as OAuth2PropertyValue)?.access_token) {
+					return { disabled: true, placeholder: 'Connect your account first', options: [] };
+				}
+				return await getTaskListsDropdown(auth as OAuth2PropertyValue);
+			},
+		}),
+	},
+	type: TriggerStrategy.POLLING,
+	async onEnable(context) {
+		await pollingHelper.onEnable(polling, {
+			auth: context.auth,
+			store: context.store,
+			propsValue: context.propsValue,
+		});
+	},
+	async onDisable(context) {
+		await pollingHelper.onDisable(polling, {
+			auth: context.auth,
+			store: context.store,
+			propsValue: context.propsValue,
+		});
+	},
+	async test(context) {
+		return await pollingHelper.test(polling, context);
+	},
+	async run(context) {
+		return await pollingHelper.poll(polling, context);
+	},
+	sampleData: {
+		'@odata.etag': 'W/"vVwdQvxCiE6779iYhchMrAAGgwrb4w=="',
+		importance: 'normal',
+		isReminderOn: false,
+		status: 'notStarted',
+		title: 'fdfdfd',
+		createdDateTime: '2025-05-08T12:40:55.3080693Z',
+		lastModifiedDateTime: '2025-05-08T12:40:55.3533435Z',
+		hasAttachments: false,
+		categories: [],
+		id: 'AQMkADAwATM3ZmYAZS0xNGVmLWNiZmYALTAwAi0wMAoARgAAAw8tTPoZEYtLvE5mK48wuvIHAL1cHUL8QohOu_-YmIXITKwABoMc5_AAAAC9XB1C-EKITrvv2JiFyEysAAaDHTv2AAAA',
+		body: {
+			content: '',
+			contentType: 'text',
+		},
+	},
 });
