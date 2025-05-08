@@ -20,6 +20,13 @@
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm ci",
+        "cwd": "packages/pieces/community/airtable"
+      }
     }
   },
   "tags": []
