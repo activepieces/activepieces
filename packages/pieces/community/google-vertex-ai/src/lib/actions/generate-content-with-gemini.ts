@@ -1,9 +1,18 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from '@google/genai';
 import { GoogleAuth } from 'google-auth-library';
+import mime from 'mime-types';
 
 interface ServiceAccountAuth {
   serviceAccountJson: string;
+}
+
+interface ContentPart {
+  text?: string;
+  inlineData?: {
+    data: string;
+    mimeType: string;
+  };
 }
 
 export const generateContentWithGemini = createAction({
@@ -32,6 +41,11 @@ export const generateContentWithGemini = createAction({
       required: true,
       description: 'The prompt to generate content from',
     }),
+    files: Property.File({
+      displayName: 'Files',
+      required: false,
+      description: 'Optional files to include in the prompt (images, PDFs, text, audio, video)',
+    }),
     maxOutputTokens: Property.Number({
       displayName: 'Max Output Tokens',
       required: false,
@@ -48,7 +62,7 @@ export const generateContentWithGemini = createAction({
   async run(context) {
     const auth = context.auth as ServiceAccountAuth;
     const serviceAccountJson = JSON.parse(auth.serviceAccountJson);
-    const { model, prompt, maxOutputTokens, temperature } = context.propsValue;
+    const { model, prompt, files, maxOutputTokens, temperature } = context.propsValue;
 
     // Initialize Gemini client with service account
     const ai = new GoogleGenAI({
@@ -67,10 +81,25 @@ export const generateContentWithGemini = createAction({
       temperature
     };
 
+    // Prepare content parts
+    const contentParts: ContentPart[] = [{ text: prompt }];
+    
+    // Add files if provided
+    if (files) {
+      const base64Data = files.data.toString('base64');
+      const mimeType = mime.lookup(files.extension || '') || 'application/octet-stream';
+      contentParts.push({
+        inlineData: {
+          data: base64Data,
+          mimeType
+        }
+      });
+    }
+
     const result = await ai.models.generateContent({
       model,
       config: generationConfig,
-      contents: prompt
+      contents: contentParts
     });
     
     return {
