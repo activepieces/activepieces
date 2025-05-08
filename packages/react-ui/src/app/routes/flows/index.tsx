@@ -44,6 +44,7 @@ export enum FlowsPageTabs {
   ISSUES = 'issues',
   FLOWS = 'flows',
 }
+export const ACTIVE_TAB_QUERY_PARAM = 'activeTab';
 
 const FlowsPage = () => {
   const { checkAccess } = useAuthorization();
@@ -52,7 +53,7 @@ const FlowsPage = () => {
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
 
   const [activeTab, setActiveTab] = useState<FlowsPageTabs>(
-    (searchParams.get('activeTab') ?? 'flows') as FlowsPageTabs,
+    (searchParams.get(ACTIVE_TAB_QUERY_PARAM) ?? 'flows') as FlowsPageTabs,
   );
 
   const { data, isLoading, refetch } = useQuery({

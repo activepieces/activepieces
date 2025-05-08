@@ -80,6 +80,7 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
+import { FlowsRunsPageReroute } from '../routes/runs';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -154,6 +155,18 @@ const routes = [
           <FlowRunPage />
         </PageTitle>
       </RoutePermissionGuard>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: '/runs',
+    element: (
+      <DashboardContainer>
+        <RoutePermissionGuard permission={Permission.READ_RUN}>
+          <PageTitle title="Flows Runs">
+            <FlowsRunsPageReroute />
+          </PageTitle>
+        </RoutePermissionGuard>
+      </DashboardContainer>
     ),
   }),
   {
