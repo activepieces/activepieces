@@ -4,4 +4,4 @@ This library was generated with [Nx](https://nx.dev).
 
 ## Building
 
-Run `nx build pieces-Close-CRM` to build the library.
+Run `nx build pieces-CloseCRM` to build the library.
