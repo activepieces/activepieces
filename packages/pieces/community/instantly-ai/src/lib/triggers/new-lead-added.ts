@@ -55,7 +55,7 @@ export const newLeadAddedTrigger = createTrigger({
     await context.store.put('lastFetchTime', new Date().toISOString());
 
     const queryParams: Record<string, string | number | boolean> = {
-      created_after: lastFetchTime,
+      created_after: lastFetchTime as string,
     };
 
     let endpoint: string;

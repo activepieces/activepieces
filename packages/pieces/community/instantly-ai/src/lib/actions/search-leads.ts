@@ -81,19 +81,19 @@ export const searchLeadsAction = createAction({
     const queryParams: Record<string, string | number | boolean> = {};
 
     if (email) {
-      queryParams.email = email;
+      queryParams['email'] = email;
     }
 
     if (first_name) {
-      queryParams.first_name = first_name;
+      queryParams['first_name'] = first_name;
     }
 
     if (last_name) {
-      queryParams.last_name = last_name;
+      queryParams['last_name'] = last_name;
     }
 
     if (company) {
-      queryParams.company = company;
+      queryParams['company'] = company;
     }
 
     if (campaign_id) {
@@ -103,19 +103,19 @@ export const searchLeadsAction = createAction({
     }
 
     if (created_after) {
-      queryParams.created_after = created_after;
+      queryParams['created_after'] = created_after;
     }
 
     if (created_before) {
-      queryParams.created_before = created_before;
+      queryParams['created_before'] = created_before;
     }
 
     if (limit) {
-      queryParams.limit = Math.min(100, Math.max(1, limit));
+      queryParams['limit'] = Math.min(100, Math.max(1, limit));
     }
 
     if (offset !== undefined) {
-      queryParams.offset = Math.max(0, offset);
+      queryParams['offset'] = Math.max(0, offset);
     }
 
     return await makeRequest({

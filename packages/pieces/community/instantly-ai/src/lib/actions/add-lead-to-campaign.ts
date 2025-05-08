@@ -72,23 +72,23 @@ export const addLeadToCampaignAction = createAction({
     };
 
     if (first_name) {
-      lead.first_name = first_name;
+      lead['first_name'] = first_name;
     }
 
     if (last_name) {
-      lead.last_name = last_name;
+      lead['last_name'] = last_name;
     }
 
     if (company) {
-      lead.company = company;
+      lead['company'] = company;
     }
 
     if (phone) {
-      lead.phone = phone;
+      lead['phone'] = phone;
     }
 
     if (custom_attributes) {
-      lead.custom_attributes = custom_attributes;
+      lead['custom_attributes'] = custom_attributes;
     }
 
     const endpoint = campaign_id

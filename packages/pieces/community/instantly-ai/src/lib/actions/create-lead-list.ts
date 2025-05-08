@@ -38,11 +38,11 @@ export const createLeadListAction = createAction({
     };
 
     if (description) {
-      payload.description = description;
+      payload['description'] = description;
     }
 
     if (tags && tags.length > 0) {
-      payload.tags = tags;
+      payload['tags'] = tags;
     }
 
     return await makeRequest({

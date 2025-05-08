@@ -56,11 +56,11 @@ export const campaignStatusChangedTrigger = createTrigger({
     await context.store.put('lastFetchTime', new Date().toISOString());
 
     const queryParams: Record<string, string | number | boolean> = {
-      updated_after: lastFetchTime,
+      updated_after: lastFetchTime as string,
     };
 
     if (campaign_id) {
-      queryParams.id = campaign_id;
+      queryParams['id'] = campaign_id;
     }
 
     const endpoint = 'campaigns';
@@ -85,7 +85,7 @@ export const campaignStatusChangedTrigger = createTrigger({
 
       // Check if the most recent status change is after the last fetch time
       const latestStatusChange = campaign.status_history[0];
-      if (new Date(latestStatusChange.timestamp) <= new Date(lastFetchTime)) {
+      if (new Date(latestStatusChange.timestamp) <= new Date(lastFetchTime as string)) {
         return false;
       }
 

@@ -66,15 +66,15 @@ export const createCampaignAction = createAction({
     };
 
     if (schedule_date) {
-      payload.schedule_date = schedule_date;
+      payload['schedule_date'] = schedule_date;
     }
 
     if (auto_start !== undefined) {
-      payload.auto_start = auto_start;
+      payload['auto_start'] = auto_start;
     }
 
     if (list_id) {
-      payload.list_id = list_id;
+      payload['list_id'] = list_id;
     }
 
     return await makeRequest({

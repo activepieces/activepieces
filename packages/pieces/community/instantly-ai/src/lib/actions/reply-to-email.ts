@@ -56,19 +56,19 @@ export const replyToEmailAction = createAction({
     };
 
     if (subject) {
-      payload.subject = subject;
+      payload['subject'] = subject;
     }
 
     if (cc && cc.length > 0) {
-      payload.cc = cc;
+      payload['cc'] = cc;
     }
 
     if (bcc && bcc.length > 0) {
-      payload.bcc = bcc;
+      payload['bcc'] = bcc;
     }
 
     if (attachments && attachments.length > 0) {
-      payload.attachments = attachments;
+      payload['attachments'] = attachments;
     }
 
     return await makeRequest({

@@ -25,8 +25,8 @@ export const instantlyAi = createPiece({
   description: 'Powerful cold email outreach and lead engagement platform',
   auth: instantlyAiAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/instantly-ai.png',
-  categories: [PieceCategory.MARKETING, PieceCategory.SALES],
+  logoUrl: 'https://cdn.prod.website-files.com/63860c8c65e7bef4a1eeebeb/67ab2655638fdc00dc35c630_Group%201%20(2).svg', // TO BE UPDATED
+  categories: [PieceCategory.MARKETING, PieceCategory.SALES_AND_CRM],
   authors: [],
   actions: [
     createCampaignAction,

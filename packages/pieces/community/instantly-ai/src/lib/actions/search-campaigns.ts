@@ -64,27 +64,27 @@ export const searchCampaignsAction = createAction({
     const queryParams: Record<string, string | number | boolean> = {};
 
     if (name) {
-      queryParams.name = name;
+      queryParams['name'] = name;
     }
 
     if (status) {
-      queryParams.status = status;
+      queryParams['status'] = status;
     }
 
     if (created_after) {
-      queryParams.created_after = created_after;
+      queryParams['created_after'] = created_after;
     }
 
     if (created_before) {
-      queryParams.created_before = created_before;
+      queryParams['created_before'] = created_before;
     }
 
     if (limit) {
-      queryParams.limit = Math.min(100, Math.max(1, limit));
+      queryParams['limit'] = Math.min(100, Math.max(1, limit));
     }
 
     if (offset !== undefined) {
-      queryParams.offset = Math.max(0, offset);
+      queryParams['offset'] = Math.max(0, offset);
     }
 
     return await makeRequest({
