@@ -1,4 +1,4 @@
-import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
+import { PieceMetadataModel, PieceMetadataModelSummary, PieceMetadataModelWithoutI18n } from '@activepieces/pieces-framework'
 import { apVersionUtil, UserInteractionJobType } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
@@ -26,6 +26,7 @@ import {
     pieceMetadataService,
 } from './piece-metadata-service'
 import { pieceSyncService } from './piece-sync-service'
+import { StatusCodes } from 'http-status-codes'
 
 export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(basePiecesController, { prefix: '/v1/pieces' })
@@ -54,7 +55,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     app.get(
         '/',
         ListPiecesRequest,
-        async (req): Promise<PieceMetadataModelSummary[]> => {
+        async (req) => {
             const latestRelease = await apVersionUtil.getCurrentRelease()
             const includeTags = req.query.includeTags ?? false
             const release = req.query.release ?? latestRelease
@@ -75,15 +76,22 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 suggestionType: req.query.suggestionType,
                 locale: req.query.locale,
             })
+            //because the Type.Array( PieceMetadataModelWithoutI18nSummary) is not working
+            const pieceMetadataSummaryWithoutI18n = pieceMetadataSummary.map((piece) => {
+                return {
+                    ...piece,
+                    i18n: undefined,
+                }
+            })
             
-            return pieceMetadataSummary
+            return pieceMetadataSummaryWithoutI18n
         },
     )
 
     app.get(
         '/:scope/:name',
         GetPieceParamsWithScopeRequest,
-        async (req): Promise<PieceMetadata> => {
+        async (req) => {
             const { name, scope } = req.params
             const { version } = req.query
 
@@ -156,8 +164,9 @@ const ListPiecesRequest = {
     },
     schema: {
         querystring: ListPiecesRequestQuery,
-
+     
     },
+ 
 }
 const GetPieceParamsRequest = {
     config: {
@@ -166,7 +175,11 @@ const GetPieceParamsRequest = {
     schema: {
         params: GetPieceRequestParams,
         querystring: GetPieceRequestQuery,
+        response: {
+            [StatusCodes.OK]: PieceMetadataModelWithoutI18n,
+        },
     },
+   
 }
 
 const GetPieceParamsWithScopeRequest = {
@@ -176,6 +189,9 @@ const GetPieceParamsWithScopeRequest = {
     schema: {
         params: GetPieceRequestWithScopeParams,
         querystring: GetPieceRequestQuery,
+        response: {
+            [StatusCodes.OK]: PieceMetadataModelWithoutI18n,
+        },
     },
 }
 
