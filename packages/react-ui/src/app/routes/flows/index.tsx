@@ -11,6 +11,7 @@ import {
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -38,7 +39,6 @@ import { TableTitle } from '../../../components/ui/table-title';
 import { FlowsTable } from './flows-table';
 import { IssuesTable } from './issues-table';
 import TaskLimitAlert from './task-limit-alert';
-import { useEmbedding } from '@/components/embed-provider';
 
 export enum FlowsPageTabs {
   HISTORY = 'history',
@@ -65,7 +65,9 @@ const FlowsPage = () => {
     }
   };
 
-  const [activeTab, setActiveTab] = useState<FlowsPageTabs>(determineActiveTab());
+  const [activeTab, setActiveTab] = useState<FlowsPageTabs>(
+    determineActiveTab(),
+  );
 
   useEffect(() => {
     setActiveTab(determineActiveTab());
@@ -156,7 +158,9 @@ const FlowsPage = () => {
                 </TabsTrigger>
               )}
             </TabsList>
-          ) : (<></>)}
+          ) : (
+            <></>
+          )}
           <TabsContent value={FlowsPageTabs.FLOWS}>
             <FlowsTable data={data} isLoading={isLoading} refetch={refetch} />
           </TabsContent>

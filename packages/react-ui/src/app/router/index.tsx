@@ -677,8 +677,8 @@ const ApRouter = () => {
   const router = useMemo(() => {
     return embedState.isEmbedded
       ? createMemoryRouter(routes, {
-        initialEntries: [window.location.pathname],
-      })
+          initialEntries: [window.location.pathname],
+        })
       : createBrowserRouter(routes);
   }, [embedState.isEmbedded]);
 
