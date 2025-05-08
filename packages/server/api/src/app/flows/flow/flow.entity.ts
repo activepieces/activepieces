@@ -49,7 +49,7 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
         },
         externalId: {
             type: String,
-            nullable: true,
+            nullable: false,
         },
         publishedVersionId: {
             ...ApIdSchema,

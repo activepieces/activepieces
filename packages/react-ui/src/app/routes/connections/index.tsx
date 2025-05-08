@@ -353,7 +353,7 @@ function AppConnectionsPage() {
     {
       accessorKey: 'flowCount',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Used In')} />
+        <DataTableColumnHeader column={column} title={t('Flows')} />
       ),
       cell: ({ row }) => {
         return <div className="text-left">{row.original.flowIds?.length}</div>;

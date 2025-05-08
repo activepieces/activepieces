@@ -11,12 +11,12 @@ export enum ConnectionOperationType {
     CREATE_CONNECTION = 'CREATE_CONNECTION',
 }
 
+export const FlowState = PopulatedFlow
 export enum TableOperationType {
     UPDATE_TABLE = 'UPDATE_TABLE',
     CREATE_TABLE = 'CREATE_TABLE',
 }
 
-export const FlowState = Type.Omit(PopulatedFlow, ['externalId'])
 export type FlowState = Static<typeof FlowState>
 
 export const ConnectionState = Type.Object({

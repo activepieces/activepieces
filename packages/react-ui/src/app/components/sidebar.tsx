@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import {
   ChevronDownIcon,
   ChevronUpIcon,
+  Link2,
   LockKeyhole,
   Settings,
 } from 'lucide-react';
@@ -31,10 +32,11 @@ import {
   SidebarMenuAction,
   SidebarSeparator,
 } from '@/components/ui/sidebar-shadcn';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId, Permission } from '@activepieces/shared';
 
 import { ShowPoweredBy } from '../../components/show-powered-by';
 import { platformHooks } from '../../hooks/platform-hooks';
@@ -173,8 +175,14 @@ export function SidebarComponent({
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const location = useLocation();
+  const { checkAccess } = useAuthorization();
+
   const showProjectUsage =
     location.pathname.startsWith('/project') && edition !== ApEdition.COMMUNITY;
+  const showConnectionsLink =
+    location.pathname.startsWith('/project') &&
+    checkAccess(Permission.READ_APP_CONNECTION);
+
   return (
     <div className="flex min-h-screen w-full">
       <div className="flex min-h-screen w-full">
@@ -212,6 +220,20 @@ export function SidebarComponent({
                               )}
                               label={t('Project Settings')}
                               Icon={Settings}
+                              isSubItem={false}
+                            />
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )}
+                      {showConnectionsLink && (
+                        <SidebarMenuItem>
+                          <SidebarMenuButton asChild>
+                            <CustomTooltipLink
+                              to={authenticationSession.appendProjectRoutePrefix(
+                                '/connections',
+                              )}
+                              label={t('Connections')}
+                              Icon={Link2}
                               isSubItem={false}
                             />
                           </SidebarMenuButton>
