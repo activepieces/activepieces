@@ -11,6 +11,19 @@ export const sendContentToUser = createAction({
       description: 'The ID of the subscriber to send content to',
       required: true,
     }),
+    platform: Property.StaticDropdown({
+      displayName: 'Platform',
+      description: 'The platform to send the content to',
+      required: false,
+      options: {
+        options: [
+          { label: 'Facebook', value: 'facebook' },
+          { label: 'Instagram', value: 'instagram' },
+          { label: 'WhatsApp', value: 'whatsapp' },
+          { label: 'Telegram', value: 'telegram' }
+        ]
+      }
+    }),
     content_type: Property.StaticDropdown({
       displayName: 'Content Type',
       description: 'The type of content to send',
@@ -55,6 +68,7 @@ export const sendContentToUser = createAction({
   async run({ auth, propsValue }) {
     const { 
       subscriber_id, 
+      platform,
       content_type, 
       text_content, 
       media_url, 
@@ -121,7 +135,7 @@ export const sendContentToUser = createAction({
     }
 
     // Prepare the content object
-    const content = {
+    const content: Record<string, any> = {
       version: 'v2',
       content: {
         messages: messages,
@@ -129,6 +143,11 @@ export const sendContentToUser = createAction({
         quick_replies: []
       }
     };
+
+    // Add platform type if specified
+    if (platform && platform !== 'facebook') {
+      content['content']['type'] = platform;
+    }
 
     // Prepare the request body
     const requestBody: Record<string, any> = {

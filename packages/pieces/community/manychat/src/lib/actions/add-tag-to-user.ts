@@ -20,6 +20,26 @@ export const addTagToUser = createAction({
   async run({ auth, propsValue }) {
     const { subscriber_id, tag_name } = propsValue;
 
+    // First, create the tag if it doesn't exist
+    try {
+      await httpClient.sendRequest({
+        method: HttpMethod.POST,
+        url: 'https://api.manychat.com/fb/page/createTag',
+        headers: {
+          accept: 'application/json',
+          Authorization: `Bearer ${auth}`,
+          'Content-Type': 'application/json',
+        },
+        body: {
+          name: tag_name,
+        },
+      });
+    } catch (error) {
+      // If the tag already exists, the API will return an error, but we can proceed
+      // with adding the tag to the user
+      console.log(`Tag creation error (may already exist): ${error}`);
+    }
+
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: 'https://api.manychat.com/fb/subscriber/addTagByName',

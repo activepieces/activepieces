@@ -24,10 +24,31 @@ export const setCustomField = createAction({
   },
   async run({ auth, propsValue }) {
     const { subscriber_id, field_name, field_value } = propsValue;
+    // First, try to create the custom field if it doesn't exist
+    try {
+      await httpClient.sendRequest({
+        method: HttpMethod.POST,
+        url: 'https://api.manychat.com/fb/page/createCustomField',
+        headers: {
+          accept: 'application/json',
+          Authorization: `Bearer ${auth}`,
+          'Content-Type': 'application/json',
+        },
+        body: {
+          caption: field_name,
+          type: 'text',
+          description: `This field stores ${field_name}`
+        },
+      });
+    } catch (error) {
+      // If the field already exists, the API will return an error, but we can proceed
+      // with setting the custom field value
+      console.log(`Custom field creation error (may already exist): ${error}`);
+    }
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: 'https://api.manychat.com/fb/subscriber/setCustomField',
+      url: 'https://api.manychat.com/fb/subscriber/setCustomFieldByName',
       headers: {
         'accept': 'application/json',
         'Authorization': `Bearer ${auth}`,
