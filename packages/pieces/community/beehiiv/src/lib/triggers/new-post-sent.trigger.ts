@@ -29,7 +29,7 @@ export const newPostSent = createTrigger({
     async onDisable(context) {
         await unsubscribeWebhook(
             context.propsValue.publicationId,
-            context.webhookUrl, // Added webhookUrl
+            context.webhookUrl,
             BEEHIIV_EVENT_TYPE, // Pass single event type
             context.auth as string,
             context.store

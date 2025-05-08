@@ -1,6 +1,6 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { HttpMethod, httpClient } from "@activepieces/pieces-common";
-import { beehiivAuth } from "../../index"; // To use the auth defined in the main piece file
+import { beehiivAuth } from "../../index";
 import { BEEHIIV_API_URL } from '../common/constants';
 
 export const createSubscriptionAction = createAction({
@@ -78,7 +78,7 @@ export const createSubscriptionAction = createAction({
         description: 'The Stripe customer ID for this subscription.',
         required: false,
     }),
-    double_opt_override: Property.ShortText({ // API docs state "string", specific enum values not listed there for this field
+    double_opt_override: Property.ShortText({
         displayName: 'Double Opt-in Override',
         description: 'Override publication double-opt settings for this subscription.',
         required: false,

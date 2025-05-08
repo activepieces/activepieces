@@ -19,7 +19,7 @@ export const beehiiv = createPiece({
   auth: beehiivAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/beehiiv.png',
-  authors: ['KCK-01'],
+  authors: ['onyedikachi-david'],
   actions: [
     createSubscriptionAction,
     updateSubscriptionAction,
