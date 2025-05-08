@@ -61,7 +61,7 @@ export const updateEmployee = createAction({
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.PUT,
-            url: `${baseUrl}/employee/${context.propsValue.userId}`,
+            url: `${baseUrl}/api/employee/${context.propsValue.userId}`,
             headers,
             body,
         });

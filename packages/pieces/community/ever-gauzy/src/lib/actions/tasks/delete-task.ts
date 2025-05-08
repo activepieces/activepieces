@@ -21,7 +21,7 @@ export const deleteTask = createAction({
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.DELETE,
-            url: `${baseUrl}/tasks/${context.propsValue.id}`,
+            url: `${baseUrl}/api/tasks/${context.propsValue.id}`,
             headers,
         });
         return response.body;

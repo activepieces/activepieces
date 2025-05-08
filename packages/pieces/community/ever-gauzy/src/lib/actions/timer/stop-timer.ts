@@ -119,7 +119,7 @@ export const stopTimer = createAction({
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
-            url: `${baseUrl}/timesheet/timer/stop`,
+            url: `${baseUrl}/api/timesheet/timer/stop`,
             headers,
             body,
         });

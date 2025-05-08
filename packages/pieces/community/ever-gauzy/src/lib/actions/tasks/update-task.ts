@@ -185,7 +185,7 @@ export const updateTask = createAction({
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.PUT,
-            url: `${baseUrl}/tasks/${context.propsValue.id}`,
+            url: `${baseUrl}/api/tasks/${context.propsValue.id}`,
             headers,
             body,
         });

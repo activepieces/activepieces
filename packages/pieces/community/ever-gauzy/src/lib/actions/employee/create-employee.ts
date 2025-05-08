@@ -73,7 +73,7 @@ export const createEmployee = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${baseUrl}/employee`,
+      url: `${baseUrl}/api/employee`,
       headers,
       body,
     });

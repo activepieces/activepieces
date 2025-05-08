@@ -30,7 +30,7 @@ export  const getTask = createAction({
             queryParams.append('relations', context.propsValue.relations.join(','));
         }
 
-        const url = `${baseUrl}/tasks/${context.propsValue.id}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+        const url = `${baseUrl}/api/tasks/${context.propsValue.id}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,

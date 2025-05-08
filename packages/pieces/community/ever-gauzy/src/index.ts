@@ -49,7 +49,7 @@ export const everGauzy = createPiece({
     createCustomApiCallAction({
       baseUrl: (auth) => {
         const authObj = auth as OAuth2PropertyValue;
-        return authObj.props?.["baseUrl"] as string || 'https://api.gauzy.co/api';
+        return authObj.props?.["baseUrl"] as string || 'https://api.gauzy.co';
       },
       auth: gauzyAuth,
       authMapping: async (auth) => ({

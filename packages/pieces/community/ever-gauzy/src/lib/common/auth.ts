@@ -9,5 +9,5 @@ export function getAuthHeaders(auth: OAuth2PropertyValue): Record<string, string
 
 export function getBaseUrl(auth: OAuth2PropertyValue): string {
   const baseUrl = auth['props']?.['baseUrl'] as string;
-  return baseUrl || 'https://api.gauzy.co/api';
+  return baseUrl || 'https://api.gauzy.co';
 }

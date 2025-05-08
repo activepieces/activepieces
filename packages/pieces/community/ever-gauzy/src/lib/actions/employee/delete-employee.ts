@@ -24,7 +24,7 @@ export const deleteEmployee = createAction({
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.DELETE,
-            url: `${baseUrl}/employees/${context.propsValue.userId}`,
+            url: `${baseUrl}/api/employees/${context.propsValue.userId}`,
             headers,
             body,
         });

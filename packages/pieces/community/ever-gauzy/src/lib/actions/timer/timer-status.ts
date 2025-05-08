@@ -169,7 +169,7 @@ export const getTimerStatus = createAction({
         }
 
         // Build the URL with query parameters
-        const url = `${baseUrl}/timesheet/timer/status${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+        const url = `${baseUrl}/api/timesheet/timer/status${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
