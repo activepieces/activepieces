@@ -29,7 +29,7 @@ export async function makeRequest({
     url: finalUrl,
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
+      'authorization': `Bearer ${apiKey}`,
     },
     body,
   });
