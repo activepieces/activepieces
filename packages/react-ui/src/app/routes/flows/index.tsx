@@ -8,8 +8,8 @@ import {
   Upload,
   Workflow,
 } from 'lucide-react';
-import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -45,15 +45,31 @@ export enum FlowsPageTabs {
   FLOWS = 'flows',
 }
 
+export const ACTIVE_TAB_QUERY_PARAM = 'activeTab';
+const isParamFlowsPagesTab = (tab: string): tab is FlowsPageTabs => {
+  return Object.values(FlowsPageTabs).includes(tab as FlowsPageTabs);
+};
 const FlowsPage = () => {
   const { checkAccess } = useAuthorization();
   const [searchParams, setSearchParams] = useSearchParams();
   const projectId = authenticationSession.getProjectId()!;
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
-
+  const activeTabParam = searchParams.get(ACTIVE_TAB_QUERY_PARAM);
   const [activeTab, setActiveTab] = useState<FlowsPageTabs>(
-    (searchParams.get('activeTab') ?? 'flows') as FlowsPageTabs,
+    isParamFlowsPagesTab(activeTabParam ?? '')
+      ? (activeTabParam as FlowsPageTabs)
+      : FlowsPageTabs.FLOWS,
   );
+  const location = useLocation();
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const activeTabParam = params.get(ACTIVE_TAB_QUERY_PARAM);
+    setActiveTab(
+      isParamFlowsPagesTab(activeTabParam ?? '')
+        ? (activeTabParam as FlowsPageTabs)
+        : FlowsPageTabs.FLOWS,
+    );
+  }, [location.search]);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['flow-table', searchParams.toString(), projectId],
