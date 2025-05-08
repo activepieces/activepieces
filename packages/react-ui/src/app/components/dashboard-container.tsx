@@ -1,11 +1,5 @@
 import { t } from 'i18next';
-import {
-  Package,
-  ListTodo,
-  Server,
-  Table2,
-  Workflow,
-} from 'lucide-react';
+import { Package, ListTodo, Server, Table2, Workflow } from 'lucide-react';
 import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
@@ -38,7 +32,7 @@ const ProjectChangedRedirector = ({
 };
 export const CloseTaskLimitAlertContext = createContext({
   isAlertClosed: false,
-  setIsAlertClosed: (isAlertClosed: boolean) => { },
+  setIsAlertClosed: (isAlertClosed: boolean) => {},
 });
 
 export function DashboardContainer({

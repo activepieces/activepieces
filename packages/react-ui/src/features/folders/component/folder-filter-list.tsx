@@ -228,7 +228,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
             className="group whitespace-nowrap flex overflow-hidden items-center pl-3 pr-1 h-8 border border-dashed"
           >
             <FolderIcon isFolderOpen={selectedFolderId === folder.id} />
-            <span className="mr-1 ml-2">
+            <span className="mr-1 ml-2 flex items-center">
               {folder.displayName}
               <span className="text-xs font-semibold ml-1">
                 ({folder.numberOfFlows})
@@ -248,8 +248,10 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
         <Popover open={showMoreFolders} onOpenChange={setShowMoreFolders}>
           <PopoverTrigger asChild>
             <Button variant="ghost" size="sm" className="h-8">
-              <EllipsisVertical className="h-4 w-4 mr-2" />
-              more
+              <span className="text-xs font-semibold mr-1">
+                ({moreFolders.length})
+              </span>
+              More
             </Button>
           </PopoverTrigger>
 
@@ -278,7 +280,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                           <FolderIcon
                             isFolderOpen={selectedFolderId === folder.id}
                           />
-                          <span className="ml-2 mr-1">
+                          <span className="mr-1 ml-2 flex items-center">
                             {folder.displayName}
                             <span className="text-xs font-semibold ml-1">
                               ({folder.numberOfFlows})
