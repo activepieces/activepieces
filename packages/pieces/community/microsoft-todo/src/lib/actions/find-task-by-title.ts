@@ -1,6 +1,7 @@
 import { Property, createAction, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, AuthenticationType, QueryParams } from "@activepieces/pieces-common";
 import { getTaskListsDropdown, MSGraphTaskList, MSGraphBaseTask } from "../common";
+import { microsoftToDoAuth } from "../../index";
 
 // Interface for the response when fetching tasks from a list
 interface FindTasksResponse {
@@ -13,6 +14,7 @@ interface AllTaskListsResponse {
 }
 
 export const findTaskByTitleAction = createAction({
+    auth:microsoftToDoAuth,
     name: 'find_task_by_title',
     displayName: 'Find Task by Title',
     description: 'Find tasks by title. Can search globally or within a specific task list (searching globally may be slow).',

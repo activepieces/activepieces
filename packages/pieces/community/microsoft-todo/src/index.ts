@@ -7,6 +7,7 @@ import { findTaskByTitleAction } from "./lib/actions/find-task-by-title";
 import { newTaskCreatedTrigger } from "./lib/triggers/new-task-created";
 import { taskCompletedTrigger } from "./lib/triggers/task-completed";
 import { taskUpdatedTrigger } from "./lib/triggers/task-updated";
+import { PieceCategory } from "@activepieces/shared";
 
 export const microsoftToDoAuth = PieceAuth.OAuth2({
   description: "Authenticate with your Microsoft Account. You will need to register an application in the Microsoft Entra admin center. For the Redirect URI, please use: `https://cloud.activepieces.com/redirect` (or your self-hosted instance redirect URI)",
@@ -18,10 +19,12 @@ export const microsoftToDoAuth = PieceAuth.OAuth2({
 
 export const microsoftTodo = createPiece({
   displayName: "Microsoft To Do",
+  description:'Cloud based task management application.',
+  categories:[PieceCategory.PRODUCTIVITY],
   auth: microsoftToDoAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/microsoft-todo.png",
-  authors: ["Activepieces Community"],
+  authors: ["onyedikachi-david"],
   actions: [
     createTask,
     createTaskListAction,

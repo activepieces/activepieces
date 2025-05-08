@@ -1,8 +1,10 @@
 import { Property, createAction, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
 import { getTaskListsDropdown, getTasksInListDropdown } from "../common";
+import { microsoftToDoAuth } from "../../index";
 
 export const updateTaskAction = createAction({
+    auth:microsoftToDoAuth,
     name: 'update_task',
     displayName: 'Update Task',
     description: 'Update an existing task in Microsoft To Do.',

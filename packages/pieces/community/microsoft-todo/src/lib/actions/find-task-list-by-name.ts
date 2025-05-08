@@ -1,5 +1,6 @@
 import { Property, createAction, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, AuthenticationType, QueryParams } from "@activepieces/pieces-common";
+import { microsoftToDoAuth } from "../../index";
 
 
 interface TaskList {
@@ -12,6 +13,7 @@ interface FindTaskListResponse {
 }
 
 export const findTaskListByNameAction = createAction({
+    auth:microsoftToDoAuth,
     name: 'find_task_list_by_name',
     displayName: 'Find Task List by Name',
     description: 'Find a Microsoft To Do task list by its name.',

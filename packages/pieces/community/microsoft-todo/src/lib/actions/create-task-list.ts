@@ -1,7 +1,9 @@
 import { Property, createAction, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
+import { microsoftToDoAuth } from "../../index";
 
 export const createTaskListAction = createAction({
+    auth:microsoftToDoAuth,
     name: 'create_task_list',
     displayName: 'Create Task List',
     description: 'Create a new task list in Microsoft To Do.',
