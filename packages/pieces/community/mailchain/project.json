@@ -18,6 +18,7 @@
       "outputs": [
         "{options.outputPath}"
       ],
+      "dependsOn": ["^build", "prebuild"],
       "options": {
         "outputPath": "dist/packages/pieces/community/mailchain",
         "tsConfig": "packages/pieces/community/mailchain/tsconfig.lib.json",
@@ -28,6 +29,13 @@
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm ci",
+        "cwd": "packages/pieces/community/mailchain"
       }
     },
     "nx-release-publish": {
