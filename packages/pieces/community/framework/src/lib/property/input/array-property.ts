@@ -34,7 +34,8 @@ export type ArraySubProps<R extends boolean> = Record<
     | ShortTextProperty<R>
     | LongTextProperty<R>
     | StaticDropdownProperty<any, R>
-
+    | MultiSelectDropdownProperty<any, R>
+    | StaticMultiSelectDropdownProperty<any, R>
     | CheckboxProperty<R>
     | NumberProperty<R>
     | FileProperty<R>

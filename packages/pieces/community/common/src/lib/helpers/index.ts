@@ -59,8 +59,8 @@ export function createCustomApiCallAction({
   props,
   extraProps,
 }: {
-  auth: PieceAuthProperty;
-  baseUrl: (auth?: any) => string;
+  auth?: PieceAuthProperty;
+  baseUrl: (auth?: unknown) => string;
   authMapping?: (
     auth: unknown,
     propsValue: StaticPropsValue<any>
