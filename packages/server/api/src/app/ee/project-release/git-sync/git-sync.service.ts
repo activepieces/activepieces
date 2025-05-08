@@ -174,7 +174,7 @@ export const gitRepoService = (_log: FastifyBaseLogger) => ({
                     })
                 }
                 for (const flow of flows) {
-                    const flowName = flow.externalId || flow.id
+                    const flowName = flow.externalId
                     const connections = await appConnectionService(log).getManyConnectionStates({
                         projectId: gitRepo.projectId,
                     })

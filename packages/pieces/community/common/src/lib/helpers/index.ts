@@ -16,6 +16,7 @@ import {
   httpClient,
 } from '../http';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
+import fs from 'fs';
 
 export const getAccessTokenOrThrow = (
   auth: OAuth2PropertyValue | undefined
@@ -192,4 +193,9 @@ i.e ${getBaseUrlForDescription(baseUrl,auth)}/resource or /resource`,
       }
     },
   });
+}
+
+export function is_chromium_installed(): boolean {
+  const chromiumPath = '/usr/bin/chromium'
+  return fs.existsSync(chromiumPath)
 }
