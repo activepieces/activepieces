@@ -1,5 +1,4 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
   CheckIcon,
@@ -13,15 +12,12 @@ import { useMemo, useCallback, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
   LIMIT_QUERY_PARAM,
   DataTable,
-  RowDataWithActions,
 } from '@/components/ui/data-table';
-import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,7 +26,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { MessageTooltip } from '@/components/ui/message-tooltip';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
-import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
@@ -47,6 +42,8 @@ import {
   Permission,
 } from '@activepieces/shared';
 
+import { runsTableColumns } from './columns';
+
 type SelectedRow = {
   id: string;
   status: FlowRunStatus;
@@ -57,7 +54,9 @@ export const RunsTable = () => {
   const [selectedRows, setSelectedRows] = useState<Array<SelectedRow>>([]);
   const [selectedAll, setSelectedAll] = useState(false);
   const [excludedRows, setExcludedRows] = useState<Set<string>>(new Set());
+
   const projectId = authenticationSession.getProjectId()!;
+
   const { data, isLoading } = useQuery({
     queryKey: ['flow-run-table', searchParams.toString(), projectId],
     staleTime: 0,
@@ -82,6 +81,16 @@ export const RunsTable = () => {
         createdBefore: createdBefore ?? undefined,
       });
     },
+  });
+
+  const columns = runsTableColumns({
+    data,
+    selectedRows,
+    setSelectedRows,
+    selectedAll,
+    setSelectedAll,
+    excludedRows,
+    setExcludedRows,
   });
 
   const navigate = useNavigate();
@@ -272,191 +281,6 @@ export const RunsTable = () => {
     },
     [navigate, openNewWindow],
   );
-
-  const columns: ColumnDef<RowDataWithActions<FlowRun>>[] = [
-    {
-      id: 'select',
-      header: ({ table }) => (
-        <div className="flex items-center">
-          <Checkbox
-            checked={selectedAll || table.getIsAllPageRowsSelected()}
-            onCheckedChange={(value) => {
-              const isChecked = !!value;
-              table.toggleAllPageRowsSelected(isChecked);
-
-              if (isChecked) {
-                const currentPageRows = table.getRowModel().rows.map((row) => ({
-                  id: row.original.id,
-                  status: row.original.status,
-                }));
-
-                setSelectedRows((prev) => {
-                  const uniqueRows = new Map<string, SelectedRow>([
-                    ...prev.map(
-                      (row) => [row.id, row] as [string, SelectedRow],
-                    ),
-                    ...currentPageRows.map(
-                      (row) => [row.id, row] as [string, SelectedRow],
-                    ),
-                  ]);
-
-                  return Array.from(uniqueRows.values());
-                });
-              } else {
-                setSelectedAll(false);
-                setSelectedRows([]);
-                setExcludedRows(new Set());
-              }
-            }}
-          />
-          {selectedRows.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="z-50">
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() => {
-                    const currentPageRows = table
-                      .getRowModel()
-                      .rows.map((row) => ({
-                        id: row.original.id,
-                        status: row.original.status,
-                      }));
-                    setSelectedRows(currentPageRows);
-                    setSelectedAll(false);
-                    setExcludedRows(new Set());
-                    table.toggleAllPageRowsSelected(true);
-                  }}
-                >
-                  {t('Select shown')}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="cursor-pointer"
-                  onClick={() => {
-                    if (data?.data) {
-                      const allRows = data.data.map((row) => ({
-                        id: row.id,
-                        status: row.status,
-                      }));
-                      setSelectedRows(allRows);
-                      setSelectedAll(true);
-                      setExcludedRows(new Set());
-                      table.toggleAllPageRowsSelected(true);
-                    }
-                  }}
-                >
-                  {t('Select all')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
-      ),
-      cell: ({ row }) => {
-        const isExcluded = excludedRows.has(row.original.id);
-        const isSelected = selectedAll
-          ? !isExcluded
-          : selectedRows.some(
-              (selectedRow) => selectedRow.id === row.original.id,
-            );
-
-        return (
-          <Checkbox
-            checked={isSelected}
-            onCheckedChange={(value) => {
-              const isChecked = !!value;
-
-              if (selectedAll) {
-                if (isChecked) {
-                  const newExcluded = new Set(excludedRows);
-                  newExcluded.delete(row.original.id);
-                  setExcludedRows(newExcluded);
-                } else {
-                  setExcludedRows(new Set([...excludedRows, row.original.id]));
-                }
-              } else {
-                if (isChecked) {
-                  setSelectedRows((prev) => [
-                    ...prev,
-                    {
-                      id: row.original.id,
-                      status: row.original.status,
-                    },
-                  ]);
-                } else {
-                  setSelectedRows((prev) =>
-                    prev.filter(
-                      (selectedRow) => selectedRow.id !== row.original.id,
-                    ),
-                  );
-                }
-              }
-              row.toggleSelected(isChecked);
-            }}
-          />
-        );
-      },
-    },
-    {
-      accessorKey: 'flowId',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Flow')} />
-      ),
-      cell: ({ row }) => {
-        return <div className="text-left">{row.original.flowDisplayName}</div>;
-      },
-    },
-    {
-      accessorKey: 'status',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Status')} />
-      ),
-      cell: ({ row }) => {
-        const status = row.original.status;
-        const { variant, Icon } = flowRunUtils.getStatusIcon(status);
-        return (
-          <div className="text-left">
-            <StatusIconWithText
-              icon={Icon}
-              text={formatUtils.convertEnumToHumanReadable(status)}
-              variant={variant}
-            />
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'created',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Start Time')} />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.startTime))}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'duration',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Duration')} />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left">
-            {row.original.finishTime &&
-              formatUtils.formatDuration(row.original.duration)}
-          </div>
-        );
-      },
-    },
-  ];
 
   return (
     <DataTable

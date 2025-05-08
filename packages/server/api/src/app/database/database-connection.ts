@@ -5,7 +5,9 @@ import {
     DataSource,
     EntitySchema,
     FindOperator,
+    ObjectLiteral,
     Raw,
+    SelectQueryBuilder,
 } from 'typeorm'
 import { AiProviderEntity } from '../ai/ai-provider-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
@@ -158,11 +160,34 @@ export const databaseConnection = () => {
     return _databaseConnection
 }
 
+export function getDatabaseType(): DatabaseType {
+    return system.getOrThrow<DatabaseType>(AppSystemProp.DB_TYPE)
+}
+
+
+export function AddAPArrayContainsToQueryBuilder<T extends ObjectLiteral>(
+    queryBuilder: SelectQueryBuilder<T>,
+    columnName: string,
+    values: string[],
+): void {
+    switch (getDatabaseType()) {
+        case DatabaseType.POSTGRES:
+            queryBuilder.andWhere(`${columnName} @> :values`, { values })
+            break
+        case DatabaseType.SQLITE3:{
+            for (const value of values) {
+                queryBuilder.andWhere(`${columnName} LIKE :value${values.indexOf(value)}`, { [`value${values.indexOf(value)}`]: `%${value}%` })
+            }
+            break
+        }
+    }
+}
+
 export function APArrayContains<T>(
     columnName: string,
     values: string[],
 ): Record<string, FindOperator<T>> {
-    const databaseType = system.get(AppSystemProp.DB_TYPE)
+    const databaseType = getDatabaseType()
     switch (databaseType) {
         case DatabaseType.POSTGRES:
             return {
