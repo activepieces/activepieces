@@ -161,7 +161,7 @@ const routes = [
     element: (
       <DashboardContainer>
         <RoutePermissionGuard permission={Permission.READ_RUN}>
-          <PageTitle title="Flows">
+          <PageTitle title="Runs">
             <FlowsPage />
           </PageTitle>
         </RoutePermissionGuard>

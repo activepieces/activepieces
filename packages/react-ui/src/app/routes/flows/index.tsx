@@ -45,7 +45,6 @@ export enum FlowsPageTabs {
   ISSUES = 'issues',
   FLOWS = 'flows',
 }
-export const ACTIVE_TAB_QUERY_PARAM = 'activeTab';
 
 const FlowsPage = () => {
   const { checkAccess } = useAuthorization();
