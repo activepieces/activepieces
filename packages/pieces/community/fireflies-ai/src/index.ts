@@ -11,9 +11,8 @@ import { newTranscriptionCompleteTrigger } from './lib/triggers/new-transcriptio
 const markdownDescription = `
 To use Fireflies.ai, you need to get an API key:
 1. Login to your account at https://fireflies.ai.
-2. Navigate to Settings > API in the left sidebar.
-3. Generate a new API key if you don't have one already.
-4. Copy the API key to use with this integration.
+2. Navigate to Settings > Developer Settings in the left sidebar.
+3. Copy the API key from the API Key section to use with this integration.
 `;
 
 export const firefliesAiAuth = PieceAuth.SecretText({
