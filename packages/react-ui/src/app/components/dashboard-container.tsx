@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { ListTodo, Server, Table2, Workflow } from 'lucide-react';
+import { ListTodo, Package, Server, Table2, Workflow } from 'lucide-react';
 import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
@@ -69,7 +69,7 @@ export function DashboardContainer({
   const releasesLink: SidebarLink = {
     type: 'link',
     to: authenticationSession.appendProjectRoutePrefix('/releases'),
-    icon: Server,
+    icon: Package,
     label: t('Releases'),
     hasPermission:
       project.releasesEnabled && checkAccess(Permission.READ_PROJECT_RELEASE),
