@@ -1706,6 +1706,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "mllopart",
+      "name": "Marc Llopart",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1257083?v=4",
+      "profile": "https://www.marcllopartriera.com",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
