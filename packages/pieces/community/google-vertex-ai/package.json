@@ -1,0 +1,8 @@
+{
+  "name": "@activepieces/piece-google-vertex-ai",
+  "version": "0.0.1",
+  "dependencies": {
+    "@google/genai": "^0.3.0",
+    "google-auth-library": "^9.0.0"
+  }
+}
