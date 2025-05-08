@@ -13,10 +13,6 @@ export const createOpportunity = createAction({
       displayName: 'Lead ID',
       description: 'The ID of the lead this opportunity is associated with',
       required: true,
-      validators: [
-        { type: 'min', params: { value: 1 } },
-        { type: 'regex', params: { pattern: '^lead_[a-zA-Z0-9]+$' } }
-      ]
     }),
     name: Property.ShortText({
       displayName: 'Opportunity Name',
@@ -73,18 +69,11 @@ export const createOpportunity = createAction({
       displayName: 'Confidence %',
       description: 'The probability of winning this opportunity (0-100)',
       required: false,
-      validators: [
-        { type: 'min', params: { value: 0 } },
-        { type: 'max', params: { value: 100 } }
-      ]
     }),
     value: Property.Number({
       displayName: 'Value',
       description: 'The monetary value of the opportunity in cents (e.g., 10000 = $100)',
       required: false,
-      validators: [
-        { type: 'min', params: { value: 0 } }
-      ]
     }),
     value_currency: Property.StaticDropdown({
       displayName: 'Currency',
@@ -117,17 +106,11 @@ export const createOpportunity = createAction({
       displayName: 'Contact ID',
       description: 'The ID of the contact associated with this opportunity',
       required: false,
-      validators: [
-        { type: 'regex', params: { pattern: '^cont_[a-zA-Z0-9]+$' } }
-      ]
     }),
     user_id: Property.ShortText({
       displayName: 'Assigned User ID',
       description: 'The ID of the user assigned to this opportunity',
       required: false,
-      validators: [
-        { type: 'regex', params: { pattern: '^user_[a-zA-Z0-9]+$' } }
-      ]
     }),
     custom_fields: Property.Object({
       displayName: 'Custom Fields',
@@ -151,19 +134,10 @@ export const createOpportunity = createAction({
     } = context.propsValue;
     const { apiKey, environment } = context.auth;
 
-    const opportunityData: CloseCRMOpportunity = {
-      lead_id,
-      ...(name && { name }),
-      ...(note && { note }),
-      ...(status_id && { status_id }),
-      ...(confidence !== undefined && { confidence }),
-      ...(value !== undefined && { value }),
-      ...(value_currency && { value_currency }),
-      ...(value_period && { value_period }),
-      ...(contact_id && { contact_id }),
-      ...(user_id && { user_id }),
-      ...custom_fields
-    };
+    const opportunityData = {
+        ...context.propsValue,
+        value_period: context.propsValue.value_period as 'one_time' | 'monthly' | 'annual'
+      };
 
     try {
       const response = await httpClient.sendRequest({

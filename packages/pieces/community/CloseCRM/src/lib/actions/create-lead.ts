@@ -54,25 +54,26 @@ export const createLead = createAction({
   },
   async run(context) {
     const { name, contacts, status, customFields } = context.propsValue;
-    const client = makeClient(context.auth);
+    const apiKey = context.auth;
 
-    const leadData: CloseCRMLead = {
-      name,
-      status_id: status,
-      contacts: contacts?.map(contact => ({
-        name: contact.name,
-        emails: contact.email ? [{ email: contact.email }] : [],
-        phones: contact.phone ? [{ phone: contact.phone }] : [],
-      })),
-      ...customFields,
+    const payload: any = {
+      name: name,
     };
 
-    try {
-      const response = await client.post('/lead/', leadData);
-      return response.data;
-    } catch (error) {
-      console.error('Error creating lead:', error);
-      throw error;
+    const client = makeClient(apiKey);
+    const response = await client.post('/lead/', payload);
+    if (status) payload.status = status;
+    if (customFields) payload.custom = customFields;
+    
+    if (contacts && Array.isArray(contacts) && contacts.length > 0) {
+        payload.contacts = contacts;
     }
+
+    
+
+    return response.data as CloseCRMLead;
   },
-});
+
+   
+  },
+);

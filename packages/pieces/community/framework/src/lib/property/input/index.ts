@@ -52,7 +52,7 @@ export type InputProperty =
   | ArrayProperty<boolean>
   | ObjectProperty<boolean>
   | JsonProperty<boolean>
-  | MultiSelectDropdownProperty<unknown, boolean>
+  | StaticDropdownProperty<unknown, boolean>
   | StaticMultiSelectDropdownProperty<unknown, boolean>
   | DynamicProperties<boolean>
   | DateTimeProperty<boolean>
@@ -178,17 +178,17 @@ export const Property = {
       : StaticDropdownProperty<T, false>;
   },
   MultiSelectDropdown<T, R extends boolean = boolean>(
-    request: Properties<MultiSelectDropdownProperty<T, R>>
+    request: Properties<StaticDropdownProperty<T, R>>
   ): R extends true
-    ? MultiSelectDropdownProperty<T, true>
-    : MultiSelectDropdownProperty<T, false> {
+    ? StaticDropdownProperty<T, true>
+    : StaticDropdownProperty<T, false> {
     return {
       ...request,
       valueSchema: undefined,
       type: PropertyType.MULTI_SELECT_DROPDOWN,
     } as unknown as R extends true
-      ? MultiSelectDropdownProperty<T, true>
-      : MultiSelectDropdownProperty<T, false>;
+      ? StaticDropdownProperty<T, true>
+      : StaticDropdownProperty<T, false>;
   },
   DynamicProperties<R extends boolean = boolean>(
     request: Properties<DynamicProperties<R>>

@@ -98,42 +98,22 @@ export const createContact = createAction({
     const { lead_id, name, title, emails, phones, urls, customFields } = context.propsValue;
     const { apiKey, environment } = context.auth;
 
-    const contactData: CloseCRMContact = {
-        lead_id,
-        name,
-        emails: [],
-        phones: [],
-        urls: [],
-      };
-      
-      // Add emails if present
-      if (emails && emails.length > 0) {
-        contactData.emails = emails.map(email => ({
-          email: email,
-          ...(email.type && { type: email.type })
-        }));
-      }
-      
-      // Add phones if present
-      if (phones && phones.length > 0) {
-        contactData.phones = phones.map(phone => ({
-          phone: phone,
-          ...(phone.type && { type: phone.type })
-        }));
-      }
-      
-      // Add URLs if present
-      if (urls && urls.length > 0) {
-        contactData.urls = urls.map(url => ({
-          url: url,
-          ...(url.type && { type: url.type })
-        }));
-      }
-      
-      // Add custom fields if present
-      if (customFields) {
-        Object.assign(contactData, customFields);
-      }
+    const contactData: Partial<CloseCRMContact> = { // Use Partial for creation
+      lead_id: lead_id,
+      name: name,
+      email: emails ? emails.map(email => ({ 
+        type: email as string,
+        email: email as string 
+      })) : [],
+      phone: phones ? phones.map(phone => ({ 
+        type: phone as string,
+        phone: phone as string 
+      })) : [],
+      url: urls ? urls.map(url => ({ 
+        type: url as string,
+        url: url as string 
+      })) : [],
+    };
     try {
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,

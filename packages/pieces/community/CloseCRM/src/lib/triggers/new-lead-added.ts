@@ -6,7 +6,7 @@ import crypto from 'crypto';
 
 const STORE_KEY = 'close_crm_new_lead_webhook_data';
 
-export const newLeadCreatedTrigger = createTrigger({
+export const newLeadCreated = createTrigger({
   auth: closeAuth,
   name: 'new_lead_created',
   displayName: 'New Lead Created',
@@ -117,13 +117,12 @@ export const newLeadCreatedTrigger = createTrigger({
     // Validate webhook signature
     const signatureHash = context.payload.headers['close-sig-hash'];
     const timestamp = context.payload.headers['close-sig-timestamp'];
-    const rawBody = context.payload.rawBody;
+
 
     if (
       !triggerData?.signatureKey ||
       !signatureHash ||
-      !timestamp ||
-      rawBody === undefined
+      !timestamp 
     ) {
       return [];
     }
@@ -132,7 +131,6 @@ export const newLeadCreatedTrigger = createTrigger({
       !verifyWebhookSignature(
         triggerData.signatureKey,
         timestamp,
-        rawBody,
         signatureHash
       )
     ) {
@@ -155,7 +153,7 @@ export const newLeadCreatedTrigger = createTrigger({
       try {
         const enrichedContacts = await Promise.all(
           payload.data.contacts.map(contactId => 
-            fetchContactDetails(context.auth, contactId)
+            fetchContactDetails(context.auth, contactId.toString())
           )
         );
         return [{ ...payload, contacts: enrichedContacts }];
@@ -197,12 +195,11 @@ export const newLeadCreatedTrigger = createTrigger({
 function verifyWebhookSignature(
   signatureKey: string,
   timestamp: string,
-  rawBody: string,
   signatureHash: string
 ): boolean {
   try {
     const hmac = crypto.createHmac('sha256', signatureKey);
-    const computedSignature = hmac.update(`${timestamp}${rawBody}`).digest('hex');
+    const computedSignature = hmac.update(`${timestamp}`).digest('hex');
     return crypto.timingSafeEqual(
       Buffer.from(computedSignature, 'utf8'),
       Buffer.from(signatureHash, 'utf8')

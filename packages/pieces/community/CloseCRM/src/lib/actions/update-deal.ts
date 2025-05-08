@@ -47,15 +47,10 @@ export const updateDeal = createAction({
     const { deal_id, status, value, note, customFields } = context.propsValue;
     const client = makeClient(context.auth);
 
-    const updateData: CloseCRMDeal = {
-      ...(status && { status }),
-      ...(value && { value }),
-      ...(note && { note }),
-      ...customFields,
-    };
+    
 
     try {
-      const response = await client.put(`/opportunity/${deal_id}`, updateData);
+      const response = await client.put(`/opportunity/${deal_id}`);
       return response.data;
     } catch (error) {
       console.error('Error updating deal:', error);

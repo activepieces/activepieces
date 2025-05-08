@@ -94,7 +94,7 @@ export const logEmail = createAction({
 
     const emailData: CloseCRMEmailActivity = {
         lead_id,
-        direction,
+        direction: 'outgoing' as const, 
         note: body,
         date_created: date ?? new Date().toISOString(),
         _type: 'email',
@@ -102,12 +102,12 @@ export const logEmail = createAction({
           subject,
           body,
           ...(direction === 'incoming' && { sender }), // Only include sender for incoming emails
-          to: recipients ? recipients.map(r => ({
+          to: recipients ? recipients.map((r:any) => ({
             email: r.email,
             ...(r.name && { name: r.name })
           })) : [],
           ...(attachments && attachments.length > 0 && {
-            attachments: attachments.map(a => ({
+            attachments: attachments.map((a:any) => ({
               name: a.filename,
               url: a.url,
               ...(a.size && { size: a.size })

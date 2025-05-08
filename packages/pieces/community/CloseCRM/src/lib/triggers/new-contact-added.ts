@@ -10,12 +10,11 @@ const STORE_KEY = 'close_crm_new_contact_webhook_data';
 const verifyWebhookSignature = (
   signatureKey: string,
   timestamp: string,
-  rawBody: string,
   signatureHash: string
 ): boolean => {
   try {
     const hmac = crypto.createHmac('sha256', signatureKey);
-    const computedSignature = hmac.update(`${timestamp}${rawBody}`).digest('hex');
+    const computedSignature = hmac.update(`${timestamp}`).digest('hex');
     return crypto.timingSafeEqual(
       Buffer.from(computedSignature, 'utf8'),
       Buffer.from(signatureHash, 'utf8')
@@ -33,12 +32,7 @@ export const newContactAdded = createTrigger({
   description: 'Triggers when a new contact is created in Close CRM',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    include_related: Property.Checkbox({
-      displayName: 'Include Related Lead Data',
-      description: 'Fetch and include complete lead information with each contact',
-      required: false,
-      defaultValue: false,
-    }),
+    
   },
   async onEnable(context) {
     const { apiKey, environment } = context.auth;
@@ -123,13 +117,11 @@ export const newContactAdded = createTrigger({
     // Validate webhook signature
     const signatureHash = context.payload.headers['close-sig-hash'];
     const timestamp = context.payload.headers['close-sig-timestamp'];
-    const rawBody = context.payload.rawBody;
 
     if (
       !triggerData?.signatureKey ||
       !signatureHash ||
-      !timestamp ||
-      rawBody === undefined
+      !timestamp  
     ) {
       return [];
     }
@@ -138,7 +130,6 @@ export const newContactAdded = createTrigger({
       !verifyWebhookSignature(
         triggerData.signatureKey,
         timestamp,
-        rawBody,
         signatureHash
       )
     ) {
@@ -157,7 +148,7 @@ export const newContactAdded = createTrigger({
     }
 
     // Optionally enrich with lead data
-    if (context.propsValue.include_related && payload.lead_id) {
+    if (payload.lead_id) {
       try {
         const lead = await fetchLeadDetails(
           context.auth,

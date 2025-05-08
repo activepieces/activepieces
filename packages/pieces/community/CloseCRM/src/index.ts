@@ -3,7 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createLead } from "./lib/actions/create-lead";
 import { logEmail } from "./lib/actions/log-email";
 import { findLead } from "./lib/actions/find-lead";
-import { newLeadAdded } from "./lib/triggers/new-lead-added";
+import { newLeadCreated } from "./lib/triggers/new-lead-added";
 import { createOpportunity } from "./lib/actions/create-opportunity";
 import { findOpportunity } from "./lib/actions/find-opportunity";
 import {opportunityStatusChanged} from "./lib/triggers/opportunity-status-changed";
@@ -71,17 +71,9 @@ export const closeCrm = createPiece({
     findOpportunity,
     createOpportunity,
     findContact,
-    createCustomApiCallAction({
-      auth: closeAuth,
-      baseUrl: (auth) => auth.propsValue.environment === 'sandbox' ? CLOSE_API_URL_SANDBOX : CLOSE_API_URL,
-      authMapping: async (auth) => ({
-        'Authorization': `Basic ${Buffer.from(`${auth.propsValue.apiKey}:`).toString('base64')}`,
-        'Content-Type': 'application/json',
-      }),
-    }),
   ],
   triggers: [
-    newLeadAdded,
+    newLeadCreated,
     newContactAdded,
     opportunityStatusChanged
   ],

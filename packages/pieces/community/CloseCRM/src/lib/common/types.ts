@@ -1,6 +1,5 @@
 export interface CloseCRMLead {
-    name: string;
-    status_id?: string;
+    id: string;
     contacts?: {
       name: string;
       emails?: { email: string }[];
@@ -15,7 +14,7 @@ export interface CloseCRMLead {
   }
 
   export interface CloseCRMDeal {
-    status?: 'active' | 'won' | 'lost' | 'archived';
+    status: 'active' | 'won' | 'lost' | 'archived';
     value?: number;
     note?: string;
     [key: string]: unknown; // For custom fields
@@ -72,6 +71,7 @@ export interface CloseCRMLead {
 
   export interface CloseCRMContact {
     lead_id: string;
+    id: string;
     name: string;
     title?: string;
     emails?: {
@@ -97,6 +97,7 @@ export interface CloseCRMLead {
     };
     _fields: {
       contact: string[];
+      lead: string[];
     };
   }
   
@@ -107,7 +108,7 @@ export interface CloseCRMLead {
     lead_id: string;
     date_created?: string;
     date_updated?: string;
-    email: {
+    email?: {
       email: string;
       type?: string;
     }[];
@@ -121,29 +122,11 @@ export interface CloseCRMLead {
     }[];
   }
 
-  //Find lead 
-  export interface CloseCRMLead {
-    id: string;
-    name: string;
-    display_name?: string;
-    status_label?: string;
-    url?: string;
-    date_created?: string;
-    date_updated?: string;
-    contact: {
-      id: string;
-      name: string;
-    }[];
-    custom_fields?: Record<string, unknown>;
-  }
   
   export interface CloseCRMSearchQuery {
     query: {
       type: string;
       queries: any[];
-    };
-    _field: {
-      lead: string[];
     };
   }
 
@@ -169,13 +152,6 @@ export interface CloseCRMLead {
     organization_id: string;
   }
   
-  export interface CloseCRMLead {
-    id: string;
-    name: string;
-    status_label?: string;
-    date_created?: string;
-    date_updated?: string;
-  }
 
   //create opportunity
   export interface CloseCRMOpportunity {
@@ -187,6 +163,7 @@ export interface CloseCRMLead {
     value?: number;
     value_currency?: string;
     value_period?: 'one_time' | 'monthly' | 'annual';
+    status?: 'active' | 'won' | 'lost' | 'archived';
     contact_id?: string;
     user_id?: string;
     date_won?: string;
@@ -196,7 +173,6 @@ export interface CloseCRMLead {
   //find opportunity
 
   export interface CloseCRMOpportunity {
-    id: string;
     lead_id: string;
     lead_name?: string;
     status_id?: string;
@@ -227,6 +203,7 @@ export interface CloseCRMLead {
     object_type: 'opportunity';
     object_id: string;
     lead_id: string;
+    payload_id: string;
     date_created: string;
     changed_fields: string[];
     previous_data?: {

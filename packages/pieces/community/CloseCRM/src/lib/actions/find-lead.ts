@@ -48,12 +48,8 @@ export const findLead = createAction({
       description: 'Maximum number of leads to return (1-100)',
       required: false,
       defaultValue: 10,
-      validators: [
-        { type: 'min', params: { value: 1 } },
-        { type: 'max', params: { value: 100 } },
-      ],
     }),
-    include_fields: Property.MultiSelectDropdown({
+    include_fields: Property.StaticDropdown({
       displayName: 'Include Fields',
       description: 'Select which fields to include in the response',
       required: false,
@@ -95,8 +91,7 @@ export const findLead = createAction({
         search_type,
         search_query,
         match_type: match_type || 'contains',
-        custom_field_name,
-        include_fields: include_fields || ['id', 'name', 'status_label', 'contacts'],
+        custom_field_name
       });
 
       const response = await httpClient.sendRequest<{ data: CloseCRMLead[] }>({
@@ -135,9 +130,9 @@ function buildLeadSearchQuery(params: {
   search_query: string;
   match_type: string;
   custom_field_name?: string;
-  include_fields: string[];
+ 
 }): CloseCRMSearchQuery {
-  const { search_type, search_query, match_type, custom_field_name, include_fields } = params;
+  const { search_type, search_query, match_type, custom_field_name } = params;
 
   const baseQuery = {
     type: "object_type",
@@ -236,8 +231,9 @@ function buildLeadSearchQuery(params: {
       type: "and",
       queries: [baseQuery, fieldCondition]
     },
-    _field: {
-    
+    _fields: {
+      lead:  ['id', 'name', 'status_label', 'contacts'],
+      contact: ['id', 'name', 'emails', 'phones']
     }
   };
 }

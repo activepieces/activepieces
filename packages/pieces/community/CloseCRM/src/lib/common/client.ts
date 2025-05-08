@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { PieceAuth } from '@activepieces/pieces-framework';
 
-export function makeClient(auth: PieceAuth.OAuth2AuthValue) {
+export function makeClient(auth: PieceAuth.PropertyValue) {
   return axios.create({
     baseURL: auth.environment === 'sandbox' ? 
       'https://api-sandbox.close.com/api/v1' : 

@@ -32,7 +32,7 @@ export const MultiSelectDropdownProperty = Type.Composite([
   }),
 ]);
 
-export type MultiSelectDropdownProperty<
+export type StaticDropdownProperty<
   T,
   R extends boolean
 > = BasePropertySchema & {

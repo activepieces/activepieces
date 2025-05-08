@@ -43,26 +43,12 @@ export const findContact = createAction({
       description: 'Maximum number of contacts to return (1-100)',
       required: false,
       defaultValue: 10,
-      validators: [
-        { 
-            type: 'min',
-            params: {
-                 value: 1 
-            }
-        },
-        {
-           type: 'max',
-           params: {
-             value: 100
-             }
-           },
-      ],
     }),
-    include_fields: Property.MultiSelectDropdown({
+    include_fields: Property.StaticDropdown({
       displayName: 'Include Fields',
       description: 'Select which fields to include in the response',
       required: false,
-      options: {
+      options:  {
         options: [
           { label: 'Name', value: 'name' },
           { label: 'Title', value: 'title' },
@@ -74,7 +60,6 @@ export const findContact = createAction({
           { label: 'Date Updated', value: 'date_updated' },
         ],
       },
-      defaultValue: ['name', 'emails', 'phones'],
     }),
   },
   async run(context) {
@@ -87,7 +72,9 @@ export const findContact = createAction({
         search_type,
         search_query,
         match_type: match_type || 'contains',
-        include_fields: include_fields || ['name', 'emails', 'phones'],
+        include_fields: Array.isArray(include_fields) 
+        ? include_fields 
+        : ['default', 'fields']
       });
 
       const response = await httpClient.sendRequest<{ data: CloseCRMContact[] }>({
@@ -224,11 +211,9 @@ function buildSearchQuery(params: {
       queries: [baseQuery, fieldCondition]
     },
     _fields: {
-      contact: include_fields
+      contact: include_fields,
+      lead: include_fields
     },
-    _field:{
-      contact: include_fields
-    }
 
   };
 }

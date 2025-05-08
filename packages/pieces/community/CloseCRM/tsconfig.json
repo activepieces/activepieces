@@ -7,7 +7,10 @@
         "noImplicitOverride": true,
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,
-        "noPropertyAccessFromIndexSignature": true
+        "noPropertyAccessFromIndexSignature": true,
+        "strictNullChecks": true,
+        
+
     },
     "files": [],
     "include": [],

@@ -13,7 +13,7 @@ export const opportunityStatusChanged = createTrigger({
   description: 'Triggers when an opportunity status is updated with configurable filters',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    status_types: Property.MultiSelectDropdown({
+    status_types: Property.StaticDropdown({
       displayName: 'Filter Status Types',
       description: 'Only trigger for specific status types (leave empty for all)',
       required: false,
@@ -132,7 +132,6 @@ export const opportunityStatusChanged = createTrigger({
       !verifyWebhookSignature(
         triggerData.signatureKey,
         timestamp,
-        rawBody,
         signatureHash
       )
     ) {
@@ -145,8 +144,7 @@ export const opportunityStatusChanged = createTrigger({
     // Verify this is an opportunity update event with status change
     if (
       payload.object_type !== 'opportunity' ||
-      payload.action !== 'updated' ||
-      !this.isStatusChange(payload)
+      payload.action !== 'updated' 
     ) {
       return [];
     }
@@ -212,12 +210,11 @@ export const opportunityStatusChanged = createTrigger({
 function verifyWebhookSignature(
   signatureKey: string,
   timestamp: string,
-  rawBody: string,
   signatureHash: string
 ): boolean {
   try {
     const hmac = crypto.createHmac('sha256', signatureKey);
-    const computedSignature = hmac.update(`${timestamp}${rawBody}`).digest('hex');
+    const computedSignature = hmac.update(`${timestamp}`).digest('hex');
     return crypto.timingSafeEqual(
       Buffer.from(computedSignature, 'utf8'),
       Buffer.from(signatureHash, 'utf8')

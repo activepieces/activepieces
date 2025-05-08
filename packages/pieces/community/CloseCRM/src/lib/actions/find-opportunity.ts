@@ -80,7 +80,7 @@ export const findOpportunity = createAction({
       description: 'Find opportunities created before this date',
       required: false,
     }),
-    include_fields: Property.MultiSelectDropdown({
+    include_fields: Property.StaticDropdown({
       displayName: 'Include Fields',
       description: 'Select which fields to include in the response',
       required: false,
@@ -107,10 +107,6 @@ export const findOpportunity = createAction({
       description: 'Maximum number of opportunities to return (1-100)',
       required: false,
       defaultValue: 20,
-      validators: [
-        { type: 'min', params: { value: 1 } },
-        { type: 'max', params: { value: 100 } },
-      ],
     }),
   },
   async run(context) {
@@ -129,7 +125,7 @@ export const findOpportunity = createAction({
       include_fields,
       limit,
     } = context.propsValue;
-    const { apiKey, environment } = context.auth.propsValue;
+    const { apiKey, environment } = context.auth;
 
     // Validate search parameters
     if (search_type === 'status' && !status_id && !status_label && !status_type) {
@@ -142,7 +138,7 @@ export const findOpportunity = createAction({
 
     // Build query parameters
     const queryParams: Record<string, string> = {
-      _fields: include_fields?.join(',') || 'id,lead_id,status_id,value',
+      _fields: 'id,lead_id,status_id,value',
       ...(limit && { _limit: limit.toString() }),
     };
 
