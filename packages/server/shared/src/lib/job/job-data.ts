@@ -71,9 +71,8 @@ export const OneTimeJobData = Type.Object({
     runId: Type.String(),
     synchronousHandlerId: Type.Optional(Type.Union([Type.String(), Type.Null()])),
     httpRequestId: Type.Optional(Type.String()),
-    payload: Type.Any(),
+    resumePayload: Type.Optional(Type.Any()),
     executionType: Type.Enum(ExecutionType),
-    retryPayload: Type.Optional(Type.Any()),
     progressUpdateType: Type.Enum(ProgressUpdateType),
 })
 export type OneTimeJobData = Static<typeof OneTimeJobData>

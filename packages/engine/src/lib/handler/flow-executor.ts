@@ -31,8 +31,9 @@ export const flowExecutor = {
         input: ExecuteFlowOperation
     }): Promise<FlowExecutorContext> {
         const trigger = input.flowVersion.trigger
+        console.log('HAHAHAHAHA trigger', trigger)
         if (input.executionType === ExecutionType.BEGIN) {
-            await triggerHelper.executeOnStart(trigger, constants, input.triggerPayload)
+            await triggerHelper.executeOnStart(trigger, constants, executionState.getStepOutput(trigger.name)?.output)
         }
         return flowExecutor.execute({
             action: trigger.nextAction,
