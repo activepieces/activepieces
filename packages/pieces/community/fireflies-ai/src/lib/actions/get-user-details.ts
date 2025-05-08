@@ -10,51 +10,27 @@ export const getUserDetailsAction = createAction({
 	description: 'Fetch profile information of a Fireflies user',
 	props: {
 		email: Property.ShortText({
-			displayName: 'User Email',
-			description: 'Email of the user to fetch details for (defaults to authenticated user if not provided)',
+			displayName: 'User ID',
+			description: 'ID of the user to fetch details for (defaults to authenticated user if not provided)',
 			required: false,
 		}),
 	},
 	async run({ propsValue, auth }) {
-		const query = propsValue.email
-			? `
-				query getUserByEmail($email: String!) {
-					user(email: $email) {
-						id
-						name
-						email
-						role
-						organization {
-							id
-							name
-						}
-						settings {
-							timezone
-							language
-						}
-					}
+		const query = `
+			query User($userId: String) {
+				user(id: $userId) {
+					user_id
+					name
+					recent_transcript
+					recent_meeting
+					num_transcripts
+					minutes_consumed
+					is_admin
 				}
-			`
-			: `
-				query getMyProfile {
-					me {
-						id
-						name
-						email
-						role
-						organization {
-							id
-							name
-						}
-						settings {
-							timezone
-							language
-						}
-					}
-				}
-			`;
+			}
+		`;
 
-		const variables = propsValue.email ? { email: propsValue.email } : undefined;
+		const variables = { userId: propsValue.email || null };
 
 		const response = await makeRequest(
 			auth as string,
@@ -63,6 +39,6 @@ export const getUserDetailsAction = createAction({
 			variables,
 		);
 
-		return propsValue.email ? response.data.user : response.data.me;
+		return response.data.user;
 	},
 });

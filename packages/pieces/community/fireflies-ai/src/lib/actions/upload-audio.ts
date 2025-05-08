@@ -1,56 +1,48 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRestRequest } from '../common/client';
+import { makeRequest } from '../common/client';
 import { firefliesAiAuth } from '../../index';
 
 export const uploadAudioAction = createAction({
 	auth: firefliesAiAuth,
 	name: 'upload_audio',
 	displayName: 'Upload Audio',
-	description: 'Upload an audio file to Fireflies for transcription',
+	description: 'Upload an audio file to Fireflies for transcription (requires a publicly accessible URL)',
 	props: {
-		title: Property.ShortText({
-			displayName: 'Meeting Title',
-			description: 'The title of the meeting',
-			required: true,
-		}),
 		audioUrl: Property.ShortText({
 			displayName: 'Audio URL',
-			description: 'Public URL to the audio file that will be transcribed',
+			description: 'The publicly accessible URL to your audio file (mp3, mp4, wav, m4a, ogg). Fireflies API only accepts URLs, not direct file uploads. For private files, consider using signed URLs with short expiry times.',
 			required: true,
-		}),
-		participants: Property.Array({
-			displayName: 'Participants',
-			description: 'List of participant emails (optional)',
-			required: false,
-		}),
-		date: Property.DateTime({
-			displayName: 'Meeting Date',
-			description: 'The date when the meeting occurred',
-			required: false,
 		}),
 	},
 	async run({ propsValue, auth }) {
-		// Prepare request body
-		const requestBody = {
-			title: propsValue.title,
-			audio_url: propsValue.audioUrl,
+		// GraphQL mutation for uploading audio
+		const query = `
+			mutation uploadAudio($input: AudioUploadInput) {
+				uploadAudio(input: $input) {
+					success
+					title
+					message
+				}
+			}
+		`;
+
+		// Define interface for the input
+		interface AudioUploadInput {
+			url: string;
+		}
+
+		// Create input for the mutation with proper typing
+		const input: AudioUploadInput = {
+			url: propsValue.audioUrl,
 		};
 
-		// Add optional parameters if provided
-		if (propsValue.participants && propsValue.participants.length > 0) {
-			requestBody['participants'] = propsValue.participants;
-		}
-
-		if (propsValue.date) {
-			requestBody['date'] = propsValue.date;
-		}
-
-		const response = await makeRestRequest(
+		// Make the GraphQL request
+		const response = await makeRequest(
 			auth as string,
 			HttpMethod.POST,
-			'/meetings/upload',
-			requestBody,
+			query,
+			{ input },
 		);
 
 		return response;

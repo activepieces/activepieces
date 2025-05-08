@@ -12,27 +12,9 @@ export const newTranscriptionCompleteTrigger = createTrigger({
 	props: {},
 	type: TriggerStrategy.WEBHOOK,
 	sampleData: {
-		"event_type": "transcript.completed",
-		"meeting": {
-			"id": "abc123",
-			"title": "Weekly Team Sync",
-			"date": "2023-05-10T15:30:00Z",
-			"duration": 3600,
-			"status": "completed",
-			"participants": [
-				{
-					"name": "John Doe",
-					"email": "john@example.com"
-				},
-				{
-					"name": "Jane Smith",
-					"email": "jane@example.com"
-				}
-			],
-			"summary": "The team discussed project progress, upcoming deadlines, and assigned new tasks.",
-			"transcript_url": "https://fireflies.ai/transcript/abc123"
-		},
-		"timestamp": "2023-05-10T16:35:00Z"
+            "meetingId": "ASxwZxCstx",
+            "eventType": "Transcription completed",
+            "clientReferenceId": "be582c46-4ac9-4565-9ba6-6ab4264496a8"
 	},
 	async onEnable(context) {
 		const response = await makeRestRequest(

@@ -18,22 +18,30 @@ export const findRecentMeetingAction = createAction({
 	},
 	async run({ propsValue, auth }) {
 		const query = `
-			query getRecentMeetings($limit: Int!) {
-				meetings(first: $limit, orderBy: {field: DATE, direction: DESC}) {
-					nodes {
+			query getRecentTranscripts($limit: Int!) {
+				transcripts(limit: $limit, skip: 0) {
+					id
+					title
+					date
+					duration
+					transcript_url
+					audio_url
+					speakers {
 						id
-						title
-						date
-						duration
-						status
-						transcript {
-							text
-						}
-						participants {
-							name
-							email
-						}
-						summary
+						name
+					}
+					sentences {
+						speaker_name
+						text
+					}
+					participants
+					meeting_attendees {
+						displayName
+						email
+					}
+					summary {
+						action_items
+						overview
 					}
 				}
 			}
@@ -49,9 +57,9 @@ export const findRecentMeetingAction = createAction({
 		);
 
 		if (propsValue.limit === 1) {
-			return response.data.meetings.nodes[0];
+			return response.data.transcripts[0];
 		}
 
-		return response.data.meetings.nodes;
+		return response.data.transcripts;
 	},
 });

@@ -24,68 +24,77 @@ export const findMeetingByQueryAction = createAction({
 			description: 'Filter meetings by participant email',
 			required: false,
 		}),
-		startDate: Property.DateTime({
-			displayName: 'Start Date',
-			description: 'Filter meetings after this date',
-			required: false,
-		}),
-		endDate: Property.DateTime({
-			displayName: 'End Date',
-			description: 'Filter meetings before this date',
+		date: Property.DateTime({
+			displayName: 'Date',
+			description: 'Filter meetings on this date (YYYY-MM-DD).',
 			required: false,
 		}),
 		limit: Property.Number({
 			displayName: 'Result Limit',
-			description: 'Maximum number of meetings to return',
+			description: 'Maximum number of meetings to return. The API allows up to 50 meetings per request.',
 			required: false,
 			defaultValue: 10,
 		}),
 	},
 	async run({ propsValue, auth }) {
-		// Build filter object based on provided parameters
-		const filters: Record<string, any> = {};
+		const variables: Record<string, any> = {};
 
 		if (propsValue.title) {
-			filters.title = { contains: propsValue.title };
+			variables['title'] = propsValue.title;
 		}
 
 		if (propsValue.hostEmail) {
-			filters.host = { email: { equals: propsValue.hostEmail } };
+			variables['hostEmail'] = propsValue.hostEmail;
 		}
 
 		if (propsValue.participantEmail) {
-			filters.participants = { some: { email: { equals: propsValue.participantEmail } } };
+			variables['participantEmail'] = propsValue.participantEmail;
 		}
 
-		if (propsValue.startDate || propsValue.endDate) {
-			filters.date = {};
+		if (propsValue.date) {
+			// Convert ISO string to milliseconds for the API
+			const dateMs = new Date(propsValue.date).getTime();
+			variables['date'] = dateMs;
+		}
 
-			if (propsValue.startDate) {
-				filters.date.gte = propsValue.startDate;
-			}
-
-			if (propsValue.endDate) {
-				filters.date.lte = propsValue.endDate;
-			}
+		if (propsValue.limit) {
+			variables['limit'] = propsValue.limit;
+		} else {
+			variables['limit'] = 10; // Default limit if not specified
 		}
 
 		const query = `
-			query searchMeetings($filters: MeetingFilterInput, $limit: Int!) {
-				meetings(first: $limit, filter: $filters, orderBy: {field: DATE, direction: DESC}) {
-					nodes {
+			query Transcripts(
+				$title: String
+				$hostEmail: String
+				$participantEmail: String
+				$date: Float
+				$limit: Int
+			) {
+				transcripts(
+					title: $title
+					host_email: $hostEmail
+					participant_email: $participantEmail
+					date: $date
+					limit: $limit
+				) {
+					id
+					title
+					date
+					duration
+					transcript_url
+					speakers {
 						id
-						title
-						date
-						duration
-						status
-						transcript {
-							text
-						}
-						participants {
-							name
-							email
-						}
-						summary
+						name
+					}
+					participants
+					meeting_attendees {
+						displayName
+						email
+					}
+					summary {
+						action_items
+						overview
 					}
 				}
 			}
@@ -95,12 +104,9 @@ export const findMeetingByQueryAction = createAction({
 			auth as string,
 			HttpMethod.POST,
 			query,
-			{
-				filters,
-				limit: propsValue.limit || 10,
-			},
+			variables,
 		);
 
-		return response.data.meetings.nodes;
+		return response.data.transcripts;
 	},
 });

@@ -17,31 +17,34 @@ export const findMeetingByIdAction = createAction({
 	},
 	async run({ propsValue, auth }) {
 		const query = `
-			query getMeeting($id: ID!) {
-				meeting(id: $id) {
+			query Transcript($id: String!) {
+				transcript(id: $id) {
 					id
 					title
 					date
 					duration
-					status
-					transcript {
-						text
-						words {
-							text
-							startTime
-							endTime
-							speaker
-						}
+					summary {
+						keywords
+						action_items
+						topics_discussed
 					}
-					participants {
+					speakers {
+						id
+						name
+					}
+					sentences {
+						speaker_name
+						speaker_id
+						text
+						start_time
+						end_time
+					}
+					participants
+					meeting_attendees {
 						name
 						email
-						duration
+						displayName
 					}
-					summary
-					topics
-					actionItems
-					questions
 				}
 			}
 		`;
@@ -55,6 +58,6 @@ export const findMeetingByIdAction = createAction({
 			},
 		);
 
-		return response.data.meeting;
+		return response.data.transcript;
 	},
 });
