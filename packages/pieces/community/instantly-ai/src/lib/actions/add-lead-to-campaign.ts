@@ -34,14 +34,24 @@ export const addLeadToCampaignAction = createAction({
       description: 'Last name of the lead',
       required: false,
     }),
-    company: Property.ShortText({
-      displayName: 'Company',
+    company_name: Property.ShortText({
+      displayName: 'Company Name',
       description: 'Company name of the lead',
       required: false,
     }),
     phone: Property.ShortText({
       displayName: 'Phone',
       description: 'Phone number of the lead',
+      required: false,
+    }),
+    website: Property.ShortText({
+      displayName: 'Website',
+      description: 'Website of the lead',
+      required: false,
+    }),
+    personalization: Property.LongText({
+      displayName: 'Personalization',
+      description: 'Personalization text for the lead',
       required: false,
     }),
     custom_attributes: Property.Object({
@@ -57,8 +67,10 @@ export const addLeadToCampaignAction = createAction({
       email,
       first_name,
       last_name,
-      company,
+      company_name,
       phone,
+      website,
+      personalization,
       custom_attributes,
     } = context.propsValue;
     const { auth: apiKey } = context;
@@ -67,39 +79,49 @@ export const addLeadToCampaignAction = createAction({
       throw new Error('Either Campaign ID or List ID must be provided');
     }
 
-    const lead: Record<string, unknown> = {
+    const leadPayload: Record<string, unknown> = {
       email,
     };
 
     if (first_name) {
-      lead['first_name'] = first_name;
+      leadPayload['first_name'] = first_name;
     }
 
     if (last_name) {
-      lead['last_name'] = last_name;
+      leadPayload['last_name'] = last_name;
     }
 
-    if (company) {
-      lead['company'] = company;
+    if (company_name) {
+      leadPayload['company_name'] = company_name;
     }
 
     if (phone) {
-      lead['phone'] = phone;
+      leadPayload['phone'] = phone;
+    }
+
+    if (website) {
+      leadPayload['website'] = website;
+    }
+
+    if (personalization) {
+      leadPayload['personalization'] = personalization;
     }
 
     if (custom_attributes) {
-      lead['custom_attributes'] = custom_attributes;
+      leadPayload['payload'] = custom_attributes;
     }
 
-    const endpoint = campaign_id
-      ? `campaigns/${campaign_id}/leads`
-      : `lead-lists/${list_id}/leads`;
+    if (campaign_id) {
+      leadPayload['campaign'] = campaign_id;
+    } else if (list_id) {
+      leadPayload['list_id'] = list_id;
+    }
 
     return await makeRequest({
-      endpoint,
+      endpoint: 'leads',
       method: HttpMethod.POST,
       apiKey: apiKey as string,
-      body: { leads: [lead] },
+      body: leadPayload,
     });
   },
 });
