@@ -228,8 +228,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
 
         const payloadBuffer = Buffer.from(JSON.stringify({
-            [flowVersion.trigger.name]: {
-                output: payload,
+            executionState: {
+                steps: {
+                    [flowVersion.trigger.name]: {
+                        output: payload,
+                    },
+                },
             },
         }))
         const file = await fileService(log).save({
@@ -253,7 +257,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             flowVersionId: flowVersion.id,
             environment,
             flowDisplayName: flowVersion.displayName,
-        }, log)
+        })
 
         flowRun.status = FlowRunStatus.RUNNING
 
@@ -478,16 +482,17 @@ const getUploadUrl = async (s3Key: string | undefined, executionDate: unknown, c
 
 const getFlowRunOrCreate = async (
     params: GetOrCreateParams,
-    log: FastifyBaseLogger,
 ): Promise<Partial<FlowRun>> => {
     const { id, projectId, flowId, flowVersionId, flowDisplayName, environment, logsFileId } =
         params
 
-    if (id) {
-        return flowRunService(log).getOneOrThrow({
-            id,
-            projectId,
-        })
+    const flowRun = await flowRunRepo().findOneBy({
+        id,
+        projectId,
+    })
+
+    if (id && !isNil(flowRun)) {
+        return flowRun
     }
 
     return {

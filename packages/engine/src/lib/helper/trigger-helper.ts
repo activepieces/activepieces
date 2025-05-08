@@ -19,7 +19,6 @@ type Listener = {
 
 export const triggerHelper = {
     async executeOnStart(trigger: Trigger, constants: EngineConstants, payload: unknown) {
-        console.log('HAHAHAHAHA executeOnStart payload', payload)
         const { pieceName, pieceVersion, triggerName, input, inputUiInfo } = (trigger as PieceTrigger).settings
         assertNotNullOrUndefined(triggerName, 'triggerName is required')
         const { pieceTrigger, processedInput } = await prepareTriggerExecution({

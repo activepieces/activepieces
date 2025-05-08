@@ -117,7 +117,6 @@ export class FlowExecutorContext {
         }
         const targetMap = getStateAtPath({ currentPath: this.currentPath, steps })
         targetMap[stepName] = stepOutput
-
         const error = stepOutput.status === StepOutputStatus.FAILED ? {
             stepName,
             message: stepOutput.errorMessage,
@@ -125,7 +124,7 @@ export class FlowExecutorContext {
 
         return new FlowExecutorContext({
             ...this,
-            tasks: this.tasks,
+            tasks: this.tasks, 
             ...spreadIfDefined('error', error),
             steps,
         })

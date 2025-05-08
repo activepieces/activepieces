@@ -124,6 +124,9 @@ function cleanSampleData(stepOutput: StepOutput) {
 
 async function getFlowExecutionState(input: ExecuteFlowOperation): Promise<FlowExecutorContext> {
     let flowContext = FlowExecutorContext.empty().increaseTask(input.tasks)
+    if (input.steps[input.flowVersion.trigger.name].output) {
+        flowContext = flowContext.upsertStep(input.flowVersion.trigger.name, input.steps[input.flowVersion.trigger.name].output as StepOutput)
+    }
     for (const [step, output] of Object.entries(input.steps)) {
         if ([StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(output.status)) {
             flowContext = flowContext.upsertStep(step, output)
