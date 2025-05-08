@@ -483,6 +483,9 @@
       "@activepieces/piece-microsoft-teams": [
         "packages/pieces/community/microsoft-teams/src/index.ts"
       ],
+      "@activepieces/piece-microsoft-todo": [
+        "packages/pieces/community/microsoft-todo/src/index.ts"
+      ],
       "@activepieces/piece-mindee": [
         "packages/pieces/community/mindee/src/index.ts"
       ],
