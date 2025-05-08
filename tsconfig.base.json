@@ -181,6 +181,9 @@
       "@activepieces/piece-convertkit": [
         "packages/pieces/community/convertkit/src/index.ts"
       ],
+      "@activepieces/piece-copy-ai": [
+        "packages/pieces/community/copy-ai/src/index.ts"
+      ],
       "@activepieces/piece-crypto": [
         "packages/pieces/community/crypto/src/index.ts"
       ],
@@ -226,6 +229,9 @@
       ],
       "@activepieces/piece-eth-name-service": [
         "packages/pieces/community/eth-name-service/src/index.ts"
+      ],
+      "@activepieces/piece-ever-gauzy": [
+        "packages/pieces/community/ever-gauzy/src/index.ts"
       ],
       "@activepieces/piece-facebook-leads": [
         "packages/pieces/community/facebook-leads/src/index.ts"
