@@ -41,7 +41,8 @@ import {
   isFailedState,
   Permission,
 } from '@activepieces/shared';
-import { runsTableColumns } from './columns'
+
+import { runsTableColumns } from './columns';
 
 type SelectedRow = {
   id: string;
@@ -82,7 +83,15 @@ export const RunsTable = () => {
     },
   });
 
-  const columns = runsTableColumns({ data, selectedRows, setSelectedRows, selectedAll, setSelectedAll, excludedRows, setExcludedRows })
+  const columns = runsTableColumns({
+    data,
+    selectedRows,
+    setSelectedRows,
+    selectedAll,
+    setSelectedAll,
+    excludedRows,
+    setExcludedRows,
+  });
 
   const navigate = useNavigate();
   const { data: flowsData, isFetching: isFetchingFlows } = flowsHooks.useFlows({
@@ -185,12 +194,13 @@ export const RunsTable = () => {
                     <Button disabled={isDisabled} className="h-9 w-full">
                       <PlayIcon className="mr-2 h-3 w-4" />
                       {selectedRows.length > 0
-                        ? `${t('Retry')} ${selectedAll
-                          ? excludedRows.size > 0
-                            ? `${t('all except')} ${excludedRows.size}`
-                            : t('all')
-                          : `(${selectedRows.length})`
-                        }`
+                        ? `${t('Retry')} ${
+                            selectedAll
+                              ? excludedRows.size > 0
+                                ? `${t('all except')} ${excludedRows.size}`
+                                : t('all')
+                              : `(${selectedRows.length})`
+                          }`
                         : t('Retry')}
                       <ChevronDown className="h-3 w-4 ml-2" />
                     </Button>
@@ -272,7 +282,6 @@ export const RunsTable = () => {
     [navigate, openNewWindow],
   );
 
-
   return (
     <DataTable
       emptyStateTextTitle={t('No flow runs found')}
@@ -289,5 +298,3 @@ export const RunsTable = () => {
     />
   );
 };
-
-

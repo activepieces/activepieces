@@ -1,20 +1,18 @@
 import { t } from 'i18next';
-
-import {
-  CheckIcon,
-  Workflow,
-} from 'lucide-react';
-import { DataTable } from '@/components/ui/data-table';
-import { authenticationSession } from '@/lib/authentication-session';
-import { FlowStatus, PopulatedFlow, SeekPage } from '@activepieces/shared';
-import { formatUtils } from '@/lib/utils';
-import { flowsTableColumns } from './columns';
-import { useEmbedding } from '@/components/embed-provider';
-import { useNewWindow } from '@/lib/navigation-utils';
-import { useNavigate } from 'react-router-dom';
+import { CheckIcon, Workflow } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import { useEmbedding } from '@/components/embed-provider';
+import { DataTable } from '@/components/ui/data-table';
 import { useFlowsBulkActions } from '@/features/flows/lib/use-flows-bulk-actions';
 import { FolderFilterList } from '@/features/folders/component/folder-filter-list';
+import { authenticationSession } from '@/lib/authentication-session';
+import { useNewWindow } from '@/lib/navigation-utils';
+import { formatUtils } from '@/lib/utils';
+import { FlowStatus, PopulatedFlow, SeekPage } from '@activepieces/shared';
+
+import { flowsTableColumns } from './columns';
 
 const filters = [
   {
@@ -38,15 +36,13 @@ const filters = [
   } as const,
 ];
 
-
 type FlowsTableProps = {
   data: SeekPage<PopulatedFlow> | undefined;
   isLoading: boolean;
   refetch: () => void;
-}
+};
 
 export const FlowsTable = ({ data, isLoading, refetch }: FlowsTableProps) => {
-
   const { embedState } = useEmbedding();
   const openNewWindow = useNewWindow();
 
@@ -56,8 +52,13 @@ export const FlowsTable = ({ data, isLoading, refetch }: FlowsTableProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const columns = useMemo(() => {
-    return flowsTableColumns({ refresh, setRefresh, selectedRows, setSelectedRows })
-  }, [refresh, setRefresh, selectedRows, setSelectedRows])
+    return flowsTableColumns({
+      refresh,
+      setRefresh,
+      selectedRows,
+      setSelectedRows,
+    });
+  }, [refresh, setRefresh, selectedRows, setSelectedRows]);
 
   const bulkActions = useFlowsBulkActions({
     selectedRows,
@@ -73,11 +74,13 @@ export const FlowsTable = ({ data, isLoading, refetch }: FlowsTableProps) => {
     <div className="flex flex-row gap-4">
       <div className="w-full">
         <DataTable
-          customFilters={!embedState.hideFolders ? [<FolderFilterList refresh={refresh} />] : undefined}
+          customFilters={
+            !embedState.hideFolders
+              ? [<FolderFilterList key="folder-filter" refresh={refresh} />]
+              : []
+          }
           emptyStateTextTitle={t('No flows found')}
-          emptyStateTextDescription={t(
-            'Create a workflow to start automating',
-          )}
+          emptyStateTextDescription={t('Create a workflow to start automating')}
           emptyStateIcon={<Workflow className="size-14" />}
           columns={columns.filter(
             (column) =>
@@ -105,5 +108,5 @@ export const FlowsTable = ({ data, isLoading, refetch }: FlowsTableProps) => {
         />
       </div>
     </div>
-  )
-}
+  );
+};

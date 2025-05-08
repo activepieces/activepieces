@@ -4,7 +4,6 @@ import { createContext, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
-import { issueHooks } from '@/features/issues/hooks/issue-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
@@ -12,11 +11,7 @@ import { isNil, Permission } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
 
-import {
-  SidebarComponent,
-  SidebarItem,
-  SidebarLink,
-} from './sidebar';
+import { SidebarComponent, SidebarItem, SidebarLink } from './sidebar';
 
 type DashboardContainerProps = {
   children: React.ReactNode;
@@ -37,7 +32,7 @@ const ProjectChangedRedirector = ({
 };
 export const CloseTaskLimitAlertContext = createContext({
   isAlertClosed: false,
-  setIsAlertClosed: (isAlertClosed: boolean) => { },
+  setIsAlertClosed: (isAlertClosed: boolean) => {},
 });
 
 export function DashboardContainer({
@@ -77,8 +72,7 @@ export function DashboardContainer({
     icon: Server,
     label: t('Releases'),
     hasPermission:
-      project.releasesEnabled &&
-      checkAccess(Permission.READ_PROJECT_RELEASE),
+      project.releasesEnabled && checkAccess(Permission.READ_PROJECT_RELEASE),
 
     showInEmbed: true,
     isSubItem: false,
@@ -125,7 +119,13 @@ export function DashboardContainer({
     isSubItem: false,
   };
 
-  const items: SidebarItem[] = [flowsLink, releasesLink, mcpLink, tablesLink, todosLink]
+  const items: SidebarItem[] = [
+    flowsLink,
+    releasesLink,
+    mcpLink,
+    tablesLink,
+    todosLink,
+  ]
     .filter(embedFilter)
     .filter(permissionFilter)
     .filter(filterAlerts);

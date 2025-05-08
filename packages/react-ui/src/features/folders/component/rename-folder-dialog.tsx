@@ -50,7 +50,7 @@ const RenameFolderDialog = ({
     mutationFn: async (data) => {
       return await foldersApi.renameFolder(folderId, {
         displayName: data.displayName,
-      })
+      });
     },
     onSuccess: () => {
       setIsOpen(false);
@@ -112,7 +112,7 @@ const RenameFolderDialog = ({
             <DialogFooter>
               <Button
                 variant={'outline'}
-                type='button'
+                type="button"
                 onClick={(e) => {
                   e.preventDefault();
                   setIsOpen(false);

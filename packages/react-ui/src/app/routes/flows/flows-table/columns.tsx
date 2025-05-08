@@ -1,9 +1,9 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  EllipsisVertical,
-} from 'lucide-react';
+import { EllipsisVertical } from 'lucide-react';
+import { Dispatch, SetStateAction } from 'react';
 
+import FlowActionMenu from '@/app/components/flow-actions-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -13,27 +13,27 @@ import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { formatUtils } from '@/lib/utils';
 import { PopulatedFlow } from '@activepieces/shared';
 
-import FlowActionMenu from '@/app/components/flow-actions-menu';
-import { Dispatch, SetStateAction } from 'react';
-
-
 type FlowsTableColumnsProps = {
   refresh: number;
   setRefresh: Dispatch<SetStateAction<number>>;
   selectedRows: PopulatedFlow[];
   setSelectedRows: Dispatch<SetStateAction<PopulatedFlow[]>>;
-}
+};
 
-export const flowsTableColumns = ({ refresh, setRefresh, selectedRows, setSelectedRows }: FlowsTableColumnsProps): (ColumnDef<RowDataWithActions<PopulatedFlow>> & {
+export const flowsTableColumns = ({
+  refresh,
+  setRefresh,
+  selectedRows,
+  setSelectedRows,
+}: FlowsTableColumnsProps): (ColumnDef<RowDataWithActions<PopulatedFlow>> & {
   accessorKey: string;
-})[] => ([
+})[] => [
   {
     id: 'select',
     header: ({ table }) => (
       <Checkbox
         checked={
-          table.getIsAllPageRowsSelected() ||
-          table.getIsSomePageRowsSelected()
+          table.getIsAllPageRowsSelected() || table.getIsSomePageRowsSelected()
         }
         onCheckedChange={(value) => {
           const isChecked = !!value;
@@ -173,9 +173,7 @@ export const flowsTableColumns = ({ refresh, setRefresh, selectedRows, setSelect
   },
   {
     accessorKey: 'actions',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="" />
-    ),
+    header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
     cell: ({ row }) => {
       const flow = row.original;
       return (
@@ -204,4 +202,4 @@ export const flowsTableColumns = ({ refresh, setRefresh, selectedRows, setSelect
       );
     },
   },
-]);
+];

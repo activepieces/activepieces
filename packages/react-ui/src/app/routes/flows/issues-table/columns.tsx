@@ -1,16 +1,15 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 
-import {
-  RowDataWithActions,
-} from '@/components/ui/data-table';
 import { Checkbox } from '@/components/ui/checkbox';
+import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-
 import { formatUtils } from '@/lib/utils';
 import { PopulatedIssue } from '@activepieces/ee-shared';
 
-export const issuesTableColumns: ColumnDef<RowDataWithActions<PopulatedIssue>>[] = [
+export const issuesTableColumns: ColumnDef<
+  RowDataWithActions<PopulatedIssue>
+>[] = [
   {
     id: 'select',
     header: ({ table }) => (
@@ -19,9 +18,7 @@ export const issuesTableColumns: ColumnDef<RowDataWithActions<PopulatedIssue>>[]
           table.getIsAllPageRowsSelected() ||
           (table.getIsSomePageRowsSelected() && 'indeterminate')
         }
-        onCheckedChange={(value) =>
-          table.toggleAllPageRowsSelected(!!value)
-        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
       />
     ),
     cell: ({ row }) => (
@@ -37,9 +34,7 @@ export const issuesTableColumns: ColumnDef<RowDataWithActions<PopulatedIssue>>[]
       <DataTableColumnHeader column={column} title={t('Flow Name')} />
     ),
     cell: ({ row }) => {
-      return (
-        <div className="text-left" > {row.original.flowDisplayName} </div>
-      );
+      return <div className="text-left"> {row.original.flowDisplayName} </div>;
     },
   },
   {
@@ -48,7 +43,7 @@ export const issuesTableColumns: ColumnDef<RowDataWithActions<PopulatedIssue>>[]
       <DataTableColumnHeader column={column} title={t('Count')} />
     ),
     cell: ({ row }) => {
-      return <div className="text-left" > {row.original.count} </div>;
+      return <div className="text-left"> {row.original.count} </div>;
     },
   },
   {
@@ -58,7 +53,7 @@ export const issuesTableColumns: ColumnDef<RowDataWithActions<PopulatedIssue>>[]
     ),
     cell: ({ row }) => {
       return (
-        <div className="text-left" >
+        <div className="text-left">
           {formatUtils.formatDate(new Date(row.original.created))}
         </div>
       );
@@ -71,10 +66,10 @@ export const issuesTableColumns: ColumnDef<RowDataWithActions<PopulatedIssue>>[]
     ),
     cell: ({ row }) => {
       return (
-        <div className="text-left" >
+        <div className="text-left">
           {formatUtils.formatDate(new Date(row.original.lastOccurrence))}
         </div>
       );
     },
   },
-]
+];

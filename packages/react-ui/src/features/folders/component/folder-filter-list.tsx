@@ -1,3 +1,4 @@
+import { PlusIcon } from '@radix-ui/react-icons';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
@@ -17,11 +18,25 @@ import { useLocation, useSearchParams } from 'react-router-dom';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -31,24 +46,16 @@ import { FolderDto, isNil, Permission } from '@activepieces/shared';
 
 import { foldersApi } from '../lib/folders-api';
 import { foldersHooks } from '../lib/folders-hooks';
+import { foldersUtils } from '../lib/folders-utils';
 
 import { CreateFolderDialog } from './create-folder-dialog';
 import { RenameFolderDialog } from './rename-folder-dialog';
-import { foldersUtils } from '../lib/folders-utils';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { PlusIcon } from '@radix-ui/react-icons';
 
 const folderIdParamName = 'folderId';
 
 const FolderIcon = ({ isFolderOpen }: { isFolderOpen: boolean }) => {
   return isFolderOpen ? (
-    <FolderOpen
-      className={cn(
-        'border-0 flex-shrink-0 w-4 h-4',
-      )}
-    />
+    <FolderOpen className={cn('border-0 flex-shrink-0 w-4 h-4')} />
   ) : (
     <Folder className="flex-shrink-0 w-4 h-4" />
   );
@@ -68,11 +75,7 @@ const FolderAction = ({
   return (
     <DropdownMenu modal={true}>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className="h-8"
-          size="icon"
-        >
+        <Button variant="ghost" className="h-8" size="icon">
           <EllipsisVertical className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
@@ -85,12 +88,15 @@ const FolderAction = ({
             name={folder.displayName}
             onRename={refetch}
           >
-
-            <Button variant='ghost' size='sm' className="flex h-8 w-full justify-start gap-2 items-center" onClick={(e) => e.stopPropagation()}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex h-8 w-full justify-start gap-2 items-center"
+              onClick={(e) => e.stopPropagation()}
+            >
               <Pencil className="h-4 w-4" />
               <span>{t('Rename')}</span>
             </Button>
-
           </RenameFolderDialog>
         </PermissionNeededTooltip>
 
@@ -110,17 +116,19 @@ const FolderAction = ({
             }}
             entityName={folder.displayName}
           >
-
-            <Button variant='ghost' size='sm' className="flex h-8 w-full justify-start gap-2 items-center" onClick={(e) => e.stopPropagation()}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex h-8 w-full justify-start gap-2 items-center"
+              onClick={(e) => e.stopPropagation()}
+            >
               <Trash2 className="h-4 w-4 text-destructive" />
               <span className="text-destructive">{t('Delete')}</span>
             </Button>
           </ConfirmationDeleteDialog>
-
         </PermissionNeededTooltip>
-
       </DropdownMenuContent>
-    </DropdownMenu >
+    </DropdownMenu>
   );
 };
 
@@ -130,11 +138,16 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
   const userHasPermissionToUpdateFolders = checkAccess(Permission.WRITE_FOLDER);
   const [searchParams, setSearchParams] = useSearchParams(location.search);
   const selectedFolderId = searchParams.get(folderIdParamName);
-  const [sortedAlphabeticallyIncreasingly, setSortedAlphabeticallyIncreasingly] = useState(true);
+  const [
+    sortedAlphabeticallyIncreasingly,
+    setSortedAlphabeticallyIncreasingly,
+  ] = useState(true);
   const [showMoreFolders, setShowMoreFolders] = useState(false);
 
   const updateSearchParams = (folderId: string | undefined) => {
-    const newQueryParameters: URLSearchParams = new URLSearchParams(searchParams);
+    const newQueryParameters: URLSearchParams = new URLSearchParams(
+      searchParams,
+    );
     if (folderId) {
       newQueryParameters.set(folderIdParamName, folderId);
     } else {
@@ -163,10 +176,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
         return b.displayName.localeCompare(a.displayName);
       }
     });
-  }, [
-    folders,
-    sortedAlphabeticallyIncreasingly,
-  ]);
+  }, [folders, sortedAlphabeticallyIncreasingly]);
 
   useEffect(() => {
     refetchFolders();
@@ -182,20 +192,20 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
 
   return (
     <div className="flex items-center space-x-2">
-      <Separator orientation='vertical' className='h-6' />
+      <Separator orientation="vertical" className="h-6" />
       <Button
-        variant={isInAllFlows ? "secondary" : "ghost"}
+        variant={isInAllFlows ? 'secondary' : 'ghost'}
         size="sm"
         onClick={() => updateSearchParams(undefined)}
         className="group h-8 border-dashed border"
       >
         <Layers className="h-4 w-4 mr-2" />
         {t(`All`)}
-        <span className='text-xs font-semibold ml-1'>({allFlowsCount})</span>
+        <span className="text-xs font-semibold ml-1">({allFlowsCount})</span>
       </Button>
 
       <Button
-        variant={isInUncategorized ? "secondary" : "ghost"}
+        variant={isInUncategorized ? 'secondary' : 'ghost'}
         size="sm"
         onClick={() => updateSearchParams('NULL')}
         className="group h-8 border-dashed border"
@@ -203,31 +213,36 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
         <Shapes className="h-4 w-4 mr-2" />
         {t('Uncategorized')}
 
-        <span className='text-xs font-semibold ml-1'>({foldersUtils.extractUncategorizedFlows(allFlowsCount, folders)})</span>
-
+        <span className="text-xs font-semibold ml-1">
+          ({foldersUtils.extractUncategorizedFlows(allFlowsCount, folders)})
+        </span>
       </Button>
 
-      {!isLoading && visibleFolders.map((folder) => (
-        <Button
-          key={folder.id}
-          variant={selectedFolderId === folder.id ? "secondary" : "ghost"}
-          size="sm"
-          onClick={() => updateSearchParams(folder.id)}
-          className="group whitespace-nowrap flex overflow-hidden items-center pl-3 pr-1 h-8 border border-dashed"
-        >
-          <FolderIcon isFolderOpen={selectedFolderId === folder.id} />
-          <span className="mr-1 ml-2">{folder.displayName}
-            <span className='text-xs font-semibold ml-1'>({folder.numberOfFlows})</span>
-          </span>
-          <FolderAction
-            folder={folder}
-            refetch={refetchFolders}
-            userHasPermissionToUpdateFolders={userHasPermissionToUpdateFolders}
-          />
-        </Button>
-      ))}
-
-
+      {!isLoading &&
+        visibleFolders.map((folder) => (
+          <Button
+            key={folder.id}
+            variant={selectedFolderId === folder.id ? 'secondary' : 'ghost'}
+            size="sm"
+            onClick={() => updateSearchParams(folder.id)}
+            className="group whitespace-nowrap flex overflow-hidden items-center pl-3 pr-1 h-8 border border-dashed"
+          >
+            <FolderIcon isFolderOpen={selectedFolderId === folder.id} />
+            <span className="mr-1 ml-2">
+              {folder.displayName}
+              <span className="text-xs font-semibold ml-1">
+                ({folder.numberOfFlows})
+              </span>
+            </span>
+            <FolderAction
+              folder={folder}
+              refetch={refetchFolders}
+              userHasPermissionToUpdateFolders={
+                userHasPermissionToUpdateFolders
+              }
+            />
+          </Button>
+        ))}
 
       {moreFolders.length > 0 && (
         <Popover open={showMoreFolders} onOpenChange={setShowMoreFolders}>
@@ -238,10 +253,10 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
             </Button>
           </PopoverTrigger>
 
-          <PopoverContent align="start"
+          <PopoverContent
+            align="start"
             className="min-w-[200px] max-w-[250px] break-all p-0"
           >
-
             <Command>
               <CommandInput placeholder="Search folders..." />
               <CommandList>
@@ -260,15 +275,22 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                         className="flex justify-between items-center cursor-pointer h-9"
                       >
                         <div className="flex items-center">
-                          <FolderIcon isFolderOpen={selectedFolderId === folder.id} />
-                          <span className="ml-2 mr-1">{folder.displayName}
-                            <span className='text-xs font-semibold ml-1'>({folder.numberOfFlows})</span>
+                          <FolderIcon
+                            isFolderOpen={selectedFolderId === folder.id}
+                          />
+                          <span className="ml-2 mr-1">
+                            {folder.displayName}
+                            <span className="text-xs font-semibold ml-1">
+                              ({folder.numberOfFlows})
+                            </span>
                           </span>
                         </div>
                         <FolderAction
                           folder={folder}
                           refetch={refetchFolders}
-                          userHasPermissionToUpdateFolders={userHasPermissionToUpdateFolders}
+                          userHasPermissionToUpdateFolders={
+                            userHasPermissionToUpdateFolders
+                          }
                         />
                       </CommandItem>
                     ))}
@@ -277,11 +299,13 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
               </CommandList>
             </Command>
             <Separator />
-            <div className='p-1'>
+            <div className="p-1">
               <Button
-                variant='ghost'
+                variant="ghost"
                 onClick={() => {
-                  setSortedAlphabeticallyIncreasingly(!sortedAlphabeticallyIncreasingly);
+                  setSortedAlphabeticallyIncreasingly(
+                    !sortedAlphabeticallyIncreasingly,
+                  );
                 }}
                 className="h-9 gap-x-2 px-2 justify-start w-full"
               >
@@ -293,9 +317,10 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                 <span>{t('Sort A - Z')}</span>
               </Button>
 
-              <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateFolders}>
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToUpdateFolders}
+              >
                 <CreateFolderDialog
-                  hasPermissionsToUpdateFolder={userHasPermissionToUpdateFolders}
                   refetchFolders={refetchFolders}
                   updateSearchParams={updateSearchParams}
                 >
@@ -305,20 +330,20 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                     size="sm"
                     className="h-9 gap-x-2 px-2 justify-start w-full"
                   >
-                    <PlusIcon className='h-4 w-4' />
+                    <PlusIcon className="h-4 w-4" />
                     Create folder
                   </Button>
-
                 </CreateFolderDialog>
               </PermissionNeededTooltip>
             </div>
-
           </PopoverContent>
         </Popover>
       )}
 
       {moreFolders.length === 0 && (
-        <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateFolders}>
+        <PermissionNeededTooltip
+          hasPermission={userHasPermissionToUpdateFolders}
+        >
           <CreateFolderDialog
             hasPermissionsToUpdateFolder={userHasPermissionToUpdateFolders}
             refetchFolders={refetchFolders}
@@ -330,10 +355,9 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
               size="sm"
               className="h-9 gap-x-2 px-2 justify-start w-full"
             >
-              <PlusIcon className='h-4 w-4' />
+              <PlusIcon className="h-4 w-4" />
               Create folder
             </Button>
-
           </CreateFolderDialog>
         </PermissionNeededTooltip>
       )}

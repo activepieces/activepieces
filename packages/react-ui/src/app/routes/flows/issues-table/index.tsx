@@ -28,7 +28,8 @@ import {
   FlowRunStatus,
   Permission,
 } from '@activepieces/shared';
-import { issuesTableColumns } from './columns'
+
+import { issuesTableColumns } from './columns';
 
 export function IssuesTable() {
   const navigate = useNavigate();
@@ -75,7 +76,6 @@ export function IssuesTable() {
   const userHasPermissionToMarkAsResolved = checkAccess(
     Permission.WRITE_ISSUES,
   );
-
 
   const userHasPermissionToSeeRuns = checkAccess(Permission.READ_RUN);
   const handleRowClick = ({
@@ -160,11 +160,11 @@ export function IssuesTable() {
           onRowClick={
             userHasPermissionToSeeRuns
               ? (row, newWindow) =>
-                handleRowClick({
-                  newWindow,
-                  flowId: row.flowId,
-                  created: row.created,
-                })
+                  handleRowClick({
+                    newWindow,
+                    flowId: row.flowId,
+                    created: row.created,
+                  })
               : undefined
           }
         />
