@@ -19,17 +19,11 @@ export const createLeadListAction = createAction({
       description: 'Description of the lead list',
       required: false,
     }),
-    tags: Property.Array({
-      displayName: 'Tags',
-      description: 'Tags to associate with the lead list',
-      required: false,
-    }),
   },
   async run(context) {
     const {
       name,
       description,
-      tags,
     } = context.propsValue;
     const { auth: apiKey } = context;
 
@@ -39,10 +33,6 @@ export const createLeadListAction = createAction({
 
     if (description) {
       payload['description'] = description;
-    }
-
-    if (tags && tags.length > 0) {
-      payload['tags'] = tags;
     }
 
     return await makeRequest({
