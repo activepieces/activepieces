@@ -338,6 +338,9 @@
       "@activepieces/piece-google-tasks": [
         "packages/pieces/community/google-tasks/src/index.ts"
       ],
+      "@activepieces/piece-google-vertex-ai": [
+        "packages/pieces/community/google-vertex-ai/src/index.ts"
+      ],
       "@activepieces/piece-gotify": [
         "packages/pieces/community/gotify/src/index.ts"
       ],
