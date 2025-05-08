@@ -1,15 +1,11 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  ChevronDown,
-} from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  RowDataWithActions,
-} from '@/components/ui/data-table';
+import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import {
   DropdownMenu,
@@ -19,18 +15,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
-import {
-  FlowRun,
-  FlowRunStatus,
-  SeekPage,
-} from '@activepieces/shared';
 import { formatUtils } from '@/lib/utils';
+import { FlowRun, FlowRunStatus, SeekPage } from '@activepieces/shared';
 
 type SelectedRow = {
   id: string;
   status: FlowRunStatus;
 };
-
 
 type RunsTableColumnsProps = {
   data: SeekPage<FlowRun> | undefined;
@@ -40,8 +31,16 @@ type RunsTableColumnsProps = {
   setSelectedAll: Dispatch<SetStateAction<boolean>>;
   excludedRows: Set<string>;
   setExcludedRows: Dispatch<SetStateAction<Set<string>>>;
-}
-export const runsTableColumns = ({ setSelectedRows, selectedRows, selectedAll, setSelectedAll, excludedRows, setExcludedRows, data }: RunsTableColumnsProps): ColumnDef<RowDataWithActions<FlowRun>>[] => ([
+};
+export const runsTableColumns = ({
+  setSelectedRows,
+  selectedRows,
+  selectedAll,
+  setSelectedAll,
+  excludedRows,
+  setExcludedRows,
+  data,
+}: RunsTableColumnsProps): ColumnDef<RowDataWithActions<FlowRun>>[] => [
   {
     id: 'select',
     header: ({ table }) => (
@@ -60,9 +59,7 @@ export const runsTableColumns = ({ setSelectedRows, selectedRows, selectedAll, s
 
               setSelectedRows((prev) => {
                 const uniqueRows = new Map<string, SelectedRow>([
-                  ...prev.map(
-                    (row) => [row.id, row] as [string, SelectedRow],
-                  ),
+                  ...prev.map((row) => [row.id, row] as [string, SelectedRow]),
                   ...currentPageRows.map(
                     (row) => [row.id, row] as [string, SelectedRow],
                   ),
@@ -129,8 +126,8 @@ export const runsTableColumns = ({ setSelectedRows, selectedRows, selectedAll, s
       const isSelected = selectedAll
         ? !isExcluded
         : selectedRows.some(
-          (selectedRow) => selectedRow.id === row.original.id,
-        );
+            (selectedRow) => selectedRow.id === row.original.id,
+          );
 
       return (
         <Checkbox
@@ -224,5 +221,4 @@ export const runsTableColumns = ({ setSelectedRows, selectedRows, selectedAll, s
       );
     },
   },
-]);
-
+];

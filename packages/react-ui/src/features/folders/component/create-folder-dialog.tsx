@@ -1,27 +1,40 @@
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { FormField, FormItem, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { FolderDto } from "@activepieces/shared"
-import { typeboxResolver } from "@hookform/resolvers/typebox"
-import { Static, Type } from "@sinclair/typebox"
-import { QueryObserverResult, RefetchOptions, useMutation } from "@tanstack/react-query"
-import { t } from "i18next"
-import { PlusIcon } from "lucide-react"
-import { useState } from "react"
-import { FormProvider, useForm } from "react-hook-form"
-import { foldersApi } from "../lib/folders-api"
-import { authenticationSession } from "@/lib/authentication-session"
-import { INTERNAL_ERROR_TOAST, toast } from "@/components/ui/use-toast"
-import { api } from "@/lib/api"
-import { HttpStatusCode } from "axios"
+import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { Static, Type } from '@sinclair/typebox';
+import {
+  QueryObserverResult,
+  RefetchOptions,
+  useMutation,
+} from '@tanstack/react-query';
+import { HttpStatusCode } from 'axios';
+import { t } from 'i18next';
+import { useState } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
+import { FolderDto } from '@activepieces/shared';
+
+import { foldersApi } from '../lib/folders-api';
 
 type CreateFolderDialogProps = {
-  hasPermissionsToUpdateFolder: boolean;
   updateSearchParams: (_folderId?: string) => void;
-  refetchFolders: (options?: RefetchOptions) => Promise<QueryObserverResult<FolderDto[], Error>>;
+  refetchFolders: (
+    options?: RefetchOptions,
+  ) => Promise<QueryObserverResult<FolderDto[], Error>>;
   children: React.ReactNode;
-}
+};
 
 const CreateFolderFormSchema = Type.Object({
   displayName: Type.String({
@@ -31,8 +44,11 @@ const CreateFolderFormSchema = Type.Object({
 
 type CreateFolderFormSchema = Static<typeof CreateFolderFormSchema>;
 
-export const CreateFolderDialog = ({ hasPermissionsToUpdateFolder, updateSearchParams, refetchFolders, children }: CreateFolderDialogProps) => {
-
+export const CreateFolderDialog = ({
+  updateSearchParams,
+  refetchFolders,
+  children,
+}: CreateFolderDialogProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const form = useForm<CreateFolderFormSchema>({
     resolver: typeboxResolver(CreateFolderFormSchema),
@@ -76,12 +92,9 @@ export const CreateFolderDialog = ({ hasPermissionsToUpdateFolder, updateSearchP
     },
   });
 
-
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
 
       <DialogContent>
         <DialogHeader>
@@ -125,6 +138,5 @@ export const CreateFolderDialog = ({ hasPermissionsToUpdateFolder, updateSearchP
         </FormProvider>
       </DialogContent>
     </Dialog>
-
-  )
-}
+  );
+};
