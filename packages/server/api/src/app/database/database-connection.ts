@@ -172,7 +172,7 @@ export function AddAPArrayContainsToQueryBuilder<T extends ObjectLiteral>(
 ): void {
     switch (getDatabaseType()) {
         case DatabaseType.POSTGRES:
-            queryBuilder.andWhere(`${columnName} @> :values`, { values: values })
+            queryBuilder.andWhere(`${columnName} @> :values`, { values })
             break
         case DatabaseType.SQLITE3:{
             for (const value of values) {
