@@ -1,5 +1,5 @@
 import { AppSystemProp, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, EngineHttpResponse, ErrorCode, ExecutionType, Flow, FlowId, FlowStatus, FlowVersionId, GetFlowVersionForWorkerRequestType, isNil, ProgressUpdateType, ProjectId, RunEnvironment } from '@activepieces/shared'
+import { ActivepiecesError, apId, EngineHttpResponse, ErrorCode, ExecutionType, Flow, FlowId, FlowStatus, FlowVersionId, GetFlowVersionForWorkerRequestType, isNil, ProgressUpdateType, ProjectId, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
@@ -94,6 +94,7 @@ export const webhookHandler = {
         }
 
         await flowRunService(logger).start({
+            flowRunId: apId(),
             environment: flowVersionToRun === GetFlowVersionForWorkerRequestType.LOCKED ? RunEnvironment.PRODUCTION : RunEnvironment.TESTING,
             flowVersionId: flowVersionIdToRun,
             payload,

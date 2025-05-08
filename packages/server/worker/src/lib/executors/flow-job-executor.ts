@@ -9,38 +9,21 @@ type EngineConstants = 'internalApiUrl' | 'publicApiUrl' | 'engineToken'
 
 
 async function prepareInput(flowVersion: FlowVersion, jobData: OneTimeJobData, engineToken: string, log: FastifyBaseLogger): Promise<Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>> {
-    switch (jobData.executionType) {
-        case ExecutionType.BEGIN:
-            return {
-                flowVersion,
-                flowRunId: jobData.runId,
-                projectId: jobData.projectId,
-                serverHandlerId: jobData.synchronousHandlerId ?? null,
-                triggerPayload: jobData.payload,
-                executionType: ExecutionType.BEGIN,
-                formatPayload: !isNil(jobData.synchronousHandlerId),
-                runEnvironment: jobData.environment,
-                httpRequestId: jobData.httpRequestId ?? null,
-                progressUpdateType: jobData.progressUpdateType,
-            }
-        case ExecutionType.RESUME: {
-            const flowRun = await engineApiService(engineToken, log).getRun({
-                runId: jobData.runId,
-            })
-            return {
-                flowVersion,
-                flowRunId: jobData.runId,
-                projectId: jobData.projectId,
-                serverHandlerId: jobData.synchronousHandlerId ?? null,
-                tasks: flowRun.tasks ?? 0,
-                executionType: ExecutionType.RESUME,
-                steps: flowRun.steps,
-                runEnvironment: jobData.environment,
-                httpRequestId: jobData.httpRequestId ?? null,
-                resumePayload: jobData.payload as ResumePayload,
-                progressUpdateType: jobData.progressUpdateType,
-            }
-        }
+    const flowRun = await engineApiService(engineToken, log).getRun({
+        runId: jobData.runId,
+    })
+    return {
+        flowVersion,
+        flowRunId: jobData.runId,
+        projectId: jobData.projectId,
+        serverHandlerId: jobData.synchronousHandlerId ?? null,
+        tasks: flowRun.tasks ?? 0,
+        executionType: ExecutionType.RESUME,
+        steps: flowRun.steps,
+        runEnvironment: jobData.environment,
+        httpRequestId: jobData.httpRequestId ?? null,
+        resumePayload: jobData.resumePayload as ResumePayload,
+        progressUpdateType: jobData.progressUpdateType,
     }
 }
 

@@ -227,14 +227,37 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             projectId,
         })
 
+        const payloadBuffer = Buffer.from(JSON.stringify({
+            executionState: {
+                steps: {
+                    [flowVersion.trigger.name]: {
+                        output: payload,
+                    },
+                },
+            },
+        }))
+        const file = await fileService(log).save({
+            fileId: apId(),
+            projectId,
+            data: payloadBuffer,    
+            size: payloadBuffer.length,
+            type: FileType.FLOW_RUN_LOG,
+            compression: FileCompression.NONE,
+            metadata: {
+                flowRunId,
+                projectId,
+            },
+        })
+
         const flowRun = await getFlowRunOrCreate({
             id: flowRunId,
+            logsFileId: file.id,
             projectId: flow.projectId,
             flowId: flowVersion.flowId,
             flowVersionId: flowVersion.id,
             environment,
             flowDisplayName: flowVersion.displayName,
-        }, log)
+        })
 
         flowRun.status = FlowRunStatus.RUNNING
 
@@ -243,7 +266,6 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         await flowRunSideEffects(log).start({
             flowRun: savedFlowRun,
             httpRequestId,
-            payload,
             priority,
             synchronousHandlerId,
             executionType,
@@ -263,6 +285,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             fileType: FileType.SAMPLE_DATA,
         })
         return this.start({
+            flowRunId: apId(),
             projectId,
             flowVersionId,
             payload: sampleData,
@@ -459,16 +482,17 @@ const getUploadUrl = async (s3Key: string | undefined, executionDate: unknown, c
 
 const getFlowRunOrCreate = async (
     params: GetOrCreateParams,
-    log: FastifyBaseLogger,
 ): Promise<Partial<FlowRun>> => {
-    const { id, projectId, flowId, flowVersionId, flowDisplayName, environment } =
+    const { id, projectId, flowId, flowVersionId, flowDisplayName, environment, logsFileId } =
         params
 
-    if (id) {
-        return flowRunService(log).getOneOrThrow({
-            id,
-            projectId,
-        })
+    const flowRun = await flowRunRepo().findOneBy({
+        id,
+        projectId,
+    })
+
+    if (id && !isNil(flowRun)) {
+        return flowRun
     }
 
     return {
@@ -479,6 +503,7 @@ const getFlowRunOrCreate = async (
         environment,
         flowDisplayName,
         startTime: new Date().toISOString(),
+        logsFileId,
     }
 }
 
@@ -535,6 +560,7 @@ type GetOrCreateParams = {
     projectId: ProjectId
     flowId: FlowId
     flowVersionId: FlowVersionId
+    logsFileId: string | undefined
     flowDisplayName: string
     environment: RunEnvironment
 }
@@ -558,7 +584,7 @@ type GetOneParams = {
 type StartParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
-    flowRunId?: FlowRunId
+    flowRunId: FlowRunId
     environment: RunEnvironment
     payload: unknown
     synchronousHandlerId: string | undefined
