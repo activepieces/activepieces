@@ -55,3 +55,80 @@ export interface CloseCRMLead {
     date_created: string;
     [key: string]: unknown; // For custom fields
   }
+
+  export interface CloseCRMContact {
+    lead_id: string;
+    name: string;
+    title?: string;
+    emails?: {
+      email: string;
+      type?: 'work' | 'home' | 'other';
+    }[];
+    phones?: {
+      phone: string;
+      type?: 'mobile' | 'work' | 'home' | 'fax' | 'other';
+    }[];
+    urls?: {
+      url: string;
+      type?: 'website' | 'linkedin' | 'twitter' | 'other';
+    }[];
+    [key: string]: unknown; // For custom fields
+  }
+
+  //contact search query
+  export interface CloseCRMSearchQuery {
+    query: {
+      type: string;
+      queries: any[];
+    };
+    _fields: {
+      contact: string[];
+    };
+  }
+  
+  export interface CloseCRMContact {
+    id: string;
+    name: string;
+    title?: string;
+    lead_id: string;
+    date_created?: string;
+    date_updated?: string;
+    email: {
+      email: string;
+      type?: string;
+    }[];
+    phone: {
+      phone: string;
+      type?: string;
+    }[];
+    url: {
+      url: string;
+      type?: string;
+    }[];
+  }
+
+  //Find lead 
+  export interface CloseCRMLead {
+    id: string;
+    name: string;
+    display_name?: string;
+    status_label?: string;
+    url?: string;
+    date_created?: string;
+    date_updated?: string;
+    contact: {
+      id: string;
+      name: string;
+    }[];
+    custom_fields?: Record<string, unknown>;
+  }
+  
+  export interface CloseCRMSearchQuery {
+    query: {
+      type: string;
+      queries: any[];
+    };
+    _field: {
+      lead: string[];
+    };
+  }
