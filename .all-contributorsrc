@@ -1715,6 +1715,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "onyedikachi-david",
+      "name": "David Anyatonwu",
+      "avatar_url": "https://avatars.githubusercontent.com/u/51977119?v=4",
+      "profile": "https://github.com/onyedikachi-david",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
