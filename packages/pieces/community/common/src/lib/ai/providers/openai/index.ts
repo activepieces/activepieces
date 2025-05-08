@@ -59,7 +59,7 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
 				const completion = await sdk.chat.completions.create({
 					model: params.model,
 					messages: messages,
-					max_tokens: params.maxTokens,
+					max_completion_tokens: params.maxTokens,
 					tools: params.functions.map((functionDefinition) => ({
 						type: 'function',
 						function: {
@@ -113,7 +113,7 @@ export const openai: AIFactory = ({ proxyUrl, engineToken }): AI => {
 						content: message.content,
 					})),
 					temperature: Math.tanh(params.creativity ?? 100),
-					max_tokens: params.maxTokens,
+					max_completion_tokens:params.maxTokens,
 					stop: params.stop,
 				});
 
@@ -227,5 +227,8 @@ export const openaiModels = [
 	}),
 	model({label:'gpt-4.1',value:'gpt-4.1',supported:['text','function']}),
 	model({label:'gpt-4.1-mini',value:'gpt-4.1-mini',supported:['text','function']}),
-	model({label:'gpt-4.1-nano',value:'gpt-4.1-nano',supported:['text','function']})
+	model({label:'gpt-4.1-nano',value:'gpt-4.1-nano',supported:['text','function']}),
+	model({label:'o3',value:'o3',supported:['text','function']}),
+	model({label:'o3-mini',value:'o3-mini',supported:['text','function']}),
+	model({label:'o4-mini',value:'o4-mini',supported:['text','function']})
 ];

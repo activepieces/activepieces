@@ -1,8 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import deepEqual from 'deep-equal';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
-import { useDeepCompareEffect } from 'react-use';
+import { useForm } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Form } from '@/components/ui/form';
@@ -21,7 +20,6 @@ import {
   Trigger,
   TriggerType,
   debounce,
-  flowStructureUtil,
   isNil,
 } from '@activepieces/shared';
 
@@ -47,23 +45,36 @@ const StepSettingsContainer = () => {
     applyOperation,
     saving,
     flowVersion,
-    refreshPieceFormSettings,
     selectedBranchIndex,
     setSelectedBranchIndex,
+    refreshStepFormSettingsToggle,
   ] = useBuilderStateContext((state) => [
     state.readonly,
     state.exitStepSettings,
     state.applyOperation,
     state.saving,
     state.flowVersion,
-    state.refreshStepFormSettingsToggle,
     state.selectedBranchIndex,
     state.setSelectedBranchIndex,
+    state.refreshStepFormSettingsToggle,
   ]);
 
   const defaultValues = useMemo(() => {
     return formUtils.buildPieceDefaultValue(selectedStep, pieceModel, true);
-  }, [selectedStep, pieceModel]);
+  }, [selectedStep.name, pieceModel]);
+
+  useEffect(() => {
+    currentValuesRef.current = defaultValues;
+    form.reset(defaultValues);
+    form.trigger();
+  }, [defaultValues]);
+
+  //Needed to show new code from Ask AI
+  useEffect(() => {
+    form.reset(selectedStep);
+    form.trigger();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshStepFormSettingsToggle]);
 
   const { stepMetadata } = piecesHooks.useStepMetadata({
     step: selectedStep,
@@ -86,24 +97,36 @@ const StepSettingsContainer = () => {
       });
     }, 200);
   }, [applyOperation]);
-
+  const currentValuesRef = useRef<Action | Trigger>(defaultValues);
   const form = useForm<Action | Trigger>({
-    mode: 'onChange',
+    mode: 'all',
     disabled: readonly,
     reValidateMode: 'onChange',
     defaultValues,
-    resolver: typeboxResolver(formSchema),
+    resolver: async (values, context, options) => {
+      const result = await typeboxResolver(formSchema)(
+        values,
+        context,
+        options,
+      );
+      if (values.type === TriggerType.EMPTY) {
+        return result;
+      }
+      if (deepEqual(values, currentValuesRef.current)) {
+        return result;
+      }
+      const valid = Object.keys(result.errors).length === 0;
+
+      currentValuesRef.current = JSON.parse(JSON.stringify(values));
+      if (values.type === TriggerType.PIECE) {
+        debouncedTrigger({ ...values, valid });
+      } else {
+        debouncedAction({ ...values, valid });
+      }
+
+      return result;
+    },
   });
-
-  useDeepCompareEffect(() => {
-    form.trigger();
-  }, [formSchema, defaultValues]);
-
-  useEffect(() => {
-    form.reset(defaultValues);
-    form.trigger();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshPieceFormSettings]);
 
   const actionOrTriggerDisplayName = selectedStep.settings.actionName
     ? pieceModel?.actions[selectedStep.settings.actionName]?.displayName
@@ -111,101 +134,10 @@ const StepSettingsContainer = () => {
     ? pieceModel?.triggers[selectedStep.settings.triggerName]?.displayName
     : null;
 
-  // Watch changes in form execluding actionName or triggerName from watching //
-  const inputChanges = useWatch({
-    name: 'settings.input',
-    control: form.control,
-  });
-
-  const itemsChange = useWatch({
-    name: 'settings.items',
-    control: form.control,
-  });
-
-  const conditionsChange = useWatch({
-    name: 'settings.conditions',
-    control: form.control,
-  });
-
-  const branchesChange = useWatch({
-    name: 'settings.branches',
-    control: form.control,
-  });
-
-  const executionTypeChange = useWatch({
-    name: 'settings.executionType',
-    control: form.control,
-  });
-  const sourceCodeChange = useWatch({
-    name: 'settings.sourceCode',
-    control: form.control,
-  });
-  const inputUIInfo = useWatch({
-    name: 'settings.inputUiInfo',
-    control: form.control,
-  });
-
-  const errorHandlingOptions = useWatch({
-    name: 'settings.errorHandlingOptions',
-    control: form.control,
-  });
-
-  const displayName = useWatch({
-    name: 'displayName',
-    control: form.control,
-  });
-
-  const previousSavedStep = useRef<Action | Trigger | null>(null);
-
-  useEffect(() => {
-    //added timeout to avoid formstate validity not being updated when values are edited
-    setTimeout(() => {
-      const currentStep: Trigger | Action = JSON.parse(
-        JSON.stringify(form.getValues()),
-      );
-      currentStep.valid = form.formState.isValid;
-      const routerBranchesNumberChanged =
-        currentStep.type === ActionType.ROUTER &&
-        previousSavedStep.current?.type === ActionType.ROUTER &&
-        previousSavedStep.current.settings.branches.length !==
-          currentStep.settings.branches.length;
-      if (
-        previousSavedStep.current === null ||
-        deepEqual(currentStep, previousSavedStep.current) ||
-        routerBranchesNumberChanged
-      ) {
-        previousSavedStep.current = currentStep;
-        return;
-      }
-      if (
-        flowStructureUtil.isAction(currentStep.type) &&
-        flowStructureUtil.isAction(selectedStep.type)
-      ) {
-        (currentStep as Action).skip = (selectedStep as Action).skip;
-      }
-      previousSavedStep.current = currentStep;
-      if (currentStep.type === TriggerType.PIECE) {
-        debouncedTrigger(currentStep as Trigger);
-      } else {
-        debouncedAction(currentStep as Action);
-      }
-    });
-  }, [
-    inputChanges,
-    itemsChange,
-    errorHandlingOptions,
-    conditionsChange,
-    sourceCodeChange,
-    inputUIInfo,
-    displayName,
-    branchesChange,
-    executionTypeChange,
-  ]);
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
   const modifiedStep = form.getValues();
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
     useState(false);
-
   return (
     <Form {...form}>
       <form
@@ -218,7 +150,9 @@ const StepSettingsContainer = () => {
             <EditableStepName
               selectedBranchIndex={selectedBranchIndex}
               setDisplayName={(value) => {
-                form.setValue('displayName', value);
+                form.setValue('displayName', value, {
+                  shouldValidate: true,
+                });
               }}
               readonly={readonly}
               displayName={modifiedStep.displayName}
@@ -233,6 +167,9 @@ const StepSettingsContainer = () => {
                   form.setValue(
                     `settings.branches[${selectedBranchIndex}].branchName`,
                     value,
+                    {
+                      shouldValidate: true,
+                    },
                   );
                 }
               }}
@@ -284,13 +221,17 @@ const StepSettingsContainer = () => {
                 ) && (
                   <ActionErrorHandlingForm
                     hideContinueOnFailure={
-                      modifiedStep.settings.errorHandlingOptions
-                        ?.continueOnFailure?.hide
+                      stepMetadata?.type === ActionType.PIECE
+                        ? stepMetadata?.errorHandlingOptions?.continueOnFailure
+                            ?.hide
+                        : false
                     }
                     disabled={readonly}
                     hideRetryOnFailure={
-                      modifiedStep.settings.errorHandlingOptions?.retryOnFailure
-                        ?.hide
+                      stepMetadata?.type === ActionType.PIECE
+                        ? stepMetadata?.errorHandlingOptions?.retryOnFailure
+                            ?.hide
+                        : false
                     }
                   ></ActionErrorHandlingForm>
                 )}

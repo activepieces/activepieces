@@ -1,4 +1,4 @@
-import { ActionType, assertNotNullOrUndefined, ConnectionOperation, ConnectionOperationType, ConnectionState, DEFAULT_SAMPLE_DATA_SETTINGS, DiffState, flowPieceUtil, flowStructureUtil, FlowVersion, isNil, PopulatedFlow, ProjectOperation, ProjectOperationType, ProjectState, Step, TriggerType } from '@activepieces/shared'
+import { ActionType, assertNotNullOrUndefined, ConnectionOperation, ConnectionOperationType, ConnectionState, DEFAULT_SAMPLE_DATA_SETTINGS, DiffState, FieldType, flowPieceUtil, flowStructureUtil, FlowVersion, isNil, PopulatedFlow, ProjectOperation, ProjectOperationType, ProjectState, Step, TableOperation, TableOperationType, TableState, TriggerType } from '@activepieces/shared'
 
 export const projectDiffService = {
     diff({ newState, currentState }: DiffParams): DiffState {
@@ -7,16 +7,18 @@ export const projectDiffService = {
         const updateFlowOperations = findFlowsToUpdate({ newState, currentState })
         const operations = [...deleteFlowOperation, ...createFlowOperation, ...updateFlowOperations]
         const connections = getFlowConnections(currentState, newState)
+        const tables = getTables(currentState, newState)
         return {
             operations,
             connections,
+            tables,
         }
     },
 }
 
 function findFlowsToCreate({ newState, currentState }: DiffParams): ProjectOperation[] {
     return newState.flows.filter((newFlow) => {
-        const flow = searchInFlowForFlowByIdOrExternalId(currentState.flows, newFlow.id)
+        const flow = searchInFlowForFlowByIdOrExternalId(currentState.flows, newFlow.externalId)
         return isNil(flow)
     }).map((flowState) => ({
         type: ProjectOperationType.CREATE_FLOW,
@@ -25,7 +27,7 @@ function findFlowsToCreate({ newState, currentState }: DiffParams): ProjectOpera
 }
 function findFlowsToDelete({ newState, currentState }: DiffParams): ProjectOperation[] {
     return currentState.flows.filter((currentFlowFromState) => {
-        const flow = newState.flows.find((flowFromNewState) => currentFlowFromState.externalId === flowFromNewState.id || currentFlowFromState.id === flowFromNewState.id)
+        const flow = newState.flows.find((flowFromNewState) => currentFlowFromState.externalId === flowFromNewState.externalId)
         return isNil(flow)
     }).map((flowState) => ({
         type: ProjectOperationType.DELETE_FLOW,
@@ -34,12 +36,12 @@ function findFlowsToDelete({ newState, currentState }: DiffParams): ProjectOpera
 }
 function findFlowsToUpdate({ newState, currentState }: DiffParams): ProjectOperation[] {
     const newStateFiles = newState.flows.filter((state) => {
-        const flow = searchInFlowForFlowByIdOrExternalId(currentState.flows, state.id)
+        const flow = searchInFlowForFlowByIdOrExternalId(currentState.flows, state.externalId)
         return !isNil(flow)
     })
     return newStateFiles.map((flowFromNewState) => {
-        const os = searchInFlowForFlowByIdOrExternalId(currentState.flows, flowFromNewState.id)
-        assertNotNullOrUndefined(os, `Could not find target flow for source flow ${flowFromNewState.id}`)
+        const os = searchInFlowForFlowByIdOrExternalId(currentState.flows, flowFromNewState.externalId)
+        assertNotNullOrUndefined(os, `Could not find target flow for source flow ${flowFromNewState.externalId}`)
         if (isFlowChanged(os, flowFromNewState)) {
             return {
                 type: ProjectOperationType.UPDATE_FLOW,
@@ -53,6 +55,20 @@ function findFlowsToUpdate({ newState, currentState }: DiffParams): ProjectOpera
 
 function isConnectionChanged(stateOne: ConnectionState, stateTwo: ConnectionState): boolean {
     return stateOne.displayName !== stateTwo.displayName || stateOne.pieceName !== stateTwo.pieceName
+}
+
+function isTableChanged(stateOne: TableState, stateTwo: TableState): boolean {
+    const fieldsMetadataOne = stateOne.fields.map((field) => ({
+        name: field.name,
+        type: field.type,
+        data: field.type === FieldType.STATIC_DROPDOWN ? field.data : undefined,
+    }))
+    const fieldsMetadataTwo = stateTwo.fields.map((field) => ({
+        name: field.name,
+        type: field.type,
+        data: field.type === FieldType.STATIC_DROPDOWN ? field.data : undefined,
+    }))
+    return stateOne.name !== stateTwo.name || JSON.stringify(fieldsMetadataOne) !== JSON.stringify(fieldsMetadataTwo)
 }
 
 function getFlowConnections(currentState: ProjectState, newState: ProjectState): ConnectionOperation[] {
@@ -83,8 +99,35 @@ function getFlowConnections(currentState: ProjectState, newState: ProjectState):
     return connectionOperations
 }
 
-function searchInFlowForFlowByIdOrExternalId(flows: PopulatedFlow[], id: string): PopulatedFlow | undefined {
-    return flows.find((flow) => flow.id === id || flow.externalId === id)
+function getTables(currentState: ProjectState, newState: ProjectState): TableOperation[] {
+    const tableOperations: TableOperation[] = []
+
+    currentState.tables?.forEach(table => {
+        const tableState = newState.tables?.find((t) => t.externalId === table.externalId)
+        if (!isNil(tableState) && isTableChanged(tableState, table)) {
+            tableOperations.push({
+                type: TableOperationType.UPDATE_TABLE,
+                tableState: table,
+                newTableState: tableState,
+            })
+        }
+    })
+
+    newState.tables?.forEach(table => {
+        const isExistingTable = currentState.tables?.find((t) => t.externalId === table.externalId)
+        if (isNil(isExistingTable)) {
+            tableOperations.push({
+                type: TableOperationType.CREATE_TABLE,
+                tableState: table,
+            })
+        }
+    })
+
+    return tableOperations
+}
+
+function searchInFlowForFlowByIdOrExternalId(flows: PopulatedFlow[], externalId: string): PopulatedFlow | undefined {
+    return flows.find((flow) =>  flow.externalId === externalId)
 }
 
 function isFlowChanged(fromFlow: PopulatedFlow, targetFlow: PopulatedFlow): boolean {

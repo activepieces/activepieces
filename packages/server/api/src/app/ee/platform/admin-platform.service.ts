@@ -114,6 +114,7 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
       
 
     },
+
 })
 
 type AdminAddPlatformParams = {

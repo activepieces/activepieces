@@ -1,10 +1,11 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { PlugIcon, Trash2, Unplug, RotateCcw } from 'lucide-react';
+import { PlugIcon, Trash2, Unplug, Link2Icon } from 'lucide-react';
 import { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
+import { PermissionNeededTooltip } from '@/components/ui/permission-needed-tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -35,6 +36,7 @@ type McpPieceProps = {
   };
   onDelete: (piece: McpPieceWithConnection) => void;
   isLoading?: boolean;
+  hasPermissionToEdit: boolean;
 };
 
 export const McpPiece = ({
@@ -42,40 +44,42 @@ export const McpPiece = ({
   pieceInfo,
   onDelete,
   isLoading = false,
+  hasPermissionToEdit,
 }: McpPieceProps) => {
   const { pieceModel, isLoading: isPieceLoading } = piecesHooks.usePiece({
     name: piece.pieceName,
   });
 
   const { refetch: refetchMcp } = mcpHooks.useMcp();
-  const { mutate: updatePieceStatus } = useMutation({
-    mutationFn: async (status: McpPieceStatus) => {
-      setStatus(status === McpPieceStatus.ENABLED);
-      await mcpApi.updatePiece({
-        pieceId: piece.id,
-        status,
-      });
-      return status;
-    },
-    onSuccess: (status) => {
-      toast({
-        title: `${t('MCP piece')} (${pieceModel?.displayName})`,
-        description: t(
-          `${
-            status === McpPieceStatus.ENABLED ? 'Enabled' : 'Disabled'
-          } successfully`,
-        ),
-      });
-      refetchMcp();
-    },
-    onError: () => {
-      toast({
-        title: `${t('MCP piece')} (${pieceModel?.displayName})`,
-        description: t('Failed to update piece status'),
-        variant: 'destructive',
-      });
-    },
-  });
+  const { mutate: updatePieceStatus, isPending: isStatusUpdatePending } =
+    useMutation({
+      mutationFn: async (status: McpPieceStatus) => {
+        setStatus(status === McpPieceStatus.ENABLED);
+        await mcpApi.updatePiece({
+          pieceId: piece.id,
+          status,
+        });
+        return status;
+      },
+      onSuccess: (status) => {
+        toast({
+          title: `${t('MCP piece')} (${pieceModel?.displayName})`,
+          description: t(
+            `${
+              status === McpPieceStatus.ENABLED ? 'Enabled' : 'Disabled'
+            } successfully`,
+          ),
+        });
+        refetchMcp();
+      },
+      onError: () => {
+        toast({
+          title: `${t('MCP piece')} (${pieceModel?.displayName})`,
+          description: t('Failed to update piece status'),
+          variant: 'destructive',
+        });
+      },
+    });
   const [status, setStatus] = useState(piece.status === McpPieceStatus.ENABLED);
 
   const connectionRequired = !isNil(pieceModel?.auth);
@@ -103,6 +107,15 @@ export const McpPiece = ({
   const displayName = piece.connection
     ? piece.connection.displayName
     : pieceInfo.displayName;
+
+  // Toggle status helper function
+  const toggleStatus = (checked: boolean) => {
+    if (hasPermissionToEdit) {
+      updatePieceStatus(
+        checked ? McpPieceStatus.ENABLED : McpPieceStatus.DISABLED,
+      );
+    }
+  };
 
   return (
     <Card className="overflow-hidden transition-all duration-200 relative hover:shadow-sm group border-border">
@@ -133,16 +146,9 @@ export const McpPiece = ({
               {pieceInfo.displayName}
             </h4>
             {piece.connection ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-full">
-                    {displayName}
-                  </p>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-[300px] break-all">
-                  <p className="text-sm">{displayName}</p>
-                </TooltipContent>
-              </Tooltip>
+              <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-full">
+                {displayName}
+              </p>
             ) : connectionMissing ? (
               <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
                 <span className="text-amber-500">
@@ -153,55 +159,65 @@ export const McpPiece = ({
           </div>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-          <Switch
-            checked={status}
-            onCheckedChange={(checked) => {
-              updatePieceStatus(
-                checked ? McpPieceStatus.ENABLED : McpPieceStatus.DISABLED,
-              );
-            }}
-            className="scale-75"
-          />
+          <PermissionNeededTooltip hasPermission={hasPermissionToEdit}>
+            <Switch
+              checked={status}
+              onCheckedChange={toggleStatus}
+              disabled={!hasPermissionToEdit || isStatusUpdatePending}
+              className="scale-75"
+            />
+          </PermissionNeededTooltip>
 
           {pieceModel?.auth && (
+            <PermissionNeededTooltip hasPermission={hasPermissionToEdit}>
+              <Tooltip>
+                <McpPieceDialog mcpPieceToUpdate={piece}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      disabled={!hasPermissionToEdit}
+                    >
+                      <Link2Icon className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                </McpPieceDialog>
+
+                <TooltipContent>
+                  {t(connectionMissing ? 'Add Connection' : 'Edit Connection')}
+                </TooltipContent>
+              </Tooltip>
+            </PermissionNeededTooltip>
+          )}
+          <PermissionNeededTooltip hasPermission={hasPermissionToEdit}>
             <Tooltip>
-              <McpPieceDialog mcpPieceToUpdate={piece}>
+              <ConfirmationDeleteDialog
+                title={`${t('Delete')} ${displayName}`}
+                message={
+                  <div>
+                    {t(
+                      "Are you sure you want to delete this tool from your MCP? if you delete it you won't be able to use it in your MCP client.",
+                    )}
+                  </div>
+                }
+                mutationFn={async () => {
+                  onDelete(piece);
+                }}
+                entityName={t('piece')}
+              >
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <RotateCcw className="h-4 w-4" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={!hasPermissionToEdit}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive transition-colors duration-200 group-hover:text-destructive/90" />
                   </Button>
                 </TooltipTrigger>
-              </McpPieceDialog>
-              <TooltipContent>
-                {t(connectionMissing ? 'Add Connection' : 'Edit Connection')}
-              </TooltipContent>
+              </ConfirmationDeleteDialog>
+              <TooltipContent>{t('Delete')}</TooltipContent>
             </Tooltip>
-          )}
-
-          <Tooltip>
-            <ConfirmationDeleteDialog
-              title={`${t('Delete')} ${displayName}`}
-              message={
-                <div>
-                  {t(
-                    "Are you sure you want to delete this tool from your MCP? if you delete it you won't be able to use it in your MCP client.",
-                  )}
-                </div>
-              }
-              mutationFn={async () => {
-                onDelete(piece);
-              }}
-              entityName={t('piece')}
-            >
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Trash2 className="h-4 w-4 text-destructive transition-colors duration-200 group-hover:text-destructive/90" />
-                </Button>
-              </TooltipTrigger>
-            </ConfirmationDeleteDialog>
-
-            <TooltipContent>{t('Delete')}</TooltipContent>
-          </Tooltip>
+          </PermissionNeededTooltip>
         </div>
       </CardContent>
     </Card>

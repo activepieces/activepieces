@@ -30,6 +30,7 @@ type BaseContext<
     id: ProjectId;
     externalId: () => Promise<string | undefined>;
   };
+  connections: ConnectionsManager;
 };
 
 type AppWebhookTriggerHookContext<
@@ -154,14 +155,14 @@ export type BaseActionContext<
   ActionProps extends InputPropertyMap
 > = BaseContext<PieceAuth, ActionProps> & {
   executionType: ET;
-  connections: ConnectionsManager;
   tags: TagsManager;
   server: ServerContext;
   files: FilesService;
   serverUrl: string;
   run: RunContext;
   generateResumeUrl: (params: {
-    queryParams: Record<string, string>
+    queryParams: Record<string, string>,
+    sync?: boolean
   }) => string;
 };
 
