@@ -236,8 +236,8 @@ function buildLeadSearchQuery(params: {
       type: "and",
       queries: [baseQuery, fieldCondition]
     },
-    _fields: {
-      lead: include_fields
+    _field: {
+    
     }
   };
 }

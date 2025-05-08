@@ -43,17 +43,31 @@ export interface CloseCRMLead {
     };
   }
 
-  export interface CloseCRMWebhookLead {
+  export interface CloseCRMLeadWebhookPayload {
+    id: string;
+    action: 'created' | 'updated' | 'deleted';
+    object_type: 'lead';
+    object_id: string;
+    date_created: string;
+    data: {
+      id: string;
+      name: string;
+      status_label?: string;
+      status_id?: string;
+      contacts?: Array<string | ContactDetails>;
+      date_created: string;
+      date_updated: string;
+      [key: string]: unknown; // For custom fields
+    };
+    organization_id: string;
+  }
+  
+  interface ContactDetails {
     id: string;
     name: string;
-    status_id: string;
-    contacts: {
-      name: string;
-      emails: { email: string }[];
-      phones: { phone: string }[];
-    }[];
-    date_created: string;
-    [key: string]: unknown; // For custom fields
+    emails?: Array<{ email: string; type?: string }>;
+    phones?: Array<{ phone: string; type?: string }>;
+    [key: string]: unknown;
   }
 
   export interface CloseCRMContact {
@@ -131,4 +145,114 @@ export interface CloseCRMLead {
     _field: {
       lead: string[];
     };
+  }
+
+  //NEW-CONTACT-ADDED
+
+  export interface CloseCRMContactWebhookPayload {
+    id: string;
+    action: 'created' | 'updated' | 'deleted';
+    object_type: 'contact';
+    object_id: string;
+    lead_id: string;
+    date_created: string;
+    data: {
+      id: string;
+      name: string;
+      title?: string;
+      lead_id: string;
+      emails?: Array<{ email: string; type?: string }>;
+      phones?: Array<{ phone: string; type?: string }>;
+      date_created: string;
+      date_updated: string;
+    };
+    organization_id: string;
+  }
+  
+  export interface CloseCRMLead {
+    id: string;
+    name: string;
+    status_label?: string;
+    date_created?: string;
+    date_updated?: string;
+  }
+
+  //create opportunity
+  export interface CloseCRMOpportunity {
+    lead_id: string;
+    name?: string;
+    note?: string;
+    status_id?: string;
+    confidence?: number;
+    value?: number;
+    value_currency?: string;
+    value_period?: 'one_time' | 'monthly' | 'annual';
+    contact_id?: string;
+    user_id?: string;
+    date_won?: string;
+    [key: string]: unknown; // For custom fields
+  }
+
+  //find opportunity
+
+  export interface CloseCRMOpportunity {
+    id: string;
+    lead_id: string;
+    lead_name?: string;
+    status_id?: string;
+    status_label?: string;
+    status_type?: 'active' | 'won' | 'lost' | 'archived';
+    pipeline_id?: string;
+    pipeline_name?: string;
+    user_id?: string;
+    user_name?: string;
+    contact_id?: string;
+    value?: number;
+    value_period?: 'one_time' | 'monthly' | 'annual';
+    value_formatted?: string;
+    expected_value?: number;
+    annualized_value?: number;
+    annualized_expected_value?: number;
+    confidence?: number;
+    note?: string;
+    date_created?: string;
+    date_updated?: string;
+    date_won?: string;
+  }
+
+  //opportunity-status changed
+  export interface CloseCRMOpportunityWebhookPayload {
+    id: string;
+    action: 'created' | 'updated' | 'deleted';
+    object_type: 'opportunity';
+    object_id: string;
+    lead_id: string;
+    date_created: string;
+    changed_fields: string[];
+    previous_data?: {
+      status_type?: string;
+      status_label?: string;
+      status_id?: string;
+      value?: number;
+      confidence?: number;
+    };
+    data: {
+      id: string;
+      lead_id: string;
+      status_type: 'active' | 'won' | 'lost' | 'archived';
+      status_label: string;
+      status_id: string;
+      value?: number;
+      value_currency?: string;
+      value_formatted?: string;
+      contact_id?: string;
+      contact_name?: string;
+      lead_name?: string;
+      date_won?: string;
+      date_lost?: string;
+      confidence?: number;
+      date_created: string;
+      date_updated: string;
+    };
+    organization_id: string;
   }

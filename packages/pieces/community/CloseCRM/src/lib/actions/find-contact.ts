@@ -225,6 +225,10 @@ function buildSearchQuery(params: {
     },
     _fields: {
       contact: include_fields
+    },
+    _field:{
+      contact: include_fields
     }
+
   };
 }

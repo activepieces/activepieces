@@ -8,7 +8,7 @@ import { createOpportunity } from "./lib/actions/create-opportunity";
 import { findOpportunity } from "./lib/actions/find-opportunity";
 import {opportunityStatusChanged} from "./lib/triggers/opportunity-status-changed";
 import { createContact } from "./lib/actions/create-contact";
-import { newcontactAdded } from "./lib/triggers/new-contact-added";
+import { newContactAdded } from "./lib/triggers/new-contact-added";
 import {findContact} from "./lib/actions/find-contact";
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
@@ -82,7 +82,7 @@ export const closeCrm = createPiece({
   ],
   triggers: [
     newLeadAdded,
-    newcontactAdded,
+    newContactAdded,
     opportunityStatusChanged
   ],
 });
