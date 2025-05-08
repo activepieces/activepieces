@@ -7,10 +7,10 @@ import { listModels } from "./lib/actions/list-models";
 import { createWorkflow } from "./lib/actions/create-workflow";
 import { setWebhook } from "./lib/actions/set-webhook";
 import { cancelRun } from "./lib/actions/cancel-run";
-// import { runCompleted } from "./lib/triggers/run-completed";
-// import { runFailed } from "./lib/triggers/run-failed";
-// import { newWorkflowCreated } from "./lib/triggers/new-workflow-created";
-// import { modelUpdated } from "./lib/triggers/model-updated";
+import { runCompleted } from "./lib/triggers/run-completed";
+import { runFailed } from "./lib/triggers/run-failed";
+import { newWorkflowCreated } from "./lib/triggers/new-workflow-created";
+import { modelUpdated } from "./lib/triggers/model-updated";
 
 export const comfyicuAuth = PieceAuth.CustomAuth({
   required: true,
@@ -40,10 +40,10 @@ export const comfyicu = createPiece({
     cancelRun,
   ],
   triggers: [
-    // runCompleted,
-    // runFailed,
-    // newWorkflowCreated,
-    // modelUpdated,
+    runCompleted,
+    runFailed,
+    newWorkflowCreated,
+    modelUpdated,
   ],
 });
     
