@@ -18,14 +18,6 @@ import { useLocation, useSearchParams } from 'react-router-dom';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
@@ -201,7 +193,9 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
       >
         <Layers className="h-4 w-4 mr-2" />
         {t(`All`)}
-        <span className="text-xs font-semibold ml-1">({allFlowsCount})</span>
+        <span className="text-xs text-muted-foreground ml-1">
+          ({allFlowsCount})
+        </span>
       </Button>
 
       <Button
@@ -213,7 +207,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
         <Shapes className="h-4 w-4 mr-2" />
         {t('Uncategorized')}
 
-        <span className="text-xs font-semibold ml-1">
+        <span className="text-xs text-muted-foreground ml-1">
           ({foldersUtils.extractUncategorizedFlows(allFlowsCount, folders)})
         </span>
       </Button>
@@ -228,9 +222,9 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
             className="group whitespace-nowrap flex overflow-hidden items-center pl-3 pr-1 h-8 border border-dashed"
           >
             <FolderIcon isFolderOpen={selectedFolderId === folder.id} />
-            <span className="mr-1 ml-2">
+            <span className="mr-1 ml-2 flex items-center">
               {folder.displayName}
-              <span className="text-xs font-semibold ml-1">
+              <span className="text-xs text-muted-foreground ml-1">
                 ({folder.numberOfFlows})
               </span>
             </span>
@@ -248,73 +242,33 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
         <Popover open={showMoreFolders} onOpenChange={setShowMoreFolders}>
           <PopoverTrigger asChild>
             <Button variant="ghost" size="sm" className="h-8">
-              <EllipsisVertical className="h-4 w-4 mr-2" />
-              more
+              <span className="text-xs font-semibold mr-1">
+                ({moreFolders.length})
+              </span>
+              more ...
             </Button>
           </PopoverTrigger>
 
-          <PopoverContent
-            align="start"
-            className="min-w-[200px] max-w-[250px] break-all p-0"
-          >
-            <Command>
-              <CommandInput placeholder="Search folders..." />
-              <CommandList>
-                <CommandEmpty>No folders found.</CommandEmpty>
-
-                <ScrollArea viewPortClassName="max-h-[220px]">
-                  <CommandGroup heading="Folders">
-                    {moreFolders.map((folder) => (
-                      <CommandItem
-                        key={folder.id}
-                        value={folder.displayName}
-                        onSelect={() => {
-                          updateSearchParams(folder.id);
-                          setShowMoreFolders(false);
-                        }}
-                        className="flex justify-between items-center cursor-pointer h-9"
-                      >
-                        <div className="flex items-center">
-                          <FolderIcon
-                            isFolderOpen={selectedFolderId === folder.id}
-                          />
-                          <span className="ml-2 mr-1">
-                            {folder.displayName}
-                            <span className="text-xs font-semibold ml-1">
-                              ({folder.numberOfFlows})
-                            </span>
-                          </span>
-                        </div>
-                        <FolderAction
-                          folder={folder}
-                          refetch={refetchFolders}
-                          userHasPermissionToUpdateFolders={
-                            userHasPermissionToUpdateFolders
-                          }
-                        />
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </ScrollArea>
-              </CommandList>
-            </Command>
-            <Separator />
-            <div className="p-1">
+          <PopoverContent align="start" className="p-2 space-y-2">
+            <div className="flex items-center justify-between mb-1">
               <Button
                 variant="ghost"
+                size="sm"
                 onClick={() => {
                   setSortedAlphabeticallyIncreasingly(
                     !sortedAlphabeticallyIncreasingly,
                   );
                 }}
-                className="h-9 gap-x-2 px-2 justify-start w-full"
+                className="h-8 w-8 p-0"
+                title={
+                  sortedAlphabeticallyIncreasingly ? 'Sort Z-A' : 'Sort A-Z'
+                }
               >
                 {sortedAlphabeticallyIncreasingly ? (
-                  <ArrowUpAz className="h-4 w-4 mr-2" />
+                  <ArrowUpAz className="h-4 w-4" />
                 ) : (
-                  <ArrowDownZA className="h-4 w-4 mr-2" />
+                  <ArrowDownZA className="h-4 w-4" />
                 )}
-                <span>{t('Sort A - Z')}</span>
               </Button>
 
               <PermissionNeededTooltip
@@ -328,14 +282,50 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                     variant="ghost"
                     disabled={!userHasPermissionToUpdateFolders}
                     size="sm"
-                    className="h-9 gap-x-2 px-2 justify-start w-full"
+                    className="h-8 flex items-center gap-1"
                   >
-                    <PlusIcon className="h-4 w-4" />
+                    <PlusIcon className="h-3 w-3" />
                     Create folder
                   </Button>
                 </CreateFolderDialog>
               </PermissionNeededTooltip>
             </div>
+
+            <Separator className="my-1" />
+
+            <ScrollArea viewPortClassName="max-h-[220px]">
+              <div className="space-y-1">
+                {moreFolders.map((folder) => (
+                  <div
+                    key={folder.id}
+                    className="flex justify-between items-center rounded-md hover:bg-accent px-2 py-1.5 cursor-pointer"
+                    onClick={() => {
+                      updateSearchParams(folder.id);
+                      setShowMoreFolders(false);
+                    }}
+                  >
+                    <div className="flex items-center">
+                      <FolderIcon
+                        isFolderOpen={selectedFolderId === folder.id}
+                      />
+                      <span className="ml-2 text-sm">
+                        {folder.displayName}
+                        <span className="text-xs text-muted-foreground ml-1">
+                          ({folder.numberOfFlows})
+                        </span>
+                      </span>
+                    </div>
+                    <FolderAction
+                      folder={folder}
+                      refetch={refetchFolders}
+                      userHasPermissionToUpdateFolders={
+                        userHasPermissionToUpdateFolders
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
           </PopoverContent>
         </Popover>
       )}
