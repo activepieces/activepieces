@@ -8,7 +8,7 @@ import { PieceCategory } from '@activepieces/shared';
 export const medullarAuth = PieceAuth.SecretText({
   displayName: 'API Key',
   required: true,
-  description: 'Please use your **api-key** as value for API Key',
+  description: 'Please use your personal **API KEY**. You can generate one in your [Medullar account profile](https://my.medullar.com/my-account), under the **API Keys** section.',
 });
 
 export const medullar = createPiece({
@@ -18,7 +18,7 @@ export const medullar = createPiece({
   auth: medullarAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl:
-    'https://cdn.medullar.com/images/web/logo/medullar_favicon_128x128.png',
+    'https://cdn.activepieces.com/pieces/medullar.png',
   authors: ['mllopart'],
   actions: [createSpace, listSpaces, addSpaceRecord, askSpace],
   triggers: [],
