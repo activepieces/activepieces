@@ -42,7 +42,6 @@ export const askSpace = createAction({
     }),
   },
   async run(context) {
-
     const userData = await getUser(context.auth);
     let chatId = context.propsValue['chatId'];
 
@@ -84,9 +83,8 @@ export const askSpace = createAction({
       headers: {
         Authorization: `Bearer ${context.auth}`,
       },
-    });      
+    });
 
     return messageResponse.body;
-
   },
 });

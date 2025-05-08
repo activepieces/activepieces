@@ -29,6 +29,20 @@ export async function getUser(authentication: string) {
   return userData;
 }
 
+export async function getUserSpaces(authentication: string) {
+  const userData = await getUser(authentication);
+
+  const spaceListResponse = await httpClient.sendRequest({
+    method: HttpMethod.GET,
+    url: `${medullarCommon.exploratorUrl}/spaces/?user=${userData.uuid}&limit=1000&offset=0`,
+    headers: {
+      Authorization: `Bearer ${authentication}`,
+    },
+  });
+
+  return spaceListResponse.body.results;
+}
+
 export const medullarPropsCommon = {
   spaceId: Property.Dropdown({
     displayName: 'Space',
@@ -46,19 +60,11 @@ export const medullarPropsCommon = {
         };
       }
 
-      const userData = await getUser(authentication);
-
-      const spaceListResponse = await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `${medullarCommon.exploratorUrl}/spaces/?user=${userData.uuid}&limit=1000&offset=0`,
-        headers: {
-          Authorization: `Bearer ${authentication}`,
-        },
-      });
+      const spaceListResponse = await getUserSpaces(authentication);
 
       return {
         disabled: false,
-        options: spaceListResponse.body.results
+        options: spaceListResponse
           .flat()
           .map((list: { name: string; uuid: string }) => {
             return {
