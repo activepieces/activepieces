@@ -25,10 +25,6 @@ export enum TimeLogSourceEnum {
 	CLOC = 'CLOC'
 }
 
-export interface GauzyWebhookInformation {
-	webhookId: string;
-}
-
 export enum TimeLogType {
 	TRACKED = 'TRACKED',
 	MANUAL = 'MANUAL',
