@@ -9,70 +9,90 @@ export const replyToEmailAction = createAction({
   displayName: 'Reply to Email',
   description: 'Send a reply to a Unibox email in Instantly',
   props: {
-    email_id: Property.ShortText({
+    reply_to_uuid: Property.ShortText({
       displayName: 'Email ID',
       description: 'The ID of the email to reply to',
       required: true,
     }),
-    body: Property.LongText({
-      displayName: 'Reply Body',
-      description: 'The body of the reply email',
+    eaccount: Property.ShortText({
+      displayName: 'Email Account',
+      description: 'The email account that will be used to send this email. It has to be an email account connected to your workspace',
       required: true,
     }),
     subject: Property.ShortText({
       displayName: 'Subject',
-      description: 'The subject of the reply email (optional)',
+      description: 'Subject line of the email message',
+      required: true,
+    }),
+    body_html: Property.LongText({
+      displayName: 'HTML Body',
+      description: 'The HTML body of the reply email',
       required: false,
     }),
-    cc: Property.Array({
+    body_text: Property.LongText({
+      displayName: 'Text Body',
+      description: 'The text body of the reply email',
+      required: false,
+    }),
+    cc_address_email_list: Property.ShortText({
       displayName: 'CC',
-      description: 'Email addresses to CC on the reply',
+      description: 'Comma-separated list of CC email addresses',
       required: false,
     }),
-    bcc: Property.Array({
+    bcc_address_email_list: Property.ShortText({
       displayName: 'BCC',
-      description: 'Email addresses to BCC on the reply',
-      required: false,
-    }),
-    attachments: Property.Array({
-      displayName: 'Attachments',
-      description: 'URLs of attachments to include with the reply',
+      description: 'Comma-separated list of BCC email addresses',
       required: false,
     }),
   },
   async run(context) {
     const {
-      email_id,
-      body,
+      reply_to_uuid,
+      eaccount,
       subject,
-      cc,
-      bcc,
-      attachments,
+      body_html,
+      body_text,
+      cc_address_email_list,
+      bcc_address_email_list,
     } = context.propsValue;
     const { auth: apiKey } = context;
 
+    // At least one body type is required
+    if (!body_html && !body_text) {
+      throw new Error('Either HTML body or Text body must be provided');
+    }
+
     const payload: Record<string, unknown> = {
-      body,
+      reply_to_uuid,
+      eaccount,
+      subject,
+      body: {},
     };
 
-    if (subject) {
-      payload['subject'] = subject;
+    if (body_html) {
+      payload['body'] = {
+        ...(payload['body'] as object),
+        html: body_html
+      };
     }
 
-    if (cc && cc.length > 0) {
-      payload['cc'] = cc;
+    if (body_text) {
+      payload['body'] = {
+        ...(payload['body'] as object),
+        text: body_text
+      };
     }
 
-    if (bcc && bcc.length > 0) {
-      payload['bcc'] = bcc;
+    if (cc_address_email_list) {
+      payload['cc_address_email_list'] = cc_address_email_list;
     }
 
-    if (attachments && attachments.length > 0) {
-      payload['attachments'] = attachments;
+    if (bcc_address_email_list) {
+      payload['bcc_address_email_list'] = bcc_address_email_list;
     }
 
     return await makeRequest({
-      endpoint: `unibox/emails/${email_id}/reply`,
+      endpoint: `emails/reply`,
       method: HttpMethod.POST,
       apiKey: apiKey as string,
       body: payload,
