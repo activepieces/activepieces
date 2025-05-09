@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from '@google/genai';
 import { GoogleAuth } from 'google-auth-library';
 import mime from 'mime-types';
+import { ApFile } from '@activepieces/pieces-framework';
 
 interface ServiceAccountAuth {
   serviceAccountJson: string;
@@ -13,6 +14,10 @@ interface ContentPart {
     data: string;
     mimeType: string;
   };
+}
+
+interface FileItem {
+  file: ApFile;
 }
 
 export const generateContentWithGemini = createAction({
@@ -41,10 +46,16 @@ export const generateContentWithGemini = createAction({
       required: true,
       description: 'The prompt to generate content from',
     }),
-    files: Property.File({
+    files: Property.Array({
       displayName: 'Files',
       required: false,
       description: 'Optional files to include in the prompt (images, PDFs, text, audio, video)',
+      properties: {
+        file: Property.File({
+          displayName: 'File',
+          required: true,
+        })
+      }
     }),
     maxOutputTokens: Property.Number({
       displayName: 'Max Output Tokens',
@@ -85,15 +96,17 @@ export const generateContentWithGemini = createAction({
     const contentParts: ContentPart[] = [{ text: prompt }];
     
     // Add files if provided
-    if (files) {
-      const base64Data = files.data.toString('base64');
-      const mimeType = mime.lookup(files.extension || '') || 'application/octet-stream';
-      contentParts.push({
-        inlineData: {
-          data: base64Data,
-          mimeType
-        }
-      });
+    if (files && files.length > 0) {
+      for (const file of files as FileItem[]) {
+        const base64Data = file.file.data.toString('base64');
+        const mimeType = mime.lookup(file.file.extension || '') || 'application/octet-stream';
+        contentParts.push({
+          inlineData: {
+            data: base64Data,
+            mimeType
+          }
+        });
+      }
     }
 
     const result = await ai.models.generateContent({
