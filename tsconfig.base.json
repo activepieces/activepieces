@@ -160,6 +160,9 @@
       "@activepieces/piece-clockodo": [
         "packages/pieces/community/clockodo/src/index.ts"
       ],
+       "@activepieces/piece-CloseCRM": [
+        "packages/pieces/community/CloseCRM/src/index.ts"
+      ],
       "@activepieces/piece-cloutly": [
         "packages/pieces/community/cloutly/src/index.ts"
       ],
