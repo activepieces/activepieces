@@ -1,6 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { GoogleGenAI, HarmCategory, HarmBlockThreshold, ContentListUnion } from '@google/genai';
-import { GoogleAuth } from 'google-auth-library';
+import { GoogleGenAI, ContentListUnion, createPartFromBase64, createPartFromUri } from '@google/genai';
 import mime from 'mime-types';
 import { ApFile } from '@activepieces/pieces-framework';
 
@@ -87,22 +86,12 @@ export const generateContentWithGemini = createAction({
       for (const file of files as FileItem[]) {
         const base64Data = file.file.data.toString('base64');
         const mimeType = mime.lookup(file.file.extension || '') || 'application/octet-stream';
-        contentParts.push({
-          inlineData: {
-            data: base64Data,
-            mimeType
-          }
-        });
+        contentParts.push(createPartFromBase64(base64Data, mimeType));
       }
     }
 
     if (youtubeUrl) {
-      contentParts.push({
-        fileData: {
-          fileUri: youtubeUrl,
-          mimeType: 'video/mp4'
-        }
-      });
+      contentParts.push(createPartFromUri(youtubeUrl, 'video/mp4'));
     }
 
     const result = await ai.models.generateContent({
