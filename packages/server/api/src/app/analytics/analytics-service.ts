@@ -23,12 +23,12 @@ export const analyticsService = {
         // Removed unused variable projectIds
         const query = flowRunRepo()
             .createQueryBuilder('flowRun')
-            .where('flowRun.projectId IN (:...projectIds)')
-            .where('DATE(flowRun.finishTime) BETWEEN :start AND :end', {
+            .andWhere('flowRun.projectId IN (:...projectIds)')
+            .andWhere('DATE(flowRun.finishTime) BETWEEN :start AND :end', {
                 start: startDate,
                 end: endDate,
             })
-            .select('flowRun.projectId', 'projectId')
+            .addSelect('flowRun.projectId', 'projectId')
             .addSelect('DATE(flowRun.finishTime)', 'date')
             .addSelect('COUNT(*)', 'totalFlowRuns')
             .addSelect(
@@ -78,7 +78,7 @@ export const analyticsService = {
 
         const result = await flowRepo()
             .createQueryBuilder('flow')
-            .select('COUNT(flow.id)', 'workflowCount')
+            .addSelect('COUNT(flow.id)', 'workflowCount')
             .addSelect(
                 'SUM(CASE WHEN flow.status = :enabledStatus THEN 1 END)',
                 'activeWorkflowCount',
