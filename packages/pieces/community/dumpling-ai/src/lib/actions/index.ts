@@ -5,4 +5,4 @@ import { scrapeWebsite } from './scrape-website';
 import { crawlWebsite } from './crawl-website';
 import { extractDocument } from './extract-document';
 
-export { webSearch, searchNews, generateImage, scrapeWebsite, crawlWebsite, extractDocument }; 
+export { webSearch, searchNews, generateImage, scrapeWebsite, crawlWebsite, extractDocument };
