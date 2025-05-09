@@ -1,4 +1,5 @@
 import { spawn } from 'child_process'
+import fs from 'fs/promises'
 import { Server } from 'http'
 import path, { resolve } from 'path'
 import { ApLock, filePiecesUtils, memoryLock, PiecesSource } from '@activepieces/server-shared'
@@ -7,7 +8,6 @@ import chalk from 'chalk'
 import chokidar from 'chokidar'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { cacheHandler } from '../../utils/cache-handler'
-import fs from 'fs/promises'
 
 export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
 
@@ -25,7 +25,8 @@ async function checkBuildTarget(nxProjectFilePath: string): Promise<string> {
             return 'build-with-deps'
         }
         return 'build'
-    } catch (error) {
+    }
+    catch (error) {
         return 'build'
     }
 }
