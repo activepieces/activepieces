@@ -24,13 +24,7 @@ export const mcpSseController: FastifyPluginAsyncTypebox = async (app) => {
 
         await server.connect(transport)
 
-        const heartbeatInterval = setInterval(() => {
-            reply.raw.write(': heartbeat\n\n')
-            req.log.info(`Heartbeat sent for session ${transport.sessionId}`)
-        }, HEARTBEAT_INTERVAL)
-
         reply.raw.on('close', async () => {
-            clearInterval(heartbeatInterval)
             req.log.info(`Connection closed for session ${transport.sessionId}`)
             await mcpSessionManager(req.log).publish(transport.sessionId, {}, 'remove')
         })
