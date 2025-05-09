@@ -41,10 +41,6 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
         return packageJson.name
     }
 
-    async function getProjectJsonFromFolderPath(folderPath: string): Promise<string> {
-        return join(folderPath, 'project.json')
-    }
-
     async function findDirectoryByPackageName(packageName: string): Promise<string | null> {
         const paths = await findAllPiecesFolder(resolve(cwd(), 'dist', 'packages', 'pieces'))
         for (const path of paths) {
@@ -160,6 +156,5 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
         findAllPieces,
         clearPieceCache,
         getPackageNameFromFolderPath,
-        getProjectJsonFromFolderPath,
     }
 }

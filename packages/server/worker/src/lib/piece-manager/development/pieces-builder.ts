@@ -7,7 +7,6 @@ import chalk from 'chalk'
 import chokidar from 'chokidar'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { cacheHandler } from '../../utils/cache-handler'
-import fs from 'fs/promises'
 
 export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
 
@@ -18,19 +17,7 @@ enum CacheState {
     PENDING = 'PENDING',
 }
 
-async function checkBuildTarget(nxProjectFilePath: string): Promise<string> {
-    try {
-        const nxProjectJson = JSON.parse(await fs.readFile(nxProjectFilePath, 'utf-8'))
-        if ('targets' in nxProjectJson && nxProjectJson.targets && nxProjectJson.targets['build-with-deps']) {
-            return 'build-with-deps'
-        }
-        return 'build'
-    } catch (error) {
-        return 'build'
-    }
-}
-
-async function handleFileChange(packages: string[], pieceProjectName: string, piecePackageName: string, nxProjectFilePath: string, io: Server, log: FastifyBaseLogger): Promise<void> {
+async function handleFileChange(packages: string[], pieceProjectName: string, piecePackageName: string, io: Server, log: FastifyBaseLogger): Promise<void> {
     log.info(
         chalk.blueBright.bold(
             '👀 Detected changes in pieces. Waiting... 👀 ' + pieceProjectName,
@@ -40,24 +27,14 @@ async function handleFileChange(packages: string[], pieceProjectName: string, pi
     try {
         lock = await memoryLock.acquire(PIECES_BUILDER_MUTEX_KEY)
 
-        const buildTarget = await checkBuildTarget(nxProjectFilePath)
-        log.info(chalk.blue.bold(`🤌 Building pieces with target: ${buildTarget} for ${pieceProjectName}... 🤌`))
-        
+        log.info(chalk.blue.bold('🤌 Building pieces... 🤌'))
         if (!/^[A-Za-z0-9-]+$/.test(pieceProjectName)) {
             throw new Error(`Piece package name contains invalid character: ${pieceProjectName}`)
         }
-
-        const cmd = `npx nx run-many -t ${buildTarget} --projects=${pieceProjectName}`
-
-        const startTime = Date.now()
+        const cmd = `npx nx run-many -t build --projects=${pieceProjectName}`
         await runCommandWithLiveOutput(cmd)
-        const endTime = Date.now()
-        const buildTime = (endTime - startTime) / 1000
-        
-        log.info(chalk.blue.bold(`Build completed in ${buildTime.toFixed(2)} seconds`))
-        
         await filePiecesUtils(packages, log).clearPieceCache(piecePackageName)
-
+        
         const cache = cacheHandler(globalCachePath)
         await cache.setCache('@activepieces/pieces-framework', CacheState.PENDING)
         await cache.setCache('@activepieces/pieces-common', CacheState.PENDING)
@@ -119,9 +96,8 @@ export async function piecesBuilder(app: FastifyInstance, io: Server, packages: 
 
         const pieceProjectName = `pieces-${packageName}`
         const packageJsonName = await filePiecesUtils(packages, app.log).getPackageNameFromFolderPath(pieceDirectory)
-        const nxProjectJson = await filePiecesUtils(packages, app.log).getProjectJsonFromFolderPath(pieceDirectory)
         const debouncedHandleFileChange = debounce(() => {
-            handleFileChange(packages, pieceProjectName, packageJsonName, nxProjectJson, io, app.log).catch(app.log.error)
+            handleFileChange(packages, pieceProjectName, packageJsonName, io, app.log).catch(app.log.error)
         }, 2000)
 
         const watcher = chokidar.watch(resolve(pieceDirectory), {

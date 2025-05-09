@@ -15,32 +15,6 @@
         "assets": ["packages/pieces/community/pdf/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
-      },
-      "dependsOn": ["prebuild"]
-    },
-    "prebuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "packages/pieces/community/pdf",
-        "command": "npm ci"
-      }
-    },
-    "build-with-deps": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "nx run pieces-pdf:prebuild",
-          "nx run pieces-pdf:build",
-          "nx run pieces-pdf:postbuild"
-        ],
-        "parallel": false
-      }
-    },
-    "postbuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "dist/packages/pieces/community/pdf",
-        "command": "npm install"
       }
     },
     "lint": {
