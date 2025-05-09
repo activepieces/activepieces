@@ -115,7 +115,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
             const flow = await engineApiService(engineToken, log).getFlowWithExactPieces({
                 versionId: jobData.flowVersionId,
                 type: GetFlowVersionForWorkerRequestType.EXACT,
-            }, jobData.flowVersionId)
+            }, jobData.flowVersionId, true)
             if (isNil(flow)) {
                 return
             }

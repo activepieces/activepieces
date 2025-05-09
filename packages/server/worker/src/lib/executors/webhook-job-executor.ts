@@ -108,7 +108,7 @@ async function getFlowToRun(workerToken: string, engineToken: string, flowVersio
     const flowToRun = await engineApiService(engineToken, log).getFlowWithExactPieces({
         flowId: data.flowId,
         type: flowVersionToRun,
-    }, flowVersionIdToRun)
+    }, flowVersionIdToRun, true)
 
     if (!isNil(flowToRun)) {
         return flowToRun
@@ -126,7 +126,7 @@ async function getFlowToRun(workerToken: string, engineToken: string, flowVersio
     const latestFlowVersion = await engineApiService(engineToken, log).getFlowWithExactPieces({
         flowId: data.flowId,
         type: GetFlowVersionForWorkerRequestType.LATEST,
-    }, flowVersionIdToRun)
+    }, flowVersionIdToRun, true)
 
     await stopAndReply(workerToken, data, {
         body: {},
@@ -149,7 +149,7 @@ async function handleSampleData(
     ).getFlowWithExactPieces({
         flowId,
         type: GetFlowVersionForWorkerRequestType.LATEST,
-    }, flowVersionIdToRun)
+    }, flowVersionIdToRun, true)
 
     if (isNil(latestFlowVersion)) {
         await stopAndReply(workerToken, data, {
