@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from '@google/genai';
+import { GoogleGenAI, HarmCategory, HarmBlockThreshold, ContentListUnion } from '@google/genai';
 import { GoogleAuth } from 'google-auth-library';
 import mime from 'mime-types';
 import { ApFile } from '@activepieces/pieces-framework';
@@ -8,35 +8,28 @@ interface ServiceAccountAuth {
   serviceAccountJson: string;
 }
 
-interface ContentPart {
-  text?: string;
-  inlineData?: {
-    data: string;
-    mimeType: string;
-  };
-}
-
 interface FileItem {
   file: ApFile;
 }
 
 export const generateContentWithGemini = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'generateContentWithGemini',
   displayName: 'Generate Content with Gemini',
-  description: 'Generate content using Google Vertex AI Gemini model',
+  description: 'Generate content using Google Vertex AI Gemini model.',
   props: {
     model: Property.Dropdown({
       displayName: 'Model',
+      description: 'See https://cloud.google.com/vertex-ai/generative-ai/docs/models for model capabilities and limitations.',
       required: true,
       refreshers: [],
       options: async () => {
         return {
           disabled: false,
           options: [
-            { label: 'Gemini Pro', value: 'gemini-pro' },
-            { label: 'Gemini Pro Vision', value: 'gemini-pro-vision' },
-            { label: 'Gemini 2.5 Pro Preview', value: 'gemini-2.5-pro-preview-05-06' },
+            { label: 'Gemini 2.5 Flash', value: 'gemini-2.5-flash-preview-04-17' },
+            { label: 'Gemini 2.5 Pro', value: 'gemini-2.5-pro-preview-05-06' },
+            { label: 'Gemini 2.0 Flash', value: 'gemini-2.0-flash' },
+            { label: 'Gemini 2.0 Flash-Lite', value: 'gemini-2.0-flash-lite' },
           ],
         };
       },
@@ -44,7 +37,7 @@ export const generateContentWithGemini = createAction({
     prompt: Property.LongText({
       displayName: 'Prompt',
       required: true,
-      description: 'The prompt to generate content from',
+      description: 'Your instructions for the AI to follow',
     }),
     files: Property.Array({
       displayName: 'Files',
@@ -57,25 +50,23 @@ export const generateContentWithGemini = createAction({
         })
       }
     }),
-    maxOutputTokens: Property.Number({
-      displayName: 'Max Output Tokens',
+    youtubeUrl: Property.ShortText({
+      displayName: 'YouTube URL',
       required: false,
-      description: 'Maximum number of tokens to generate',
-      defaultValue: 2048,
+      description: 'Optional public YouTube video URL for the AI to use as a reference',
     }),
     temperature: Property.Number({
       displayName: 'Temperature',
       required: false,
-      description: 'Controls randomness: 0 is deterministic, 1 is creative',
+      description: 'Controls randomness: 0 is more deterministic, 1 is more random',
       defaultValue: 0,
     })
   },
   async run(context) {
     const auth = context.auth as ServiceAccountAuth;
     const serviceAccountJson = JSON.parse(auth.serviceAccountJson);
-    const { model, prompt, files, maxOutputTokens, temperature } = context.propsValue;
+    const { model, prompt, files, youtubeUrl, temperature } = context.propsValue;
 
-    // Initialize Gemini client with service account
     const ai = new GoogleGenAI({
       vertexai: true,
       googleAuthOptions: {
@@ -83,19 +74,15 @@ export const generateContentWithGemini = createAction({
         scopes: ['https://www.googleapis.com/auth/cloud-platform'],
       },
       project: serviceAccountJson.project_id,
-      location: 'us-central1' // Default location, can be made configurable if needed
+      location: 'us-central1'
     });
 
-    // Set up generation config
     const generationConfig = {
-      maxOutputTokens,
       temperature
     };
 
-    // Prepare content parts
-    const contentParts: ContentPart[] = [{ text: prompt }];
+    const contentParts: ContentListUnion = [{ text: prompt }];
     
-    // Add files if provided
     if (files && files.length > 0) {
       for (const file of files as FileItem[]) {
         const base64Data = file.file.data.toString('base64');
@@ -107,6 +94,15 @@ export const generateContentWithGemini = createAction({
           }
         });
       }
+    }
+
+    if (youtubeUrl) {
+      contentParts.push({
+        fileData: {
+          fileUri: youtubeUrl,
+          mimeType: 'video/mp4'
+        }
+      });
     }
 
     const result = await ai.models.generateContent({
