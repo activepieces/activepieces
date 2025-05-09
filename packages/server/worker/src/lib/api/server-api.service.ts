@@ -162,12 +162,12 @@ export const engineApiService = (engineToken: string, log: FastifyBaseLogger) =>
                 exceptionHandler.handle(e, log)
             }
         },
-        async getFlowWithExactPieces(request: GetFlowVersionForWorkerRequest, flowVersionIdToRun: FlowVersionId | null | undefined): Promise<PopulatedFlow | null> {
+        async getFlowWithExactPieces(request: GetFlowVersionForWorkerRequest, flowVersionIdToRun: FlowVersionId | null | undefined, useCache = true): Promise<PopulatedFlow | null> {
             const startTime = performance.now()
             log.debug({ request }, '[EngineApiService#getFlowWithExactPieces] start')
 
             const cachedFlow = await readFlowFromCache(flowVersionIdToRun)
-            if (cachedFlow) {
+            if (cachedFlow && useCache) {
                 log.debug({ request, took: performance.now() - startTime }, '[EngineApiService#getFlowWithExactPieces] cache hit')
                 return cachedFlow
             }
