@@ -4,7 +4,6 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 
-import { LocalesEnum } from '@/app/routes/settings/appearance/language-switcher';
 import { Button } from '@/components/ui/button';
 import { ColorPicker } from '@/components/ui/color-picker';
 import {
@@ -28,6 +27,7 @@ import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformApi } from '@/lib/platforms-api';
 import { localesMap } from '@/lib/utils';
+import { LocalesEnum } from '@activepieces/shared';
 
 const FromSchema = Type.Object({
   name: Type.String(),

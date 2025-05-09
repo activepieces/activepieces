@@ -2,10 +2,11 @@ import { Trigger } from './trigger/trigger';
 import { Action } from './action/action';
 import {
   EventPayload,
+  LocalesEnum,
   ParseEventResponse,
   PieceCategory,
 } from '@activepieces/shared';
-import { PieceBase, PieceMetadata } from './piece-metadata';
+import { PieceBase, PieceMetadata} from './piece-metadata';
 import { PieceAuthProperty } from './property/authentication';
 
 export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
@@ -26,6 +27,7 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
     public readonly minimumSupportedRelease?: string,
     public readonly maximumSupportedRelease?: string,
     public readonly description = '',
+    public readonly i18n?: Partial<Record<LocalesEnum, Record<string, string>>>,
   ) {
     actions.forEach((action) => (this._actions[action.name] = action));
     triggers.forEach((trigger) => (this._triggers[trigger.name] = trigger));
@@ -43,6 +45,7 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
       auth: this.auth,
       minimumSupportedRelease: this.minimumSupportedRelease,
       maximumSupportedRelease: this.maximumSupportedRelease,
+      i18n: this.i18n,
     };
   }
 
@@ -78,6 +81,7 @@ export const createPiece = <PieceAuth extends PieceAuthProperty>(
     params.minimumSupportedRelease,
     params.maximumSupportedRelease,
     params.description,
+    params.i18n,
   );
 };
 
@@ -95,6 +99,7 @@ type CreatePieceParams<
   actions: Action<PieceAuth>[];
   triggers: Trigger<PieceAuth>[];
   categories?: PieceCategory[];
+  i18n?: Partial<Record<LocalesEnum, Record<string, string>>>;
 };
 
 type PieceEventProcessors = {
@@ -106,6 +111,8 @@ type PieceEventProcessors = {
   }) => boolean;
 };
 
-type BackwardCompatiblePieceMetadata = Omit<PieceMetadata, 'name' | 'version' | 'authors'> & {
+type BackwardCompatiblePieceMetadata = Omit<PieceMetadata, 'name' | 'version' | 'authors' | 'i18n'> & {
   authors?: PieceMetadata['authors']
+  i18n?: PieceMetadata['i18n']
 }
+
