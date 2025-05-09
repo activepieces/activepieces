@@ -11,6 +11,7 @@ import {
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -45,31 +46,31 @@ export enum FlowsPageTabs {
   FLOWS = 'flows',
 }
 
-export const ACTIVE_TAB_QUERY_PARAM = 'activeTab';
-const isParamFlowsPagesTab = (tab: string): tab is FlowsPageTabs => {
-  return Object.values(FlowsPageTabs).includes(tab as FlowsPageTabs);
-};
 const FlowsPage = () => {
   const { checkAccess } = useAuthorization();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const projectId = authenticationSession.getProjectId()!;
   const { data: showIssuesNotification } = issueHooks.useIssuesNotification();
-  const activeTabParam = searchParams.get(ACTIVE_TAB_QUERY_PARAM);
-  const [activeTab, setActiveTab] = useState<FlowsPageTabs>(
-    isParamFlowsPagesTab(activeTabParam ?? '')
-      ? (activeTabParam as FlowsPageTabs)
-      : FlowsPageTabs.FLOWS,
-  );
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const determineActiveTab = () => {
+    if (location.pathname.includes('/runs')) {
+      return FlowsPageTabs.HISTORY;
+    } else if (location.pathname.includes('/issues')) {
+      return FlowsPageTabs.ISSUES;
+    } else {
+      return FlowsPageTabs.FLOWS;
+    }
+  };
+
+  const [activeTab, setActiveTab] = useState<FlowsPageTabs>(
+    determineActiveTab(),
+  );
+
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const activeTabParam = params.get(ACTIVE_TAB_QUERY_PARAM);
-    setActiveTab(
-      isParamFlowsPagesTab(activeTabParam ?? '')
-        ? (activeTabParam as FlowsPageTabs)
-        : FlowsPageTabs.FLOWS,
-    );
-  }, [location.search]);
+    setActiveTab(determineActiveTab());
+  }, [location.pathname]);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['flow-table', searchParams.toString(), projectId],
@@ -94,11 +95,21 @@ const FlowsPage = () => {
     },
   });
 
+  const { embedState } = useEmbedding();
+
   const handleTabChange = (value: FlowsPageTabs) => {
     setActiveTab(value);
-    const newQueryParameters: URLSearchParams = new URLSearchParams();
-    newQueryParameters.set('activeTab', value);
-    setSearchParams(newQueryParameters);
+
+    let newPath = location.pathname;
+    if (value === FlowsPageTabs.HISTORY) {
+      newPath = newPath.replace(/\/(flows|issues)$/, '/runs');
+    } else if (value === FlowsPageTabs.ISSUES) {
+      newPath = newPath.replace(/\/(flows|runs)$/, '/issues');
+    } else {
+      newPath = newPath.replace(/\/(runs|issues)$/, '/flows');
+    }
+
+    navigate(newPath);
   };
 
   return (
@@ -122,29 +133,33 @@ const FlowsPage = () => {
           onValueChange={(v) => handleTabChange(v as FlowsPageTabs)}
           className="w-full"
         >
-          <TabsList variant="outline">
-            <TabsTrigger value={FlowsPageTabs.FLOWS} variant="outline">
-              <Workflow className="h-4 w-4 mr-2" />
-              {t('Flows')}
-            </TabsTrigger>
-            {checkAccess(Permission.READ_RUN) && (
-              <TabsTrigger value={FlowsPageTabs.HISTORY} variant="outline">
-                <History className="h-4 w-4 mr-2" />
-                {t('Runs')}
+          {!embedState.hideSideNav ? (
+            <TabsList variant="outline">
+              <TabsTrigger value={FlowsPageTabs.FLOWS} variant="outline">
+                <Workflow className="h-4 w-4 mr-2" />
+                {t('Flows')}
               </TabsTrigger>
-            )}
-            {checkAccess(Permission.READ_ISSUES) && (
-              <TabsTrigger value={FlowsPageTabs.ISSUES} variant="outline">
-                <CircleAlert className="h-4 w-4 mr-2" />
-                <span className="flex items-center gap-2">
-                  {t('Issues')}
-                  {showIssuesNotification && (
-                    <span className="ml-1 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
-                  )}
-                </span>
-              </TabsTrigger>
-            )}
-          </TabsList>
+              {checkAccess(Permission.READ_RUN) && (
+                <TabsTrigger value={FlowsPageTabs.HISTORY} variant="outline">
+                  <History className="h-4 w-4 mr-2" />
+                  {t('Runs')}
+                </TabsTrigger>
+              )}
+              {checkAccess(Permission.READ_ISSUES) && (
+                <TabsTrigger value={FlowsPageTabs.ISSUES} variant="outline">
+                  <CircleAlert className="h-4 w-4 mr-2" />
+                  <span className="flex items-center gap-2">
+                    {t('Issues')}
+                    {showIssuesNotification && (
+                      <span className="ml-1 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
+                    )}
+                  </span>
+                </TabsTrigger>
+              )}
+            </TabsList>
+          ) : (
+            <></>
+          )}
           <TabsContent value={FlowsPageTabs.FLOWS}>
             <FlowsTable data={data} isLoading={isLoading} refetch={refetch} />
           </TabsContent>
