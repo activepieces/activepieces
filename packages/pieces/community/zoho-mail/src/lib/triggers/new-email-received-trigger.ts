@@ -1,7 +1,11 @@
 import { OAuth2PropertyValue, Property, StoreScope, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { zohoMailAuth } from '../../index';
-import { ZOHO_MAIL_API_URL, fetchAccounts, fetchFolders } from '../common';
+import { fetchAccounts, fetchFolders, getZohoMailApiUrl } from '../common';
 import { HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common';
+
+interface TriggerAuthProps extends OAuth2PropertyValue {
+    data_center: string;
+}
 
 interface ZohoEmail {
     messageId: string;
@@ -46,7 +50,7 @@ export const newEmailReceived = createTrigger({
             refreshers: [],
             options: async ({ auth }) => {
                 if (!auth) return { disabled: true, placeholder: 'Please authenticate first', options: [] };
-                const accounts = await fetchAccounts(auth as OAuth2PropertyValue);
+                const accounts = await fetchAccounts(auth as TriggerAuthProps);
                 if (accounts.length === 0) return { disabled: true, placeholder: 'No accounts found', options: [] };
                 return { disabled: false, options: accounts };
             },
@@ -58,7 +62,7 @@ export const newEmailReceived = createTrigger({
             refreshers: ['accountId'],
             options: async ({ auth, accountId }) => {
                 if (!auth || !accountId) return { disabled: true, placeholder: 'Select an account first', options: [] };
-                const folders = await fetchFolders(auth as OAuth2PropertyValue, accountId as string);
+                const folders = await fetchFolders(auth as TriggerAuthProps, accountId as string);
                 return { disabled: false, options: [{label: 'All Folders (Default)', value: ''}, ...folders] };
             },
         }),
@@ -86,6 +90,8 @@ export const newEmailReceived = createTrigger({
     async run(context) {
         const { accountId, folderId } = context.propsValue;
         const accessToken = context.auth.access_token;
+        const authProps = context.auth as TriggerAuthProps;
+        const apiUrl = getZohoMailApiUrl(authProps.data_center);
         const lastProcessedTimestamp = await context.store.get<number>(TRIGGER_DATA_STORE_KEY, StoreScope.FLOW) || 0;
 
         const queryParams: QueryParams = {
@@ -102,7 +108,7 @@ export const newEmailReceived = createTrigger({
 
         const response = await httpClient.sendRequest<ListEmailsResponse>({
             method: HttpMethod.GET,
-            url: `${ZOHO_MAIL_API_URL}/accounts/${accountId}/messages/view`,
+            url: `${apiUrl}/accounts/${accountId}/messages/view`,
             headers: {
                 'Authorization': `Zoho-oauthtoken ${accessToken}`,
             },
@@ -147,6 +153,8 @@ export const newEmailReceived = createTrigger({
     async test(context) {
         const { accountId, folderId } = context.propsValue;
         const accessToken = context.auth.access_token;
+        const authProps = context.auth as TriggerAuthProps;
+        const apiUrl = getZohoMailApiUrl(authProps.data_center);
 
         const queryParams: QueryParams = {
             status: 'all',
@@ -161,7 +169,7 @@ export const newEmailReceived = createTrigger({
 
         const response = await httpClient.sendRequest<ListEmailsResponse>({
             method: HttpMethod.GET,
-            url: `${ZOHO_MAIL_API_URL}/accounts/${accountId}/messages/view`,
+            url: `${apiUrl}/accounts/${accountId}/messages/view`,
             headers: {
                 'Authorization': `Zoho-oauthtoken ${accessToken}`,
             },

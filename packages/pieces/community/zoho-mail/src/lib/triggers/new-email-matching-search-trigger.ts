@@ -1,7 +1,12 @@
 import { OAuth2PropertyValue, Property, StoreScope, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { zohoMailAuth } from '../../index';
-import { ZOHO_MAIL_API_URL, fetchAccounts } from '../common'; // No need for fetchFolders here
+import { fetchAccounts, getZohoMailApiUrl } from '../common'; // Import getZohoMailApiUrl, remove ZOHO_MAIL_API_URL
 import { HttpMethod, QueryParams, httpClient } from '@activepieces/pieces-common';
+
+// Define a local type for auth props
+interface TriggerAuthProps extends OAuth2PropertyValue {
+  data_center: string; // Stores the domain string e.g., 'com', 'eu'
+}
 
 // Using the same ZohoEmail and ListEmailsResponse interfaces as new-email-received-trigger
 // as the search endpoint seems to return a similar data structure.
@@ -49,7 +54,7 @@ export const newEmailMatchingSearch = createTrigger({
             refreshers: [],
             options: async ({ auth }) => {
                 if (!auth) return { disabled: true, placeholder: 'Please authenticate first', options: [] };
-                const accounts = await fetchAccounts(auth as OAuth2PropertyValue);
+                const accounts = await fetchAccounts(auth as TriggerAuthProps); // Use TriggerAuthProps
                 if (accounts.length === 0) return { disabled: true, placeholder: 'No accounts found', options: [] };
                 return { disabled: false, options: accounts };
             },
@@ -81,6 +86,8 @@ export const newEmailMatchingSearch = createTrigger({
     async run(context) {
         const { accountId, searchKey } = context.propsValue;
         const accessToken = context.auth.access_token;
+        const authProps = context.auth as TriggerAuthProps; // Get auth props
+        const apiUrl = getZohoMailApiUrl(authProps.data_center); // Get dynamic API URL
         const lastProcessedTimestamp = await context.store.get<number>(TRIGGER_SEARCH_DATA_STORE_KEY, StoreScope.FLOW) || 0;
 
         const queryParams: QueryParams = {
@@ -96,7 +103,7 @@ export const newEmailMatchingSearch = createTrigger({
 
         const response = await httpClient.sendRequest<ListEmailsResponse>({
             method: HttpMethod.GET,
-            url: `${ZOHO_MAIL_API_URL}/accounts/${accountId}/messages/search`,
+            url: `${apiUrl}/accounts/${accountId}/messages/search`, // Use dynamic apiUrl
             headers: {
                 'Authorization': `Zoho-oauthtoken ${accessToken}`,
             },
@@ -147,6 +154,8 @@ export const newEmailMatchingSearch = createTrigger({
     async test(context) {
         const { accountId, searchKey } = context.propsValue;
         const accessToken = context.auth.access_token;
+        const authProps = context.auth as TriggerAuthProps; // Get auth props
+        const apiUrl = getZohoMailApiUrl(authProps.data_center); // Get dynamic API URL
 
         const queryParams: QueryParams = {
             searchKey: searchKey as string,
@@ -156,7 +165,7 @@ export const newEmailMatchingSearch = createTrigger({
 
         const response = await httpClient.sendRequest<ListEmailsResponse>({
             method: HttpMethod.GET,
-            url: `${ZOHO_MAIL_API_URL}/accounts/${accountId}/messages/search`,
+            url: `${apiUrl}/accounts/${accountId}/messages/search`, // Use dynamic apiUrl
             headers: {
                 'Authorization': `Zoho-oauthtoken ${accessToken}`,
             },

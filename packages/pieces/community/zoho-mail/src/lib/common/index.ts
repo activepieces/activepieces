@@ -1,7 +1,10 @@
 import { OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { HttpMethod, httpClient } from "@activepieces/pieces-common";
 
-export const ZOHO_MAIL_API_URL = 'https://mail.zoho.com/api';
+export function getZohoMailApiUrl(domainSuffix: string): string {
+    // Ensure a default like 'com' if domainSuffix is unexpectedly empty or undefined
+    return `https://mail.zoho.${domainSuffix || 'com'}/api`;
+}
 
 interface ZohoAccount {
     accountId: string;
@@ -27,10 +30,16 @@ interface ZohoFoldersResponse {
     data: ZohoFolder[];
 }
 
-export async function fetchAccounts(auth: OAuth2PropertyValue): Promise<{ label: string; value: string; }[]> {
+// Modify auth type to include data_center from props, which holds the domain suffix
+interface AuthWithDataCenter extends OAuth2PropertyValue {
+    data_center: string; // e.g., 'com', 'eu'
+}
+
+export async function fetchAccounts(auth: AuthWithDataCenter): Promise<{ label: string; value: string; }[]> {
+    const apiUrl = getZohoMailApiUrl(auth.data_center);
     const response = await httpClient.sendRequest<ZohoAccountsResponse>({
         method: HttpMethod.GET,
-        url: `${ZOHO_MAIL_API_URL}/accounts`,
+        url: `${apiUrl}/accounts`,
         headers: {
             'Authorization': `Zoho-oauthtoken ${auth.access_token}`,
         },
@@ -45,12 +54,12 @@ export async function fetchAccounts(auth: OAuth2PropertyValue): Promise<{ label:
     return [];
 }
 
-export async function fetchFolders(auth: OAuth2PropertyValue, accountId: string): Promise<{ label: string; value: string; }[]> {
-    if (!accountId) return []; // Don't fetch if no accountId
-
+export async function fetchFolders(auth: AuthWithDataCenter, accountId: string): Promise<{ label: string; value: string; }[]> {
+    if (!accountId) return [];
+    const apiUrl = getZohoMailApiUrl(auth.data_center);
     const response = await httpClient.sendRequest<ZohoFoldersResponse>({
         method: HttpMethod.GET,
-        url: `${ZOHO_MAIL_API_URL}/accounts/${accountId}/folders`,
+        url: `${apiUrl}/accounts/${accountId}/folders`,
         headers: {
             'Authorization': `Zoho-oauthtoken ${auth.access_token}`,
         },

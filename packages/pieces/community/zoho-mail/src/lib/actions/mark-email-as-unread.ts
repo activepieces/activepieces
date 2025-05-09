@@ -1,7 +1,12 @@
 import { zohoMailAuth } from '../../index';
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { ZOHO_MAIL_API_URL, fetchAccounts } from '../common';
+import { fetchAccounts, getZohoMailApiUrl } from '../common';
+
+// Define a local type for auth props
+interface ActionAuthProps extends OAuth2PropertyValue {
+  data_center: string; // Stores the domain string e.g., 'com', 'eu'
+}
 
 export const markEmailAsUnread = createAction({
   auth: zohoMailAuth,
@@ -16,7 +21,7 @@ export const markEmailAsUnread = createAction({
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, placeholder: 'Please authenticate first', options: [] };
-        const accounts = await fetchAccounts(auth as OAuth2PropertyValue);
+        const accounts = await fetchAccounts(auth as ActionAuthProps);
         if (accounts.length === 0) return { disabled: true, placeholder: 'No accounts found', options: [] };
         return { disabled: false, options: accounts };
       },
@@ -35,6 +40,8 @@ export const markEmailAsUnread = createAction({
   async run(context) {
     const { accountId, messageIds, threadIds } = context.propsValue;
     const accessToken = context.auth.access_token;
+    const authProps = context.auth as ActionAuthProps;
+    const apiUrl = getZohoMailApiUrl(authProps.data_center);
 
     const finalMessageIds = messageIds as string[] | undefined;
     const finalThreadIds = threadIds as string[] | undefined;
@@ -56,7 +63,7 @@ export const markEmailAsUnread = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.PUT,
-      url: `${ZOHO_MAIL_API_URL}/accounts/${accountId}/updatemessage`,
+      url: `${apiUrl}/accounts/${accountId}/updatemessage`,
       headers: {
         'Authorization': `Zoho-oauthtoken ${accessToken}`,
         'Content-Type': 'application/json',

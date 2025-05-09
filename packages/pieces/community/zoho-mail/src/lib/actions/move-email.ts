@@ -1,7 +1,12 @@
 import { zohoMailAuth } from '../../index';
 import { Property, createAction, OAuth2PropertyValue, DynamicPropsValue, InputPropertyMap } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { ZOHO_MAIL_API_URL, fetchAccounts, fetchFolders } from '../common';
+import { fetchAccounts, fetchFolders, getZohoMailApiUrl } from '../common';
+
+// Define a local type for auth props
+interface ActionAuthProps extends OAuth2PropertyValue {
+  data_center: string; // Stores the domain string e.g., 'com', 'eu'
+}
 
 export const moveEmail = createAction({
   auth: zohoMailAuth,
@@ -16,7 +21,7 @@ export const moveEmail = createAction({
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, placeholder: 'Please authenticate first', options: [] };
-        const accounts = await fetchAccounts(auth as OAuth2PropertyValue);
+        const accounts = await fetchAccounts(auth as ActionAuthProps);
         if (accounts.length === 0) return { disabled: true, placeholder: 'No accounts found', options: [] };
         return { disabled: false, options: accounts };
       },
@@ -28,7 +33,7 @@ export const moveEmail = createAction({
       refreshers: ['accountId'],
       options: async ({ auth, accountId }) => {
         if (!auth || !accountId) return { disabled: true, placeholder: 'Select an account first', options: [] };
-        const folders = await fetchFolders(auth as OAuth2PropertyValue, accountId as string);
+        const folders = await fetchFolders(auth as ActionAuthProps, accountId as string);
         if (folders.length === 0) return { disabled: true, placeholder: 'No folders found for this account', options: [] };
         return { disabled: false, options: folders };
       },
@@ -65,7 +70,7 @@ export const moveEmail = createAction({
                 refreshers: [], // Depends on accountId from parent props
                 options: async () => {
                     if (!auth || !accountId) return { disabled: true, placeholder: 'Select an account first', options: [] };
-                    const folders = await fetchFolders(auth as OAuth2PropertyValue, accountId as string);
+                    const folders = await fetchFolders(auth as ActionAuthProps, accountId as string);
                     if (folders.length === 0) return { disabled: true, placeholder: 'No folders found', options: [] };
                     return { disabled: false, options: folders };
                 }
@@ -83,6 +88,8 @@ export const moveEmail = createAction({
   async run(context) {
     const { accountId, destfolderId, messageIds, threadIds, isFolderSpecific, folderId, isArchive } = context.propsValue;
     const accessToken = context.auth.access_token;
+    const authProps = context.auth as ActionAuthProps;
+    const apiUrl = getZohoMailApiUrl(authProps.data_center);
 
     if (!messageIds && !threadIds) {
       throw new Error('Either Message IDs or Thread IDs must be provided.');
@@ -120,7 +127,7 @@ export const moveEmail = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.PUT,
-      url: `${ZOHO_MAIL_API_URL}/accounts/${accountId}/updatemessage`,
+      url: `${apiUrl}/accounts/${accountId}/updatemessage`,
       headers: {
         'Authorization': `Zoho-oauthtoken ${accessToken}`,
         'Content-Type': 'application/json',

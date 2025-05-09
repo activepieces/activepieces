@@ -1,7 +1,12 @@
 import { zohoMailAuth } from '../../index';
 import { Property, createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient, HttpMessageBody, QueryParams } from '@activepieces/pieces-common';
-import { ZOHO_MAIL_API_URL, fetchAccounts, fetchFolders } from '../common';
+import { fetchAccounts, fetchFolders, getZohoMailApiUrl } from '../common';
+
+// Define a local type for auth props, similar to send-email.ts
+interface ActionAuthProps extends OAuth2PropertyValue {
+  data_center: string; // Stores the domain string e.g., 'com', 'eu'
+}
 
 export const getEmailDetails = createAction({
   auth: zohoMailAuth,
@@ -16,7 +21,7 @@ export const getEmailDetails = createAction({
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, placeholder: 'Please authenticate first', options: [] };
-        const accounts = await fetchAccounts(auth as OAuth2PropertyValue);
+        const accounts = await fetchAccounts(auth as ActionAuthProps);
         if (accounts.length === 0) return { disabled: true, placeholder: 'No accounts found', options: [] };
         return { disabled: false, options: accounts };
       },
@@ -28,7 +33,7 @@ export const getEmailDetails = createAction({
       refreshers: ['accountId'],
       options: async ({ auth, accountId }) => {
         if (!auth || !accountId) return { disabled: true, placeholder: 'Select an account first', options: [] };
-        const folders = await fetchFolders(auth as OAuth2PropertyValue, accountId as string);
+        const folders = await fetchFolders(auth as ActionAuthProps, accountId as string);
         if (folders.length === 0) return { disabled: true, placeholder: 'No folders found', options: [] };
         return { disabled: false, options: folders };
       },
@@ -54,6 +59,8 @@ export const getEmailDetails = createAction({
   async run(context) {
     const { accountId, folderId, messageId, includeBlockContentForContent, includeInlineForAttachmentInfo } = context.propsValue;
     const accessToken = context.auth.access_token;
+    const authProps = context.auth as ActionAuthProps;
+    const apiUrl = getZohoMailApiUrl(authProps.data_center);
 
     const headers = {
       'Authorization': `Zoho-oauthtoken ${accessToken}`,
@@ -62,7 +69,7 @@ export const getEmailDetails = createAction({
     // 1. Get Metadata
     const metadataResponse = await httpClient.sendRequest<HttpMessageBody>({
       method: HttpMethod.GET,
-      url: `${ZOHO_MAIL_API_URL}/accounts/${accountId}/folders/${folderId}/messages/${messageId}/details`,
+      url: `${apiUrl}/accounts/${accountId}/folders/${folderId}/messages/${messageId}/details`,
       headers,
     });
 
@@ -73,7 +80,7 @@ export const getEmailDetails = createAction({
     }
     const contentResponse = await httpClient.sendRequest<HttpMessageBody>({
       method: HttpMethod.GET,
-      url: `${ZOHO_MAIL_API_URL}/accounts/${accountId}/folders/${folderId}/messages/${messageId}/content`,
+      url: `${apiUrl}/accounts/${accountId}/folders/${folderId}/messages/${messageId}/content`,
       headers,
       queryParams: contentQueryParams,
     });
@@ -85,7 +92,7 @@ export const getEmailDetails = createAction({
     }
     const attachmentInfoResponse = await httpClient.sendRequest<HttpMessageBody>({
       method: HttpMethod.GET,
-      url: `${ZOHO_MAIL_API_URL}/accounts/${accountId}/folders/${folderId}/messages/${messageId}/attachmentinfo`,
+      url: `${apiUrl}/accounts/${accountId}/folders/${folderId}/messages/${messageId}/attachmentinfo`,
       headers,
       queryParams: attachmentInfoQueryParams,
     });

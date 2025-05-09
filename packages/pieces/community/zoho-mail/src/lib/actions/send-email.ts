@@ -1,7 +1,13 @@
 import { zohoMailAuth } from '../../index';
 import { Property, createAction, DynamicPropsValue, InputPropertyMap, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { ZOHO_MAIL_API_URL, fetchAccounts } from '../common';
+import { fetchAccounts, getZohoMailApiUrl } from '../common';
+
+// Define a local type for auth props if ZohoAuthProps from index.ts is not directly accessible
+// This should match the structure of props within the OAuth2PropertyValue from zohoMailAuth
+interface ActionAuthProps extends OAuth2PropertyValue {
+  data_center: string; // Assuming data_center stores the domain string like 'com', 'eu'
+}
 
 const encodingOptions = [
   { label: 'UTF-8 (Default)', value: 'UTF-8' },
@@ -37,7 +43,8 @@ export const sendEmail = createAction({
             options: [],
           };
         }
-        const accounts = await fetchAccounts(auth as OAuth2PropertyValue);
+        // Cast auth to ActionAuthProps to include data_center
+        const accounts = await fetchAccounts(auth as ActionAuthProps);
         if (accounts.length === 0) {
           return {
             disabled: true,
@@ -160,6 +167,8 @@ export const sendEmail = createAction({
         schedulingOptions
     } = context.propsValue;
     const accessToken = context.auth.access_token;
+    const authProps = context.auth as ActionAuthProps;
+    const apiUrl = getZohoMailApiUrl(authProps.data_center);
 
     const requestBody: Record<string, unknown> = {
       fromAddress,
@@ -189,7 +198,7 @@ export const sendEmail = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${ZOHO_MAIL_API_URL}/accounts/${accountId}/messages`,
+      url: `${apiUrl}/accounts/${accountId}/messages`,
       headers: {
         'Authorization': `Zoho-oauthtoken ${accessToken}`,
         'Content-Type': 'application/json',
