@@ -1,0 +1,27 @@
+{
+  "name": "pieces-quickbooks",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/quickbooks/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/quickbooks",
+        "tsConfig": "packages/pieces/community/quickbooks/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/quickbooks/package.json",
+        "main": "packages/pieces/community/quickbooks/src/index.ts",
+        "assets": ["packages/pieces/community/quickbooks/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/community/quickbooks/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}
