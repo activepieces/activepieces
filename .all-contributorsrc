@@ -1724,6 +1724,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "neo773",
+      "name": "neo773",
+      "avatar_url": "https://avatars.githubusercontent.com/u/62795688?v=4",
+      "profile": "https://huzef.com",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
