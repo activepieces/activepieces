@@ -1,4 +1,7 @@
 {
   "name": "@activepieces/piece-pdf",
-  "version": "0.2.3"
+  "version": "0.2.3",
+  "dependencies": {
+    "jimp": "^0.22.12"
+  }
 }
