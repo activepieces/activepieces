@@ -35,11 +35,18 @@ import { newDirectMessageTrigger } from './lib/triggers/new-direct-message';
 import { retrieveThreadMessages } from './lib/actions/retrieve-thread-messages';
 import { newMentionInDirectMessageTrigger } from './lib/triggers/new-mention-in-direct-message';
 import { newCommandInDirectMessageTrigger } from './lib/triggers/new-command-in-direct-message';
+import { setChannelTopicAction } from './lib/actions/set-channel-topic';
+import { getMessageAction } from './lib/actions/get-message';
+import { findUserByIdAction } from './lib/actions/find-user-by-id';
+import { newUserTrigger } from './lib/triggers/new-user';
+import { newSavedMessageTrigger } from './lib/triggers/new-saved-message';
+import { newTeamCustomEmojiTrigger } from './lib/triggers/new-team-custom-emoji';
+import { inviteUserToChannelAction } from './lib/actions/invite-user-to-channel';
 
 export const slackAuth = PieceAuth.OAuth2({
 	description: '',
 	authUrl:
-		'https://slack.com/oauth/v2/authorize?user_scope=search:read,users.profile:write,reactions:read,im:history',
+		'https://slack.com/oauth/v2/authorize?user_scope=search:read,users.profile:write,reactions:read,im:history,stars:read',
 	tokenUrl: 'https://slack.com/api/oauth.v2.access',
 	required: true,
 	scope: [
@@ -64,6 +71,8 @@ export const slackAuth = PieceAuth.OAuth2({
 		'reactions:write',
 		'usergroups:read',
 		'chat:write.customize',
+		'emoji:read',
+		'users.profile:read'
 	],
 });
 
@@ -122,8 +131,12 @@ export const slack = createPiece({
 		uploadFile,
 		getFileAction,
 		searchMessages,
+		setChannelTopicAction,
 		findUserByEmailAction,
+		findUserByIdAction,
 		findUserByHandleAction,
+		inviteUserToChannelAction,
+		getMessageAction,
 		updateMessage,
 		createChannelAction,
 		updateProfileAction,
@@ -139,13 +152,13 @@ export const slack = createPiece({
 			authMapping: async (auth, propsValue) => {
 				if (propsValue.useUserToken) {
 					return {
-						Authorization: `Bearer ${(auth as OAuth2PropertyValue).data['authed_user']?.access_token
-							}`,
+						Authorization: `Bearer ${
+							(auth as OAuth2PropertyValue).data['authed_user']?.access_token
+						}`,
 					};
 				} else {
 					return {
-						Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token
-							}`,
+						Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
 					};
 				}
 			},
@@ -166,9 +179,12 @@ export const slack = createPiece({
 		newMention,
 		newMentionInDirectMessageTrigger,
 		newReactionAdded,
-		channelCreated, newCommand,
-		newCommandInDirectMessageTrigger
-		
+		channelCreated,
+		newCommand,
+		newCommandInDirectMessageTrigger,
+		newUserTrigger,
+		newSavedMessageTrigger,
+		newTeamCustomEmojiTrigger,
 	],
 });
 
