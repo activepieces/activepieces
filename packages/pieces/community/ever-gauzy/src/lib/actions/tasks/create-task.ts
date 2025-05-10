@@ -199,7 +199,7 @@ export const createTask = createAction({
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
-            url: `${baseUrl}/api/tasks`,
+            url: `${baseUrl}/tasks`,
             headers,
             body,
         });

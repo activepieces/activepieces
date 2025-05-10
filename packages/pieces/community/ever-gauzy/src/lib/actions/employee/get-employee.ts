@@ -69,7 +69,7 @@ export const getEmployee = createAction({
         }
 
         // Build the URL with the employee ID and query parameters
-        const url = `${baseUrl}/api/employee/${context.propsValue.id}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+        const url = `${baseUrl}/employee/${context.propsValue.id}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,

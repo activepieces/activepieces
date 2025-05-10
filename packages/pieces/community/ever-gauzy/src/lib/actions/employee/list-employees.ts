@@ -88,7 +88,7 @@ export const listEmployees = createAction({
         }
 
         // Build the URL with query parameters
-        const url = `${baseUrl}/api/employee${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+        const url = `${baseUrl}/employee${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
