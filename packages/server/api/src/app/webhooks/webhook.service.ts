@@ -1,11 +1,12 @@
 import { pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, EngineHttpResponse, ErrorCode, EventPayload, Flow, FlowStatus, isNil, RunEnvironment } from '@activepieces/shared'
+import { ActivepiecesError, apId, EngineHttpResponse, ErrorCode, EventPayload, Flow, FlowStatus, isNil, RunEnvironment, TriggerPayload } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { usageService } from '../ee/platform-billing/usage/usage-service'
 import { flowService } from '../flows/flow/flow.service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { WebhookFlowVersionToRun, webhookHandler } from './webhook-handler'
+import { handshakeHandler } from './handshake-handler'
 
 type HandleWebhookParams = {
     flowId: string
@@ -46,20 +47,42 @@ export const webhookService = {
 
         const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(flowVersionToRun, flow)
 
-        const webhookValidationResponse = await validateWebhookRequest({
-            flow,
-            log: pinoLogger,
-            saveSampleData,
-            webhookHeader,
-            webhookRequestId,
-            flowVersionToRun,
-        })
+        await assertExceedsLimit(flow, pinoLogger)
 
-        if (!isNil(webhookValidationResponse)) {
-            return webhookValidationResponse
+        const response = await handshakeHandler.handleHandshakeRequest({
+            payload: payload as TriggerPayload,
+            handshakeConfiguration: flow.handshakeConfiguration ?? null,
+            log: pinoLogger,
+            flowId: flow.id,
+            flowVersionId: flowVersionIdToRun,
+            projectId: flow.projectId,
+        })
+        if (!isNil(response)) {
+            logger.info({
+                message: 'Handshake request completed',
+                flowId: flow.id,
+                flowVersionId: flowVersionIdToRun,
+                webhookRequestId,
+            }, 'Handshake request completed')
+            return {
+                status: StatusCodes.OK,
+                body: response.body,
+                headers: response.headers ?? {},
+            }
         }
 
+        const flowDisabledAndNoSaveSampleData = flow.status !== FlowStatus.ENABLED && !saveSampleData && flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST
+        if (flowDisabledAndNoSaveSampleData) {
+            return {
+                status: StatusCodes.NOT_FOUND,
+                body: {},
+                headers: {
+                    [webhookHeader]: webhookRequestId,
+                },
+            }
+        }
         pinoLogger.info('Adding webhook job to queue')
+
 
         if (async) {
             return webhookHandler.handleAsync({
@@ -96,22 +119,6 @@ export const webhookService = {
             },
         }
     },
-}
-
-async function validateWebhookRequest(params: CheckValidWebhookParams): Promise<EngineHttpResponse | null> {
-    const { flow, log, saveSampleData, flowVersionToRun, webhookHeader, webhookRequestId } = params
-    await assertExceedsLimit(flow, log)
-
-    if (flow.status !== FlowStatus.ENABLED && !saveSampleData && flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST) {
-        return {
-            status: StatusCodes.NOT_FOUND,
-            body: {},
-            headers: {
-                [webhookHeader]: webhookRequestId,
-            },
-        }
-    }
-    return null
 }
 
 async function assertExceedsLimit(flow: Flow, log: FastifyBaseLogger): Promise<void> {
