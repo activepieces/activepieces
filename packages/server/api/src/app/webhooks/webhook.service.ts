@@ -5,8 +5,8 @@ import { StatusCodes } from 'http-status-codes'
 import { usageService } from '../ee/platform-billing/usage/usage-service'
 import { flowService } from '../flows/flow/flow.service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
-import { WebhookFlowVersionToRun, webhookHandler } from './webhook-handler'
 import { handshakeHandler } from './handshake-handler'
+import { WebhookFlowVersionToRun, webhookHandler } from './webhook-handler'
 
 type HandleWebhookParams = {
     flowId: string
@@ -132,13 +132,4 @@ async function assertExceedsLimit(flow: Flow, log: FastifyBaseLogger): Promise<v
             metric: 'tasks',
         },
     })
-}
-
-type CheckValidWebhookParams = {
-    flow: Flow
-    log: FastifyBaseLogger
-    saveSampleData: boolean
-    webhookHeader: string
-    webhookRequestId: string
-    flowVersionToRun: WebhookFlowVersionToRun
 }
