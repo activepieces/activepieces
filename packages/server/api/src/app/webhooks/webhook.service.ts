@@ -1,18 +1,17 @@
 import { pinoLogging } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, assertNotNullOrUndefined, EngineHttpResponse, ErrorCode, EventPayload, Flow, FlowStatus, GetFlowVersionForWorkerRequestType, isNil } from '@activepieces/shared'
+import { ActivepiecesError, apId, EngineHttpResponse, ErrorCode, EventPayload, Flow, FlowStatus, isNil, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { usageService } from '../ee/platform-billing/usage/usage-service'
 import { flowService } from '../flows/flow/flow.service'
-import { projectService } from '../project/project-service'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
-import { webhookHandler } from './webhook-handler'
+import { WebhookFlowVersionToRun, webhookHandler } from './webhook-handler'
 
 type HandleWebhookParams = {
     flowId: string
     async: boolean
     saveSampleData: boolean
-    flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED
+    flowVersionToRun: WebhookFlowVersionToRun
     data: (projectId: string) => Promise<EventPayload>
     logger: FastifyBaseLogger
     payload?: Record<string, unknown>
@@ -35,7 +34,6 @@ export const webhookService = {
         const webhookRequestId = apId()
         const pinoLogger = pinoLogging.createWebhookContextLog({ log: logger, webhookId: webhookRequestId, flowId })
         const flow = await flowService(pinoLogger).getOneById(flowId)
-        const onlySaveSampleData = isNil(flowVersionToRun) || !execute
 
         if (isNil(flow)) {
             pinoLogger.info('Flow not found, returning GONE')
@@ -46,13 +44,15 @@ export const webhookService = {
             }
         }
 
+        const flowVersionIdToRun = await webhookHandler.getFlowVersionIdToRun(flowVersionToRun, flow)
+
         const webhookValidationResponse = await validateWebhookRequest({
             flow,
             log: pinoLogger,
             saveSampleData,
-            flowVersionToRun,
             webhookHeader,
             webhookRequestId,
+            flowVersionToRun,
         })
 
         if (!isNil(webhookValidationResponse)) {
@@ -60,37 +60,32 @@ export const webhookService = {
         }
 
         pinoLogger.info('Adding webhook job to queue')
-        const synchronousHandlerId = async ? null : engineResponseWatcher(pinoLogger).getServerId()
-        const flowVersionIdToRun = onlySaveSampleData ? null : await webhookHandler.getFlowVersionIdToRun(flowVersionToRun, flow)
 
         if (async) {
             return webhookHandler.handleAsync({
                 flow,
                 saveSampleData,
-                flowVersionToRun,
+                flowVersionIdToRun,
                 payload: payload ?? await data(flow.projectId),
                 logger: pinoLogger,
                 webhookRequestId,
-                synchronousHandlerId,
-                flowVersionIdToRun,
+                runEnvironment: flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST ? RunEnvironment.PRODUCTION : RunEnvironment.TESTING,
                 webhookHeader,
-                execute: !onlySaveSampleData,
+                execute: flow.status === FlowStatus.ENABLED && execute,
             })
         }
 
-        assertNotNullOrUndefined(synchronousHandlerId, 'synchronousHandlerId is required for sync webhook')
 
         const flowHttpResponse = await webhookHandler.handleSync({
-            savingSampleData: saveSampleData,
-            flowVersionToRun,
             payload: payload ?? await data(flow.projectId),
             projectId: flow.projectId,
             flow,
+            runEnvironment: flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST ? RunEnvironment.PRODUCTION : RunEnvironment.TESTING,
             logger: pinoLogger,
             webhookRequestId,
-            synchronousHandlerId,
+            synchronousHandlerId: engineResponseWatcher(pinoLogger).getServerId(),
             flowVersionIdToRun,
-            execute: !onlySaveSampleData,
+            saveSampleData,
         })
         return {
             status: flowHttpResponse.status,
@@ -105,23 +100,9 @@ export const webhookService = {
 
 async function validateWebhookRequest(params: CheckValidWebhookParams): Promise<EngineHttpResponse | null> {
     const { flow, log, saveSampleData, flowVersionToRun, webhookHeader, webhookRequestId } = params
-
-    const projectExists = await projectService.exists(flow.projectId)
-    if (!projectExists) {
-        log.info('Project is soft deleted, returning GONE')
-        return {
-            status: StatusCodes.GONE,
-            body: {},
-            headers: {},
-        }
-    }
-
     await assertExceedsLimit(flow, log)
-    if (
-        flow.status !== FlowStatus.ENABLED &&
-        !saveSampleData &&
-        flowVersionToRun === GetFlowVersionForWorkerRequestType.LOCKED
-    ) {
+
+    if (flow.status !== FlowStatus.ENABLED && !saveSampleData && flowVersionToRun === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST) {
         return {
             status: StatusCodes.NOT_FOUND,
             body: {},
@@ -150,7 +131,7 @@ type CheckValidWebhookParams = {
     flow: Flow
     log: FastifyBaseLogger
     saveSampleData: boolean
-    flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED | undefined
     webhookHeader: string
     webhookRequestId: string
+    flowVersionToRun: WebhookFlowVersionToRun
 }
