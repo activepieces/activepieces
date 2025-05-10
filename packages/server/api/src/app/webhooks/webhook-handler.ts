@@ -1,5 +1,5 @@
 import { AppSystemProp, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, EngineHttpResponse, ExecutionType, Flow, FlowId, FlowStatus, FlowVersionId, isNil, ProgressUpdateType, ProjectId, RunEnvironment, TriggerPayload } from '@activepieces/shared'
+import { assertNotNullOrUndefined, EngineHttpResponse, ExecutionType, Flow, FlowId, FlowStatus, FlowVersionId, isNil, ProgressUpdateType, ProjectId, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
@@ -9,7 +9,6 @@ import { system } from '../helper/system/system'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue } from '../workers/queue'
 import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
-import { handshakeHandler } from './handshake-handler'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 
@@ -38,29 +37,6 @@ export const webhookHandler = {
 
     async handleAsync(params: AsyncWebhookParams): Promise<EngineHttpResponse> {
         const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, webhookHeader, saveSampleData, execute, runEnvironment } = params
-
-
-        const response = await handshakeHandler.handleHandshakeRequest({
-            payload: payload as TriggerPayload,
-            handshakeConfiguration: flow.handshakeConfiguration ?? null,
-            log: logger,
-            flowId: flow.id,
-            flowVersionId: flowVersionIdToRun,
-            projectId: flow.projectId,
-        })
-        if (!isNil(response)) {
-            logger.info({
-                message: 'Handshake request completed',
-                flowId: flow.id,
-                flowVersionId: flowVersionIdToRun,
-                webhookRequestId,
-            }, 'Handshake request completed')
-            return {
-                status: StatusCodes.OK,
-                body: response.body,
-                headers: response.headers ?? {},
-            }
-        }
 
         await jobQueue(logger).add({
             id: webhookRequestId,
