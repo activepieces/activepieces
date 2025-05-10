@@ -81,6 +81,9 @@
       "@activepieces/piece-assemblyai": [
         "packages/pieces/community/assemblyai/src/index.ts"
       ],
+      "@activepieces/piece-attio": [
+        "packages/pieces/community/attio/src/index.ts"
+      ],
       "@activepieces/piece-azure-communication-services": [
         "packages/pieces/community/azure-communication-services/src/index.ts"
       ],
@@ -166,9 +169,6 @@
       "@activepieces/piece-confluence": [
         "packages/pieces/community/confluence/src/index.ts"
       ],
-      "@activepieces/piece-copy-ai": [
-        "packages/pieces/community/copy-ai/src/index.ts"
-      ],
       "@activepieces/piece-connections": [
         "packages/pieces/community/connections/src/index.ts"
       ],
@@ -183,6 +183,9 @@
       ],
       "@activepieces/piece-convertkit": [
         "packages/pieces/community/convertkit/src/index.ts"
+      ],
+      "@activepieces/piece-copy-ai": [
+        "packages/pieces/community/copy-ai/src/index.ts"
       ],
       "@activepieces/piece-crypto": [
         "packages/pieces/community/crypto/src/index.ts"
