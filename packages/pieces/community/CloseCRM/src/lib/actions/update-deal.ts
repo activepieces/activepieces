@@ -1,7 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { closeAuth } from '../..';
 import { makeClient } from '../common/client';
-import { CloseCRMDeal } from '../common/types';
 
 export const updateDeal = createAction({
   auth: closeAuth,

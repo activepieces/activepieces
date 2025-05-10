@@ -6,7 +6,7 @@ import crypto from 'crypto';
 
 const STORE_KEY = 'close_crm_new_lead_webhook_data';
 
-export const newLeadCreated = createTrigger({
+export const newLeadAdded = createTrigger({
   auth: closeAuth,
   name: 'new_lead_created',
   displayName: 'New Lead Created',

@@ -3,7 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createLead } from "./lib/actions/create-lead";
 import { logEmail } from "./lib/actions/log-email";
 import { findLead } from "./lib/actions/find-lead";
-import { newLeadCreated } from "./lib/triggers/new-lead-added";
+import { newLeadAdded } from "./lib/triggers/new-lead-added";
 import { createOpportunity } from "./lib/actions/create-opportunity";
 import { findOpportunity } from "./lib/actions/find-opportunity";
 import {opportunityStatusChanged} from "./lib/triggers/opportunity-status-changed";
@@ -73,7 +73,7 @@ export const closeCrm = createPiece({
     findContact,
   ],
   triggers: [
-    newLeadCreated,
+    newLeadAdded,
     newContactAdded,
     opportunityStatusChanged
   ],

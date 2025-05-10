@@ -13,13 +13,6 @@ export interface CloseCRMLead {
     // Add other methods as needed
   }
 
-  export interface CloseCRMDeal {
-    status: 'active' | 'won' | 'lost' | 'archived';
-    value?: number;
-    note?: string;
-    [key: string]: unknown; // For custom fields
-  }
-
   export interface CloseCRMEmailActivity {
     lead_id: string;
     direction: 'outgoing' | 'incoming';
@@ -69,6 +62,7 @@ export interface CloseCRMLead {
     [key: string]: unknown;
   }
 
+  //Contact name
   export interface CloseCRMContact {
     lead_id: string;
     id: string;
@@ -101,28 +95,6 @@ export interface CloseCRMLead {
     };
   }
   
-  export interface CloseCRMContact {
-    id: string;
-    name: string;
-    title?: string;
-    lead_id: string;
-    date_created?: string;
-    date_updated?: string;
-    email?: {
-      email: string;
-      type?: string;
-    }[];
-    phone: {
-      phone: string;
-      type?: string;
-    }[];
-    url: {
-      url: string;
-      type?: string;
-    }[];
-  }
-
-  
   export interface CloseCRMSearchQuery {
     query: {
       type: string;
@@ -150,24 +122,6 @@ export interface CloseCRMLead {
       date_updated: string;
     };
     organization_id: string;
-  }
-  
-
-  //create opportunity
-  export interface CloseCRMOpportunity {
-    lead_id: string;
-    name?: string;
-    note?: string;
-    status_id?: string;
-    confidence?: number;
-    value?: number;
-    value_currency?: string;
-    value_period?: 'one_time' | 'monthly' | 'annual';
-    status?: 'active' | 'won' | 'lost' | 'archived';
-    contact_id?: string;
-    user_id?: string;
-    date_won?: string;
-    [key: string]: unknown; // For custom fields
   }
 
   //find opportunity
