@@ -1,5 +1,5 @@
 import { AppSystemProp, JobType, LATEST_JOB_DATA_SCHEMA_VERSION, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, EngineHttpResponse, ErrorCode, ExecutionType, Flow, FlowId, FlowStatus, FlowVersionId, GetFlowVersionForWorkerRequestType, isNil, ProgressUpdateType, ProjectId, RunEnvironment } from '@activepieces/shared'
+import { assertNotNullOrUndefined, EngineHttpResponse, ExecutionType, Flow, FlowId, FlowStatus, FlowVersionId, isNil, ProgressUpdateType, ProjectId, RunEnvironment, TriggerPayload } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
@@ -8,28 +8,59 @@ import { triggerEventService } from '../flows/trigger-events/trigger-event.servi
 import { system } from '../helper/system/system'
 import { engineResponseWatcher } from '../workers/engine-response-watcher'
 import { jobQueue } from '../workers/queue'
-import { getJobPriority } from '../workers/queue/queue-manager'
+import { DEFAULT_PRIORITY } from '../workers/queue/queue-manager'
+import { handshakeHandler } from './handshake-handler'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
 
+export enum WebhookFlowVersionToRun {
+    LOCKED_FALL_BACK_TO_LATEST = 'locked_fall_back_to_latest',
+    LATEST = 'latest',
+}
+
 export const webhookHandler = {
-    async getFlowVersionIdToRun(type: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED, flow: Flow): Promise<FlowVersionId | null> {
-        if (type === GetFlowVersionForWorkerRequestType.LOCKED && !isNil(flow.publishedVersionId)) {
+    async getFlowVersionIdToRun(type: WebhookFlowVersionToRun, flow: Flow): Promise<FlowVersionId> {
+        if (type === WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST && !isNil(flow.publishedVersionId)) {
             return flow.publishedVersionId
         }
 
         const flowVersionSchema = await flowVersionRepo()
             .createQueryBuilder()
             .select('id')
-            .where('"flowId" = :flowId', { flowId: flow.id })
+            .where({
+                flowId: flow.id,
+            })
             .orderBy('created', 'DESC')
-            .getOne()
-
-        return flowVersionSchema?.id ?? null
+            .getRawOne()
+        assertNotNullOrUndefined(flowVersionSchema, 'Flow version not found')
+        return flowVersionSchema.id
     },
 
     async handleAsync(params: AsyncWebhookParams): Promise<EngineHttpResponse> {
-        const { flow, logger, webhookRequestId, synchronousHandlerId, payload, flowVersionToRun, flowVersionIdToRun, webhookHeader, saveSampleData, execute } = params
+        const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, webhookHeader, saveSampleData, execute, runEnvironment } = params
+
+
+        const response = await handshakeHandler.handleHandshakeRequest({
+            payload: payload as TriggerPayload,
+            handshakeConfiguration: flow.handshakeConfiguration ?? null,
+            log: logger,
+            flowId: flow.id,
+            flowVersionId: flowVersionIdToRun,
+            projectId: flow.projectId,
+        })
+        if (!isNil(response)) {
+            logger.info({
+                message: 'Handshake request completed',
+                flowId: flow.id,
+                flowVersionId: flowVersionIdToRun,
+                webhookRequestId,
+            }, 'Handshake request completed')
+            return {
+                status: StatusCodes.OK,
+                body: response.body,
+                headers: response.headers ?? {},
+            }
+        }
 
         await jobQueue(logger).add({
             id: webhookRequestId,
@@ -38,15 +69,14 @@ export const webhookHandler = {
                 projectId: flow.projectId,
                 schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                 requestId: webhookRequestId,
-                synchronousHandlerId,
                 payload,
                 flowId: flow.id,
                 saveSampleData,
-                flowVersionToRun,
                 flowVersionIdToRun,
+                runEnvironment,
                 execute,
             },
-            priority: await getJobPriority(synchronousHandlerId),
+            priority: DEFAULT_PRIORITY,
         })
         logger.info('Async webhook request completed')
         return {
@@ -59,31 +89,21 @@ export const webhookHandler = {
     },
 
     async handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse> {
-        const { savingSampleData, flowVersionToRun, payload, projectId, flow, logger, webhookRequestId, synchronousHandlerId, flowVersionIdToRun, execute } = params
+        const { payload, projectId, flow, logger, webhookRequestId, synchronousHandlerId, flowVersionIdToRun, runEnvironment, saveSampleData } = params
 
-        if (savingSampleData) {
-            await saveSampleData({ flowId: flow.id, payload, projectId, log: logger })
-        }
-
-        const onlySaveSampleData = isNil(flowVersionIdToRun) || !execute
-        if (onlySaveSampleData) {
+        if (isNil(flow)) {
             return {
-                status: StatusCodes.OK,
+                status: StatusCodes.GONE,
                 body: {},
                 headers: {},
             }
         }
-
-
-
-        if (isNil(flow.status)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityId: flow.id, entityType: 'flow' },
-            })
+        if (saveSampleData) {
+            // TODO this is bug, we should save the payload that is extracted from the webhook
+            await saveSamplePayload({ flowId: flow.id, payload, projectId, log: logger })
         }
 
-        const disabledFlow = flowVersionToRun === GetFlowVersionForWorkerRequestType.LOCKED && flow.status !== FlowStatus.ENABLED
+        const disabledFlow = flow.status !== FlowStatus.ENABLED
 
         if (disabledFlow) {
             return {
@@ -94,7 +114,7 @@ export const webhookHandler = {
         }
 
         await flowRunService(logger).start({
-            environment: flowVersionToRun === GetFlowVersionForWorkerRequestType.LOCKED ? RunEnvironment.PRODUCTION : RunEnvironment.TESTING,
+            environment: runEnvironment,
             flowVersionId: flowVersionIdToRun,
             payload,
             synchronousHandlerId,
@@ -111,8 +131,7 @@ export const webhookHandler = {
         })
     },
 }
-
-async function saveSampleData(params: SaveSampleDataParams): Promise<void> {
+async function saveSamplePayload(params: SaveSampleDataParams): Promise<void> {
     const { flowId, payload, projectId, log } = params
     rejectedPromiseHandler(triggerEventService(log).saveEvent({
         flowId,
@@ -122,31 +141,6 @@ async function saveSampleData(params: SaveSampleDataParams): Promise<void> {
     await webhookSimulationService(log).delete({ flowId, projectId })
 }
 
-type AsyncWebhookParams = {
-    flow: Flow
-    logger: FastifyBaseLogger
-    webhookRequestId: string
-    synchronousHandlerId: string | null
-    payload: unknown
-    flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED | undefined
-    flowVersionIdToRun: FlowVersionId | null
-    webhookHeader: string
-    saveSampleData: boolean
-    execute: boolean
-}
-
-type SyncWebhookParams = {
-    savingSampleData: boolean
-    flowVersionToRun: GetFlowVersionForWorkerRequestType.LATEST | GetFlowVersionForWorkerRequestType.LOCKED | undefined
-    payload: unknown
-    projectId: ProjectId
-    flow: Flow
-    logger: FastifyBaseLogger
-    webhookRequestId: string
-    synchronousHandlerId: string
-    flowVersionIdToRun: FlowVersionId | null
-    execute: boolean
-}
 
 type SaveSampleDataParams = {
     flowId: FlowId
@@ -154,3 +148,29 @@ type SaveSampleDataParams = {
     projectId: ProjectId
     log: FastifyBaseLogger
 }
+
+type AsyncWebhookParams = {
+    flow: Flow
+    logger: FastifyBaseLogger
+    webhookRequestId: string
+    payload: unknown
+    flowVersionIdToRun: FlowVersionId
+    webhookHeader: string
+    saveSampleData: boolean
+    runEnvironment: RunEnvironment
+    execute: boolean
+}
+
+
+type SyncWebhookParams = {
+    payload: unknown
+    saveSampleData: boolean
+    projectId: ProjectId
+    runEnvironment: RunEnvironment
+    flow: Flow
+    logger: FastifyBaseLogger
+    webhookRequestId: string
+    synchronousHandlerId: string
+    flowVersionIdToRun: FlowVersionId
+}
+

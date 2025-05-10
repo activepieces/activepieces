@@ -115,6 +115,13 @@ export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOper
 }
 
 
+export const TriggerPayload = Type.Object({
+    body: Type.Unknown(),
+    rawBody: Type.Optional(Type.Unknown()),
+    headers: Type.Record(Type.String(), Type.String()),
+    queryParams: Type.Record(Type.String(), Type.String()),
+})
+
 export type TriggerPayload<T = unknown> = {
     body: T
     rawBody?: unknown
