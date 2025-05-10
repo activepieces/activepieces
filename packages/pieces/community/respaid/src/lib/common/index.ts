@@ -28,9 +28,9 @@ export const respaidActionsCommon = {
     })
   }),
   validateProps: (propsValue: ActionPayloadProps) => {
-    const { unique_identifier, email, invoice_number } = propsValue;
-    if (!unique_identifier && (!email || !invoice_number)) {
-      throw new Error('You must provide either a unique_identifier OR both email and invoice_number.');
+    const { unique_identifier, email } = propsValue;
+    if (!unique_identifier && !email) {
+      throw new Error('You must provide either a unique_identifier OR email.');
     }
   }
 }
