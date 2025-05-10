@@ -15,6 +15,10 @@ import { createEntry } from './lib/actions/create-entry';
 import { updateEntry } from './lib/actions/update-entry';
 import { findRecord } from './lib/actions/find-record';
 import { findListEntry } from './lib/actions/find-list-entry';
+import { listEntryCreated } from './lib/triggers/list-entry-created';
+import { listEntryUpdated } from './lib/triggers/list-entry-updated';
+import { recordCreated } from './lib/triggers/record-created';
+import { recordUpdated } from './lib/triggers/record-updated';
 
 export const attioAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -30,5 +34,5 @@ export const attio = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/attio.png',
   authors: [],
   actions: [createRecord, updateRecord, createEntry, updateEntry, findRecord, findListEntry],
-  triggers: [],
+  triggers: [listEntryCreated, listEntryUpdated, recordCreated, recordUpdated],
 });
