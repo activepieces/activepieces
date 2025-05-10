@@ -1,10 +1,14 @@
-import { ActivepiecesError, apId, ApId, Cursor, ErrorCode, isNil, McpWithPieces, SeekPage, spreadIfDefined } from '@activepieces/shared'
+import { rejectedPromiseHandler } from '@activepieces/server-shared'
+import { ActivepiecesError, apId, ApId, Cursor, ErrorCode, isNil, McpWithPieces, SeekPage, spreadIfDefined, TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { telemetry } from '../helper/telemetry.utils'
 import { McpEntity } from './mcp-entity'
 import { mcpPieceService } from './mcp-piece-service'
+
+
 
 const repo = repoFactory(McpEntity)
 
@@ -81,6 +85,22 @@ export const mcpService = (_log: FastifyBaseLogger) => ({
         return this.getOrThrow({ mcpId: mcp.id })
     },
 
+    async trackToolCall({ mcpId, toolName }: { mcpId: ApId, toolName: string }): Promise<void> {
+        const mcp = await repo().findOneBy({ id: mcpId })
+        if (isNil(mcp)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: mcpId, entityType: 'MCP' },
+            })
+        }
+        rejectedPromiseHandler(telemetry(_log).trackProject(mcp.projectId, {
+            name: TelemetryEventName.MCP_TOOL_CALLED,
+            payload: {
+                mcpId,
+                toolName,
+            },
+        }), _log)
+    },
 })
 
 type ListParams = {
