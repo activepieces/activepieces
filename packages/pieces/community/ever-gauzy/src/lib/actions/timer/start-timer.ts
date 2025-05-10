@@ -119,7 +119,7 @@ export const startTimer = createAction({
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
-            url: `${baseUrl}/api/timesheet/timer/start`,
+            url: `${baseUrl}/timesheet/timer/start`,
             headers,
             body,
         });
