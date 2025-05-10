@@ -166,9 +166,6 @@
       "@activepieces/piece-confluence": [
         "packages/pieces/community/confluence/src/index.ts"
       ],
-      "@activepieces/piece-copy-ai": [
-        "packages/pieces/community/copy-ai/src/index.ts"
-      ],
       "@activepieces/piece-connections": [
         "packages/pieces/community/connections/src/index.ts"
       ],
@@ -183,6 +180,9 @@
       ],
       "@activepieces/piece-convertkit": [
         "packages/pieces/community/convertkit/src/index.ts"
+      ],
+      "@activepieces/piece-copy-ai": [
+        "packages/pieces/community/copy-ai/src/index.ts"
       ],
       "@activepieces/piece-crypto": [
         "packages/pieces/community/crypto/src/index.ts"
@@ -539,6 +539,9 @@
       ],
       "@activepieces/piece-pastefy": [
         "packages/pieces/community/pastefy/src/index.ts"
+      ],
+      "@activepieces/piece-pcloud": [
+        "packages/pieces/community/pcloud/src/index.ts"
       ],
       "@activepieces/piece-pdf": ["packages/pieces/community/pdf/src/index.ts"],
       "@activepieces/piece-perplexity-ai": [
