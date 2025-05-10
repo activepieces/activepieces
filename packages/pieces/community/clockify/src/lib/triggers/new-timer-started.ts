@@ -14,74 +14,85 @@ export const newTimerStartedTrigger = createTrigger({
       description: 'The ID of the workspace',
       required: true,
     }),
-    userId: Property.ShortText({
-      displayName: 'User ID',
-      description: 'The ID of the user (leave empty to monitor all users if you have admin rights)',
+    projectId: Property.ShortText({
+      displayName: 'Project ID',
+      description: 'The ID of the project (leave empty to trigger for all projects)',
       required: false,
     }),
   },
-  type: TriggerStrategy.POLLING,
-  onEnable: async ({ store }) => {
-    await store.put('runningTimers', {});
+  sampleData: {
+    id: '987654',
+    description: 'Working on Feature Y',
+    userId: 'user123',
+    workspaceId: 'workspace123',
+    projectId: 'project123',
+    timeInterval: {
+      start: '2023-01-01T14:00:00Z',
+      duration: null
+    },
+    billable: true,
+    isRunning: true
   },
-  onDisable: async () => {
-    // Nothing to clean up
-  },
-  run: async ({ store, auth, propsValue }) => {
-    const storedRunningTimers = await store.get('runningTimers') as Record<string, any> || {};
-    let newTimers: any[] = [];
+  type: TriggerStrategy.WEBHOOK,
+  async onEnable(context) {
+    // Create a webhook in Clockify for timer started events
+    const { workspaceId, projectId } = context.propsValue;
 
-    let endpoint = `/workspaces/${propsValue.workspaceId}`;
+    const webhookData: Record<string, any> = {
+      name: `Activepieces Timer Started Trigger`,
+      url: context.webhookUrl,
+      triggerSource: 'TIMER',
+      triggerEvent: 'STARTED',
+    };
 
-    // If user ID is provided, check for that user only
-    if (propsValue.userId) {
-      endpoint += `/user/${propsValue.userId}/time-entries?in-progress=true`;
-      const runningTimer = await makeRequest(auth as string, HttpMethod.GET, endpoint);
-
-      if (runningTimer && runningTimer.length > 0) {
-        const timer = runningTimer[0];
-        // If this timer wasn't previously running, it's new
-        if (!storedRunningTimers[propsValue.userId]) {
-          newTimers.push(timer);
-          storedRunningTimers[propsValue.userId] = timer.id;
-        }
-      } else {
-        // No running timer, remove from stored timers
-        if (storedRunningTimers[propsValue.userId]) {
-          delete storedRunningTimers[propsValue.userId];
-        }
-      }
-    } else {
-      // Get all users in the workspace and check each one
-      const users = await makeRequest(auth as string, HttpMethod.GET, `/workspaces/${propsValue.workspaceId}/users`);
-
-      for (const user of users) {
-        const userTimerEndpoint = `/workspaces/${propsValue.workspaceId}/user/${user.id}/time-entries?in-progress=true`;
-        const runningTimer = await makeRequest(auth as string, HttpMethod.GET, userTimerEndpoint);
-
-        if (runningTimer && runningTimer.length > 0) {
-          const timer = runningTimer[0];
-          // If this timer wasn't previously running, it's new
-          if (!storedRunningTimers[user.id]) {
-            newTimers.push(timer);
-            storedRunningTimers[user.id] = timer.id;
-          }
-        } else {
-          // No running timer, remove from stored timers
-          if (storedRunningTimers[user.id]) {
-            delete storedRunningTimers[user.id];
-          }
-        }
-      }
+    // If a specific project is selected, add it to the webhook configuration
+    if (projectId) {
+      webhookData['projectIds'] = [projectId];
     }
 
-    await store.put('runningTimers', storedRunningTimers);
+    const webhook = await makeRequest(
+      context.auth as string,
+      HttpMethod.POST,
+      `/workspaces/${workspaceId}/webhooks`,
+      webhookData
+    );
 
-    return newTimers.map(timer => {
-      return {
-        id: timer.id,
-        payload: timer,
-      };
-    });
+    await context.store.put('webhookId', webhook.id);
+  },
+  async onDisable(context) {
+    // Delete the webhook when the trigger is disabled
+    const webhookId = await context.store.get('webhookId');
+    const { workspaceId } = context.propsValue;
+
+    if (webhookId) {
+      await makeRequest(
+        context.auth as string,
+        HttpMethod.DELETE,
+        `/workspaces/${workspaceId}/webhooks/${webhookId}`
+      );
+    }
+  },
+  async run(context) {
+    // Process the webhook payload
+    // When a timer is started, Clockify will send a webhook to the registered URL
+
+    if (!context.payload) {
+      return [];
+    }
+
+    // Extract the timer data from the payload
+    const timerData = context.payload.body || context.payload;
+
+    // Generate a unique ID for the timer
+    const uniqueId = typeof timerData === 'object' && timerData !== null && 'id' in timerData
+      ? (timerData as any).id
+      : new Date().toISOString();
+
+    return [
+      {
+        id: uniqueId,
+        payload: timerData,
+      },
+    ];
   },
 });

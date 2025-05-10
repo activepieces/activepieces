@@ -30,7 +30,7 @@ export const clockifyAuth = PieceAuth.SecretText({
 export const clockify = createPiece({
   displayName: 'Clockify',
   description: 'Time tracking and productivity platform for individuals and teams',
-  logoUrl: 'https://cdn.activepieces.com/pieces/clockify.png',
+  logoUrl: 'https://clockify.me/assets/images/clockify-logo-by-cake-com-03-24.svg',
   authors: ['AnkitSharmaOnGithub'],
   auth: clockifyAuth,
   actions: [

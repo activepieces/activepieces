@@ -20,36 +20,69 @@ export const newTaskTrigger = createTrigger({
       required: true,
     }),
   },
-  type: TriggerStrategy.POLLING,
-  onEnable: async ({ store }) => {
-    await store.put('lastFetchedTask', new Date().toISOString());
+  sampleData: {
+    id: '123456',
+    name: 'Sample Task',
+    projectId: 'project123',
+    assigneeIds: ['user123'],
+    estimate: '3600',
+    status: 'ACTIVE',
+    createdAt: '2023-01-01T00:00:00Z'
   },
-  onDisable: async () => {
-    // Nothing to clean up
-  },
-  run: async ({ store, auth, propsValue }) => {
-    const lastFetchedTask = await store.get('lastFetchedTask') as string;
-    const currentTime = new Date().toISOString();
+  type: TriggerStrategy.WEBHOOK,
+  async onEnable(context) {
+    // Create a webhook in Clockify for task creation events
+    const { workspaceId, projectId } = context.propsValue;
 
-    const tasks = await makeRequest(
-      auth as string,
-      HttpMethod.GET,
-      `/workspaces/${propsValue.workspaceId}/projects/${propsValue.projectId}/tasks`
+    const webhook = await makeRequest(
+      context.auth as string,
+      HttpMethod.POST,
+      `/workspaces/${workspaceId}/webhooks`,
+      {
+        name: `Activepieces New Task Trigger`,
+        url: context.webhookUrl,
+        triggerSource: 'TASK',
+        triggerEvent: 'NEW',
+        projectIds: [projectId]
+      }
     );
 
-    // Filter tasks that were created after the last check
-    const newTasks = tasks.filter((task: any) => {
-      const taskCreationTime = new Date(task.timeEstimate ? task.timeEstimate.createdAt : task.dateCreated || task.createdAt).toISOString();
-      return taskCreationTime > lastFetchedTask;
-    });
+    await context.store.put('webhookId', webhook.id);
+  },
+  async onDisable(context) {
+    // Delete the webhook when the trigger is disabled
+    const webhookId = await context.store.get('webhookId');
+    const { workspaceId } = context.propsValue;
 
-    await store.put('lastFetchedTask', currentTime);
+    if (webhookId) {
+      await makeRequest(
+        context.auth as string,
+        HttpMethod.DELETE,
+        `/workspaces/${workspaceId}/webhooks/${webhookId}`
+      );
+    }
+  },
+  async run(context) {
+    // Process the webhook payload
+    // When a new task is created, Clockify will send a webhook to the registered URL
 
-    return newTasks.map((task: any) => {
-      return {
-        id: task.id,
-        payload: task,
-      };
-    });
+    if (!context.payload) {
+      return [];
+    }
+
+    // Extract the task data from the payload
+    const taskData = context.payload.body || context.payload;
+
+    // Generate a unique ID for the task
+    const uniqueId = typeof taskData === 'object' && taskData !== null && 'id' in taskData
+      ? (taskData as any).id
+      : new Date().toISOString();
+
+    return [
+      {
+        id: uniqueId,
+        payload: taskData,
+      },
+    ];
   },
 });

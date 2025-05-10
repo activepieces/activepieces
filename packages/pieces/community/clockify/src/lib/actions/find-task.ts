@@ -3,6 +3,13 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { clockifyAuth } from '../../index';
 
+interface Task {
+  id: string;
+  name: string;
+  status: string;
+  [key: string]: any;
+}
+
 export const findTask = createAction({
   auth: clockifyAuth,
   name: 'find_task',
@@ -42,7 +49,7 @@ export const findTask = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    let path = `/workspaces/${propsValue.workspaceId}/projects/${propsValue.projectId}/tasks`;
+    const path = `/workspaces/${propsValue.workspaceId}/projects/${propsValue.projectId}/tasks`;
 
     // If task ID is provided, directly get that task
     if (propsValue.taskId) {
@@ -59,20 +66,20 @@ export const findTask = createAction({
       auth as string,
       HttpMethod.GET,
       path
-    );
+    ) as Task[];
 
     let filteredTasks = tasks;
 
     // Filter by name if provided
     if (propsValue.taskName) {
-      filteredTasks = filteredTasks.filter(task =>
-        task.name.toLowerCase().includes(propsValue.taskName.toLowerCase())
+      filteredTasks = filteredTasks.filter((task: Task) =>
+        task.name.toLowerCase().includes(propsValue.taskName?.toLowerCase() || '')
       );
     }
 
     // Filter by status if provided
     if (propsValue.status) {
-      filteredTasks = filteredTasks.filter(task =>
+      filteredTasks = filteredTasks.filter((task: Task) =>
         task.status === propsValue.status
       );
     }

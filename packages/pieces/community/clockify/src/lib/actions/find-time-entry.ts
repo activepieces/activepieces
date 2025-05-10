@@ -3,6 +3,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { clockifyAuth } from '../../index';
 
+interface TimeEntry {
+  id: string;
+  description?: string;
+  [key: string]: any;
+}
+
 export const findTimeEntry = createAction({
   auth: clockifyAuth,
   name: 'find_time_entry',
@@ -72,14 +78,14 @@ export const findTimeEntry = createAction({
       auth as string,
       HttpMethod.GET,
       `/workspaces/${propsValue.workspaceId}/user/${propsValue.userId}/time-entries${queryParams}`
-    );
+    ) as TimeEntry[];
 
     let filteredEntries = timeEntries;
 
     // Filter by description if provided
     if (propsValue.description) {
-      filteredEntries = filteredEntries.filter(entry =>
-        entry.description && entry.description.toLowerCase().includes(propsValue.description.toLowerCase())
+      filteredEntries = filteredEntries.filter((entry: TimeEntry) =>
+        entry.description && entry.description.toLowerCase().includes(propsValue.description?.toLowerCase() || '')
       );
     }
 

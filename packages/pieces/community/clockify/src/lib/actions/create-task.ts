@@ -24,16 +24,6 @@ export const createTask = createAction({
       description: 'The name of the task',
       required: true,
     }),
-    assigneeIds: Property.Array({
-      displayName: 'Assignee IDs',
-      description: 'The IDs of the users to assign to the task',
-      required: false,
-    }),
-    estimate: Property.ShortText({
-      displayName: 'Estimate (seconds)',
-      description: 'The estimated time for the task in seconds',
-      required: false,
-    }),
     status: Property.StaticDropdown({
       displayName: 'Status',
       description: 'The status of the task',
@@ -53,8 +43,6 @@ export const createTask = createAction({
       `/workspaces/${propsValue.workspaceId}/projects/${propsValue.projectId}/tasks`,
       {
         name: propsValue.name,
-        assigneeIds: propsValue.assigneeIds,
-        estimate: propsValue.estimate,
         status: propsValue.status,
       }
     );

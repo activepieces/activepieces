@@ -14,51 +14,86 @@ export const newTimeEntryTrigger = createTrigger({
       description: 'The ID of the workspace',
       required: true,
     }),
-    userId: Property.ShortText({
-      displayName: 'User ID',
-      description: 'The ID of the user (leave empty to monitor all users if you have admin rights)',
+    projectId: Property.ShortText({
+      displayName: 'Project ID',
+      description: 'The ID of the project (leave empty to trigger for all projects)',
       required: false,
     }),
   },
-  type: TriggerStrategy.POLLING,
-  onEnable: async ({ store }) => {
-    await store.put('lastFetchedTimeEntry', new Date().toISOString());
+  sampleData: {
+    id: '456789',
+    description: 'Working on Project X',
+    userId: 'user123',
+    workspaceId: 'workspace123',
+    projectId: 'project123',
+    timeInterval: {
+      start: '2023-01-01T09:00:00Z',
+      end: '2023-01-01T17:00:00Z',
+      duration: '28800'
+    },
+    billable: true,
+    tagIds: ['tag123']
   },
-  onDisable: async () => {
-    // Nothing to clean up
-  },
-  run: async ({ store, auth, propsValue }) => {
-    const lastFetchedTimeEntry = await store.get('lastFetchedTimeEntry') as string;
-    const currentTime = new Date().toISOString();
+  type: TriggerStrategy.WEBHOOK,
+  async onEnable(context) {
+    // Create a webhook in Clockify for time entry creation events
+    const { workspaceId, projectId } = context.propsValue;
 
-    let endpoint = `/workspaces/${propsValue.workspaceId}`;
+    const webhookData: Record<string, any> = {
+      name: `Activepieces Time Entry Trigger`,
+      url: context.webhookUrl,
+      triggerSource: 'TIME_ENTRY',
+      triggerEvent: 'CREATED',
+    };
 
-    // If user ID is provided, get time entries for that user only
-    if (propsValue.userId) {
-      endpoint += `/user/${propsValue.userId}`;
+    // If a specific project is selected, add it to the webhook configuration
+    if (projectId) {
+      webhookData['projectIds'] = [projectId];
     }
 
-    endpoint += `/time-entries`;
-
-    const timeEntries = await makeRequest(
-      auth as string,
-      HttpMethod.GET,
-      endpoint
+    const webhook = await makeRequest(
+      context.auth as string,
+      HttpMethod.POST,
+      `/workspaces/${workspaceId}/webhooks`,
+      webhookData
     );
 
-    // Filter time entries that were created after the last check
-    const newTimeEntries = timeEntries.filter((entry: any) => {
-      const entryCreationTime = new Date(entry.timeInterval.start).toISOString();
-      return entryCreationTime > lastFetchedTimeEntry;
-    });
+    await context.store.put('webhookId', webhook.id);
+  },
+  async onDisable(context) {
+    // Delete the webhook when the trigger is disabled
+    const webhookId = await context.store.get('webhookId');
+    const { workspaceId } = context.propsValue;
 
-    await store.put('lastFetchedTimeEntry', currentTime);
+    if (webhookId) {
+      await makeRequest(
+        context.auth as string,
+        HttpMethod.DELETE,
+        `/workspaces/${workspaceId}/webhooks/${webhookId}`
+      );
+    }
+  },
+  async run(context) {
+    // Process the webhook payload
+    // When a new time entry is created, Clockify will send a webhook to the registered URL
 
-    return newTimeEntries.map((entry: any) => {
-      return {
-        id: entry.id,
-        payload: entry,
-      };
-    });
+    if (!context.payload) {
+      return [];
+    }
+
+    // Extract the time entry data from the payload
+    const timeEntryData = context.payload.body || context.payload;
+
+    // Generate a unique ID for the time entry
+    const uniqueId = typeof timeEntryData === 'object' && timeEntryData !== null && 'id' in timeEntryData
+      ? (timeEntryData as any).id
+      : new Date().toISOString();
+
+    return [
+      {
+        id: uniqueId,
+        payload: timeEntryData,
+      },
+    ];
   },
 });
