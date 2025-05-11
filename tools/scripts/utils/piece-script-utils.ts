@@ -7,6 +7,8 @@ import { extractPieceFromModule } from '../../../packages/shared/src'
 import * as semver from 'semver'
 import { readPackageJson } from './files'
 import { StatusCodes } from 'http-status-codes'
+import { execSync } from 'child_process'
+
 type Piece = {
     name: string;
     displayName: string;
@@ -148,12 +150,11 @@ async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | 
     try {
         const packageJson = await readPackageJson(folderPath);
         
-        // Check if package-lock.json exists and run npm ci if it does
-        const packageLockPath = join(folderPath, 'package-lock.json');
-        const packageLockExists = await stat(packageLockPath).catch(() => null);
-        if (packageLockExists) {
-            const { execSync } = require('child_process');
-            execSync('npm ci', { cwd: folderPath, stdio: 'inherit' });
+        const packageLockPath = join(folderPath, 'package.json');
+        const packageExists = await stat(packageLockPath).catch(() => null);
+        if (packageExists) {
+            console.info(`[loadPieceFromFolder] package.json exists, running npm install`)
+            execSync('npm install', { cwd: folderPath, stdio: 'inherit' });
         }
 
         const module = await import(
