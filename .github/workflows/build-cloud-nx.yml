@@ -29,7 +29,17 @@ jobs:
       
       - name: Get changed files
         id: changed-files
-        run: echo "files=$(git diff --name-only HEAD origin/main | tr '\n' ' ')" >> $GITHUB_OUTPUT
+        run: echo "files=$(git diff --name-only HEAD~1 HEAD | tr '\n' ' ')" >> $GITHUB_OUTPUT
+      
+      - name: Check if framework or common pieces are changed
+        id: check-framework-common
+        run: |
+          CHANGED_FILES="${{ steps.changed-files.outputs.files }}"
+          if echo "$CHANGED_FILES" | grep -q "pieces-framework\|pieces-common"; then
+            echo "framework_or_common_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "framework_or_common_changed=false" >> $GITHUB_OUTPUT
+          fi
       
       - name: Extract pieces projects from changed files
         id: extract-pieces
@@ -37,16 +47,25 @@ jobs:
           PIECES=$(echo "${{ steps.changed-files.outputs.files }}" | grep -o "pieces-[^ /]*" | sort -u | tr '\n' ',' | sed 's/,$//')
           echo "pieces_projects=$PIECES" >> $GITHUB_OUTPUT
 
-      - run: npx nx affected --target=lint --exclude="pieces-*" --agents --parallel
-      
+      - name: Lint affected projects excluding pieces
+        run: npx nx affected --target=lint --exclude="pieces-*" --agents --parallel
       - name: Lint changed pieces projects
-        if: steps.extract-pieces.outputs.pieces_projects != ''
+        if: steps.extract-pieces.outputs.pieces_projects != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false'
         run: npx nx run-many --target=lint --projects="${{ steps.extract-pieces.outputs.pieces_projects }}" --agents --parallel
-        
-      - run: npx nx affected --target=build -c production --agents --parallel
       
+      - name: Lint all pieces projects
+        if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
+        run: npx nx run-many --target=lint --projects="pieces-*" --agents --parallel
+        
+      - name: Build affected projects excluding pieces
+        run: npx nx affected --target=build -c production --exclude="pieces-*" --agents --parallel
+    
       - name: Build changed pieces projects
-        if: steps.extract-pieces.outputs.pieces_projects != ''
+        if: steps.extract-pieces.outputs.pieces_projects != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false'
         run: npx nx run-many --target=build -c production --projects="${{ steps.extract-pieces.outputs.pieces_projects }}" --agents --parallel
+      
+      - name: Build all pieces projects
+        if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
+        run: npx nx run-many --target=build -c production --projects="pieces-*" --agents --parallel
         
       - run: npx nx run-many --target=test --projects=engine,shared,server-api --agents --parallel
