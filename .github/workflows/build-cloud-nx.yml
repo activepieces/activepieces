@@ -1,7 +1,7 @@
 name: CI
 on:
   push:
-    branches:
+    branches: # dicuss remove this from main (NO NEED FOR CI)
       - main
   pull_request:
 
@@ -27,6 +27,6 @@ jobs:
 
       - uses: nrwl/nx-set-shas@v4
 
-      - run: npx nx affected --target=lint --agents
-      - run: npx nx affected --target=build -c production --agents
+      - run: npx nx affected --target=lint --agents --parallel
+      - run: npx nx affected --target=build -c production --agents --parallel
       - run: npx nx run-many --target=test --projects=engine,shared,server-api --agents --parallel
