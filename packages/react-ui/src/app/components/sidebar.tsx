@@ -46,6 +46,7 @@ import { HelpAndFeedback } from './help-and-feedback';
 import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
 import { SidebarUser } from './sidebar-user';
 import UsageLimitsButton from './usage-limits-button';
+import { SidebarInviteUserButton } from './sidebar-invite-user';
 
 type Link = {
   icon: React.ReactNode;
@@ -93,9 +94,8 @@ export const CustomTooltipLink = ({
         )}
       >
         <div
-          className={`w-full flex items-center justify-between gap-2 px-2 py-1.5 ${
-            !Icon ? 'p-2' : ''
-          }`}
+          className={`w-full flex items-center justify-between gap-2 px-2 py-1.5 ${!Icon ? 'p-2' : ''
+            }`}
         >
           <div className="flex items-center gap-2 justify-between w-full">
             <div className="flex items-center gap-2">
@@ -211,20 +211,6 @@ export function SidebarComponent({
                           <SidebarPlatformAdminButton />
                         </SidebarMenuButton>
                       </SidebarMenuItem>
-                      {!location.pathname.startsWith('/platform') && (
-                        <SidebarMenuItem>
-                          <SidebarMenuButton asChild>
-                            <CustomTooltipLink
-                              to={authenticationSession.appendProjectRoutePrefix(
-                                '/settings/general',
-                              )}
-                              label={t('Project Settings')}
-                              Icon={Settings}
-                              isSubItem={false}
-                            />
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      )}
                       {showConnectionsLink && (
                         <SidebarMenuItem>
                           <SidebarMenuButton asChild>
@@ -243,7 +229,10 @@ export function SidebarComponent({
                   </SidebarGroup>
                 </ScrollArea>
               </SidebarContent>
-              <SidebarFooter className="pb-4 gap-4">
+              <SidebarFooter className="pb-4">
+                <SidebarMenu>
+                  <SidebarInviteUserButton />
+                </SidebarMenu>
                 <SidebarMenu>
                   <HelpAndFeedback />
                 </SidebarMenu>
