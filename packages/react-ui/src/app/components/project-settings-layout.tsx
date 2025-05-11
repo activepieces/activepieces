@@ -15,6 +15,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { isNil, Permission } from '@activepieces/shared';
 
 import { authenticationSession } from '../../lib/authentication-session';
+import { projectSettingsRoutes } from '../router/project-route-wrapper';
 
 const iconSize = 20;
 
@@ -34,37 +35,45 @@ export default function ProjectSettingsLayout({
   const sidebarNavItems: SidebarItem[] = [
     {
       title: t('General'),
-      href: authenticationSession.appendProjectRoutePrefix('/settings/general'),
+      href: authenticationSession.appendProjectRoutePrefix(
+        projectSettingsRoutes.general,
+      ),
       icon: <Settings size={iconSize} />,
     },
     {
       title: t('Appearance'),
       href: authenticationSession.appendProjectRoutePrefix(
-        '/settings/appearance',
+        projectSettingsRoutes.appearance,
       ),
       icon: <SunMoon size={iconSize} />,
     },
     {
       title: t('Team'),
-      href: authenticationSession.appendProjectRoutePrefix('/settings/team'),
+      href: authenticationSession.appendProjectRoutePrefix(
+        projectSettingsRoutes.team,
+      ),
       icon: <Users size={iconSize} />,
       hasPermission: checkAccess(Permission.READ_PROJECT_MEMBER),
     },
     {
       title: t('Pieces'),
-      href: authenticationSession.appendProjectRoutePrefix('/settings/pieces'),
+      href: authenticationSession.appendProjectRoutePrefix(
+        projectSettingsRoutes.pieces,
+      ),
       icon: <Puzzle size={iconSize} />,
     },
     {
       title: t('Alerts'),
-      href: authenticationSession.appendProjectRoutePrefix('/settings/alerts'),
+      href: authenticationSession.appendProjectRoutePrefix(
+        projectSettingsRoutes.alerts,
+      ),
       icon: <Bell size={iconSize} />,
       hasPermission: checkAccess(Permission.READ_ALERT),
     },
     {
       title: t('Environments'),
       href: authenticationSession.appendProjectRoutePrefix(
-        '/settings/environments',
+        projectSettingsRoutes.environments,
       ),
       icon: <GitBranch size={iconSize} />,
       hasPermission: checkAccess(Permission.READ_PROJECT_RELEASE),

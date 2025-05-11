@@ -1,5 +1,6 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 import {
   PieceMetadataModel,
@@ -23,7 +24,6 @@ import {
   StepMetadata,
   StepMetadataWithSuggestions,
 } from './types';
-import { useTranslation } from 'react-i18next';
 
 type UsePieceAndMostRecentPatchProps = {
   name: string;
@@ -66,7 +66,8 @@ export const piecesHooks = {
     const { i18n } = useTranslation();
     const query = useQuery<PieceMetadataModel, Error>({
       queryKey: ['piece', name, version],
-      queryFn: () => piecesApi.get({ name, version, locale: i18n.language as LocalesEnum }),
+      queryFn: () =>
+        piecesApi.get({ name, version, locale: i18n.language as LocalesEnum }),
       staleTime: Infinity,
       enabled,
     });
@@ -116,7 +117,12 @@ export const piecesHooks = {
     return useQueries({
       queries: names.map((name) => ({
         queryKey: ['piece', name, undefined],
-        queryFn: () => piecesApi.get({ name, version: undefined, locale: i18n.language as LocalesEnum }),
+        queryFn: () =>
+          piecesApi.get({
+            name,
+            version: undefined,
+            locale: i18n.language as LocalesEnum,
+          }),
         staleTime: Infinity,
       })),
     });
@@ -133,9 +139,11 @@ export const piecesHooks = {
     };
   },
   useStepsMetadata: (props: UseStepsMetadata) => {
-    const { i18n } = useTranslation();  
+    const { i18n } = useTranslation();
     return useQueries({
-      queries: props.map((step) => stepMetadataQueryBuilder(step, i18n.language as LocalesEnum)),
+      queries: props.map((step) =>
+        stepMetadataQueryBuilder(step, i18n.language as LocalesEnum),
+      ),
     });
   },
   usePieces: ({
@@ -147,7 +155,12 @@ export const piecesHooks = {
     const query = useQuery<PieceMetadataModelSummary[], Error>({
       queryKey: ['pieces', searchQuery, includeHidden],
       queryFn: () =>
-        piecesApi.list({ searchQuery, includeHidden, includeTags, locale: i18n.language as LocalesEnum }),
+        piecesApi.list({
+          searchQuery,
+          includeHidden,
+          includeTags,
+          locale: i18n.language as LocalesEnum,
+        }),
       staleTime: searchQuery ? 0 : Infinity,
     });
     return {

@@ -28,7 +28,6 @@ import { ApFlagId, LocalesEnum } from '@activepieces/shared';
 
 import { flagsHooks } from '../../../../hooks/flags-hooks';
 
-
 export const localesMap = {
   [LocalesEnum.BULGARIAN]: 'Български',
   [LocalesEnum.CHINESE_SIMPLIFIED]: '简体中文',

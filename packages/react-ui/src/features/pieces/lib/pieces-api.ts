@@ -137,7 +137,10 @@ export const piecesApi = {
       suggestedTriggers: piece.suggestedTriggers,
     };
   },
-  async getMetadata(step: Action | Trigger, locale: LocalesEnum): Promise<StepMetadata> {
+  async getMetadata(
+    step: Action | Trigger,
+    locale: LocalesEnum,
+  ): Promise<StepMetadata> {
     const customLogoUrl =
       'customLogoUrl' in step ? step.customLogoUrl : undefined;
     switch (step.type) {

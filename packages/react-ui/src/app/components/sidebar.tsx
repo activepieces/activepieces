@@ -40,6 +40,7 @@ import { ApEdition, ApFlagId, Permission } from '@activepieces/shared';
 
 import { ShowPoweredBy } from '../../components/show-powered-by';
 import { platformHooks } from '../../hooks/platform-hooks';
+import { projectSettingsRoutes } from '../router/project-route-wrapper';
 
 import { ApDashboardSidebarHeader } from './ap-dashboard-sidebar-header';
 import { HelpAndFeedback } from './help-and-feedback';
@@ -216,11 +217,16 @@ export function SidebarComponent({
                           <SidebarMenuButton asChild>
                             <CustomTooltipLink
                               to={authenticationSession.appendProjectRoutePrefix(
-                                '/settings/general',
+                                projectSettingsRoutes.general,
                               )}
                               label={t('Project Settings')}
                               Icon={Settings}
                               isSubItem={false}
+                              isActive={(pathname) =>
+                                Object.values(projectSettingsRoutes).some(
+                                  (route) => pathname.includes(route),
+                                )
+                              }
                             />
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -318,7 +324,7 @@ function ApSidebarMenuGroup(item: SidebarGroup) {
           >
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton className="py-0 gap-2 hover:bg-gray-200 rounded-lg transition-colors">
+                <SidebarMenuButton className="py-0 gap-2  rounded-lg">
                   {item.icon && <item.icon className="size-4" />}
                   <span>{item.label}</span>
                   <SidebarMenuAction asChild>
