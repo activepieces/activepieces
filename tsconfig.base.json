@@ -227,6 +227,9 @@
       "@activepieces/piece-dropbox": [
         "packages/pieces/community/dropbox/src/index.ts"
       ],
+      "@activepieces/piece-dumpling-ai": [
+        "packages/pieces/community/dumpling-ai/src/index.ts"
+      ],
       "@activepieces/piece-elevenlabs": [
         "packages/pieces/community/elevenlabs/src/index.ts"
       ],
@@ -462,6 +465,9 @@
         "packages/pieces/community/mautic/src/index.ts"
       ],
       "@activepieces/piece-mcp": ["packages/pieces/community/mcp/src/index.ts"],
+      "@activepieces/piece-medullar": [
+        "packages/pieces/community/medullar/src/index.ts"
+      ],
       "@activepieces/piece-mempool-space": [
         "packages/pieces/community/mempool-space/src/index.ts"
       ],
@@ -479,6 +485,9 @@
       ],
       "@activepieces/piece-microsoft-teams": [
         "packages/pieces/community/microsoft-teams/src/index.ts"
+      ],
+      "@activepieces/piece-microsoft-todo": [
+        "packages/pieces/community/microsoft-todo/src/index.ts"
       ],
       "@activepieces/piece-mindee": [
         "packages/pieces/community/mindee/src/index.ts"

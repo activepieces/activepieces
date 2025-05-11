@@ -87,6 +87,10 @@ export function DashboardContainer({
     showInEmbed: true,
     hasPermission: checkAccess(Permission.READ_FLOW),
     isSubItem: false,
+    isActive: (pathname) =>
+      pathname.includes('/flows') ||
+      pathname.includes('/runs') ||
+      pathname.includes('/issues'),
   };
 
   const mcpLink: SidebarLink = {
