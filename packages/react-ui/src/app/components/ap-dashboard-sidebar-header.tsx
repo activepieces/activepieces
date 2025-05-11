@@ -2,7 +2,7 @@ import { t } from 'i18next';
 import { Link } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { SidebarHeader } from '@/components/ui/sidebar-shadcn';
 import {
   Tooltip,
@@ -25,7 +25,8 @@ const ApDashboardSidebarHeader = ({
   const branding = flagsHooks.useWebsiteBranding();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { embedState } = useEmbedding();
-  const showProjectSwitcher = edition !== ApEdition.COMMUNITY && !embedState.isEmbedded;
+  const showProjectSwitcher =
+    edition !== ApEdition.COMMUNITY && !embedState.isEmbedded;
   const defaultRoute = determineDefaultRoute(useAuthorization().checkAccess);
 
   const renderLogo = () => {
@@ -55,14 +56,10 @@ const ApDashboardSidebarHeader = ({
   return (
     <SidebarHeader className="pb-0">
       <div className="flex items-center justify-between grow gap-1">
-        <Button variant='ghost' className={cn({ 'w-full': !isHomeDashboard })}>
-          <Link
-            to={isHomeDashboard ? defaultRoute : '/platform'}
-          >
+        <Button variant="ghost" className={cn({ 'w-full': !isHomeDashboard })}>
+          <Link to={isHomeDashboard ? defaultRoute : '/platform'}>
             <Tooltip>
-              <TooltipTrigger asChild>
-                {renderLogo()}
-              </TooltipTrigger>
+              <TooltipTrigger asChild>{renderLogo()}</TooltipTrigger>
               <TooltipContent side="bottom">{t('Home')}</TooltipContent>
             </Tooltip>
           </Link>

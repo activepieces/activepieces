@@ -4,7 +4,6 @@ import {
   ChevronUpIcon,
   Link2,
   LockKeyhole,
-  Settings,
 } from 'lucide-react';
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -43,10 +42,10 @@ import { platformHooks } from '../../hooks/platform-hooks';
 
 import { ApDashboardSidebarHeader } from './ap-dashboard-sidebar-header';
 import { HelpAndFeedback } from './help-and-feedback';
+import { SidebarInviteUserButton } from './sidebar-invite-user';
 import { SidebarPlatformAdminButton } from './sidebar-platform-admin';
 import { SidebarUser } from './sidebar-user';
 import UsageLimitsButton from './usage-limits-button';
-import { SidebarInviteUserButton } from './sidebar-invite-user';
 
 type Link = {
   icon: React.ReactNode;
@@ -94,8 +93,9 @@ export const CustomTooltipLink = ({
         )}
       >
         <div
-          className={`w-full flex items-center justify-between gap-2 px-2 py-1.5 ${!Icon ? 'p-2' : ''
-            }`}
+          className={`w-full flex items-center justify-between gap-2 px-2 py-1.5 ${
+            !Icon ? 'p-2' : ''
+          }`}
         >
           <div className="flex items-center gap-2 justify-between w-full">
             <div className="flex items-center gap-2">

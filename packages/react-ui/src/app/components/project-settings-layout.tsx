@@ -26,11 +26,14 @@ export default function ProjectSettingsLayout({
   children,
 }: SettingsLayoutProps) {
   const { platform } = platformHooks.useCurrentPlatform();
+
   const currentProjectId = authenticationSession.getProjectId();
+
   const { checkAccess } = useAuthorization();
   if (isNil(currentProjectId)) {
     return <Navigate to="/sign-in" replace />;
   }
+
   const sidebarNavItems: SidebarItem[] = [
     {
       title: t('General'),

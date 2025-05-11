@@ -20,6 +20,7 @@ export const ThemeToggle = () => {
     <DropdownMenuItem className="p-0" onSelect={(e) => e.preventDefault()}>
       <Button
         variant="ghost"
+        size="sm"
         className={cn('gap-x-2 w-full justify-between px-2')}
         onClick={handleToggleTheme}
       >
