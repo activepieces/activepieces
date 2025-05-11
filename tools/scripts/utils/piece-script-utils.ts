@@ -147,6 +147,14 @@ async function traverseFolder(folderPath: string): Promise<string[]> {
 async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | null> {
     try {
         const packageJson = await readPackageJson(folderPath);
+        
+        // Check if package-lock.json exists and run npm ci if it does
+        const packageLockPath = join(folderPath, 'package-lock.json');
+        const packageLockExists = await stat(packageLockPath).catch(() => null);
+        if (packageLockExists) {
+            const { execSync } = require('child_process');
+            execSync('npm ci', { cwd: folderPath, stdio: 'inherit' });
+        }
 
         const module = await import(
             join(folderPath, 'src', 'index')
