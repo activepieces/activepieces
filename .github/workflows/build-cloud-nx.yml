@@ -35,7 +35,7 @@ jobs:
         id: check-framework-common
         run: |
           CHANGED_FILES="${{ steps.changed-files.outputs.files }}"
-          if echo "$CHANGED_FILES" | grep -q "pieces-framework\|pieces-common"; then
+          if echo "$CHANGED_FILES" | grep -q "community/framework\|community/common"; then
             echo "framework_or_common_changed=true" >> $GITHUB_OUTPUT
           else
             echo "framework_or_common_changed=false" >> $GITHUB_OUTPUT
