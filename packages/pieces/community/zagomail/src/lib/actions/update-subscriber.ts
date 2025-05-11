@@ -44,7 +44,7 @@ export const updateSubscriberAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const payload = {
+    const payload: Record<string, unknown> = {
       first_name: propsValue.firstName,
       last_name: propsValue.lastName,
       status: propsValue.status,

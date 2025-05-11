@@ -37,7 +37,7 @@ export const subscriberTaggedTrigger = createTrigger({
     event_type: 'subscriber.tagged',
   },
   async onEnable(context) {
-    const payload = {
+    const payload: Record<string, unknown> = {
       url: context.webhookUrl,
       event_type: 'subscriber.tagged',
       list_id: context.propsValue.listId,
