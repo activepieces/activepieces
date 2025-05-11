@@ -3,12 +3,15 @@ import {
   type EmojiPickerListEmojiProps,
   type EmojiPickerListRowProps,
   EmojiPicker as EmojiPickerPrimitive,
-} from "frimousse";
+} from 'frimousse';
 
-import { LoaderIcon, SearchIcon } from "lucide-react";
-import type * as React from "react";
+import { SmileIcon, LoaderIcon } from 'lucide-react';
+import type * as React from 'react';
 
-import { cn } from "@/lib/utils";
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+
+import { Popover, PopoverContent, PopoverTrigger } from './popover';
 
 function EmojiPicker({
   className,
@@ -17,8 +20,8 @@ function EmojiPicker({
   return (
     <EmojiPickerPrimitive.Root
       className={cn(
-        "bg-popover text-popover-foreground isolate flex h-full w-fit flex-col overflow-hidden rounded-md",
-        className
+        'bg-popover text-popover-foreground isolate flex h-full w-fit flex-col overflow-hidden rounded-md',
+        className,
       )}
       data-slot="emoji-picker"
       {...props}
@@ -32,12 +35,11 @@ function EmojiPickerSearch({
 }: React.ComponentProps<typeof EmojiPickerPrimitive.Search>) {
   return (
     <div
-      className={cn("flex h-9 items-center gap-2 border-b px-3", className)}
+      className={cn('flex h-9 items-center gap-2 border-b px-3', className)}
       data-slot="emoji-picker-search-wrapper"
     >
-      <SearchIcon className="size-4 shrink-0 opacity-50" />
       <EmojiPickerPrimitive.Search
-        className="outline-hidden placeholder:text-muted-foreground flex h-10 w-full rounded-md bg-transparent py-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+        className="outline-none placeholder:text-muted-foreground flex h-10 w-full rounded-md bg-transparent py-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
         data-slot="emoji-picker-search"
         {...props}
       />
@@ -62,8 +64,8 @@ function EmojiPickerEmoji({
     <button
       {...props}
       className={cn(
-        "data-[active]:bg-accent flex size-7 items-center justify-center rounded-sm text-base",
-        className
+        'data-[active]:bg-accent flex size-7 items-center justify-center rounded-sm text-base',
+        className,
       )}
       data-slot="emoji-picker-emoji"
     >
@@ -93,7 +95,7 @@ function EmojiPickerContent({
 }: React.ComponentProps<typeof EmojiPickerPrimitive.Viewport>) {
   return (
     <EmojiPickerPrimitive.Viewport
-      className={cn("outline-hidden relative flex-1", className)}
+      className={cn('outline-none relative flex-1 overflow-y-auto', className)}
       data-slot="emoji-picker-viewport"
       {...props}
     >
@@ -125,12 +127,12 @@ function EmojiPickerContent({
 function EmojiPickerFooter({
   className,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<'div'>) {
   return (
     <div
       className={cn(
-        "max-w-(--frimousse-viewport-width) flex w-full min-w-0 items-center gap-1 border-t p-2",
-        className
+        'flex w-full min-w-0 items-center gap-1 border-t p-2',
+        className,
       )}
       data-slot="emoji-picker-footer"
       {...props}
@@ -157,9 +159,38 @@ function EmojiPickerFooter({
   );
 }
 
-export {
-  EmojiPicker,
-  EmojiPickerSearch,
-  EmojiPickerContent,
-  EmojiPickerFooter,
+interface EmojiSelectorProps {
+  onEmojiSelect: (emoji: { emoji: string }) => void;
+  selectedEmoji: string | null;
+}
+
+export const EmojiSelector = ({
+  onEmojiSelect,
+  selectedEmoji,
+}: EmojiSelectorProps) => {
+  const handleContentWheel = (e: React.WheelEvent) => {
+    e.stopPropagation();
+  };
+
+  return (
+    <Popover modal={false}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="icon" className="size-9">
+          {selectedEmoji || <SmileIcon className="h-4 w-4" />}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="p-0 w-64 border"
+        align="center"
+        onWheel={handleContentWheel}
+        style={{ maxHeight: 'none' }}
+      >
+        <EmojiPicker className="h-[300px]" onEmojiSelect={onEmojiSelect}>
+          <EmojiPickerSearch placeholder="Search emoji..." />
+          <EmojiPickerContent className="overflow-y-auto" />
+          <EmojiPickerFooter />
+        </EmojiPicker>
+      </PopoverContent>
+    </Popover>
+  );
 };
