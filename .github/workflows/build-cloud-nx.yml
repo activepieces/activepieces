@@ -29,7 +29,7 @@ jobs:
       
       - name: Get changed files
         id: changed-files
-        run: echo "files=$(git diff --name-only HEAD~1 HEAD | tr '\n' ' ')" >> $GITHUB_OUTPUT
+        run: echo "files=$(git diff --name-only HEAD origin/main | tr '\n' ' ')" >> $GITHUB_OUTPUT
       
       - name: Check if framework or common pieces are changed
         id: check-framework-common
@@ -44,7 +44,7 @@ jobs:
       - name: Extract pieces projects from changed files
         id: extract-pieces
         run: |
-          PIECES=$(echo "${{ steps.changed-files.outputs.files }}" | grep -o "pieces-[^ /]*" | sort -u | tr '\n' ',' | sed 's/,$//')
+          PIECES=$(echo "${{ steps.changed-files.outputs.files }}" | grep -o "packages/pieces/[^/]*/[^/]*/" | awk -F'/' '{print "pieces-" $4}' | sort -u | tr '\n' ',' | sed 's/,$//')
           echo "pieces_projects=$PIECES" >> $GITHUB_OUTPUT
 
       - name: Lint affected projects excluding pieces
