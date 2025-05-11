@@ -24,6 +24,8 @@ jobs:
 
       - uses: nrwl/nx-set-shas@v4
 
+      - run: git fetch origin main:main
+
       - run: npx nx affected --target=lint --base=main --head=HEAD --agents
       - run: npx nx affected --target=build -c production --base=main --head=HEAD --agents
       - run: npx nx run-many --target=test --projects=engine,shared,server-api --agents
