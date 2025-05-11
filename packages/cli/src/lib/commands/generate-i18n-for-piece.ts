@@ -57,7 +57,7 @@ const generateI18nForPiece = async (pieceName: string) => {
 };
 
 
-export const generateI18nForPieceCommand = new Command('generate-i18n-for-piece')
+export const generateI18nForPieceCommand = new Command('generate-translation-file')
   .description('Generate i18n for a piece')
   .action(async () => {
     const questions = [

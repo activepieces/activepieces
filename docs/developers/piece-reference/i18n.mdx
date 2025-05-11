@@ -1,0 +1,57 @@
+---
+title: 'Internationalization'
+description: 'Learn about translating pieces to multiple locales'
+icon: 'globe'
+---
+
+
+<Steps>
+  <Step title="Generate The Translation File">
+    After you are done with editing your piece, generate the translation file by running the follwing command:
+    
+    ```bash
+    npm run cli pieces generate-translation-file
+    ```
+    You will be asked for the piece folder.
+  </Step>
+  <Step title="Translate to Wanted Locale">
+    Under your piece `src` folder you will have `i18n.json`, make a copy of it, rename it to the targetted locale , like `fr.json`, and translate it.
+  </Step>
+  <Step title="Import Translation">
+    Import translation into your piece `index.ts` file and include it in the pieces i18n property, like this: 
+    ```ts 
+import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+import { catchWebhook } from "./lib/triggers/catch-hook";
+import { LocalesEnum, PieceCategory } from "@activepieces/shared";
+import { returnResponse } from "./lib/actions/return-response";
+import { returnResponseAndWaitForNextWebhook } from "./lib/actions/return-response-and-wait-for-next-webhook";
+//Importing the new translation file for the fr locale
+import fr from "./i18n/fr.json";
+export const webhook = createPiece({
+        displayName: "Webhook",
+        description: "Receive HTTP requests and trigger flows using unique URLs.",
+        auth: PieceAuth.None(),
+        categories: [PieceCategory.CORE],
+        minimumSupportedRelease: "0.52.0",
+        logoUrl: "https://cdn.activepieces.com/pieces/webhook.svg",
+        authors: ["abuaboud", "pfernandez98", "kishanprmr", "AbdulTheActivePiecer"],
+        actions: [returnResponse, returnResponseAndWaitForNextWebhook],
+        triggers: [catchWebhook],
+        i18n: {
+            //Including the translation
+            [LocalesEnum.FRENCH]: fr,
+        },
+});
+
+
+```
+ 
+  </Step>
+   <Step title="Testing">
+    In your dashboard go to Project Settings -> Appearance -> Lanugages
+    ![Languages](/resources/i18n-pieces.png)
+    Then check the piece in the builder:
+    ![French Webhooks](/resources/french-webhooks.png)
+  </Step>
+
+</Steps>
