@@ -1,8 +1,5 @@
 name: CI
 on:
-  push:
-    branches: # dicuss remove this from main (NO NEED FOR CI)
-      - main
   pull_request:
 
 permissions:
@@ -16,17 +13,30 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      
       - uses: actions/setup-node@v3
         with:
           node-version: 20
           cache: 'npm'
 
-      - run: npx nx-cloud start-ci-run --distribute-on="3 linux-extra-large-js" --agents
+      - uses: actions/cache@v3
+        with:
+          path: .nx/cache
+          key: nx-cache-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            nx-cache-${{ runner.os }}-
+
+      - run: npx nx-cloud start-ci-run --distribute-on="3 linux-large-js" --agents --stop-agents-on-error
 
       - run: npm ci
 
       - uses: nrwl/nx-set-shas@v4
 
-      - run: npx nx affected --target=lint --agents --parallel
-      - run: npx nx affected --target=build -c production --agents --parallel
-      - run: npx nx run-many --target=test --projects=engine,shared,server-api --agents --parallel
+      # Run lint with caching
+      - run: npx nx affected --target=lint --agents --parallel --max-parallel=3
+
+      # Run build without caching
+      - run: npx nx affected --target=build -c production --agents --parallel --max-parallel=3 --skip-nx-cache
+
+      # Run tests with caching
+      - run: npx nx run-many --target=test --projects=engine,shared,server-api --agents --parallel --max-parallel=3
