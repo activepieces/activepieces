@@ -9,6 +9,11 @@ export const getSubscriberDetailsAction = createAction({
   displayName: 'Get Subscriber Details',
   description: 'Get detailed information about a subscriber',
   props: {
+    listId: Property.ShortText({
+      displayName: 'List ID',
+      description: 'The ID of the list the subscriber belongs to',
+      required: true,
+    }),
     subscriberId: Property.ShortText({
       displayName: 'Subscriber ID',
       description: 'The ID of the subscriber to get details for',
@@ -19,7 +24,7 @@ export const getSubscriberDetailsAction = createAction({
     return await makeRequest(
       auth as string,
       HttpMethod.GET,
-      `/subscribers/${propsValue.subscriberId}`,
+      `/lists/get-subscriber?list_uid=${propsValue.listId}&subscriber_uid=${propsValue.subscriberId}`,
       undefined
     );
   },

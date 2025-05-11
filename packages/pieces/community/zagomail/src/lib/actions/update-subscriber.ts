@@ -9,10 +9,20 @@ export const updateSubscriberAction = createAction({
   displayName: 'Update Subscriber',
   description: 'Update an existing subscriber',
   props: {
+    listId: Property.ShortText({
+      displayName: 'List ID',
+      description: 'The ID of the list the subscriber belongs to',
+      required: true,
+    }),
     subscriberId: Property.ShortText({
       displayName: 'Subscriber ID',
       description: 'The ID of the subscriber to update',
       required: true,
+    }),
+    email: Property.ShortText({
+      displayName: 'Email',
+      description: 'The email address of the subscriber',
+      required: false,
     }),
     firstName: Property.ShortText({
       displayName: 'First Name',
@@ -24,31 +34,12 @@ export const updateSubscriberAction = createAction({
       description: 'The last name of the subscriber',
       required: false,
     }),
-    status: Property.StaticDropdown({
-      displayName: 'Status',
-      description: 'The subscription status',
-      required: false,
-      options: {
-        options: [
-          { label: 'Subscribed', value: 'subscribed' },
-          { label: 'Unsubscribed', value: 'unsubscribed' },
-          { label: 'Bounced', value: 'bounced' },
-          { label: 'Inactive', value: 'inactive' },
-        ],
-      },
-    }),
-    customFields: Property.Object({
-      displayName: 'Custom Fields',
-      description: 'Any custom fields to update for this subscriber',
-      required: false,
-    }),
   },
   async run({ propsValue, auth }) {
     const payload: Record<string, unknown> = {
-      first_name: propsValue.firstName,
-      last_name: propsValue.lastName,
-      status: propsValue.status,
-      custom_fields: propsValue.customFields,
+      email: propsValue.email,
+      fname: propsValue.firstName,
+      lname: propsValue.lastName,
     };
 
     // Remove undefined values
@@ -60,8 +51,8 @@ export const updateSubscriberAction = createAction({
 
     return await makeRequest(
       auth as string,
-      HttpMethod.PATCH,
-      `/subscribers/${propsValue.subscriberId}`,
+      HttpMethod.POST,
+      `/lists/subscriber-update?list_uid=${propsValue.listId}&subscriber_uid=${propsValue.subscriberId}`,
       payload
     );
   },

@@ -15,10 +15,10 @@ export const subscriberTaggedTrigger = createTrigger({
       description: 'The ID of the list to monitor',
       required: true,
     }),
-    tag: Property.ShortText({
-      displayName: 'Tag',
-      description: 'Filter for a specific tag (leave empty to trigger for any tag)',
-      required: false,
+    tagId: Property.ShortText({
+      displayName: 'Tag ID',
+      description: 'The ID of the tag to monitor',
+      required: true,
     }),
   },
   type: TriggerStrategy.WEBHOOK,
@@ -30,36 +30,35 @@ export const subscriberTaggedTrigger = createTrigger({
     status: 'subscribed',
     tag: 'VIP',
     tagged_at: '2023-05-18T09:22:41.000000Z',
-    custom_fields: {
-      company: 'Acme Inc.',
-    },
     list_id: '6789',
-    event_type: 'subscriber.tagged',
+    event_type: 'tag-added',
   },
   async onEnable(context) {
-    const payload: Record<string, unknown> = {
-      url: context.webhookUrl,
-      event_type: 'subscriber.tagged',
-      list_id: context.propsValue.listId,
+    const payload = {
+      event_type: 'tag-added',
+      target_url: context.webhookUrl,
+      listId: context.propsValue.listId,
+      tagId: context.propsValue.tagId
     };
-
-    if (context.propsValue.tag) {
-      payload['tag'] = context.propsValue.tag;
-    }
 
     const response = await makeRequest(
       context.auth as string,
       HttpMethod.POST,
-      '/webhooks',
+      '/webhooks/create',
       payload
     ) as WebhookResponse;
 
-    await context.store.put<StoredWebhook>('zagomail_tagged_webhook', {
-      webhookId: response.id,
+    const webhookId = response.id || '';
+    if (!webhookId) {
+      throw new Error('Failed to get webhook ID from response');
+    }
+
+    await context.store.put<StoredWebhook>('zagomail_subscriber_tagged', {
+      webhookId: webhookId,
     });
   },
   async onDisable(context) {
-    const webhook = await context.store.get<StoredWebhook>('zagomail_tagged_webhook');
+    const webhook = await context.store.get<StoredWebhook>('zagomail_subscriber_tagged');
     if (!isNil(webhook) && !isNil(webhook.webhookId)) {
       await makeRequest(
         context.auth as string,
@@ -70,15 +69,16 @@ export const subscriberTaggedTrigger = createTrigger({
     }
   },
   async run(context) {
+    console.log('Received webhook payload:', JSON.stringify(context.payload.body));
     return [context.payload.body];
   },
 });
 
 type WebhookResponse = {
-  id: string;
-  url: string;
-  event_type: string;
-  created_at: string;
+  id?: string;
+  url?: string;
+  event_type?: string;
+  created_at?: string;
 };
 
 type StoredWebhook = {

@@ -19,7 +19,7 @@ export const getCampaignDetailsAction = createAction({
     return await makeRequest(
       auth as string,
       HttpMethod.GET,
-      `/campaigns/${propsValue.campaignId}`,
+      `/campaigns/get-stats?campaign_uid=${propsValue.campaignId}`,
       undefined
     );
   },

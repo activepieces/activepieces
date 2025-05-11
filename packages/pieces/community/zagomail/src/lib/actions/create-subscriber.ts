@@ -29,24 +29,18 @@ export const createSubscriberAction = createAction({
       description: 'The last name of the subscriber',
       required: false,
     }),
-    customFields: Property.Object({
-      displayName: 'Custom Fields',
-      description: 'Any custom fields to set for this subscriber',
-      required: false,
-    }),
   },
   async run({ propsValue, auth }) {
     const payload = {
       email: propsValue.email,
-      first_name: propsValue.firstName,
-      last_name: propsValue.lastName,
-      custom_fields: propsValue.customFields,
+      fname: propsValue.firstName,
+      lname: propsValue.lastName,
     };
 
     return await makeRequest(
       auth as string,
       HttpMethod.POST,
-      `/lists/${propsValue.listId}/subscribers`,
+      `/lists/subscriber-create?list_uid=${propsValue.listId}`,
       payload
     );
   },

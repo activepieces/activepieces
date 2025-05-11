@@ -9,32 +9,27 @@ export const findSubscriberByEmailAction = createAction({
   displayName: 'Find Subscriber by Email',
   description: 'Find a subscriber by their email address',
   props: {
+    listId: Property.ShortText({
+      displayName: 'List ID',
+      description: 'The ID of the list to search in',
+      required: true,
+    }),
     email: Property.ShortText({
       displayName: 'Email',
       description: 'The email address of the subscriber to find',
       required: true,
     }),
-    listId: Property.ShortText({
-      displayName: 'List ID',
-      description: 'The ID of the list to search in (leave empty to search across all lists)',
-      required: false,
-    }),
   },
   async run({ propsValue, auth }) {
-    const endpoint = '/subscribers/search';
-    const queryParams = new URLSearchParams({
+    const payload = {
       email: propsValue.email,
-    });
-
-    if (propsValue.listId) {
-      queryParams.append('list_id', propsValue.listId);
-    }
+    };
 
     return await makeRequest(
       auth as string,
-      HttpMethod.GET,
-      `${endpoint}?${queryParams.toString()}`,
-      undefined
+      HttpMethod.POST,
+      `/lists/search-by-email?list_uid=${propsValue.listId}`,
+      payload
     );
   },
 });

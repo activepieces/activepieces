@@ -7,29 +7,30 @@ export const tagSubscriberAction = createAction({
   auth: zagomailAuth,
   name: 'tag_subscriber',
   displayName: 'Tag Subscriber',
-  description: 'Add one or more tags to an existing subscriber',
+  description: 'Add a tag to an existing subscriber',
   props: {
+    listId: Property.ShortText({
+      displayName: 'List ID',
+      description: 'The ID of the list the subscriber belongs to',
+      required: true,
+    }),
     subscriberId: Property.ShortText({
       displayName: 'Subscriber ID',
       description: 'The ID of the subscriber to tag',
       required: true,
     }),
-    tags: Property.Array({
-      displayName: 'Tags',
-      description: 'The tags to add to the subscriber',
+    tagId: Property.ShortText({
+      displayName: 'Tag ID',
+      description: 'The ID of the tag to add to the subscriber',
       required: true,
     }),
   },
   async run({ propsValue, auth }) {
-    const payload = {
-      tags: propsValue.tags,
-    };
-
     return await makeRequest(
       auth as string,
       HttpMethod.POST,
-      `/subscribers/${propsValue.subscriberId}/tags`,
-      payload
+      `/lists/add-tag?ztag_id=${propsValue.tagId}&subscriber_uid=${propsValue.subscriberId}&list_uid=${propsValue.listId}`,
+      {}
     );
   },
 });

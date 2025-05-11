@@ -8,7 +8,6 @@ import { updateSubscriberAction } from './lib/actions/update-subscriber';
 import { findSubscriberByEmailAction } from './lib/actions/find-subscriber-by-email';
 import { getSubscriberDetailsAction } from './lib/actions/get-subscriber-details';
 import { getCampaignDetailsAction } from './lib/actions/get-campaign-details';
-import { sendEmailAction } from './lib/actions/send-email';
 
 // Triggers
 import { subscriberAddedTrigger } from './lib/triggers/subscriber-added';
@@ -45,10 +44,7 @@ export const zagomail = createPiece({
 
     // Read Actions
     getSubscriberDetailsAction,
-    getCampaignDetailsAction,
-
-    // Additional Actions
-    sendEmailAction
+    getCampaignDetailsAction
   ],
   triggers: [
     subscriberAddedTrigger,

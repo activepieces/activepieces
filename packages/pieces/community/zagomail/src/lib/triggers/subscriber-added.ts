@@ -24,30 +24,33 @@ export const subscriberAddedTrigger = createTrigger({
     last_name: 'Doe',
     status: 'subscribed',
     created_at: '2023-05-18T09:22:41.000000Z',
-    custom_fields: {
-      company: 'Acme Inc.',
-    },
     list_id: '6789',
-    event_type: 'subscriber.created',
+    event_type: 'subscriber-activate',
   },
   async onEnable(context) {
     const response = await makeRequest(
       context.auth as string,
       HttpMethod.POST,
-      '/webhooks',
+      '/webhooks/create',
       {
-        url: context.webhookUrl,
-        event_type: 'subscriber.created',
-        list_id: context.propsValue.listId,
+        event_type: 'subscriber-activate',
+        target_url: context.webhookUrl,
+        listId: context.propsValue.listId
       }
     ) as WebhookResponse;
 
-    await context.store.put<StoredWebhook>('zagomail_webhook', {
-      webhookId: response.id,
+    const webhookId = response.id || '';
+    if (!webhookId) {
+      throw new Error('Failed to get webhook ID from response');
+    }
+
+    console.log('Ankit logging webhookId', webhookId);
+    await context.store.put<StoredWebhook>('zagomail_subscriber_added', {
+      webhookId: webhookId,
     });
   },
   async onDisable(context) {
-    const webhook = await context.store.get<StoredWebhook>('zagomail_webhook');
+    const webhook = await context.store.get<StoredWebhook>('zagomail_subscriber_added');
     if (!isNil(webhook) && !isNil(webhook.webhookId)) {
       await makeRequest(
         context.auth as string,
@@ -58,15 +61,16 @@ export const subscriberAddedTrigger = createTrigger({
     }
   },
   async run(context) {
+    console.log('Received webhook payload:', JSON.stringify(context.payload.body));
     return [context.payload.body];
   },
 });
 
 type WebhookResponse = {
-  id: string;
-  url: string;
-  event_type: string;
-  created_at: string;
+  id?: string;
+  url?: string;
+  event_type?: string;
+  created_at?: string;
 };
 
 type StoredWebhook = {
