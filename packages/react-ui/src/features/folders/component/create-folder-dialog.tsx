@@ -19,6 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { EmojiSelector } from '@/components/ui/emoji-picker';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -50,6 +51,8 @@ export const CreateFolderDialog = ({
   children,
 }: CreateFolderDialogProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null);
+
   const form = useForm<CreateFolderFormSchema>({
     resolver: typeboxResolver(CreateFolderFormSchema),
   });
@@ -60,13 +63,18 @@ export const CreateFolderDialog = ({
     CreateFolderFormSchema
   >({
     mutationFn: async (data) => {
+      const displayName = selectedEmoji
+        ? `${selectedEmoji} ${data.displayName}`
+        : data.displayName;
+
       return await foldersApi.create({
-        displayName: data.displayName,
+        displayName,
         projectId: authenticationSession.getProjectId()!,
       });
     },
     onSuccess: (folder) => {
       form.reset();
+      setSelectedEmoji(null);
       setIsDialogOpen(false);
       updateSearchParams(folder.id);
       refetchFolders();
@@ -92,6 +100,10 @@ export const CreateFolderDialog = ({
     },
   });
 
+  const handleEmojiSelect = (emoji: { emoji: string }) => {
+    setSelectedEmoji(emoji.emoji);
+  };
+
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -107,13 +119,19 @@ export const CreateFolderDialog = ({
               name="displayName"
               render={({ field }) => (
                 <FormItem>
-                  <Input
-                    {...field}
-                    required
-                    id="folder"
-                    placeholder={t('Folder Name')}
-                    className="rounded-sm"
-                  />
+                  <div className="flex items-center gap-2">
+                    <EmojiSelector
+                      onEmojiSelect={handleEmojiSelect}
+                      selectedEmoji={selectedEmoji}
+                    />
+                    <Input
+                      {...field}
+                      required
+                      id="folder"
+                      placeholder={t('Folder Name')}
+                      className="rounded-sm"
+                    />
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -123,7 +141,7 @@ export const CreateFolderDialog = ({
                 {form.formState.errors.root.serverError.message}
               </FormMessage>
             )}
-            <DialogFooter>
+            <DialogFooter className="mt-4">
               <Button
                 variant={'outline'}
                 onClick={() => setIsDialogOpen(false)}
