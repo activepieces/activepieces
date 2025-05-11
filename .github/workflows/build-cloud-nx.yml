@@ -26,17 +26,12 @@ jobs:
           restore-keys: |
             nx-cache-${{ runner.os }}-
 
-      - run: npx nx-cloud start-ci-run --distribute-on="3 linux-large-js" --agents --stop-agents-on-error
+      - run: npx nx-cloud start-ci-run --distribute-on="3 linux-large-js" --agents
 
       - run: npm ci
 
       - uses: nrwl/nx-set-shas@v4
 
-      # Run lint with caching
-      - run: npx nx affected --target=lint --agents --parallel --max-parallel=3
-
-      # Run build without caching
-      - run: npx nx affected --target=build -c production --agents --parallel --max-parallel=3 --skip-nx-cache
-
-      # Run tests with caching
-      - run: npx nx run-many --target=test --projects=engine,shared,server-api --agents --parallel --max-parallel=3
+      - run: npx nx affected --target=lint --agents --parallel
+      - run: npx nx affected --target=build -c production --agents --parallel--skip-nx-cache
+      - run: npx nx run-many --target=test --projects=engine,shared,server-api --agents --parallel
