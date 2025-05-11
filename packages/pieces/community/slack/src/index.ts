@@ -36,8 +36,6 @@ import { retrieveThreadMessages } from './lib/actions/retrieve-thread-messages';
 import { newMentionInDirectMessageTrigger } from './lib/triggers/new-mention-in-direct-message';
 import { newCommandInDirectMessageTrigger } from './lib/triggers/new-command-in-direct-message';
 
-// gahahahahah
-
 export const slackAuth = PieceAuth.OAuth2({
 	description: '',
 	authUrl:
