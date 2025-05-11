@@ -182,6 +182,23 @@ function buildConnectionSchema(
 }
 
 export const formUtils = {
+  /**When we use deepEqual if one object has an undefined value and the other doesn't have the key, that's an unequality, so to be safe we remove undefined values */
+  removeUndefinedFromInput: (step: Action | Trigger) => {
+    const copiedStep = JSON.parse(JSON.stringify(step));
+    if (
+      copiedStep.type !== TriggerType.PIECE &&
+      copiedStep.type !== ActionType.PIECE
+    ) {
+      return step;
+    }
+
+    copiedStep.settings.input = Object.fromEntries(
+      Object.entries(copiedStep.settings.input).filter(
+        ([_, value]) => value !== undefined,
+      ),
+    );
+    return copiedStep;
+  },
   buildPieceDefaultValue: (
     selectedStep: Action | Trigger,
     piece: PieceMetadata | null | undefined,
@@ -546,24 +563,14 @@ export function getDefaultValueForStep(
       case PropertyType.SECRET_TEXT:
       case PropertyType.CUSTOM:
       case PropertyType.COLOR:
+      case PropertyType.MULTI_SELECT_DROPDOWN:
+      case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
+      case PropertyType.JSON:
+      case PropertyType.NUMBER:
       case PropertyType.OAUTH2: {
         defaultValues[name] = existingInput[name] ?? property.defaultValue;
         break;
       }
-      case PropertyType.JSON: {
-        defaultValues[name] = existingInput[name] ?? property.defaultValue;
-        break;
-      }
-      case PropertyType.NUMBER: {
-        defaultValues[name] = existingInput[name] ?? property.defaultValue;
-        break;
-      }
-      case PropertyType.MULTI_SELECT_DROPDOWN:
-        defaultValues[name] = existingInput[name] ?? property.defaultValue;
-        break;
-      case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-        defaultValues[name] = existingInput[name] ?? property.defaultValue;
-        break;
       case PropertyType.OBJECT:
       case PropertyType.DYNAMIC:
         defaultValues[name] =
