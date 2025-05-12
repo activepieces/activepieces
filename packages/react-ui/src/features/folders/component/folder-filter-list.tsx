@@ -54,68 +54,102 @@ type FolderActionProps = {
   userHasPermissionToUpdateFolders: boolean;
 };
 
-const FolderAction = ({
+export const FolderAction = ({
   folder,
   refetch,
   userHasPermissionToUpdateFolders,
 }: FolderActionProps) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState<'rename' | 'delete' | null>(
+    null,
+  );
+
+  const handleOpenDialog = (dialog: 'rename' | 'delete') => {
+    setDialogOpen(dialog);
+    setIsDropdownOpen(false);
+  };
+
+  const handleDialogClose = () => {
+    setDialogOpen(null);
+  };
+
   return (
-    <DropdownMenu modal={true}>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-8" size="icon">
-          <EllipsisVertical className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <PermissionNeededTooltip
-          hasPermission={userHasPermissionToUpdateFolders}
-        >
-          <RenameFolderDialog
-            folderId={folder.id}
-            name={folder.displayName}
-            onRename={refetch}
+    <>
+      <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8" size="icon">
+            <EllipsisVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <PermissionNeededTooltip
+            hasPermission={userHasPermissionToUpdateFolders}
           >
             <Button
               variant="ghost"
               size="sm"
               className="flex h-8 w-full justify-start gap-2 items-center"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpenDialog('rename');
+              }}
             >
               <Pencil className="h-4 w-4" />
               <span>{t('Rename')}</span>
             </Button>
-          </RenameFolderDialog>
-        </PermissionNeededTooltip>
-
-        <PermissionNeededTooltip
-          hasPermission={userHasPermissionToUpdateFolders}
-        >
-          <ConfirmationDeleteDialog
-            title={t('Delete {folderName}', {
-              folderName: folder.displayName,
-            })}
-            message={t(
-              'If you delete this folder, we will keep its flows and move them to Uncategorized.',
-            )}
-            mutationFn={async () => {
-              await foldersApi.delete(folder.id);
-              refetch();
-            }}
-            entityName={folder.displayName}
+          </PermissionNeededTooltip>
+          <PermissionNeededTooltip
+            hasPermission={userHasPermissionToUpdateFolders}
           >
             <Button
               variant="ghost"
               size="sm"
               className="flex h-8 w-full justify-start gap-2 items-center"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpenDialog('delete');
+              }}
             >
               <Trash2 className="h-4 w-4 text-destructive" />
               <span className="text-destructive">{t('Delete')}</span>
             </Button>
-          </ConfirmationDeleteDialog>
-        </PermissionNeededTooltip>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          </PermissionNeededTooltip>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {dialogOpen === 'rename' && (
+        <RenameFolderDialog
+          folderId={folder.id}
+          name={folder.displayName}
+          onRename={refetch}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) handleDialogClose();
+          }}
+        />
+      )}
+
+      {dialogOpen === 'delete' && (
+        <ConfirmationDeleteDialog
+          title={t('Delete {folderName}', {
+            folderName: folder.displayName,
+          })}
+          message={t(
+            'If you delete this folder, we will keep its flows and move them to Uncategorized.',
+          )}
+          mutationFn={async () => {
+            console.info('HEllo');
+            await foldersApi.delete(folder.id);
+            refetch();
+          }}
+          entityName={folder.displayName}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) handleDialogClose();
+          }}
+        />
+      )}
+    </>
   );
 };
 
@@ -273,10 +307,15 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
       {moreFolders.length > 0 && (
         <Popover open={showMoreFolders} onOpenChange={setShowMoreFolders}>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <span className="text-xs font-semibold mr-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex items-center gap-1"
+            >
+              <span className="text-xs font-semibold">
                 ({moreFolders.length})
               </span>
+              more
               <ChevronDown className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
