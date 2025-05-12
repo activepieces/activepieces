@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.52.2",
-  "rcVersion": "0.53.0-rc.0",
+  "version": "0.53.1",
+  "rcVersion": "0.54.0-rc.0",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve react-ui",
@@ -58,8 +58,6 @@
     "@google/generative-ai": "0.21.0",
     "@hookform/resolvers": "3.9.0",
     "@hubspot/api-client": "12.0.1",
-    "@linear/sdk": "7.0.1",
-    "@mailchain/sdk": "0.31.0",
     "@mailchimp/mailchimp_marketing": "3.0.80",
     "@mailerlite/mailerlite-nodejs": "1.1.0",
     "@microsoft/microsoft-graph-client": "3.0.7",
@@ -183,14 +181,12 @@
     "i18next-browser-languagedetector": "8.0.0",
     "i18next-http-backend": "2.5.2",
     "i18next-icu": "2.3.0",
-    "imap": "0.8.17",
     "imapflow": "1.0.152",
     "intercom-client": "6.0.0",
     "intl-messageformat": "10.5.14",
     "ioredis": "5.4.1",
     "is-base64": "1.1.0",
     "isolated-vm": "5.0.1",
-    "jimp": "0.22.12",
     "js-yaml": "4.1.0",
     "jsdom": "23.0.1",
     "jshint": "2.13.6",
@@ -222,7 +218,6 @@
     "node-cron": "3.0.3",
     "nodemailer": "6.9.9",
     "notion-to-md": "3.1.1",
-    "npm": "10.8.2",
     "nx-cloud": "19.1.0",
     "object-sizeof": "2.6.3",
     "octokit": "4.1.2",
@@ -332,7 +327,6 @@
     "@swc/core": "1.5.7",
     "@swc/helpers": "0.5.11",
     "@testing-library/react": "15.0.6",
-    "@trumbitta/nx-plugin-unused-deps": "1.12.1",
     "@types/bcrypt": "5.0.0",
     "@types/color": "3.0.6",
     "@types/contrast-color": "1.0.3",
@@ -450,7 +444,6 @@
     "rollup": "npm:@rollup/wasm-node"
   },
   "overrides": {
-    "cross-spawn": "7.0.6",
     "@tryfabric/martian": {
       "@notionhq/client": "$@notionhq/client"
     },

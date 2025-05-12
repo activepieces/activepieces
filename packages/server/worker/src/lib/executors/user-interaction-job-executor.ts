@@ -29,6 +29,7 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                         simulate: jobData.test,
                         publicApiUrl: workerMachine.getPublicApiUrl(),
                     }),
+                    triggerPayload: jobData.triggerPayload,
                     test: jobData.test,
                     projectId: jobData.projectId,
                 })

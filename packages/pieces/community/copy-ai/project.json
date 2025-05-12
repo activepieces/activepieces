@@ -1,0 +1,39 @@
+{
+    "name": "pieces-copy-ai",
+    "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "packages/pieces/community/copy-ai/src",
+    "projectType": "library",
+    "release": {
+        "version": {
+            "generatorOptions": {
+                "packageRoot": "dist/{projectRoot}",
+                "currentVersionResolver": "git-tag"
+            }
+        }
+    },
+    "tags": [],
+    "targets": {
+        "build": {
+            "executor": "@nx/js:tsc",
+            "outputs": ["{options.outputPath}"],
+            "options": {
+                "outputPath": "dist/packages/pieces/community/copy-ai",
+                "tsConfig": "packages/pieces/community/copy-ai/tsconfig.lib.json",
+                "packageJson": "packages/pieces/community/copy-ai/package.json",
+                "main": "packages/pieces/community/copy-ai/src/index.ts",
+                "assets": ["packages/pieces/community/copy-ai/*.md"],
+                "buildableProjectDepsInPackageJsonType": "dependencies",
+                "updateBuildableProjectDepsInPackageJson": true
+            }
+        },
+        "nx-release-publish": {
+            "options": {
+                "packageRoot": "dist/{projectRoot}"
+            }
+        },
+        "lint": {
+            "executor": "@nx/eslint:lint",
+            "outputs": ["{options.outputFile}"]
+        }
+    }
+}
