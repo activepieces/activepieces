@@ -20,7 +20,7 @@ function EmojiPicker({
   return (
     <EmojiPickerPrimitive.Root
       className={cn(
-        'bg-popover text-popover-foreground isolate flex h-full w-fit flex-col overflow-hidden rounded-md',
+        'bg-popover text-popover-foreground isolate flex h-full w-full flex-col overflow-hidden rounded-md',
         className,
       )}
       data-slot="emoji-picker"
@@ -189,14 +189,14 @@ export const EmojiSelector = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="p-0 w-64 border"
+        className="w-64 border bg-popover rounded-md shadow-md p-0" 
         align="center"
         onWheel={handleContentWheel}
-        style={{ maxHeight: 'none' }}
+        sideOffset={5}
       >
         <EmojiPicker className="h-[300px]" onEmojiSelect={handleEmojiSelect}>
           <EmojiPickerSearch placeholder="Search emoji..." />
-          <EmojiPickerContent className="overflow-y-auto" />
+          <EmojiPickerContent />
           <EmojiPickerFooter />
         </EmojiPicker>
       </PopoverContent>
