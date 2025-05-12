@@ -18,16 +18,11 @@ export function SidebarInviteUserButton() {
   }
 
   return (
-    <Tooltip>
-      <InviteUserDialog>
-        <TooltipTrigger asChild>
-          <SidebarMenuButton className="w-full justify-start hover:bg-accent hover:text-primary rounded-lg transition-colors">
-            <UserPlus className="size-4  stroke-[2px]" />
-            <span>Invite User</span>
-          </SidebarMenuButton>
-        </TooltipTrigger>
-      </InviteUserDialog>
-      <TooltipContent side="bottom">{t('Invite User')}</TooltipContent>
-    </Tooltip>
+    <InviteUserDialog>
+      <SidebarMenuButton className="w-full justify-start hover:bg-accent hover:text-primary rounded-lg transition-colors">
+        <UserPlus className="size-4  stroke-[2px]" />
+        <span>Invite User</span>
+      </SidebarMenuButton>
+    </InviteUserDialog>
   );
 }
