@@ -36,11 +36,8 @@ export const SortableFolder = ({
   const [emoji, ...nameParts] = folder.displayName.split(' ');
   const name = nameParts.join(' ');
 
-  // Handle container click to avoid interfering with button clicks
   const handleContainerClick = (e: React.MouseEvent) => {
-    // Only apply drag listeners to container directly, not to child elements
     if (e.target === e.currentTarget) {
-      // This is a direct click on the container, not on a child
       e.preventDefault();
     }
   };

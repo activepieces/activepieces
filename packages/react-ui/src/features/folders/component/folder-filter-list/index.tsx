@@ -2,7 +2,7 @@ import { PlusIcon } from '@radix-ui/react-icons';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronDown } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import {
   DndContext,
@@ -45,6 +45,9 @@ import { SortableFolder } from './sortable-folder';
 
 export const folderIdParamName = 'folderId';
 const FOLDER_ORDER_STORAGE_KEY = 'ap_folder_order';
+const AVERAGE_FOLDER_WIDTH = 180; // Average width of folder item in pixels
+const ADD_BUTTON_SPACE = 50; // Space needed for the add folder button in pixels
+const SAFETY_MARGIN = 30; // Extra space to prevent layout issues
 
 const FolderFilterList = ({ refresh }: { refresh: number }) => {
   const location = useLocation();
@@ -55,6 +58,8 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
   const [sortedAlphabeticallyIncreasingly, setSortedAlphabeticallyIncreasingly] = useState(true);
   const [showMoreFolders, setShowMoreFolders] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [visibleFolderCount, setVisibleFolderCount] = useState(5);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   const [folderOrder, setFolderOrder] = useState<string[]>(() => {
     const savedOrder = localStorage.getItem(FOLDER_ORDER_STORAGE_KEY);
@@ -68,8 +73,6 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
       },
     })
   );
-
-  const visibleFolderCount = 5;
 
   const updateSearchParams = (folderId: string | undefined) => {
     const newQueryParameters: URLSearchParams = new URLSearchParams(
@@ -195,6 +198,28 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
     localStorage.setItem(FOLDER_ORDER_STORAGE_KEY, JSON.stringify(newOrder));
   };
 
+  useEffect(() => {
+    if (!containerRef.current || !folders || folders.length === 0) return;
+    
+    const updateVisibleCount = () => {
+      const containerWidth = containerRef.current?.clientWidth || 0;
+      const availableWidth = Math.max(0, containerWidth - (ADD_BUTTON_SPACE + SAFETY_MARGIN));
+      
+      const estimatedCount = Math.floor(availableWidth / AVERAGE_FOLDER_WIDTH);
+      
+      const calculatedCount = Math.max(1, Math.min(estimatedCount, folders.length));
+      
+      setVisibleFolderCount(calculatedCount);
+    };
+    
+    updateVisibleCount();
+    
+    const resizeObserver = new ResizeObserver(updateVisibleCount);
+    resizeObserver.observe(containerRef.current);
+    
+    return () => resizeObserver.disconnect();
+  }, [folders]);
+
   return (
     <div className="flex items-center gap-2 w-full">
       <div className="flex items-center gap-2">
@@ -228,8 +253,8 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
       
       <div className="h-6 w-px bg-border mx-1"></div>
       
-      <div className="flex-1 overflow-hidden">
-        <div className="flex items-center gap-2 min-w-0 flex-wrap">
+      <div className="flex-1 overflow-hidden" ref={containerRef}>
+        <div className="flex items-center gap-2 min-w-0">
           {!isLoading && (
             <>
               {(visibleFolders.length > 0 || (folders && folders.length > 0)) && (
@@ -248,9 +273,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                   >
                     <div className={cn(
                       "flex items-center gap-2 min-w-0",
-                      isDragging 
-                        ? "overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] whitespace-nowrap" 
-                        : "flex-wrap"
+                      "overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] whitespace-nowrap" 
                     )}>
                       {(isDragging ? orderedFolders : visibleFolders).map((folder) => (
                         <SortableFolder
