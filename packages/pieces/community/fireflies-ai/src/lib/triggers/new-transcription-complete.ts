@@ -1,5 +1,5 @@
 
-import { createTrigger, Property, StoreScope, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import crypto from 'crypto';
 export const newTranscriptionComplete = createTrigger({
   name: 'newTranscriptionComplete',

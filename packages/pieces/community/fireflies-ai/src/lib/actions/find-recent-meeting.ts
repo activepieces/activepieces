@@ -19,6 +19,10 @@ export const findRecentMeeting = createAction({
   async run({ auth, propsValue }) {
     const user = await fireflyService.getUser(auth, propsValue.userId);
 
+    if (!user.recent_meeting) {
+      throw new Error('No recent meeting found for the user');
+    }
+
     return await fireflyService.getTranscript(auth, user.recent_meeting);
   },
 });
