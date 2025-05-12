@@ -2,6 +2,6 @@
   "name": "@activepieces/piece-clarifai",
   "version": "0.2.7",
   "dependencies": {
-    "clarifai-nodejs-grpc": "10.10.2"
+    "clarifai-nodejs-grpc": "11.3.3"
   }
 }
