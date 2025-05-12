@@ -51,11 +51,6 @@ export const FilePieceMetadataService = (_log: FastifyBaseLogger): PieceMetadata
                 pieces: originalPiecesMetadata,
                 suggestionType: params.suggestionType,
             })
-            console.log('--------------------------------')
-            pieces.forEach(r=>{
-                console.log(r.i18n)
-            })
-            console.log('--------------------------------')
             const filteredPieces = pieces.map((p) =>
                 toPieceMetadataModel({
                     pieceMetadata: p,
