@@ -19,18 +19,28 @@ export const createEntryAction = createAction({
       description: 'The ID of the record to add to the list',
       required: true,
     }),
+    parent_object: Property.ShortText({
+      displayName: 'Parent Object Type',
+      description: 'The type of object the record belongs to (e.g., people, companies, deals)',
+      required: true,
+      defaultValue: 'people',
+    }),
     attributes: Property.Object({
       displayName: 'Entry Attributes',
-      description: 'The attributes of the entry. Use key:value format',
+      description: 'The attributes of the entry (e.g., status, custom fields)',
       required: false,
     }),
   },
   async run({ auth, propsValue }) {
-    const { list_id, record_id, attributes } = propsValue;
+    const { list_id, record_id, parent_object, attributes } = propsValue;
 
+    // Format the request payload according to Attio API requirements
     const payload = {
-      record_id: record_id,
-      attributes: attributes || {}
+      data: {
+        parent_record_id: record_id,
+        parent_object: parent_object,
+        entry_values: attributes || {}
+      }
     };
 
     const response = await makeRequest(

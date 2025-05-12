@@ -21,20 +21,25 @@ export const updateEntryAction = createAction({
     }),
     attributes: Property.Object({
       displayName: 'Entry Attributes',
-      description: 'The attributes to update. Use key:value format',
+      description: 'The attributes to update (e.g., status, custom fields)',
       required: true,
     }),
   },
   async run({ auth, propsValue }) {
     const { list_id, entry_id, attributes } = propsValue;
 
+    // Format the request payload according to Attio API requirements
+    const payload = {
+      data: {
+        entry_values: attributes
+      }
+    };
+
     const response = await makeRequest(
       auth,
-      HttpMethod.PATCH,
+      HttpMethod.PUT, // Change to PUT as shown in the API documentation
       `/lists/${list_id}/entries/${entry_id}`,
-      {
-        attributes: attributes
-      }
+      payload
     );
 
     return response;
