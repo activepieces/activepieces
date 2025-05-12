@@ -59,7 +59,7 @@ export const SortableFolder = ({
         variant={isSelected ? 'secondary' : 'ghost'}
         size="sm"
         onClick={onClick}
-        className="group whitespace-nowrap flex overflow-hidden items-center px-3 border-0 z-10"
+        className="group whitespace-nowrap flex rounded-none overflow-hidden items-center px-3 border-0 z-10"
       >
         <span className="mr-2">{emoji}</span>
         <span className="mr-2 flex items-center">

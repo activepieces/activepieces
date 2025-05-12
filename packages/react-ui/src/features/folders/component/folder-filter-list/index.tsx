@@ -46,8 +46,9 @@ import { SortableFolder } from './sortable-folder';
 export const folderIdParamName = 'folderId';
 const FOLDER_ORDER_STORAGE_KEY = 'ap_folder_order';
 const AVERAGE_FOLDER_WIDTH = 180; // Average width of folder item in pixels
-const ADD_BUTTON_SPACE = 50; // Space needed for the add folder button in pixels
-const SAFETY_MARGIN = 30; // Extra space to prevent layout issues
+const ADD_BUTTON_SPACE = 60; // Space needed for the add folder button in pixels
+const MORE_BUTTON_SPACE = 100; // Space for "more" button if visible
+const SAFETY_MARGIN = 50; // Extra space to prevent layout issues
 
 const FolderFilterList = ({ refresh }: { refresh: number }) => {
   const location = useLocation();
@@ -199,26 +200,51 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
   };
 
   useEffect(() => {
-    if (!containerRef.current || !folders || folders.length === 0) return;
+    if (!containerRef.current) return;
     
     const updateVisibleCount = () => {
-      const containerWidth = containerRef.current?.clientWidth || 0;
-      const availableWidth = Math.max(0, containerWidth - (ADD_BUTTON_SPACE + SAFETY_MARGIN));
+      // Only calculate if we have folders
+      if (!folders || folders.length === 0) return;
       
+      const containerWidth = containerRef.current?.clientWidth || 0;
+      
+      // Reserve space for buttons and safety margin
+      let reservedSpace = ADD_BUTTON_SPACE + SAFETY_MARGIN;
+      
+      // If we have more folders than visibleFolderCount, also reserve space for "more" button
+      if (folders.length > visibleFolderCount) {
+        reservedSpace += MORE_BUTTON_SPACE;
+      }
+      
+      const availableWidth = Math.max(0, containerWidth - reservedSpace);
+      
+      // Calculate maximum number of folders that can fit
       const estimatedCount = Math.floor(availableWidth / AVERAGE_FOLDER_WIDTH);
       
+      // Ensure at least 1 folder is shown and not more than the total folders
       const calculatedCount = Math.max(1, Math.min(estimatedCount, folders.length));
       
-      setVisibleFolderCount(calculatedCount);
+      // Only update if the count actually changed
+      if (calculatedCount !== visibleFolderCount) {
+        setVisibleFolderCount(calculatedCount);
+      }
     };
     
+    // Initial calculation
     updateVisibleCount();
     
+    // Adjust on window resize
+    window.addEventListener('resize', updateVisibleCount);
+    
+    // Set up ResizeObserver for container resizing
     const resizeObserver = new ResizeObserver(updateVisibleCount);
     resizeObserver.observe(containerRef.current);
     
-    return () => resizeObserver.disconnect();
-  }, [folders]);
+    return () => {
+      window.removeEventListener('resize', updateVisibleCount);
+      resizeObserver.disconnect();
+    };
+  }, [folders, visibleFolderCount]);
 
   return (
     <div className="flex items-center gap-2 w-full">
@@ -301,22 +327,6 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                               userHasPermissionToUpdateFolders={userHasPermissionToUpdateFolders}
                             />
                           ))}
-                          
-                          <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateFolders}>
-                            <CreateFolderDialog
-                              refetchFolders={refetchFolders}
-                              updateSearchParams={updateSearchParams}
-                            >
-                              <Button
-                                variant="outline"
-                                disabled={!userHasPermissionToUpdateFolders}
-                                size="icon"
-                                className="size-9"
-                              >
-                                <PlusIcon className="h-4 w-4" />
-                              </Button>
-                            </CreateFolderDialog>
-                          </PermissionNeededTooltip>
                         </>
                       )}
                     </div>
@@ -324,6 +334,23 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                 </DndContext>
               )}
               
+              {/* Always show the Create Folder button, positioned after folders */}
+              <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateFolders}>
+                <CreateFolderDialog
+                  refetchFolders={refetchFolders}
+                  updateSearchParams={updateSearchParams}
+                >
+                  <Button
+                    variant="outline"
+                    disabled={!userHasPermissionToUpdateFolders}
+                    size="icon"
+                    className="size-9"
+                  >
+                    <PlusIcon className="h-4 w-4" />
+                  </Button>
+                </CreateFolderDialog>
+              </PermissionNeededTooltip>
+
               {!isLoading && !isDragging && moreFolders.length > 0 && (
                 <Popover open={showMoreFolders} onOpenChange={setShowMoreFolders}>
                   <PopoverTrigger asChild>

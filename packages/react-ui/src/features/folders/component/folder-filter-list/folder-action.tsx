@@ -44,7 +44,7 @@ export const FolderAction = ({
     <>
       <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-9" size="icon">
+          <Button variant="ghost" className="h-9 !rounded-none" size="icon">
             <EllipsisVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
