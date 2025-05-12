@@ -7,6 +7,8 @@ import { extractPieceFromModule } from '../../../packages/shared/src'
 import * as semver from 'semver'
 import { readPackageJson } from './files'
 import { StatusCodes } from 'http-status-codes'
+import { execSync } from 'child_process'
+
 type Piece = {
     name: string;
     displayName: string;
@@ -147,6 +149,13 @@ async function traverseFolder(folderPath: string): Promise<string[]> {
 async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | null> {
     try {
         const packageJson = await readPackageJson(folderPath);
+        
+        const packageLockPath = join(folderPath, 'package.json');
+        const packageExists = await stat(packageLockPath).catch(() => null);
+        if (packageExists) {
+            console.info(`[loadPieceFromFolder] package.json exists, running npm install`)
+            execSync('npm install', { cwd: folderPath, stdio: 'inherit' });
+        }
 
         const module = await import(
             join(folderPath, 'src', 'index')
