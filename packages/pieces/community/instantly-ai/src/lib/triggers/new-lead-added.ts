@@ -1,18 +1,34 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { instantlyAiAuth } from '../../index';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { isNil } from '@activepieces/shared';
 import { makeRequest } from '../common/client';
+
+interface InstantlyLeadWebhookPayload {
+  timestamp: string;
+  event_type: string;
+  campaign_name: string;
+  workspace: string;
+  campaign_id: string;
+  lead_email: string;
+  firstName?: string;
+  lastName?: string;
+  companyName?: string;
+  website?: string;
+  phone?: string;
+  [key: string]: any;
+}
 
 export const newLeadAddedTrigger = createTrigger({
   auth: instantlyAiAuth,
   name: 'new_lead_added',
   displayName: 'New Lead Added',
-  description: 'Triggers when a lead is added to a campaign or list',
+  description: 'Triggers when a new lead is added to a campaign.\n\nTo use this trigger, manually set up a webhook in Instantly.ai:\n1. Go to Instantly settings\n2. Navigate to Integrations tab and find webhooks\n3. Click "Add Webhook"\n4. Enter the webhook URL provided by ActivePieces\n5. Select the campaign and event type "Email Sent"\n6. Click "Add Webhook"',
   props: {
     campaign_id: Property.Dropdown({
       displayName: 'Campaign',
-      description: 'Filter by Campaign (leave empty to check all campaigns)',
-      required: false,
+      description: 'The campaign to monitor for new leads',
+      required: true,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) {
@@ -58,131 +74,67 @@ export const newLeadAddedTrigger = createTrigger({
         }
       },
     }),
-    list_id: Property.Dropdown({
-      displayName: 'Lead List',
-      description: 'Filter by Lead List (leave empty to check all lists)',
-      required: false,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Please authenticate first',
-            options: [],
-          };
-        }
-
-        try {
-          const response = await makeRequest({
-            endpoint: 'lead-lists',
-            method: HttpMethod.GET,
-            apiKey: auth as string,
-          });
-
-          if (!response || !response.items || !Array.isArray(response.items)) {
-            return {
-              disabled: true,
-              placeholder: 'No lead lists found',
-              options: [],
-            };
-          }
-
-          return {
-            options: response.items.map((list: any) => {
-              return {
-                label: list.name,
-                value: list.id,
-              };
-            }),
-          };
-        } catch (error) {
-          return {
-            disabled: true,
-            placeholder: 'Error fetching lead lists',
-            options: [],
-          };
-        }
-      },
-    }),
   },
+  type: TriggerStrategy.WEBHOOK,
   sampleData: {
-    id: "54321",
-    email: "contact@example.com",
-    first_name: "Jane",
-    last_name: "Doe",
-    company: "Example Corp",
-    phone: "+1234567890",
-    added_to: {
-      type: "campaign",
-      id: "12345",
-      name: "Product Launch Campaign"
-    },
-    created_at: "2023-08-22T14:30:45Z"
+    timestamp: "2023-08-22T15:45:30.123Z",
+    event_type: "email_sent",
+    campaign_name: "Product Demo Campaign",
+    workspace: "workspace_123456",
+    campaign_id: "campaign_789012",
+    lead_email: "contact@example.com",
+    firstName: "John",
+    lastName: "Doe",
+    companyName: "Example Inc",
+    website: "example.com",
+    phone: "+1234567890"
   },
-  type: TriggerStrategy.POLLING,
-  onEnable: async (context) => {
-    // Store last check time when the trigger is enabled
-    await context.store.put('lastFetchTime', new Date().toISOString());
-  },
-  onDisable: async (context) => {
-    // Clear the stored timestamp when the trigger is disabled
-    await context.store.delete('lastFetchTime');
-  },
-  run: async (context) => {
-    const { campaign_id, list_id } = context.propsValue;
-    const { auth: apiKey } = context;
-
-    // Get last fetch time or use a default (24 hours ago)
-    const lastFetchTime = await context.store.get('lastFetchTime') ||
-      new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
-    // Update last fetch time for next run
-    await context.store.put('lastFetchTime', new Date().toISOString());
-
-    // Set up endpoint and query params based on whether we're looking at a campaign or a list
-    let endpoint;
-    const queryParams: Record<string, string | number | boolean> = {
-      created_after: lastFetchTime as string,
+  async onEnable(context) {
+    // Store information about the webhook for later reference
+    // Note: The webhook must be manually created in Instantly.ai dashboard
+    const webhook = {
+      url: context.webhookUrl,
+      campaign_id: context.propsValue.campaign_id,
+      event_type: "email_sent"  // Email sent is a good indicator of a new lead being added
     };
 
-    if (campaign_id) {
-      endpoint = `campaigns/${campaign_id}/leads`;
-    } else if (list_id) {
-      endpoint = `leads/list/${list_id}/items`;
-    } else {
-      // If neither is specified, check all leads
-      endpoint = 'leads';
+    // Store webhook info in the database
+    await context.store.put('new_lead_webhook', webhook);
+  },
+  async onDisable(context) {
+    // Nothing to do as Instantly doesn't provide a way to programmatically remove webhooks
+    // Users will need to remove webhooks manually from Instantly's integration settings
+  },
+  async run(context) {
+    // Process and return webhook payload
+    const payload = context.payload.body as InstantlyLeadWebhookPayload;
+
+    // Verify this is a lead-related event
+    if (payload.event_type === "email_sent" &&
+        payload.campaign_id === context.propsValue.campaign_id) {
+      // Extract lead information from the payload
+      const leadData = {
+        id: payload.lead_email,
+        email: payload.lead_email,
+        first_name: payload.firstName,
+        last_name: payload.lastName,
+        created_at: payload.timestamp,
+        company: payload.companyName,
+        website: payload.website,
+        phone: payload.phone
+      };
+
+      // Add remaining payload fields except for campaign_id which we already extracted
+      const { campaign_id, ...otherFields } = payload;
+
+      return [{
+        ...leadData,
+        ...otherFields,
+        campaign_id // Add campaign_id at the end to ensure it's the correct one
+      }];
     }
 
-    // Fetch leads added since last check
-    try {
-      const response = await makeRequest({
-        endpoint,
-        method: HttpMethod.GET,
-        apiKey: apiKey as string,
-        queryParams,
-      });
-
-      if (!response.items || !Array.isArray(response.items)) {
-        return [];
-      }
-
-      // Format and return leads
-      return response.items.map((lead: any) => {
-        return {
-          id: lead.id,
-          email: lead.email,
-          first_name: lead.first_name,
-          last_name: lead.last_name,
-          created_at: lead.timestamp_created,
-          campaign_id: campaign_id || lead.campaign_id,
-          list_id: list_id || lead.list_id,
-          // Include other fields from the lead
-          ...lead,
-        };
-      });
-    } catch (error) {
-      return [];
-    }
+    // Don't trigger for other event types
+    return [];
   },
 });
