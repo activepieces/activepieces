@@ -63,5 +63,4 @@ export const generateTranslationFileForPieceCommand = new Command('generate-tran
   });
 
 
-
   

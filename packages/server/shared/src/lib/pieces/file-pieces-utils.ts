@@ -119,8 +119,9 @@ export const filePiecesUtils = (packages: string[], log: FastifyBaseLogger) => {
                 pieceName,
                 pieceVersion,
             })
+            const originalMetadata = await piece.metadata({ packageName: pieceName, pieceSource: 'dist' })
             const metadata: PieceMetadata = {
-                ...(await piece.metadata({packageName: pieceName, pieceSource: 'dist'})),
+                ...originalMetadata,
                 name: pieceName,
                 version: pieceVersion,
                 authors: piece.authors,

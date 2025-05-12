@@ -9,192 +9,168 @@ import { isNil, LocalesEnum } from "@activepieces/shared"
 import path from 'path';
 import fs from 'fs/promises';
 import fastGlob from 'fast-glob';
+
 const fetchI18nForActionOrTrigger = (source: Action<PieceAuthProperty, InputPropertyMap> | Trigger<PieceAuthProperty, InputPropertyMap>) => {
-    const i18n:Record<string, string> = {}
-  
-    if(source.displayName) {
-      i18n[source.displayName] = source.displayName
-    }
-  
-    if(source.description) {
-      i18n[source.description] = source.description
-    }
-  
-  
-    Object.values(source.props).forEach((prop) => {
-      if(prop.displayName) {
-        i18n[prop.displayName] = prop.displayName
-      }
-      if(prop.description) {
-        i18n[prop.description] = prop.description
-      }
-      switch(prop.type) {
-        case PropertyType.STATIC_DROPDOWN:
-        case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-          {
-            if(prop.options) {
-             prop.options.options.forEach((option) => {
-              if(option.label) {
-                i18n[option.label] = option.label
-              }
-             })
-            }
-            break;
-          }
-          case PropertyType.MARKDOWN:
-           {
-            if(prop.description) {
-              i18n[prop.description] = prop.description
-            }
-            break;
-           }
-       }
-    })
-    return i18n
-   
-  
+  const i18n: Record<string, string> = {}
+
+  if (source.displayName) {
+    i18n[source.displayName] = source.displayName
   }
-  
-  export const generateTranslationFile = ({actions, triggers, description,displayName, auth}:  Piece<PieceAuthProperty>) => {
-    let i18n:Record<string, string> = {}
-    i18n[displayName] = displayName
-    i18n[description] = description
-    if(auth) {
-      if(auth.displayName) {
-        i18n[auth.displayName] = auth.displayName
-      }
-      if(auth.description) {
-        i18n[auth.description] = auth.description
-      }
-      switch(auth.type) {
-        case PropertyType.OAUTH2:{
-          if(auth.props){
-            Object.values(auth.props).forEach((prop) => {
-              if(prop.displayName) {
-                i18n[prop.displayName] = prop.displayName
-              }
-              if(prop.description) {
-                i18n[prop.description] = prop.description
+
+  if (source.description) {
+    i18n[source.description] = source.description
+  }
+
+
+  Object.values(source.props).forEach((prop) => {
+    if (prop.displayName) {
+      i18n[prop.displayName] = prop.displayName
+    }
+    if (prop.description) {
+      i18n[prop.description] = prop.description
+    }
+    switch (prop.type) {
+      case PropertyType.STATIC_DROPDOWN:
+      case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
+        {
+          if (prop.options) {
+            prop.options.options.forEach((option) => {
+              if (option.label) {
+                i18n[option.label] = option.label
               }
             })
           }
           break;
         }
-        case PropertyType.SECRET_TEXT: {
-          break;
-        }
-        case PropertyType.BASIC_AUTH :{
-          if(auth.username.displayName) {
-            i18n[auth.username.displayName] = auth.username.displayName
-          }
-          if(auth.username.description) {
-            i18n[auth.username.description] = auth.username.description
-          }
-          if(auth.password.displayName) {
-            i18n[auth.password.displayName] = auth.password.displayName
-          }
-          if(auth.password.description) {
-            i18n[auth.password.description] = auth.password.description
+      case PropertyType.MARKDOWN:
+        {
+          if (prop.description) {
+            i18n[prop.description] = prop.description
           }
           break;
         }
-        case PropertyType.CUSTOM_AUTH: {
-           Object.values((auth as CustomAuthProperty<CustomAuthProps>).props ).forEach((prop) => {
-            if(prop.displayName) {
+    }
+  })
+  return i18n
+
+
+}
+
+export const generateTranslationFile = ({ actions, triggers, description, displayName, auth }: Piece<PieceAuthProperty>) => {
+  let i18n: Record<string, string> = {}
+  i18n[displayName] = displayName
+  i18n[description] = description
+  if (auth) {
+    if (auth.displayName) {
+      i18n[auth.displayName] = auth.displayName
+    }
+    if (auth.description) {
+      i18n[auth.description] = auth.description
+    }
+    switch (auth.type) {
+      case PropertyType.OAUTH2: {
+        if (auth.props) {
+          Object.values(auth.props).forEach((prop) => {
+            if (prop.displayName) {
               i18n[prop.displayName] = prop.displayName
             }
-            if(prop.description) {
+            if (prop.description) {
               i18n[prop.description] = prop.description
             }
           })
-          break;
-        }
-      }
-    }
-  
-    Object.values(actions).forEach((action) => {
-      i18n = {...i18n, ...fetchI18nForActionOrTrigger(action)}
-    })
-  
-    Object.values(triggers).forEach((trigger) => {
-      i18n = {...i18n, ...fetchI18nForActionOrTrigger(trigger)}
-    })
-    
-    return i18n
-   }
-  
-   const fetchTranslationFromI18n = (i18n: Record<string, string>, key: string) => {
-    if(!i18n[key]) {
-      return key
-    }
-    return i18n[key]
-   }
-   const translateActionOrTrigger  = <T extends ActionBase | TriggerBase>(source: T, i18n: Record<string, string>): T => {
-    const translatedActionOrTrigger: T = JSON.parse(JSON.stringify(source))
-    translatedActionOrTrigger.displayName = fetchTranslationFromI18n(i18n, source.displayName)
-    translatedActionOrTrigger.description = fetchTranslationFromI18n(i18n, source.description)
-    translatedActionOrTrigger.props = Object.fromEntries(Object.entries(source.props).map(([key, prop]) => {
-      const translatedProp: PieceProperty = JSON.parse(JSON.stringify(prop))
-      translatedProp.displayName = fetchTranslationFromI18n(i18n, prop.displayName)
-      if(prop.description) {
-        translatedProp.description = fetchTranslationFromI18n(i18n, prop.description)
-      }
-      switch(translatedProp.type) {
-        case PropertyType.STATIC_DROPDOWN:
-        case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-          {
-            translatedProp.options.options = translatedProp.options.options.map((option) => ({...option, label: fetchTranslationFromI18n(i18n, option.label)}))
-            break;
-          }
-        case PropertyType.MARKDOWN:
-          {
-            if(translatedProp.description) {
-              translatedProp.description = fetchTranslationFromI18n(i18n, translatedProp.description)
-            }
-          }
-          break;
-      }
-      return [key, translatedProp]
-    }))
-    return translatedActionOrTrigger
-   }
-  
-   const translateAuth = (auth: PieceAuthProperty, i18n: Record<string, string>) => {
-    const translatedAuth: PieceAuthProperty = JSON.parse(JSON.stringify(auth))
-    translatedAuth.displayName = fetchTranslationFromI18n(i18n, auth.displayName)
-    if(auth.description) {
-    translatedAuth.description = fetchTranslationFromI18n(i18n, auth.description)
-    }
-    switch(translatedAuth.type) {
-      case PropertyType.OAUTH2:
-      {
-        if(translatedAuth.props) {
-          translatedAuth.props = Object.fromEntries(Object.entries(translatedAuth.props).map(([key, prop]) => {
-           const translatedProp = {
-            ...prop,
-            displayName: fetchTranslationFromI18n(i18n, prop.displayName),
-            description: prop.description ? fetchTranslationFromI18n(i18n, prop.description) : undefined
-           }
-           return [key, translatedProp]
-          }))
         }
         break;
       }
-      case PropertyType.SECRET_TEXT:
+      case PropertyType.SECRET_TEXT: {
+        break;
+      }
+      case PropertyType.BASIC_AUTH: {
+        if (auth.username.displayName) {
+          i18n[auth.username.displayName] = auth.username.displayName
+        }
+        if (auth.username.description) {
+          i18n[auth.username.description] = auth.username.description
+        }
+        if (auth.password.displayName) {
+          i18n[auth.password.displayName] = auth.password.displayName
+        }
+        if (auth.password.description) {
+          i18n[auth.password.description] = auth.password.description
+        }
+        break;
+      }
+      case PropertyType.CUSTOM_AUTH: {
+        Object.values((auth as CustomAuthProperty<CustomAuthProps>).props).forEach((prop) => {
+          if (prop.displayName) {
+            i18n[prop.displayName] = prop.displayName
+          }
+          if (prop.description) {
+            i18n[prop.description] = prop.description
+          }
+        })
+        break;
+      }
+    }
+  }
+
+  Object.values(actions).forEach((action) => {
+    i18n = { ...i18n, ...fetchI18nForActionOrTrigger(action) }
+  })
+
+  Object.values(triggers).forEach((trigger) => {
+    i18n = { ...i18n, ...fetchI18nForActionOrTrigger(trigger) }
+  })
+
+  return i18n
+}
+
+const fetchTranslationFromI18n = (i18n: Record<string, string>, key: string) => {
+  if (!i18n[key]) {
+    return key
+  }
+  return i18n[key]
+}
+const translateActionOrTrigger = <T extends ActionBase | TriggerBase>(source: T, i18n: Record<string, string>): T => {
+  const translatedActionOrTrigger: T = JSON.parse(JSON.stringify(source))
+  translatedActionOrTrigger.displayName = fetchTranslationFromI18n(i18n, source.displayName)
+  translatedActionOrTrigger.description = fetchTranslationFromI18n(i18n, source.description)
+  translatedActionOrTrigger.props = Object.fromEntries(Object.entries(source.props).map(([key, prop]) => {
+    const translatedProp: PieceProperty = JSON.parse(JSON.stringify(prop))
+    translatedProp.displayName = fetchTranslationFromI18n(i18n, prop.displayName)
+    if (prop.description) {
+      translatedProp.description = fetchTranslationFromI18n(i18n, prop.description)
+    }
+    switch (translatedProp.type) {
+      case PropertyType.STATIC_DROPDOWN:
+      case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
         {
+          translatedProp.options.options = translatedProp.options.options.map((option) => ({ ...option, label: fetchTranslationFromI18n(i18n, option.label) }))
           break;
         }
-      case PropertyType.BASIC_AUTH:
+      case PropertyType.MARKDOWN:
         {
-            translatedAuth.username.displayName = fetchTranslationFromI18n(i18n, translatedAuth.username.displayName)
-            translatedAuth.username.description = translatedAuth.username.description ? fetchTranslationFromI18n(i18n, translatedAuth.username.description) : undefined
-            translatedAuth.password.displayName = fetchTranslationFromI18n(i18n, translatedAuth.password.displayName)
-            translatedAuth.password.description = translatedAuth.password.description ? fetchTranslationFromI18n(i18n, translatedAuth.password.description) : undefined
-            break;
+          if (translatedProp.description) {
+            translatedProp.description = fetchTranslationFromI18n(i18n, translatedProp.description)
+          }
         }
-      case PropertyType.CUSTOM_AUTH:
-        {
-          translatedAuth.props = Object.fromEntries(Object.entries((translatedAuth as CustomAuthProperty<CustomAuthProps>).props).map(([key, prop]) => {
+        break;
+    }
+    return [key, translatedProp]
+  }))
+  return translatedActionOrTrigger
+}
+
+const translateAuth = (auth: PieceAuthProperty, i18n: Record<string, string>) => {
+  const translatedAuth: PieceAuthProperty = JSON.parse(JSON.stringify(auth))
+  translatedAuth.displayName = fetchTranslationFromI18n(i18n, auth.displayName)
+  if (auth.description) {
+    translatedAuth.description = fetchTranslationFromI18n(i18n, auth.description)
+  }
+  switch (translatedAuth.type) {
+    case PropertyType.OAUTH2:
+      {
+        if (translatedAuth.props) {
+          translatedAuth.props = Object.fromEntries(Object.entries(translatedAuth.props).map(([key, prop]) => {
             const translatedProp = {
               ...prop,
               displayName: fetchTranslationFromI18n(i18n, prop.displayName),
@@ -202,59 +178,83 @@ const fetchI18nForActionOrTrigger = (source: Action<PieceAuthProperty, InputProp
             }
             return [key, translatedProp]
           }))
-          break;
         }
-    }
-    return translatedAuth
-   }
-   export const translatePiece =<T extends PieceMetadataModelSummary | PieceMetadataModel>(piece: T, locale: LocalesEnum): T => {
-        if(isNil(piece.i18n)) {
-          return piece
-        }
-        const i18n = piece.i18n[locale]
-        if(!i18n) {
-          return piece;
-        }
-        const translatedPiece:  PieceMetadataModelSummary | PieceMetadataModel = JSON.parse(JSON.stringify(piece))
-        translatedPiece.displayName = fetchTranslationFromI18n(i18n, piece.displayName)
-        translatedPiece.description = fetchTranslationFromI18n(i18n, piece.description)
-        if(typeof translatedPiece.actions === 'object') {
-         translatedPiece.actions = Object.fromEntries(Object.entries(translatedPiece.actions).map(([key, action]) => [key, translateActionOrTrigger(action, i18n)]))
-        }
-        if(typeof translatedPiece.triggers === 'object') {
-          translatedPiece.triggers = Object.fromEntries(Object.entries(translatedPiece.triggers).map(([key, trigger]) => [key, translateActionOrTrigger(trigger, i18n)]))
-        }
-        if(translatedPiece.auth)
-        {
-          translatedPiece.auth = translateAuth(translatedPiece.auth, i18n)
-        }
-        return translatedPiece as T
-   }
+        break;
+      }
+    case PropertyType.SECRET_TEXT:
+      {
+        break;
+      }
+    case PropertyType.BASIC_AUTH:
+      {
+        translatedAuth.username.displayName = fetchTranslationFromI18n(i18n, translatedAuth.username.displayName)
+        translatedAuth.username.description = translatedAuth.username.description ? fetchTranslationFromI18n(i18n, translatedAuth.username.description) : undefined
+        translatedAuth.password.displayName = fetchTranslationFromI18n(i18n, translatedAuth.password.displayName)
+        translatedAuth.password.description = translatedAuth.password.description ? fetchTranslationFromI18n(i18n, translatedAuth.password.description) : undefined
+        break;
+      }
+    case PropertyType.CUSTOM_AUTH:
+      {
+        translatedAuth.props = Object.fromEntries(Object.entries((translatedAuth as CustomAuthProperty<CustomAuthProps>).props).map(([key, prop]) => {
+          const translatedProp = {
+            ...prop,
+            displayName: fetchTranslationFromI18n(i18n, prop.displayName),
+            description: prop.description ? fetchTranslationFromI18n(i18n, prop.description) : undefined
+          }
+          return [key, translatedProp]
+        }))
+        break;
+      }
+  }
+  return translatedAuth
+}
+export const translatePiece = <T extends PieceMetadataModelSummary | PieceMetadataModel>(piece: T, locale: LocalesEnum): T => {
+  if (isNil(piece.i18n)) {
+    return piece
+  }
+  const i18n = piece.i18n[locale]
+  if (!i18n) {
+    return piece;
+  }
+  const translatedPiece: PieceMetadataModelSummary | PieceMetadataModel = JSON.parse(JSON.stringify(piece))
+  translatedPiece.displayName = fetchTranslationFromI18n(i18n, piece.displayName)
+  translatedPiece.description = fetchTranslationFromI18n(i18n, piece.description)
+  if (typeof translatedPiece.actions === 'object') {
+    translatedPiece.actions = Object.fromEntries(Object.entries(translatedPiece.actions).map(([key, action]) => [key, translateActionOrTrigger(action, i18n)]))
+  }
+  if (typeof translatedPiece.triggers === 'object') {
+    translatedPiece.triggers = Object.fromEntries(Object.entries(translatedPiece.triggers).map(([key, trigger]) => [key, translateActionOrTrigger(trigger, i18n)]))
+  }
+  if (translatedPiece.auth) {
+    translatedPiece.auth = translateAuth(translatedPiece.auth, i18n)
+  }
+  return translatedPiece as T
+}
 
-type I18nType =  Partial<Record<LocalesEnum, Record<string, string>>>;
+type I18nType = Partial<Record<LocalesEnum, Record<string, string>>>;
 async function fileExists(filePath: string) {
   try {
     await fs.access(filePath);
     return true;
   } catch {
-    return false; 
+    return false;
   }
 }
 
-const readLocaleFile = async (locale: LocalesEnum, pieceOutputPath: string) =>{
+const readLocaleFile = async (locale: LocalesEnum, pieceOutputPath: string) => {
   try {
     path.resolve
-    const filePath = path.join(pieceOutputPath,'src', 'i18n', `${locale}.json`);
+    const filePath = path.join(pieceOutputPath, 'src', 'i18n', `${locale}.json`);
     if (await fileExists(filePath)) {
       const file = await fs.readFile(filePath, 'utf8');
       const translations = JSON.parse(file);
-      if(typeof translations === 'object' && translations !== null){
+      if (typeof translations === 'object' && translations !== null) {
         console.log(`translation read for ${locale} for piece ${pieceOutputPath}`);
         return translations;
       }
       console.error(`invalid i18n file for ${locale} for piece ${pieceOutputPath}`);
     }
-   
+
     return null;
   } catch (error) {
     console.error(`error reading i18n file for ${locale} for piece ${pieceOutputPath}: ${error}`);
@@ -262,36 +262,36 @@ const readLocaleFile = async (locale: LocalesEnum, pieceOutputPath: string) =>{
   }
 }
 
-export const initializeI18n = async (pieceName:string,pieceSource: 'node_modules' | 'dist'): Promise<I18nType | undefined> => {
-    const locales = Object.values(LocalesEnum);
-    const i18n: I18nType = {};
-    const pieceOutputPath = await extractPiecePath(pieceName, pieceSource)
-    if(!pieceOutputPath){
-      return undefined
+export const initializeI18n = async (pieceName: string, pieceSource: 'node_modules' | 'dist'): Promise<I18nType | undefined> => {
+  const locales = Object.values(LocalesEnum);
+  const i18n: I18nType = {};
+  const pieceOutputPath = await extractPiecePath(pieceName, pieceSource)
+  if (!pieceOutputPath) {
+    return undefined
+  }
+  for (const locale of locales) {
+    const translation = await readLocaleFile(locale, pieceOutputPath);
+    if (translation) {
+      i18n[locale] = translation;
     }
-    for(const locale of locales){
-      const translation = await readLocaleFile(locale, pieceOutputPath);
-      if(translation){
-        i18n[locale] = translation;
-      }
-    }
-    return (Object.keys(i18n).length > 0) ? i18n : undefined;
+  }
+  return (Object.keys(i18n).length > 0) ? i18n : undefined;
 }
 
-const extractPiecePath = async (pieceName:string,pieceSource: 'node_modules' | 'dist') => {
+const extractPiecePath = async (pieceName: string, pieceSource: 'node_modules' | 'dist') => {
   console.log(`piece node modules path: ${path.resolve('node_modules', pieceName)}`)
-  if(pieceSource === 'node_modules'){
-     return path.resolve('node_modules', pieceName)
+  if (pieceSource === 'node_modules') {
+    return path.resolve('node_modules', pieceName)
   }
   const distPath = path.resolve('dist/packages/pieces')
   const files = await fastGlob('**/**/package.json', { cwd: distPath });
   for (const relativeFile of files) {
     const fullPath = path.join(distPath, relativeFile);
     try {
-  
+
       const content = await fs.readFile(fullPath, 'utf-8');
       const json = JSON.parse(content);
-      if(json.name === pieceName){
+      if (json.name === pieceName) {
         console.log(`fullPath: ${fullPath.replace('/package.json', '')}`)
         return fullPath.replace('/package.json', '')
       }
