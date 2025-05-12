@@ -19,7 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { EmojiSelector } from '@/components/ui/emoji-picker';
+import { DEFAULT_IMOJI, EmojiSelector } from '@/components/ui/emoji-picker';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -63,9 +63,9 @@ export const CreateFolderDialog = ({
     CreateFolderFormSchema
   >({
     mutationFn: async (data) => {
-      const displayName = selectedEmoji
-        ? `${selectedEmoji} ${data.displayName}`
-        : data.displayName;
+      const displayName = `${selectedEmoji || DEFAULT_IMOJI} ${
+        data.displayName
+      }`;
 
       return await foldersApi.create({
         displayName,
