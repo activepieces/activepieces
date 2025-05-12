@@ -34,8 +34,8 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
   }
 
 
-  async metadata(packageName: string, pieceSource: 'node_modules' | 'dist'): Promise<BackwardCompatiblePieceMetadata> {
-    const i18n = await initializeI18n(packageName, pieceSource)
+  async metadata(params: {packageName: string, pieceSource: 'node_modules' | 'dist'} | undefined): Promise<BackwardCompatiblePieceMetadata> {
+    const i18n = params? await initializeI18n(params.packageName, params.pieceSource): undefined
     return {
       displayName: this.displayName,
       logoUrl: this.logoUrl,

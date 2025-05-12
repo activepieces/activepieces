@@ -152,7 +152,7 @@ export const pieceHelper = {
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, piecesSource })
         const pieceAlias = pieceLoader.getPackageAlias({ pieceName, pieceVersion, piecesSource })
         return {
-            ...(await piece.metadata(pieceAlias, 'node_modules')),
+            ...(await piece.metadata({packageName: pieceAlias, pieceSource: 'node_modules'})),
             name: pieceName,
             version: pieceVersion,
             authors: piece.authors,

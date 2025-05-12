@@ -13,7 +13,7 @@ type Piece = {
     version: string;
     minimumSupportedRelease?: string;
     maximumSupportedRelease?: string;
-    metadata(packageName: string, pieceSource: 'node_modules' | 'dist'): Promise<Omit<PieceMetadata, 'name' | 'version'>>;
+    metadata(params: {packageName: string, pieceSource: 'node_modules' | 'dist'} | undefined): Promise<Omit<PieceMetadata, 'name' | 'version'>>;
 };
 
 export const AP_CLOUD_API_BASE = 'https://cloud.activepieces.com/api/v1';
@@ -159,7 +159,7 @@ async function loadPieceFromFolder(folderPath: string): Promise<PieceMetadata | 
             pieceVersion
         });
         const metadata = {
-            ...(await piece.metadata(packageJson.name, 'dist')),
+            ...(await piece.metadata({packageName: packageJson.name, pieceSource: 'dist'})),
             name: packageJson.name,
             version: packageJson.version,
         };
