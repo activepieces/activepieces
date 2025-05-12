@@ -159,6 +159,9 @@ function EmojiPickerFooter({
   );
 }
 
+
+export const DEFAULT_IMOJI = "😆"
+
 interface EmojiSelectorProps {
   onEmojiSelect: (emoji: { emoji: string }) => void;
   selectedEmoji: string | null;
@@ -176,7 +179,7 @@ export const EmojiSelector = ({
     <Popover modal={false}>
       <PopoverTrigger asChild>
         <Button variant="outline" size="icon" className="size-9">
-          {selectedEmoji || <SmileIcon className="h-4 w-4" />}
+          {selectedEmoji || DEFAULT_IMOJI}
         </Button>
       </PopoverTrigger>
       <PopoverContent
