@@ -40,6 +40,7 @@ import { FlowVersionsList } from './flow-versions';
 import { FlowRunDetails } from './run-details';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
+import { PieceToolbar } from './flow-canvas/piece-toolbar';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
@@ -226,6 +227,7 @@ const BuilderPage = () => {
                 ></CanvasControls>
               )}
 
+            <PieceToolbar />
             <ShowPoweredBy position="absolute" show={platform?.showPoweredBy} />
             <DataSelector
               parentHeight={middlePanelSize.height}
