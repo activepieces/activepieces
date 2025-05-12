@@ -130,7 +130,6 @@
     "bullmq": "5.28.1",
     "cheerio": "1.0.0-rc.12",
     "chokidar": "3.6.0",
-    "clarifai-nodejs-grpc": "10.10.2",
     "class-variance-authority": "0.7.0",
     "clear-module": "4.1.2",
     "cli-table3": "0.6.3",
