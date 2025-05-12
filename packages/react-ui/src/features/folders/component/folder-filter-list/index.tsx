@@ -263,6 +263,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                   onDragStart={handleDragStart}
                   onDragEnd={handleDragEnd}
                   modifiers={[restrictToHorizontalAxis]}
+                  autoScroll={false}
                 >
                   <SortableContext 
                     items={isDragging 
@@ -273,105 +274,122 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                   >
                     <div className={cn(
                       "flex items-center gap-2 min-w-0",
-                      "overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] whitespace-nowrap" 
+                      "overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] whitespace-nowrap",
                     )}>
-                      {(isDragging ? orderedFolders : visibleFolders).map((folder) => (
-                        <SortableFolder
-                          key={folder.id}
-                          folder={folder}
-                          isSelected={selectedFolderId === folder.id}
-                          onClick={() => updateSearchParams(folder.id)}
-                          refetch={refetchFolders}
-                          userHasPermissionToUpdateFolders={userHasPermissionToUpdateFolders}
-                        />
-                      ))}
-                      
-                      {!isDragging && moreFolders.length > 0 && (
-                        <Popover open={showMoreFolders} onOpenChange={setShowMoreFolders}>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="flex items-center gap-1"
+                      {isDragging ? (
+                        <div className="flex items-center gap-2 h-9">
+                          {orderedFolders.map((folder) => (
+                            <SortableFolder
+                              key={folder.id}
+                              folder={folder}
+                              isSelected={selectedFolderId === folder.id}
+                              onClick={() => updateSearchParams(folder.id)}
+                              refetch={refetchFolders}
+                              userHasPermissionToUpdateFolders={userHasPermissionToUpdateFolders}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <>
+                          {visibleFolders.map((folder) => (
+                            <SortableFolder
+                              key={folder.id}
+                              folder={folder}
+                              isSelected={selectedFolderId === folder.id}
+                              onClick={() => updateSearchParams(folder.id)}
+                              refetch={refetchFolders}
+                              userHasPermissionToUpdateFolders={userHasPermissionToUpdateFolders}
+                            />
+                          ))}
+                          
+                          <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateFolders}>
+                            <CreateFolderDialog
+                              refetchFolders={refetchFolders}
+                              updateSearchParams={updateSearchParams}
                             >
-                              <span className="text-xs font-semibold">
-                                ({moreFolders.length})
-                              </span>
-                              more
-                              <ChevronDown className="h-4 w-4" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent align="start" className="py-1 px-0 w-60">
-                            <Command>
-                              <CommandInput
-                                placeholder="Search folders..."
-                                className="h-8 mb-2"
-                              />
-                              <CommandEmpty>No folders found.</CommandEmpty>
-                              <CommandGroup>
-                                <ScrollArea viewPortClassName="max-h-[220px]">
-                                  {moreFolders.map((folder) => {
-                                    const [emoji, ...nameParts] = folder.displayName.split(' ');
-                                    const name = nameParts.join(' ');
-
-                                    return (
-                                      <CommandItem
-                                        key={folder.id}
-                                        value={folder.displayName}
-                                        className={cn('flex justify-between items-center h-9', {
-                                          'bg-secondary': folder.id === selectedFolderId,
-                                        })}
-                                        onSelect={() => {
-                                          updateSearchParams(folder.id);
-                                          promoteFolder(folder.id);
-                                          setShowMoreFolders(false);
-                                        }}
-                                      >
-                                        <div className="flex items-center">
-                                          <span className="mr-2">{emoji}</span>
-                                          <span className="ml-2 text-sm">
-                                            {name}
-                                            <span className="text-xs text-muted-foreground ml-1">
-                                              ({folder.numberOfFlows})
-                                            </span>
-                                          </span>
-                                        </div>
-                                        <FolderAction
-                                          folder={folder}
-                                          refetch={refetchFolders}
-                                          userHasPermissionToUpdateFolders={
-                                            userHasPermissionToUpdateFolders
-                                          }
-                                        />
-                                      </CommandItem>
-                                    );
-                                  })}
-                                </ScrollArea>
-                              </CommandGroup>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
+                              <Button
+                                variant="outline"
+                                disabled={!userHasPermissionToUpdateFolders}
+                                size="icon"
+                                className="size-9"
+                              >
+                                <PlusIcon className="h-4 w-4" />
+                              </Button>
+                            </CreateFolderDialog>
+                          </PermissionNeededTooltip>
+                        </>
                       )}
                     </div>
                   </SortableContext>
                 </DndContext>
               )}
               
-              <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateFolders}>
-                <CreateFolderDialog
-                  refetchFolders={refetchFolders}
-                  updateSearchParams={updateSearchParams}
-                >
-                  <Button
-                    variant="outline"
-                    disabled={!userHasPermissionToUpdateFolders}
-                    size="icon"
-                    className="size-9"
-                  >
-                    <PlusIcon className="h-4 w-4" />
-                  </Button>
-                </CreateFolderDialog>
-              </PermissionNeededTooltip>
+              {!isLoading && !isDragging && moreFolders.length > 0 && (
+                <Popover open={showMoreFolders} onOpenChange={setShowMoreFolders}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex items-center gap-1"
+                    >
+                      <span className="text-xs font-semibold">
+                        ({moreFolders.length})
+                      </span>
+                      more
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="py-1 px-0 w-60">
+                    <Command>
+                      <CommandInput
+                        placeholder="Search folders..."
+                        className="h-8 mb-2"
+                      />
+                      <CommandEmpty>No folders found.</CommandEmpty>
+                      <CommandGroup>
+                        <ScrollArea viewPortClassName="max-h-[220px]">
+                          {moreFolders.map((folder) => {
+                            const [emoji, ...nameParts] = folder.displayName.split(' ');
+                            const name = nameParts.join(' ');
+
+                            return (
+                              <CommandItem
+                                key={folder.id}
+                                value={folder.displayName}
+                                className={cn('flex justify-between items-center h-9', {
+                                  'bg-secondary': folder.id === selectedFolderId,
+                                })}
+                                onSelect={() => {
+                                  updateSearchParams(folder.id);
+                                  promoteFolder(folder.id);
+                                  setShowMoreFolders(false);
+                                }}
+                              >
+                                <div className="flex items-center">
+                                  <span className="mr-2">{emoji}</span>
+                                  <span className="ml-2 text-sm">
+                                    {name}
+                                    <span className="text-xs text-muted-foreground ml-1">
+                                      ({folder.numberOfFlows})
+                                    </span>
+                                  </span>
+                                </div>
+                                <FolderAction
+                                  folder={folder}
+                                  refetch={refetchFolders}
+                                  userHasPermissionToUpdateFolders={
+                                    userHasPermissionToUpdateFolders
+                                  }
+                                />
+                              </CommandItem>
+                            );
+                          })}
+                        </ScrollArea>
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              )}
             </>
           )}
         </div>
