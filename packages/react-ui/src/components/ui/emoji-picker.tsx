@@ -159,7 +159,7 @@ function EmojiPickerFooter({
   );
 }
 
-export const DEFAULT_IMOJI = '😆';
+export const DEFAULT_IMOJI = '📁';
 
 interface EmojiSelectorProps {
   onEmojiSelect: (emoji: { emoji: string }) => void;
@@ -173,9 +173,9 @@ export const EmojiSelector = ({
   const handleContentWheel = (e: React.WheelEvent) => {
     e.stopPropagation();
   };
-  
+
   const [open, setOpen] = useState(false);
-  
+
   const handleEmojiSelect = (emoji: { emoji: string }) => {
     onEmojiSelect(emoji);
     setOpen(false); // Close the popover when an emoji is selected
