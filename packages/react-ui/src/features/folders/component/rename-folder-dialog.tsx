@@ -2,7 +2,7 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { EmojiSelector } from '@/components/ui/emoji-picker';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
@@ -22,38 +23,78 @@ import { Folder } from '@activepieces/shared';
 
 import { foldersApi } from '../lib/folders-api';
 
-const RenameFolderSchema = Type.Object({
+interface RenameFolderDialogProps {
+  folderId: string;
+  name: string;
+  onRename: () => void;
+  children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+const RenameFolderFormSchema = Type.Object({
   displayName: Type.String({
-    errorMessage: t('Please enter a folder name'),
+    errorMessage: t('Please enter folder name'),
   }),
 });
 
-type RenameFolderSchema = Static<typeof RenameFolderSchema>;
+type RenameFolderFormSchema = Static<typeof RenameFolderFormSchema>;
 
-const RenameFolderDialog = ({
-  children,
+export const RenameFolderDialog = ({
   folderId,
-  onRename,
   name,
-}: {
-  children: React.ReactNode;
-  folderId: string;
-  onRename: () => void;
-  name: string;
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const form = useForm<RenameFolderSchema>({
-    resolver: typeboxResolver(RenameFolderSchema),
+  onRename,
+  children,
+  open,
+  onOpenChange,
+}: RenameFolderDialogProps) => {
+  const [isControlled] = useState(
+    open !== undefined && onOpenChange !== undefined,
+  );
+  const [isUncontrolledOpen, setIsUncontrolledOpen] = useState(false);
+  const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (name) {
+      const emojiRegex = /^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)/u;
+      const match = name.match(emojiRegex);
+
+      if (match && match[0]) {
+        setSelectedEmoji(match[0]);
+      }
+    }
+  }, [name]);
+
+  const getDisplayNameWithoutEmoji = () => {
+    if (!name) return '';
+
+    const emojiRegex = /^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)/u;
+    return name.replace(emojiRegex, '').trim();
+  };
+
+  const form = useForm<RenameFolderFormSchema>({
+    resolver: typeboxResolver(RenameFolderFormSchema),
+    defaultValues: {
+      displayName: getDisplayNameWithoutEmoji(),
+    },
   });
 
-  const { mutate, isPending } = useMutation<Folder, Error, RenameFolderSchema>({
+  const { mutate, isPending } = useMutation<
+    Folder,
+    Error,
+    RenameFolderFormSchema
+  >({
     mutationFn: async (data) => {
+      const displayName = selectedEmoji
+        ? `${selectedEmoji} ${data.displayName}`
+        : data.displayName;
+
       return await foldersApi.renameFolder(folderId, {
-        displayName: data.displayName,
+        displayName: displayName,
       });
     },
     onSuccess: () => {
-      setIsOpen(false);
+      handleClose();
       onRename();
       toast({
         title: t('Renamed flow successfully'),
@@ -70,36 +111,51 @@ const RenameFolderDialog = ({
     },
   });
 
+  const handleEmojiSelect = (emoji: { emoji: string }) => {
+    setSelectedEmoji(emoji.emoji);
+  };
+
+  const handleClose = () => {
+    if (isControlled) {
+      onOpenChange?.(false);
+    } else {
+      setIsUncontrolledOpen(false);
+    }
+  };
+
+  const isOpen = isControlled ? open : isUncontrolledOpen;
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger className="w-full" asChild>
-        {children}
-      </DialogTrigger>
-      <DialogContent>
+    <Dialog
+      open={isOpen}
+      onOpenChange={isControlled ? onOpenChange : setIsUncontrolledOpen}
+    >
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
+
+      <DialogContent onClick={(e) => e.stopPropagation()}>
         <DialogHeader>
-          <DialogTitle>
-            {t('Rename')} {name}
-          </DialogTitle>
+          <DialogTitle>{t('Rename Folder')}</DialogTitle>
         </DialogHeader>
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit((data) => mutate(data))}>
             <FormField
+              control={form.control}
               name="displayName"
               render={({ field }) => (
                 <FormItem>
-                  <Input
-                    {...field}
-                    required
-                    id="displayName"
-                    placeholder={t('New Folder Name')}
-                    className="rounded-sm"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        form.handleSubmit((data) => mutate(data))();
-                      }
-                    }}
-                  />
+                  <div className="flex items-center gap-2">
+                    <EmojiSelector
+                      selectedEmoji={selectedEmoji}
+                      onEmojiSelect={handleEmojiSelect}
+                    />
+                    <Input
+                      {...field}
+                      required
+                      id="folder"
+                      placeholder={t('Folder Name')}
+                      className="rounded-sm"
+                    />
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -109,14 +165,11 @@ const RenameFolderDialog = ({
                 {form.formState.errors.root.serverError.message}
               </FormMessage>
             )}
-            <DialogFooter>
+            <DialogFooter className="mt-4">
               <Button
                 variant={'outline'}
+                onClick={() => handleClose()}
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setIsOpen(false);
-                }}
               >
                 {t('Cancel')}
               </Button>
@@ -130,5 +183,3 @@ const RenameFolderDialog = ({
     </Dialog>
   );
 };
-
-export { RenameFolderDialog };
