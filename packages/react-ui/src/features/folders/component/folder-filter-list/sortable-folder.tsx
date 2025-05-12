@@ -37,7 +37,10 @@ export const SortableFolder = ({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    zIndex: isDragging ? 100 : 1,
+    width: isDragging ? 'auto' : undefined,
+    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 1 : undefined,
+    boxSizing: 'border-box' as const
   };
 
   const [emoji, ...nameParts] = folder.displayName.split(' ');
@@ -75,7 +78,7 @@ export const SortableFolder = ({
             ({folder.numberOfFlows})
           </span>
         </span>
-         <FolderAction
+        <FolderAction
           folder={folder}
           refetch={refetch}
           userHasPermissionToUpdateFolders={userHasPermissionToUpdateFolders}

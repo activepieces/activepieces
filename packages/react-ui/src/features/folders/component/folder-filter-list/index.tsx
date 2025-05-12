@@ -52,6 +52,8 @@ const AVERAGE_FOLDER_WIDTH = 180; // Average width of folder item in pixels
 const ADD_BUTTON_SPACE = 60; // Space needed for the add folder button in pixels
 const MORE_BUTTON_SPACE = 100; // Space for "more" button if visible
 const SAFETY_MARGIN = 50; // Extra space to prevent layout issues
+const SCROLL_SPEED = 10; // Pixels per frame
+const SCROLL_THRESHOLD = 100; // Pixels from edge to start scrolling
 
 const FolderFilterList = ({ refresh }: { refresh: number }) => {
   const location = useLocation();
@@ -63,6 +65,9 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [visibleFolderCount, setVisibleFolderCount] = useState(5);
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrollAnimationRef = useRef<number | null>(null);
+  const mousePositionRef = useRef({ x: 0, y: 0 });
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -71,6 +76,83 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
       },
     }),
   );
+
+  useEffect(() => {
+    return () => {
+      if (scrollAnimationRef.current !== null) {
+        cancelAnimationFrame(scrollAnimationRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      mousePositionRef.current = { x: e.clientX, y: e.clientY };
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
+
+  useEffect(() => {
+    let lastTimestamp = 0;
+    const SCROLL_INTERVAL = 16; // ~60fps
+
+    const handleScroll = (timestamp: number) => {
+      if (timestamp - lastTimestamp < SCROLL_INTERVAL) {
+        scrollAnimationRef.current = requestAnimationFrame(handleScroll);
+        return;
+      }
+      
+      lastTimestamp = timestamp;
+      
+      if (!isDragging) {
+        scrollAnimationRef.current = requestAnimationFrame(handleScroll);
+        return;
+      }
+
+      const mouseX = mousePositionRef.current.x;
+      const windowWidth = window.innerWidth;
+      
+      let scrollDelta = 0;
+
+      if (mouseX > windowWidth - SCROLL_THRESHOLD) {
+        const distanceFromEdge = windowWidth - mouseX;
+        const scrollFactor = 1 - Math.max(0, Math.min(1, distanceFromEdge / SCROLL_THRESHOLD));
+        scrollDelta = Math.ceil(SCROLL_SPEED * (1 + scrollFactor * 2));
+      } 
+      else if (mouseX < SCROLL_THRESHOLD) {
+        const distanceFromEdge = mouseX;
+        const scrollFactor = 1 - Math.max(0, Math.min(1, distanceFromEdge / SCROLL_THRESHOLD));
+        scrollDelta = -Math.ceil(SCROLL_SPEED * (1 + scrollFactor * 2));
+      }
+
+      if (scrollDelta !== 0) {
+        window.scrollBy({
+          left: scrollDelta,
+          behavior: 'auto' 
+        });
+      }
+      
+      scrollAnimationRef.current = requestAnimationFrame(handleScroll);
+    };
+
+    if (isDragging) {
+      scrollAnimationRef.current = requestAnimationFrame(handleScroll);
+    } else if (scrollAnimationRef.current !== null) {
+      cancelAnimationFrame(scrollAnimationRef.current);
+      scrollAnimationRef.current = null;
+    }
+
+    return () => {
+      if (scrollAnimationRef.current !== null) {
+        cancelAnimationFrame(scrollAnimationRef.current);
+      }
+    };
+  }, [isDragging]);
 
   const updateSearchParams = (folderId: string | undefined) => {
     const newQueryParameters: URLSearchParams = new URLSearchParams(
@@ -283,7 +365,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
 
       <div className="h-6 w-px bg-border mx-1"></div>
 
-      <div className="flex-1 overflow-hidden" ref={containerRef}>
+      <div className="flex-1 overflow-visible" ref={containerRef}>
         <div className="flex items-center gap-2 min-w-0">
           {!isLoading && (
             <>
@@ -305,13 +387,14 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                     strategy={horizontalListSortingStrategy}
                   >
                     <div
+                      ref={scrollContainerRef}
                       className={cn(
-                        'flex items-center gap-2 min-w-0',
-                        'overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] whitespace-nowrap',
+                        'flex items-center gap-2 min-w-max',
+                        'overflow-visible whitespace-nowrap',
                       )}
                     >
                       {isDragging ? (
-                        <div className="flex items-center gap-2 h-9">
+                        <div className="flex items-center gap-2 h-9 w-max">
                           {orderedFolders.map((folder) => (
                             <SortableFolder
                               key={folder.id}
