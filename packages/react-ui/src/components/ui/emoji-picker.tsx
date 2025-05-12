@@ -4,8 +4,7 @@ import {
   type EmojiPickerListRowProps,
   EmojiPicker as EmojiPickerPrimitive,
 } from 'frimousse';
-
-import { SmileIcon, LoaderIcon } from 'lucide-react';
+import { LoaderIcon } from 'lucide-react';
 import type * as React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -159,8 +158,7 @@ function EmojiPickerFooter({
   );
 }
 
-
-export const DEFAULT_IMOJI = "😆"
+export const DEFAULT_IMOJI = '😆';
 
 interface EmojiSelectorProps {
   onEmojiSelect: (emoji: { emoji: string }) => void;
