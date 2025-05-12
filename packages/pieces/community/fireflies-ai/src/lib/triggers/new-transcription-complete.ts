@@ -1,5 +1,4 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
 import { firefliesAiAuth } from '../../index';
 
 export const newTranscriptionCompleteTrigger = createTrigger({
