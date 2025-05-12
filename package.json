@@ -121,7 +121,6 @@
     "amqplib": "0.10.4",
     "assemblyai": "4.7.0",
     "async-mutex": "0.4.0",
-    "aws-sdk": "2.1642.0",
     "axios": "1.8.3",
     "axios-retry": "4.4.1",
     "basic-ftp": "5.0.5",
