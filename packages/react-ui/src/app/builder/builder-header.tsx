@@ -151,7 +151,7 @@ export const BuilderHeader = () => {
                 setIsEditingFlowName(true);
               }}
               onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
-              onDuplicate={() => { }}
+              onDuplicate={() => {}}
             >
               <ChevronDown className="h-8 w-8" />
             </FlowActionMenu>
