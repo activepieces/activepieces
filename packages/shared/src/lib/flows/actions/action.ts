@@ -54,6 +54,7 @@ export const SourceCode = Type.Object({
 export type SourceCode = Static<typeof SourceCode>
 
 export const CodeActionSettings = Type.Object({
+    version: Type.Optional(Type.Union([Type.Literal('v1'), Type.Literal('v2')])),
     sourceCode: SourceCode,
     input: Type.Record(Type.String({}), Type.Any()),
     inputUiInfo: Type.Optional(SampleDataSetting),

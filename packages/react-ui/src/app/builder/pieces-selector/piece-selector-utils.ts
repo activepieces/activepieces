@@ -214,9 +214,12 @@ const getDefaultStep = ({
               code: defaultCode,
               packageJson: '{}',
             },
+            version: 'v2',
             input,
             inputUiInfo: {
-              customizedInputs: {},
+              customizedInputs: {
+                logoUrl: `https://cdn.activepieces.com/quicknew/agents/robots/robot_${Math.floor(Math.random() * 10000 + 1)}.png`,
+              },
             },
             errorHandlingOptions,
           },

@@ -31,17 +31,23 @@ const ActionErrorHandlingForm = React.memo(
     disabled,
   }: ActionErrorHandlingFormProps) => {
     const form = useFormContext<Action | Trigger>();
-    const showShowForPiece =
-      !isNil(form.getValues().settings.actionName) ||
-      !isNil(form.getValues().settings.triggerName);
+    const showForPiece = !isNil(form.getValues().settings.actionName) || 
+                         !isNil(form.getValues().settings.triggerName);
     const isPieceType = [ActionType.PIECE, TriggerType.PIECE].includes(
       form.getValues().type,
     );
+    const isCodeTypeV2 = form.getValues().type === ActionType.CODE && 
+                         form.getValues().settings.version === 'v2';
+    
+    const shouldShow = (!isPieceType || showForPiece) && !isCodeTypeV2;
+    const showContinueOnFailure = !hideContinueOnFailure;
+    const showRetryOnFailure = !hideRetryOnFailure;
+    
     return (
       <>
-        {(!isPieceType || showShowForPiece) && (
+        {shouldShow && (
           <div className="grid gap-4">
-            {hideContinueOnFailure !== true && (
+            {showContinueOnFailure && (
               <FormField
                 name="settings.errorHandlingOptions.continueOnFailure.value"
                 control={form.control}
@@ -72,7 +78,7 @@ const ActionErrorHandlingForm = React.memo(
                 )}
               />
             )}
-            {hideRetryOnFailure !== true && (
+            {showRetryOnFailure && (
               <FormField
                 name="settings.errorHandlingOptions.retryOnFailure.value"
                 control={form.control}
