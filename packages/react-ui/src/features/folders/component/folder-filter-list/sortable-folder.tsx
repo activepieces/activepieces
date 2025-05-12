@@ -57,7 +57,7 @@ export const SortableFolder = ({
       {...listeners}
       onClick={handleContainerClick}
       className={cn(
-        'relative group whitespace-nowrap h-9 flex overflow-hidden items-center border rounded-sm cursor-grab active:cursor-grabbing',
+        'relative group whitespace-nowrap h-9 flex overflow-hidden bg-blue-500 items-center border rounded-sm cursor-grab active:cursor-grabbing',
         isDragging ? 'opacity-60 shadow-md' : 'opacity-100',
         isSelected ? 'bg-secondary' : 'bg-background',
       )}
@@ -66,7 +66,7 @@ export const SortableFolder = ({
         variant={isSelected ? 'secondary' : 'ghost'}
         size="sm"
         onClick={onClick}
-        className="group whitespace-nowrap flex rounded-none overflow-hidden items-center px-3 border-0 z-10"
+        className="group whitespace-nowrap flex rounded-none overflow-hidden items-center pl-3 pr-0 border-0 z-10"
       >
         <span className="mr-2">{emoji}</span>
         <span className="mr-2 flex items-center">
@@ -75,14 +75,12 @@ export const SortableFolder = ({
             ({folder.numberOfFlows})
           </span>
         </span>
-      </Button>
-      <div>
-        <FolderAction
+         <FolderAction
           folder={folder}
           refetch={refetch}
           userHasPermissionToUpdateFolders={userHasPermissionToUpdateFolders}
         />
-      </div>
+      </Button>
     </div>
   );
 };
