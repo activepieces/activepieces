@@ -6,6 +6,7 @@ import {
 } from 'frimousse';
 import { LoaderIcon } from 'lucide-react';
 import type * as React from 'react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -172,9 +173,16 @@ export const EmojiSelector = ({
   const handleContentWheel = (e: React.WheelEvent) => {
     e.stopPropagation();
   };
+  
+  const [open, setOpen] = useState(false);
+  
+  const handleEmojiSelect = (emoji: { emoji: string }) => {
+    onEmojiSelect(emoji);
+    setOpen(false); // Close the popover when an emoji is selected
+  };
 
   return (
-    <Popover modal={false}>
+    <Popover modal={false} open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" size="icon" className="size-9">
           {selectedEmoji || DEFAULT_IMOJI}
@@ -186,7 +194,7 @@ export const EmojiSelector = ({
         onWheel={handleContentWheel}
         style={{ maxHeight: 'none' }}
       >
-        <EmojiPicker className="h-[300px]" onEmojiSelect={onEmojiSelect}>
+        <EmojiPicker className="h-[300px]" onEmojiSelect={handleEmojiSelect}>
           <EmojiPickerSearch placeholder="Search emoji..." />
           <EmojiPickerContent className="overflow-y-auto" />
           <EmojiPickerFooter />
