@@ -1,9 +1,8 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { catchWebhook } from './lib/triggers/catch-hook';
-import { LocalesEnum, PieceCategory } from '@activepieces/shared';
+import { PieceCategory } from '@activepieces/shared';
 import { returnResponse } from './lib/actions/return-response';
 import { returnResponseAndWaitForNextWebhook } from './lib/actions/return-response-and-wait-for-next-webhook';
-import fr from './i18n/fr.json';
 export const webhook = createPiece({
   displayName: 'Webhook',
   description: 'Receive HTTP requests and trigger flows using unique URLs.',
@@ -14,7 +13,4 @@ export const webhook = createPiece({
   authors: ['abuaboud', 'pfernandez98', 'kishanprmr','AbdulTheActivePiecer'],
   actions: [returnResponse,returnResponseAndWaitForNextWebhook],
   triggers: [catchWebhook],
-  i18n: {
-    [LocalesEnum.FRENCH]: fr,
-  }
 });

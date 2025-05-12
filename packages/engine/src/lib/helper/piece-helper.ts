@@ -150,9 +150,9 @@ export const pieceHelper = {
     async extractPieceMetadata({ piecesSource, params }: { piecesSource: string, params: ExecuteExtractPieceMetadata }): Promise<PieceMetadata> {
         const { pieceName, pieceVersion } = params
         const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, piecesSource })
-
+        const pieceAlias = pieceLoader.getPackageAlias({ pieceName, pieceVersion, piecesSource })
         return {
-            ...piece.metadata(),
+            ...(await piece.metadata(pieceAlias, 'node_modules')),
             name: pieceName,
             version: pieceVersion,
             authors: piece.authors,

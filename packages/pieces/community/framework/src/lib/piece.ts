@@ -2,12 +2,13 @@ import { Trigger } from './trigger/trigger';
 import { Action } from './action/action';
 import {
   EventPayload,
-  LocalesEnum,
   ParseEventResponse,
   PieceCategory,
 } from '@activepieces/shared';
 import { PieceBase, PieceMetadata} from './piece-metadata';
 import { PieceAuthProperty } from './property/authentication';
+import { initializeI18n } from './i18n';
+
 
 export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
   implements Omit<PieceBase, 'version' | 'name'>
@@ -27,13 +28,14 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
     public readonly minimumSupportedRelease?: string,
     public readonly maximumSupportedRelease?: string,
     public readonly description = '',
-    public readonly i18n?: Partial<Record<LocalesEnum, Record<string, string>>>,
   ) {
     actions.forEach((action) => (this._actions[action.name] = action));
     triggers.forEach((trigger) => (this._triggers[trigger.name] = trigger));
   }
 
-  metadata(): BackwardCompatiblePieceMetadata {
+
+  async metadata(packageName: string, pieceSource: 'node_modules' | 'dist'): Promise<BackwardCompatiblePieceMetadata> {
+    const i18n = await initializeI18n(packageName, pieceSource)
     return {
       displayName: this.displayName,
       logoUrl: this.logoUrl,
@@ -45,7 +47,7 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
       auth: this.auth,
       minimumSupportedRelease: this.minimumSupportedRelease,
       maximumSupportedRelease: this.maximumSupportedRelease,
-      i18n: this.i18n,
+      i18n
     };
   }
 
@@ -81,7 +83,6 @@ export const createPiece = <PieceAuth extends PieceAuthProperty>(
     params.minimumSupportedRelease,
     params.maximumSupportedRelease,
     params.description,
-    params.i18n,
   );
 };
 
@@ -99,7 +100,6 @@ type CreatePieceParams<
   actions: Action<PieceAuth>[];
   triggers: Trigger<PieceAuth>[];
   categories?: PieceCategory[];
-  i18n?: Partial<Record<LocalesEnum, Record<string, string>>>;
 };
 
 type PieceEventProcessors = {

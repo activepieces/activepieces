@@ -162,6 +162,7 @@
     "elevenlabs": "0.2.2",
     "embla-carousel-react": "8.1.8",
     "exifreader": "4.20.0",
+    "fast-glob": "3.3.3",
     "fastify": "4.28.1",
     "fastify-favicon": "4.3.0",
     "fastify-plugin": "4.5.1",

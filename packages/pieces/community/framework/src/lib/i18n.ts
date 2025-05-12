@@ -6,7 +6,9 @@ import { Piece } from "./piece"
 import { Action } from "./action/action"
 import { Trigger } from "./trigger/trigger"
 import { isNil, LocalesEnum } from "@activepieces/shared"
-
+import path from 'path';
+import fs from 'fs/promises';
+import fastGlob from 'fast-glob';
 const fetchI18nForActionOrTrigger = (source: Action<PieceAuthProperty, InputPropertyMap> | Trigger<PieceAuthProperty, InputPropertyMap>) => {
     const i18n:Record<string, string> = {}
   
@@ -53,7 +55,7 @@ const fetchI18nForActionOrTrigger = (source: Action<PieceAuthProperty, InputProp
   
   }
   
-  export const generateI18n = ({actions, triggers, description,displayName, auth}:  Piece<PieceAuthProperty>) => {
+  export const generateTranslationFile = ({actions, triggers, description,displayName, auth}:  Piece<PieceAuthProperty>) => {
     let i18n:Record<string, string> = {}
     i18n[displayName] = displayName
     i18n[description] = description
@@ -228,3 +230,74 @@ const fetchI18nForActionOrTrigger = (source: Action<PieceAuthProperty, InputProp
         }
         return translatedPiece as T
    }
+
+type I18nType =  Partial<Record<LocalesEnum, Record<string, string>>>;
+async function fileExists(filePath: string) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false; 
+  }
+}
+
+const readLocaleFile = async (locale: LocalesEnum, pieceOutputPath: string) =>{
+  try {
+    path.resolve
+    const filePath = path.join(pieceOutputPath,'src', 'i18n', `${locale}.json`);
+    if (await fileExists(filePath)) {
+      const file = await fs.readFile(filePath, 'utf8');
+      const translations = JSON.parse(file);
+      if(typeof translations === 'object' && translations !== null){
+        console.log(`translation read for ${locale} for piece ${pieceOutputPath}`);
+        return translations;
+      }
+      console.error(`invalid i18n file for ${locale} for piece ${pieceOutputPath}`);
+    }
+   
+    return null;
+  } catch (error) {
+    console.error(`error reading i18n file for ${locale} for piece ${pieceOutputPath}: ${error}`);
+    return null;
+  }
+}
+
+export const initializeI18n = async (pieceName:string,pieceSource: 'node_modules' | 'dist'): Promise<I18nType | undefined> => {
+    const locales = Object.values(LocalesEnum);
+    const i18n: I18nType = {};
+    const pieceOutputPath = await extractPiecePath(pieceName, pieceSource)
+    if(!pieceOutputPath){
+      return undefined
+    }
+    for(const locale of locales){
+      const translation = await readLocaleFile(locale, pieceOutputPath);
+      if(translation){
+        i18n[locale] = translation;
+      }
+    }
+    return (Object.keys(i18n).length > 0) ? i18n : undefined;
+}
+
+const extractPiecePath = async (pieceName:string,pieceSource: 'node_modules' | 'dist') => {
+  console.log(`piece node modules path: ${path.resolve('node_modules', pieceName)}`)
+  if(pieceSource === 'node_modules'){
+     return path.resolve('node_modules', pieceName)
+  }
+  const distPath = path.resolve('dist/packages/pieces')
+  const files = await fastGlob('**/**/package.json', { cwd: distPath });
+  for (const relativeFile of files) {
+    const fullPath = path.join(distPath, relativeFile);
+    try {
+  
+      const content = await fs.readFile(fullPath, 'utf-8');
+      const json = JSON.parse(content);
+      if(json.name === pieceName){
+        console.log(`fullPath: ${fullPath.replace('/package.json', '')}`)
+        return fullPath.replace('/package.json', '')
+      }
+    } catch (err) {
+      console.error(`Error loading ${fullPath}:`, err);
+    }
+  }
+  return undefined
+}

@@ -1,4 +1,4 @@
-import { PieceMetadataModel, PieceMetadataModelSummary, PieceMetadataModelWithoutI18n } from '@activepieces/pieces-framework'
+import { PieceMetadataModel  } from '@activepieces/pieces-framework'
 import { apVersionUtil, UserInteractionJobType } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
@@ -26,7 +26,6 @@ import {
     pieceMetadataService,
 } from './piece-metadata-service'
 import { pieceSyncService } from './piece-sync-service'
-import { StatusCodes } from 'http-status-codes'
 
 export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(basePiecesController, { prefix: '/v1/pieces' })
@@ -115,7 +114,6 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         async (req): Promise<PieceMetadataModel> => {
             const { name } = req.params
             const { version } = req.query
-
             const decodedName = decodeURIComponent(name)
             const projectId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId
             const platformId = req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.platform.id
@@ -175,9 +173,7 @@ const GetPieceParamsRequest = {
     schema: {
         params: GetPieceRequestParams,
         querystring: GetPieceRequestQuery,
-        response: {
-            [StatusCodes.OK]: PieceMetadataModelWithoutI18n,
-        },
+    
     },
    
 }
@@ -188,10 +184,7 @@ const GetPieceParamsWithScopeRequest = {
     },
     schema: {
         params: GetPieceRequestWithScopeParams,
-        querystring: GetPieceRequestQuery,
-        response: {
-            [StatusCodes.OK]: PieceMetadataModelWithoutI18n,
-        },
+        querystring: GetPieceRequestQuery
     },
 }
 
