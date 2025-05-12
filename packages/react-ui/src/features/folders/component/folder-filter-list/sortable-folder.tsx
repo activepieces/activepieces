@@ -23,10 +23,17 @@ export const SortableFolder = ({
   refetch,
   userHasPermissionToUpdateFolders,
 }: SortableFolderProps) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
     id: folder.id,
   });
-  
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -43,16 +50,16 @@ export const SortableFolder = ({
   };
 
   return (
-    <div 
-      ref={setNodeRef} 
+    <div
+      ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
       onClick={handleContainerClick}
       className={cn(
-        "relative group whitespace-nowrap h-9 flex overflow-hidden items-center border rounded-sm cursor-grab active:cursor-grabbing",
-        isDragging ? "opacity-60 shadow-md" : "opacity-100",
-        isSelected ? "bg-secondary" : "bg-background"
+        'relative group whitespace-nowrap h-9 flex overflow-hidden items-center border rounded-sm cursor-grab active:cursor-grabbing',
+        isDragging ? 'opacity-60 shadow-md' : 'opacity-100',
+        isSelected ? 'bg-secondary' : 'bg-background',
       )}
     >
       <Button
@@ -73,11 +80,9 @@ export const SortableFolder = ({
         <FolderAction
           folder={folder}
           refetch={refetch}
-          userHasPermissionToUpdateFolders={
-            userHasPermissionToUpdateFolders
-          }
+          userHasPermissionToUpdateFolders={userHasPermissionToUpdateFolders}
         />
       </div>
     </div>
   );
-}; 
+};
