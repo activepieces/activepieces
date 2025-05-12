@@ -59,7 +59,6 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
   const userHasPermissionToUpdateFolders = checkAccess(Permission.WRITE_FOLDER);
   const [searchParams, setSearchParams] = useSearchParams(location.search);
   const selectedFolderId = searchParams.get(folderIdParamName);
-  const [sortedAlphabeticallyIncreasingly] = useState(true);
   const [showMoreFolders, setShowMoreFolders] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [visibleFolderCount, setVisibleFolderCount] = useState(5);
@@ -100,7 +99,6 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
   const orderedFolders = useMemo(() => {
     if (!folders) return [];
 
-    // Sort folders by their displayOrder
     return [...folders].sort((a, b) => a.displayOrder - b.displayOrder);
   }, [folders]);
 
@@ -134,28 +132,32 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
       const newIndex = currentIds.indexOf(overId);
 
       if (oldIndex !== -1 && newIndex !== -1) {
-        // Create a copy of orderedFolders to reorder
         const reorderedFolders = [...orderedFolders];
         
-        // Remove the folder from its old position
         const [movedFolder] = reorderedFolders.splice(oldIndex, 1);
         
-        // Insert it at the new position
         reorderedFolders.splice(newIndex, 0, movedFolder);
         
-        // Create folder order items with incremental order values
-        const folderOrders: FolderOrderItem[] = reorderedFolders.map((folder, index) => ({
+        const updatedFolders = reorderedFolders.map((folder, index) => ({
+          ...folder,
+          displayOrder: index * 100,
+        }));
+        
+        foldersHooks.useQueryClient?.setQueryData(
+          foldersHooks.folderListQueryKey,
+          updatedFolders
+        );
+        
+        const folderOrders: FolderOrderItem[] = updatedFolders.map((folder, index) => ({
           folderId: folder.id,
-          order: index * 100, // Using multiples of 100 to allow for easy insertions in between
+          order: folder.displayOrder,
         }));
 
-        // Save the order to the backend
         try {
           await foldersApi.updateOrder(folderOrders);
-          // Refetch folders to get the updated order from the server
-          refetchFolders();
         } catch (error) {
           console.error('Failed to update folder order:', error);
+          refetchFolders();
         }
       }
     }
@@ -173,38 +175,40 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
     );
     if (isAlreadyVisible) return;
 
-    // Find the folder we want to promote
     const folderToPromote = folders.find(folder => folder.id === folderId);
     if (!folderToPromote) return;
 
-    // Create a new array with the folder to promote at the beginning
     const updatedFolders = [...folders];
     
-    // Remove the folder from its current position
     const currentIndex = updatedFolders.findIndex(f => f.id === folderId);
     if (currentIndex === -1) return;
     
     updatedFolders.splice(currentIndex, 1);
     
-    // Calculate the insertion position (we want it after visible folders)
     const insertPosition = Math.min(visibleFolderCount - 1, updatedFolders.length);
     
-    // Insert the folder at the target position
     updatedFolders.splice(insertPosition, 0, folderToPromote);
     
-    // Generate new order values
-    const folderOrders: FolderOrderItem[] = updatedFolders.map((folder, index) => ({
-      folderId: folder.id,
-      order: index * 100,
+    const optimisticFolders = updatedFolders.map((folder, index) => ({
+      ...folder,
+      displayOrder: index * 100,
     }));
     
-    // Save the order to the backend
+    foldersHooks.useQueryClient?.setQueryData(
+      foldersHooks.folderListQueryKey,
+      optimisticFolders
+    );
+    
+    const folderOrders: FolderOrderItem[] = optimisticFolders.map((folder) => ({
+      folderId: folder.id,
+      order: folder.displayOrder,
+    }));
+    
     try {
       await foldersApi.updateOrder(folderOrders);
-      // Refetch folders to get the updated order from the server
-      refetchFolders();
     } catch (error) {
       console.error('Failed to promote folder:', error);
+      refetchFolders();
     }
   };
 
@@ -212,43 +216,31 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
     if (!containerRef.current) return;
 
     const updateVisibleCount = () => {
-      // Only calculate if we have folders
       if (!folders || folders.length === 0) return;
 
       const containerWidth = containerRef.current?.clientWidth || 0;
-
-      // Reserve space for buttons and safety margin
       let reservedSpace = ADD_BUTTON_SPACE + SAFETY_MARGIN;
 
-      // If we have more folders than visibleFolderCount, also reserve space for "more" button
       if (folders.length > visibleFolderCount) {
         reservedSpace += MORE_BUTTON_SPACE;
       }
 
       const availableWidth = Math.max(0, containerWidth - reservedSpace);
-
-      // Calculate maximum number of folders that can fit
       const estimatedCount = Math.floor(availableWidth / AVERAGE_FOLDER_WIDTH);
-
-      // Ensure at least 1 folder is shown and not more than the total folders
       const calculatedCount = Math.max(
         1,
         Math.min(estimatedCount, folders.length),
       );
 
-      // Only update if the count actually changed
       if (calculatedCount !== visibleFolderCount) {
         setVisibleFolderCount(calculatedCount);
       }
     };
 
-    // Initial calculation
     updateVisibleCount();
 
-    // Adjust on window resize
     window.addEventListener('resize', updateVisibleCount);
 
-    // Set up ResizeObserver for container resizing
     const resizeObserver = new ResizeObserver(updateVisibleCount);
     resizeObserver.observe(containerRef.current);
 
@@ -354,7 +346,6 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                 </DndContext>
               )}
 
-              {/* Always show the Create Folder button, positioned after folders */}
               <PermissionNeededTooltip
                 hasPermission={userHasPermissionToUpdateFolders}
               >
