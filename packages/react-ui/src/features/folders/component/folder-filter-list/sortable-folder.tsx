@@ -53,7 +53,7 @@ export const SortableFolder = ({
       {...listeners}
       onClick={handleContainerClick}
       className={cn(
-        "relative group whitespace-nowrap h-9 flex overflow-hidden items-center border rounded-md cursor-grab active:cursor-grabbing",
+        "relative group whitespace-nowrap h-9 flex overflow-hidden items-center border rounded-sm cursor-grab active:cursor-grabbing",
         isDragging ? "opacity-60 shadow-md" : "opacity-100",
         isSelected ? "bg-secondary" : "bg-background"
       )}
