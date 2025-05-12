@@ -1,6 +1,4 @@
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRestRequest } from '../common/client';
 import { isNil } from '@activepieces/shared';
 import { firefliesAiAuth } from '../../index';
 
@@ -9,48 +7,37 @@ export const newTranscriptionCompleteTrigger = createTrigger({
 	name: 'new_transcription_complete',
 	displayName: 'New Transcription Complete',
 	description: 'Triggered when a new meeting is transcribed',
-	props: {},
+	props: {
+		webhookInstructions: Property.MarkDown({
+			value: `
+## Fireflies.ai Webhook Setup
+To use this trigger, you need to manually set up a webhook in your Fireflies.ai account:
+
+1. Login to your Fireflies.ai account
+2. Navigate to **Settings** > **Developer Settings** in the left sidebar
+3. Enter the following URL in the webhooks field:
+\`\`\`
+{{webhookUrl}}
+\`\`\`
+4. Click Save to register the webhook
+
+This webhook will be triggered when a meeting transcription is completed.
+			`,
+		}),
+	},
 	type: TriggerStrategy.WEBHOOK,
 	sampleData: {
-            "meetingId": "ASxwZxCstx",
-            "eventType": "Transcription completed",
-            "clientReferenceId": "be582c46-4ac9-4565-9ba6-6ab4264496a8"
+		"meetingId": "ASxwZxCstx",
+		"eventType": "Transcription completed",
+		"clientReferenceId": "be582c46-4ac9-4565-9ba6-6ab4264496a8"
 	},
 	async onEnable(context) {
-		const response = await makeRestRequest(
-			context.auth as string,
-			HttpMethod.POST,
-			'/webhooks',
-			{
-				"url": context.webhookUrl,
-				"events": ["transcript.completed"]
-			}
-		) as WebhookResponse;
-
-		await context.store.put<{webhookId: string}>('new_transcription_complete', {
-			webhookId: response.id
-		});
+		// No need to register webhooks programmatically as user will do it manually
 	},
 	async onDisable(context) {
-		const webhook = await context.store.get<{webhookId: string}>('new_transcription_complete');
-
-		if (!isNil(webhook) && !isNil(webhook.webhookId)) {
-			await makeRestRequest(
-				context.auth as string,
-				HttpMethod.DELETE,
-				`/webhooks/${webhook.webhookId}`,
-				{}
-			);
-		}
+		// No need to unregister webhooks as user will do it manually
 	},
 	async run(context) {
 		return [context.payload.body];
 	},
 });
-
-interface WebhookResponse {
-	id: string;
-	url: string;
-	events: string[];
-	created_at: string;
-}
