@@ -73,6 +73,9 @@ export const getGraphQuestion = createAction({
         );
       }
 
+      // we wait 15 seconds so the graph can load
+      await page.waitForTimeout(15000);
+
       const screenshotBuffer = await page.screenshot({
         path: graphName,
         type: 'png',
