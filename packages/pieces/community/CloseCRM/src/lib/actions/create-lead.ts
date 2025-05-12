@@ -1,7 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { closeAuth } from './../../index';
-import { makeClient } from '../common/client';
-import { CloseCRMLead } from '../common/types';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 export const createLead = createAction({
   auth: closeAuth,
@@ -54,26 +53,26 @@ export const createLead = createAction({
   },
   async run(context) {
     const { name, contacts, status, customFields } = context.propsValue;
-    const apiKey = context.auth;
 
     const payload: any = {
       name: name,
+      contacts: contacts,
+      status: status,
+      custom: customFields,
+
     };
 
-    const client = makeClient(apiKey);
-    const response = await client.post('/lead/', payload);
-    if (status) payload.status = status;
-    if (customFields) payload.custom = customFields;
-    
-    if (contacts && Array.isArray(contacts) && contacts.length > 0) {
-        payload.contacts = contacts;
-    }
-
-    
-
-    return response.data as CloseCRMLead;
-  },
+     const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: 'https://api.close.com/api/v1/lead',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${context.auth}`,
+      },
+      body: payload,
+    });
+    return response.body;
 
    
   },
-);
+});

@@ -36,9 +36,7 @@ export const newContactAdded = createTrigger({
   },
   async onEnable(context) {
     const { apiKey, environment } = context.auth;
-    const baseUrl = environment === 'sandbox' 
-      ? 'https://api-sandbox.close.com/api/v1' 
-      : 'https://api.close.com/api/v1';
+    const baseUrl = environment === 'https://api.close.com/api/v1';
 
     const request: HttpRequest<{
       url: string;
@@ -47,7 +45,7 @@ export const newContactAdded = createTrigger({
       method: HttpMethod.POST,
       url: `${baseUrl}/webhook/`,
       headers: {
-        'Authorization': `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`,
+        'Authorization': `Bearer ${context.auth}`,
         'Content-Type': 'application/json',
       },
       body: {
@@ -85,15 +83,14 @@ export const newContactAdded = createTrigger({
     }>(STORE_KEY);
 
     if (triggerData?.webhookId) {
-      const baseUrl = triggerData.environment === 'sandbox' 
-        ? 'https://api-sandbox.close.com/api/v1' 
-        : 'https://api.close.com/api/v1';
+      const baseUrl = triggerData.environment === 'https://api.close.com/api/v1';
 
       const request: HttpRequest = {
         method: HttpMethod.DELETE,
         url: `${baseUrl}/webhook/${triggerData.webhookId}`,
         headers: {
-          'Authorization': `Basic ${Buffer.from(`${context.auth.apiKey}:`).toString('base64')}`,
+          'Authorization': `Bearer ${context.auth}`,
+          'Content-Type': 'application/json',
         },
       };
 
@@ -189,16 +186,14 @@ async function fetchLeadDetails(
   auth: { apiKey: string; environment: string },
   leadId: string
 ) {
-  const baseUrl = auth.environment === 'sandbox' 
-    ? 'https://api-sandbox.close.com/api/v1' 
-    : 'https://api.close.com/api/v1';
+  const baseUrl = auth.environment === 'https://api.close.com/api/v1';
 
   const response = await httpClient.sendRequest<CloseCRMLead>({
     method: HttpMethod.GET,
     url: `${baseUrl}/lead/${leadId}/`,
     headers: {
-      'Authorization': `Basic ${Buffer.from(`${auth.apiKey}:`).toString('base64')}`,
-      'Accept': 'application/json',
+      'Authorization': `Bearer ${auth.apiKey}`,
+      'Content-Type': 'application/json',
     },
   });
 

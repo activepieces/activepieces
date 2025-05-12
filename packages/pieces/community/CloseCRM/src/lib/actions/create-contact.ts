@@ -95,11 +95,12 @@ export const createContact = createAction({
     }),
   },
   async run(context) {
-    const { lead_id, name, title, emails, phones, urls, customFields } = context.propsValue;
-    const { apiKey, environment } = context.auth;
+    const { lead_id, name, title, emails, phones, urls, customFields } = context.propsValue;;
 
     const contactData: Partial<CloseCRMContact> = { // Use Partial for creation
       lead_id: lead_id,
+      title: title,
+      custom: customFields,
       name: name,
       email: emails ? emails.map(email => ({ 
         type: email as string,
@@ -117,11 +118,10 @@ export const createContact = createAction({
     try {
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: `${environment === 'sandbox' ? 'https://api-sandbox.close.com/api/v1' : 'https://api.close.com/api/v1'}/contact/`,
+        url: `https://api.close.com/api/v1/contact`,
         headers: {
-          'Authorization': `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`,
+          'Authorization': `Bearer ${context.auth}`,
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
         },
         body: contactData,
       });

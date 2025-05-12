@@ -24,47 +24,6 @@ export const createOpportunity = createAction({
       description: 'Additional details about the opportunity',
       required: false,
     }),
-    status_id: Property.Dropdown({
-      displayName: 'Status',
-      description: 'Select the opportunity status',
-      required: false,
-      refreshers: [],
-      options: async ({ auth }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Please authenticate first'
-          };
-        }
-
-        try {
-          const response = await httpClient.sendRequest<{ data: Array<{ id: string, label: string }> }>({
-            method: HttpMethod.GET,
-            url: `${auth === 'sandbox' ? 'https://api-sandbox.close.com/api/v1' : 'https://api.close.com/api/v1'}/status/opportunity/`,
-            headers: {
-              'Authorization': `Basic ${Buffer.from(`${auth}:`).toString('base64')}`,
-              'Accept': 'application/json',
-            },
-          });
-
-          return {
-            disabled: false,
-            options: response.body.data.map(status => ({
-              label: status.label,
-              value: status.id
-            }))
-          };
-        } catch (error) {
-          console.error('Error fetching statuses:', error);
-          return {
-            disabled: true,
-            options: [],
-            placeholder: 'Could not fetch statuses. Check your connection.'
-          };
-        }
-      }
-    }),
     confidence: Property.Number({
       displayName: 'Confidence %',
       description: 'The probability of winning this opportunity (0-100)',
@@ -123,7 +82,6 @@ export const createOpportunity = createAction({
       lead_id,
       name,
       note,
-      status_id,
       confidence,
       value,
       value_currency,
@@ -132,21 +90,27 @@ export const createOpportunity = createAction({
       user_id,
       custom_fields
     } = context.propsValue;
-    const { apiKey, environment } = context.auth;
 
     const opportunityData = {
-        ...context.propsValue,
-        value_period: context.propsValue.value_period as 'one_time' | 'monthly' | 'annual'
+      lead_id,
+      name,
+      note,
+      confidence,
+      value,
+      value_currency,
+      value_period,
+      contact_id,
+      user_id,
+      custom_fields
       };
 
     try {
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: `${environment === 'sandbox' ? 'https://api-sandbox.close.com/api/v1' : 'https://api.close.com/api/v1'}/opportunity/`,
+        url: `https://api.close.com/api/v1/opportunity/`,
         headers: {
-          'Authorization': `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`,
+          'Authorization': `Bearer ${context.auth}`,
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
         },
         body: opportunityData,
       });

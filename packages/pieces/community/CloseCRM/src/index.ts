@@ -10,7 +10,6 @@ import {opportunityStatusChanged} from "./lib/triggers/opportunity-status-change
 import { createContact } from "./lib/actions/create-contact";
 import { newContactAdded } from "./lib/triggers/new-contact-added";
 import {findContact} from "./lib/actions/find-contact";
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 const CLOSE_API_URL = 'https://api.close.com/api/v1';
 const CLOSE_API_URL_SANDBOX = 'https://api-sandbox.close.com/api/v1';
@@ -56,8 +55,8 @@ export const closeAuth = PieceAuth.CustomAuth({
   },
 });
 
-export const closeCrm = createPiece({
-  displayName: "Close CRM",
+export const CloseCRM = createPiece({
+  displayName: "CloseCRM",
   description: "Sales automation and CRM integration for Close",
   auth: closeAuth,
   minimumSupportedRelease: '0.36.1',

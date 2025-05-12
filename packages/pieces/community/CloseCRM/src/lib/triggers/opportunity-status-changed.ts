@@ -40,9 +40,7 @@ export const opportunityStatusChanged = createTrigger({
   },
   async onEnable(context) {
     const { apiKey, environment } = context.auth;
-    const baseUrl = environment === 'sandbox' 
-      ? 'https://api-sandbox.close.com/api/v1' 
-      : 'https://api.close.com/api/v1';
+    const baseUrl = environment === 'https://api.close.com/api/v1';
 
     const request: HttpRequest<{
       url: string;
@@ -51,7 +49,7 @@ export const opportunityStatusChanged = createTrigger({
       method: HttpMethod.POST,
       url: `${baseUrl}/webhook/`,
       headers: {
-        'Authorization': `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`,
+        'Authorization': `Bearer ${context.auth}`,
         'Content-Type': 'application/json',
       },
       body: {
@@ -86,15 +84,13 @@ export const opportunityStatusChanged = createTrigger({
     }>(STORE_KEY);
 
     if (triggerData?.webhookId) {
-      const baseUrl = triggerData.environment === 'sandbox' 
-        ? 'https://api-sandbox.close.com/api/v1' 
-        : 'https://api.close.com/api/v1';
+      const baseUrl = triggerData.environment === 'https://api.close.com/api/v1';
 
       const request: HttpRequest = {
         method: HttpMethod.DELETE,
         url: `${baseUrl}/webhook/${triggerData.webhookId}`,
         headers: {
-          'Authorization': `Basic ${Buffer.from(`${context.auth.apiKey}:`).toString('base64')}`,
+          'Authorization': `Bearer ${context.auth}`,
         },
       };
 

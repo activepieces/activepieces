@@ -64,7 +64,6 @@ export const findContact = createAction({
   },
   async run(context) {
     const { search_type, search_query, match_type, limit, include_fields } = context.propsValue;
-    const { apiKey, environment } = context.auth;
 
     try {
       // Build the search query
@@ -78,10 +77,10 @@ export const findContact = createAction({
       });
 
       const response = await httpClient.sendRequest<{ data: CloseCRMContact[] }>({
-        method: HttpMethod.POST,
-        url: `${environment === 'sandbox' ? 'https://api-sandbox.close.com/api/v1' : 'https://api.close.com/api/v1'}/data/search/`,
+        method: HttpMethod.GET,
+        url: `https://api.close.com/api/v1/data/contact`,
         headers: {
-          'Authorization': `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`,
+          'Authorization': `bearer ${context.auth}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },

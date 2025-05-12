@@ -78,7 +78,6 @@ export const findLead = createAction({
       limit, 
       include_fields 
     } = context.propsValue;
-    const { apiKey, environment } = context.auth;
 
     // Validate custom field search
     if (search_type === 'custom_field' && !custom_field_name) {
@@ -95,12 +94,11 @@ export const findLead = createAction({
       });
 
       const response = await httpClient.sendRequest<{ data: CloseCRMLead[] }>({
-        method: HttpMethod.POST,
-        url: `${environment === 'sandbox' ? 'https://api-sandbox.close.com/api/v1' : 'https://api.close.com/api/v1'}/data/search/`,
+        method: HttpMethod.GET,
+        url: `https://api.close.com/api/v1/data/lead`,
         headers: {
-          'Authorization': `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`,
+          'Authorization': `Bearer ${context.auth}`,
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
         },
         queryParams: {
           ...(limit && { '_limit': limit.toString() }),

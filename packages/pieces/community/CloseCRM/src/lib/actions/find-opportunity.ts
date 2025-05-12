@@ -142,39 +142,14 @@ export const findOpportunity = createAction({
       ...(limit && { _limit: limit.toString() }),
     };
 
-    // Add filters based on search type
-    switch (search_type) {
-      case 'status':
-        if (status_id) queryParams['status_id'] = status_id;
-        if (status_label) queryParams['status_label'] = status_label;
-        if (status_type) queryParams['status_type'] = status_type;
-        break;
-      case 'lead':
-        if (lead_id) queryParams['lead_id'] = lead_id;
-        break;
-      case 'user':
-        if (user_id) queryParams['user_id'] = user_id;
-        break;
-      case 'contact':
-        if (contact_id) queryParams['contact_id'] = contact_id;
-        break;
-      case 'value':
-        if (min_value) queryParams['value__gte'] = min_value.toString();
-        if (max_value) queryParams['value__lte'] = max_value.toString();
-        break;
-      case 'date':
-        if (date_created_after) queryParams['date_created__gte'] = date_created_after;
-        if (date_created_before) queryParams['date_created__lte'] = date_created_before;
-        break;
-    }
 
     try {
       const response = await httpClient.sendRequest<{ data: CloseCRMOpportunity[] }>({
         method: HttpMethod.GET,
-        url: `${environment === 'sandbox' ? 'https://api-sandbox.close.com/api/v1' : 'https://api.close.com/api/v1'}/opportunity/`,
+        url: `https://api.close.com/api/v1/opportunity`,
         headers: {
-          'Authorization': `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`,
-          'Accept': 'application/json',
+          'Authorization': `Bearer ${context.auth}`,
+          'Content-Type': 'application/json',
         },
         queryParams: queryParams,
       });
