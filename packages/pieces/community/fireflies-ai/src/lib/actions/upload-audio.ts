@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, Property, StoreScope } from '@activepieces/pieces-framework';
 import { firefliesAuth } from '../..';
 import { fireflyService } from '../common/fireflyService';
 
@@ -19,6 +19,11 @@ export const uploadAudio = createAction({
       description: 'The title of the audio file',
       required: false,
     }),
+    webhook: Property.ShortText({
+      displayName: 'Webhook URL',
+      description: 'The URL of the webhook that will be called when the transcription is complete',
+      required: false,
+    }),
     lang: Property.ShortText({
       displayName: 'Language',
       description: 'The language of the audio file',
@@ -31,20 +36,19 @@ export const uploadAudio = createAction({
     }),
     referenceId: Property.ShortText({
       displayName: 'Reference ID',
-      description: 'Arbitrary ID that can be used to reference the audio file in your own systems',
+      description:
+        'Arbitrary ID that can be used to reference the audio file in your own systems',
       required: false,
     }),
   },
-  async run({ auth, store, propsValue }) {
-    const webhook = (await store.get('webhookUrl')) as string;
-
-    await fireflyService.uploadAudio(auth, {
+  async run({ auth, propsValue }) {
+    return await fireflyService.uploadAudio(auth, {
       url: propsValue.url,
       title: propsValue.title,
       lang: propsValue.lang,
       saveVideo: propsValue.saveVideo,
       referenceId: propsValue.referenceId,
-      webhook,
+      webhook: propsValue.webhook,
     });
   },
 });

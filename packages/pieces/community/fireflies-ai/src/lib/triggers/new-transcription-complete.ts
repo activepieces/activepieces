@@ -1,5 +1,5 @@
 
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, Property, StoreScope, TriggerStrategy } from '@activepieces/pieces-framework';
 import crypto from 'crypto';
 export const newTranscriptionComplete = createTrigger({
   name: 'newTranscriptionComplete',
@@ -21,19 +21,17 @@ export const newTranscriptionComplete = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable({ webhookUrl, propsValue, store }) {
     if (propsValue.webhookSecretKey) {
-      await store.put('webhookSecretKey', propsValue.webhookSecretKey);
+      await store.put<string>('webhookSecretKey', propsValue.webhookSecretKey);
     }
 
-    await store.put('webhookUrl', webhookUrl);
     console.log('[FIREFILES_AI] Webhook enabled. Webhook URL: ' + webhookUrl);
   },
   async onDisable({ store, webhookUrl }) {
     await store.delete('webhookSecretKey');
-    await store.delete('webhookUrl');
     console.log('[FIREFILES_AI] Webhook disabled. Webhook URL:' + webhookUrl);
   },
   async run({store, payload}) {
-    const webhookSecretKey = await store.get('webhookSecretKey') as string;
+    const webhookSecretKey = await store.get<string>('webhookSecretKey');
     const hmacSignature = payload.headers['x-hub-signature'];
 
     if (webhookSecretKey) {

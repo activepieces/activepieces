@@ -94,7 +94,7 @@ export const fireflyService = {
     input: {
       url: string;
       title?: string;
-      webhook?: string;
+      webhook?: string | null;
       lang?: string;
       saveVideo?: boolean;
       attendees?: {
@@ -102,7 +102,7 @@ export const fireflyService = {
         email?: string;
         phoneNumber?: string;
       }[];
-      referenceId?: string,
+      referenceId?: string;
     }
   ) {
     const response = await httpClient.sendRequest({
@@ -115,13 +115,15 @@ export const fireflyService = {
       body: {
         query: uploadAudioMutation,
         variables: {
-          url: input.url,
-          title: input.title,
-          webhook: input.webhook,
-          custom_language: input.lang,
-          save_video: input.saveVideo,
-          attendees: input.attendees,
-          client_reference_id: input.referenceId,
+          input: {
+            url: input.url,
+            title: input.title,
+            webhook: input.webhook,
+            custom_language: input.lang,
+            save_video: input.saveVideo,
+            attendees: input.attendees,
+            client_reference_id: input.referenceId,
+          },
         },
       },
     });
