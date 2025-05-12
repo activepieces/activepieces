@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common/client';
 import { instantlyAiAuth } from '../../index';
@@ -9,15 +9,100 @@ export const addLeadToCampaignAction = createAction({
   displayName: 'Add Lead to Campaign',
   description: 'Add a specific lead to a campaign or lead list in Instantly',
   props: {
-    campaign_id: Property.ShortText({
-      displayName: 'Campaign ID',
-      description: 'ID of the campaign to add the lead to',
+    campaign_id: Property.Dropdown({
+      displayName: 'Campaign',
+      description: 'Select the campaign to add the lead to',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+
+        try {
+          const response = await makeRequest({
+            endpoint: 'campaigns',
+            method: HttpMethod.GET,
+            apiKey: auth as string,
+            queryParams: {
+              limit: 100,
+            },
+          });
+
+          if (!response || !response.items || !Array.isArray(response.items)) {
+            return {
+              disabled: true,
+              placeholder: 'No campaigns found',
+              options: [],
+            };
+          }
+
+          return {
+            options: response.items.map((campaign: any) => {
+              return {
+                label: campaign.name,
+                value: campaign.id,
+              };
+            }),
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            placeholder: 'Error fetching campaigns',
+            options: [],
+          };
+        }
+      },
     }),
-    list_id: Property.ShortText({
-      displayName: 'List ID',
-      description: 'ID of the lead list to add the lead to',
+    list_id: Property.Dropdown({
+      displayName: 'Lead List',
+      description: 'Select the lead list to add the lead to',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+
+        try {
+          const response = await makeRequest({
+            endpoint: 'lead-lists',
+            method: HttpMethod.GET,
+            apiKey: auth as string,
+          });
+
+          if (!response || !response.items || !Array.isArray(response.items)) {
+            return {
+              disabled: true,
+              placeholder: 'No lead lists found',
+              options: [],
+            };
+          }
+
+          return {
+            options: response.items.map((list: any) => {
+              return {
+                label: list.name,
+                value: list.id,
+              };
+            }),
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            placeholder: 'Error fetching lead lists',
+            options: [],
+          };
+        }
+      },
     }),
     email: Property.ShortText({
       displayName: 'Email',

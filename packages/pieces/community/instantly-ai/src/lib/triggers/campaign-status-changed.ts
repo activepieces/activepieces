@@ -22,10 +22,54 @@ export const campaignStatusChangedTrigger = createTrigger({
         ],
       },
     }),
-    campaign_id: Property.ShortText({
-      displayName: 'Campaign ID',
-      description: 'Filter by Campaign ID (leave empty to trigger for all campaigns)',
+    campaign_id: Property.Dropdown({
+      displayName: 'Campaign',
+      description: 'Filter by Campaign (leave empty to trigger for all campaigns)',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+
+        try {
+          const response = await makeRequest({
+            endpoint: 'campaigns',
+            method: HttpMethod.GET,
+            apiKey: auth as string,
+            queryParams: {
+              limit: 100,
+            },
+          });
+
+          if (!response || !response.items || !Array.isArray(response.items)) {
+            return {
+              disabled: true,
+              placeholder: 'No campaigns found',
+              options: [],
+            };
+          }
+
+          return {
+            options: response.items.map((campaign: any) => {
+              return {
+                label: campaign.name,
+                value: campaign.id,
+              };
+            }),
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            placeholder: 'Error fetching campaigns',
+            options: [],
+          };
+        }
+      },
     }),
   },
   sampleData: {
@@ -73,12 +117,12 @@ export const campaignStatusChangedTrigger = createTrigger({
       queryParams,
     });
 
-    if (!response.campaigns || !Array.isArray(response.campaigns)) {
+    if (!response.items || !Array.isArray(response.items)) {
       return [];
     }
 
     // Filter campaigns that have changed status since last check
-    const statusChangedCampaigns = response.campaigns.filter((campaign: any) => {
+    const statusChangedCampaigns = response.items.filter((campaign: any) => {
       if (!campaign.status_history || campaign.status_history.length < 2) {
         return false;
       }

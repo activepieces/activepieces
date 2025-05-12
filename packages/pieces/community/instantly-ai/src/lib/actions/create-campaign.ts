@@ -104,10 +104,51 @@ export const createCampaignAction = createAction({
       required: false,
       defaultValue: false,
     }),
-    list_id: Property.ShortText({
-      displayName: 'Lead List ID',
-      description: 'ID of the lead list to use for this campaign',
+    list_id: Property.Dropdown({
+      displayName: 'Lead List',
+      description: 'Select the lead list to use for this campaign',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+
+        try {
+          const response = await makeRequest({
+            endpoint: 'lead-lists',
+            method: HttpMethod.GET,
+            apiKey: auth as string,
+          });
+
+          if (!response || !response.items || !Array.isArray(response.items)) {
+            return {
+              disabled: true,
+              placeholder: 'No lead lists found',
+              options: [],
+            };
+          }
+
+          return {
+            options: response.items.map((list: any) => {
+              return {
+                label: list.name,
+                value: list.id,
+              };
+            }),
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            placeholder: 'Error fetching lead lists',
+            options: [],
+          };
+        }
+      },
     }),
   },
   async run(context) {

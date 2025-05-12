@@ -9,15 +9,100 @@ export const newLeadAddedTrigger = createTrigger({
   displayName: 'New Lead Added',
   description: 'Triggers when a lead is added to a campaign or list',
   props: {
-    campaign_id: Property.ShortText({
-      displayName: 'Campaign ID',
-      description: 'Filter by Campaign ID (leave empty to check all campaigns)',
+    campaign_id: Property.Dropdown({
+      displayName: 'Campaign',
+      description: 'Filter by Campaign (leave empty to check all campaigns)',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+
+        try {
+          const response = await makeRequest({
+            endpoint: 'campaigns',
+            method: HttpMethod.GET,
+            apiKey: auth as string,
+            queryParams: {
+              limit: 100,
+            },
+          });
+
+          if (!response || !response.items || !Array.isArray(response.items)) {
+            return {
+              disabled: true,
+              placeholder: 'No campaigns found',
+              options: [],
+            };
+          }
+
+          return {
+            options: response.items.map((campaign: any) => {
+              return {
+                label: campaign.name,
+                value: campaign.id,
+              };
+            }),
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            placeholder: 'Error fetching campaigns',
+            options: [],
+          };
+        }
+      },
     }),
-    list_id: Property.ShortText({
-      displayName: 'List ID',
-      description: 'Filter by List ID (leave empty to check all lists)',
+    list_id: Property.Dropdown({
+      displayName: 'Lead List',
+      description: 'Filter by Lead List (leave empty to check all lists)',
       required: false,
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'Please authenticate first',
+            options: [],
+          };
+        }
+
+        try {
+          const response = await makeRequest({
+            endpoint: 'lead-lists',
+            method: HttpMethod.GET,
+            apiKey: auth as string,
+          });
+
+          if (!response || !response.items || !Array.isArray(response.items)) {
+            return {
+              disabled: true,
+              placeholder: 'No lead lists found',
+              options: [],
+            };
+          }
+
+          return {
+            options: response.items.map((list: any) => {
+              return {
+                label: list.name,
+                value: list.id,
+              };
+            }),
+          };
+        } catch (error) {
+          return {
+            disabled: true,
+            placeholder: 'Error fetching lead lists',
+            options: [],
+          };
+        }
+      },
     }),
   },
   sampleData: {
@@ -54,84 +139,50 @@ export const newLeadAddedTrigger = createTrigger({
     // Update last fetch time for next run
     await context.store.put('lastFetchTime', new Date().toISOString());
 
+    // Set up endpoint and query params based on whether we're looking at a campaign or a list
+    let endpoint;
     const queryParams: Record<string, string | number | boolean> = {
       created_after: lastFetchTime as string,
     };
 
-    let endpoint: string;
-    let sourceType: 'campaign' | 'list';
-    let sourceName = '';
-
     if (campaign_id) {
       endpoint = `campaigns/${campaign_id}/leads`;
-      sourceType = 'campaign';
-
-      // Fetch campaign name
-      try {
-        const campaignResponse = await makeRequest({
-          endpoint: `campaigns/${campaign_id}`,
-          method: HttpMethod.GET,
-          apiKey: apiKey as string,
-        });
-
-        if (campaignResponse && campaignResponse.name) {
-          sourceName = campaignResponse.name;
-        }
-      } catch (error) {
-        // Ignore error and continue without the name
-      }
     } else if (list_id) {
-      endpoint = `lead-lists/${list_id}/leads`;
-      sourceType = 'list';
-
-      // Fetch list name
-      try {
-        const listResponse = await makeRequest({
-          endpoint: `lead-lists/${list_id}`,
-          method: HttpMethod.GET,
-          apiKey: apiKey as string,
-        });
-
-        if (listResponse && listResponse.name) {
-          sourceName = listResponse.name;
-        }
-      } catch (error) {
-        // Ignore error and continue without the name
-      }
+      endpoint = `leads/list/${list_id}/items`;
     } else {
+      // If neither is specified, check all leads
       endpoint = 'leads';
-      sourceType = 'list'; // Default
     }
 
-    // Fetch leads created since last check
-    const response = await makeRequest({
-      endpoint,
-      method: HttpMethod.GET,
-      apiKey: apiKey as string,
-      queryParams,
-    });
+    // Fetch leads added since last check
+    try {
+      const response = await makeRequest({
+        endpoint,
+        method: HttpMethod.GET,
+        apiKey: apiKey as string,
+        queryParams,
+      });
 
-    if (!response.leads || !Array.isArray(response.leads)) {
+      if (!response.items || !Array.isArray(response.items)) {
+        return [];
+      }
+
+      // Format and return leads
+      return response.items.map((lead: any) => {
+        return {
+          id: lead.id,
+          email: lead.email,
+          first_name: lead.first_name,
+          last_name: lead.last_name,
+          created_at: lead.timestamp_created,
+          campaign_id: campaign_id || lead.campaign_id,
+          list_id: list_id || lead.list_id,
+          // Include other fields from the lead
+          ...lead,
+        };
+      });
+    } catch (error) {
       return [];
     }
-
-    // Format the response
-    return response.leads.map((lead: any) => {
-      return {
-        id: lead.id,
-        email: lead.email,
-        first_name: lead.first_name,
-        last_name: lead.last_name,
-        company: lead.company,
-        phone: lead.phone,
-        added_to: {
-          type: sourceType,
-          id: campaign_id || list_id || 'all',
-          name: sourceName || 'All Leads'
-        },
-        created_at: lead.created_at,
-        custom_attributes: lead.custom_attributes
-      };
-    });
   },
 });
