@@ -52,8 +52,8 @@ const AVERAGE_FOLDER_WIDTH = 180; // Average width of folder item in pixels
 const ADD_BUTTON_SPACE = 60; // Space needed for the add folder button in pixels
 const MORE_BUTTON_SPACE = 100; // Space for "more" button if visible
 const SAFETY_MARGIN = 50; // Extra space to prevent layout issues
-const SCROLL_SPEED = 10; // Pixels per frame
-const SCROLL_THRESHOLD = 100; // Pixels from edge to start scrolling
+const SCROLL_SPEED = 5; // Reduced speed to prevent bouncing
+const SCROLL_THRESHOLD = 150; // Increased threshold for smoother scrolling
 
 const FolderFilterList = ({ refresh }: { refresh: number }) => {
   const location = useLocation();
@@ -68,6 +68,8 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollAnimationRef = useRef<number | null>(null);
   const mousePositionRef = useRef({ x: 0, y: 0 });
+  const pageScrollPositionRef = useRef(0);
+  const isAtScrollBoundaryRef = useRef({ left: false, right: false });
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -98,8 +100,28 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
   }, []);
 
   useEffect(() => {
+    const checkScrollBoundaries = () => {
+      isAtScrollBoundaryRef.current.left = window.scrollX <= 0;
+      
+      const maxScrollX = document.documentElement.scrollWidth - window.innerWidth;
+      isAtScrollBoundaryRef.current.right = window.scrollX >= maxScrollX - 5; // 5px buffer
+      
+      pageScrollPositionRef.current = window.scrollX;
+    };
+    
+    checkScrollBoundaries();
+    
+    window.addEventListener('scroll', checkScrollBoundaries);
+    
+    return () => {
+      window.removeEventListener('scroll', checkScrollBoundaries);
+    };
+  }, []);
+
+  useEffect(() => {
     let lastTimestamp = 0;
     const SCROLL_INTERVAL = 16; // ~60fps
+    let lastAppliedDelta = 0;
 
     const handleScroll = (timestamp: number) => {
       if (timestamp - lastTimestamp < SCROLL_INTERVAL) {
@@ -120,27 +142,54 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
       let scrollDelta = 0;
 
       if (mouseX > windowWidth - SCROLL_THRESHOLD) {
+        if (isAtScrollBoundaryRef.current.right) {
+          scrollAnimationRef.current = requestAnimationFrame(handleScroll);
+          return;
+        }
+        
         const distanceFromEdge = windowWidth - mouseX;
         const scrollFactor = 1 - Math.max(0, Math.min(1, distanceFromEdge / SCROLL_THRESHOLD));
         scrollDelta = Math.ceil(SCROLL_SPEED * (1 + scrollFactor * 2));
       } 
       else if (mouseX < SCROLL_THRESHOLD) {
+        if (isAtScrollBoundaryRef.current.left) {
+          scrollAnimationRef.current = requestAnimationFrame(handleScroll);
+          return;
+        }
+        
         const distanceFromEdge = mouseX;
         const scrollFactor = 1 - Math.max(0, Math.min(1, distanceFromEdge / SCROLL_THRESHOLD));
         scrollDelta = -Math.ceil(SCROLL_SPEED * (1 + scrollFactor * 2));
       }
 
-      if (scrollDelta !== 0) {
+      if (scrollDelta !== 0 && (scrollDelta !== lastAppliedDelta || 
+         (scrollDelta > 0 && !isAtScrollBoundaryRef.current.right) || 
+         (scrollDelta < 0 && !isAtScrollBoundaryRef.current.left))) {
+        
+        lastAppliedDelta = scrollDelta;
+        
+        const beforeScroll = window.scrollX;
+        
         window.scrollBy({
           left: scrollDelta,
           behavior: 'auto' 
         });
+        
+        if (beforeScroll === window.scrollX) {
+          if (scrollDelta > 0) {
+            isAtScrollBoundaryRef.current.right = true;
+          } else {
+            isAtScrollBoundaryRef.current.left = true;
+          }
+        }
       }
       
       scrollAnimationRef.current = requestAnimationFrame(handleScroll);
     };
 
     if (isDragging) {
+      isAtScrollBoundaryRef.current = { left: window.scrollX <= 0, right: false };
+      lastAppliedDelta = 0;
       scrollAnimationRef.current = requestAnimationFrame(handleScroll);
     } else if (scrollAnimationRef.current !== null) {
       cancelAnimationFrame(scrollAnimationRef.current);
