@@ -55,10 +55,15 @@ const ApDashboardSidebarHeader = ({
 
   return (
     <SidebarHeader className="pb-0">
-      <div className={cn("flex items-center justify-between grow gap-1", {
-        "justify-start": !isHomeDashboard
-      })}>
-        <Button variant="ghost" className={cn({ "w-full": !isHomeDashboard && !showProjectSwitcher })}>
+      <div
+        className={cn('flex items-center justify-between grow gap-1', {
+          'justify-start': !isHomeDashboard,
+        })}
+      >
+        <Button
+          variant="ghost"
+          className={cn({ 'w-full': !isHomeDashboard && !showProjectSwitcher })}
+        >
           <Link to={isHomeDashboard ? defaultRoute : '/platform'}>
             <Tooltip>
               <TooltipTrigger asChild>{renderLogo()}</TooltipTrigger>

@@ -1,13 +1,7 @@
-import { t } from 'i18next';
 import { UserPlus } from 'lucide-react';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { SidebarMenuButton } from '@/components/ui/sidebar-shadcn';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { InviteUserDialog } from '@/features/team/component/invite-user-dialog';
 
 export function SidebarInviteUserButton() {
