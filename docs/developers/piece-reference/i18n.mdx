@@ -7,50 +7,24 @@ icon: 'globe'
 
 <Steps>
   <Step title="Generate The Translation File">
-    After you are done with editing your piece, generate the translation file by running the follwing command:
-    
-    ```bash
-    npm run cli pieces generate-translation-file
-    ```
-    You will be asked for the piece folder.
+     After adding the piece to the [AP_DEV_PIECES](/developers/development-setup/local) and running 
+     ```bash
+     npm start
+     ```
+     Wait until you see this in your terminal: `Translation file for piece created in <piece_folder>/src/i18n/translation.json` that's where the translation file will be located
   </Step>
-  <Step title="Translate to Wanted Locale">
-    Under your piece `src` folder you will have `i18n.json`, make a copy of it, rename it to the targetted locale , like `fr.json`, and translate it.
+  <Step title="Translate to a Certain Locale">
+    Once a change to a translation file is merged you can join our Crowdin project https://crowdin.com/project/activepieces and translate the piece there
   </Step>
-  <Step title="Import Translation">
-    Import translation into your piece `index.ts` file and include it in the pieces i18n property, like this: 
-    ```ts 
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
-import { catchWebhook } from "./lib/triggers/catch-hook";
-import { LocalesEnum, PieceCategory } from "@activepieces/shared";
-import { returnResponse } from "./lib/actions/return-response";
-import { returnResponseAndWaitForNextWebhook } from "./lib/actions/return-response-and-wait-for-next-webhook";
-//Importing the new translation file for the fr locale
-import fr from "./i18n/fr.json";
-export const webhook = createPiece({
-        displayName: "Webhook",
-        description: "Receive HTTP requests and trigger flows using unique URLs.",
-        auth: PieceAuth.None(),
-        categories: [PieceCategory.CORE],
-        minimumSupportedRelease: "0.52.0",
-        logoUrl: "https://cdn.activepieces.com/pieces/webhook.svg",
-        authors: ["abuaboud", "pfernandez98", "kishanprmr", "AbdulTheActivePiecer"],
-        actions: [returnResponse, returnResponseAndWaitForNextWebhook],
-        triggers: [catchWebhook],
-        i18n: {
-            //Including the translation
-            [LocalesEnum.FRENCH]: fr,
-        },
-});
-
-
-```
- 
-  </Step>
-   <Step title="Testing">
-    In your dashboard go to Project Settings -> Appearance -> Lanugages
+  
+   <Step title="Testing Locally">
+    In your dashboard go to Project Settings -> Appearance -> Languages
     ![Languages](/resources/i18n-pieces.png)
-    Then check the piece in the builder:
+   
+    You can create or edit the locale file (it's a copy of the translation file with its values translated) i.e fr.json under the piece directory and see the change in the UI after refreshing.
+  
+
+     Then check the piece in the builder:
     ![French Webhooks](/resources/french-webhooks.png)
   </Step>
 
