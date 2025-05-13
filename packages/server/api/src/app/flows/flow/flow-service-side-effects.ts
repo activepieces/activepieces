@@ -71,7 +71,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
                 type: ScheduleType.CRON_EXPRESSION,
                 failureCount: flowToUpdate.schedule?.failureCount ?? 0,
             },
-            webhookHandshakeConfiguration,
+            webhookHandshakeConfiguration: flowToUpdate.handshakeConfiguration ?? webhookHandshakeConfiguration,
         }
     },
 

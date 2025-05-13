@@ -16,6 +16,7 @@ export const gitSyncHelper = (_log: FastifyBaseLogger) => ({
                 const migratedFlowVersion = flowMigrations.apply(flow.version)
                 flows.push({
                     ...flow,
+                    externalId: flow.externalId ?? flow.id,
                     version: migratedFlowVersion,
                 })
             }

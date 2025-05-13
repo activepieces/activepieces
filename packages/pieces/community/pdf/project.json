@@ -15,6 +15,7 @@
         "assets": ["packages/pieces/community/pdf/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
+        
       },
       "dependsOn": ["prebuild", "^build"]
     },
